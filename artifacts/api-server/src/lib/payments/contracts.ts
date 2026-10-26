@@ -25,6 +25,17 @@ export const PaymentWebhookEventSchema = z.discriminatedUnion("type", [
       currencyCode: currency,
     })
     .strict(),
+  // The provider declined a requested refund: nothing moved, the obligation stays owed.
+  z
+    .object({
+      id: providerId,
+      type: z.literal("REFUND_FAILED"),
+      providerIntentId: providerId,
+      providerRefundId: providerId,
+      amountMinor,
+      currencyCode: currency,
+    })
+    .strict(),
 ]);
 
 export type PaymentWebhookEvent = z.infer<typeof PaymentWebhookEventSchema>;

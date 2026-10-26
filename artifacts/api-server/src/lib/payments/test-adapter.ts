@@ -132,6 +132,31 @@ export class TestOnlyPaymentAdapter implements PaymentProviderAdapter {
     return signed;
   }
 
+  /** Simulates the provider declining a refund request; the captured balance is unchanged. */
+  createRefundFailureWebhook(input: {
+    providerIntentId: string;
+    amountMinor: number;
+    currencyCode: string;
+    idempotencyKey: string;
+  }): SignedPaymentWebhook {
+    const snapshot = this.snapshots.get(input.providerIntentId);
+    if (
+      !snapshot ||
+      !["CAPTURED", "PARTIALLY_REFUNDED"].includes(snapshot.status) ||
+      snapshot.currencyCode !== input.currencyCode
+    ) {
+      throw new Error("Simulated refund has no captured balance to fail against");
+    }
+    return this.sign({
+      id: `sim_event_${randomUUID()}`,
+      type: "REFUND_FAILED",
+      providerIntentId: input.providerIntentId,
+      providerRefundId: `sim_refund_${randomUUID()}`,
+      amountMinor: input.amountMinor,
+      currencyCode: input.currencyCode,
+    });
+  }
+
   verifyWebhook(event: PaymentWebhookEvent, signature: string): boolean {
     if (!/^sha256=[a-f0-9]{64}$/.test(signature)) return false;
     const expected = Buffer.from(this.signatureFor(event));

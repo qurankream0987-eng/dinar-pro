@@ -12,6 +12,7 @@ import {
 } from "../lib/payments/service";
 import { PaymentWebhookEventSchema } from "../lib/payments/contracts";
 import { testOnlyPaymentAdapter } from "../lib/payments/test-adapter";
+import { listRefundObligations } from "../lib/payments/obligations";
 
 const router = Router();
 
@@ -187,6 +188,25 @@ router.post(
         status: updatedRefund.status,
         mode: updatedRefund.mode,
       });
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+/** Refunds owed after cancellation or expiry, for manual reconciliation; read-only. */
+router.get(
+  "/admin/payments/refund-obligations",
+  requireAuth,
+  requireAdmin,
+  async (req, res, next) => {
+    const status = req.query.status;
+    if (status !== undefined && status !== "OPEN" && status !== "RESOLVED") {
+      res.status(400).json({ error: "Invalid status filter" });
+      return;
+    }
+    try {
+      res.json({ items: await listRefundObligations(status), mode: "SIMULATION_ONLY" });
     } catch (error) {
       next(error);
     }

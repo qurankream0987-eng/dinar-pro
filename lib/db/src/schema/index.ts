@@ -1139,7 +1139,7 @@ export const paymentEvents = pgTable(
     ),
     check(
       "payment_events_type_valid",
-      sql`${t.eventType} IN ('CAPTURE_SUCCEEDED', 'REFUND_SUCCEEDED')`,
+      sql`${t.eventType} IN ('CAPTURE_SUCCEEDED', 'REFUND_SUCCEEDED', 'REFUND_FAILED')`,
     ),
     check("payment_events_amount_positive", sql`${t.amountMinor} > 0`),
     check(
@@ -1147,6 +1147,68 @@ export const paymentEvents = pgTable(
       sql`${t.payloadSha256} ~ '^[a-f0-9]{64}$'`,
     ),
     check("payment_events_simulation_only", sql`${t.mode} = 'SIMULATION_ONLY'`),
+  ],
+);
+/**
+ * A verified payment the platform owes back because its order was cancelled (reservation
+ * expiry, or a capture that arrived after cancellation). One per intent; append-only except
+ * OPEN → RESOLVED, which requires the provider's REFUND_SUCCEEDED event (enforced by triggers).
+ */
+export const paymentRefundObligations = pgTable(
+  "payment_refund_obligations",
+  {
+    id: text("id").primaryKey(),
+    paymentIntentId: text("payment_intent_id")
+      .notNull()
+      .references(() => paymentIntents.id),
+    orderId: text("order_id")
+      .notNull()
+      .references(() => orders.id),
+    sourcePaymentEventId: text("source_payment_event_id")
+      .notNull()
+      .references(() => paymentEvents.id),
+    reason: text("reason").notNull(),
+    amountMinor: integer("amount_minor").notNull(),
+    currencyCode: text("currency_code").notNull(),
+    status: text("status").default("OPEN").notNull(),
+    resolvedRefundEventId: text("resolved_refund_event_id").references(
+      () => paymentEvents.id,
+    ),
+    resolvedAt: timestamp("resolved_at", { withTimezone: true }),
+    mode: text("mode").default("SIMULATION_ONLY").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [
+    uniqueIndex("payment_refund_obligations_intent_unique").on(t.paymentIntentId),
+    uniqueIndex("payment_refund_obligations_source_event_unique").on(
+      t.sourcePaymentEventId,
+    ),
+    index("payment_refund_obligations_status_created_idx").on(
+      t.status,
+      t.createdAt,
+    ),
+    check(
+      "payment_refund_obligations_reason_valid",
+      sql`${t.reason} IN ('RESERVATION_EXPIRED', 'CAPTURE_AFTER_CANCELLATION')`,
+    ),
+    check(
+      "payment_refund_obligations_amount_positive",
+      sql`${t.amountMinor} > 0`,
+    ),
+    check(
+      "payment_refund_obligations_status_valid",
+      sql`${t.status} IN ('OPEN', 'RESOLVED')`,
+    ),
+    check(
+      "payment_refund_obligations_resolution_evidence",
+      sql`(${t.status} = 'OPEN' AND ${t.resolvedRefundEventId} IS NULL AND ${t.resolvedAt} IS NULL) OR (${t.status} = 'RESOLVED' AND ${t.resolvedRefundEventId} IS NOT NULL AND ${t.resolvedAt} IS NOT NULL)`,
+    ),
+    check(
+      "payment_refund_obligations_simulation_only",
+      sql`${t.mode} = 'SIMULATION_ONLY'`,
+    ),
   ],
 );
 export const paymentDisputeEvents = pgTable(

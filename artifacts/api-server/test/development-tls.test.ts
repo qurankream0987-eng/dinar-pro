@@ -157,18 +157,18 @@ test("clone migration refuses a ledger other than the exact 28-entry baseline", 
   assert.throws(() => assertCloneMigrationBaseline(altered, expected));
 });
 
-test("clone migration accepts only the reviewed 40-entry journal, checked against the files on disk", () => {
+test("clone migration accepts only the reviewed 41-entry journal, checked against the files on disk", () => {
   const migrations = new URL("../../../lib/db/drizzle/", import.meta.url);
   const journal = JSON.parse(readFileSync(new URL("meta/_journal.json", migrations), "utf8")) as { entries: Array<{ tag: string }> };
   const entries = journal.entries.map(({ tag }) => ({
     tag,
     sha256: createHash("sha256").update(readFileSync(new URL(`${tag}.sql`, migrations))).digest("hex"),
   }));
-  assert.equal(entries.length, 40);
-  assert.equal(REVIEWED_PENDING_MIGRATIONS.at(-1)?.tag, "0039_ai_cache_write_costs");
+  assert.equal(entries.length, 41);
+  assert.equal(REVIEWED_PENDING_MIGRATIONS.at(-1)?.tag, "0040_refund_obligations");
   assert.doesNotThrow(() => assertCloneMigrationJournal(entries));
-  assert.throws(() => assertCloneMigrationJournal(entries.slice(0, 39)), /expects 40/);
-  assert.throws(() => assertCloneMigrationJournal([...entries, { tag: "0040_unreviewed", sha256: "0".repeat(64) }]), /expects 40/);
+  assert.throws(() => assertCloneMigrationJournal(entries.slice(0, 40)), /expects 41/);
+  assert.throws(() => assertCloneMigrationJournal([...entries, { tag: "0041_unreviewed", sha256: "0".repeat(64) }]), /expects 41/);
   const edited = entries.map((entry) => ({ ...entry }));
   edited[37].sha256 = "f".repeat(64);
   assert.throws(() => assertCloneMigrationJournal(edited), /0037_pre_integration_closure differs/);

@@ -35,6 +35,7 @@ import {
 } from "@workspace/api-zod";
 import { requireAuth } from "../lib/auth";
 import { applyTerminalOrderAccounting } from "../lib/order-terminal-accounting";
+import { expireOrderReservation } from "../lib/order-expiry";
 import { recordCourierCommissionAccrual } from "../lib/courier-economics";
 import { getDeliveryView, orderHandoff, settleOrderFulfillment } from "../lib/delivery";
 import { marketAllowsCashDirect } from "../lib/market-capability-registry";
@@ -211,51 +212,6 @@ async function orderViews(rows: (typeof orders.$inferSelect)[], tx: any = db) {
     sellerAvatarObjectPath: avatars.get(row.sellerId) ?? null,
   }));
 }
-async function expireOrderReservation(
-  tx: any,
-  row: typeof orders.$inferSelect,
-  now: Date,
-) {
-  const items = await tx
-    .select()
-    .from(orderItems)
-    .where(eq(orderItems.orderId, row.id))
-    .orderBy(orderItems.offerId);
-  for (const item of items) {
-    if (item.data.inventoryMode !== "LIMITED") continue;
-    const [offer] = await tx
-      .select()
-      .from(offers)
-      .where(eq(offers.id, item.offerId))
-      .for("update");
-    if (!offer) continue;
-    await tx
-      .update(offers)
-      .set({
-        reservedQuantity: Math.max(0, offer.reservedQuantity - item.quantity),
-        updatedAt: now,
-      })
-      .where(eq(offers.id, offer.id));
-  }
-  await settleOrderFulfillment(tx, row.id, "CANCELLED", now);
-  const data = {
-    ...row.data,
-    issue: "انتهت مهلة قبول الطلب",
-    reservationReleasedAt: now.toISOString(),
-  };
-  const [updated] = await tx
-    .update(orders)
-    .set({ status: "CANCELLED", data, updatedAt: now })
-    .where(eq(orders.id, row.id))
-    .returning();
-  await tx.insert(messages).values({
-    id: randomUUID(),
-    conversationId: row.id,
-    body: "انتهت مهلة قبول الطلب وأُعيد المخزون المحجوز.",
-  });
-  return updated as typeof orders.$inferSelect;
-}
-
 export async function releaseExpiredReservations(now = new Date()) {
   return db.transaction(async (tx) => {
     const expired = await tx

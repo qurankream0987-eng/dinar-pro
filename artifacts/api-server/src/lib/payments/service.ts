@@ -9,6 +9,7 @@ import {
   paymentIntents,
   paymentReconciliationItems,
   paymentReconciliationRuns,
+  paymentRefundObligations,
   paymentRefunds,
 } from "@workspace/db";
 import type {
@@ -20,6 +21,12 @@ import { paymentWebhookDigest } from "./contracts";
 import {
   recordPaymentCapturedOnDisputedOrder,
 } from "./disputes";
+import { expireOrderReservation } from "../order-expiry";
+import {
+  recordRefundObligation,
+  resolveRefundObligation,
+  type RefundObligationReason,
+} from "./obligations";
 
 export class PaymentCoreError extends Error {
   constructor(
@@ -95,6 +102,13 @@ export async function createPaymentIntent(input: {
       .from(paymentIntents)
       .where(eq(paymentIntents.orderId, input.orderId))
       .for("update");
+    // A retry of the same request that waited on the order lock sees the intent its twin
+    // created: same buyer and key is the same request, not a conflict.
+    if (
+      existingForOrder?.buyerId === input.buyerId &&
+      existingForOrder.idempotencyKey === input.idempotencyKey
+    )
+      return { row: existingForOrder, created: false };
     if (existingForOrder)
       reject(409, "ORDER_INTENT_EXISTS", "Order already has a payment intent");
 
@@ -244,6 +258,8 @@ export async function receivePaymentWebhook(input: {
     }
 
     let refund: typeof paymentRefunds.$inferSelect | undefined;
+    let refundDueReason: RefundObligationReason | undefined;
+    const now = new Date();
     if (input.event.type === "CAPTURE_SUCCEEDED") {
       const captureCanFollowDispute =
         !!dispute &&
@@ -259,17 +275,18 @@ export async function receivePaymentWebhook(input: {
       ) {
         reject(409, "CAPTURE_STATE_MISMATCH", "Capture does not match pending intent");
       }
-      // A cancelled order (or one whose reservation lapsed before the sweep ran) has released its
-      // stock; money must not be recorded against it. Disputed orders keep their own rules above.
-      if (
+      // A verified capture for an order that is cancelled, or whose reservation lapsed before
+      // the sweep ran, is never a normal payment: it is recorded as evidence and becomes a
+      // REFUND_DUE obligation (owner policy D3). Disputed orders keep their own rules above.
+      if (!dispute && order.status === "CANCELLED")
+        refundDueReason = "CAPTURE_AFTER_CANCELLATION";
+      else if (
         !dispute &&
-        (order.status === "CANCELLED" ||
-          (order.status === "CREATED" &&
-            (!order.reservationExpiresAt ||
-              order.reservationExpiresAt.getTime() <= Date.now())))
-      ) {
-        reject(409, "ORDER_NOT_PAYABLE", "Order is no longer payable");
-      }
+        order.status === "CREATED" &&
+        (!order.reservationExpiresAt ||
+          order.reservationExpiresAt.getTime() <= now.getTime())
+      )
+        refundDueReason = "RESERVATION_EXPIRED";
     } else {
       if (dispute)
         reject(
@@ -289,9 +306,11 @@ export async function receivePaymentWebhook(input: {
         refund.status !== "REQUESTED" ||
         refund.amountMinor !== input.event.amountMinor ||
         refund.currencyCode !== input.event.currencyCode ||
-        !["SIMULATION_CAPTURED", "SIMULATION_PARTIALLY_REFUNDED"].includes(
-          intent.status,
-        ) ||
+        ![
+          "SIMULATION_CAPTURED",
+          "SIMULATION_PARTIALLY_REFUNDED",
+          "SIMULATION_BUYER_REFUND_DUE",
+        ].includes(intent.status) ||
         intent.refundedAmountMinor + input.event.amountMinor >
           intent.capturedAmountMinor
       ) {
@@ -337,6 +356,16 @@ export async function receivePaymentWebhook(input: {
       reject(409, "PROVIDER_EVENT_ID_REUSED", "Provider event id was reused");
     }
 
+    if (input.event.type === "REFUND_FAILED") {
+      // Nothing moved at the provider: the request fails and the balance stays owed, so a
+      // later request (a new idempotency key) can retry it.
+      await tx
+        .update(paymentRefunds)
+        .set({ status: "FAILED", updatedAt: now })
+        .where(eq(paymentRefunds.id, refund!.id));
+      return { duplicate: false, paymentIntent: paymentIntentView(intent) };
+    }
+
     let nextStatus: string;
     let capturedAmountMinor = intent.capturedAmountMinor;
     let refundedAmountMinor = intent.refundedAmountMinor;
@@ -352,31 +381,61 @@ export async function receivePaymentWebhook(input: {
             refundedAmountMinor,
           })
         : "SIMULATION_CAPTURED";
+      // The lapsed order is cancelled first (its intent still shows no capture, so expiry
+      // records nothing); the obligation below then owes the capture recorded here.
+      if (refundDueReason === "RESERVATION_EXPIRED")
+        await expireOrderReservation(tx, order, now);
     } else {
       refundedAmountMinor += input.event.amountMinor;
+      const fullyRefunded = refundedAmountMinor === capturedAmountMinor;
       nextStatus =
-        refundedAmountMinor === capturedAmountMinor
-          ? "SIMULATION_REFUNDED"
-          : "SIMULATION_PARTIALLY_REFUNDED";
+        intent.status === "SIMULATION_BUYER_REFUND_DUE"
+          ? fullyRefunded
+            ? "SIMULATION_REFUNDED"
+            : "SIMULATION_BUYER_REFUND_DUE"
+          : fullyRefunded
+            ? "SIMULATION_REFUNDED"
+            : "SIMULATION_PARTIALLY_REFUNDED";
       await tx
         .update(paymentRefunds)
         .set({
           status: "SIMULATED_COMPLETED",
-          updatedAt: new Date(),
+          updatedAt: now,
         })
         .where(eq(paymentRefunds.id, refund!.id));
     }
 
-    const [updated] = await tx
+    let [updated] = await tx
       .update(paymentIntents)
       .set({
         status: nextStatus,
         capturedAmountMinor,
         refundedAmountMinor,
-        updatedAt: new Date(),
+        updatedAt: now,
       })
       .where(eq(paymentIntents.id, intent.id))
       .returning();
+    if (refundDueReason) {
+      await recordRefundObligation(tx, {
+        intent: updated,
+        reason: refundDueReason,
+        sourcePaymentEventId: insertedEvent.id,
+      });
+      [updated] = await tx
+        .select()
+        .from(paymentIntents)
+        .where(eq(paymentIntents.id, intent.id));
+    }
+    if (
+      input.event.type === "REFUND_SUCCEEDED" &&
+      intent.status === "SIMULATION_BUYER_REFUND_DUE" &&
+      nextStatus === "SIMULATION_REFUNDED"
+    )
+      await resolveRefundObligation(tx, {
+        paymentIntentId: intent.id,
+        refundEventId: insertedEvent.id,
+        now,
+      });
     return {
       duplicate: false,
       paymentIntent: paymentIntentView(updated),
@@ -419,9 +478,14 @@ export async function createRefundRequest(input: {
       return existing;
     }
 
+    // A REFUND_DUE obligation (no dispute) is refunded through the same request path; a
+    // dispute's refund still needs an approved provider integration.
     if (
-      !["SIMULATION_CAPTURED", "SIMULATION_PARTIALLY_REFUNDED"].includes(
-        intent.status,
+      !(
+        ["SIMULATION_CAPTURED", "SIMULATION_PARTIALLY_REFUNDED"].includes(
+          intent.status,
+        ) ||
+        (intent.status === "SIMULATION_BUYER_REFUND_DUE" && !intent.disputeId)
       )
     ) {
       reject(409, "PAYMENT_NOT_REFUNDABLE", "No simulated capture is available");
@@ -557,6 +621,34 @@ export async function reconcilePayments(adapter: PaymentProviderAdapter) {
     const rows = paymentEventsByIntent.get(row.paymentIntentId) ?? [];
     rows.push(row);
     paymentEventsByIntent.set(row.paymentIntentId, rows);
+  }
+
+  const obligationRows = intentIds.length
+    ? await db
+        .select()
+        .from(paymentRefundObligations)
+        .where(inArray(paymentRefundObligations.paymentIntentId, intentIds))
+    : [];
+  const obligationByIntent = new Map(
+    obligationRows.map((row) => [row.paymentIntentId, row]),
+  );
+  /** A non-dispute REFUND_DUE intent owes exactly its open obligation; a refunded one resolved it. */
+  function obligationStateMatches(intent: (typeof intents)[number]) {
+    const obligation = obligationByIntent.get(intent.id);
+    if (intent.disputeId) return !obligation;
+    if (intent.status === "SIMULATION_BUYER_REFUND_DUE")
+      return (
+        obligation?.status === "OPEN" &&
+        obligation.currencyCode === intent.currencyCode &&
+        obligation.amountMinor <= intent.capturedAmountMinor &&
+        intent.capturedAmountMinor - intent.refundedAmountMinor > 0
+      );
+    if (!obligation) return true;
+    return (
+      obligation.status === "RESOLVED" &&
+      intent.status === "SIMULATION_REFUNDED" &&
+      intent.refundedAmountMinor === intent.capturedAmountMinor
+    );
   }
 
   function disputeStateMatches(intent: (typeof intents)[number]) {
@@ -737,7 +829,8 @@ export async function reconcilePayments(adapter: PaymentProviderAdapter) {
           snapshot.currencyCode === intent.currencyCode &&
           snapshot.capturedAmountMinor === intent.capturedAmountMinor &&
           snapshot.refundedAmountMinor === intent.refundedAmountMinor &&
-          disputeStateMatches(intent),
+          disputeStateMatches(intent) &&
+          obligationStateMatches(intent),
       );
       return { intent, snapshot, result: matches ? "MATCH" : "MISMATCH" };
     }),

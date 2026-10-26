@@ -1,8 +1,8 @@
 /**
- * Payment ↔ order state integrity (Claude 00, defects D1/D2). The simulation-only capture must not
- * record money against an order that is no longer payable, and a buyer must not be able to cancel
- * (releasing the reserved stock) an order whose payment was already captured. Both are fail-closed
- * guards; no refund or settlement policy is introduced here.
+ * Payment ↔ order state integrity (Claude 00 D1/D2, updated by Claude 01 for owner policy D3).
+ * A capture for an order that is no longer payable is never a normal payment: it is recorded as
+ * evidence and owed back as one REFUND_DUE obligation, and the order stays cancelled. A buyer must
+ * not be able to cancel (releasing the reserved stock) an order whose payment was captured.
  */
 import { test, after } from "node:test";
 import assert from "node:assert/strict";
@@ -71,31 +71,34 @@ const deliver = (signed: ReturnType<typeof testOnlyPaymentAdapter.createCaptureW
 const capture = (providerIntentId: string) => deliver(testOnlyPaymentAdapter.createCaptureWebhook(providerIntentId));
 const reserved = async () => (await db.select().from(offers).where(eq(offers.id, listing.data.id)))[0]!.reservedQuantity;
 
-await test("D1: a capture arriving after the buyer cancelled the order is refused and records nothing", async () => {
+await test("D1: a capture arriving after the buyer cancelled the order is owed back, never kept as a payment", async () => {
   const { orderId, intent } = await orderWithIntent("cancelled");
   const cancelled = await request(`/orders/${orderId}/cancel`, "POST", { reason: "غيّرت رأيي" }, buyer);
   assert.equal(cancelled.status, 200, cancelled.text);
   assert.equal(cancelled.data.status, "CANCELLED");
   const late = await capture(intent.providerIntentId);
-  assert.equal(late.status, 409, late.text);
+  assert.equal(late.status, 200, late.text);
   const [after] = await db.select().from(paymentIntents).where(eq(paymentIntents.id, intent.id));
-  assert.equal(after!.status, "SIMULATION_PENDING");
-  assert.equal(after!.capturedAmountMinor, 0, "no money is recorded against a cancelled order");
+  assert.equal(after!.status, "SIMULATION_BUYER_REFUND_DUE", "never SIMULATION_CAPTURED on a cancelled order");
+  assert.equal((await db.select().from(orders).where(eq(orders.id, orderId)))[0]!.status, "CANCELLED");
+  assert.equal((await pool.query("SELECT count(*)::int AS n FROM payment_refund_obligations WHERE payment_intent_id = $1", [intent.id])).rows[0].n, 1);
 });
 
-await test("D1: a capture arriving after the reservation expired is refused, before and after the sweep", async () => {
+await test("D1: a capture arriving after the reservation lapsed is owed back once, before and after the sweep", async () => {
   const { orderId, intent } = await orderWithIntent("expired");
   await db.update(orders).set({ reservationExpiresAt: new Date(Date.now() - 60_000) }).where(eq(orders.id, orderId));
   const signed = testOnlyPaymentAdapter.createCaptureWebhook(intent.providerIntentId);
   const beforeSweep = await deliver(signed);
-  assert.equal(beforeSweep.status, 409, `expired but not yet swept: ${beforeSweep.text}`);
+  assert.equal(beforeSweep.status, 200, `expired but not yet swept: ${beforeSweep.text}`);
+  assert.equal((await db.select().from(orders).where(eq(orders.id, orderId)))[0]!.status, "CANCELLED", "the capture cancels the lapsed order");
   await releaseExpiredReservations();
-  assert.equal((await db.select().from(orders).where(eq(orders.id, orderId)))[0]!.status, "CANCELLED");
-  // The provider retries the same signed event after the sweep.
+  // The provider retries the same signed event after the sweep: a duplicate, nothing new.
   const afterSweep = await deliver(signed);
-  assert.equal(afterSweep.status, 409, afterSweep.text);
+  assert.equal(afterSweep.status, 200, afterSweep.text);
+  assert.equal(afterSweep.data.duplicate, true);
   const [row] = await db.select().from(paymentIntents).where(eq(paymentIntents.id, intent.id));
-  assert.equal(row!.capturedAmountMinor, 0);
+  assert.equal(row!.status, "SIMULATION_BUYER_REFUND_DUE");
+  assert.equal((await pool.query("SELECT count(*)::int AS n FROM payment_refund_obligations WHERE payment_intent_id = $1", [intent.id])).rows[0].n, 1);
 });
 
 await test("D2: a buyer cannot cancel (and release stock for) an order whose payment was captured", async () => {

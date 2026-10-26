@@ -28,6 +28,8 @@ export const REVIEWED_PENDING_MIGRATIONS: ReadonlyArray<{ tag: string; sha256: s
   { tag: "0038_ai_model_price_entry", sha256: "544c0349205974e6594b958c5c4459fbd4f8ce1b3c7f1bc05314187c33ecf776" },
   // Two nullable price columns and two zero-default counters on 0037 tables; no existing row changes.
   { tag: "0039_ai_cache_write_costs", sha256: "724d67853374cafc7263933a4b51f1ff1d45560549488dc39fe22a43175649cc" },
+  // One new append-only table with guard triggers; payment_events_type_valid is only widened.
+  { tag: "0040_refund_obligations", sha256: "211c7db104036fc74cb08c668e9bf5b26d8f038915b1ab8232d8a79d2e20bfbb" },
 ];
 export const EXPECTED_JOURNAL_ENTRIES =
   EXPECTED_BASELINE_MIGRATIONS + REVIEWED_PENDING_MIGRATIONS.length;
