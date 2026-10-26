@@ -19,8 +19,9 @@ import {
   disputes,
   sellerDues,
   checkoutRequests,
+  paymentIntents,
 } from "@workspace/db";
-import { and, eq, or, inArray, desc, lte } from "drizzle-orm";
+import { and, eq, or, inArray, desc, lte, sql } from "drizzle-orm";
 import {
   CreateListingBody,
   UpdateListingBody,
@@ -1151,6 +1152,19 @@ router.post("/orders/:id/:action", async (req, res) => {
       const body = CancelOrderBody.parse(req.body);
       if (status !== "CREATED")
         throw fail(409, "لا يمكن الإلغاء بعد بدء التنفيذ");
+      // The order row is locked above and capture locks it too, so this read cannot race a capture.
+      // Cancelling would release the stock while the captured money stays recorded.
+      const [paid] = await tx
+        .select({ id: paymentIntents.id })
+        .from(paymentIntents)
+        .where(
+          and(
+            eq(paymentIntents.orderId, row.id),
+            sql`${paymentIntents.capturedAmountMinor} > ${paymentIntents.refundedAmountMinor}`,
+          ),
+        );
+      if (paid)
+        throw fail(409, "تم تحصيل دفعة لهذا الطلب؛ لا يمكن إلغاؤه قبل استردادها");
       status = "CANCELLED";
       data.issue = body.reason;
       system = "تم إلغاء الطلب وإعادة المخزون";

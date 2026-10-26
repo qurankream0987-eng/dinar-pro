@@ -52,6 +52,9 @@
     "test:storage-s3-wire": "mkdir -p .test-build && esbuild test/storage-s3-wire.test.ts --bundle --packages=external --platform=node --format=esm --outfile=.test-build/storage-s3-wire.test.mjs && node --test .test-build/storage-s3-wire.test.mjs",
     "test:fresh-environment": "NODE_ENV=development node test/run.mjs fresh-environment.test",
     "test:commerce-journey": "NODE_ENV=development BDINAR_WAVE4_ACCEPTANCE=development node test/run.mjs commerce-journey.test",
+    "test:payment-order-state": "NODE_ENV=development BDINAR_WAVE4_ACCEPTANCE=development node test/run.mjs payment-order-state.test",
+    "test:request-bounds": "NODE_ENV=development BDINAR_TEST_DATABASE=development node test/run.mjs request-collection-bounds.test",
+    "test:listing-edit-snapshot": "NODE_ENV=development BDINAR_TEST_DATABASE=development node test/run.mjs listing-edit-snapshot.test",
     "test:isolation": "node --test test/isolation/sandbox.test.mjs"
   },
   "dependencies": {

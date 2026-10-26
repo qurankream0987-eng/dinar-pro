@@ -259,6 +259,17 @@ export async function receivePaymentWebhook(input: {
       ) {
         reject(409, "CAPTURE_STATE_MISMATCH", "Capture does not match pending intent");
       }
+      // A cancelled order (or one whose reservation lapsed before the sweep ran) has released its
+      // stock; money must not be recorded against it. Disputed orders keep their own rules above.
+      if (
+        !dispute &&
+        (order.status === "CANCELLED" ||
+          (order.status === "CREATED" &&
+            (!order.reservationExpiresAt ||
+              order.reservationExpiresAt.getTime() <= Date.now())))
+      ) {
+        reject(409, "ORDER_NOT_PAYABLE", "Order is no longer payable");
+      }
     } else {
       if (dispute)
         reject(

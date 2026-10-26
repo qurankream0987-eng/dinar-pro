@@ -130,6 +130,32 @@ app.use((req, res, next) => {
 });
 app.use(express.json({ limit: "128kb" }));
 app.use(express.urlencoded({ extended: true }));
+// Zod 3 records one issue per failing array element (GHSA-mrhx-c7xc-m3w5): 128 KB of JSON can
+// hold ~65k elements and ~24 MB of issues. The largest request array any schema allows is 250,
+// so whole-body array elements are bounded before any route schema runs.
+export const MAX_JSON_ARRAY_ELEMENTS = 2000;
+function exceedsArrayBound(body: unknown) {
+  let elements = 0;
+  const pending: unknown[] = [body];
+  while (pending.length) {
+    const value = pending.pop();
+    if (Array.isArray(value)) {
+      elements += value.length;
+      if (elements > MAX_JSON_ARRAY_ELEMENTS) return true;
+      pending.push(...value);
+    } else if (value && typeof value === "object") {
+      pending.push(...Object.values(value));
+    }
+  }
+  return false;
+}
+app.use((req, res, next) => {
+  if (exceedsArrayBound(req.body)) {
+    res.status(413).json({ error: "حجم البيانات المرسلة أكبر من المسموح" });
+    return;
+  }
+  next();
+});
 
 app.use(cookieParser());
 // Operational probes stay outside session lookup so liveness remains useful
