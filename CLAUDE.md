@@ -71,6 +71,7 @@ DINAR_LOCAL_PG=postgres://user@127.0.0.1:55432 test/isolation/local-suite.sh <su
   row and intent `SIMULATION_BUYER_REFUND_DUE` (policy D3, `lib/payments/obligations.ts`); only a
   provider `REFUND_SUCCEEDED` resolves it. The table is append-only by DB trigger.
 - A new migration must be added to `drizzle/release-manifest.json` (sha256), `REVIEWED_PENDING_MIGRATIONS`
-  in `lib/db/src/clone-migration-guard.ts` and the reviewed-journal test in `development-tls.test.ts`.
+  in `lib/db/src/clone-migration-guard.ts`, the reviewed-journal test in `development-tls.test.ts` and
+  the expected head tag in `readiness.test.ts`.
 - S3 object metadata must expose `generation` (VersionId or ETag); listing-photo completion depends on it.
 - Zod is 3.25.76 (GHSA-mrhx-c7xc-m3w5); mitigated by the body array bound, upgrade still pending.

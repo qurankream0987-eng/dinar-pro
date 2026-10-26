@@ -4,6 +4,7 @@ import { spawn } from "node:child_process";
 import { createServer } from "node:net";
 import { eq } from "drizzle-orm";
 import { db, pool, offers, markets, sessions, promotionProducts, listingPromotions, commercialLedger } from "@workspace/db";
+import { localObjectStorage } from "./local-object-storage";
 import app from "../src/app";
 import { digest } from "../src/lib/auth";
 import { lockedAccount, post, reconcileAccount } from "../src/lib/commercial-ledger";
@@ -62,6 +63,8 @@ try {
   const startupPort = (portProbe.address() as {port:number}).port;
   await new Promise<void>(r=>portProbe.close(()=>r()));
   const child = spawn(process.execPath,["dist/index.mjs"],{env:{...process.env,PORT:String(startupPort)},stdio:["ignore","pipe","pipe"]});
+  // Registered at spawn: an entrypoint that exits early must fail the test, not hang its teardown.
+  const closed = new Promise<void>(r=>child.once("close",()=>r()));
   let startupLog = "";
   child.stdout.on("data",d=>{startupLog += d.toString();});
   child.stderr.on("data",d=>{startupLog += d.toString();});
@@ -78,7 +81,6 @@ try {
     assert.equal(ready,true,"Real entrypoint must sweep expired campaigns and become ready");
     assert.doesNotMatch(startupLog,/Failed to (mark expired promotions|release expired order reservations|scrub expired location previews)/);
   } finally {
-    const closed = new Promise<void>(r=>child.once("close",()=>r()));
     child.kill("SIGTERM");
     await closed;
   }
@@ -129,4 +131,5 @@ try {
 } finally {
   await new Promise<void>(r=>server.close(()=>r()));
   await pool.end();
+  await localObjectStorage?.close();
 }
