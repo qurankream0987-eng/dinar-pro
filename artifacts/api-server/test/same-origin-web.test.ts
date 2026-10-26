@@ -1,0 +1,91 @@
+// P0-3: one service must serve /api/* and the built web app from the same origin, because the
+// frontend calls /api relatively, writes are origin-checked, and the session cookie is SameSite=Lax.
+import { test, after } from "node:test";
+import assert from "node:assert/strict";
+import { mkdtempSync, mkdirSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
+
+const webDist = mkdtempSync(path.join(tmpdir(), "dinar-web-"));
+mkdirSync(path.join(webDist, "assets"));
+writeFileSync(path.join(webDist, "index.html"), "<!doctype html><html dir=\"rtl\"><body>DINAR_SPA_SHELL</body></html>");
+writeFileSync(path.join(webDist, "assets", "index-abc123.js"), "console.log('bundle')");
+writeFileSync(path.join(webDist, "favicon.svg"), "<svg/>");
+process.env.DINAR_WEB_DIST = webDist;
+process.env.DATABASE_URL = "postgres://web:web@127.0.0.1:1/web_test";
+process.env.DINAR_DEV_DATABASE_URL = process.env.DATABASE_URL;
+
+const { default: app } = await import("../src/app");
+const server = app.listen(0);
+await new Promise<void>((resolve) => server.once("listening", resolve));
+const address = server.address();
+assert.ok(address && typeof address !== "string");
+const origin = `http://127.0.0.1:${address.port}`;
+
+await test("GET / serves the SPA shell", async () => {
+  const response = await fetch(`${origin}/`, { headers: { Accept: "text/html" } });
+  assert.equal(response.status, 200);
+  assert.match(response.headers.get("content-type") ?? "", /text\/html/);
+  assert.match(await response.text(), /DINAR_SPA_SHELL/);
+  assert.match(response.headers.get("cache-control") ?? "", /no-cache/);
+});
+
+await test("client-side routes fall back to the SPA shell", async () => {
+  for (const route of ["/account", "/listings/42", "/orders/abc/track"]) {
+    const response = await fetch(`${origin}${route}`, { headers: { Accept: "text/html" } });
+    assert.equal(response.status, 200, route);
+    assert.match(await response.text(), /DINAR_SPA_SHELL/, route);
+  }
+});
+
+await test("hashed assets are served with long-lived caching", async () => {
+  const response = await fetch(`${origin}/assets/index-abc123.js`);
+  assert.equal(response.status, 200);
+  assert.match(response.headers.get("content-type") ?? "", /javascript/);
+  assert.match(response.headers.get("cache-control") ?? "", /immutable/);
+  assert.equal(response.headers.get("x-content-type-options"), "nosniff");
+});
+
+await test("missing files are 404, never the SPA shell", async () => {
+  for (const route of ["/assets/missing-000.js", "/missing.png"]) {
+    const response = await fetch(`${origin}${route}`);
+    assert.equal(response.status, 404, route);
+    assert.doesNotMatch(await response.text(), /DINAR_SPA_SHELL/, route);
+  }
+});
+
+await test("unknown /api routes stay JSON 404 and are never answered with the SPA", async () => {
+  const response = await fetch(`${origin}/api/does-not-exist`, { headers: { Accept: "text/html" } });
+  assert.equal(response.status, 404);
+  assert.match(response.headers.get("content-type") ?? "", /application\/json/);
+  assert.doesNotMatch(await response.text(), /DINAR_SPA_SHELL/);
+});
+
+await test("API probes are unaffected", async () => {
+  const response = await fetch(`${origin}/api/healthz`);
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), { status: "ok" });
+});
+
+await test("path traversal cannot escape the web directory", async () => {
+  for (const route of ["/..%2fpackage.json", "/%2e%2e/%2e%2e/package.json", "/assets/..%2f..%2findex.html"]) {
+    const response = await fetch(`${origin}${route}`);
+    const body = await response.text();
+    assert.doesNotMatch(body, /"name"\s*:/, route);
+  }
+});
+
+await test("cross-origin writes are still refused on the shared origin", async () => {
+  const response = await fetch(`${origin}/api/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Origin: "https://evil.example" },
+    body: "{}",
+  });
+  assert.equal(response.status, 403);
+});
+
+after(async () => {
+  await new Promise<void>((resolve, reject) => server.close((error) => (error ? reject(error) : resolve())));
+  const { pool } = await import("@workspace/db");
+  await pool.end().catch(() => undefined);
+});

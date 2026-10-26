@@ -1,0 +1,17 @@
+{
+  "name": "@workspace/api-zod",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./marketplace-options": "./src/marketplace-options.ts",
+    "./marketplace-schemas": "./src/marketplace-schemas.ts",
+    "./listing-pricing": "./src/listing-pricing.ts",
+    "./conversation-runtime": "./src/conversation-runtime.ts",
+    "./surface-composition": "./src/surface-composition.ts"
+  },
+  "dependencies": {
+    "zod": "catalog:"
+  }
+}

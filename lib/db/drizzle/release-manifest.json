@@ -1,0 +1,162 @@
+[
+  {
+    "tag": "0000_faulty_firestar",
+    "sha256": "521752ce93003b0ecad78314984432a45914e3efe7af577ab6fc369d121cf519"
+  },
+  {
+    "tag": "0001_invariants",
+    "sha256": "f5a2cc9a633d33344ae532243be8e7ce4b405b9127ad0bbc87cec2d61a16f788"
+  },
+  {
+    "tag": "0002_cloudy_mach_iv",
+    "sha256": "88e81b9a42ca63911c2f74373eb6ddfd8985e1256844e6d8bf97800ec4068acd"
+  },
+  {
+    "tag": "0003_busy_la_nuit",
+    "sha256": "0a3195238bdf772fb1aed920fc60bb8bbf823a05cba3e8f5c7cce9556a4db5c5"
+  },
+  {
+    "tag": "0004_stormy_unus",
+    "sha256": "8e03bb842912f7d486303ef82aeee8919309588a3fa9e05899178be4de5615a3"
+  },
+  {
+    "tag": "0005_sparkling_union_jack",
+    "sha256": "6425c2a252eafc539689202940d07b3a0515f9a5077c20d06b4899b4bc114604"
+  },
+  {
+    "tag": "0006_big_ezekiel",
+    "sha256": "cd0b84b95ef7be5a9985e0fbeb1191ec4ff456c9b6d975fdd4eb470f4cd92d37"
+  },
+  {
+    "tag": "0007_warm_marvel_boy",
+    "sha256": "72577d393321cfdbed0e15fff4848dfc6a88e23edcbc476e64dc8f852d2a4f81"
+  },
+  {
+    "tag": "0008_sudden_lester",
+    "sha256": "fe28a85546140e6d6ef9bfdc12694f0bcbfed5472aae638b0945d4fa6cad1e19"
+  },
+  {
+    "tag": "0009_loving_brood",
+    "sha256": "9840c24d7c7eeb0d6f3863e5b36fafad356ff169e4b368582e3a073b64238020"
+  },
+  {
+    "tag": "0010_nice_stepford_cuckoos",
+    "sha256": "f283ff692884ef61676e1917bbdd949c2fe685689fa061d0c5dfa003ea35b2f9"
+  },
+  {
+    "tag": "0011_wave1_database_invariants",
+    "sha256": "90ebf1633b90a4eb014753d20507a609ed1c32a2a7de269ea455ee45d70594d9"
+  },
+  {
+    "tag": "0012_ambiguous_adam_warlock",
+    "sha256": "7a1b2effb28b430d2484db23d5439468db9667806bbdb3d38f9746fed963b485"
+  },
+  {
+    "tag": "0013_wave3_privacy_moderation",
+    "sha256": "ef0d6d5a4cc988e845e412bbe9cc462fe10489ce7ffd0aadae248ff284ea52fd"
+  },
+  {
+    "tag": "0014_deep_wallflower",
+    "sha256": "a6643b0e7e862ae782a07a6c5d09ab9830afb889502b85fa219de6385bfd8a98"
+  },
+  {
+    "tag": "0015_chunky_frank_castle",
+    "sha256": "9ef497764784b834f90d7ea9740bcdc6e9ecb42745440b7043c1230d4d0cf2cc"
+  },
+  {
+    "tag": "0016_wave4_payment_disputes",
+    "sha256": "3ca3a640ac9ffddbe975b40bc22fbcbda1a8c803b0ad6b2db255f552506216f7"
+  },
+  {
+    "tag": "0017_ambitious_ultragirl",
+    "sha256": "fa270f5e53bc5d7035146817e0b2c6ab52897b7b7b624442507587ab38697336"
+  },
+  {
+    "tag": "0018_strong_luke_cage",
+    "sha256": "5daeb9401bb8adaf4d6140be54f6993797b364a51d39364663f2c4edf93acb3b"
+  },
+  {
+    "tag": "0019_block_c_employment",
+    "sha256": "043a2e22d4b6117951c239c675d188a283207c45eeb41746ba31b7c6f8fc43c4"
+  },
+  {
+    "tag": "0020_block_d_delivery",
+    "sha256": "1c109ae1118a6a2e97e9b0bbd75b3faa4d70c154d51c3bcf44d8d0a991de41e8"
+  },
+  {
+    "tag": "0021_block_e_promotions",
+    "sha256": "6afa0ca30dcd57ec910587a56b818dce1026376e5cf48d18f7d4db5e24d31d20"
+  },
+  {
+    "tag": "0022_block_f4_drivers",
+    "sha256": "1743470da9e6d18da72dea469e8f2af430043f984861e73e00bbaaff25ebd8c4"
+  },
+  {
+    "tag": "0023_g1_provider_boundary",
+    "sha256": "8d3159d11f76c22d8d82c6d163a2af4b40f32b7da53d3c621b89e8808507c902"
+  },
+  {
+    "tag": "0024_g2_negotiations",
+    "sha256": "3693171dafaeeff77593f3d90de932667114f1957d7a4c8cc48723b079507174"
+  },
+  {
+    "tag": "0025_monetization_v3",
+    "sha256": "8873e83a53995f923fc730b294b738df4e8baf26dd3ece8b6bd22c3d92b85a24"
+  },
+  {
+    "tag": "0026_burly_power_pack",
+    "sha256": "ef70374bf8e4c2178565293efa8333a2c47916b9f08d0addb0a626281f9cb2b9"
+  },
+  {
+    "tag": "0027_personal_intelligence",
+    "sha256": "fe9fcac30a244af13e9091dfa672dae62eb1f00e9cb44f8608a08c9babd17402"
+  },
+  {
+    "tag": "0028_fashion_search_attributes",
+    "sha256": "7509c80c243ba5dbdff45b815d26ba6db71bdcba211becfe2ea585092b6154fe"
+  },
+  {
+    "tag": "0029_soft_radioactive_man",
+    "sha256": "66c8bd410bffe867deb0d1af6f021013e9511f0202b9d774940057d4c3eb4f29"
+  },
+  {
+    "tag": "0030_swift_living_mummy",
+    "sha256": "581225f625b613ef3fb8c2193ca2a5114d0b1076040bf267292b8206fa1c09d8"
+  },
+  {
+    "tag": "0031_negotiation_events_append_only",
+    "sha256": "093c083143c8f28bfef21607611f4a4ea272487132c4f6e16545659612b87be8"
+  },
+  {
+    "tag": "0032_wave63_delivery_progress",
+    "sha256": "a3d15757a0feca5f4c331f97cf404bc1f4c323de6439b112da86be0f7ff64a2c"
+  },
+  {
+    "tag": "0033_courier_fare_assignment_history",
+    "sha256": "6ae01af6fb456baaea43ac3213e36ba8a8a7856f9edfb28b96f705cfbd87e73e"
+  },
+  {
+    "tag": "0034_tutorial_learning_history",
+    "sha256": "c837c47336cd426668742d788469162263b72636b44e8ead8316cf57da3505ac"
+  },
+  {
+    "tag": "0035_ai_usage_allowances",
+    "sha256": "f9b2dca03b02a34c8f5f174d691bcea6162fdf48ce052ed7e02c82907fb3943d"
+  },
+  {
+    "tag": "0036_marketplace_inquiries",
+    "sha256": "9e7d22add1877e972f9d37de2742a1c1d50f1aa59cd6e1c6aed7df3df69300d7"
+  },
+  {
+    "tag": "0037_pre_integration_closure",
+    "sha256": "d5459950c67a575b7a82eaae8e71d7d8d3ed37ecf0d5e6c423d61631307f9ea5"
+  },
+  {
+    "tag": "0038_ai_model_price_entry",
+    "sha256": "544c0349205974e6594b958c5c4459fbd4f8ce1b3c7f1bc05314187c33ecf776"
+  },
+  {
+    "tag": "0039_ai_cache_write_costs",
+    "sha256": "724d67853374cafc7263933a4b51f1ff1d45560549488dc39fe22a43175649cc"
+  }
+]

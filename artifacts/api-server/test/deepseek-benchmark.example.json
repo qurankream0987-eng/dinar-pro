@@ -1,0 +1,29 @@
+{
+  "approval": {
+    "id": "REPLACE-WITH-OWNER-APPROVAL-ID",
+    "approvedBy": "REPLACE: DINAR owner",
+    "approvedAt": "2026-10-24T00:00:00.000Z",
+    "providers": ["DEEPSEEK"],
+    "budgetUsd": 0.03,
+    "deepseekPaidInferenceAuthorized": false
+  },
+  "limits": {
+    "maxRequestsPerCandidate": 4,
+    "maxInputTokensPerRequest": 18000,
+    "maxOutputTokens": 500,
+    "maxRetries": 0,
+    "maxConcurrency": 1,
+    "timeoutMs": 30000,
+    "repetitions": 1
+  },
+  "candidates": [
+    {
+      "id": "deepseek-flash",
+      "role": "ADVANCED",
+      "model": "deepseek-flash",
+      "transport": "CHAT_COMPLETIONS",
+      "toolChoice": "REQUIRED",
+      "reasoningEffort": "none"
+    }
+  ]
+}

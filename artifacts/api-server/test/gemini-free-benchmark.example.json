@@ -1,0 +1,24 @@
+{
+  "approval": {
+    "id": "REPLACE-WITH-OWNER-APPROVAL-ID",
+    "approvedBy": "REPLACE: DINAR owner",
+    "approvedAt": "2026-10-24T00:00:00.000Z",
+    "providers": ["GEMINI"],
+    "budgetUsd": 0,
+    "geminiFreeTierConfirmed": false,
+    "geminiBillingDisabledConfirmed": false,
+    "geminiUnpaidTermsAccepted": false
+  },
+  "limits": {
+    "maxRequestsPerCandidate": 4,
+    "maxInputTokensPerRequest": 18000,
+    "maxOutputTokens": 1024,
+    "maxRetries": 0,
+    "maxConcurrency": 1,
+    "timeoutMs": 30000,
+    "repetitions": 1
+  },
+  "candidates": [
+    { "id": "gemini-flash-lite-free", "role": "COST_EFFECTIVE", "model": "gemini-3.5-flash-lite", "transport": "GEMINI_GENERATE_CONTENT", "toolChoice": "AUTO" }
+  ]
+}

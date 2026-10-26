@@ -1,0 +1,22 @@
+{
+  "approval": {
+    "id": "REPLACE-WITH-OWNER-APPROVAL-ID",
+    "approvedBy": "REPLACE: DINAR owner",
+    "approvedAt": "2026-10-24T00:00:00.000Z",
+    "providers": ["OPENROUTER"],
+    "budgetUsd": 5
+  },
+  "limits": {
+    "maxRequestsPerCandidate": 24,
+    "maxInputTokensPerRequest": 18000,
+    "maxOutputTokens": 4096,
+    "maxRetries": 0,
+    "maxConcurrency": 1,
+    "timeoutMs": 45000,
+    "repetitions": 1
+  },
+  "candidates": [
+    { "id": "gemma-26b-free", "role": "COST_EFFECTIVE", "model": "google/gemma-4-26b-a4b-it:free", "transport": "CHAT_COMPLETIONS", "toolChoice": "AUTO" },
+    { "id": "gemma-31b-free", "role": "ADVANCED", "model": "google/gemma-4-31b-it:free", "transport": "CHAT_COMPLETIONS", "toolChoice": "AUTO" }
+  ]
+}

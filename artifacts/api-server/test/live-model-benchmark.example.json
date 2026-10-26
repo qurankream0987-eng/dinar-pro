@@ -1,0 +1,23 @@
+{
+  "approval": {
+    "id": "REPLACE-WITH-OWNER-APPROVAL-ID",
+    "approvedBy": "REPLACE: owner name or role",
+    "approvedAt": "2026-10-23T00:00:00.000Z",
+    "providers": ["OPENAI", "ANTHROPIC"],
+    "budgetUsd": 5
+  },
+  "limits": {
+    "maxRequestsPerCandidate": 48,
+    "maxInputTokensPerRequest": 18000,
+    "maxOutputTokens": 4096,
+    "maxRetries": 0,
+    "maxConcurrency": 1,
+    "timeoutMs": 45000,
+    "repetitions": 2
+  },
+  "candidates": [
+    { "id": "openai-luna", "role": "COST_EFFECTIVE", "model": "gpt-6-luna", "transport": "RESPONSES", "toolChoice": "AUTO", "reasoningEffort": "medium" },
+    { "id": "openai-sol", "role": "ADVANCED", "model": "gpt-6.1-sol", "transport": "RESPONSES", "toolChoice": "AUTO", "reasoningEffort": "medium" },
+    { "id": "claude-haiku", "role": "ALTERNATIVE", "model": "claude-haiku-5-5", "transport": "CHAT_COMPLETIONS", "toolChoice": "AUTO" }
+  ]
+}

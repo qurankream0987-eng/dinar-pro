@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>DINAR — Conversation as the Application Acceptance Report</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #071321;
+        --panel: #0d1d31;
+        --panel-2: #112640;
+        --line: #263a53;
+        --text: #edf3fb;
+        --muted: #a9b8ca;
+        --gold: #e3b553;
+        --green: #5ed2a0;
+        --amber: #f2c66d;
+        --blue: #83b8ff;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: radial-gradient(ellipse at 75% 0%, #132d4b 0, var(--bg) 52%);
+        color: var(--text);
+        font: 15px/1.65 Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+      }
+      main { width: min(1080px, calc(100% - 36px)); margin: 42px auto 72px; }
+      header { border-bottom: 1px solid var(--line); padding: 0 0 28px; }
+      .eyebrow { color: var(--gold); font-size: 12px; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; }
+      h1 { max-width: 800px; margin: 10px 0 12px; font-size: clamp(30px, 5vw, 48px); line-height: 1.12; letter-spacing: -.035em; }
+      h2 { margin: 34px 0 12px; font-size: 21px; }
+      h3 { margin: 0 0 8px; font-size: 16px; }
+      p { margin: 8px 0; }
+      .lede { max-width: 820px; color: var(--muted); font-size: 17px; }
+      .pills { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+      .pill { border: 1px solid var(--line); border-radius: 999px; padding: 5px 10px; color: var(--muted); font-size: 12px; }
+      .pill.good { border-color: #27654e; color: var(--green); }
+      .pill.note { border-color: #705a2b; color: var(--amber); }
+      .summary {
+        margin-top: 24px; border: 1px solid #4e442e; border-left: 4px solid var(--gold);
+        border-radius: 12px; background: linear-gradient(110deg, #1b2531, #102039); padding: 17px 19px;
+      }
+      .summary strong { color: var(--gold); }
+      .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+      .card { border: 1px solid var(--line); border-radius: 12px; background: #0b1a2b; padding: 16px; }
+      .card p, .muted { color: var(--muted); }
+      .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; }
+      table { width: 100%; min-width: 820px; border-collapse: collapse; background: #0b1a2b; }
+      th, td { border-bottom: 1px solid var(--line); padding: 12px 13px; text-align: left; vertical-align: top; }
+      th { color: #dbe7f6; background: #10233a; font-size: 12px; letter-spacing: .04em; text-transform: uppercase; }
+      tr:last-child td { border-bottom: 0; }
+      td:first-child { width: 25%; font-weight: 700; }
+      td:nth-child(2) { width: 18%; }
+      .status { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 800; }
+      .status::before { width: 7px; height: 7px; border-radius: 50%; background: currentColor; content: ""; }
+      .pass { color: var(--green); }
+      .partial { color: var(--amber); }
+      .scope { color: var(--blue); }
+      code, .path { color: #c8d9ed; font: 12px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace; overflow-wrap: anywhere; }
+      .path { display: inline-block; margin: 2px 4px 2px 0; }
+      ul { margin: 8px 0; padding-left: 21px; }
+      li { margin: 5px 0; }
+      .callout { border: 1px solid var(--line); border-radius: 10px; background: var(--panel); padding: 13px 15px; }
+      footer { margin-top: 34px; border-top: 1px solid var(--line); padding-top: 15px; color: var(--muted); font-size: 12px; }
+      @media (max-width: 700px) {
+        main { width: min(100% - 24px, 1080px); margin-top: 24px; }
+        .grid { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <div class="eyebrow">DINAR · Product implementation acceptance</div>
+        <h1>Conversation as the Application</h1>
+        <p class="lede">Source-traced acceptance report for connecting DINAR’s existing marketplace capabilities to typed, in-conversation surfaces. No parallel marketplace engine was introduced.</p>
+        <div class="pills">
+          <span class="pill good">Existing canonical capabilities reused</span>
+          <span class="pill good">Focused typecheck passed</span>
+          <span class="pill note">G2/G3 suites not rerun</span>
+          <span class="pill">October 9, 2026</span>
+        </div>
+      </header>
+
+      <section class="summary">
+        <strong>Outcome:</strong> the requested flows were already broadly wired. The implementation gap found in the trace was that service results looked like generic listings in chat. Inline service cards now show a service badge and service-specific detail and cart labels while keeping the same canonical listing, result-set identity, detail route, and cart action.
+      </section>
+
+      <h2>Acceptance matrix</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Priority / capability</th><th>Result</th><th>Acceptance evidence and boundary</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1. Product search</td>
+              <td><span class="status pass">Accepted</span></td>
+              <td>Buyer intent and canonical marketplace search return persisted listing records through typed <code>LISTING_RESULTS</code> blocks, rendered as in-chat result cards. Search and ranking remain server-owned.</td>
+            </tr>
+            <tr>
+              <td>2. Service search</td>
+              <td><span class="status pass">Accepted; card clarified</span></td>
+              <td>Services remain canonical listings with <code>fulfilmentType=SERVICE</code>. Their chat cards now show the service label and use “تفاصيل الخدمة” / “أضف الخدمة إلى السلة”; no separate service search engine was added.</td>
+            </tr>
+            <tr>
+              <td>3. Listing details</td>
+              <td><span class="status pass">Accepted</span></td>
+              <td>Selecting a result opens the existing listing detail workflow inline in the conversation and retains the exact result identity.</td>
+            </tr>
+            <tr>
+              <td>4. Conversational sell flow</td>
+              <td><span class="status pass">Accepted</span></td>
+              <td>The existing seller draft flow supports registry-backed product and service categories. Draft state and publish authority remain on the server.</td>
+            </tr>
+            <tr>
+              <td>5. Photo-first seller entry</td>
+              <td><span class="status partial">Available with limits</span></td>
+              <td>Authenticated sellers can submit photos without typing listing details; the composer supplies the seller-entry prompt and attaches validated uploads to the conversation. Automatic image suggestions are not active: no runtime photo-suggestion provider is wired. Photos are not interpreted as facts.</td>
+            </tr>
+            <tr>
+              <td>6. Inline draft review</td>
+              <td><span class="status pass">Accepted</span></td>
+              <td>The server-built seller review payload renders as an inline draft panel. Buttons send the same conversational commands available by typing; review does not publish by itself.</td>
+            </tr>
+            <tr>
+              <td>7. Explicit publish and result</td>
+              <td><span class="status pass">Accepted</span></td>
+              <td>Publication is an explicit seller action through the existing draft service. The conversation displays the resulting server-owned state rather than treating review as publication.</td>
+            </tr>
+            <tr>
+              <td>8. My Listings</td>
+              <td><span class="status pass">Accepted</span></td>
+              <td>The inline seller surface reads the existing owned-listings endpoint and offers the current management and promotion controls.</td>
+            </tr>
+            <tr>
+              <td>9. Edit, pause, resume, delete</td>
+              <td><span class="status pass">Accepted; delete is archive</span></td>
+              <td>Edits and status changes use server-issued previews and explicit confirmation. “Delete” maps to archive/soft removal; historical orders and financial references remain. Permanent deletion is not offered.</td>
+            </tr>
+            <tr>
+              <td>10. Comparison</td>
+              <td><span class="status pass">Accepted</span></td>
+              <td>The comparison panel renders server-provided listing identities and comparable facts; unknown fields remain explicitly unknown.</td>
+            </tr>
+            <tr>
+              <td>11. Promotions</td>
+              <td><span class="status pass">Accepted; existing scope</span></td>
+              <td>The existing inline promotion flow is reused. No payment provider, real-money settlement, or monetization capability was added or reopened.</td>
+            </tr>
+            <tr>
+              <td>12. Guest to authenticated resume</td>
+              <td><span class="status partial">Seller intent supported</span></td>
+              <td>A same-market guest seller intent is preserved through sign-in and starts the authenticated seller task. Guest browsing remains read-only; arbitrary guest transcripts are not imported as durable authenticated conversations.</td>
+            </tr>
+            <tr>
+              <td>13. Ordinal references</td>
+              <td><span class="status pass">Accepted</span></td>
+              <td>Ordinal and numeric references resolve against the active result set, whose resource IDs are retained for details and actions. Out-of-range references are clarified rather than guessed.</td>
+            </tr>
+            <tr>
+              <td>14. General conversation</td>
+              <td><span class="status pass">Accepted</span></td>
+              <td>General chat and the existing typed advice surface remain available alongside marketplace actions; they do not replace canonical marketplace authority.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>Architecture and safety</h2>
+      <div class="grid">
+        <section class="card">
+          <h3>Canonical state stays authoritative</h3>
+          <p>Search, listing drafts, listing management, cart, comparison, and promotion behavior continue through existing DINAR server capabilities. The model selects intent or a surface; it does not return HTML or React markup.</p>
+        </section>
+        <section class="card">
+          <h3>Typed conversation rendering</h3>
+          <p>Versioned <code>LISTING_RESULTS</code> and <code>SURFACE</code> blocks are validated and dispatched by the conversation renderer to approved components. Buttons either submit conversational commands or invoke the existing server action with the exact result or preview identity.</p>
+        </section>
+        <section class="card">
+          <h3>Consequential actions</h3>
+          <p>Publish, archive, status changes, cart actions, and promotion steps retain their existing review, confirmation, identity, market, and server-side checks. No financial behavior was expanded.</p>
+        </section>
+        <section class="card">
+          <h3>Not reopened</h3>
+          <p>G2/G3 capability restoration remains closed. Search, seller, listings, orders, tracking, delivery, monetization, and personal-intelligence engines were not rebuilt. Original-account live recheck remains deferred by the product owner.</p>
+        </section>
+      </div>
+
+      <h2>Focused change and verification</h2>
+      <div class="callout">
+        <ul>
+          <li>Changed only the existing in-chat listing card and result action labels for service listings.</li>
+          <li><code>pnpm --filter @workspace/dinar run typecheck</code> — passed.</li>
+          <li>Restarted the DINAR web workflow; Vite served successfully. The public guest conversation entry rendered in the preview with no browser console errors.</li>
+          <li>No G2/G3 or full app suites were run, as requested. Prior accepted baseline remains the separately reported G2 64/64 checks and 5/5 journeys, G3 31/31 checks and 7/7 journeys; those results were not regenerated for this scope.</li>
+          <li>The preview was captured on the guest landing state; a signed-in service-result interaction was not visually exercised.</li>
+        </ul>
+      </div>
+
+      <h2>Source trace</h2>
+      <p class="muted">Primary implementation points reviewed:</p>
+      <p>
+        <span class="path">artifacts/api-server/src/ai/marketplace-intent.ts</span>
+        <span class="path">artifacts/api-server/src/lib/marketplace-listings.ts</span>
+        <span class="path">artifacts/api-server/src/ai/listing-draft.ts</span>
+        <span class="path">artifacts/api-server/src/ai/listing-photo-intelligence.ts</span>
+        <span class="path">artifacts/dinar/src/features/ai/ConversationContent.tsx</span>
+        <span class="path">artifacts/dinar/src/features/ai/SellerListingsSurface.tsx</span>
+        <span class="path">artifacts/dinar/src/features/ai/BuyerPanels.tsx</span>
+        <span class="path">artifacts/dinar/src/features/ai/conversation-storage.ts</span>
+      </p>
+      <p class="muted">Focused implementation change:</p>
+      <p>
+        <span class="path">artifacts/dinar/src/features/OfferCard.tsx</span>
+        <span class="path">artifacts/dinar/src/features/ai/ConversationContent.tsx</span>
+      </p>
+      <footer>DINAR · Conversation as the Application · Acceptance report dated October 9, 2026.</footer>
+    </main>
+  </body>
+</html>

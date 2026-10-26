@@ -1,0 +1,81 @@
+/* One button language, shared by app controls and the Radix compatibility adapter. */
+.dinar-button {
+  --button-focus: #5db6ff;
+  box-sizing: border-box;
+  min-width: 0;
+  min-height: 44px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  padding: 10px 18px;
+  font-size: .9375rem;
+  line-height: 1.4;
+  font-weight: 650;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease, box-shadow 160ms ease, transform 160ms ease, opacity 160ms ease;
+}
+.dinar-button--sm { min-height: 44px; padding: 9px 16px; font-size: .875rem; }
+.dinar-button--lg { min-height: 48px; padding: 12px 22px; border-radius: 14px; }
+.dinar-button--primary {
+  --button-focus: #ffd77a;
+  background: linear-gradient(135deg, #ffd77a, #f2b84b);
+  border-color: rgba(255,215,122,.45);
+  color: #101b28;
+  box-shadow: 0 2px 6px rgba(242,184,75,.08);
+}
+.dinar-button--secondary { background: #10243a; border-color: rgba(94,148,207,.32); color: #f4f7fc; }
+.dinar-button--ghost { background: transparent; color: #b1bfd0; border-color: transparent; }
+.dinar-button--danger { --button-focus: #ff9898; background: #8b2938; border-color: #b34150; color: #fff1f2; }
+.dinar-button--danger-soft { --button-focus: #ff9898; background: rgba(189,60,77,.12); border-color: rgba(226,103,116,.3); color: #ffabb6; }
+.dinar-button--success { --button-focus: #86d9b4; background: #173f32; border-color: #34765b; color: #a6e4c5; }
+.dinar-button--nav { background: transparent; border-color: transparent; color: #d7dde4; padding: 0; }
+.dinar-button--nav[aria-current="page"], .dinar-button--nav[data-active="true"] { background: rgba(255,255,255,.11); color: #fff; }
+.dinar-icon-button { padding: 0; border-radius: 12px; }
+.dinar-icon-button--md { width: 44px; height: 44px; min-height: 44px; }
+.dinar-icon-button--sm { width: 40px; height: 40px; min-height: 40px; }
+.dinar-button svg { flex-shrink: 0; width: 18px; height: 18px; stroke-width: 1.8; }
+.dinar-icon-button svg { width: 20px; height: 20px; }
+.dinar-button:focus-visible { outline: 2px solid var(--button-focus); outline-offset: 3px; }
+.dinar-button:active:not(:disabled):not([aria-disabled="true"]) { transform: translateY(0) scale(.985); }
+.dinar-button:disabled, .dinar-button[aria-disabled="true"] {
+  background: #1b2b3d; background-image: none; color: #8290a3; border-color: rgba(130,144,163,.12);
+  opacity: .6; cursor: not-allowed; box-shadow: none; transform: none;
+}
+@media (hover: hover) {
+  .dinar-button:hover:not(:disabled):not([aria-disabled="true"]) { transform: translateY(-1px); }
+  .dinar-button--primary:hover:not(:disabled) { border-color: #ffd77a; box-shadow: 0 4px 12px rgba(242,184,75,.16); }
+  .dinar-button--secondary:hover:not(:disabled) { background-color: #173149; border-color: rgba(94,148,207,.6); box-shadow: 0 3px 8px rgba(42,141,255,.06); }
+  .dinar-button--ghost:hover:not(:disabled), .dinar-button--nav:hover:not(:disabled) { background: rgba(255,255,255,.07); color: #f4f7fc; }
+  .dinar-button--danger:hover:not(:disabled) { background: #a63244; }
+  .dinar-button--danger-soft:hover:not(:disabled) { background: rgba(189,60,77,.22); }
+  .dinar-button--success:hover:not(:disabled) { background: #215240; }
+}
+@media (max-width: 767px) { .dinar-icon-button--sm { width: 44px; height: 44px; min-height: 44px; } }
+@media (prefers-reduced-motion: reduce) {
+  .dinar-button, .dinar-button:hover, .dinar-button:active { transition: none; transform: none; }
+}
+.dinar-action-group { min-width: 0; margin: 0; padding: 0; border: 0; }
+/* Specialized selection cards retain their geometry, with the same input feedback. */
+:where(button):not(.dinar-button) {
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease, box-shadow 160ms ease, transform 160ms ease, opacity 160ms ease;
+}
+:where(button):focus-visible { outline: 2px solid #5db6ff; outline-offset: 3px; }
+:where(button):disabled { cursor: not-allowed; }
+:where(button):not(.dinar-button):active:not(:disabled) { transform: scale(.985); }
+.dinar-composer-send { border-radius: 9999px; }
+@media (prefers-reduced-motion: reduce) {
+  :where(button):not(.dinar-button) { transition: none; }
+  :where(button):not(.dinar-button):active:not(:disabled) { transform: none; }
+  .dinar-button .animate-spin { animation: none; }
+}
+.dinar-chip { border-radius: 12px; min-height: 44px; }
+.dinar-chip:focus-visible, .dinar-switch:focus-visible { outline: 2px solid #5db6ff; outline-offset: 3px; }
+.dinar-switch::before { content: ''; position: absolute; inset: 8px 0; background: currentColor; border-radius: 9999px; }
+/* Raw selection cards and navigation rows keep their purpose-specific surfaces. */
+:where(button):not(.dinar-button):not(.ai-rail-action):not(.ai-rail-profile) { min-height: 44px; }
+.dinar-button:active:not(:disabled):not([aria-disabled="true"]) { transform: translateY(0) scale(.985); }
+@media (prefers-reduced-motion: reduce) {
+  .dinar-button:hover:not(:disabled):not([aria-disabled="true"]),
+  .dinar-button:active:not(:disabled):not([aria-disabled="true"]) { transform: none; }
+}

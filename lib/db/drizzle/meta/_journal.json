@@ -1,0 +1,286 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1790500048491,
+      "tag": "0000_faulty_firestar",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790504210987,
+      "tag": "0001_invariants",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790535959997,
+      "tag": "0002_cloudy_mach_iv",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1790609523014,
+      "tag": "0003_busy_la_nuit",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1790625446054,
+      "tag": "0004_stormy_unus",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1790628175048,
+      "tag": "0005_sparkling_union_jack",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1790695603406,
+      "tag": "0006_big_ezekiel",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1790818929096,
+      "tag": "0007_warm_marvel_boy",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1790873047588,
+      "tag": "0008_sudden_lester",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1790874447328,
+      "tag": "0009_loving_brood",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1790880932491,
+      "tag": "0010_nice_stepford_cuckoos",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1790951592576,
+      "tag": "0011_wave1_database_invariants",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1790982239279,
+      "tag": "0012_ambiguous_adam_warlock",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1790983427353,
+      "tag": "0013_wave3_privacy_moderation",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1790986187933,
+      "tag": "0014_deep_wallflower",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1791024380579,
+      "tag": "0015_chunky_frank_castle",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1791030123237,
+      "tag": "0016_wave4_payment_disputes",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1791125378581,
+      "tag": "0017_ambitious_ultragirl",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1791139888601,
+      "tag": "0018_strong_luke_cage",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1791204246521,
+      "tag": "0019_block_c_employment",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1791227185337,
+      "tag": "0020_block_d_delivery",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1791242981162,
+      "tag": "0021_block_e_promotions",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1791286895638,
+      "tag": "0022_block_f4_drivers",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1791309051615,
+      "tag": "0023_g1_provider_boundary",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1791324353554,
+      "tag": "0024_g2_negotiations",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1791378668598,
+      "tag": "0025_monetization_v3",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1791414714693,
+      "tag": "0026_burly_power_pack",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1791494522762,
+      "tag": "0027_personal_intelligence",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1791655886094,
+      "tag": "0028_fashion_search_attributes",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1791686194790,
+      "tag": "0029_soft_radioactive_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1791796397675,
+      "tag": "0030_swift_living_mummy",
+      "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1791800000000,
+      "tag": "0031_negotiation_events_append_only",
+      "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1791810000000,
+      "tag": "0032_wave63_delivery_progress",
+      "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1792030661142,
+      "tag": "0033_courier_fare_assignment_history",
+      "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1792097000000,
+      "tag": "0034_tutorial_learning_history",
+      "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1792180000000,
+      "tag": "0035_ai_usage_allowances",
+      "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1792190000000,
+      "tag": "0036_marketplace_inquiries",
+      "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1792200000000,
+      "tag": "0037_pre_integration_closure",
+      "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1792210000000,
+      "tag": "0038_ai_model_price_entry",
+      "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1792793828854,
+      "tag": "0039_ai_cache_write_costs",
+      "breakpoints": true
+    }
+  ]
+}

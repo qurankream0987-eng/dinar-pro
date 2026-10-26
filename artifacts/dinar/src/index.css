@@ -1,0 +1,663 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "./ui/Buttons.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ==========================================================================
+   BDINAR design tokens
+   Brand foundation: deep blue + warm gold from the approved logo.
+   Gold is an accent only: badges, highlights, the "1 unit" coin motif.
+   Every surface is defined separately for light and dark — no inversion.
+   ========================================================================== */
+
+:root {
+  --dinar-bg: #061321;
+  --dinar-bg-deep: #040e19;
+  --dinar-surface: #0d1d30;
+  --dinar-surface-raised: #10243a;
+  --dinar-surface-soft: #0a192a;
+  --dinar-border: rgba(94, 148, 207, .20);
+  --dinar-border-strong: rgba(94, 148, 207, .35);
+  --dinar-blue: #2a8dff;
+  --dinar-blue-soft: #5db6ff;
+  --dinar-gold: #f2b84b;
+  --dinar-gold-soft: #ffd77a;
+  --dinar-text: #f4f7fc;
+  --dinar-text-secondary: #9aa9bc;
+  --dinar-muted: #718096;
+  /* Brand */
+  --primary: 213 96% 34%; /* vivid blue drawn from the approved mark */
+  --primary-hover: 213 96% 28%;
+  --primary-foreground: 0 0% 100%;
+  --primary-soft: 213 100% 96%; /* tinted surface for selected states */
+  --primary-soft-foreground: 213 96% 32%;
+  --ink: 213 90% 14%; /* deep blue used for brand surfaces */
+  --ink-foreground: 220 60% 98%;
+  --accent: 41 92% 54%; /* gold  #f4b21f */
+  --accent-foreground: 213 90% 14%;
+  --accent-soft: 43 100% 94%;
+  --accent-ink: 34 90% 30%; /* gold readable as text on light */
+
+  /* Neutrals */
+  --background: 216 40% 97%;
+  --foreground: 216 48% 13%;
+  --card: 0 0% 100%;
+  --card-foreground: 216 48% 13%;
+  --elevated: 0 0% 100%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 216 48% 13%;
+  --secondary: 213 85% 96%;
+  --secondary-foreground: 213 96% 32%;
+  --muted: 216 30% 94%;
+  --muted-foreground: 216 15% 42%;
+  --text-secondary: 216 22% 31%;
+  --border: 216 25% 89%;
+  --border-strong: 216 20% 80%;
+  --input: 216 18% 82%;
+  --ring: 213 96% 40%;
+
+  /* Semantic */
+  --success: 158 72% 29%;
+  --success-soft: 150 60% 94%;
+  --warning: 30 90% 36%;
+  --warning-soft: 42 100% 93%;
+  --destructive: 356 70% 48%;
+  --destructive-foreground: 0 0% 100%;
+  --destructive-soft: 356 90% 96%;
+  --info: 212 80% 44%;
+  --info-soft: 212 90% 95%;
+  --disabled: 220 18% 88%;
+  --disabled-foreground: 221 12% 58%;
+
+  /* Legacy shadcn aliases used by components/ui */
+  --card-border: var(--border);
+  --popover-border: var(--border);
+  --chart-1: 213 96% 34%;
+  --chart-2: 41 92% 54%;
+  --chart-3: 158 72% 29%;
+  --chart-4: 212 80% 44%;
+  --chart-5: 356 70% 48%;
+  --sidebar: 0 0% 100%;
+  --sidebar-foreground: 216 48% 13%;
+  --sidebar-border: 216 25% 89%;
+  --sidebar-primary: 213 96% 34%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 213 85% 96%;
+  --sidebar-accent-foreground: 213 96% 32%;
+  --sidebar-ring: 213 96% 40%;
+
+  /* Elevation — navy tinted, soft */
+  --shadow-xs: 0 1px 2px hsl(216 48% 13% / 0.06);
+  --shadow-sm: 0 1px 2px hsl(216 48% 13% / 0.05), 0 2px 8px hsl(216 48% 13% / 0.05);
+  --shadow-md: 0 2px 6px hsl(216 48% 13% / 0.05), 0 10px 24px hsl(216 48% 13% / 0.08);
+  --shadow-lg: 0 8px 16px hsl(216 48% 13% / 0.06), 0 24px 48px hsl(216 48% 13% / 0.14);
+
+  /* Type */
+  --app-font-sans: "IBM Plex Sans Arabic", "Segoe UI", Tahoma, system-ui, sans-serif;
+
+  /* Radius */
+  --radius: 1rem;
+
+  /* Layout */
+  --container: 1200px;
+  --gutter: 16px;
+  --topbar-h: 60px;
+  --bottomnav-h: 64px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+
+  /* Motion */
+  --dur-fast: 120ms;
+  --dur-base: 200ms;
+  --dur-slow: 320ms;
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  color-scheme: light;
+}
+
+.dark {
+  --primary: 213 94% 69%; /* brighter logo blue for contrast on navy */
+  --primary-hover: 213 96% 75%;
+  --primary-foreground: 215 75% 9%;
+  --primary-soft: 213 48% 19%;
+  --primary-soft-foreground: 212 100% 87%;
+  --ink: 213 78% 13%;
+  --ink-foreground: 220 60% 98%;
+  --accent: 41 90% 58%;
+  --accent-foreground: 215 75% 9%;
+  --accent-soft: 38 45% 16%;
+  --accent-ink: 42 92% 66%;
+
+  --background: 220 40% 7%;
+  --foreground: 216 35% 94%;
+  --card: 219 35% 11%;
+  --card-foreground: 216 35% 94%;
+  --elevated: 218 32% 14%;
+  --popover: 218 32% 14%;
+  --popover-foreground: 216 35% 94%;
+  --secondary: 216 46% 19%;
+  --secondary-foreground: 212 75% 84%;
+  --muted: 218 28% 15%;
+  --muted-foreground: 216 18% 65%;
+  --text-secondary: 216 22% 77%;
+  --border: 218 24% 20%;
+  --border-strong: 218 20% 29%;
+  --input: 218 20% 29%;
+  --ring: 213 94% 69%;
+
+  --success: 155 55% 55%;
+  --success-soft: 158 40% 13%;
+  --warning: 38 92% 62%;
+  --warning-soft: 34 45% 14%;
+  --destructive: 356 85% 66%;
+  --destructive-foreground: 225 60% 9%;
+  --destructive-soft: 356 40% 15%;
+  --info: 208 90% 68%;
+  --info-soft: 212 45% 15%;
+  --disabled: 224 20% 18%;
+  --disabled-foreground: 221 12% 45%;
+
+  --sidebar: 219 35% 11%;
+  --sidebar-foreground: 216 35% 94%;
+  --sidebar-border: 218 24% 20%;
+  --sidebar-primary: 213 94% 69%;
+  --sidebar-primary-foreground: 215 75% 9%;
+  --sidebar-accent: 213 48% 19%;
+  --sidebar-accent-foreground: 212 100% 87%;
+  --sidebar-ring: 213 94% 69%;
+
+  --shadow-xs: 0 1px 2px hsl(0 0% 0% / 0.3);
+  --shadow-sm: 0 1px 2px hsl(0 0% 0% / 0.3), 0 2px 8px hsl(0 0% 0% / 0.2);
+  --shadow-md: 0 2px 6px hsl(0 0% 0% / 0.3), 0 10px 24px hsl(0 0% 0% / 0.35);
+  --shadow-lg: 0 8px 16px hsl(0 0% 0% / 0.35), 0 24px 48px hsl(0 0% 0% / 0.5);
+
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-card-border: hsl(var(--border));
+  --color-elevated: hsl(var(--elevated));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-popover-border: hsl(var(--border));
+  --color-primary: hsl(var(--primary));
+  --color-primary-hover: hsl(var(--primary-hover));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-primary-soft: hsl(var(--primary-soft));
+  --color-primary-soft-foreground: hsl(var(--primary-soft-foreground));
+  --color-ink: hsl(var(--ink));
+  --color-ink-foreground: hsl(var(--ink-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-text-secondary: hsl(var(--text-secondary));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-accent-soft: hsl(var(--accent-soft));
+  --color-accent-ink: hsl(var(--accent-ink));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-destructive-soft: hsl(var(--destructive-soft));
+  --color-success: hsl(var(--success));
+  --color-success-soft: hsl(var(--success-soft));
+  --color-warning: hsl(var(--warning));
+  --color-warning-soft: hsl(var(--warning-soft));
+  --color-info: hsl(var(--info));
+  --color-info-soft: hsl(var(--info-soft));
+  --color-disabled: hsl(var(--disabled));
+  --color-disabled-foreground: hsl(var(--disabled-foreground));
+  --color-border: hsl(var(--border));
+  --color-border-strong: hsl(var(--border-strong));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+
+  --color-chart-1: hsl(var(--chart-1));
+  --color-chart-2: hsl(var(--chart-2));
+  --color-chart-3: hsl(var(--chart-3));
+  --color-chart-4: hsl(var(--chart-4));
+  --color-chart-5: hsl(var(--chart-5));
+  --color-sidebar: hsl(var(--sidebar));
+  --color-sidebar-foreground: hsl(var(--sidebar-foreground));
+  --color-sidebar-border: hsl(var(--sidebar-border));
+  --color-sidebar-primary: hsl(var(--sidebar-primary));
+  --color-sidebar-primary-foreground: hsl(var(--sidebar-primary-foreground));
+  --color-sidebar-accent: hsl(var(--sidebar-accent));
+  --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
+  --color-sidebar-ring: hsl(var(--sidebar-ring));
+
+  --font-sans: var(--app-font-sans);
+
+  /* Radius scale: 6 / 10 / 12 / 16 / 20 / 28 */
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 28px;
+
+  --shadow-xs: var(--shadow-xs);
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+
+  /* Type scale (px): 11 12 13 14 15 17 20 24 30 */
+  --text-2xs: 11px;
+  --text-2xs--line-height: 16px;
+  --text-xs: 12px;
+  --text-xs--line-height: 18px;
+  --text-sm: 13px;
+  --text-sm--line-height: 20px;
+  --text-base: 14px;
+  --text-base--line-height: 22px;
+  --text-md: 15px;
+  --text-md--line-height: 24px;
+  --text-lg: 17px;
+  --text-lg--line-height: 26px;
+  --text-xl: 20px;
+  --text-xl--line-height: 30px;
+  --text-2xl: 24px;
+  --text-2xl--line-height: 34px;
+  --text-3xl: 30px;
+  --text-3xl--line-height: 42px;
+
+  /* Breakpoints: phone-first, tablet 768, desktop 1024, wide 1280 */
+  --breakpoint-sm: 480px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+
+  --animate-rise: rise var(--dur-slow) var(--ease-out) both;
+  --animate-fade: fade var(--dur-base) ease-out both;
+  --animate-pop: pop 360ms var(--ease-out);
+  --animate-shimmer: shimmer 1.4s ease-in-out infinite;
+}
+
+/* Z-index layers */
+:root {
+  --z-sticky: 30;
+  --z-header: 40;
+  --z-nav: 40;
+  --z-sidebar: 50;
+  --z-action-bar: 45;
+  --z-overlay: 60;
+  --z-modal: 70;
+  --z-toast: 80;
+  --site-sidebar-width: 112px;
+}
+
+/* Shared desktop navigation, with the mobile bar using the same brand surface. */
+.app-shell-main {
+  min-width: 0;
+  min-height: 100dvh;
+}
+@media (min-width: 1024px) {
+  .app-shell-main[data-sidebar="site"] {
+    margin-inline-start: var(--site-sidebar-width);
+  }
+}
+.site-nav-dark {
+  --primary: 213 94% 69%;
+  --primary-hover: 213 96% 75%;
+  --primary-foreground: 215 75% 9%;
+  --primary-soft: 213 48% 19%;
+  --primary-soft-foreground: 212 100% 87%;
+  --accent: 41 90% 58%;
+  --accent-foreground: 215 75% 9%;
+  --accent-soft: 39 45% 16%;
+  --background: 220 40% 7%;
+  --foreground: 216 35% 94%;
+  --card: 216 34% 12%;
+  --card-foreground: 216 35% 94%;
+  --secondary: 213 28% 18%;
+  --secondary-foreground: 212 100% 87%;
+  --muted: 216 25% 16%;
+  --muted-foreground: 215 18% 68%;
+  --text-secondary: 215 23% 79%;
+  --border: 213 22% 24%;
+  --input: 213 22% 24%;
+  --ring: 213 94% 69%;
+  color: hsl(var(--foreground));
+  background:
+    radial-gradient(circle at 0% 0%, hsl(var(--primary) / 0.12), transparent 34%),
+    linear-gradient(180deg, hsl(218 42% 11%), hsl(220 45% 8%));
+}
+.site-sidebar {
+  isolation: isolate;
+  background:
+    radial-gradient(circle at 50% 0%, hsl(var(--primary) / 0.15), transparent 28%),
+    radial-gradient(ellipse at 50% 72%, hsl(var(--accent) / 0.07), transparent 38%),
+    linear-gradient(180deg, hsl(218 42% 11%), hsl(220 45% 7%));
+  box-shadow: 14px 0 42px hsl(220 60% 4% / 0.2);
+}
+.site-sidebar-art {
+  z-index: 0;
+  pointer-events: none;
+}
+.site-sidebar > :not(.site-sidebar-art) {
+  position: relative;
+  z-index: 1;
+}
+.site-sidebar-brand {
+  transition: background-color var(--dur-base) ease;
+}
+.site-sidebar-brand:hover {
+  background: hsl(0 0% 100% / 0.04);
+}
+.site-sidebar-logo {
+  display: block;
+  width: 84px;
+  height: 84px;
+  object-fit: contain;
+}
+.site-nav-link {
+  color: #d7dde4;
+  text-decoration: none;
+}
+.site-rail-action {
+  border: 0; border-radius: 12px; background: transparent; color: #d7dde4;
+}
+.site-rail-action:hover {
+  background: rgba(255,255,255,.08); color: #fff;
+}
+.site-nav-link[aria-current="page"],
+.site-rail-action[aria-current="page"] {
+  border-color: transparent; background: rgba(255,255,255,.11); color: #fff; box-shadow: none;
+}
+.site-nav-link[aria-current="page"]::before {
+  position: absolute;
+  inset-block: 13px;
+  inset-inline-start: -5px;
+  width: 2px;
+  border-radius: 999px;
+  background: #d7dde4;
+  content: "";
+}
+.site-sidebar-tooltip {
+  position: absolute;
+  z-index: 90;
+  inset-inline-end: calc(100% + 10px);
+  top: 50%;
+  padding: 7px 10px;
+  transform: translateY(-50%) translateX(4px);
+  border: 1px solid hsl(var(--accent) / 0.26);
+  border-radius: 10px;
+  background: hsl(220 45% 8%);
+  color: hsl(var(--foreground));
+  box-shadow: 0 8px 24px hsl(0 0% 0% / 0.28);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.25;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity var(--dur-fast) ease,
+    transform var(--dur-fast) ease,
+    visibility var(--dur-fast) ease;
+}
+.site-rail-action:hover .site-sidebar-tooltip,
+.site-rail-action:focus-visible .site-sidebar-tooltip,
+.site-sidebar-account:hover .site-sidebar-tooltip,
+.site-sidebar-account:focus-visible .site-sidebar-tooltip {
+  transform: translateY(-50%);
+  opacity: 1;
+  visibility: visible;
+}
+.site-sidebar-footer {
+  flex-shrink: 0;
+}
+.site-bottomnav {
+  background:
+    linear-gradient(180deg, hsl(218 42% 11% / 0.98), hsl(220 45% 8% / 0.99));
+}
+.site-nav-dark :focus-visible {
+  outline-color: hsl(var(--accent));
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.18); }
+  100% { transform: scale(1); }
+}
+@keyframes shimmer {
+  0% { opacity: 1; }
+  50% { opacity: 0.55; }
+  100% { opacity: 1; }
+}
+@keyframes sheet-up {
+  from { transform: translateY(100%); }
+  to { transform: none; }
+}
+@keyframes sheet-down {
+  from { transform: none; }
+  to { transform: translateY(100%); }
+}
+@keyframes modal-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes modal-out {
+  from { opacity: 1; }
+  to { opacity: 0; transform: scale(0.98); }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html {
+    direction: rtl;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+  body {
+    margin: 0;
+    min-width: 320px;
+    font-family: var(--app-font-sans);
+    font-size: 14px;
+    line-height: 1.6;
+    background: hsl(var(--background));
+    color: hsl(var(--foreground));
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: "tnum" 0;
+  }
+  button, input, select, textarea {
+    font: inherit;
+    color: inherit;
+  }
+  button, a, input, select, textarea, label {
+    -webkit-tap-highlight-color: transparent;
+  }
+  button:not(:disabled), [role="button"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
+  :focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
+  ::selection {
+    background: hsl(var(--primary) / 0.18);
+  }
+  img {
+    max-width: 100%;
+  }
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type="number"] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
+  input[type="search"]::-webkit-search-cancel-button {
+    display: none;
+  }
+  h1, h2, h3, p {
+    overflow-wrap: anywhere;
+  }
+}
+
+@layer utilities {
+  /* Numbers stay LTR and tabular so prices line up and never reorder in RTL. */
+  /* Tabular digits; isolated so a price never reorders surrounding Arabic text.
+     Direction is inherited — digit runs are LTR by the bidi algorithm already. */
+  .num {
+    font-variant-numeric: tabular-nums;
+    unicode-bidi: isolate;
+  }
+  .container-app {
+    width: 100%;
+    max-width: var(--container);
+    margin-inline: auto;
+    padding-inline: var(--gutter);
+  }
+  .scrollbar-none {
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+  .safe-bottom {
+    padding-bottom: calc(var(--safe-bottom));
+  }
+  .pressable {
+    transition:
+      transform var(--dur-fast) ease,
+      background-color var(--dur-base) ease,
+      border-color var(--dur-base) ease,
+      color var(--dur-base) ease,
+      box-shadow var(--dur-base) ease,
+      opacity var(--dur-base) ease;
+  }
+  .pressable:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+  .skeleton {
+    background: hsl(var(--muted));
+    animation: var(--animate-shimmer);
+  }
+  /* Flip directional icons (chevrons/arrows) — lucide draws them LTR. */
+  .icon-dir {
+    transform: scaleX(-1);
+  }
+}
+
+@media (min-width: 768px) {
+  :root {
+    --gutter: 24px;
+    --topbar-h: 68px;
+  }
+}
+@media (min-width: 1280px) {
+  :root {
+    --gutter: 32px;
+  }
+}
+
+/* Page padding so fixed mobile nav / action bars never cover content. */
+.app-main {
+  min-height: calc(100dvh - var(--topbar-h));
+  padding-bottom: calc(var(--bottomnav-h) + var(--safe-bottom) + 24px);
+}
+.app-main[data-bar="action"] {
+  padding-bottom: calc(128px + var(--safe-bottom));
+}
+.app-main[data-bar="none"] {
+  padding-bottom: 32px;
+}
+.app-main[data-bar="chat"] {
+  min-height: 0;
+  padding-bottom: 0;
+}
+@media (min-width: 768px) {
+  .app-main,
+  .app-main[data-bar="action"],
+  .app-main[data-bar="none"] {
+    padding-bottom: 64px;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .app-main[data-bar="nav"] {
+    padding-bottom: calc(var(--bottomnav-h) + var(--safe-bottom) + 24px);
+  }
+}
+
+/* Sheet: bottom sheet on phones, centered dialog from tablet up. */
+.sheet-content {
+  position: fixed;
+  z-index: var(--z-modal);
+  inset-inline: 0;
+  bottom: 0;
+  max-height: min(92dvh, 760px);
+  display: flex;
+  flex-direction: column;
+  background: hsl(var(--elevated));
+  color: hsl(var(--foreground));
+  border-radius: 24px 24px 0 0;
+  box-shadow: var(--shadow-lg);
+  padding-bottom: var(--safe-bottom);
+}
+.sheet-content[data-state="open"] {
+  animation: sheet-up var(--dur-slow) var(--ease-out);
+}
+.sheet-content[data-state="closed"] {
+  animation: sheet-down var(--dur-base) ease-in;
+}
+@media (min-width: 768px) {
+  .sheet-content {
+    inset-inline: auto;
+    left: 50%;
+    top: 50%;
+    bottom: auto;
+    translate: -50% -50%;
+    width: min(var(--sheet-w, 480px), calc(100vw - 48px));
+    border-radius: 24px;
+    max-height: min(86dvh, 760px);
+  }
+  .sheet-content[data-state="open"] {
+    animation: modal-in var(--dur-base) var(--ease-out);
+  }
+  .sheet-content[data-state="closed"] {
+    animation: modal-out var(--dur-fast) ease-in;
+  }
+}
+.sheet-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-overlay);
+  background: hsl(225 50% 5% / 0.5);
+}
+.sheet-overlay[data-state="open"] {
+  animation: fade var(--dur-base) ease-out;
+}
+.sheet-overlay[data-state="closed"] {
+  animation: fade var(--dur-fast) ease-in reverse;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" preserveAspectRatio="xMidYMid meet" fill="none">
+  <defs>
+    <linearGradient id="dinar-mark-blue-gradient-2026" x1="100" y1="85" x2="407" y2="420" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1674C4"/>
+      <stop offset=".42" stop-color="#07559A"/>
+      <stop offset="1" stop-color="#031B35"/>
+    </linearGradient>
+    <linearGradient id="dinar-mark-gold-gradient-2026" x1="92" y1="87" x2="420" y2="424" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFE09A"/>
+      <stop offset=".38" stop-color="#F2C45E"/>
+      <stop offset=".72" stop-color="#D79B32"/>
+      <stop offset="1" stop-color="#8F5A13"/>
+    </linearGradient>
+    <clipPath id="dinar-mark-northwest-weave-2026">
+      <path d="M0 0h256v256H0z"/>
+    </clipPath>
+  </defs>
+
+  <!-- Four angular ribbon turns form one woven mark around an untouched center. -->
+  <g stroke-linejoin="round">
+    <path
+      d="M78 213 198 93c32-32 84-32 116 0l120 120c7 7 7 19 0 26l-21 21L256 108 99 260l-21-21c-7-7-7-19 0-26Z"
+      fill="url(#dinar-mark-gold-gradient-2026)"
+    />
+    <path
+      d="m299 78 120 120c32 32 32 84 0 116L299 434c-7 7-19 7-26 0l-21-21 156-157L256 99l21-21c7-7 19-7 26 0Z"
+      fill="url(#dinar-mark-blue-gradient-2026)"
+    />
+    <path
+      d="m434 299-120 120c-32 32-84 32-116 0L78 299c-7-7-7-19 0-26l21-21 157 156 157-156 21 21c7 7 7 19 0 26Z"
+      fill="url(#dinar-mark-gold-gradient-2026)"
+    />
+    <path
+      d="M213 434 93 314c-32-32-32-84 0-116L213 78c7-7 19-7 26 0l21 21-156 157 156 157-21 21c-7 7-19 7-26 0Z"
+      fill="url(#dinar-mark-blue-gradient-2026)"
+    />
+    <!-- This alternating overpass completes the four-way weave. -->
+    <path
+      d="M78 213 198 93c32-32 84-32 116 0l120 120c7 7 7 19 0 26l-21 21L256 108 99 260l-21-21c-7-7-7-19 0-26Z"
+      fill="url(#dinar-mark-gold-gradient-2026)"
+      clip-path="url(#dinar-mark-northwest-weave-2026)"
+    />
+  </g>
+</svg>

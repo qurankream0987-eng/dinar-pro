@@ -1,0 +1,3633 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: DINAR general marketplace API with seller-defined listing prices
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: commercial
+    description: DINAR commercial economy (prepaid commercial balance, paid placements, Market Pulse, DINAR Business)
+  - name: auth
+    description: Anonymous authentication and verified account creation
+  - name: marketplace
+    description: Listings and marketplace discovery
+  - name: orders
+    description: Governed order lifecycle
+  - name: dashboard
+    description: Buyer and seller overview data
+  - name: account
+    description: Authenticated account profile settings
+  - name: storage
+    description: Public user profile image upload and serving
+  - name: ai
+    description: Authenticated DINAR AI discovery conversations
+paths:
+  /auth/phone-verification/challenges:
+    post:
+      operationId: requestPhoneVerificationChallenge
+      tags: [auth]
+      summary: Start a phone ownership verification challenge
+      description: The response does not disclose whether the phone belongs to an existing account.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PhoneVerificationChallengeRequest" }
+      responses:
+        "202":
+          description: A challenge was accepted for delivery
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PhoneVerificationChallengeResponse" }
+        "400":
+          description: Invalid phone number
+        "429":
+          description: Too many verification attempts
+        "503":
+          description: No phone verification provider is configured
+  /auth/phone-verification/challenges/verify:
+    post:
+      operationId: verifyPhoneVerificationChallenge
+      tags: [auth]
+      summary: Verify a one-time phone code
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PhoneVerificationCodeRequest" }
+      responses:
+        "200":
+          description: Short-lived proof for one account registration
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PhoneVerificationCodeResponse" }
+        "400":
+          description: Invalid, expired, or already-used code
+        "429":
+          description: Too many verification attempts
+  /auth/register:
+    post:
+      operationId: registerAccount
+      tags: [auth]
+      summary: Create an account after phone ownership verification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AuthRegisterRequest" }
+      responses:
+        "201":
+          description: Account created and authenticated
+        "400":
+          description: Invalid registration details or missing phone proof
+        "409":
+          description: Registration could not be completed with these details
+        "429":
+          description: Too many registration attempts
+        "503":
+          description: No eligible account market is available
+  /auth/login:
+    post:
+      operationId: loginAccount
+      tags: [auth]
+      summary: Start a session for a phone-verified account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AuthLoginRequest" }
+      responses:
+        "200":
+          description: Authenticated account session
+        "401":
+          description: Invalid credentials or missing phone proof
+        "429":
+          description: Too many login attempts
+  /account/profile-avatar/upload-url:
+    post:
+      operationId: requestProfileAvatarUpload
+      tags: [account]
+      summary: Request a profile image upload URL
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ProfileAvatarUploadRequest" }
+      responses:
+        "200":
+          description: A short-lived URL for direct image upload
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProfileAvatarUploadResponse" }
+        "400":
+          description: Invalid image metadata
+        "401":
+          description: Sign-in required
+  /account/profile-avatar:
+    put:
+      operationId: setProfileAvatar
+      tags: [account]
+      summary: Save the authenticated user's uploaded profile image
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ProfileAvatarSetRequest" }
+      responses:
+        "200":
+          description: Profile image saved
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProfileAvatarSetResponse" }
+        "400":
+          description: Invalid or incomplete uploaded image
+        "401":
+          description: Sign-in required
+        "403":
+          description: The uploaded image does not belong to this user
+  /account/listing-photos/upload-url:
+    post:
+      operationId: requestListingPhotoUpload
+      tags: [account]
+      summary: Request a private listing photo upload URL
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ListingPhotoUploadRequest" }
+      responses:
+        "200":
+          description: A short-lived URL for direct image upload
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ListingPhotoUploadResponse" }
+        "400":
+          description: Invalid image metadata
+        "401":
+          description: Sign-in required
+  /account/listing-photos/complete:
+    post:
+      operationId: completeListingPhotoUpload
+      tags: [account]
+      summary: Validate and finalize a private listing photo upload
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ListingPhotoCompleteRequest" }
+      responses:
+        "200":
+          description: Validated private listing photo
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ListingPhotoCompleteResponse" }
+        "400":
+          description: Invalid or incomplete uploaded image
+        "401":
+          description: Sign-in required
+        "403":
+          description: The uploaded image does not belong to this user
+  /storage/objects/{objectPath}:
+    get:
+      operationId: getProfileAvatarObject
+      tags: [storage]
+      summary: Serve a public profile image from object storage
+      parameters:
+        - in: path
+          name: objectPath
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Profile image bytes
+          content:
+            image/*:
+              schema: { type: string, format: binary }
+        "404":
+          description: Image not found
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+  /readyz:
+    get:
+      operationId: readinessCheck
+      tags: [health]
+      summary: Readiness check
+      description: Reports whether the API can serve traffic — database reachable, schema current, essential configuration valid and phone verification deliverable. Check values name the failing area only, never a setting's value.
+      responses:
+        "200":
+          description: API and required database schema are ready
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadinessStatus"
+        "503":
+          description: API is alive but the database, schema, essential configuration or phone verification is not ready
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadinessStatus"
+  /listings:
+    get:
+      operationId: getListings
+      tags: [marketplace]
+      summary: List published listings
+      parameters:
+        - in: query
+          name: search
+          schema: { type: string }
+        - in: query
+          name: category
+          schema: { type: string }
+        - in: query
+          name: categoryId
+          schema: { type: string }
+        - in: query
+          name: sort
+          schema: { type: string, enum: [RELEVANCE, PRICE_ASC, PRICE_DESC, NEWEST, YEAR_ASC, YEAR_DESC, MILEAGE_ASC, MILEAGE_DESC, PROPERTY_SIZE_ASC, PROPERTY_SIZE_DESC] }
+        - in: query
+          name: status
+          schema: { type: string, enum: [PUBLISHED, PAUSED, ARCHIVED] }
+      responses:
+        "200":
+          description: Listings
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Listing" }
+    post:
+      operationId: createListing
+      tags: [marketplace]
+      summary: Create a listing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ListingInput" }
+      responses:
+        "201":
+          description: Created listing
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Listing" }
+  /categories:
+    get:
+      operationId: getMarketplaceCategories
+      tags: [marketplace]
+      summary: List active marketplace categories and their data-driven fields
+      responses:
+        "200":
+          description: Active category registry
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/MarketplaceCategory" }
+  /admin/categories:
+    get:
+      operationId: getAdminMarketplaceCategories
+      tags: [marketplace]
+      summary: List all marketplace categories for administrators
+      responses:
+        "200":
+          description: Category registry
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/MarketplaceCategory" }
+    post:
+      operationId: createMarketplaceCategory
+      tags: [marketplace]
+      summary: Add a marketplace category as an administrator
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MarketplaceCategoryInput" }
+      responses:
+        "201":
+          description: Created category
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MarketplaceCategory" }
+        "400":
+          description: Invalid category definition
+        "403":
+          description: Administrator access required
+  /admin/categories/{id}:
+    patch:
+      operationId: updateMarketplaceCategory
+      tags: [marketplace]
+      summary: Update or deactivate a marketplace category as an administrator
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MarketplaceCategoryUpdate" }
+      responses:
+        "200":
+          description: Updated category
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MarketplaceCategory" }
+        "400":
+          description: Invalid category definition
+        "403":
+          description: Administrator access required
+        "404":
+          description: Category not found
+  /admin/categories/{id}/audit:
+    get:
+      operationId: getAdminMarketplaceCategoryAudit
+      tags: [marketplace]
+      summary: List category policy changes for administrators
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Category change history, newest first
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/MarketplaceCategoryAuditRecord" }
+        "401":
+          description: Sign-in required
+        "403":
+          description: Administrator access required
+        "404":
+          description: Category not found
+  /admin/markets/{id}/audit:
+    get:
+      operationId: getAdminMarketCategoryPolicyAudit
+      tags: [marketplace]
+      summary: List restricted-category policy changes for administrators
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Market category policy history, newest first
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/MarketCategoryPolicyAuditRecord" }
+        "401":
+          description: Sign-in required
+        "403":
+          description: Administrator access required
+        "404":
+          description: Market not found
+  /listings/{id}:
+    get:
+      operationId: getListing
+      tags: [marketplace]
+      summary: Get a listing
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Listing
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Listing" }
+        "404":
+          description: Not found
+    patch:
+      operationId: updateListing
+      tags: [marketplace]
+      summary: Update a seller's listing
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ListingUpdate" }
+      responses:
+        "200":
+          description: Updated listing
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Listing" }
+        "400":
+          description: Invalid listing update
+        "404":
+          description: Listing not found
+    delete:
+      operationId: archiveListing
+      tags: [marketplace]
+      summary: Archive a seller listing without deleting order history
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Archived listing; historical order references are retained
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Listing" }
+        "404":
+          description: Listing not found
+        "409":
+          description: Listing has a reservation or an unresolved order
+  /listings/{id}/status:
+    patch:
+      operationId: changeListingStatus
+      tags: [marketplace]
+      summary: Pause or resume an owned listing
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ListingStatusAction" }
+      responses:
+        "200":
+          description: Updated listing status
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Listing" }
+        "400":
+          description: Invalid status action
+        "404":
+          description: Listing not found
+        "409":
+          description: Listing cannot make that status transition
+  /dashboard:
+    get:
+      operationId: getDashboard
+      tags: [dashboard]
+      summary: Get marketplace dashboard
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Dashboard" }
+  /orders:
+    get:
+      operationId: getOrders
+      tags: [orders]
+      summary: List current user's orders
+      parameters:
+        - in: query
+          name: role
+          schema: { type: string, enum: [buyer, seller] }
+        - in: query
+          name: status
+          schema: { type: string }
+      responses:
+        "200":
+          description: Orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Order" }
+    post:
+      operationId: createOrder
+      tags: [orders]
+      summary: Create an order and reserve inventory
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/OrderInput" }
+      responses:
+        "201":
+          description: Created order
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Order" }
+        "409":
+          description: Out of stock
+  /checkout:
+    post:
+      operationId: checkoutCart
+      tags: [orders]
+      summary: Validate a cart and create one order per seller
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CheckoutInput" }
+      responses:
+        "201":
+          description: Seller orders created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CheckoutResponse" }
+        "400":
+          description: Invalid checkout input
+        "409":
+          description: Cart changed or inventory is no longer available
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CheckoutConflict" }
+  /orders/{id}:
+    get:
+      operationId: getOrder
+      tags: [orders]
+      summary: Get an order
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Order
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Order" }
+  /orders/{id}/contact:
+    get:
+      operationId: getOrderContact
+      tags: [orders]
+      summary: Retrieve seller-approved contact for an eligible order buyer
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Freshly authorized seller contact
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OrderContactRelease" }
+        "404":
+          description: Order contact is unavailable to this actor
+  /orders/{id}/fulfillment:
+    get:
+      operationId: getOrderFulfillment
+      tags: [orders]
+      summary: Delivery method, state and transaction locations for one order (its buyer and seller only)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Participant delivery view
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OrderDelivery" }
+        "404":
+          description: Order not found for this actor
+  /orders/{id}/courier-fare:
+    get:
+      operationId: getCourierFare
+      tags: [orders]
+      summary: Read the negotiated fare for the buyer or assigned courier
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Current proposal or immutable agreed fare snapshot
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CourierFareView" }
+        "404":
+          description: Order not found for this actor
+  /orders/{id}/courier-fare/proposals:
+    post:
+      operationId: proposeCourierFare
+      tags: [orders]
+      summary: Propose a delivery fare in the order market's currency
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CourierFareProposalInput" }
+      responses:
+        "200":
+          description: The current fare proposal
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CourierFareProposalResult" }
+        "400":
+          description: Invalid amount or idempotency key
+        "409":
+          description: Fare cannot be negotiated or the agreement is already locked
+  /orders/{id}/courier-fare/confirm:
+    post:
+      operationId: confirmCourierFare
+      tags: [orders]
+      summary: Confirm the current courier fare proposal
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CourierFareConfirmInput" }
+      responses:
+        "200":
+          description: Confirmation status and fare snapshot, when both parties agree
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CourierFareConfirmResult" }
+        "404":
+          description: Order or proposal not found for this actor
+        "409":
+          description: Proposal is stale or fare confirmation is closed
+  /courier/commission-account:
+    get:
+      operationId: getCourierCommissionAccount
+      tags: [courier]
+      summary: Read courier commission receivables and acceptance hold status
+      responses:
+        "200":
+          description: Balances are separated by market and currency
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CourierCommissionAccount" }
+  /courier/commission-account/settlements:
+    post:
+      operationId: settleCourierCommissionSimulation
+      tags: [courier]
+      summary: Clear a market's courier receivable in a no-transfer development simulation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CourierCommissionSettlementInput" }
+      responses:
+        "200":
+          description: SIMULATION_ONLY settlement record; no money is transferred
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CourierCommissionSettlementResult" }
+        "409":
+          description: No outstanding receivable or settlement conflict
+  /orders/{id}/tracking:
+    get:
+      operationId: getOrderTracking
+      tags: [orders]
+      summary: Get participant-authorized canonical delivery status and optional ephemeral provider tracking
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: No-store tracking view; coordinates are returned only from an authorized live provider
+          headers:
+            Cache-Control:
+              schema: { type: string }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OrderTracking" }
+        "404":
+          description: Order not found for this actor
+  /orders/{id}/accept:
+    post:
+      operationId: acceptOrder
+      tags: [orders]
+      summary: Accept an order as seller
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Accepted order
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Order" }
+  /orders/{id}/delivery:
+    post:
+      operationId: markOrderDelivered
+      tags: [orders]
+      summary: Mark an order delivered with proof
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DeliveryInput" }
+      responses:
+        "200":
+          description: Delivered order
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Order" }
+  /orders/{id}/confirm:
+    post:
+      operationId: confirmOrder
+      tags: [orders]
+      summary: Confirm receipt or report an issue
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ConfirmationInput" }
+      responses:
+        "200":
+          description: Updated order
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Order" }
+  /orders/{id}/cancel:
+    post:
+      operationId: cancelOrder
+      tags: [orders]
+      summary: Request order cancellation
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CancelInput" }
+      responses:
+        "200":
+          description: Cancelled order
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Order" }
+  /orders/{id}/messages:
+    get:
+      operationId: getOrderMessages
+      tags: [orders]
+      summary: Get messages for an order
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Message" }
+    post:
+      operationId: sendOrderMessage
+      tags: [orders]
+      summary: Send an order-bound message
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MessageInput" }
+      responses:
+        "201":
+          description: Message
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Message" }
+  /admin/disputes:
+    get:
+      operationId: getAdminDisputes
+      tags: [orders]
+      summary: List marketplace disputes for administrators
+      responses:
+        "200":
+          description: Disputes, including their order and resolution context
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/AdminDispute" }
+        "401":
+          description: Sign-in required
+        "403":
+          description: Administrator access required
+  /admin/disputes/{orderId}/resolve:
+    post:
+      operationId: resolveAdminDispute
+      tags: [orders]
+      summary: Resolve an open disputed order as an administrator
+      parameters:
+        - in: path
+          name: orderId
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ResolveAdminDisputeInput" }
+      responses:
+        "200":
+          description: Dispute resolution and resulting order state
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminDisputeResolutionResult" }
+        "400":
+          description: Invalid resolution outcome or note
+        "401":
+          description: Sign-in required
+        "403":
+          description: Administrator access required
+        "404":
+          description: Order or dispute not found
+        "409":
+          description: Order is not an open disputed order
+  /ai/voice-transcription:
+    post:
+      operationId: transcribeAiVoiceMessage
+      tags: [ai]
+      summary: Transcribe a temporary voice recording for the DINAR composer
+      requestBody:
+        required: true
+        content:
+          audio/webm:
+            schema: { $ref: "#/components/schemas/AiVoiceRecording" }
+          audio/mp4:
+            schema: { $ref: "#/components/schemas/AiVoiceRecording" }
+          audio/ogg:
+            schema: { $ref: "#/components/schemas/AiVoiceRecording" }
+          audio/wav:
+            schema: { $ref: "#/components/schemas/AiVoiceRecording" }
+      responses:
+        "200":
+          description: Arabic transcription; the recording is not retained
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AiVoiceTranscriptionResponse" }
+        "400":
+          description: Invalid or empty recording
+        "413":
+          description: Recording exceeds the upload limit
+        "429":
+          description: Voice transcription rate limit reached
+        "503":
+          description: Transcription service unavailable
+  /ai/preview:
+    post:
+      operationId: previewAiConversation
+      tags: [ai]
+      summary: Send a bounded guest conversation turn or read-only marketplace preview
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AiPreviewInput" }
+      responses:
+        "200":
+          description: Guest conversation or read-only marketplace result
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AiPreviewResponse" }
+        "400":
+          description: Invalid request or cross-market guest context
+        "409":
+          description: Requested market action is unavailable
+        "429":
+          description: Guest preview rate limit reached
+        "503":
+          description: Guest rate-limit authority is unavailable
+  /ai/conversations:
+    post:
+      operationId: createAiConversation
+      tags: [ai]
+      summary: Create a DINAR AI conversation
+      responses:
+        "201":
+          description: Conversation
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AiConversation" }
+    get:
+      operationId: getAiConversations
+      tags: [ai]
+      summary: List the authenticated user's DINAR AI conversations
+      responses:
+        "200":
+          description: Conversations
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/AiConversation" }
+  /ai/learning-history:
+    get:
+      operationId: getAiLearningHistory
+      tags: [ai]
+      summary: List the authenticated user's recent tutorial learning events
+      responses:
+        "200":
+          description: Up to 100 recent events owned by the authenticated user
+          content:
+            application/json:
+              schema:
+                type: array
+                maxItems: 100
+                items: { $ref: "#/components/schemas/TutorialLearningEvent" }
+        "401":
+          description: Authentication required
+    post:
+      operationId: createAiLearningHistoryEvent
+      tags: [ai]
+      summary: Record one authenticated tutorial learning event idempotently
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TutorialLearningEventInput" }
+      responses:
+        "200":
+          description: Existing event returned for an idempotent retry
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TutorialLearningEvent" }
+        "201":
+          description: Learning event recorded for the authenticated user
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TutorialLearningEvent" }
+        "400":
+          description: Invalid event payload
+        "401":
+          description: Authentication required
+  /ai/conversations/guest-handoff:
+    post:
+      operationId: createAiGuestHandoff
+      tags: [ai]
+      summary: Create an authenticated conversation from bounded, filtered guest dialogue
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AiGuestHandoffInput" }
+      responses:
+        "200":
+          description: Previously claimed handoff, returned without duplicating messages
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AiGuestHandoffResponse" }
+        "201":
+          description: Authenticated conversation and imported safe text messages
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AiGuestHandoffResponse" }
+        "400":
+          description: Invalid handoff or market mismatch
+        "401":
+          description: Sign-in required
+        "409":
+          description: Handoff was already claimed by another account or conflicts with existing messages
+  /ai/conversations/{id}:
+    get:
+      operationId: getAiConversation
+      tags: [ai]
+      summary: Get a DINAR AI conversation history
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Conversation history
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AiConversationHistory" }
+    patch:
+      operationId: renameAiConversation
+      tags: [ai]
+      summary: Rename an owned DINAR AI conversation
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AiConversationRenameInput" }
+      responses:
+        "200":
+          description: Renamed conversation
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AiConversation" }
+        "404":
+          description: Conversation not found
+    delete:
+      operationId: deleteAiConversation
+      tags: [ai]
+      summary: Delete an owned DINAR AI conversation and its history
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "204":
+          description: Conversation deleted
+        "404":
+          description: Conversation not found
+  /ai/conversations/{id}/copies:
+    post:
+      operationId: copyAiConversation
+      tags: [ai]
+      summary: Create an owned text-only copy or an edit branch of a conversation
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AiConversationCopyInput" }
+      responses:
+        "201":
+          description: New conversation with copied plain-text history; interactive blocks are not copied
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AiConversationHistory" }
+        "400":
+          description: Invalid edit branch anchor
+        "404":
+          description: Conversation or message not found
+  /ai/conversations/{id}/turns:
+    post:
+      operationId: sendAiConversationTurn
+      tags: [ai]
+      summary: Send a natural-language DINAR AI turn
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AiTurnInput" }
+      responses:
+        "200":
+          description: Server-sent events
+          content:
+            text/event-stream:
+              schema: { type: string }
+  /ai/conversations/{id}/actions/add-to-cart:
+    post:
+      operationId: addAiListingToCart
+      tags: [ai]
+      summary: Add a conversation result to the authenticated user's cart
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AiListingCartAction" }
+      responses:
+        "200":
+          description: Cart action receipt rendered as an assistant message
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AiListingCartActionResponse" }
+  /ai/conversations/{id}/control-actions/{resultSetId}/acknowledgement:
+    post:
+      operationId: acknowledgeAiControlAction
+      tags: [ai]
+      summary: Record whether this device applied a conversational client action (theme)
+      description: >
+        Client actions change only the device (the app theme). The server never claims they
+        succeeded: it records the device's own acknowledgement, once, for the owner's pending
+        request, so the conversation shows the real outcome after reload.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+        - in: path
+          name: resultSetId
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AiControlActionAcknowledgement" }
+      responses:
+        "200":
+          description: The recorded outcome (unchanged when already acknowledged)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AiControlActionAcknowledgementResult" }
+        "401":
+          description: Sign-in required
+        "404":
+          description: No such client action for this user
+  /ai/listing-management-previews/{id}/action:
+    post:
+      operationId: applyAiListingManagementPreview
+      tags: [ai]
+      summary: Confirm or cancel an authenticated seller listing preview
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AiListingManagementPreviewAction" }
+      responses:
+        "200":
+          description: Preview action status
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AiListingManagementPreviewResult" }
+        "401":
+          description: Sign-in required
+        "404":
+          description: Preview not found
+        "409":
+          description: Preview expired, stale, or invalid
+  /ai/employment-actions/{id}/action:
+    post:
+      operationId: applyAiEmploymentAction
+      tags: [ai]
+      summary: Confirm or cancel one exact pending employment action in the actor's own conversation
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AiEmploymentActionRequest" }
+      responses:
+        "200":
+          description: Employment action outcome
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AiEmploymentActionResult" }
+        "401":
+          description: Sign-in required
+        "404":
+          description: Action not found in the actor's conversations
+        "409":
+          description: Action rejected by the employment authority
+  /ai/promotion-actions/{id}/action:
+    post:
+      operationId: applyAiPromotionAction
+      tags: [ai]
+      summary: Confirm or cancel one exact pending promotion review in the seller's own conversation
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AiEmploymentActionRequest" }
+      responses:
+        "200":
+          description: Promotion action outcome
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AiPromotionActionResult" }
+        "401":
+          description: Sign-in required
+        "404":
+          description: Action not found in the seller's conversations
+  /seller-dues:
+    get:
+      operationId: getSellerDues
+      tags: [orders]
+      summary: List seller dues
+      responses:
+        "200":
+          description: Seller dues
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/SellerDue" }
+  /promotion-products:
+    get:
+      operationId: getPromotionProducts
+      tags: [marketplace]
+      summary: List enabled promotion plans in the authenticated seller's active market
+      responses:
+        "200":
+          description: Market-scoped promotion plans
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/PromotionProduct" }
+        "401":
+          description: Sign-in required
+        "503":
+          description: Promotion feature is disabled in this environment
+  /listings/{id}/promotion-preview:
+    post:
+      operationId: previewListingPromotion
+      tags: [marketplace]
+      summary: Preview a promotion for an owned published listing without changing state
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PromotionPreviewInput" }
+      responses:
+        "200":
+          description: Immutable price and placement preview; no charge or money movement
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PromotionPreview" }
+        "401":
+          description: Sign-in required
+        "404":
+          description: Listing or market-scoped plan not found
+        "409":
+          description: Listing is not published or already has an active promotion
+        "503":
+          description: Promotion feature is disabled in this environment
+  /listings/{id}/promotions:
+    post:
+      operationId: confirmListingPromotion
+      tags: [marketplace]
+      summary: Explicitly confirm and buy a promotion through the simulated (TEST_NO_TRANSFER) payment authority
+      description: >
+        The price, currency, duration and placement come only from the admin plan and are
+        snapshotted. Activation requires a captured simulated payment verified by the test
+        adapter's signature; no real money moves and no order, commission, seller-dues or
+        delivery record is created. Retrying with the same idempotencyKey returns the same
+        campaign. Disabled outside development and test environments.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PromotionConfirmInput" }
+      responses:
+        "200":
+          description: Replay of an earlier purchase with the same idempotencyKey
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SellerPromotion" }
+        "201":
+          description: Campaign with immutable plan snapshots; ACTIVE after a captured simulated payment, PAYMENT_FAILED otherwise
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SellerPromotion" }
+        "400":
+          description: Explicit confirmation is required
+        "401":
+          description: Sign-in required
+        "403":
+          description: Simulated promotions are disabled outside development and test
+        "503":
+          description: Promotion feature is disabled in this environment
+        "404":
+          description: Listing or market-scoped plan not found
+        "409":
+          description: Listing is not eligible, already has a live promotion, or the idempotencyKey was used for another request
+  /promotions:
+    get:
+      operationId: getSellerPromotions
+      tags: [marketplace]
+      summary: List the authenticated seller's own promotion campaigns in the active market
+      responses:
+        "200":
+          description: Seller-owned campaigns with server-evaluated serving state
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/SellerPromotion" }
+        "401":
+          description: Sign-in required
+        "503":
+          description: Promotion feature is disabled in this environment
+  /promotions/{id}:
+    get:
+      operationId: getSellerPromotion
+      tags: [marketplace]
+      summary: Read one of the authenticated seller's own campaigns
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Seller-owned campaign
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SellerPromotion" }
+        "401":
+          description: Sign-in required
+        "404":
+          description: Campaign not found for this seller and market
+        "503":
+          description: Promotion feature is disabled in this environment
+  /promotions/{id}/actions:
+    post:
+      operationId: changeSellerPromotion
+      tags: [marketplace]
+      summary: Pause, resume or cancel one of the authenticated seller's own campaigns
+      description: Pausing never extends the paid window. Cancelling stops sponsored serving immediately; there is no real refund in simulation.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SellerPromotionAction" }
+      responses:
+        "200":
+          description: Campaign after the transition
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SellerPromotion" }
+        "401":
+          description: Sign-in required
+        "403":
+          description: Account restricted
+        "404":
+          description: Campaign not found for this seller and market
+        "409":
+          description: Transition not allowed from the campaign's current state
+        "503":
+          description: Promotion feature is disabled in this environment
+  /admin/markets/{marketId}/promotions:
+    get:
+      operationId: getAdminMarketPromotions
+      tags: [marketplace]
+      summary: Operational view of a market's promotion campaigns for administrators
+      parameters:
+        - in: path
+          name: marketId
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Campaigns with status and serving state; no buyer or viewer data
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/AdminPromotion" }
+        "401":
+          description: Sign-in required
+        "403":
+          description: Administrator access required
+        "404":
+          description: Market not found
+        "503":
+          description: Promotion feature is disabled in this environment
+  /admin/markets/{marketId}/promotion-products:
+    get:
+      operationId: getAdminPromotionProducts
+      tags: [marketplace]
+      summary: List all promotion plans configured for a market
+      parameters:
+        - in: path
+          name: marketId
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Market promotion catalog
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/PromotionProduct" }
+        "401":
+          description: Sign-in required
+        "403":
+          description: Administrator access required
+        "404":
+          description: Market not found
+        "503":
+          description: Promotion feature is disabled in this environment
+    post:
+      operationId: createAdminPromotionProduct
+      tags: [marketplace]
+      summary: Add a market-scoped promotion plan and price as an administrator
+      parameters:
+        - in: path
+          name: marketId
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PromotionProductInput" }
+      responses:
+        "201":
+          description: Created market-scoped promotion plan
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PromotionProduct" }
+        "400":
+          description: Invalid plan, price, or market currency
+        "401":
+          description: Sign-in required
+        "403":
+          description: Administrator access required
+        "404":
+          description: Market or category not found
+        "503":
+          description: Promotion feature is disabled in this environment
+  /admin/markets/{marketId}/promotion-products/{id}:
+    patch:
+      operationId: updateAdminPromotionProduct
+      tags: [marketplace]
+      summary: Update a market-scoped promotion plan; existing campaign snapshots are unchanged
+      parameters:
+        - in: path
+          name: marketId
+          required: true
+          schema: { type: string }
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PromotionProductUpdate" }
+      responses:
+        "200":
+          description: Updated promotion plan
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PromotionProduct" }
+        "400":
+          description: Invalid plan, price, or market currency
+        "401":
+          description: Sign-in required
+        "403":
+          description: Administrator access required
+        "404":
+          description: Market, category, or plan not found
+        "503":
+          description: Promotion feature is disabled in this environment
+  /commercial/balance:
+    get:
+      operationId: getCommercialBalance
+      tags: [commercial]
+      summary: "The actor's DINAR commercial balance (prepaid credit for DINAR services only), safe history and bundle units"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommercialJsonObject" }
+  /commercial/topups:
+    post:
+      operationId: createCommercialTopup
+      tags: [commercial]
+      summary: "Open a commercial top-up intent at the payment-provider boundary; the balance changes only after a verified provider capture"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CommercialJsonObject" }
+      responses:
+        "201":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommercialJsonObject" }
+  /commercial/topups/{id}/simulate-capture:
+    post:
+      operationId: simulateCommercialTopupCapture
+      tags: [commercial]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      summary: "Development/test only: the simulated provider captures and emits its signed webhook (TEST_NO_TRANSFER)"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CommercialJsonObject" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommercialJsonObject" }
+  /commercial/payment-webhooks:
+    post:
+      operationId: receiveCommercialPaymentWebhook
+      tags: [commercial]
+      summary: "Provider webhook; credits a top-up only when signature, amount, currency and provider status verify"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CommercialJsonObject" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommercialJsonObject" }
+  /commercial/products:
+    get:
+      operationId: getCommercialProducts
+      tags: [commercial]
+      summary: "Effective commercial products (featured, VIP, refresh, sponsored, demand capture, bundles, DINAR Business) in the actor's market"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommercialJsonObject" }
+  /commercial/purchase-review:
+    post:
+      operationId: reviewCommercialPurchase
+      tags: [commercial]
+      summary: "Review a commercial purchase from server state; changes nothing"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CommercialJsonObject" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommercialJsonObject" }
+  /commercial/purchases:
+    post:
+      operationId: purchaseCommercialProduct
+      tags: [commercial]
+      summary: "Buy a commercial product from the commercial balance or a bundle unit; idempotent"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CommercialJsonObject" }
+      responses:
+        "201":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommercialJsonObject" }
+  /commercial/entitlements:
+    get:
+      operationId: getCommercialEntitlements
+      tags: [commercial]
+      summary: "The actor's bundle units"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommercialJsonObject" }
+  /commercial/campaigns/analytics:
+    get:
+      operationId: getCampaignAnalytics
+      tags: [commercial]
+      summary: "Aggregate results of the actor's own campaigns (no buyer data)"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommercialJsonObject" }
+  /commercial/attribution:
+    post:
+      operationId: recordCommercialAttribution
+      tags: [commercial]
+      summary: "Report a delivered or opened paid card with its opaque signed token; the server decides any charge"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CommercialJsonObject" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommercialJsonObject" }
+  /market-pulse:
+    get:
+      operationId: getMarketPulse
+      tags: [commercial]
+      summary: "Aggregated market demand (cohort-thresholded; deeper windows need DINAR Business)"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommercialJsonObject" }
+  /business/plans:
+    get:
+      operationId: getBusinessPlans
+      tags: [commercial]
+      summary: "DINAR Business plans in the actor's market"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommercialJsonObject" }
+  /business/subscription:
+    get:
+      operationId: getBusinessSubscription
+      tags: [commercial]
+      summary: "The actor's DINAR Business status"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommercialJsonObject" }
+  /business/subscription-review:
+    post:
+      operationId: reviewBusinessSubscription
+      tags: [commercial]
+      summary: "Review a DINAR Business subscription; changes nothing"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CommercialJsonObject" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommercialJsonObject" }
+  /business/subscriptions:
+    post:
+      operationId: createBusinessSubscription
+      tags: [commercial]
+      summary: "Subscribe to DINAR Business from the commercial balance; no auto-renew"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CommercialJsonObject" }
+      responses:
+        "201":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommercialJsonObject" }
+  /business/subscription/cancel:
+    post:
+      operationId: cancelBusinessSubscription
+      tags: [commercial]
+      summary: "Stop renewal; entitlements remain until the paid period ends"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CommercialJsonObject" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommercialJsonObject" }
+  /ai/commerce-actions/{id}/action:
+    post:
+      operationId: applyAiCommerceAction
+      tags: [commercial]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      summary: "Confirm or cancel one exact pending commercial review in the actor's own conversation"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CommercialJsonObject" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommercialJsonObject" }
+  /admin/markets/{marketId}/commercial-products:
+    get:
+      operationId: getAdminCommercialProducts
+      tags: [commercial]
+      parameters:
+        - { name: marketId, in: path, required: true, schema: { type: string } }
+      summary: "All commercial products of a market (admin)"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommercialJsonObject" }
+    post:
+      operationId: createAdminCommercialProduct
+      tags: [commercial]
+      parameters:
+        - { name: marketId, in: path, required: true, schema: { type: string } }
+      summary: "Create a versioned commercial product (admin)"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CommercialJsonObject" }
+      responses:
+        "201":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommercialJsonObject" }
+  /admin/commercial-products/{id}:
+    patch:
+      operationId: updateAdminCommercialProduct
+      tags: [commercial]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      summary: "Enable or disable new sales of a commercial product (admin)"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CommercialJsonObject" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommercialJsonObject" }
+  /admin/commercial-policies:
+    get:
+      operationId: getAdminCommercialPolicies
+      tags: [commercial]
+      summary: "Versioned commercial policy (admin)"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommercialJsonObject" }
+    post:
+      operationId: createAdminCommercialPolicy
+      tags: [commercial]
+      summary: "Create a new commercial policy version (admin)"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CommercialJsonObject" }
+      responses:
+        "201":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommercialJsonObject" }
+  /admin/commercial-credits:
+    post:
+      operationId: grantAdminCommercialCredit
+      tags: [commercial]
+      summary: "Grant promotional commercial credit (kept apart from paid credit)"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CommercialJsonObject" }
+      responses:
+        "201":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommercialJsonObject" }
+  /admin/commercial-refunds:
+    post:
+      operationId: refundAdminCommercialEntry
+      tags: [commercial]
+      summary: "Refund a commercial ledger charge back to commercial credit (no real money)"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CommercialJsonObject" }
+      responses:
+        "201":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommercialJsonObject" }
+  /admin/markets/{marketId}/commercial-summary:
+    get:
+      operationId: getAdminCommercialSummary
+      tags: [commercial]
+      parameters:
+        - { name: marketId, in: path, required: true, schema: { type: string } }
+      summary: "Commercial revenue by product, reserved budgets, GMV and commission kept apart, attribution and Market Pulse health (admin)"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommercialJsonObject" }
+components:
+  schemas:
+    CommercialJsonObject:
+      type: object
+      additionalProperties: true
+      description: Commercial economy request/response object; bodies are validated strictly on the server and never accept owners, prices, balances or paid flags.
+    PhoneVerificationChallengeRequest:
+      type: object
+      additionalProperties: false
+      required: [phoneCountryCode, phoneNumber]
+      properties:
+        phoneCountryCode: { type: string, minLength: 2, maxLength: 5 }
+        phoneNumber: { type: string, minLength: 1, maxLength: 100 }
+    PhoneVerificationChallengeResponse:
+      type: object
+      required: [challengeId, expiresAt]
+      properties:
+        challengeId: { type: string, format: uuid }
+        expiresAt: { type: string, format: date-time }
+        developmentCode: { type: string, pattern: "^[0-9]{6}$" }
+    PhoneVerificationCodeRequest:
+      type: object
+      additionalProperties: false
+      required: [challengeId, code]
+      properties:
+        challengeId: { type: string, format: uuid }
+        code: { type: string, pattern: "^[0-9]{6}$" }
+    PhoneVerificationCodeResponse:
+      type: object
+      required: [verificationToken]
+      properties:
+        verificationToken: { type: string, pattern: "^[a-f0-9]{64}$" }
+    AuthRegisterRequest:
+      type: object
+      additionalProperties: false
+      required: [displayName, phoneCountryCode, phoneNumber, accountCountry, password, confirmPassword, acceptTerms]
+      properties:
+        displayName: { type: string, minLength: 2, maxLength: 80 }
+        phoneCountryCode: { type: string, minLength: 2, maxLength: 5 }
+        phoneNumber: { type: string, minLength: 1, maxLength: 100 }
+        accountCountry: { type: string, minLength: 2, maxLength: 2 }
+        password: { type: string, minLength: 12, maxLength: 128 }
+        confirmPassword: { type: string, minLength: 12, maxLength: 128 }
+        acceptTerms: { type: boolean, enum: [true] }
+        verificationToken:
+          type: string
+          pattern: "^[a-f0-9]{64}$"
+          description: Required outside development; omitted development registrations create accounts that remain phone-unverified.
+    AuthLoginRequest:
+      type: object
+      additionalProperties: false
+      required: [phoneCountryCode, phoneNumber, password]
+      properties:
+        phoneCountryCode: { type: string, minLength: 2, maxLength: 5 }
+        phoneNumber: { type: string, minLength: 1, maxLength: 100 }
+        password: { type: string, minLength: 1, maxLength: 128 }
+        verificationToken: { type: string, pattern: "^[a-f0-9]{64}$" }
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+    ReadinessStatus:
+      type: object
+      required: [status, checks]
+      properties:
+        status: { type: string, enum: [ready, not_ready] }
+        checks:
+          type: object
+          required: [database, migrations, configuration, phoneVerification]
+          properties:
+            database: { type: string, enum: [ready, unavailable] }
+            migrations:
+              type: string
+              enum: [current, pending, unavailable, unchecked]
+            configuration: { type: string, enum: [ready, invalid] }
+            phoneVerification: { type: string, enum: [ready, not_configured] }
+    CategoryAttributeDefinition:
+      type: object
+      required: [label, type, operators]
+      properties:
+        label: { type: string, minLength: 1, maxLength: 100 }
+        type: { type: string, enum: [string, number] }
+        operators:
+          type: array
+          minItems: 1
+          items: { type: string, enum: [eq, contains, gt, gte, lt, lte] }
+        requiredForPublish: { type: boolean }
+        searchable: { type: boolean }
+        filterable: { type: boolean }
+        minimum: { type: number }
+        maximum: { type: number }
+        maxLength: { type: integer, minimum: 1, maximum: 500 }
+        options: { type: array, items: { type: string, maxLength: 160 } }
+    MarketplaceSortDefinition:
+      type: object
+      required: [id, label, field, direction]
+      properties:
+        id: { type: string, enum: [PRICE_ASC, PRICE_DESC, NEWEST, YEAR_ASC, YEAR_DESC, MILEAGE_ASC, MILEAGE_DESC, PROPERTY_SIZE_ASC, PROPERTY_SIZE_DESC] }
+        label: { type: string, minLength: 1, maxLength: 80 }
+        field: { type: string, enum: [PRICE, CREATED_AT, ATTRIBUTE] }
+        direction: { type: string, enum: [ASC, DESC] }
+        attribute: { type: string, maxLength: 80 }
+    MarketplaceCategoryRules:
+      type: object
+      required: [display, sorting, pricing, inventory, sellerDraft]
+      properties:
+        display:
+          type: object
+          required: [cardAttributes, detailAttributes]
+          properties:
+            cardAttributes: { type: array, uniqueItems: true, items: { type: string, maxLength: 80 } }
+            detailAttributes: { type: array, uniqueItems: true, items: { type: string, maxLength: 80 } }
+        sorting:
+          type: object
+          required: [defaultSort, options]
+          properties:
+            defaultSort: { type: string, enum: [PRICE_ASC, PRICE_DESC, NEWEST, YEAR_ASC, YEAR_DESC, MILEAGE_ASC, MILEAGE_DESC, PROPERTY_SIZE_ASC, PROPERTY_SIZE_DESC] }
+            options:
+              type: array
+              minItems: 1
+              items: { $ref: "#/components/schemas/MarketplaceSortDefinition" }
+        pricing:
+          type: object
+          required: [allowedModes, defaultMode, minAmountMinor, maxAmountMinor]
+          properties:
+            allowedModes:
+              type: array
+              minItems: 1
+              uniqueItems: true
+              items: { type: string, enum: [FIXED, NEGOTIABLE, OPEN_TO_OFFERS] }
+            defaultMode: { type: string, enum: [FIXED, NEGOTIABLE, OPEN_TO_OFFERS] }
+            minAmountMinor: { type: integer, minimum: 1 }
+            maxAmountMinor: { type: integer, minimum: 1 }
+        inventory:
+          type: object
+          required: [semantics, allowedModes, defaultMode]
+          properties:
+            semantics: { type: string, enum: [TRACKED, SINGLE, NON_STOCK] }
+            allowedModes:
+              type: array
+              minItems: 1
+              uniqueItems: true
+              items: { type: string, enum: [LIMITED, UNLIMITED] }
+            defaultMode: { type: string, enum: [LIMITED, UNLIMITED] }
+            defaultQuantity: { type: integer, minimum: 1, maximum: 1000000 }
+        sellerDraft:
+          type: object
+          required: [requiredFields]
+          properties:
+            requiredFields:
+              type: array
+              minItems: 1
+              uniqueItems: true
+              items: { type: string, enum: [TITLE, DESCRIPTION, PRICE, ATTRIBUTES, INVENTORY, FULFILMENT, LOCATION, CONTACT] }
+    MarketplaceCategory:
+      type: object
+      required: [id, label, labelEn, parentId, aliases, resourceType, renderer, attributes, searchFilters, allowAdditionalAttributes, rules, isActive]
+      properties:
+        id: { type: string }
+        label: { type: string }
+        labelEn: { type: string }
+        parentId: { type: ["string", "null"] }
+        aliases: { type: array, items: { type: string } }
+        resourceType: { type: string, enum: [PRODUCT, SERVICE, MIXED] }
+        renderer: { type: string, enum: [GENERIC, CAR, PROPERTY] }
+        attributes:
+          type: object
+          additionalProperties: { $ref: "#/components/schemas/CategoryAttributeDefinition" }
+        searchFilters:
+          type: object
+          additionalProperties: { $ref: "#/components/schemas/CategoryAttributeDefinition" }
+        allowAdditionalAttributes: { type: boolean }
+        rules: { $ref: "#/components/schemas/MarketplaceCategoryRules" }
+        isActive: { type: boolean }
+    MarketplaceCategoryInput:
+      type: object
+      required: [id, label, labelEn, resourceType, renderer, aliases, attributes, searchFilters, rules]
+      properties:
+        id: { type: string, pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$" }
+        label: { type: string, minLength: 1, maxLength: 100 }
+        labelEn: { type: string, minLength: 1, maxLength: 100 }
+        parentId: { type: ["string", "null"] }
+        aliases: { type: array, maxItems: 40, items: { type: string, maxLength: 100 } }
+        resourceType: { type: string, enum: [PRODUCT, SERVICE, MIXED] }
+        renderer: { type: string, enum: [GENERIC, CAR, PROPERTY] }
+        attributes:
+          type: object
+          maxProperties: 50
+          additionalProperties: { $ref: "#/components/schemas/CategoryAttributeDefinition" }
+        searchFilters:
+          type: object
+          maxProperties: 50
+          additionalProperties: { $ref: "#/components/schemas/CategoryAttributeDefinition" }
+        allowAdditionalAttributes: { type: boolean, default: false }
+        isActive: { type: boolean, default: true }
+        rules: { $ref: "#/components/schemas/MarketplaceCategoryRules" }
+    MarketplaceCategoryUpdate:
+      type: object
+      properties:
+        label: { type: string, minLength: 1, maxLength: 100 }
+        labelEn: { type: string, minLength: 1, maxLength: 100 }
+        parentId: { type: ["string", "null"] }
+        aliases: { type: array, maxItems: 40, items: { type: string, maxLength: 100 } }
+        resourceType: { type: string, enum: [PRODUCT, SERVICE, MIXED] }
+        renderer: { type: string, enum: [GENERIC, CAR, PROPERTY] }
+        attributes:
+          type: object
+          maxProperties: 50
+          additionalProperties: { $ref: "#/components/schemas/CategoryAttributeDefinition" }
+        searchFilters:
+          type: object
+          maxProperties: 50
+          additionalProperties: { $ref: "#/components/schemas/CategoryAttributeDefinition" }
+        allowAdditionalAttributes: { type: boolean }
+        isActive: { type: boolean }
+        rules: { $ref: "#/components/schemas/MarketplaceCategoryRules" }
+    MarketplaceCategoryAuditRecord:
+      type: object
+      required: [id, categoryId, actorId, actorName, action, before, after, createdAt]
+      properties:
+        id: { type: string }
+        categoryId: { type: string }
+        actorId: { type: string }
+        actorName: { type: string }
+        action: { type: string, enum: [CREATE, UPDATE] }
+        before:
+          type: [object, "null"]
+          additionalProperties: true
+        after:
+          type: object
+          additionalProperties: true
+        createdAt: { type: string, format: date-time }
+    MarketRestrictedCategoriesSnapshot:
+      type: object
+      required: [restrictedCategories]
+      properties:
+        restrictedCategories:
+          type: array
+          items: { type: string }
+    MarketCategoryPolicyAuditData:
+      type: object
+      required: [before, after]
+      properties:
+        before: { $ref: "#/components/schemas/MarketRestrictedCategoriesSnapshot" }
+        after: { $ref: "#/components/schemas/MarketRestrictedCategoriesSnapshot" }
+        reason: { type: string, enum: [CATEGORY_RENAMED] }
+        categoryId: { type: string }
+    MarketCategoryPolicyAuditRecord:
+      type: object
+      required: [id, marketId, actorId, actorName, action, data, createdAt]
+      properties:
+        id: { type: string }
+        marketId: { type: string }
+        actorId: { type: string }
+        actorName: { type: string }
+        action: { type: string, enum: [CATEGORY_POLICY] }
+        data: { $ref: "#/components/schemas/MarketCategoryPolicyAuditData" }
+        createdAt: { type: string, format: date-time }
+    ListingPricingMode:
+      type: string
+      enum: [FIXED, NEGOTIABLE, OPEN_TO_OFFERS]
+    ListingPriceRepresentation:
+      type: string
+      enum: [FIXED, NEGOTIABLE, OPEN_TO_OFFERS, STARTING_FROM, QUOTE_REQUIRED]
+      description: >-
+        What the price means. STARTING_FROM (a starting amount) and QUOTE_REQUIRED (no price; the
+        seller quotes) are stored as pricingMode OPEN_TO_OFFERS and are never bought directly.
+        Only FIXED is purchasable without an agreement; every representation accepts buyer proposals.
+    Listing:
+      type: object
+      required: [id, title, description, category, area, unitPrice, pricingMode, currency, availableQuantity, reservedQuantity, inventoryMode, fulfilmentType, sellerName, rating, imageUrl, contactPhone, status]
+      properties:
+        id: { type: string }
+        title: { type: string }
+        description: { type: string }
+        category: { type: string }
+        categoryId: { type: string }
+        isSponsored:
+          type: boolean
+          description: Set only by the server for a paid placement; always rendered with a visible «إعلان ممول» label.
+        sponsoredTier:
+          type: string
+          enum: [STANDARD, VIP]
+          description: Paid tier of a sponsored slot; VIP is shown together with «ممول» and never means a verified seller.
+        sponsoredToken:
+          type: string
+          maxLength: 1024
+          description: Opaque signed attribution token for a delivered paid card (no personal data); the server alone decides any charge.
+        recommendationReasons:
+          type: array
+          maxItems: 6
+          items: { type: string, maxLength: 120 }
+          description: Recommendation and buyer-ranking surfaces only; each reason is a deterministic signal that matched.
+        area: { type: string }
+        city: { type: string }
+        attributes: { type: object, additionalProperties: true }
+        paymentMethods:
+          type: array
+          maxItems: 2
+          items: { type: string, enum: [CASH_DIRECT, CARD] }
+        unitPrice: { type: ["string", "null"] }
+        pricingMode: { $ref: "#/components/schemas/ListingPricingMode" }
+        priceRepresentation: { $ref: "#/components/schemas/ListingPriceRepresentation" }
+        currency: { type: string }
+        availableQuantity: { type: ["integer", "null"], minimum: 0 }
+        reservedQuantity: { type: integer }
+        inventoryMode: { type: string, enum: [LIMITED, UNLIMITED] }
+        fulfilmentType: { type: string, enum: [PICKUP, DELIVERY, DIGITAL, SERVICE] }
+        sellerName: { type: string }
+        sellerId: { type: string }
+        sellerAvatarObjectPath: { type: ["string", "null"] }
+        rating: { type: number }
+        reviewCount: { type: integer }
+        imageUrl: { type: string }
+        imageUrls: { type: array, maxItems: 6, items: { type: string, maxLength: 2000 } }
+        contactPhone: { type: ["string", "null"], maxLength: 30 }
+        negotiable:
+          type: boolean
+          description: A buyer may propose a price on this listing (true for every listing with a known price representation). An agreed price is private to that buyer; the public price never changes.
+        status: { type: string, enum: [DRAFT, PUBLISHED, PAUSED, ARCHIVED] }
+        createdAt: { type: string }
+    ListingInput:
+      type: object
+      required: [title, description, category, area, unitPrice, inventoryMode, fulfilmentType, imageUrl]
+      properties:
+        title: { type: string, minLength: 2 }
+        description: { type: string, minLength: 10 }
+        category: { type: string }
+        categoryId: { type: string }
+        area: { type: string }
+        city: { type: string, maxLength: 100 }
+        attributes: { type: object, additionalProperties: true }
+        paymentMethods:
+          type: array
+          minItems: 1
+          maxItems: 2
+          items: { type: string, enum: [CASH_DIRECT, CARD] }
+        unitPrice: { type: ["string", "null"], minLength: 1, maxLength: 32, pattern: '^[0-9]+(\.[0-9]+)?$' }
+        pricingMode: { $ref: "#/components/schemas/ListingPricingMode" }
+        priceRepresentation: { $ref: "#/components/schemas/ListingPriceRepresentation" }
+        availableQuantity: { type: ["integer", "null"], minimum: 1 }
+        inventoryMode: { type: string, enum: [LIMITED, UNLIMITED] }
+        fulfilmentType: { type: string, enum: [PICKUP, DELIVERY, DIGITAL, SERVICE] }
+        imageUrl: { type: string }
+        imageUrls: { type: array, maxItems: 6, items: { type: string, maxLength: 2000 } }
+        contactPhone: { type: ["string", "null"], maxLength: 30 }
+        negotiable: { type: boolean }
+    ListingStatusAction:
+      type: object
+      required: [action]
+      additionalProperties: false
+      properties:
+        action: { type: string, enum: [PAUSE, RESUME] }
+    ListingUpdate:
+      type: object
+      required: [title, description, category, area, unitPrice, inventoryMode, fulfilmentType, imageUrl]
+      properties:
+        title: { type: string, minLength: 2 }
+        description: { type: string, minLength: 10 }
+        category: { type: string }
+        categoryId: { type: string }
+        area: { type: string }
+        city: { type: string, maxLength: 100 }
+        attributes: { type: object, additionalProperties: true }
+        unitPrice: { type: ["string", "null"], minLength: 1, maxLength: 32, pattern: '^[0-9]+(\.[0-9]+)?$' }
+        pricingMode: { $ref: "#/components/schemas/ListingPricingMode" }
+        priceRepresentation: { $ref: "#/components/schemas/ListingPriceRepresentation" }
+        availableQuantity: { type: ["integer", "null"], minimum: 1 }
+        inventoryMode: { type: string, enum: [LIMITED, UNLIMITED] }
+        fulfilmentType: { type: string, enum: [PICKUP, DELIVERY, DIGITAL, SERVICE] }
+        imageUrl: { type: string }
+        imageUrls: { type: array, maxItems: 6, items: { type: string, maxLength: 2000 } }
+        contactPhone: { type: ["string", "null"], maxLength: 30 }
+        negotiable: { type: boolean }
+    OrderItem:
+      type: object
+      required: [listingId, listingTitle, listingImageUrl, quantity, unitPrice, total, currency, fulfilmentType]
+      properties:
+        listingId: { type: string }
+        listingTitle: { type: string }
+        listingImageUrl: { type: string }
+        quantity: { type: integer }
+        unitPrice: { type: string }
+        total: { type: string }
+        currency: { type: string }
+        fulfilmentType: { type: string, enum: [PICKUP, DELIVERY, DIGITAL, SERVICE] }
+    Order:
+      type: object
+      required: [id, listingId, listingTitle, listingImageUrl, buyerName, sellerName, quantity, unitPrice, total, currency, fulfilmentType, status, createdAt, updatedAt, expiresAt, platformFeeMinor, sellerAmountMinor, minorUnitScale, commissionRateBps]
+      properties:
+        id: { type: string }
+        listingId: { type: string }
+        listingTitle: { type: string }
+        listingImageUrl: { type: string }
+        buyerName: { type: string }
+        buyerAvatarObjectPath: { type: ["string", "null"] }
+        sellerName: { type: string }
+        sellerAvatarObjectPath: { type: ["string", "null"] }
+        quantity: { type: integer }
+        unitPrice: { type: string }
+        total: { type: string }
+        currency: { type: string }
+        platformFeeMinor: { type: integer, minimum: 0 }
+        sellerAmountMinor: { type: integer, minimum: 0 }
+        minorUnitScale: { type: integer, minimum: 0, maximum: 6 }
+        commissionRateBps: { type: integer, minimum: 0, maximum: 10000 }
+        fulfilmentType: { type: string }
+        status: { type: string, enum: [CREATED, PAYMENT_PENDING, PAID, ACCEPTED, IN_PROGRESS, SELLER_MARKED_DELIVERED, BUYER_CONFIRMED, COMPLETED, CANCELLED, DISPUTED] }
+        createdAt: { type: string }
+        updatedAt: { type: string }
+        expiresAt: { type: string }
+        deliveryProof: { type: ["string", "null"] }
+        issue: { type: ["string", "null"], maxLength: 1500 }
+        dispute:
+          type: object
+          required: [reason, description, evidence]
+          properties:
+            reason: { type: string, minLength: 3, maxLength: 100 }
+            description: { type: string, minLength: 10, maxLength: 600 }
+            evidence:
+              type: array
+              items:
+                type: object
+                properties:
+                  type: { type: string }
+                  reference: { type: string }
+                  submittedBy: { type: string }
+                  createdAt: { type: string }
+            status: { type: string }
+            resolution: { type: [string, "null"] }
+            resolvedAt: { type: [string, "null"] }
+        sellerId: { type: string }
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/OrderItem" }
+    OrderContactRelease:
+      type: object
+      required: [orderId, contacts]
+      properties:
+        orderId: { type: string }
+        contacts:
+          type: array
+          items:
+            type: object
+            required: [listingTitle, phone]
+            properties:
+              listingTitle: { type: string }
+              phone: { type: string }
+    DisputeEvidence:
+      type: object
+      required: [type, reference, submittedBy, createdAt]
+      properties:
+        type: { type: string }
+        reference: { type: string }
+        submittedBy: { type: string }
+        createdAt: { type: string }
+    AdminDispute:
+      type: object
+      required: [id, orderId, status, reason, description, evidence, orderStatus, buyerId, buyerName, sellerId, sellerName, quantity, subtotalMinor, currencyCode, minorUnitScale, commissionRateBps, platformFeeMinor, sellerAmountMinor, createdAt, resolution, resolutionNote, resolvedAt, resolvedBy, resolvedByName]
+      properties:
+        id: { type: string }
+        orderId: { type: string }
+        status: { type: string, enum: [OPEN, RESOLVED] }
+        reason: { type: string }
+        description: { type: string }
+        evidence:
+          type: array
+          items: { $ref: "#/components/schemas/DisputeEvidence" }
+        orderStatus: { type: string }
+        buyerId: { type: string }
+        buyerName: { type: string }
+        sellerId: { type: string }
+        sellerName: { type: string }
+        quantity: { type: integer }
+        subtotalMinor: { type: integer, minimum: 0 }
+        currencyCode: { type: string }
+        minorUnitScale: { type: integer, minimum: 0, maximum: 6 }
+        commissionRateBps: { type: integer, minimum: 0, maximum: 10000 }
+        platformFeeMinor: { type: integer, minimum: 0 }
+        sellerAmountMinor: { type: integer, minimum: 0 }
+        createdAt: { type: string }
+        resolution: { type: ["string", "null"] }
+        resolutionNote: { type: ["string", "null"] }
+        resolvedAt: { type: ["string", "null"] }
+        resolvedBy: { type: ["string", "null"] }
+        resolvedByName: { type: ["string", "null"] }
+    ResolveAdminDisputeInput:
+      type: object
+      required: [resolution]
+      properties:
+        resolution: { type: string, enum: [BUYER, SELLER] }
+        note: { type: string, maxLength: 1000 }
+    AdminDisputeResolutionResult:
+      type: object
+      required: [orderId, disputeStatus, orderStatus, resolution, resolutionNote, resolvedAt, resolvedBy, commissionRateBps, platformFeeMinor, sellerAmountMinor, sellerDueCreated]
+      properties:
+        orderId: { type: string }
+        disputeStatus: { type: string, enum: [RESOLVED] }
+        orderStatus: { type: string, enum: [COMPLETED, CANCELLED] }
+        resolution: { type: string, enum: [BUYER, SELLER] }
+        resolutionNote: { type: ["string", "null"] }
+        resolvedAt: { type: string }
+        resolvedBy: { type: string }
+        commissionRateBps: { type: integer, minimum: 0, maximum: 10000 }
+        platformFeeMinor: { type: integer, minimum: 0 }
+        sellerAmountMinor: { type: integer, minimum: 0 }
+        sellerDueCreated: { type: boolean }
+    CheckoutLineInput:
+      type: object
+      required: [listingId, quantity, fulfilmentType]
+      properties:
+        listingId: { type: string, minLength: 1 }
+        quantity: { type: integer, minimum: 1 }
+        fulfilmentType: { type: string, enum: [PICKUP, DELIVERY, DIGITAL, SERVICE] }
+    CheckoutInput:
+      type: object
+      required: [items, idempotencyKey]
+      properties:
+        items:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items: { $ref: "#/components/schemas/CheckoutLineInput" }
+        idempotencyKey: { type: string, minLength: 16, maxLength: 128 }
+        deliveryInstructions: { type: string, maxLength: 1000 }
+    CheckoutResponse:
+      type: object
+      required: [orders, total, currency]
+      properties:
+        orders:
+          type: array
+          items: { $ref: "#/components/schemas/Order" }
+        total: { type: string }
+        currency: { type: string }
+    CheckoutConflict:
+      type: object
+      required: [error]
+      properties:
+        error: { type: string }
+        issues:
+          type: array
+          items:
+            type: object
+            required: [listingId, code, message]
+            properties:
+              listingId: { type: string }
+              code: { type: string, enum: [NOT_FOUND, NOT_ACTIVE, SELLER_UNAVAILABLE, FULFILMENT_UNAVAILABLE, OUT_OF_STOCK, INVALID_QUANTITY, PRICING_UNAVAILABLE] }
+              message: { type: string }
+              availableQuantity: { type: ["integer", "null"] }
+    OrderInput:
+      type: object
+      required: [listingId, quantity, fulfilmentType, idempotencyKey]
+      properties:
+        listingId: { type: string }
+        quantity: { type: integer, minimum: 1 }
+        fulfilmentType: { type: string, enum: [PICKUP, DELIVERY, DIGITAL, SERVICE] }
+        idempotencyKey: { type: string, minLength: 16, maxLength: 128 }
+        deliveryInstructions: { type: string, maxLength: 1000 }
+    DeliveryInput:
+      type: object
+      required: [proofType, proofToken]
+      properties:
+        proofType: { type: string, enum: [QR, CODE, COURIER, START_END] }
+        proofToken: { type: string }
+    ConfirmationInput:
+      type: object
+      required: [received]
+      properties:
+        received: { type: boolean }
+        issue: { type: ["string", "null"], maxLength: 1500 }
+        dispute:
+          type: object
+          required: [reason, description, evidence]
+          properties:
+            reason: { type: string, minLength: 3, maxLength: 100 }
+            description: { type: string, minLength: 10, maxLength: 600 }
+            evidence: { type: array, maxItems: 5, items: { type: string, maxLength: 300 } }
+    CancelInput:
+      type: object
+      required: [reason]
+      properties:
+        reason: { type: string, minLength: 3 }
+    Message:
+      type: object
+      required: [id, orderId, senderName, senderRole, body, createdAt, isMine]
+      properties:
+        id: { type: string }
+        orderId: { type: string }
+        senderName: { type: string }
+        senderRole: { type: string, enum: [BUYER, SELLER, ADMIN, SYSTEM] }
+        body: { type: string }
+        createdAt: { type: string }
+        isMine: { type: boolean }
+    MessageInput:
+      type: object
+      required: [body]
+      properties:
+        body: { type: string, minLength: 1, maxLength: 1000 }
+    AiConversation:
+      type: object
+      required: [id, kind, title, marketId, createdAt, updatedAt]
+      properties:
+        id: { type: string }
+        kind: { type: string, enum: [AI] }
+        title: { type: string }
+        marketId: { type: string }
+        createdAt: { type: string }
+        updatedAt: { type: string }
+    AiConversationRenameInput:
+      type: object
+      required: [title]
+      additionalProperties: false
+      properties:
+        title: { type: string, minLength: 1, maxLength: 80 }
+    AiConversationCopyInput:
+      type: object
+      additionalProperties: false
+      properties:
+        beforeMessageId:
+          type: string
+          description: Optional USER message to edit; only earlier text messages are copied into the new branch
+    AiTurnInput:
+      type: object
+      required: [message]
+      properties:
+        message: { type: string, minLength: 1, maxLength: 4000 }
+        reasoningEffort: { type: string, enum: [low, medium, high], description: Reasoning effort for the server-selected GPT-OSS model. }
+        clientMessageId: { type: string, format: uuid, description: Stable identifier for safe turn retries. }
+        imageObjectPaths:
+          type: array
+          maxItems: 4
+          items: { type: string, minLength: 1, maxLength: 500 }
+        locationRequestId:
+          type: string
+          format: uuid
+          description: The delivery location request or preview this explicit submission answers.
+        location: { $ref: "#/components/schemas/TransactionLocationInput" }
+    AiPreviewHistoryMessage:
+      type: object
+      additionalProperties: false
+      required: [actor, body]
+      properties:
+        actor: { type: string, enum: [USER, ASSISTANT] }
+        body: { type: string, maxLength: 1200 }
+    AiPreviewInput:
+      type: object
+      additionalProperties: false
+      required: [message, marketId]
+      properties:
+        message: { type: string, minLength: 1, maxLength: 2000 }
+        reasoningEffort: { type: string, enum: [low, medium, high], description: Reasoning effort for the server-selected GPT-OSS model. }
+        marketId:
+          type: string
+          minLength: 1
+          maxLength: 32
+          description: Active market that scopes the guest context; must match the server-resolved market.
+        history:
+          type: array
+          maxItems: 10
+          items: { $ref: "#/components/schemas/AiPreviewHistoryMessage" }
+        earlierUserTopics:
+          type: array
+          maxItems: 6
+          description: The guest's own older messages beyond history, oldest first. Topic hints for the model only; never routed, never authority, re-sanitized by the server.
+          items: { type: string, minLength: 1, maxLength: 160 }
+        query: { type: string, maxLength: 200 }
+        resourceIds:
+          type: array
+          maxItems: 24
+          uniqueItems: true
+          items: { type: string, minLength: 1, maxLength: 200 }
+        searchState: { $ref: "#/components/schemas/AiSearchState" }
+    AiVoiceRecording:
+      type: string
+      description: Raw audio bytes sent with an audio media type.
+    AiVoiceTranscriptionResponse:
+      type: object
+      additionalProperties: false
+      required: [transcript]
+      properties:
+        transcript: { type: string, minLength: 1, maxLength: 4000 }
+    AiPreviewResponse:
+      type: object
+      additionalProperties: false
+      required: [body, blocks]
+      properties:
+        body: { type: string, maxLength: 7000 }
+        blocks:
+          type: array
+          maxItems: 24
+          items: { $ref: "#/components/schemas/AiUiBlock" }
+        requiresAuth: { type: boolean }
+        query: { type: string, maxLength: 200 }
+        searchState: { $ref: "#/components/schemas/AiSearchState" }
+    AiGuestHandoffMessage:
+      type: object
+      additionalProperties: false
+      required: [id, actor, body]
+      properties:
+        id: { type: string, format: uuid }
+        actor: { type: string, enum: [USER, ASSISTANT] }
+        body: { type: string, minLength: 1, maxLength: 7000 }
+    AiGuestHandoffInput:
+      type: object
+      additionalProperties: false
+      required: [handoffId, userId, marketId, messages]
+      properties:
+        handoffId:
+          type: string
+          format: uuid
+          description: Stable, single-use guest handoff identifier; also scopes the resulting conversation ID.
+        userId:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Must match the authenticated user to prevent account-switch attachment.
+        marketId:
+          type: string
+          minLength: 1
+          maxLength: 32
+        messages:
+          type: array
+          maxItems: 12
+          items: { $ref: "#/components/schemas/AiGuestHandoffMessage" }
+        continuation:
+          $ref: "#/components/schemas/AiGuestHandoffContinuation"
+    AiGuestHandoffContinuation:
+      type: object
+      additionalProperties: false
+      required: [messageId, body]
+      properties:
+        messageId: { type: string, format: uuid }
+        body: { type: string, minLength: 1, maxLength: 2000 }
+        listingId: { type: string, minLength: 1, maxLength: 200 }
+    AiGuestHandoffResponse:
+      type: object
+      required: [conversation, messages, continuationStatus]
+      properties:
+        conversation: { $ref: "#/components/schemas/AiConversation" }
+        messages:
+          type: array
+          items: { $ref: "#/components/schemas/AiMessage" }
+        continuationStatus:
+          type: string
+          enum: [NOT_STARTED, PENDING, FAILED, COMPLETED, UNCERTAIN]
+    TransactionLocationInput:
+      type: object
+      description: >
+        One explicit, user-initiated location: a single device reading or a typed
+        address. Never sent automatically; validated and scoped by the delivery authority.
+      required: [source]
+      additionalProperties: false
+      properties:
+        source: { type: string, enum: [DEVICE, MANUAL] }
+        latitude: { type: number, minimum: -90, maximum: 90 }
+        longitude: { type: number, minimum: -180, maximum: 180 }
+        accuracyMeters: { type: number, minimum: 0 }
+        city: { type: string, maxLength: 100 }
+        area: { type: string, maxLength: 100 }
+        addressText: { type: string, maxLength: 300 }
+        note: { type: string, maxLength: 300 }
+    TransactionLocation:
+      type: object
+      required: [id, purpose, purposeLabel, source, latitude, longitude, accuracyMeters, accuracyNote, city, area, addressText, note, redacted, sharedByRole, updatedAt]
+      properties:
+        id: { type: string }
+        purpose: { type: string, enum: [DELIVERY_DESTINATION, PICKUP_POINT, SERVICE_APPOINTMENT] }
+        purposeLabel: { type: string }
+        source: { type: string, enum: [DEVICE, MANUAL] }
+        latitude: { type: number, nullable: true }
+        longitude: { type: number, nullable: true }
+        accuracyMeters: { type: number, nullable: true }
+        accuracyNote: { type: string, nullable: true }
+        city: { type: string }
+        area: { type: string }
+        addressText: { type: string, nullable: true }
+        note: { type: string, nullable: true }
+        redacted: { type: boolean }
+        sharedByRole: { type: string, enum: [BUYER, SELLER] }
+        updatedAt: { type: string }
+    DeliveryOption:
+      type: object
+      required: [method, label, available]
+      properties:
+        method: { type: string, enum: [PICKUP, SELLER_DELIVERY, COURIER, EXTERNAL_PROVIDER] }
+        label: { type: string }
+        available: { type: boolean }
+        reason: { type: string }
+    CourierFareProposalInput:
+      type: object
+      additionalProperties: false
+      required: [amount, idempotencyKey]
+      properties:
+        amount:
+          type: string
+          minLength: 1
+          maxLength: 32
+          description: Positive decimal string in the order market's currency.
+        idempotencyKey:
+          type: string
+          minLength: 12
+          maxLength: 128
+    CourierFareConfirmInput:
+      type: object
+      additionalProperties: false
+      required: [proposalId]
+      properties:
+        proposalId: { type: string }
+    CourierFareProposal:
+      type: object
+      required:
+        - id
+        - fareMinor
+        - currencyCode
+        - minorUnitScale
+        - amount
+        - status
+        - proposedByMe
+        - buyerConfirmed
+        - courierConfirmed
+        - canConfirm
+        - createdAt
+      properties:
+        id: { type: string }
+        fareMinor: { type: integer, minimum: 1 }
+        currencyCode: { type: string, pattern: "^[A-Z]{3}$" }
+        minorUnitScale: { type: integer, minimum: 0, maximum: 3 }
+        amount: { type: string }
+        status: { type: string, enum: [PENDING, SUPERSEDED, AGREED, CANCELLED] }
+        proposedByMe: { type: boolean }
+        buyerConfirmed: { type: boolean }
+        courierConfirmed: { type: boolean }
+        canConfirm: { type: boolean }
+        createdAt: { type: string, format: date-time }
+    CourierFareAgreement:
+      type: object
+      required:
+        - id
+        - proposalId
+        - fareMinor
+        - currencyCode
+        - minorUnitScale
+        - amount
+        - commissionRateBps
+        - estimatedCommissionMinor
+        - estimatedCommission
+        - agreedAt
+      properties:
+        id: { type: string }
+        proposalId: { type: string }
+        fareMinor: { type: integer, minimum: 1 }
+        currencyCode: { type: string, pattern: "^[A-Z]{3}$" }
+        minorUnitScale: { type: integer, minimum: 0, maximum: 3 }
+        amount: { type: string }
+        commissionRateBps: { type: integer, enum: [1000] }
+        estimatedCommissionMinor: { type: integer, minimum: 0 }
+        estimatedCommission: { type: string }
+        agreedAt: { type: string, format: date-time }
+    CourierFareView:
+      type: object
+      required: [orderId, status, role, currencyCode, minorUnitScale, proposal, agreement]
+      properties:
+        orderId: { type: string }
+        status:
+          type: string
+          enum: [WAITING_FOR_COURIER, ACCEPTED, RELEASED, AWAITING_CONFIRMATION, AGREED]
+        role: { type: string, enum: [BUYER, COURIER] }
+        currencyCode: { type: string, pattern: "^[A-Z]{3}$" }
+        minorUnitScale: { type: integer, minimum: 0, maximum: 3 }
+        proposal:
+          allOf: [{ $ref: "#/components/schemas/CourierFareProposal" }]
+          nullable: true
+        agreement:
+          allOf: [{ $ref: "#/components/schemas/CourierFareAgreement" }]
+          nullable: true
+    CourierFareProposalResult:
+      type: object
+      required: [proposal, agreement, idempotent]
+      properties:
+        proposal: { $ref: "#/components/schemas/CourierFareProposal" }
+        agreement:
+          allOf: [{ $ref: "#/components/schemas/CourierFareAgreement" }]
+          nullable: true
+        idempotent: { type: boolean }
+    CourierFareConfirmResult:
+      type: object
+      required: [proposal, agreement, agreed, idempotent]
+      properties:
+        proposal:
+          allOf: [{ $ref: "#/components/schemas/CourierFareProposal" }]
+          nullable: true
+        agreement:
+          allOf: [{ $ref: "#/components/schemas/CourierFareAgreement" }]
+          nullable: true
+        agreed: { type: boolean }
+        idempotent: { type: boolean }
+    CourierCommissionBalance:
+      type: object
+      required: [marketId, currencyCode, minorUnitScale, amountMinor, deliveryCount, amount]
+      properties:
+        marketId: { type: string }
+        currencyCode: { type: string, pattern: "^[A-Z]{3}$" }
+        minorUnitScale: { type: integer, minimum: 0, maximum: 3 }
+        amountMinor: { type: integer, minimum: 0 }
+        deliveryCount: { type: integer, minimum: 0 }
+        amount: { type: string }
+    CourierCommissionAccount:
+      type: object
+      required:
+        - courierId
+        - outstandingDeliveryCount
+        - hold
+        - holdThreshold
+        - settlementMode
+        - realMoneyTransferred
+        - balances
+        - earningsHistory
+      properties:
+        courierId: { type: string }
+        outstandingDeliveryCount: { type: integer, minimum: 0 }
+        hold: { type: boolean }
+        holdThreshold: { type: integer, enum: [10] }
+        settlementMode: { type: string, enum: [SIMULATION_ONLY] }
+        realMoneyTransferred: { type: boolean, enum: [false] }
+        balances:
+          type: array
+          items: { $ref: "#/components/schemas/CourierCommissionBalance" }
+        earningsHistory:
+          type: array
+          items: { $ref: "#/components/schemas/CourierCommissionEarning" }
+    CourierCommissionEarning:
+      type: object
+      required:
+        - orderId
+        - orderReference
+        - completedAt
+        - marketId
+        - agreedFareMinor
+        - agreedFare
+        - commissionRateBps
+        - commissionMinor
+        - commission
+        - courierShareMinor
+        - courierShare
+        - currencyCode
+        - minorUnitScale
+        - receivableStatus
+        - simulationClearedAt
+        - settlementMode
+        - realPaymentVerified
+      properties:
+        orderId: { type: string }
+        orderReference: { type: string }
+        completedAt: { type: string, format: date-time }
+        marketId: { type: string }
+        agreedFareMinor: { type: integer, minimum: 1 }
+        agreedFare: { type: string }
+        commissionRateBps: { type: integer, enum: [1000] }
+        commissionMinor: { type: integer, minimum: 0 }
+        commission: { type: string }
+        courierShareMinor: { type: integer, minimum: 0 }
+        courierShare: { type: string }
+        currencyCode: { type: string, pattern: "^[A-Z]{3}$" }
+        minorUnitScale: { type: integer, minimum: 0, maximum: 3 }
+        receivableStatus: { type: string, enum: [OUTSTANDING, SIMULATION_CLEARED] }
+        simulationClearedAt: { type: ["string", "null"], format: date-time }
+        settlementMode: { type: ["string", "null"], enum: [SIMULATION_ONLY, null] }
+        realPaymentVerified: { type: boolean, enum: [false] }
+    CourierCommissionSettlementInput:
+      type: object
+      additionalProperties: false
+      required: [marketId, currencyCode, idempotencyKey]
+      properties:
+        marketId: { type: string }
+        currencyCode: { type: string, pattern: "^[A-Z]{3}$" }
+        idempotencyKey:
+          type: string
+          minLength: 12
+          maxLength: 128
+    CourierCommissionSettlement:
+      type: object
+      required:
+        - id
+        - courierId
+        - marketId
+        - amountMinor
+        - currencyCode
+        - minorUnitScale
+        - receivableCount
+        - idempotencyKey
+        - mode
+        - simulatedAt
+      properties:
+        id: { type: string }
+        courierId: { type: string }
+        marketId: { type: string }
+        amountMinor: { type: integer, minimum: 1 }
+        currencyCode: { type: string, pattern: "^[A-Z]{3}$" }
+        minorUnitScale: { type: integer, minimum: 0, maximum: 3 }
+        receivableCount: { type: integer, minimum: 1 }
+        idempotencyKey: { type: string }
+        mode: { type: string, enum: [SIMULATION_ONLY] }
+        simulatedAt: { type: string, format: date-time }
+    CourierCommissionSettlementResult:
+      type: object
+      required: [settlement, idempotent, realMoneyTransferred]
+      properties:
+        settlement: { $ref: "#/components/schemas/CourierCommissionSettlement" }
+        idempotent: { type: boolean }
+        realMoneyTransferred: { type: boolean, enum: [false] }
+    OrderDelivery:
+      type: object
+      description: Participant-only delivery view of one order (buyer or seller of that order).
+      required: [orderId, orderRef, orderStatus, listingTitle, role, capability, options, fulfillment, destination, pickupPoint, serviceLocation, fee, canSelectMethod, canChangeDestination, canSetPickupPoint, nextActions, awaitingHandoff]
+      properties:
+        orderId: { type: string }
+        orderRef: { type: string }
+        orderStatus: { type: string }
+        listingTitle: { type: string }
+        role: { type: string, enum: [BUYER, SELLER] }
+        capability: { type: string, enum: [PICKUP_ONLY, SELLER_DELIVERY, SERVICE, NONE] }
+        options:
+          type: array
+          items: { $ref: "#/components/schemas/DeliveryOption" }
+        fulfillment:
+          type: object
+          nullable: true
+          required: [method, methodLabel, status, statusLabel, failureReason, failureLabel, version, updatedAt]
+          properties:
+            method: { type: string, enum: [PICKUP, SELLER_DELIVERY, COURIER, EXTERNAL_PROVIDER] }
+            methodLabel: { type: string }
+            status: { type: string, enum: [REQUESTED, ACCEPTED, READY_FOR_PICKUP, PICKED_UP, OUT_FOR_DELIVERY, DELIVERED, CANCELLED, FAILED] }
+            statusLabel: { type: string }
+            failureReason: { type: string, nullable: true, enum: [BUYER_UNAVAILABLE, ADDRESS_UNREACHABLE, SELLER_UNABLE, OTHER, null] }
+            failureLabel: { type: string, nullable: true }
+            version: { type: integer }
+            updatedAt: { type: string }
+        destination:
+          allOf: [{ $ref: "#/components/schemas/TransactionLocation" }]
+          nullable: true
+        pickupPoint:
+          allOf: [{ $ref: "#/components/schemas/TransactionLocation" }]
+          nullable: true
+        serviceLocation:
+          allOf: [{ $ref: "#/components/schemas/TransactionLocation" }]
+          nullable: true
+        fee:
+          type: object
+          required: [implemented, note]
+          properties:
+            implemented: { type: boolean }
+            note: { type: string }
+        canSelectMethod: { type: boolean }
+        canChangeDestination: { type: boolean }
+        canSetPickupPoint: { type: boolean }
+        nextActions:
+          type: array
+          items: { type: string, enum: [ACCEPTED, OUT_FOR_DELIVERY, READY_FOR_PICKUP, CANCELLED, FAILED] }
+        awaitingHandoff: { type: boolean }
+    OrderTracking:
+      type: object
+      required: [orderId, orderStatus, delivery, tracking, progress]
+      properties:
+        orderId: { type: string }
+        orderStatus: { type: string }
+        delivery:
+          type: object
+          nullable: true
+          required: [method, methodLabel, status, statusLabel, updatedAt]
+          properties:
+            method: { type: string, enum: [PICKUP, SELLER_DELIVERY, COURIER, EXTERNAL_PROVIDER] }
+            methodLabel: { type: string }
+            status: { type: string, enum: [REQUESTED, ACCEPTED, READY_FOR_PICKUP, PICKED_UP, OUT_FOR_DELIVERY, DELIVERED, CANCELLED, FAILED] }
+            statusLabel: { type: string }
+            updatedAt: { type: string, format: date-time }
+        tracking:
+          oneOf:
+            - $ref: "#/components/schemas/OrderTrackingUnavailable"
+            - $ref: "#/components/schemas/OrderTrackingStopped"
+            - $ref: "#/components/schemas/OrderTrackingLive"
+        progress:
+          type: array
+          items: { $ref: "#/components/schemas/OrderProgressEvent" }
+    OrderProgressEvent:
+      type: object
+      required: [type, occurredAt, actorRole]
+      properties:
+        type: { type: string, enum: [PICKED_UP, OUT_FOR_DELIVERY, ARRIVED, HANDED_OFF, BUYER_RECEIVED] }
+        occurredAt: { type: string, format: date-time }
+        actorRole: { type: string, enum: [COURIER, BUYER] }
+    OrderTrackingUnavailable:
+      type: object
+      required: [state, reason]
+      properties:
+        state: { type: string, const: UNAVAILABLE }
+        reason: { type: string, enum: [NOT_BUYER, NOT_COURIER, NOT_ACTIVE, NO_DRIVER, NO_PROVIDER] }
+    OrderTrackingStopped:
+      type: object
+      required: [state, reason]
+      properties:
+        state: { type: string, const: STOPPED }
+        reason: { type: string, const: ORDER_TERMINAL }
+    OrderTrackingLive:
+      type: object
+      required: [state, position, route, eta]
+      properties:
+        state: { type: string, enum: [LIVE, STALE] }
+        position:
+          type: object
+          required: [latitude, longitude, observedAt]
+          properties:
+            latitude: { type: number, minimum: -90, maximum: 90 }
+            longitude: { type: number, minimum: -180, maximum: 180 }
+            accuracyMeters: { type: number, minimum: 0, nullable: true }
+            observedAt: { type: string, format: date-time }
+        route:
+          type: object
+          nullable: true
+          required: [encodedPolyline, observedAt]
+          properties:
+            encodedPolyline: { type: string, maxLength: 200000 }
+            observedAt: { type: string, format: date-time }
+        eta:
+          type: object
+          nullable: true
+          required: [arrivalAt, observedAt]
+          properties:
+            arrivalAt: { type: string, format: date-time }
+            observedAt: { type: string, format: date-time }
+    AiListingCartAction:
+      type: object
+      required: [resultSetId, resourceId]
+      properties:
+        resultSetId: { type: string, format: uuid }
+        resourceId: { type: string, minLength: 1, maxLength: 200 }
+    AiListingCartActionResponse:
+      type: object
+      required: [assistantMessage]
+      properties:
+        assistantMessage: { $ref: "#/components/schemas/AiMessage" }
+    AiListingManagementPreviewAction:
+      type: object
+      required: [action]
+      additionalProperties: false
+      properties:
+        action: { type: string, enum: [CONFIRM, CANCEL] }
+    AiListingManagementPreviewResult:
+      type: object
+      required: [status, listingId]
+      properties:
+        status: { type: string, enum: [PENDING, CONFIRMED, CANCELLED, EXPIRED] }
+        listingId: { type: string }
+    AiMessage:
+      type: object
+      required: [id, actor, body, createdAt, blocks]
+      properties:
+        id: { type: string }
+        actor: { type: string, enum: [USER, ASSISTANT, SYSTEM, TOOL] }
+        body: { type: string }
+        createdAt: { type: string }
+        blocks:
+          type: array
+          items: { $ref: "#/components/schemas/AiUiBlock" }
+        actionReceipts:
+          type: array
+          maxItems: 12
+          description: >
+            The commercial actions this turn opened or moved, as recorded by DINAR's action
+            ledger and re-read on every response: the status is the ledger's current one, never
+            the assistant's text. Only the viewer's own actions in this conversation appear.
+          items: { $ref: "#/components/schemas/AiActionReceipt" }
+    AiActionReceipt:
+      type: object
+      additionalProperties: false
+      required: [action, lifecycle, title, requiresConfirmation]
+      properties:
+        action: { type: string, maxLength: 40 }
+        lifecycle:
+          type: string
+          enum: [PROPOSED, REQUIRES_CONFIRMATION, EXECUTING, SUCCEEDED, FAILED, UNKNOWN]
+        outcome:
+          type: string
+          description: Why a FAILED action did not complete.
+          enum: [REJECTED, CANCELLED, EXPIRED, SUPERSEDED]
+        title: { type: string, maxLength: 120 }
+        resource: { type: string, maxLength: 160 }
+        amount:
+          type: object
+          additionalProperties: false
+          required: [value, currency, kind]
+          properties:
+            value: { type: string, maxLength: 24 }
+            currency: { type: string, maxLength: 8 }
+            kind: { type: string, enum: [PROPOSED, SUBMITTED, AGREED, PAYMENT] }
+        orderId: { type: string, maxLength: 64 }
+        paymentState: { type: string, enum: [AWAITING_CONFIRMATION, SIMULATED_CAPTURED, CAPTURED] }
+        nextStep: { type: string, maxLength: 200 }
+        requiresConfirmation: { type: boolean }
+        failure: { type: string, maxLength: 240 }
+    AiUiBlock:
+      type: object
+      required: [type, version, payload]
+      properties:
+        type: { type: string, enum: [LISTING_RESULTS, SURFACE] }
+        version: { type: integer, enum: [1] }
+        payload:
+          type: object
+          required: [resultSetId, listings]
+          properties:
+            draft: { type: object, additionalProperties: true }
+            draftStep: { type: string }
+            draftReview:
+              type: object
+              additionalProperties: true
+              description: >
+                Typed seller draft review built by the server: each value with its provenance
+                (USER_DECLARED, IMAGE_INFERRED, DINAR_DERIVED, SERVER_FACT, UNKNOWN), image
+                guesses marked as needing confirmation, every missing required field, and the
+                allowed actions (PUBLISH only when nothing is missing, EDIT, CANCEL).
+            comparison:
+              type: object
+              additionalProperties: true
+              description: Current server facts of the compared listings side by side; values the seller did not state are null ("غير معروف").
+            purchaseReview:
+              type: object
+              additionalProperties: true
+              description: Review of a pending, confirm-only selection (adds to cart after re-reading price, stock and account); never pays.
+            sellerInsight:
+              type: object
+              additionalProperties: true
+              description: >
+                Seller insight from DINAR-internal facts only: price comparables (count, range,
+                median), listing factors phrased as possibilities (never as causes), or a
+                BUSINESS_SUMMARY of the seller's own stock, order counts or per-listing results
+                (shape: SellerBusinessInsight in @workspace/api-zod/conversation-runtime).
+            attributes: { type: object, additionalProperties: true }
+            resourceIds: { type: array, items: { type: string } }
+            resourceId: { type: string }
+            sellerContactRequested:
+              type: boolean
+              description: A request marker only; the number is retrieved separately through the order-authorized no-store endpoint.
+            hideMap: { type: boolean }
+            searchState: { $ref: "#/components/schemas/AiSearchState" }
+            presentation:
+              type: string
+              enum: [RESULTS, DETAILS]
+              description: DETAILS marks one result opened from the conversation's current result set.
+            photoSuggestionStatus:
+              type: string
+              enum: [UNAVAILABLE, FAILED, NO_SUGGESTIONS, SUGGESTIONS]
+            photoSuggestions:
+              type: array
+              maxItems: 12
+              items: { $ref: "#/components/schemas/AiPhotoSuggestion" }
+            managementPreview:
+              type: object
+              required: [previewId, action, listingId, listingTitle, fieldLabel, beforeValue, afterValue, status]
+              properties:
+                previewId: { type: string, format: uuid }
+                action: { type: string, enum: [UPDATE, PAUSE, RESUME, ARCHIVE] }
+                listingId: { type: string }
+                listingTitle: { type: string }
+                fieldLabel: { type: string }
+                beforeValue: { type: string }
+                afterValue: { type: string }
+                status: { type: string, enum: [PENDING, CONFIRMED, CANCELLED, EXPIRED] }
+            surface: { type: string, enum: [CART, CHECKOUT, AUTH, SETTINGS, ORDERS, ORDER, ORDERS_LIST, ORDER_SELECTOR, ORDER_STATUS, ORDER_TRACKING, SELL, MY_LISTINGS, DUES, MARKET, MARKET_SELECTOR, ACCOUNT, LOGOUT, CLARIFY, UNSUPPORTED, JOB_DRAFT, JOB_REVIEW, JOB_SEARCH_RESULTS, JOB_DETAILS, MY_JOBS, CV_PROFILE, CANDIDATE_SEARCH_RESULTS, CANDIDATE_DETAILS, APPLICATION_REVIEW, MY_APPLICATIONS, APPLICATION_LIST, EMPLOYMENT_ACTION, EMPLOYMENT_NOTICE, LOCATION_PERMISSION_REQUEST, LOCATION_PREVIEW, LOCATION_CONFIRMED, MANUAL_ADDRESS, DELIVERY_OPTIONS, DELIVERY_SUMMARY, DELIVERY_ACTION, DELIVERY_STATUS, PICKUP_DETAILS, DELIVERY_NOTICE, PROMOTION_OPTIONS, PROMOTION_REVIEW, PROMOTION_STATUS, MY_PROMOTIONS, PROMOTION_DETAILS, COMPARISON, PURCHASE_REVIEW, PAYMENT_REVIEW, DRIVER_ONBOARDING, DRIVER_ONBOARDING_REVIEW, DRIVER_STATUS, DRIVER_AVAILABILITY, DELIVERY_WORK_RESULTS, DRIVER_ASSIGNMENT_REVIEW, DRIVER_ASSIGNMENT_STATUS, DRIVER_EARNINGS_HISTORY, PROVIDER_CONNECTION_REVIEW, PROVIDER_SECRET_ONCE, PROVIDER_STATUS, ADVICE, NEGOTIATION_REVIEW, NEGOTIATION_STATUS, NEGOTIATION_LIST, MY_INTERESTS, MEMORY_SUMMARY, MEMORY_CONFIRMATION, MEMORY_UPDATED, COMMERCIAL_BALANCE, COMMERCIAL_LEDGER_SUMMARY, COMMERCIAL_TOPUP_REVIEW, COMMERCIAL_PRODUCTS, COMMERCIAL_PRODUCT_REVIEW, FEATURED_REVIEW, VIP_REVIEW, REFRESH_REVIEW, BUNDLE_REVIEW, BUNDLE_STATUS, PROMOTION_TYPE_OPTIONS, DEMAND_CAPTURE_REVIEW, CAMPAIGN_STATUS, CAMPAIGN_ANALYTICS, MARKET_PULSE, MARKET_OPPORTUNITY, BUSINESS_PLAN_REVIEW, BUSINESS_STATUS, COMMERCE_NOTICE, AI_USAGE, AI_PLANS, INQUIRY_DRAFT, INQUIRY_STATUS, INQUIRY_INCOMING, INQUIRY_LIST, INQUIRY_NOTICE, APP_THEME, MARKET_SWITCH_REVIEW, MARKET_SWITCH_STATUS, PROFILE_REVIEW, PROFILE_STATUS, CONTROL_NOTICE, PRIVACY_EXPORT, TUTORIAL_VIDEO_CARD] }
+            tutorial: { $ref: "#/components/schemas/AiTutorialPayload" }
+            guestSellerIntent:
+              type: boolean
+              description: Guest-only marker allowing same-market seller intent to be resumed after authentication.
+            employment:
+              type: object
+              additionalProperties: true
+              description: Allowlisted employment view (jobs, CV profile, candidates, applications, pending action), validated server-side.
+            delivery:
+              type: object
+              additionalProperties: true
+              description: >
+                Allowlisted delivery/location view for the order's own participant, rebuilt
+                server-side on every read. Stored copies never contain coordinates or address text.
+            promotion:
+              type: object
+              additionalProperties: true
+              description: >
+                Allowlisted seller promotion view (plans, review, campaigns), rebuilt from
+                server state on every read. Prices come only from admin plans.
+            driver:
+              type: object
+              additionalProperties: true
+              description: >
+                Allowlisted driver view (profile, review, coarse work cards, assignments),
+                rebuilt from server state on every read. Never contains contacts or coordinates.
+            provider:
+              type: object
+              additionalProperties: true
+              description: >
+                Allowlisted provider connection view (review, status, safe key prefix).
+                Never contains a key, secret or credential hash.
+            memory:
+              type: object
+              additionalProperties: false
+              required: [view, groups]
+              properties:
+                view: { type: string, enum: [MY_INTERESTS, MEMORY_SUMMARY, MEMORY_CONFIRMATION, MEMORY_UPDATED] }
+                groups:
+                  type: array
+                  maxItems: 6
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [label, items]
+                    properties:
+                      label: { type: string, maxLength: 80 }
+                      items:
+                        type: array
+                        maxItems: 12
+                        items:
+                          type: object
+                          additionalProperties: false
+                          required: [topic, label, reason]
+                          properties:
+                            topic: { type: string, maxLength: 80 }
+                            label: { type: string, maxLength: 120 }
+                            reason: { type: string, maxLength: 160 }
+              description: Private structured memory summary, returned only to the authenticated owner.
+            advice:
+              type: object
+              additionalProperties: true
+              description: >
+                G2 conversational answer: its class (CONVERSATIONAL_RESPONSE, GROUNDED_ADVICE,
+                CLARIFICATION_REQUIRED), the data scope it is grounded in (DINAR_INTERNAL or
+                GENERAL_KNOWLEDGE), deterministic statistics and reasons, and an optional topic
+                (SPONSORED_PLACEMENT, MARKETING_CLAIMS_BLOCKED with the refused claim kinds,
+                MARKETING_COPY for copy grounded in the seller's own listing record).
+                Never an action.
+            negotiation:
+              type: object
+              additionalProperties: true
+              description: >
+                Allowlisted price-negotiation view for one of its two parties (review, status
+                or list), rebuilt from the negotiation authority on every read.
+            inquiry:
+              type: object
+              additionalProperties: true
+              description: >
+                DINAR NEXT G2 buyer–seller inquiry view for one of its two parties (draft review,
+                status, incoming message, list, notice), rebuilt from the inquiry authority on every
+                read. Messages carry their author role and provenance (BUYER_AUTHORED,
+                SELLER_AUTHORED, DINAR_DRAFT_APPROVED) and per-message submitted/delivered/read
+                times; delivery is in-app only and external notifications are NOT_CONFIGURED.
+                Never contains phone numbers, addresses or the other party's account id.
+            control:
+              type: object
+              additionalProperties: true
+              description: >
+                Universal product control view (APP_THEME, MARKET_SWITCH_REVIEW/STATUS,
+                PROFILE_REVIEW/STATUS, CONTROL_NOTICE, PRIVACY_EXPORT), validated by ProductControlPayload in
+                @workspace/api-zod/conversation-runtime. Theme changes are client actions whose
+                status (REQUESTED, APPLIED, FAILED) is the device's own acknowledgement; market and
+                profile reviews show their pending action's real status. Never contains secrets,
+                coordinates or another user's data.
+            commerce:
+              type: object
+              additionalProperties: true
+              description: >
+                Monetization V3 commercial view (commercial balance, top-up and purchase reviews,
+                campaigns and aggregate results, Market Pulse, DINAR Business), and the G1 AI
+                usage card (AI_USAGE: plan tier, per-resource requests and tokens consumed in the
+                current period, renewal boundary) and plan comparison (AI_PLANS: allowances per
+                tier, configured prices or "not configured", billing connection state), rebuilt
+                from server state on every read. Never contains buyer identity, ledger keys,
+                provider costs or secrets.
+            resultSetId: { type: string }
+            listings:
+              type: array
+              items: { $ref: "#/components/schemas/Listing" }
+    AiControlActionAcknowledgement:
+      type: object
+      required: [status]
+      additionalProperties: false
+      properties:
+        status: { type: string, enum: [APPLIED, FAILED] }
+    AiControlActionAcknowledgementResult:
+      type: object
+      required: [status]
+      properties:
+        status: { type: string, enum: [REQUESTED, APPLIED, FAILED] }
+    AiEmploymentActionRequest:
+      type: object
+      required: [action]
+      additionalProperties: false
+      properties:
+        action: { type: string, enum: [CONFIRM, CANCEL] }
+    AiEmploymentActionResult:
+      type: object
+      required: [status, message]
+      properties:
+        status: { type: string, enum: [CONFIRMED, CANCELLED, EXPIRED] }
+        message: { type: string }
+    AiPromotionActionResult:
+      type: object
+      required: [status, message]
+      properties:
+        status: { type: string, enum: [CONFIRMED, CANCELLED, EXPIRED, REJECTED] }
+        message: { type: string }
+        promotionId: { type: string }
+    AiSearchState:
+      type: object
+      required: [search, filters]
+      properties:
+        search: { type: string, maxLength: 200 }
+        categoryId: { type: string, maxLength: 80 }
+        filters:
+          type: array
+          maxItems: 12
+          items:
+            type: object
+            required: [field, operator, value]
+            properties:
+              field: { type: string, minLength: 1, maxLength: 80 }
+              operator: { type: string, enum: [eq, ne, contains, gt, gte, lt, lte] }
+              value:
+                anyOf:
+                  - { type: string, maxLength: 200 }
+                  - { type: number }
+        sort: { type: string, enum: [RELEVANCE, PRICE_ASC, PRICE_DESC, NEWEST, YEAR_ASC, YEAR_DESC, MILEAGE_ASC, MILEAGE_DESC, PROPERTY_SIZE_ASC, PROPERTY_SIZE_DESC] }
+    AiPhotoSuggestion:
+      type: object
+      required: [field, value, confidence, imageObjectPath]
+      properties:
+        field: { type: string, minLength: 1, maxLength: 80 }
+        value:
+          anyOf:
+            - { type: string, maxLength: 160 }
+            - { type: number }
+        confidence: { type: number, minimum: 0, maximum: 1 }
+        imageObjectPath: { type: string, minLength: 1, maxLength: 500 }
+    AiTutorialPayload:
+      type: object
+      additionalProperties: false
+      required: [id, title, caption, steps, animation]
+      properties:
+        id:
+          type: string
+          enum: [SELL_FIRST_LISTING, PHOTO_FIRST_SELLING, PROMOTION_OVERVIEW, FEATURED_EXPLAINER, VIP_EXPLAINER, DEMAND_CAPTURE_EXPLAINER]
+        title: { type: string, minLength: 1, maxLength: 120 }
+        caption: { type: string, minLength: 1, maxLength: 300 }
+        animation: { type: string, enum: [LOCAL_STEP_SEQUENCE] }
+        steps:
+          type: array
+          minItems: 5
+          maxItems: 5
+          items:
+            type: object
+            additionalProperties: false
+            required: [title, description]
+            properties:
+              title: { type: string, minLength: 1, maxLength: 100 }
+              description: { type: string, minLength: 1, maxLength: 240 }
+    AiConversationHistory:
+      type: object
+      required: [conversation, messages]
+      properties:
+        conversation: { $ref: "#/components/schemas/AiConversation" }
+        messages:
+          type: array
+          items: { $ref: "#/components/schemas/AiMessage" }
+    TutorialLearningEventInput:
+      type: object
+      additionalProperties: false
+      required: [idempotencyKey, tutorialId, eventType]
+      properties:
+        idempotencyKey: { type: string, format: uuid }
+        tutorialId:
+          type: string
+          enum: [SELL_FIRST_LISTING, PHOTO_FIRST_SELLING, PROMOTION_OVERVIEW, FEATURED_EXPLAINER, VIP_EXPLAINER, DEMAND_CAPTURE_EXPLAINER]
+        eventType:
+          type: string
+          enum: [TUTORIAL_OPENED, PLAYBACK_STARTED, PLAYBACK_PROGRESS_MILESTONE, TEXT_FALLBACK_VIEWED, CONTINUATION_TRIGGERED]
+        milestonePercent:
+          type: integer
+          enum: [25, 50, 75, 100]
+        currentTimeSeconds: { type: integer, minimum: 0, maximum: 3600 }
+    TutorialLearningEvent:
+      type: object
+      additionalProperties: false
+      required: [id, tutorialId, eventType, milestonePercent, currentTimeSeconds, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        tutorialId:
+          type: string
+          enum: [SELL_FIRST_LISTING, PHOTO_FIRST_SELLING, PROMOTION_OVERVIEW, FEATURED_EXPLAINER, VIP_EXPLAINER, DEMAND_CAPTURE_EXPLAINER]
+        eventType:
+          type: string
+          enum: [TUTORIAL_OPENED, PLAYBACK_STARTED, PLAYBACK_PROGRESS_MILESTONE, TEXT_FALLBACK_VIEWED, CONTINUATION_TRIGGERED]
+        milestonePercent:
+          type: integer
+          enum: [25, 50, 75, 100]
+          nullable: true
+        currentTimeSeconds: { type: integer, minimum: 0, maximum: 3600, nullable: true }
+        createdAt: { type: string, format: date-time }
+    SellerDue:
+      type: object
+      required: [id, orderId, listingTitle, amount, currency, reason, dueAt, status]
+      properties:
+        id: { type: string }
+        orderId: { type: string }
+        listingTitle: { type: string }
+        amount: { type: string }
+        currency: { type: string }
+        reason: { type: string }
+        dueAt: { type: string }
+        status: { type: string, enum: [PENDING, PAID, DISPUTED] }
+    Dashboard:
+      type: object
+      required: [userName, activeListings, activeOrders, completedOrders, pendingDues, pendingDuesAmount, recentOrders, sellerStats]
+      properties:
+        userName: { type: string }
+        activeListings: { type: integer }
+        activeOrders: { type: integer }
+        completedOrders: { type: integer }
+        pendingDues: { type: integer }
+        pendingDuesAmount: { type: string }
+        recentOrders:
+          type: array
+          items: { $ref: "#/components/schemas/Order" }
+        sellerStats:
+          type: object
+          required: [sales, rating, responseRate]
+          properties:
+            sales: { type: integer }
+            rating: { type: number }
+            responseRate: { type: integer }
+    ProfileAvatarUploadRequest:
+      type: object
+      required: [size, contentType]
+      properties:
+        size: { type: integer, minimum: 1, maximum: 5242880 }
+        contentType: { type: string, enum: [image/jpeg, image/png, image/webp] }
+    ProfileAvatarUploadResponse:
+      type: object
+      required: [uploadURL, objectPath]
+      properties:
+        uploadURL: { type: string, format: uri }
+        objectPath: { type: string }
+    ProfileAvatarSetRequest:
+      type: object
+      required: [objectPath]
+      properties:
+        objectPath: { type: string, minLength: 1, maxLength: 500 }
+    ProfileAvatarSetResponse:
+      type: object
+      required: [avatarObjectPath]
+      properties:
+        avatarObjectPath: { type: string }
+    ListingPhotoUploadRequest:
+      type: object
+      required: [size, contentType]
+      properties:
+        size: { type: integer, minimum: 1, maximum: 5242880 }
+        contentType: { type: string, enum: [image/jpeg, image/png, image/webp] }
+    ListingPhotoUploadResponse:
+      type: object
+      required: [uploadURL, objectPath]
+      properties:
+        uploadURL: { type: string, format: uri }
+        objectPath: { type: string }
+    ListingPhotoCompleteRequest:
+      type: object
+      required: [objectPath]
+      properties:
+        objectPath: { type: string, minLength: 1, maxLength: 500 }
+    ListingPhotoCompleteResponse:
+      type: object
+      required: [objectPath]
+      properties:
+        objectPath: { type: string }
+    PromotionProduct:
+      type: object
+      required: [id, marketId, categoryId, name, placement, priceMinor, currencyCode, durationDays, enabled]
+      properties:
+        id: { type: string }
+        marketId: { type: string }
+        categoryId: { type: ["string", "null"], description: "Null for products that are not category-scoped (bundles, DINAR Business)." }
+        name: { type: string }
+        placement: { type: string, enum: [SEARCH_AND_CHAT, FEATURED, VIP, REFRESH, SPONSORED_SEARCH, SPONSORED_RECOMMENDATION, DEMAND, NONE] }
+        productType: { type: string, enum: [STANDARD_PROMOTION, FEATURED_LISTING, VIP_LISTING, REFRESH_LISTING, SPONSORED_SEARCH, SPONSORED_RECOMMENDATION, DEMAND_CAPTURE, PROMOTION_BUNDLE, EXTRA_LISTING_QUOTA, DINAR_BUSINESS, SPONSORED_SURFACE] }
+        chargingMode: { type: string }
+        pricingVersion: { type: integer }
+        priceMinor: { type: integer, minimum: 1 }
+        currencyCode: { type: string, pattern: "^[A-Z]{3}$" }
+        durationDays: { type: integer, minimum: 1, maximum: 365 }
+        enabled: { type: boolean }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    PromotionProductInput:
+      type: object
+      additionalProperties: false
+      required: [categoryId, name, placement, priceMinor, durationDays]
+      properties:
+        categoryId: { type: string, minLength: 1, maxLength: 100 }
+        name: { type: string, minLength: 1, maxLength: 100 }
+        placement: { type: string, enum: [SEARCH_AND_CHAT] }
+        priceMinor: { type: integer, minimum: 1, maximum: 2000000000 }
+        durationDays: { type: integer, minimum: 1, maximum: 365 }
+        enabled: { type: boolean, default: true }
+    PromotionProductUpdate:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        categoryId: { type: string, minLength: 1, maxLength: 100 }
+        name: { type: string, minLength: 1, maxLength: 100 }
+        placement: { type: string, enum: [SEARCH_AND_CHAT] }
+        priceMinor: { type: integer, minimum: 1, maximum: 2000000000 }
+        currencyCode: { type: string, pattern: "^[A-Z]{3}$" }
+        durationDays: { type: integer, minimum: 1, maximum: 365 }
+        enabled: { type: boolean }
+    PromotionPreviewInput:
+      type: object
+      additionalProperties: false
+      required: [promotionProductId]
+      properties:
+        promotionProductId: { type: string, minLength: 1 }
+    PromotionPreview:
+      type: object
+      required: [listingId, productId, productName, categoryId, priceMinor, currencyCode, placement, durationDays, simulationOnly, simulationEnabled, warning]
+      properties:
+        listingId: { type: string }
+        productId: { type: string }
+        productName: { type: string }
+        categoryId: { type: string }
+        priceMinor: { type: integer, minimum: 1 }
+        currencyCode: { type: string }
+        placement: { type: string, enum: [SEARCH_AND_CHAT] }
+        durationDays: { type: integer, minimum: 1, maximum: 365 }
+        simulationOnly: { type: boolean, enum: [true] }
+        simulationEnabled: { type: boolean }
+        warning: { type: string }
+    PromotionConfirmInput:
+      type: object
+      additionalProperties: false
+      required: [promotionProductId, confirmed, idempotencyKey]
+      properties:
+        promotionProductId: { type: string, minLength: 1 }
+        confirmed: { type: boolean, enum: [true] }
+        idempotencyKey: { type: string, pattern: "^[A-Za-z0-9._:-]{8,128}$" }
+        simulatedPaymentOutcome:
+          type: string
+          enum: [DECLINE]
+          description: Test-card equivalent for the simulation; it can only make the payment fail.
+    SellerPromotionAction:
+      type: object
+      additionalProperties: false
+      required: [action]
+      properties:
+        action: { type: string, enum: [PAUSE, RESUME, CANCEL] }
+    SellerPromotion:
+      type: object
+      required: [id, listingId, listingTitle, productName, placement, placementLabel, durationDays, priceMinor, currencyCode, priceLabel, status, effectiveStatus, paymentStatus, paymentMode, serving, servingNote, startsAt, expiresAt, createdAt, canPause, canResume, canCancel, autoRenew]
+      properties:
+        id: { type: string }
+        listingId: { type: string }
+        listingTitle: { type: string }
+        productName: { type: string }
+        placement: { type: string, enum: [SEARCH_AND_CHAT, FEATURED, VIP, REFRESH, SPONSORED_SEARCH, SPONSORED_RECOMMENDATION, DEMAND] }
+        placementLabel: { type: string }
+        durationDays: { type: integer, minimum: 1, maximum: 365 }
+        priceMinor: { type: integer, minimum: 1 }
+        currencyCode: { type: string }
+        priceLabel: { type: string }
+        status: { type: string, enum: [PENDING_PAYMENT, ACTIVE, PAUSED, EXPIRED, CANCELLED, PAYMENT_FAILED, BUDGET_EXHAUSTED] }
+        effectiveStatus: { type: string, enum: [PENDING_PAYMENT, SCHEDULED, ACTIVE, PAUSED, EXPIRED, CANCELLED, PAYMENT_FAILED, BUDGET_EXHAUSTED] }
+        paymentStatus: { type: string, enum: [SIMULATION_PENDING, SIMULATION_CAPTURED, SIMULATION_FAILED, LEGACY_UNVERIFIED, BALANCE_CHARGED, ENTITLEMENT_CONSUMED] }
+        productType: { type: string }
+        productTypeLabel: { type: string }
+        tier: { type: string, enum: [VIP, STANDARD] }
+        paymentSource: { type: string, enum: [SIMULATED_PROVIDER, COMMERCIAL_BALANCE, BUNDLE_ENTITLEMENT] }
+        chargingMode: { type: string }
+        budgetLabel: { type: string }
+        spentLabel: { type: string }
+        remainingLabel: { type: string }
+        unitChargeLabel: { type: string }
+        paymentMode: { type: string, enum: [TEST_NO_TRANSFER] }
+        serving: { type: boolean }
+        servingNote: { type: string }
+        startsAt: { type: string, format: date-time }
+        expiresAt: { type: string, format: date-time }
+        createdAt: { type: string, format: date-time }
+        canPause: { type: boolean }
+        canResume: { type: boolean }
+        canCancel: { type: boolean }
+        autoRenew: { type: boolean, enum: [false] }
+    AdminPromotion:
+      allOf:
+        - { $ref: "#/components/schemas/SellerPromotion" }
+        - type: object
+          required: [sellerId]
+          properties:
+            sellerId: { type: string }
+

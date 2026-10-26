@@ -1,0 +1,15 @@
+{
+  "DINAR-DEEPSEEK-R3-LIVE-2026-10-25": {
+    "status": "CONSUMED",
+    "maxRequests": 6,
+    "budgetUsd": 0.05,
+    "startedAt": "2026-10-25T14:52:53.953Z",
+    "ledgerPath": "/home/runner/.dinar-benchmark/ledgers/DINAR-DEEPSEEK-R3-LIVE-2026-10-25.ledger.jsonl",
+    "finishedAt": "2026-10-25T14:53:24.624Z",
+    "summary": {
+      "requests": 6,
+      "estimatedSpendUsd": 0.007282,
+      "stopped": null
+    }
+  }
+}

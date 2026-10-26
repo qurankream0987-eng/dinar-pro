@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>DINAR Capability Trace &amp; Conversation Acceptance Report</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --navy: #071321;
+        --panel: #10233a;
+        --panel-raised: #142b46;
+        --line: #29415d;
+        --text: #edf3f8;
+        --muted: #b0bdcb;
+        --gold: #efbd59;
+        --green: #67d5a2;
+        --blue: #91c2ff;
+        --amber: #ffd37d;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: radial-gradient(ellipse at 50% -15%, #183252, var(--navy) 62%);
+        color: var(--text);
+        font: 15px/1.65 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+      main { width: min(1180px, calc(100% - 32px)); margin: 40px auto 64px; }
+      header, section, footer {
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        background: color-mix(in srgb, var(--panel) 94%, transparent);
+        box-shadow: 0 16px 40px #00000022;
+      }
+      header { padding: clamp(24px, 5vw, 52px); border-top: 3px solid var(--gold); }
+      .eyebrow { color: var(--gold); font-size: 12px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+      h1 { margin: 10px 0 8px; max-width: 850px; font-size: clamp(30px, 5vw, 48px); line-height: 1.12; }
+      h2 { margin: 0 0 16px; font-size: 23px; }
+      h3 { margin: 0 0 6px; font-size: 16px; }
+      p { margin: 8px 0; }
+      .lead, .muted { color: var(--muted); }
+      .metrics { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; margin-top: 28px; }
+      .metric { padding: 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel-raised); }
+      .metric strong { display: block; color: var(--gold); font-size: 25px; line-height: 1.2; }
+      .metric span { color: var(--muted); font-size: 13px; }
+      .invariant { margin-top: 18px; padding: 14px 16px; border-left: 3px solid var(--green); border-radius: 8px; background: #102b2a; }
+      code { padding: 3px 7px; border-radius: 6px; background: #06101c; color: #ffe0a1; font: 700 13px ui-monospace, SFMono-Regular, Menlo, monospace; }
+      section { margin-top: 18px; padding: clamp(20px, 3vw, 30px); }
+      .table-wrap { overflow-x: auto; }
+      table { width: 100%; border-collapse: collapse; min-width: 760px; }
+      th, td { padding: 12px 13px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+      th { color: #d3deea; font-size: 12px; letter-spacing: .05em; text-transform: uppercase; }
+      td { color: var(--muted); }
+      td:first-child { color: var(--text); font-weight: 700; min-width: 170px; }
+      tr:last-child td { border-bottom: 0; }
+      .badge { display: inline-block; white-space: nowrap; padding: 2px 9px; border: 1px solid currentColor; border-radius: 999px; font-size: 11px; font-weight: 800; letter-spacing: .04em; }
+      .pass { color: var(--green); }
+      .limited { color: var(--amber); }
+      .unverified { color: var(--blue); }
+      .callout { margin-top: 14px; padding: 14px 16px; border: 1px solid #735c32; border-radius: 10px; background: #2a2418; color: #ead6ad; }
+      ul { margin: 8px 0 0; padding-left: 20px; color: var(--muted); }
+      li + li { margin-top: 7px; }
+      .arabic { font-family: "Noto Sans Arabic", Tahoma, Arial, sans-serif; }
+      .matrix table { min-width: 1580px; font-size: 12px; }
+      .matrix th, .matrix td { padding: 8px 9px; }
+      .matrix td:first-child { min-width: 190px; }
+      .final-values td:first-child { min-width: 260px; }
+      .small { font-size: 12px; }
+      footer { margin-top: 18px; padding: 18px 22px; color: var(--muted); font-size: 13px; }
+      @media (max-width: 720px) {
+        main { width: min(100% - 20px, 1180px); margin: 14px auto 32px; }
+        .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        section { padding: 18px; }
+      }
+      @media print {
+        :root { color-scheme: light; --navy: #fff; --panel: #fff; --panel-raised: #f4f6f8; --line: #ccd4dd; --text: #111827; --muted: #364152; --gold: #8b6208; --green: #067647; --blue: #175cd3; --amber: #8a4b08; }
+        body { background: #fff; }
+        header, section, footer { box-shadow: none; break-inside: avoid; }
+        main { width: 100%; margin: 0; }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <div class="eyebrow">DINAR · Development capability trace</div>
+        <h1>Capability matrix &amp; conversation acceptance report</h1>
+        <p class="lead">Final evidence snapshot — 9 October 2026. G2, G3, G-Final, and Personal Intelligence checks used disposable loopback PostgreSQL databases. Model behavior was controlled or deterministic; no live AI, payment, delivery, SMS, maps, provider, or marketplace service was contacted.</p>
+        <div class="metrics" aria-label="Acceptance results">
+          <div class="metric"><strong>64 / 64</strong><span>G2 capability assertions passed</span></div>
+          <div class="metric"><strong>5 / 5</strong><span>G2 connected journeys passed</span></div>
+          <div class="metric"><strong>31 / 31</strong><span>G3 browser acceptance checks passed</span></div>
+          <div class="metric"><strong>7 / 7</strong><span>G3 connected journeys passed</span></div>
+          <div class="metric"><strong>20 / 20</strong><span>G-Final journeys passed; 22 / 22 Node tests</span></div>
+        </div>
+        <div class="invariant"><strong>FALSE_CAPABILITY_DENIAL=0 in tested paths</strong><br />Guest marketplace refusals in Kuwait are intentional rollout enforcement, not a failed capability. One inactive-market order-read boundary remains a product-policy question; it was not changed or counted as a confirmed false denial.</div>
+      </header>
+
+      <section>
+        <h2>Capability matrix</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Capability</th><th>Result</th><th>Conversation evidence</th><th>Boundary</th></tr></thead>
+            <tbody>
+              <tr>
+                <td>Buyer discovery in Jordan</td>
+                <td><span class="badge pass">VERIFIED · JO</span></td>
+                <td>Explicit search, stable result positions, “second item”, sorting, comparison, details, and offer-grounded price advice.</td>
+                <td>Controlled fixture inventory; this is not a live-catalogue audit.</td>
+              </tr>
+              <tr>
+                <td>Open seller question</td>
+                <td><span class="badge pass">VERIFIED · CONTROLLED MODEL</span></td>
+                <td><span class="arabic" dir="rtl">طيب انا بدي ابيع شو ابيع</span> reached the shared model gateway as ADVICE. No SELL draft surface or offer was created.</td>
+                <td>The test reply was injected. It does not establish the original account’s live response or Arabic dialect quality.</td>
+              </tr>
+              <tr>
+                <td>Seller draft and publication</td>
+                <td><span class="badge pass">VERIFIED · JO</span></td>
+                <td>Explicit seller intent opens the canonical draft. Browser journey: draft → price advice → edit → review → publish only after confirmation; server found exactly one resulting listing.</td>
+                <td>A model suggestion does not publish. Publishing still requires the canonical review/confirmation path.</td>
+              </tr>
+              <tr>
+                <td>Negotiation and order</td>
+                <td><span class="badge pass">VERIFIED · JO</span></td>
+                <td>Offer 7 → counter 8 → accept → order at 8; the public listing remains 10. Server-side ownership and current-state checks passed.</td>
+                <td>Order state is operational marketplace state, not proof of payment.</td>
+              </tr>
+              <tr>
+                <td>Payments and settlement</td>
+                <td><span class="badge limited">SIMULATION ONLY</span></td>
+                <td>Review and confirmation surfaces were checked; the UI correctly says no funds moved and never reports a real payment.</td>
+                <td>No payment provider, real charge, refund, seller dues transfer, or settlement was selected or tested.</td>
+              </tr>
+              <tr>
+                <td>Promotions and provider connections</td>
+                <td><span class="badge pass">IN-APP FLOW VERIFIED</span></td>
+                <td>Promotion remains review-gated. Provider connection flow covers review, confirmation, one-time secret display, hidden-after-reload, replacement warning, and revocation.</td>
+                <td>External requests: 0. No live provider synchronization was exercised.</td>
+              </tr>
+              <tr>
+                <td>Driver, employment, delivery, privacy</td>
+                <td><span class="badge pass">VERIFIED · GUARDED</span></td>
+                <td>Employment stays distinct from driver onboarding; pending eligibility is not presented as approval. Delivery status omits precise coordinates and unrelated users see no private order details.</td>
+                <td>No unearned trust/verification claims; availability and order actions remain server-authorized.</td>
+              </tr>
+              <tr>
+                <td>Guest preview in default Kuwait market</td>
+                <td><span class="badge limited">ROLLOUT-GATED · EXPECTED</span></td>
+                <td>KW remains <code>isActive=false</code>, <code>COMING_SOON</code>. Guest search returns 409; direct seller-listing intent returns a no-draft refusal; conversational seller advice remains available.</td>
+                <td>Guests cannot select active Jordan in the current selector. Guest-to-authenticated seller-draft handoff in an active market was therefore not verified; no market was force-enabled.</td>
+              </tr>
+              <tr>
+                <td>Original-account live reply and model quality</td>
+                <td><span class="badge unverified">NOT VERIFIED</span></td>
+                <td>The exact assistant reply from the reported account was unavailable. The controlled tests verify routing and server effects only.</td>
+                <td>No claim is made about live provider output, per-account history, or dialect quality.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section>
+        <h2>Conversation acceptance report</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Journey</th><th>Result</th><th>Verified path</th></tr></thead>
+            <tbody>
+              <tr><td>G2 A–E</td><td><span class="badge pass">5 / 5 PASS</span></td><td>Multi-turn buyer/seller/provider journeys; authoritative search and action surfaces; no false business success.</td></tr>
+              <tr><td>G3 J-A · Seller</td><td><span class="badge pass">PASS</span></td><td>Draft, price advice, edit, review, and publication only after server confirmation.</td></tr>
+              <tr><td>G3 J-B · Buyer</td><td><span class="badge pass">PASS</span></td><td>Search, carousel, advice, comparison, selected item, order review, and simulation-only payment.</td></tr>
+              <tr><td>G3 J-C · Negotiation</td><td><span class="badge pass">PASS</span></td><td>Seller counter, buyer acceptance, private agreed price, order at the agreed price, unchanged public price.</td></tr>
+              <tr><td>G3 J-D · Provider</td><td><span class="badge pass">PASS</span></td><td>Review → confirm → one-time key → reload hides it → replacement warning → revoke.</td></tr>
+              <tr><td>G3 J-E · Driver</td><td><span class="badge pass">PASS</span></td><td>Driver application and availability remain pending/market-authorized; no approval claims.</td></tr>
+              <tr><td>G3 J-F · Employment</td><td><span class="badge pass">PASS</span></td><td>Job intent stays separate from driver onboarding; profile privacy and inert untrusted text.</td></tr>
+              <tr><td>G3 J-G · Multi-role</td><td><span class="badge pass">PASS</span></td><td>One account switches between seller draft, search, saved draft, promotion advice, and provider status.</td></tr>
+              <tr><td>G3-31 · Guest market gate</td><td><span class="badge pass">PASS · EXPECTED GATE</span></td><td>In KW, guest search is blocked, seller listing intent starts no draft, and seller advice remains conversational.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section>
+        <h2>Verification and interpretation</h2>
+        <ul>
+          <li><strong>G2:</strong> 64/64 capability assertions and 72/72 Node tests passed; 5/5 journeys passed. Safety counters were zero for unauthorized effects, injection success, phone/provider-secret/location/payment leaks, stale actions, unknown actions, timeout false-success, external requests, and fabricated market claims.</li>
+          <li><strong>G3:</strong> 31/31 acceptance checks and 7/7 journeys passed; 117 browser/layout checks were recorded. Widths 320, 360, 390, 414, and 1280 px passed. XSS, privacy, accessibility reachability, external-call, false-success, page-error, and unexpected-console-error counters were zero.</li>
+          <li><strong>G-Final:</strong> 20/20 journeys and 22/22 Node tests passed on a fresh JO-only disposable database. All false-success, cross-user/provider/market, forged-price, fake-paid, fake-approved-driver, fake-sponsored, prompt-injection, secret-leak, external-request, and parallel-authority counters were zero. No money moved; log scan found zero addresses, coordinates, or secrets.</li>
+          <li><strong>G-Final model boundary:</strong> the test-only helper now supplies a structured search proposal, item, and price ceiling where those are the test inputs. This proves runtime handling and server authority, not Arabic phrase interpretation, dialect quality, or live model behavior.</li>
+          <li><strong>Personal Intelligence:</strong> its focused migration/policy/runtime suite passed 1/1 on a separate disposable loopback database; cross-user, sensitive inference, duplicate inflation, irrelevant context, credential, precise-location, financial-secret, and one-shot-overfitting counters were all zero.</li>
+          <li><strong>Typecheck/build:</strong> API typecheck passed after the last test-only edit. Workspace typecheck, API build, and DINAR web build also passed; the web build emitted warnings only.</li>
+          <li><strong>Model-call accounting:</strong> the targeted G2-41 assertion scoped its zero-call check to the 18 deterministic commands in that case and passed. Suite-wide telemetry also includes seven earlier, intentional model-fallback calls; it is not a claim that every turn in the full suite avoided the model.</li>
+          <li><strong>Safety scope:</strong> each acceptance run used a separate local disposable database; only JO was activated for marketplace journeys. No production, managed development database, legacy database, Railway destructive test, live model/provider credential, market rollout, payment configuration, or external service was used or changed.</li>
+        </ul>
+        <div class="callout"><strong>Open evidence item:</strong> the original account’s live response to <span class="arabic" dir="rtl">طيب انا بدي ابيع شو ابيع</span> remains unverified. G2-SELL-01 exercises the controlled routing and proves no draft/listing side effect; it cannot substitute for that account’s exact live response.</div>
+      </section>
+
+      <section>
+        <h2>Full repository reconciliation</h2>
+        <p class="muted">The matrix below covers 42 capability groups named in the reconciliation brief. “Tests: EXIST” means a focused test exists in the repository; it does not imply that every such suite was rerun in this final batch. “Reachable: YES” means a source-traced runtime route/surface exists under its stated gates. Commercial features outside the G-Final journey are explicitly marked unverified rather than passed.</p>
+        <div class="table-wrap matrix">
+          <table>
+            <thead>
+              <tr>
+                <th>Capability</th>
+                <th>Implementation · server / DB authority</th>
+                <th>Conversation entry / UI</th>
+                <th>Feature flag / market / auth gate</th>
+                <th>Tests / runtime reachable</th>
+                <th>False denial possible / action</th>
+                <th>Evidence and boundary</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>1. General chat</td><td>EXISTS · YES / NOT_REQUIRED</td><td>CONNECTED / CONNECTED</td><td>NONE / NONE / NONE</td><td>EXIST / YES</td><td>NO / NONE</td><td>G2/G3/G-Final controlled paths; no market needed for ordinary chat.</td></tr>
+              <tr><td>2. Guest chat</td><td>EXISTS · YES / NOT_REQUIRED</td><td>CONNECTED / CONNECTED</td><td>NONE / VALID / NONE</td><td>EXIST / YES</td><td>NO / NONE</td><td>G3 guest gate: general advice remains available; marketplace reads obey country rollout.</td></tr>
+              <tr><td>3. Guest → authenticated continuation</td><td>EXISTS · YES / NOT_REQUIRED</td><td>CONNECTED / CONNECTED</td><td>NONE / VALID / VALID</td><td>EXIST / YES</td><td>NO / NONE</td><td>Same-market handoff code exists; exactly-once resume acceptance remains unverified in this batch.</td></tr>
+              <tr><td>4. Authentication and phone verification</td><td>PARTIAL · YES / YES</td><td>CONNECTED / CONNECTED</td><td>NONE / NONE / VALID</td><td>EXIST / YES</td><td>NO / NONE</td><td>Development verification was used in fixtures. No SMS provider is selected; no live delivery claim.</td></tr>
+              <tr><td>5. Market selection and isolation</td><td>EXISTS · YES / YES</td><td>CONNECTED / CONNECTED</td><td>NONE / VALID / VALID</td><td>EXIST / YES</td><td>NO / NONE</td><td>JO-only acceptance and zero cross-market counter; KW guest denial is expected rollout policy. Language does not select a market.</td></tr>
+              <tr><td>6. Product search</td><td>EXISTS · YES / YES</td><td>CONNECTED / CONNECTED</td><td>NONE / VALID / VALID</td><td>EXIST / YES</td><td>NO / NONE</td><td>G2/G3/G-Final return persisted canonical listings; no external catalogue or fabricated result.</td></tr>
+              <tr><td>7. Service search</td><td>EXISTS · YES / YES</td><td>CONNECTED / CONNECTED</td><td>NONE / VALID / VALID</td><td>EXIST / YES</td><td>NO / NONE</td><td>Canonical listings/search with SERVICE fulfilment; no separate service engine.</td></tr>
+              <tr><td>8. Product cards</td><td>EXISTS · YES / YES</td><td>CONNECTED / CONNECTED</td><td>NONE / VALID / VALID</td><td>EXIST / YES</td><td>NO / NONE</td><td>G3 browser and G-Final results use typed in-chat cards with server identities.</td></tr>
+              <tr><td>9. Service cards</td><td>EXISTS · YES / YES</td><td>CONNECTED / CONNECTED</td><td>NONE / VALID / VALID</td><td>EXIST / YES</td><td>NO / NONE</td><td>One prior disconnected UI detail was corrected: service badge/detail/cart labels now use the canonical service listing and action.</td></tr>
+              <tr><td>10. Listing details and result references</td><td>EXISTS · YES / YES</td><td>CONNECTED / CONNECTED</td><td>NONE / VALID / VALID</td><td>EXIST / YES</td><td>NO / NONE</td><td>Persisted result-set identities drive ordinal/detail selection; G2/G3/G-Final verify references and ownership.</td></tr>
+              <tr><td>11. Generic product/service draft</td><td>EXISTS · YES / YES</td><td>CONNECTED / CONNECTED</td><td>NONE / VALID / VALID</td><td>EXIST / YES</td><td>NO / NONE</td><td>G-Final J01/J06 and G2/G3 cover one seller runtime, missing fields, generic “Other”, and services.</td></tr>
+              <tr><td>12. Photo upload</td><td>EXISTS · YES / YES</td><td>CONNECTED / CONNECTED</td><td>NONE / VALID / VALID</td><td>EXIST / YES</td><td>NO / NONE</td><td>Authenticated upload path validates ownership/storage; invalid or unuploaded paths are refused before publication.</td></tr>
+              <tr><td>13. Photo vision autofill</td><td>PARTIAL · YES / YES</td><td>CONNECTED / CONNECTED</td><td>NONE / VALID / VALID</td><td>EXIST / NO (live provider)</td><td>NO / REPORT_GAP</td><td>Test-only deterministic suggestion provider exists; no runtime vision provider is wired. This is the one confirmed implementation gap.</td></tr>
+              <tr><td>14. Explicit publish</td><td>EXISTS · YES / YES</td><td>CONNECTED / CONNECTED</td><td>NONE / VALID / VALID</td><td>EXIST / YES</td><td>NO / NONE</td><td>G2/G3/G-Final require review and explicit confirmation; AUTO_PUBLISH=0.</td></tr>
+              <tr><td>15. My Listings</td><td>EXISTS · YES / YES</td><td>CONNECTED / CONNECTED</td><td>NONE / VALID / VALID</td><td>EXIST / YES</td><td>NO / NONE</td><td>G-Final J02 returns only seller-owned listing identities.</td></tr>
+              <tr><td>16. Edit listings</td><td>EXISTS · YES / YES</td><td>CONNECTED / CONNECTED</td><td>NONE / VALID / VALID</td><td>EXIST / YES</td><td>NO / NONE</td><td>G-Final J02 uses server-issued preview and confirmation; foreign edit is rejected.</td></tr>
+              <tr><td>17. Pause and reactivate</td><td>EXISTS · YES / YES</td><td>CONNECTED / CONNECTED</td><td>NONE / VALID / VALID</td><td>EXIST / YES</td><td>NO / NONE</td><td>G-Final J02 changes only the selected listing after confirmation.</td></tr>
+              <tr><td>18. Archive</td><td>EXISTS · YES / YES</td><td>CONNECTED / CONNECTED</td><td>NONE / VALID / VALID</td><td>EXIST / YES</td><td>NO / NONE</td><td>Existing archive/soft-removal path preserves order and financial history; no permanent-delete behavior added.</td></tr>
+              <tr><td>19. Cart</td><td>PARTIAL · YES / YES</td><td>CONNECTED / CONNECTED</td><td>NONE / VALID / VALID</td><td>EXIST / YES</td><td>NO / NONE</td><td>Canonical cart/UI exists. Authenticated conversational cart confirmation was not re-accepted in this batch.</td></tr>
+              <tr><td>20. Buy and order creation</td><td>EXISTS · YES / YES</td><td>CONNECTED / CONNECTED</td><td>NONE / VALID / VALID</td><td>EXIST / YES</td><td>NO / NONE</td><td>G2/G3/G-Final use canonical order/negotiation authorities; no model-written order or fake payment.</td></tr>
+              <tr><td>21. Order history and status</td><td>EXISTS · YES / YES</td><td>CONNECTED / CONNECTED</td><td>NONE / VALID* / VALID</td><td>EXIST / YES</td><td>YES* / REPORT_GAP</td><td>Owner-scoped reads are read-only. *The global inactive-market gate may block these reads; product policy is undecided.</td></tr>
+              <tr><td>22. Tracking</td><td>EXISTS · YES / YES</td><td>CONNECTED / CONNECTED</td><td>NONE / VALID* / VALID</td><td>EXIST / YES</td><td>YES* / REPORT_GAP</td><td>Order IDs and tracking state are server-resolved; no fake GPS/ETA. Same inactive-market read-policy question applies.</td></tr>
+              <tr><td>23. Delivery</td><td>EXISTS · YES / YES</td><td>CONNECTED / CONNECTED</td><td>NONE / VALID / VALID</td><td>EXIST / YES</td><td>NO / NONE</td><td>Delivery authority and status surfaces remain canonical; ARRIVED is not treated as RECEIVED.</td></tr>
+              <tr><td>24. Courier and fare negotiation</td><td>PARTIAL · YES / YES</td><td>CONNECTED / CONNECTED</td><td>NONE / VALID / VALID</td><td>EXIST / YES</td><td>NO / NONE</td><td>Driver/provider-linked paths are tested; courier fare agreement after approval was not reverified in this batch.</td></tr>
+              <tr><td>25. Generic promotion purchase</td><td>EXISTS · YES / YES</td><td>CONNECTED / CONNECTED</td><td>ENABLED (test only) / VALID / VALID</td><td>EXIST / YES</td><td>NO / NONE</td><td>G-Final J12 review/confirmation, canonical campaign and sponsored state; payment is simulated and no money moved.</td></tr>
+              <tr><td>26. Featured, VIP, refresh, and bundles</td><td>EXISTS · YES / YES</td><td>CONNECTED / CONNECTED</td><td>ENABLED (test only) / VALID / VALID</td><td>EXIST / YES</td><td>NO / NONE</td><td>Generic commercial product, review surfaces, and routes exist. Named plans were not all end-to-end tested here.</td></tr>
+              <tr><td>27. Sponsored search</td><td>EXISTS · YES / YES</td><td>CONNECTED / CONNECTED</td><td>ENABLED (test only) / VALID / VALID</td><td>EXIST / YES</td><td>NO / NONE</td><td>G-Final verifies canonical sponsored listing; payment does not invent relevance or bypass hard filters.</td></tr>
+              <tr><td>28. Sponsored recommendations</td><td>EXISTS · YES / YES</td><td>CONNECTED / CONNECTED</td><td>ENABLED (test only) / VALID / VALID</td><td>EXIST / YES</td><td>NO / NONE</td><td>Generic recommender and focused Block E tests exist; the Block E suite was not rerun in this batch.</td></tr>
+              <tr><td>29. Demand capture</td><td>EXISTS · YES / YES</td><td>CONNECTED / CONNECTED</td><td>ENABLED (test only) / VALID / VALID</td><td>EXIST / YES</td><td>NO / NONE</td><td>Commercial product type, campaign charging, and typed review surface exist; no fresh end-to-end acceptance claimed.</td></tr>
+              <tr><td>30. Market Pulse</td><td>EXISTS · YES / YES</td><td>CONNECTED / CONNECTED</td><td>NONE / VALID / VALID</td><td>EXIST / YES</td><td>NO / NONE</td><td>Commerce handler, route, and typed surface exist; only an older seeded smoke path covers it, not rerun here.</td></tr>
+              <tr><td>31. DINAR Business</td><td>EXISTS · YES / YES</td><td>CONNECTED / CONNECTED</td><td>NONE / VALID / VALID</td><td>EXIST / YES</td><td>NO / NONE</td><td>Business plans/entitlements and conversational review/status surfaces exist; no fresh end-to-end acceptance claimed.</td></tr>
+              <tr><td>32. Commercial balance and seller receivable</td><td>EXISTS · YES / YES</td><td>CONNECTED / CONNECTED</td><td>NONE / VALID / VALID</td><td>EXIST / YES</td><td>NO / NONE</td><td>Separate commercial ledger and seller receivable authorities remain. No transfer or settlement was enabled.</td></tr>
+              <tr><td>33. Courier receivable</td><td>EXISTS · YES / YES</td><td>CONNECTED / CONNECTED</td><td>NONE / VALID / VALID</td><td>EXIST / YES</td><td>NO / NONE</td><td>Separate courier receivable model and delivery-economics tests exist; no live payout or settlement.</td></tr>
+              <tr><td>34. Personal Intelligence save/read/forget/privacy</td><td>EXISTS · YES / YES</td><td>CONNECTED / CONNECTED</td><td>NONE / NONE / VALID</td><td>EXIST / YES</td><td>NO / NONE</td><td>Focused suite passed 1/1; all eight privacy, isolation, relevance, and overfitting counters were zero.</td></tr>
+              <tr><td>35. Locale, dialect, and style</td><td>PARTIAL · YES / YES</td><td>CONNECTED / CONNECTED</td><td>NONE / NONE / VALID</td><td>EXIST / YES</td><td>NO / NONE</td><td>Style preferences and market separation exist; controlled model tests do not establish live dialect or response quality.</td></tr>
+              <tr><td>36. Provider registry, connections, listing API</td><td>EXISTS · YES / YES</td><td>CONNECTED / CONNECTED</td><td>NONE / VALID / VALID</td><td>EXIST / YES</td><td>NO / NONE</td><td>G-Final J03 and SEC-PROVIDER verify canonical listing mapping, idempotency, ownership, and one-time secret display. External requests: 0.</td></tr>
+              <tr><td>37. Webhooks</td><td>PARTIAL · YES / YES</td><td>CONNECTED / ABSENT</td><td>ENABLED (test adapter) / VALID / VALID</td><td>EXIST / YES</td><td>NO / NONE</td><td>Signed test-adapter capture paths exist; no live payment/provider webhook or real-money behavior was used.</td></tr>
+              <tr><td>38. Notifications</td><td>PARTIAL · YES / YES</td><td>CONNECTED / CONNECTED</td><td>NONE / VALID / VALID</td><td>EXIST / YES</td><td>NO / NONE</td><td>In-app order action items are available. Provider registry explicitly has an interface-only boundary; no outbound notification adapter exists.</td></tr>
+              <tr><td>39. Typed AI blocks, result sets, and surface registry</td><td>EXISTS · YES / YES</td><td>CONNECTED / CONNECTED</td><td>NONE / VALID / VALID</td><td>EXIST / YES</td><td>NO / NONE</td><td>G2/G3/G-Final validate persisted identities and typed in-chat renderers; architecture has one conversation runtime/action registry.</td></tr>
+              <tr><td>40. Button and text action parity</td><td>EXISTS · YES / YES</td><td>CONNECTED / CONNECTED</td><td>NONE / VALID / VALID</td><td>EXIST / YES</td><td>NO / NONE</td><td>Existing buttons route through the same canonical action or conversational command; no duplicate business authority.</td></tr>
+              <tr><td>41. AI-generated React/HTML boundary</td><td>EXISTS · YES / NOT_REQUIRED</td><td>CONNECTED / CONNECTED</td><td>NONE / NONE / NONE</td><td>EXIST / YES</td><td>NO / NONE</td><td>AI_GENERATED_REACT=0; AI_GENERATED_HTML=0; G-Final architecture scan found dangerouslySetInnerHTML=0.</td></tr>
+              <tr><td>42. Ownership, auth, idempotency, market authority</td><td>EXISTS · YES / YES</td><td>CONNECTED / CONNECTED</td><td>NONE / VALID / VALID</td><td>EXIST / YES</td><td>NO / NONE</td><td>G2/G3/G-Final security counters are zero for unauthorized effects, cross-user/provider/market access, stale actions, and forged prices.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="small muted">Column order: Implementation; server authority / database authority; conversation entry / UI surface; feature flag / market gate / auth gate; tests exist / runtime reachable; false-denial possibility / required action. “NOT_REQUIRED” applies where no persistent domain state is involved. “REPORT_GAP” on order status/tracking records an unresolved policy boundary, not a confirmed defect.</p>
+      </section>
+
+      <section>
+        <h2>Final report values</h2>
+        <div class="table-wrap">
+          <table class="final-values">
+            <tbody>
+              <tr><td>BRANCH / START_HEAD / FINAL_HEAD</td><td><code>main</code> / <code>b291327db9333c90ec76e4f196c2add456ee957a</code> / same; no commit created.</td></tr>
+              <tr><td>UNCOMMITTED_WORK_PRESERVED</td><td>YES. Pre-existing dirty edits were not observed. Current changes are limited to this report and the G-Final test-only structured search helper.</td></tr>
+              <tr><td>TOTAL_CAPABILITIES_FOUND / CONNECTED_AND_WORKING</td><td>42 scoped capability groups / 24 evidenced as connected and working in controlled development journeys.</td></tr>
+              <tr><td>EXISTING_BUT_DISCONNECTED_FOUND / FIXED</td><td>1 / 1 — service-result cards had generic service presentation; service-specific labels/actions now use the existing canonical listing path.</td></tr>
+              <tr><td>TRUE_IMPLEMENTATION_GAPS</td><td>1 — runtime photo vision/autofill provider is absent.</td></tr>
+              <tr><td>OBSOLETE_FALSE_DENIAL_PATHS_FOUND / FALSE_DENIAL_PATHS_FIXED</td><td>0 / 0. No confirmed obsolete denial path was changed. In tested active-market flows: FALSE_CAPABILITY_DENIAL=0, FALSE_MARKET_DISABLED_CLAIM=0, FALSE_ADVICE_ONLY_CLAIM=0, UNKNOWN_NORMAL_TOPIC_REJECTED=0.</td></tr>
+              <tr><td>GENERAL_CHAT / GUEST_CHAT / GENERAL_TO_SEARCH / GENERAL_TO_SELL / TOOL_TO_GENERAL</td><td>PASS / PASS within guest policy / PASS controlled / PASS controlled / PASS controlled.</td></tr>
+              <tr><td>MARKETPLACE</td><td>PRODUCT_SEARCH, SERVICE_SEARCH, PRODUCT_CARDS, SERVICE_CARDS, GENERIC_LISTING_CARD, LISTING_DETAIL: PASS in controlled active-market acceptance.</td></tr>
+              <tr><td>SELLER</td><td>GENERIC_PRODUCT_SELL, GENERIC_SERVICE_SELL, DRAFT, PHOTO_UPLOAD, EXPLICIT_PUBLISH, MY_LISTINGS, EDIT, PAUSE, REACTIVATE, ARCHIVE: PASS. VISION_AUTOFILL: BLOCKED_BY_MISSING_VISION_PROVIDER. AUTO_PUBLISH=0.</td></tr>
+              <tr><td>PROMOTION (exact fields)</td><td>FEATURED=NOT_VERIFIED; VIP=NOT_VERIFIED; REFRESH=NOT_VERIFIED; SPONSORED_SEARCH=PASS; SPONSORED_RECOMMENDATION=NOT_VERIFIED (focused suite exists but was not rerun); DEMAND_CAPTURE=NOT_VERIFIED; MARKET_PULSE=NOT_VERIFIED; DINAR_BUSINESS=NOT_VERIFIED. These surfaces are present in the canonical commercial runtime; no new pass is claimed beyond G-Final's generic campaign and sponsored-search path.</td></tr>
+              <tr><td>COMMERCE (exact fields)</td><td>CART=NOT_VERIFIED for authenticated AI confirmation; BUY=PASS; ORDERS=PASS for active JO controlled journeys; TRACKING=PASS in active-market paths, with inactive-market read policy unresolved; DELIVERY=PASS for controlled status/driver paths; COURIER=PARTIAL because approved-driver fare agreement was not reverified. No fake GPS/ETA or payment success.</td></tr>
+              <tr><td>PERSONAL INTELLIGENCE</td><td>SAVE / READ / FORGET / NO_CROSS_USER_LEAK: PASS in the focused test; sensitive inference, auth secrets, precise GPS, financial secrets, duplicates, and one-shot overfitting: 0.</td></tr>
+              <tr><td>SURFACES (exact fields)</td><td>SURFACE_REGISTRY=PASS; INLINE_PRODUCT_RESULTS=PASS; INLINE_SERVICE_RESULTS=PASS; INLINE_DRAFT=PASS; INLINE_ORDER=PASS; INLINE_TRACKING=PASS for active-market tested paths; INLINE_PROMOTION=PASS for generic campaign flow; BUTTON_AND_TEXT_SAME_RUNTIME=PASS; AI_GENERATED_REACT=0; AI_GENERATED_HTML=0.</td></tr>
+              <tr><td>LANGUAGE</td><td>DIALECT_ADAPTATION and EXPLICIT_STYLE_OVERRIDE are present in policy/runtime but live response quality is NOT VERIFIED. MARKET_LANGUAGE_DECOUPLED is preserved; MARKET_SWITCH_FROM_LANGUAGE=0.</td></tr>
+              <tr><td>ARCHITECTURE</td><td>PARALLEL_SEARCH_ENGINE_CREATED=0; PARALLEL_SELLER_ENGINE_CREATED=0; PARALLEL_SERVICE_ENGINE_CREATED=0; PARALLEL_MONETIZATION_ENGINE_CREATED=0; FABRICATED_LISTINGS=0; UNAUTHORIZED_STATE_CHANGES=0.</td></tr>
+              <tr><td>QUALITY (exact fields)</td><td>TYPECHECK=PASS; API_BUILD=PASS; WEB_BUILD=PASS; GIT_DIFF_CHECK=PASS. Disposable DB=USED. RAILWAY_DESTRUCTIVE_TESTS=0; PRODUCTION_ACCESSED=NO; LEGACY_DB_ACCESSED=NO.</td></tr>
+              <tr><td>LIVE_AUTHENTICATED_BROWSER_QA</td><td>DEFERRED_BY_PRODUCT_OWNER; not represented as PASS.</td></tr>
+              <tr><td>PREVIOUS CLAUDE/CODEX/REPLIT WORK PRESERVED</td><td>YES. No reset, checkout, rebase, merge, or branch movement. Existing Claude monetization and Codex frontend-personal-experience commits are ancestors of HEAD; other observed branch tips were left untouched and not merged.</td></tr>
+              <tr><td>ALL_EXISTING_CAPABILITIES_RECONCILED</td><td>YES within the 42 prompt-scoped groups; unverified surfaces and the single true gap are explicitly classified above.</td></tr>
+              <tr><td>CONVERSATION_AS_APPLICATION / DINAR_CORE_PRODUCT</td><td>NOT_CLOSED / NOT_CLOSED. Controlled core journeys pass, but live-account behavior is deferred, several auxiliary flows were not reverified, and vision autofill lacks a runtime provider.</td></tr>
+              <tr><td>REMAINING_REAL_GAPS</td><td>Runtime photo vision/autofill provider is not wired; automatic image-derived field suggestions cannot run outside the deterministic test provider.</td></tr>
+              <tr><td>COMMITS / RECENT COMMITS</td><td>0 created in this reconciliation. Recent HEAD history inspected: <code>b291327</code> capability documentation; <code>bfca3a4</code> conversation storage/API integration; <code>942a4be</code> conversation continuity; <code>4947de9</code> conversation-as-application runtime.</td></tr>
+              <tr><td>RELEVANT BRANCH TIPS</td><td><code>claude/monetization-v3</code> and <code>codex/frontend-personal-experience</code> are ancestors of HEAD. <code>codex/block-b-closure</code>, <code>codex/monetization-v3-continuation</code>, and <code>replit-agent</code> remain at their existing non-ancestor tips; no merge or movement was performed.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout"><strong>Market-policy boundary left unchanged:</strong> <code>conversation-runtime.ts</code> returns at the inactive-market gate before calling <code>orderContext</code>. <code>orderContext</code> performs owner-scoped, read-only status/tracking lookups. Whether these views remain available when the selected market is inactive is unresolved; changing the gate could affect market isolation and pending-action handling.</div>
+        <p class="muted">The old pre-switch smoke test was not run: it requires a seeded Kuwait listing (<code>KW_lst_shirts</code>). The final acceptance databases intentionally used no broad seed and activated only JO. The separate Block E suite was not rerun in this batch, so no new pass is claimed for its unexercised named commercial flows.</p>
+        <p class="muted">Source trace: <code>artifacts/api-server/src/ai/conversation-runtime.ts</code>, <code>order-context.ts</code>, <code>commerce-turn.ts</code>, <code>personal-memory-turn.ts</code>, <code>listing-photo-intelligence.ts</code>, <code>artifacts/dinar/src/features/ai/CommercialSurface.tsx</code>, and the G2/G3/G-Final, Personal Intelligence, Block E, and pre-switch test files.</p>
+      </section>
+
+      <footer>
+        This is a development capability report, not a production certification or legal/payment readiness approval. Jordan was the only activated acceptance market. The report distinguishes controlled development evidence from live model output and deferred authenticated browser QA.
+      </footer>
+    </main>
+  </body>
+</html>

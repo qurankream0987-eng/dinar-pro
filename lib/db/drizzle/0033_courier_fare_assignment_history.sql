@@ -1,0 +1,1 @@
+DROP INDEX "courier_fare_agreements_order_unique";

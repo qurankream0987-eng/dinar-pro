@@ -1,0 +1,51 @@
+modules = ["nodejs-24", "python-base-3.13", "postgresql-16"]
+
+[deployment]
+router = "application"
+deploymentTarget = "autoscale"
+
+[deployment.postBuild]
+args = ["pnpm", "store", "prune"]
+env = { "CI" = "true" }
+
+[workflows]
+runButton = "Project"
+
+[agent]
+stack = "PNPM_WORKSPACE"
+expertMode = true
+
+[postMerge]
+path = "scripts/post-merge.sh"
+timeoutMs = 20000
+
+[nix]
+channel = "stable-25_05"
+packages = ["glib", "nspr", "nss", "atk", "at-spi2-atk", "at-spi2-core", "dbus", "xorg.libX11", "xorg.libXcomposite", "xorg.libXdamage", "xorg.libXext", "xorg.libXfixes", "xorg.libXrandr", "xorg.libxcb", "libxkbcommon", "mesa", "libdrm", "alsa-lib", "libgbm", "tesseract", "aider-chat-full", "opencode", "copilot-cli"]
+
+[userenv]
+
+[userenv.development]
+BDINAR_PROMOTIONS_ENABLED = "true"
+DINAR_AI_MODEL_FALLBACK = "true"
+# Temporary development default (owner-approved 2026-10-20): the Replit AI Integrations proxy.
+# GROQ, OPENROUTER and OPENAI stay selectable here; DINAR_AI_MODEL applies to GROQ only.
+DINAR_AI_PROVIDER = "REPLIT_OPENAI"
+DINAR_AI_MODEL = "qwen/qwen3.8-27b"
+
+[userenv.shared]
+
+[objectStorage]
+defaultBucketID = "replit-objstore-06d586d0-1566-4e2a-9f98-1e190d19be28"
+
+[[ports]]
+localPort = 8080
+externalPort = 80
+
+[[ports]]
+localPort = 8081
+externalPort = 8081
+
+[[ports]]
+localPort = 24108
+externalPort = 3000

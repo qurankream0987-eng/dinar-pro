@@ -1,0 +1,31 @@
+{
+  "approval": {
+    "id": "REPLACE-WITH-OWNER-APPROVAL-ID",
+    "approvedBy": "REPLACE: DINAR owner",
+    "approvedAt": "2026-10-24T00:00:00.000Z",
+    "providers": ["GROQ"],
+    "budgetUsd": 0,
+    "groqFreeTierConfirmed": false,
+    "groqDeveloperUpgradeDisabledConfirmed": false,
+    "groqNoBillablePathConfirmed": false,
+    "groqPrivacyReviewed": false
+  },
+  "limits": {
+    "maxRequestsPerCandidate": 4,
+    "maxInputTokensPerRequest": 8000,
+    "maxOutputTokens": 512,
+    "maxRetries": 0,
+    "maxConcurrency": 1,
+    "timeoutMs": 30000,
+    "repetitions": 1
+  },
+  "candidates": [
+    {
+      "id": "groq-gpt-oss-120b-free",
+      "role": "ADVANCED",
+      "model": "openai/gpt-oss-120b",
+      "transport": "CHAT_COMPLETIONS",
+      "toolChoice": "AUTO"
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "name": "@workspace/db",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./schema": "./src/schema/index.ts",
+    "./database-url": "./src/database-url.ts",
+    "./database-url-resolver": "./src/database-url-resolver.mjs",
+    "./deployed-target": "./src/deployed-target.ts"
+  },
+  "scripts": {
+    "push": "node ./scripts/deny-schema-push.mjs",
+    "push-force": "node ./scripts/deny-schema-push.mjs",
+    "generate": "drizzle-kit generate --config ./drizzle.config.ts",
+    "migrate": "drizzle-kit migrate --config ./drizzle.config.ts",
+    "migrate:clone": "node --experimental-strip-types ./scripts/migrate-clone.mjs",
+    "migration:check": "node --experimental-strip-types ./scripts/preview-migration-check.mjs",
+    "check": "drizzle-kit check --dialect=postgresql --out=drizzle",
+    "migrate:release": "node --experimental-strip-types ./scripts/migrate-release.mjs",
+    "test:release-migration": "node --experimental-strip-types --test ./scripts/release-migration.test.mjs ./scripts/release-migration-concurrency.test.mjs"
+  },
+  "dependencies": {
+    "drizzle-orm": "catalog:",
+    "drizzle-zod": "^0.8.3",
+    "pg": "^8.23.0",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "@types/pg": "^8.23.1",
+    "drizzle-kit": "^0.31.10"
+  }
+}
