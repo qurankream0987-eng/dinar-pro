@@ -51,16 +51,19 @@ NETLOG="$WORK/net-attempts.log"
 SECRET=$(od -An -N32 -tx1 /dev/urandom | tr -d ' \n')
 SEEDPW=seed-$(od -An -N12 -tx1 /dev/urandom | tr -d ' \n')
 CHROMIUM=${DINAR_CHROMIUM:-}
-# shellcheck disable=SC2086
-run() {
+# base: migration and seeding (no suite switches, so e.g. BDINAR_LOG_SCAN never reaches the seed);
+# run: the suite itself, with its switches.
+base() {
   env -i PATH="$PATH" HOME="$WORK" LANG=C.UTF-8 TZ=UTC NODE_ENV=development \
     DATABASE_URL="$URL" DINAR_DEV_DATABASE_URL="$URL" \
     BDINAR_DISPOSABLE_ACCEPTANCE_DB=1 BDINAR_DISPOSABLE_TEST_DATABASE=1 \
     SESSION_SECRET="$SECRET" BDINAR_SEED_PASSWORD="$SEEDPW" \
     ${CHROMIUM:+REPLIT_PLAYWRIGHT_CHROMIUM_EXECUTABLE="$CHROMIUM" CHROMIUM_PATH="$CHROMIUM"} \
     DINAR_ISOLATION_NET_LOG="$NETLOG" NODE_OPTIONS="--import=file://$HERE/net-guard.mjs" \
-    $EXTRA "$@"
+    "$@"
 }
+# shellcheck disable=SC2086
+run() { base $EXTRA "$@"; }
 cleanup() {
   [ "${DINAR_SUITE_KEEP_DB:-0}" = 1 ] || node -e "
 const pg = require('$REPO/lib/db/node_modules/pg');
@@ -71,13 +74,13 @@ c.connect().then(() => c.query('DROP DATABASE IF EXISTS \"' + process.argv[2] + 
 }
 trap cleanup EXIT
 
-(cd "$REPO/lib/db" && run node_modules/.bin/drizzle-kit migrate --config ./drizzle.config.ts >/dev/null)
+(cd "$REPO/lib/db" && base node_modules/.bin/drizzle-kit migrate --config ./drizzle.config.ts >/dev/null)
 cd "$API"
 case "${DINAR_SUITE_SEED:-fixtures}" in
-  fixtures) run BDINAR_ACCEPTANCE_FIXTURES=development \
+  fixtures) base BDINAR_ACCEPTANCE_FIXTURES=development \
     BDINAR_ACCEPTANCE_FIXTURE_MODULES=MARKET_FIXTURES,USER_FIXTURES,PRODUCT_LISTINGS,PHASE1_LISTINGS \
     node test/run.mjs acceptance-fixtures.seed >/dev/null ;;
-  development) run BDINAR_SEED=development node test/run.mjs seed >/dev/null ;;
+  development) base BDINAR_SEED=development node test/run.mjs seed >/dev/null ;;
   none) ;;
   *) echo "LOCAL_SUITE: DINAR_SUITE_SEED must be fixtures, development or none" >&2; exit 96 ;;
 esac

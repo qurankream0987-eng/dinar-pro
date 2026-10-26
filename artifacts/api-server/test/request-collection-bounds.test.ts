@@ -52,6 +52,32 @@ await test("ordinary bodies at the bound still reach their route", async () => {
   assert.equal((await post("/checkout", `{"items":[]}`, cookie)).status === 413, false);
 });
 
+const healthy = async () => (await fetch(`${origin}/api/healthz`)).status === 200;
+
+await test("deep nesting is bounded or validated, never a crash", async () => {
+  const depth = 40_000; // 80 KB of brackets, inside the byte limit
+  const deepArrays = `{"items":${"[".repeat(depth)}${"]".repeat(depth)}}`;
+  assert.equal((await post("/checkout", deepArrays, cookie)).status, 413, "each nested array counts as an element");
+  const deepObjects = `{"items":${'{"a":'.repeat(20_000)}1${"}".repeat(20_000)}}`;
+  assert.ok(deepObjects.length < 128 * 1024);
+  const objects = await post("/checkout", deepObjects, cookie);
+  assert.ok(objects.status === 400 || objects.status === 413, `${objects.status} ${objects.text.slice(0, 120)}`);
+  assert.ok(await healthy(), "the process survives both");
+});
+
+await test("bodies over 128 KB are refused by the parser", async () => {
+  const oversized = `{"note":"${"x".repeat(140 * 1024)}"}`;
+  assert.equal((await post("/checkout", oversized, cookie)).status, 413);
+  assert.ok(await healthy());
+});
+
+await test("a legitimate multi-item checkout is not mistaken for a flood", async () => {
+  const items = Array.from({ length: 5 }, () => ({ listingId: `missing-${Math.random().toString(36).slice(2)}`, quantity: 1 }));
+  const legit = await post("/checkout", JSON.stringify({ items, idempotencyKey: `bounds-legit-${Date.now()}-0000` }), cookie);
+  assert.notEqual(legit.status, 413, legit.text);
+  assert.notEqual(legit.status, 500, legit.text);
+});
+
 after(async () => {
   server.close();
   await pool.end();
