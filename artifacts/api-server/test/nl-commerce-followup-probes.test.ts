@@ -129,7 +129,7 @@ test("narrow VIP, sponsored relevance, and natural-language entry probes", async
     carCategory!,
     { unitPrice: "5", inventoryMode: "LIMITED", availableQuantity: 1 },
     "JOD",
-  ), { pricingMode: "FIXED", unitPriceMinor: 5_000 });
+  ), { pricingMode: "FIXED", unitPriceMinor: 5_000, priceRepresentation: null });
   const [sellerRow] = await db.select().from(users).where(eq(users.id, otherSeller.id));
   assert.equal(sellerRow?.activeMarketId, "JO");
   const [jordan] = await db.select().from(markets).where(eq(markets.id, "JO"));

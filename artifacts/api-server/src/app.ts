@@ -162,6 +162,11 @@ app.use(cookieParser());
 // during database outages and readiness can report dependency failure itself.
 app.use("/api", health);
 app.use("/api", sessionMiddleware, router);
+// Unknown API paths are always a JSON 404; previously only the payments simulation gate
+// answered them, so enabling the simulation exposed Express's HTML 404.
+app.use("/api", (_req, res) => {
+  res.status(404).json({ error: "Not found" });
+});
 if (process.env.DINAR_WEB_DIST) app.use(createWebFrontend(process.env.DINAR_WEB_DIST));
 /** The single API error boundary; exported so its reporting can be exercised in isolation. */
 export function apiErrorHandler(error: any, req: any, res: any, _next: any) {
