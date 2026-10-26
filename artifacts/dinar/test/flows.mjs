@@ -1,5 +1,5 @@
 import { chromium } from '@playwright/test';
-const browser = await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_PATH || '/repl/tools/bin/chromium'});
+const browser = await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_PATH || process.env.REPLIT_PLAYWRIGHT_CHROMIUM_EXECUTABLE});
 const context = await browser.newContext({baseURL:'http://127.0.0.1:4173',viewport:{width:390,height:844}}); await context.addInitScript(() => localStorage.setItem('bdinar-onboarded', '1')); const page=await context.newPage(); let checks=0;
 function check(value,message){if(!value)throw new Error(message);checks++;}
 const phone='5'+String(Date.now()).slice(-7);const password='Browser-acceptance-2026!';

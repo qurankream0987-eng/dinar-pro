@@ -8,10 +8,11 @@ type ProviderOutcome = "SAFE" | "MATCH" | "AMBIGUOUS" | "FAIL";
 const disposableUrl = new URL(process.env.DINAR_DEV_DATABASE_URL ?? "");
 assert.equal(process.env.BDINAR_IMAGE_PUBLICATION_ACCEPTANCE, "disposable");
 assert.equal(process.env.NODE_ENV, "development");
-assert.equal(process.env.DATABASE_URL, undefined);
+// Loopback and a disposable name the test/run.mjs guard also accepts; any port, so the suite runs
+// through the standard runner (the former fixed 55438/dinar_image_review_test could not).
+assert.ok([undefined, process.env.DINAR_DEV_DATABASE_URL].includes(process.env.DATABASE_URL));
 assert.equal(disposableUrl.hostname, "127.0.0.1");
-assert.equal(disposableUrl.port, "55438");
-assert.equal(disposableUrl.pathname, "/dinar_image_review_test");
+assert.match(disposableUrl.pathname, /^\/dinar_test_image_review(?:_[a-z0-9_]+)?$/);
 
 process.env.DINAR_PUBLICATION_IMAGE_REVIEW = "enabled";
 process.env.DINAR_VISION_PROVIDER = "GROQ";
@@ -122,6 +123,8 @@ globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
   return originalFetch(input, init);
 }) as typeof fetch;
 
+// Storage must be configured before the application's modules are evaluated.
+const { localObjectStorage } = await import("./local-object-storage");
 const [{ default: app }, database, objectStorage] = await Promise.all([
   import("../src/app"),
   import("@workspace/db"),
@@ -595,4 +598,5 @@ after(async () => {
     await db.delete(users).where(inArray(users.id, createdUserIds));
   globalThis.fetch = originalFetch;
   await pool.end();
+  await localObjectStorage?.close();
 });

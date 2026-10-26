@@ -4,7 +4,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 const output = "/tmp/dinar-ai-qa";
 mkdirSync(output, { recursive: true });
 const browser = await chromium.launch({
-  executablePath: "/repl/tools/bin/chromium",
+  executablePath: process.env.CHROMIUM_PATH ?? process.env.REPLIT_PLAYWRIGHT_CHROMIUM_EXECUTABLE,
 });
 const baseURL = process.env.AI_HOME_BASE_URL ?? "http://127.0.0.1:4173";
 const context = await browser.newContext({

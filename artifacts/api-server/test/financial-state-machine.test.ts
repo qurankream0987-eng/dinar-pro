@@ -405,6 +405,66 @@ await test("case 13: a failure inside the expiry transaction rolls everything ba
   assert.equal((await obligations(intent.id)).length, 0);
 });
 
+await test("case 8b: a requested refund confirmed with another amount or currency is refused", async () => {
+  const { intent } = await paidThenExpired();
+  const owed = intent.capturedAmountMinor;
+  const refund = await createRefundRequest({ paymentIntentId: intent.id, idempotencyKey: key("mismatch"), amountMinor: owed, reason: "مطابقة" });
+  const providerRefundId = `sim_refund_${randomUUID()}`;
+  await attachProviderRefundId(refund.id, providerRefundId);
+  // Signed through the adapter's own canonical signer, so only the payload is wrong.
+  const signer = testOnlyPaymentAdapter as unknown as { sign(event: unknown): { event: any; signature: string } };
+  for (const event of [
+    { id: `sim_event_${randomUUID()}`, type: "REFUND_SUCCEEDED", providerIntentId: intent.providerIntentId, providerRefundId, amountMinor: owed - 1, currencyCode: intent.currencyCode },
+    { id: `sim_event_${randomUUID()}`, type: "REFUND_SUCCEEDED", providerIntentId: intent.providerIntentId, providerRefundId, amountMinor: owed, currencyCode: intent.currencyCode === "USD" ? "EUR" : "USD" },
+  ])
+    assert.equal((await deliver(signer.sign(event))).status, 409, JSON.stringify(event));
+  assert.equal((await obligations(intent.id))[0].status, "OPEN");
+  assert.equal((await intentRow(intent.id)).refundedAmountMinor, 0);
+});
+
+await test("seller cancellation: allowed before payment, refused once payment is captured", async () => {
+  const unpaid = await order();
+  await intentFor(unpaid);
+  assert.equal((await request(`/orders/${unpaid}/cancel`, "POST", { reason: "نفدت الكمية" }, seller)).status, 200);
+  const paidOrder = await order();
+  const intent = await intentFor(paidOrder);
+  assert.equal((await capture(intent)).status, 200);
+  assert.equal((await request(`/orders/${paidOrder}/cancel`, "POST", { reason: "نفدت الكمية" }, seller)).status, 409);
+  assert.equal((await request(`/orders/${paidOrder}/cancel`, "POST", { reason: "غريب" }, stranger)).status, 404, "a stranger cannot even see it");
+  assert.equal((await orderRow(paidOrder)).status, "CREATED");
+});
+
+await test("a disputed payment cannot be refunded through the REFUND_DUE path", async () => {
+  const orderId = await order();
+  const intent = await intentFor(orderId);
+  assert.equal((await capture(intent)).status, 200);
+  assert.equal((await request(`/orders/${orderId}/accept`, "POST", {}, seller)).status, 200);
+  assert.equal((await request(`/orders/${orderId}/delivery`, "POST", { proofType: "CODE", proofToken: `FSM-DISPUTE-${runId}` }, seller)).status, 200);
+  const disputed = await request(`/orders/${orderId}/confirm`, "POST", { received: false, issue: "لم يصل المنتج كما وُصف" }, buyer);
+  assert.equal(disputed.status, 200, disputed.text);
+  assert.equal((await intentRow(intent.id)).status, "SIMULATION_DISPUTED");
+  await assert.rejects(createRefundRequest({ paymentIntentId: intent.id, idempotencyKey: key("dispute"), amountMinor: intent.amountMinor, reason: "نزاع" }), (error: any) => error.status === 409);
+  assert.equal((await obligations(intent.id)).length, 0, "disputes keep their own financial audit");
+});
+
+await test("durable idempotency lives in PostgreSQL: duplicate events and obligations are rejected by the database", async () => {
+  const { intent } = await paidThenExpired();
+  const [event] = await db.select().from(paymentEvents).where(eq(paymentEvents.paymentIntentId, intent.id));
+  await assert.rejects(pool.query(
+    "INSERT INTO payment_events (id, payment_intent_id, provider_key, provider_event_id, event_type, amount_minor, currency_code, payload_sha256, mode) VALUES ($1,$2,$3,$4,'CAPTURE_SUCCEEDED',$5,$6,$7,'SIMULATION_ONLY')",
+    [randomUUID(), intent.id, event!.providerKey, event!.providerEventId, event!.amountMinor, event!.currencyCode, event!.payloadSha256],
+  ), /payment_events_provider_event_unique/);
+  await assert.rejects(pool.query(
+    "INSERT INTO payment_refund_obligations (id, payment_intent_id, order_id, source_payment_event_id, reason, amount_minor, currency_code) VALUES ($1,$2,$3,$4,'RESERVATION_EXPIRED',$5,$6)",
+    [randomUUID(), intent.id, intent.orderId, event!.id, intent.capturedAmountMinor, intent.currencyCode],
+  ), /payment_refund_obligations_(intent|source_event)_unique/);
+  const otherOrder = await order();
+  await assert.rejects(pool.query(
+    "INSERT INTO payment_refund_obligations (id, payment_intent_id, order_id, source_payment_event_id, reason, amount_minor, currency_code) VALUES ($1,$2,$3,$4,'RESERVATION_EXPIRED',1,$5)",
+    [randomUUID(), intent.id, otherOrder, event!.id, intent.currencyCode],
+  ), "an obligation must point at its own order and capture");
+});
+
 await test("case 15: an unknown provider outcome is surfaced by reconciliation, not guessed", async () => {
   const orderId = await order();
   const intent = await intentFor(orderId);

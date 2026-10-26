@@ -161,7 +161,7 @@ async function checkSafe(page, label, path, selector) {
 try {
   browser = await chromium.launch({
     headless: true,
-    executablePath: process.env.CHROMIUM_PATH ?? "/repl/tools/bin/chromium",
+    executablePath: process.env.CHROMIUM_PATH ?? process.env.REPLIT_PLAYWRIGHT_CHROMIUM_EXECUTABLE,
     args: ["--no-sandbox", "--disable-dev-shm-usage"],
   });
 

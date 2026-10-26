@@ -17,7 +17,7 @@ const providerRequests = [];
 const contactCacheHeaders = [];
 const browser = await chromium.launch({
   headless: true,
-  executablePath: process.env.CHROMIUM_PATH ?? "/repl/tools/bin/chromium",
+  executablePath: process.env.CHROMIUM_PATH ?? process.env.REPLIT_PLAYWRIGHT_CHROMIUM_EXECUTABLE,
 });
 try {
   const context = await browser.newContext({

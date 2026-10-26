@@ -15,7 +15,7 @@ const consoleTexts = [];
 const providerRequests = [];
 const browser = await chromium.launch({
   headless: true,
-  executablePath: process.env.CHROMIUM_PATH ?? "/repl/tools/bin/chromium",
+  executablePath: process.env.CHROMIUM_PATH ?? process.env.REPLIT_PLAYWRIGHT_CHROMIUM_EXECUTABLE,
 });
 const context = await browser.newContext({
   baseURL: webBase,

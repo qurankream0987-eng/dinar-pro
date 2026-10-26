@@ -106,7 +106,7 @@ async function openConversation(page, actor, conversationId) {
   await page.waitForTimeout(400);
 }
 
-const browser = await chromium.launch({ headless: true, executablePath: process.env.CHROMIUM_PATH ?? "/repl/tools/bin/chromium" });
+const browser = await chromium.launch({ headless: true, executablePath: process.env.CHROMIUM_PATH ?? process.env.REPLIT_PLAYWRIGHT_CHROMIUM_EXECUTABLE });
 const only = process.env.E_SCENARIOS?.split(",");
 const scenarios = [["empty", "buyer", null], ...Object.entries(conversations).map(([name, item]) => [name, item.actor, item.id])]
   .filter(([name]) => !only || only.includes(name));

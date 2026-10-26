@@ -20,7 +20,7 @@ const apiErrorResponses = [];
 const checks = [];
 const browser = await chromium.launch({
   headless: true,
-  executablePath: env.CHROMIUM_PATH ?? "/repl/tools/bin/chromium",
+  executablePath: env.CHROMIUM_PATH ?? env.REPLIT_PLAYWRIGHT_CHROMIUM_EXECUTABLE,
 });
 const contexts = {};
 const pages = {};

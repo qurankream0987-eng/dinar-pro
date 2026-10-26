@@ -500,8 +500,11 @@ await test("DS-12 disconnect mid-turn: one provider call, settled reservation, n
   assert.match(first, /"type":"status"/u, "the stream had started");
   controller.abort();
   // The provider answers after the client left; wait for the server to finish the turn.
+  // The reservation is settled inside the turn and the message is marked completed after it, so
+  // wait for both; under load the two writes are observably apart (the earlier DS-12 flake).
+  const turnStatus = async () => (await db.select().from(messages).where(eq(messages.id, clientMessageId)))[0]?.metadata.turnStatus;
   let reservations = await reservationsOf(actor.id);
-  for (let waited = 0; waited < 5_000 && !(reservations.length && reservations.every((row) => row.status !== "RESERVED")); waited += 100) {
+  for (let waited = 0; waited < 5_000 && !(reservations.length && reservations.every((row) => row.status !== "RESERVED") && (await turnStatus()) !== "pending"); waited += 100) {
     await new Promise((resolve) => setTimeout(resolve, 100));
     reservations = await reservationsOf(actor.id);
   }

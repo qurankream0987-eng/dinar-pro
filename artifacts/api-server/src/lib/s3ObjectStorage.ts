@@ -65,7 +65,10 @@ export class S3ObjectFile implements ObjectFileLike {
       const result = await this.client.send(new HeadObjectCommand({ Bucket: this.bucket, Key: this.key }));
       const metadata: Record<string, string> = {};
       if (result.Metadata?.aclpolicy) metadata[ACL_METADATA_KEY] = result.Metadata.aclpolicy;
-      return [{ size: result.ContentLength, contentType: result.ContentType, cacheControl: result.CacheControl, metadata }];
+      // `generation` detects replacement between two reads (listing-photo verification requires
+      // it): the version id on versioned buckets, otherwise the ETag, which changes with content.
+      const generation = result.VersionId ?? result.ETag?.replace(/"/g, "");
+      return [{ size: result.ContentLength, contentType: result.ContentType, cacheControl: result.CacheControl, metadata, ...(generation ? { generation } : {}) }];
     } catch (error) { if (isMissing(error)) throw new ObjectNotFoundError(); throw error; }
   }
   async setMetadata(input: { metadata: Record<string, string> }): Promise<void> {

@@ -3,7 +3,7 @@ import { chromium } from "@playwright/test";
 
 const baseURL = process.env.PREMIUM_UI_BASE ?? "http://127.0.0.1:4173";
 const browser = await chromium.launch({
-  executablePath: process.env.CHROMIUM_PATH ?? "/repl/tools/bin/chromium",
+  executablePath: process.env.CHROMIUM_PATH ?? process.env.REPLIT_PLAYWRIGHT_CHROMIUM_EXECUTABLE,
   args: ["--no-sandbox"],
 });
 const context = await browser.newContext({ baseURL, viewport: { width: 1440, height: 900 } });

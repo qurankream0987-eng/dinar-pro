@@ -192,7 +192,7 @@ async function openSession(cookie) {
 }
 
 try {
-  browser = await chromium.launch({ headless: true, executablePath: process.env.CHROMIUM_PATH ?? "/repl/tools/bin/chromium" });
+  browser = await chromium.launch({ headless: true, executablePath: process.env.CHROMIUM_PATH ?? process.env.REPLIT_PLAYWRIGHT_CHROMIUM_EXECUTABLE });
 
   // ── Seller: conversational draft → publish review → published → my listings ──
   page = await openSession(cookies.seller);

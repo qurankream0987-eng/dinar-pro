@@ -208,7 +208,7 @@ async function openSession(cookie, { geolocation } = {}) {
 }
 
 try {
-  browser = await chromium.launch({ headless: true, executablePath: process.env.CHROMIUM_PATH ?? "/repl/tools/bin/chromium" });
+  browser = await chromium.launch({ headless: true, executablePath: process.env.CHROMIUM_PATH ?? process.env.REPLIT_PLAYWRIGHT_CHROMIUM_EXECUTABLE });
 
   // ── Buyer: seller delivery with a one-time device location ──
   page = await openSession(buyerCookie, { geolocation: FIXTURE });

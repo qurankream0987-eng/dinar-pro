@@ -120,7 +120,7 @@ async function journey(name, run) {
   }
 }
 
-const browser = await chromium.launch({ headless: true, executablePath: process.env.CHROMIUM_PATH ?? "/repl/tools/bin/chromium" });
+const browser = await chromium.launch({ headless: true, executablePath: process.env.CHROMIUM_PATH ?? process.env.REPLIT_PLAYWRIGHT_CHROMIUM_EXECUTABLE });
 try {
   await journey("themeAtEveryWidth", async () => {
     const widths = [];

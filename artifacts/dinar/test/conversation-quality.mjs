@@ -4,7 +4,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 const baseURL = process.env.AI_HOME_BASE_URL ?? 'http://127.0.0.1:4175';
 const output = process.env.AI_QUALITY_OUTPUT ?? '/tmp/dinar-conversation-quality';
 mkdirSync(output, { recursive: true });
-const browser = await chromium.launch({ executablePath: '/repl/tools/bin/chromium' });
+const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH ?? process.env.REPLIT_PLAYWRIGHT_CHROMIUM_EXECUTABLE });
 const errors = [], checks = [];
 const context = await browser.newContext({ baseURL, viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
 const page = await context.newPage();

@@ -282,7 +282,7 @@ const uiSellerListingIds = {};
 let tutorialBrowser;
 
 try {
-  browser = await chromium.launch({ headless: true, executablePath: process.env.CHROMIUM_PATH ?? "/repl/tools/bin/chromium" });
+  browser = await chromium.launch({ headless: true, executablePath: process.env.CHROMIUM_PATH ?? process.env.REPLIT_PLAYWRIGHT_CHROMIUM_EXECUTABLE });
 
   await record("G3-31", "guest selects an active market and resumes the same search exactly once", async () => {
     page = await openSession("");

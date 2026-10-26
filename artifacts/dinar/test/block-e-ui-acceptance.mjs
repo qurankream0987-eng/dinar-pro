@@ -201,7 +201,7 @@ async function sponsoredLabelsAccurate(results, label) {
 }
 
 try {
-  browser = await chromium.launch({ headless: true, executablePath: process.env.CHROMIUM_PATH ?? "/repl/tools/bin/chromium" });
+  browser = await chromium.launch({ headless: true, executablePath: process.env.CHROMIUM_PATH ?? process.env.REPLIT_PLAYWRIGHT_CHROMIUM_EXECUTABLE });
 
   // ── Seller: promote through the conversation, simulated payment, see the campaign ──
   page = await openSession(sellerCookie);

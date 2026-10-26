@@ -28,7 +28,12 @@ function parseAmzDate(value: string): number {
   return Date.UTC(Number(y), Number(mo) - 1, Number(d), Number(h), Number(mi), Number(s));
 }
 
-export async function startS3CompatibleTestServer(options: { accessKeyId: string; secretAccessKey: string; region: string; bucket: string; basePath?: string }) {
+/**
+ * `corsLoopbackOrigins` mirrors a bucket CORS rule for browser uploads to presigned URLs from a
+ * loopback web origin: preflight OPTIONS is answered unsigned (as S3 does) and responses carry
+ * that origin. Signature checks on the actual request are unchanged.
+ */
+export async function startS3CompatibleTestServer(options: { accessKeyId: string; secretAccessKey: string; region: string; bucket: string; basePath?: string; corsLoopbackOrigins?: boolean }) {
   const objects = new Map<string, StoredObject>();
   const requests: S3RequestRecord[] = [];
   const basePath = (options.basePath ?? "").replace(/\/+$/, "");
@@ -95,6 +100,22 @@ export async function startS3CompatibleTestServer(options: { accessKeyId: string
     const rawPath = (req.url ?? "/").split("?")[0]!;
     const record: S3RequestRecord = { method: req.method ?? "", path: rawPath, auth: "none", status: 0 };
     requests.push(record);
+    const origin = req.headers.origin;
+    if (options.corsLoopbackOrigins && origin && /^http:\/\/(127\.0\.0\.1|localhost):\d+$/.test(origin)) {
+      res.setHeader("access-control-allow-origin", origin);
+      res.setHeader("vary", "origin");
+      res.setHeader("access-control-expose-headers", "etag");
+      if (req.method === "OPTIONS") {
+        record.status = 204;
+        res.writeHead(204, {
+          "access-control-allow-methods": "PUT, GET, HEAD",
+          "access-control-allow-headers": String(req.headers["access-control-request-headers"] ?? "content-type"),
+          "access-control-max-age": "600",
+        });
+        res.end();
+        return;
+      }
+    }
     const respond = (status: number, code?: string) => {
       record.status = status;
       if (code) xmlError(res, status, code);
@@ -114,6 +135,7 @@ export async function startS3CompatibleTestServer(options: { accessKeyId: string
         res.writeHead(200, {
           "content-length": existing.bytes.length,
           "content-type": existing.contentType,
+          etag: `"${sha256(existing.bytes).slice(0, 32)}"`,
           ...(existing.cacheControl ? { "cache-control": existing.cacheControl } : {}),
           ...Object.fromEntries(Object.entries(existing.metadata).map(([name, value]) => [`x-amz-meta-${name}`, value])),
         });

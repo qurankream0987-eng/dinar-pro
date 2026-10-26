@@ -5,6 +5,7 @@ import { execFile } from "node:child_process";
 import { and, desc, eq, inArray, or } from "drizzle-orm";
 import { readFile, unlink } from "node:fs/promises";
 import { promisify } from "node:util";
+import { localObjectStorage } from "./local-object-storage";
 import app from "../src/app";
 import {
   aiResultSets,
@@ -45,7 +46,6 @@ import { DeterministicPhotoSuggestionProvider } from "../src/ai/listing-photo-in
 requireSafeReplitDevelopmentDatabase("BDINAR_PHASE1_ACCEPTANCE");
 process.env.BDINAR_BLOCK_MODEL_CALLS = "1";
 const execFileAsync = promisify(execFile);
-
 const server = app.listen(0);
 await new Promise<void>((resolve) => server.once("listening", resolve));
 const port = (server.address() as any).port;
@@ -1342,7 +1342,7 @@ await test("Phase 1 persisted marketplace acceptance journeys", async () => {
           maxBuffer: 2_000_000,
           env: {
             ...process.env,
-            CHROMIUM_PATH: "/repl/tools/bin/chromium",
+            CHROMIUM_PATH: process.env.CHROMIUM_PATH ?? process.env.REPLIT_PLAYWRIGHT_CHROMIUM_EXECUTABLE,
             PHASE1_WEB_BASE: browserTestWeb.baseUrl,
             PHASE1_API_ORIGIN: new URL(base).origin,
             PHASE1_COOKIE: cookie,
@@ -2102,5 +2102,6 @@ after(async () => {
   await new Promise<void>((resolve, reject) =>
     server.close((error) => (error ? reject(error) : resolve())),
   );
+  await localObjectStorage?.close();
   await pool.end();
 });

@@ -40,6 +40,7 @@ import {
   ObjectStorageService,
 } from "../src/lib/objectStorage";
 import { startDinarBrowserTestWeb } from "./browser-test-web-server";
+import { startS3CompatibleTestServer } from "./s3-compatible-test-server";
 import { requireSafeReplitDevelopmentDatabase } from "./safe-development-database";
 
 requireSafeReplitDevelopmentDatabase("BDINAR_SECURITY_ACCEPTANCE");
@@ -366,8 +367,26 @@ async function availablePort() {
 
 const workerLogs = new Map<ChildProcess, string>();
 
+// Outside Replit the built server needs an explicit storage provider; the workers get the
+// loopback S3-compatible test server instead of the Replit sidecar (Replit keeps its default).
+// Both workers start concurrently, so the server is shared through one promise.
+let workerS3: ReturnType<typeof startS3CompatibleTestServer> | undefined;
+async function workerStorageEnv(): Promise<Record<string, string>> {
+  if (process.env.REPL_ID || process.env.OBJECT_STORAGE_PROVIDER) return {};
+  workerS3 ??= startS3CompatibleTestServer({ accessKeyId: "SECWORKERKEY", secretAccessKey: "security-worker-secret-not-real-0000", region: "auto", bucket: "dinar-security" });
+  return {
+    OBJECT_STORAGE_PROVIDER: "s3",
+    OBJECT_STORAGE_S3_ENDPOINT: (await workerS3).endpoint,
+    OBJECT_STORAGE_S3_REGION: "auto",
+    OBJECT_STORAGE_S3_BUCKET: "dinar-security",
+    OBJECT_STORAGE_S3_ACCESS_KEY_ID: "SECWORKERKEY",
+    OBJECT_STORAGE_S3_SECRET_ACCESS_KEY: "security-worker-secret-not-real-0000",
+  };
+}
+
 async function startAuthApiWorker() {
   const port = await availablePort();
+  const storageEnv = await workerStorageEnv();
   const child = spawn(
     process.execPath,
     ["--enable-source-maps", "dist/index.mjs"],
@@ -375,6 +394,7 @@ async function startAuthApiWorker() {
       cwd: process.cwd(),
       env: {
         ...process.env,
+        ...storageEnv,
         NODE_ENV: "development",
         PORT: String(port),
       },
@@ -1706,7 +1726,7 @@ await test("stored HTML payloads stay inert across buyer, seller, chat, and admi
         maxBuffer: 2_000_000,
         env: {
           ...process.env,
-          CHROMIUM_PATH: "/repl/tools/bin/chromium",
+          CHROMIUM_PATH: process.env.CHROMIUM_PATH ?? process.env.REPLIT_PLAYWRIGHT_CHROMIUM_EXECUTABLE,
           WAVE2_WEB_BASE: browserTestWeb.baseUrl,
           WAVE2_API_ORIGIN: new URL(base).origin,
           WAVE2_XSS_PAYLOAD: xssPayload,
@@ -2506,6 +2526,7 @@ after(async () => {
       authTestProxy = undefined;
     }
     await Promise.all(authWorkerProcesses.map(stopAuthApiWorker));
+    if (workerS3) await (await workerS3).close();
   server.closeAllConnections();
   storageUploadServer.closeAllConnections();
   await new Promise<void>((resolve, reject) =>

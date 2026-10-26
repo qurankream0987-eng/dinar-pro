@@ -53,6 +53,21 @@ test("signed save, read, range, ACL and delete over HTTP with the selected s3 pr
   assert.ok(s3.requests.every((request) => request.auth === "header" && request.status !== 403), JSON.stringify(s3.requests.filter((r) => r.status === 403)));
 });
 
+test("metadata carries a generation that changes when the object is replaced (photo verification needs it)", async () => {
+  const storage = new ObjectStorageService(env);
+  const path = "/objects/listing-photos/seller-1/generation-probe.png";
+  assert.equal(await storage.saveObjectEntityFromBuffer(path, png, "image/png"), true);
+  const file = await storage.getObjectEntityFile(path);
+  const [first] = await file.getMetadata();
+  assert.ok(first.generation, "listing-photo completion rejects objects without a generation");
+  assert.equal((await file.getMetadata())[0].generation, first.generation, "stable while unchanged");
+  const replaced = Buffer.concat([png, Buffer.from([0])]);
+  const uploadURL = await storage.getObjectEntityUploadURL("listing-photos/seller-1/generation-probe.png");
+  assert.equal((await fetch(uploadURL, { method: "PUT", body: replaced, headers: { "content-type": "image/png" } })).status, 200);
+  assert.notEqual((await file.getMetadata())[0].generation, first.generation, "a replaced object is detected");
+  await file.delete();
+});
+
 test("a presigned upload URL works for the browser's PUT and only for its own key", async () => {
   const storage = new ObjectStorageService(env);
   const uploadURL = await storage.getObjectEntityUploadURL("listing-photos/seller-1/upload.png");

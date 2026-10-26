@@ -792,7 +792,7 @@ await test("browser: report, admin hide, sponsored label, policies, deletion", a
         maxBuffer: 2_000_000,
         env: {
           ...process.env,
-          CHROMIUM_PATH: "/repl/tools/bin/chromium",
+          CHROMIUM_PATH: process.env.CHROMIUM_PATH ?? process.env.REPLIT_PLAYWRIGHT_CHROMIUM_EXECUTABLE,
           WAVE3_WEB_BASE: web.baseUrl,
           WAVE3_API_ORIGIN: new URL(base).origin,
           WAVE3_REPORTER_COOKIE: actor("REPORTER").cookie,

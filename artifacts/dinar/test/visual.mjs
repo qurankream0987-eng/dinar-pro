@@ -1,7 +1,7 @@
 import { chromium } from '@playwright/test';
 import { randomUUID } from 'node:crypto';
 import { mkdirSync, writeFileSync } from 'node:fs';
-const browser = await chromium.launch({ headless: true, executablePath: process.env.CHROMIUM_PATH || '/repl/tools/bin/chromium' });
+const browser = await chromium.launch({ headless: true, executablePath: process.env.CHROMIUM_PATH || process.env.REPLIT_PLAYWRIGHT_CHROMIUM_EXECUTABLE });
 const baseURL = 'http://127.0.0.1:4173';
 const context = await browser.newContext({ baseURL });
 await context.addInitScript(() => localStorage.setItem('bdinar-onboarded', '1'));

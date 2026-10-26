@@ -6,7 +6,7 @@ import { chromium } from '@playwright/test';
 // this does not claim to validate server business authority or real payments.
 const output = process.env.PREMIUM_UI_OUTPUT ?? '/tmp/dinar-frontend-closure';
 mkdirSync(output, { recursive: true });
-const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH ?? '/repl/tools/bin/chromium', args: ['--no-sandbox'] });
+const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH ?? process.env.REPLIT_PLAYWRIGHT_CHROMIUM_EXECUTABLE, args: ['--no-sandbox'] });
 const context = await browser.newContext({ baseURL: process.env.PREMIUM_UI_BASE ?? 'http://127.0.0.1:4173', viewport: { width: 1440, height: 900 } });
 const errors = [], consoleErrors = [], expectedConsoleErrors = [], checks = [], turns = [];
 const market = { id: 'KW', status: 'ACTIVE', isActive: true, priceConfigured: true, countryNameEn: 'Kuwait', countryNameAr: 'الكويت', countryCode: 'KW', currencyCode: 'KWD', currencySymbolAr: 'د.ك', unitPriceMinor: 1000, minorUnitScale: 3, fulfilmentMethods: ['PICKUP'], paymentMethods: ['CASH'], restrictedCategories: [], sellerEligibilityMode: 'OPEN' };
