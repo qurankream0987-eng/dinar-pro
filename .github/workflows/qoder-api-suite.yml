@@ -1,0 +1,78 @@
+name: qoder-api-suite
+
+on:
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: "test/run.mjs suite name (e.g. block-f2-buyer.test)"
+        required: true
+        default: block-f2-buyer.test
+      flags:
+        description: "Extra BDINAR_*/DINAR_* switches, space separated"
+        required: false
+        default: BDINAR_BLOCKF_ACCEPTANCE=development
+  push:
+    branches: ["qoder/**"]
+
+concurrency:
+  group: qoder-api-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  suite:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: dinar_isolation
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U dinar_isolation"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      DINAR_LOCAL_PG: postgres://dinar_isolation@127.0.0.1:5432
+      SUITE: ${{ github.event.inputs.suite || 'block-f2-buyer.test' }}
+      FLAGS: ${{ github.event.inputs.flags || 'BDINAR_BLOCKF_ACCEPTANCE=development' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm run typecheck
+
+      - name: Build api-server
+        run: pnpm --filter @workspace/api-server run build
+
+      - name: Build web
+        run: pnpm --filter @workspace/dinar run build
+
+      - name: Run one isolated suite
+        working-directory: artifacts/api-server
+        run: sh test/isolation/local-suite.sh "$SUITE" $FLAGS
+
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: suite-log
+          path: |
+            artifacts/api-server/*.log
+          if-no-files-found: ignore
