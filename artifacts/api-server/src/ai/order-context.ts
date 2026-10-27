@@ -20,7 +20,7 @@ const ORDER_SURFACES = new Set([
   "ORDER_TRACKING",
 ]);
 
-type OrderPurpose = "LIST" | "STATUS" | "TRACKING" | "RECEIPT";
+type OrderPurpose = "LIST" | "STATUS" | "TRACKING" | "RECEIPT" | "ISSUE";
 
 function normalized(message: string) {
   return foldArabicLetters(normalizeDigits(message))
@@ -34,6 +34,9 @@ function requestFor(message: string, surface?: string): OrderPurpose | "HIDE_MAP
   const text = normalized(message);
   if (/(?:فاتوره|ايصال|الفاتوره|الايصال)/u.test(text) && /(?:طلب|طلبي|الطلبات)/u.test(text))
     return "RECEIPT";
+  // «لم أستلم الطلب، افتح لي شكوى»: a problem with an order the buyer is waiting for.
+  if (/(?:لم|ما)\s+(?:استلم|استلمت|يوصل|يوصلني|وصل|وصلني)|(?:شكوي|شكوه|نزاع|بلاغ)\s/u.test(`${text} `) && /(?:طلب|شكوي|شكوه|نزاع|استلم)/u.test(text))
+    return "ISSUE";
   if (/(?:اخف|اخفي|اغلق|اقفل).{0,16}الخريطه/u.test(text)) return "HIDE_MAP";
   if (/(?:اظهر|اعرض|افتح|ورني).{0,16}الخريطه/u.test(text)) return "SHOW_MAP";
   if (/طلباتي|(?:اعرض|افتح|ورني).{0,12}(?:الطلبات|طلباتي)|سجل الطلبات/u.test(text))
@@ -224,6 +227,36 @@ export async function orderContext(
       ids: rows.map((row) => row.id),
       purpose: "LIST",
       prompt: rows.length ? "هذه طلباتك مرتبة حسب حالتها الحالية." : "لا توجد لديك طلبات بعد.",
+    });
+  }
+
+  // A dispute is opened only from the order itself, after the seller has recorded the hand-off,
+  // with the buyer's own description; chat text alone never opens one.
+  if (request === "ISSUE") {
+    const awaiting = await db
+      .select({ id: orders.id })
+      .from(orders)
+      .where(and(eq(orders.buyerId, ownerId), eq(orders.marketId, marketId), eq(orders.status, "SELLER_MARKED_DELIVERED")))
+      .orderBy(desc(orders.createdAt));
+    const how = "لم أفتح نزاعًا من نص المحادثة. افتح تفاصيل الطلب واختر «لم أستلم الطلب» واكتب ما حدث، فيُسجَّل نزاع واحد مرتبط بالطلب وتراجعه الإدارة.";
+    if (awaiting.length === 1)
+      return orderSurface({ surface: "ORDER_STATUS", ownerId, marketId, ids: [awaiting[0]!.id], orderId: awaiting[0]!.id, purpose: "ISSUE", prompt: `هذا طلبك الذي سجّل البائع تسليمه. ${how}` });
+    if (awaiting.length > 1)
+      return orderSurface({ surface: "ORDER_SELECTOR", ownerId, marketId, ids: awaiting.map((row) => row.id), purpose: "ISSUE", prompt: `لديك عدة طلبات سجّل بائعوها التسليم. اختر الطلب المقصود. ${how}` });
+    const rows = await db
+      .select({ id: orders.id })
+      .from(orders)
+      .where(and(eq(orders.buyerId, ownerId), eq(orders.marketId, marketId)))
+      .orderBy(desc(orders.createdAt));
+    return orderSurface({
+      surface: "ORDERS_LIST",
+      ownerId,
+      marketId,
+      ids: rows.map((row) => row.id),
+      purpose: "ISSUE",
+      prompt: rows.length
+        ? "لا يوجد لديك طلب سجّل بائعه التسليم بعد، لذلك لا يمكن فتح نزاع على الاستلام الآن. هذه طلباتك وحالتها الحالية؛ يمكنك مراسلة البائع من تفاصيل الطلب."
+        : "لا توجد لديك طلبات في هذا السوق لفتح شكوى عليها.",
     });
   }
 

@@ -1,0 +1,85 @@
+/**
+ * General Arabic matching for conversational search. Tokens arrive already folded by
+ * normalizeSearch (hamza forms → ا, ى → ي, diacritics removed; ة is kept). Nothing here knows
+ * about any product: it handles attached particles, tanween, possessive endings, sound plurals,
+ * the verb ↔ verbal-noun pair of form II («ينظف» ↔ «تنظيف»), a small everyday lexicon, and words
+ * that describe the request rather than the item («أحد», weekdays, «المنتجات»).
+ */
+
+/** Words that say who/when/what-in-general, never what the listing is. */
+const REQUEST_WORDS = new Set([
+  "احد", "حد", "شخص", "واحد", "لي", "لنا", "الي", "عندي", "ابي", "ابغي", "ابغى", "اريد", "بدي", "ودي",
+  "ورني", "وريني", "ورينا", "ارني", "راويني", "فرجني", "اعرض", "اعرضلي", "ابحث", "دورلي", "فقط", "بس",
+  "السبت", "الاحد", "الاثنين", "الثلاثاء", "الاربعاء", "الخميس", "الجمعه", "الجمعة", "اليوم", "بكره", "بكرة", "غدا",
+  "منتج", "منتجات", "المنتج", "المنتجات", "اغراض", "الاغراض", "اشياء", "الاشياء", "سلع", "السلع", "بضاعه", "بضاعة",
+]);
+
+/** Everyday synonyms; a token matches if the listing text contains any member of its group. */
+const LEXICON: readonly (readonly string[])[] = [
+  ["بيت", "بيوت", "منزل", "منازل", "شقه", "شقة", "شقق"],
+  ["هاتف", "جوال", "موبايل", "تلفون", "تليفون"],
+  ["ماكينه", "ماكينة", "مكينه", "مكينة"],
+  ["سياره", "سيارة", "عربيه", "عربية"],
+  ["مقهي", "كافيه", "كوفي"],
+  ["شعار", "لوجو", "لوغو"],
+];
+const LEXICON_BY_WORD = new Map<string, readonly string[]>(
+  LEXICON.flatMap((group) => group.map((word) => [word, group] as const)),
+);
+
+const PROCLITICS = ["وال", "فال", "بال", "كال", "لل", "ال", "و", "ف", "ب", "ك", "ل"];
+const POSSESSIVES = ["كم", "هم", "ها", "نا", "ي", "ك"];
+
+/** Every surface form a request token may take in a listing. */
+export function tokenVariants(token: string): string[] {
+  const forms = new Set<string>([token]);
+  for (const prefix of PROCLITICS)
+    if (token.startsWith(prefix) && token.length - prefix.length >= 3) forms.add(token.slice(prefix.length));
+  for (const form of [...forms]) {
+    // Tanween fatha leaves a final alef once diacritics are removed: «شعارًا» → «شعارا».
+    if (form.endsWith("ا") && form.length >= 4) forms.add(form.slice(0, -1));
+    for (const suffix of POSSESSIVES)
+      if (form.endsWith(suffix) && form.length - suffix.length >= 3) forms.add(form.slice(0, -suffix.length));
+    // Sound feminine plural: «ماكينات» → «ماكينة».
+    if (form.endsWith("ات") && form.length >= 5) {
+      const stem = form.slice(0, -2);
+      forms.add(`${stem}ة`).add(`${stem}ه`);
+    }
+  }
+  for (const form of [...forms]) {
+    // Form II imperfect ↔ verbal noun: «ينظف» ↔ «تنظيف», «يصمم» ↔ «تصميم», «نوصل» ↔ «توصيل».
+    const verb = /^[يتنا](\S)(\S)(\S)$/u.exec(form);
+    if (verb) forms.add(`ت${verb[1]}${verb[2]}ي${verb[3]}`);
+  }
+  for (const form of [...forms]) for (const synonym of LEXICON_BY_WORD.get(form) ?? []) forms.add(synonym);
+  return [...forms];
+}
+
+/** Drops words that describe the request rather than the item, unless nothing would remain. */
+export function itemTokens(tokens: readonly string[]): string[] {
+  const kept = tokens.filter((token) => !REQUEST_WORDS.has(token));
+  return kept.length ? kept : [...tokens];
+}
+
+/**
+ * «لمقهى», «لتغليف»: a word carrying the purpose particle لـ says what the buyer needs the item
+ * for. When no listing matches the whole request, these may be relaxed — and the reply must name
+ * them (`broadenedFrom`). The first item word is never relaxed.
+ */
+export function purposeTokens(tokens: readonly string[]): string[] {
+  return tokens.slice(1).filter((token) => /^ل(?!ل|ا)/u.test(token) && token.length >= 4);
+}
+
+const escape = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+/**
+ * The token itself keeps plain containment (unchanged behaviour). A derived form must begin a
+ * word of the listing, optionally after an attached particle, so short stems cannot match inside
+ * unrelated words.
+ */
+export function textMatchesToken(text: string, token: string): boolean {
+  if (text.includes(token)) return true;
+  return tokenVariants(token).some(
+    (form) => form !== token && new RegExp(`(?:^|\\s)(?:و|ف|ب|ل|ك)?(?:ال)?${escape(form)}`, "u").test(text),
+  );
+}

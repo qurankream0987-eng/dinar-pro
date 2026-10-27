@@ -22,8 +22,23 @@ function normalizeCategoryToken(value: string): string {
     .replace(/^لل/u, "");
 }
 
+/** «هاتفي», «سيارتي»: in a sale the possessive ending names the seller's own item. */
+function categoryTokenForms(value: string): string[] {
+  const token = normalizeCategoryToken(value);
+  const forms = [token];
+  // «المنزلي» (household) is an adjective: a word with the article never takes a possessive.
+  if (/^(?:و|ف)?(?:ب|ك|ل)?ال|^لل/u.test(normalizeSearch(value))) return forms;
+  for (const suffix of ["كم", "هم", "ها", "نا", "ي", "ك"]) {
+    if (!token.endsWith(suffix) || token.length - suffix.length < 3) continue;
+    const stem = token.slice(0, -suffix.length);
+    forms.push(stem);
+    if (stem.endsWith("ت")) forms.push(`${stem.slice(0, -1)}ة`, `${stem.slice(0, -1)}ه`);
+  }
+  return forms;
+}
+
 /** Match category aliases as complete words, allowing common attached Arabic articles and prepositions. */
-export function hasCategoryAlias(message: string, alias: string): boolean {
+export function hasCategoryAlias(message: string, alias: string, options: { possessive?: boolean } = {}): boolean {
   const words = normalizeSearch(message).split(/\s+/).filter(Boolean);
   const aliasWords = normalizeSearch(alias).split(/\s+/).filter(Boolean);
   if (!aliasWords.length || aliasWords.length > words.length) return false;
@@ -32,8 +47,10 @@ export function hasCategoryAlias(message: string, alias: string): boolean {
     aliasWords.every(
       (word, offset) =>
         words[start + offset] !== undefined &&
-        normalizeCategoryToken(words[start + offset]!) ===
-          normalizeCategoryToken(word),
+        (options.possessive
+          ? categoryTokenForms(words[start + offset]!)
+          : [normalizeCategoryToken(words[start + offset]!)]
+        ).includes(normalizeCategoryToken(word)),
     ),
   );
 }

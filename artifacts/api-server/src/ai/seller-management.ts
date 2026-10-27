@@ -127,7 +127,7 @@ function matchTokens(value: string) {
     .map((token) => token.replace(/^ال/, ""));
 }
 
-const UPDATE_VERBS = "(?:غير|عدل|حدث|غيّر|عدّل|حدّث|خلي|خل|اجعل|زود|زيد|نزل|قلل|ارفع|خفض)";
+const UPDATE_VERBS = "(?:غير|عدل|حدث|غيّر|عدّل|حدّث|خلي|خل|اجعل|زود|زيد|زد|نزل|قلل|ارفع|خفض)";
 const ORDINAL_WORD =
   "(?:(?:ال)?(?:اول(?:ى|ي)?|ثاني(?:ة|ه)?|ثالث(?:ة|ه)?|رابع(?:ة|ه)?|خامس(?:ة|ه)?|سادس(?:ة|ه)?|سابع(?:ة|ه)?|ثامن(?:ة|ه)?|تاسع(?:ة|ه)?|عاشر(?:ة|ه)?|اخير(?:ة|ه)?))";
 /** Optional listing reference between a field and its value: "الإعلان الثاني", "هذه القطعة", "القطعة التي عرضتها". */
@@ -288,7 +288,9 @@ function soldPhrase(message: string) {
 }
 
 function statusOrArchiveOperation(message: string) {
-  const text = normalizeSearch(message).trim().replace(/[،,.!؟]+/g, " ").replace(/\s+/g, " ").trim();
+  // «وقف الإعلان الثاني مؤقتًا»: how long the pause lasts does not change which listing it is.
+  const text = normalizeSearch(message).trim().replace(/[،,.!؟]+/g, " ").replace(/\s+/g, " ").trim()
+    .replace(/\s+(?:مؤقتا|موقتا|مؤقت|موقت|حاليا|الحين|الان|شوي)$/u, "");
   const target = `(?:\\s+(?:الاعلان|العرض))?\\s*(?:${ORDINAL_WORD}|رقم\\s*\\d{1,2}|القديم|الاقدم)?`;
   if (soldPhrase(text) || new RegExp(`(?:^|\\s)(?:شيله|شيلها|احذفه|احذفها|ازله|ازيله|ازيلها|ارشفه|ارشفها)$`).test(text))
     return "ARCHIVE" as const;
@@ -1146,7 +1148,8 @@ async function adviceTarget(input: { conversationId: string; message: string; ma
 // ─── Seller business assistance (Command C) ─────────────────────────────────
 // Each answer is a real aggregation over the seller's own rows in the active market.
 const INVENTORY =
-  /(?:^|\s)(?:بضاعتي|مخزوني|المخزون|منتجاتي)(?:\s|$)|(?:^|\s)كم\s+(?:بقي|باقي|ظل|ضل|تبقي|متبقي|متوفر|المتاح|الكميه)(?:\s|$)/u;
+  // «البضاعة اللي أعرضها»: what the seller lists, named by a relative clause.
+  /(?:^|\s)(?:ال)?(?:بضاعه|بضاعة|منتجات|اغراض|اشياء|عروض|اعلانات)\s+(?:اللي|التي|الي)\s+(?:ا|ن)?(?:عرض|نزل|نشر|حط|بيع)\S*(?:\s|$)|(?:^|\s)(?:بضاعتي|مخزوني|المخزون|منتجاتي)(?:\s|$)|(?:^|\s)كم\s+(?:بقي|باقي|ظل|ضل|تبقي|متبقي|متوفر|المتاح|الكميه)(?:\s|$)/u;
 const SELLER_ORDERS =
   /(?:^|\s)كم\s+(?:طلب|طلبا|طلبات)\s*(?:عندي|لي|وصلني|جاني|وصلتني|علي)(?:\s|$)|(?:^|\s)(?:طلبات|طلب)\s+(?:الزباين|الزبائن|العملاء|المشترين)(?:\s|$)|(?:^|\s)(?:مبيعاتي|كم\s+بعت)(?:\s|$)/u;
 // «قارن أول إعلانين عندي», «قارن إعلاناتي»: comparing the seller's own listings is the
@@ -1349,7 +1352,7 @@ async function ordersTurn(input: { conversationId: string; market: Market; actor
 /** Period-explicit sales from the seller's own order and payment records (conversation-first C). */
 async function salesTurn(input: { conversationId: string; market: Market; actorId: string }, text: string): Promise<SurfaceTurn> {
   const insight = await sellerSalesInsight(input.actorId, input.market, text);
-  const asksTop = /(?:اكثر|افضل)\s+(?:منتجاتي|اعلاناتي|عروضي|منتج)/u.test(text);
+  const asksTop = /(?:اكثر|افضل)\s+(?:منتجاتي|اعلاناتي|عروضي|منتج)|(?:^|\s)(?:ال)?اكثر\s+(?:شي\s+|شيء\s+)?(?:مبيعا|بيعا|مبيع)(?:\s|$)/u.test(text);
   const result = await makeSellerContextResult({ conversationId: input.conversationId, market: input.market, actorId: input.actorId }, [], salesPrompt(insight, asksTop));
   result.result.sellerInsight = insight;
   return result;

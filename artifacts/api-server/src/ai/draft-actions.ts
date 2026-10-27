@@ -28,6 +28,9 @@ const PUBLISH = /^(?:نعم\s+)?(?:انشره|انشرها|انشر|انشر ا�
 // «كمل الإعلان». Anchored on both ends: a sentence that merely mentions an ad passes on.
 const RESUME =
   /^(?:(?:طيب|خلينا|خلنا|يلا|هيا|ممكن)\s+)?(?:كمل|اكمل|كملي|نكمل|لنكمل|تابع|نتابع|ارجع|نرجع|رجعنا|رجعني|نعود|عد|عودة|رجوع)\s*(?:لل|ل|الي|علي|في|بال|ب)?\s*(?:ال)?(?:اعلاني|اعلان|مسودتي|مسوده|عرضي|عرض|بيع)(?:\s+(?:السابق|القديم|الاول|الاخير)|\s+(?:اللي|الي|الذي)\s+(?:قبل|قبله|بديته|بداته|كان|بدات فيه))?$/u;
+// «اعرض الإعلان قبل النشر», «راجع المسودة»: show the stored draft; it never publishes.
+const REVIEW =
+  /^(?:(?:اعرض|افتح|راجع|وريني|ورني|ارني|شوف)\s+(?:لي\s+)?)(?:ال)?(?:اعلان|اعلاني|مسوده|مسودة|مسودتي)(?:\s+قبل\s+(?:ال)?نشر(?:ه)?)?$/u;
 /** «كمل الإعلان / كمل إعلاني» — for classifying a queued compound-request step. */
 export const isDraftResumeRequest = (message: string) => RESUME.test(text(message));
 const CONFIRM = /^(?:نعم|اكيد|اكد|تاكيد|موافق|تمام|اوكي|ok|yes|نفذ|انشره|نعم انشر|تاكيد النشر)$/u;
@@ -246,8 +249,11 @@ export async function executeDraftActionTurn(input: { conversationId: string; me
   }
 
   // ── «كمل الإعلان»: bring back an unfinished draft; several mean a choice, never a guess.
-  if (RESUME.test(said)) {
+  const reviewRequest = REVIEW.test(said);
+  if (RESUME.test(said) || reviewRequest) {
     const drafts = open(await conversationDrafts(input.conversationId));
+    // «اعرض الإعلان» without a draft is not about a draft; other handlers keep it.
+    if (reviewRequest && !drafts.length) return null;
     if (!drafts.length) return sellTurn({}, "cancelled", "لا توجد مسودة إعلان غير مكتملة في هذه المحادثة. قل «أريد أبيع …» لبدء واحدة.");
     if (drafts.length === 1) return resumed(drafts[0]!);
     return sellTurn({}, "choose_draft", `لديك ${drafts.length} مسودات غير مكتملة: ${drafts.map((item, index) => `${index + 1}. «${item.draft.title ?? "بدون عنوان"}»`).join("، ")}. أي واحدة تكمل؟`, {

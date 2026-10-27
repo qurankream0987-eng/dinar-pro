@@ -2242,7 +2242,7 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
           : typeof (toolResult.query.buyer as { message?: unknown } | undefined)?.message === "string"
             ? String((toolResult.query.buyer as { message: string }).message)
           : toolResult.listings.length && Array.isArray(toolResult.query.broadenedFrom)
-            ? `لم أجد عروضًا تذكر «${toolResult.query.broadenedFrom.join(" ")}» تحديدًا، فعرضت ${toolResult.listings.length} عروض من التصنيف نفسه تطابق بقية طلبك.`
+            ? `لم أجد عروضًا تذكر «${toolResult.query.broadenedFrom.join(" ")}» تحديدًا، فعرضت ${toolResult.listings.length} عروض تطابق بقية طلبك.`
           : toolResult.listings.length
             ? `وجدت ${toolResult.listings.length} عروض منشورة تطابق طلبك. راجع التفاصيل الحالية من بطاقات العرض.`
             : searchState?.filters.length

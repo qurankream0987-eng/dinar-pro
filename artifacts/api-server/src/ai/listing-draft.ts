@@ -145,7 +145,7 @@ function extractInitialUnitPrice(
     `(?:بمبلغ\\s*|بسعر\\s*|سعر(?:ها|ه)?\\s*|بـ?\\s*)?(\\d[\\d٬,]*(?:\\.\\d+)?)\\s*${currency}`,
   ).exec(normalized) ??
     // "بـ290" / "بسعر 290" without a currency word: the price phrase still owns the number.
-    /(?:^|\s)(?:بمبلغ\s*|بسعر\s*|بـ\s*|ب)(\d[\d٬,]*(?:\.\d+)?)(?=\s|$|[،,.])/u.exec(normalized);
+    /(?:^|\s)(?:بمبلغ\s*|بسعر\s*|بـ\s*|ب\s?)(\d[\d٬,]*(?:\.\d+)?)(?=\s|$|[،,.])/u.exec(normalized);
   if (!amount) return undefined;
   const value = Number(amount[1].replace(/[٬,]/g, ""));
   return Number.isFinite(value) && value > 0
@@ -156,6 +156,9 @@ function extractInitialUnitPrice(
 function extractInitialQuantity(message: string): number | undefined {
   const normalized = normalizeSearchNumberText(message);
   const match = /(?:عندي|لدي|كمية|الكمية)\s*(\d{1,7})/.exec(normalized);
+  // «عندي جهاز واحد», «قطعة وحدة»: one unit written as a word.
+  if (!match && /(?:(?:عندي|لدي)\s+\S+|(?:^|\s)(?:قطعه|قطعة|حبه|حبة))\s+(?:واحد|واحده|واحدة|وحده|وحدة|1)(?=\s|$|[،,.])/u.test(normalized))
+    return 1;
   if (!match) return undefined;
   const quantity = Number(match[1]);
   return Number.isSafeInteger(quantity) && quantity > 0 && quantity <= 1_000_000
@@ -182,9 +185,10 @@ function cleanTitle(message: string): string {
     .replace(/^\s*(?:يا\s+)?دينار\s*[،,:]?\s*/u, "")
     .replace(/^\s*(?:بع|بيع)\s+لي\s+/u, "")
     .replace(/^\s*(?:عندي|لدي|كمية|الكمية)\s*\d+\s*/iu, "")
-    .replace(/^\s*(?:أنا|انا|أريد|اريد|أبي|ابي|أبغى|ابغى|أحتاج|احتاج|أملك|املك|عندي|لدي)(?=\s|$)\s*/iu, "")
+    .replace(/^\s*(?:أنا|انا|أريد|اريد|أبي|ابي|أبغى|ابغى|بدي|ودي|أحتاج|احتاج|أملك|املك|عندي|لدي)(?=\s|$)\s*/iu, "")
     .replace(
-      /^\s*(?:(?:أن|ان)\s*)?(?:أبيع|ابيع|أعرض|اعرض|انشر|أقدم|اقدم|أوفر|اوفر)\s*/iu,
+      // «أبيعه»: the attached pronoun is the draft's item, not a new title word.
+      /^\s*(?:(?:أن|ان)\s*)?(?:أبيع|ابيع|أعرض|اعرض|انشر|أقدم|اقدم|أوفر|اوفر)(?:ها|ه(?=\s|$))?\s*/iu,
       "",
     )
     .replace(/^\s*(?:للبيع|بيع)\s*/iu, "")
@@ -310,7 +314,7 @@ function explicitConfiguredCategory(
         alias: normalizeSearch(alias),
       })),
     )
-    .filter(({ alias }) => alias.length >= 2 && hasCategoryAlias(message, alias))
+    .filter(({ alias }) => alias.length >= 2 && hasCategoryAlias(message, alias, { possessive: true }))
     .sort((a, b) => b.alias.length - a.alias.length);
   // A word two categories share, written as a purpose («للمنزل»: for the home), names
   // the category whose own label it is, not the other category's alias.
@@ -1248,6 +1252,24 @@ export function negotiableStatement(message: string): boolean | undefined {
   return undefined;
 }
 
+/**
+ * «لا، البطارية 89٪» after the seller wrote «البطارية 86٪»: an explicit correction of a fact in
+ * the seller's own description replaces that one value and keeps everything else.
+ */
+function correctDescribedFact(draft: z.infer<typeof ConversationDraft>, message: string): boolean {
+  const said = message.trim();
+  const body = stripCorrectionPrefix(said.replace(/^\s*(?:لا|لأ|عفوا|عفوًا|تصحيح)\s*[,،:]\s*/u, "")).trim();
+  if (!draft.description || body === said) return false;
+  const fact = /^(\S+(?:\s+\S+)?)\s+(\S+)$/u.exec(body);
+  if (!fact) return false;
+  const label = fact[1]!.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const stated = new RegExp(`(${label}\\s*[:：]?\\s*)([^\\s،,.؛]+)`, "u");
+  const current = stated.exec(draft.description);
+  if (!current || current[2] === fact[2]) return false;
+  draft.description = draft.description.replace(stated, (_whole, prefix: string) => `${prefix}${fact[2]}`);
+  return true;
+}
+
 function collapseWhitespace(message: string): string {
   return message.replace(/[^\S\n]+/g, " ").replace(/\n{2,}/g, "\n");
 }
@@ -1859,7 +1881,8 @@ export async function listingDraft(
     : undefined;
   const startsAnotherSale =
     surface === "SELL" &&
-    /^(?:(?:ابي|ابغى|اريد|بدي)\s+(?:ان\s+)?(?:ابيع|اعرض|اقدم|اوفر)|(?:ابيع|اعرض|انشر)\b)/u.test(
+    // «بدي أبيعه ب300»: the attached pronoun is the item of the draft in progress.
+    /^(?:(?:ابي|ابغى|اريد|بدي)\s+(?:ان\s+)?(?:ابيع|اعرض|اقدم|اوفر)(?!ه|ها|هم)|(?:ابيع|اعرض|انشر)\b)/u.test(
       normalizeSearch(message),
     );
   const startNewDraft =
@@ -1902,14 +1925,16 @@ export async function listingDraft(
       !categoryChanges &&
       !correction?.changed &&
       accountPhoneIntent;
-    const stepAnswerConsumed = categoryChanges || correction?.changed
+    const factCorrected = !categoryChanges && !correction?.changed && correctDescribedFact(draft, text);
+    const stepAnswerConsumed = categoryChanges || correction?.changed || factCorrected
       ? false
       : accountPhoneClarification
         ? true
         : consumeDraftAnswer(draft, step, text, configured);
     if (
       (!stepAnswerConsumed || step === "title" || step === "description") &&
-      !correction?.changed
+      !correction?.changed &&
+      !factCorrected
     ) {
       const updates = structuredDraftUpdates(draft, text, configured);
       if (updates.changed) draft = updates.draft;
@@ -1921,6 +1946,15 @@ export async function listingDraft(
       !isCategoryOnlySelection(text, categorySelection)
     )
       consumeDraftAnswer(draft, "title", text, configured);
+    // «ب300 وقابل للتفاوض، عندي جهاز واحد»: a price answer may also state the quantity.
+    if (step === "price" && stepAnswerConsumed && draft.availableQuantity === undefined) {
+      const stated = extractInitialQuantity(text);
+      const inventory = categoryForDraft(draft, configured)?.rules.inventory;
+      if (stated !== undefined && inventory?.allowedModes.includes("LIMITED") && inventory.semantics !== "NON_STOCK") {
+        draft.inventoryMode = "LIMITED";
+        draft.availableQuantity = String(stated);
+      }
+    }
     const negotiable = negotiableStatement(text);
     if (negotiable !== undefined) draft.negotiable = negotiable;
     markDraftSources(before, draft, "USER_DECLARED");

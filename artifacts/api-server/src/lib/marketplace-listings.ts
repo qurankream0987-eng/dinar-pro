@@ -29,6 +29,7 @@ import {
 } from "./promotion-policy";
 import { rankSponsored, representativeCampaign, servingCampaignsFor, sponsoredScore } from "./promotions";
 import { getCommercialPolicy } from "./commercial-policy";
+import { itemTokens, textMatchesToken } from "./arabic-search-terms";
 
 export type OfferRow = {
   offer: typeof offers.$inferSelect;
@@ -206,7 +207,7 @@ export async function searchMarketplaceListings(
   // the listing must contain; it is dropped only when other words remain.
   const allTokens = normalizeSearch(term).split(/\s+/).filter(Boolean);
   const meaningful = allTokens.filter((token) => !SERVICE_ROLE_WORDS.has(token));
-  const tokens = meaningful.length ? meaningful : allTokens;
+  const tokens = itemTokens(meaningful.length ? meaningful : allTokens);
   // Product words that are also category aliases ("سماعات") match inflections by stem.
   const aliasTokens = new Set(
     (categoryRow?.aliases ?? []).map((alias) => normalizeSearch(alias)),
@@ -292,7 +293,14 @@ export async function searchMarketplaceListings(
           offer.inventoryMode === "UNLIMITED" ||
           (offer.availableQuantity ?? 0) - offer.reservedQuantity > 0) &&
         (options.conversational
-          ? tokens.every((token) => searchableText(offer).includes(tokenNeedle(token)))
+          ? (() => {
+              const text = searchableText(offer);
+              // Category-alias words keep their stem rule; other words also match their
+              // general Arabic forms (lib/arabic-search-terms.ts).
+              return tokens.every((token) =>
+                aliasTokens.has(token) ? text.includes(tokenNeedle(token)) : textMatchesToken(text, token),
+              );
+            })()
           : searchableText(offer).includes(normalizeSearch(term))),
     );
   const requestedSort =

@@ -589,7 +589,9 @@ export async function executeBuyerTurn(input: {
     }
     const color = text.match(COLOR);
     const size = text.match(SIZE);
-    const number = text.match(/(\d+(?:\.\d+)?)/u);
+    // «5 آلاف» is 5,000: the thousands word multiplies the number before it.
+    const amount = text.match(/(\d+(?:\.\d+)?)(?:\s*(الف|الاف|مليون)(?=\s|$))?/u);
+    const number = amount && [amount[0], String(Number(amount[1]) * (amount[2] === "مليون" ? 1_000_000 : amount[2] ? 1_000 : 1))];
     if (color) return { tool: "buyerRefine", version: 1, result: await runBuyerSearch(input.market, { ...state, color: color[1]! }) };
     if (size) return { tool: "buyerRefine", version: 1, result: await runBuyerSearch(input.market, { ...state, size: size[1]!.toLowerCase() }) };
     if (number && MAX_PRICE.test(text) && /(?:الي|لحد|حتي|حدي|ميزانيتي|اقصي|بحدود|عادي)/u.test(text))

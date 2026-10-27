@@ -25,10 +25,15 @@ export function surfaceIntent(message: string): string | undefined {
   // «أعرض 15 بدل 20», «اعرض 2»: an amount or a position names no item, so it is not a sale;
   // negotiation, the draft in progress or the visible results give it its meaning.
   if (priceProposal(message) || isBareShowNumber(message)) return undefined;
+  // «اعرض لي الماكينات» asks DINAR to show something, and «البضاعة اللي أعرضها» refers to the
+  // seller's existing listings; neither offers a new item for sale.
+  const offerText = text
+    .replace(/(?:^|\s)اعرض\s+(?:لي|لنا)(?=\s|$)/gu, " ")
+    .replace(/(?:^|\s)(?:اللي|التي|الي|الذي)\s+(?:ا|ن)?عرض\S*/gu, " ");
   if (
     // «اعرض المستعمل فقط», «اعرض الأرخص»: showing the current results, not offering something.
     /ابيع|للبيع|انشر.*عرض|اعرض(?!\s+(?:لي\s+)?(?:ال)?(?:مستعمل[ةه]?|مستخدم[ةه]?|جديد[ةه]?|ارخص|أرخص|اغلى|اغلي|أغلى|نتائج|الكل|كل\s+النتائج)(?:\s|$))|(?:عندي|لدي|املك).*(?:للايجار|للاجار)|(?:^|\s)(?:اريد\s+)?(?:اقدم|اوفر)\s+(?:خدمة|خدمتي)(?=\s|$)/.test(
-      text,
+      offerText,
     )
   )
     return "SELL";

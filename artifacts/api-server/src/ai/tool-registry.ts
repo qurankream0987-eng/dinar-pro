@@ -9,6 +9,8 @@ import {
   searchMarketplaceListings,
 } from "../lib/marketplace-listings";
 import { resolveMarketplaceCategory } from "../lib/marketplace-categories";
+import { itemTokens, purposeTokens } from "../lib/arabic-search-terms";
+import { normalizeSearch } from "./search-context";
 import {
   decorateStoredResults,
   recommendListings,
@@ -311,6 +313,16 @@ export const aiToolRegistry: Record<string, ToolDefinition> = {
         if (aliasWords.length) {
           listings = await run(remaining);
           if (listings.length) broadenedFrom = aliasWords;
+        }
+      }
+      // «شعار لمقهى»: a purpose word no listing mentions is relaxed, and reported.
+      if (!listings.length && !broadenedFrom && input.query) {
+        const words = itemTokens(normalizeSearch(input.query).split(/\s+/).filter(Boolean));
+        const purpose = purposeTokens(words);
+        const remaining = words.filter((word) => !purpose.includes(word));
+        if (purpose.length && remaining.length) {
+          listings = await run(remaining.join(" "));
+          if (listings.length) broadenedFrom = purpose;
         }
       }
       const sponsoredIds = listings.filter((item) => item.isSponsored).map((item) => item.id);

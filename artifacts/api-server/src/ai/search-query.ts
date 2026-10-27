@@ -29,9 +29,10 @@ export function normalizeSearchNumberText(value: string): string {
 function parseAmount(value: string): number | undefined {
   if (typeof value !== "string") return undefined;
   const normalized = normalizeSearchNumberText(value).trim().replace(/,/g, "");
-  const match = normalized.match(/^(\d+(?:\.\d+)?)\s*(الف|مليون)?$/);
+  // «5 آلاف» folds to «5 الاف»: the plural is the same multiplier as «الف».
+  const match = normalized.match(/^(\d+(?:\.\d+)?)\s*(الف|الاف|مليون)?$/);
   if (!match) return undefined;
-  const multiplier = match[2] === "مليون" ? 1_000_000 : match[2] === "الف" ? 1_000 : 1;
+  const multiplier = match[2] === "مليون" ? 1_000_000 : match[2] === "الف" || match[2] === "الاف" ? 1_000 : 1;
   const amount = Number(match[1]) * multiplier;
   return Number.isFinite(amount) ? amount : undefined;
 }
@@ -44,7 +45,7 @@ function numericFilter(
 ): SearchFilter | undefined {
   if (requireVocabulary && !new RegExp(vocabulary).test(message))
     return undefined;
-  const numberPattern = String.raw`(\d+(?:[,.]\d{3})*(?:\.\d+)?(?:\s*(?:الف|مليون))?)`;
+  const numberPattern = String.raw`(\d+(?:[,.]\d{3})*(?:\.\d+)?(?:\s*(?:الف|الاف|مليون))?)`;
   const less = requireVocabulary
     ? undefined
     : new RegExp(String.raw`(?:اقل من|دون|تحت|حد اقصى)\s*${numberPattern}`).exec(message);
@@ -417,7 +418,7 @@ function stripStructuredTerms(
       : []),
     ...(filters.some((filter) => filter.operator === "ne") ? NEGATION_TERMS : []),
     ...(filters.some((filter) => filter.field === "city") ? LOCATION_TERMS : []),
-    "وريني", "ورجيني", "اعرض", "اعرضلي", "رتب", "رتبها", "حسب",
+    "وريني", "ورني", "ورينا", "راويني", "ارني", "فرجني", "ورجيني", "اعرض", "اعرضلي", "رتب", "رتبها", "حسب",
   ]
     .filter((term): term is string => Boolean(term))
     .map(normalizeSearch)
