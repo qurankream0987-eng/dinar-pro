@@ -62,6 +62,13 @@ jobs:
       - name: Build web
         run: pnpm --filter @workspace/dinar run build
 
+      - name: Install Chromium (browser journeys)
+        if: contains(env.SUITE, 'browser-journey')
+        working-directory: artifacts/dinar
+        run: |
+          pnpm exec playwright install --with-deps chromium
+          echo "DINAR_CHROMIUM=$(node -e 'console.log(require("@playwright/test").chromium.executablePath())')" >> "$GITHUB_ENV"
+
       - name: Run one isolated suite
         working-directory: artifacts/api-server
         run: sh test/isolation/local-suite.sh "$SUITE" $FLAGS
