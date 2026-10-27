@@ -164,11 +164,12 @@ await test("SC02 REAL_E2E: narrow → sort → compare → «كم ماشي؟» �
 
   const [negotiation] = await db.select().from(negotiations).where(and(eq(negotiations.listingId, offerListingId), eq(negotiations.buyerId, buyer.id)));
   assert.ok(negotiation, "the offer opened a negotiation");
-  assert.equal(negotiation!.status, "AGREED");
+  assert.equal(negotiation!.status, "ACCEPTED");
   assert.equal(negotiation!.agreedAmountMinor, OFFER_AMOUNT * 10 ** negotiation!.minorUnitScale);
 
   const buyerOrders = await db.select().from(orders).where(eq(orders.buyerId, buyer.id));
   assert.equal(buyerOrders.length, 1, "exactly one order");
+  assert.equal(negotiation!.orderId, buyerOrders[0]!.id, "the order consumed the agreed negotiation");
   const lines = await db.select().from(orderItems).where(eq(orderItems.orderId, buyerOrders[0]!.id));
   assert.equal(lines.length, 1);
   assert.equal(lines[0]!.offerId, offerListingId, "the order is for the agreed car");
