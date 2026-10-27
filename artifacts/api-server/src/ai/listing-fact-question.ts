@@ -62,6 +62,8 @@ type Fact = {
   read: (attributes: unknown) => string | undefined;
   missing: (title: string) => string;
   answer: (title: string, value: string) => string;
+  /** The drafted message for the seller; the default scopes the buyer's own question to the listing. */
+  draft?: (title: string, question: string) => string;
 };
 
 const FACTS: readonly Fact[] = [
@@ -71,6 +73,7 @@ const FACTS: readonly Fact[] = [
     missing: (title) => `لم يذكر البائع الممشى في إعلان «${title}». جهّزت سؤالًا للبائع:`,
     answer: (title, value) =>
       `ممشى «${title}» حسب سجل الإعلان: ${value} كم. هذه معلومة من الإعلان نفسه، ولم أفترض غيرها.`,
+    draft: (title) => `كم ممشى «${title}»؟`,
   },
   {
     test: OPERATING_HOURS_QUESTION,
@@ -129,7 +132,7 @@ export async function executeListingFactQuestion(input: {
   return draftListingQuestion(
     { ...input, actorId },
     listingId,
-    `بخصوص «${title}»: ${question}؟`,
+    fact.draft?.(title, question) ?? `بخصوص «${title}»: ${question}؟`,
     fact.missing(title),
   );
 }
