@@ -78,14 +78,21 @@ const ACCEPT = /^(?:نعم\s+)?(?:اقبل|اقبله|اقبلها|قبول|مو
 const REJECT = /^(?:ارفض|ارفضه|ارفضها|رفض|لا اقبل|ما اقبل|ما ابي اقبل)(?:\s+(?:العرض|عرضه|عرضها))*(?:\s+\S+)?$/u;
 const SELLER_LIST = /(?:^|\s)(?:هل\s+)?(?:عندي|وصلني|وصلتني|جاني|جاتني)\s+(?:اي\s+)?عروض(?:\s+(?:اسعار|سعر|جديده|علي اعلاناتي|على اعلاناتي))?(?:\s|$)|(?:^|\s)عروض (?:الاسعار|اسعار) (?:اللي|الي) (?:وصلت|جات|جاتني)|^(?:اعرض|وريني|شوف)\s+عروض\s+(?:السعر|الاسعار|المشترين)$/u;
 const BUYER_LIST = /^(?:اعرض|وريني|شوف)\s+(?:عروضي|عروض اسعاري)$|(?:وش|شو|ايش|شنو|ماذا) صار (?:علي|على|ب|في|مع) (?:عرضي|عروضي)|(?:^|\s)رد البائع(?:\s|$)|حاله عرضي|(?:^|\s)عروضي على الاسعار|(?:^|\s)عروض اسعاري|(?:^|\s)(?:البائع|البايع) (?:رد|وافق|رفض)/u;
-const CONFIRM = /^(?:نعم|اكيد|اكد|تاكيد|ارسل|ارسله|ارسلها|ارسل العرض|ارسال العرض|موافق|اوافق|تمام|اوكي|نفذ|اقبل|قبول|ok|yes)(?:\s+(?:علي|على)\s*\d+(?:\.\d+)?)?$/u;
+// «قدّم العرض», «ابعث العرض»: submitting the open review, as the review card says «إرسال العرض».
+const CONFIRM = /^(?:نعم|اكيد|اكد|تاكيد|ارسل|ارسله|ارسلها|ارسل العرض|ارسال العرض|قدم العرض|قدمه|قدمها|ابعث العرض|ابعثه|ابعثها|موافق|اوافق|تمام|اوكي|نفذ|اقبل|قبول|ok|yes)(?:\s+(?:علي|على)\s*\d+(?:\.\d+)?)?$/u;
 const CANCEL = /^(?:لا|كلا|الغاء|الغ|الغي|تراجع|لا ترسل|الغاء العرض)$/u;
 const WITHDRAW_REQUEST = /^(?:اسحب عرضي|اسحب العرض|اسحب عرضي المقابل|اسحب العرض المقابل|سحب العرض|الغي عرضي|الغ عرضي|تراجع عن عرضي)$/u;
 const EDIT = /^(?:تعديل|عدل|عدله|غير المبلغ|عدل المبلغ)$/u;
+/**
+ * «90 وأنت تستلمها», «85 والتوصيل عليك»: an amount followed by a condition. The amount is the
+ * counter; the condition is not part of what a negotiation records (price only), so the review
+ * names it as unrecorded instead of silently dropping it.
+ */
+const AMOUNT_WITH_TERMS = new RegExp(`^(?:ب\\s*)?${NUMBER}\\s+(و\\S.*)$`, "u");
 const AMOUNT_ONLY = new RegExp(`^(?:(?:خله|خليه|خليها|خلها|خل|اجعله|خلي العرض|العرض|عرض مضاد)\\s+)?(?:ب\\s*)?${NUMBER}$`, "u");
 const ORDER_NOW = /^(?:اطلبه|اطلبها|اطلب|اشتريه|اشتريها|خذه|خذها|اطلبه الان|اطلبه الحين|كمل الطلب|اكمل الطلب)$/u;
 const BEST_PRICE_REQUEST =
-  /(?:اساله|اسال البائع|قله|قل له).{0,24}(?:اخر(?:\s+سعر)?|السعر النهائي|سعره النهائي|كم\s+طالب(?:\s+فيه)?|كم\s+يطلب)|^(?:وش|كم)\s+(?:اخر(?:ه|\s+سعر)?|السعر النهائي|طالب(?:\s+فيه)?)|^(?:(?:يا\s+)?دينار\s+)?(?:اطلب|اطلب لي|اسال عن|ابي|ابغي|بدي|شو|ايش)\s+(?:اخر|افضل|احسن)\s+سعر|(?:^|\s)(?:اطلب|اطلب لي|ابي|ابغي|بدي|اريد)\s+تسعيره(?:\s|$)/u;
+  /(?:اساله|اسال البائع|قله|قل له).{0,24}(?:اخر(?:\s+سعر)?|السعر النهائي|سعره النهائي|كم\s+طالب(?:\s+فيه)?|كم\s+يطلب)|^(?:وش|كم)\s+(?:اخر(?:ه|\s+سعر)?(?!\s+(?:عرض|عروض))|السعر النهائي|طالب(?:\s+فيه)?)|^(?:(?:يا\s+)?دينار\s+)?(?:اطلب|اطلب لي|اسال عن|ابي|ابغي|بدي|شو|ايش)\s+(?:اخر|افضل|احسن)\s+سعر|(?:^|\s)(?:اطلب|اطلب لي|ابي|ابغي|بدي|اريد)\s+تسعيره(?:\s|$)/u;
 /**
  * «كم تكلفة الخدمة»: a quotation request only about the listing in view. Without one it is a
  * general cost question («كم تكلف منظومة صغيرة؟», «كم تكلفة برو؟») and is left to other handlers.
@@ -322,6 +329,7 @@ async function decisionReview(
   negotiationId: string,
   action: Exclude<NegotiationAction, "SEND_NEGOTIATION_OFFER" | "REQUEST_BEST_PRICE">,
   amount?: number,
+  unrecordedTerms?: string,
 ): Promise<Turn> {
   const row = await negotiationForParty(input.actorId, negotiationId);
   if (!row) return notice("عرض السعر غير موجود.");
@@ -349,7 +357,10 @@ async function decisionReview(
     REJECT_NEGOTIATION: `رفض عرض السعر على «${view.title}»؟ اكتب «نعم» للرفض أو «إلغاء».`,
     WITHDRAW_NEGOTIATION: `سحب عرضك النشط على «${view.title}»؟ اكتب «نعم» للتأكيد أو «إلغاء».`,
   };
-  return reviewTurn(review, { ...view }, prompts[action], action);
+  const terms = unrecordedTerms
+    ? ` الشرط «${unrecordedTerms}» لا يُسجَّل في عرض السعر (يحفظ DINAR المبلغ فقط)؛ اكتبه للطرف الآخر في رسالة الطلب إن أردت.`
+    : "";
+  return reviewTurn(review, { ...view }, `${prompts[action]}${terms}`, action);
 }
 
 async function listTurn(input: { conversationId: string; market: Market; actorId: string }, role: "BUYER" | "SELLER"): Promise<Turn> {
@@ -809,7 +820,8 @@ export async function executeNegotiationTurn(input: {
     if (PRICE_UNSUITABLE.test(text)) return notice(UNSUITABLE_PROMPT);
     if (edit && edit.amount === undefined && sellerContext !== "AMBIGUOUS")
       return notice("اكتب مبلغ العرض المضاد، مثل «خليه 55». لم يُرسل شيء.");
-    const counter = amountIn(text, SELLER_COUNTER) ?? amountIn(text, AMOUNT_ONLY) ?? edit?.amount ?? proposed;
+    const withTerms = text.match(AMOUNT_WITH_TERMS);
+    const counter = amountIn(text, SELLER_COUNTER) ?? amountIn(text, AMOUNT_ONLY) ?? edit?.amount ?? proposed ?? (withTerms ? Number(withTerms[1]) : undefined);
     const decision = counter !== undefined ? "COUNTER" : ACCEPT.test(text) ? "ACCEPT" : REJECT.test(text) ? "REJECT" : undefined;
     if (!decision && parseCommandNumbers(text).ordinal !== undefined && sellerContext !== "AMBIGUOUS") {
       const selected = await negotiationForParty(actorId, sellerContext);
@@ -818,7 +830,7 @@ export async function executeNegotiationTurn(input: {
     }
     if (decision) {
       if (sellerContext === "AMBIGUOUS") return notice("أي عرض تقصد؟ اذكر رقمه من القائمة، مثل «اقبل الأول».");
-      if (decision === "COUNTER") return decisionReview(context, sellerContext, "COUNTER_NEGOTIATION", counter);
+      if (decision === "COUNTER") return decisionReview(context, sellerContext, "COUNTER_NEGOTIATION", counter, withTerms?.[2]?.trim());
       return decisionReview(context, sellerContext, decision === "ACCEPT" ? "ACCEPT_NEGOTIATION" : "REJECT_NEGOTIATION");
     }
   }

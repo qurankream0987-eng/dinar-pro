@@ -695,16 +695,22 @@ function parsePending(set: StoredSet | undefined, actorId: string): StoredPendin
 const valueOf = (pending: StoredPending, key: string) => pending.structuredInput?.[key]?.value;
 
 /** The order this conversation is about: the latest block's own order surface or delivery step. */
+/**
+ * The order this conversation is about: the most recent order card in it. An unrelated turn in
+ * between (a question, a stray «نعم») does not lose it; ownership and market are rechecked.
+ */
 async function orderInContext(conversationId: string, actorId: string, marketId: string): Promise<string | undefined> {
-  const [block] = await db
+  const blocks = await db
     .select({ payload: aiUiBlocks.payload })
     .from(aiUiBlocks)
     .where(eq(aiUiBlocks.conversationId, conversationId))
     .orderBy(desc(aiUiBlocks.createdAt))
-    .limit(1);
-  const payload = (block?.payload ?? {}) as { surface?: unknown; resourceId?: unknown; delivery?: unknown };
-  if (typeof payload.resourceId !== "string" || !(payload.surface === "ORDER" || payload.delivery)) return undefined;
-  const [order] = await db.select({ id: orders.id }).from(orders).where(and(eq(orders.id, payload.resourceId), eq(orders.buyerId, actorId), eq(orders.marketId, marketId)));
+    .limit(20);
+  const payload = blocks
+    .map((block) => (block.payload ?? {}) as { surface?: unknown; resourceId?: unknown; delivery?: unknown })
+    .find((item) => typeof item.resourceId === "string" && (item.surface === "ORDER" || item.delivery));
+  if (!payload) return undefined;
+  const [order] = await db.select({ id: orders.id }).from(orders).where(and(eq(orders.id, payload.resourceId as string), eq(orders.buyerId, actorId), eq(orders.marketId, marketId)));
   return order?.id;
 }
 

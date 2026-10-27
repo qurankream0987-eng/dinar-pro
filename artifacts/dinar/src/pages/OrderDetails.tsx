@@ -98,6 +98,18 @@ function useMinutesLeft(iso?: string) {
   return Math.ceil((new Date(iso).getTime() - now) / 60000);
 }
 
+/** What must happen before the seller can record the hand-off, or null when it can be recorded now. */
+function handoffPrerequisite(arrangement?: { method?: string; status?: string } | null): string | null {
+  if (!arrangement?.status || !["REQUESTED", "ACCEPTED", "OUT_FOR_DELIVERY", "READY_FOR_PICKUP"].includes(arrangement.status))
+    return null;
+  if (arrangement.method === "COURIER") return "يسجّل مندوب التوصيل المسند تسليم هذا الطلب.";
+  if (arrangement.method === "PICKUP" && arrangement.status !== "READY_FOR_PICKUP")
+    return "عندما يصبح الطلب جاهزًا اكتب «جاهز للاستلام» في المحادثة، ثم سجّل التسليم هنا.";
+  if (arrangement.method === "SELLER_DELIVERY" && arrangement.status !== "OUT_FOR_DELIVERY")
+    return "عند خروجك للتوصيل اكتب «خرج للتوصيل» في المحادثة، ثم سجّل التسليم هنا.";
+  return null;
+}
+
 function CompletedBuyerReceipt({
   order,
   role,
@@ -321,6 +333,15 @@ function OrderView({ order }: { order: Detail }) {
   const OPEN = ["CREATED", "PAYMENT_PENDING", "PAID"].includes(order.status);
   const WORKING = ["ACCEPTED", "IN_PROGRESS"].includes(order.status);
   const DELIVERED = order.status === "SELLER_MARKED_DELIVERED";
+  // With an active delivery arrangement the server records the hand-off only once it is ready
+  // (lib/delivery.ts recordOrderHandoff); the card says what comes first instead of a refusal.
+  const arrangement = useGetOrderFulfillment(order.id, {
+    query: {
+      queryKey: getGetOrderFulfillmentQueryKey(order.id),
+      enabled: role === "seller" && WORKING,
+    },
+  }).data?.fulfillment;
+  const handoffFirst = handoffPrerequisite(arrangement);
   const proofShown = proofLabel(order.deliveryProof);
   const issue = parseIssue(order.issue);
 
@@ -419,10 +440,15 @@ function OrderView({ order }: { order: Detail }) {
             data-testid="input-delivery-proof"
           />
         </Field>
+        {handoffFirst && (
+          <p className="mt-3 text-sm" role="status" data-testid="text-handoff-prerequisite">
+            {handoffFirst}
+          </p>
+        )}
         <Button
           block
           className="mt-4"
-          disabled={!proof.trim()}
+          disabled={!proof.trim() || Boolean(handoffFirst)}
           onClick={() => setDialog("deliver")}
           icon={<PackageCheck size={18} />}
           data-testid="button-mark-delivered"

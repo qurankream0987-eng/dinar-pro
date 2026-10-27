@@ -49,7 +49,11 @@ export default function SellerListingsSurface({
 }) {
   const queryClient = useQueryClient();
   const { market } = useAccount();
-  const listings = useGetListings(OWN_LISTINGS);
+  // A change confirmed in chat is written by the server, not through this cache: every card
+  // reads the listings afresh, so it never shows the values from before the change.
+  const listings = useGetListings(OWN_LISTINGS, {
+    query: { queryKey: getGetListingsQueryKey(OWN_LISTINGS), staleTime: 0, refetchOnMount: "always" },
+  });
   const changeStatus = useChangeListingStatus();
   const archive = useArchiveListing();
   const promotionProducts = useGetPromotionProducts();

@@ -234,8 +234,17 @@ export async function executeDraftActionTurn(input: { conversationId: string; me
     return sellTurn(read?.draft ?? {}, "review", `لم يُنشر الإعلان: ${outcome.message}`);
   }
 
+  // ── «انشره» again on a draft that is already published: say so; never publish twice.
+  if (PUBLISH.test(said) && latestBlock?.payload.surface === "SELL" && latestBlock.payload.draftStep === "published") {
+    const published = ConversationDraft.safeParse(latestBlock.payload.draft);
+    const listingId = typeof latestBlock.payload.resourceId === "string" ? latestBlock.payload.resourceId : undefined;
+    return sellTurn(published.success ? published.data : {}, "published", "هذا الإعلان منشور بالفعل؛ لم أنشر نسخة ثانية. تجده في «إعلاناتي».", {
+      ...(listingId ? { resourceId: listingId, resourceIds: [listingId] } : {}),
+    });
+  }
+
   // ── «انشره» on the draft in focus.
-  const focused = latestBlock?.payload.surface === "SELL" && !CLOSED_STEPS.includes(String(latestBlock.payload.draftStep ?? "")) ? ConversationDraft.safeParse(latestBlock.payload.draft) : undefined;
+  const focused =latestBlock?.payload.surface === "SELL" && !CLOSED_STEPS.includes(String(latestBlock.payload.draftStep ?? "")) ? ConversationDraft.safeParse(latestBlock.payload.draft) : undefined;
   if (PUBLISH.test(said) && focused?.success && focused.data.draftId) {
     const draft = focused.data;
     const categories = await configured();

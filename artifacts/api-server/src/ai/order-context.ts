@@ -238,7 +238,7 @@ export async function orderContext(
       .from(orders)
       .where(and(eq(orders.buyerId, ownerId), eq(orders.marketId, marketId), eq(orders.status, "SELLER_MARKED_DELIVERED")))
       .orderBy(desc(orders.createdAt));
-    const how = "لم أفتح نزاعًا من نص المحادثة. افتح تفاصيل الطلب واختر «لم أستلم الطلب» واكتب ما حدث، فيُسجَّل نزاع واحد مرتبط بالطلب وتراجعه الإدارة.";
+    const how = "لم أفتح نزاعًا من نص المحادثة. اضغط «الإبلاغ عن مشكلة» في بطاقة الطلب واختر «لم أستلم الطلب» واكتب ما حدث، فيُسجَّل نزاع واحد مرتبط بالطلب وتراجعه الإدارة.";
     if (awaiting.length === 1)
       return orderSurface({ surface: "ORDER_STATUS", ownerId, marketId, ids: [awaiting[0]!.id], orderId: awaiting[0]!.id, purpose: "ISSUE", prompt: `هذا طلبك الذي سجّل البائع تسليمه. ${how}` });
     if (awaiting.length > 1)
@@ -255,7 +255,7 @@ export async function orderContext(
       ids: rows.map((row) => row.id),
       purpose: "ISSUE",
       prompt: rows.length
-        ? "لا يوجد لديك طلب سجّل بائعه التسليم بعد، لذلك لا يمكن فتح نزاع على الاستلام الآن. هذه طلباتك وحالتها الحالية؛ يمكنك مراسلة البائع من تفاصيل الطلب."
+        ? "لا يوجد لديك طلب سجّل بائعه التسليم بعد، لذلك لا يمكن فتح نزاع على الاستلام الآن. هذه طلباتك وحالتها الحالية؛ افتح الطلب من القائمة لمراسلة البائع."
         : "لا توجد لديك طلبات في هذا السوق لفتح شكوى عليها.",
     });
   }
