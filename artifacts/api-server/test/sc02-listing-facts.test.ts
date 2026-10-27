@@ -139,7 +139,8 @@ await focused("SC02-1", "a listing without a recorded mileage answers determinis
   assert.ok(String(review.body ?? "").includes(missingMileageTitle) || /برادو/u.test(String(review.body ?? "")), "the drafted question names the listing");
 
   // Nothing was sent: the card is a review, and a bare «أرسل» is still an explicit confirmation step.
-  assert.match(String(draft.prompt ?? ""), /أرسل|إرسال|ارسل/u, "the review explains how to send it");
+  // Surface payloads carry the copy in the assistant body (routes/ai.ts), not in the block.
+  assert.match(question.body, /أرسل|إرسال|ارسل/u, "the review explains how to send it");
 });
 
 await focused("SC02-2", "a comparison labels a missing attribute «لم يذكر البائع»", async () => {
