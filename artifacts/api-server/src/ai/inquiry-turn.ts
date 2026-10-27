@@ -251,6 +251,23 @@ async function guardedPreconditions(actorId: string, market: Market, target: Inq
 const PRICE_SEPARATION =
   "سؤالك يتضمن سعرًا أو عرضًا ماليًا، والعروض المالية لا تُرسل كاستفسار. إن كان الإعلان يقبل التفاوض قل مثلًا «أعطيه 100» لتراجع عرض السعر قبل إرساله، أو اسأل البائع سؤالًا لا يتضمن سعرًا. لم يُرسل شيء.";
 
+/**
+ * A question DINAR prepared for the buyer («كم ماشي؟» on a listing with no recorded
+ * mileage). It is the same review card «اسأل البائع» produces: nothing is sent until the
+ * buyer confirms, and the authority stays the existing SEND_INQUIRY_MESSAGE action.
+ */
+export async function draftListingQuestion(
+  input: Input & { actorId: string },
+  listingId: string,
+  body: string,
+  lead: string,
+): Promise<Turn> {
+  const target: InquiryTarget = { kind: "LISTING", listingId };
+  const refused = await guardedPreconditions(input.actorId, input.market, target);
+  if (refused) return refused;
+  return draft(input, target, body, "DINAR_DRAFT_APPROVED", lead);
+}
+
 async function askSeller(input: Input & { actorId: string }, question: string): Promise<Turn> {
   const listingId = await focusedListing({ conversationId: input.conversationId, market: input.market, actorId: input.actorId, message: input.message });
   if (!listingId) return notice("أي إعلان تقصد؟ ابحث عن المنتج أو افتح الإعلان، ثم قل «اسأل البائع …». لم يُرسل شيء.");

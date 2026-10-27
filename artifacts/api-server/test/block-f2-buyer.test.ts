@@ -224,10 +224,10 @@ await focused("F2-07", "an unknown field stays unknown; nothing is invented", as
   const compared = await turn(buyer, unknownConv, `قارن ${Math.min(grey, other)} و ${Math.max(grey, other)}`);
   const condition = compared.payload.comparison.rows.find((row: any) => row.label === "الحالة");
   const greyColumn = compared.payload.comparison.listings.findIndex((listing: any) => listing.id === T.grey);
-  assert.equal(condition.values[greyColumn], null, "condition not stated by the seller stays null («غير معروف»)");
+  assert.equal(condition.values[greyColumn], null, "condition not stated by the seller stays null («لم يذكر البائع»)");
   const labels = compared.payload.comparison.rows.map((row: any) => row.label);
   for (const invented of ["الماركة", "الخامة", "المقاس", "اللون"]) assert.ok(!labels.includes(invented), `${invented} is not a registry field`);
-  assert.equal(compared.payload.comparison.unknownLabel, "غير معروف");
+  assert.equal(compared.payload.comparison.unknownLabel, "لم يذكر البائع");
 });
 
 await focused("F2-08", "similar and cheaper alternatives reuse the Block E recommender", async () => {

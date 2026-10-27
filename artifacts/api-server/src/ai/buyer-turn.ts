@@ -372,9 +372,9 @@ async function comparison(set: StoredSet, positions: number[], market: Market): 
         resultSetId: set.id,
         listings: listings.map((listing) => ({ id: listing!.id, title: listing!.title, isSponsored: Boolean(listing!.isSponsored) })),
         rows,
-        unknownLabel: "غير معروف",
+        unknownLabel: "لم يذكر البائع",
       },
-      prompt: "قارنت البيانات الحالية من DINAR فقط. ما لم يذكره البائع يظهر «غير معروف» ولم أفترض قيمته.",
+      prompt: "قارنت البيانات الحالية من DINAR فقط. ما لم يذكره البائع يظهر «لم يذكر البائع» ولم أفترض قيمته.",
     },
   };
 }

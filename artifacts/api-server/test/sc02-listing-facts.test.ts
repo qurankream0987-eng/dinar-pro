@@ -115,9 +115,9 @@ await focused("SC02-1", "a listing without a recorded mileage answers determinis
   conv = await newConversation();
   // Cheapest has no recorded mileage, so «الأول» after «أرخص» is the unknown one.
   await publishCar(seller, { title: "تويوتا برادو 2021", year: 2021, price: "4500", mileage: 60000 });
-  await publishCar(seller, { title: "تويوتا برادو 2018", year: 2018, price: "3200" });
+  await publishCar(seller, { title: "تويوتا برادو 2020", year: 2020, price: "3200" });
   await publishCar(seller, { title: "تويوتا برادو 2022", year: 2022, price: "5000", mileage: 30000 });
-  missingMileageTitle = `تويوتا برادو 2018 ${runId}`;
+  missingMileageTitle = `تويوتا برادو 2020 ${runId}`;
 
   await turn(buyer, conv, "دينار أبي برادو مستعملة");
   await turn(buyer, conv, "من 2020 وفوق");
@@ -129,7 +129,7 @@ await focused("SC02-1", "a listing without a recorded mileage answers determinis
 
   const question = await turn(buyer, conv, "هذا الأول كم ماشي؟");
   assert.match(question.body, /لم يذكر البائع الممشى/u, `expected a deterministic «لم يذكر البائع الممشى» answer, got: ${question.body}`);
-  assert.match(question.body, /2018/u, "the answer names the listing it is about");
+  assert.match(question.body, /2020/u, "the answer names the listing it is about");
   const draft = question.payload ?? {};
   assert.equal(draft.surface, "INQUIRY_DRAFT", `expected an inquiry review to ask the seller, got surface ${draft.surface}`);
   assert.equal(draft.view, "DRAFT");
