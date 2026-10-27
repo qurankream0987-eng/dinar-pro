@@ -159,25 +159,32 @@ const cleaning = await publish(seller, {
 
 await focused("GEN-1", "a recorded property characteristic is answered from the record", async () => {
   const conv = await newConversation();
-  const found = await turn(buyer, conv, "أريد شقة للإيجار");
+  const found = await turn(buyer, conv, `أريد شقة للإيجار ${runId}`);
   const foundIds = listingIds(found.payload);
   assert.ok(foundIds.includes(flat3.id) && foundIds.includes(flat2.id), `both flats are found: ${found.body}`);
   assert.notEqual(found.payload?.surface, "INQUIRY_DRAFT", "a search is not a question");
+  const first = foundIds[0] === flat3.id ? flat3 : flat2;
+  const recorded = first === flat3 ? { bedrooms: 3, area: 120 } : { bedrooms: 2, area: 85 };
   const bedrooms = await turn(buyer, conv, "كم غرفة نوم في الأولى؟");
   assert.match(bedrooms.body, /غرف النوم/u, `the answer names the recorded characteristic: ${bedrooms.body}`);
-  assert.match(bedrooms.body, /3/u, `the recorded 3 bedrooms are answered: ${bedrooms.body}`);
+  assert.match(bedrooms.body, new RegExp(String(recorded.bedrooms), "u"), `the recorded bedrooms are answered: ${bedrooms.body}`);
+  assert.ok(bedrooms.body.includes(first.title), "the answer is about the first listing in view");
   assert.doesNotMatch(bedrooms.body, /لم يذكر البائع/u);
   assert.notEqual(bedrooms.payload?.surface, "INQUIRY_DRAFT", "a recorded value needs no seller question");
   const area = await turn(buyer, conv, "كم مساحة الأولى؟");
-  assert.match(area.body, /120/u, `the recorded 120 m² are answered: ${area.body}`);
+  assert.match(area.body, new RegExp(String(recorded.area), "u"), `the recorded area is answered: ${area.body}`);
   assert.doesNotMatch(area.body, /لم يذكر البائع/u);
 });
 
 await focused("GEN-2", "an unrecorded property characteristic says so and opens an unsent review", async () => {
   const conv = await newConversation();
-  await turn(buyer, conv, "أريد شقة للإيجار");
-  const question = await turn(buyer, conv, "كم حمام في الأولى؟");
-  assert.match(question.body, /لم يذكر البائع الحمامات/u, `the record has no bathrooms for the first flat: ${question.body}`);
+  const found = await turn(buyer, conv, `أريد شقة للإيجار ${runId}`);
+  const ids = listingIds(found.payload);
+  const position = ids.indexOf(flat3.id) + 1;
+  assert.ok(position >= 1 && position <= 6, `the first flat is visible in the list: ${ids.join(",")}`);
+  const word = ["الأولى", "الثانية", "الثالثة", "الرابعة", "الخامسة", "السادسة"][position - 1]!;
+  const question = await turn(buyer, conv, `كم حمام في ${word}؟`);
+  assert.match(question.body, /لم يذكر البائع الحمامات/u, `the record has no bathrooms for that flat: ${question.body}`);
   assert.equal(question.payload?.surface, "INQUIRY_DRAFT", `expected an inquiry review: ${question.body}`);
   assert.equal(question.payload?.inquiry?.view, "DRAFT");
   assert.equal(question.payload?.inquiry?.status, "PENDING");
@@ -188,7 +195,7 @@ await focused("GEN-2", "an unrecorded property characteristic says so and opens 
 
 await focused("GEN-3", "a recorded fashion characteristic is answered; an unrecorded one is a review", async () => {
   const conv = await newConversation();
-  const found = await turn(buyer, conv, "أريد جاكيت شتوي");
+  const found = await turn(buyer, conv, `أريد جاكيت شتوي ${runId}`);
   assert.ok(listingIds(found.payload).includes(jacket.id), `the jacket is found: ${found.body}`);
   const season = await turn(buyer, conv, "هل هذا شتوي؟");
   assert.match(season.body, /الموسم/u, `the answer names the season: ${season.body}`);
@@ -205,7 +212,7 @@ await focused("GEN-3", "a recorded fashion characteristic is answered; an unreco
 
 await focused("GEN-4", "an option question is answered with the recorded option, not the asked one", async () => {
   const conv = await newConversation();
-  const found = await turn(buyer, conv, "أريد لابتوب مستعمل");
+  const found = await turn(buyer, conv, `أريد لابتوب مستعمل ${runId}`);
   assert.ok(listingIds(found.payload).includes(laptop.id), `the laptop is found: ${found.body}`);
   const question = await turn(buyer, conv, "هل اللابتوب جديد؟");
   assert.match(question.body, /الحالة/u, `the answer names the recorded condition: ${question.body}`);
@@ -216,7 +223,7 @@ await focused("GEN-4", "an option question is answered with the recorded option,
 
 await focused("GEN-5", "a recorded home characteristic is answered for a different product", async () => {
   const conv = await newConversation();
-  await turn(buyer, conv, "أريد طاولة طعام");
+  await turn(buyer, conv, `أريد طاولة طعام ${runId}`);
   const question = await turn(buyer, conv, "هل الطاولة جديدة؟");
   assert.match(question.body, /جديد/u, `the recorded condition is answered: ${question.body}`);
   assert.notEqual(question.payload?.surface, "INQUIRY_DRAFT");
@@ -224,7 +231,7 @@ await focused("GEN-5", "a recorded home characteristic is answered for a differe
 
 await focused("GEN-6", "a service with no registered characteristics asks the seller instead of inventing", async () => {
   const conv = await newConversation();
-  const found = await turn(buyer, conv, "أريد خدمة تنظيف");
+  const found = await turn(buyer, conv, `أريد خدمة تنظيف ${runId}`);
   assert.ok(listingIds(found.payload).includes(cleaning.id), `the service is found: ${found.body}`);
   const question = await turn(buyer, conv, "هل تشمل الخدمة الضمان؟");
   assert.match(question.body, /(?:لا أجد في سجل|لا يسجّل)[^]*الضمان/u, `the record cannot answer it: ${question.body}`);
@@ -238,7 +245,7 @@ await focused("GEN-6", "a service with no registered characteristics asks the se
 
 await focused("GEN-7", "search and ranking keep their own path", async () => {
   const conv = await newConversation();
-  const found = await turn(buyer, conv, "أريد شقة للإيجار");
+  const found = await turn(buyer, conv, `أريد شقة للإيجار ${runId}`);
   assert.notEqual(found.payload?.surface, "INQUIRY_DRAFT", "a search is never a review");
   const ranked = await turn(buyer, conv, "أرخص");
   assert.notEqual(ranked.payload?.surface, "INQUIRY_DRAFT", "a ranking is never a review");

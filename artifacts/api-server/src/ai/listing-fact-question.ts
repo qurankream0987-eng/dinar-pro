@@ -169,7 +169,15 @@ const overlaps = (a: string, b: string) =>
   a === b || (a.length >= 4 && b.length >= 4 && (a.startsWith(b) || b.startsWith(a)));
 
 const wordsOf = (text: string) => normalizeBuyerText(text).split(/\s+/u).filter(Boolean);
-const stemsOf = (text: string) => new Set(wordsOf(text).map(stem));
+/** A word and its stem: «لابتوب» keeps its ل (a loanword, not a proclitic), «العقار» loses ال. */
+const vocabularyOf = (text: string) => {
+  const vocabulary = new Set<string>();
+  for (const word of wordsOf(text)) {
+    vocabulary.add(stem(word));
+    vocabulary.add(word);
+  }
+  return vocabulary;
+};
 
 /** One registered characteristic of the listing's category, plus any Arabic-named extra field. */
 type Characteristic = {
@@ -179,8 +187,8 @@ type Characteristic = {
 };
 
 function characteristicOf(key: string, label: string, options: readonly string[] | undefined): Characteristic {
-  const stems = new Set([...stemsOf(label), ...stemsOf(key)]);
-  for (const option of options ?? []) for (const value of stemsOf(option)) stems.add(value);
+  const stems = new Set([...vocabularyOf(label), ...vocabularyOf(key)]);
+  for (const option of options ?? []) for (const value of vocabularyOf(option)) stems.add(value);
   return { key, label, stems };
 }
 
@@ -205,7 +213,7 @@ function characteristicOfQuestion(
 ): Characteristic | undefined {
   if (!characteristics.length) return undefined;
   const anyVocabulary = new Set(characteristics.flatMap((characteristic) => [...characteristic.stems]));
-  const titleStems = stemsOf(title);
+  const titleStems = vocabularyOf(title);
   // The item's own name («لابتوب», «طاولة») is not a characteristic; a word that is both in the
   // title and in the registry vocabulary is one («شتوي» in «جاكيت شتوي»).
   const tokens = subject.filter((token) => {
@@ -342,7 +350,7 @@ export async function executeListingFactQuestion(input: {
 
   // No registered field explains the question: name the characteristic the buyer asked about and
   // offer the seller question. The item's own words are not characteristics.
-  const titleStems = stemsOf(title);
+  const titleStems = vocabularyOf(title);
   const asked = subject
     .filter((token) => !/^\d+(?:[.,]\d+)?$/u.test(token) && !UNIT_WORDS.has(token))
     .filter((token) => !titleStems.has(stem(token)));
