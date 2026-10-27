@@ -244,17 +244,18 @@ await focused("STOCK-8", "an ordinal resolves to that listing's own record", asy
   const found = await view(buyer, conv, "مدفأة كهربائية");
   const ids = listingIds(found.payload);
   assert.ok(ids.includes(stoveSmall.id) && ids.includes(stoveLarge.id), `both stoves are in view: ${found.body}`);
-  const targetIndex = ids.indexOf(stoveLarge.id) + 1;
-  assert.ok(targetIndex === 1 || targetIndex === 2, "the large stove is one of the two results");
-  const word = ["الأول", "الثاني", "الثالث"][targetIndex - 1];
-  const target = targetIndex === 1 ? stoveLarge : stoveSmall;
-  const targetId = targetIndex === 1 ? stoveLarge.id : stoveSmall.id;
-  const expected = targetIndex === 1 ? 7 : 5;
-  const answer = await turn(buyer, conv, `كم المتبقي في ${word}؟`);
-  assert.match(answer.body, new RegExp(`المتاح الآن من «[^»]*»\\s*${expected}\\b`, "u"), `${word} is the ${expected}-unit listing: ${answer.body}`);
-  assert.ok(answer.body.includes(target.title), `the answer names the listing asked about: ${answer.body}`);
-  const state = await offerState(targetId);
-  assert.equal(state.available, expected);
+  // Each position must answer with that listing's own record; the two quantities differ so an
+  // ignored ordinal would name the wrong title or the wrong number.
+  for (const [stove, expected] of [[stoveLarge, 7], [stoveSmall, 5]] as const) {
+    const position = ids.indexOf(stove.id) + 1;
+    assert.ok(position >= 1 && position <= 3, "each stove has a visible position");
+    const word = ["الأول", "الثاني", "الثالث"][position - 1];
+    const answer = await turn(buyer, conv, `كم المتبقي في ${word}؟`);
+    assert.match(answer.body, new RegExp(`المتاح الآن من «[^»]*»\\s*${expected}\\b`, "u"), `${word} is the ${expected}-unit listing: ${answer.body}`);
+    assert.ok(answer.body.includes(stove.title), `the answer names the listing asked about: ${answer.body}`);
+    const state = await offerState(stove.id);
+    assert.equal(state.available, expected);
+  }
 });
 
 await focused("STOCK-9", "with no listing in view DINAR asks which listing, never guesses", async () => {

@@ -13,7 +13,7 @@ import { and, eq } from "drizzle-orm";
 import { db, offers } from "@workspace/db";
 import type { marketFor } from "../lib/markets";
 import type { ToolResult } from "./tool-registry";
-import { normalizeBuyerText } from "./buyer-turn";
+import { latestListingSet, normalizeBuyerText } from "./buyer-turn";
 import { focusedListing } from "./negotiation-turn";
 
 type Market = Awaited<ReturnType<typeof marketFor>>;
@@ -76,6 +76,16 @@ function clarify(prompt: string): Turn {
   };
 }
 
+/**
+ * The focus window skips conversational answers, so a second stock question can outrun it.
+ * The current result set still holds what the buyer is looking at; it speaks for one listing
+ * only — a list of several is ambiguous and is asked about instead of guessed.
+ */
+async function soleVisibleListing(conversationId: string, marketId: string): Promise<string | undefined> {
+  const set = await latestListingSet(conversationId, marketId);
+  return set?.resourceIds.length === 1 ? set.resourceIds[0] : undefined;
+}
+
 const STATUS_MEANING: Record<string, string> = {
   PAUSED: "موقوف مؤقتًا من البائع",
   SOLD_OUT: "نفدت كميته",
@@ -99,12 +109,13 @@ export async function executeStockQuestion(input: {
   const text = normalizeBuyerText(input.message);
   if (!STOCK_QUESTION.test(text)) return null;
 
-  const listingId = await focusedListing({
-    conversationId: input.conversationId,
-    market: input.market,
-    actorId,
-    message: input.message,
-  });
+  const listingId =
+    (await focusedListing({
+      conversationId: input.conversationId,
+      market: input.market,
+      actorId,
+      message: input.message,
+    })) ?? (await soleVisibleListing(input.conversationId, input.market.id));
   const [row] = listingId
     ? await db
         .select({
