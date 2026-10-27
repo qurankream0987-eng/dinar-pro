@@ -11,8 +11,6 @@ on:
         description: "Extra BDINAR_*/DINAR_* switches, space separated"
         required: false
         default: BDINAR_BLOCKF_ACCEPTANCE=development
-  push:
-    branches: ["qoder/**"]
 
 concurrency:
   group: qoder-api-${{ github.ref }}
