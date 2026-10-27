@@ -498,8 +498,10 @@ await test("A7c a model search suggestion never replaces the answer to a general
   assert.ok(isGeneralAnswer(general), general.raw.slice(0, 300));
   assert.equal(general.body, "التكلفة تعتمد على المساحة والنوع.");
   // Asking about inventory is a marketplace request even as a question.
+  // Since Claude 03 «عندكم …؟» is recognised by DINAR itself (no model suggestion needed), so the
+  // reply is the ordinary search reply; it must still be a search, never a general answer.
   const inventory = await say(buyer, conv, `عندكم كرسي ${TOKEN}؟`);
-  assert.match(inventory.body, /بحثت داخل DINAR/u);
+  assert.match(inventory.body, /بحثت داخل DINAR|وجدت \d+ عروض منشورة/u);
   assert.ok(!isGeneralAnswer(inventory));
   behaviour = replyWith({});
 });
