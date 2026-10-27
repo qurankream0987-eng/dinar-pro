@@ -235,9 +235,18 @@ try {
   await widths("SC01 buyer results", results.getByTestId("ai-results-list"));
   checks.push("another user found the listing in chat; no seller phone is exposed");
 
+  // T3: the buyer asks about the stock of the listing in view. DINAR answers from the
+  // listing's record (one unit, none reserved yet), and asking reserves nothing.
+  const ordinal = `${["الأول", "الثاني", "الثالث", "الرابع", "الخامس"][shownIds.indexOf(listingId)]}`;
+  const stock = await sendTurn(shownIds.length === 1 ? "كم المتبقي؟" : `كم المتبقي في ${ordinal}؟`);
+  const stockText = await stock.innerText();
+  assert.match(stockText, /المتاح الآن[^]*\b1\b/u, "the buyer sees the recorded remaining quantity");
+  assert.match(stockText, /سجل الإعلان/u, "the answer is attributed to the record, not the seller");
+  await widths("SC01 stock answer", latestAssistant());
+  checks.push("buyer asked «كم المتبقي؟»; DINAR answered from the record and reserved nothing");
+
   // The seller said «قابل للتفاوض»: buying needs an agreed price first (the scenario's
   // «شراء أو قدّم عرضًا بحسب النمط»). Offer → seller accepts in their chat → buy at the agreement.
-  const ordinal = `${["الأول", "الثاني", "الثالث", "الرابع", "الخامس"][shownIds.indexOf(listingId)]}`;
   const direct = await sendTurn(`أبي ${ordinal}`);
   assert.match(await direct.innerText(), /قابل للتفاوض|اتفق مع البائع/u, "a negotiable listing is not bought at the asking price without an agreement");
   const offer = await sendTurn("اعرض عليه 280");
