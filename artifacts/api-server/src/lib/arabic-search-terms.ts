@@ -111,7 +111,11 @@ const escape = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
  */
 export function textMatchesToken(text: string, token: string): boolean {
   if (text.includes(token)) return true;
+  // …and end it, allowing only an inflectional ending: the stem «سيار» (from «سيارات») matches
+  // «سيارة», but a stem is never the prefix of another word.
   return tokenVariants(token).some(
-    (form) => form !== token && new RegExp(`(?:^|\\s)(?:و|ف|ب|ل|ك)?(?:ال)?${escape(form)}`, "u").test(text),
+    (form) =>
+      form !== token &&
+      new RegExp(`(?:^|\\s)(?:و|ف|ب|ل|ك)?(?:ال)?${escape(form)}(?:ة|ه|ات|ي|يه|ية)?(?=\\s|$)`, "u").test(text),
   );
 }
