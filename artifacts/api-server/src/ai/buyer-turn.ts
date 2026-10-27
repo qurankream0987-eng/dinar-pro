@@ -108,11 +108,11 @@ const ORDINAL_TOKENS: Record<string, number> = {
   الخامس: 5, الخامسه: 5, السادس: 6, السادسه: 6,
 };
 
-/** Every position named in "قارن الأول والثالث" / "قارن 1 و 3", in order. */
+/** Every position named in "قارن الأول والثالث" / "قارن الأول بالثاني" / "قارن 1 و 3", in order. */
 function positionsIn(text: string): number[] {
   const positions: number[] = [];
   for (const raw of text.split(/\s+/)) {
-    const word = raw.replace(/^و(?=ال|\d)/u, "");
+    const word = raw.replace(/^(?:و|ب)(?=ال|\d)/u, "");
     const value = ORDINAL_TOKENS[word] ?? (/^\d{1,2}$/.test(word) ? Number(word) : undefined);
     if (value && !positions.includes(value)) positions.push(value);
   }
