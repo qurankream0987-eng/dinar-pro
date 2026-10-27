@@ -44,7 +44,7 @@ async function request(path: string, method = "GET", body?: unknown, cookie = ""
 }
 
 type Actor = { id: string; cookie: string };
-const phoneBase = 51_400_000 + ((Date.now() + process.pid) % 200_000);
+const phoneBase = 51_400_000 + ((Date.now() + process.pid) % 90_000);
 let phoneOffset = 0;
 async function register(label: string): Promise<Actor> {
   const phoneNumber = String(phoneBase + 3 * phoneOffset++);
