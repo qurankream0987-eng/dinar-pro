@@ -396,7 +396,11 @@ function modelUnavailable(turn: { result: ToolResult }): boolean {
 const DRAFT_DESCRIPTION_REQUEST = /(?:^|\s)اكتب(?:\s+لي)?\s+(?:\S+\s+)?وصف/u;
 const BARE_PHRASE_MAX_WORDS = 4;
 function isBareProductPhrase(message: string): boolean {
-  const words = normalizeSearch(searchTerms(message)).split(/\s+/u).filter(Boolean);
+  // «ايفون 13 مستعمل لو سمحت»: politeness does not make a product phrase a sentence.
+  const words = normalizeSearch(searchTerms(message))
+    .replace(/(?:^|\s)(?:لو سمحت|لو سمحتي|من فضلك|الله يخليك|رجاء|رجاءا)(?=\s|$)/gu, " ")
+    .split(/\s+/u)
+    .filter(Boolean);
   return words.length > 0 && words.length <= BARE_PHRASE_MAX_WORDS && !isGeneralRequest(message);
 }
 

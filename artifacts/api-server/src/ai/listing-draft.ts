@@ -196,6 +196,8 @@ function cleanTitle(message: string): string {
     .replace(/\s*(?:موجود(?:ة)?|متوفر(?:ة)?|الموقع|للاستلام|في منطقة|مدينة|محافظة)\s+.*$/iu, "")
     .replace(/\s*[,،]?\s*(?:الحبة|للحبة)\s*$/i, "")
     .replace(/\s*[,،]?\s*للبيع.*$/i, "")
+    // «كنبة بدي بيعها»: the trailing wish is not part of the item's name.
+    .replace(/\s*[,،]?\s*(?:و)?(?:بدي|ابي|اريد|أريد|ابغى|حاب|ودي)\s+(?:ا|أ|ن)?(?:بيع|ابيع)\S*\s*$/u, "")
     // A dangling price word only as its own word: «ذهب» keeps its final «ب».
     .replace(/(?:^|\s)(?:بسعر|بمبلغ|سعر(?:ها|ه)?|بـ?)\s*$/iu, "")
     .trim();

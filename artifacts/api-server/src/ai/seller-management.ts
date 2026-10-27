@@ -304,7 +304,23 @@ function statusOrArchiveOperation(message: string) {
     return "RESUME" as const;
   if (new RegExp(`^(?:احذف|حذف|ارشف|أرشف)\\s+(?:الاعلان|العرض)(?:ه|ها)?${ordinal}$`).test(text))
     return "ARCHIVE" as const;
+  // «وقّف إعلان الطاولة»: the listing named after the verb (resolved by namedStatusTarget).
+  const named = namedStatusTarget(message);
+  if (named) return named.action;
   return undefined;
+}
+
+/** «وقف إعلان الطاولة», «رجع عرض الأكواب», «احذف اعلان الكنبة»: a status verb and a listing name. */
+function namedStatusTarget(message: string): { action: "PAUSE" | "RESUME" | "ARCHIVE"; name: string } | undefined {
+  const text = normalizeSearch(message).trim().replace(/[،,.!؟]+/g, " ").replace(/\s+/g, " ").trim()
+    .replace(/\s+(?:مؤقتا|موقتا|مؤقت|موقت|حاليا|الحين|الان|شوي)$/u, "");
+  const match = text.match(/^(وقف|اوقف|ايقاف|عطل|رجع|اعد|استانف|شغل|فعل|احذف|حذف|ارشف)\s+(?:ال)?(?:اعلان|عرض)\s+(\S.{1,40})$/u);
+  if (!match) return undefined;
+  const name = match[2]!.trim();
+  if (new RegExp(`^(?:رقم\\s*)?(?:${ORDINAL_WORD}|\\d{1,2})$`, "u").test(name)) return undefined;
+  const verb = match[1]!;
+  const action = /^(?:وقف|اوقف|ايقاف|عطل)$/u.test(verb) ? "PAUSE" : /^(?:احذف|حذف|ارشف)$/u.test(verb) ? "ARCHIVE" : "RESUME";
+  return { action, name };
 }
 
 /** «وقفه», «رجعها»: a status verb whose object is the listing already open. */
@@ -1024,6 +1040,25 @@ export async function executeSellerListingManagementTurn(input: {
     );
   }
 
+  // A named listing wins over whatever is in focus, and resolves only among the seller's own.
+  const namedStatus = action ? namedStatusTarget(input.message) : undefined;
+  if (namedStatus) {
+    const own = (await resolveCurrentOwnedListings(input.market, actorId)).filter((listing) => ["PUBLISHED", "PAUSED"].includes(String(listing.status)));
+    const wanted = matchTokens(namedStatus.name);
+    const matches = own.filter((listing) => {
+      const titleTokens = matchTokens(listing.title);
+      return wanted.length > 0 && wanted.every((token) => titleTokens.some((word) => word.includes(token)));
+    });
+    if (matches.length === 1) return createListingPreview(context, matches[0]!.id, namedStatus.action, input.message);
+    return makeSellerContextResult(
+      context,
+      matches,
+      matches.length
+        ? `لديك ${matches.length} إعلانات تطابق «${namedStatus.name}». أي واحد تقصد؟ اختر رقمه ثم أعد الطلب. لم يتغير شيء.`
+        : `لم أجد إعلانًا باسم «${namedStatus.name}» ضمن إعلاناتك في هذا السوق. لم يتغير شيء.`,
+    );
+  }
+
   const currentIds = current?.resourceIds ?? [];
   const refreshed = currentIds.length
     ? await resolveCurrentOwnedListings(input.market, actorId, currentIds)
@@ -1149,7 +1184,7 @@ async function adviceTarget(input: { conversationId: string; message: string; ma
 // Each answer is a real aggregation over the seller's own rows in the active market.
 const INVENTORY =
   // «البضاعة اللي أعرضها»: what the seller lists, named by a relative clause.
-  /(?:^|\s)(?:ال)?(?:بضاعه|بضاعة|منتجات|اغراض|اشياء|عروض|اعلانات)\s+(?:اللي|التي|الي)\s+(?:ا|ن)?(?:عرض|نزل|نشر|حط|بيع)\S*(?:\s|$)|(?:^|\s)(?:بضاعتي|مخزوني|المخزون|منتجاتي)(?:\s|$)|(?:^|\s)كم\s+(?:بقي|باقي|ظل|ضل|تبقي|متبقي|متوفر|المتاح|الكميه)(?:\s|$)/u;
+  /(?:^|\s)(?:ال)?(?:بضاعه|بضاعة|منتجات|اغراض|اشياء|عروض|اعلانات)\s+(?:اللي|التي|الي)\s+(?:ا|ن)?(?:عرض|نزل|نشر|حط|بيع)\S*(?:\s|$)|(?:^|\s)(?:شو|وش|ايش|ماذا|ما)\s+(?:عندي|لدي)\s+(?:معروض|منشور|اعلانات|بضاعه|بضاعة|عروض)(?:\s|$)|(?:^|\s)(?:بضاعتي|مخزوني|المخزون|منتجاتي)(?:\s|$)|(?:^|\s)كم\s+(?:بقي|باقي|ظل|ضل|تبقي|متبقي|متوفر|المتاح|الكميه)(?:\s|$)/u;
 const SELLER_ORDERS =
   /(?:^|\s)كم\s+(?:طلب|طلبا|طلبات)\s*(?:عندي|لي|وصلني|جاني|وصلتني|علي)(?:\s|$)|(?:^|\s)(?:طلبات|طلب)\s+(?:الزباين|الزبائن|العملاء|المشترين)(?:\s|$)|(?:^|\s)(?:مبيعاتي|كم\s+بعت)(?:\s|$)/u;
 // «قارن أول إعلانين عندي», «قارن إعلاناتي»: comparing the seller's own listings is the

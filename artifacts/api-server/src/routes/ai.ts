@@ -2241,6 +2241,8 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
             ? recommendationText(toolResult.query, toolResult.listings.length)
           : typeof (toolResult.query.buyer as { message?: unknown } | undefined)?.message === "string"
             ? String((toolResult.query.buyer as { message: string }).message)
+          : toolResult.listings.length && typeof toolResult.query.widenedFromCategory === "string"
+            ? `لم أجد عروضًا مطابقة في تصنيف «${toolResult.query.widenedFromCategory}»، فعرضت ${toolResult.listings.length} عروض من تصنيفات أخرى تطابق كلماتك.`
           : toolResult.listings.length && Array.isArray(toolResult.query.broadenedFrom)
             ? `لم أجد عروضًا تذكر «${toolResult.query.broadenedFrom.join(" ")}» تحديدًا، فعرضت ${toolResult.listings.length} عروض تطابق بقية طلبك.`
           : toolResult.listings.length

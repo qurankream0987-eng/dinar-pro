@@ -478,7 +478,9 @@ export function parseStructuredSearch(
 ): SearchQuery | undefined {
   const normalized = normalizeNumberWords(
     normalizeSearch(normalizeDigits(stripCorrectionPrefix(message))),
-  );
+  )
+    // «شو في سيارات …», «في عندكم طاولة؟»: the question frame is not a city («في …») or an item.
+    .replace(/^(?:(?:شو|وش|ايش|شنو)\s+(?:في|فيه)|(?:في|فيه|هل)\s+(?:عندكم|لديكم|عندك)|عندكم|لديكم)\s+/u, "");
   const categories = configured ?? [];
   const mentionedCategory = searchCategory(normalized, categories);
   const categoryId = mentionedCategory?.id ?? previous?.categoryId;

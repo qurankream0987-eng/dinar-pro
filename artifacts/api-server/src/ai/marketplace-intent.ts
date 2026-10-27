@@ -73,7 +73,13 @@ export function isVagueRequest(message: string): boolean {
 const EXPLICIT_SEARCH_ACTION =
   /(?:^|\s)(?:ابحث(?:\s+لي)?|ابحثلي|ادور|دور(?:\s+لي)?|دورلي|فتش|شوف\s+الموجود|فرجني|وريني|ورني|ورينا|راويني|ارني|اعرض|search|find|look\s+for|show\s+me)(?=\s|$)/u;
 const MARKETPLACE_REQUEST_ACTION =
-  /(?:^|\s)(?:اريد|ابي|ابغي|احتاج|بدي|ودي|حاب|نفسي|ابغى)\s/u;
+  /(?:^|\s)(?:اريد|ابي|ابغي|احتاج|بدي|ودي|حاب|نفسي|ابغى|عايز|عاوز|محتاج|محتاجه|نبي|نبغى|بدنا)\s/u;
+/**
+ * «في عندكم طاولة؟», «عندكم خدمة تنظيف؟», «شو في سيارات تويوتا»، «مين يصمم شعارات»: asking
+ * whether the market has something is a search. Each form needs an item word after it.
+ */
+const MARKETPLACE_QUESTION =
+  /^(?:(?:في|فيه|هل)\s+)?(?:عندكم|لديكم|عندك)\s+(?!وقت|مشكله|سؤال|فكره|علم)\S{2,}|^(?:شو|وش|ايش|شنو)\s+(?:في|فيه)\s+\S{3,}|^مين\s+(?!(?:ب|بي)?(?:يقدر|يعرف|يساعد|يفهم|يحكي|يقول|قدر|عرف|ساعد))(?:ي|ب|بي)\S{3,}(?:\s+\S+)?/u;
 /**
  * «ابي اتعلم …», «بدي افهم …», «حاب اسافر …»: wanting to do an activity (learn, understand,
  * write, plan, travel, talk) is not wanting an item. Acquisition verbs (اشتري، اطلب) stay searches.
@@ -92,6 +98,7 @@ export function hasExplicitMarketplaceSearchIntent(message: string): boolean {
   const correction = normalizeMarketplaceText(stripCorrectionPrefix(message));
   if (correction !== normalized)
     return correction.length > 0 && !isVagueRequest(correction);
+  if (MARKETPLACE_QUESTION.test(normalized) && !isVagueRequest(normalized)) return true;
   return (
     MARKETPLACE_REQUEST_ACTION.test(normalized) &&
     !WANT_ACTIVITY.test(normalized) &&

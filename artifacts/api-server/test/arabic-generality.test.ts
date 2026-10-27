@@ -15,8 +15,8 @@ import app from "../src/app";
 import type { ConversationModelGateway } from "../src/ai/model-gateway";
 import { requireSafeReplitDevelopmentDatabase } from "./safe-development-database";
 
-/** The understanding rate measured on the Claude-written set on 2026-10-27; raise it, never lower it. */
-const UNDERSTANDING_FLOOR = Number(process.env.DINAR_GENERALITY_FLOOR ?? "0.36");
+/** Measured on the Claude-written set, 2026-10-27: 0.36 before the general fixes, 0.955 after. Raise it, never lower it. */
+const UNDERSTANDING_FLOOR = Number(process.env.DINAR_GENERALITY_FLOOR ?? "0.95");
 
 requireSafeReplitDevelopmentDatabase("BDINAR_TEST_DATABASE");
 let modelCalls = 0;

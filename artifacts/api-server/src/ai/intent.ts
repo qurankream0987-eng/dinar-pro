@@ -44,6 +44,8 @@ export function surfaceIntent(message: string): string | undefined {
     /(?:^|\s)(?:بع|بيع)\s+لي\s+(?!(?:هذا|هذي|هذه|ذا|هذاك|اعلاني|اعلانه|منتجي|عرضي|الاعلان|المنتج|العرض)(?:\s|$))\S+/.test(text)
   )
     return "SELL";
+  // «عندي كنبة بدي بيعها»: the item was just named and the wish takes it as its object.
+  if (/(?:^|\s)(?:عندي|لدي)\s+\S+.*(?:^|\s)(?:اريد|ابي|ابغي|ابغى|بدي|ودي|حاب)\s+(?:ا|ن)?(?:بيع|ابيع)(?:ه|ها|هم)(?:\s|$)/.test(text)) return "SELL";
   // «أريد بيع هاتفي», «بدي بيع سيارتي»: the verbal noun after a wish names a new sale.
   if (/(?:^|\s)(?:اريد|ابي|ابغي|ابغى|بدي|ودي|حاب|عايز|عاوز)\s+(?:ان\s+)?بيع\s+(?!لي(?:\s|$))\S+/.test(text)) return "SELL";
   // «عندي خدمة تنظيف»: offering a named service.

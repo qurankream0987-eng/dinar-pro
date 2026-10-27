@@ -205,7 +205,8 @@ export async function searchMarketplaceListings(
   const term = (options.search ?? "").slice(0, 200).toLocaleLowerCase("ar");
   // «فني مكيفات», «معلم بلاط»: a generic role noun names who does the work, not a word
   // the listing must contain; it is dropped only when other words remain.
-  const allTokens = normalizeSearch(term).split(/\s+/).filter(Boolean);
+  // «…مستعملة؟»: punctuation is a word break, never part of a word to find.
+  const allTokens = normalizeSearch(term.replace(/[؟?!،,؛;.()«»"']+/gu, " ")).split(/\s+/).filter(Boolean);
   const meaningful = allTokens.filter((token) => !SERVICE_ROLE_WORDS.has(token));
   const tokens = itemTokens(meaningful.length ? meaningful : allTokens);
   // Product words that are also category aliases ("سماعات") match inflections by stem.

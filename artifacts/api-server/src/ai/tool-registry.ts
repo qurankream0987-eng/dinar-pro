@@ -9,7 +9,7 @@ import {
   searchMarketplaceListings,
 } from "../lib/marketplace-listings";
 import { resolveMarketplaceCategory } from "../lib/marketplace-categories";
-import { itemTokens, purposeTokens } from "../lib/arabic-search-terms";
+import { genericTokens, itemTokens, purposeTokens } from "../lib/arabic-search-terms";
 import { normalizeSearch } from "./search-context";
 import {
   decorateStoredResults,
@@ -325,6 +325,32 @@ export const aiToolRegistry: Record<string, ToolDefinition> = {
           if (listings.length) broadenedFrom = purpose;
         }
       }
+      // «موبايل ايفون»: a generic kind-of-thing word beside a specific one may be relaxed, and reported.
+      if (!listings.length && !broadenedFrom && input.query) {
+        const words = itemTokens(normalizeSearch(input.query).split(/\s+/).filter(Boolean));
+        const generic = genericTokens(words);
+        if (generic.length) {
+          listings = await run(words.filter((word) => !generic.includes(word)).join(" "));
+          if (listings.length) broadenedFrom = generic;
+        }
+      }
+      // «محتاج حد ينضف الشقة»: the category inferred from a noun («الشقة» → عقارات) may be the
+      // wrong one. With nothing inside it, the same words are searched across categories and the
+      // reply says the category was widened. Only category-independent filters are kept.
+      let widenedFromCategory: string | undefined;
+      if (!listings.length && (input.categoryId || input.category) && input.query) {
+        const category = await resolveMarketplaceCategory(input.categoryId, input.category);
+        const wider = await searchMarketplaceListings(context.market, {
+          search: input.query,
+          conversational: true,
+          filters: (input.filters as SearchFilter[] | undefined)?.filter((filter) => ["price", "city", "condition"].includes(filter.field)),
+          sort: input.sort as SearchSort | undefined,
+        });
+        if (wider.length) {
+          listings = wider;
+          widenedFromCategory = category?.label ?? input.category ?? input.categoryId;
+        }
+      }
       const sponsoredIds = listings.filter((item) => item.isSponsored).map((item) => item.id);
       return {
         kind: "SEARCH",
@@ -335,6 +361,7 @@ export const aiToolRegistry: Record<string, ToolDefinition> = {
           filters: input.filters ?? [],
           ...(input.sort ? { sort: input.sort } : {}),
           ...(broadenedFrom ? { broadenedFrom } : {}),
+          ...(widenedFromCategory ? { widenedFromCategory } : {}),
           // Which positions were paid, so a restored result keeps the same labels.
           ...(sponsoredIds.length ? { sponsoredIds } : {}),
         },
