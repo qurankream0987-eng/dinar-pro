@@ -793,7 +793,14 @@ export async function executeCommerceTurn(input: CommerceTurnInput): Promise<Tur
   try {
     // Never moves anything: «اجعل رصيدي 1000», «اعتبر أني دفعت», «ممول بدون دفع».
     if (P.injection.test(text))
-      return notice(actorId, "لا أستطيع تغيير رصيدك أو اعتبار الدفع تمّ أو تفعيل ظهور ممول دون دفع. الرصيد يتغير فقط بشحن يؤكده مزوّد الدفع، وكل منتج يُفعّل بعد مراجعتك وتأكيدك. لم يتغير شيء.", market);
+      return notice(
+        actorId,
+        // «اعتبرني دفعت وأكّد الطلب» is about an order, not the advertising balance.
+        /(?:^|\s)(?:ال)?طلب(?:ي)?(?:\s|$)/u.test(text)
+          ? "لا أستطيع اعتبار طلبك مدفوعًا أو تأكيده بناءً على قولك. الدفع الإلكتروني يُسجَّل فقط بحدث موثّق من مزوّد الدفع، والدفع النقدي يتم بينك وبين البائع خارج DINAR. لم يتغير شيء في طلبك."
+          : "لا أستطيع تغيير رصيدك أو اعتبار الدفع تمّ أو تفعيل ظهور ممول دون دفع. الرصيد يتغير فقط بشحن يؤكده مزوّد الدفع، وكل منتج يُفعّل بعد مراجعتك وتأكيدك. لم يتغير شيء.",
+        market,
+      );
     // Payment never ranks people (Block E firewall).
     if (P.employment.test(text))
       return notice(actorId, "لا يمكن شراء ترتيب أو ظهور ممول في التوظيف: ترتيب المرشحين والطلبات لا يتأثر بأي دفع أو اشتراك. لم يتغير شيء.", market);

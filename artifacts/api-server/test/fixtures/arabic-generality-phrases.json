@@ -1,0 +1,41 @@
+{
+  "about": "Everyday Arabic requests used to measure how general DINAR's understanding is. None is taken from the ten acceptance scenarios. The first set was written by Claude (who knows the fixes), so it is NOT an independent measurement: the owner and real users should add their own phrases under 'owner'. Each entry: who says it, the message, and what must happen.",
+  "expectations": {
+    "finds": "the reply lists the named fixture listing",
+    "sell": "a sale draft opens (SELL surface); categoryId must match when given",
+    "seller": "a seller-management answer or preview (no model, no SELL form)",
+    "none": "none of the fixture listings is returned (precision)",
+    "noCommerce": "ordinary conversation: no SELL form, no preview, no listing write"
+  },
+  "claude": [
+    { "who": "buyer", "message": "بدي اشتري موبايل ايفون مستعمل", "expect": "finds", "listing": "iphone", "variety": "levantine" },
+    { "who": "buyer", "message": "عايز ايفون ١٣ مستعمل", "expect": "finds", "listing": "iphone", "variety": "egyptian, Arabic-Indic digits" },
+    { "who": "buyer", "message": "ابغى جوال ايفون", "expect": "finds", "listing": "iphone", "variety": "gulf" },
+    { "who": "buyer", "message": "أبحث عن هاتف آيفون مستعمل", "expect": "finds", "listing": "iphone", "variety": "msa" },
+    { "who": "buyer", "message": "ايفون 13 مستعمل لو سمحت", "expect": "finds", "listing": "iphone", "variety": "polite suffix" },
+    { "who": "buyer", "message": "في عندكم طاولة سفرة مستعملة؟", "expect": "finds", "listing": "table", "variety": "levantine synonym (سفرة)" },
+    { "who": "buyer", "message": "دوّر لي على طاوله مستعمله", "expect": "finds", "listing": "table", "variety": "ه for ة" },
+    { "who": "buyer", "message": "شو في سيارات تويوتا مستعملة", "expect": "finds", "listing": "prado", "variety": "levantine plural" },
+    { "who": "buyer", "message": "ابي سياره برادو", "expect": "finds", "listing": "prado", "variety": "gulf, ه for ة" },
+    { "who": "buyer", "message": "محتاج حد ينضف الشقة", "expect": "finds", "listing": "cleaning", "variety": "typo ض for ظ" },
+    { "who": "buyer", "message": "مين بنظف بيوت؟", "expect": "finds", "listing": "cleaning", "variety": "levantine verb" },
+    { "who": "buyer", "message": "عندكم خدمة تنظيف منازل؟", "expect": "finds", "listing": "cleaning", "variety": "msa question" },
+    { "who": "buyer", "message": "اريد مصمم يسوي لي لوجو", "expect": "finds", "listing": "logo", "variety": "gulf, loanword" },
+    { "who": "buyer", "message": "مين يصمم شعارات", "expect": "finds", "listing": "logo", "variety": "plural" },
+    { "who": "seller", "message": "بدي بيع لابتوبي", "expect": "sell", "variety": "levantine, possessive" },
+    { "who": "seller", "message": "عندي كنبة بدي بيعها", "expect": "sell", "variety": "levantine" },
+    { "who": "seller", "message": "حاب اعرض سيارتي للبيع", "expect": "sell", "categoryId": "cars", "variety": "gulf, possessive" },
+    { "who": "seller", "message": "ابيع جوالي", "expect": "sell", "categoryId": "electronics", "variety": "possessive" },
+    { "who": "seller", "message": "شو عندي معروض؟", "expect": "seller", "variety": "levantine" },
+    { "who": "seller", "message": "كم باقي من الأكواب؟", "expect": "seller", "variety": "stock question" },
+    { "who": "seller", "message": "وقّف إعلان الطاولة", "expect": "seller", "variety": "named listing" },
+    { "who": "seller", "message": "نزّل سعر الأكواب ل 2", "expect": "seller", "variety": "price change" },
+    { "who": "buyer", "message": "بدي تلفزيون سامسونج", "expect": "none", "variety": "precision" },
+    { "who": "buyer", "message": "ابحث عن دراجة هوائية", "expect": "none", "variety": "precision" },
+    { "who": "buyer", "message": "ابي فستان عرس", "expect": "none", "variety": "precision" },
+    { "who": "buyer", "message": "كيف حالك اليوم؟", "expect": "noCommerce", "variety": "small talk" },
+    { "who": "buyer", "message": "اشرح لي يعني ايش التفاوض", "expect": "noCommerce", "variety": "general question" },
+    { "who": "seller", "message": "كيف اكتب وصف حلو لمنتج؟", "expect": "noCommerce", "variety": "advice, not a sale" }
+  ],
+  "owner": []
+}
