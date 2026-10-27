@@ -171,10 +171,12 @@ await focused("SC06-4", "a spec the seller recorded is answered from the record"
   assert.notEqual(question.payload?.surface, "INQUIRY_DRAFT", "a recorded value needs no seller question");
 });
 
-await focused("SC06-5", "a search that mentions inspection is not turned into a question", async () => {
+await focused("SC06-5", "a search that mentions inspection or hours is not turned into a question", async () => {
   const searchConv = await newConversation();
   const search = await turn(buyer, searchConv, "أريد ماكينة صناعية مفحوصة");
   assert.notEqual(search.payload?.surface, "INQUIRY_DRAFT", `a search stays a search: ${search.body}`);
+  const watch = await turn(buyer, searchConv, "أريد ساعة يد رجالية");
+  assert.notEqual(watch.payload?.surface, "INQUIRY_DRAFT", `«ساعة» in a product search is not an operating-hours question: ${watch.body}`);
 });
 
 console.log("SC06_SUMMARY", JSON.stringify({ passed: Object.values(results).filter((value) => value === "PASS").length, total: Object.keys(results).length, results }));
