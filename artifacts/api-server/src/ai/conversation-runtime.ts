@@ -55,6 +55,7 @@ import { executeDeliveryTurn, isDeliveryQuery } from "./delivery-turn";
 import { executePromotionTurn, explainSponsoredPlacement, isPromotionQuery } from "./promotion-turn";
 import { executeBuyerTurn, executePurchaseTurn, executeOrderContactRequest, reviewQuantity } from "./buyer-turn";
 import { executeListingFactQuestion } from "./listing-fact-question";
+import { executeStockQuestion } from "./stock-question";
 import { isAiUsageQuestion } from "./usage-intent";
 import { executeDriverTurn, isDriverOnboardingIntent, isDriverQuery } from "./driver-turn";
 import { executeDraftActionTurn } from "./draft-actions";
@@ -1143,6 +1144,21 @@ export async function executeAiConversationTurn(
   if (buyer) {
     options.onToolSelected?.(buyer.tool === "buyerSearch" || buyer.tool === "buyerRefine" || buyer.tool === "buyerRank" ? "searchListings" : buyer.tool);
     return buyer;
+  }
+  // «كم المتبقي؟» about the listing in view: the inventory record answers, never the model.
+  // Asking is read-only, so it runs after the buyer's own selections and before fact flows.
+  const stock =
+    !context.imageObjectPaths?.length && context.location === undefined && isMarketAvailable(context.market)
+      ? await executeStockQuestion({
+          conversationId: context.conversationId,
+          message: context.message,
+          market: context.market,
+          actorId: context.actorId,
+        })
+      : null;
+  if (stock) {
+    options.onToolSelected?.(stock.tool);
+    return stock;
   }
   // «هذا الأول كم ماشي؟» asks about a fact the listing itself records; when the seller recorded
   // nothing, the answer says so and offers the ordinary inquiry review. Never the model.
