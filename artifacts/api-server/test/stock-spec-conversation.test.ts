@@ -121,12 +121,19 @@ const buyer = await register("buyer");
 const carA = await publish(seller, {
   title: "سيارة تويوتا كورولا 2019", price: "7800", categoryId: "cars", category: "سيارات",
   description: "سيارة بحالة جيدة، صيانة منتظمة",
-  attributes: { make: "تويوتا", model: "كورولا", year: 2019, condition: "مستعمل", mileage: 32000, operatingHours: 8, inspection: "مفحوصة بالكامل" }, quantity: 4,
+  attributes: { make: "تويوتا", model: "كورولا", year: 2019, condition: "مستعمل", mileage: 32000 }, quantity: 4,
 });
 const carB = await publish(seller, {
   title: "سيارة هوندا سيفيك 2020", price: "9200", categoryId: "cars", category: "سيارات",
   description: "سيارة عائلية، استخدام خفيف",
   attributes: { make: "هوندا", model: "سيفيك", year: 2020, condition: "مستعمل", mileage: 51000 }, quantity: 2,
+});
+// The cars schema refuses keys it does not define, so the hours and inspection facts live on a
+// generic listing (the same place SC06 records them).
+const machine = await publish(seller, {
+  title: "ماكينة تغليف صناعية", price: "3100", categoryId: "other", category: "أخرى",
+  description: "ماكينة تغليف صناعية مستعملة",
+  attributes: { condition: "مستعمل", operatingHours: 8, inspection: "مفحوصة بالكامل" }, quantity: 3,
 });
 const flat = await publish(seller, {
   title: "شقة مفروشة", price: "550", categoryId: "property", category: "عقارات",
@@ -139,7 +146,7 @@ const cleaning = await publish(seller, {
   attributes: {}, inventoryMode: "UNLIMITED",
 });
 
-const tracked = [carA.id, carB.id, flat.id, cleaning.id];
+const tracked = [carA.id, carB.id, machine.id, flat.id, cleaning.id];
 const before = await offerRows(tracked);
 
 await focused("MIX-1", "a spec question then a stock question about the same listing", async () => {
@@ -160,17 +167,18 @@ await focused("MIX-1", "a spec question then a stock question about the same lis
 
 await focused("MIX-2", "stock, then a spec fact, then stock again — the question decides the layer", async () => {
   const conv = await newConversation(buyer);
-  await turn(buyer, conv, `أريد تويوتا ${runId}`);
+  const found = await turn(buyer, conv, `أريد ماكينة ${runId}`);
+  assert.ok(listingIds(found.payload).includes(machine.id), `the machine is in view: ${found.body}`);
 
   const first = await turn(buyer, conv, "كم حبة باقي؟");
-  assert.match(first.body, /المتاح الآن[^]*\b4\b/u, `stock first: ${first.body}`);
+  assert.match(first.body, /المتاح الآن[^]*\b3\b/u, `stock first: ${first.body}`);
 
   const inspection = await turn(buyer, conv, "هل عليها فحص؟");
   assert.match(inspection.body, /مفحوصة بالكامل/u, `the inspection fact is quoted: ${inspection.body}`);
   assert.doesNotMatch(inspection.body, /المتاح الآن/u, "a fact question is not a stock answer");
 
   const second = await turn(buyer, conv, "هل المنتج متوفر؟");
-  assert.match(second.body, /المتاح الآن[^]*\b4\b/u, `stock again, unchanged: ${second.body}`);
+  assert.match(second.body, /المتاح الآن[^]*\b3\b/u, `stock again, unchanged: ${second.body}`);
 });
 
 await focused("MIX-3", "two listings in view: each layer resolves the same ordinal to the same listing", async () => {
