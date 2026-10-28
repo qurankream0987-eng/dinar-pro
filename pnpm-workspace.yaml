@@ -64,7 +64,8 @@ catalog:
   tsx: ^4.21.0
   vite: ^7.3.7
   wouter: ^3.3.5
-  zod: ^3.25.76
+  # GHSA-mrhx-c7xc-m3w5 (CVE-2023-54404) is fixed in zod 4.6.6; the workspace targets the v4 API.
+  zod: ^4.6.7
 
 autoInstallPeers: false
 
@@ -76,6 +77,9 @@ onlyBuiltDependencies:
 
 overrides:
   body-parser: "2.4.0"
+  # GHSA-6pq8-jhm2-2vcw (CVE-2026-110816) is fixed in qs 6.16.1. Patch-level bump inside
+  # express 5.2.1's ^6.14.0 range; body-parser 2.4.0 already runs qs 6.16.1 in-process.
+  qs: "6.16.1"
   undici: "7.30.1"
   proxy-addr: "2.0.8"
   source-map-js: "1.2.2"

@@ -268,11 +268,11 @@ const SurfaceBlock = z.object({
         .optional(),
     draft: ConversationDraft.optional(),
     draftStep: z.string().optional(),
-    draftReview: z.record(z.unknown()).optional(),
-    sellerInsight: z.record(z.unknown()).optional(),
-    comparison: z.record(z.unknown()).optional(),
-    purchaseReview: z.record(z.unknown()).optional(),
-    commerce: z.record(z.unknown()).optional(),
+    draftReview: z.record(z.string(), z.unknown()).optional(),
+    sellerInsight: z.record(z.string(), z.unknown()).optional(),
+    comparison: z.record(z.string(), z.unknown()).optional(),
+    purchaseReview: z.record(z.string(), z.unknown()).optional(),
+    commerce: z.record(z.string(), z.unknown()).optional(),
     tutorial: TutorialPayloadSchema.optional(),
     photoSuggestionStatus: z.enum([
       "UNAVAILABLE",
@@ -285,18 +285,18 @@ const SurfaceBlock = z.object({
       .array(z.enum(LISTING_PHOTO_UNCERTAINTIES))
       .max(LISTING_PHOTO_UNCERTAINTIES.length)
       .optional(),
-    employment: z.record(z.unknown()).optional(),
-    delivery: z.record(z.unknown()).optional(),
-    promotion: z.record(z.unknown()).optional(),
-    driver: z.record(z.unknown()).optional(),
-    provider: z.record(z.unknown()).optional(),
-    advice: z.record(z.unknown()).optional(),
+    employment: z.record(z.string(), z.unknown()).optional(),
+    delivery: z.record(z.string(), z.unknown()).optional(),
+    promotion: z.record(z.string(), z.unknown()).optional(),
+    driver: z.record(z.string(), z.unknown()).optional(),
+    provider: z.record(z.string(), z.unknown()).optional(),
+    advice: z.record(z.string(), z.unknown()).optional(),
     memory: z.object({ view: z.enum(["MY_INTERESTS", "MEMORY_SUMMARY", "MEMORY_CONFIRMATION", "MEMORY_UPDATED"]), groups: z.array(z.object({ label: z.string().max(80), items: z.array(z.object({ topic: z.string().max(80), label: z.string().max(120), reason: z.string().max(160) })).max(12) })).max(6) }).optional(),
-    negotiation: z.record(z.unknown()).optional(),
-    inquiry: z.record(z.unknown()).optional(),
+    negotiation: z.record(z.string(), z.unknown()).optional(),
+    inquiry: z.record(z.string(), z.unknown()).optional(),
     control: ProductControlPayload.optional(),
     relatesToAction: z.string().uuid().optional(),
-    listings: z.array(z.record(z.unknown())),
+    listings: z.array(z.record(z.string(), z.unknown())),
     surface: conversationSurfaceTokenSchema,
   }),
 });
@@ -308,7 +308,7 @@ const ListingBlock = z.object({
     resourceIds: z.array(z.string().min(1).max(200)).max(24).optional(),
     searchState: SearchStateSchema.optional(),
     presentation: Presentation.optional(),
-    listings: z.array(z.record(z.unknown())),
+    listings: z.array(z.record(z.string(), z.unknown())),
   }),
 });
 const GuestAiPreviewResponse = z
@@ -320,7 +320,7 @@ const GuestAiPreviewResponse = z
           .object({
             type: z.enum(["LISTING_RESULTS", "SURFACE"]),
             version: z.literal(1),
-            payload: z.record(z.unknown()),
+            payload: z.record(z.string(), z.unknown()),
           })
           .strict(),
       )

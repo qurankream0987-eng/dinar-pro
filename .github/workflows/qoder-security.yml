@@ -1,0 +1,115 @@
+name: qoder-security
+
+# Development-only evidence for the dependency remediation wave requested by the owner.
+# No deployment, no database, no provider keys, no paid calls.
+# Advisory ids and counts are printed; gitleaks never prints matched secret values.
+
+on:
+  workflow_dispatch:
+    inputs:
+      regen_lockfile:
+        description: "Regenerate pnpm-lock.yaml and upload it as an artifact"
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: qoder-security-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lockfile:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.regen_lockfile }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: 10
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24
+      - name: Regenerate lockfile
+        run: pnpm install --lockfile-only --no-frozen-lockfile
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: pnpm-lock
+          path: pnpm-lock.yaml
+          if-no-files-found: error
+
+  audit:
+    if: ${{ github.event_name != 'workflow_dispatch' || !inputs.regen_lockfile }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: 10
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Dependency audit
+        run: |
+          set +e
+          pnpm audit --json > audit.json
+          echo "pnpm_audit_exit=$?"
+          set -e
+          node -e 'const r=require("./audit.json");const v=r.metadata?.vulnerabilities??{};console.log("AUDIT_VULNERABILITIES",JSON.stringify(v));for(const a of Object.values(r.advisories??{}))console.log("ADVISORY",a.severity,"|",a.module_name,"|",a.github_advisory_id??"","|",a.patched_versions??"");const b=(v.high??0)+(v.critical??0);console.log("BLOCKING_VULNERABILITIES",b);if(b>0)process.exit(1)'
+      - name: Resolved versions
+        run: |
+          echo "RESOLVED_ZOD:"
+          grep -nE '^  zod@' pnpm-lock.yaml || true
+          echo "RESOLVED_QS:"
+          grep -nE '^  qs@' pnpm-lock.yaml || true
+      - name: Secret scan with gitleaks (redacted)
+        uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_ENABLE_COMMENTS: "false"
+          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: "false"
+      - name: Credential pattern scan (values never printed)
+        run: |
+          for p in 'github_pat_[A-Za-z0-9_]{20,}' 'gh[pousr]_[A-Za-z0-9_]{20,}' 'AKIA[0-9A-Z]{16}' 'xox[baprs]-[A-Za-z0-9-]{10,}' 'sk-[A-Za-z0-9]{20,}' 'BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY'; do
+            git grep -IlE "$p" HEAD -- . && echo "MATCHED_PATTERN: $p" || true
+          done
+          echo "TRACKED_ENV_FILES:"
+          git ls-files | grep -E '(^|/)\.env' || echo "  none"
+      - name: Upload audit report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: security-report
+          path: audit.json
+          if-no-files-found: ignore
+
+  build:
+    if: ${{ github.event_name != 'workflow_dispatch' || !inputs.regen_lockfile }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: 10
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Typecheck
+        run: pnpm run typecheck
+      - name: Build api-server
+        run: pnpm --filter @workspace/api-server run build
+      - name: Build web
+        run: pnpm --filter @workspace/dinar run build
