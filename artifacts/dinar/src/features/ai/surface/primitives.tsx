@@ -38,6 +38,7 @@ export function SurfaceCard({
   state,
   status,
   testId,
+  card,
   children,
 }: {
   label: string;
@@ -45,6 +46,8 @@ export function SurfaceCard({
   state?: string;
   status?: string;
   testId?: string;
+  /** The server envelope that governs this card; exposed as data for tests and inspection. */
+  card?: { schemaVersion?: number; surfaceId?: string; lifecycle?: string };
   children: ReactNode;
 }) {
   return (
@@ -56,6 +59,9 @@ export function SurfaceCard({
       data-state={state}
       data-status={status}
       data-testid={testId}
+      data-card-schema-version={card?.schemaVersion}
+      data-card-surface-id={card?.surfaceId}
+      data-card-lifecycle={card?.lifecycle}
     >
       {children}
     </section>

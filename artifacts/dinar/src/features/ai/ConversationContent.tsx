@@ -45,6 +45,7 @@ import { ComparisonPanel, isComparison, isPurchaseReview, PurchaseReviewPanel } 
 import { isDriverPayload } from "./driver-types";
 import { isProviderPayload } from "./provider-types";
 import { AdvicePanel, ClarificationOptions, NegotiationPanel, adviceChipLabel, isAdvice, isNegotiation } from "./SmartSurfaces";
+import { CardEnvelopeProvider } from "./surface/ComposedSurface";
 import type { LocationSubmission } from "./delivery-types";
 
 class BlockBoundary extends Component<
@@ -1345,14 +1346,16 @@ function MessageTurn({
           message.blocks?.map((block, index) => index === chipIndex ? null : (
             <fieldset disabled={busy} aria-busy={busy || undefined} className="dinar-action-group" data-surface-size={block.type === "SURFACE" && block.payload.surface ? conversationSurfaceSize(block.payload.surface) : "WIDE"} key={`${block.type}-${block.payload?.resultSetId}`}>
               <BlockBoundary>
-                <ResultBlock
-                  block={block}
-                  activeWorkflow={activeWorkflow}
-                  activeResults={activeResults}
-                  onSend={onSend}
-                  onSelectMarket={onSelectMarket}
-                  key={`${block.type}-${block.payload?.resultSetId}`}
-                />
+                <CardEnvelopeProvider value={block.payload.card}>
+                  <ResultBlock
+                    block={block}
+                    activeWorkflow={activeWorkflow}
+                    activeResults={activeResults}
+                    onSend={onSend}
+                    onSelectMarket={onSelectMarket}
+                    key={`${block.type}-${block.payload?.resultSetId}`}
+                  />
+                </CardEnvelopeProvider>
               </BlockBoundary>
             </fieldset>
           ))}

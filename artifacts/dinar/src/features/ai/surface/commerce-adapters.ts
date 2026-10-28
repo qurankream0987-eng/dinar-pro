@@ -39,13 +39,13 @@ function negotiationDecisionActions(item: NegotiationView): SurfaceAction[] {
   const decisions = item.decisions ?? [];
   const actions: SurfaceAction[] = [];
   if (decisions.includes("ACCEPT"))
-    actions.push({ kind: "SEND", label: "قبول العرض", message: "اقبل العرض", emphasis: "PRIMARY", icon: "CHECK", testId: "negotiation-status-accept" });
+    actions.push({ kind: "SEND", actionId: "ACCEPT", label: "قبول العرض", message: "اقبل العرض", emphasis: "PRIMARY", icon: "CHECK", testId: "negotiation-status-accept" });
   if (decisions.includes("COUNTER"))
-    actions.push({ kind: "SEND", label: "عرض مقابل", message: "أريد إرسال عرض مقابل", emphasis: "SECONDARY", icon: "EDIT", testId: "negotiation-status-counter" });
+    actions.push({ kind: "SEND", actionId: "COUNTER", label: "عرض مقابل", message: "أريد إرسال عرض مقابل", emphasis: "SECONDARY", icon: "EDIT", testId: "negotiation-status-counter" });
   if (decisions.includes("REJECT"))
-    actions.push({ kind: "SEND", label: "رفض العرض", message: "ارفض العرض", emphasis: "DANGER", testId: "negotiation-status-reject" });
+    actions.push({ kind: "SEND", actionId: "REJECT", label: "رفض العرض", message: "ارفض العرض", emphasis: "DANGER", testId: "negotiation-status-reject" });
   if (decisions.includes("WITHDRAW"))
-    actions.push({ kind: "SEND", label: "سحب العرض", message: "اسحب العرض", emphasis: "QUIET", icon: "CLOSE", testId: "negotiation-status-withdraw" });
+    actions.push({ kind: "SEND", actionId: "WITHDRAW", label: "سحب العرض", message: "اسحب العرض", emphasis: "QUIET", icon: "CLOSE", testId: "negotiation-status-withdraw" });
   return actions;
 }
 export type Negotiation = NegotiationView & {
@@ -163,14 +163,15 @@ function negotiationReviewActions(negotiation: Negotiation): SurfaceAction[] {
   const actions: SurfaceAction[] =
     negotiation.action === "SEND_NEGOTIATION_OFFER"
       ? [
-          { kind: "SEND", label: "إرسال العرض", message: "إرسال العرض", emphasis: "PRIMARY", icon: "SEND", testId: "negotiation-send" },
-          { kind: "SEND", label: "تعديل المبلغ", message: "تعديل", emphasis: "SECONDARY", icon: "EDIT", testId: "negotiation-edit" },
+          { kind: "SEND", actionId: "SEND", label: "إرسال العرض", message: "إرسال العرض", emphasis: "PRIMARY", icon: "SEND", testId: "negotiation-send" },
+          { kind: "SEND", actionId: "EDIT", label: "تعديل المبلغ", message: "تعديل", emphasis: "SECONDARY", icon: "EDIT", testId: "negotiation-edit" },
         ]
       : negotiation.action === "REQUEST_BEST_PRICE"
-        ? [{ kind: "SEND", label: "إرسال طلب السعر", message: "نعم", emphasis: "PRIMARY", icon: "SEND", testId: "negotiation-best-price-send" }]
+        ? [{ kind: "SEND", actionId: "SEND", label: "إرسال طلب السعر", message: "نعم", emphasis: "PRIMARY", icon: "SEND", testId: "negotiation-best-price-send" }]
         : [
             {
               kind: "SEND",
+              actionId: "CONFIRM",
               label:
                 negotiation.action === "ACCEPT_NEGOTIATION" ? "قبول السعر" : negotiation.action === "REJECT_NEGOTIATION" ? "تأكيد الرفض" : "إرسال العرض المضاد",
               message: buyerFacingCounter ? "موافق" : "نعم",
@@ -179,8 +180,8 @@ function negotiationReviewActions(negotiation: Negotiation): SurfaceAction[] {
               testId: "negotiation-confirm",
             },
           ];
-  if (buyerFacingCounter) actions.push({ kind: "SEND", label: "رفض", message: "رفض", emphasis: "DANGER", testId: "negotiation-decline" });
-  actions.push({ kind: "SEND", label: "إلغاء", message: "إلغاء", emphasis: "QUIET", icon: "CLOSE", testId: "negotiation-cancel" });
+  if (buyerFacingCounter) actions.push({ kind: "SEND", actionId: "REJECT", label: "رفض", message: "رفض", emphasis: "DANGER", testId: "negotiation-decline" });
+  actions.push({ kind: "SEND", actionId: "CANCEL", label: "إلغاء", message: "إلغاء", emphasis: "QUIET", icon: "CLOSE", testId: "negotiation-cancel" });
   return actions;
 }
 
@@ -216,7 +217,7 @@ function hypotheticalSurface(negotiation: Negotiation): ComposedSurfaceInput {
         : negotiation.canOffer
           ? [{
               type: "actions" as const,
-              items: [{ kind: "SEND" as const, label: "مراجعة عرض بهذا السعر", message: "أرسل عرضا بهذا السعر", emphasis: "SECONDARY" as const, icon: "HANDSHAKE" as const, testId: "hypothetical-offer" }],
+              items: [{ kind: "SEND" as const, actionId: "OFFER" as const, label: "مراجعة عرض بهذا السعر", message: "أرسل عرضا بهذا السعر", emphasis: "SECONDARY" as const, icon: "HANDSHAKE" as const, testId: "hypothetical-offer" }],
             }]
           : []),
     ],
@@ -251,8 +252,8 @@ export function negotiationSurface(negotiation: Negotiation): ComposedSurfaceInp
                 actions:
                   item.role === "SELLER" && item.status === "OPEN"
                     ? [
-                        { kind: "SEND" as const, label: "قبول", message: `اقبل ${ORDINALS[index] ?? `رقم ${index + 1}`}`, emphasis: "SECONDARY" as const, icon: "CHECK" as const, testId: `negotiation-accept-${index + 1}` },
-                        { kind: "SEND" as const, label: "رفض", message: `ارفض ${ORDINALS[index] ?? `رقم ${index + 1}`}`, emphasis: "DANGER" as const, testId: `negotiation-reject-${index + 1}` },
+                        { kind: "SEND" as const, actionId: "ACCEPT" as const, label: "قبول", message: `اقبل ${ORDINALS[index] ?? `رقم ${index + 1}`}`, emphasis: "SECONDARY" as const, icon: "CHECK" as const, testId: `negotiation-accept-${index + 1}` },
+                        { kind: "SEND" as const, actionId: "REJECT" as const, label: "رفض", message: `ارفض ${ORDINALS[index] ?? `رقم ${index + 1}`}`, emphasis: "DANGER" as const, testId: `negotiation-reject-${index + 1}` },
                       ]
                     : undefined,
                 testId: "negotiation-item",
@@ -312,7 +313,7 @@ export function negotiationSurface(negotiation: Negotiation): ComposedSurfaceInp
       ...(!review && negotiation.role === "BUYER" && negotiation.status === "ACCEPTED" && !negotiation.ordered
         ? [{
             type: "actions" as const,
-            items: [{ kind: "SEND" as const, label: "مراجعة الطلب بالسعر المتفق عليه", message: "اطلبه", emphasis: "PRIMARY" as const, icon: "CART" as const, testId: "negotiation-order" }],
+            items: [{ kind: "SEND" as const, actionId: "ORDER" as const, label: "مراجعة الطلب بالسعر المتفق عليه", message: "اطلبه", emphasis: "PRIMARY" as const, icon: "CART" as const, testId: "negotiation-order" }],
           }]
         : []),
     ],
@@ -388,6 +389,7 @@ export function purchaseSurface(review: PurchaseReview): ComposedSurfaceInput {
   const actions: SurfaceAction[] = [
     {
       kind: "SEND",
+      actionId: "CONFIRM",
       label: confirmLabel,
       message: "نعم",
       emphasis: "PRIMARY",
@@ -399,6 +401,7 @@ export function purchaseSurface(review: PurchaseReview): ComposedSurfaceInput {
     ...(stage === "PAYMENT"
       ? (review.paymentMethods ?? []).map((method): SurfaceAction => ({
           kind: "SEND",
+          actionId: "PAYMENT_METHOD",
           label: PAYMENT_METHOD_LABEL[method],
           message: method === "CASH_DIRECT" ? "كاش" : "فيزا",
           emphasis: "SECONDARY",
@@ -407,10 +410,11 @@ export function purchaseSurface(review: PurchaseReview): ComposedSurfaceInput {
           testId: `purchase-payment-${method}`,
         }))
       : []),
-    ...(stage === "ITEM" ? [{ kind: "SEND" as const, label: "متابعة الطلب", message: "اطلبه الآن", emphasis: "SECONDARY" as const, testId: "purchase-continue" }] : []),
+    ...(stage === "ITEM" ? [{ kind: "SEND" as const, actionId: "CONTINUE" as const, label: "متابعة الطلب", message: "اطلبه الآن", emphasis: "SECONDARY" as const, testId: "purchase-continue" }] : []),
     ...(stage === "ORDER" && !review.fulfilment
       ? (review.fulfilmentOptions ?? []).map((option): SurfaceAction => ({
           kind: "SEND",
+          actionId: "FULFILMENT",
           label: option.label,
           message: option.label,
           emphasis: "SECONDARY",
@@ -418,7 +422,7 @@ export function purchaseSurface(review: PurchaseReview): ComposedSurfaceInput {
           testId: `purchase-fulfilment-${option.method}`,
         }))
       : []),
-    { kind: "SEND", label: "إلغاء", message: "إلغاء", emphasis: "QUIET", icon: "CLOSE", testId: "purchase-cancel" },
+    { kind: "SEND", actionId: "CANCEL", label: "إلغاء", message: "إلغاء", emphasis: "QUIET", icon: "CLOSE", testId: "purchase-cancel" },
   ];
   return {
     version: 1,

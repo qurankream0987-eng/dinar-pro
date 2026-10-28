@@ -216,12 +216,15 @@ try {
   assert.ok(purchaseInfo.buttons.includes("purchase-confirm"), "the decision is still available after reload");
   checks.push("purchase review: reload restores the same surface id and pending lifecycle");
 
-  await clickTurn(purchase.getByTestId("purchase-cancel"));
+  const declined = await clickTurn(purchase.getByTestId("purchase-cancel"));
+  assert.match((await declined.innerText()).replace(/\s+/g, " "), /أُلغي/u, "the server confirms the cancellation in words too");
+  await reopen(purchaseConversation);
   purchase = await card('[data-testid="purchase-review"]');
   purchaseInfo = await cardInfo(purchase);
-  assert.equal(purchaseInfo.lifecycle, "CANCELLED", "declining is the server's outcome, shown on the card");
+  assert.equal(purchaseInfo.surfaceId, surfaces.purchase.surfaceId, "the cancelled card keeps its identity");
+  assert.equal(purchaseInfo.lifecycle, "CANCELLED", "reloading shows the server's CANCELLED outcome on the same card");
   assert.deepEqual(purchaseInfo.buttons, [], "a cancelled review offers no action");
-  checks.push("purchase review: declining shows the authoritative CANCELLED lifecycle with no actions");
+  checks.push("purchase review: declining then reloading shows the authoritative CANCELLED lifecycle with no actions");
 
   await reopen(purchaseConversation);
   purchase = await card('[data-testid="purchase-review"]');
@@ -254,12 +257,15 @@ try {
   assert.ok(negotiationInfo.buttons.includes("negotiation-send"));
   checks.push("negotiation review: reload restores the same pending offer review");
 
-  await clickTurn(negotiation.getByTestId("negotiation-cancel"));
+  const declinedOffer = await clickTurn(negotiation.getByTestId("negotiation-cancel"));
+  assert.match((await declinedOffer.innerText()).replace(/\s+/g, " "), /أُلغي/u, "the server confirms the cancellation in words too");
+  await reopen(negotiationConversation);
   negotiation = await card('[data-testid="negotiation-review"]');
   negotiationInfo = await cardInfo(negotiation);
-  assert.equal(negotiationInfo.lifecycle, "CANCELLED");
-  assert.deepEqual(negotiationInfo.buttons, []);
-  checks.push("negotiation review: declining shows the authoritative CANCELLED lifecycle with no actions");
+  assert.equal(negotiationInfo.surfaceId, surfaces.negotiation.surfaceId, "the cancelled review keeps its identity");
+  assert.equal(negotiationInfo.lifecycle, "CANCELLED", "reloading shows the authoritative CANCELLED lifecycle");
+  assert.deepEqual(negotiationInfo.buttons, [], "a cancelled review offers no action");
+  checks.push("negotiation review: declining then reloading shows the authoritative CANCELLED lifecycle with no actions");
 
   await reopen(negotiationConversation);
   negotiation = await card('[data-testid="negotiation-review"]');

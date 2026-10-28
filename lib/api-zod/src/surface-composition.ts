@@ -103,6 +103,8 @@ export const SurfaceActionSchema = z.discriminatedUnion("kind", [
     /** Shown but not usable until the server-side precondition is met (e.g. no method chosen). */
     disabled: z.boolean().optional(),
     testId: testId.optional(),
+    /** The server capability this button stands for (e.g. CONFIRM); never invented by the model. */
+    actionId: z.string().regex(/^[A-Z][A-Z0-9_]{0,39}$/).optional(),
   }).strict(),
   z.object({
     kind: z.literal("NAVIGATE"),
@@ -111,6 +113,7 @@ export const SurfaceActionSchema = z.discriminatedUnion("kind", [
     emphasis: z.enum(["PRIMARY", "SECONDARY", "QUIET"]).default("QUIET"),
     icon: icon.optional(),
     testId: testId.optional(),
+    actionId: z.string().regex(/^[A-Z][A-Z0-9_]{0,39}$/).optional(),
   }).strict(),
 ]);
 export type SurfaceAction = z.infer<typeof SurfaceActionSchema>;
@@ -243,4 +246,115 @@ export type ComposedSurfaceInput = z.input<typeof ComposedSurfaceSchema>;
 export function parseComposedSurface(value: unknown): ComposedSurface | null {
   const result = ComposedSurfaceSchema.safeParse(value);
   return result.success ? result.data : null;
+}
+
+// ─── Card envelope ───────────────────────────────────────────────────────────
+
+/**
+ * The versioned envelope around a card. The server decides what exists: the surface type, the
+ * resource it names, the lifecycle, the actions it may offer, whether a review is pending and
+ * when it expires. The model never supplies any of these. A client that does not know this
+ * version refuses the card instead of guessing.
+ */
+export const CARD_SCHEMA_VERSION = 1 as const;
+
+export const CARD_RESOURCE_KINDS = [
+  "NONE", "LISTING", "ORDER", "NEGOTIATION", "INQUIRY", "CART", "DELIVERY", "EMPLOYMENT",
+  "PROMOTION", "DRIVER", "PROVIDER", "CONTROL", "CONVERSATION", "MARKET",
+] as const;
+/** The role the card is written for; omitted when the card is the same for every role. */
+export const CARD_ROLES = ["BUYER", "SELLER", "GUEST", "ADMIN", "DRIVER", "PROVIDER", "EMPLOYER", "CANDIDATE"] as const;
+/**
+ * How the client keeps the card current using infrastructure that already exists: the
+ * conversation's SSE stream, a resource re-fetch on reload, or plain history restoration.
+ */
+export const CARD_REFRESH_STRATEGIES = ["SSE", "REFETCH", "RESTORE", "NONE"] as const;
+
+const cardSurfaceType = z.string().regex(/^[A-Z][A-Z0-9_]{0,63}$/);
+const cardActionId = z.string().regex(/^[A-Z][A-Z0-9_]{0,39}$/);
+
+export const CardEnvelopeSchema = z.object({
+  schemaVersion: z.literal(CARD_SCHEMA_VERSION),
+  /** Semantic surface id (e.g. CHECKOUT_CONFIRMATION), derived from the server's registry. */
+  surfaceType: cardSurfaceType,
+  /** Stable identity across reloads, derived from server records only. */
+  surfaceId: z.string().trim().min(1).max(200).regex(/^[A-Za-z0-9:_-]+$/),
+  resource: z.object({
+    kind: z.enum(CARD_RESOURCE_KINDS),
+    id: z.string().trim().min(1).max(200).optional(),
+  }).strict(),
+  conversationId: z.string().uuid(),
+  taskId: z.string().trim().min(1).max(200).optional(),
+  context: z.object({
+    role: z.enum(CARD_ROLES).optional(),
+    marketId: z.string().trim().min(1).max(64),
+    currency: z.string().length(3).optional(),
+  }).strict(),
+  status: z.object({
+    lifecycle: z.enum(SURFACE_STATES),
+    resource: z.string().regex(/^[A-Z][A-Z_]{0,39}$/).optional(),
+  }).strict(),
+  /** Capability ids the server allows right now; absent on legacy surfaces without a list. */
+  allowedActions: z.array(cardActionId).max(12).optional(),
+  pendingReviewId: z.string().uuid().optional(),
+  expiresAt: z.string().datetime().optional(),
+  refresh: z.object({ strategy: z.enum(CARD_REFRESH_STRATEGIES) }).strict(),
+  sourceTimestamp: z.string().datetime(),
+  accessibility: z.object({
+    label: z.string().trim().min(1).max(120),
+    description: z.string().trim().min(1).max(300).optional(),
+  }).strict(),
+  /** A server-composed card, when the server owns the display; adapters fill it otherwise. */
+  surface: ComposedSurfaceSchema.optional(),
+}).strict().superRefine((envelope, context) => {
+  if (!surfaceAllowsActions(envelope.status.lifecycle) && (envelope.allowedActions?.length ?? 0) > 0)
+    context.addIssue({ code: z.ZodIssueCode.custom, message: "a terminal envelope must not allow actions" });
+  if (envelope.pendingReviewId && envelope.status.lifecycle !== "PENDING_REVIEW")
+    context.addIssue({ code: z.ZodIssueCode.custom, message: "only a pending review has a pending review id" });
+});
+export type CardEnvelope = z.infer<typeof CardEnvelopeSchema>;
+export type CardEnvelopeInput = z.input<typeof CardEnvelopeSchema>;
+
+/** Validates an envelope; an unknown version or shape never parses as the current one. */
+export function parseCardEnvelope(value: unknown): CardEnvelope | null {
+  const result = CardEnvelopeSchema.safeParse(value);
+  return result.success ? result.data : null;
+}
+
+/**
+ * Applies the server's envelope to a card composed by an adapter. A review lifecycle replaces
+ * the composition's own state (READY keeps it), and a SEND action survives only when the server
+ * listed its capability id. Navigation is not a state change and survives a terminal lifecycle.
+ * Returns null when the envelope belongs to an unknown version.
+ */
+export function applyCardEnvelope(surface: ComposedSurface, envelope: CardEnvelope): ComposedSurface | null {
+  if (envelope.schemaVersion !== CARD_SCHEMA_VERSION) return null;
+  const base = envelope.surface ?? surface;
+  const allowed = envelope.allowedActions;
+  const keep = (action: SurfaceAction): boolean => {
+    if (action.kind !== "SEND") return true;
+    if (!surfaceAllowsActions(envelope.status.lifecycle)) return false;
+    if (allowed === undefined) return true;
+    return action.actionId !== undefined && allowed.includes(action.actionId);
+  };
+  const terminal = !surfaceAllowsActions(envelope.status.lifecycle);
+  const sections = base.sections.flatMap((section): SurfaceSection[] => {
+    if (section.type === "actions") {
+      const items = section.items.filter(keep);
+      return items.length ? [{ ...section, items }] : [];
+    }
+    if (section.type === "options")
+      return [{
+        ...section,
+        items: section.items.map((item) => (item.actions ? { ...item, actions: item.actions.filter(keep) } : item)),
+      }];
+    // A terminal envelope retires the adapter's stale "awaiting your decision" wording; the
+    // shared state notice then explains the outcome in its place.
+    if (section.type === "notice" && terminal && section.tone === "PENDING") return [];
+    return [section];
+  });
+  // READY means "no review state to report", so the adapter's own state (EMPTY, UNAVAILABLE…)
+  // is kept; a server-composed surface or a review lifecycle replaces it.
+  const state = envelope.surface || envelope.status.lifecycle !== "READY" ? envelope.status.lifecycle : base.state;
+  return { ...base, state, sections };
 }

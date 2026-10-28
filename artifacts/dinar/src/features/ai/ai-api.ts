@@ -27,11 +27,16 @@ import type {
 } from "@workspace/api-client-react";
 import { SEARCH_OPERATORS } from "@workspace/api-zod/marketplace-schemas";
 import {
+  conversationSemanticSurfacesForToken,
   isRegisteredConversationSurface,
   type TutorialLearningEventInput,
   type ConversationSurfaceToken,
   type TutorialPayload,
 } from "@workspace/api-zod/conversation-runtime";
+import {
+  parseCardEnvelope,
+  type CardEnvelope,
+} from "@workspace/api-zod/surface-composition";
 import {
   EMPLOYMENT_SURFACES,
   normalizeEmployment,
@@ -78,6 +83,8 @@ export type AiUiBlock = {
     commerce?: CommercialPayload;
     tutorial?: TutorialPayload;
     surface?: ConversationSurfaceToken;
+    /** Wave 03: the server's typed, versioned envelope governing this card. */
+    card?: CardEnvelope;
     /** G2 server-built advice (scope-labelled) and negotiation views. */
     advice?: unknown;
     negotiation?: unknown;
@@ -217,6 +224,22 @@ export type AiStreamEvent =
 const conversationsKey = getGetAiConversationsQueryKey();
 const conversationKey = (id: string) => getGetAiConversationQueryKey(id);
 
+/** The semantic card types a listing result block may carry (it has no wire token). */
+const LISTING_CARD_TYPES = new Set(["PRODUCT_RESULT_CARD", "SERVICE_RESULT_CARD", "SEARCH_RESULTS_RAIL", "LISTING_DETAIL_CARD"]);
+
+/**
+ * An envelope must describe this block: its type belongs to the block's token. A card whose
+ * envelope names another surface is not rendered under this block, even when it says nothing.
+ */
+function cardMatchesBlock(card: CardEnvelope, type: AiUiBlock["type"], surface: ConversationSurfaceToken | undefined): boolean {
+  if (type === "LISTING_RESULTS") return LISTING_CARD_TYPES.has(card.surfaceType);
+  if (!surface) return false;
+  return (
+    card.surfaceType === surface ||
+    (conversationSemanticSurfacesForToken(surface) as readonly string[]).includes(card.surfaceType)
+  );
+}
+
 function normalizeBlock(value: unknown): AiUiBlock | null {
   if (!value || typeof value !== "object") return null;
   const block = value as Partial<AiUiBlock>;
@@ -229,6 +252,13 @@ function normalizeBlock(value: unknown): AiUiBlock | null {
   const payload = block.payload as Partial<AiUiBlock["payload"]>;
   if (block.type === "SURFACE" && !isRegisteredConversationSurface(payload.surface))
     return null;
+  if (payload.card !== undefined) {
+    const card = parseCardEnvelope(payload.card);
+    // An unknown version or a mismatched surface is never partially applied: the block is dropped.
+    if (!card || !cardMatchesBlock(card, block.type as AiUiBlock["type"], payload.surface))
+      return null;
+    payload.card = card;
+  }
   if (payload.surface && (MEMORY_SURFACES as readonly string[]).includes(payload.surface)) {
     const memory = normalizeMemory(payload.memory);
     if (!memory || memory.view !== payload.surface) return null;

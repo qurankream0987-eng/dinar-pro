@@ -1,4 +1,13 @@
-import { parseComposedSurface, surfaceAllowsActions, type ComposedSurface, type SurfaceSection } from "@workspace/api-zod/surface-composition";
+import { createContext, useContext, type ReactNode } from "react";
+import {
+  applyCardEnvelope,
+  parseCardEnvelope,
+  parseComposedSurface,
+  surfaceAllowsActions,
+  type CardEnvelope,
+  type ComposedSurface,
+  type SurfaceSection,
+} from "@workspace/api-zod/surface-composition";
 import {
   ActionRow,
   BarList,
@@ -34,6 +43,22 @@ const STATE_TEXT: Partial<Record<ComposedSurface["state"], string>> = {
   FAILED: "تعذر تحميل هذه البطاقة الآن.",
 };
 
+/** The envelope travels with the message block; a panel nested inside it reads it here. */
+const CardEnvelopeContext = createContext<CardEnvelope | undefined>(undefined);
+
+export function CardEnvelopeProvider({ value, children }: { value?: unknown; children: ReactNode }) {
+  const parsed = value === undefined ? undefined : parseCardEnvelope(value) ?? undefined;
+  return <CardEnvelopeContext.Provider value={parsed}>{children}</CardEnvelopeContext.Provider>;
+}
+
+function InvalidCard() {
+  return (
+    <SurfaceCard label="بطاقة غير متاحة" tone="WARNING" state="INVALID" testId="composed-surface-invalid">
+      <SurfaceNotice tone="WARNING" text="تعذر عرض هذه البطاقة. يمكنك إعادة الطلب في المحادثة." />
+    </SurfaceCard>
+  );
+}
+
 function Section({ section, onSend }: { section: SurfaceSection; onSend?: (text: string) => void }) {
   switch (section.type) {
     case "header":
@@ -64,35 +89,54 @@ function Section({ section, onSend }: { section: SurfaceSection; onSend?: (text:
 /**
  * Renders a validated composition with the shared primitives. An invalid composition is not
  * rendered in part: a small notice replaces it and the conversation carries on.
+ * `envelope` is the server's versioned decision for this card; without one, an older stored
+ * card keeps its legacy contract. A terminal or unsupported envelope never renders an action.
  * `active` is false on older cards, which then show their data without live actions.
  */
 export function ComposedSurfaceView({
   surface,
+  envelope,
   active,
   onSend,
 }: {
   surface: unknown;
+  envelope?: unknown;
   active: boolean;
   onSend?: (text: string) => void;
 }) {
+  const contextEnvelope = useContext(CardEnvelopeContext);
+  const supplied = envelope !== undefined ? envelope : contextEnvelope;
+  const parsedEnvelope = supplied === undefined ? undefined : parseCardEnvelope(supplied);
   const parsed = parseComposedSurface(surface);
-  if (!parsed)
-    return (
-      <SurfaceCard label="بطاقة غير متاحة" tone="WARNING" state="INVALID" testId="composed-surface-invalid">
-        <SurfaceNotice tone="WARNING" text="تعذر عرض هذه البطاقة. يمكنك إعادة الطلب في المحادثة." />
-      </SurfaceCard>
-    );
-  const notice = STATE_NOTICE[parsed.state];
+  if (!parsed || (supplied !== undefined && !parsedEnvelope)) return <InvalidCard />;
+  const view = parsedEnvelope ? applyCardEnvelope(parsed, parsedEnvelope) : parsed;
+  if (!view) return <InvalidCard />;
+  const notice = STATE_NOTICE[view.state];
   // A composition that already explains its state (e.g. an outcome notice) is not repeated.
-  const explainsState = parsed.sections.some((section) => section.type === "notice");
-  const send = active && surfaceAllowsActions(parsed.state) ? onSend : undefined;
+  const explainsState = view.sections.some((section) => section.type === "notice");
+  const send = active && surfaceAllowsActions(view.state) ? onSend : undefined;
   return (
-    <div className="ds-size" data-size={parsed.size}>
-      <SurfaceCard label={parsed.label} tone={parsed.tone} state={parsed.state} status={parsed.status} testId={parsed.testId ?? "composed-surface"}>
-        {parsed.sections.map((section, index) => (
+    <div className="ds-size" data-size={view.size}>
+      <SurfaceCard
+        label={view.label}
+        tone={view.tone}
+        state={view.state}
+        status={view.status}
+        testId={view.testId ?? "composed-surface"}
+        card={
+          parsedEnvelope
+            ? {
+                schemaVersion: parsedEnvelope.schemaVersion,
+                surfaceId: parsedEnvelope.surfaceId,
+                lifecycle: parsedEnvelope.status.lifecycle,
+              }
+            : undefined
+        }
+      >
+        {view.sections.map((section, index) => (
           <Section key={index} section={section} onSend={send} />
         ))}
-        {!explainsState && notice && STATE_TEXT[parsed.state] && <SurfaceNotice tone={notice.tone} text={STATE_TEXT[parsed.state]!} />}
+        {!explainsState && notice && STATE_TEXT[view.state] && <SurfaceNotice tone={notice.tone} text={STATE_TEXT[view.state]!} />}
       </SurfaceCard>
     </div>
   );

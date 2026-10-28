@@ -6,6 +6,8 @@ import {
 } from "../ai/smart-turn";
 import { refreshNegotiationPayload } from "../ai/negotiation-turn";
 import { refreshInquiryPayload } from "../ai/inquiry-turn";
+import { buildCardEnvelope } from "../ai/card-envelope";
+import { CardEnvelopeSchema } from "@workspace/api-zod/surface-composition";
 import { acknowledgeClientAction, refreshControlPayload } from "../ai/product-control-turn";
 import { guestUsageKey, reserveAiUsage, settleAiUsage, type AiUsageMeasurement, type AiUsageOwner } from "../lib/ai-usage";
 import { usageLimitMessage } from "../ai/usage-turn";
@@ -299,6 +301,7 @@ const SurfaceBlock = z.object({
     relatesToAction: z.string().uuid().optional(),
     listings: z.array(z.record(z.string(), z.unknown())),
     surface: conversationSurfaceTokenSchema,
+    card: CardEnvelopeSchema.optional(),
   }),
 });
 const ListingBlock = z.object({
@@ -310,6 +313,7 @@ const ListingBlock = z.object({
     searchState: SearchStateSchema.optional(),
     presentation: Presentation.optional(),
     listings: z.array(z.record(z.string(), z.unknown())),
+    card: CardEnvelopeSchema.optional(),
   }),
 });
 const GuestAiPreviewResponse = z
@@ -402,7 +406,7 @@ async function freshBlocksForConversation(
       payload: row.payload,
     });
     return parsed.success
-      ? [{ messageId: row.messageId, block: parsed.data }]
+      ? [{ messageId: row.messageId, createdAt: row.createdAt, block: parsed.data }]
       : [];
   });
   const surfaceMap = new Map<string, any[]>();
@@ -585,6 +589,34 @@ async function freshBlocksForConversation(
       if (status) preview.status = status;
     }
   }
+  // The card envelope is recomputed from the refreshed records, never replayed from the stored
+  // copy: a confirmed, cancelled or expired review changes the card on the next read.
+  const cardSetIds = [...new Set(surfaceBlocks.map((item) => item.block.payload.resultSetId))];
+  const cardExpiry = new Map<string, Date | null>();
+  if (cardSetIds.length) {
+    const cardSets = await db
+      .select({ id: aiResultSets.id, expiresAt: aiResultSets.expiresAt })
+      .from(aiResultSets)
+      .where(
+        and(
+          eq(aiResultSets.conversationId, conversationId),
+          inArray(aiResultSets.id, cardSetIds),
+        ),
+      );
+    for (const set of cardSets) cardExpiry.set(set.id, set.expiresAt);
+  }
+  for (const item of surfaceBlocks) {
+    item.block.payload.card = buildCardEnvelope({
+      conversationId,
+      marketId: market.id,
+      currency: market.currencyCode,
+      token: item.block.payload.surface,
+      resultSetId: item.block.payload.resultSetId,
+      payload: item.block.payload as unknown as Record<string, unknown>,
+      sourceTimestamp: item.createdAt,
+      expiresAt: cardExpiry.get(item.block.payload.resultSetId),
+    }) ?? undefined;
+  }
   const parsedBlocks = rows.flatMap((row) => {
     const payload = StoredBlockPayload.safeParse(row.payload);
     if (
@@ -649,6 +681,20 @@ async function freshBlocksForConversation(
           searchState: payload.searchState,
           ...(payload.presentation ? { presentation: payload.presentation } : {}),
           listings,
+          card: buildCardEnvelope({
+            conversationId,
+            marketId: market.id,
+            currency: market.currencyCode,
+            presentation: payload.presentation,
+            resultSetId: payload.resultSetId,
+            payload: {
+              resourceIds: listings.map((listing) => listing.id),
+              ...(payload.presentation ? { presentation: payload.presentation } : {}),
+              ...(payload.searchState ? { searchState: payload.searchState } : {}),
+            },
+            sourceTimestamp: row.createdAt,
+            expiresAt: resultSet.expiresAt,
+          }) ?? undefined,
         },
       });
       const current = surfaceMap.get(row.messageId) ?? [];
@@ -1809,7 +1855,18 @@ router.post(
             SurfaceBlock.parse({
               type: "SURFACE",
               version: 1,
-              payload: receipt.block,
+              payload: {
+                ...receipt.block,
+                card: buildCardEnvelope({
+                  conversationId: conversation.id,
+                  marketId: market.id,
+                  currency: market.currencyCode,
+                  token: String(receipt.block.surface ?? ""),
+                  resultSetId: String(receipt.block.resultSetId ?? ""),
+                  payload: receipt.block,
+                  sourceTimestamp: receipt.createdAt,
+                }) ?? undefined,
+              },
             }),
           ],
         },
@@ -2006,41 +2063,56 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
 
     const toolResult = execution.result;
     if (toolResult.kind === "SURFACE") {
+      const resultSetId = toolResult.resultSetId ?? randomUUID();
+      const surfacePayload: Record<string, unknown> = {
+        resultSetId,
+        listings: [],
+        surface: toolResult.surface,
+        resourceIds: toolResult.resourceIds,
+        resourceId: toolResult.resourceId,
+        sellerContactRequested: toolResult.sellerContactRequested,
+        hideMap: toolResult.hideMap,
+        managementPreview: toolResult.managementPreview,
+        draft: toolResult.draft,
+        draftStep: toolResult.draftStep,
+        draftReview: toolResult.draftReview,
+        sellerInsight: toolResult.sellerInsight,
+        comparison: toolResult.comparison,
+        purchaseReview: toolResult.purchaseReview,
+        photoSuggestionStatus: toolResult.photoSuggestionStatus,
+        photoSuggestions: toolResult.photoSuggestions,
+        photoSuggestionUncertainties:
+          toolResult.photoSuggestionUncertainties,
+        employment: toolResult.employment,
+        delivery: toolResult.delivery,
+        promotion: toolResult.promotion,
+        commerce: toolResult.commerce,
+        tutorial: toolResult.tutorial,
+        driver: toolResult.driver,
+        provider: toolResult.provider,
+        advice: toolResult.advice,
+        memory: toolResult.memory,
+        negotiation: toolResult.negotiation,
+        inquiry: toolResult.inquiry,
+        control: toolResult.control,
+        relatesToAction: toolResult.relatesToAction,
+      };
       const block = SurfaceBlock.parse({
         type: "SURFACE",
         version: 1,
         payload: {
-          resultSetId: toolResult.resultSetId ?? randomUUID(),
-          listings: [],
-          surface: toolResult.surface,
-          resourceIds: toolResult.resourceIds,
-          resourceId: toolResult.resourceId,
-          sellerContactRequested: toolResult.sellerContactRequested,
-          hideMap: toolResult.hideMap,
-          managementPreview: toolResult.managementPreview,
-          draft: toolResult.draft,
-          draftStep: toolResult.draftStep,
-          draftReview: toolResult.draftReview,
-          sellerInsight: toolResult.sellerInsight,
-          comparison: toolResult.comparison,
-          purchaseReview: toolResult.purchaseReview,
-          photoSuggestionStatus: toolResult.photoSuggestionStatus,
-          photoSuggestions: toolResult.photoSuggestions,
-          photoSuggestionUncertainties:
-            toolResult.photoSuggestionUncertainties,
-          employment: toolResult.employment,
-          delivery: toolResult.delivery,
-          promotion: toolResult.promotion,
-          commerce: toolResult.commerce,
-          tutorial: toolResult.tutorial,
-          driver: toolResult.driver,
-          provider: toolResult.provider,
-          advice: toolResult.advice,
-          memory: toolResult.memory,
-          negotiation: toolResult.negotiation,
-          inquiry: toolResult.inquiry,
-          control: toolResult.control,
-          relatesToAction: toolResult.relatesToAction,
+          ...surfacePayload,
+          // The envelope is server-derived: surface type, resource, lifecycle, allowed
+          // capabilities, pending review and expiry come from the records above.
+          card: buildCardEnvelope({
+            conversationId: conversation.id,
+            marketId: market.id,
+            currency: market.currencyCode,
+            token: toolResult.surface,
+            resultSetId,
+            payload: surfacePayload,
+            sourceTimestamp: new Date(),
+          }) ?? undefined,
         },
       });
       const body = withPlanNotice(toolResult.prompt ?? (
@@ -2073,8 +2145,9 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
             blockType: "SURFACE",
             version: 1,
             payload: block.payload.delivery
-              ? { ...block.payload, delivery: storableDeliveryPayload(block.payload.delivery) }
-              : block.payload,
+              // The envelope is derived on every read; a stored copy would be stale by design.
+              ? { ...block.payload, card: undefined, delivery: storableDeliveryPayload(block.payload.delivery) }
+              : { ...block.payload, card: undefined },
             ordinal: 0,
           });
         if (
@@ -2251,6 +2324,19 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
                 ...(searchState ? { searchState } : {}),
                 presentation,
                 listings: toolResult.listings,
+                card: buildCardEnvelope({
+                  conversationId: conversation.id,
+                  marketId: market.id,
+                  currency: market.currencyCode,
+                  presentation,
+                  resultSetId,
+                  payload: {
+                    resourceIds,
+                    presentation,
+                    ...(searchState ? { searchState } : {}),
+                  },
+                  sourceTimestamp: messageCreatedAt,
+                }) ?? undefined,
               },
             }),
           ]
