@@ -1,0 +1,76 @@
+name: qoder-security-audit
+
+# Launch-gate evidence only: dependency advisory audit plus a credential-pattern scan.
+# Never prints a matched value — only file names, commit ids and counts. No deployment,
+# no database, no provider keys, no paid calls.
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: qoder-security-audit-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Dependency audit
+        run: |
+          set +e
+          pnpm audit --json > audit.json
+          echo "pnpm_audit_exit=$?"
+          set -e
+          node -e '
+            const fs = require("fs");
+            const report = JSON.parse(fs.readFileSync("audit.json", "utf8"));
+            const meta = report.metadata ?? {};
+            console.log("AUDIT_VULNERABILITIES", JSON.stringify(meta.vulnerabilities ?? {}));
+            console.log("AUDIT_DEPENDENCIES", JSON.stringify(meta.dependencies ?? {}));
+            const advisories = Object.values(report.advisories ?? {});
+            for (const a of advisories)
+              console.log("ADVISORY", [a.severity, a.module_name, a.github_advisory_id ?? "", a.patched_versions ?? ""].join(" | "));
+            if (report.error) console.log("AUDIT_ERROR", report.error.summary ?? "unknown");
+          '
+
+      - name: Credential pattern scan (values never printed)
+        run: |
+          PATTERN='(github_pat_[A-Za-z0-9_]{20,}|gh[pousr]_[A-Za-z0-9]{20,}|AKIA[0-9A-Z]{16}|xox[baprs]-[A-Za-z0-9-]{10,}|-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----|sk-[A-Za-z0-9]{20,})'
+          echo "HEAD_MATCH_FILES:"
+          git grep -IlE "$PATTERN" HEAD -- . || echo "  none"
+          echo "HISTORY_SCAN_BEGIN"
+          matches=0
+          for commit in $(git rev-list --all); do
+            if git grep -qE "$PATTERN" "$commit" -- .; then
+              echo "HISTORY_MATCH_COMMIT $commit"
+              matches=$((matches + 1))
+            fi
+          done
+          echo "HISTORY_SCAN_COMMITS=$(git rev-list --all --count) MATCHES=$matches"
+          echo "TRACKED_ENV_FILES:"
+          git ls-files | grep -E '(^|/)\.env' || echo "  none"
+
+      - name: Upload audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-audit
+          path: audit.json
+          if-no-files-found: ignore
