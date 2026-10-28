@@ -121,12 +121,12 @@ const buyer = await register("buyer");
 const carA = await publish(seller, {
   title: "سيارة تويوتا كورولا 2019", price: "7800", categoryId: "cars", category: "سيارات",
   description: "سيارة بحالة جيدة، صيانة منتظمة",
-  attributes: { mileage: 32000, operatingHours: 8, inspection: "مفحوصة بالكامل" }, quantity: 4,
+  attributes: { make: "تويوتا", model: "كورولا", year: 2019, condition: "مستعمل", mileage: 32000, operatingHours: 8, inspection: "مفحوصة بالكامل" }, quantity: 4,
 });
 const carB = await publish(seller, {
   title: "سيارة هوندا سيفيك 2020", price: "9200", categoryId: "cars", category: "سيارات",
   description: "سيارة عائلية، استخدام خفيف",
-  attributes: { mileage: 51000 }, quantity: 2,
+  attributes: { make: "هوندا", model: "سيفيك", year: 2020, condition: "مستعمل", mileage: 51000 }, quantity: 2,
 });
 const flat = await publish(seller, {
   title: "شقة مفروشة", price: "550", categoryId: "property", category: "عقارات",
