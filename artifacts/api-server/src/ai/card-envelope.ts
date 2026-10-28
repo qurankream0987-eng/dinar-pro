@@ -178,6 +178,8 @@ function resourceOf(source: CardEnvelopeSource): { kind: CardEnvelopeInput["reso
     return listingId ? { kind: "LISTING", id: listingId } : { kind: "NONE" };
   }
   if (purchase) {
+    const orderId = text(purchase.orderId);
+    if (orderId) return { kind: "ORDER", id: orderId };
     const listingId = text(purchase.listingId) ?? resourceId;
     return listingId ? { kind: "LISTING", id: listingId } : { kind: "NONE" };
   }

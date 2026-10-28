@@ -309,8 +309,6 @@ export const CardEnvelopeSchema = z.object({
 }).strict().superRefine((envelope, context) => {
   if (!surfaceAllowsActions(envelope.status.lifecycle) && (envelope.allowedActions?.length ?? 0) > 0)
     context.addIssue({ code: z.ZodIssueCode.custom, message: "a terminal envelope must not allow actions" });
-  if (envelope.pendingReviewId && envelope.status.lifecycle !== "PENDING_REVIEW")
-    context.addIssue({ code: z.ZodIssueCode.custom, message: "only a pending review has a pending review id" });
 });
 export type CardEnvelope = z.infer<typeof CardEnvelopeSchema>;
 export type CardEnvelopeInput = z.input<typeof CardEnvelopeSchema>;
