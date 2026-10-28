@@ -161,10 +161,13 @@ test("actions exist only on live, valid-state cards", () => {
   assert.equal(count(live, "<button"), 2);
   const old = render(paymentReview, false);
   assert.equal(count(old, "<button"), 0, "an older card offers no SEND action");
-  const expired = render({ ...paymentReview, state: "EXPIRED" }, true);
+  // A terminal composition cannot carry a SEND action at all, so its notice is shown on a
+  // display-only card: no stale button survives in the payload or the markup.
+  const terminal = { version: 1 as const, label: "مراجعة", size: "COMPACT" as const, sections: [{ type: "facts" as const, rows: [{ label: "الحالة", value: "منتهية" }] }] };
+  const expired = render({ ...terminal, state: "EXPIRED" }, true);
   assert.equal(count(expired, "<button"), 0, "an expired card offers no action");
   assert.ok(expired.includes("انتهت صلاحية هذه البطاقة"));
-  const denied = render({ ...paymentReview, state: "DENIED" }, true);
+  const denied = render({ ...terminal, state: "DENIED" }, true);
   assert.equal(count(denied, "<button"), 0);
   // An in-app link is navigation, not a mutation: it stays available on older cards.
   assert.ok(render(optionsWithBars, false).includes('href="/listings/abc"'));

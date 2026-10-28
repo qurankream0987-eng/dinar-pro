@@ -36,12 +36,13 @@ const runId = randomUUID().slice(0, 6);
 const TOKEN = [...runId].map((char) => "قمزدلفنسعرطبكهوج"[parseInt(char, 16)]).join("");
 let ipSequence = 0;
 
-async function request(path: string, method = "GET", body?: unknown, cookie = "") {
+async function request(path: string, method = "GET", body?: unknown, cookie = "", headers: Record<string, string> = {}) {
   const response = await fetch(base + path, {
     method,
     headers: {
       ...(method !== "GET" ? { "Content-Type": "application/json" } : {}),
       ...(cookie ? { Cookie: cookie } : {}),
+      ...headers,
       ...(path.startsWith("/auth/") ? { "X-Forwarded-For": `198.23.${Math.floor(ipSequence / 250)}.${(ipSequence++ % 250) + 1}` } : {}),
     },
     body: body === undefined ? (method === "GET" ? undefined : "{}") : JSON.stringify(body),
@@ -247,14 +248,14 @@ await test("W02.3 listing publication with one key creates one listing; the same
     title: `طاولة موجة ${TOKEN}`, description: `طاولة خشب ${runId}`, category: "أخرى", categoryId: "other", area: "خلدا", city: "عمان",
     attributes: {}, unitPrice: "7", inventoryMode: "LIMITED", availableQuantity: 2, fulfilmentType: "PICKUP", imageUrl: "", imageUrls: [],
   };
-  const first = await request("/listings", "POST", body, seller.cookie);
-  const second = await request("/listings", "POST", body, seller.cookie);
+  const first = await request("/listings", "POST", body, seller.cookie, { "Idempotency-Key": key });
+  const second = await request("/listings", "POST", body, seller.cookie, { "Idempotency-Key": key });
   assert.equal(first.status, 201, first.raw);
   assert.equal(second.status, 200, second.raw);
   assert.equal(second.data.id, first.data.id, "the retry resolves to the same listing");
   const rows = await db.select().from(offers).where(eq(offers.id, first.data.id));
   assert.equal(rows.length, 1);
-  const conflicting = await request("/listings", "POST", { ...body, title: `طاولة أخرى ${TOKEN}` }, seller.cookie);
+  const conflicting = await request("/listings", "POST", { ...body, title: `طاولة أخرى ${TOKEN}` }, seller.cookie, { "Idempotency-Key": key });
   assert.equal(conflicting.status, 409, conflicting.raw);
 });
 

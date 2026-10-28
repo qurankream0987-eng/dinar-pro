@@ -1,4 +1,4 @@
-import { parseComposedSurface, type ComposedSurface, type SurfaceSection } from "@workspace/api-zod/surface-composition";
+import { parseComposedSurface, surfaceAllowsActions, type ComposedSurface, type SurfaceSection } from "@workspace/api-zod/surface-composition";
 import {
   ActionRow,
   BarList,
@@ -15,12 +15,23 @@ import {
 } from "./primitives";
 
 /** States that are told plainly; the card never offers actions it can no longer honour. */
-const STATE_NOTICE: Partial<Record<ComposedSurface["state"], { tone: "INFO" | "WARNING" | "DANGER"; text: string; actions: boolean }>> = {
-  EMPTY: { tone: "INFO", text: "لا توجد بيانات لعرضها في هذه البطاقة.", actions: true },
-  EXPIRED: { tone: "WARNING", text: "انتهت صلاحية هذه البطاقة؛ اطلبها من جديد في المحادثة لعرض الحالة الحالية.", actions: false },
-  UNAVAILABLE: { tone: "INFO", text: "هذه الخدمة غير متاحة الآن.", actions: true },
-  DENIED: { tone: "DANGER", text: "لا تملك صلاحية عرض هذه البيانات.", actions: false },
-  FAILED: { tone: "DANGER", text: "تعذر تحميل هذه البطاقة الآن.", actions: true },
+const STATE_NOTICE: Partial<Record<ComposedSurface["state"], { tone: "INFO" | "SUCCESS" | "WARNING" | "DANGER" }>> = {
+  EMPTY: { tone: "INFO" },
+  CONFIRMED: { tone: "SUCCESS" },
+  CANCELLED: { tone: "WARNING" },
+  EXPIRED: { tone: "WARNING" },
+  UNAVAILABLE: { tone: "INFO" },
+  DENIED: { tone: "DANGER" },
+  FAILED: { tone: "DANGER" },
+};
+const STATE_TEXT: Partial<Record<ComposedSurface["state"], string>> = {
+  EMPTY: "لا توجد بيانات لعرضها في هذه البطاقة.",
+  CONFIRMED: "تم تنفيذ هذا الإجراء بعد تأكيدك.",
+  CANCELLED: "أُلغي هذا الإجراء دون أي تغيير.",
+  EXPIRED: "انتهت صلاحية هذه البطاقة؛ اطلبها من جديد في المحادثة لعرض الحالة الحالية.",
+  UNAVAILABLE: "هذه الخدمة غير متاحة الآن.",
+  DENIED: "لا تملك صلاحية عرض هذه البيانات.",
+  FAILED: "تعذر تحميل هذه البطاقة الآن.",
 };
 
 function Section({ section, onSend }: { section: SurfaceSection; onSend?: (text: string) => void }) {
@@ -72,14 +83,16 @@ export function ComposedSurfaceView({
       </SurfaceCard>
     );
   const notice = STATE_NOTICE[parsed.state];
-  const send = active && (notice?.actions ?? true) ? onSend : undefined;
+  // A composition that already explains its state (e.g. an outcome notice) is not repeated.
+  const explainsState = parsed.sections.some((section) => section.type === "notice");
+  const send = active && surfaceAllowsActions(parsed.state) ? onSend : undefined;
   return (
     <div className="ds-size" data-size={parsed.size}>
       <SurfaceCard label={parsed.label} tone={parsed.tone} state={parsed.state} status={parsed.status} testId={parsed.testId ?? "composed-surface"}>
         {parsed.sections.map((section, index) => (
           <Section key={index} section={section} onSend={send} />
         ))}
-        {notice && <SurfaceNotice tone={notice.tone} text={notice.text} />}
+        {!explainsState && notice && STATE_TEXT[parsed.state] && <SurfaceNotice tone={notice.tone} text={STATE_TEXT[parsed.state]!} />}
       </SurfaceCard>
     </div>
   );

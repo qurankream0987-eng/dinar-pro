@@ -1,3 +1,4 @@
+import { actionLifecycleState } from "@workspace/api-zod/surface-composition";
 import type { ComposedSurfaceInput, SurfaceAction, SurfaceSection } from "@workspace/api-zod/surface-composition";
 
 /**
@@ -267,6 +268,7 @@ export function negotiationSurface(negotiation: Negotiation): ComposedSurfaceInp
       version: 1,
       label: "عرض السعر",
       size: "COMPACT",
+      state: "UNAVAILABLE",
       testId: "negotiation-unavailable",
       sections: [{ type: "notice", tone: "INFO", text: "عرض السعر هذا لم يعد متاحًا." }],
     };
@@ -284,6 +286,9 @@ export function negotiationSurface(negotiation: Negotiation): ComposedSurfaceInp
     version: 1,
     label: review ? "مراجعة عرض السعر" : "حالة عرض السعر",
     size: "MEDIUM",
+    // A review follows the action ledger's lifecycle; a status card is only terminal when the
+    // negotiation itself expired. An accepted price still offers its order step.
+    state: review ? actionLifecycleState(negotiation.status ?? "") : negotiation.status === "EXPIRED" ? "EXPIRED" : "READY",
     testId: review ? "negotiation-review" : "negotiation-status",
     status: statusToken(negotiation.status),
     sections: [
@@ -358,7 +363,9 @@ const PAYMENT_METHOD_LABEL: Record<"CASH_DIRECT" | "CARD", string> = { CASH_DIRE
 
 export function purchaseSurface(review: PurchaseReview): ComposedSurfaceInput {
   const stage = review.stage ?? "ITEM";
+  const state = actionLifecycleState(review.status);
   const pending = review.status === "PENDING";
+  const awaitingExecution = state === "PENDING_REVIEW";
   const fulfilment = review.fulfilment ? (FULFILMENT_LABEL[review.fulfilment] ?? review.fulfilment) : null;
   const confirmLabel =
     stage === "PAYMENT"
@@ -417,6 +424,7 @@ export function purchaseSurface(review: PurchaseReview): ComposedSurfaceInput {
     version: 1,
     label: "مراجعة الشراء",
     size: "MEDIUM",
+    state,
     testId: "purchase-review",
     status: statusToken(review.status),
     sections: [
@@ -437,10 +445,10 @@ export function purchaseSurface(review: PurchaseReview): ComposedSurfaceInput {
         total: { label: "الإجمالي", value: review.total === null ? "—" : money(review.total), verified: review.total !== null },
         disclosure: PURCHASE_NOTE[stage],
       },
-      ...(pending ? [{ type: "notice" as const, tone: "PENDING" as const, text: "لم يُنفذ بعد — بانتظار تأكيدك.", testId: "pending-notice" }] : []),
-      ...(pending
-        ? [{ type: "actions" as const, items: actions }]
+      ...(awaitingExecution
+        ? [{ type: "notice" as const, tone: "PENDING" as const, text: pending ? "لم يُنفذ بعد — بانتظار تأكيدك." : "جارٍ تنفيذ هذا الإجراء؛ لا يمكن تكراره الآن.", testId: "pending-notice" }]
         : [{ type: "notice" as const, tone: "NEUTRAL" as const, text: review.status === "CONFIRMED" ? PURCHASE_CONFIRMED[stage] : (PURCHASE_STATUS[review.status] ?? "تمت مراجعة هذا الطلب.") }]),
+      ...(pending ? [{ type: "actions" as const, items: actions }] : []),
     ],
   };
 }

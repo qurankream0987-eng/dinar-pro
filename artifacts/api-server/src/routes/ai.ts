@@ -114,6 +114,7 @@ import {
   categorySchema,
   listMarketplaceCategories,
 } from "../lib/marketplace-categories";
+import { findCardAddReceipt } from "../lib/marketplace-cart";
 import { taskPlanNotice } from "../ai/task-plan";
 import { executeAiConversationTurn } from "../ai/conversation-runtime";
 import { claimsCompletedAction, claimsUsersCompletedAction, enforceModelAuthority, MODEL_CLAIM_WITHHELD, receiptsForTurn, receiptViews } from "../ai/action-receipts";
@@ -1766,6 +1767,7 @@ router.post(
           resultSetId: action.resultSetId,
           resourceId: action.resourceId,
           quantity: 1,
+          cardReceipt: true,
         }),
         {
           conversationId: conversation.id,
@@ -1787,55 +1789,29 @@ router.post(
     )
       throw fail(500, "تعذر تأكيد إضافة العرض إلى السلة");
 
-    const body =
-      execution.result.prompt ?? "تمت الإضافة إلى السلة. راجعها قبل المتابعة.";
-    const createdAt = new Date();
-    const messageId = randomUUID();
-    const block = SurfaceBlock.parse({
-      type: "SURFACE",
-      version: 1,
-      payload: {
-        resultSetId: randomUUID(),
-        listings: [],
-        surface: "CART",
-      },
+    // The card's receipt (and its single cart effect) is written exactly once by the tool;
+    // repeated taps, retries, reloads and a second session all read this stored row back.
+    const receipt = await findCardAddReceipt({
+      conversationId: conversation.id,
+      resultSetId: action.resultSetId,
+      listingId: action.resourceId,
     });
-
-    const [row] = await db.transaction(async (tx) => {
-      const [message] = await tx
-        .insert(messages)
-        .values({
-          id: messageId,
-          conversationId: conversation.id,
-          actor: "ASSISTANT",
-          body,
-          contentType: "TEXT",
-        })
-        .returning();
-      await tx.insert(aiUiBlocks).values({
-        id: randomUUID(),
-        conversationId: conversation.id,
-        messageId: message.id,
-        blockType: "SURFACE",
-        version: 1,
-        payload: block.payload,
-        ordinal: 0,
-      });
-      await tx
-        .update(conversations)
-        .set({ updatedAt: createdAt })
-        .where(eq(conversations.id, conversation.id));
-      return [message];
-    });
+    if (!receipt) throw fail(500, "تعذر تأكيد إضافة العرض إلى السلة");
 
     res.json(
       AddAiListingToCartResponse.parse({
         assistantMessage: {
-          id: row.id,
+          id: receipt.id,
           actor: "ASSISTANT",
-          body: row.body,
-          createdAt: row.createdAt.toISOString(),
-          blocks: [block],
+          body: receipt.body,
+          createdAt: receipt.createdAt.toISOString(),
+          blocks: [
+            SurfaceBlock.parse({
+              type: "SURFACE",
+              version: 1,
+              payload: receipt.block,
+            }),
+          ],
         },
       }),
     );

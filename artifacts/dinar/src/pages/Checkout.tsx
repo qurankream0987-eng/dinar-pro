@@ -1,4 +1,4 @@
-import { useRef, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { useLocation } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -26,6 +26,11 @@ import { Checkbox, Field, Textarea } from "@/ui/Field";
 import { PageHeader, Summary } from "@/ui/Layout";
 import { SmartImage } from "@/ui/Media";
 import { groupBySeller, hasStockIssue } from "./Cart";
+import {
+  checkoutFingerprint,
+  checkoutRequestKey,
+  clearCheckoutRequestKey,
+} from "@/features/checkout-request";
 
 function Step({
   n,
@@ -58,7 +63,6 @@ export default function CheckoutPage() {
   const [instructions, setInstructions] = useState("");
   const [agreed, setAgreed] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const requestKey = useRef<string | null>(null);
 
   if (cart.error)
     return (
@@ -107,12 +111,15 @@ export default function CheckoutPage() {
       return;
     }
     setError(null);
-    requestKey.current ??= window.crypto.randomUUID();
+    const deliveryInstructions = needsInstructions ? instructions.trim() : "";
+    const idempotencyKey = checkoutRequestKey(
+      checkoutFingerprint(cart.items, deliveryInstructions),
+    );
     checkout.mutate(
       {
         data: {
-          idempotencyKey: requestKey.current,
-          deliveryInstructions: needsInstructions ? instructions.trim() : "",
+          idempotencyKey,
+          deliveryInstructions,
           items: cart.items.map(({ listingId, quantity, fulfilmentType }) => ({
             listingId,
             quantity,
@@ -122,7 +129,7 @@ export default function CheckoutPage() {
       },
       {
         onSuccess: (res) => {
-          requestKey.current = null;
+          clearCheckoutRequestKey();
           cart.clear();
           void qc.invalidateQueries({ queryKey: getGetOrdersQueryKey() });
           void qc.invalidateQueries({ queryKey: getGetDashboardQueryKey() });

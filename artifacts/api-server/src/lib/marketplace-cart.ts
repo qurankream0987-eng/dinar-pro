@@ -1,6 +1,6 @@
-import { randomUUID } from "node:crypto";
-import { and, eq } from "drizzle-orm";
-import { cartItems, carts, db, users } from "@workspace/db";
+import { createHash, randomUUID } from "node:crypto";
+import { and, desc, eq, sql } from "drizzle-orm";
+import { aiResultSets, aiUiBlocks, cartItems, carts, conversations, db, messages, users } from "@workspace/db";
 import { isMarketAvailable, marketFor } from "./markets";
 import { categoryById } from "./marketplace-categories";
 import { listing, offerRows } from "./marketplace-listings";
@@ -197,6 +197,66 @@ export async function replaceMarketplaceCart(
   return { ok: true };
 }
 
+async function validatedCartListing(
+  tx: any,
+  actor: typeof users.$inferSelect,
+  market: ResolvedMarket,
+  listingId: string,
+) {
+  const rows = await offerRows(market.id, tx);
+  const row = rows.find(({ offer }: any) => offer.id === listingId);
+  if (
+    !row ||
+    row.offer.status !== "PUBLISHED" ||
+    !["FIXED", "NEGOTIABLE"].includes(row.offer.pricingMode) ||
+    row.offer.unitPriceMinor === null ||
+    row.seller.status !== "ACTIVE" ||
+    market.restrictedCategories.includes(row.offer.data.category)
+  )
+    throw fail(409, "هذا العرض لم يعد متاحًا في سوقك الحالي");
+  if (row.offer.sellerId === actor.id)
+    throw fail(409, "لا يمكنك شراء عرضك الخاص");
+  return row;
+}
+
+async function cartItemsAfterAdd(
+  tx: any,
+  actor: typeof users.$inferSelect,
+  market: ResolvedMarket,
+  row: any,
+  listingId: string,
+  quantity: number,
+) {
+  const [cart] = await tx
+    .select()
+    .from(carts)
+    .where(and(eq(carts.userId, actor.id), eq(carts.marketId, market.id)));
+  const currentItems = cart
+    ? await tx
+        .select()
+        .from(cartItems)
+        .where(eq(cartItems.cartId, cart.id))
+    : [];
+  const existing = currentItems.find((item: any) => item.offerId === listingId);
+  const nextQuantity = (existing?.quantity ?? 0) + quantity;
+  if (
+    row.offer.inventoryMode === "LIMITED" &&
+    nextQuantity >
+      Math.max(
+        0,
+        (row.offer.availableQuantity ?? 0) - row.offer.reservedQuantity,
+      )
+  )
+    throw fail(409, "الكمية المطلوبة تتجاوز المخزون المتاح");
+
+  const items: CartLine[] = currentItems.map((item: any) => ({
+    listingId: item.offerId,
+    quantity: item.offerId === listingId ? nextQuantity : item.quantity,
+  }));
+  if (!existing) items.push({ listingId, quantity });
+  return { items, nextQuantity };
+}
+
 export async function addMarketplaceCartItem(input: {
   userId: string;
   expectedMarketId: string;
@@ -220,52 +280,164 @@ export async function addMarketplaceCartItem(input: {
     if (!isMarketAvailable(market))
       throw fail(409, "هذا السوق غير متاح حاليًا");
 
-    const rows = await offerRows(market.id, tx);
-    const row = rows.find(({ offer }) => offer.id === listingId);
-    if (
-      !row ||
-      row.offer.status !== "PUBLISHED" ||
-      !["FIXED", "NEGOTIABLE"].includes(row.offer.pricingMode) ||
-      row.offer.unitPriceMinor === null ||
-      row.seller.status !== "ACTIVE" ||
-      market.restrictedCategories.includes(row.offer.data.category)
-    )
-      throw fail(409, "هذا العرض لم يعد متاحًا في سوقك الحالي");
-    if (row.offer.sellerId === actor.id)
-      throw fail(409, "لا يمكنك شراء عرضك الخاص");
-
-    const [cart] = await tx
-      .select()
-      .from(carts)
-      .where(and(eq(carts.userId, actor.id), eq(carts.marketId, market.id)));
-    const currentItems = cart
-      ? await tx
-          .select()
-          .from(cartItems)
-          .where(eq(cartItems.cartId, cart.id))
-      : [];
-    const existing = currentItems.find((item: any) => item.offerId === listingId);
-    const nextQuantity = (existing?.quantity ?? 0) + quantity;
-    if (
-      row.offer.inventoryMode === "LIMITED" &&
-      nextQuantity >
-        Math.max(
-          0,
-          (row.offer.availableQuantity ?? 0) - row.offer.reservedQuantity,
-        )
-    )
-      throw fail(409, "الكمية المطلوبة تتجاوز المخزون المتاح");
-
-    const items: CartLine[] = currentItems.map((item: any) => ({
-      listingId: item.offerId,
-      quantity: item.offerId === listingId ? nextQuantity : item.quantity,
-    }));
-    if (!existing) items.push({ listingId, quantity });
+    const row = await validatedCartListing(tx, actor, market, listingId);
+    const { items, nextQuantity } = await cartItemsAfterAdd(
+      tx,
+      actor,
+      market,
+      row,
+      listingId,
+      quantity,
+    );
     await persistCart(tx, actor, market, items);
     return {
       listing: listing(row.offer, row.seller, market),
       quantity: nextQuantity,
     };
+  });
+}
+
+/**
+ * A card's "add to cart" is one request with one effect. The card's identity — conversation,
+ * result set and listing — is the idempotency key, recorded as the assistant receipt in the same
+ * transaction as the cart write, under the user's row lock. A repeat, a retry after a timeout, a
+ * reload, or the same card from a second session returns the stored receipt and never increments
+ * the cart again. The listing, result-set expiry and stock are revalidated inside that lock.
+ */
+export type CardAddReceipt = {
+  id: string;
+  body: string;
+  createdAt: Date;
+  block: { resultSetId: string; listings: unknown[]; surface: "CART" };
+};
+
+const CARD_ADD_SCOPE = "CARD_ADD_V1";
+export function cardAddReceiptKey(input: { conversationId: string; resultSetId: string; listingId: string }) {
+  return createHash("sha256")
+    .update(`${CARD_ADD_SCOPE}:${input.conversationId}:${input.resultSetId}:${input.listingId}`)
+    .digest("hex");
+}
+
+function receiptOf(row: typeof messages.$inferSelect): CardAddReceipt {
+  const metadata = row.metadata as Record<string, unknown>;
+  return {
+    id: row.id,
+    body: row.body,
+    createdAt: row.createdAt,
+    block: { resultSetId: String(metadata.blockResultSetId ?? ""), listings: [], surface: "CART" },
+  };
+}
+
+export async function findCardAddReceipt(input: {
+  conversationId: string;
+  resultSetId: string;
+  listingId: string;
+}): Promise<CardAddReceipt | null> {
+  const key = cardAddReceiptKey(input);
+  const [row] = await db
+    .select()
+    .from(messages)
+    .where(and(eq(messages.conversationId, input.conversationId), sql`${messages.metadata}->>'cardAddKey' = ${key}`))
+    .orderBy(desc(messages.createdAt))
+    .limit(1);
+  return row ? receiptOf(row) : null;
+}
+
+export async function addMarketplaceCartItemOnce(input: {
+  userId: string;
+  expectedMarketId: string;
+  conversationId: string;
+  resultSetId: string;
+  listingId: string;
+  quantity: number;
+}) {
+  const { userId, expectedMarketId, conversationId, resultSetId, listingId, quantity } = input;
+  if (!Number.isSafeInteger(quantity) || quantity < 1 || quantity > 100)
+    throw fail(400, "الكمية غير صالحة");
+  const key = cardAddReceiptKey({ conversationId, resultSetId, listingId });
+
+  return db.transaction(async (tx) => {
+    const [actor] = await tx
+      .select()
+      .from(users)
+      .where(eq(users.id, userId))
+      .for("update");
+    if (!actor) throw fail(401, "سجّل الدخول للمتابعة");
+    const market = await marketFor({ actor }, tx);
+    if (market.id !== expectedMarketId)
+      throw fail(409, "تغير السوق، أعد تحميل المحادثة");
+    if (!isMarketAvailable(market))
+      throw fail(409, "هذا السوق غير متاح حاليًا");
+
+    const [prior] = await tx
+      .select()
+      .from(messages)
+      .where(and(eq(messages.conversationId, conversationId), sql`${messages.metadata}->>'cardAddKey' = ${key}`))
+      .orderBy(desc(messages.createdAt))
+      .limit(1);
+    if (prior) return { receipt: receiptOf(prior), replayed: true };
+
+    const [resultSet] = await tx
+      .select()
+      .from(aiResultSets)
+      .where(
+        and(
+          eq(aiResultSets.id, resultSetId),
+          eq(aiResultSets.conversationId, conversationId),
+          eq(aiResultSets.marketId, market.id),
+        ),
+      )
+      .for("update");
+    if (
+      !resultSet ||
+      (resultSet.expiresAt && resultSet.expiresAt.getTime() <= Date.now()) ||
+      !resultSet.resourceIds.includes(listingId)
+    )
+      throw fail(409, "لم يعد هذا العرض ضمن نتائج هذه المحادثة؛ أعد البحث ثم حاول مجددًا");
+
+    const row = await validatedCartListing(tx, actor, market, listingId);
+    const { items, nextQuantity } = await cartItemsAfterAdd(
+      tx,
+      actor,
+      market,
+      row,
+      listingId,
+      quantity,
+    );
+    await persistCart(tx, actor, market, items);
+
+    const title = listing(row.offer, row.seller, market).title;
+    const body = `أُضيف «${title}» إلى سلتك (${nextQuantity}). راجع السلة قبل إكمال الطلب.`;
+    const blockResultSetId = randomUUID();
+    const [message] = await tx
+      .insert(messages)
+      .values({
+        id: randomUUID(),
+        conversationId,
+        actor: "ASSISTANT",
+        body,
+        contentType: "TEXT",
+        metadata: {
+          cardAddKey: key,
+          cardAdd: "ADD_TO_CART",
+          resultSetId,
+          listingId,
+          quantity: nextQuantity,
+          blockResultSetId,
+        },
+      })
+      .returning();
+    await tx.insert(aiUiBlocks).values({
+      id: randomUUID(),
+      conversationId,
+      messageId: message!.id,
+      blockType: "SURFACE",
+      version: 1,
+      payload: { resultSetId: blockResultSetId, listings: [], surface: "CART" },
+      ordinal: 0,
+    });
+    await tx.update(conversations).set({ updatedAt: new Date() }).where(eq(conversations.id, conversationId));
+    return { receipt: receiptOf(message!), replayed: false };
   });
 }
 

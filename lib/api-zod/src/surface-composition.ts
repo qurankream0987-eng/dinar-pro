@@ -27,7 +27,48 @@ export const SURFACE_PRIMITIVES = [
 ] as const;
 export type SurfacePrimitive = (typeof SURFACE_PRIMITIVES)[number];
 
-export const SURFACE_STATES = ["READY", "EMPTY", "EXPIRED", "UNAVAILABLE", "DENIED", "FAILED"] as const;
+export const SURFACE_STATES = [
+  "READY",
+  "PENDING_REVIEW",
+  "CONFIRMED",
+  "CANCELLED",
+  "EMPTY",
+  "EXPIRED",
+  "UNAVAILABLE",
+  "DENIED",
+  "FAILED",
+] as const;
+export type SurfaceState = (typeof SURFACE_STATES)[number];
+/** A terminal card has nothing left to decide: no SEND action may be carried or rendered. */
+export const SURFACE_TERMINAL_STATES = ["CONFIRMED", "CANCELLED", "EXPIRED", "DENIED"] as const;
+
+/**
+ * The action ledger's status in the card vocabulary. PENDING and EXECUTING are still awaiting the
+ * owner's decision or the server's execution; REJECTED and SUPERSEDED are deliberate closes.
+ */
+export function actionLifecycleState(status: string): SurfaceState {
+  switch (status) {
+    case "PENDING":
+    case "EXECUTING":
+      return "PENDING_REVIEW";
+    case "CONFIRMED":
+      return "CONFIRMED";
+    case "CANCELLED":
+    case "REJECTED":
+    case "SUPERSEDED":
+      return "CANCELLED";
+    case "EXPIRED":
+      return "EXPIRED";
+    default:
+      return "READY";
+  }
+}
+
+/** Whether this state may carry an executable (SEND) action at all. */
+export function surfaceAllowsActions(state: SurfaceState): boolean {
+  return !(SURFACE_TERMINAL_STATES as readonly string[]).includes(state);
+}
+
 export const SURFACE_TONES = ["NEUTRAL", "INFO", "SUCCESS", "WARNING", "DANGER", "GOLD"] as const;
 /** A finite icon vocabulary mapped to one icon set in the renderer; never a URL or markup. */
 export const SURFACE_ICONS = [
@@ -192,6 +233,8 @@ export const ComposedSurfaceSchema = z.object({
   );
   if (actions.filter((action) => action.emphasis === "PRIMARY").length > 1)
     context.addIssue({ code: z.ZodIssueCode.custom, message: "one primary action per surface" });
+  if (!surfaceAllowsActions(surface.state) && actions.some((action) => action.kind === "SEND"))
+    context.addIssue({ code: z.ZodIssueCode.custom, message: "a terminal surface must not offer a send action" });
 });
 export type ComposedSurface = z.infer<typeof ComposedSurfaceSchema>;
 export type ComposedSurfaceInput = z.input<typeof ComposedSurfaceSchema>;

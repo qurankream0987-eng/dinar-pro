@@ -3,7 +3,7 @@ import { z } from "zod";
 import { aiResultSets, db } from "@workspace/db";
 import type { ListingRecord } from "../lib/dinar-data";
 import type { marketFor } from "../lib/markets";
-import { addMarketplaceCartItem } from "../lib/marketplace-cart";
+import { addMarketplaceCartItem, addMarketplaceCartItemOnce } from "../lib/marketplace-cart";
 import {
   categoryAliasWords,
   searchMarketplaceListings,
@@ -200,6 +200,8 @@ export const aiToolRegistry: Record<string, ToolDefinition> = {
         resultSetId: z.string().uuid(),
         resourceId: z.string().min(1).max(200),
         quantity: z.number().int().min(1).max(100).default(1),
+        /** A card button: the conversation/result-set/listing identity is the receipt key. */
+        cardReceipt: z.boolean().optional(),
       })
       .strict(),
     modelDefinition: {
@@ -233,6 +235,24 @@ export const aiToolRegistry: Record<string, ToolDefinition> = {
         throw new ToolRejectedError(
           "The requested listing is not in this conversation's current results.",
         );
+
+      if (input.cardReceipt) {
+        const { receipt } = await addMarketplaceCartItemOnce({
+          userId: context.actorId,
+          expectedMarketId: context.market.id,
+          conversationId: context.conversationId,
+          resultSetId: input.resultSetId,
+          listingId: input.resourceId,
+          quantity: input.quantity,
+        });
+        return {
+          kind: "SURFACE",
+          surface: "CART",
+          query: {},
+          listings: [],
+          prompt: receipt.body,
+        };
+      }
 
       const receipt = await addMarketplaceCartItem({
         userId: context.actorId,
