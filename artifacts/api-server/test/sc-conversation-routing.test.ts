@@ -110,7 +110,9 @@ await test("SC01: the seller's own words fill one draft; a correction changes on
   assert.ok(draftId, describe(start));
   const specs = await say(seller, conv, "آيفون 13، 128 جيجا، مستعمل، البطارية 86٪، ومعه الشاحن");
   assert.equal(specs.payload.draft?.draftId, draftId, describe(specs));
-  assert.match(JSON.stringify(specs.payload.draft), /86/u, describe(specs));
+  // The battery lives in the description; the rest of the draft carries random UUIDs, where two
+  // hex digits such as «86» occur by chance, so only the corrected field may be read.
+  assert.match(String(specs.payload.draft?.description ?? ""), /86/u, describe(specs));
   const price = await say(seller, conv, "بدي أبيعه ب 300 وقابل للتفاوض، عندي جهاز واحد، والاستلام في منطقتي");
   assert.equal(price.surface, "SELL", describe(price));
   assert.equal(price.payload.draft?.draftId, draftId, describe(price));
@@ -120,8 +122,8 @@ await test("SC01: the seller's own words fill one draft; a correction changes on
   const corrected = await say(seller, conv, "لا، البطارية 89٪")
   assert.equal(corrected.model, false, describe(corrected));
   assert.equal(corrected.payload.draft?.draftId, draftId, describe(corrected));
-  assert.match(JSON.stringify(corrected.payload.draft), /89/u, describe(corrected));
-  assert.doesNotMatch(JSON.stringify(corrected.payload.draft), /86/u, "the old battery value is replaced, not kept");
+  assert.match(String(corrected.payload.draft?.description ?? ""), /89/u, describe(corrected));
+  assert.doesNotMatch(String(corrected.payload.draft?.description ?? ""), /86/u, "the old battery value is replaced, not kept");
   assert.equal(corrected.payload.draft?.unitPrice, "300", "other fields are kept");
   const review = await say(seller, conv, "اعرض الإعلان قبل النشر");
   assert.equal(review.surface, "SELL", describe(review));
