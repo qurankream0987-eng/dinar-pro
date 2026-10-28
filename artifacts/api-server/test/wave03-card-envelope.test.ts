@@ -101,14 +101,18 @@ function surfaceBlock(turn: { blocks: any[] }, surface: string) {
   return block;
 }
 function cardOf(block: any) {
-  const parsed = parseCardEnvelope(block.payload.card);
-  assert.ok(parsed, `${block.payload.surface}: the block carries a valid card envelope (${JSON.stringify(block.payload.card).slice(0, 300)})`);
+  const raw = block.payload.card;
+  const parsed = parseCardEnvelope(raw);
+  if (!parsed) {
+    const issues = CardEnvelopeSchema ? CardEnvelopeSchema.safeParse(raw).error?.issues : undefined;
+    assert.fail(`${block.payload.surface ?? block.type}: no valid card envelope ${JSON.stringify({ keys: Object.keys(block.payload), card: raw ?? null, issues: issues ?? null }).slice(0, 900)}`);
+  }
   return parsed;
 }
-async function publish(actor: Actor, title: string, quantity: number, price = "3") {
+async function publish(actor: Actor, title: string, quantity: number, price = "3", pricingMode = "NEGOTIABLE") {
   const created = await request("/listings", "POST", {
     title, description: `${title} — وصف للاختبار ${runId}`, category: "أخرى", categoryId: "other", area: "خلدا", city: "عمان",
-    attributes: {}, unitPrice: price, inventoryMode: "LIMITED", availableQuantity: quantity, fulfilmentType: "PICKUP", pricingMode: "NEGOTIABLE", imageUrl: "", imageUrls: [],
+    attributes: {}, unitPrice: price, inventoryMode: "LIMITED", availableQuantity: quantity, fulfilmentType: "PICKUP", pricingMode, imageUrl: "", imageUrls: [],
   }, actor.cookie);
   assert.equal(created.status, 201, `${title}: ${created.raw}`);
   return created.data.id as string;
@@ -143,11 +147,14 @@ await test("W03.1 the envelope schema refuses another version and terminal actio
 
 let seller: Actor, buyer: Actor;
 let cups = "";
+/** A fixed price: the runtime never opens a purchase review for a negotiable listing. */
+let fixed = "";
 let buyerConv = "";
 
 await test("setup: a seller lists one offer and the buyer searches for it", async () => {
   [seller, buyer] = await Promise.all(["Seller", "Buyer"].map((label) => register(label)));
   cups = await publish(seller, `أكواب موجة ${TOKEN}`, 20);
+  fixed = await publish(seller, `أكواب ثابتة ${TOKEN}`, 20, "3", "FIXED");
   buyerConv = await conversation(buyer);
   const found = await say(buyer, buyerConv, `ابحث عن أكواب موجة ${TOKEN}`);
   const block = found.blocks.find((candidate) => candidate.type === "LISTING_RESULTS");
@@ -184,7 +191,7 @@ let reviewSurfaceId = "";
 
 await test("W03.2 a purchase review names its pending action, expiry and allowed actions", async () => {
   reviewConv = await conversation(buyer);
-  await say(buyer, reviewConv, `ابحث عن أكواب موجة ${TOKEN}`);
+  await say(buyer, reviewConv, `ابحث عن أكواب ثابتة ${TOKEN}`);
   const review = await say(buyer, reviewConv, "أبي الأول");
   assert.equal(review.blocks.find((candidate) => candidate.type === "SURFACE")?.payload.surface, "PURCHASE_REVIEW", review.body);
   const block = surfaceBlock(review, "PURCHASE_REVIEW");
@@ -199,7 +206,7 @@ await test("W03.2 a purchase review names its pending action, expiry and allowed
   assert.equal(card.refresh.strategy, "SSE", "a pending decision is refreshed by the conversation stream");
   assert.equal(card.context.role, "BUYER");
   assert.equal(card.resource.kind, "LISTING");
-  assert.equal(card.resource.id, cups);
+  assert.equal(card.resource.id, fixed);
   assert.ok(Date.parse(card.expiresAt) > Date.now(), "the review expires in the future");
   assert.ok(card.accessibility.label.length > 0);
   assert.equal(card.surfaceId, `${reviewAction}:CHECKOUT_CONFIRMATION`, "identity is derived from server records only");

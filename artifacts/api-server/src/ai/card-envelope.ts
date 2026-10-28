@@ -9,6 +9,7 @@ import {
   conversationSemanticSurfacesForToken,
   type ConversationSurfaceToken,
 } from "@workspace/api-zod/conversation-runtime";
+import { logger } from "../lib/logger";
 
 /**
  * Builds the card envelope from server state only. Every value here is either a record the
@@ -267,5 +268,10 @@ export function buildCardEnvelope(source: CardEnvelopeSource): CardEnvelope | nu
     },
   };
   const parsed = CardEnvelopeSchema.safeParse(envelope);
-  return parsed.success ? parsed.data : null;
+  if (!parsed.success) {
+    // A dropped card must be visible: the block still renders its legacy composition.
+    logger.warn({ event: "card_envelope_invalid", surfaceType, issues: parsed.error.issues }, "card envelope omitted");
+    return null;
+  }
+  return parsed.data;
 }
