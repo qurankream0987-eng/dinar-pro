@@ -258,7 +258,7 @@ await test("W03.2 cancelling the review is visible after reload as a terminal ca
   await say(buyer, offerConv, "إلغاء");
   const conversationView = await reload(buyer, offerConv);
   const block = blocksOf(conversationView).find((candidate) => candidate.type === "SURFACE" && candidate.payload.surface === "NEGOTIATION_REVIEW");
-  assert.ok(block, "the stored negotiation review is returned");
+  assert.ok(block, `the stored negotiation review is returned: ${JSON.stringify(blocksOf(conversationView).filter((candidate) => candidate.type === "SURFACE").map((candidate) => candidate.payload?.surface))}`);
   const card = cardOf(block);
   assert.equal(card.surfaceId, offerSurfaceId);
   assert.equal(card.status.lifecycle, "CANCELLED");
@@ -273,4 +273,9 @@ await test("W03.3 the envelope carries no account or contact identifier", async 
   const serialized = JSON.stringify(blocksOf(conversationView).map((block) => block.payload?.card));
   for (const secret of [buyer.id, buyer.phoneNumber, seller.phoneNumber, `+965${buyer.phoneNumber}`])
     assert.equal(serialized.includes(secret), false, "the envelope never carries an account or contact identifier");
+});
+
+// The app keeps the server open for the whole file; close it so the isolated runner can exit.
+test.after(async () => {
+  await new Promise<void>((resolve) => server.close(() => resolve()));
 });
