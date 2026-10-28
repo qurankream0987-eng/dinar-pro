@@ -28,7 +28,7 @@ export const requestPhoneVerificationChallengeResponseDevelopmentCodeRegExp = ne
 
 
 export const RequestPhoneVerificationChallengeResponse = zod.object({
-  "challengeId": zod.string().uuid(),
+  "challengeId": zod.uuid(),
   "expiresAt": zod.coerce.date(),
   "developmentCode": zod.string().regex(requestPhoneVerificationChallengeResponseDevelopmentCodeRegExp).optional()
 })
@@ -41,7 +41,7 @@ export const verifyPhoneVerificationChallengeBodyCodeRegExp = new RegExp('^[0-9]
 
 
 export const VerifyPhoneVerificationChallengeBody = zod.object({
-  "challengeId": zod.string().uuid(),
+  "challengeId": zod.uuid(),
   "code": zod.string().regex(verifyPhoneVerificationChallengeBodyCodeRegExp)
 })
 
@@ -121,12 +121,12 @@ export const requestProfileAvatarUploadBodySizeMax = 5242880;
 
 
 export const RequestProfileAvatarUploadBody = zod.object({
-  "size": zod.number().int().min(1).max(requestProfileAvatarUploadBodySizeMax),
+  "size": zod.int().min(1).max(requestProfileAvatarUploadBodySizeMax),
   "contentType": zod.enum(['image/jpeg', 'image/png', 'image/webp'])
 })
 
 export const RequestProfileAvatarUploadResponse = zod.object({
-  "uploadURL": zod.string().url(),
+  "uploadURL": zod.url(),
   "objectPath": zod.string()
 })
 
@@ -155,12 +155,12 @@ export const requestListingPhotoUploadBodySizeMax = 5242880;
 
 
 export const RequestListingPhotoUploadBody = zod.object({
-  "size": zod.number().int().min(1).max(requestListingPhotoUploadBodySizeMax),
+  "size": zod.int().min(1).max(requestListingPhotoUploadBodySizeMax),
   "contentType": zod.enum(['image/jpeg', 'image/png', 'image/webp'])
 })
 
 export const RequestListingPhotoUploadResponse = zod.object({
-  "uploadURL": zod.string().url(),
+  "uploadURL": zod.url(),
   "objectPath": zod.string()
 })
 
@@ -262,15 +262,15 @@ export const GetListingsResponseItem = zod.object({
   "pricingMode": zod.enum(['FIXED', 'NEGOTIABLE', 'OPEN_TO_OFFERS']),
   "priceRepresentation": zod.enum(['FIXED', 'NEGOTIABLE', 'OPEN_TO_OFFERS', 'STARTING_FROM', 'QUOTE_REQUIRED']).optional().describe('What the price means. STARTING_FROM (a starting amount) and QUOTE_REQUIRED (no price; the seller quotes) are stored as pricingMode OPEN_TO_OFFERS and are never bought directly. Only FIXED is purchasable without an agreement; every representation accepts buyer proposals.'),
   "currency": zod.string(),
-  "availableQuantity": zod.number().int().min(getListingsResponseAvailableQuantityMin).nullable(),
-  "reservedQuantity": zod.number().int(),
+  "availableQuantity": zod.int().min(getListingsResponseAvailableQuantityMin).nullable(),
+  "reservedQuantity": zod.int(),
   "inventoryMode": zod.enum(['LIMITED', 'UNLIMITED']),
   "fulfilmentType": zod.enum(['PICKUP', 'DELIVERY', 'DIGITAL', 'SERVICE']),
   "sellerName": zod.string(),
   "sellerId": zod.string().optional(),
   "sellerAvatarObjectPath": zod.string().nullish(),
   "rating": zod.number(),
-  "reviewCount": zod.number().int().optional(),
+  "reviewCount": zod.int().optional(),
   "imageUrl": zod.string(),
   "imageUrls": zod.array(zod.string().max(getListingsResponseImageUrlsItemMax)).max(getListingsResponseImageUrlsMax).optional(),
   "contactPhone": zod.string().max(getListingsResponseContactPhoneMax).nullable(),
@@ -317,7 +317,7 @@ export const CreateListingBody = zod.object({
   "unitPrice": zod.string().min(1).max(createListingBodyUnitPriceMax).regex(createListingBodyUnitPriceRegExp).nullable(),
   "pricingMode": zod.enum(['FIXED', 'NEGOTIABLE', 'OPEN_TO_OFFERS']).optional(),
   "priceRepresentation": zod.enum(['FIXED', 'NEGOTIABLE', 'OPEN_TO_OFFERS', 'STARTING_FROM', 'QUOTE_REQUIRED']).optional().describe('What the price means. STARTING_FROM (a starting amount) and QUOTE_REQUIRED (no price; the seller quotes) are stored as pricingMode OPEN_TO_OFFERS and are never bought directly. Only FIXED is purchasable without an agreement; every representation accepts buyer proposals.'),
-  "availableQuantity": zod.number().int().min(1).nullish(),
+  "availableQuantity": zod.int().min(1).nullish(),
   "inventoryMode": zod.enum(['LIMITED', 'UNLIMITED']),
   "fulfilmentType": zod.enum(['PICKUP', 'DELIVERY', 'DIGITAL', 'SERVICE']),
   "imageUrl": zod.string(),
@@ -362,15 +362,15 @@ export const CreateListingResponse = zod.object({
   "pricingMode": zod.enum(['FIXED', 'NEGOTIABLE', 'OPEN_TO_OFFERS']),
   "priceRepresentation": zod.enum(['FIXED', 'NEGOTIABLE', 'OPEN_TO_OFFERS', 'STARTING_FROM', 'QUOTE_REQUIRED']).optional().describe('What the price means. STARTING_FROM (a starting amount) and QUOTE_REQUIRED (no price; the seller quotes) are stored as pricingMode OPEN_TO_OFFERS and are never bought directly. Only FIXED is purchasable without an agreement; every representation accepts buyer proposals.'),
   "currency": zod.string(),
-  "availableQuantity": zod.number().int().min(createListingResponseAvailableQuantityMin).nullable(),
-  "reservedQuantity": zod.number().int(),
+  "availableQuantity": zod.int().min(createListingResponseAvailableQuantityMin).nullable(),
+  "reservedQuantity": zod.int(),
   "inventoryMode": zod.enum(['LIMITED', 'UNLIMITED']),
   "fulfilmentType": zod.enum(['PICKUP', 'DELIVERY', 'DIGITAL', 'SERVICE']),
   "sellerName": zod.string(),
   "sellerId": zod.string().optional(),
   "sellerAvatarObjectPath": zod.string().nullish(),
   "rating": zod.number(),
-  "reviewCount": zod.number().int().optional(),
+  "reviewCount": zod.int().optional(),
   "imageUrl": zod.string(),
   "imageUrls": zod.array(zod.string().max(createListingResponseImageUrlsItemMax)).max(createListingResponseImageUrlsMax).optional(),
   "contactPhone": zod.string().max(createListingResponseContactPhoneMax).nullable(),
@@ -432,7 +432,7 @@ export const GetMarketplaceCategoriesResponseItem = zod.object({
   "filterable": zod.boolean().optional(),
   "minimum": zod.number().optional(),
   "maximum": zod.number().optional(),
-  "maxLength": zod.number().int().min(1).max(getMarketplaceCategoriesResponseAttributesMaxLengthMax).optional(),
+  "maxLength": zod.int().min(1).max(getMarketplaceCategoriesResponseAttributesMaxLengthMax).optional(),
   "options": zod.array(zod.string().max(getMarketplaceCategoriesResponseAttributesOptionsItemMax)).optional()
 })),
   "searchFilters": zod.record(zod.string(), zod.object({
@@ -444,7 +444,7 @@ export const GetMarketplaceCategoriesResponseItem = zod.object({
   "filterable": zod.boolean().optional(),
   "minimum": zod.number().optional(),
   "maximum": zod.number().optional(),
-  "maxLength": zod.number().int().min(1).max(getMarketplaceCategoriesResponseSearchFiltersMaxLengthMax).optional(),
+  "maxLength": zod.int().min(1).max(getMarketplaceCategoriesResponseSearchFiltersMaxLengthMax).optional(),
   "options": zod.array(zod.string().max(getMarketplaceCategoriesResponseSearchFiltersOptionsItemMax)).optional()
 })),
   "allowAdditionalAttributes": zod.boolean(),
@@ -466,14 +466,14 @@ export const GetMarketplaceCategoriesResponseItem = zod.object({
   "pricing": zod.object({
   "allowedModes": zod.array(zod.enum(['FIXED', 'NEGOTIABLE', 'OPEN_TO_OFFERS'])).min(1),
   "defaultMode": zod.enum(['FIXED', 'NEGOTIABLE', 'OPEN_TO_OFFERS']),
-  "minAmountMinor": zod.number().int().min(1),
-  "maxAmountMinor": zod.number().int().min(1)
+  "minAmountMinor": zod.int().min(1),
+  "maxAmountMinor": zod.int().min(1)
 }),
   "inventory": zod.object({
   "semantics": zod.enum(['TRACKED', 'SINGLE', 'NON_STOCK']),
   "allowedModes": zod.array(zod.enum(['LIMITED', 'UNLIMITED'])).min(1),
   "defaultMode": zod.enum(['LIMITED', 'UNLIMITED']),
-  "defaultQuantity": zod.number().int().min(1).max(getMarketplaceCategoriesResponseRulesInventoryDefaultQuantityMax).optional()
+  "defaultQuantity": zod.int().min(1).max(getMarketplaceCategoriesResponseRulesInventoryDefaultQuantityMax).optional()
 }),
   "sellerDraft": zod.object({
   "requiredFields": zod.array(zod.enum(['TITLE', 'DESCRIPTION', 'PRICE', 'ATTRIBUTES', 'INVENTORY', 'FULFILMENT', 'LOCATION', 'CONTACT'])).min(1)
@@ -536,7 +536,7 @@ export const GetAdminMarketplaceCategoriesResponseItem = zod.object({
   "filterable": zod.boolean().optional(),
   "minimum": zod.number().optional(),
   "maximum": zod.number().optional(),
-  "maxLength": zod.number().int().min(1).max(getAdminMarketplaceCategoriesResponseAttributesMaxLengthMax).optional(),
+  "maxLength": zod.int().min(1).max(getAdminMarketplaceCategoriesResponseAttributesMaxLengthMax).optional(),
   "options": zod.array(zod.string().max(getAdminMarketplaceCategoriesResponseAttributesOptionsItemMax)).optional()
 })),
   "searchFilters": zod.record(zod.string(), zod.object({
@@ -548,7 +548,7 @@ export const GetAdminMarketplaceCategoriesResponseItem = zod.object({
   "filterable": zod.boolean().optional(),
   "minimum": zod.number().optional(),
   "maximum": zod.number().optional(),
-  "maxLength": zod.number().int().min(1).max(getAdminMarketplaceCategoriesResponseSearchFiltersMaxLengthMax).optional(),
+  "maxLength": zod.int().min(1).max(getAdminMarketplaceCategoriesResponseSearchFiltersMaxLengthMax).optional(),
   "options": zod.array(zod.string().max(getAdminMarketplaceCategoriesResponseSearchFiltersOptionsItemMax)).optional()
 })),
   "allowAdditionalAttributes": zod.boolean(),
@@ -570,14 +570,14 @@ export const GetAdminMarketplaceCategoriesResponseItem = zod.object({
   "pricing": zod.object({
   "allowedModes": zod.array(zod.enum(['FIXED', 'NEGOTIABLE', 'OPEN_TO_OFFERS'])).min(1),
   "defaultMode": zod.enum(['FIXED', 'NEGOTIABLE', 'OPEN_TO_OFFERS']),
-  "minAmountMinor": zod.number().int().min(1),
-  "maxAmountMinor": zod.number().int().min(1)
+  "minAmountMinor": zod.int().min(1),
+  "maxAmountMinor": zod.int().min(1)
 }),
   "inventory": zod.object({
   "semantics": zod.enum(['TRACKED', 'SINGLE', 'NON_STOCK']),
   "allowedModes": zod.array(zod.enum(['LIMITED', 'UNLIMITED'])).min(1),
   "defaultMode": zod.enum(['LIMITED', 'UNLIMITED']),
-  "defaultQuantity": zod.number().int().min(1).max(getAdminMarketplaceCategoriesResponseRulesInventoryDefaultQuantityMax).optional()
+  "defaultQuantity": zod.int().min(1).max(getAdminMarketplaceCategoriesResponseRulesInventoryDefaultQuantityMax).optional()
 }),
   "sellerDraft": zod.object({
   "requiredFields": zod.array(zod.enum(['TITLE', 'DESCRIPTION', 'PRICE', 'ATTRIBUTES', 'INVENTORY', 'FULFILMENT', 'LOCATION', 'CONTACT'])).min(1)
@@ -651,7 +651,7 @@ export const CreateMarketplaceCategoryBody = zod.object({
   "filterable": zod.boolean().optional(),
   "minimum": zod.number().optional(),
   "maximum": zod.number().optional(),
-  "maxLength": zod.number().int().min(1).max(createMarketplaceCategoryBodyAttributesMaxLengthMax).optional(),
+  "maxLength": zod.int().min(1).max(createMarketplaceCategoryBodyAttributesMaxLengthMax).optional(),
   "options": zod.array(zod.string().max(createMarketplaceCategoryBodyAttributesOptionsItemMax)).optional()
 })),
   "searchFilters": zod.record(zod.string(), zod.object({
@@ -663,7 +663,7 @@ export const CreateMarketplaceCategoryBody = zod.object({
   "filterable": zod.boolean().optional(),
   "minimum": zod.number().optional(),
   "maximum": zod.number().optional(),
-  "maxLength": zod.number().int().min(1).max(createMarketplaceCategoryBodySearchFiltersMaxLengthMax).optional(),
+  "maxLength": zod.int().min(1).max(createMarketplaceCategoryBodySearchFiltersMaxLengthMax).optional(),
   "options": zod.array(zod.string().max(createMarketplaceCategoryBodySearchFiltersOptionsItemMax)).optional()
 })),
   "allowAdditionalAttributes": zod.boolean().default(createMarketplaceCategoryBodyAllowAdditionalAttributesDefault),
@@ -686,14 +686,14 @@ export const CreateMarketplaceCategoryBody = zod.object({
   "pricing": zod.object({
   "allowedModes": zod.array(zod.enum(['FIXED', 'NEGOTIABLE', 'OPEN_TO_OFFERS'])).min(1),
   "defaultMode": zod.enum(['FIXED', 'NEGOTIABLE', 'OPEN_TO_OFFERS']),
-  "minAmountMinor": zod.number().int().min(1),
-  "maxAmountMinor": zod.number().int().min(1)
+  "minAmountMinor": zod.int().min(1),
+  "maxAmountMinor": zod.int().min(1)
 }),
   "inventory": zod.object({
   "semantics": zod.enum(['TRACKED', 'SINGLE', 'NON_STOCK']),
   "allowedModes": zod.array(zod.enum(['LIMITED', 'UNLIMITED'])).min(1),
   "defaultMode": zod.enum(['LIMITED', 'UNLIMITED']),
-  "defaultQuantity": zod.number().int().min(1).max(createMarketplaceCategoryBodyRulesInventoryDefaultQuantityMax).optional()
+  "defaultQuantity": zod.int().min(1).max(createMarketplaceCategoryBodyRulesInventoryDefaultQuantityMax).optional()
 }),
   "sellerDraft": zod.object({
   "requiredFields": zod.array(zod.enum(['TITLE', 'DESCRIPTION', 'PRICE', 'ATTRIBUTES', 'INVENTORY', 'FULFILMENT', 'LOCATION', 'CONTACT'])).min(1)
@@ -750,7 +750,7 @@ export const CreateMarketplaceCategoryResponse = zod.object({
   "filterable": zod.boolean().optional(),
   "minimum": zod.number().optional(),
   "maximum": zod.number().optional(),
-  "maxLength": zod.number().int().min(1).max(createMarketplaceCategoryResponseAttributesMaxLengthMax).optional(),
+  "maxLength": zod.int().min(1).max(createMarketplaceCategoryResponseAttributesMaxLengthMax).optional(),
   "options": zod.array(zod.string().max(createMarketplaceCategoryResponseAttributesOptionsItemMax)).optional()
 })),
   "searchFilters": zod.record(zod.string(), zod.object({
@@ -762,7 +762,7 @@ export const CreateMarketplaceCategoryResponse = zod.object({
   "filterable": zod.boolean().optional(),
   "minimum": zod.number().optional(),
   "maximum": zod.number().optional(),
-  "maxLength": zod.number().int().min(1).max(createMarketplaceCategoryResponseSearchFiltersMaxLengthMax).optional(),
+  "maxLength": zod.int().min(1).max(createMarketplaceCategoryResponseSearchFiltersMaxLengthMax).optional(),
   "options": zod.array(zod.string().max(createMarketplaceCategoryResponseSearchFiltersOptionsItemMax)).optional()
 })),
   "allowAdditionalAttributes": zod.boolean(),
@@ -784,14 +784,14 @@ export const CreateMarketplaceCategoryResponse = zod.object({
   "pricing": zod.object({
   "allowedModes": zod.array(zod.enum(['FIXED', 'NEGOTIABLE', 'OPEN_TO_OFFERS'])).min(1),
   "defaultMode": zod.enum(['FIXED', 'NEGOTIABLE', 'OPEN_TO_OFFERS']),
-  "minAmountMinor": zod.number().int().min(1),
-  "maxAmountMinor": zod.number().int().min(1)
+  "minAmountMinor": zod.int().min(1),
+  "maxAmountMinor": zod.int().min(1)
 }),
   "inventory": zod.object({
   "semantics": zod.enum(['TRACKED', 'SINGLE', 'NON_STOCK']),
   "allowedModes": zod.array(zod.enum(['LIMITED', 'UNLIMITED'])).min(1),
   "defaultMode": zod.enum(['LIMITED', 'UNLIMITED']),
-  "defaultQuantity": zod.number().int().min(1).max(createMarketplaceCategoryResponseRulesInventoryDefaultQuantityMax).optional()
+  "defaultQuantity": zod.int().min(1).max(createMarketplaceCategoryResponseRulesInventoryDefaultQuantityMax).optional()
 }),
   "sellerDraft": zod.object({
   "requiredFields": zod.array(zod.enum(['TITLE', 'DESCRIPTION', 'PRICE', 'ATTRIBUTES', 'INVENTORY', 'FULFILMENT', 'LOCATION', 'CONTACT'])).min(1)
@@ -864,7 +864,7 @@ export const UpdateMarketplaceCategoryBody = zod.object({
   "filterable": zod.boolean().optional(),
   "minimum": zod.number().optional(),
   "maximum": zod.number().optional(),
-  "maxLength": zod.number().int().min(1).max(updateMarketplaceCategoryBodyAttributesMaxLengthMax).optional(),
+  "maxLength": zod.int().min(1).max(updateMarketplaceCategoryBodyAttributesMaxLengthMax).optional(),
   "options": zod.array(zod.string().max(updateMarketplaceCategoryBodyAttributesOptionsItemMax)).optional()
 })).optional(),
   "searchFilters": zod.record(zod.string(), zod.object({
@@ -876,7 +876,7 @@ export const UpdateMarketplaceCategoryBody = zod.object({
   "filterable": zod.boolean().optional(),
   "minimum": zod.number().optional(),
   "maximum": zod.number().optional(),
-  "maxLength": zod.number().int().min(1).max(updateMarketplaceCategoryBodySearchFiltersMaxLengthMax).optional(),
+  "maxLength": zod.int().min(1).max(updateMarketplaceCategoryBodySearchFiltersMaxLengthMax).optional(),
   "options": zod.array(zod.string().max(updateMarketplaceCategoryBodySearchFiltersOptionsItemMax)).optional()
 })).optional(),
   "allowAdditionalAttributes": zod.boolean().optional(),
@@ -899,14 +899,14 @@ export const UpdateMarketplaceCategoryBody = zod.object({
   "pricing": zod.object({
   "allowedModes": zod.array(zod.enum(['FIXED', 'NEGOTIABLE', 'OPEN_TO_OFFERS'])).min(1),
   "defaultMode": zod.enum(['FIXED', 'NEGOTIABLE', 'OPEN_TO_OFFERS']),
-  "minAmountMinor": zod.number().int().min(1),
-  "maxAmountMinor": zod.number().int().min(1)
+  "minAmountMinor": zod.int().min(1),
+  "maxAmountMinor": zod.int().min(1)
 }),
   "inventory": zod.object({
   "semantics": zod.enum(['TRACKED', 'SINGLE', 'NON_STOCK']),
   "allowedModes": zod.array(zod.enum(['LIMITED', 'UNLIMITED'])).min(1),
   "defaultMode": zod.enum(['LIMITED', 'UNLIMITED']),
-  "defaultQuantity": zod.number().int().min(1).max(updateMarketplaceCategoryBodyRulesInventoryDefaultQuantityMax).optional()
+  "defaultQuantity": zod.int().min(1).max(updateMarketplaceCategoryBodyRulesInventoryDefaultQuantityMax).optional()
 }),
   "sellerDraft": zod.object({
   "requiredFields": zod.array(zod.enum(['TITLE', 'DESCRIPTION', 'PRICE', 'ATTRIBUTES', 'INVENTORY', 'FULFILMENT', 'LOCATION', 'CONTACT'])).min(1)
@@ -963,7 +963,7 @@ export const UpdateMarketplaceCategoryResponse = zod.object({
   "filterable": zod.boolean().optional(),
   "minimum": zod.number().optional(),
   "maximum": zod.number().optional(),
-  "maxLength": zod.number().int().min(1).max(updateMarketplaceCategoryResponseAttributesMaxLengthMax).optional(),
+  "maxLength": zod.int().min(1).max(updateMarketplaceCategoryResponseAttributesMaxLengthMax).optional(),
   "options": zod.array(zod.string().max(updateMarketplaceCategoryResponseAttributesOptionsItemMax)).optional()
 })),
   "searchFilters": zod.record(zod.string(), zod.object({
@@ -975,7 +975,7 @@ export const UpdateMarketplaceCategoryResponse = zod.object({
   "filterable": zod.boolean().optional(),
   "minimum": zod.number().optional(),
   "maximum": zod.number().optional(),
-  "maxLength": zod.number().int().min(1).max(updateMarketplaceCategoryResponseSearchFiltersMaxLengthMax).optional(),
+  "maxLength": zod.int().min(1).max(updateMarketplaceCategoryResponseSearchFiltersMaxLengthMax).optional(),
   "options": zod.array(zod.string().max(updateMarketplaceCategoryResponseSearchFiltersOptionsItemMax)).optional()
 })),
   "allowAdditionalAttributes": zod.boolean(),
@@ -997,14 +997,14 @@ export const UpdateMarketplaceCategoryResponse = zod.object({
   "pricing": zod.object({
   "allowedModes": zod.array(zod.enum(['FIXED', 'NEGOTIABLE', 'OPEN_TO_OFFERS'])).min(1),
   "defaultMode": zod.enum(['FIXED', 'NEGOTIABLE', 'OPEN_TO_OFFERS']),
-  "minAmountMinor": zod.number().int().min(1),
-  "maxAmountMinor": zod.number().int().min(1)
+  "minAmountMinor": zod.int().min(1),
+  "maxAmountMinor": zod.int().min(1)
 }),
   "inventory": zod.object({
   "semantics": zod.enum(['TRACKED', 'SINGLE', 'NON_STOCK']),
   "allowedModes": zod.array(zod.enum(['LIMITED', 'UNLIMITED'])).min(1),
   "defaultMode": zod.enum(['LIMITED', 'UNLIMITED']),
-  "defaultQuantity": zod.number().int().min(1).max(updateMarketplaceCategoryResponseRulesInventoryDefaultQuantityMax).optional()
+  "defaultQuantity": zod.int().min(1).max(updateMarketplaceCategoryResponseRulesInventoryDefaultQuantityMax).optional()
 }),
   "sellerDraft": zod.object({
   "requiredFields": zod.array(zod.enum(['TITLE', 'DESCRIPTION', 'PRICE', 'ATTRIBUTES', 'INVENTORY', 'FULFILMENT', 'LOCATION', 'CONTACT'])).min(1)
@@ -1105,15 +1105,15 @@ export const GetListingResponse = zod.object({
   "pricingMode": zod.enum(['FIXED', 'NEGOTIABLE', 'OPEN_TO_OFFERS']),
   "priceRepresentation": zod.enum(['FIXED', 'NEGOTIABLE', 'OPEN_TO_OFFERS', 'STARTING_FROM', 'QUOTE_REQUIRED']).optional().describe('What the price means. STARTING_FROM (a starting amount) and QUOTE_REQUIRED (no price; the seller quotes) are stored as pricingMode OPEN_TO_OFFERS and are never bought directly. Only FIXED is purchasable without an agreement; every representation accepts buyer proposals.'),
   "currency": zod.string(),
-  "availableQuantity": zod.number().int().min(getListingResponseAvailableQuantityMin).nullable(),
-  "reservedQuantity": zod.number().int(),
+  "availableQuantity": zod.int().min(getListingResponseAvailableQuantityMin).nullable(),
+  "reservedQuantity": zod.int(),
   "inventoryMode": zod.enum(['LIMITED', 'UNLIMITED']),
   "fulfilmentType": zod.enum(['PICKUP', 'DELIVERY', 'DIGITAL', 'SERVICE']),
   "sellerName": zod.string(),
   "sellerId": zod.string().optional(),
   "sellerAvatarObjectPath": zod.string().nullish(),
   "rating": zod.number(),
-  "reviewCount": zod.number().int().optional(),
+  "reviewCount": zod.int().optional(),
   "imageUrl": zod.string(),
   "imageUrls": zod.array(zod.string().max(getListingResponseImageUrlsItemMax)).max(getListingResponseImageUrlsMax).optional(),
   "contactPhone": zod.string().max(getListingResponseContactPhoneMax).nullable(),
@@ -1160,7 +1160,7 @@ export const UpdateListingBody = zod.object({
   "unitPrice": zod.string().min(1).max(updateListingBodyUnitPriceMax).regex(updateListingBodyUnitPriceRegExp).nullable(),
   "pricingMode": zod.enum(['FIXED', 'NEGOTIABLE', 'OPEN_TO_OFFERS']).optional(),
   "priceRepresentation": zod.enum(['FIXED', 'NEGOTIABLE', 'OPEN_TO_OFFERS', 'STARTING_FROM', 'QUOTE_REQUIRED']).optional().describe('What the price means. STARTING_FROM (a starting amount) and QUOTE_REQUIRED (no price; the seller quotes) are stored as pricingMode OPEN_TO_OFFERS and are never bought directly. Only FIXED is purchasable without an agreement; every representation accepts buyer proposals.'),
-  "availableQuantity": zod.number().int().min(1).nullish(),
+  "availableQuantity": zod.int().min(1).nullish(),
   "inventoryMode": zod.enum(['LIMITED', 'UNLIMITED']),
   "fulfilmentType": zod.enum(['PICKUP', 'DELIVERY', 'DIGITAL', 'SERVICE']),
   "imageUrl": zod.string(),
@@ -1205,15 +1205,15 @@ export const UpdateListingResponse = zod.object({
   "pricingMode": zod.enum(['FIXED', 'NEGOTIABLE', 'OPEN_TO_OFFERS']),
   "priceRepresentation": zod.enum(['FIXED', 'NEGOTIABLE', 'OPEN_TO_OFFERS', 'STARTING_FROM', 'QUOTE_REQUIRED']).optional().describe('What the price means. STARTING_FROM (a starting amount) and QUOTE_REQUIRED (no price; the seller quotes) are stored as pricingMode OPEN_TO_OFFERS and are never bought directly. Only FIXED is purchasable without an agreement; every representation accepts buyer proposals.'),
   "currency": zod.string(),
-  "availableQuantity": zod.number().int().min(updateListingResponseAvailableQuantityMin).nullable(),
-  "reservedQuantity": zod.number().int(),
+  "availableQuantity": zod.int().min(updateListingResponseAvailableQuantityMin).nullable(),
+  "reservedQuantity": zod.int(),
   "inventoryMode": zod.enum(['LIMITED', 'UNLIMITED']),
   "fulfilmentType": zod.enum(['PICKUP', 'DELIVERY', 'DIGITAL', 'SERVICE']),
   "sellerName": zod.string(),
   "sellerId": zod.string().optional(),
   "sellerAvatarObjectPath": zod.string().nullish(),
   "rating": zod.number(),
-  "reviewCount": zod.number().int().optional(),
+  "reviewCount": zod.int().optional(),
   "imageUrl": zod.string(),
   "imageUrls": zod.array(zod.string().max(updateListingResponseImageUrlsItemMax)).max(updateListingResponseImageUrlsMax).optional(),
   "contactPhone": zod.string().max(updateListingResponseContactPhoneMax).nullable(),
@@ -1266,15 +1266,15 @@ export const ArchiveListingResponse = zod.object({
   "pricingMode": zod.enum(['FIXED', 'NEGOTIABLE', 'OPEN_TO_OFFERS']),
   "priceRepresentation": zod.enum(['FIXED', 'NEGOTIABLE', 'OPEN_TO_OFFERS', 'STARTING_FROM', 'QUOTE_REQUIRED']).optional().describe('What the price means. STARTING_FROM (a starting amount) and QUOTE_REQUIRED (no price; the seller quotes) are stored as pricingMode OPEN_TO_OFFERS and are never bought directly. Only FIXED is purchasable without an agreement; every representation accepts buyer proposals.'),
   "currency": zod.string(),
-  "availableQuantity": zod.number().int().min(archiveListingResponseAvailableQuantityMin).nullable(),
-  "reservedQuantity": zod.number().int(),
+  "availableQuantity": zod.int().min(archiveListingResponseAvailableQuantityMin).nullable(),
+  "reservedQuantity": zod.int(),
   "inventoryMode": zod.enum(['LIMITED', 'UNLIMITED']),
   "fulfilmentType": zod.enum(['PICKUP', 'DELIVERY', 'DIGITAL', 'SERVICE']),
   "sellerName": zod.string(),
   "sellerId": zod.string().optional(),
   "sellerAvatarObjectPath": zod.string().nullish(),
   "rating": zod.number(),
-  "reviewCount": zod.number().int().optional(),
+  "reviewCount": zod.int().optional(),
   "imageUrl": zod.string(),
   "imageUrls": zod.array(zod.string().max(archiveListingResponseImageUrlsItemMax)).max(archiveListingResponseImageUrlsMax).optional(),
   "contactPhone": zod.string().max(archiveListingResponseContactPhoneMax).nullable(),
@@ -1331,15 +1331,15 @@ export const ChangeListingStatusResponse = zod.object({
   "pricingMode": zod.enum(['FIXED', 'NEGOTIABLE', 'OPEN_TO_OFFERS']),
   "priceRepresentation": zod.enum(['FIXED', 'NEGOTIABLE', 'OPEN_TO_OFFERS', 'STARTING_FROM', 'QUOTE_REQUIRED']).optional().describe('What the price means. STARTING_FROM (a starting amount) and QUOTE_REQUIRED (no price; the seller quotes) are stored as pricingMode OPEN_TO_OFFERS and are never bought directly. Only FIXED is purchasable without an agreement; every representation accepts buyer proposals.'),
   "currency": zod.string(),
-  "availableQuantity": zod.number().int().min(changeListingStatusResponseAvailableQuantityMin).nullable(),
-  "reservedQuantity": zod.number().int(),
+  "availableQuantity": zod.int().min(changeListingStatusResponseAvailableQuantityMin).nullable(),
+  "reservedQuantity": zod.int(),
   "inventoryMode": zod.enum(['LIMITED', 'UNLIMITED']),
   "fulfilmentType": zod.enum(['PICKUP', 'DELIVERY', 'DIGITAL', 'SERVICE']),
   "sellerName": zod.string(),
   "sellerId": zod.string().optional(),
   "sellerAvatarObjectPath": zod.string().nullish(),
   "rating": zod.number(),
-  "reviewCount": zod.number().int().optional(),
+  "reviewCount": zod.int().optional(),
   "imageUrl": zod.string(),
   "imageUrls": zod.array(zod.string().max(changeListingStatusResponseImageUrlsItemMax)).max(changeListingStatusResponseImageUrlsMax).optional(),
   "contactPhone": zod.string().max(changeListingStatusResponseContactPhoneMax).nullable(),
@@ -1374,10 +1374,10 @@ export const getDashboardResponseRecentOrdersItemDisputeDescriptionMax = 600;
 
 export const GetDashboardResponse = zod.object({
   "userName": zod.string(),
-  "activeListings": zod.number().int(),
-  "activeOrders": zod.number().int(),
-  "completedOrders": zod.number().int(),
-  "pendingDues": zod.number().int(),
+  "activeListings": zod.int(),
+  "activeOrders": zod.int(),
+  "completedOrders": zod.int(),
+  "pendingDues": zod.int(),
   "pendingDuesAmount": zod.string(),
   "recentOrders": zod.array(zod.object({
   "id": zod.string(),
@@ -1388,14 +1388,14 @@ export const GetDashboardResponse = zod.object({
   "buyerAvatarObjectPath": zod.string().nullish(),
   "sellerName": zod.string(),
   "sellerAvatarObjectPath": zod.string().nullish(),
-  "quantity": zod.number().int(),
+  "quantity": zod.int(),
   "unitPrice": zod.string(),
   "total": zod.string(),
   "currency": zod.string(),
-  "platformFeeMinor": zod.number().int().min(getDashboardResponseRecentOrdersItemPlatformFeeMinorMin),
-  "sellerAmountMinor": zod.number().int().min(getDashboardResponseRecentOrdersItemSellerAmountMinorMin),
-  "minorUnitScale": zod.number().int().min(getDashboardResponseRecentOrdersItemMinorUnitScaleMin).max(getDashboardResponseRecentOrdersItemMinorUnitScaleMax),
-  "commissionRateBps": zod.number().int().min(getDashboardResponseRecentOrdersItemCommissionRateBpsMin).max(getDashboardResponseRecentOrdersItemCommissionRateBpsMax),
+  "platformFeeMinor": zod.int().min(getDashboardResponseRecentOrdersItemPlatformFeeMinorMin),
+  "sellerAmountMinor": zod.int().min(getDashboardResponseRecentOrdersItemSellerAmountMinorMin),
+  "minorUnitScale": zod.int().min(getDashboardResponseRecentOrdersItemMinorUnitScaleMin).max(getDashboardResponseRecentOrdersItemMinorUnitScaleMax),
+  "commissionRateBps": zod.int().min(getDashboardResponseRecentOrdersItemCommissionRateBpsMin).max(getDashboardResponseRecentOrdersItemCommissionRateBpsMax),
   "fulfilmentType": zod.string(),
   "status": zod.enum(['CREATED', 'PAYMENT_PENDING', 'PAID', 'ACCEPTED', 'IN_PROGRESS', 'SELLER_MARKED_DELIVERED', 'BUYER_CONFIRMED', 'COMPLETED', 'CANCELLED', 'DISPUTED']),
   "createdAt": zod.string(),
@@ -1421,7 +1421,7 @@ export const GetDashboardResponse = zod.object({
   "listingId": zod.string(),
   "listingTitle": zod.string(),
   "listingImageUrl": zod.string(),
-  "quantity": zod.number().int(),
+  "quantity": zod.int(),
   "unitPrice": zod.string(),
   "total": zod.string(),
   "currency": zod.string(),
@@ -1429,9 +1429,9 @@ export const GetDashboardResponse = zod.object({
 })).optional()
 })),
   "sellerStats": zod.object({
-  "sales": zod.number().int(),
+  "sales": zod.int(),
   "rating": zod.number(),
-  "responseRate": zod.number().int()
+  "responseRate": zod.int()
 })
 })
 
@@ -1473,14 +1473,14 @@ export const GetOrdersResponseItem = zod.object({
   "buyerAvatarObjectPath": zod.string().nullish(),
   "sellerName": zod.string(),
   "sellerAvatarObjectPath": zod.string().nullish(),
-  "quantity": zod.number().int(),
+  "quantity": zod.int(),
   "unitPrice": zod.string(),
   "total": zod.string(),
   "currency": zod.string(),
-  "platformFeeMinor": zod.number().int().min(getOrdersResponsePlatformFeeMinorMin),
-  "sellerAmountMinor": zod.number().int().min(getOrdersResponseSellerAmountMinorMin),
-  "minorUnitScale": zod.number().int().min(getOrdersResponseMinorUnitScaleMin).max(getOrdersResponseMinorUnitScaleMax),
-  "commissionRateBps": zod.number().int().min(getOrdersResponseCommissionRateBpsMin).max(getOrdersResponseCommissionRateBpsMax),
+  "platformFeeMinor": zod.int().min(getOrdersResponsePlatformFeeMinorMin),
+  "sellerAmountMinor": zod.int().min(getOrdersResponseSellerAmountMinorMin),
+  "minorUnitScale": zod.int().min(getOrdersResponseMinorUnitScaleMin).max(getOrdersResponseMinorUnitScaleMax),
+  "commissionRateBps": zod.int().min(getOrdersResponseCommissionRateBpsMin).max(getOrdersResponseCommissionRateBpsMax),
   "fulfilmentType": zod.string(),
   "status": zod.enum(['CREATED', 'PAYMENT_PENDING', 'PAID', 'ACCEPTED', 'IN_PROGRESS', 'SELLER_MARKED_DELIVERED', 'BUYER_CONFIRMED', 'COMPLETED', 'CANCELLED', 'DISPUTED']),
   "createdAt": zod.string(),
@@ -1506,7 +1506,7 @@ export const GetOrdersResponseItem = zod.object({
   "listingId": zod.string(),
   "listingTitle": zod.string(),
   "listingImageUrl": zod.string(),
-  "quantity": zod.number().int(),
+  "quantity": zod.int(),
   "unitPrice": zod.string(),
   "total": zod.string(),
   "currency": zod.string(),
@@ -1529,7 +1529,7 @@ export const createOrderBodyDeliveryInstructionsMax = 1000;
 
 export const CreateOrderBody = zod.object({
   "listingId": zod.string(),
-  "quantity": zod.number().int().min(1),
+  "quantity": zod.int().min(1),
   "fulfilmentType": zod.enum(['PICKUP', 'DELIVERY', 'DIGITAL', 'SERVICE']),
   "idempotencyKey": zod.string().min(createOrderBodyIdempotencyKeyMin).max(createOrderBodyIdempotencyKeyMax),
   "deliveryInstructions": zod.string().max(createOrderBodyDeliveryInstructionsMax).optional()
@@ -1564,14 +1564,14 @@ export const CreateOrderResponse = zod.object({
   "buyerAvatarObjectPath": zod.string().nullish(),
   "sellerName": zod.string(),
   "sellerAvatarObjectPath": zod.string().nullish(),
-  "quantity": zod.number().int(),
+  "quantity": zod.int(),
   "unitPrice": zod.string(),
   "total": zod.string(),
   "currency": zod.string(),
-  "platformFeeMinor": zod.number().int().min(createOrderResponsePlatformFeeMinorMin),
-  "sellerAmountMinor": zod.number().int().min(createOrderResponseSellerAmountMinorMin),
-  "minorUnitScale": zod.number().int().min(createOrderResponseMinorUnitScaleMin).max(createOrderResponseMinorUnitScaleMax),
-  "commissionRateBps": zod.number().int().min(createOrderResponseCommissionRateBpsMin).max(createOrderResponseCommissionRateBpsMax),
+  "platformFeeMinor": zod.int().min(createOrderResponsePlatformFeeMinorMin),
+  "sellerAmountMinor": zod.int().min(createOrderResponseSellerAmountMinorMin),
+  "minorUnitScale": zod.int().min(createOrderResponseMinorUnitScaleMin).max(createOrderResponseMinorUnitScaleMax),
+  "commissionRateBps": zod.int().min(createOrderResponseCommissionRateBpsMin).max(createOrderResponseCommissionRateBpsMax),
   "fulfilmentType": zod.string(),
   "status": zod.enum(['CREATED', 'PAYMENT_PENDING', 'PAID', 'ACCEPTED', 'IN_PROGRESS', 'SELLER_MARKED_DELIVERED', 'BUYER_CONFIRMED', 'COMPLETED', 'CANCELLED', 'DISPUTED']),
   "createdAt": zod.string(),
@@ -1597,7 +1597,7 @@ export const CreateOrderResponse = zod.object({
   "listingId": zod.string(),
   "listingTitle": zod.string(),
   "listingImageUrl": zod.string(),
-  "quantity": zod.number().int(),
+  "quantity": zod.int(),
   "unitPrice": zod.string(),
   "total": zod.string(),
   "currency": zod.string(),
@@ -1623,7 +1623,7 @@ export const checkoutCartBodyDeliveryInstructionsMax = 1000;
 export const CheckoutCartBody = zod.object({
   "items": zod.array(zod.object({
   "listingId": zod.string().min(1),
-  "quantity": zod.number().int().min(1),
+  "quantity": zod.int().min(1),
   "fulfilmentType": zod.enum(['PICKUP', 'DELIVERY', 'DIGITAL', 'SERVICE'])
 })).min(1).max(checkoutCartBodyItemsMax),
   "idempotencyKey": zod.string().min(checkoutCartBodyIdempotencyKeyMin).max(checkoutCartBodyIdempotencyKeyMax),
@@ -1660,14 +1660,14 @@ export const CheckoutCartResponse = zod.object({
   "buyerAvatarObjectPath": zod.string().nullish(),
   "sellerName": zod.string(),
   "sellerAvatarObjectPath": zod.string().nullish(),
-  "quantity": zod.number().int(),
+  "quantity": zod.int(),
   "unitPrice": zod.string(),
   "total": zod.string(),
   "currency": zod.string(),
-  "platformFeeMinor": zod.number().int().min(checkoutCartResponseOrdersItemPlatformFeeMinorMin),
-  "sellerAmountMinor": zod.number().int().min(checkoutCartResponseOrdersItemSellerAmountMinorMin),
-  "minorUnitScale": zod.number().int().min(checkoutCartResponseOrdersItemMinorUnitScaleMin).max(checkoutCartResponseOrdersItemMinorUnitScaleMax),
-  "commissionRateBps": zod.number().int().min(checkoutCartResponseOrdersItemCommissionRateBpsMin).max(checkoutCartResponseOrdersItemCommissionRateBpsMax),
+  "platformFeeMinor": zod.int().min(checkoutCartResponseOrdersItemPlatformFeeMinorMin),
+  "sellerAmountMinor": zod.int().min(checkoutCartResponseOrdersItemSellerAmountMinorMin),
+  "minorUnitScale": zod.int().min(checkoutCartResponseOrdersItemMinorUnitScaleMin).max(checkoutCartResponseOrdersItemMinorUnitScaleMax),
+  "commissionRateBps": zod.int().min(checkoutCartResponseOrdersItemCommissionRateBpsMin).max(checkoutCartResponseOrdersItemCommissionRateBpsMax),
   "fulfilmentType": zod.string(),
   "status": zod.enum(['CREATED', 'PAYMENT_PENDING', 'PAID', 'ACCEPTED', 'IN_PROGRESS', 'SELLER_MARKED_DELIVERED', 'BUYER_CONFIRMED', 'COMPLETED', 'CANCELLED', 'DISPUTED']),
   "createdAt": zod.string(),
@@ -1693,7 +1693,7 @@ export const CheckoutCartResponse = zod.object({
   "listingId": zod.string(),
   "listingTitle": zod.string(),
   "listingImageUrl": zod.string(),
-  "quantity": zod.number().int(),
+  "quantity": zod.int(),
   "unitPrice": zod.string(),
   "total": zod.string(),
   "currency": zod.string(),
@@ -1741,14 +1741,14 @@ export const GetOrderResponse = zod.object({
   "buyerAvatarObjectPath": zod.string().nullish(),
   "sellerName": zod.string(),
   "sellerAvatarObjectPath": zod.string().nullish(),
-  "quantity": zod.number().int(),
+  "quantity": zod.int(),
   "unitPrice": zod.string(),
   "total": zod.string(),
   "currency": zod.string(),
-  "platformFeeMinor": zod.number().int().min(getOrderResponsePlatformFeeMinorMin),
-  "sellerAmountMinor": zod.number().int().min(getOrderResponseSellerAmountMinorMin),
-  "minorUnitScale": zod.number().int().min(getOrderResponseMinorUnitScaleMin).max(getOrderResponseMinorUnitScaleMax),
-  "commissionRateBps": zod.number().int().min(getOrderResponseCommissionRateBpsMin).max(getOrderResponseCommissionRateBpsMax),
+  "platformFeeMinor": zod.int().min(getOrderResponsePlatformFeeMinorMin),
+  "sellerAmountMinor": zod.int().min(getOrderResponseSellerAmountMinorMin),
+  "minorUnitScale": zod.int().min(getOrderResponseMinorUnitScaleMin).max(getOrderResponseMinorUnitScaleMax),
+  "commissionRateBps": zod.int().min(getOrderResponseCommissionRateBpsMin).max(getOrderResponseCommissionRateBpsMax),
   "fulfilmentType": zod.string(),
   "status": zod.enum(['CREATED', 'PAYMENT_PENDING', 'PAID', 'ACCEPTED', 'IN_PROGRESS', 'SELLER_MARKED_DELIVERED', 'BUYER_CONFIRMED', 'COMPLETED', 'CANCELLED', 'DISPUTED']),
   "createdAt": zod.string(),
@@ -1774,7 +1774,7 @@ export const GetOrderResponse = zod.object({
   "listingId": zod.string(),
   "listingTitle": zod.string(),
   "listingImageUrl": zod.string(),
-  "quantity": zod.number().int(),
+  "quantity": zod.int(),
   "unitPrice": zod.string(),
   "total": zod.string(),
   "currency": zod.string(),
@@ -1826,7 +1826,7 @@ export const GetOrderFulfillmentResponse = zod.object({
   "statusLabel": zod.string(),
   "failureReason": zod.union([zod.literal('BUYER_UNAVAILABLE'),zod.literal('ADDRESS_UNREACHABLE'),zod.literal('SELLER_UNABLE'),zod.literal('OTHER'),zod.literal(null)]).nullable(),
   "failureLabel": zod.string().nullable(),
-  "version": zod.number().int(),
+  "version": zod.int(),
   "updatedAt": zod.string()
 }).nullable(),
   "destination": zod.union([zod.object({
@@ -1922,12 +1922,12 @@ export const GetCourierFareResponse = zod.object({
   "status": zod.enum(['WAITING_FOR_COURIER', 'ACCEPTED', 'RELEASED', 'AWAITING_CONFIRMATION', 'AGREED']),
   "role": zod.enum(['BUYER', 'COURIER']),
   "currencyCode": zod.string().regex(getCourierFareResponseCurrencyCodeRegExp),
-  "minorUnitScale": zod.number().int().min(getCourierFareResponseMinorUnitScaleMin).max(getCourierFareResponseMinorUnitScaleMax),
+  "minorUnitScale": zod.int().min(getCourierFareResponseMinorUnitScaleMin).max(getCourierFareResponseMinorUnitScaleMax),
   "proposal": zod.union([zod.object({
   "id": zod.string(),
-  "fareMinor": zod.number().int().min(1),
+  "fareMinor": zod.int().min(1),
   "currencyCode": zod.string().regex(getCourierFareResponseProposalOneCurrencyCodeRegExp),
-  "minorUnitScale": zod.number().int().min(getCourierFareResponseProposalOneMinorUnitScaleMin).max(getCourierFareResponseProposalOneMinorUnitScaleMax),
+  "minorUnitScale": zod.int().min(getCourierFareResponseProposalOneMinorUnitScaleMin).max(getCourierFareResponseProposalOneMinorUnitScaleMax),
   "amount": zod.string(),
   "status": zod.enum(['PENDING', 'SUPERSEDED', 'AGREED', 'CANCELLED']),
   "proposedByMe": zod.boolean(),
@@ -1939,12 +1939,12 @@ export const GetCourierFareResponse = zod.object({
   "agreement": zod.union([zod.object({
   "id": zod.string(),
   "proposalId": zod.string(),
-  "fareMinor": zod.number().int().min(1),
+  "fareMinor": zod.int().min(1),
   "currencyCode": zod.string().regex(getCourierFareResponseAgreementOneCurrencyCodeRegExp),
-  "minorUnitScale": zod.number().int().min(getCourierFareResponseAgreementOneMinorUnitScaleMin).max(getCourierFareResponseAgreementOneMinorUnitScaleMax),
+  "minorUnitScale": zod.int().min(getCourierFareResponseAgreementOneMinorUnitScaleMin).max(getCourierFareResponseAgreementOneMinorUnitScaleMax),
   "amount": zod.string(),
   "commissionRateBps": zod.literal(1000),
-  "estimatedCommissionMinor": zod.number().int().min(getCourierFareResponseAgreementOneEstimatedCommissionMinorMin),
+  "estimatedCommissionMinor": zod.int().min(getCourierFareResponseAgreementOneEstimatedCommissionMinorMin),
   "estimatedCommission": zod.string(),
   "agreedAt": zod.coerce.date()
 }),zod.null()])
@@ -1987,9 +1987,9 @@ export const proposeCourierFareResponseAgreementOneEstimatedCommissionMinorMin =
 export const ProposeCourierFareResponse = zod.object({
   "proposal": zod.object({
   "id": zod.string(),
-  "fareMinor": zod.number().int().min(1),
+  "fareMinor": zod.int().min(1),
   "currencyCode": zod.string().regex(proposeCourierFareResponseProposalCurrencyCodeRegExp),
-  "minorUnitScale": zod.number().int().min(proposeCourierFareResponseProposalMinorUnitScaleMin).max(proposeCourierFareResponseProposalMinorUnitScaleMax),
+  "minorUnitScale": zod.int().min(proposeCourierFareResponseProposalMinorUnitScaleMin).max(proposeCourierFareResponseProposalMinorUnitScaleMax),
   "amount": zod.string(),
   "status": zod.enum(['PENDING', 'SUPERSEDED', 'AGREED', 'CANCELLED']),
   "proposedByMe": zod.boolean(),
@@ -2001,12 +2001,12 @@ export const ProposeCourierFareResponse = zod.object({
   "agreement": zod.union([zod.object({
   "id": zod.string(),
   "proposalId": zod.string(),
-  "fareMinor": zod.number().int().min(1),
+  "fareMinor": zod.int().min(1),
   "currencyCode": zod.string().regex(proposeCourierFareResponseAgreementOneCurrencyCodeRegExp),
-  "minorUnitScale": zod.number().int().min(proposeCourierFareResponseAgreementOneMinorUnitScaleMin).max(proposeCourierFareResponseAgreementOneMinorUnitScaleMax),
+  "minorUnitScale": zod.int().min(proposeCourierFareResponseAgreementOneMinorUnitScaleMin).max(proposeCourierFareResponseAgreementOneMinorUnitScaleMax),
   "amount": zod.string(),
   "commissionRateBps": zod.literal(1000),
-  "estimatedCommissionMinor": zod.number().int().min(proposeCourierFareResponseAgreementOneEstimatedCommissionMinorMin),
+  "estimatedCommissionMinor": zod.int().min(proposeCourierFareResponseAgreementOneEstimatedCommissionMinorMin),
   "estimatedCommission": zod.string(),
   "agreedAt": zod.coerce.date()
 }),zod.null()]),
@@ -2042,9 +2042,9 @@ export const confirmCourierFareResponseAgreementOneEstimatedCommissionMinorMin =
 export const ConfirmCourierFareResponse = zod.object({
   "proposal": zod.union([zod.object({
   "id": zod.string(),
-  "fareMinor": zod.number().int().min(1),
+  "fareMinor": zod.int().min(1),
   "currencyCode": zod.string().regex(confirmCourierFareResponseProposalOneCurrencyCodeRegExp),
-  "minorUnitScale": zod.number().int().min(confirmCourierFareResponseProposalOneMinorUnitScaleMin).max(confirmCourierFareResponseProposalOneMinorUnitScaleMax),
+  "minorUnitScale": zod.int().min(confirmCourierFareResponseProposalOneMinorUnitScaleMin).max(confirmCourierFareResponseProposalOneMinorUnitScaleMax),
   "amount": zod.string(),
   "status": zod.enum(['PENDING', 'SUPERSEDED', 'AGREED', 'CANCELLED']),
   "proposedByMe": zod.boolean(),
@@ -2056,12 +2056,12 @@ export const ConfirmCourierFareResponse = zod.object({
   "agreement": zod.union([zod.object({
   "id": zod.string(),
   "proposalId": zod.string(),
-  "fareMinor": zod.number().int().min(1),
+  "fareMinor": zod.int().min(1),
   "currencyCode": zod.string().regex(confirmCourierFareResponseAgreementOneCurrencyCodeRegExp),
-  "minorUnitScale": zod.number().int().min(confirmCourierFareResponseAgreementOneMinorUnitScaleMin).max(confirmCourierFareResponseAgreementOneMinorUnitScaleMax),
+  "minorUnitScale": zod.int().min(confirmCourierFareResponseAgreementOneMinorUnitScaleMin).max(confirmCourierFareResponseAgreementOneMinorUnitScaleMax),
   "amount": zod.string(),
   "commissionRateBps": zod.literal(1000),
-  "estimatedCommissionMinor": zod.number().int().min(confirmCourierFareResponseAgreementOneEstimatedCommissionMinorMin),
+  "estimatedCommissionMinor": zod.int().min(confirmCourierFareResponseAgreementOneEstimatedCommissionMinorMin),
   "estimatedCommission": zod.string(),
   "agreedAt": zod.coerce.date()
 }),zod.null()]),
@@ -2096,7 +2096,7 @@ export const getCourierCommissionAccountResponseEarningsHistoryItemMinorUnitScal
 
 export const GetCourierCommissionAccountResponse = zod.object({
   "courierId": zod.string(),
-  "outstandingDeliveryCount": zod.number().int().min(getCourierCommissionAccountResponseOutstandingDeliveryCountMin),
+  "outstandingDeliveryCount": zod.int().min(getCourierCommissionAccountResponseOutstandingDeliveryCountMin),
   "hold": zod.boolean(),
   "holdThreshold": zod.literal(10),
   "settlementMode": zod.enum(['SIMULATION_ONLY']),
@@ -2104,9 +2104,9 @@ export const GetCourierCommissionAccountResponse = zod.object({
   "balances": zod.array(zod.object({
   "marketId": zod.string(),
   "currencyCode": zod.string().regex(getCourierCommissionAccountResponseBalancesItemCurrencyCodeRegExp),
-  "minorUnitScale": zod.number().int().min(getCourierCommissionAccountResponseBalancesItemMinorUnitScaleMin).max(getCourierCommissionAccountResponseBalancesItemMinorUnitScaleMax),
-  "amountMinor": zod.number().int().min(getCourierCommissionAccountResponseBalancesItemAmountMinorMin),
-  "deliveryCount": zod.number().int().min(getCourierCommissionAccountResponseBalancesItemDeliveryCountMin),
+  "minorUnitScale": zod.int().min(getCourierCommissionAccountResponseBalancesItemMinorUnitScaleMin).max(getCourierCommissionAccountResponseBalancesItemMinorUnitScaleMax),
+  "amountMinor": zod.int().min(getCourierCommissionAccountResponseBalancesItemAmountMinorMin),
+  "deliveryCount": zod.int().min(getCourierCommissionAccountResponseBalancesItemDeliveryCountMin),
   "amount": zod.string()
 })),
   "earningsHistory": zod.array(zod.object({
@@ -2114,15 +2114,15 @@ export const GetCourierCommissionAccountResponse = zod.object({
   "orderReference": zod.string(),
   "completedAt": zod.coerce.date(),
   "marketId": zod.string(),
-  "agreedFareMinor": zod.number().int().min(1),
+  "agreedFareMinor": zod.int().min(1),
   "agreedFare": zod.string(),
   "commissionRateBps": zod.literal(1000),
-  "commissionMinor": zod.number().int().min(getCourierCommissionAccountResponseEarningsHistoryItemCommissionMinorMin),
+  "commissionMinor": zod.int().min(getCourierCommissionAccountResponseEarningsHistoryItemCommissionMinorMin),
   "commission": zod.string(),
-  "courierShareMinor": zod.number().int().min(getCourierCommissionAccountResponseEarningsHistoryItemCourierShareMinorMin),
+  "courierShareMinor": zod.int().min(getCourierCommissionAccountResponseEarningsHistoryItemCourierShareMinorMin),
   "courierShare": zod.string(),
   "currencyCode": zod.string().regex(getCourierCommissionAccountResponseEarningsHistoryItemCurrencyCodeRegExp),
-  "minorUnitScale": zod.number().int().min(getCourierCommissionAccountResponseEarningsHistoryItemMinorUnitScaleMin).max(getCourierCommissionAccountResponseEarningsHistoryItemMinorUnitScaleMax),
+  "minorUnitScale": zod.int().min(getCourierCommissionAccountResponseEarningsHistoryItemMinorUnitScaleMin).max(getCourierCommissionAccountResponseEarningsHistoryItemMinorUnitScaleMax),
   "receivableStatus": zod.enum(['OUTSTANDING', 'SIMULATION_CLEARED']),
   "simulationClearedAt": zod.coerce.date().nullable(),
   "settlementMode": zod.union([zod.literal('SIMULATION_ONLY'),zod.literal(null)]).nullable(),
@@ -2159,10 +2159,10 @@ export const SettleCourierCommissionSimulationResponse = zod.object({
   "id": zod.string(),
   "courierId": zod.string(),
   "marketId": zod.string(),
-  "amountMinor": zod.number().int().min(1),
+  "amountMinor": zod.int().min(1),
   "currencyCode": zod.string().regex(settleCourierCommissionSimulationResponseSettlementCurrencyCodeRegExp),
-  "minorUnitScale": zod.number().int().min(settleCourierCommissionSimulationResponseSettlementMinorUnitScaleMin).max(settleCourierCommissionSimulationResponseSettlementMinorUnitScaleMax),
-  "receivableCount": zod.number().int().min(1),
+  "minorUnitScale": zod.int().min(settleCourierCommissionSimulationResponseSettlementMinorUnitScaleMin).max(settleCourierCommissionSimulationResponseSettlementMinorUnitScaleMax),
+  "receivableCount": zod.int().min(1),
   "idempotencyKey": zod.string(),
   "mode": zod.enum(['SIMULATION_ONLY']),
   "simulatedAt": zod.coerce.date()
@@ -2268,14 +2268,14 @@ export const AcceptOrderResponse = zod.object({
   "buyerAvatarObjectPath": zod.string().nullish(),
   "sellerName": zod.string(),
   "sellerAvatarObjectPath": zod.string().nullish(),
-  "quantity": zod.number().int(),
+  "quantity": zod.int(),
   "unitPrice": zod.string(),
   "total": zod.string(),
   "currency": zod.string(),
-  "platformFeeMinor": zod.number().int().min(acceptOrderResponsePlatformFeeMinorMin),
-  "sellerAmountMinor": zod.number().int().min(acceptOrderResponseSellerAmountMinorMin),
-  "minorUnitScale": zod.number().int().min(acceptOrderResponseMinorUnitScaleMin).max(acceptOrderResponseMinorUnitScaleMax),
-  "commissionRateBps": zod.number().int().min(acceptOrderResponseCommissionRateBpsMin).max(acceptOrderResponseCommissionRateBpsMax),
+  "platformFeeMinor": zod.int().min(acceptOrderResponsePlatformFeeMinorMin),
+  "sellerAmountMinor": zod.int().min(acceptOrderResponseSellerAmountMinorMin),
+  "minorUnitScale": zod.int().min(acceptOrderResponseMinorUnitScaleMin).max(acceptOrderResponseMinorUnitScaleMax),
+  "commissionRateBps": zod.int().min(acceptOrderResponseCommissionRateBpsMin).max(acceptOrderResponseCommissionRateBpsMax),
   "fulfilmentType": zod.string(),
   "status": zod.enum(['CREATED', 'PAYMENT_PENDING', 'PAID', 'ACCEPTED', 'IN_PROGRESS', 'SELLER_MARKED_DELIVERED', 'BUYER_CONFIRMED', 'COMPLETED', 'CANCELLED', 'DISPUTED']),
   "createdAt": zod.string(),
@@ -2301,7 +2301,7 @@ export const AcceptOrderResponse = zod.object({
   "listingId": zod.string(),
   "listingTitle": zod.string(),
   "listingImageUrl": zod.string(),
-  "quantity": zod.number().int(),
+  "quantity": zod.int(),
   "unitPrice": zod.string(),
   "total": zod.string(),
   "currency": zod.string(),
@@ -2351,14 +2351,14 @@ export const MarkOrderDeliveredResponse = zod.object({
   "buyerAvatarObjectPath": zod.string().nullish(),
   "sellerName": zod.string(),
   "sellerAvatarObjectPath": zod.string().nullish(),
-  "quantity": zod.number().int(),
+  "quantity": zod.int(),
   "unitPrice": zod.string(),
   "total": zod.string(),
   "currency": zod.string(),
-  "platformFeeMinor": zod.number().int().min(markOrderDeliveredResponsePlatformFeeMinorMin),
-  "sellerAmountMinor": zod.number().int().min(markOrderDeliveredResponseSellerAmountMinorMin),
-  "minorUnitScale": zod.number().int().min(markOrderDeliveredResponseMinorUnitScaleMin).max(markOrderDeliveredResponseMinorUnitScaleMax),
-  "commissionRateBps": zod.number().int().min(markOrderDeliveredResponseCommissionRateBpsMin).max(markOrderDeliveredResponseCommissionRateBpsMax),
+  "platformFeeMinor": zod.int().min(markOrderDeliveredResponsePlatformFeeMinorMin),
+  "sellerAmountMinor": zod.int().min(markOrderDeliveredResponseSellerAmountMinorMin),
+  "minorUnitScale": zod.int().min(markOrderDeliveredResponseMinorUnitScaleMin).max(markOrderDeliveredResponseMinorUnitScaleMax),
+  "commissionRateBps": zod.int().min(markOrderDeliveredResponseCommissionRateBpsMin).max(markOrderDeliveredResponseCommissionRateBpsMax),
   "fulfilmentType": zod.string(),
   "status": zod.enum(['CREATED', 'PAYMENT_PENDING', 'PAID', 'ACCEPTED', 'IN_PROGRESS', 'SELLER_MARKED_DELIVERED', 'BUYER_CONFIRMED', 'COMPLETED', 'CANCELLED', 'DISPUTED']),
   "createdAt": zod.string(),
@@ -2384,7 +2384,7 @@ export const MarkOrderDeliveredResponse = zod.object({
   "listingId": zod.string(),
   "listingTitle": zod.string(),
   "listingImageUrl": zod.string(),
-  "quantity": zod.number().int(),
+  "quantity": zod.int(),
   "unitPrice": zod.string(),
   "total": zod.string(),
   "currency": zod.string(),
@@ -2453,14 +2453,14 @@ export const ConfirmOrderResponse = zod.object({
   "buyerAvatarObjectPath": zod.string().nullish(),
   "sellerName": zod.string(),
   "sellerAvatarObjectPath": zod.string().nullish(),
-  "quantity": zod.number().int(),
+  "quantity": zod.int(),
   "unitPrice": zod.string(),
   "total": zod.string(),
   "currency": zod.string(),
-  "platformFeeMinor": zod.number().int().min(confirmOrderResponsePlatformFeeMinorMin),
-  "sellerAmountMinor": zod.number().int().min(confirmOrderResponseSellerAmountMinorMin),
-  "minorUnitScale": zod.number().int().min(confirmOrderResponseMinorUnitScaleMin).max(confirmOrderResponseMinorUnitScaleMax),
-  "commissionRateBps": zod.number().int().min(confirmOrderResponseCommissionRateBpsMin).max(confirmOrderResponseCommissionRateBpsMax),
+  "platformFeeMinor": zod.int().min(confirmOrderResponsePlatformFeeMinorMin),
+  "sellerAmountMinor": zod.int().min(confirmOrderResponseSellerAmountMinorMin),
+  "minorUnitScale": zod.int().min(confirmOrderResponseMinorUnitScaleMin).max(confirmOrderResponseMinorUnitScaleMax),
+  "commissionRateBps": zod.int().min(confirmOrderResponseCommissionRateBpsMin).max(confirmOrderResponseCommissionRateBpsMax),
   "fulfilmentType": zod.string(),
   "status": zod.enum(['CREATED', 'PAYMENT_PENDING', 'PAID', 'ACCEPTED', 'IN_PROGRESS', 'SELLER_MARKED_DELIVERED', 'BUYER_CONFIRMED', 'COMPLETED', 'CANCELLED', 'DISPUTED']),
   "createdAt": zod.string(),
@@ -2486,7 +2486,7 @@ export const ConfirmOrderResponse = zod.object({
   "listingId": zod.string(),
   "listingTitle": zod.string(),
   "listingImageUrl": zod.string(),
-  "quantity": zod.number().int(),
+  "quantity": zod.int(),
   "unitPrice": zod.string(),
   "total": zod.string(),
   "currency": zod.string(),
@@ -2539,14 +2539,14 @@ export const CancelOrderResponse = zod.object({
   "buyerAvatarObjectPath": zod.string().nullish(),
   "sellerName": zod.string(),
   "sellerAvatarObjectPath": zod.string().nullish(),
-  "quantity": zod.number().int(),
+  "quantity": zod.int(),
   "unitPrice": zod.string(),
   "total": zod.string(),
   "currency": zod.string(),
-  "platformFeeMinor": zod.number().int().min(cancelOrderResponsePlatformFeeMinorMin),
-  "sellerAmountMinor": zod.number().int().min(cancelOrderResponseSellerAmountMinorMin),
-  "minorUnitScale": zod.number().int().min(cancelOrderResponseMinorUnitScaleMin).max(cancelOrderResponseMinorUnitScaleMax),
-  "commissionRateBps": zod.number().int().min(cancelOrderResponseCommissionRateBpsMin).max(cancelOrderResponseCommissionRateBpsMax),
+  "platformFeeMinor": zod.int().min(cancelOrderResponsePlatformFeeMinorMin),
+  "sellerAmountMinor": zod.int().min(cancelOrderResponseSellerAmountMinorMin),
+  "minorUnitScale": zod.int().min(cancelOrderResponseMinorUnitScaleMin).max(cancelOrderResponseMinorUnitScaleMax),
+  "commissionRateBps": zod.int().min(cancelOrderResponseCommissionRateBpsMin).max(cancelOrderResponseCommissionRateBpsMax),
   "fulfilmentType": zod.string(),
   "status": zod.enum(['CREATED', 'PAYMENT_PENDING', 'PAID', 'ACCEPTED', 'IN_PROGRESS', 'SELLER_MARKED_DELIVERED', 'BUYER_CONFIRMED', 'COMPLETED', 'CANCELLED', 'DISPUTED']),
   "createdAt": zod.string(),
@@ -2572,7 +2572,7 @@ export const CancelOrderResponse = zod.object({
   "listingId": zod.string(),
   "listingTitle": zod.string(),
   "listingImageUrl": zod.string(),
-  "quantity": zod.number().int(),
+  "quantity": zod.int(),
   "unitPrice": zod.string(),
   "total": zod.string(),
   "currency": zod.string(),
@@ -2660,13 +2660,13 @@ export const GetAdminDisputesResponseItem = zod.object({
   "buyerName": zod.string(),
   "sellerId": zod.string(),
   "sellerName": zod.string(),
-  "quantity": zod.number().int(),
-  "subtotalMinor": zod.number().int().min(getAdminDisputesResponseSubtotalMinorMin),
+  "quantity": zod.int(),
+  "subtotalMinor": zod.int().min(getAdminDisputesResponseSubtotalMinorMin),
   "currencyCode": zod.string(),
-  "minorUnitScale": zod.number().int().min(getAdminDisputesResponseMinorUnitScaleMin).max(getAdminDisputesResponseMinorUnitScaleMax),
-  "commissionRateBps": zod.number().int().min(getAdminDisputesResponseCommissionRateBpsMin).max(getAdminDisputesResponseCommissionRateBpsMax),
-  "platformFeeMinor": zod.number().int().min(getAdminDisputesResponsePlatformFeeMinorMin),
-  "sellerAmountMinor": zod.number().int().min(getAdminDisputesResponseSellerAmountMinorMin),
+  "minorUnitScale": zod.int().min(getAdminDisputesResponseMinorUnitScaleMin).max(getAdminDisputesResponseMinorUnitScaleMax),
+  "commissionRateBps": zod.int().min(getAdminDisputesResponseCommissionRateBpsMin).max(getAdminDisputesResponseCommissionRateBpsMax),
+  "platformFeeMinor": zod.int().min(getAdminDisputesResponsePlatformFeeMinorMin),
+  "sellerAmountMinor": zod.int().min(getAdminDisputesResponseSellerAmountMinorMin),
   "createdAt": zod.string(),
   "resolution": zod.string().nullable(),
   "resolutionNote": zod.string().nullable(),
@@ -2710,9 +2710,9 @@ export const ResolveAdminDisputeResponse = zod.object({
   "resolutionNote": zod.string().nullable(),
   "resolvedAt": zod.string(),
   "resolvedBy": zod.string(),
-  "commissionRateBps": zod.number().int().min(resolveAdminDisputeResponseCommissionRateBpsMin).max(resolveAdminDisputeResponseCommissionRateBpsMax),
-  "platformFeeMinor": zod.number().int().min(resolveAdminDisputeResponsePlatformFeeMinorMin),
-  "sellerAmountMinor": zod.number().int().min(resolveAdminDisputeResponseSellerAmountMinorMin),
+  "commissionRateBps": zod.int().min(resolveAdminDisputeResponseCommissionRateBpsMin).max(resolveAdminDisputeResponseCommissionRateBpsMax),
+  "platformFeeMinor": zod.int().min(resolveAdminDisputeResponsePlatformFeeMinorMin),
+  "sellerAmountMinor": zod.int().min(resolveAdminDisputeResponseSellerAmountMinorMin),
   "sellerDueCreated": zod.boolean()
 })
 
@@ -2899,7 +2899,7 @@ export const PreviewAiConversationResponse = zod.object({
   "imageObjectPath": zod.string().min(1).max(previewAiConversationResponseBlocksItemPayloadPhotoSuggestionsItemImageObjectPathMax)
 })).max(previewAiConversationResponseBlocksItemPayloadPhotoSuggestionsMax).optional(),
   "managementPreview": zod.object({
-  "previewId": zod.string().uuid(),
+  "previewId": zod.uuid(),
   "action": zod.enum(['UPDATE', 'PAUSE', 'RESUME', 'ARCHIVE']),
   "listingId": zod.string(),
   "listingTitle": zod.string(),
@@ -2960,15 +2960,15 @@ export const PreviewAiConversationResponse = zod.object({
   "pricingMode": zod.enum(['FIXED', 'NEGOTIABLE', 'OPEN_TO_OFFERS']),
   "priceRepresentation": zod.enum(['FIXED', 'NEGOTIABLE', 'OPEN_TO_OFFERS', 'STARTING_FROM', 'QUOTE_REQUIRED']).optional().describe('What the price means. STARTING_FROM (a starting amount) and QUOTE_REQUIRED (no price; the seller quotes) are stored as pricingMode OPEN_TO_OFFERS and are never bought directly. Only FIXED is purchasable without an agreement; every representation accepts buyer proposals.'),
   "currency": zod.string(),
-  "availableQuantity": zod.number().int().min(previewAiConversationResponseBlocksItemPayloadListingsItemAvailableQuantityMin).nullable(),
-  "reservedQuantity": zod.number().int(),
+  "availableQuantity": zod.int().min(previewAiConversationResponseBlocksItemPayloadListingsItemAvailableQuantityMin).nullable(),
+  "reservedQuantity": zod.int(),
   "inventoryMode": zod.enum(['LIMITED', 'UNLIMITED']),
   "fulfilmentType": zod.enum(['PICKUP', 'DELIVERY', 'DIGITAL', 'SERVICE']),
   "sellerName": zod.string(),
   "sellerId": zod.string().optional(),
   "sellerAvatarObjectPath": zod.string().nullish(),
   "rating": zod.number(),
-  "reviewCount": zod.number().int().optional(),
+  "reviewCount": zod.int().optional(),
   "imageUrl": zod.string(),
   "imageUrls": zod.array(zod.string().max(previewAiConversationResponseBlocksItemPayloadListingsItemImageUrlsItemMax)).max(previewAiConversationResponseBlocksItemPayloadListingsItemImageUrlsMax).optional(),
   "contactPhone": zod.string().max(previewAiConversationResponseBlocksItemPayloadListingsItemContactPhoneMax).nullable(),
@@ -3029,11 +3029,11 @@ export const getAiLearningHistoryResponseCurrentTimeSecondsMax = 3600;
 
 
 export const GetAiLearningHistoryResponseItem = zod.object({
-  "id": zod.string().uuid(),
+  "id": zod.uuid(),
   "tutorialId": zod.enum(['SELL_FIRST_LISTING', 'PHOTO_FIRST_SELLING', 'PROMOTION_OVERVIEW', 'FEATURED_EXPLAINER', 'VIP_EXPLAINER', 'DEMAND_CAPTURE_EXPLAINER']),
   "eventType": zod.enum(['TUTORIAL_OPENED', 'PLAYBACK_STARTED', 'PLAYBACK_PROGRESS_MILESTONE', 'TEXT_FALLBACK_VIEWED', 'CONTINUATION_TRIGGERED']),
   "milestonePercent": zod.union([zod.literal(25),zod.literal(50),zod.literal(75),zod.literal(100),zod.literal(null)]).nullable(),
-  "currentTimeSeconds": zod.number().int().min(getAiLearningHistoryResponseCurrentTimeSecondsMin).max(getAiLearningHistoryResponseCurrentTimeSecondsMax).nullable(),
+  "currentTimeSeconds": zod.int().min(getAiLearningHistoryResponseCurrentTimeSecondsMin).max(getAiLearningHistoryResponseCurrentTimeSecondsMax).nullable(),
   "createdAt": zod.coerce.date()
 })
 export const GetAiLearningHistoryResponse = zod.array(GetAiLearningHistoryResponseItem).max(100)
@@ -3048,11 +3048,11 @@ export const createAiLearningHistoryEventBodyCurrentTimeSecondsMax = 3600;
 
 
 export const CreateAiLearningHistoryEventBody = zod.object({
-  "idempotencyKey": zod.string().uuid(),
+  "idempotencyKey": zod.uuid(),
   "tutorialId": zod.enum(['SELL_FIRST_LISTING', 'PHOTO_FIRST_SELLING', 'PROMOTION_OVERVIEW', 'FEATURED_EXPLAINER', 'VIP_EXPLAINER', 'DEMAND_CAPTURE_EXPLAINER']),
   "eventType": zod.enum(['TUTORIAL_OPENED', 'PLAYBACK_STARTED', 'PLAYBACK_PROGRESS_MILESTONE', 'TEXT_FALLBACK_VIEWED', 'CONTINUATION_TRIGGERED']),
   "milestonePercent": zod.union([zod.literal(25),zod.literal(50),zod.literal(75),zod.literal(100)]).optional(),
-  "currentTimeSeconds": zod.number().int().min(createAiLearningHistoryEventBodyCurrentTimeSecondsMin).max(createAiLearningHistoryEventBodyCurrentTimeSecondsMax).optional()
+  "currentTimeSeconds": zod.int().min(createAiLearningHistoryEventBodyCurrentTimeSecondsMin).max(createAiLearningHistoryEventBodyCurrentTimeSecondsMax).optional()
 })
 
 export const createAiLearningHistoryEventResponseCurrentTimeSecondsMin = 0;
@@ -3061,11 +3061,11 @@ export const createAiLearningHistoryEventResponseCurrentTimeSecondsMax = 3600;
 
 
 export const CreateAiLearningHistoryEventResponse = zod.object({
-  "id": zod.string().uuid(),
+  "id": zod.uuid(),
   "tutorialId": zod.enum(['SELL_FIRST_LISTING', 'PHOTO_FIRST_SELLING', 'PROMOTION_OVERVIEW', 'FEATURED_EXPLAINER', 'VIP_EXPLAINER', 'DEMAND_CAPTURE_EXPLAINER']),
   "eventType": zod.enum(['TUTORIAL_OPENED', 'PLAYBACK_STARTED', 'PLAYBACK_PROGRESS_MILESTONE', 'TEXT_FALLBACK_VIEWED', 'CONTINUATION_TRIGGERED']),
   "milestonePercent": zod.union([zod.literal(25),zod.literal(50),zod.literal(75),zod.literal(100),zod.literal(null)]).nullable(),
-  "currentTimeSeconds": zod.number().int().min(createAiLearningHistoryEventResponseCurrentTimeSecondsMin).max(createAiLearningHistoryEventResponseCurrentTimeSecondsMax).nullable(),
+  "currentTimeSeconds": zod.int().min(createAiLearningHistoryEventResponseCurrentTimeSecondsMin).max(createAiLearningHistoryEventResponseCurrentTimeSecondsMax).nullable(),
   "createdAt": zod.coerce.date()
 })
 
@@ -3088,16 +3088,16 @@ export const createAiGuestHandoffBodyContinuationListingIdMax = 200;
 
 
 export const CreateAiGuestHandoffBody = zod.object({
-  "handoffId": zod.string().uuid().describe('Stable, single-use guest handoff identifier; also scopes the resulting conversation ID.'),
+  "handoffId": zod.uuid().describe('Stable, single-use guest handoff identifier; also scopes the resulting conversation ID.'),
   "userId": zod.string().min(1).max(createAiGuestHandoffBodyUserIdMax).describe('Must match the authenticated user to prevent account-switch attachment.'),
   "marketId": zod.string().min(1).max(createAiGuestHandoffBodyMarketIdMax),
   "messages": zod.array(zod.object({
-  "id": zod.string().uuid(),
+  "id": zod.uuid(),
   "actor": zod.enum(['USER', 'ASSISTANT']),
   "body": zod.string().min(1).max(createAiGuestHandoffBodyMessagesItemBodyMax)
 })).max(createAiGuestHandoffBodyMessagesMax),
   "continuation": zod.object({
-  "messageId": zod.string().uuid(),
+  "messageId": zod.uuid(),
   "body": zod.string().min(1).max(createAiGuestHandoffBodyContinuationBodyMax),
   "listingId": zod.string().min(1).max(createAiGuestHandoffBodyContinuationListingIdMax).optional()
 }).optional()
@@ -3231,7 +3231,7 @@ export const CreateAiGuestHandoffResponse = zod.object({
   "imageObjectPath": zod.string().min(1).max(createAiGuestHandoffResponseMessagesItemBlocksItemPayloadPhotoSuggestionsItemImageObjectPathMax)
 })).max(createAiGuestHandoffResponseMessagesItemBlocksItemPayloadPhotoSuggestionsMax).optional(),
   "managementPreview": zod.object({
-  "previewId": zod.string().uuid(),
+  "previewId": zod.uuid(),
   "action": zod.enum(['UPDATE', 'PAUSE', 'RESUME', 'ARCHIVE']),
   "listingId": zod.string(),
   "listingTitle": zod.string(),
@@ -3292,15 +3292,15 @@ export const CreateAiGuestHandoffResponse = zod.object({
   "pricingMode": zod.enum(['FIXED', 'NEGOTIABLE', 'OPEN_TO_OFFERS']),
   "priceRepresentation": zod.enum(['FIXED', 'NEGOTIABLE', 'OPEN_TO_OFFERS', 'STARTING_FROM', 'QUOTE_REQUIRED']).optional().describe('What the price means. STARTING_FROM (a starting amount) and QUOTE_REQUIRED (no price; the seller quotes) are stored as pricingMode OPEN_TO_OFFERS and are never bought directly. Only FIXED is purchasable without an agreement; every representation accepts buyer proposals.'),
   "currency": zod.string(),
-  "availableQuantity": zod.number().int().min(createAiGuestHandoffResponseMessagesItemBlocksItemPayloadListingsItemAvailableQuantityMin).nullable(),
-  "reservedQuantity": zod.number().int(),
+  "availableQuantity": zod.int().min(createAiGuestHandoffResponseMessagesItemBlocksItemPayloadListingsItemAvailableQuantityMin).nullable(),
+  "reservedQuantity": zod.int(),
   "inventoryMode": zod.enum(['LIMITED', 'UNLIMITED']),
   "fulfilmentType": zod.enum(['PICKUP', 'DELIVERY', 'DIGITAL', 'SERVICE']),
   "sellerName": zod.string(),
   "sellerId": zod.string().optional(),
   "sellerAvatarObjectPath": zod.string().nullish(),
   "rating": zod.number(),
-  "reviewCount": zod.number().int().optional(),
+  "reviewCount": zod.int().optional(),
   "imageUrl": zod.string(),
   "imageUrls": zod.array(zod.string().max(createAiGuestHandoffResponseMessagesItemBlocksItemPayloadListingsItemImageUrlsItemMax)).max(createAiGuestHandoffResponseMessagesItemBlocksItemPayloadListingsItemImageUrlsMax).optional(),
   "contactPhone": zod.string().max(createAiGuestHandoffResponseMessagesItemBlocksItemPayloadListingsItemContactPhoneMax).nullable(),
@@ -3467,7 +3467,7 @@ export const GetAiConversationResponse = zod.object({
   "imageObjectPath": zod.string().min(1).max(getAiConversationResponseMessagesItemBlocksItemPayloadPhotoSuggestionsItemImageObjectPathMax)
 })).max(getAiConversationResponseMessagesItemBlocksItemPayloadPhotoSuggestionsMax).optional(),
   "managementPreview": zod.object({
-  "previewId": zod.string().uuid(),
+  "previewId": zod.uuid(),
   "action": zod.enum(['UPDATE', 'PAUSE', 'RESUME', 'ARCHIVE']),
   "listingId": zod.string(),
   "listingTitle": zod.string(),
@@ -3528,15 +3528,15 @@ export const GetAiConversationResponse = zod.object({
   "pricingMode": zod.enum(['FIXED', 'NEGOTIABLE', 'OPEN_TO_OFFERS']),
   "priceRepresentation": zod.enum(['FIXED', 'NEGOTIABLE', 'OPEN_TO_OFFERS', 'STARTING_FROM', 'QUOTE_REQUIRED']).optional().describe('What the price means. STARTING_FROM (a starting amount) and QUOTE_REQUIRED (no price; the seller quotes) are stored as pricingMode OPEN_TO_OFFERS and are never bought directly. Only FIXED is purchasable without an agreement; every representation accepts buyer proposals.'),
   "currency": zod.string(),
-  "availableQuantity": zod.number().int().min(getAiConversationResponseMessagesItemBlocksItemPayloadListingsItemAvailableQuantityMin).nullable(),
-  "reservedQuantity": zod.number().int(),
+  "availableQuantity": zod.int().min(getAiConversationResponseMessagesItemBlocksItemPayloadListingsItemAvailableQuantityMin).nullable(),
+  "reservedQuantity": zod.int(),
   "inventoryMode": zod.enum(['LIMITED', 'UNLIMITED']),
   "fulfilmentType": zod.enum(['PICKUP', 'DELIVERY', 'DIGITAL', 'SERVICE']),
   "sellerName": zod.string(),
   "sellerId": zod.string().optional(),
   "sellerAvatarObjectPath": zod.string().nullish(),
   "rating": zod.number(),
-  "reviewCount": zod.number().int().optional(),
+  "reviewCount": zod.int().optional(),
   "imageUrl": zod.string(),
   "imageUrls": zod.array(zod.string().max(getAiConversationResponseMessagesItemBlocksItemPayloadListingsItemImageUrlsItemMax)).max(getAiConversationResponseMessagesItemBlocksItemPayloadListingsItemImageUrlsMax).optional(),
   "contactPhone": zod.string().max(getAiConversationResponseMessagesItemBlocksItemPayloadListingsItemContactPhoneMax).nullable(),
@@ -3741,7 +3741,7 @@ export const CopyAiConversationResponse = zod.object({
   "imageObjectPath": zod.string().min(1).max(copyAiConversationResponseMessagesItemBlocksItemPayloadPhotoSuggestionsItemImageObjectPathMax)
 })).max(copyAiConversationResponseMessagesItemBlocksItemPayloadPhotoSuggestionsMax).optional(),
   "managementPreview": zod.object({
-  "previewId": zod.string().uuid(),
+  "previewId": zod.uuid(),
   "action": zod.enum(['UPDATE', 'PAUSE', 'RESUME', 'ARCHIVE']),
   "listingId": zod.string(),
   "listingTitle": zod.string(),
@@ -3802,15 +3802,15 @@ export const CopyAiConversationResponse = zod.object({
   "pricingMode": zod.enum(['FIXED', 'NEGOTIABLE', 'OPEN_TO_OFFERS']),
   "priceRepresentation": zod.enum(['FIXED', 'NEGOTIABLE', 'OPEN_TO_OFFERS', 'STARTING_FROM', 'QUOTE_REQUIRED']).optional().describe('What the price means. STARTING_FROM (a starting amount) and QUOTE_REQUIRED (no price; the seller quotes) are stored as pricingMode OPEN_TO_OFFERS and are never bought directly. Only FIXED is purchasable without an agreement; every representation accepts buyer proposals.'),
   "currency": zod.string(),
-  "availableQuantity": zod.number().int().min(copyAiConversationResponseMessagesItemBlocksItemPayloadListingsItemAvailableQuantityMin).nullable(),
-  "reservedQuantity": zod.number().int(),
+  "availableQuantity": zod.int().min(copyAiConversationResponseMessagesItemBlocksItemPayloadListingsItemAvailableQuantityMin).nullable(),
+  "reservedQuantity": zod.int(),
   "inventoryMode": zod.enum(['LIMITED', 'UNLIMITED']),
   "fulfilmentType": zod.enum(['PICKUP', 'DELIVERY', 'DIGITAL', 'SERVICE']),
   "sellerName": zod.string(),
   "sellerId": zod.string().optional(),
   "sellerAvatarObjectPath": zod.string().nullish(),
   "rating": zod.number(),
-  "reviewCount": zod.number().int().optional(),
+  "reviewCount": zod.int().optional(),
   "imageUrl": zod.string(),
   "imageUrls": zod.array(zod.string().max(copyAiConversationResponseMessagesItemBlocksItemPayloadListingsItemImageUrlsItemMax)).max(copyAiConversationResponseMessagesItemBlocksItemPayloadListingsItemImageUrlsMax).optional(),
   "contactPhone": zod.string().max(copyAiConversationResponseMessagesItemBlocksItemPayloadListingsItemContactPhoneMax).nullable(),
@@ -3875,9 +3875,9 @@ export const sendAiConversationTurnBodyLocationNoteMax = 300;
 export const SendAiConversationTurnBody = zod.object({
   "message": zod.string().min(1).max(sendAiConversationTurnBodyMessageMax),
   "reasoningEffort": zod.enum(['low', 'medium', 'high']).optional().describe('Reasoning effort for the server-selected GPT-OSS model.'),
-  "clientMessageId": zod.string().uuid().optional().describe('Stable identifier for safe turn retries.'),
+  "clientMessageId": zod.uuid().optional().describe('Stable identifier for safe turn retries.'),
   "imageObjectPaths": zod.array(zod.string().min(1).max(sendAiConversationTurnBodyImageObjectPathsItemMax)).max(sendAiConversationTurnBodyImageObjectPathsMax).optional(),
-  "locationRequestId": zod.string().uuid().optional().describe('The delivery location request or preview this explicit submission answers.'),
+  "locationRequestId": zod.uuid().optional().describe('The delivery location request or preview this explicit submission answers.'),
   "location": zod.object({
   "source": zod.enum(['DEVICE', 'MANUAL']),
   "latitude": zod.number().min(sendAiConversationTurnBodyLocationLatitudeMin).max(sendAiConversationTurnBodyLocationLatitudeMax).optional(),
@@ -3905,7 +3905,7 @@ export const addAiListingToCartBodyResourceIdMax = 200;
 
 
 export const AddAiListingToCartBody = zod.object({
-  "resultSetId": zod.string().uuid(),
+  "resultSetId": zod.uuid(),
   "resourceId": zod.string().min(1).max(addAiListingToCartBodyResourceIdMax)
 })
 
@@ -4029,7 +4029,7 @@ export const AddAiListingToCartResponse = zod.object({
   "imageObjectPath": zod.string().min(1).max(addAiListingToCartResponseAssistantMessageBlocksItemPayloadPhotoSuggestionsItemImageObjectPathMax)
 })).max(addAiListingToCartResponseAssistantMessageBlocksItemPayloadPhotoSuggestionsMax).optional(),
   "managementPreview": zod.object({
-  "previewId": zod.string().uuid(),
+  "previewId": zod.uuid(),
   "action": zod.enum(['UPDATE', 'PAUSE', 'RESUME', 'ARCHIVE']),
   "listingId": zod.string(),
   "listingTitle": zod.string(),
@@ -4090,15 +4090,15 @@ export const AddAiListingToCartResponse = zod.object({
   "pricingMode": zod.enum(['FIXED', 'NEGOTIABLE', 'OPEN_TO_OFFERS']),
   "priceRepresentation": zod.enum(['FIXED', 'NEGOTIABLE', 'OPEN_TO_OFFERS', 'STARTING_FROM', 'QUOTE_REQUIRED']).optional().describe('What the price means. STARTING_FROM (a starting amount) and QUOTE_REQUIRED (no price; the seller quotes) are stored as pricingMode OPEN_TO_OFFERS and are never bought directly. Only FIXED is purchasable without an agreement; every representation accepts buyer proposals.'),
   "currency": zod.string(),
-  "availableQuantity": zod.number().int().min(addAiListingToCartResponseAssistantMessageBlocksItemPayloadListingsItemAvailableQuantityMin).nullable(),
-  "reservedQuantity": zod.number().int(),
+  "availableQuantity": zod.int().min(addAiListingToCartResponseAssistantMessageBlocksItemPayloadListingsItemAvailableQuantityMin).nullable(),
+  "reservedQuantity": zod.int(),
   "inventoryMode": zod.enum(['LIMITED', 'UNLIMITED']),
   "fulfilmentType": zod.enum(['PICKUP', 'DELIVERY', 'DIGITAL', 'SERVICE']),
   "sellerName": zod.string(),
   "sellerId": zod.string().optional(),
   "sellerAvatarObjectPath": zod.string().nullish(),
   "rating": zod.number(),
-  "reviewCount": zod.number().int().optional(),
+  "reviewCount": zod.int().optional(),
   "imageUrl": zod.string(),
   "imageUrls": zod.array(zod.string().max(addAiListingToCartResponseAssistantMessageBlocksItemPayloadListingsItemImageUrlsItemMax)).max(addAiListingToCartResponseAssistantMessageBlocksItemPayloadListingsItemImageUrlsMax).optional(),
   "contactPhone": zod.string().max(addAiListingToCartResponseAssistantMessageBlocksItemPayloadListingsItemContactPhoneMax).nullable(),
@@ -4135,7 +4135,7 @@ export const AddAiListingToCartResponse = zod.object({
  */
 export const AcknowledgeAiControlActionParams = zod.object({
   "id": zod.coerce.string(),
-  "resultSetId": zod.coerce.string().pipe(zod.string().uuid())
+  "resultSetId": zod.uuid()
 })
 
 export const AcknowledgeAiControlActionBody = zod.object({
@@ -4151,7 +4151,7 @@ export const AcknowledgeAiControlActionResponse = zod.object({
  * @summary Confirm or cancel an authenticated seller listing preview
  */
 export const ApplyAiListingManagementPreviewParams = zod.object({
-  "id": zod.coerce.string().pipe(zod.string().uuid())
+  "id": zod.uuid()
 })
 
 export const ApplyAiListingManagementPreviewBody = zod.object({
@@ -4168,7 +4168,7 @@ export const ApplyAiListingManagementPreviewResponse = zod.object({
  * @summary Confirm or cancel one exact pending employment action in the actor's own conversation
  */
 export const ApplyAiEmploymentActionParams = zod.object({
-  "id": zod.coerce.string().pipe(zod.string().uuid())
+  "id": zod.uuid()
 })
 
 export const ApplyAiEmploymentActionBody = zod.object({
@@ -4185,7 +4185,7 @@ export const ApplyAiEmploymentActionResponse = zod.object({
  * @summary Confirm or cancel one exact pending promotion review in the seller's own conversation
  */
 export const ApplyAiPromotionActionParams = zod.object({
-  "id": zod.coerce.string().pipe(zod.string().uuid())
+  "id": zod.uuid()
 })
 
 export const ApplyAiPromotionActionBody = zod.object({
@@ -4232,10 +4232,10 @@ export const GetPromotionProductsResponseItem = zod.object({
   "placement": zod.enum(['SEARCH_AND_CHAT', 'FEATURED', 'VIP', 'REFRESH', 'SPONSORED_SEARCH', 'SPONSORED_RECOMMENDATION', 'DEMAND', 'NONE']),
   "productType": zod.enum(['STANDARD_PROMOTION', 'FEATURED_LISTING', 'VIP_LISTING', 'REFRESH_LISTING', 'SPONSORED_SEARCH', 'SPONSORED_RECOMMENDATION', 'DEMAND_CAPTURE', 'PROMOTION_BUNDLE', 'EXTRA_LISTING_QUOTA', 'DINAR_BUSINESS', 'SPONSORED_SURFACE']).optional(),
   "chargingMode": zod.string().optional(),
-  "pricingVersion": zod.number().int().optional(),
-  "priceMinor": zod.number().int().min(1),
+  "pricingVersion": zod.int().optional(),
+  "priceMinor": zod.int().min(1),
   "currencyCode": zod.string().regex(getPromotionProductsResponseCurrencyCodeRegExp),
-  "durationDays": zod.number().int().min(1).max(getPromotionProductsResponseDurationDaysMax),
+  "durationDays": zod.int().min(1).max(getPromotionProductsResponseDurationDaysMax),
   "enabled": zod.boolean(),
   "createdAt": zod.coerce.date().optional(),
   "updatedAt": zod.coerce.date().optional()
@@ -4267,10 +4267,10 @@ export const PreviewListingPromotionResponse = zod.object({
   "productId": zod.string(),
   "productName": zod.string(),
   "categoryId": zod.string(),
-  "priceMinor": zod.number().int().min(1),
+  "priceMinor": zod.int().min(1),
   "currencyCode": zod.string(),
   "placement": zod.enum(['SEARCH_AND_CHAT']),
-  "durationDays": zod.number().int().min(1).max(previewListingPromotionResponseDurationDaysMax),
+  "durationDays": zod.int().min(1).max(previewListingPromotionResponseDurationDaysMax),
   "simulationOnly": zod.literal(true),
   "simulationEnabled": zod.boolean(),
   "warning": zod.string()
@@ -4308,8 +4308,8 @@ export const ConfirmListingPromotionResponse = zod.object({
   "productName": zod.string(),
   "placement": zod.enum(['SEARCH_AND_CHAT', 'FEATURED', 'VIP', 'REFRESH', 'SPONSORED_SEARCH', 'SPONSORED_RECOMMENDATION', 'DEMAND']),
   "placementLabel": zod.string(),
-  "durationDays": zod.number().int().min(1).max(confirmListingPromotionResponseDurationDaysMax),
-  "priceMinor": zod.number().int().min(1),
+  "durationDays": zod.int().min(1).max(confirmListingPromotionResponseDurationDaysMax),
+  "priceMinor": zod.int().min(1),
   "currencyCode": zod.string(),
   "priceLabel": zod.string(),
   "status": zod.enum(['PENDING_PAYMENT', 'ACTIVE', 'PAUSED', 'EXPIRED', 'CANCELLED', 'PAYMENT_FAILED', 'BUDGET_EXHAUSTED']),
@@ -4352,8 +4352,8 @@ export const GetSellerPromotionsResponseItem = zod.object({
   "productName": zod.string(),
   "placement": zod.enum(['SEARCH_AND_CHAT', 'FEATURED', 'VIP', 'REFRESH', 'SPONSORED_SEARCH', 'SPONSORED_RECOMMENDATION', 'DEMAND']),
   "placementLabel": zod.string(),
-  "durationDays": zod.number().int().min(1).max(getSellerPromotionsResponseDurationDaysMax),
-  "priceMinor": zod.number().int().min(1),
+  "durationDays": zod.int().min(1).max(getSellerPromotionsResponseDurationDaysMax),
+  "priceMinor": zod.int().min(1),
   "currencyCode": zod.string(),
   "priceLabel": zod.string(),
   "status": zod.enum(['PENDING_PAYMENT', 'ACTIVE', 'PAUSED', 'EXPIRED', 'CANCELLED', 'PAYMENT_FAILED', 'BUDGET_EXHAUSTED']),
@@ -4401,8 +4401,8 @@ export const GetSellerPromotionResponse = zod.object({
   "productName": zod.string(),
   "placement": zod.enum(['SEARCH_AND_CHAT', 'FEATURED', 'VIP', 'REFRESH', 'SPONSORED_SEARCH', 'SPONSORED_RECOMMENDATION', 'DEMAND']),
   "placementLabel": zod.string(),
-  "durationDays": zod.number().int().min(1).max(getSellerPromotionResponseDurationDaysMax),
-  "priceMinor": zod.number().int().min(1),
+  "durationDays": zod.int().min(1).max(getSellerPromotionResponseDurationDaysMax),
+  "priceMinor": zod.int().min(1),
   "currencyCode": zod.string(),
   "priceLabel": zod.string(),
   "status": zod.enum(['PENDING_PAYMENT', 'ACTIVE', 'PAUSED', 'EXPIRED', 'CANCELLED', 'PAYMENT_FAILED', 'BUDGET_EXHAUSTED']),
@@ -4454,8 +4454,8 @@ export const ChangeSellerPromotionResponse = zod.object({
   "productName": zod.string(),
   "placement": zod.enum(['SEARCH_AND_CHAT', 'FEATURED', 'VIP', 'REFRESH', 'SPONSORED_SEARCH', 'SPONSORED_RECOMMENDATION', 'DEMAND']),
   "placementLabel": zod.string(),
-  "durationDays": zod.number().int().min(1).max(changeSellerPromotionResponseDurationDaysMax),
-  "priceMinor": zod.number().int().min(1),
+  "durationDays": zod.int().min(1).max(changeSellerPromotionResponseDurationDaysMax),
+  "priceMinor": zod.int().min(1),
   "currencyCode": zod.string(),
   "priceLabel": zod.string(),
   "status": zod.enum(['PENDING_PAYMENT', 'ACTIVE', 'PAUSED', 'EXPIRED', 'CANCELLED', 'PAYMENT_FAILED', 'BUDGET_EXHAUSTED']),
@@ -4502,8 +4502,8 @@ export const GetAdminMarketPromotionsResponseItem = zod.object({
   "productName": zod.string(),
   "placement": zod.enum(['SEARCH_AND_CHAT', 'FEATURED', 'VIP', 'REFRESH', 'SPONSORED_SEARCH', 'SPONSORED_RECOMMENDATION', 'DEMAND']),
   "placementLabel": zod.string(),
-  "durationDays": zod.number().int().min(1).max(getAdminMarketPromotionsResponseOneDurationDaysMax),
-  "priceMinor": zod.number().int().min(1),
+  "durationDays": zod.int().min(1).max(getAdminMarketPromotionsResponseOneDurationDaysMax),
+  "priceMinor": zod.int().min(1),
   "currencyCode": zod.string(),
   "priceLabel": zod.string(),
   "status": zod.enum(['PENDING_PAYMENT', 'ACTIVE', 'PAUSED', 'EXPIRED', 'CANCELLED', 'PAYMENT_FAILED', 'BUDGET_EXHAUSTED']),
@@ -4555,10 +4555,10 @@ export const GetAdminPromotionProductsResponseItem = zod.object({
   "placement": zod.enum(['SEARCH_AND_CHAT', 'FEATURED', 'VIP', 'REFRESH', 'SPONSORED_SEARCH', 'SPONSORED_RECOMMENDATION', 'DEMAND', 'NONE']),
   "productType": zod.enum(['STANDARD_PROMOTION', 'FEATURED_LISTING', 'VIP_LISTING', 'REFRESH_LISTING', 'SPONSORED_SEARCH', 'SPONSORED_RECOMMENDATION', 'DEMAND_CAPTURE', 'PROMOTION_BUNDLE', 'EXTRA_LISTING_QUOTA', 'DINAR_BUSINESS', 'SPONSORED_SURFACE']).optional(),
   "chargingMode": zod.string().optional(),
-  "pricingVersion": zod.number().int().optional(),
-  "priceMinor": zod.number().int().min(1),
+  "pricingVersion": zod.int().optional(),
+  "priceMinor": zod.int().min(1),
   "currencyCode": zod.string().regex(getAdminPromotionProductsResponseCurrencyCodeRegExp),
-  "durationDays": zod.number().int().min(1).max(getAdminPromotionProductsResponseDurationDaysMax),
+  "durationDays": zod.int().min(1).max(getAdminPromotionProductsResponseDurationDaysMax),
   "enabled": zod.boolean(),
   "createdAt": zod.coerce.date().optional(),
   "updatedAt": zod.coerce.date().optional()
@@ -4587,8 +4587,8 @@ export const CreateAdminPromotionProductBody = zod.object({
   "categoryId": zod.string().min(1).max(createAdminPromotionProductBodyCategoryIdMax),
   "name": zod.string().min(1).max(createAdminPromotionProductBodyNameMax),
   "placement": zod.enum(['SEARCH_AND_CHAT']),
-  "priceMinor": zod.number().int().min(1).max(createAdminPromotionProductBodyPriceMinorMax),
-  "durationDays": zod.number().int().min(1).max(createAdminPromotionProductBodyDurationDaysMax),
+  "priceMinor": zod.int().min(1).max(createAdminPromotionProductBodyPriceMinorMax),
+  "durationDays": zod.int().min(1).max(createAdminPromotionProductBodyDurationDaysMax),
   "enabled": zod.boolean().default(createAdminPromotionProductBodyEnabledDefault)
 })
 
@@ -4606,10 +4606,10 @@ export const CreateAdminPromotionProductResponse = zod.object({
   "placement": zod.enum(['SEARCH_AND_CHAT', 'FEATURED', 'VIP', 'REFRESH', 'SPONSORED_SEARCH', 'SPONSORED_RECOMMENDATION', 'DEMAND', 'NONE']),
   "productType": zod.enum(['STANDARD_PROMOTION', 'FEATURED_LISTING', 'VIP_LISTING', 'REFRESH_LISTING', 'SPONSORED_SEARCH', 'SPONSORED_RECOMMENDATION', 'DEMAND_CAPTURE', 'PROMOTION_BUNDLE', 'EXTRA_LISTING_QUOTA', 'DINAR_BUSINESS', 'SPONSORED_SURFACE']).optional(),
   "chargingMode": zod.string().optional(),
-  "pricingVersion": zod.number().int().optional(),
-  "priceMinor": zod.number().int().min(1),
+  "pricingVersion": zod.int().optional(),
+  "priceMinor": zod.int().min(1),
   "currencyCode": zod.string().regex(createAdminPromotionProductResponseCurrencyCodeRegExp),
-  "durationDays": zod.number().int().min(1).max(createAdminPromotionProductResponseDurationDaysMax),
+  "durationDays": zod.int().min(1).max(createAdminPromotionProductResponseDurationDaysMax),
   "enabled": zod.boolean(),
   "createdAt": zod.coerce.date().optional(),
   "updatedAt": zod.coerce.date().optional()
@@ -4639,9 +4639,9 @@ export const UpdateAdminPromotionProductBody = zod.object({
   "categoryId": zod.string().min(1).max(updateAdminPromotionProductBodyCategoryIdMax).optional(),
   "name": zod.string().min(1).max(updateAdminPromotionProductBodyNameMax).optional(),
   "placement": zod.enum(['SEARCH_AND_CHAT']).optional(),
-  "priceMinor": zod.number().int().min(1).max(updateAdminPromotionProductBodyPriceMinorMax).optional(),
+  "priceMinor": zod.int().min(1).max(updateAdminPromotionProductBodyPriceMinorMax).optional(),
   "currencyCode": zod.string().regex(updateAdminPromotionProductBodyCurrencyCodeRegExp).optional(),
-  "durationDays": zod.number().int().min(1).max(updateAdminPromotionProductBodyDurationDaysMax).optional(),
+  "durationDays": zod.int().min(1).max(updateAdminPromotionProductBodyDurationDaysMax).optional(),
   "enabled": zod.boolean().optional()
 })
 
@@ -4659,10 +4659,10 @@ export const UpdateAdminPromotionProductResponse = zod.object({
   "placement": zod.enum(['SEARCH_AND_CHAT', 'FEATURED', 'VIP', 'REFRESH', 'SPONSORED_SEARCH', 'SPONSORED_RECOMMENDATION', 'DEMAND', 'NONE']),
   "productType": zod.enum(['STANDARD_PROMOTION', 'FEATURED_LISTING', 'VIP_LISTING', 'REFRESH_LISTING', 'SPONSORED_SEARCH', 'SPONSORED_RECOMMENDATION', 'DEMAND_CAPTURE', 'PROMOTION_BUNDLE', 'EXTRA_LISTING_QUOTA', 'DINAR_BUSINESS', 'SPONSORED_SURFACE']).optional(),
   "chargingMode": zod.string().optional(),
-  "pricingVersion": zod.number().int().optional(),
-  "priceMinor": zod.number().int().min(1),
+  "pricingVersion": zod.int().optional(),
+  "priceMinor": zod.int().min(1),
   "currencyCode": zod.string().regex(updateAdminPromotionProductResponseCurrencyCodeRegExp),
-  "durationDays": zod.number().int().min(1).max(updateAdminPromotionProductResponseDurationDaysMax),
+  "durationDays": zod.int().min(1).max(updateAdminPromotionProductResponseDurationDaysMax),
   "enabled": zod.boolean(),
   "createdAt": zod.coerce.date().optional(),
   "updatedAt": zod.coerce.date().optional()
