@@ -54,4 +54,8 @@ test("one cart intent keeps one key across a reload; a new cart or a finished or
     checkoutFingerprint([apples, bread], "اتصل قبل التوصيل"),
   );
   assert.notEqual(withInstructions, first, "new delivery instructions are a new intent");
+  assert.ok(
+    ![...store.values()].some((value) => value.includes("اتصل قبل التوصيل")),
+    "delivery instructions are never persisted in browser storage",
+  );
 });
