@@ -62,8 +62,8 @@ jobs:
       - name: Build web
         run: pnpm --filter @workspace/dinar run build
 
-      - name: Install Chromium (browser journeys)
-        if: contains(env.SUITE, 'browser-journey')
+      - name: Install Chromium (browser journeys and XSS acceptance)
+        if: contains(env.SUITE, 'browser-journey') || contains(env.SUITE, 'security-acceptance')
         working-directory: artifacts/dinar
         run: |
           pnpm exec playwright install --with-deps chromium

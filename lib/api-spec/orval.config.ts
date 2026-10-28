@@ -60,10 +60,9 @@ export default defineConfig({
       prettier: true,
       override: {
         zod: {
-          // Orval resolves `auto` from lib/api-spec/package.json, which has no
-          // zod dependency, so orval >= 8.23 falls back to Zod 4 syntax while
-          // the catalog installs zod 3. Pin to match the catalog.
-          version: 3,
+          // The workspace catalog installs zod 4 (GHSA-mrhx-c7xc-m3w5). Pin the
+          // generator to the same major so committed output survives regeneration.
+          version: 4,
           coerce: {
             query: ['boolean', 'number', 'string'],
             param: ['boolean', 'number', 'string'],
