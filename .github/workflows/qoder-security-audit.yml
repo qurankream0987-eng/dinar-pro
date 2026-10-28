@@ -5,6 +5,9 @@ name: qoder-security-audit
 # no database, no provider keys, no paid calls.
 
 on:
+  push:
+    branches:
+      - qoder/09-launch-gates
   workflow_dispatch:
 
 concurrency:
