@@ -119,17 +119,17 @@ const seller = await register("seller");
 const buyer = await register("buyer");
 
 const carA = await publish(seller, {
-  title: "سيارة تويوتا كورولا 2019", price: "7800", categoryId: "cars", category: "سيارات",
+  title: "سيارة تويوتا كورولا 2019", price: "7800", categoryId: "other", category: "أخرى",
   description: "سيارة بحالة جيدة، صيانة منتظمة",
-  attributes: { make: "تويوتا", model: "كورولا", year: 2019, condition: "مستعمل", mileage: 32000 }, quantity: 4,
+  attributes: { condition: "مستعمل", mileage: 32000 }, quantity: 4,
 });
 const carB = await publish(seller, {
-  title: "سيارة هوندا سيفيك 2020", price: "9200", categoryId: "cars", category: "سيارات",
+  title: "سيارة هوندا سيفيك 2020", price: "9200", categoryId: "other", category: "أخرى",
   description: "سيارة عائلية، استخدام خفيف",
-  attributes: { make: "هوندا", model: "سيفيك", year: 2020, condition: "مستعمل", mileage: 51000 }, quantity: 2,
+  attributes: { condition: "مستعمل", mileage: 51000 }, quantity: 2,
 });
-// The cars schema refuses keys it does not define, so the hours and inspection facts live on a
-// generic listing (the same place SC06 records them).
+// The generic category accepts the fact-only fields; the cars schema refuses keys it does not
+// define, and this suite asks about records, not about category-specific publishing rules.
 const machine = await publish(seller, {
   title: "ماكينة تغليف صناعية", price: "3100", categoryId: "other", category: "أخرى",
   description: "ماكينة تغليف صناعية مستعملة",
@@ -138,7 +138,7 @@ const machine = await publish(seller, {
 const flat = await publish(seller, {
   title: "شقة مفروشة", price: "550", categoryId: "property", category: "عقارات",
   description: "شقة مفروشة قريبة من الخدمات",
-  attributes: { propertyType: "شقة", transactionType: "إيجار", bedrooms: 3, area: 120 }, quantity: 2,
+  attributes: { propertyType: "شقة", transactionType: "إيجار", bedrooms: 3, area: 120 }, quantity: 1,
 });
 const cleaning = await publish(seller, {
   title: "خدمة تنظيف", price: "25", categoryId: "services", category: "خدمات",
@@ -160,7 +160,7 @@ await focused("MIX-1", "a spec question then a stock question about the same lis
   assert.equal(mileage.payload?.surface, "CLARIFY");
 
   const stock = await turn(buyer, conv, "كم المتبقي؟");
-  assert.match(stock.body, /المتاح الآن[^]*\b4\b/u, `the stock layer answers the same listing: ${stock.body}`);
+  assert.match(stock.body, /المتاح الآن من «[^»]*»\s*4\b/u, `the stock layer answers the same listing: ${stock.body}`);
   assert.match(stock.body, /سجل الإعلان/u);
   assert.equal(stock.payload?.surface, "CLARIFY");
 });
@@ -171,14 +171,14 @@ await focused("MIX-2", "stock, then a spec fact, then stock again — the questi
   assert.ok(listingIds(found.payload).includes(machine.id), `the machine is in view: ${found.body}`);
 
   const first = await turn(buyer, conv, "كم حبة باقي؟");
-  assert.match(first.body, /المتاح الآن[^]*\b3\b/u, `stock first: ${first.body}`);
+  assert.match(first.body, /المتاح الآن من «[^»]*»\s*3\b/u, `stock first: ${first.body}`);
 
   const inspection = await turn(buyer, conv, "هل عليها فحص؟");
   assert.match(inspection.body, /مفحوصة بالكامل/u, `the inspection fact is quoted: ${inspection.body}`);
   assert.doesNotMatch(inspection.body, /المتاح الآن/u, "a fact question is not a stock answer");
 
   const second = await turn(buyer, conv, "هل المنتج متوفر؟");
-  assert.match(second.body, /المتاح الآن[^]*\b3\b/u, `stock again, unchanged: ${second.body}`);
+  assert.match(second.body, /المتاح الآن من «[^»]*»\s*3\b/u, `stock again, unchanged: ${second.body}`);
 });
 
 await focused("MIX-3", "two listings in view: each layer resolves the same ordinal to the same listing", async () => {
@@ -221,7 +221,7 @@ await focused("MIX-4", "a registry characteristic and the stock of a flat in one
   assert.match(bedrooms.body, /\b3\b/u, `the recorded bedrooms are answered: ${bedrooms.body}`);
 
   const stock = await turn(buyer, conv, "كم المتبقي؟");
-  assert.match(stock.body, /المتاح الآن[^]*\b2\b/u, `the flat's two units: ${stock.body}`);
+  assert.match(stock.body, /المتاح الآن من «[^»]*»\s*1\b/u, `the flat's single unit: ${stock.body}`);
 });
 
 await focused("MIX-5", "an unrecorded service fact opens an unsent review; its stock stays unlimited", async () => {
