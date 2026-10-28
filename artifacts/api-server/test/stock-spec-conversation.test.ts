@@ -14,7 +14,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { eq, inArray } from "drizzle-orm";
-import { db, marketplaceInquiries, offers, orderItems } from "@workspace/db";
+import { db, aiResultSets, marketplaceInquiries, offers, orderItems } from "@workspace/db";
 import app from "../src/app";
 import { getModelGatewayCallCount } from "../src/ai/model-gateway";
 import { requireSafeReplitDevelopmentDatabase } from "./safe-development-database";
@@ -155,7 +155,9 @@ await focused("MIX-1", "a spec question then a stock question about the same lis
   assert.ok(listingIds(found.payload).includes(carA.id), `the car is in view: ${found.body}`);
 
   const mileage = await turn(buyer, conv, "كم ماشي؟");
-  assert.match(mileage.body, /ممشى/u, `the spec layer names the mileage: ${mileage.body}`);
+  const sets = await db.select({ query: aiResultSets.query, ids: aiResultSets.resourceIds })
+    .from(aiResultSets).where(eq(aiResultSets.conversationId, conv));
+  assert.match(mileage.body, /ممشى/u, `the spec layer names the mileage: ${mileage.body} | search=${found.payload?.surface} | sets=${JSON.stringify(sets).slice(0, 500)}`);
   assert.match(mileage.body, /32,000/u, `the recorded mileage is answered: ${mileage.body}`);
   assert.equal(mileage.payload?.surface, "CLARIFY");
 
