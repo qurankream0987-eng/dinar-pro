@@ -4135,7 +4135,7 @@ export const AddAiListingToCartResponse = zod.object({
  */
 export const AcknowledgeAiControlActionParams = zod.object({
   "id": zod.coerce.string(),
-  "resultSetId": zod.coerce.string().uuid()
+  "resultSetId": zod.coerce.string().pipe(zod.string().uuid())
 })
 
 export const AcknowledgeAiControlActionBody = zod.object({
@@ -4151,7 +4151,7 @@ export const AcknowledgeAiControlActionResponse = zod.object({
  * @summary Confirm or cancel an authenticated seller listing preview
  */
 export const ApplyAiListingManagementPreviewParams = zod.object({
-  "id": zod.coerce.string().uuid()
+  "id": zod.coerce.string().pipe(zod.string().uuid())
 })
 
 export const ApplyAiListingManagementPreviewBody = zod.object({
@@ -4168,7 +4168,7 @@ export const ApplyAiListingManagementPreviewResponse = zod.object({
  * @summary Confirm or cancel one exact pending employment action in the actor's own conversation
  */
 export const ApplyAiEmploymentActionParams = zod.object({
-  "id": zod.coerce.string().uuid()
+  "id": zod.coerce.string().pipe(zod.string().uuid())
 })
 
 export const ApplyAiEmploymentActionBody = zod.object({
@@ -4185,7 +4185,7 @@ export const ApplyAiEmploymentActionResponse = zod.object({
  * @summary Confirm or cancel one exact pending promotion review in the seller's own conversation
  */
 export const ApplyAiPromotionActionParams = zod.object({
-  "id": zod.coerce.string().uuid()
+  "id": zod.coerce.string().pipe(zod.string().uuid())
 })
 
 export const ApplyAiPromotionActionBody = zod.object({
