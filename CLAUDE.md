@@ -74,4 +74,5 @@ DINAR_LOCAL_PG=postgres://user@127.0.0.1:55432 test/isolation/local-suite.sh <su
   in `lib/db/src/clone-migration-guard.ts`, the reviewed-journal test in `development-tls.test.ts` and
   the expected head tag in `readiness.test.ts`.
 - S3 object metadata must expose `generation` (VersionId or ETag); listing-photo completion depends on it.
-- Zod is 3.25.76 (GHSA-mrhx-c7xc-m3w5); mitigated by the body array bound, upgrade still pending.
+- Zod is 4.6.7 and qs is 6.16.1; GHSA-mrhx-c7xc-m3w5 and GHSA-6pq8-jhm2-2vcw are patched.
+  Regenerate `lib/api-zod` through `lib/api-spec` codegen (orval `zod.version: 4`), never by hand.

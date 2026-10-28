@@ -155,9 +155,11 @@ a real empty internal result, labelled as external and never turned into a DINAR
 driver, no fake subscription.
 
 ### T7 — Maintenance
-Zod 3.25.76 advisory (GHSA-mrhx-c7xc-m3w5): plan the upgrade against the codegen
-(`lib/api-zod`, `lib/api-client-react`) and Drizzle; no blind major upgrade. Keep the 2000-element
-JSON bound.
+Zod was upgraded to 4.6.7 and qs to 6.16.1 on `qoder/10-security-deps` (GHSA-mrhx-c7xc-m3w5,
+GHSA-6pq8-jhm2-2vcw). Keep `lib/api-spec/orval.config.ts` on `zod.version: 4` and verify
+regeneration with the `codegen` job in `qoder-security.yml`; never hand-edit generated files.
+Keep the 2000-element JSON bound. The historical GitHub PAT revocation remains an unproven
+owner action.
 
 Not to start without the owner: food options (SC04), quotes/appointments (SC05), digital
 deliverables (SC08), cross-market/FX (SC09), wholesale/partial returns/companies.
