@@ -6,6 +6,7 @@
   "include": [
     "../src",
     "./composed-surface.test.tsx",
-    "./deepseek-stream-render.test.tsx"
+    "./deepseek-stream-render.test.tsx",
+    "./wave02-card-lifecycle.test.tsx"
   ]
 }

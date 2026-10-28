@@ -9,6 +9,7 @@ on:
     branches:
       - qoder/10-security-deps
       - qoder/11-wave01-security-close
+      - qoder/12-wave02-card-reliability
   workflow_dispatch:
 
 permissions:
