@@ -1,8 +1,8 @@
 /**
  * One checkout submission keeps one request key for the lifetime of its intent —
- * across double taps, retries after a timeout, and a page reload — so the server can
- * replay the first order instead of creating a second one. A different cart or
- * instructions is a different intent and gets a new key.
+ * across double taps, retries after a timeout, a page reload and a second tab —
+ * so the server can replay the first order instead of creating a second one.
+ * A different cart or instructions is a different intent and gets a new key.
  */
 const STORAGE_KEY = "dinar.checkout.request.v1";
 
@@ -10,7 +10,7 @@ type StoredRequest = { fingerprint: string; key: string };
 
 function read(): StoredRequest | null {
   try {
-    const raw = window.sessionStorage.getItem(STORAGE_KEY);
+    const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as Partial<StoredRequest>;
     return typeof parsed.key === "string" && typeof parsed.fingerprint === "string"
@@ -37,7 +37,7 @@ export function checkoutRequestKey(fingerprint: string): string {
   if (stored?.fingerprint === fingerprint) return stored.key;
   const key = window.crypto.randomUUID();
   try {
-    window.sessionStorage.setItem(
+    window.localStorage.setItem(
       STORAGE_KEY,
       JSON.stringify({ fingerprint, key } satisfies StoredRequest),
     );
@@ -49,7 +49,7 @@ export function checkoutRequestKey(fingerprint: string): string {
 
 export function clearCheckoutRequestKey(): void {
   try {
-    window.sessionStorage.removeItem(STORAGE_KEY);
+    window.localStorage.removeItem(STORAGE_KEY);
   } catch {
     // Nothing to clear when storage is unavailable.
   }
