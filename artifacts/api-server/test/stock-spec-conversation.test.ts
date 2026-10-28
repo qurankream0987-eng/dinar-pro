@@ -119,12 +119,12 @@ const seller = await register("seller");
 const buyer = await register("buyer");
 
 const carA = await publish(seller, {
-  title: "سيارة تويوتا كورولا 2019", price: "7800", categoryId: "other", category: "أخرى",
+  title: "سيارة عائلية", price: "7800", categoryId: "other", category: "أخرى",
   description: "سيارة بحالة جيدة، صيانة منتظمة",
   attributes: { condition: "مستعمل", mileage: 32000 }, quantity: 4,
 });
 const carB = await publish(seller, {
-  title: "سيارة هوندا سيفيك 2020", price: "9200", categoryId: "other", category: "أخرى",
+  title: "سيارة رياضية", price: "9200", categoryId: "other", category: "أخرى",
   description: "سيارة عائلية، استخدام خفيف",
   attributes: { condition: "مستعمل", mileage: 51000 }, quantity: 2,
 });
@@ -151,7 +151,7 @@ const before = await offerRows(tracked);
 
 await focused("MIX-1", "a spec question then a stock question about the same listing", async () => {
   const conv = await newConversation(buyer);
-  const found = await turn(buyer, conv, `أريد تويوتا ${runId}`);
+  const found = await turn(buyer, conv, `أريد سيارة عائلية ${runId}`);
   assert.ok(listingIds(found.payload).includes(carA.id), `the car is in view: ${found.body}`);
 
   const mileage = await turn(buyer, conv, "كم ماشي؟");
