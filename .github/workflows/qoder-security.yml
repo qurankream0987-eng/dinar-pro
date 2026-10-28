@@ -55,11 +55,21 @@ jobs:
           GITLEAKS_ENABLE_UPLOAD_ARTIFACT: "false"
       - name: Credential pattern scan (values never printed)
         run: |
-          for p in 'github_pat_[A-Za-z0-9_]{20,}' 'gh[pousr]_[A-Za-z0-9_]{20,}' 'AKIA[0-9A-Z]{16}' 'xox[baprs]-[A-Za-z0-9-]{10,}' 'sk-[A-Za-z0-9]{20,}' 'BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY'; do
-            git grep -IlE "$p" HEAD -- . && echo "MATCHED_PATTERN: $p" || true
+          PATTERN='(github_pat_[A-Za-z0-9_]{20,}|gh[pousr]_[A-Za-z0-9]{20,}|AKIA[0-9A-Z]{16}|xox[baprs]-[A-Za-z0-9-]{10,}|-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----|sk-[A-Za-z0-9]{20,})'
+          echo "HEAD_MATCH_FILES:"
+          git grep -IlE "$PATTERN" HEAD -- . || echo "  none"
+          echo "HISTORY_SCAN_BEGIN"
+          matches=0
+          for commit in $(git rev-list --all); do
+            if git grep -qE "$PATTERN" "$commit" -- .; then
+              echo "HISTORY_MATCH_COMMIT $commit"
+              matches=$((matches + 1))
+            fi
           done
+          echo "HISTORY_SCAN_COMMITS=$(git rev-list --all --count) MATCHES=$matches"
           echo "TRACKED_ENV_FILES:"
           git ls-files | grep -E '(^|/)\.env' || echo "  none"
+          [ "$matches" -eq 0 ]
       - name: Upload audit report
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
