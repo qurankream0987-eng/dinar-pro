@@ -29,9 +29,10 @@ const Count = z.number().int().min(0).max(10_000_000);
 const TokenCount = z.number().int().min(0).max(2_000_000_000);
 /** Resources added after version 0 default to "not included" in older admin rows (fail closed). */
 const LATER_RESOURCES: readonly AiUsageResource[] = ["AUDIO_TRANSCRIPTION"];
-function perResource<T extends z.ZodTypeAny>(item: T, laterDefault: z.infer<T>) {
+function perResource(item: typeof Count, laterDefault: number) {
+  const withLaterDefault = item.default(laterDefault);
   return z
-    .object(Object.fromEntries(AI_USAGE_RESOURCES.map((resource) => [resource, LATER_RESOURCES.includes(resource) ? item.default(laterDefault) : item])) as Record<AiUsageResource, T>)
+    .object(Object.fromEntries(AI_USAGE_RESOURCES.map((resource) => [resource, LATER_RESOURCES.includes(resource) ? withLaterDefault : item])) as Record<AiUsageResource, typeof Count>)
     .strict();
 }
 const TierAllowance = z
