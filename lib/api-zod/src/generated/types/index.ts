@@ -68,6 +68,7 @@ export * from './aiUiBlock';
 export * from './aiUiBlockPayload';
 export * from './aiUiBlockPayloadAdvice';
 export * from './aiUiBlockPayloadAttributes';
+export * from './aiUiBlockPayloadCard';
 export * from './aiUiBlockPayloadCommerce';
 export * from './aiUiBlockPayloadComparison';
 export * from './aiUiBlockPayloadControl';
