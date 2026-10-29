@@ -1730,6 +1730,11 @@ export type AiUiBlockPayloadComparison = { [key: string]: unknown };
 export type AiUiBlockPayloadPurchaseReview = { [key: string]: unknown };
 
 /**
+ * The versioned card envelope the server decides for this block (schemaVersion 1): surface type and identity, resource, conversation, market context, lifecycle, allowed actions, pending review, expiry, refresh strategy, source timestamp and accessibility label. The client validates it before rendering and never invents an action the server did not allow.
+ */
+export type AiUiBlockPayloadCard = { [key: string]: unknown };
+
+/**
  * Seller insight from DINAR-internal facts only: price comparables (count, range, median), listing factors phrased as possibilities (never as causes), or a BUSINESS_SUMMARY of the seller's own stock, order counts or per-listing results (shape: SellerBusinessInsight in @workspace/api-zod/conversation-runtime).
  */
 export type AiUiBlockPayloadSellerInsight = { [key: string]: unknown };
@@ -1831,6 +1836,8 @@ export type AiUiBlockPayload = {
   comparison?: AiUiBlockPayloadComparison;
   /** Review of a pending, confirm-only selection (adds to cart after re-reading price, stock and account); never pays. */
   purchaseReview?: AiUiBlockPayloadPurchaseReview;
+  /** The versioned card envelope the server decides for this block (schemaVersion 1): surface type and identity, resource, conversation, market context, lifecycle, allowed actions, pending review, expiry, refresh strategy, source timestamp and accessibility label. The client validates it before rendering and never invents an action the server did not allow. */
+  card?: AiUiBlockPayloadCard;
   /** Seller insight from DINAR-internal facts only: price comparables (count, range, median), listing factors phrased as possibilities (never as causes), or a BUSINESS_SUMMARY of the seller's own stock, order counts or per-listing results (shape: SellerBusinessInsight in @workspace/api-zod/conversation-runtime). */
   sellerInsight?: AiUiBlockPayloadSellerInsight;
   attributes?: AiUiBlockPayloadAttributes;
