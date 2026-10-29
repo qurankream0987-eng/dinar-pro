@@ -3156,6 +3156,15 @@ components:
               type: object
               additionalProperties: true
               description: Review of a pending, confirm-only selection (adds to cart after re-reading price, stock and account); never pays.
+            card:
+              type: object
+              additionalProperties: true
+              description: >
+                The versioned card envelope the server decides for this block (schemaVersion 1):
+                surface type and identity, resource, conversation, market context, lifecycle,
+                allowed actions, pending review, expiry, refresh strategy, source timestamp and
+                accessibility label. The client validates it before rendering and never invents
+                an action the server did not allow.
             sellerInsight:
               type: object
               additionalProperties: true
