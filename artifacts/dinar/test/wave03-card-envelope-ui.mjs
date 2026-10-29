@@ -16,8 +16,9 @@ const webBase = process.env.W03_WEB_BASE;
 const apiOrigin = process.env.W03_API_ORIGIN;
 const buyerCookie = process.env.W03_BUYER_COOKIE;
 const title = process.env.W03_TITLE;
+const purchaseTitle = process.env.W03_PURCHASE_TITLE;
 const resultPath = process.env.W03_UI_RESULT_PATH;
-if (!webBase || !apiOrigin || !buyerCookie || !title || !resultPath)
+if (!webBase || !apiOrigin || !buyerCookie || !title || !purchaseTitle || !resultPath)
   throw new Error("Missing Wave 03 browser journey configuration.");
 
 const checks = [];
@@ -196,7 +197,7 @@ try {
 
   // ── Purchase review: pending → declined → reload ─────────────────────────────
   const purchaseConversation = await newConversation();
-  await sendTurn(`ابحث عن ${title}`);
+  await sendTurn(`ابحث عن ${purchaseTitle}`);
   await sendTurn("أبي الأول");
   let purchase = await card('[data-testid="purchase-review"]');
   let purchaseInfo = await cardInfo(purchase);

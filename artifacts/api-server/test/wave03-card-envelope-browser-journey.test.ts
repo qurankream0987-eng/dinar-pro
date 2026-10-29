@@ -51,11 +51,17 @@ await test("W03 real browser: an envelope-driven card keeps its identity, lifecy
   const seller = await register(`موجة البائع ${runId}`);
   const buyer = await register(`موجة المشتري ${runId}`);
   const title = `أكواب موجة ${runId}`;
-  const published = await request("/listings", "POST", {
-    title, description: `${title} — وصف للاختبار ${runId}`, category: "أخرى", categoryId: "other", area: "خلدا", city: CITY,
-    attributes: {}, unitPrice: "3", inventoryMode: "LIMITED", availableQuantity: 20, fulfilmentType: "PICKUP", pricingMode: "NEGOTIABLE", imageUrl: "", imageUrls: [],
-  }, seller);
+  // The runtime never opens a purchase review for a negotiable listing: the purchase journey
+  // uses a second, fixed-price listing so the card under test is the purchase one.
+  const purchaseTitle = `أكواب موجة ثابتة ${runId}`;
+  const listing = {
+    description: `${title} — وصف للاختبار ${runId}`, category: "أخرى", categoryId: "other", area: "خلدا", city: CITY,
+    attributes: {}, unitPrice: "3", inventoryMode: "LIMITED", availableQuantity: 20, fulfilmentType: "PICKUP", imageUrl: "", imageUrls: [],
+  };
+  const published = await request("/listings", "POST", { ...listing, title, pricingMode: "NEGOTIABLE" }, seller);
   assert.equal(published.status, 201, published.text);
+  const publishedFixed = await request("/listings", "POST", { ...listing, title: purchaseTitle, pricingMode: "FIXED" }, seller);
+  assert.equal(publishedFixed.status, 201, publishedFixed.text);
   const modelCallsBefore = getModelGatewayCallCount();
   const web = await startDinarBrowserTestWeb(origin);
   const resultPath = `/tmp/dinar-wave03-ui-${runId}.json`;
@@ -69,6 +75,7 @@ await test("W03 real browser: an envelope-driven card keeps its identity, lifecy
         W03_API_ORIGIN: origin,
         W03_BUYER_COOKIE: buyer,
         W03_TITLE: title,
+        W03_PURCHASE_TITLE: purchaseTitle,
         W03_UI_RESULT_PATH: resultPath,
       },
       timeout: 900_000,
