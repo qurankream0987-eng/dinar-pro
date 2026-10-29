@@ -100,3 +100,8 @@ await test("W03 real browser: an envelope-driven card keeps its identity, lifecy
   assert.ok(report.checks.length >= 14, `expected the full journey, got ${report.checks.length} checks`);
   assert.equal(getModelGatewayCallCount(), modelCallsBefore, "no model call in any deterministic turn");
 });
+
+// The app keeps the server open for the whole file; close it so the isolated runner can exit.
+test.after(async () => {
+  await new Promise<void>((resolve) => server.close(() => resolve()));
+});
