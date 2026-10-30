@@ -485,8 +485,9 @@ const HAS = /^(?:يشمل|تشمل|فيه|فيها|عليه|عليها|معه|م
 /** A preference no record can settle («أنسب للعائلة», «أفضل لي»): facts only, never a ranking. */
 const SUBJECTIVE = /^(?:ال)?(?:انسب|افضل|احسن|اروع|اجمل|اريح)$/u;
 const IMPLICIT_FIELD: Record<string, string> = { احدث: "year", اقدم: "year", اجدد: "year", ارخص: "price", اغلي: "price" };
+/** «ممشاه» ↔ «الممشى», «سنتها» ↔ «السنة»: article, possessive, ة and a final long vowel (ا/ى/ي) drop. */
 const attributeStem = (word: string) =>
-  normalizeSearch(word).replace(/^(?:و|ف|ب|ل)?ال(?=\S{3,})/u, "").replace(/(?:ها|ه|هم)$/u, "").replace(/[ةه]$/u, "");
+  normalizeSearch(word).replace(/^(?:و|ف|ب|ل)?ال(?=\S{3,})/u, "").replace(/(?:ها|ه|هم)$/u, "").replace(/[ةه]$/u, "").replace(/(?<=\S{3})[اي]$/u, "");
 
 async function whichQuestion(set: StoredSet, text: string, market: Market): Promise<Turn | null> {
   const asked = text.match(WHICH)?.[1];

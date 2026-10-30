@@ -58,7 +58,8 @@
     "test:isolation": "node --test test/isolation/sandbox.test.mjs",
     "test:context": "NODE_ENV=development BDINAR_TEST_DATABASE=development node test/run.mjs context-understanding.test",
     "test:context-sealed": "NODE_ENV=development BDINAR_TEST_DATABASE=development node test/run.mjs context-sealed.test",
-    "test:listing-contact-text": "NODE_ENV=development BDINAR_TEST_DATABASE=development node test/run.mjs listing-contact-text.test"
+    "test:listing-contact-text": "NODE_ENV=development BDINAR_TEST_DATABASE=development node test/run.mjs listing-contact-text.test",
+    "test:w02-ultra": "NODE_ENV=development BDINAR_TEST_DATABASE=development node test/run.mjs w02-ultra-cards.test"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1155.0",
