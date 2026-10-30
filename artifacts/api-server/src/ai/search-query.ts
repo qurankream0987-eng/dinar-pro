@@ -109,8 +109,8 @@ const FIELD_VALUE_ALIASES: {
 const CATEGORY_NEUTRAL_HINT_FIELDS = new Set(["color", "colour", "condition"]);
 
 const SORT_ALIASES: { sort: SearchSort; phrases: string[] }[] = [
-  { sort: "PRICE_ASC", phrases: ["الارخص", "ارخص", "اقل سعر", "من الاقل سعرا", "حسب السعر تصاعديا", "السعر من الاقل", "من الارخص"] },
-  { sort: "PRICE_DESC", phrases: ["الاغلى", "اغلى", "اعلى سعر", "من الاعلى سعرا", "حسب السعر تنازليا"] },
+  { sort: "PRICE_ASC", phrases: ["الارخص", "ارخص", "اقل سعر", "من الاقل سعرا", "حسب السعر تصاعديا", "السعر من الاقل", "من الارخص", "من الرخيص"] },
+  { sort: "PRICE_DESC", phrases: ["الاغلى", "اغلى", "اعلى سعر", "من الاعلى سعرا", "حسب السعر تنازليا", "من الغالي"] },
   { sort: "NEWEST", phrases: ["الاحدث", "احدث العروض", "الاضافة حديثا", "ترتيب حسب التاريخ"] },
   { sort: "YEAR_DESC", phrases: ["موديل احدث", "احدث موديل", "سنة الصنع تنازليا"] },
   { sort: "YEAR_ASC", phrases: ["موديل اقدم", "اقدم موديل", "سنة الصنع تصاعديا"] },
@@ -121,7 +121,7 @@ const SORT_ALIASES: { sort: SearchSort; phrases: string[] }[] = [
   { sort: "RELEVANCE", phrases: ["الاكثر صلة", "الاقرب للمواصفات", "الانسب"] },
 ];
 
-const SORT_FILLER_TERMS = ["رتبهم", "نظم", "نظمها", "حسب السعر", "السعر", "من", "اولا", "اول", "للاغلى", "للاعلى", "الى الاغلى", "الى الاعلى"];
+const SORT_FILLER_TERMS = ["رتبهم", "رتبهن", "رتبها", "نظم", "نظمها", "حسب السعر", "السعر", "من", "اولا", "اول", "للاغلى", "للاعلى", "الى الاغلى", "الى الاعلى"];
 
 function hasPhrase(message: string, phrase: string): boolean {
   const normalized = normalizeSearch(phrase);

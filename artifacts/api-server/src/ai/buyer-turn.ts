@@ -59,6 +59,8 @@ const BuyerState = z
     ranking: z.enum(["DEFAULT", "CHEAPEST", "BEST_VALUE", "CONDITION_FIRST"]).default("DEFAULT"),
     message: z.string().max(600).optional(),
     reasons: z.record(z.string(), z.array(z.string().max(120)).max(6)).optional(),
+    /** Words Block A relaxed and reported (`broadenedFrom`); relaxed again only if needed. */
+    relaxed: z.array(z.string().max(80)).max(6).optional(),
   })
   .passthrough();
 export type BuyerState = z.infer<typeof BuyerState>;
@@ -79,9 +81,9 @@ const COLOR = new RegExp(`^(?:(?:خله|خليه|خليها|خلها|بدي|اب
 const SIZE = /^(?:(?:بدي|ابي|اريد|خله|خليه)\s+)?(?:مقاس|قياس|سايز|size)\s*([a-z]{1,4}|\d{2,3}|صغير|وسط|كبير)$/u;
 const MAX_PRICE = /(?:عادي|ما عندي مشكله|ما في مشكله|لحد|حدي|ميزانيتي|اقصي|بحدود)/u;
 const QUALITY_WORDS = /(?:^|\s)(?:مميز|مميزه|ممتاز|ممتازه|فخم|فخمه|اصلي)(?=\s|$)/gu;
-const CHEAPEST = /^(?:(?:انا\s+)?(?:ابي|اريد|بدي|ابغي)\s+)?(?:ال)?ارخص(?:\s+(?:واحد|شي|شيء|فقط|بس|منهم))*$|(?:^|\s)(?:اهم شي|اهم شيء|المهم|يهمني)\s+(?:ال)?سعر(?:\s|$)|(?:^|\s)السعر\s+فقط(?:\s|$)/u;
+const CHEAPEST = /^(?:(?:انا\s+)?(?:ابي|اريد|بدي|ابغي)\s+)?(?:ال)?ارخص(?:\s+(?:واحد|شي|شيء|فقط|بس|منهم))*$|(?:^|\s)(?:اهم شي|اهم شيء|المهم|يهمني)\s+(?:ال)?سعر(?:\s|$)|(?:^|\s)السعر\s+فقط(?:\s|$)|^(?:اي\s+واحد|ايهم|ايهن|مين|منو|شنو|انهو|اياهم)\s+(?:فيهم\s+|منهم\s+|فيهن\s+)?(?:ال)?ارخص(?:\s+(?:فيهم|منهم|فيهن|واحد))?$/u;
 /** «رتب الأرخص», «رتبها من الأرخص», «الأرخص أولا», «رتب حسب السعر من الأقل»: the same ranking, so the current filters stay. */
-const CHEAPEST_SORT = /^(?:(?:رتب|رتبها|رتبهم|رتبلي|نظم|نظمها|نظمهم|خلها|خليها)\s+)?(?:(?:حسب|ب)\s*(?:ال)?سعر\s+)?(?:(?:من\s+)?(?:ال)?ارخص|(?:من\s+)?(?:ال)?اقل\s+سعرا?|من\s+(?:ال)?اقل)(?:\s+(?:اولا|اول|الي\s+الاغلي|للاغلي|فالاغلي))?$/u;
+const CHEAPEST_SORT = /^(?:(?:رتب|رتبها|رتبهم|رتبهن|رتبلي|نظم|نظمها|نظمهم|نظمهن|خلها|خليها)\s+)?(?:(?:حسب|ب)\s*(?:ال)?سعر\s+)?(?:(?:من\s+)?(?:ال)?ارخص|(?:من\s+)?(?:ال)?رخيص|(?:من\s+)?(?:ال)?اقل\s+سعرا?|من\s+(?:ال)?اقل)(?:\s+(?:اولا|اول|الي\s+الاغلي|للاغلي|فالاغلي))?$/u;
 const CONDITION_FIRST = /(?:^|\s)(?:اهم شي|اهم شيء|المهم|يهمني|اهتم)\s+(?:ب)?(?:ال)?حاله(?:\s|$)|ما يهمني السعر/u;
 const BEST = /^(?:(?:انا\s+)?(?:ابي|اريد|بدي|ابغي|اعطني|وريني|ارني)\s+)?(?:ال)?افضل(?:\s+(?:واحد|شي|شيء|قيمه|منهم))?(?:\s+مقابل\s+(?:ال)?سعر)?(?:\s+حتي\s+لو\s+(?:اغلي|ازيد)(?:\s+\S+){0,2})?$|^افضل\s+قيمه(?:\s+مقابل\s+(?:ال)?سعر)?$|^(?:اي\s+واحد|ايهم|مين|شو|وش|ايش)\s+(?:ال)?افضل(?:\s+(?:فيهم|منهم))?$/u;
 /**
@@ -98,6 +100,24 @@ const NEED_ONLY = /^(?:انا\s+)?(?:جوعان|جوعانه|جائع|جائعه
 // «أريد أن أشتري شيئًا» names no item: searching DINAR for the word «شيء» finds nothing useful.
 const VAGUE_PURCHASE = /^(?:(?:انا|دينار)\s+)?(?:ابي|ابغي|بدي|اريد|احتاج|حاب|ودي)\s+(?:ان\s+)?(?:اشتري|شراء|اشتري لي|اشوف|ادور علي|ابحث عن)\s+(?:شي|شيء|شيئا|شيا|شيئ|حاجه|حاجات|اغراض|اشياء|منتج|غرض)$/u;
 const COMPARE = /^(?:قارن|قارنلي|قارن لي|مقارنه|قارن بين)\s+(.+)$/u;
+/** «قارن بينهم», «قارنهم», «قارن الاثنين»: every result in view, when there are two to four. */
+const COMPARE_ALL = /^(?:(?:قارن|قارنلي|قارن لي)\s+(?:بين(?:هم|ها|هن)|(?:ال)?اثنين|(?:ال)?ثنتين|كلهم|الكل|بينهم كلهم)|قارنهم|قارنها|قارنهن)$/u;
+/** «ايه الفرق بين الأول والثالث؟», «شو الفرق بينهم؟»: a comparison asked as a question. */
+const DIFFERENCE = /^(?:(?:طيب|طب)\s+)?(?:ايه|ايش|وش|شو|ما|شنو|شنهو)\s+(?:هو\s+)?(?:ال)?فرق\s+(.+)$/u;
+/**
+ * A correction that opens the message («لا لا غلطت،», «عفوا،», «قصدي»): what follows is the
+ * buyer's corrected preference and is read as if typed alone.
+ */
+const CORRECTION_LEAD = /^(?:(?:لا|لأ)\s+){0,2}(?:(?:غلطت|عفوا|سوري|اسف|اقصد|قصدي|اعني|يعني|خلص|خلاص)\s+){0,2}/u;
+/**
+ * A budget ceiling on the current list: «ما ابي اكثر من 300» (a negated «more than» is an upper
+ * bound), «خلها لين 400», «لحد 400», «ما يزيد عن 300». The whole message must be the ceiling.
+ */
+const CEILING = /^(?:(?:طيب|طب|خلاص|بس|خلها|خليها|خله|خليه|خلي|يعني)\s+)*(?:(?:ما|مو|مش|لا)\s+(?:ابي|ابغي|بدي|اريد|اقدر|بقدر|ودي)\s+(?:ادفع\s+)?(?:اكثر|اكتر|ازيد|فوق)\s+(?:من\s+|عن\s+)?|(?:لين|الين|لغايه|لحد|الي|حتي|بحد\s+اقصي|ميزانيتي)\s+|(?:ما|لا)\s+(?:يزيد|يتعدي)\s+(?:عن\s+)?)(\d+(?:\.\d+)?)(?:\s*(الف|الاف))?(?:\s+(?:دينار|ريال|درهم|جنيه|بس|فقط))?$/u;
+/** «نفس الشي بس ارخص من الثاني»: the current search, priced below a listing in view. */
+const CHEAPER_THAN = /^(?:(?:نفس|زي|مثل)\s+(?:ال)?(?:شي|شيء|مواصفات|نوع|اشي)\s+)?(?:(?:بس|لكن|بس يكون|بشرط)\s+)?(?:ابي\s+)?(?:ال)?ارخص\s+من\s+(\S+)$/u;
+/** «جهز الطلب», «حضر لي الطلب»: a purchase review for the listing in view, never an order. */
+const PREPARE_ORDER = /^(?:(?:طيب|خلاص)\s+)?(?:جهز|حضر|سوي|سو|اعمل|اعملي|جهزلي|حضرلي)\s+(?:لي\s+)?(?:ال)?طلب(?:\s+.*)?$/u;
 const SELECT = /^(?:انا\s+)?(?:ابي|ابغي|بدي|اريد|اشتري|بشتري|اخذ|باخذ|حاب اخذ|خذ)\s+(?:اشتري\s+|اخذ\s+)?(.+)$/u;
 const CONFIRM = /^(?:(?:تمام|طيب|اوكي|خلاص)\s+)?(?:نعم|اكيد|اكد|تاكيد|موافق|تمام|اوكي|ok|yes|نفذ|اضف|اضفه|اضيفه|اكد الشراء)$/u;
 const CANCEL = /^(?:لا|كلا|الغاء|الغ|الغي|تراجع|لا شكرا)$/u;
@@ -157,8 +177,12 @@ export function stateOf(set: StoredSet | undefined): BuyerState | undefined {
   if (own.success) return own.data;
   if (query.recommendation) return undefined;
   const filters = z.array(SearchFilterInput).safeParse(query.filters ?? []);
+  // Block A may have relaxed a word and said so (`broadenedFrom`). The refinement keeps the
+  // buyer's full words and relaxes the same ones again only if the refined search finds nothing.
+  const relaxed = Array.isArray(query.broadenedFrom) ? query.broadenedFrom.filter((word): word is string => typeof word === "string").slice(0, 6) : [];
   return {
     search: typeof query.search === "string" ? query.search : "",
+    ...(relaxed.length ? { relaxed } : {}),
     ...(typeof query.categoryId === "string" ? { categoryId: query.categoryId } : {}),
     filters: filters.success ? filters.data : [],
     ranking: "DEFAULT",
@@ -274,6 +298,18 @@ export async function runBuyerSearch(market: Market, state: BuyerState): Promise
     }
     return true;
   });
+  if (!matching.length && state.relaxed?.length) {
+    const relaxed = new Set(state.relaxed.map((word) => normalizeSearch(word)));
+    const search = normalizeSearch(state.search).split(/\s+/u).filter((word) => !relaxed.has(word)).join(" ");
+    if (search && search !== normalizeSearch(state.search)) {
+      const wider = await runBuyerSearch(market, { ...state, search, relaxed: undefined });
+      if (wider.listings.length) {
+        const buyer = (wider.query as { buyer?: BuyerState }).buyer;
+        const note = `لم أجد عروضًا تذكر «${state.relaxed.join(" ")}» تحديدًا، فعرضت ما يطابق بقية طلبك.`;
+        return { ...wider, query: { ...wider.query, broadenedFrom: state.relaxed, buyer: { ...buyer!, search: state.search, relaxed: state.relaxed, message: `${note} ${buyer?.message ?? ""}`.trim() } } };
+      }
+    }
+  }
   let listings: ListingRecord[];
   let reasons: Record<string, string[]> = {};
   if (sponsoredView) {
@@ -385,7 +421,11 @@ export function notice(prompt: string): Turn {
 
 async function purchaseReview(input: { conversationId: string; market: Market; actorId: string; message: string; quantity?: number }): Promise<Turn> {
   const reference = await resolveReference({ conversationId: input.conversationId, marketId: input.market.id, actorId: input.actorId, message: input.message });
-  if (!reference) return notice("هذا الرقم غير موجود في النتائج الحالية. اختر عرضًا ظاهرًا في القائمة.");
+  if (!reference)
+    // «ابيه» / «أبي هذا» with no listing in focus names nothing: ask, never pick one.
+    return notice(/(?:^|\s)(?:هذا|هذه|هذي)(?:\s|$)/u.test(normalizeBuyerText(input.message))
+      ? "أي عرض تقصد؟ اختر من النتائج الظاهرة، مثل «أبي الأول» أو «الثاني»."
+      : "هذا الرقم غير موجود في النتائج الحالية. اختر عرضًا ظاهرًا في القائمة.");
   const snapshot = await readListingForBuyer(input.actorId, reference.resourceId);
   if (snapshot?.unitPriceMinor === null && snapshot.agreedQuantity === undefined)
     return notice("هذا العرض يقبل العروض وليس له سعر معلن. اتفق مع البائع على السعر أولًا؛ يمكنك طلب أفضل سعر أو تقديم عرض.");
@@ -525,7 +565,27 @@ export async function executeBuyerTurn(input: {
       : `لا يوجد العرض رقم ${ordinalPosition} ضمن النتائج الحالية. اختر رقمًا ظاهرًا أو ابدأ بحثًا جديدًا.`);
 
   const compare = text.match(COMPARE);
+  if (set && COMPARE_ALL.test(text)) {
+    if (set.resourceIds.length < 2 || set.resourceIds.length > 4)
+      return notice(`اختر العروض التي تريد مقارنتها، مثل «قارن الأول بالثاني» (لديك ${set.resourceIds.length}).`);
+    return comparison(set, set.resourceIds.map((_, index) => index + 1), input.market);
+  }
   if (compare && set) return comparison(set, positionsIn(compare[1]!), input.market);
+  const difference = text.match(DIFFERENCE);
+  if (difference && set) {
+    const rest = difference[1]!.replace(/^بين\s*/u, "");
+    if (/^(?:هم|ها|هن|بينهم|الاثنين)$/u.test(rest) || difference[1] === "بينهم") {
+      if (set.resourceIds.length >= 2 && set.resourceIds.length <= 4)
+        return comparison(set, set.resourceIds.map((_, index) => index + 1), input.market);
+    } else if (positionsIn(rest).length >= 2) return comparison(set, positionsIn(rest), input.market);
+  }
+
+  if (set && PREPARE_ORDER.test(text)) {
+    const named = parseCommandNumbers(input.message).ordinal !== undefined;
+    if (!named && set.resourceIds.length !== 1)
+      return notice(`أي عرض تريد أن أجهّز طلبه؟ لديك ${set.resourceIds.length} نتائج؛ اكتب مثلًا «جهز طلب الأول».`);
+    return purchaseReview({ conversationId: input.conversationId, market: input.market, actorId, message: named ? input.message : "أبي الأول" });
+  }
 
   if (NEED_ONLY.test(text))
     return notice("ماذا تريد أن تأكل أو تشرب؟ اكتب اسم الوجبة أو المنتج، مثل «بروستد» أو «برجر»، وسأبحث في عروض DINAR.");
@@ -538,6 +598,14 @@ export async function executeBuyerTurn(input: {
     const quantity = reviewQuantity(pickWithQuantity[2]!);
     if (quantity !== undefined)
       return purchaseReview({ conversationId: input.conversationId, market: input.market, actorId, message: `أبي ${pickWithQuantity[1]}`, quantity });
+  }
+
+  // «بدي 3 من الأول», «ابي حبتين من الثاني»: the quantity first, then the position.
+  const quantityOf = text.match(/^(?:انا\s+)?(?:ابي|ابغي|بدي|اريد|خذ|اخذ)\s+(.+?)\s+من\s+(\S+)$/u);
+  if (set && quantityOf && ORDINAL_TOKENS[quantityOf[2]!] !== undefined) {
+    const quantity = reviewQuantity(quantityOf[1]!.replace(/\s+(?:حبات|حبه|قطع|قطعه|قطعات|علب|علبه)$/u, ""));
+    if (quantity !== undefined)
+      return purchaseReview({ conversationId: input.conversationId, market: input.market, actorId, message: `أبي ${quantityOf[2]}`, quantity });
   }
 
   const select = text.match(SELECT);
@@ -555,8 +623,8 @@ export async function executeBuyerTurn(input: {
       });
   }
 
-  // Ranking requests on the current list; a leading «لا» only corrects the previous one.
-  const asked = text.replace(/^(?:لا|لأ)\s+/u, "");
+  // Ranking requests on the current list; a leading «لا» or «غلطت» only corrects the previous one.
+  const asked = text.replace(CORRECTION_LEAD, "");
   const ranking: BuyerRanking | undefined = CONDITION_FIRST.test(asked)
     ? "CONDITION_FIRST"
     : CHEAPEST.test(asked) || CHEAPEST_SORT.test(asked)
@@ -581,11 +649,41 @@ export async function executeBuyerTurn(input: {
 
   // Deltas on the current list: condition, colour, size, budget ceiling.
   if (state) {
-    const condition = text.match(CONDITION_REFINE);
+    const condition = asked.match(CONDITION_REFINE);
     if (condition) {
-      // Stored listings say «مستعمل» or «جديد»; one condition at a time replaces the previous one.
+      // Stored listings say «مستعمل» or «جديد»; one condition at a time replaces the previous one,
+      // including a condition the original search parsed as a filter.
       const value = /^(?:مستعمل|مستخدم)/u.test(condition[1]!) ? "مستعمل" : "جديد";
-      return { tool: "buyerRefine", version: 1, result: await runBuyerSearch(input.market, { ...state, condition: value }) };
+      // The replaced condition also leaves the search words («لابتوب جديد» → «لابتوب»).
+      const search = normalizeBuyerText(state.search).split(" ").filter((word) => !/^(?:ال)?(?:مستعمل|مستعمله|مستخدم|مستخدمه|جديد|جديده)$/u.test(word)).join(" ");
+      return { tool: "buyerRefine", version: 1, result: await runBuyerSearch(input.market, { ...state, search, filters: state.filters.filter((filter) => filter.field !== "condition"), condition: value }) };
+    }
+    const ceiling = asked.match(CEILING);
+    if (ceiling) {
+      const value = Number(ceiling[1]) * (ceiling[2] ? 1000 : 1);
+      return { tool: "buyerRefine", version: 1, result: await runBuyerSearch(input.market, { ...state, filters: state.filters.filter((filter) => !(filter.field === "price" && ["gt", "gte"].includes(filter.operator))), maxPrice: value }) };
+    }
+    const cheaper = asked.match(CHEAPER_THAN);
+    if (cheaper && set) {
+      const position = positionsIn(cheaper[1]!)[0] ?? (/^(?:هذا|هذي|هذه)$/u.test(cheaper[1]!) && set.resourceIds.length === 1 ? 1 : undefined);
+      const anchorId = position !== undefined ? set.resourceIds[position - 1] : undefined;
+      if (position !== undefined && !anchorId)
+        return notice(`لا يوجد العرض رقم ${position} ضمن النتائج الحالية. اختر رقمًا ظاهرًا.`);
+      if (anchorId) {
+        const [anchor] = await searchMarketplaceListings(input.market, { search: "", allowedIds: [anchorId], limit: 1 });
+        const price = anchor ? priceOf(anchor) : null;
+        if (price === null) return notice("هذا العرض ليس له سعر معلن، فلا أستطيع البحث عن الأرخص منه.");
+        const { maxPrice: _ignored, ...rest } = state;
+        return {
+          tool: "buyerRefine",
+          version: 1,
+          result: await runBuyerSearch(input.market, {
+            ...rest,
+            filters: [...state.filters.filter((filter) => filter.field !== "price"), { field: "price", operator: "lt", value: price }],
+            ranking: "CHEAPEST",
+          }),
+        };
+      }
     }
     const color = text.match(COLOR);
     const size = text.match(SIZE);

@@ -39,10 +39,11 @@ export type TaskPlan = {
   truncated?: boolean;
 };
 
-// «وبعدها / وبعدين / بعد ذلك / ثم / and then» between two non-empty requests, and «وكمان /
-// وأيضًا / and also» when it opens a new sentence («كم بقي من حصتي؟ وكمان اشرح لي …»).
+// «وبعدها / وبعدين / بعد ذلك / ثم / and then» between two non-empty requests, «وكمان /
+// وأيضًا / and also» when it opens a new sentence («كم بقي من حصتي؟ وكمان اشرح لي …»), and
+// «… وجهز الطلب» after a search: preparing the order is its own step, reviewed when it runs.
 const CONNECTOR =
-  /\s*[،,]?\s*(?:^|\s)(?:و?بعدها|و?بعدين|و?بعد\s+(?:ذلك|كذا|هذا|هذي)|و?ثم|and\s+then|then)(?=\s)\s*|\s*[؟?.!،,]\s*(?:وكمان|وايضا|وأيضا|وأيضًا|وايضًا|and\s+also)(?=\s)\s*/iu;
+  /\s*[،,]?\s*(?:^|\s)(?:و?بعدها|و?بعدين|و?بعد\s+(?:ذلك|كذا|هذا|هذي)|و?ثم|and\s+then|then)(?=\s)\s*|\s*[؟?.!،,]\s*(?:وكمان|وايضا|وأيضا|وأيضًا|وايضًا|and\s+also)(?=\s)\s*|\s+و(?=(?:جهز|جهّز|حضر|حضّر|اعمل|سوي|سوّي)\s+(?:لي\s+)?(?:ال)?طلب)/iu;
 const CONFIRMATION_ONLY =
   /^(?:نعم|ايه|إيه|أكيد|اكيد|أكد|اكد|موافق|تمام|اوكي|أوكي|ok|yes|نفذ|انشر(?:ه|ها)?|ادفع|اشتر(?:ه|يه)?|اقبل|وافق)$/iu;
 const CONTINUE =

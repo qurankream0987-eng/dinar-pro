@@ -16,14 +16,44 @@ export function normalizeDigits(value: string): string {
     .replace(/[٬،]/g, ",");
 }
 
-/** Letter-level folding shared by queries and listing text. */
+/**
+ * Dialect words with one meaning everywhere, folded to the form DINAR's rules already read
+ * (W04). Whole words only, with an attached و/ب/ف; applied to queries and listing text alike,
+ * so matching stays symmetric. Ambiguous words stay as typed: «تاني» is also «again» and
+ * «دي»/«هاي» have other meanings, so only the definite ordinals and unambiguous forms fold.
+ */
+const DIALECT_WORDS: ReadonlyArray<readonly [RegExp, string]> = [
+  // Egyptian and Levantine ordinals (ث → ت).
+  [/^التاني$/u, "الثاني"], [/^التاني[ةه]$/u, "الثانيه"],
+  [/^التالت$/u, "الثالث"], [/^التالت[ةه]$/u, "الثالثه"],
+  // Wanting across dialects → «ابي», which every request rule reads.
+  [/^(?:بغيت|نبغي|بغينا|عايز|عاوز|عايز[ةه]|عاوز[ةه]|اشتي|نشتي|داير|داير[ةه]|دايرين)$/u, "ابي"],
+  // Demonstratives → «هذا».
+  [/^(?:هادا|هاذا|هاد|ده)$/u, "هذا"],
+];
+
+function foldDialectWords(value: string): string {
+  return value.replace(/(^|[\s،,؟?!.])([^\s،,؟?!.]+)/gu, (whole, lead: string, word: string) => {
+    for (const [pattern, canonical] of DIALECT_WORDS) {
+      if (pattern.test(word)) return `${lead}${canonical}`;
+      // «والتالت», «بالتاني»: a conjunction or preposition attached to the article stays attached
+      // (only before «ال», so «بده» — «he wants» — is not read as «ب» + «ده»).
+      if (/^[وبف]ال/u.test(word) && pattern.test(word.slice(1))) return `${lead}${word[0]}${canonical}`;
+    }
+    return whole;
+  });
+}
+
+/** Letter-level folding shared by queries and listing text, plus the dialect word fold. */
 export function foldArabicLetters(value: string): string {
-  return value
-    .toLocaleLowerCase("ar")
-    .replace(/[أإآ]/g, "ا")
-    .replace(/ى/g, "ي")
-    .replace(/ـ/g, "")
-    .replace(/[ً-ٰٟ]/g, "");
+  return foldDialectWords(
+    value
+      .toLocaleLowerCase("ar")
+      .replace(/[أإآ]/g, "ا")
+      .replace(/ى/g, "ي")
+      .replace(/ـ/g, "")
+      .replace(/[ً-ٰٟ]/g, "")
+  );
 }
 
 // Indefinite feminine adjectives fold to the masculine value sellers store ("سماعة سوداء").
@@ -290,6 +320,11 @@ export type NumericMention = {
 
 const CURRENCY = /^(?:دينار|دنانير|ريال|ريالات|دولار|دولارات|درهم|جنيه|jd|jod|kwd|sar|usd)$/;
 const LESS = /(?:اقل من|دون|تحت|ما يزيد عن|لا يزيد عن|ما بيزيد عن)$/;
+/**
+ * A negated «exceed» or «more than» is an upper bound (W04): «لا يتعدى 450», «ما يتجاوز 300»,
+ * «ما ابي اكثر من 300», «مو اكثر من 200».
+ */
+const NOT_MORE = /(?:(?:لا|ما|مو|مش)\s+(?:بي)?(?:يتعدي|يتعدى|يتجاوز|يعدي)(?:\s+(?:عن|ال))?|(?:لا|ما|مو|مش)\s+(?:(?:ابي|ابغي|بدي|اريد|ودي|اقدر)\s+)?(?:ادفع\s+)?(?:اكثر|اكتر|ازيد|فوق)(?:\s+(?:من|عن))?)$/;
 const AT_MOST = /(?:حد اقصي|حد اقصى|بحد اقصي|بحد اقصى|اقصي|اقصى|لحد|ميزانيتي|ميزانية|بميزانية|ميزانيه|بميزانيه)$/;
 const MORE = /(?:اكثر من|اعلى من|اعلي من|فوق)$/;
 const AT_LEAST = /(?:علي الاقل|على الاقل|بالاقل)$/;
@@ -375,7 +410,7 @@ export function parseNumericMentions(normalizedText: string): NumericMention[] {
       current.value >= 1950 &&
       current.value <= 2035 &&
       (!isRange || (partner!.value >= 1950 && partner!.value <= 2035)) &&
-      !LESS.test(before) && !MORE.test(before) && !AT_MOST.test(before) && !APPROX.test(before)
+      !LESS.test(before) && !MORE.test(before) && !AT_MOST.test(before) && !APPROX.test(before) && !NOT_MORE.test(before)
     ) {
       kind = "YEAR";
       explicit = false;
@@ -383,7 +418,8 @@ export function parseNumericMentions(normalizedText: string): NumericMention[] {
 
     let comparator: NumericComparator = "eq";
     const comparatorContext = before.replace(/\s+(?:السعر|سعر|بسعر)$/, "");
-    if (LESS.test(comparatorContext)) comparator = "lt";
+    if (NOT_MORE.test(comparatorContext)) comparator = "lte";
+    else if (LESS.test(comparatorContext)) comparator = "lt";
     else if (AT_MOST.test(comparatorContext)) comparator = "lte";
     else if (MORE.test(comparatorContext)) comparator = "gt";
     else if (AT_LEAST.test(comparatorContext)) comparator = "gte";

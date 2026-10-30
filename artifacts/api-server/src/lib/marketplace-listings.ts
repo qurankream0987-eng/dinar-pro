@@ -296,10 +296,10 @@ export async function searchMarketplaceListings(
         (options.conversational
           ? (() => {
               const text = searchableText(offer);
-              // Category-alias words keep their stem rule; other words also match their
-              // general Arabic forms (lib/arabic-search-terms.ts).
+              // Category-alias words keep their stem rule and, like other words, also match their
+              // general Arabic forms and everyday synonyms («هاتف» ↔ «جوال»; lib/arabic-search-terms.ts).
               return tokens.every((token) =>
-                aliasTokens.has(token) ? text.includes(tokenNeedle(token)) : textMatchesToken(text, token),
+                (aliasTokens.has(token) && text.includes(tokenNeedle(token))) || textMatchesToken(text, token),
               );
             })()
           : searchableText(offer).includes(normalizeSearch(term))),

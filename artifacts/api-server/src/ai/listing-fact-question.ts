@@ -34,7 +34,8 @@ const ORDINALS: Record<string, number> = {
   الاول: 1, اول: 1, الاولي: 1, الثاني: 2, ثاني: 2, الثانيه: 2, الثالث: 3, ثالث: 3, الثالثه: 3,
   الرابع: 4, الرابعه: 4, الخامس: 5, الخامسه: 5, السادس: 6, السادسه: 6,
 };
-const DEICTIC = new Set(["هذا", "هذه", "هذي", "هال", "هاي"]);
+/** «هادي», «دي» are demonstratives only inside a question about a listing in view («بشحال هادي؟»). */
+const DEICTIC = new Set(["هذا", "هذه", "هذي", "هال", "هاي", "هادي", "دي"]);
 
 const MILEAGE_QUESTION =
   /(?:^|\s)(?:كم|قديش|قد\s+ايش|شكد)\s+(?:ال)?(?:ممشى|ممشي|ماشي|ماشيه|عداد|العداد|عدادها)(?:\s|$)/u;
@@ -110,6 +111,18 @@ const FACTS: readonly Fact[] = [
 // ─── Arabic question shape (no product knowledge) ───────────────────────────
 
 /** The message asks something, rather than stating or requesting. */
+/**
+ * «الثاني كم سعره؟», «شكد سعره؟», «هذا بشحال؟», «بكام ده؟»: the published price of the listing in
+ * view, read from the record. «آخر سعر» / «أفضل سعر» are negotiation and are routed before this.
+ */
+const PRICE_QUESTION =
+  /(?:^|\s)(?:بكم|بكام|بشحال|بقداش|بقديش)(?:\s|$)|(?:^|\s)(?:كم|شكد|قديش|قداش|شحال|ايش|وش|شو|ما|ماهو)\s+(?:هو\s+)?(?:ال)?(?:سعر|سعره|سعرها|ثمن|ثمنه|ثمنها|حقه|حقها)(?:\s|$)|(?:^|\s)(?:ال)?(?:سعر|سعره|سعرها)\s+(?:كم|شكد|قديش|بكم)(?:\s|$)/u;
+const PRICE_WORDS = new Set(["بكم", "بكام", "بشحال", "بقداش", "بقديش", "شحال", "قداش", "قديش", "شكد", "كم", "سعر", "السعر", "سعره", "سعرها", "ثمن", "ثمنه", "ثمنها", "حقه", "حقها", "هو"]);
+/** «الأول قديش؟», «هذا بكم؟»: a bare price question word at the end, with a reference to a listing. */
+const PRICE_TAIL = /(?:^|\s)(?:قديش|بقديش|شكد|شحال|بشحال|قداش|بقداش|بكم|بكام)$/u;
+/** A price word with a pronoun names one listing; with several in view it needs a position. */
+const PRICE_PRONOUN = /(?:^|\s)(?:سعره|سعرها|ثمنه|ثمنها|حقه|حقها)(?:\s|$)/u;
+
 const QUESTION = /^(?:(?:يا\s+)?دينار\s+)?(?:(?:لو\s+سمحت|من\s+فضلك|ممكن|طيب)\s+)?(?:هل|كم|قديش|قد\s+ايش|شكد|وش|شو|ايش|ما|ماذا)(?:\s|$)/u;
 /** «هل يوجد/توجد/في …» asks whether a listing exists: a search, not a characteristic. */
 const EXISTENTIAL = /^(?:(?:يا\s+)?دينار\s+)?(?:(?:لو\s+سمحت|من\s+فضلك|ممكن|طيب)\s+)?هل\s+(?:يوجد|توجد|في|فيه|فيها|عندك|عندكم|لديك|لديكم)(?:\s|$)/u;
@@ -280,6 +293,8 @@ export async function executeListingFactQuestion(input: {
   const { actorId } = input;
   if (!actorId) return null;
   const text = normalizeBuyerText(input.message);
+  const referenced = text.split(/\s+/u).some((word) => ORDINALS[word] !== undefined || DEICTIC.has(word));
+  if (PRICE_QUESTION.test(text) || (PRICE_TAIL.test(text) && referenced)) return listingPriceAnswer({ ...input, actorId }, text);
   const fact = FACTS.find((candidate) => candidate.test.test(text));
   const characteristicQuestion =
     !fact &&
@@ -366,4 +381,46 @@ export async function executeListingFactQuestion(input: {
     `بخصوص «${title}»: ${question}؟`,
     `لا أجد في سجل إعلان «${title}» حقلًا يوضّح «${asked.join(" ")}»، فلا أستطيع تأكيد ذلك من السجل. جهّزت سؤالًا للبائع:`,
   );
+}
+
+/** The published price, from the record. A private agreed price is shown in the purchase review. */
+async function listingPriceAnswer(input: { conversationId: string; market: Market; actorId: string }, text: string): Promise<Turn | null> {
+  const set = await latestListingSet(input.conversationId, input.market.id);
+  if (!set?.resourceIds.length) return null;
+  const position = positionIn(text.split(/\s+/u), set.resourceIds.length);
+  if (position === undefined)
+    return PRICE_PRONOUN.test(text)
+      ? notice(`عن أي عرض تسأل؟ لديك ${set.resourceIds.length} نتائج؛ اكتب مثلًا «الأول كم سعره؟».`)
+      : null;
+  const listingId = set.resourceIds[position - 1];
+  if (!listingId) return notice(`لا يوجد العرض رقم ${position} ضمن النتائج الحالية. اختر رقمًا ظاهرًا أو ابدأ بحثًا جديدًا.`);
+  const [row] = await db
+    .select({ data: offers.data, status: offers.status, unitPriceMinor: offers.unitPriceMinor, pricingMode: offers.pricingMode })
+    .from(offers)
+    .where(and(eq(offers.id, listingId), eq(offers.marketId, input.market.id)));
+  if (!row || row.status !== "PUBLISHED") return notice("هذا العرض لم يعد متاحًا؛ لم أجب من بيانات قديمة.");
+  const title = typeof row.data.title === "string" ? row.data.title : "الإعلان";
+  // Without an ordinal or a demonstrative, a single result is the subject only if the question
+  // names nothing else: «كم سعر الآيفون؟» beside one laptop asks about something else.
+  const words = text.split(/\s+/u);
+  const explicit = words.some((word) => ORDINALS[word] !== undefined || DEICTIC.has(word));
+  if (!explicit) {
+    const titleWords = vocabularyOf(title);
+    const named = words.filter((word) => !PRICE_WORDS.has(word) && !LEAD_WORDS.has(word) && !REFERENCE.has(word) && !FILLER.has(word));
+    if (named.some((word) => ![...titleWords].some((candidate) => overlaps(stem(word), candidate)))) return null;
+  }
+  const scale = input.market.minorUnitScale;
+  const price =
+    row.unitPriceMinor === null
+      ? undefined
+      : `${(row.unitPriceMinor / 10 ** scale).toFixed(scale)} ${input.market.currencyCode}`;
+  const prompt =
+    price === undefined
+      ? `«${title}» ليس له سعر معلن؛ السعر بالاتفاق مع البائع. يمكنك طلب أفضل سعر أو تقديم عرض.`
+      : `سعر «${title}» المعلن: ${price}.${row.pricingMode === "NEGOTIABLE" ? " السعر قابل للتفاوض؛ يمكنك طلب أفضل سعر أو تقديم عرض." : ""} هذه معلومة من الإعلان نفسه، والسعر النهائي يُراجع قبل أي طلب.`;
+  return {
+    tool: "listingFactQuestion",
+    version: 1,
+    result: { kind: "SURFACE", surface: "CLARIFY", resourceIds: [listingId], resourceId: listingId, query: {}, listings: [], prompt },
+  };
 }

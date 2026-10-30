@@ -35,6 +35,7 @@ const LEXICON: readonly (readonly string[])[] = [
   ["مقهي", "كافيه", "كوفي"],
   ["شعار", "لوجو", "لوغو"],
   ["طعام", "سفره", "سفرة"],
+  ["كوب", "اكواب", "كاس", "كاسات", "كاسه", "كاسة"],
 ];
 const LEXICON_BY_WORD = new Map<string, readonly string[]>(
   LEXICON.flatMap((group) => group.map((word) => [word, group] as const)),
@@ -61,6 +62,8 @@ export function tokenVariants(token: string): string[] {
     // Final «ه» written for «ة» and back: «طاوله» ↔ «طاولة».
     if (form.length >= 3 && form.endsWith("ه")) forms.add(`${form.slice(0, -1)}ة`);
     if (form.length >= 3 && form.endsWith("ة")) forms.add(`${form.slice(0, -1)}ه`);
+    // A singular in ة names one of a collective noun: «كنبة» ↔ «كنب», «شجرة» ↔ «شجر» (W04).
+    if (form.length >= 4 && /[ةه]$/u.test(form)) forms.add(form.slice(0, -1));
   }
   // The common ض/ظ spelling slip: «ينضف» for «ينظف».
   for (const form of [...forms]) {
@@ -81,10 +84,17 @@ export function tokenVariants(token: string): string[] {
   return [...forms];
 }
 
-/** The generic kind-of-thing words among the item words, when specific words remain beside them. */
+/**
+ * Words that describe an item without naming one. «هاتف جديد» relaxed to «جديد» would match any
+ * new listing, so a description alone never justifies relaxing the generic noun (W04).
+ */
+const DESCRIPTIVE = /^(?:ال)?(?:جديد|جديده|جديدة|مستعمل|مستعمله|مستعملة|مستخدم|مستخدمه|مستخدمة|نظيف|نظيفه|نظيفة|كويس|كويسه|كويسة|ممتاز|ممتازه|ممتازة|مميز|مميزه|مميزة|اصلي|اصليه|اصلية|رخيص|رخيصه|رخيصة|غالي|غاليه|غالية|كبير|كبيره|كبيرة|صغير|صغيره|صغيرة|اسود|ابيض|احمر|ازرق|اخضر|اصفر|رمادي|بني|وردي|ذهبي|فضي)$/u;
+
+/** The generic kind-of-thing words among the item words, when a specific (naming) word remains beside them. */
 export function genericTokens(tokens: readonly string[]): string[] {
   const generic = tokens.filter((token) => tokenVariants(token).some((form) => GENERIC_NOUNS.has(form)));
-  return generic.length < tokens.length ? generic : [];
+  const specific = tokens.filter((token) => !generic.includes(token) && !DESCRIPTIVE.test(token));
+  return generic.length < tokens.length && specific.length > 0 ? generic : [];
 }
 
 /** Drops words that describe the request rather than the item, unless nothing would remain. */

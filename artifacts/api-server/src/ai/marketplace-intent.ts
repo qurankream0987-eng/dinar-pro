@@ -79,7 +79,7 @@ const MARKETPLACE_REQUEST_ACTION =
  * whether the market has something is a search. Each form needs an item word after it.
  */
 const MARKETPLACE_QUESTION =
-  /^(?:(?:في|فيه|هل)\s+)?(?:عندكم|لديكم|عندك)\s+(?!وقت|مشكله|سؤال|فكره|علم)\S{2,}|^(?:شو|وش|ايش|شنو)\s+(?:في|فيه)\s+\S{3,}|^مين\s+(?!(?:ب|بي)?(?:يقدر|يعرف|يساعد|يفهم|يحكي|يقول|قدر|عرف|ساعد))(?:ي|ب|بي)\S{3,}(?:\s+\S+)?/u;
+  /^(?:(?:في|فيه|هل|شو|وش|ايش|شنو)\s+)?(?:عندكم|لديكم|عندك)\s+(?:من\s+)?(?!وقت|مشكله|سؤال|فكره|علم)\S{2,}|^(?:شو|وش|ايش|شنو)\s+(?:في|فيه)\s+\S{3,}|^مين\s+(?!(?:ب|بي)?(?:يقدر|يعرف|يساعد|يفهم|يحكي|يقول|قدر|عرف|ساعد))(?:ي|ب|بي)\S{3,}(?:\s+\S+)?/u;
 /**
  * «ابي اتعلم …», «بدي افهم …», «حاب اسافر …»: wanting to do an activity (learn, understand,
  * write, plan, travel, talk) is not wanting an item. Acquisition verbs (اشتري، اطلب) stay searches.
