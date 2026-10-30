@@ -60,7 +60,8 @@
     "test:context-sealed": "NODE_ENV=development BDINAR_TEST_DATABASE=development node test/run.mjs context-sealed.test",
     "test:listing-contact-text": "NODE_ENV=development BDINAR_TEST_DATABASE=development node test/run.mjs listing-contact-text.test",
     "test:w02-ultra": "NODE_ENV=development BDINAR_TEST_DATABASE=development node test/run.mjs w02-ultra-cards.test",
-    "test:w02-ultra-browser": "NODE_ENV=development BDINAR_TEST_DATABASE=development BDINAR_PROMOTIONS_ENABLED=true node test/run.mjs w02-ultra-browser.test"
+    "test:w02-ultra-browser": "NODE_ENV=development BDINAR_TEST_DATABASE=development BDINAR_PROMOTIONS_ENABLED=true node test/run.mjs w02-ultra-browser.test",
+    "test:policy-cards": "NODE_ENV=development BDINAR_TEST_DATABASE=development node test/run.mjs policy-consent-cards.test"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1155.0",

@@ -1777,6 +1777,11 @@ export type AiUiBlockPayloadDriver = { [key: string]: unknown };
  */
 export type AiUiBlockPayloadProvider = { [key: string]: unknown };
 
+/**
+ * Policy review card (W02-ULTRA B10): the current version, effective date, legal-review status and reading path of each policy that requires acceptance, whether this user accepted it, and the review id whose exact versions an acceptance records. Contract acceptance only; optional privacy consents are unaffected.
+ */
+export type AiUiBlockPayloadPolicyReview = { [key: string]: unknown };
+
 export type AiUiBlockPayloadMemoryGroupsItemItemsItem = {
   /** @maxLength 80 */
   topic: string;
@@ -1867,6 +1872,8 @@ export type AiUiBlockPayload = {
   driver?: AiUiBlockPayloadDriver;
   /** Allowlisted provider connection view (review, status, safe key prefix). Never contains a key, secret or credential hash. */
   provider?: AiUiBlockPayloadProvider;
+  /** Policy review card (W02-ULTRA B10): the current version, effective date, legal-review status and reading path of each policy that requires acceptance, whether this user accepted it, and the review id whose exact versions an acceptance records. Contract acceptance only; optional privacy consents are unaffected. */
+  policyReview?: AiUiBlockPayloadPolicyReview;
   /** Private structured memory summary, returned only to the authenticated owner. */
   memory?: AiUiBlockPayloadMemory;
   /** G2 conversational answer: its class (CONVERSATIONAL_RESPONSE, GROUNDED_ADVICE, CLARIFICATION_REQUIRED), the data scope it is grounded in (DINAR_INTERNAL or GENERAL_KNOWLEDGE), deterministic statistics and reasons, and an optional topic (SPONSORED_PLACEMENT, MARKETING_CLAIMS_BLOCKED with the refused claim kinds, MARKETING_COPY for copy grounded in the seller's own listing record). Never an action. */

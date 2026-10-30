@@ -1,3 +1,4 @@
+import { PolicyReviewPanel, isPolicyReview } from "./PolicyReviewPanel";
 import { normalizeMemory } from "./memory-types";
 import { normalizeInquiry } from "./inquiry-types";
 import { ControlSurface, normalizeControl } from "./ControlSurface";
@@ -1018,6 +1019,8 @@ function ResultBlock({
     const memory = normalizeMemory(block.payload.memory);
     return memory ? <Suspense fallback={<SurfaceLoading />}><MemorySummary memory={memory} active={Boolean(activeWorkflow)} onSend={onSend} /></Suspense> : null;
   }
+  if (block.type === "SURFACE" && isPolicyReview(block.payload.policyReview))
+    return <PolicyReviewPanel review={block.payload.policyReview} active={Boolean(activeWorkflow)} onSend={onSend} />;
   if (block.type === "SURFACE" && block.payload.surface === "ADVICE")
     return isAdvice(block.payload.advice) ? <AdvicePanel advice={block.payload.advice} active={Boolean(activeWorkflow)} onSend={onSend} /> : null;
   if (block.type === "SURFACE" && block.payload.surface === "COMPARISON")

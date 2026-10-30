@@ -63,6 +63,7 @@ import { executeProviderTurn, isExplicitProviderManagementIntent } from "./provi
 import { SMART_STATE_KINDS, executeModelFallback, executeSmartTurn } from "./smart-turn";
 import { executeCommerceTurn } from "./commerce-turn";
 import { executeInquiryTurn } from "./inquiry-turn";
+import { executePolicyTurn } from "./policy-turn";
 import { executeProductControlTurn } from "./product-control-turn";
 import { aiUsagePolicyFor, globalGuardOpen, hasAiAllowance } from "../lib/ai-usage";
 import { meteredPlatformGateway } from "../lib/ai-spend";
@@ -661,6 +662,12 @@ export async function executeAiConversationTurn(
     if (turn) options.onToolSelected?.(turn.tool);
     return turn;
   };
+  // «راجع الشروط المحدثة», «أوافق على الشروط المحدثة»: deterministic, before any commerce flow.
+  const policy = await executePolicyTurn({ conversationId: context.conversationId, message: context.message, market: context.market, actorId: context.actorId });
+  if (policy) {
+    options.onToolSelected?.(policy.tool);
+    return policy;
+  }
   const contactRequest = await executeOrderContactRequest({
     conversationId: context.conversationId,
     message: context.message,

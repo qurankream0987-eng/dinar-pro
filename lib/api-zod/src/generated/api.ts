@@ -2926,6 +2926,7 @@ export const PreviewAiConversationResponse = zod.object({
   "promotion": zod.record(zod.string(), zod.unknown()).optional().describe('Allowlisted seller promotion view (plans, review, campaigns), rebuilt from server state on every read. Prices come only from admin plans.\n'),
   "driver": zod.record(zod.string(), zod.unknown()).optional().describe('Allowlisted driver view (profile, review, coarse work cards, assignments), rebuilt from server state on every read. Never contains contacts or coordinates.\n'),
   "provider": zod.record(zod.string(), zod.unknown()).optional().describe('Allowlisted provider connection view (review, status, safe key prefix). Never contains a key, secret or credential hash.\n'),
+  "policyReview": zod.record(zod.string(), zod.unknown()).optional().describe('Policy review card (W02-ULTRA B10): the current version, effective date, legal-review status and reading path of each policy that requires acceptance, whether this user accepted it, and the review id whose exact versions an acceptance records. Contract acceptance only; optional privacy consents are unaffected.\n'),
   "memory": zod.object({
   "view": zod.enum(['MY_INTERESTS', 'MEMORY_SUMMARY', 'MEMORY_CONFIRMATION', 'MEMORY_UPDATED']),
   "groups": zod.array(zod.object({
@@ -3259,6 +3260,7 @@ export const CreateAiGuestHandoffResponse = zod.object({
   "promotion": zod.record(zod.string(), zod.unknown()).optional().describe('Allowlisted seller promotion view (plans, review, campaigns), rebuilt from server state on every read. Prices come only from admin plans.\n'),
   "driver": zod.record(zod.string(), zod.unknown()).optional().describe('Allowlisted driver view (profile, review, coarse work cards, assignments), rebuilt from server state on every read. Never contains contacts or coordinates.\n'),
   "provider": zod.record(zod.string(), zod.unknown()).optional().describe('Allowlisted provider connection view (review, status, safe key prefix). Never contains a key, secret or credential hash.\n'),
+  "policyReview": zod.record(zod.string(), zod.unknown()).optional().describe('Policy review card (W02-ULTRA B10): the current version, effective date, legal-review status and reading path of each policy that requires acceptance, whether this user accepted it, and the review id whose exact versions an acceptance records. Contract acceptance only; optional privacy consents are unaffected.\n'),
   "memory": zod.object({
   "view": zod.enum(['MY_INTERESTS', 'MEMORY_SUMMARY', 'MEMORY_CONFIRMATION', 'MEMORY_UPDATED']),
   "groups": zod.array(zod.object({
@@ -3496,6 +3498,7 @@ export const GetAiConversationResponse = zod.object({
   "promotion": zod.record(zod.string(), zod.unknown()).optional().describe('Allowlisted seller promotion view (plans, review, campaigns), rebuilt from server state on every read. Prices come only from admin plans.\n'),
   "driver": zod.record(zod.string(), zod.unknown()).optional().describe('Allowlisted driver view (profile, review, coarse work cards, assignments), rebuilt from server state on every read. Never contains contacts or coordinates.\n'),
   "provider": zod.record(zod.string(), zod.unknown()).optional().describe('Allowlisted provider connection view (review, status, safe key prefix). Never contains a key, secret or credential hash.\n'),
+  "policyReview": zod.record(zod.string(), zod.unknown()).optional().describe('Policy review card (W02-ULTRA B10): the current version, effective date, legal-review status and reading path of each policy that requires acceptance, whether this user accepted it, and the review id whose exact versions an acceptance records. Contract acceptance only; optional privacy consents are unaffected.\n'),
   "memory": zod.object({
   "view": zod.enum(['MY_INTERESTS', 'MEMORY_SUMMARY', 'MEMORY_CONFIRMATION', 'MEMORY_UPDATED']),
   "groups": zod.array(zod.object({
@@ -3771,6 +3774,7 @@ export const CopyAiConversationResponse = zod.object({
   "promotion": zod.record(zod.string(), zod.unknown()).optional().describe('Allowlisted seller promotion view (plans, review, campaigns), rebuilt from server state on every read. Prices come only from admin plans.\n'),
   "driver": zod.record(zod.string(), zod.unknown()).optional().describe('Allowlisted driver view (profile, review, coarse work cards, assignments), rebuilt from server state on every read. Never contains contacts or coordinates.\n'),
   "provider": zod.record(zod.string(), zod.unknown()).optional().describe('Allowlisted provider connection view (review, status, safe key prefix). Never contains a key, secret or credential hash.\n'),
+  "policyReview": zod.record(zod.string(), zod.unknown()).optional().describe('Policy review card (W02-ULTRA B10): the current version, effective date, legal-review status and reading path of each policy that requires acceptance, whether this user accepted it, and the review id whose exact versions an acceptance records. Contract acceptance only; optional privacy consents are unaffected.\n'),
   "memory": zod.object({
   "view": zod.enum(['MY_INTERESTS', 'MEMORY_SUMMARY', 'MEMORY_CONFIRMATION', 'MEMORY_UPDATED']),
   "groups": zod.array(zod.object({
@@ -4060,6 +4064,7 @@ export const AddAiListingToCartResponse = zod.object({
   "promotion": zod.record(zod.string(), zod.unknown()).optional().describe('Allowlisted seller promotion view (plans, review, campaigns), rebuilt from server state on every read. Prices come only from admin plans.\n'),
   "driver": zod.record(zod.string(), zod.unknown()).optional().describe('Allowlisted driver view (profile, review, coarse work cards, assignments), rebuilt from server state on every read. Never contains contacts or coordinates.\n'),
   "provider": zod.record(zod.string(), zod.unknown()).optional().describe('Allowlisted provider connection view (review, status, safe key prefix). Never contains a key, secret or credential hash.\n'),
+  "policyReview": zod.record(zod.string(), zod.unknown()).optional().describe('Policy review card (W02-ULTRA B10): the current version, effective date, legal-review status and reading path of each policy that requires acceptance, whether this user accepted it, and the review id whose exact versions an acceptance records. Contract acceptance only; optional privacy consents are unaffected.\n'),
   "memory": zod.object({
   "view": zod.enum(['MY_INTERESTS', 'MEMORY_SUMMARY', 'MEMORY_CONFIRMATION', 'MEMORY_UPDATED']),
   "groups": zod.array(zod.object({

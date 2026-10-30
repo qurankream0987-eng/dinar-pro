@@ -294,6 +294,15 @@ const SurfaceBlock = z.object({
     driver: z.record(z.string(), z.unknown()).optional(),
     provider: z.record(z.string(), z.unknown()).optional(),
     advice: z.record(z.string(), z.unknown()).optional(),
+    policyReview: z.object({
+      view: z.enum(["REVIEW", "ACCEPTED", "DECLINED", "CURRENT"]),
+      reviewId: z.string().uuid().optional(),
+      policies: z.array(z.object({
+        key: z.string().max(60), version: z.string().max(40), title: z.string().max(120), effectiveDate: z.string().max(20),
+        path: z.string().regex(/^\/policies\/[a-z0-9-]{1,60}$/u), legalReviewPending: z.boolean(), accepted: z.boolean(),
+      }).strict()).max(12),
+      optionalConsentsUnaffected: z.literal(true),
+    }).strict().optional(),
     memory: z.object({ view: z.enum(["MY_INTERESTS", "MEMORY_SUMMARY", "MEMORY_CONFIRMATION", "MEMORY_UPDATED"]), groups: z.array(z.object({ label: z.string().max(80), items: z.array(z.object({ topic: z.string().max(80), label: z.string().max(120), reason: z.string().max(160) })).max(12) })).max(6) }).optional(),
     negotiation: z.record(z.string(), z.unknown()).optional(),
     inquiry: z.record(z.string(), z.unknown()).optional(),
@@ -2092,6 +2101,7 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
         provider: toolResult.provider,
         advice: toolResult.advice,
         memory: toolResult.memory,
+        policyReview: toolResult.policyReview,
         negotiation: toolResult.negotiation,
         inquiry: toolResult.inquiry,
         control: toolResult.control,

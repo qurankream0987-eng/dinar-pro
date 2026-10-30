@@ -4,10 +4,10 @@ import {
   marketPriceVersions,
   markets,
   offers,
-  users,
-} from "@workspace/db";
+  users, policyAcceptances } from "@workspace/db";
 import { listings as productListings } from "../src/lib/dinar-data";
 import { hashPassword } from "../src/lib/auth";
+import { registrationAcceptancePolicies } from "../src/lib/policies";
 import { phase1DevelopmentListings } from "./phase1-dev-fixtures";
 
 export type AcceptanceFixtureModule =
@@ -110,6 +110,10 @@ export async function seedAcceptanceFixtures(requested: AcceptanceFixtureModule[
         passwordHash,
         phoneVerified: true,
       }).onConflictDoNothing();
+      // A fixture account accepted the current policies at creation, as registration records it.
+      await db.insert(policyAcceptances)
+        .values(registrationAcceptancePolicies().map((policy) => ({ userId: id, policyKey: policy.key, policyVersion: policy.version })))
+        .onConflictDoNothing();
     }
   }
 

@@ -6,7 +6,8 @@ import {
   sellerDues,
   disputes,
 } from "@workspace/db";
-import { db, pool, markets, users, offers, marketPriceVersions } from "@workspace/db";
+import { db, pool, markets, users, offers, marketPriceVersions, policyAcceptances } from "@workspace/db";
+import { registrationAcceptancePolicies } from "../src/lib/policies";
 import { eq } from "drizzle-orm";
 import { hashPassword } from "../src/lib/auth";
 import { listings } from "../src/lib/dinar-data";
@@ -93,6 +94,11 @@ for (let n = 0; n < 6; n++) {
       passwordHash,
       phoneVerified: true,
     })
+    .onConflictDoNothing();
+  // A seeded account accepted the current policies at creation, as registration records it.
+  await db
+    .insert(policyAcceptances)
+    .values(registrationAcceptancePolicies().map((policy) => ({ userId: id, policyKey: policy.key, policyVersion: policy.version })))
     .onConflictDoNothing();
 }
 for (const market of configured)

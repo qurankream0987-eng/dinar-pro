@@ -71,6 +71,7 @@ import {
 } from "../lib/listing-photos";
 import { findListingContactText, listingContactTextRefusal, normalizeListingContactPhone } from "../lib/listing-contact";
 import { getAuthorizedSellerContacts } from "../lib/contact-release";
+import { assertPoliciesAccepted } from "../lib/policy-gate";
 import { recordOrderDisputeOpened } from "../lib/payments/disputes";
 import {
   activePolicyRules,
@@ -349,6 +350,7 @@ export async function createListingForActor(
   if (!attributes.ok) throw fail(400, attributes.reason);
   if (attributes.missing.length)
     throw fail(400, `أكمل خصائص العرض المطلوبة: ${attributes.missing.join("، ")}`);
+  await assertPoliciesAccepted(actor.id);
   const market = await marketFor({ actor });
   // A phone in the text would bypass the order-bound contact release (lib/contact-release.ts).
   if (findListingContactText(`${body.title}\n${body.description ?? ""}`, market.id)) throw listingContactTextRefusal();
@@ -632,6 +634,8 @@ async function checkout(
         ),
       };
     }
+    // Contract acceptance before a new order (an idempotent replay above still returns its order).
+    await assertPoliciesAccepted(actor.id, tx);
     if (actor.status !== ACCOUNT_STATUS.active)
       throw fail(
         403,

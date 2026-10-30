@@ -3237,6 +3237,14 @@ components:
               description: >
                 Allowlisted provider connection view (review, status, safe key prefix).
                 Never contains a key, secret or credential hash.
+            policyReview:
+              type: object
+              additionalProperties: true
+              description: >
+                Policy review card (W02-ULTRA B10): the current version, effective date, legal-review
+                status and reading path of each policy that requires acceptance, whether this user
+                accepted it, and the review id whose exact versions an acceptance records. Contract
+                acceptance only; optional privacy consents are unaffected.
             memory:
               type: object
               additionalProperties: false

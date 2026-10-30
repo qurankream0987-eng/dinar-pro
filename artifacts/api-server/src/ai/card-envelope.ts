@@ -223,10 +223,12 @@ export function buildCardEnvelope(source: CardEnvelopeSource): CardEnvelope | nu
     return undefined;
   })();
 
+  const policyReview = record(payload.policyReview);
   let allowedActions: string[] | undefined;
   if (purchase) allowedActions = lifecycle === "PENDING_REVIEW" && status.lifecycle === "PENDING_REVIEW" ? purchaseCapabilities(purchase) : [];
   else if (negotiation) allowedActions = lifecycle === "PENDING_REVIEW" && status.lifecycle === "PENDING_REVIEW" ? negotiationCapabilities(negotiation) : text(negotiation.view) === "REVIEW" ? [] : negotiationCapabilities(negotiation);
   else if (preview) allowedActions = lifecycle === "PENDING_REVIEW" ? ["CONFIRM", "CANCEL"] : [];
+  else if (policyReview) allowedActions = policyReview.view === "REVIEW" ? ["ACCEPT", "DECLINE"] : [];
   else allowedActions = undefined;
 
   const resource = resourceOf(source);

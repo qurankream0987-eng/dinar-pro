@@ -67,6 +67,8 @@ export type ToolResult = {
   sellerInsight?: Record<string, unknown>;
   /** Block F2 server facts side by side; unknown values stay null. */
   comparison?: Record<string, unknown>;
+  /** W02-ULTRA B10: the policy versions reviewed, accepted or declined in this conversation. */
+  policyReview?: import("./policy-turn").PolicyReview;
   /** Block F2 purchase review for an F0 pending action; nothing is paid. */
   purchaseReview?: Record<string, unknown>;
   photoSuggestionStatus?: ListingPhotoSuggestionStatus;

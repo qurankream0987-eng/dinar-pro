@@ -80,6 +80,7 @@ export type AiUiBlock = {
   version: 1;
   payload: {
     memory?: import("./MemorySummary").MemoryPayload;
+    policyReview?: unknown;
     commerce?: CommercialPayload;
     tutorial?: TutorialPayload;
     surface?: ConversationSurfaceToken;
