@@ -178,6 +178,8 @@ export default function AiPage() {
   const shouldAutoFollow = useRef(true);
   const previousScrollHeight = useRef<number | null>(null);
   const userScrollUntil = useRef(0);
+  /** The viewport geometry at the previous scroll event (W02-ULTRA scroll stability). */
+  const lastScrollGeometry = useRef<{ top: number; height: number; client: number } | null>(null);
   const touchOrigin = useRef<{ x: number; y: number } | null>(null);
   const requestEpoch = useRef(0);
   const initializedId = useRef<string | undefined>(undefined);
@@ -1272,6 +1274,21 @@ export default function AiPage() {
     const distanceFromBottom =
       viewport.scrollHeight - viewport.clientHeight - viewport.scrollTop;
     const pinnedToBottom = distanceFromBottom < 96;
+    // Moving up while the content and viewport keep their size is the reader going to an older
+    // card (find-in-page, a link, an element scrolled into view), not new content arriving. It
+    // stops auto-follow, so a later resize (rotation, keyboard, width change) no longer snaps
+    // the thread back to the bottom. Growth changes the size; jumping to the latest moves down.
+    const previous = lastScrollGeometry.current;
+    lastScrollGeometry.current = { top: viewport.scrollTop, height: viewport.scrollHeight, client: viewport.clientHeight };
+    if (
+      shouldAutoFollow.current &&
+      !pinnedToBottom &&
+      previous &&
+      previous.height === viewport.scrollHeight &&
+      previous.client === viewport.clientHeight &&
+      viewport.scrollTop < previous.top
+    )
+      shouldAutoFollow.current = false;
     if (Date.now() < userScrollUntil.current || !shouldAutoFollow.current) {
       shouldAutoFollow.current = pinnedToBottom;
     }

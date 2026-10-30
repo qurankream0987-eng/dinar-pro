@@ -363,6 +363,85 @@ export async function runBuyerSearch(market: Market, state: BuyerState): Promise
 
 // ─── Comparison and selection ────────────────────────────────────────────────
 
+/** Where a compared value comes from (W02-ULTRA): DINAR's own record, or what the seller entered. */
+export type ComparisonSource = "RECORD" | "SELLER";
+export type ComparisonRow = {
+  key: string;
+  label: string;
+  source: ComparisonSource;
+  values: (string | number | null)[];
+  /** false where the listing's category has no such characteristic («لا ينطبق»), not «unknown». */
+  applies: boolean[];
+};
+/** A fact computed from the rows above (DERIVED); never an opinion or a ranking of «better». */
+export type ComparisonHighlight = { key: string; label: string; text: string; listingIds: string[]; missing: number };
+
+const numeric = (value: string | number | null | undefined): number | undefined => {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && /^-?\d+(?:\.\d+)?$/u.test(value.trim())) return Number(value);
+  return undefined;
+};
+
+/**
+ * The comparison of listings in view, category-aware without knowing any category: each
+ * characteristic is labelled by a category that defines it, cells of a category without it
+ * read «لا ينطبق», and numeric characteristics get their factual lowest/highest (DERIVED).
+ */
+export async function compareRows(listings: ListingRecord[]): Promise<{ rows: ComparisonRow[]; highlights: ComparisonHighlight[] }> {
+  const categories = new Map((await listMarketplaceCategories()).map((row) => [row.id, categorySchema(row)]));
+  const schemaOf = (listing: ListingRecord) => categories.get(listing.categoryId ?? "");
+  const attributeKeys = new Set<string>();
+  for (const listing of listings) {
+    for (const key of Object.keys(schemaOf(listing)?.attributes ?? {})) attributeKeys.add(key);
+    for (const key of Object.keys(listing.attributes ?? {})) attributeKeys.add(key);
+  }
+  const row = (key: string, label: string, source: ComparisonSource, value: (listing: ListingRecord) => string | number | null, applies?: (listing: ListingRecord) => boolean): ComparisonRow => ({
+    key,
+    label,
+    source,
+    values: listings.map((listing) => value(listing) ?? null),
+    applies: listings.map((listing) => applies?.(listing) ?? true),
+  });
+  const labelOf = (key: string) =>
+    listings.map((listing) => schemaOf(listing)?.attributes[key]?.label).find((label): label is string => Boolean(label)) ?? key;
+  const rows: ComparisonRow[] = [
+    row("price", "السعر", "RECORD", (listing) => (listing.unitPrice === null ? "بالاتفاق" : `${listing.unitPrice} ${listing.currency}`)),
+    ...[...attributeKeys].map((key) =>
+      row(key, labelOf(key), "SELLER", (listing) => listing.attributes?.[key] ?? null, (listing) =>
+        listing.attributes?.[key] != null || Boolean(schemaOf(listing)?.attributes[key]) || !schemaOf(listing)),
+    ),
+    row("city", "المدينة", "RECORD", (listing) => listing.city || null),
+    row("availability", "التوفر", "RECORD", (listing) =>
+      listing.inventoryMode === "UNLIMITED" ? "متاح" : `${(listing.availableQuantity ?? 0) - listing.reservedQuantity} قطعة`),
+    row("fulfilment", "الاستلام", "RECORD", (listing) => ({ PICKUP: "استلام", DELIVERY: "توصيل", SERVICE: "خدمة", DIGITAL: "رقمي" })[listing.fulfilmentType] ?? null),
+    row("images", "الصور", "RECORD", (listing) => (listing.imageUrls?.length ?? 0) + (listing.imageUrl ? 1 : 0)),
+    row("rating", "تقييم البائع", "RECORD", (listing) => (listing.reviewCount > 0 ? `${listing.rating}/5 (${listing.reviewCount})` : null)),
+  ];
+  const highlights: ComparisonHighlight[] = [];
+  const numericRows: Array<{ key: string; label: string; values: (number | undefined)[] }> = [
+    { key: "price", label: "السعر", values: listings.map((listing) => numeric(listing.unitPrice)) },
+    ...rows.filter((item) => item.source === "SELLER").map((item) => ({ key: item.key, label: item.label, values: item.values.map(numeric) })),
+  ];
+  for (const item of numericRows) {
+    const known = item.values.map((value, index) => ({ value, index })).filter((entry): entry is { value: number; index: number } => entry.value !== undefined);
+    if (known.length < 2) continue;
+    const min = Math.min(...known.map((entry) => entry.value));
+    const max = Math.max(...known.map((entry) => entry.value));
+    if (min === max) continue;
+    const missing = listings.length - known.length;
+    const titles = (target: number) => known.filter((entry) => entry.value === target).map((entry) => listings[entry.index]!);
+    for (const [kind, target] of [["الأقل", min], ["الأعلى", max]] as const)
+      highlights.push({
+        key: `${item.key}:${kind === "الأقل" ? "min" : "max"}`,
+        label: `${kind} ${item.label}`,
+        text: titles(target).map((listing) => `«${listing.title}»`).join("، "),
+        listingIds: titles(target).map((listing) => listing.id),
+        missing,
+      });
+  }
+  return { rows, highlights: highlights.slice(0, 8) };
+}
+
 async function comparison(set: StoredSet, positions: number[], market: Market): Promise<Turn> {
   const ids = positions.map((position) => set.resourceIds[position - 1]);
   if (positions.length < 2 || ids.some((id) => !id))
@@ -371,29 +450,7 @@ async function comparison(set: StoredSet, positions: number[], market: Market): 
   const byId = new Map(live.map((listing) => [listing.id, listing]));
   const listings = (ids as string[]).map((id) => byId.get(id));
   if (listings.some((listing) => !listing)) return notice("أحد العروض لم يعد متاحًا؛ لم أقارن بيانات قديمة.");
-  const categories = new Map((await listMarketplaceCategories()).map((row) => [row.id, categorySchema(row)]));
-  const attributeKeys = new Set<string>();
-  for (const listing of listings) {
-    for (const key of Object.keys(categories.get(listing!.categoryId ?? "")?.attributes ?? {})) attributeKeys.add(key);
-    for (const key of Object.keys(listing!.attributes ?? {})) attributeKeys.add(key);
-  }
-  const unknown = null;
-  const row = (label: string, value: (listing: ListingRecord) => string | number | null) => ({
-    label,
-    values: listings.map((listing) => value(listing!) ?? unknown),
-  });
-  const rows = [
-    row("السعر", (listing) => (listing.unitPrice === null ? "بالاتفاق" : `${listing.unitPrice} ${listing.currency}`)),
-    ...[...attributeKeys].map((key) =>
-      row(categories.get(listings[0]!.categoryId ?? "")?.attributes[key]?.label ?? key, (listing) => listing.attributes?.[key] ?? null),
-    ),
-    row("المدينة", (listing) => listing.city || null),
-    row("التوفر", (listing) =>
-      listing.inventoryMode === "UNLIMITED" ? "متاح" : `${(listing.availableQuantity ?? 0) - listing.reservedQuantity} قطعة`),
-    row("الاستلام", (listing) => ({ PICKUP: "استلام", DELIVERY: "توصيل", SERVICE: "خدمة", DIGITAL: "رقمي" })[listing.fulfilmentType] ?? null),
-    row("الصور", (listing) => (listing.imageUrls?.length ?? 0) + (listing.imageUrl ? 1 : 0)),
-    row("تقييم البائع", (listing) => (listing.reviewCount > 0 ? `${listing.rating}/5 (${listing.reviewCount})` : null)),
-  ];
+  const { rows, highlights } = await compareRows(listings as ListingRecord[]);
   return {
     tool: "buyerCompare",
     version: 1,
@@ -408,11 +465,70 @@ async function comparison(set: StoredSet, positions: number[], market: Market): 
         resultSetId: set.id,
         listings: listings.map((listing) => ({ id: listing!.id, title: listing!.title, isSponsored: Boolean(listing!.isSponsored) })),
         rows,
+        highlights,
         unknownLabel: "لم يذكر البائع",
+        notApplicableLabel: "لا ينطبق",
+        sourceLabels: { RECORD: "من سجل DINAR", SELLER: "كما ذكره البائع", DERIVED: "محسوب من القيم أعلاه" },
       },
-      prompt: "قارنت البيانات الحالية من DINAR فقط. ما لم يذكره البائع يظهر «لم يذكر البائع» ولم أفترض قيمته.",
+      prompt: "قارنت البيانات الحالية من DINAR فقط. ما لم يذكره البائع يظهر «لم يذكر البائع» ولم أفترض قيمته، وما لا يخص فئة العرض يظهر «لا ينطبق».",
     },
   };
+}
+
+// ─── «Which one …?» over the listings in view (W02-ULTRA) ────────────────────
+
+const WHICH = /^(?:(?:طيب|طب|يعني)\s+)?(?:اي|ايهم|ايهن|مين|منو|انهو|اياهم|اي\s+واحد|اي\s+عرض)\s+(?:(?:فيهم|منهم|فيهن|منهن)\s+)?(.+)$/u;
+const LOWER = /^(?:ال)?(?:اقل|ارخص|اصغر|اقصر|اخف|اقدم)$/u;
+const HIGHER = /^(?:ال)?(?:اكثر|اعلي|اكبر|اغلي|احدث|اطول|اثقل|اوسع|اجدد)$/u;
+/** «يشمل ضمان», «فيه ضمان», «عليها فحص», «معه فاتورة»: whether the record states a characteristic. */
+const HAS = /^(?:يشمل|تشمل|فيه|فيها|عليه|عليها|معه|معها|عنده|عندها|يجي\s+مع|تجي\s+مع)$/u;
+/** A preference no record can settle («أنسب للعائلة», «أفضل لي»): facts only, never a ranking. */
+const SUBJECTIVE = /^(?:ال)?(?:انسب|افضل|احسن|اروع|اجمل|اريح)$/u;
+const IMPLICIT_FIELD: Record<string, string> = { احدث: "year", اقدم: "year", اجدد: "year", ارخص: "price", اغلي: "price" };
+const attributeStem = (word: string) =>
+  normalizeSearch(word).replace(/^(?:و|ف|ب|ل)?ال(?=\S{3,})/u, "").replace(/(?:ها|ه|هم)$/u, "").replace(/[ةه]$/u, "");
+
+async function whichQuestion(set: StoredSet, text: string, market: Market): Promise<Turn | null> {
+  const asked = text.match(WHICH)?.[1];
+  if (!asked) return null;
+  const words = asked.split(/\s+/u).filter(Boolean);
+  const direction = words.some((word) => LOWER.test(word)) ? "min" : words.some((word) => HIGHER.test(word)) ? "max" : undefined;
+  const presence = words.some((word) => HAS.test(word));
+  const subjective = words.some((word) => SUBJECTIVE.test(word));
+  if (!direction && !presence && !subjective) return null;
+  const ids = set.resourceIds.slice(0, 6);
+  if (ids.length < 2) return null;
+  const live = await searchMarketplaceListings(market, { search: "", allowedIds: ids, limit: 6 });
+  const byId = new Map(live.map((listing) => [listing.id, listing]));
+  const listings = ids.map((id) => byId.get(id)).filter((listing): listing is ListingRecord => Boolean(listing));
+  if (listings.length < 2) return notice("بعض العروض لم تعد متاحة؛ لم أقارن بيانات قديمة. حدّث البحث.");
+  const { rows } = await compareRows(listings);
+  const named = words.filter((word) => !LOWER.test(word) && !HIGHER.test(word) && !HAS.test(word) && !SUBJECTIVE.test(word)).map(attributeStem).filter((word) => word.length >= 3);
+  const implicit = words.map((word) => IMPLICIT_FIELD[normalizeSearch(word).replace(/^ال/u, "")]).find(Boolean);
+  const row =
+    rows.find((item) => named.some((word) => attributeStem(item.label).split(/\s+/u).some((part) => part.length >= 3 && (part.startsWith(word) || word.startsWith(part))) || attributeStem(item.key) === word)) ??
+    (implicit ? rows.find((item) => item.key === implicit) : undefined);
+  const titleOf = (index: number) => `«${listings[index]!.title}»`;
+  if (subjective && !row)
+    return notice(`«${asked}» تقدير شخصي لا تسجّله الإعلانات، فلن أرتبها على أنه حقيقة. ما المسجّل: السعر والحالة والمواصفات التي ذكرها البائعون؛ اكتب «قارن بينهم» لتراها جنبًا إلى جنب، أو اسأل بائع عرض محدد.`);
+  if (!row) {
+    const wanted = named.join(" ") || asked;
+    return notice(`لا يسجّل أي من العروض الظاهرة «${wanted}»، فلا أستطيع الحكم من السجل. يمكنك سؤال البائع، مثل «اسأل بائع الأول عن ${wanted}».`);
+  }
+  const unknown = row.values.map((value, index) => ({ value, index })).filter((entry) => entry.value === null && row.applies[entry.index]);
+  const unknownText = unknown.length ? ` لم يذكر البائع ${row.label} في ${unknown.map((entry) => titleOf(entry.index)).join("، ")}.` : "";
+  if (presence) {
+    const stated = row.values.map((value, index) => ({ value, index })).filter((entry) => entry.value !== null);
+    const lines = stated.map((entry) => `${titleOf(entry.index)}: ${entry.value}`);
+    return notice(`${lines.length ? `ما سجّله البائعون عن ${row.label}: ${lines.join("؛ ")}.` : `لم يذكر أي بائع ${row.label}.`}${unknownText} هذه أقوال البائعين كما كتبوها، ولم يتحقق منها DINAR.`);
+  }
+  const values = (row.key === "price" ? listings.map((listing) => numeric(listing.unitPrice)) : row.values.map(numeric));
+  const known = values.map((value, index) => ({ value, index })).filter((entry): entry is { value: number; index: number } => entry.value !== undefined);
+  if (known.length < 2)
+    return notice(`لا يكفي المسجّل للمقارنة في ${row.label}: ${known.length ? `${titleOf(known[0]!.index)} فقط يذكره` : "لم يذكره أي بائع"}.${unknownText}`);
+  const target = direction === "min" ? Math.min(...known.map((entry) => entry.value)) : Math.max(...known.map((entry) => entry.value));
+  const winners = known.filter((entry) => entry.value === target).map((entry) => titleOf(entry.index));
+  return notice(`${direction === "min" ? "الأقل" : "الأعلى"} في ${row.label} بين العروض الظاهرة: ${winners.join("، ")} (${row.values[known.find((entry) => entry.value === target)!.index] ?? target}). ${row.source === "SELLER" ? "القيمة كما ذكرها البائع." : "من سجل DINAR."}${unknownText}`);
 }
 
 export function notice(prompt: string): Turn {
@@ -650,6 +766,12 @@ export async function executeBuyerTurn(input: {
         ...(raisedBy && typeof ceiling === "number" ? { maxPrice: ceiling + raisedBy } : {}),
       }),
     };
+  }
+
+  // «أيهم ممشاه أقل؟», «أيهم يشمل ضمان؟»: answered from the recorded values of the listings in view.
+  if (set && state) {
+    const which = await whichQuestion(set, text, input.market);
+    if (which) return which;
   }
 
   // Deltas on the current list: condition, colour, size, budget ceiling.
