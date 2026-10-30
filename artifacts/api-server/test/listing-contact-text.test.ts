@@ -64,7 +64,7 @@ await test("a phone, email or link in new listing text is refused; ordinary numb
     const refused = await request("/listings", "POST", listingBody({ description }), seller);
     assert.equal(refused.status, 400, `${description}: ${refused.text}`);
     // The schema may refuse a link first; a bare phone is caught only by the contact-text rule.
-    if (/\d{9}/u.test(description)) assert.match(refused.text, /رقم التواصل|بيانات التواصل/u);
+    if (/\d{9}/u.test(description)) assert.equal(refused.data.code, "LISTING_CONTACT_TEXT", refused.text);
   }
   const titled = await request("/listings", "POST", listingBody({ title: `تويوتا برادو 2021 150000 ${randomUUID().slice(0, 4)}`, category: "سيارات", categoryId: "cars", attributes: { make: "تويوتا", model: "برادو", year: 2021, condition: "مستعمل" } }), seller);
   assert.equal(titled.status, 201, titled.text);
@@ -73,8 +73,13 @@ await test("a phone, email or link in new listing text is refused; ordinary numb
 await test("an edit cannot add contact text either", async () => {
   const created = await request("/listings", "POST", listingBody({}), seller);
   assert.equal(created.status, 201, created.text);
-  const edited = await request(`/listings/${created.data.id}`, "PATCH", { description: "مكتب ممتاز، اتصل 0791234567" }, seller);
+  // PATCH is a full update: the same body with contact text, so only the contact rule can refuse it.
+  const body = listingBody({});
+  const clean = await request(`/listings/${created.data.id}`, "PATCH", { ...body, title: created.data.title }, seller);
+  assert.equal(clean.status, 200, `the unchanged full body is accepted: ${clean.text}`);
+  const edited = await request(`/listings/${created.data.id}`, "PATCH", { ...body, title: created.data.title, description: "مكتب ممتاز بحالة جيدة، اتصل 0791234567" }, seller);
   assert.equal(edited.status, 400, edited.text);
+  assert.equal(edited.data.code, "LISTING_CONTACT_TEXT", `refused by the contact rule, not the schema: ${edited.text}`);
 });
 
 await test("contact text stored before this rule is redacted for buyers, kept for the owner", async () => {
