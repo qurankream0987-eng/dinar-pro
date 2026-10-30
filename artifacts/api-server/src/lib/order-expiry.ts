@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { messages, offers, orderItems, orders, paymentIntents } from "@workspace/db";
 import { settleOrderFulfillment } from "./delivery";
 import { recordRefundObligation } from "./payments/obligations";
+import { recordOrderFinancialEvent } from "./order-journal";
 
 /**
  * Cancels a CREATED order whose seller-acceptance window lapsed and releases its reservation.
@@ -48,6 +49,18 @@ export async function expireOrderReservation(
     .set({ status: "CANCELLED", data, updatedAt: now })
     .where(eq(orders.id, row.id))
     .returning();
+  await recordOrderFinancialEvent(tx, {
+    orderId: row.id,
+    eventType: "ORDER_CANCELLED",
+    accountObligation: "NONE",
+    businessRef: row.id,
+    actorType: "SYSTEM",
+    currencyCode: row.currencyCode,
+    amountMinor: 0,
+    idempotencyKey: `order-cancelled:${row.id}`,
+    authorizationContext: { source: "RESERVATION_EXPIRY" },
+    data: { status: "CANCELLED", issue: data.issue },
+  });
   const [intent] = await tx
     .select()
     .from(paymentIntents)

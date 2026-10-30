@@ -170,5 +170,9 @@
   {
     "tag": "0042_d1_d2_business_foundation",
     "sha256": "5d2c6fc28d2f910528d43a3e4efb7676bf7839a1fd90a30c1c39a78d887765db"
+  },
+  {
+    "tag": "0043_wave07_financial_journal",
+    "sha256": "4403b20eefd37d18cfe29086722946975a4765192ad5b3cc86b089ac54347cf0"
   }
 ]

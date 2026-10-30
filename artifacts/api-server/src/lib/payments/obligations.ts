@@ -6,6 +6,7 @@ import {
   paymentIntents,
   paymentRefundObligations,
 } from "@workspace/db";
+import { recordOrderFinancialEvent } from "../order-journal";
 
 type Intent = typeof paymentIntents.$inferSelect;
 export type RefundObligationReason =
@@ -75,7 +76,25 @@ export async function recordRefundObligation(
     })
     .onConflictDoNothing()
     .returning();
-  if (created) return created;
+  if (created) {
+    await recordOrderFinancialEvent(tx, {
+      orderId: intent.orderId,
+      eventType: "REFUND_OBLIGATION_OPENED",
+      accountObligation: "REFUND_OBLIGATION",
+      businessRef: created.id,
+      actorType: "SYSTEM",
+      currencyCode: created.currencyCode,
+      amountMinor: created.amountMinor,
+      idempotencyKey: `refund-obligation-opened:${created.id}`,
+      authorizationContext: {
+        source: "REFUND_OBLIGATION",
+        reason: created.reason,
+        paymentIntentId: intent.id,
+        sourcePaymentEventId,
+      },
+    });
+    return created;
+  }
   const [existing] = await tx
     .select()
     .from(paymentRefundObligations)
@@ -88,7 +107,7 @@ export async function resolveRefundObligation(
   tx: any,
   input: { paymentIntentId: string; refundEventId: string; now: Date },
 ) {
-  await tx
+  const [resolved] = await tx
     .update(paymentRefundObligations)
     .set({
       status: "RESOLVED",
@@ -100,7 +119,24 @@ export async function resolveRefundObligation(
         eq(paymentRefundObligations.paymentIntentId, input.paymentIntentId),
         eq(paymentRefundObligations.status, "OPEN"),
       ),
-    );
+    )
+    .returning();
+  if (!resolved) return;
+  await recordOrderFinancialEvent(tx, {
+    orderId: resolved.orderId,
+    eventType: "REFUND_OBLIGATION_RESOLVED",
+    accountObligation: "REFUND_OBLIGATION",
+    businessRef: resolved.id,
+    actorType: "PROVIDER",
+    currencyCode: resolved.currencyCode,
+    amountMinor: resolved.amountMinor,
+    idempotencyKey: `refund-obligation-resolved:${resolved.id}`,
+    authorizationContext: {
+      source: "REFUND_OBLIGATION",
+      paymentIntentId: input.paymentIntentId,
+      refundEventId: input.refundEventId,
+    },
+  });
 }
 
 /** The administration's reconciliation queue: obligations newest first. */

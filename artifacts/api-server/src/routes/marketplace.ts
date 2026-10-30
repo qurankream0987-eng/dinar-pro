@@ -47,9 +47,15 @@ import { checkoutIssueMessage, planCheckout } from "../lib/commerce";
 import { acceptedNegotiationForCheckout, consumeNegotiation, resolveCommercialUnitPrice, type Negotiation } from "../lib/negotiations";
 import { marketFor, assertMarketActive, assertMarketPolicy } from "../lib/markets";
 import {
-  calculatePlatformFeeMinor,
-  PLATFORM_FEE_BASIS_POINTS,
-} from "../lib/market-pricing";
+  calculateCommissionMinor,
+  commissionSnapshot,
+  resolveCommissionPolicy,
+} from "../lib/commission-policy";
+import {
+  commissionReversalsByOrder,
+  netCommissionDueMinor,
+  recordOrderFinancialEvent,
+} from "../lib/order-journal";
 import {
   listing,
   offerRowsByIds,
@@ -726,6 +732,9 @@ async function checkout(
     // G2: a price this buyer agreed with the seller is resolved here, on the server, from
     // the negotiation authority; the request never carries a price. The public listing
     // price is untouched, and commission below is computed on the agreed subtotal.
+    const commissionPolicy = await resolveCommissionPolicy(tx, {
+      marketId: market.id,
+    });
     const created: (typeof orders.$inferSelect)[] = [];
     let grandTotal = 0;
     for (const [sellerId, group] of plan.plan.groups) {
@@ -736,8 +745,8 @@ async function checkout(
       );
       if (!Number.isSafeInteger(subtotal) || subtotal > 2000000000)
         throw fail(400, "الإجمالي يتجاوز الحد المسموح");
-      const commissionRateBps = PLATFORM_FEE_BASIS_POINTS;
-      const fee = calculatePlatformFeeMinor(subtotal, commissionRateBps);
+      const commissionRateBps = commissionPolicy.rateBasisPoints;
+      const fee = calculateCommissionMinor(subtotal, commissionPolicy);
       const id = randomUUID();
       const first = group[0].listing;
       const reservationExpiresAt = new Date(Date.now() + 1800000);
@@ -789,6 +798,7 @@ async function checkout(
             issue: null,
             paymentMode: "TEST_NO_TRANSFER",
             commissionRateBps,
+            commissionPolicy: commissionSnapshot(commissionPolicy),
             deliveryInstructions: safeInstructions,
             ...(group.some((line) => negotiated.has(line.listing.id))
               ? { negotiationIds: group.flatMap((line) => (negotiated.has(line.listing.id) ? [negotiated.get(line.listing.id)!.id] : [])) }
@@ -811,6 +821,29 @@ async function checkout(
           data: items[index],
         })),
       );
+      await recordOrderFinancialEvent(tx, {
+        orderId: id,
+        eventType: "ORDER_CREATED",
+        accountObligation: "BUYER_RECEIVABLE",
+        businessRef: id,
+        actorType: "BUYER",
+        actorId: actor.id,
+        currencyCode: market.currencyCode,
+        amountMinor: subtotal,
+        idempotencyKey: `order-created:${id}`,
+        authorizationContext: {
+          source: "CHECKOUT",
+          marketId: market.id,
+          checkoutIdempotencyKey: idempotencyKey,
+        },
+        data: {
+          subtotalMinor: subtotal,
+          platformFeeMinor: fee,
+          commissionRateBps,
+          commissionPolicy: commissionSnapshot(commissionPolicy),
+          priceVersionId: market.priceVersionId,
+        },
+      });
       await tx.insert(conversations).values({ id, orderId: id });
       await tx.insert(messages).values({
         id: randomUUID(),
@@ -1165,17 +1198,28 @@ router.get("/seller-dues", async (req, res) => {
     .from(sellerDues)
     .innerJoin(orders, eq(orders.id, sellerDues.orderId))
     .where(eq(sellerDues.sellerId, req.actor!.id));
+  const reversals = await commissionReversalsByOrder(
+    rows.map(({ order }) => order.id),
+  );
   res.json(
     rows.map(({ due, order }) => {
+      const snapshot = order.data.commissionPolicy;
       const commissionRateBps =
-        typeof order.data.commissionRateBps === "number"
-          ? order.data.commissionRateBps
-          : 1_000;
+        snapshot && typeof snapshot === "object" &&
+        Number.isSafeInteger((snapshot as Record<string, unknown>).rateBasisPoints)
+          ? ((snapshot as Record<string, unknown>).rateBasisPoints as number)
+          : typeof order.data.commissionRateBps === "number"
+            ? order.data.commissionRateBps
+            : 1_000;
+      const netMinor = netCommissionDueMinor(
+        due.amountMinor,
+        reversals.get(order.id) ?? 0,
+      );
       return {
       id: due.id,
       orderId: order.id,
       listingTitle: order.data.listingTitle,
-      amount: money(due.amountMinor, order.minorUnitScale),
+      amount: money(netMinor, order.minorUnitScale),
       currency: due.currencyCode,
       reason: `عمولة ${commissionRateBps / 100}% بعد اكتمال الطلب — لا يتوفر سداد إلكتروني`,
       dueAt: due.createdAt.toISOString(),
@@ -1209,6 +1253,9 @@ router.get("/dashboard", async (req, res) => {
         eq(sellerDues.status, "PENDING"),
       ),
     );
+  const reversals = await commissionReversalsByOrder(
+    dues.map((due) => due.orderId),
+  );
   res.json({
     userName: req.actor!.displayName,
     activeListings: mine.filter((o) => o.status === "PUBLISHED").length,
@@ -1223,7 +1270,11 @@ router.get("/dashboard", async (req, res) => {
     completedOrders: sales.filter((o) => o.status === "COMPLETED").length,
     pendingDues: dues.length,
     pendingDuesAmount: money(
-      dues.reduce((s, d) => s + d.amountMinor, 0),
+      dues.reduce(
+        (s, d) =>
+          s + netCommissionDueMinor(d.amountMinor, reversals.get(d.orderId) ?? 0),
+        0,
+      ),
       market.minorUnitScale,
     ),
     recentOrders: sales.slice(0, 3).map(orderView),

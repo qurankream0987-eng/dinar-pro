@@ -34,6 +34,9 @@ export const REVIEWED_PENDING_MIGRATIONS: ReadonlyArray<{ tag: string; sha256: s
   // triggers that only mark search documents stale. No existing value changes.
   { tag: "0041_c1_sql_search", sha256: "945ccc5622390b1a6a2e9af94aaa2d9010ac8b0e164de3b90571742dc1b05a5c" },
   { tag: "0042_d1_d2_business_foundation", sha256: "5d2c6fc28d2f910528d43a3e4efb7676bf7839a1fd90a30c1c39a78d887765db" },
+  // Versioned commission policies and the append-only order financial journal; the markets
+  // price CHECK is only relaxed so activation no longer depends on a legacy unit price.
+  { tag: "0043_wave07_financial_journal", sha256: "4403b20eefd37d18cfe29086722946975a4765192ad5b3cc86b089ac54347cf0" },
 ];
 export const EXPECTED_JOURNAL_ENTRIES =
   EXPECTED_BASELINE_MIGRATIONS + REVIEWED_PENDING_MIGRATIONS.length;
