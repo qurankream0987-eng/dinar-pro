@@ -13,6 +13,7 @@ import {
   recordCommissionReversal,
   recordOrderFinancialEvent,
 } from "./order-journal";
+import { confirmedCashRefundTotalMinor } from "./payments/cash";
 
 type TerminalOrderStatus = "COMPLETED" | "CANCELLED";
 type OrderRecord = typeof orders.$inferSelect;
@@ -102,6 +103,18 @@ export async function applyTerminalOrderAccounting(
         previouslyRefundedMinor: 0,
         businessRef: `capture-refunds:${intent.id}`,
       });
+    // A confirmed cash refund before completion equally cancels commission on that portion.
+    // Cash claims are refused while an electronic intent exists, so these paths never overlap.
+    else {
+      const cashRefundedMinor = await confirmedCashRefundTotalMinor(tx, order.id);
+      if (cashRefundedMinor > 0)
+        await recordCommissionReversal(tx, {
+          order,
+          refundAmountMinor: cashRefundedMinor,
+          previouslyRefundedMinor: 0,
+          businessRef: `cash-refunds:${order.id}`,
+        });
+    }
     return Boolean(due);
   }
   return false;

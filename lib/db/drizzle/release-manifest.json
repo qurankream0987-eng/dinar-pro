@@ -168,6 +168,10 @@
     "sha256": "4403b20eefd37d18cfe29086722946975a4765192ad5b3cc86b089ac54347cf0"
   },
   {
+    "tag": "0042_wave08_cash_engines",
+    "sha256": "44e4a812ae36f25ef2210627741e76898e02ddf58c1e5ec78abb3379798a326d"
+  },
+  {
     "tag": "0045_c1_sql_search",
     "sha256": "945ccc5622390b1a6a2e9af94aaa2d9010ac8b0e164de3b90571742dc1b05a5c"
   },

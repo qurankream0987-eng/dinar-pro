@@ -337,7 +337,15 @@ export function getMarketCapabilityProfile(
     payments: {
       cashDirect: {
         marketPolicyEnabled: marketAllowsCashDirect(market),
-        available: marketAllowsCashDirect(market),
+        // The engine records claims and attestations only; production stays unavailable
+        // until the owner activates direct cash deliberately for a market.
+        engineImplemented: true,
+        environment:
+          marketAllowsCashDirect(market) && resolvedEnvironment === "development"
+            ? "DEVELOPMENT_ONLY"
+            : "UNAVAILABLE",
+        available:
+          marketAllowsCashDirect(market) && resolvedEnvironment === "development",
       },
       electronic: {
         marketPolicyEnabled: electronicPolicyEnabled,

@@ -1498,6 +1498,126 @@ export const paymentReconciliationItems = pgTable(
   ],
 );
 
+/**
+ * Wave 08: direct buyer→seller cash. A buyer's "I paid" is a claim, not proof. Only the
+ * seller's confirmation attests that cash was received; only the buyer's later confirmation
+ * attests that a cash refund was repaid. No row here moves money through the platform.
+ */
+export const cashPaymentClaims = pgTable(
+  "cash_payment_claims",
+  {
+    id: text("id").primaryKey(),
+    orderId: text("order_id")
+      .notNull()
+      .references(() => orders.id),
+    buyerId: text("buyer_id")
+      .notNull()
+      .references(() => users.id),
+    sellerId: text("seller_id")
+      .notNull()
+      .references(() => users.id),
+    amountMinor: integer("amount_minor").notNull(),
+    currencyCode: text("currency_code").notNull(),
+    status: text("status").default("CLAIMED").notNull(),
+    claimedAt: timestamp("claimed_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    decidedAt: timestamp("decided_at", { withTimezone: true }),
+    decidedBy: text("decided_by").references(() => users.id),
+    decisionReason: text("decision_reason"),
+    evidence: jsonb("evidence").$type<unknown[]>().default([]).notNull(),
+    idempotencyKey: text("idempotency_key").notNull(),
+    mode: text("mode").default("CASH_DIRECT").notNull(),
+    ...dates(),
+  },
+  (t) => [
+    uniqueIndex("cash_payment_claims_order_unique").on(t.orderId),
+    uniqueIndex("cash_payment_claims_buyer_key_unique").on(
+      t.buyerId,
+      t.idempotencyKey,
+    ),
+    index("cash_payment_claims_status_idx").on(t.status, t.createdAt),
+    check("cash_payment_claims_amount_positive", sql`${t.amountMinor} > 0`),
+    check(
+      "cash_payment_claims_currency_valid",
+      sql`char_length(${t.currencyCode}) = 3`,
+    ),
+    check(
+      "cash_payment_claims_status_valid",
+      sql`${t.status} IN ('CLAIMED', 'CONFIRMED', 'DENIED', 'DISPUTED')`,
+    ),
+    check("cash_payment_claims_mode_valid", sql`${t.mode} = 'CASH_DIRECT'`),
+    check(
+      "cash_payment_claims_decision_valid",
+      sql`(${t.status} = 'CLAIMED' AND ${t.decidedAt} IS NULL AND ${t.decidedBy} IS NULL AND ${t.decisionReason} IS NULL) OR (${t.status} IN ('CONFIRMED', 'DENIED', 'DISPUTED') AND ${t.decidedAt} IS NOT NULL AND ${t.decidedBy} IS NOT NULL)`,
+    ),
+  ],
+);
+/**
+ * A cash refund is its own engine. The case can exist as OPEN before any repayment happens;
+ * a seller's repayment claim is unverified until the buyer confirms receiving the cash.
+ */
+export const cashRefundCases = pgTable(
+  "cash_refund_cases",
+  {
+    id: text("id").primaryKey(),
+    orderId: text("order_id")
+      .notNull()
+      .references(() => orders.id),
+    paymentClaimId: text("payment_claim_id")
+      .notNull()
+      .references(() => cashPaymentClaims.id),
+    openedBy: text("opened_by")
+      .notNull()
+      .references(() => users.id),
+    buyerId: text("buyer_id")
+      .notNull()
+      .references(() => users.id),
+    sellerId: text("seller_id")
+      .notNull()
+      .references(() => users.id),
+    amountMinor: integer("amount_minor").notNull(),
+    currencyCode: text("currency_code").notNull(),
+    reason: text("reason").default("").notNull(),
+    status: text("status").default("OPEN").notNull(),
+    repaymentClaimedAt: timestamp("repayment_claimed_at", { withTimezone: true }),
+    repaymentNote: text("repayment_note"),
+    repaymentEvidence: jsonb("repayment_evidence")
+      .$type<unknown[]>()
+      .default([])
+      .notNull(),
+    buyerConfirmedAt: timestamp("buyer_confirmed_at", { withTimezone: true }),
+    disputedAt: timestamp("disputed_at", { withTimezone: true }),
+    disputeReason: text("dispute_reason"),
+    withdrawnAt: timestamp("withdrawn_at", { withTimezone: true }),
+    idempotencyKey: text("idempotency_key").notNull(),
+    mode: text("mode").default("CASH_DIRECT").notNull(),
+    ...dates(),
+  },
+  (t) => [
+    uniqueIndex("cash_refund_cases_opener_key_unique").on(
+      t.openedBy,
+      t.idempotencyKey,
+    ),
+    index("cash_refund_cases_order_idx").on(t.orderId, t.createdAt),
+    index("cash_refund_cases_status_idx").on(t.status, t.createdAt),
+    check("cash_refund_cases_amount_positive", sql`${t.amountMinor} > 0`),
+    check(
+      "cash_refund_cases_currency_valid",
+      sql`char_length(${t.currencyCode}) = 3`,
+    ),
+    check(
+      "cash_refund_cases_status_valid",
+      sql`${t.status} IN ('OPEN', 'REPAYMENT_CLAIMED', 'CONFIRMED', 'DISPUTED', 'WITHDRAWN')`,
+    ),
+    check("cash_refund_cases_mode_valid", sql`${t.mode} = 'CASH_DIRECT'`),
+    check(
+      "cash_refund_cases_evidence_valid",
+      sql`(${t.status} <> 'REPAYMENT_CLAIMED' OR ${t.repaymentClaimedAt} IS NOT NULL) AND (${t.status} <> 'CONFIRMED' OR ${t.buyerConfirmedAt} IS NOT NULL) AND (${t.status} <> 'DISPUTED' OR (${t.disputedAt} IS NOT NULL AND ${t.disputeReason} IS NOT NULL)) AND (${t.status} <> 'WITHDRAWN' OR ${t.withdrawnAt} IS NOT NULL)`,
+    ),
+  ],
+);
+
 // Wave 3: one report authority for every reportable marketplace target.
 export const moderationReasonCodes = pgTable(
   "moderation_reason_codes",

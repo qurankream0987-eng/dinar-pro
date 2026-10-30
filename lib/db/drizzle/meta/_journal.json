@@ -297,6 +297,13 @@
       "breakpoints": true
     },
     {
+      "idx": 42,
+      "version": "7",
+      "when": 1793340000000,
+      "tag": "0042_wave08_cash_engines",
+      "breakpoints": true
+    },
+    {
       "idx": 45,
       "version": "7",
       "when": 1793510000000,
