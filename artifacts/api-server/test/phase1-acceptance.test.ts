@@ -1326,7 +1326,9 @@ await test("Phase 1 persisted marketplace acceptance journeys", async () => {
         "PHASE1 browser UI acceptance: skipped by explicit API-only flag",
       );
     } else {
-      browserTestWeb = await startDinarBrowserTestWeb();
+      // The dev server's /api proxy must point at this suite's API: without a target it fell back
+      // to 127.0.0.1:8080, so any request reaching the proxy instead of the page route got a 500.
+      browserTestWeb = await startDinarBrowserTestWeb(new URL(base).origin);
       const browserResultPath = `/tmp/dinar-phase1-ui-${runId}.json`;
       const browserModelCallsBefore = getModelGatewayCallCount();
       let browserProcessError: unknown;
@@ -1397,6 +1399,8 @@ await test("Phase 1 persisted marketplace acceptance journeys", async () => {
             checks: browserResult.checks,
             pageErrors: browserResult.pageErrors,
             consoleErrors: browserResult.consoleErrors,
+            // Diagnostics only: the responses behind any «Failed to load resource» error.
+            failedResponses: browserResult.failedResponses,
             expectedMarketConversationConflicts:
               browserResult.expectedMarketConversationConflicts,
             publishedOffer: Boolean(browserResult.publishedOfferId),

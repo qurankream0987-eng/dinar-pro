@@ -33,6 +33,8 @@ if (
 const checks = [];
 const pageErrors = [];
 const consoleErrors = [];
+/** Diagnostics only: which response produced a «Failed to load resource» console error. */
+const failedResponses = [];
 const expectedMarketConversationConflicts = [];
 let browser;
 let context;
@@ -80,6 +82,7 @@ async function openAuthenticatedSession(cookie) {
     if (message.type() === "error") consoleErrors.push(message.text());
   });
   sessionPage.on("response", (response) => {
+    if (response.status() >= 400) failedResponses.push(`${response.status()} ${response.request().method()} ${response.url().slice(0, 160)}`);
     const path = new URL(response.url()).pathname;
     if (
       response.request().method() === "GET" &&
@@ -89,6 +92,15 @@ async function openAuthenticatedSession(cookie) {
       expectedMarketConversationConflicts.push(path);
   });
   await sessionContext.route("**/api/**", async (route) => {
+    try {
+      await proxyApi(route);
+    } catch (error) {
+      // Diagnostics only: the error is recorded and rethrown, so behaviour is unchanged.
+      failedResponses.push(`ROUTE_ERROR ${route.request().method()} ${new URL(route.request().url()).pathname}: ${String(error?.message ?? error).slice(0, 200)}`);
+      throw error;
+    }
+  });
+  async function proxyApi(route) {
     const request = route.request();
     const requestUrl = new URL(request.url());
     const headers = await request.allHeaders();
@@ -139,7 +151,7 @@ async function openAuthenticatedSession(cookie) {
       }
     }
     await route.fulfill({ response });
-  });
+  }
   browserContexts.push(sessionContext);
 
   const identity = await sessionContext.request.get(
@@ -1109,6 +1121,7 @@ try {
         checks,
         pageErrors,
         consoleErrors,
+        failedResponses,
         expectedMarketConversationConflicts,
         createdConversationIds,
         publishedOfferId,
