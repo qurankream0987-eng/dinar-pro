@@ -21,8 +21,7 @@ import {
   SEARCH_OPERATORS,
   SEARCH_SORTS,
   type SearchFilter,
-  type SearchSort,
-} from "@workspace/api-zod/marketplace-schemas";
+  type SearchSort, searchFilterDefinition } from "@workspace/api-zod/marketplace-schemas";
 import {
   MODEL_OPEN_SURFACE_TOKENS,
   modelOpenSurfaceSchema,
@@ -363,7 +362,9 @@ export const aiToolRegistry: Record<string, ToolDefinition> = {
         const wider = await searchMarketplaceListings(context.market, {
           search: input.query,
           conversational: true,
-          filters: (input.filters as SearchFilter[] | undefined)?.filter((filter) => ["price", "city", "condition"].includes(filter.field)),
+          // Only filters that exist without a category: a category's own field (condition) would be
+          // refused there and fail the whole turn (W04 sealed S01).
+          filters: (input.filters as SearchFilter[] | undefined)?.filter((filter) => searchFilterDefinition(undefined, filter.field) !== undefined),
           sort: input.sort as SearchSort | undefined,
         });
         if (wider.length) {

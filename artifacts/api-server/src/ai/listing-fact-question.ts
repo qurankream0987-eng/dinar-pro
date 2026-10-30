@@ -33,6 +33,7 @@ type Turn = { tool: string; version: number; result: ToolResult };
 const ORDINALS: Record<string, number> = {
   الاول: 1, اول: 1, الاولي: 1, الثاني: 2, ثاني: 2, الثانيه: 2, الثالث: 3, ثالث: 3, الثالثه: 3,
   الرابع: 4, الرابعه: 4, الخامس: 5, الخامسه: 5, السادس: 6, السادسه: 6,
+  السابع: 7, السابعه: 7, الثامن: 8, الثامنه: 8, التاسع: 9, التاسعه: 9, العاشر: 10, العاشره: 10,
 };
 /** «هادي», «دي» are demonstratives only inside a question about a listing in view («بشحال هادي؟»). */
 const DEICTIC = new Set(["هذا", "هذه", "هذي", "هال", "هاي", "هادي", "دي"]);

@@ -70,8 +70,13 @@ const BLOCK = /(?:^|\s)(?:احظر|امنع|اوقف\s+رسائل|اوقف\s+م�
 const CONFIRM = /^(?:نعم|اي|ايوه|اكيد|ارسل|ارسله|ارسلها|ارسل\s+الرساله|ارسل\s+الرد|ارسل\s+السؤال|نعم\s+ارسل|تمام|موافق|اوكي|ok|yes)$/u;
 const CANCEL = /^(?:لا|كلا|الغ|الغي|الغاء|لا\s+ترسل|تراجع|لا\s+شكرا)$/u;
 const EDIT = /^(?:عدل(?:ها|ه)?|غير(?:ها|ه)?|خلها|اجعلها)\s*(?:الي|إلى|ل)?\s*:?\s*(.+)$/u;
+/**
+ * «زيد عليه سؤال إذا عليها حوادث», «واسأله كمان عن البطارية», «لا، اسأله عن الفاتورة أيضًا»:
+ * adds a question to the open draft instead of replacing it (W04). Still a draft: nothing is sent.
+ */
+const APPEND = /^(?:(?:لا|و|طيب|كمان)\s+)*(?:(?:زيد|زود|اضف|ضيف|حط)\s+(?:عليه|عليها|عليهم|لها|له|فيها|فيه)?\s*(?:سؤال|سوال)?|(?:و)?(?:اساله|اسالها|اسال)\s+(?:كمان|ايضا|بعد))\s*(?:عن|اذا|ان|لو)?\s*(.+?)\s*$|^(?:(?:لا|و|طيب)\s+)*(?:و)?(?:اساله|اسالها)\s+(?:عن|اذا|ان|لو)?\s*(.+?)\s+(?:كمان|ايضا|بعد)$/u;
 const CONFIRM_WANTED = /(?:للتاكيد|يتاكد|يؤكد|يأكد|تاكيد\s+منه|تاكيد\s+من\s+(?:ال)?بائع|علي\s+اي\s+حال|مع\s+ذلك|حتي\s+لو)/u;
-const QUANTITY = /(\d{1,6})\s*(?:قطعه|قطع|حبه|حبات|حبة|وحده|وحدات|كرتون|كراتين|صندوق|علبه|علب|كيس|اكياس|كيلو|متر|pcs|pieces|units)?/u;
+const QUANTITY = /(?<!\d)(\d{1,6})(?!\d)\s*(?:قطعه|قطع|حبه|حبات|حبة|وحده|وحدات|كرتون|كراتين|صندوق|علبه|علب|كيس|اكياس|كيلو|متر|pcs|pieces|units)?/u;
 // A request addressed to DINAR itself («اشرح لي…»), never a reply to the other party.
 const DINAR_DIRECTED = /^(?:(?:يا\s+)?دينار\s+)?(?:اشرح|علمني|ترجم|لخص|خطط|احسب|قارن|اقترح|حلل|اكتب\s+لي|ساعدني)(?:\s|$)/u;
 // Words that mean the message is another request to DINAR, not a reply under an incoming card.
@@ -348,6 +353,18 @@ export async function executeInquiryTurn(input: Input): Promise<Turn | null> {
     if (CANCEL.test(text)) {
       const outcome = await confirmPendingAction({ actionId: latest!.id, actorId: input.actorId, market: input.market, decision: "CANCEL" });
       return notice(outcome.status === "CANCELLED" ? "أُلغيت الرسالة؛ لم يُرسل شيء." : outcome.message);
+    }
+    const appended = text.match(APPEND);
+    const addition = appended?.[1] ?? appended?.[2];
+    const previousBody = pending?.structuredInput?.body?.value;
+    if (addition && typeof previousBody === "string") {
+      await db.update(aiResultSets).set({ query: { ...pending, status: "SUPERSEDED", notice: "استُبدلت بصياغة أحدث." } }).where(eq(aiResultSets.id, latest!.id));
+      const provenance: InquiryProvenance = String(pending!.targetResource).startsWith("listing:") ? "BUYER_AUTHORED" : (await roleOfTarget(input.actorId, String(pending!.targetResource))) === "SELLER" ? "SELLER_AUTHORED" : "BUYER_AUTHORED";
+      const target = parseTargetKey(String(pending!.targetResource));
+      if (!target) return notice("تعذر تعديل الرسالة؛ ابدأها من جديد. لم يُرسل شيء.");
+      // «… أيضًا/كمان» closes the second form: drop it from the raw words before taking the tail.
+      const raw = appended?.[2] ? input.message.trim().replace(/[\s،,.؟?!]*(?:أيضًا|أيضا|ايضا|ايضًا|كمان|بعد)[\s.؟?!]*$/u, "") : input.message;
+      return draft(actor, target, `${previousBody.trim()} ${asQuestion(rawTail(raw, addition))}`, provenance, "أضفت السؤال إلى الرسالة:");
     }
     const edited = text.match(EDIT);
     if (edited?.[1]) {

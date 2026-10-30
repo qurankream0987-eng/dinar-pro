@@ -69,7 +69,7 @@ import {
   makeListingPhotosPublic,
   replaceListingPhotoReferences,
 } from "../lib/listing-photos";
-import { normalizeListingContactPhone } from "../lib/listing-contact";
+import { findListingContactText, listingContactTextRefusal, normalizeListingContactPhone } from "../lib/listing-contact";
 import { getAuthorizedSellerContacts } from "../lib/contact-release";
 import { recordOrderDisputeOpened } from "../lib/payments/disputes";
 import {
@@ -350,6 +350,8 @@ export async function createListingForActor(
   if (attributes.missing.length)
     throw fail(400, `أكمل خصائص العرض المطلوبة: ${attributes.missing.join("، ")}`);
   const market = await marketFor({ actor });
+  // A phone in the text would bypass the order-bound contact release (lib/contact-release.ts).
+  if (findListingContactText(`${body.title}\n${body.description ?? ""}`, market.id)) throw listingContactTextRefusal();
   const photoPaths = await validateListingImages(
     body.imageUrl,
     body.imageUrls,

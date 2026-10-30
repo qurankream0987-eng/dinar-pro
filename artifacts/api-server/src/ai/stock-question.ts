@@ -9,6 +9,7 @@
  * read-only: it reserves nothing and drafts no inquiry. Detection is a rule about Arabic
  * stock phrasings, not about a product.
  */
+import { findListingContactText } from "../lib/listing-contact";
 import { and, eq } from "drizzle-orm";
 import { db, offers } from "@workspace/db";
 import type { marketFor } from "../lib/markets";
@@ -108,6 +109,10 @@ export async function executeStockQuestion(input: {
   if (!actorId) return null;
   const text = normalizeBuyerText(input.message);
   if (!STOCK_QUESTION.test(text)) return null;
+  // «قله يتصل على 0791112222»: a phone number is a contact attempt, never a quantity; the
+  // inquiry rules refuse it (lib/inquiries.ts).
+  // An 8+ digit run is never a quantity either, valid phone or not.
+  if (findListingContactText(input.message, input.market.id) || /\d{8,}/u.test(normalizeBuyerText(input.message).replace(/[\s-]/gu, ""))) return null;
 
   const listingId =
     (await focusedListing({

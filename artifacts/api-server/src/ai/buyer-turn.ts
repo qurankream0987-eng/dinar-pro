@@ -125,7 +125,7 @@ const WANT_FOCUSED_LISTING = /^(?:ابيه|ابيها|ابغاه|ابغاها|ا
 
 const ORDINAL_TOKENS: Record<string, number> = {
   الاول: 1, اول: 1, الاولي: 1, الثاني: 2, ثاني: 2, الثانيه: 2, الثالث: 3, ثالث: 3, الثالثه: 3, الرابع: 4, الرابعه: 4,
-  الخامس: 5, الخامسه: 5, السادس: 6, السادسه: 6,
+  الخامس: 5, الخامسه: 5, السادس: 6, السادسه: 6, السابع: 7, السابعه: 7, الثامن: 8, الثامنه: 8, التاسع: 9, التاسعه: 9, العاشر: 10, العاشره: 10,
 };
 
 /** Every position named in "قارن الأول والثالث" / "قارن الأول بالثاني" / "قارن 1 و 3", in order. */
@@ -624,7 +624,8 @@ export async function executeBuyerTurn(input: {
   }
 
   // Ranking requests on the current list; a leading «لا» or «غلطت» only corrects the previous one.
-  const asked = text.replace(CORRECTION_LEAD, "");
+  // «طيب والأرخص؟»: a discourse lead and an attached «و» before the ranking word are ellipsis.
+  const asked = text.replace(CORRECTION_LEAD, "").replace(/^(?:(?:طيب|طب|اوكي|تمام|يعني)\s+)?و?(?=(?:ال)?(?:ارخص|افضل|احسن)(?:\s|$))/u, "");
   const ranking: BuyerRanking | undefined = CONDITION_FIRST.test(asked)
     ? "CONDITION_FIRST"
     : CHEAPEST.test(asked) || CHEAPEST_SORT.test(asked)

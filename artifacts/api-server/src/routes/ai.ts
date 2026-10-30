@@ -2277,7 +2277,13 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
             : {}),
         })
       : undefined;
-    const assistantText =
+    // A conversation keeps the market it started in (ownedConversation). After the account moved
+    // to another market, a search here still reads this conversation's market — say so (W04).
+    const marketNote =
+      req.actor!.activeMarketId && req.actor!.activeMarketId !== conversation.marketId && (toolResult.kind === "SEARCH" || toolResult.kind === "RESULTS")
+        ? ` هذه المحادثة مرتبطة بسوق ${conversation.marketId}، وسوقك الحالي ${req.actor!.activeMarketId}؛ لعروض سوقك الحالي ابدأ محادثة جديدة.`
+        : "";
+    const assistantText = (
       toolResult.kind === "RESOURCE"
         ? toolResult.listings.length
           ? "هذا هو العرض الذي أشرت إليه. افتح البطاقة لمراجعة التفاصيل الحالية."
@@ -2298,7 +2304,8 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
             ? `وجدت ${toolResult.listings.length} عروض منشورة تطابق طلبك. راجع التفاصيل الحالية من بطاقات العرض.`
             : searchState?.filters.length
               ? "لم أجد عروضًا منشورة مطابقة في سوقك الحالي. جرّب إزالة أحد الشروط، مثل السعر أو المدينة، أو اكتب «امسح الفلاتر»."
-              : "لم أجد عروضًا منشورة مطابقة في سوقك الحالي. جرّب كلمات أخرى أو تصنيفًا أوسع.";
+              : "لم أجد عروضًا منشورة مطابقة في سوقك الحالي. جرّب كلمات أخرى أو تصنيفًا أوسع."
+    ) + marketNote;
     const organicCount = toolResult.listings.filter((listing) => !listing.isSponsored).length;
     const paidDemandCount = toolResult.listings.length - organicCount;
     const demandText =

@@ -38,7 +38,7 @@ import {
   replaceListingPhotoReferences,
   validateListingPhotoPathsForOwner,
 } from "./listing-photos";
-import { normalizeListingContactPhone } from "./listing-contact";
+import { findListingContactText, listingContactTextRefusal, normalizeListingContactPhone } from "./listing-contact";
 import { listing } from "./marketplace-listings";
 import { assertMarketActive, resolveMarket } from "./markets";
 import { assertListingPublicationPolicy } from "./publication-policy";
@@ -223,6 +223,9 @@ export async function updateOwnedListing(
   )
     throw fail(400, "المدينة غير صالحة");
 
+  // A phone in the text would bypass the order-bound contact release (lib/contact-release.ts).
+  const editedText = [body.title, body.description].filter((value): value is string => typeof value === "string").join("\n");
+  if (editedText && findListingContactText(editedText, market.id)) throw listingContactTextRefusal();
   const row = await ownedListing(tx, listingId, ownerId, market.id, true);
   if (
     input.expectedUpdatedAt &&

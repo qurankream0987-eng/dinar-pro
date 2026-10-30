@@ -18,6 +18,8 @@ const REQUEST_WORDS = new Set([
   "عندكم", "عندك", "لديكم", "في", "فيه", "شو", "وش", "ايش", "مين", "هل", "على", "عن", "لو", "سمحت", "فضلك", "من",
   // Doing verbs and the generic word for a service: «يسوي لي لوجو», «خدمة تنظيف».
   "يسوي", "يسويلي", "يعمل", "يعملي", "خدمه", "خدمة", "خدمات",
+  // A negation particle left beside a value («… مو جديد») never names the item (W04).
+  "مو", "مش", "ليس", "ليست",
 ]);
 
 /**

@@ -30,6 +30,7 @@ import {
 import { rankSponsored, representativeCampaign, servingCampaignsFor, sponsoredScore } from "./promotions";
 import { getCommercialPolicy } from "./commercial-policy";
 import { itemTokens, textMatchesToken } from "./arabic-search-terms";
+import { redactListingContactText } from "./listing-contact";
 
 export type OfferRow = {
   offer: typeof offers.$inferSelect;
@@ -103,11 +104,14 @@ export function listing(
     row.data.fulfilmentType === "SERVICE"
       ? row.data.fulfilmentType
       : "PICKUP";
+  // Buyers never see contact details stored in the text (written before the write-time rule);
+  // the owner's own management view keeps what they wrote.
+  const publicText = (value: unknown) =>
+    typeof value !== "string" ? "" : includeSellerContact ? value : redactListingContactText(value, row.marketId);
   return {
     id: row.id,
-    title: typeof row.data.title === "string" ? row.data.title : "",
-    description:
-      typeof row.data.description === "string" ? row.data.description : "",
+    title: publicText(row.data.title),
+    description: publicText(row.data.description),
     category: typeof row.data.category === "string" ? row.data.category : "",
     ...(typeof row.data.categoryId === "string"
       ? { categoryId: row.data.categoryId }

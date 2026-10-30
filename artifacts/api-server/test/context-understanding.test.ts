@@ -330,6 +330,24 @@ await test("W04 relaxation: a description alone never replaces the generic noun"
   assert.deepEqual(genericTokens(["موبايل", "ايفون"]), ["موبايل"], "«موبايل ايفون» still relaxes to «ايفون»");
 });
 
+await test("W04 normalization integrity: names, prices, currency and ordinary words survive", async () => {
+  const { foldArabicLetters, normalizeMarketplaceText, parseNumericMentions } = await import("../src/ai/arabic-normalization");
+  // Amounts, currency codes, model numbers and digits are untouched by the dialect fold.
+  for (const text of ["1,250.500 دينار", "KWD 3.500", "SAR 199", "موديل SM-A546E", "2021 150000", "٤٥٠ دينار"])
+    assert.equal(foldArabicLetters(text), text.toLocaleLowerCase("ar").replace(/[أإآ]/g, "ا").replace(/ى/g, "ي"), text);
+  // Ambiguous words are kept as typed: «تاني» (again), «بده» (he wants), «هادي» (calm), «دي», «هاي».
+  for (const word of ["تاني", "بده", "هادي", "دي", "هاي", "ابحث تاني"]) assert.equal(foldArabicLetters(word), word, word);
+  // Only whole words fold: a longer word that contains a folded form is unchanged.
+  for (const word of ["عايزين", "التالتين", "هادئ", "هاديه"]) assert.equal(foldArabicLetters(word), word, word);
+  // Ordinary questions keep their words (no commerce verb is injected into them).
+  for (const text of ["ما الفرق بين الطاقة الشمسية والرياح", "اشرح لي لغة بايثون", "كيف أكتب دراسة جدوى"])
+    assert.doesNotMatch(foldArabicLetters(text), /(?:^|\s)ابي(?:\s|$)/u, text);
+  // Numbers keep their meaning; a negated «exceed» is an upper bound, a plain one is a lower bound.
+  assert.deepEqual(parseNumericMentions(normalizeMarketplaceText("لا يتعدى 450 دينار")).map((m) => [m.value, m.comparator]), [[450, "lte"]]);
+  assert.deepEqual(parseNumericMentions(normalizeMarketplaceText("اكثر من 300")).map((m) => [m.value, m.comparator]), [[300, "gt"]]);
+  assert.deepEqual(parseNumericMentions(normalizeMarketplaceText("سعره 4500")).map((m) => m.value), [4500]);
+});
+
 const PROBE_FLOOR = Number(process.env.DINAR_CONTEXT_PROBE_FLOOR ?? "1");
 const HELD_OUT_FLOOR = Number(process.env.DINAR_CONTEXT_HELD_OUT_FLOOR ?? "1");
 
