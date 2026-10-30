@@ -71,7 +71,8 @@
     "test:provider-controls": "NODE_ENV=development BDINAR_TEST_DATABASE=development node test/run.mjs provider-controls.test",
     "test:search-sql-foundation": "NODE_ENV=development BDINAR_TEST_DATABASE=development BDINAR_PROMOTIONS_ENABLED=true node test/run.mjs search-sql-foundation.test",
     "test:search-sql-performance": "NODE_ENV=development BDINAR_TEST_DATABASE=development BDINAR_PROMOTIONS_ENABLED=true node test/run.mjs search-sql-performance.test",
-    "test:w07": "NODE_ENV=development BDINAR_W07_ACCEPTANCE=development BDINAR_WAVE4_ACCEPTANCE=development node test/run.mjs wave07-financial-journal.test"
+    "test:w07": "NODE_ENV=development BDINAR_W07_ACCEPTANCE=development BDINAR_WAVE4_ACCEPTANCE=development node test/run.mjs wave07-financial-journal.test",
+    "test:w08": "NODE_ENV=development BDINAR_W08_ACCEPTANCE=development BDINAR_WAVE4_ACCEPTANCE=development node test/run.mjs wave08-cash-and-refunds.test"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1155.0",

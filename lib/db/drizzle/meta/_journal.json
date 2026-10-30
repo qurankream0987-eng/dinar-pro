@@ -309,6 +309,13 @@
       "when": 1793260000000,
       "tag": "0043_wave07_financial_journal",
       "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1793340000000,
+      "tag": "0044_wave08_cash_engines",
+      "breakpoints": true
     }
   ]
 }

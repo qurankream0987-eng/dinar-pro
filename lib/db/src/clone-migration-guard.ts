@@ -37,6 +37,8 @@ export const REVIEWED_PENDING_MIGRATIONS: ReadonlyArray<{ tag: string; sha256: s
   // Versioned commission policies and the append-only order financial journal; the markets
   // price CHECK is only relaxed so activation no longer depends on a legacy unit price.
   { tag: "0043_wave07_financial_journal", sha256: "4403b20eefd37d18cfe29086722946975a4765192ad5b3cc86b089ac54347cf0" },
+  // Two additive cash tables with transition-guard triggers; no existing table or row changes.
+  { tag: "0044_wave08_cash_engines", sha256: "44e4a812ae36f25ef2210627741e76898e02ddf58c1e5ec78abb3379798a326d" },
 ];
 export const EXPECTED_JOURNAL_ENTRIES =
   EXPECTED_BASELINE_MIGRATIONS + REVIEWED_PENDING_MIGRATIONS.length;
