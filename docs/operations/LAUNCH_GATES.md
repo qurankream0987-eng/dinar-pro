@@ -37,7 +37,7 @@
 | typecheck وبناء الخادم والواجهة | ✅ | 2026-10-30 |
 | `pnpm audit` | ✅ | «No known vulnerabilities» |
 | توليد الكود قابل للتكرار | ✅ | إعادة التوليد بلا فرق |
-| التشغيل الكامل المستقل | 🟡 | `CURRENT_ENGINEERING_BASELINE.md` |
+| التشغيل الكامل المستقل | 🟡 | `CURRENT_ENGINEERING_BASELINE.md`: 98 من 99 suite خضراء، و`phase1-acceptance` عيب واجهة مفتوح (W06) |
 | ترحيلات PostgreSQL 18 | ⛔ | لا PG18 في البيئة. 👤: نطاق شبكة أو صورة |
 
 ### B2. سلطة التجارة والمال

@@ -465,7 +465,7 @@ export const ACTION_REGISTRY: Record<string, ActionDefinition> = {
     read: readInquiryTarget,
     allowed: (snapshot, _actorId, input) => {
       if (snapshot.reason) return snapshot.reason;
-      const problem = inquiryBodyProblem(String(input.body ?? ""));
+      const problem = inquiryBodyProblem(String(input.body ?? ""), snapshot.inquiryTitle ?? undefined);
       if (problem) return problem;
       if (containsPriceOffer(String(input.body ?? ""))) return "الرسالة تتضمن عرض سعر؛ العروض المالية تُرسل عبر التفاوض";
       return undefined;

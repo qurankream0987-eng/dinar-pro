@@ -63,7 +63,7 @@ async function register(label: string): Promise<Actor> {
 }
 
 type Turn = { body: string; payload: any };
-async function turn(actor: Actor, conversationId: string, message: string): Promise<Turn> {
+async function turn(actor: Actor, conversationId: string, message: string, deterministic = true): Promise<Turn> {
   const before = getModelGatewayCallCount();
   const response = await fetch(`${base}/ai/conversations/${conversationId}/turns`, {
     method: "POST",
@@ -75,7 +75,7 @@ async function turn(actor: Actor, conversationId: string, message: string): Prom
     .map((line) => { try { return JSON.parse(line.slice(5)); } catch { return {}; } })
     .find((event: any) => event.type === "complete");
   assert.ok(complete, `${message}: ${raw.slice(0, 300)}`);
-  assert.equal(getModelGatewayCallCount() - before, 0, `model call for «${message}»`);
+  if (deterministic) assert.equal(getModelGatewayCallCount() - before, 0, `model call for «${message}»`);
   return { body: complete.assistantMessage.body, payload: complete.assistantMessage.blocks[0]?.payload };
 }
 
@@ -250,6 +250,20 @@ await focused("GEN-7", "search and ranking keep their own path", async () => {
   const ranked = await turn(buyer, conv, "أرخص");
   assert.notEqual(ranked.payload?.surface, "INQUIRY_DRAFT", "a ranking is never a review");
   assert.ok(listingIds(ranked.payload).length > 0, `the ranking keeps the list: ${ranked.body}`);
+});
+
+await focused("GEN-8", "a general question beside a single result is not drafted as a seller question", async () => {
+  // One listing in view, but the question names nothing about it and no recorded field explains
+  // it: it keeps the ordinary (model) path, not an inquiry about the listing.
+  const conv = await newConversation();
+  const found = await turn(buyer, conv, `أريد خدمة تنظيف ${runId}`);
+  assert.deepEqual(listingIds(found.payload), [cleaning.id], found.body);
+  const general = await turn(buyer, conv, "كم ساعة يحتاج تنظيف بيت مساحته 200 متر؟", false);
+  assert.notEqual(general.payload?.surface, "INQUIRY_DRAFT", general.body);
+  assert.equal((await sentTo(cleaning.id)).length, 0);
+  // A question that points at the listing still asks the seller.
+  const pointed = await turn(buyer, conv, "هل عليها ضمان؟");
+  assert.equal(pointed.payload?.surface, "INQUIRY_DRAFT", pointed.body);
 });
 
 console.log("GENERALITY_SUMMARY", JSON.stringify({

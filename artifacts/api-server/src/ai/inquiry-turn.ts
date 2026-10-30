@@ -213,7 +213,8 @@ async function listingFacts(listingId: string) {
 }
 
 async function draft(input: Input & { actorId: string }, target: InquiryTarget, body: string, provenance: InquiryProvenance, lead: string, extra: Record<string, unknown> = {}): Promise<Turn> {
-  const problem = inquiryBodyProblem(body);
+  const quoted = target.kind === "LISTING" ? (await listingFacts(target.listingId))?.title : undefined;
+  const problem = inquiryBodyProblem(body, quoted);
   if (problem) return notice(`${problem}. لم يُرسل شيء.`);
   try {
     const review = await createPendingAction({

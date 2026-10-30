@@ -124,6 +124,8 @@ const FILLER = new Set([
   "هما", "من", "بخصوص", "عن", "حسب", "سجل", "السجل", "الحالي", "الحاليه", "يحتوي", "تحتوي", "يشمل",
   "تشمل", "يوجد", "توجد", "الموجود", "الموجوده", "كذلك", "ايضا", "فقط", "بس",
 ]);
+/** Pronouns that point at the listing in view («هل عليها ضمان؟», «هل معه كفالة؟»). */
+const LISTING_PRONOUNS = new Set(["فيه", "فيها", "عليه", "عليها", "له", "لها", "عنه", "عنها", "هو", "هي", "معه", "معها"]);
 /**
  * Words that mean the message is not a question about a recorded characteristic: who can answer,
  * a judgement, a price/stock/purchase, or the listing's presentation. They keep their own paths.
@@ -349,7 +351,10 @@ export async function executeListingFactQuestion(input: {
   }
 
   // No registered field explains the question: name the characteristic the buyer asked about and
-  // offer the seller question. The item's own words are not characteristics.
+  // offer the seller question. The item's own words are not characteristics. With nothing in the
+  // record to anchor it, the question must point at the listing itself; «كم لوح يحتاج بيت …؟»
+  // beside a single result is general reasoning and keeps the ordinary path.
+  if (!wordsOf(text).some((word) => REFERENCE.has(word) || LISTING_PRONOUNS.has(word))) return null;
   const titleStems = vocabularyOf(title);
   const asked = subject
     .filter((token) => !/^\d+(?:[.,]\d+)?$/u.test(token) && !UNIT_WORDS.has(token))

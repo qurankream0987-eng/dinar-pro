@@ -63,11 +63,17 @@ const CONTACT_PATTERN = /(?:\+?\d[\d\s-]{6,}\d)|[\w.+-]+@[\w-]+\.[\w.]+|https?:\
 const PRICE_OFFER_PATTERN =
   /(?:بمبلغ|بسعر|ب\s*سعر|اعطيك|أعطيك|اعطيه|أعطيه|ادفع|أدفع|ادفعلك|بـ?\s*\d+(?:[.,]\d+)?\s*(?:دينار|دنانير|jod|kwd|ريال|sar)|\d+(?:[.,]\d+)?\s*(?:دينار|دنانير|jod|kwd|ريال|sar)\s*(?:لل|لـ|ل)?(?:قطعه|قطعة|الكل|حبه|حبة)?|خصم|تخفيض|اخر\s+سعر|آخر\s+سعر)/iu;
 
-export function inquiryBodyProblem(body: string): string | undefined {
+/**
+ * `quoted` is server data DINAR places in a drafted message (the listing's own title, e.g.
+ * «لاندكروزر 2021 150000»): it is not the author's words, so it is left out of the contact
+ * check only. Everything the author typed is still checked; lengths count the whole message.
+ */
+export function inquiryBodyProblem(body: string, quoted?: string): string | undefined {
   const text = body.trim();
   if (text.length < 2) return "الرسالة قصيرة جدًا";
   if (text.length > 1000) return "الرسالة أطول من 1000 حرف";
-  if (CONTACT_PATTERN.test(text)) return "لا تُرسل أرقام الهواتف أو البريد أو الروابط عبر الاستفسار؛ بيانات التواصل تُتاح فقط عبر الطلب المؤكد";
+  const authored = quoted && quoted.trim().length >= 2 ? text.split(quoted.trim()).join(" ") : text;
+  if (CONTACT_PATTERN.test(authored)) return "لا تُرسل أرقام الهواتف أو البريد أو الروابط عبر الاستفسار؛ بيانات التواصل تُتاح فقط عبر الطلب المؤكد";
   return undefined;
 }
 
@@ -201,7 +207,7 @@ export async function submitInquiryMessage(input: {
   provenance: InquiryProvenance;
   originConversationId: string;
 }): Promise<SubmitResult> {
-  const problem = inquiryBodyProblem(input.body);
+  const problem = inquiryBodyProblem(input.body, input.target.kind === "LISTING" ? await listingTitle(input.target.listingId) : undefined);
   if (problem) throw fail(400, problem, "INVALID_BODY");
   if (containsPriceOffer(input.body)) throw fail(409, "الرسالة تتضمن عرض سعر؛ العروض المالية تُرسل عبر التفاوض لا عبر الاستفسار", "PRICE_OFFER");
   const messageId = `inq-${input.actionId}`;

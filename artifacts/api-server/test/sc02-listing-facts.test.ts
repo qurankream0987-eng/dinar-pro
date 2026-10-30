@@ -160,5 +160,21 @@ await focused("SC02-3", "a recorded mileage is answered from the listing record"
   assert.notEqual(question.payload?.surface, "INQUIRY_DRAFT", "a recorded value needs no seller question");
 });
 
+await focused("SC02-4", "a listing title with numbers is quoted in the seller question, not mistaken for a phone number", async () => {
+  // «2021 150000» in a title (year + mileage) has the shape of a phone number. It is the
+  // listing's own server-side title, quoted by DINAR, so the inquiry must not be refused for it;
+  // a number the buyer types is still refused (lib/inquiries.ts CONTACT_PATTERN).
+  const numbered = await publishCar(seller, { title: "لاندكروزر 2021 150000", year: 2021, price: "4700" });
+  const own = await newConversation();
+  const found = await turn(buyer, own, `دينار أبي لاندكروزر ${runId}`);
+  assert.ok((found.payload?.listings ?? []).some((listing: any) => listing.id === numbered), found.body);
+  const question = await turn(buyer, own, "هذا الأول كم ماشي؟");
+  assert.doesNotMatch(question.body, /لا تُرسل أرقام الهواتف/u, `the title's numbers are not a contact detail: ${question.body}`);
+  assert.match(question.body, /لم يذكر البائع الممشى/u, question.body);
+  assert.equal(question.payload?.surface, "INQUIRY_DRAFT", question.body);
+  const typed = await turn(buyer, own, "اسأل البائع اتصل بي على 0791234567");
+  assert.match(typed.body, /لا تُرسل أرقام الهواتف/u, `a phone number the buyer typed is still refused: ${typed.body}`);
+});
+
 console.log("SC02_SUMMARY", JSON.stringify({ passed: Object.values(results).filter((value) => value === "PASS").length, total: Object.keys(results).length, results }));
 server.close();

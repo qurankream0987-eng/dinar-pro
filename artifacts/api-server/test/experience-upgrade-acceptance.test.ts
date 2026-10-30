@@ -232,7 +232,7 @@ await test("XP-02 «أريد أن أشتري شيئًا» asks what to buy; gene
   const results = search.blocks.find((block) => block.type === "LISTING_RESULTS");
   assert.deepEqual(results?.payload.resourceIds, [L.panels], search.body);
   const general = await say(actor, conv, "كم لوح شمسي يحتاج بيت استهلاكه 600 كيلوواط ساعة شهريًا؟");
-  assert.equal(general.modelCalled, true, "a sizing question is general reasoning, not a search");
+  assert.equal(general.modelCalled, true, `a sizing question is general reasoning, not a search: ${general.body}`);
   assert.ok(!general.blocks.some((block) => block.type === "LISTING_RESULTS"));
   const first = await say(actor, conv, "الأول");
   assert.equal(first.modelCalled, false);
