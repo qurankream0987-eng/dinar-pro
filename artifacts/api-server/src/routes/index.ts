@@ -17,6 +17,7 @@ import courier from "./courier";
 import privacy from "./privacy";
 import appeals from "./appeals";
 import integrations from "./integrations";
+import cash from "./cash";
 const router: IRouter = Router();
 router.use(adminMarkets);
 router.use(adminDisputes);
@@ -24,6 +25,8 @@ router.use(adminDrivers);
 router.use(categories);
 router.use(auth);
 router.use(marketplace);
+// Cash attestations live beside orders but have their own development-only gate.
+router.use(cash);
 router.use(profileAvatar);
 router.use(listingPhotos);
 router.use(ai);
