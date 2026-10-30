@@ -11,6 +11,7 @@ import {
   check,
   doublePrecision,
   bigint,
+  type AnyPgColumn,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 const dates = () => ({
@@ -1025,6 +1026,113 @@ export const sellerDues = pgTable(
     ...dates(),
   },
   (t) => [index("dues_seller_status_idx").on(t.sellerId, t.status)],
+);
+/**
+ * Versioned commission policy. The platform baseline (1,000 bps) is seeded as a published
+ * global policy. Orders snapshot the policy they were priced under, so later policy
+ * changes never rewrite the commission of an existing order.
+ */
+export const commissionPolicies = pgTable(
+  "commission_policies",
+  {
+    id: text("id").primaryKey(),
+    policyKey: text("policy_key").notNull(),
+    version: integer("version").notNull(),
+    rateBasisPoints: integer("rate_basis_points").notNull(),
+    basis: text("basis").default("GROSS_ITEM_SUBTOTAL").notNull(),
+    roundingMode: text("rounding_mode").default("HALF_UP").notNull(),
+    marketId: text("market_id").references(() => markets.id),
+    status: text("status").default("DRAFT").notNull(),
+    effectiveFrom: timestamp("effective_from", { withTimezone: true }).notNull(),
+    effectiveTo: timestamp("effective_to", { withTimezone: true }),
+    contentHash: text("content_hash").notNull(),
+    approvedBy: text("approved_by"),
+    publishedAt: timestamp("published_at", { withTimezone: true }),
+    createdBy: text("created_by"),
+    ...dates(),
+  },
+  (t) => [
+    uniqueIndex("commission_policies_key_version_unique").on(t.policyKey, t.version),
+    index("commission_policies_lookup_idx").on(t.policyKey, t.status, t.effectiveFrom),
+    check(
+      "commission_policies_rate_valid",
+      sql`${t.rateBasisPoints} BETWEEN 0 AND 10000`,
+    ),
+    check("commission_policies_basis_valid", sql`${t.basis} IN ('GROSS_ITEM_SUBTOTAL')`),
+    check("commission_policies_rounding_valid", sql`${t.roundingMode} IN ('HALF_UP')`),
+    check(
+      "commission_policies_status_valid",
+      sql`${t.status} IN ('DRAFT', 'PUBLISHED', 'SUPERSEDED')`,
+    ),
+    check(
+      "commission_policies_publication_valid",
+      sql`${t.status} <> 'PUBLISHED' OR (${t.publishedAt} IS NOT NULL)`,
+    ),
+    check(
+      "commission_policies_window_valid",
+      sql`${t.effectiveTo} IS NULL OR ${t.effectiveTo} > ${t.effectiveFrom}`,
+    ),
+  ],
+);
+/**
+ * Append-only financial journal for an order. Every entry names the business event that
+ * caused it, the account obligation it moves, the currency and integer minor amount, the
+ * actor and authorization context, and a per-order idempotency key. Corrections are new
+ * reversing entries; rows are never updated or deleted (guard triggers enforce this).
+ */
+export const orderFinancialEvents = pgTable(
+  "order_financial_events",
+  {
+    id: text("id").primaryKey(),
+    orderId: text("order_id")
+      .notNull()
+      .references(() => orders.id),
+    eventType: text("event_type").notNull(),
+    accountObligation: text("account_obligation").notNull(),
+    businessRef: text("business_ref").notNull(),
+    actorType: text("actor_type").notNull(),
+    actorId: text("actor_id").references(() => users.id),
+    currencyCode: text("currency_code").notNull(),
+    amountMinor: integer("amount_minor").notNull(),
+    idempotencyKey: text("idempotency_key").notNull(),
+    reversesEventId: text("reverses_event_id").references(
+      (): AnyPgColumn => orderFinancialEvents.id,
+    ),
+    authorizationContext: jsonb("authorization_context")
+      .$type<Record<string, unknown>>()
+      .default({})
+      .notNull(),
+    data: jsonb("data").$type<Record<string, unknown>>().default({}).notNull(),
+    recordedAt: timestamp("recorded_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [
+    uniqueIndex("order_financial_events_idempotency_unique").on(
+      t.orderId,
+      t.idempotencyKey,
+    ),
+    index("order_financial_events_reversal_idx").on(t.reversesEventId),
+    index("order_financial_events_order_idx").on(t.orderId, t.recordedAt),
+    index("order_financial_events_type_idx").on(t.eventType, t.recordedAt),
+    check(
+      "order_financial_events_event_type_valid",
+      sql`${t.eventType} IN ('ORDER_CREATED', 'PAYMENT_CAPTURED', 'PAYMENT_REFUNDED', 'ORDER_COMPLETED', 'ORDER_CANCELLED', 'COMMISSION_ACCRUED', 'COMMISSION_REVERSED', 'SELLER_PAYABLE_DUE', 'REFUND_OBLIGATION_OPENED', 'REFUND_OBLIGATION_RESOLVED')`,
+    ),
+    check(
+      "order_financial_events_obligation_valid",
+      sql`${t.accountObligation} IN ('BUYER_RECEIVABLE', 'BUYER_PAYMENT', 'BUYER_REFUND', 'SELLER_PAYABLE', 'PLATFORM_COMMISSION', 'REFUND_OBLIGATION', 'NONE')`,
+    ),
+    check(
+      "order_financial_events_actor_valid",
+      sql`${t.actorType} IN ('BUYER', 'SELLER', 'SYSTEM', 'ADMIN', 'PROVIDER')`,
+    ),
+    check("order_financial_events_amount_valid", sql`${t.amountMinor} >= 0`),
+    check(
+      "order_financial_events_currency_valid",
+      sql`char_length(${t.currencyCode}) = 3`,
+    ),
+  ],
 );
 export const paymentIntents = pgTable(
   "payment_intents",

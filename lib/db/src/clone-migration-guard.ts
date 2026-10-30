@@ -30,6 +30,9 @@ export const REVIEWED_PENDING_MIGRATIONS: ReadonlyArray<{ tag: string; sha256: s
   { tag: "0039_ai_cache_write_costs", sha256: "724d67853374cafc7263933a4b51f1ff1d45560549488dc39fe22a43175649cc" },
   // One new append-only table with guard triggers; payment_events_type_valid is only widened.
   { tag: "0040_refund_obligations", sha256: "211c7db104036fc74cb08c668e9bf5b26d8f038915b1ab8232d8a79d2e20bfbb" },
+  // Versioned commission policies and the append-only order financial journal; the markets
+  // price CHECK is only relaxed so activation no longer depends on a legacy unit price.
+  { tag: "0041_wave07_financial_journal", sha256: "4403b20eefd37d18cfe29086722946975a4765192ad5b3cc86b089ac54347cf0" },
 ];
 export const EXPECTED_JOURNAL_ENTRIES =
   EXPECTED_BASELINE_MIGRATIONS + REVIEWED_PENDING_MIGRATIONS.length;
