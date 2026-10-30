@@ -112,9 +112,9 @@ export async function openUser(browser, { webBase, apiOrigin, cookie, label, rec
     assert.ok(buttons.every((button) => button.name), `${name} ${width}px: every button has an accessible name`);
     recorder.checks.push(`${name} ${width}px: RTL, no overflow, content and named buttons inside the viewport`);
   }
-  /** The scenario widths: 320 and 390 phones and a desktop window. */
-  async function widths(name, visible) {
-    for (const width of [320, 390, 1280]) await measure(name, width, visible);
+  /** The scenario widths: 320 and 390 phones and a desktop window, unless a suite names its own. */
+  async function widths(name, visible, list = [320, 390, 1280]) {
+    for (const width of list) await measure(name, width, visible);
     await page.setViewportSize({ width: 390, height: 844 });
     await settle();
   }
