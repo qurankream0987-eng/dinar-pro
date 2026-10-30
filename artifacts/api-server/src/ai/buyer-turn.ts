@@ -577,7 +577,11 @@ export async function executeBuyerTurn(input: {
     if (/^(?:هم|ها|هن|بينهم|الاثنين)$/u.test(rest) || difference[1] === "بينهم") {
       if (set.resourceIds.length >= 2 && set.resourceIds.length <= 4)
         return comparison(set, set.resourceIds.map((_, index) => index + 1), input.market);
-    } else if (positionsIn(rest).length >= 2) return comparison(set, positionsIn(rest), input.market);
+    } else {
+      // Only ordinal words name results here: «الفرق بين الآيفون 15 و16» compares models, not results 15 and 16.
+      const ordinals = [...new Set(rest.split(/\s+/u).map((word) => ORDINAL_TOKENS[word.replace(/^(?:و|ب)(?=ال)/u, "")]).filter((position): position is number => position !== undefined))];
+      if (ordinals.length >= 2 && !/\d/u.test(rest)) return comparison(set, ordinals, input.market);
+    }
   }
 
   if (set && PREPARE_ORDER.test(text)) {

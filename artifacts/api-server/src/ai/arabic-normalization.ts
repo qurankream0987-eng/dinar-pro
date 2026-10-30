@@ -34,7 +34,15 @@ const DIALECT_WORDS: ReadonlyArray<readonly [RegExp, string]> = [
   [/^(?:هادا|هاذا|هاد|ده)$/u, "هذا"],
 ];
 
+/**
+ * Cheap pre-check: folding runs thousands of times per turn (category alias matching), and
+ * almost no text contains a dialect word, so the per-word pass runs only when one may occur.
+ */
+const MAY_HAVE_DIALECT_WORD =
+  /(?:^|[\s،,؟?!.])[وبف]?(?:التاني|التالت|بغيت|نبغي|بغينا|عايز|عاوز|اشتي|نشتي|داير|ابغا|ابغي|used|هادا|هاذا|هاد|ده)/u;
+
 function foldDialectWords(value: string): string {
+  if (!MAY_HAVE_DIALECT_WORD.test(value)) return value;
   return value.replace(/(^|[\s،,؟?!.])([^\s،,؟?!.]+)/gu, (whole, lead: string, word: string) => {
     for (const [pattern, canonical] of DIALECT_WORDS) {
       if (pattern.test(word)) return `${lead}${canonical}`;
