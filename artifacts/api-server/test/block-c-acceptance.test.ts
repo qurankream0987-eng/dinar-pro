@@ -949,11 +949,21 @@ await acceptance("C21", "public views leak no private, internal or protected fie
   ];
   const leaks: string[] = [];
   const actorPhones = [employerA, employerB, candidateA, candidateB, candidateC, candidateD].map((actor) => actor.phone);
-  for (const entry of payloadLog) {
+  for (const logged of payloadLog) {
+    // Since Wave 03 every block carries a card envelope whose `context.marketId` is the viewer's
+    // own active market (routes/ai.ts: marketFor(req)), a designed contract field, not an
+    // employment record field. It must be exactly the viewer's market; only that one field is
+    // then left out of the key scan. Phones and account ids are still scanned in the full block.
+    const block = JSON.parse(logged);
+    if (block.payload?.card) {
+      assert.equal(block.payload.card.context?.marketId, "JO", "the envelope names only the viewer's own market");
+      delete block.payload.card.context.marketId;
+    }
+    const entry = JSON.stringify(block);
     for (const key of forbiddenKeys) if (entry.includes(`"${key}"`)) leaks.push(key);
-    for (const phone of actorPhones) if (entry.includes(phone)) leaks.push(`auth phone ${phone}`);
+    for (const phone of actorPhones) if (logged.includes(phone)) leaks.push(`auth phone ${phone}`);
     for (const id of [employerA.id, employerB.id, candidateA.id, candidateB.id, candidateC.id, candidateD.id])
-      if (entry.includes(id)) leaks.push("account id");
+      if (logged.includes(id)) leaks.push("account id");
   }
   assert.ok(payloadLog.length > 50, `${payloadLog.length} employment payloads scanned`);
   assert.deepEqual([...new Set(leaks)], []);

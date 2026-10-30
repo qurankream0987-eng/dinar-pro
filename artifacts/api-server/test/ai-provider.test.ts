@@ -286,16 +286,20 @@ await test("the dinarConversationTurn tool schema states every bound DINAR's Zod
  * contract field by field: a field, bound, enum value or strictness added to one and not the
  * other fails here, before any provider sees it.
  */
+// Zod 4 introspection: a schema's definition is `_zod.def` (its kind in `type`), and each check is
+// an object whose `_zod.def.check` names it. The walker compares exactly what the Zod 3 version did.
+const zodChecks = (def: any) => (def.checks ?? []).map((check: any) => check._zod.def);
 function zodMirrorIssues(schema: any, json: any, path: string): string[] {
-  const def = schema._def;
+  const def = schema._zod.def;
   const at = path || "<root>";
-  switch (def.typeName) {
-    case "ZodObject": {
+  switch (def.type) {
+    case "object": {
       const issues: string[] = [];
       if (json.type !== "object") return [`${at}: type ${json.type}`];
-      if (def.unknownKeys === "strict" && json.additionalProperties !== false) issues.push(`${at}: not closed`);
-      const shape = schema.shape as Record<string, any>;
-      const required = Object.keys(shape).filter((key) => !shape[key].isOptional()).sort();
+      // .strict() is a `never` catchall: unknown keys are refused, so the tool must be closed too.
+      if (def.catchall?._zod.def.type === "never" && json.additionalProperties !== false) issues.push(`${at}: not closed`);
+      const shape = def.shape as Record<string, any>;
+      const required = Object.keys(shape).filter((key) => shape[key]._zod.def.type !== "optional").sort();
       if (JSON.stringify(required) !== JSON.stringify([...(json.required ?? [])].sort())) issues.push(`${at}: required ${json.required} vs ${required}`);
       for (const key of new Set([...Object.keys(shape), ...Object.keys(json.properties ?? {})])) {
         if (!shape[key]) issues.push(`${path}.${key}: only in the tool schema`);
@@ -304,25 +308,29 @@ function zodMirrorIssues(schema: any, json: any, path: string): string[] {
       }
       return issues;
     }
-    case "ZodOptional":
+    case "optional":
       return zodMirrorIssues(def.innerType, json, path);
-    case "ZodEnum":
-      return JSON.stringify(def.values) === JSON.stringify(json.enum) && json.type === "string" ? [] : [`${at}: enum`];
-    case "ZodArray":
+    case "enum":
+      return JSON.stringify(Object.values(def.entries)) === JSON.stringify(json.enum) && json.type === "string" ? [] : [`${at}: enum`];
+    case "array": {
+      const max = zodChecks(def).find((check: any) => check.check === "max_length")?.maximum;
       return [
-        ...(json.type !== "array" || (def.maxLength?.value ?? undefined) !== json.maxItems ? [`${at}: array bound`] : []),
-        ...zodMirrorIssues(def.type, json.items, `${path}[]`),
+        ...(json.type !== "array" || max !== json.maxItems ? [`${at}: array bound`] : []),
+        ...zodMirrorIssues(def.element, json.items, `${path}[]`),
       ];
-    case "ZodString": {
-      const max = def.checks.find((check: any) => check.kind === "max")?.value;
+    }
+    case "string": {
+      const checks = zodChecks(def);
+      const max = checks.find((check: any) => check.check === "max_length")?.maximum;
       // A regex-constrained string is described in words (no provider pattern dialect is assumed).
-      const patterned = def.checks.some((check: any) => check.kind === "regex");
+      const patterned = checks.some((check: any) => check.check === "string_format" && check.format === "regex");
       return json.type === "string" && (patterned ? Boolean(json.description) : max === json.maxLength) ? [] : [`${at}: string bound ${max} vs ${json.maxLength}`];
     }
-    case "ZodNumber": {
-      const integer = def.checks.some((check: any) => check.kind === "int");
-      const min = def.checks.find((check: any) => check.kind === "min");
-      const max = def.checks.find((check: any) => check.kind === "max");
+    case "number": {
+      const checks = zodChecks(def);
+      const integer = checks.some((check: any) => check.check === "number_format" && ["safeint", "int32", "uint32"].includes(check.format));
+      const min = checks.find((check: any) => check.check === "greater_than");
+      const max = checks.find((check: any) => check.check === "less_than");
       const issues: string[] = [];
       if (json.type !== (integer ? "integer" : "number")) issues.push(`${at}: type ${json.type}`);
       if (max?.value !== json.maximum) issues.push(`${at}: maximum`);
@@ -331,7 +339,7 @@ function zodMirrorIssues(schema: any, json: any, path: string): string[] {
       return issues;
     }
     default:
-      return [`${at}: unhandled ${def.typeName}`];
+      return [`${at}: unhandled ${def.type}`];
   }
 }
 
