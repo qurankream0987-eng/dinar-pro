@@ -23,6 +23,10 @@ import {
 } from "./disputes";
 import { expireOrderReservation } from "../order-expiry";
 import {
+  recordCommissionReversal,
+  recordOrderFinancialEvent,
+} from "../order-journal";
+import {
   recordRefundObligation,
   resolveRefundObligation,
   type RefundObligationReason,
@@ -435,6 +439,36 @@ export async function receivePaymentWebhook(input: {
         paymentIntentId: intent.id,
         refundEventId: insertedEvent.id,
         now,
+      });
+    await recordOrderFinancialEvent(tx, {
+      orderId: order.id,
+      eventType:
+        input.event.type === "CAPTURE_SUCCEEDED"
+          ? "PAYMENT_CAPTURED"
+          : "PAYMENT_REFUNDED",
+      accountObligation:
+        input.event.type === "CAPTURE_SUCCEEDED"
+          ? "BUYER_PAYMENT"
+          : "BUYER_REFUND",
+      businessRef: insertedEvent.id,
+      actorType: "PROVIDER",
+      currencyCode: input.event.currencyCode,
+      amountMinor: input.event.amountMinor,
+      idempotencyKey: `payment-event:${insertedEvent.id}`,
+      authorizationContext: {
+        source: "PAYMENT_WEBHOOK",
+        providerKey: input.adapter.providerKey,
+        providerIntentId: intent.providerIntentId,
+        providerEventId: input.event.id,
+        paymentIntentId: intent.id,
+      },
+    });
+    if (input.event.type === "REFUND_SUCCEEDED" && order.status === "COMPLETED")
+      await recordCommissionReversal(tx, {
+        order,
+        refundAmountMinor: input.event.amountMinor,
+        previouslyRefundedMinor: intent.refundedAmountMinor,
+        businessRef: insertedEvent.id,
       });
     return {
       duplicate: false,

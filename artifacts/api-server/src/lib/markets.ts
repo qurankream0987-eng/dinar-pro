@@ -43,9 +43,13 @@ export async function marketFor(req: any, tx: any = db, lock = false) {
   if (!row) throw marketError(400, 'السوق غير موجود');
   return resolveMarket(row, tx);
 }
+/**
+ * Commerce availability is the market's own activation decision. A historical market unit
+ * price (a pre-flexible-pricing artifact) is never the reason commerce is enabled or denied;
+ * listing prices are per-listing and evaluated at checkout.
+ */
 export function isMarketAvailable(market: Awaited<ReturnType<typeof marketFor>>) {
-  return market.isActive && ['ACTIVE', 'LIMITED'].includes(market.status) &&
-    market.priceConfigured && market.unitPriceMinor >= 1;
+  return market.isActive && ['ACTIVE', 'LIMITED'].includes(market.status);
 }
 export function assertMarketActive(market: Awaited<ReturnType<typeof marketFor>>) {
   if (!isMarketAvailable(market))

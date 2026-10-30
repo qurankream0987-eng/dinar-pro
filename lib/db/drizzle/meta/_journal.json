@@ -290,6 +290,13 @@
       "breakpoints": true
     },
     {
+      "idx": 41,
+      "version": "7",
+      "when": 1793260000000,
+      "tag": "0041_wave07_financial_journal",
+      "breakpoints": true
+    },
+    {
       "idx": 45,
       "version": "7",
       "when": 1793510000000,

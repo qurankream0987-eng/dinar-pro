@@ -12,6 +12,7 @@ import {
   assertCloneDatabaseIdentity,
   assertCloneMigrationBaseline,
   assertCloneMigrationJournal,
+  EXPECTED_JOURNAL_ENTRIES,
   REVIEWED_PENDING_MIGRATIONS,
   resolveCloneMigrationTarget,
   verifiedCloneDatabaseCredentials,
@@ -157,18 +158,18 @@ test("clone migration refuses a ledger other than the exact 28-entry baseline", 
   assert.throws(() => assertCloneMigrationBaseline(altered, expected));
 });
 
-test("clone migration accepts only the reviewed 43-entry journal, checked against the files on disk", () => {
+test("clone migration accepts only the reviewed journal (every entry hashed and reviewed), checked against the files on disk", () => {
   const migrations = new URL("../../../lib/db/drizzle/", import.meta.url);
   const journal = JSON.parse(readFileSync(new URL("meta/_journal.json", migrations), "utf8")) as { entries: Array<{ tag: string }> };
   const entries = journal.entries.map(({ tag }) => ({
     tag,
     sha256: createHash("sha256").update(readFileSync(new URL(`${tag}.sql`, migrations))).digest("hex"),
   }));
-  assert.equal(entries.length, 43);
+  assert.equal(entries.length, EXPECTED_JOURNAL_ENTRIES);
   assert.equal(REVIEWED_PENDING_MIGRATIONS.at(-1)?.tag, "0046_d1_d2_business_foundation");
   assert.doesNotThrow(() => assertCloneMigrationJournal(entries));
-  assert.throws(() => assertCloneMigrationJournal(entries.slice(0, 42)), /expects 43/);
-  assert.throws(() => assertCloneMigrationJournal([...entries, { tag: "0043_unreviewed", sha256: "0".repeat(64) }]), /expects 43/);
+  assert.throws(() => assertCloneMigrationJournal(entries.slice(0, entries.length - 1)), new RegExp(`expects ${EXPECTED_JOURNAL_ENTRIES}`));
+  assert.throws(() => assertCloneMigrationJournal([...entries, { tag: "9999_unreviewed", sha256: "0".repeat(64) }]), new RegExp(`expects ${EXPECTED_JOURNAL_ENTRIES}`));
   const edited = entries.map((entry) => ({ ...entry }));
   edited[37].sha256 = "f".repeat(64);
   assert.throws(() => assertCloneMigrationJournal(edited), /0037_pre_integration_closure differs/);
