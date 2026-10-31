@@ -11,7 +11,6 @@ import {
   moderationReasonCodes,
   offers,
   orders,
-  policyAcceptances,
   users,
 } from "@workspace/db";
 import { requireAuth, verifyPassword } from "../lib/auth";
@@ -29,6 +28,12 @@ import {
   currentPolicy,
   DATA_RETENTION_POLICY,
 } from "../lib/policies";
+import {
+  policyConsentStatus,
+  policyContentSha256,
+  policyLifecycleFor,
+  recordPolicyDecision,
+} from "../lib/policy-lifecycle";
 import { PLATFORM_FEE_BASIS_POINTS } from "../lib/market-pricing";
 import { ObjectStorageService } from "../lib/objectStorage";
 import { logger } from "../lib/logger";
@@ -48,9 +53,19 @@ const reasonText = z.string().trim().min(3).max(1000);
 
 // ---------------------------------------------------------------- policies
 
-router.get("/policies", (_req, res) => {
+router.get("/policies", async (_req, res) => {
+  const policies = [];
+  for (const document of currentPolicies()) {
+    const { sections: _sections, ...summary } = document;
+    const registered = await policyLifecycleFor(document.key, document.version);
+    policies.push({
+      ...summary,
+      contentSha256: policyContentSha256(document),
+      lifecycle: registered?.lifecycle ?? "NOT_REGISTERED",
+    });
+  }
   res.json({
-    policies: currentPolicies().map(({ sections: _sections, ...summary }) => summary),
+    policies,
     fees: {
       commissionRateBps: PLATFORM_FEE_BASIS_POINTS,
       payer: "SELLER",
@@ -59,31 +74,20 @@ router.get("/policies", (_req, res) => {
   });
 });
 
-router.get("/policies/:key", (req, res) => {
+router.get("/policies/:key", async (req, res) => {
   const policy = currentPolicy(String(req.params.key));
   if (!policy) throw fail(404, "السياسة غير موجودة");
-  res.json(policy);
+  const registered = await policyLifecycleFor(policy.key, policy.version);
+  res.json({
+    ...policy,
+    contentSha256: policyContentSha256(policy),
+    lifecycle: registered?.lifecycle ?? "NOT_REGISTERED",
+  });
 });
 
 router.get("/account/policy-acceptances", requireAuth, async (req, res) => {
-  const accepted = await db
-    .select()
-    .from(policyAcceptances)
-    .where(eq(policyAcceptances.userId, req.actor!.id));
-  res.json(
-    currentPolicies()
-      .filter((policy) => policy.requiresAcceptance)
-      .map((policy) => {
-        const record = accepted.find(
-          (row) => row.policyKey === policy.key && row.policyVersion === policy.version,
-        );
-        return {
-          key: policy.key,
-          version: policy.version,
-          acceptedAt: record?.acceptedAt.toISOString() ?? null,
-        };
-      }),
-  );
+  const status = await policyConsentStatus(req.actor!.id);
+  res.json(status.required);
 });
 
 router.post("/account/policy-acceptances", requireAuth, async (req, res) => {
@@ -92,13 +96,17 @@ router.post("/account/policy-acceptances", requireAuth, async (req, res) => {
     .strict()
     .parse(req.body);
   const policy = currentPolicy(body.key);
-  if (!policy?.requiresAcceptance || policy.version !== body.version)
+  if (!policy?.requiresAcceptance)
     throw fail(409, "نسخة السياسة غير متاحة للموافقة");
-  await db
-    .insert(policyAcceptances)
-    .values({ userId: req.actor!.id, policyKey: policy.key, policyVersion: policy.version })
-    .onConflictDoNothing();
-  res.status(201).json({ key: policy.key, version: policy.version });
+  const { event } = await recordPolicyDecision({
+    userId: req.actor!.id,
+    key: policy.key,
+    version: body.version,
+    decision: "ACCEPTED",
+    source: "POLICY_REVIEW",
+    idempotencyKey: `review:${policy.key}:${body.version}`,
+  });
+  res.status(201).json({ key: event.key, version: event.version });
 });
 
 // ----------------------------------------------------------------- reports
