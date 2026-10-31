@@ -339,7 +339,7 @@ router.get("/listings/:id", async (req, res) => {
 export type TrustedListingContext = {
   /** Passed only by server services after business authorization; never read from a request body. */
   businessId?: string;
-  tx?: typeof db;
+  tx?: Parameters<Parameters<typeof db.transaction>[0]>[0] | typeof db;
 };
 
 export async function createListingForActor(

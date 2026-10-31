@@ -38,7 +38,7 @@ import { d2BusinessIdentity } from "./d2-business-identity";
 
 type Market = Awaited<ReturnType<typeof marketFor>>;
 type ListingUpdate = z.infer<typeof UpdateListingBody>;
-type Executor = typeof db;
+type Executor = Parameters<Parameters<typeof db.transaction>[0]>[0] | typeof db;
 
 const fail = (status: number, message: string, code?: string) =>
   Object.assign(new Error(message), { status, ...(code ? { code } : {}) });
@@ -130,7 +130,7 @@ function requiredUpdateCapabilities(body: ListingUpdate): BusinessCapability[] {
   const content = body.title !== undefined || body.description !== undefined || body.category !== undefined ||
     body.categoryId !== undefined || body.attributes !== undefined || body.imageUrl !== undefined ||
     body.imageUrls !== undefined || body.area !== undefined || body.city !== undefined ||
-    body.fulfilmentType !== undefined || body.contactPhone !== undefined || body.paymentMethods !== undefined ||
+    body.fulfilmentType !== undefined || body.contactPhone !== undefined ||
     body.negotiable !== undefined;
   const capabilities: BusinessCapability[] = [];
   if (price || content) capabilities.push("business.listing.update");
