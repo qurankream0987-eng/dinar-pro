@@ -3,10 +3,11 @@
  * approved. Absent or invalid = no target: DINAR shows no deadline rather than inventing one
  * (the same rule as DINAR_PRIVACY_RESPONSE_DAYS for privacy requests).
  *
- * - DINAR_REPORT_RESPONSE_HOURS: reports (listing, user, order), 1–720 hours.
+ * - DINAR_REPORT_RESPONSE_HOURS: reports (listing, user, order, message, AI answer), 1–720 hours.
  * - DINAR_APPEAL_RESPONSE_HOURS: appeals against a trust decision, 1–720 hours.
+ * - DINAR_SUPPORT_RESPONSE_HOURS: user support cases, 1–720 hours.
  */
-export type ResponseTargetKey = "DINAR_REPORT_RESPONSE_HOURS" | "DINAR_APPEAL_RESPONSE_HOURS";
+export type ResponseTargetKey = "DINAR_REPORT_RESPONSE_HOURS" | "DINAR_APPEAL_RESPONSE_HOURS" | "DINAR_SUPPORT_RESPONSE_HOURS";
 
 export function responseTargetHours(key: ResponseTargetKey, env: NodeJS.ProcessEnv = process.env): number | null {
   const hours = Number(env[key]);

@@ -4,9 +4,11 @@ import { z } from "zod";
 import { and, asc, desc, eq, gte, ilike, or, sql } from "drizzle-orm";
 import {
   db,
+  conversations,
   marketplacePolicyRules,
   marketplaceReports,
   markets,
+  messages,
   moderationAudit,
   moderationReasonCodes,
   offers,
@@ -46,7 +48,7 @@ const fail = (status: number, message: string) =>
   Object.assign(new Error(message), { status });
 
 export const REPORTS_PER_DAY_LIMIT = 10;
-const TARGET_TYPES = ["LISTING", "USER", "ORDER"] as const;
+const TARGET_TYPES = ["LISTING", "USER", "ORDER", "MESSAGE", "AI_ANSWER"] as const;
 type TargetType = (typeof TARGET_TYPES)[number];
 
 const reasonText = z.string().trim().min(3).max(1000);
@@ -175,6 +177,26 @@ async function reportableTargetMarket(
       throw notFound();
     return order.marketId;
   }
+  if (targetType === "MESSAGE") {
+    // Only a message the reporter received from the other side of their own order.
+    const [message] = await tx.select().from(messages).where(eq(messages.id, targetId));
+    if (!message || !message.senderId || message.senderId === reporter.id) throw notFound();
+    const [conversation] = await tx.select().from(conversations).where(eq(conversations.id, message.conversationId));
+    if (!conversation || conversation.kind !== "ORDER" || !conversation.orderId) throw notFound();
+    const [order] = await tx.select().from(orders).where(eq(orders.id, conversation.orderId));
+    if (!order || ![order.buyerId, order.sellerId].includes(reporter.id)) throw notFound();
+    return order.marketId;
+  }
+  if (targetType === "AI_ANSWER") {
+    // Reporting an AI answer keeps ids only: the answer text is never copied out of the message.
+    const [message] = await tx.select().from(messages).where(eq(messages.id, targetId));
+    if (!message) throw notFound();
+    const [conversation] = await tx.select().from(conversations).where(eq(conversations.id, message.conversationId));
+    if (!conversation || conversation.kind !== "AI" || conversation.ownerUserId !== reporter.id) throw notFound();
+    if (message.senderId === reporter.id) throw notFound();
+    if (!conversation.marketId) throw notFound();
+    return conversation.marketId;
+  }
   if (targetId === reporter.id) throw notFound();
   const [target] = await tx.select().from(users).where(eq(users.id, targetId));
   if (!target || target.status === ACCOUNT_STATUS.deactivated) throw notFound();
@@ -215,6 +237,8 @@ function reportView(row: typeof marketplaceReports.$inferSelect) {
     note: row.note,
     status: row.status,
     createdAt: row.createdAt.toISOString(),
+    // An AI-answer report keeps ids and the reporter's own note only; the answer text is not copied.
+    ...(row.targetType === "AI_ANSWER" ? { retention: "IDS_AND_USER_NOTE_ONLY" as const } : {}),
   };
 }
 
@@ -222,6 +246,8 @@ router.post("/reports", requireAuth, async (req, res) => {
   // Reporter identity is the authenticated session; strict parsing rejects
   // any reporterId supplied in the body.
   const body = CreateReportBody.parse(req.body);
+  if (body.targetType === "AI_ANSWER" && (body.note?.length ?? 0) > 500)
+    throw fail(400, "ملاحظة بلاغ إجابة الذكاء الاصطناعي لا تتجاوز 500 حرف");
   const result = await db.transaction(async (tx) => {
     const [reporter] = await tx
       .select()
@@ -398,6 +424,43 @@ async function targetContext(tx: any, targetType: string, targetId: string) {
       createdAt: order.createdAt.toISOString(),
     };
   }
+  if (targetType === "MESSAGE") {
+    const [row] = await tx
+      .select({ message: messages, conversation: conversations, sender: users })
+      .from(messages)
+      .innerJoin(conversations, eq(conversations.id, messages.conversationId))
+      .leftJoin(users, eq(users.id, messages.senderId))
+      .where(eq(messages.id, targetId));
+    if (!row) return null;
+    return {
+      kind: "MESSAGE",
+      id: row.message.id,
+      body: row.message.body,
+      conversationId: row.message.conversationId,
+      orderId: row.conversation.orderId,
+      senderId: row.message.senderId,
+      senderName: row.sender?.displayName ?? null,
+      createdAt: row.message.createdAt.toISOString(),
+    };
+  }
+  if (targetType === "AI_ANSWER") {
+    const [row] = await tx
+      .select({ message: messages, conversation: conversations })
+      .from(messages)
+      .innerJoin(conversations, eq(conversations.id, messages.conversationId))
+      .where(eq(messages.id, targetId));
+    if (!row) return null;
+    // Minimal retention: the generated answer text is not shown to the review queue.
+    return {
+      kind: "AI_ANSWER",
+      id: row.message.id,
+      conversationId: row.message.conversationId,
+      marketId: row.conversation.marketId,
+      senderId: row.message.senderId,
+      createdAt: row.message.createdAt.toISOString(),
+      contentRetained: false,
+    };
+  }
   const [user] = await tx.select().from(users).where(eq(users.id, targetId));
   if (!user) return null;
   const [counts] = await tx
@@ -459,7 +522,7 @@ const ResolveReportBody = z
   .object({
     decision: z.enum(["DISMISS", "ACTION"]),
     action: z
-      .enum(["HIDE_LISTING", "REMOVE_LISTING", "RESTRICT_USER", "SUSPEND_USER"])
+      .enum(["HIDE_LISTING", "REMOVE_LISTING", "RESTRICT_USER", "SUSPEND_USER", "FLAG_AI_ANSWER"])
       .optional(),
     subjectUserId: z.string().max(100).optional(),
     reason: reasonText,
@@ -479,9 +542,23 @@ router.post("/admin/reports/:id/resolve", async (req, res) => {
     if (row.status !== "OPEN") throw fail(409, "تمت معالجة البلاغ بالفعل");
     if (body.decision === "ACTION") {
       if (!body.action) throw fail(400, "اختر الإجراء المطلوب");
-      // Actions always apply to the report's own target; the client cannot
-      // redirect them to another listing or user.
-      if (body.action === "HIDE_LISTING" || body.action === "REMOVE_LISTING") {
+      if (body.action === "FLAG_AI_ANSWER") {
+        // A generated answer is reviewed by a human and flagged; no account, listing or payment
+        // changes, and the answer text is not copied into the audit row.
+        if (row.targetType !== "AI_ANSWER")
+          throw fail(400, "هذا الإجراء يخص بلاغات إجابات الذكاء الاصطناعي فقط");
+        await recordModerationAudit(tx, {
+          actor,
+          action: "AI_ANSWER_FLAGGED",
+          targetType: "AI_ANSWER",
+          targetId: row.targetId,
+          reportId: row.id,
+          reason: body.reason,
+          after: { reportStatus: "ACTIONED" },
+        });
+      } else if (row.targetType === "AI_ANSWER") {
+        throw fail(400, "قرار بلاغ إجابة الذكاء الاصطناعي لا يغيّر حسابًا أو إعلانًا");
+      } else if (body.action === "HIDE_LISTING" || body.action === "REMOVE_LISTING") {
         if (row.targetType !== "LISTING")
           throw fail(400, "هذا الإجراء يخص بلاغات العروض فقط");
         await moderateListing(tx, {
@@ -501,6 +578,13 @@ router.post("/admin/reports/:id/resolve", async (req, res) => {
             .where(eq(offers.id, row.targetId));
           if (!offer) throw fail(404, "العرض غير موجود");
           subject = offer.sellerId;
+        } else if (row.targetType === "MESSAGE") {
+          const [message] = await tx
+            .select({ senderId: messages.senderId })
+            .from(messages)
+            .where(eq(messages.id, row.targetId));
+          if (!message?.senderId) throw fail(404, "الرسالة غير موجودة");
+          subject = message.senderId;
         } else {
           const [order] = await tx
             .select()

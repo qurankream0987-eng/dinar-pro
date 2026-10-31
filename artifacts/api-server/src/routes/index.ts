@@ -11,6 +11,7 @@ import commercial from "./commercial";
 import adminDisputes from "./admin-disputes";
 import adminDrivers from "./admin-drivers";
 import trustSafety from "./trust-safety";
+import trustOps from "./trust-ops";
 import compliance from "./compliance";
 import payments from "./payments";
 import provider from "./provider";
@@ -41,6 +42,7 @@ router.use(businessProfiles);
 // Before payments: its router-wide simulation gate would hide every later route.
 router.use(provider);
 router.use(trustSafety);
+router.use(trustOps);
 router.use(compliance);
 router.use(courier);
 router.use(payments);

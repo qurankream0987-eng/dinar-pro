@@ -2668,6 +2668,189 @@ export const trustAppealEvents = pgTable(
   (t) => [index("trust_appeal_events_appeal_idx").on(t.appealId, t.createdAt)],
 );
 
+// Wave 10: a fraud signal is an observation, never a verdict. Rows are immutable; a human
+// review records what was decided and never sanctions anyone by itself.
+export const fraudSignals = pgTable(
+  "fraud_signals",
+  {
+    id: text("id").primaryKey(),
+    subjectType: text("subject_type").notNull(),
+    subjectId: text("subject_id").notNull(),
+    signalType: text("signal_type").notNull(),
+    severity: text("severity").default("LOW").notNull(),
+    source: text("source").notNull(),
+    evidence: jsonb("evidence").$type<Record<string, unknown>>().default({}).notNull(),
+    dedupeKey: text("dedupe_key").notNull(),
+    observedAt: timestamp("observed_at", { withTimezone: true }).defaultNow().notNull(),
+    createdBy: text("created_by").references(() => users.id),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    uniqueIndex("fraud_signals_dedupe_unique").on(t.subjectType, t.subjectId, t.dedupeKey),
+    index("fraud_signals_subject_idx").on(t.subjectType, t.subjectId, t.observedAt),
+    index("fraud_signals_created_idx").on(t.createdAt),
+    check("fraud_signals_subject_valid", sql`${t.subjectType} IN ('USER', 'LISTING', 'ORDER', 'MESSAGE', 'PAYMENT')`),
+    check("fraud_signals_severity_valid", sql`${t.severity} IN ('LOW', 'MEDIUM', 'HIGH')`),
+    check("fraud_signals_source_valid", sql`${t.source} IN ('RULE', 'REPORT', 'ADMIN', 'SYSTEM')`),
+    check("fraud_signals_type_format", sql`${t.signalType} ~ '^[A-Z][A-Z0-9_]{2,63}$'`),
+    check("fraud_signals_dedupe_length", sql`char_length(${t.dedupeKey}) BETWEEN 3 AND 120`),
+  ],
+);
+
+// Append-only human review of one signal; unique per signal so a false positive is dismissed once.
+export const fraudSignalReviews = pgTable(
+  "fraud_signal_reviews",
+  {
+    id: text("id").primaryKey(),
+    signalId: text("signal_id").notNull().references(() => fraudSignals.id),
+    reviewerId: text("reviewer_id").notNull().references(() => users.id),
+    decision: text("decision").notNull(),
+    note: text("note").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    uniqueIndex("fraud_signal_reviews_signal_unique").on(t.signalId),
+    index("fraud_signal_reviews_reviewer_idx").on(t.reviewerId, t.createdAt),
+    check("fraud_signal_reviews_decision_valid", sql`${t.decision} IN ('CONFIRMED', 'DISMISSED', 'ESCALATED')`),
+    check("fraud_signal_reviews_note_length", sql`char_length(${t.note}) BETWEEN 5 AND 2000`),
+  ],
+);
+
+/** Human support case; users own theirs, ADMIN staff see and assign every case. */
+export const supportCases = pgTable(
+  "support_cases",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull().references(() => users.id),
+    marketId: text("market_id").notNull().references(() => markets.id),
+    category: text("category").notNull(),
+    subject: text("subject").notNull(),
+    status: text("status").default("OPEN").notNull(),
+    priority: text("priority").default("NORMAL").notNull(),
+    assignedTo: text("assigned_to").references(() => users.id),
+    lastMessageAt: timestamp("last_message_at", { withTimezone: true }).defaultNow().notNull(),
+    closedAt: timestamp("closed_at", { withTimezone: true }),
+    ...dates(),
+  },
+  (t) => [
+    index("support_cases_user_idx").on(t.userId, t.createdAt),
+    index("support_cases_status_idx").on(t.status, t.lastMessageAt),
+    index("support_cases_assigned_idx").on(t.assignedTo, t.status),
+    check("support_cases_category_valid", sql`${t.category} IN ('ORDER', 'PAYMENT', 'ACCOUNT', 'SAFETY', 'TECHNICAL', 'DATA', 'OTHER')`),
+    check("support_cases_status_valid", sql`${t.status} IN ('OPEN', 'AWAITING_USER', 'AWAITING_STAFF', 'RESOLVED', 'CLOSED')`),
+    check("support_cases_priority_valid", sql`${t.priority} IN ('LOW', 'NORMAL', 'HIGH', 'URGENT')`),
+    check("support_cases_subject_length", sql`char_length(${t.subject}) BETWEEN 3 AND 160`),
+    check("support_cases_closed_consistent", sql`(${t.status} IN ('RESOLVED', 'CLOSED')) = (${t.closedAt} IS NOT NULL)`),
+  ],
+);
+
+// Append-only; internal notes are staff-only and enforced in the engine and by a CHECK.
+export const supportCaseMessages = pgTable(
+  "support_case_messages",
+  {
+    id: text("id").primaryKey(),
+    caseId: text("case_id").notNull().references(() => supportCases.id),
+    authorKind: text("author_kind").notNull(),
+    authorId: text("author_id").references(() => users.id),
+    body: text("body").notNull(),
+    internal: boolean("internal").default(false).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    index("support_case_messages_case_idx").on(t.caseId, t.createdAt),
+    check("support_case_messages_author_valid", sql`${t.authorKind} IN ('USER', 'STAFF', 'SYSTEM')`),
+    check("support_case_messages_body_length", sql`char_length(${t.body}) BETWEEN 1 AND 4000`),
+    check("support_case_messages_internal_staff_only", sql`${t.internal} = false OR ${t.authorKind} = 'STAFF'`),
+    check("support_case_messages_system_author_free", sql`(${t.authorKind} = 'SYSTEM') = (${t.authorId} IS NULL)`),
+  ],
+);
+
+export const supportCaseEvents = pgTable(
+  "support_case_events",
+  {
+    id: text("id").primaryKey(),
+    caseId: text("case_id").notNull().references(() => supportCases.id),
+    actorKind: text("actor_kind").notNull(),
+    actorId: text("actor_id").references(() => users.id),
+    fromStatus: text("from_status"),
+    toStatus: text("to_status").notNull(),
+    note: text("note"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    index("support_case_events_case_idx").on(t.caseId, t.createdAt),
+    check("support_case_events_actor_valid", sql`${t.actorKind} IN ('USER', 'STAFF', 'SYSTEM')`),
+    check("support_case_events_status_valid", sql`${t.toStatus} IN ('OPEN', 'AWAITING_USER', 'AWAITING_STAFF', 'RESOLVED', 'CLOSED')`),
+    check("support_case_events_note_length", sql`${t.note} IS NULL OR char_length(${t.note}) <= 2000`),
+  ],
+);
+
+// Append-only WhatsApp consent ledger: the latest event per user+market decides. Phone numbers are
+// never stored, only their SHA-256 so a consent can be matched without keeping the number twice.
+export const whatsappConsentEvents = pgTable(
+  "whatsapp_consent_events",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull().references(() => users.id),
+    marketId: text("market_id").notNull().references(() => markets.id),
+    phoneHash: text("phone_hash").notNull(),
+    decision: text("decision").notNull(),
+    source: text("source").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    index("whatsapp_consent_events_user_idx").on(t.userId, t.marketId, t.createdAt),
+    check("whatsapp_consent_events_decision_valid", sql`${t.decision} IN ('GRANTED', 'REVOKED')`),
+    check("whatsapp_consent_events_source_valid", sql`${t.source} IN ('IN_APP', 'SUPPORT')`),
+    check("whatsapp_consent_events_phone_hash_format", sql`${t.phoneHash} ~ '^[0-9a-f]{64}$'`),
+  ],
+);
+
+/** A template must be human-approved; this row records lifecycle state only, no provider call. */
+export const whatsappTemplates = pgTable(
+  "whatsapp_templates",
+  {
+    key: text("key").primaryKey(),
+    category: text("category").notNull(),
+    language: text("language").default("ar").notNull(),
+    status: text("status").default("DRAFT").notNull(),
+    body: text("body").notNull(),
+    variableCount: integer("variable_count").default(0).notNull(),
+    approvedAt: timestamp("approved_at", { withTimezone: true }),
+    ...dates(),
+  },
+  (t) => [
+    index("whatsapp_templates_status_idx").on(t.status, t.category),
+    check("whatsapp_templates_key_format", sql`${t.key} ~ '^[A-Z][A-Z0-9_]{1,60}$'`),
+    check("whatsapp_templates_category_valid", sql`${t.category} IN ('MARKETING', 'UTILITY', 'AUTHENTICATION')`),
+    check("whatsapp_templates_status_valid", sql`${t.status} IN ('DRAFT', 'SUBMITTED', 'APPROVED', 'REJECTED', 'DISABLED')`),
+    check("whatsapp_templates_variable_count_valid", sql`${t.variableCount} BETWEEN 0 AND 10`),
+    check("whatsapp_templates_approval_timing", sql`${t.status} IN ('APPROVED', 'DISABLED') OR ${t.approvedAt} IS NULL`),
+  ],
+);
+
+/** Readiness record only: delivery_state is constrained to NOT_SENT so this table cannot send. */
+export const whatsappIntents = pgTable(
+  "whatsapp_intents",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull().references(() => users.id),
+    marketId: text("market_id").notNull().references(() => markets.id),
+    templateKey: text("template_key").notNull().references(() => whatsappTemplates.key),
+    payload: jsonb("payload").$type<Record<string, string>>().default({}).notNull(),
+    decision: text("decision").notNull(),
+    detail: text("detail").notNull(),
+    deliveryState: text("delivery_state").default("NOT_SENT").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    index("whatsapp_intents_user_idx").on(t.userId, t.createdAt),
+    index("whatsapp_intents_decision_idx").on(t.decision, t.createdAt),
+    check("whatsapp_intents_decision_valid", sql`${t.decision} IN ('READY_TO_SEND', 'BLOCKED_NO_CONSENT', 'BLOCKED_TEMPLATE_NOT_APPROVED', 'BLOCKED_TEMPLATE_DISABLED', 'BLOCKED_PROVIDER_UNAVAILABLE', 'BLOCKED_PAYLOAD_INVALID')`),
+    check("whatsapp_intents_never_sent", sql`${t.deliveryState} = 'NOT_SENT'`),
+  ],
+);
+
 // ─── D2: DINAR Business identity ─────────────────────────────────────────────
 
 export const BUSINESS_VERIFICATION_STATUSES = ["DRAFT", "DOCUMENTS_REQUIRED", "PENDING_REVIEW", "VERIFIED", "REJECTED", "SUSPENDED"] as const;

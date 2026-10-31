@@ -41,6 +41,10 @@ export const REVIEWED_PENDING_MIGRATIONS: ReadonlyArray<{ tag: string; sha256: s
   { tag: "0044_wave08_cash_engines", sha256: "44e4a812ae36f25ef2210627741e76898e02ddf58c1e5ec78abb3379798a326d" },
   // Six additive compliance tables; policies start DRAFT and no legal entity row is seeded.
   { tag: "0045_wave09_policy_consent_compliance", sha256: "29127432970d98e5a98e138ed78b9cfe781fa35a6f0366762b6ab36786b12316" },
+  // Seven additive trust/support/WhatsApp tables, review and consent triggers, and five reason
+  // codes; marketplace_reports_target_type_valid is only widened. WhatsApp intents stay NOT_SENT.
+  { tag: "0046_wave10_trust_support_whatsapp", sha256: "edb8ca5702215790271b405cc086152fb1fb8ea3090d599008a7a828b3bb50e0" },
+];
 ];
 export const EXPECTED_JOURNAL_ENTRIES =
   EXPECTED_BASELINE_MIGRATIONS + REVIEWED_PENDING_MIGRATIONS.length;

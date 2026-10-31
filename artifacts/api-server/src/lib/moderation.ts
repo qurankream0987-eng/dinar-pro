@@ -41,6 +41,8 @@ export async function recordModerationAudit(
       | "LISTING"
       | "USER"
       | "ORDER"
+      | "MESSAGE"
+      | "AI_ANSWER"
       | "REPORT"
       | "POLICY_RULE"
       | "REASON_CODE"

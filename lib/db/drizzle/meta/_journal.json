@@ -323,6 +323,13 @@
       "when": 1793420000000,
       "tag": "0045_wave09_policy_consent_compliance",
       "breakpoints": true
+    },
+    {
+      "idx": 46,
+      "version": "7",
+      "when": 1793500000000,
+      "tag": "0046_wave10_trust_support_whatsapp",
+      "breakpoints": true
     }
   ]
 }

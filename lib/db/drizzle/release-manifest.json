@@ -182,5 +182,9 @@
   {
     "tag": "0045_wave09_policy_consent_compliance",
     "sha256": "29127432970d98e5a98e138ed78b9cfe781fa35a6f0366762b6ab36786b12316"
+  },
+  {
+    "tag": "0046_wave10_trust_support_whatsapp",
+    "sha256": "edb8ca5702215790271b405cc086152fb1fb8ea3090d599008a7a828b3bb50e0"
   }
 ]
