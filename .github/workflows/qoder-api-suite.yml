@@ -103,6 +103,10 @@ jobs:
                 case "$value" in 0|1) ;; *) echo "$key must be 0 or 1" >&2; exit 96 ;; esac ;;
               BDINAR_PHASE1_SKIP_BROWSER)
                 [ "$value" = 1 ] || { echo "$key must be 1" >&2; exit 96; } ;;
+              BDINAR_TEST_DATABASE)
+                [ "$value" = development ] || { echo "$key must be development" >&2; exit 96; } ;;
+              BDINAR_PROMOTIONS_ENABLED)
+                [ "$value" = true ] || { echo "$key must be true" >&2; exit 96; } ;;
               DINAR_TLS_ACCEPTANCE)
                 [ "$value" = development ] || { echo "$key must be development" >&2; exit 96; } ;;
               *)
