@@ -161,7 +161,7 @@ jobs:
         run: pnpm --filter @workspace/dinar run test:surfaces
 
       - name: Install Chromium (browser journeys and XSS acceptance)
-        if: contains(env.SUITE, '-browser-journey') || env.SUITE == 'security-acceptance.test' || env.SUITE == 'phase1-acceptance.test' || env.SUITE == 'commerce-journey.test' || env.SUITE == 'w02-ultra-browser.test'
+        if: contains(env.SUITE, '-browser-journey') || env.SUITE == 'security-acceptance.test' || env.SUITE == 'phase1-acceptance.test' || env.SUITE == 'commerce-journey.test' || env.SUITE == 'w02-ultra-browser.test' || env.SUITE == 'wave3-acceptance.test'
         working-directory: artifacts/dinar
         run: |
           pnpm exec playwright install --with-deps chromium
