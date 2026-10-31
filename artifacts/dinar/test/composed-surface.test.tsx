@@ -21,6 +21,8 @@ import {
 import { SellerSalesInsight } from "@workspace/api-zod/conversation-runtime";
 import { ComposedSurfaceView } from "../src/features/ai/surface/ComposedSurface";
 import { businessSurface, plansSurface, salesSurface, usageSurface } from "../src/features/ai/surface/adapters";
+import { businessSurface as nativeBusinessSurface } from "../src/features/ai/surface/business-adapters";
+import type { BusinessPayload } from "../src/features/ai/business-types";
 
 const render = (surface: unknown, active = true) =>
   renderToStaticMarkup(
@@ -354,4 +356,36 @@ test("purchase review: server totals only, gold only when priced, payment needs 
   assert.ok(negotiated.includes("purchase-fulfilment-PICKUP"));
   const done = render(valid(purchaseSurface({ ...review, stage: "PAYMENT", status: "CONFIRMED" })));
   assert.ok(done.includes("لم تُحوَّل أموال") && count(done, "<button") === 0, "a confirmed simulated payment never claims money moved");
+});
+
+// ─── D3-A native business: every server view composes to a valid card ────────────
+
+test("every native business view composes to a valid card (metrics carry no unknown keys)", () => {
+  const listing = {
+    listingId: "l1", title: "شاورما", status: "PUBLISHED", priceMinor: 2500, price: "2.500 JOD", currency: "JOD",
+    inventoryMode: "UNLIMITED" as const, availableQuantity: null, reservedQuantity: 0, category: "أخرى",
+  };
+  const draft = { draftId: "d1", title: "شاورما", priceMinor: 2500, price: "2.500 JOD", currency: "JOD", category: "أخرى", categoryId: "other", area: "عمان" };
+  const order = { orderId: "o1", status: "COMPLETED", currencyCode: "JOD", subtotalMinor: 2500, sellerAmountMinor: 2500, total: "2.500 JOD", createdAt: "2026-11-01T00:00:00.000Z", itemCount: 1 };
+  const views: [string, BusinessPayload, string][] = [
+    ["BUSINESS_SETUP", { view: "SETUP", businessId: "b1", name: "مطعم الرمال", businessTypeLabel: "مطعم", status: "DRAFT", identityStatus: "PENDING_D2", operatingMode: "INTERNAL_DINAR", prompt: "ما وصف نشاطك؟", allowedActions: [] }, "business-setup"],
+    ["BUSINESS_PROFILE_REVIEW", { view: "PROFILE_REVIEW", businessId: "b1", name: "مطعم الرمال", status: "DRAFT", reviewLines: ["الاسم: «مطعم الرمال»"], pendingActionId: "p1", allowedActions: ["ACTIVATE", "CANCEL"] }, "business-profile-review"],
+    ["BUSINESS_PROFILE", { view: "PROFILE", businessId: "b1", name: "مطعم الرمال", status: "ACTIVE", operatingMode: "INTERNAL_DINAR", identityStatus: "PENDING_D2", publicPath: "/business/b1", summary: { total: 3, published: 3, paused: 0 }, allowedActions: ["CATALOG", "ORDERS", "INSIGHTS"] }, "business-profile"],
+    ["BUSINESS_CATALOG", { view: "CATALOG", businessId: "b1", name: "مطعم الرمال", listings: [listing], summary: { total: 1, published: 1, paused: 0, outOfStock: 0 }, allowedActions: ["PAUSE", "PRICE", "STOCK_OUT"] }, "business-catalog"],
+    ["BUSINESS_CATALOG_DRAFT", { view: "CATALOG_DRAFT", businessId: "b1", businessName: "مطعم الرمال", drafts: [draft], allowedActions: ["PUBLISH"] }, "business-catalog-draft"],
+    ["BUSINESS_LISTING_REVIEW", { view: "LISTING_REVIEW", businessId: "b1", businessName: "مطعم الرمال", title: "نشر «شاورما»", lines: ["السعر: 2.500 JOD"], pendingActionId: "p2", allowedActions: ["CONFIRM", "CANCEL"] }, "business-listing-review"],
+    ["BUSINESS_ORDERS", { view: "ORDERS", businessId: "b1", name: "مطعم الرمال", orders: [order], allowedActions: [] }, "business-orders"],
+    ["BUSINESS_INSIGHTS", { view: "INSIGHTS", businessId: "b1", name: "مطعم الرمال", insights: { listings: 3, published: 3, paused: 0, completedOrders: 1, completedRevenueMinor: 2500, completedRevenue: "2.500 JOD" }, allowedActions: [] }, "business-insights"],
+  ];
+  for (const [surface, payload, testId] of views) {
+    const composition = nativeBusinessSurface(payload);
+    assert.ok(composition, `${surface} has a composition`);
+    const parsed = ComposedSurfaceSchema.safeParse(composition);
+    assert.ok(parsed.success, `${surface}: ${parsed.success ? "" : JSON.stringify(parsed.error.issues)}`);
+    assert.equal(composition.testId, testId);
+    assert.ok(parseComposedSurface(composition), `${surface} parses for the renderer`);
+  }
+  const insights = nativeBusinessSurface(views[7]![1])!;
+  const rendered = render(valid(insights));
+  assert.ok(rendered.includes("business-insights") && rendered.includes("2.500 JOD"), "the revenue figure reaches the card");
 });

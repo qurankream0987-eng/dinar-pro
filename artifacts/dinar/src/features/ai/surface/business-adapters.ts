@@ -391,7 +391,7 @@ function insightsSurface(payload: BusinessPayload): ComposedSurfaceInput {
               { key: "insight-published", label: "منشور", value: number(insights.published) },
               { key: "insight-paused", label: "موقوف", value: number(insights.paused) },
               { key: "insight-orders", label: "طلبات مكتملة", value: number(insights.completedOrders) },
-              { key: "insight-revenue", label: "إيراد مكتمل", value: clip(insights.completedRevenue ?? "", 120), ltr: true },
+              { key: "insight-revenue", label: "إيراد مكتمل", value: clip(insights.completedRevenue ?? "", 120) },
             ].slice(0, 8),
           }]
         : []),
