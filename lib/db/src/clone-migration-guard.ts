@@ -37,6 +37,9 @@ export const REVIEWED_PENDING_MIGRATIONS: ReadonlyArray<{ tag: string; sha256: s
   { tag: "0042_wave08_cash_engines", sha256: "44e4a812ae36f25ef2210627741e76898e02ddf58c1e5ec78abb3379798a326d" },
   // Six additive compliance tables; policies start DRAFT and no legal entity row is seeded.
   { tag: "0043_wave09_policy_consent_compliance", sha256: "29127432970d98e5a98e138ed78b9cfe781fa35a6f0366762b6ab36786b12316" },
+  // Seven additive trust/support/WhatsApp tables, review and consent triggers, and five reason
+  // codes; marketplace_reports_target_type_valid is only widened. WhatsApp intents stay NOT_SENT.
+  { tag: "0044_wave10_trust_support_whatsapp", sha256: "edb8ca5702215790271b405cc086152fb1fb8ea3090d599008a7a828b3bb50e0" },
   // C1 search foundation: one new table, two defaulted columns on offers, indexes, pg_trgm and two
   // triggers that only mark search documents stale. No existing value changes.
   { tag: "0045_c1_sql_search", sha256: "945ccc5622390b1a6a2e9af94aaa2d9010ac8b0e164de3b90571742dc1b05a5c" },
