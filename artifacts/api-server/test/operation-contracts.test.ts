@@ -99,3 +99,34 @@ await test("OC-05 a stranger's target is not found, and registration is scoped t
   unregister();
   assert.deepEqual(await operationAuthority("REFUND_REQUEST").review(request as any), { refused: true, code: "NOT_AVAILABLE" });
 });
+
+import { assertOperationAuthorityConformance } from "./operation-authority-conformance";
+
+await test("OC-06 the conformance checks Qoder's real authority must pass run green against the double", async () => {
+  const { authority, submitted } = double();
+  const checked = await assertOperationAuthorityConformance(authority, {
+    owned: request as any,
+    stranger: { ...(request as any), actorId: "user_2" },
+    writes: async () => submitted.size,
+  });
+  assert.equal(checked.length, 6);
+  console.log("OPERATION_CONFORMANCE", JSON.stringify(checked));
+});
+
+await test("OC-07 the conformance checks reject broken authorities (they are not vacuous)", async () => {
+  const broken = (patch: (authority: OperationAuthority, store: Map<string, OperationReceipt>) => OperationAuthority) => {
+    const { authority, submitted } = double();
+    return { authority: patch(authority, submitted), submitted };
+  };
+  const cases = {
+    revealsStranger: broken((authority) => ({ ...authority, review: async (input) => (input.actorId === "user_1" ? authority.review(input) : { refused: true, code: "NOT_ALLOWED" }) })),
+    writesOnReview: broken((authority, store) => ({ ...authority, review: async (input) => { store.set(`r${store.size}`, {} as OperationReceipt); return authority.review(input); } })),
+    claimsRefunded: broken((authority) => ({ ...authority, submit: async (review, confirmation) => ({ ...(await authority.submit(review, confirmation)), status: "REFUNDED" } as any) })),
+  };
+  for (const [name, { authority, submitted }] of Object.entries(cases))
+    await assert.rejects(
+      assertOperationAuthorityConformance(authority, { owned: request as any, stranger: { ...(request as any), actorId: "user_2" }, writes: async () => submitted.size }),
+      `${name} must fail conformance`,
+    );
+  assert.deepEqual(await operationAuthority("REFUND_REQUEST").review(request as any), { refused: true, code: "NOT_AVAILABLE" }, "nothing stays registered after the checks");
+});
