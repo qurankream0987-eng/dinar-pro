@@ -30,6 +30,8 @@ import {
 } from "../lib/inquiries";
 import { confirmPendingAction, createPendingAction, type ActionReview } from "./action-foundation";
 import { focusedListing, isBestPriceRequest } from "./negotiation-turn";
+import { latestListingSet } from "./buyer-turn";
+import { searchMarketplaceListings } from "../lib/marketplace-listings";
 import { foldArabicLetters, normalizeDigits } from "./arabic-normalization";
 import { isGeneralRequest } from "./listing-draft";
 import type { ToolResult } from "./tool-registry";
@@ -55,6 +57,13 @@ const ASK_VERB = String.raw`(?:اسال|اساله|اسالها|سال|سله|ا
 const SELLER_NOUN = String.raw`(?:ال)?(?:بائع|بايع|بياع|تاجر|صاحب\s+(?:ال)?(?:اعلان|عرض|محل|منتج|بضاعه|سلعه))`;
 const BUYER_NOUN = String.raw`(?:ال)?(?:مشتري|زبون|عميل)`;
 const TELL_VERB = String.raw`(?:وضح|وضحي|بلغ|ابلغ|خبر|اخبر|قل|قول|قولي|ارسل|اكتب)`;
+/**
+ * «اسأل صاحب الأرخص عن البطارية», «اسأل بائع الأغلى إذا …»: the seller is chosen by the listings'
+ * recorded live prices among the results in view (§09), never by the model or a guess.
+ */
+const ASK_BY_PRICE = new RegExp(String.raw`${LEAD}${ASK_VERB}\s+(?:لي\s+)?(?:ال)?(?:بائع|بايع|بياع|تاجر|صاحب)\s+(?:ال)?(ارخص|اغلي)(?:\s+(?:واحد|فيهم|منهم|عرض))?\s*(?:عن|اذا|إذا|ان|لو)?\s*(.*)$`, "u");
+/** «لكن لا ترسل السؤال حتى أوافق»: every draft already waits for «أرسل»; the clause is not for the seller. */
+const HOLD_CLAUSE = /[\s،,]*(?:لكن|بس|و)?\s*(?:لا|ما)\s+(?:ترسل|ترسله|ترسلها|تبعث|تبعثه)(?:\s+[^\s]+){0,3}?\s+(?:حتى|حتي|لين|الين|قبل\s+ما|الا\s+بعد\s+ما|إلا\s+بعد\s+ما)\s+[^\s]+[\s.!؟?]*$/u;
 const ASK_SELLER = new RegExp(String.raw`${LEAD}${ASK_VERB}\s+(?:لي\s+)?${SELLER_NOUN}\s*(?:اذا|إذا|عن|عما|ان|لو)?\s*(.*)$`, "u");
 const ASK_BUYER = new RegExp(String.raw`${LEAD}${ASK_VERB}\s+${BUYER_NOUN}\s*(?:اذا|عن|عما|ان|لو)?\s*(.*)$`, "u");
 const TELL_BUYER = new RegExp(String.raw`${LEAD}${TELL_VERB}\s+(?:لل|ل)?${BUYER_NOUN.replace("(?:ال)?", "")}\s*(?:ان|بان|انه|انها)?\s*(.+)$`, "u");
@@ -274,8 +283,8 @@ export async function draftListingQuestion(
   return draft(input, target, body, "DINAR_DRAFT_APPROVED", lead);
 }
 
-async function askSeller(input: Input & { actorId: string }, question: string): Promise<Turn> {
-  const listingId = await focusedListing({ conversationId: input.conversationId, market: input.market, actorId: input.actorId, message: input.message });
+async function askSeller(input: Input & { actorId: string }, question: string, chosen?: string): Promise<Turn> {
+  const listingId = chosen ?? await focusedListing({ conversationId: input.conversationId, market: input.market, actorId: input.actorId, message: input.message });
   if (!listingId) return notice("أي إعلان تقصد؟ ابحث عن المنتج أو افتح الإعلان، ثم قل «اسأل البائع …». لم يُرسل شيء.");
   const target: InquiryTarget = { kind: "LISTING", listingId };
   const refused = await guardedPreconditions(input.actorId, input.market, target);
@@ -416,8 +425,26 @@ export async function executeInquiryTurn(input: Input): Promise<Turn | null> {
 
   // ── Outgoing messages: always a review first.
   if (isBestPriceRequest(input.message)) return null; // the negotiation authority handles price requests
-  const askSellerMatch = text.match(ASK_SELLER);
-  if (askSellerMatch) return askSeller(actor, askSellerMatch[1] ?? "");
+  // A «don't send until I approve» clause is honoured by the review itself and dropped from the text.
+  const held = HOLD_CLAUSE.test(input.message) ? { ...actor, message: input.message.replace(HOLD_CLAUSE, "") } : actor;
+  const heldText = normalizeInquiryText(held.message);
+  const byPrice = heldText.match(ASK_BY_PRICE);
+  if (byPrice) {
+    const set = await latestListingSet(input.conversationId, input.market.id);
+    const live = set?.resourceIds.length ? await searchMarketplaceListings(input.market, { search: "", allowedIds: set.resourceIds.slice(0, 24), limit: 24 }) : [];
+    const priced = live.filter((listing) => listing.unitPrice !== null && Number.isFinite(Number(listing.unitPrice)));
+    if (!priced.length) return notice("لا توجد نتائج بأسعار معلنة أختار منها. ابحث أولًا، ثم اطلب «اسأل صاحب الأرخص …». لم يُرسل شيء.");
+    const prices = priced.map((listing) => Number(listing.unitPrice));
+    const target = byPrice[1] === "ارخص" ? Math.min(...prices) : Math.max(...prices);
+    const winners = priced.filter((listing) => Number(listing.unitPrice) === target);
+    if (winners.length > 1)
+      return notice(`أكثر من عرض بالسعر نفسه (${target} ${winners[0]!.currency}): ${winners.map((listing) => `«${listing.title}»`).join("، ")}. أي واحد تقصد؟ اختر بالترتيب، مثل «اسأل بائع الأول عن …». لم يُرسل شيء.`);
+    const turn = await askSeller(held, byPrice[2] ?? "", winners[0]!.id);
+    if (held !== actor && turn.result.prompt) turn.result.prompt = `${turn.result.prompt}\n(لن يُرسل شيء قبل أن تكتب «أرسل»، كما طلبت.)`;
+    return turn;
+  }
+  const askSellerMatch = heldText.match(ASK_SELLER);
+  if (askSellerMatch) return askSeller(held, askSellerMatch[1] ?? "");
   const tellSeller = text.match(TELL_SELLER);
   if (tellSeller?.[1]) return askSeller(actor, tellSeller[1]);
   const askBuyer = text.match(ASK_BUYER);

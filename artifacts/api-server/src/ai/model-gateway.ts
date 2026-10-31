@@ -11,7 +11,7 @@ export type AIProviderErrorCode =
 
 /** Why a provider answered without a usable DINAR turn (a model outcome, not a transport fault). */
 /** INCOMPLETE: the provider ended generation for a reason that leaves the call unfinished (DeepSeek `aborted`). */
-export type AIResponseDetail = "OUTPUT_LIMIT" | "REFUSAL" | "NO_TOOL_CALL" | "INCOMPLETE";
+export type AIResponseDetail = "OUTPUT_LIMIT" | "REFUSAL" | "NO_TOOL_CALL" | "INCOMPLETE" | "DISABLED" | "CIRCUIT_OPEN";
 
 export class AIProviderError extends Error {
   /** Usage the provider reported for a response that was billed but not usable. */
@@ -475,7 +475,76 @@ export function proposeThroughGateway(
   options?: ModelCallOptions,
 ): Promise<ProposedToolCall> {
   modelGatewayCallCount += 1;
-  return gateway.proposeToolCall(messages, tools, options);
+  const provider = gateway.providerInfo?.provider;
+  if (!provider) return gateway.proposeToolCall(messages, tools, options);
+  const model = gateway.providerInfo?.requestedModel ?? "UNKNOWN";
+  // Owner switch, no deploy needed beyond the environment: the request is never sent.
+  const disabled = (process.env.DINAR_AI_DISABLED_PROVIDERS ?? "").split(",").map((value) => value.trim().toUpperCase()).filter(Boolean);
+  if (disabled.includes("*") || disabled.includes(provider)) return Promise.reject(refusedLocally(provider, model, "NOT_CONFIGURED", "DISABLED"));
+  const threshold = breakerThreshold();
+  if (!threshold) return gateway.proposeToolCall(messages, tools, options);
+  const state = breakers.get(provider) ?? { failures: 0, openUntil: 0, trial: false };
+  breakers.set(provider, state);
+  const now = Date.now();
+  if (state.openUntil > now || state.trial) return Promise.reject(refusedLocally(provider, model, "UNAVAILABLE", "CIRCUIT_OPEN"));
+  // After the cool-down exactly one trial request is let through; its outcome closes or reopens.
+  if (state.openUntil && state.openUntil <= now) state.trial = true;
+  return gateway.proposeToolCall(messages, tools, options).then(
+    (call) => {
+      state.failures = 0;
+      state.openUntil = 0;
+      state.trial = false;
+      return call;
+    },
+    (error: unknown) => {
+      // Outages count; a billed but unusable answer (OUTPUT_LIMIT, REFUSAL…) is the model, not the provider.
+      const outage = !(error instanceof AIProviderError) || error.code === "UNAVAILABLE";
+      if (outage) {
+        state.failures += 1;
+        if (state.trial || state.failures >= threshold) state.openUntil = Date.now() + breakerCooldownMs();
+      }
+      state.trial = false;
+      throw error;
+    },
+  );
+}
+
+/**
+ * Per-provider circuit breaker (§13). DINAR_AI_BREAKER_FAILURES consecutive outages open it for
+ * DINAR_AI_BREAKER_COOLDOWN_MS; 0 disables it. Default 5, except in model-blocked test runs.
+ */
+type BreakerState = { failures: number; openUntil: number; trial: boolean };
+const breakers = new Map<string, BreakerState>();
+function breakerThreshold(env: NodeJS.ProcessEnv = process.env): number {
+  if (env.DINAR_AI_BREAKER_FAILURES !== undefined) {
+    const value = Number(env.DINAR_AI_BREAKER_FAILURES);
+    return Number.isInteger(value) && value > 0 ? Math.min(value, 100) : 0;
+  }
+  return env.BDINAR_BLOCK_MODEL_CALLS === "1" ? 0 : 5;
+}
+function breakerCooldownMs(env: NodeJS.ProcessEnv = process.env): number {
+  const value = Number(env.DINAR_AI_BREAKER_COOLDOWN_MS);
+  return Number.isInteger(value) && value >= 1000 ? Math.min(value, 3_600_000) : 60_000;
+}
+function refusedLocally(provider: AIProvider, model: string, code: AIProviderErrorCode, detail: AIResponseDetail): AIProviderError {
+  const error = new AIProviderError(provider, code, model);
+  error.detail = detail;
+  return error;
+}
+
+/** Health for monitoring: no prompts, no keys, only each provider's breaker state. */
+export function providerHealth(): Array<{ provider: string; state: "CLOSED" | "OPEN" | "HALF_OPEN"; consecutiveFailures: number }> {
+  const now = Date.now();
+  return [...breakers].map(([provider, state]) => ({
+    provider,
+    state: state.trial || (state.openUntil && state.openUntil <= now) ? "HALF_OPEN" : state.openUntil > now ? "OPEN" : "CLOSED",
+    consecutiveFailures: state.failures,
+  }));
+}
+
+/** Test-only: forget breaker state between scenarios. */
+export function resetProviderBreakers(): void {
+  breakers.clear();
 }
 
 class BlockedTestModelGateway implements ConversationModelGateway {

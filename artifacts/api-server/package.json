@@ -62,7 +62,9 @@
     "test:w02-ultra": "NODE_ENV=development BDINAR_TEST_DATABASE=development node test/run.mjs w02-ultra-cards.test",
     "test:w02-ultra-browser": "NODE_ENV=development BDINAR_TEST_DATABASE=development BDINAR_PROMOTIONS_ENABLED=true node test/run.mjs w02-ultra-browser.test",
     "test:policy-cards": "NODE_ENV=development BDINAR_TEST_DATABASE=development node test/run.mjs policy-consent-cards.test",
-    "test:model-native": "NODE_ENV=development BDINAR_TEST_DATABASE=development node test/run.mjs model-native-routing.test"
+    "test:model-native": "NODE_ENV=development BDINAR_TEST_DATABASE=development node test/run.mjs model-native-routing.test",
+    "test:bounded-multistep": "NODE_ENV=development BDINAR_TEST_DATABASE=development node test/run.mjs bounded-multistep.test",
+    "test:provider-controls": "NODE_ENV=development BDINAR_TEST_DATABASE=development node test/run.mjs provider-controls.test"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1155.0",

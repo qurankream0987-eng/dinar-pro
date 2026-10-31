@@ -43,7 +43,7 @@ export type TaskPlan = {
 // وأيضًا / and also» when it opens a new sentence («كم بقي من حصتي؟ وكمان اشرح لي …»), and
 // «… وجهز الطلب» after a search: preparing the order is its own step, reviewed when it runs.
 const CONNECTOR =
-  /\s*[،,]?\s*(?:^|\s)(?:و?بعدها|و?بعدين|و?بعد\s+(?:ذلك|كذا|هذا|هذي)|و?ثم|and\s+then|then)(?=\s)\s*|\s*[؟?.!،,]\s*(?:وكمان|وايضا|وأيضا|وأيضًا|وايضًا|and\s+also)(?=\s)\s*|\s+و(?=(?:جهز|جهّز|حضر|حضّر|اعمل|سوي|سوّي)\s+(?:لي\s+)?(?:ال)?طلب)/iu;
+  /\s*[،,]?\s*(?:^|\s)(?:و?بعدها|و?بعدين|و?بعد\s+(?:ذلك|كذا|هذا|هذي)|و?ثم|and\s+then|then)(?=\s)\s*|\s*[؟?.!،,]\s*(?:وكمان|وايضا|وأيضا|وأيضًا|وايضًا|and\s+also)(?=\s)\s*|\s+و(?=(?:جهز|جهّز|حضر|حضّر|اعمل|سوي|سوّي)\s+(?:لي\s+)?(?:ال)?طلب)|\s*[،,]\s*(?=و?(?:قارن|اسأل|اسال|رتب|رتّب|ابحث|دور|اعرض|جهز|جهّز)\s)/iu;
 const CONFIRMATION_ONLY =
   /^(?:نعم|ايه|إيه|أكيد|اكيد|أكد|اكد|موافق|تمام|اوكي|أوكي|ok|yes|نفذ|انشر(?:ه|ها)?|ادفع|اشتر(?:ه|يه)?|اقبل|وافق)$/iu;
 const CONTINUE =
@@ -54,7 +54,8 @@ const CANCEL_PLAN =
 export function splitCompoundRequest(message: string): { steps: string[]; truncated: boolean } | undefined {
   const parts = message
     .split(CONNECTOR)
-    .map((part) => part.replace(/^[\s،,.]+|[\s،,.]+$/gu, "").trim())
+    // «، واسأل …»: the conjunction joins the steps; the step itself starts at the verb.
+    .map((part) => part.replace(/^[\s،,.]+|[\s،,.]+$/gu, "").replace(/^و(?=(?:قارن|اسأل|اسال|رتب|رتّب|ابحث|دور|اعرض|جهز|جهّز)\s)/u, "").trim())
     .filter(Boolean);
   if (parts.length < 2 || parts.some((part) => part.length < 2)) return undefined;
   return { steps: parts.slice(0, MAX_STEPS), truncated: parts.length > MAX_STEPS };
