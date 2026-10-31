@@ -393,7 +393,6 @@ function insightsSurface(payload: BusinessPayload): ComposedSurfaceInput {
               { key: "insight-orders", label: "طلبات مكتملة", value: number(insights.completedOrders) },
               { key: "insight-revenue", label: "إيراد مكتمل", value: clip(insights.completedRevenue ?? "", 120), ltr: true },
             ].slice(0, 8),
-            testId: "business-insights-metrics",
           }]
         : []),
       { type: "text", muted: true, text: "أرقام من سجلات DINAR لهذا النشاط فقط؛ لا تُعرض بيانات نشاط آخر." },
