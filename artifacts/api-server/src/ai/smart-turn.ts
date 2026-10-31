@@ -53,6 +53,7 @@ import {
 } from "./model-turn";
 import { claimsCompletedAction, enforceModelAuthority, recentActionReceipts } from "./action-receipts";
 import { AUTH_RATE_LIMIT_SCOPE, consumeRateLimit } from "../lib/auth-rate-limiter";
+import { escalatesAfterLight, gatewayForTier, heavyTurnLimit, modelTieringEnabled, selectModelTier, type ModelTier, type TierDecision, type TierReason } from "./model-tier";
 import { aiUsageSummary, reserveAiUsage, settleAiUsage, type AiUsageOutcome, type AiUsageOwner, type AiUsageRefusal } from "../lib/ai-usage";
 import { businessPlans, planAiTier } from "../lib/business";
 import { nearLimitNote, PLAN_HINT_MARKER, usageLimitMessage, usageResourceFor } from "./usage-turn";
@@ -840,25 +841,62 @@ export async function draftWithClaimGuard(
   gateway: ConversationModelGateway,
   message: string,
   context: ModelContext,
-): Promise<{ outcome: Awaited<ReturnType<typeof interpretWithModel>>; blocked?: ClaimKind[]; metered: ModelMetering }> {
-  const outcome = await interpretWithModel(gateway, message, context);
-  if (!outcome.ok || !isMarketingRequest(message)) return { outcome, metered: metering([outcome]) };
+  /** Dual-tier routing (model-tier.ts); absent = the single-model behaviour. */
+  tiering?: { decision: TierDecision; allowEscalation: () => Promise<boolean> },
+): Promise<{ outcome: Awaited<ReturnType<typeof interpretWithModel>>; blocked?: ClaimKind[]; metered: ModelMetering; tier?: TierTrace }> {
+  const startedAt = Date.now();
+  let tier = tiering?.decision.tier ?? "LIGHT";
+  let chosen = tiering ? gatewayForTier(gateway, tier, context.reasoningEffort) : { gateway, reasoningEffort: context.reasoningEffort };
+  const outcomes: Awaited<ReturnType<typeof interpretWithModel>>[] = [];
+  let outcome = await interpretWithModel(chosen.gateway, message, { ...context, reasoningEffort: chosen.reasoningEffort });
+  outcomes.push(outcome);
+  let escalated = false;
+  // One bounded escalation, inside the same turn deadline, with the same context.
+  if (tiering && tier === "LIGHT" && !outcome.ok && escalatesAfterLight(outcome.reason) && (await tiering.allowEscalation())) {
+    const left = Number(process.env.DINAR_MODEL_TIMEOUT_MS ?? 25000) - (Date.now() - startedAt);
+    if (left > 1000) {
+      tier = "HEAVY";
+      escalated = true;
+      chosen = gatewayForTier(gateway, "HEAVY", context.reasoningEffort);
+      outcome = await interpretWithModel(chosen.gateway, message, { ...context, reasoningEffort: chosen.reasoningEffort }, left);
+      outcomes.push(outcome);
+    }
+  }
+  const trace: TierTrace | undefined = tiering
+    ? { tier, reason: escalated ? "LIGHT_OUTPUT_INVALID" : tiering.decision.reason, escalated, ...("heavyKind" in chosen && chosen.heavyKind ? { heavyKind: chosen.heavyKind } : {}) }
+    : undefined;
+  if (trace) logger.info({ event: "dinar_ai_model_tier", ...trace, outcome: outcome.ok ? "OK" : outcome.reason, provider: outcome.modelCall.provider, model: outcome.modelCall.actualModel ?? outcome.modelCall.requestedModel }, "model tier");
+  const done = (extra: { blocked?: ClaimKind[] } = {}) => ({ outcome, ...extra, metered: metering(outcomes), ...(trace ? { tier: trace } : {}) });
+  if (!outcome.ok || !isMarketingRequest(message)) return done();
   const facts = context.sellerListing ?? null;
   const violations = unsupportedCopyClaims(outcome.turn.conversationalReply, facts);
-  if (!violations.length) return { outcome, metered: metering([outcome]) };
+  if (!violations.length) return done();
   logger.info({ event: "dinar_marketing_claims_rejected", claims: violations, attempt: 1 }, "marketing draft rejected");
-  const retried = await interpretWithModel(gateway, message, {
+  outcome = await interpretWithModel(chosen.gateway, message, {
     ...context,
+    reasoningEffort: chosen.reasoningEffort,
     correction: `SERVER_CHECK: your draft stated claims the listing facts do not support (${violations.join(", ")}). Rewrite the whole answer without them: no such wording anywhere in suggested text, not even conditionally.`,
   });
-  const metered = metering([outcome, retried]);
-  if (!retried.ok) return { outcome: retried, metered };
-  const remaining = unsupportedCopyClaims(retried.turn.conversationalReply, facts);
+  outcomes.push(outcome);
+  if (!outcome.ok) return done();
+  const remaining = unsupportedCopyClaims(outcome.turn.conversationalReply, facts);
   if (remaining.length) {
     logger.info({ event: "dinar_marketing_claims_rejected", claims: remaining, attempt: 2 }, "marketing draft refused");
-    return { outcome: retried, blocked: remaining, metered };
+    return done({ blocked: remaining });
   }
-  return { outcome: retried, metered };
+  return done();
+}
+type TierTrace = { tier: ModelTier; reason: TierReason; escalated: boolean; heavyKind?: "SEPARATE_MODEL" | "SAME_MODEL_HIGH_EFFORT" };
+
+/** A HEAVY turn spends the actor's separate heavy allowance; any doubt keeps the turn LIGHT. */
+async function heavyAllowed(actorId: string): Promise<boolean> {
+  const limit = heavyTurnLimit();
+  if (!limit) return false;
+  try {
+    return !(await consumeRateLimit([{ scope: AUTH_RATE_LIMIT_SCOPE.conversationModelHeavyActor, value: actorId }], MODEL_TURN_WINDOW_SECONDS, limit));
+  } catch {
+    return false;
+  }
 }
 
 /** Provider calls and tokens of one user-visible operation (a corrective retry included). */
@@ -1005,12 +1043,20 @@ export async function executeModelFallback(
   let context: ModelContext;
   try {
     context = await modelContext(input);
+    const actorId = input.actorId;
+    let tiering: Parameters<typeof draftWithClaimGuard>[3];
+    if (modelTieringEnabled()) {
+      let decision = selectModelTier(input.message);
+      if (decision.tier === "HEAVY" && !(await heavyAllowed(actorId))) decision = { tier: "LIGHT", reason: "HEAVY_CAP_REACHED" };
+      const noEscalation = decision.reason === "HEAVY_CAP_REACHED" || decision.reason === "DECISION_NEVER_ESCALATES";
+      tiering = { decision, allowEscalation: () => (noEscalation ? Promise.resolve(false) : heavyAllowed(actorId)) };
+    }
     drafted = await draftWithClaimGuard(gateway, input.message, {
       ...context,
       reasoningEffort: input.reasoningEffort,
       // Outside LEGACY the model may restate a DINAR request in DINAR's own words (routing-mode.ts).
       canonicalRequests: aiRoutingMode() !== "LEGACY",
-    });
+    }, tiering);
   } catch (error) {
     await settleAiUsage(reserved.reservation.id, { outcome: "PROVIDER_FAILED", providerCalls: 1 }).catch(() => undefined);
     throw error;

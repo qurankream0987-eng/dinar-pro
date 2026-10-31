@@ -94,11 +94,11 @@ const REPLIT_OPENAI_MODEL = "gpt-5-mini";
  */
 export function resolveAIProviderConfiguration(
   env: NodeJS.ProcessEnv = process.env,
-  slot: "PRIMARY" | "FALLBACK" = "PRIMARY",
+  slot: "PRIMARY" | "FALLBACK" | "HEAVY" = "PRIMARY",
 ): AIProviderConfiguration {
-  if (env.DINAR_GEMMA_FREE_ONLY === "true" && slot === "FALLBACK")
+  if (env.DINAR_GEMMA_FREE_ONLY === "true" && slot !== "PRIMARY")
     throw new Error("DINAR_GEMMA_FREE_ONLY does not allow fallback providers.");
-  const prefix = slot === "PRIMARY" ? "DINAR_AI_" : "DINAR_AI_FALLBACK_";
+  const prefix = slot === "PRIMARY" ? "DINAR_AI_" : slot === "FALLBACK" ? "DINAR_AI_FALLBACK_" : "DINAR_AI_HEAVY_";
   const configured = (env[`${prefix}PROVIDER`] ?? (slot === "PRIMARY" ? "GROQ" : "")).trim().toUpperCase();
   const model = env[`${prefix}MODEL`]?.trim();
   if (configured === "GROQ") {
@@ -246,6 +246,8 @@ export function safeProviderBaseUrl(value: string | undefined, env: NodeJS.Proce
 export type AIModelRuntimeConfiguration = {
   primary: AIProviderConfiguration;
   fallback?: AIProviderConfiguration;
+  /** The HEAVY tier model (DINAR_AI_HEAVY_PROVIDER / DINAR_AI_HEAVY_MODEL), used only when DINAR_AI_TIERING=on. */
+  heavy?: AIProviderConfiguration;
   /** Whole-turn deadline across retries and fallback (DINAR_MODEL_TIMEOUT_MS). */
   timeoutMs: number;
   /** Retries of a transient outage on the same provider (DINAR_AI_MAX_RETRIES, 0–2). */
@@ -270,12 +272,19 @@ export function resolveAIModelRuntimeConfiguration(env: NodeJS.ProcessEnv = proc
     // A fallback identical to the primary would only repeat the same failure at extra cost.
     if (candidate.provider !== primary.provider || candidate.requestedModel !== primary.requestedModel) fallback = candidate;
   }
+  let heavy: AIProviderConfiguration | undefined;
+  if (env.DINAR_AI_HEAVY_PROVIDER?.trim()) {
+    const candidate = resolveAIProviderConfiguration(env, "HEAVY");
+    // A heavy tier identical to the primary is the primary at high effort (model-tier.ts), not a second model.
+    if (candidate.provider !== primary.provider || candidate.requestedModel !== primary.requestedModel) heavy = candidate;
+  }
   const retries = Number(env.DINAR_AI_MAX_RETRIES ?? 1);
   const outputTokens = Number(env.DINAR_AI_MAX_OUTPUT_TOKENS ?? MAX_OUTPUT_TOKENS);
   const timeout = Number(env.DINAR_MODEL_TIMEOUT_MS ?? 25000);
   return {
     primary,
     ...(fallback ? { fallback } : {}),
+    ...(heavy ? { heavy } : {}),
     timeoutMs: Number.isFinite(timeout) ? Math.min(Math.max(timeout, 50), 120_000) : 25000,
     maxRetries: Number.isInteger(retries) ? Math.min(Math.max(retries, 0), 2) : 1,
     maxOutputTokens: Number.isInteger(outputTokens) ? Math.min(Math.max(outputTokens, 256), MAX_OUTPUT_TOKENS) : MAX_OUTPUT_TOKENS,
@@ -319,6 +328,8 @@ export function describeAIModelReadiness(env: NodeJS.ProcessEnv = process.env) {
       modelCallsEnabled: env.DINAR_AI_MODEL_FALLBACK === "true",
       primary: slot(runtime.primary),
       fallback: runtime.fallback ? slot(runtime.fallback) : null,
+      // Present only when configured, so the existing readiness shape is unchanged otherwise.
+      ...(runtime.heavy || env.DINAR_AI_TIERING ? { tiering: { enabled: env.DINAR_AI_TIERING?.trim().toLowerCase() === "on", heavy: runtime.heavy ? slot(runtime.heavy) : "SAME_MODEL_HIGH_EFFORT" } } : {}),
       timeoutMs: runtime.timeoutMs,
       maxRetries: runtime.maxRetries,
       maxOutputTokens: runtime.maxOutputTokens,
@@ -445,6 +456,8 @@ export interface ConversationModelGateway {
   ): Promise<ProposedToolCall>;
   /** An owner-configured second model, tried only after the primary failed (never for a timeout). */
   readonly fallback?: ConversationModelGateway;
+  /** The HEAVY tier (model-tier.ts): a stronger model for requests that earn it. Absent: same model, high effort. */
+  readonly heavy?: ConversationModelGateway;
 }
 
 /** Aborting cancels the provider request (turn timeout); it never retries a mutation. */
@@ -1068,7 +1081,21 @@ export async function createConversationModelGateway(
       // An unconfigured fallback is simply absent; the primary decides on its own.
     }
   }
-  return chatGateway(runtime.primary, env, fallback);
+  const primary = chatGateway(runtime.primary, env, fallback);
+  if (!runtime.heavy) return primary;
+  let heavy: ConversationModelGateway;
+  try {
+    // The heavy tier shares the primary's fallback: a heavy outage still has an answer path.
+    heavy = chatGateway(runtime.heavy, env, fallback);
+  } catch {
+    return primary; // An unconfigured heavy model is simply absent: HEAVY becomes high effort.
+  }
+  return {
+    providerInfo: primary.providerInfo,
+    ...(primary.fallback ? { fallback: primary.fallback } : {}),
+    heavy,
+    proposeToolCall: (messages, tools, options) => primary.proposeToolCall(messages, tools, options),
+  };
 }
 
 const GROQ_TRANSCRIPTION_MODEL = "whisper-large-v3-turbo";

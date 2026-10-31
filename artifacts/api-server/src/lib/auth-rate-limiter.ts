@@ -20,6 +20,7 @@ export const AUTH_RATE_LIMIT_SCOPE = {
   providerInvalid: "provider-invalid-ip",
   guestAiPreview: "guest-ai-preview-ip",
   conversationModelActor: "conversation-model-actor",
+  conversationModelHeavyActor: "conversation-model-heavy-actor",
   inquiryActor: "inquiry-actor",
   privacyUser: "privacy-user",
 } as const;
