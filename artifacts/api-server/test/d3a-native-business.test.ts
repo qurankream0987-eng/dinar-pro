@@ -615,7 +615,7 @@ await focused("D3A-27", "stock-out uses the canonical pause and preserves the li
   assert.equal(review.business.view, "LISTING_REVIEW");
   assert.ok(review.business.lines.some((line: string) => line.includes("نفاد")));
   const done = await turn(verified, verifiedConv, "أكد");
-  assert.equal(done.business.view, "CATALOG");
+  assert.equal(done.business.view, "CATALOG", JSON.stringify(done.business));
   const after = await offerOf(shawarmaId);
   assert.equal(after.status, "PAUSED");
   assert.equal(after.availableQuantity, before.availableQuantity);
