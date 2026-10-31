@@ -316,6 +316,13 @@
       "when": 1793340000000,
       "tag": "0044_wave08_cash_engines",
       "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "7",
+      "when": 1793420000000,
+      "tag": "0045_wave09_policy_consent_compliance",
+      "breakpoints": true
     }
   ]
 }

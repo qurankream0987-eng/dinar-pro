@@ -2,6 +2,7 @@ import { db, markets, marketPriceVersions, sellerMarketEligibility } from '@work
 import { countryByCode, DEFAULT_MARKET } from '@workspace/global';
 import { and, eq, lte, gt, isNull, or, desc } from 'drizzle-orm';
 import { marketAllowsFulfilment } from './market-capability-registry';
+import { assertMinorProtection, assertSellerVerification, requireCommercialCapability } from './compliance';
 export const marketError = (status: number, message: string) => Object.assign(new Error(message), { status });
 export const GUEST_MARKET_COOKIE = 'bdinar_guest_market';
 export async function resolveMarket(row: typeof markets.$inferSelect, tx: any = db) {
@@ -63,4 +64,8 @@ export async function assertMarketPolicy(market: Awaited<ReturnType<typeof marke
     const [eligibility] = await tx.select().from(sellerMarketEligibility).where(and(eq(sellerMarketEligibility.userId, sellerId), eq(sellerMarketEligibility.marketId, market.id), eq(sellerMarketEligibility.approved, true)));
     if (!eligibility) throw marketError(403, 'النشر واستقبال الطلبات في هذا السوق يتطلب موافقة على أهلية البائع');
   }
+  // Wave 09 gates: each is inert until the market opts in through market_compliance_settings.
+  await assertSellerVerification(sellerId, market.id, tx);
+  await assertMinorProtection(sellerId, market.id, tx);
+  await requireCommercialCapability(market.id, 'MARKETPLACE', tx);
 }

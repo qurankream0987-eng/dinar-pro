@@ -13,6 +13,7 @@ import {
   sessions,
   markets,
   policyAcceptances,
+  policyConsentEvents,
   phoneVerificationChallenges,
 } from "@workspace/db";
 import {
@@ -24,7 +25,7 @@ import {
   VerifyPhoneVerificationChallengeResponse,
 } from "@workspace/api-zod";
 import { canHoldSession, SESSION_STATUSES } from "./account-status";
-import { registrationAcceptancePolicies } from "./policies";
+import { signupConsentRows } from "./policy-lifecycle";
 import { and, eq, gt, inArray, isNotNull, isNull, lte } from "drizzle-orm";
 import { parsePhoneNumberFromString } from "libphonenumber-js/max";
 import { countries, countryByCode } from "@workspace/global";
@@ -504,14 +505,17 @@ router.post("/auth/register", registrationLimit, async (req, res) => {
       .onConflictDoNothing({ target: users.normalizedPhone })
       .returning();
     if (!created) return { kind: "duplicate" as const };
-    // acceptTerms covers every policy version that requires acceptance.
+    // acceptTerms covers every policy version that requires acceptance; the append-only
+    // consent ledger records the same explicit signup decision with its content hash.
+    const consentRows = await signupConsentRows(created.id, tx);
     await tx.insert(policyAcceptances).values(
-      registrationAcceptancePolicies().map((policy) => ({
+      consentRows.map((row) => ({
         userId: created.id,
-        policyKey: policy.key,
-        policyVersion: policy.version,
+        policyKey: row.policyKey,
+        policyVersion: row.policyVersion,
       })),
     );
+    await tx.insert(policyConsentEvents).values(consentRows);
     return { kind: "created" as const, user: created };
   });
   if (user.kind === "unverified") {

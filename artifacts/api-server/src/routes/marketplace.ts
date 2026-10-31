@@ -46,6 +46,7 @@ import {
 import { checkoutIssueMessage, planCheckout } from "../lib/commerce";
 import { acceptedNegotiationForCheckout, consumeNegotiation, resolveCommercialUnitPrice, type Negotiation } from "../lib/negotiations";
 import { marketFor, assertMarketActive, assertMarketPolicy } from "../lib/markets";
+import { assertMinorProtection, requireCommercialCapability } from "../lib/compliance";
 import {
   calculateCommissionMinor,
   commissionSnapshot,
@@ -649,6 +650,8 @@ async function checkout(
       );
     const market = await marketFor({ actor }, tx, true);
     assertMarketActive(market);
+    await assertMinorProtection(actor.id, market.id, tx);
+    await requireCommercialCapability(market.id, "PAYMENTS", tx);
     if (!marketAllowsCashDirect(market)) throw fail(409, "لا توجد طريقة دفع متاحة في هذا السوق");
     const ids = [...new Set<string>(lines.map((l) => l.listingId))].sort();
     if (!ids.length) throw fail(400, "السلة فارغة");

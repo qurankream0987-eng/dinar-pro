@@ -29,6 +29,7 @@ import {
   personalMemories,
   personalMemoryControls,
   policyAcceptances,
+  policyConsentEvents,
   privacyConsentEvents,
   privacyRequestEvents,
   privacyRequests,
@@ -37,6 +38,7 @@ import {
   users,
 } from "@workspace/db";
 import { DATA_RETENTION_POLICY } from "./policies";
+import { listPolicyConsentEvents } from "./policy-lifecycle";
 import { logger } from "./logger";
 import { notifyUserAfterDecision } from "./notifications";
 
@@ -375,6 +377,7 @@ const CATEGORY_LABELS = {
   personalMemories: "ما يتذكره المساعد عنك",
   reportsFiled: "بلاغات قدمتها",
   policyAcceptances: "موافقاتك على السياسات",
+  policyConsents: "سجل قراراتك على السياسات",
   sharedLocations: "مواقع شاركتها لطلبات",
   privacyRequests: "طلبات الخصوصية",
 } as const;
@@ -384,7 +387,7 @@ export async function personalDataSummary(userId: string) {
   const [user] = await db.select().from(users).where(eq(users.id, userId));
   if (!user) throw fail(404, "الحساب غير موجود");
   const n = async (query: Promise<Array<{ n: number }>>) => Number((await query)[0]?.n ?? 0);
-  const [listings, ordersAsBuyer, ordersAsSeller, messagesSent, aiConversations, memories, reports, acceptances, locations, requests] = await Promise.all([
+  const [listings, ordersAsBuyer, ordersAsSeller, messagesSent, aiConversations, memories, reports, acceptances, consents, locations, requests] = await Promise.all([
     n(db.select({ n: count() }).from(offers).where(eq(offers.sellerId, userId))),
     n(db.select({ n: count() }).from(orders).where(eq(orders.buyerId, userId))),
     n(db.select({ n: count() }).from(orders).where(eq(orders.sellerId, userId))),
@@ -393,10 +396,11 @@ export async function personalDataSummary(userId: string) {
     n(db.select({ n: count() }).from(personalMemories).where(and(eq(personalMemories.userId, userId), eq(personalMemories.status, "ACTIVE")))),
     n(db.select({ n: count() }).from(marketplaceReports).where(eq(marketplaceReports.reporterId, userId))),
     n(db.select({ n: count() }).from(policyAcceptances).where(eq(policyAcceptances.userId, userId))),
+    n(db.select({ n: count() }).from(policyConsentEvents).where(eq(policyConsentEvents.userId, userId))),
     n(db.select({ n: count() }).from(transactionLocations).where(and(eq(transactionLocations.sharedBy, userId), isNull(transactionLocations.redactedAt)))),
     n(db.select({ n: count() }).from(privacyRequests).where(eq(privacyRequests.userId, userId))),
   ]);
-  const counts = { listings, ordersAsBuyer, ordersAsSeller, messagesSent, aiConversations, personalMemories: memories, reportsFiled: reports, policyAcceptances: acceptances, sharedLocations: locations, privacyRequests: requests };
+  const counts = { listings, ordersAsBuyer, ordersAsSeller, messagesSent, aiConversations, personalMemories: memories, reportsFiled: reports, policyAcceptances: acceptances, policyConsents: consents, sharedLocations: locations, privacyRequests: requests };
   return {
     profile: {
       displayName: user.displayName,
@@ -461,6 +465,7 @@ export async function buildPersonalDataExport(userId: string) {
     profile: summary.profile,
     preferences: summary.preferences,
     consentHistory: await consentHistory(userId),
+    policyConsentEvents: await listPolicyConsentEvents(userId),
     personalMemoryControls: memoryControlRows,
     listings: bounded(listingRows.map((row) => ({ ...row, createdAt: row.createdAt.toISOString() }))),
     orders: bounded(
