@@ -306,6 +306,13 @@ export const offers = pgTable(
     availableQuantity: integer("available_quantity"),
     reservedQuantity: integer("reserved_quantity").default(0).notNull(),
     data: jsonb("data").$type<Record<string, any>>().notNull(),
+    /**
+     * C1 search index bookkeeping (migration 0041). A trigger bumps the revision and marks the row
+     * stale whenever `data` changes (or its category changes); only the search refresher clears it,
+     * after writing offer_search_documents for that exact revision. Not listing content.
+     */
+    searchRevision: bigint("search_revision", { mode: "number" }).default(0).notNull(),
+    searchDocumentStale: boolean("search_document_stale").default(true).notNull(),
     ...dates(),
   },
   (t) => [
@@ -323,6 +330,30 @@ export const offers = pgTable(
     ),
     index("offers_market_status_idx").on(t.marketId, t.status),
     index("offers_seller_idx").on(t.sellerId),
+    // C1: organic order walks (created_at, id); price sorts and the stale-row lookup.
+    index("offers_market_status_created_idx").on(t.marketId, t.status, t.createdAt, t.id),
+    index("offers_market_status_price_idx").on(t.marketId, t.status, t.unitPriceMinor),
+    index("offers_search_stale_idx").on(t.marketId).where(sql`${t.searchDocumentStale}`),
+  ],
+);
+/**
+ * C1: the searchable text of one listing, exactly as the search's JavaScript builds it
+ * (marketplace-search-index.ts), for one source revision. Internal: never returned to clients.
+ */
+export const offerSearchDocuments = pgTable(
+  "offer_search_documents",
+  {
+    offerId: text("offer_id")
+      .primaryKey()
+      .references(() => offers.id, { onDelete: "cascade" }),
+    searchText: text("search_text").notNull(),
+    sourceRevision: bigint("source_revision", { mode: "number" }).notNull(),
+    textVersion: integer("text_version").notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    index("offer_search_documents_text_trgm_idx").using("gin", sql`${t.searchText} gin_trgm_ops`),
+    index("offer_search_documents_version_idx").on(t.textVersion),
   ],
 );
 export const promotionProducts = pgTable(

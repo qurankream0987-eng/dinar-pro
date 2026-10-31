@@ -162,5 +162,9 @@
   {
     "tag": "0040_refund_obligations",
     "sha256": "211c7db104036fc74cb08c668e9bf5b26d8f038915b1ab8232d8a79d2e20bfbb"
+  },
+  {
+    "tag": "0041_c1_sql_search",
+    "sha256": "382b69bdee1927c544ef6496530e33d5fae5f34ed804dc39b85a98d104456fa5"
   }
 ]

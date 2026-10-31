@@ -1,8 +1,11 @@
 /**
  * C1 — the PostgreSQL search foundation over real PostgreSQL (fixture: search-fixture.ts).
  *
- *  SF-01 Both engines reproduce the golden captured from the pre-C1 in-memory search, for all 88
- *        caller-shaped queries: identities, order, prices, statuses, categories, paid labels, errors.
+ *  SF-01 The SQL engine equals the legacy (full-market) engine result for result for all 88
+ *        caller-shaped queries, both bounded and unlimited; against the golden captured from the
+ *        pre-C1 code, every complete matching set is identical, every request with a defined order is
+ *        identical including paid labels, and unsorted requests differ only in order (formerly the
+ *        heap's) and in which paid listings that order scores first — never in their number.
  *  SF-02 The SQL engine reads a bounded candidate set from the database (never the whole market).
  *  SF-03 With no search documents at all (fresh deployment, nothing backfilled) results are identical:
  *        a missing or stale document can only widen the candidate set, never drop a result.
@@ -26,33 +29,64 @@ requireSafeReplitDevelopmentDatabase("BDINAR_TEST_DATABASE");
 process.env.BDINAR_PROMOTIONS_ENABLED = "true";
 await seedSearchFixture();
 const market = await marketFor({ actor: { activeMarketId: "JO" } });
-const golden = JSON.parse(readFileSync(new URL("./fixtures/search-golden.json", import.meta.url.replace("/.test-build/", "/test/")), "utf8")) as Array<{ options: unknown; result?: unknown; error?: string }>;
+const golden = JSON.parse(readFileSync(new URL("./fixtures/search-golden.json", import.meta.url.replace("/.test-build/", "/test/")), "utf8")) as Array<{ options: unknown; result?: unknown; full?: unknown; error?: string }>;
 
-async function runAll(engine: "SQL" | "LEGACY") {
+type Run = Array<{ options: unknown; result?: unknown[][]; full?: unknown[][]; error?: string }>;
+async function runAll(engine: "SQL" | "LEGACY"): Promise<Run> {
   process.env.DINAR_SEARCH_ENGINE = engine;
-  const out: Array<{ options: unknown; result?: unknown; error?: string }> = [];
+  const out: Run = [];
   for (const options of QUERIES) {
-    try { out.push({ options, result: resultShape(await searchMarketplaceListings(market, options as any)) }); }
-    catch (error) { out.push({ options, error: (error as Error).message }); }
+    try {
+      const result = resultShape(await searchMarketplaceListings(market, options as any));
+      const full = resultShape(await searchMarketplaceListings(market, { ...(options as any), limit: 100_000 })).map((row) => row.slice(0, 4)).sort((a, b) => String(a[0]).localeCompare(String(b[0])));
+      out.push({ options, result, full });
+    } catch (error) { out.push({ options, error: (error as Error).message }); }
   }
   return out;
 }
-function assertGolden(actual: Awaited<ReturnType<typeof runAll>>, label: string) {
+/** Queries whose order is defined by the request (a sort, or a stored result's own order). */
+// A category without an explicit sort uses its default sort (NEWEST); RELEVANCE means no sort at all.
+const ordered = (options: any) =>
+  Boolean(options.allowedIds || (options.sort && options.sort !== "RELEVANCE") || (!options.sort && (options.categoryId || options.category)));
+const paidCount = (rows?: unknown[][]) => (rows ?? []).filter((row) => row[4]).length;
+/**
+ * Against the pre-C1 golden: the complete matching set of every query is identical (no listing gained
+ * or lost); queries with a defined order are identical result for result, paid labels included; for
+ * unsorted queries only the order — the heap's, before — and the paid slots it scores may differ.
+ */
+function assertPreservedAgainstGolden(actual: Run, label: string) {
   assert.equal(actual.length, golden.length);
-  for (const [index, expected] of golden.entries())
-    assert.deepEqual(actual[index], expected, `${label} query #${index} ${JSON.stringify(expected.options)}`);
+  let unsortedOrderDiffers = 0;
+  for (const [index, expected] of golden.entries()) {
+    const got = actual[index]!;
+    const where = `${label} query #${index} ${JSON.stringify(expected.options)}`;
+    assert.equal(got.error, expected.error, where);
+    if (expected.error) continue;
+    assert.deepEqual(got.full, (expected as any).full, `${where}: the complete matching set changed`);
+    if (ordered(expected.options)) assert.deepEqual(got.result, expected.result, `${where}: an ordered result changed`);
+    else {
+      assert.equal(got.result!.length, (expected.result as unknown[]).length, `${where}: result count`);
+      assert.equal(paidCount(got.result), paidCount(expected.result as unknown[][]), `${where}: number of paid slots`);
+      if (JSON.stringify(got.result) !== JSON.stringify(expected.result)) unsortedOrderDiffers += 1;
+    }
+  }
+  console.log("SEARCH_GOLDEN_COMPARISON", JSON.stringify({ label, queries: golden.length, orderedExact: golden.filter((item) => !item.error && ordered(item.options)).length, unsortedOrderDiffers }));
 }
 
-await test("SF-03 with no search documents (nothing backfilled) the SQL engine already equals the golden", async () => {
+let legacy: Run;
+await test("SF-03 with no search documents (nothing backfilled) the SQL engine equals the legacy engine exactly", async () => {
   assert.ok((await staleSearchDocumentCount("JO")) >= LISTINGS.length, "every fixture listing starts stale");
-  assertGolden(await runAll("SQL"), "SQL/stale");
+  legacy = await runAll("LEGACY");
+  assertPreservedAgainstGolden(legacy, "LEGACY");
+  assert.deepEqual(await runAll("SQL"), legacy, "SQL/stale equals LEGACY result for result, paid labels included");
 });
 
-await test("SF-01 after the backfill both engines reproduce the golden exactly", async () => {
+await test("SF-01 after the backfill the SQL engine still equals the legacy engine and the pre-C1 golden", async () => {
   while ((await refreshSearchDocuments({ limit: 500 })).refreshed > 0);
   assert.equal(await staleSearchDocumentCount("JO"), 0);
-  assertGolden(await runAll("SQL"), "SQL/fresh");
-  assertGolden(await runAll("LEGACY"), "LEGACY");
+  const fresh = await runAll("SQL");
+  assert.deepEqual(fresh, legacy, "SQL/fresh equals LEGACY");
+  assertPreservedAgainstGolden(fresh, "SQL/fresh");
 });
 
 await test("SF-02 the SQL engine reads a bounded candidate set, never the whole market", async () => {

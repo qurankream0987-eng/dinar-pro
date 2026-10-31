@@ -1,5 +1,6 @@
 import app from "./app";
 import { logger } from "./lib/logger";
+import { startSearchIndexMaintenance } from "./lib/marketplace-search-index";
 import { onProviderBreakerTransition } from "./ai/model-gateway";
 import { releaseExpiredReservations } from "./routes/marketplace";
 import { scrubStaleLocationPreviews } from "./ai/delivery-turn";
@@ -63,4 +64,6 @@ app.listen(port, (err) => {
   }
 
   logger.info({ port }, "Server listening");
+  // C1: build and refresh search documents in the background (search stays correct without them).
+  startSearchIndexMaintenance();
 });

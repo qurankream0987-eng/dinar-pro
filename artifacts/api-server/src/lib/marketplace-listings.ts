@@ -10,7 +10,7 @@ import {
   users,
   type markets,
 } from "@workspace/db";
-import { and, eq, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, or, sql, type SQL } from "drizzle-orm";
 import type { ListingRecord } from "./dinar-data";
 import { acceptsPriceProposals, priceRepresentationOf } from "@workspace/api-zod/listing-pricing";
 import { marketError, type marketFor } from "./markets";
@@ -29,7 +29,10 @@ import {
 } from "./promotion-policy";
 import { rankSponsored, representativeCampaign, servingCampaignsFor, sponsoredScore } from "./promotions";
 import { getCommercialPolicy } from "./commercial-policy";
-import { itemTokens, textMatchesToken } from "./arabic-search-terms";
+import { itemTokens, textMatchesToken, tokenVariants } from "./arabic-search-terms";
+import { searchTextContext, searchableTextOf, searchTextVersionReady, SEARCH_TEXT_VERSION } from "./marketplace-search-index";
+import { offerSearchDocuments, listingPromotions } from "@workspace/db";
+import { SEARCH_PLACEMENTS, SERVING_PAYMENT_STATUSES } from "./promotions";
 import { redactListingContactText } from "./listing-contact";
 
 export type OfferRow = {
@@ -174,8 +177,8 @@ export async function searchMarketplaceListings(
     limit?: number;
   },
 ): Promise<ListingRecord[]> {
-  const [rows, allCategories, policyRules] = await Promise.all([
-    offerRows(market.id),
+  const engine = searchEngine();
+  const [allCategories, policyRules] = await Promise.all([
     listMarketplaceCategories(true),
     activePolicyRules(market.id),
   ]);
@@ -255,30 +258,11 @@ export async function searchMarketplaceListings(
         default: return false;
       }
     });
-  const searchableText = (offer: typeof offers.$inferSelect) =>
-    normalizeSearch(
-      [
-        offer.data.title,
-        offer.data.description,
-        offer.data.category,
-        offer.data.city,
-        offer.data.area,
-        ...Object.entries(
-          schemasById.get(
-            typeof offer.data.categoryId === "string"
-              ? offer.data.categoryId
-              : categoryIdsByLabel.get(String(offer.data.category ?? "")) ?? "",
-          )?.attributes ?? {},
-        )
-          .filter(([, definition]) => definition.searchable !== false)
-          .map(([field]) => offer.data.attributes?.[field]),
-      ]
-        .filter((value) => value != null)
-        .join(" "),
-    );
-  const matchedRows = rows
-    .filter(
-      ({ offer, seller }) =>
+  // The same text the C1 search documents store (marketplace-search-index.ts).
+  const textContext = searchTextContext(allCategories);
+  const searchableText = (offer: typeof offers.$inferSelect) => searchableTextOf(offer, textContext);
+  // Every server-side eligibility rule, applied to each candidate exactly as before C1.
+  const accepted = ({ offer, seller }: OfferRow) =>
         seller.status === "ACTIVE" &&
         !market.restrictedCategories.includes(offer.data.category) &&
         !market.restrictedCategories.includes(offer.data.categoryId ?? "") &&
@@ -306,12 +290,16 @@ export async function searchMarketplaceListings(
                 (aliasTokens.has(token) && text.includes(tokenNeedle(token))) || textMatchesToken(text, token),
               );
             })()
-          : searchableText(offer).includes(normalizeSearch(term))),
-    );
+          : searchableText(offer).includes(normalizeSearch(term)));
   const requestedSort =
     options.sort ?? schema?.rules.sorting.defaultSort ?? undefined;
+  type SortField = "PRICE" | "CREATED_AT" | "ATTRIBUTE";
+  type SortDirection = "ASC" | "DESC";
+  let sortField: SortField | undefined;
+  let sortDirection = "DESC" as SortDirection;
+  let sortDefinition: NonNullable<typeof schema>["rules"]["sorting"]["options"][number] | undefined;
   if (requestedSort && requestedSort !== "RELEVANCE") {
-    const sortDefinition = schema?.rules.sorting.options.find(
+    sortDefinition = schema?.rules.sorting.options.find(
       (option) => option.id === requestedSort,
     );
     const globalSort =
@@ -322,11 +310,44 @@ export async function searchMarketplaceListings(
         400,
         `الترتيب ${requestedSort} غير مدعوم لهذا التصنيف.`,
       );
-    const field = sortDefinition?.field ??
-      (requestedSort === "NEWEST" ? "CREATED_AT" : "PRICE");
-    const direction =
-      sortDefinition?.direction ??
-      (requestedSort === "PRICE_ASC" ? "ASC" : "DESC");
+    sortField = (sortDefinition?.field ??
+      (requestedSort === "NEWEST" ? "CREATED_AT" : "PRICE")) as SortField;
+    sortDirection =
+      (sortDefinition?.direction ??
+      (requestedSort === "PRICE_ASC" ? "ASC" : "DESC")) as SortDirection;
+  }
+  const limit = options.limit ?? 24;
+  // Sponsored slots apply to the default view only (see below); they need every eligible paid
+  // listing's organic position, so the SQL scan continues until it has passed all of them.
+  const defaultView =
+    !options.sort ||
+    options.sort === "RELEVANCE" ||
+    options.sort === (schema?.rules.sorting.defaultSort ?? "NEWEST");
+  const sponsoredSlotCount =
+    options.ownSellerId || options.sponsoredPlacement === false || !defaultView || options.allowedIds
+      ? 0
+      : options.sponsoredSlots ?? (await getCommercialPolicy(market.id)).searchSponsoredSlots;
+  const matchedRows: OfferRow[] =
+    engine === "LEGACY"
+      ? await legacyCandidates(market.id, accepted)
+      : await sqlCandidates({
+          market,
+          accepted,
+          limit,
+          options,
+          categoryRow,
+          sortField,
+          sortDirection,
+          textNeedles: options.conversational
+            ? tokens.map((token) => [...new Set([token, ...tokenVariants(token), ...(aliasTokens.has(token) ? [tokenNeedle(token)] : [])])])
+            : normalizeSearch(term)
+              ? [[normalizeSearch(term)]]
+              : [],
+          sponsoredSlots: sponsoredSlotCount,
+        });
+  if (sortField) {
+    const field = sortField;
+    const direction: SortDirection = sortDirection;
     matchedRows.sort((a, b) => {
       const getValue = (offer: typeof offers.$inferSelect) => {
         if (field === "PRICE") return offer.unitPriceMinor;
@@ -345,7 +366,6 @@ export async function searchMarketplaceListings(
       return b.offer.createdAt.getTime() - a.offer.createdAt.getTime();
     });
   }
-  const limit = options.limit ?? 24;
   const toRecord = ({ offer, seller }: OfferRow, sponsored: boolean | PaidSlot): ListingRecord => {
     const categoryId =
       typeof offer.data.categoryId === "string"
@@ -379,10 +399,6 @@ export async function searchMarketplaceListings(
   // of labelled slots. The default view (relevance or the category's default
   // order) carries those slots; an order the user chose instead, such as cheapest
   // first, is never reordered or labelled by payment.
-  const defaultView =
-    !options.sort ||
-    options.sort === "RELEVANCE" ||
-    options.sort === (schema?.rules.sorting.defaultSort ?? "NEWEST");
   const paidSlots: Map<string, PaidSlot> =
     options.ownSellerId ||
     options.sponsoredPlacement === false ||
@@ -401,7 +417,7 @@ export async function searchMarketplaceListings(
                 : categoryIdsByLabel.get(String(offer.data.category ?? "")),
             activeCategoryIds,
           },
-          options.sponsoredSlots ?? (await getCommercialPolicy(market.id)).searchSponsoredSlots,
+          sponsoredSlotCount,
         );
   // Paid slots first in score order; the organic rest keeps its canonical order.
   const rowsById = new Map(matchedRows.map((row) => [row.offer.id, row]));
@@ -493,3 +509,172 @@ async function sponsoredPlacementIds(
 }
 
 type PaidSlot = { promotionId: string; placement: string };
+
+// ─── C1: candidate sources ───────────────────────────────────────────────────
+
+/**
+ * DINAR_SEARCH_ENGINE: SQL (default) reads a bounded, indexed superset of candidates from PostgreSQL;
+ * LEGACY loads every listing of the market (the pre-C1 path), kept for comparison and rollback.
+ * Both apply the same eligibility predicates, sort and sponsored placement in JavaScript.
+ */
+export function searchEngine(env: NodeJS.ProcessEnv = process.env): "SQL" | "LEGACY" {
+  return (env.DINAR_SEARCH_ENGINE ?? "").trim().toUpperCase() === "LEGACY" ? "LEGACY" : "SQL";
+}
+
+export type SearchStats = { engine: "SQL" | "LEGACY"; rowsRead: number; batches: number; matched: number; staleRows: number; textIndexUsed: boolean };
+let lastStats: SearchStats | undefined;
+/** Diagnostics of the most recent search in this process (tests and benchmarks). */
+export function lastSearchStats(): SearchStats | undefined {
+  return lastStats;
+}
+
+async function legacyCandidates(marketId: string, accepted: (row: OfferRow) => boolean): Promise<OfferRow[]> {
+  // The whole market, as before C1 — in the same deterministic organic order as the SQL engine
+  // (the pre-C1 order was the heap's, which the database never guaranteed).
+  const rows: OfferRow[] = await db
+    .select({ offer: offers, seller: users })
+    .from(offers)
+    .innerJoin(users, eq(users.id, offers.sellerId))
+    .where(eq(offers.marketId, marketId))
+    .orderBy(asc(offers.createdAt), asc(offers.id));
+  const matched = rows.filter(accepted);
+  lastStats = { engine: "LEGACY", rowsRead: rows.length, batches: 1, matched: matched.length, staleRows: 0, textIndexUsed: false };
+  return matched;
+}
+
+const likeNeedle = (needle: string) => `%${needle.replace(/[\\%_]/g, (character) => `\\${character}`)}%`;
+
+/**
+ * The SQL candidate stage. Every condition here is implied by the JavaScript predicates (a superset),
+ * so `accepted` still decides; the scan reads candidates in the final order, in bounded keyset batches,
+ * and stops once it has `limit` accepted rows and has passed every possibly-sponsored listing.
+ *  - exact: market, active seller, PUBLISHED or own seller, allowedIds, conversational availability;
+ *  - widened: category (id or label), price (±1 minor unit), text (any needle of each token in a fresh
+ *    document — a stale row is always a candidate);
+ *  - left to JavaScript: restricted categories, policy rules, other filters, exact text rules.
+ */
+async function sqlCandidates(input: {
+  market: ResolvedMarket;
+  accepted: (row: OfferRow) => boolean;
+  limit: number;
+  options: Parameters<typeof searchMarketplaceListings>[1];
+  categoryRow?: { id: string; label: string };
+  sortField?: "PRICE" | "CREATED_AT" | "ATTRIBUTE";
+  sortDirection: "ASC" | "DESC";
+  textNeedles: string[][];
+  sponsoredSlots: number;
+}): Promise<OfferRow[]> {
+  const { market, options } = input;
+  const stats: SearchStats = { engine: "SQL", rowsRead: 0, batches: 0, matched: 0, staleRows: 0, textIndexUsed: false };
+  lastStats = stats;
+  if (options.allowedIds && !options.allowedIds.length) return [];
+  const conditions: SQL[] = [eq(offers.marketId, market.id), eq(users.status, "ACTIVE")];
+  conditions.push(options.ownSellerId ? eq(offers.sellerId, options.ownSellerId) : eq(offers.status, "PUBLISHED"));
+  if (options.allowedIds) conditions.push(inArray(offers.id, [...new Set(options.allowedIds)]));
+  if (options.conversational)
+    conditions.push(sql`(${offers.inventoryMode} = 'UNLIMITED' OR coalesce(${offers.availableQuantity}, 0) - ${offers.reservedQuantity} > 0)`);
+  if (input.categoryRow)
+    conditions.push(sql`(${offers.data}->>'categoryId' = ${input.categoryRow.id} OR ${offers.data}->>'category' = ${input.categoryRow.label})`);
+  const scale = 10 ** ("minorUnitScale" in market ? market.minorUnitScale : 3);
+  for (const filter of options.filters ?? []) {
+    if (filter.field !== "price") continue;
+    conditions.push(sql`${offers.unitPriceMinor} IS NOT NULL`);
+    if (typeof filter.value !== "number" || !Number.isFinite(filter.value)) continue;
+    const target = filter.value * scale;
+    if (filter.operator === "eq") conditions.push(sql`${offers.unitPriceMinor} BETWEEN ${Math.floor(target) - 1} AND ${Math.ceil(target) + 1}`);
+    else if (filter.operator === "gt" || filter.operator === "gte") conditions.push(sql`${offers.unitPriceMinor} >= ${Math.floor(target) - 1}`);
+    else if (filter.operator === "lt" || filter.operator === "lte") conditions.push(sql`${offers.unitPriceMinor} <= ${Math.ceil(target) + 1}`);
+  }
+  const needles = input.textNeedles.filter((group) => group.length && !group.includes(""));
+  if (needles.length && (await searchTextVersionReady())) {
+    stats.textIndexUsed = true;
+    const matching = sql.join(
+      needles.map((group) => sql`(${sql.join(group.map((needle) => sql`d.search_text LIKE ${likeNeedle(needle)}`), sql` OR `)})`),
+      sql` AND `,
+    );
+    conditions.push(sql`(${offers.searchDocumentStale} OR ${offers.id} IN (SELECT d.offer_id FROM ${offerSearchDocuments} d WHERE d.text_version = ${SEARCH_TEXT_VERSION} AND ${matching}))`);
+  }
+  const where = and(...conditions)!;
+
+  // The final order, as sort keys PostgreSQL can walk; JavaScript re-sorts identically (stable).
+  // Organic (no explicit sort): creation time, then id — the pre-C1 order was the heap's, unspecified.
+  const priceMissing = sql<number>`(${offers.unitPriceMinor} IS NULL)::int`;
+  const price = sql<number>`coalesce(${offers.unitPriceMinor}, 0)`;
+  type Key = { expr: SQL; dir: "ASC" | "DESC"; cast: string };
+  const created: Key = { expr: sql`${offers.createdAt}`, dir: "ASC", cast: "timestamptz" };
+  const id: Key = { expr: sql`${offers.id}`, dir: "ASC", cast: "text" };
+  const keys: Key[] =
+    input.sortField === "PRICE"
+      ? [{ expr: priceMissing, dir: "ASC", cast: "int" }, { expr: price, dir: input.sortDirection, cast: "bigint" }, { ...created, dir: "DESC" }, id]
+      : input.sortField === "CREATED_AT"
+        ? [{ ...created, dir: input.sortDirection }, id]
+        : [created, id];
+  // Attribute sorts keep JavaScript's exact numeric coercion; their candidates are read in full.
+  // Stored results and a seller's own listings are bounded sets: read in full as well.
+  const readAll = input.sortField === "ATTRIBUTE" || Boolean(options.allowedIds) || Boolean(options.ownSellerId);
+
+  let pendingSponsored = new Set<string>();
+  if (!readAll && input.sponsoredSlots > 0 && isPromotionSimulationEnabled()) {
+    const now = new Date();
+    const serving = await db
+      .selectDistinct({ id: listingPromotions.listingId })
+      .from(listingPromotions)
+      .where(and(
+        eq(listingPromotions.marketId, market.id),
+        eq(listingPromotions.status, "ACTIVE"),
+        inArray(listingPromotions.paymentStatus, [...SERVING_PAYMENT_STATUSES]),
+        eq(listingPromotions.paymentMode, "DEVELOPMENT_SIMULATED"),
+        inArray(listingPromotions.placementSnapshot, [...SEARCH_PLACEMENTS]),
+        sql`${listingPromotions.startsAt} <= ${now}`,
+        sql`${listingPromotions.expiresAt} > ${now}`,
+      ));
+    if (serving.length) {
+      const inSuperset = await db
+        .select({ id: offers.id })
+        .from(offers)
+        .innerJoin(users, eq(users.id, offers.sellerId))
+        .where(and(where, inArray(offers.id, serving.map((row) => row.id))));
+      pendingSponsored = new Set(inSuperset.map((row) => row.id));
+    }
+  }
+
+  const matched: OfferRow[] = [];
+  let cursor: string[] | undefined;
+  let batch = Math.min(Math.max(input.limit * 2, 50), 500);
+  for (;;) {
+    const after = cursor ? keysetAfter(keys, cursor) : undefined;
+    const rows = await db
+      .select({ offer: offers, seller: users, k: sql<string[]>`ARRAY[${sql.join(keys.map((key) => sql`(${key.expr})::text`), sql`, `)}]` })
+      .from(offers)
+      .innerJoin(users, eq(users.id, offers.sellerId))
+      .where(after ? and(where, after) : where)
+      .orderBy(...keys.map((key) => (key.dir === "ASC" ? asc(key.expr) : desc(key.expr))))
+      .limit(batch);
+    stats.batches += 1;
+    stats.rowsRead += rows.length;
+    for (const row of rows) {
+      pendingSponsored.delete(row.offer.id);
+      if (row.offer.searchDocumentStale) stats.staleRows += 1;
+      if (input.accepted(row)) matched.push({ offer: row.offer, seller: row.seller });
+    }
+    stats.matched = matched.length;
+    if (rows.length < batch) break;
+    if (!readAll && matched.length >= input.limit && pendingSponsored.size === 0) break;
+    cursor = rows.at(-1)!.k;
+    batch = Math.min(batch * 2, 2_000);
+  }
+  return matched;
+}
+
+/** Rows strictly after `cursor` in the order of `keys` (lexicographic, per-key direction). */
+function keysetAfter(keys: { expr: SQL; dir: "ASC" | "DESC"; cast: string }[], cursor: string[]): SQL {
+  const value = (index: number) => sql`${cursor[index]}::${sql.raw(keys[index]!.cast)}`;
+  return or(
+    ...keys.map((key, index) =>
+      and(
+        ...keys.slice(0, index).map((previous, earlier) => sql`(${previous.expr}) = ${value(earlier)}`),
+        key.dir === "ASC" ? sql`(${key.expr}) > ${value(index)}` : sql`(${key.expr}) < ${value(index)}`,
+      ),
+    ),
+  )!;
+}

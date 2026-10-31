@@ -17,108 +17,10 @@
     "sf-promo-2:SEARCH_AND_CHAT"
    ],
    [
-    "sf-0016",
-    "35.000",
+    "sf-0026",
+    "6.000",
     "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
-    "sf-0001",
-    "7000.000",
-    "PUBLISHED",
-    "cars",
-    null
-   ],
-   [
-    "sf-0002",
-    "9500.000",
-    "PUBLISHED",
-    "cars",
-    null
-   ],
-   [
-    "sf-0003",
-    "18000.000",
-    "PUBLISHED",
-    "cars",
-    null
-   ],
-   [
-    "sf-0004",
-    "3500.000",
-    "PUBLISHED",
-    "cars",
-    null
-   ],
-   [
-    "sf-0005",
-    "6800.000",
-    "PUBLISHED",
-    "cars",
-    null
-   ],
-   [
-    "sf-0006",
-    "4200.000",
-    "PUBLISHED",
-    "cars",
-    null
-   ],
-   [
-    "sf-0012",
-    "260.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
-    "sf-0013",
-    "420.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
-    "sf-0014",
-    "210.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
-    "sf-0015",
-    "150.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
-    "sf-0018",
-    "480.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
-    "sf-0019",
-    "175.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
-    "sf-0020",
-    "15.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
-    "sf-0021",
-    null,
-    "PUBLISHED",
-    "electronics",
+    "fashion",
     null
    ],
    [
@@ -129,38 +31,10 @@
     null
    ],
    [
-    "sf-0024",
-    "60.000",
+    "sf-0039",
+    "9.000",
     "PUBLISHED",
-    "fashion",
-    null
-   ],
-   [
-    "sf-0025",
-    "35.000",
-    "PUBLISHED",
-    "fashion",
-    null
-   ],
-   [
-    "sf-0026",
-    "6.000",
-    "PUBLISHED",
-    "fashion",
-    null
-   ],
-   [
-    "sf-0027",
-    "300.000",
-    "PUBLISHED",
-    "home",
-    null
-   ],
-   [
-    "sf-0028",
-    "120.000",
-    "PUBLISHED",
-    "home",
+    "other",
     null
    ],
    [
@@ -168,118 +42,6 @@
     "12.000",
     "PUBLISHED",
     "home",
-    null
-   ]
-  ]
- },
- {
-  "options": {
-   "limit": 200
-  },
-  "result": [
-   [
-    "sf-0017",
-    "45.000",
-    "PUBLISHED",
-    "electronics",
-    "sf-promo-3:SEARCH_AND_CHAT"
-   ],
-   [
-    "sf-0071",
-    "256.000",
-    "PUBLISHED",
-    "electronics",
-    "sf-promo-2:SEARCH_AND_CHAT"
-   ],
-   [
-    "sf-0016",
-    "35.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
-    "sf-0001",
-    "7000.000",
-    "PUBLISHED",
-    "cars",
-    null
-   ],
-   [
-    "sf-0002",
-    "9500.000",
-    "PUBLISHED",
-    "cars",
-    null
-   ],
-   [
-    "sf-0003",
-    "18000.000",
-    "PUBLISHED",
-    "cars",
-    null
-   ],
-   [
-    "sf-0004",
-    "3500.000",
-    "PUBLISHED",
-    "cars",
-    null
-   ],
-   [
-    "sf-0005",
-    "6800.000",
-    "PUBLISHED",
-    "cars",
-    null
-   ],
-   [
-    "sf-0006",
-    "4200.000",
-    "PUBLISHED",
-    "cars",
-    null
-   ],
-   [
-    "sf-0012",
-    "260.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
-    "sf-0013",
-    "420.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
-    "sf-0014",
-    "210.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
-    "sf-0015",
-    "150.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
-    "sf-0018",
-    "480.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
-    "sf-0019",
-    "175.000",
-    "PUBLISHED",
-    "electronics",
     null
    ],
    [
@@ -287,102 +49,11 @@
     "15.000",
     "PUBLISHED",
     "electronics",
-    null
-   ],
-   [
-    "sf-0021",
-    null,
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
-    "sf-0023",
-    "8.000",
-    "PUBLISHED",
-    "fashion",
-    null
-   ],
-   [
-    "sf-0024",
-    "60.000",
-    "PUBLISHED",
-    "fashion",
-    null
-   ],
-   [
-    "sf-0025",
-    "35.000",
-    "PUBLISHED",
-    "fashion",
-    null
-   ],
-   [
-    "sf-0026",
-    "6.000",
-    "PUBLISHED",
-    "fashion",
-    null
-   ],
-   [
-    "sf-0027",
-    "300.000",
-    "PUBLISHED",
-    "home",
-    null
-   ],
-   [
-    "sf-0028",
-    "120.000",
-    "PUBLISHED",
-    "home",
-    null
-   ],
-   [
-    "sf-0029",
-    "12.000",
-    "PUBLISHED",
-    "home",
-    null
-   ],
-   [
-    "sf-0030",
-    "140.000",
-    "PUBLISHED",
-    "home",
-    null
-   ],
-   [
-    "sf-0031",
-    "550.000",
-    "PUBLISHED",
-    "property",
-    null
-   ],
-   [
-    "sf-0032",
-    "45000.000",
-    "PUBLISHED",
-    "property",
-    null
-   ],
-   [
-    "sf-0033",
-    "90000.000",
-    "PUBLISHED",
-    "property",
     null
    ],
    [
     "sf-0034",
     "15.000",
-    "PUBLISHED",
-    "services",
-    null
-   ],
-   [
-    "sf-0035",
-    "25.000",
     "PUBLISHED",
     "services",
     null
@@ -395,24 +66,17 @@
     null
    ],
    [
-    "sf-0037",
-    "30.000",
+    "sf-0035",
+    "25.000",
     "PUBLISHED",
     "services",
     null
    ],
    [
-    "sf-0039",
-    "9.000",
+    "sf-0037",
+    "30.000",
     "PUBLISHED",
-    "other",
-    null
-   ],
-   [
-    "sf-0040",
-    "3100.000",
-    "PUBLISHED",
-    "other",
+    "services",
     null
    ],
    [
@@ -423,17 +87,24 @@
     null
    ],
    [
-    "sf-0042",
-    "3000.000",
+    "sf-0016",
+    "35.000",
     "PUBLISHED",
-    "cars",
+    "electronics",
     null
    ],
    [
-    "sf-0043",
-    "100.000",
+    "sf-0025",
+    "35.000",
     "PUBLISHED",
-    "electronics",
+    "fashion",
+    null
+   ],
+   [
+    "sf-0024",
+    "60.000",
+    "PUBLISHED",
+    "fashion",
     null
    ],
    [
@@ -465,7 +136,609 @@
     null
    ],
    [
+    "sf-0043",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
     "sf-0048",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0053",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0058",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0063",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ]
+  ],
+  "full": [
+   [
+    "sf-0001",
+    "7000.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0002",
+    "9500.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0003",
+    "18000.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0004",
+    "3500.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0005",
+    "6800.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0006",
+    "4200.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0012",
+    "260.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0013",
+    "420.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0014",
+    "210.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0015",
+    "150.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0016",
+    "35.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0017",
+    "45.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0018",
+    "480.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0019",
+    "175.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0020",
+    "15.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0021",
+    null,
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0023",
+    "8.000",
+    "PUBLISHED",
+    "fashion"
+   ],
+   [
+    "sf-0024",
+    "60.000",
+    "PUBLISHED",
+    "fashion"
+   ],
+   [
+    "sf-0025",
+    "35.000",
+    "PUBLISHED",
+    "fashion"
+   ],
+   [
+    "sf-0026",
+    "6.000",
+    "PUBLISHED",
+    "fashion"
+   ],
+   [
+    "sf-0027",
+    "300.000",
+    "PUBLISHED",
+    "home"
+   ],
+   [
+    "sf-0028",
+    "120.000",
+    "PUBLISHED",
+    "home"
+   ],
+   [
+    "sf-0029",
+    "12.000",
+    "PUBLISHED",
+    "home"
+   ],
+   [
+    "sf-0030",
+    "140.000",
+    "PUBLISHED",
+    "home"
+   ],
+   [
+    "sf-0031",
+    "550.000",
+    "PUBLISHED",
+    "property"
+   ],
+   [
+    "sf-0032",
+    "45000.000",
+    "PUBLISHED",
+    "property"
+   ],
+   [
+    "sf-0033",
+    "90000.000",
+    "PUBLISHED",
+    "property"
+   ],
+   [
+    "sf-0034",
+    "15.000",
+    "PUBLISHED",
+    "services"
+   ],
+   [
+    "sf-0035",
+    "25.000",
+    "PUBLISHED",
+    "services"
+   ],
+   [
+    "sf-0036",
+    "20.000",
+    "PUBLISHED",
+    "services"
+   ],
+   [
+    "sf-0037",
+    "30.000",
+    "PUBLISHED",
+    "services"
+   ],
+   [
+    "sf-0039",
+    "9.000",
+    "PUBLISHED",
+    "other"
+   ],
+   [
+    "sf-0040",
+    "3100.000",
+    "PUBLISHED",
+    "other"
+   ],
+   [
+    "sf-0041",
+    "30.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0042",
+    "3000.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0043",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0044",
+    "67.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0045",
+    "74.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0046",
+    "81.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0047",
+    "88.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0048",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0049",
+    "102.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0050",
+    "109.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0051",
+    "116.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0052",
+    "123.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0053",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0054",
+    "137.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0055",
+    "144.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0056",
+    "151.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0057",
+    "158.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0058",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0059",
+    "172.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0060",
+    "179.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0061",
+    "186.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0062",
+    "193.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0063",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0064",
+    "207.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0065",
+    "214.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0066",
+    "221.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0067",
+    "228.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0068",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0069",
+    "242.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0070",
+    "249.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0071",
+    "256.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0072",
+    "263.000",
+    "PUBLISHED",
+    "electronics"
+   ]
+  ]
+ },
+ {
+  "options": {
+   "limit": 200
+  },
+  "result": [
+   [
+    "sf-0017",
+    "45.000",
+    "PUBLISHED",
+    "electronics",
+    "sf-promo-3:SEARCH_AND_CHAT"
+   ],
+   [
+    "sf-0071",
+    "256.000",
+    "PUBLISHED",
+    "electronics",
+    "sf-promo-2:SEARCH_AND_CHAT"
+   ],
+   [
+    "sf-0026",
+    "6.000",
+    "PUBLISHED",
+    "fashion",
+    null
+   ],
+   [
+    "sf-0023",
+    "8.000",
+    "PUBLISHED",
+    "fashion",
+    null
+   ],
+   [
+    "sf-0039",
+    "9.000",
+    "PUBLISHED",
+    "other",
+    null
+   ],
+   [
+    "sf-0029",
+    "12.000",
+    "PUBLISHED",
+    "home",
+    null
+   ],
+   [
+    "sf-0020",
+    "15.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0034",
+    "15.000",
+    "PUBLISHED",
+    "services",
+    null
+   ],
+   [
+    "sf-0036",
+    "20.000",
+    "PUBLISHED",
+    "services",
+    null
+   ],
+   [
+    "sf-0035",
+    "25.000",
+    "PUBLISHED",
+    "services",
+    null
+   ],
+   [
+    "sf-0037",
+    "30.000",
+    "PUBLISHED",
+    "services",
+    null
+   ],
+   [
+    "sf-0041",
+    "30.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0016",
+    "35.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0025",
+    "35.000",
+    "PUBLISHED",
+    "fashion",
+    null
+   ],
+   [
+    "sf-0024",
+    "60.000",
+    "PUBLISHED",
+    "fashion",
+    null
+   ],
+   [
+    "sf-0044",
+    "67.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0045",
+    "74.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0046",
+    "81.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0047",
+    "88.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0043",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0048",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0053",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0058",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0063",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0068",
     "100.000",
     "PUBLISHED",
     "electronics",
@@ -493,15 +766,15 @@
     null
    ],
    [
-    "sf-0052",
-    "123.000",
+    "sf-0028",
+    "120.000",
     "PUBLISHED",
-    "electronics",
+    "home",
     null
    ],
    [
-    "sf-0053",
-    "100.000",
+    "sf-0052",
+    "123.000",
     "PUBLISHED",
     "electronics",
     null
@@ -514,8 +787,22 @@
     null
    ],
    [
+    "sf-0030",
+    "140.000",
+    "PUBLISHED",
+    "home",
+    null
+   ],
+   [
     "sf-0055",
     "144.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0015",
+    "150.000",
     "PUBLISHED",
     "electronics",
     null
@@ -535,15 +822,15 @@
     null
    ],
    [
-    "sf-0058",
-    "100.000",
+    "sf-0059",
+    "172.000",
     "PUBLISHED",
     "electronics",
     null
    ],
    [
-    "sf-0059",
-    "172.000",
+    "sf-0019",
+    "175.000",
     "PUBLISHED",
     "electronics",
     null
@@ -570,15 +857,15 @@
     null
    ],
    [
-    "sf-0063",
-    "100.000",
+    "sf-0064",
+    "207.000",
     "PUBLISHED",
     "electronics",
     null
    ],
    [
-    "sf-0064",
-    "207.000",
+    "sf-0014",
+    "210.000",
     "PUBLISHED",
     "electronics",
     null
@@ -605,13 +892,6 @@
     null
    ],
    [
-    "sf-0068",
-    "100.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
     "sf-0069",
     "242.000",
     "PUBLISHED",
@@ -626,11 +906,515 @@
     null
    ],
    [
+    "sf-0012",
+    "260.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
     "sf-0072",
     "263.000",
     "PUBLISHED",
     "electronics",
     null
+   ],
+   [
+    "sf-0027",
+    "300.000",
+    "PUBLISHED",
+    "home",
+    null
+   ],
+   [
+    "sf-0013",
+    "420.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0018",
+    "480.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0031",
+    "550.000",
+    "PUBLISHED",
+    "property",
+    null
+   ],
+   [
+    "sf-0042",
+    "3000.000",
+    "PUBLISHED",
+    "cars",
+    null
+   ],
+   [
+    "sf-0040",
+    "3100.000",
+    "PUBLISHED",
+    "other",
+    null
+   ],
+   [
+    "sf-0004",
+    "3500.000",
+    "PUBLISHED",
+    "cars",
+    null
+   ],
+   [
+    "sf-0006",
+    "4200.000",
+    "PUBLISHED",
+    "cars",
+    null
+   ],
+   [
+    "sf-0005",
+    "6800.000",
+    "PUBLISHED",
+    "cars",
+    null
+   ],
+   [
+    "sf-0001",
+    "7000.000",
+    "PUBLISHED",
+    "cars",
+    null
+   ],
+   [
+    "sf-0002",
+    "9500.000",
+    "PUBLISHED",
+    "cars",
+    null
+   ],
+   [
+    "sf-0003",
+    "18000.000",
+    "PUBLISHED",
+    "cars",
+    null
+   ],
+   [
+    "sf-0032",
+    "45000.000",
+    "PUBLISHED",
+    "property",
+    null
+   ],
+   [
+    "sf-0033",
+    "90000.000",
+    "PUBLISHED",
+    "property",
+    null
+   ],
+   [
+    "sf-0021",
+    null,
+    "PUBLISHED",
+    "electronics",
+    null
+   ]
+  ],
+  "full": [
+   [
+    "sf-0001",
+    "7000.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0002",
+    "9500.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0003",
+    "18000.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0004",
+    "3500.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0005",
+    "6800.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0006",
+    "4200.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0012",
+    "260.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0013",
+    "420.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0014",
+    "210.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0015",
+    "150.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0016",
+    "35.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0017",
+    "45.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0018",
+    "480.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0019",
+    "175.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0020",
+    "15.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0021",
+    null,
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0023",
+    "8.000",
+    "PUBLISHED",
+    "fashion"
+   ],
+   [
+    "sf-0024",
+    "60.000",
+    "PUBLISHED",
+    "fashion"
+   ],
+   [
+    "sf-0025",
+    "35.000",
+    "PUBLISHED",
+    "fashion"
+   ],
+   [
+    "sf-0026",
+    "6.000",
+    "PUBLISHED",
+    "fashion"
+   ],
+   [
+    "sf-0027",
+    "300.000",
+    "PUBLISHED",
+    "home"
+   ],
+   [
+    "sf-0028",
+    "120.000",
+    "PUBLISHED",
+    "home"
+   ],
+   [
+    "sf-0029",
+    "12.000",
+    "PUBLISHED",
+    "home"
+   ],
+   [
+    "sf-0030",
+    "140.000",
+    "PUBLISHED",
+    "home"
+   ],
+   [
+    "sf-0031",
+    "550.000",
+    "PUBLISHED",
+    "property"
+   ],
+   [
+    "sf-0032",
+    "45000.000",
+    "PUBLISHED",
+    "property"
+   ],
+   [
+    "sf-0033",
+    "90000.000",
+    "PUBLISHED",
+    "property"
+   ],
+   [
+    "sf-0034",
+    "15.000",
+    "PUBLISHED",
+    "services"
+   ],
+   [
+    "sf-0035",
+    "25.000",
+    "PUBLISHED",
+    "services"
+   ],
+   [
+    "sf-0036",
+    "20.000",
+    "PUBLISHED",
+    "services"
+   ],
+   [
+    "sf-0037",
+    "30.000",
+    "PUBLISHED",
+    "services"
+   ],
+   [
+    "sf-0039",
+    "9.000",
+    "PUBLISHED",
+    "other"
+   ],
+   [
+    "sf-0040",
+    "3100.000",
+    "PUBLISHED",
+    "other"
+   ],
+   [
+    "sf-0041",
+    "30.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0042",
+    "3000.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0043",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0044",
+    "67.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0045",
+    "74.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0046",
+    "81.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0047",
+    "88.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0048",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0049",
+    "102.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0050",
+    "109.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0051",
+    "116.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0052",
+    "123.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0053",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0054",
+    "137.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0055",
+    "144.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0056",
+    "151.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0057",
+    "158.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0058",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0059",
+    "172.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0060",
+    "179.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0061",
+    "186.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0062",
+    "193.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0063",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0064",
+    "207.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0065",
+    "214.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0066",
+    "221.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0067",
+    "228.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0068",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0069",
+    "242.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0070",
+    "249.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0071",
+    "256.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0072",
+    "263.000",
+    "PUBLISHED",
+    "electronics"
    ]
   ]
  },
@@ -655,25 +1439,417 @@
     "sf-promo-2:SEARCH_AND_CHAT"
    ],
    [
-    "sf-0016",
-    "35.000",
+    "sf-0026",
+    "6.000",
     "PUBLISHED",
-    "electronics",
+    "fashion",
     null
    ],
+   [
+    "sf-0023",
+    "8.000",
+    "PUBLISHED",
+    "fashion",
+    null
+   ],
+   [
+    "sf-0039",
+    "9.000",
+    "PUBLISHED",
+    "other",
+    null
+   ]
+  ],
+  "full": [
    [
     "sf-0001",
     "7000.000",
     "PUBLISHED",
-    "cars",
-    null
+    "cars"
    ],
    [
     "sf-0002",
     "9500.000",
     "PUBLISHED",
-    "cars",
-    null
+    "cars"
+   ],
+   [
+    "sf-0003",
+    "18000.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0004",
+    "3500.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0005",
+    "6800.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0006",
+    "4200.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0012",
+    "260.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0013",
+    "420.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0014",
+    "210.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0015",
+    "150.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0016",
+    "35.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0017",
+    "45.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0018",
+    "480.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0019",
+    "175.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0020",
+    "15.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0021",
+    null,
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0023",
+    "8.000",
+    "PUBLISHED",
+    "fashion"
+   ],
+   [
+    "sf-0024",
+    "60.000",
+    "PUBLISHED",
+    "fashion"
+   ],
+   [
+    "sf-0025",
+    "35.000",
+    "PUBLISHED",
+    "fashion"
+   ],
+   [
+    "sf-0026",
+    "6.000",
+    "PUBLISHED",
+    "fashion"
+   ],
+   [
+    "sf-0027",
+    "300.000",
+    "PUBLISHED",
+    "home"
+   ],
+   [
+    "sf-0028",
+    "120.000",
+    "PUBLISHED",
+    "home"
+   ],
+   [
+    "sf-0029",
+    "12.000",
+    "PUBLISHED",
+    "home"
+   ],
+   [
+    "sf-0030",
+    "140.000",
+    "PUBLISHED",
+    "home"
+   ],
+   [
+    "sf-0031",
+    "550.000",
+    "PUBLISHED",
+    "property"
+   ],
+   [
+    "sf-0032",
+    "45000.000",
+    "PUBLISHED",
+    "property"
+   ],
+   [
+    "sf-0033",
+    "90000.000",
+    "PUBLISHED",
+    "property"
+   ],
+   [
+    "sf-0034",
+    "15.000",
+    "PUBLISHED",
+    "services"
+   ],
+   [
+    "sf-0035",
+    "25.000",
+    "PUBLISHED",
+    "services"
+   ],
+   [
+    "sf-0036",
+    "20.000",
+    "PUBLISHED",
+    "services"
+   ],
+   [
+    "sf-0037",
+    "30.000",
+    "PUBLISHED",
+    "services"
+   ],
+   [
+    "sf-0039",
+    "9.000",
+    "PUBLISHED",
+    "other"
+   ],
+   [
+    "sf-0040",
+    "3100.000",
+    "PUBLISHED",
+    "other"
+   ],
+   [
+    "sf-0041",
+    "30.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0042",
+    "3000.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0043",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0044",
+    "67.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0045",
+    "74.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0046",
+    "81.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0047",
+    "88.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0048",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0049",
+    "102.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0050",
+    "109.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0051",
+    "116.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0052",
+    "123.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0053",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0054",
+    "137.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0055",
+    "144.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0056",
+    "151.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0057",
+    "158.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0058",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0059",
+    "172.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0060",
+    "179.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0061",
+    "186.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0062",
+    "193.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0063",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0064",
+    "207.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0065",
+    "214.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0066",
+    "221.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0067",
+    "228.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0068",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0069",
+    "242.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0070",
+    "249.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0071",
+    "256.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0072",
+    "263.000",
+    "PUBLISHED",
+    "electronics"
    ]
   ]
  },
@@ -691,20 +1867,6 @@
     "sf-promo-2:SEARCH_AND_CHAT"
    ],
    [
-    "sf-0012",
-    "260.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
-    "sf-0013",
-    "420.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
     "sf-0020",
     "15.000",
     "PUBLISHED",
@@ -712,22 +1874,8 @@
     null
    ],
    [
-    "sf-0021",
-    null,
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
     "sf-0041",
     "30.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
-    "sf-0043",
-    "100.000",
     "PUBLISHED",
     "electronics",
     null
@@ -761,7 +1909,42 @@
     null
    ],
    [
+    "sf-0043",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
     "sf-0048",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0053",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0058",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0063",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0068",
     "100.000",
     "PUBLISHED",
     "electronics",
@@ -796,13 +1979,6 @@
     null
    ],
    [
-    "sf-0053",
-    "100.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
     "sf-0054",
     "137.000",
     "PUBLISHED",
@@ -831,13 +2007,6 @@
     null
    ],
    [
-    "sf-0058",
-    "100.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
     "sf-0059",
     "172.000",
     "PUBLISHED",
@@ -850,6 +2019,225 @@
     "PUBLISHED",
     "electronics",
     null
+   ],
+   [
+    "sf-0061",
+    "186.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ]
+  ],
+  "full": [
+   [
+    "sf-0012",
+    "260.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0013",
+    "420.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0020",
+    "15.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0021",
+    null,
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0041",
+    "30.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0043",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0044",
+    "67.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0045",
+    "74.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0046",
+    "81.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0047",
+    "88.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0048",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0049",
+    "102.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0050",
+    "109.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0051",
+    "116.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0052",
+    "123.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0053",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0054",
+    "137.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0055",
+    "144.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0056",
+    "151.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0057",
+    "158.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0058",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0059",
+    "172.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0060",
+    "179.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0061",
+    "186.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0062",
+    "193.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0063",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0064",
+    "207.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0065",
+    "214.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0066",
+    "221.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0067",
+    "228.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0068",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0069",
+    "242.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0070",
+    "249.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0071",
+    "256.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0072",
+    "263.000",
+    "PUBLISHED",
+    "electronics"
    ]
   ]
  },
@@ -867,13 +2255,6 @@
     "sf-promo-1:SEARCH_AND_CHAT"
    ],
    [
-    "sf-0012",
-    "260.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
     "sf-0020",
     "15.000",
     "PUBLISHED",
@@ -881,22 +2262,8 @@
     null
    ],
    [
-    "sf-0021",
-    null,
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
     "sf-0041",
     "30.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
-    "sf-0043",
-    "100.000",
     "PUBLISHED",
     "electronics",
     null
@@ -930,7 +2297,42 @@
     null
    ],
    [
+    "sf-0043",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
     "sf-0048",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0053",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0058",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0063",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0068",
     "100.000",
     "PUBLISHED",
     "electronics",
@@ -965,13 +2367,6 @@
     null
    ],
    [
-    "sf-0053",
-    "100.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
     "sf-0054",
     "137.000",
     "PUBLISHED",
@@ -1000,13 +2395,6 @@
     null
    ],
    [
-    "sf-0058",
-    "100.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
     "sf-0059",
     "172.000",
     "PUBLISHED",
@@ -1026,6 +2414,218 @@
     "PUBLISHED",
     "electronics",
     null
+   ]
+  ],
+  "full": [
+   [
+    "sf-0012",
+    "260.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0013",
+    "420.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0020",
+    "15.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0021",
+    null,
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0041",
+    "30.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0043",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0044",
+    "67.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0045",
+    "74.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0046",
+    "81.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0047",
+    "88.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0048",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0049",
+    "102.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0050",
+    "109.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0051",
+    "116.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0052",
+    "123.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0053",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0054",
+    "137.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0055",
+    "144.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0056",
+    "151.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0057",
+    "158.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0058",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0059",
+    "172.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0060",
+    "179.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0061",
+    "186.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0062",
+    "193.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0063",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0064",
+    "207.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0065",
+    "214.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0066",
+    "221.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0067",
+    "228.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0068",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0069",
+    "242.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0070",
+    "249.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0071",
+    "256.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0072",
+    "263.000",
+    "PUBLISHED",
+    "electronics"
    ]
   ]
  },
@@ -1036,29 +2636,8 @@
   },
   "result": [
    [
-    "sf-0012",
-    "260.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
-    "sf-0013",
-    "420.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
     "sf-0020",
     "15.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
-    "sf-0021",
-    null,
     "PUBLISHED",
     "electronics",
     null
@@ -1071,13 +2650,6 @@
     null
    ],
    [
-    "sf-0043",
-    "100.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
     "sf-0044",
     "67.000",
     "PUBLISHED",
@@ -1106,7 +2678,42 @@
     null
    ],
    [
+    "sf-0043",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
     "sf-0048",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0053",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0058",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0063",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0068",
     "100.000",
     "PUBLISHED",
     "electronics",
@@ -1141,13 +2748,6 @@
     null
    ],
    [
-    "sf-0053",
-    "100.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
     "sf-0054",
     "137.000",
     "PUBLISHED",
@@ -1171,731 +2771,6 @@
    [
     "sf-0057",
     "158.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
-    "sf-0058",
-    "100.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
-    "sf-0059",
-    "172.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
-    "sf-0060",
-    "179.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
-    "sf-0061",
-    "186.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ]
-  ]
- },
- {
-  "options": {
-   "search": "هواتف",
-   "conversational": true
-  },
-  "result": []
- },
- {
-  "options": {
-   "search": "ايفون",
-   "conversational": true
-  },
-  "result": [
-   [
-    "sf-0013",
-    "420.000",
-    "PUBLISHED",
-    "electronics",
-    "sf-promo-1:SEARCH_AND_CHAT"
-   ],
-   [
-    "sf-0014",
-    "210.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ]
-  ]
- },
- {
-  "options": {
-   "search": "آيفون 13",
-   "conversational": true
-  },
-  "result": [
-   [
-    "sf-0013",
-    "420.000",
-    "PUBLISHED",
-    "electronics",
-    "sf-promo-1:SEARCH_AND_CHAT"
-   ]
-  ]
- },
- {
-  "options": {
-   "search": "سامسونج",
-   "conversational": true
-  },
-  "result": [
-   [
-    "sf-0012",
-    "260.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ]
-  ]
- },
- {
-  "options": {
-   "search": "samsung",
-   "conversational": true
-  },
-  "result": [
-   [
-    "sf-0015",
-    "150.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ]
-  ]
- },
- {
-  "options": {
-   "search": "SM-G973",
-   "conversational": true
-  },
-  "result": [
-   [
-    "sf-0015",
-    "150.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ]
-  ]
- },
- {
-  "options": {
-   "search": "A55",
-   "conversational": true
-  },
-  "result": [
-   [
-    "sf-0012",
-    "260.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ]
-  ]
- },
- {
-  "options": {
-   "search": "سيارة",
-   "conversational": true
-  },
-  "result": [
-   [
-    "sf-0001",
-    "7000.000",
-    "PUBLISHED",
-    "cars",
-    null
-   ],
-   [
-    "sf-0002",
-    "9500.000",
-    "PUBLISHED",
-    "cars",
-    null
-   ],
-   [
-    "sf-0003",
-    "18000.000",
-    "PUBLISHED",
-    "cars",
-    null
-   ],
-   [
-    "sf-0004",
-    "3500.000",
-    "PUBLISHED",
-    "cars",
-    null
-   ],
-   [
-    "sf-0005",
-    "6800.000",
-    "PUBLISHED",
-    "cars",
-    null
-   ],
-   [
-    "sf-0006",
-    "4200.000",
-    "PUBLISHED",
-    "cars",
-    null
-   ],
-   [
-    "sf-0042",
-    "3000.000",
-    "PUBLISHED",
-    "cars",
-    null
-   ]
-  ]
- },
- {
-  "options": {
-   "search": "سيارات",
-   "conversational": true
-  },
-  "result": [
-   [
-    "sf-0001",
-    "7000.000",
-    "PUBLISHED",
-    "cars",
-    null
-   ],
-   [
-    "sf-0002",
-    "9500.000",
-    "PUBLISHED",
-    "cars",
-    null
-   ],
-   [
-    "sf-0003",
-    "18000.000",
-    "PUBLISHED",
-    "cars",
-    null
-   ],
-   [
-    "sf-0004",
-    "3500.000",
-    "PUBLISHED",
-    "cars",
-    null
-   ],
-   [
-    "sf-0005",
-    "6800.000",
-    "PUBLISHED",
-    "cars",
-    null
-   ],
-   [
-    "sf-0006",
-    "4200.000",
-    "PUBLISHED",
-    "cars",
-    null
-   ],
-   [
-    "sf-0042",
-    "3000.000",
-    "PUBLISHED",
-    "cars",
-    null
-   ]
-  ]
- },
- {
-  "options": {
-   "search": "سياره كيا",
-   "conversational": true
-  },
-  "result": [
-   [
-    "sf-0001",
-    "7000.000",
-    "PUBLISHED",
-    "cars",
-    null
-   ],
-   [
-    "sf-0042",
-    "3000.000",
-    "PUBLISHED",
-    "cars",
-    null
-   ]
-  ]
- },
- {
-  "options": {
-   "search": "تويوتا",
-   "conversational": true
-  },
-  "result": [
-   [
-    "sf-0003",
-    "18000.000",
-    "PUBLISHED",
-    "cars",
-    null
-   ],
-   [
-    "sf-0005",
-    "6800.000",
-    "PUBLISHED",
-    "cars",
-    null
-   ]
-  ]
- },
- {
-  "options": {
-   "search": "toyota",
-   "conversational": true
-  },
-  "result": [
-   [
-    "sf-0005",
-    "6800.000",
-    "PUBLISHED",
-    "cars",
-    null
-   ]
-  ]
- },
- {
-  "options": {
-   "search": "فني مكيفات",
-   "conversational": true
-  },
-  "result": [
-   [
-    "sf-0034",
-    "15.000",
-    "PUBLISHED",
-    "services",
-    null
-   ]
-  ]
- },
- {
-  "options": {
-   "search": "مكيفات",
-   "conversational": true
-  },
-  "result": [
-   [
-    "sf-0034",
-    "15.000",
-    "PUBLISHED",
-    "services",
-    null
-   ]
-  ]
- },
- {
-  "options": {
-   "search": "تنظيف",
-   "conversational": true
-  },
-  "result": [
-   [
-    "sf-0035",
-    "25.000",
-    "PUBLISHED",
-    "services",
-    null
-   ]
-  ]
- },
- {
-  "options": {
-   "search": "مترجم",
-   "conversational": true
-  },
-  "result": [
-   [
-    "sf-0037",
-    "30.000",
-    "PUBLISHED",
-    "services",
-    null
-   ]
-  ]
- },
- {
-  "options": {
-   "search": "كنب",
-   "conversational": true
-  },
-  "result": [
-   [
-    "sf-0027",
-    "300.000",
-    "PUBLISHED",
-    "home",
-    null
-   ],
-   [
-    "sf-0028",
-    "120.000",
-    "PUBLISHED",
-    "home",
-    null
-   ]
-  ]
- },
- {
-  "options": {
-   "search": "كنبة",
-   "conversational": true
-  },
-  "result": [
-   [
-    "sf-0027",
-    "300.000",
-    "PUBLISHED",
-    "home",
-    null
-   ],
-   [
-    "sf-0028",
-    "120.000",
-    "PUBLISHED",
-    "home",
-    null
-   ]
-  ]
- },
- {
-  "options": {
-   "search": "سوداء",
-   "conversational": true
-  },
-  "result": [
-   [
-    "sf-0023",
-    "8.000",
-    "PUBLISHED",
-    "fashion",
-    null
-   ],
-   [
-    "sf-0025",
-    "35.000",
-    "PUBLISHED",
-    "fashion",
-    null
-   ]
-  ]
- },
- {
-  "options": {
-   "search": "اسود",
-   "conversational": true
-  },
-  "result": [
-   [
-    "sf-0023",
-    "8.000",
-    "PUBLISHED",
-    "fashion",
-    null
-   ],
-   [
-    "sf-0025",
-    "35.000",
-    "PUBLISHED",
-    "fashion",
-    null
-   ]
-  ]
- },
- {
-  "options": {
-   "search": "تيشيرت",
-   "conversational": true
-  },
-  "result": [
-   [
-    "sf-0023",
-    "8.000",
-    "PUBLISHED",
-    "fashion",
-    null
-   ]
-  ]
- },
- {
-  "options": {
-   "search": "تي شيرت",
-   "conversational": true
-  },
-  "result": [
-   [
-    "sf-0023",
-    "8.000",
-    "PUBLISHED",
-    "fashion",
-    null
-   ]
-  ]
- },
- {
-  "options": {
-   "search": "لابتوب للبرمجة",
-   "conversational": true
-  },
-  "result": [
-   [
-    "sf-0018",
-    "480.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ]
-  ]
- },
- {
-  "options": {
-   "search": "شقة",
-   "conversational": true
-  },
-  "result": [
-   [
-    "sf-0027",
-    "300.000",
-    "PUBLISHED",
-    "home",
-    null
-   ],
-   [
-    "sf-0028",
-    "120.000",
-    "PUBLISHED",
-    "home",
-    null
-   ],
-   [
-    "sf-0029",
-    "12.000",
-    "PUBLISHED",
-    "home",
-    null
-   ],
-   [
-    "sf-0030",
-    "140.000",
-    "PUBLISHED",
-    "home",
-    null
-   ],
-   [
-    "sf-0031",
-    "550.000",
-    "PUBLISHED",
-    "property",
-    null
-   ],
-   [
-    "sf-0032",
-    "45000.000",
-    "PUBLISHED",
-    "property",
-    null
-   ],
-   [
-    "sf-0033",
-    "90000.000",
-    "PUBLISHED",
-    "property",
-    null
-   ],
-   [
-    "sf-0035",
-    "25.000",
-    "PUBLISHED",
-    "services",
-    null
-   ]
-  ]
- },
- {
-  "options": {
-   "search": "شقق خلدا",
-   "conversational": true
-  },
-  "result": [
-   [
-    "sf-0031",
-    "550.000",
-    "PUBLISHED",
-    "property",
-    null
-   ]
-  ]
- },
- {
-  "options": {
-   "search": "أبي هاتف مستعمل",
-   "conversational": true
-  },
-  "result": [
-   [
-    "sf-0071",
-    "256.000",
-    "PUBLISHED",
-    "electronics",
-    "sf-promo-2:SEARCH_AND_CHAT"
-   ],
-   [
-    "sf-0013",
-    "420.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
-    "sf-0020",
-    "15.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
-    "sf-0021",
-    null,
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
-    "sf-0043",
-    "100.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
-    "sf-0044",
-    "67.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
-    "sf-0045",
-    "74.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
-    "sf-0046",
-    "81.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
-    "sf-0047",
-    "88.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
-    "sf-0048",
-    "100.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
-    "sf-0049",
-    "102.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
-    "sf-0050",
-    "109.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
-    "sf-0051",
-    "116.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
-    "sf-0052",
-    "123.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
-    "sf-0053",
-    "100.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
-    "sf-0054",
-    "137.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
-    "sf-0055",
-    "144.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
-    "sf-0056",
-    "151.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
-    "sf-0057",
-    "158.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
-    "sf-0058",
-    "100.000",
     "PUBLISHED",
     "electronics",
     null
@@ -1928,17 +2803,1162 @@
     "electronics",
     null
    ]
+  ],
+  "full": [
+   [
+    "sf-0012",
+    "260.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0013",
+    "420.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0020",
+    "15.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0021",
+    null,
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0041",
+    "30.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0043",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0044",
+    "67.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0045",
+    "74.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0046",
+    "81.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0047",
+    "88.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0048",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0049",
+    "102.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0050",
+    "109.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0051",
+    "116.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0052",
+    "123.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0053",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0054",
+    "137.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0055",
+    "144.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0056",
+    "151.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0057",
+    "158.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0058",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0059",
+    "172.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0060",
+    "179.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0061",
+    "186.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0062",
+    "193.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0063",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0064",
+    "207.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0065",
+    "214.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0066",
+    "221.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0067",
+    "228.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0068",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0069",
+    "242.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0070",
+    "249.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0071",
+    "256.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0072",
+    "263.000",
+    "PUBLISHED",
+    "electronics"
+   ]
   ]
  },
  {
   "options": {
-   "search": "ابغى جوال جديد؟",
+   "search": "هواتف",
+   "conversational": true
+  },
+  "result": [],
+  "full": []
+ },
+ {
+  "options": {
+   "search": "ايفون",
+   "conversational": true
+  },
+  "result": [
+   [
+    "sf-0013",
+    "420.000",
+    "PUBLISHED",
+    "electronics",
+    "sf-promo-1:SEARCH_AND_CHAT"
+   ],
+   [
+    "sf-0014",
+    "210.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ]
+  ],
+  "full": [
+   [
+    "sf-0013",
+    "420.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0014",
+    "210.000",
+    "PUBLISHED",
+    "electronics"
+   ]
+  ]
+ },
+ {
+  "options": {
+   "search": "آيفون 13",
+   "conversational": true
+  },
+  "result": [
+   [
+    "sf-0013",
+    "420.000",
+    "PUBLISHED",
+    "electronics",
+    "sf-promo-1:SEARCH_AND_CHAT"
+   ]
+  ],
+  "full": [
+   [
+    "sf-0013",
+    "420.000",
+    "PUBLISHED",
+    "electronics"
+   ]
+  ]
+ },
+ {
+  "options": {
+   "search": "سامسونج",
    "conversational": true
   },
   "result": [
    [
     "sf-0012",
     "260.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ]
+  ],
+  "full": [
+   [
+    "sf-0012",
+    "260.000",
+    "PUBLISHED",
+    "electronics"
+   ]
+  ]
+ },
+ {
+  "options": {
+   "search": "samsung",
+   "conversational": true
+  },
+  "result": [
+   [
+    "sf-0015",
+    "150.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ]
+  ],
+  "full": [
+   [
+    "sf-0015",
+    "150.000",
+    "PUBLISHED",
+    "electronics"
+   ]
+  ]
+ },
+ {
+  "options": {
+   "search": "SM-G973",
+   "conversational": true
+  },
+  "result": [
+   [
+    "sf-0015",
+    "150.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ]
+  ],
+  "full": [
+   [
+    "sf-0015",
+    "150.000",
+    "PUBLISHED",
+    "electronics"
+   ]
+  ]
+ },
+ {
+  "options": {
+   "search": "A55",
+   "conversational": true
+  },
+  "result": [
+   [
+    "sf-0012",
+    "260.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ]
+  ],
+  "full": [
+   [
+    "sf-0012",
+    "260.000",
+    "PUBLISHED",
+    "electronics"
+   ]
+  ]
+ },
+ {
+  "options": {
+   "search": "سيارة",
+   "conversational": true
+  },
+  "result": [
+   [
+    "sf-0042",
+    "3000.000",
+    "PUBLISHED",
+    "cars",
+    null
+   ],
+   [
+    "sf-0004",
+    "3500.000",
+    "PUBLISHED",
+    "cars",
+    null
+   ],
+   [
+    "sf-0006",
+    "4200.000",
+    "PUBLISHED",
+    "cars",
+    null
+   ],
+   [
+    "sf-0005",
+    "6800.000",
+    "PUBLISHED",
+    "cars",
+    null
+   ],
+   [
+    "sf-0001",
+    "7000.000",
+    "PUBLISHED",
+    "cars",
+    null
+   ],
+   [
+    "sf-0002",
+    "9500.000",
+    "PUBLISHED",
+    "cars",
+    null
+   ],
+   [
+    "sf-0003",
+    "18000.000",
+    "PUBLISHED",
+    "cars",
+    null
+   ]
+  ],
+  "full": [
+   [
+    "sf-0001",
+    "7000.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0002",
+    "9500.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0003",
+    "18000.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0004",
+    "3500.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0005",
+    "6800.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0006",
+    "4200.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0042",
+    "3000.000",
+    "PUBLISHED",
+    "cars"
+   ]
+  ]
+ },
+ {
+  "options": {
+   "search": "سيارات",
+   "conversational": true
+  },
+  "result": [
+   [
+    "sf-0042",
+    "3000.000",
+    "PUBLISHED",
+    "cars",
+    null
+   ],
+   [
+    "sf-0004",
+    "3500.000",
+    "PUBLISHED",
+    "cars",
+    null
+   ],
+   [
+    "sf-0006",
+    "4200.000",
+    "PUBLISHED",
+    "cars",
+    null
+   ],
+   [
+    "sf-0005",
+    "6800.000",
+    "PUBLISHED",
+    "cars",
+    null
+   ],
+   [
+    "sf-0001",
+    "7000.000",
+    "PUBLISHED",
+    "cars",
+    null
+   ],
+   [
+    "sf-0002",
+    "9500.000",
+    "PUBLISHED",
+    "cars",
+    null
+   ],
+   [
+    "sf-0003",
+    "18000.000",
+    "PUBLISHED",
+    "cars",
+    null
+   ]
+  ],
+  "full": [
+   [
+    "sf-0001",
+    "7000.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0002",
+    "9500.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0003",
+    "18000.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0004",
+    "3500.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0005",
+    "6800.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0006",
+    "4200.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0042",
+    "3000.000",
+    "PUBLISHED",
+    "cars"
+   ]
+  ]
+ },
+ {
+  "options": {
+   "search": "سياره كيا",
+   "conversational": true
+  },
+  "result": [
+   [
+    "sf-0042",
+    "3000.000",
+    "PUBLISHED",
+    "cars",
+    null
+   ],
+   [
+    "sf-0001",
+    "7000.000",
+    "PUBLISHED",
+    "cars",
+    null
+   ]
+  ],
+  "full": [
+   [
+    "sf-0001",
+    "7000.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0042",
+    "3000.000",
+    "PUBLISHED",
+    "cars"
+   ]
+  ]
+ },
+ {
+  "options": {
+   "search": "تويوتا",
+   "conversational": true
+  },
+  "result": [
+   [
+    "sf-0005",
+    "6800.000",
+    "PUBLISHED",
+    "cars",
+    null
+   ],
+   [
+    "sf-0003",
+    "18000.000",
+    "PUBLISHED",
+    "cars",
+    null
+   ]
+  ],
+  "full": [
+   [
+    "sf-0003",
+    "18000.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0005",
+    "6800.000",
+    "PUBLISHED",
+    "cars"
+   ]
+  ]
+ },
+ {
+  "options": {
+   "search": "toyota",
+   "conversational": true
+  },
+  "result": [
+   [
+    "sf-0005",
+    "6800.000",
+    "PUBLISHED",
+    "cars",
+    null
+   ]
+  ],
+  "full": [
+   [
+    "sf-0005",
+    "6800.000",
+    "PUBLISHED",
+    "cars"
+   ]
+  ]
+ },
+ {
+  "options": {
+   "search": "فني مكيفات",
+   "conversational": true
+  },
+  "result": [
+   [
+    "sf-0034",
+    "15.000",
+    "PUBLISHED",
+    "services",
+    null
+   ]
+  ],
+  "full": [
+   [
+    "sf-0034",
+    "15.000",
+    "PUBLISHED",
+    "services"
+   ]
+  ]
+ },
+ {
+  "options": {
+   "search": "مكيفات",
+   "conversational": true
+  },
+  "result": [
+   [
+    "sf-0034",
+    "15.000",
+    "PUBLISHED",
+    "services",
+    null
+   ]
+  ],
+  "full": [
+   [
+    "sf-0034",
+    "15.000",
+    "PUBLISHED",
+    "services"
+   ]
+  ]
+ },
+ {
+  "options": {
+   "search": "تنظيف",
+   "conversational": true
+  },
+  "result": [
+   [
+    "sf-0035",
+    "25.000",
+    "PUBLISHED",
+    "services",
+    null
+   ]
+  ],
+  "full": [
+   [
+    "sf-0035",
+    "25.000",
+    "PUBLISHED",
+    "services"
+   ]
+  ]
+ },
+ {
+  "options": {
+   "search": "مترجم",
+   "conversational": true
+  },
+  "result": [
+   [
+    "sf-0037",
+    "30.000",
+    "PUBLISHED",
+    "services",
+    null
+   ]
+  ],
+  "full": [
+   [
+    "sf-0037",
+    "30.000",
+    "PUBLISHED",
+    "services"
+   ]
+  ]
+ },
+ {
+  "options": {
+   "search": "كنب",
+   "conversational": true
+  },
+  "result": [
+   [
+    "sf-0028",
+    "120.000",
+    "PUBLISHED",
+    "home",
+    null
+   ],
+   [
+    "sf-0027",
+    "300.000",
+    "PUBLISHED",
+    "home",
+    null
+   ]
+  ],
+  "full": [
+   [
+    "sf-0027",
+    "300.000",
+    "PUBLISHED",
+    "home"
+   ],
+   [
+    "sf-0028",
+    "120.000",
+    "PUBLISHED",
+    "home"
+   ]
+  ]
+ },
+ {
+  "options": {
+   "search": "كنبة",
+   "conversational": true
+  },
+  "result": [
+   [
+    "sf-0028",
+    "120.000",
+    "PUBLISHED",
+    "home",
+    null
+   ],
+   [
+    "sf-0027",
+    "300.000",
+    "PUBLISHED",
+    "home",
+    null
+   ]
+  ],
+  "full": [
+   [
+    "sf-0027",
+    "300.000",
+    "PUBLISHED",
+    "home"
+   ],
+   [
+    "sf-0028",
+    "120.000",
+    "PUBLISHED",
+    "home"
+   ]
+  ]
+ },
+ {
+  "options": {
+   "search": "سوداء",
+   "conversational": true
+  },
+  "result": [
+   [
+    "sf-0023",
+    "8.000",
+    "PUBLISHED",
+    "fashion",
+    null
+   ],
+   [
+    "sf-0025",
+    "35.000",
+    "PUBLISHED",
+    "fashion",
+    null
+   ]
+  ],
+  "full": [
+   [
+    "sf-0023",
+    "8.000",
+    "PUBLISHED",
+    "fashion"
+   ],
+   [
+    "sf-0025",
+    "35.000",
+    "PUBLISHED",
+    "fashion"
+   ]
+  ]
+ },
+ {
+  "options": {
+   "search": "اسود",
+   "conversational": true
+  },
+  "result": [
+   [
+    "sf-0023",
+    "8.000",
+    "PUBLISHED",
+    "fashion",
+    null
+   ],
+   [
+    "sf-0025",
+    "35.000",
+    "PUBLISHED",
+    "fashion",
+    null
+   ]
+  ],
+  "full": [
+   [
+    "sf-0023",
+    "8.000",
+    "PUBLISHED",
+    "fashion"
+   ],
+   [
+    "sf-0025",
+    "35.000",
+    "PUBLISHED",
+    "fashion"
+   ]
+  ]
+ },
+ {
+  "options": {
+   "search": "تيشيرت",
+   "conversational": true
+  },
+  "result": [
+   [
+    "sf-0023",
+    "8.000",
+    "PUBLISHED",
+    "fashion",
+    null
+   ]
+  ],
+  "full": [
+   [
+    "sf-0023",
+    "8.000",
+    "PUBLISHED",
+    "fashion"
+   ]
+  ]
+ },
+ {
+  "options": {
+   "search": "تي شيرت",
+   "conversational": true
+  },
+  "result": [
+   [
+    "sf-0023",
+    "8.000",
+    "PUBLISHED",
+    "fashion",
+    null
+   ]
+  ],
+  "full": [
+   [
+    "sf-0023",
+    "8.000",
+    "PUBLISHED",
+    "fashion"
+   ]
+  ]
+ },
+ {
+  "options": {
+   "search": "لابتوب للبرمجة",
+   "conversational": true
+  },
+  "result": [
+   [
+    "sf-0018",
+    "480.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ]
+  ],
+  "full": [
+   [
+    "sf-0018",
+    "480.000",
+    "PUBLISHED",
+    "electronics"
+   ]
+  ]
+ },
+ {
+  "options": {
+   "search": "شقة",
+   "conversational": true
+  },
+  "result": [
+   [
+    "sf-0029",
+    "12.000",
+    "PUBLISHED",
+    "home",
+    null
+   ],
+   [
+    "sf-0035",
+    "25.000",
+    "PUBLISHED",
+    "services",
+    null
+   ],
+   [
+    "sf-0028",
+    "120.000",
+    "PUBLISHED",
+    "home",
+    null
+   ],
+   [
+    "sf-0030",
+    "140.000",
+    "PUBLISHED",
+    "home",
+    null
+   ],
+   [
+    "sf-0027",
+    "300.000",
+    "PUBLISHED",
+    "home",
+    null
+   ],
+   [
+    "sf-0031",
+    "550.000",
+    "PUBLISHED",
+    "property",
+    null
+   ],
+   [
+    "sf-0032",
+    "45000.000",
+    "PUBLISHED",
+    "property",
+    null
+   ],
+   [
+    "sf-0033",
+    "90000.000",
+    "PUBLISHED",
+    "property",
+    null
+   ]
+  ],
+  "full": [
+   [
+    "sf-0027",
+    "300.000",
+    "PUBLISHED",
+    "home"
+   ],
+   [
+    "sf-0028",
+    "120.000",
+    "PUBLISHED",
+    "home"
+   ],
+   [
+    "sf-0029",
+    "12.000",
+    "PUBLISHED",
+    "home"
+   ],
+   [
+    "sf-0030",
+    "140.000",
+    "PUBLISHED",
+    "home"
+   ],
+   [
+    "sf-0031",
+    "550.000",
+    "PUBLISHED",
+    "property"
+   ],
+   [
+    "sf-0032",
+    "45000.000",
+    "PUBLISHED",
+    "property"
+   ],
+   [
+    "sf-0033",
+    "90000.000",
+    "PUBLISHED",
+    "property"
+   ],
+   [
+    "sf-0035",
+    "25.000",
+    "PUBLISHED",
+    "services"
+   ]
+  ]
+ },
+ {
+  "options": {
+   "search": "شقق خلدا",
+   "conversational": true
+  },
+  "result": [
+   [
+    "sf-0031",
+    "550.000",
+    "PUBLISHED",
+    "property",
+    null
+   ]
+  ],
+  "full": [
+   [
+    "sf-0031",
+    "550.000",
+    "PUBLISHED",
+    "property"
+   ]
+  ]
+ },
+ {
+  "options": {
+   "search": "أبي هاتف مستعمل",
+   "conversational": true
+  },
+  "result": [
+   [
+    "sf-0071",
+    "256.000",
+    "PUBLISHED",
+    "electronics",
+    "sf-promo-2:SEARCH_AND_CHAT"
+   ],
+   [
+    "sf-0020",
+    "15.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0044",
+    "67.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0045",
+    "74.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0046",
+    "81.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0047",
+    "88.000",
     "PUBLISHED",
     "electronics",
     null
@@ -1951,8 +3971,349 @@
     null
    ],
    [
+    "sf-0048",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0053",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0058",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0063",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0068",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0049",
+    "102.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0050",
+    "109.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0051",
+    "116.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0052",
+    "123.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0054",
+    "137.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0055",
+    "144.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0056",
+    "151.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0057",
+    "158.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0059",
+    "172.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0060",
+    "179.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0061",
+    "186.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0062",
+    "193.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ]
+  ],
+  "full": [
+   [
+    "sf-0013",
+    "420.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0020",
+    "15.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0021",
+    null,
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0043",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0044",
+    "67.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0045",
+    "74.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0046",
+    "81.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
     "sf-0047",
     "88.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0048",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0049",
+    "102.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0050",
+    "109.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0051",
+    "116.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0052",
+    "123.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0053",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0054",
+    "137.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0055",
+    "144.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0056",
+    "151.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0057",
+    "158.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0058",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0059",
+    "172.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0060",
+    "179.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0061",
+    "186.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0062",
+    "193.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0063",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0064",
+    "207.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0065",
+    "214.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0066",
+    "221.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0067",
+    "228.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0068",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0069",
+    "242.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0070",
+    "249.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0071",
+    "256.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0072",
+    "263.000",
+    "PUBLISHED",
+    "electronics"
+   ]
+  ]
+ },
+ {
+  "options": {
+   "search": "ابغى جوال جديد؟",
+   "conversational": true
+  },
+  "result": [
+   [
+    "sf-0047",
+    "88.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0043",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0063",
+    "100.000",
     "PUBLISHED",
     "electronics",
     null
@@ -1979,13 +4340,6 @@
     null
    ],
    [
-    "sf-0063",
-    "100.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
     "sf-0067",
     "228.000",
     "PUBLISHED",
@@ -1998,6 +4352,69 @@
     "PUBLISHED",
     "electronics",
     null
+   ],
+   [
+    "sf-0012",
+    "260.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ]
+  ],
+  "full": [
+   [
+    "sf-0012",
+    "260.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0043",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0047",
+    "88.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0051",
+    "116.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0055",
+    "144.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0059",
+    "172.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0063",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0067",
+    "228.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0071",
+    "256.000",
+    "PUBLISHED",
+    "electronics"
    ]
   ]
  },
@@ -2036,6 +4453,13 @@
     null
    ],
    [
+    "sf-0063",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
     "sf-0051",
     "116.000",
     "PUBLISHED",
@@ -2064,13 +4488,6 @@
     null
    ],
    [
-    "sf-0063",
-    "100.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
     "sf-0066",
     "221.000",
     "PUBLISHED",
@@ -2091,6 +4508,80 @@
     "electronics",
     null
    ]
+  ],
+  "full": [
+   [
+    "sf-0013",
+    "420.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0020",
+    "15.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0045",
+    "74.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0048",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0051",
+    "116.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0054",
+    "137.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0057",
+    "158.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0060",
+    "179.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0063",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0066",
+    "221.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0069",
+    "242.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0072",
+    "263.000",
+    "PUBLISHED",
+    "electronics"
+   ]
   ]
  },
  {
@@ -2098,21 +4589,24 @@
    "search": "شعار",
    "conversational": true
   },
-  "result": []
+  "result": [],
+  "full": []
  },
  {
   "options": {
    "search": "ممنوع",
    "conversational": true
   },
-  "result": []
+  "result": [],
+  "full": []
  },
  {
   "options": {
    "search": "لا يوجد شيء كهذا",
    "conversational": true
   },
-  "result": []
+  "result": [],
+  "full": []
  },
  {
   "options": {
@@ -2129,18 +4623,230 @@
     "sf-promo-2:SEARCH_AND_CHAT"
    ],
    [
-    "sf-0012",
-    "260.000",
+    "sf-0020",
+    "15.000",
     "PUBLISHED",
     "electronics",
     null
    ],
    [
-    "sf-0013",
-    "420.000",
+    "sf-0041",
+    "30.000",
     "PUBLISHED",
     "electronics",
     null
+   ]
+  ],
+  "full": [
+   [
+    "sf-0012",
+    "260.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0013",
+    "420.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0020",
+    "15.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0021",
+    null,
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0041",
+    "30.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0043",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0044",
+    "67.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0045",
+    "74.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0046",
+    "81.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0047",
+    "88.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0048",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0049",
+    "102.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0050",
+    "109.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0051",
+    "116.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0052",
+    "123.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0053",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0054",
+    "137.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0055",
+    "144.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0056",
+    "151.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0057",
+    "158.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0058",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0059",
+    "172.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0060",
+    "179.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0061",
+    "186.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0062",
+    "193.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0063",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0064",
+    "207.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0065",
+    "214.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0066",
+    "221.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0067",
+    "228.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0068",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0069",
+    "242.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0070",
+    "249.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0071",
+    "256.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0072",
+    "263.000",
+    "PUBLISHED",
+    "electronics"
    ]
   ]
  },
@@ -2157,6 +4863,218 @@
     "PUBLISHED",
     "electronics",
     "sf-promo-2:SEARCH_AND_CHAT"
+   ]
+  ],
+  "full": [
+   [
+    "sf-0012",
+    "260.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0013",
+    "420.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0020",
+    "15.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0021",
+    null,
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0041",
+    "30.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0043",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0044",
+    "67.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0045",
+    "74.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0046",
+    "81.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0047",
+    "88.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0048",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0049",
+    "102.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0050",
+    "109.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0051",
+    "116.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0052",
+    "123.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0053",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0054",
+    "137.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0055",
+    "144.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0056",
+    "151.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0057",
+    "158.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0058",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0059",
+    "172.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0060",
+    "179.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0061",
+    "186.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0062",
+    "193.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0063",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0064",
+    "207.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0065",
+    "214.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0066",
+    "221.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0067",
+    "228.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0068",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0069",
+    "242.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0070",
+    "249.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0071",
+    "256.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0072",
+    "263.000",
+    "PUBLISHED",
+    "electronics"
    ]
   ]
  },
@@ -2175,20 +5093,6 @@
     "sf-promo-2:SEARCH_AND_CHAT"
    ],
    [
-    "sf-0012",
-    "260.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
-    "sf-0013",
-    "420.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
     "sf-0020",
     "15.000",
     "PUBLISHED",
@@ -2196,22 +5100,8 @@
     null
    ],
    [
-    "sf-0021",
-    null,
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
     "sf-0041",
     "30.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
-    "sf-0043",
-    "100.000",
     "PUBLISHED",
     "electronics",
     null
@@ -2245,7 +5135,42 @@
     null
    ],
    [
+    "sf-0043",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
     "sf-0048",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0053",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0058",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0063",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0068",
     "100.000",
     "PUBLISHED",
     "electronics",
@@ -2280,13 +5205,6 @@
     null
    ],
    [
-    "sf-0053",
-    "100.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
     "sf-0054",
     "137.000",
     "PUBLISHED",
@@ -2310,13 +5228,6 @@
    [
     "sf-0057",
     "158.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
-    "sf-0058",
-    "100.000",
     "PUBLISHED",
     "electronics",
     null
@@ -2350,13 +5261,6 @@
     null
    ],
    [
-    "sf-0063",
-    "100.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
     "sf-0064",
     "207.000",
     "PUBLISHED",
@@ -2385,13 +5289,6 @@
     null
    ],
    [
-    "sf-0068",
-    "100.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
     "sf-0069",
     "242.000",
     "PUBLISHED",
@@ -2406,11 +5303,244 @@
     null
    ],
    [
+    "sf-0012",
+    "260.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
     "sf-0072",
     "263.000",
     "PUBLISHED",
     "electronics",
     null
+   ],
+   [
+    "sf-0013",
+    "420.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0021",
+    null,
+    "PUBLISHED",
+    "electronics",
+    null
+   ]
+  ],
+  "full": [
+   [
+    "sf-0012",
+    "260.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0013",
+    "420.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0020",
+    "15.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0021",
+    null,
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0041",
+    "30.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0043",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0044",
+    "67.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0045",
+    "74.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0046",
+    "81.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0047",
+    "88.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0048",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0049",
+    "102.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0050",
+    "109.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0051",
+    "116.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0052",
+    "123.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0053",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0054",
+    "137.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0055",
+    "144.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0056",
+    "151.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0057",
+    "158.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0058",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0059",
+    "172.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0060",
+    "179.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0061",
+    "186.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0062",
+    "193.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0063",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0064",
+    "207.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0065",
+    "214.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0066",
+    "221.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0067",
+    "228.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0068",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0069",
+    "242.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0070",
+    "249.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0071",
+    "256.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0072",
+    "263.000",
+    "PUBLISHED",
+    "electronics"
    ]
   ]
  },
@@ -2422,20 +5552,6 @@
   },
   "result": [
    [
-    "sf-0012",
-    "260.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
-    "sf-0013",
-    "420.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
     "sf-0020",
     "15.000",
     "PUBLISHED",
@@ -2443,22 +5559,8 @@
     null
    ],
    [
-    "sf-0021",
-    null,
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
     "sf-0041",
     "30.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
-    "sf-0043",
-    "100.000",
     "PUBLISHED",
     "electronics",
     null
@@ -2492,7 +5594,42 @@
     null
    ],
    [
+    "sf-0043",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
     "sf-0048",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0053",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0058",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0063",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0068",
     "100.000",
     "PUBLISHED",
     "electronics",
@@ -2527,13 +5664,6 @@
     null
    ],
    [
-    "sf-0053",
-    "100.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
     "sf-0054",
     "137.000",
     "PUBLISHED",
@@ -2562,13 +5692,6 @@
     null
    ],
    [
-    "sf-0058",
-    "100.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
     "sf-0059",
     "172.000",
     "PUBLISHED",
@@ -2588,6 +5711,225 @@
     "PUBLISHED",
     "electronics",
     null
+   ],
+   [
+    "sf-0062",
+    "193.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ]
+  ],
+  "full": [
+   [
+    "sf-0012",
+    "260.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0013",
+    "420.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0020",
+    "15.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0021",
+    null,
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0041",
+    "30.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0043",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0044",
+    "67.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0045",
+    "74.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0046",
+    "81.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0047",
+    "88.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0048",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0049",
+    "102.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0050",
+    "109.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0051",
+    "116.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0052",
+    "123.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0053",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0054",
+    "137.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0055",
+    "144.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0056",
+    "151.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0057",
+    "158.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0058",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0059",
+    "172.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0060",
+    "179.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0061",
+    "186.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0062",
+    "193.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0063",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0064",
+    "207.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0065",
+    "214.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0066",
+    "221.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0067",
+    "228.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0068",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0069",
+    "242.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0070",
+    "249.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0071",
+    "256.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0072",
+    "263.000",
+    "PUBLISHED",
+    "electronics"
    ]
   ]
  },
@@ -2599,20 +5941,6 @@
   },
   "result": [
    [
-    "sf-0012",
-    "260.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
-    "sf-0013",
-    "420.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
     "sf-0020",
     "15.000",
     "PUBLISHED",
@@ -2620,22 +5948,8 @@
     null
    ],
    [
-    "sf-0021",
-    null,
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
     "sf-0041",
     "30.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
-    "sf-0043",
-    "100.000",
     "PUBLISHED",
     "electronics",
     null
@@ -2669,7 +5983,42 @@
     null
    ],
    [
+    "sf-0043",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
     "sf-0048",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0053",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0058",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0063",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0068",
     "100.000",
     "PUBLISHED",
     "electronics",
@@ -2704,13 +6053,6 @@
     null
    ],
    [
-    "sf-0053",
-    "100.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
     "sf-0054",
     "137.000",
     "PUBLISHED",
@@ -2739,13 +6081,6 @@
     null
    ],
    [
-    "sf-0058",
-    "100.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
     "sf-0059",
     "172.000",
     "PUBLISHED",
@@ -2765,6 +6100,225 @@
     "PUBLISHED",
     "electronics",
     null
+   ],
+   [
+    "sf-0062",
+    "193.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ]
+  ],
+  "full": [
+   [
+    "sf-0012",
+    "260.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0013",
+    "420.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0020",
+    "15.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0021",
+    null,
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0041",
+    "30.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0043",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0044",
+    "67.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0045",
+    "74.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0046",
+    "81.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0047",
+    "88.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0048",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0049",
+    "102.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0050",
+    "109.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0051",
+    "116.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0052",
+    "123.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0053",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0054",
+    "137.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0055",
+    "144.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0056",
+    "151.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0057",
+    "158.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0058",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0059",
+    "172.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0060",
+    "179.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0061",
+    "186.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0062",
+    "193.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0063",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0064",
+    "207.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0065",
+    "214.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0066",
+    "221.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0067",
+    "228.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0068",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0069",
+    "242.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0070",
+    "249.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0071",
+    "256.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0072",
+    "263.000",
+    "PUBLISHED",
+    "electronics"
    ]
   ]
  },
@@ -2783,20 +6337,6 @@
     "sf-promo-2:SEARCH_AND_CHAT"
    ],
    [
-    "sf-0012",
-    "260.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
-    "sf-0013",
-    "420.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
     "sf-0020",
     "15.000",
     "PUBLISHED",
@@ -2804,22 +6344,8 @@
     null
    ],
    [
-    "sf-0021",
-    null,
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
     "sf-0041",
     "30.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
-    "sf-0043",
-    "100.000",
     "PUBLISHED",
     "electronics",
     null
@@ -2853,7 +6379,42 @@
     null
    ],
    [
+    "sf-0043",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
     "sf-0048",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0053",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0058",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0063",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0068",
     "100.000",
     "PUBLISHED",
     "electronics",
@@ -2888,13 +6449,6 @@
     null
    ],
    [
-    "sf-0053",
-    "100.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
     "sf-0054",
     "137.000",
     "PUBLISHED",
@@ -2923,13 +6477,6 @@
     null
    ],
    [
-    "sf-0058",
-    "100.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
     "sf-0059",
     "172.000",
     "PUBLISHED",
@@ -2942,6 +6489,225 @@
     "PUBLISHED",
     "electronics",
     null
+   ],
+   [
+    "sf-0061",
+    "186.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ]
+  ],
+  "full": [
+   [
+    "sf-0012",
+    "260.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0013",
+    "420.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0020",
+    "15.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0021",
+    null,
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0041",
+    "30.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0043",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0044",
+    "67.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0045",
+    "74.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0046",
+    "81.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0047",
+    "88.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0048",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0049",
+    "102.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0050",
+    "109.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0051",
+    "116.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0052",
+    "123.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0053",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0054",
+    "137.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0055",
+    "144.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0056",
+    "151.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0057",
+    "158.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0058",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0059",
+    "172.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0060",
+    "179.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0061",
+    "186.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0062",
+    "193.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0063",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0064",
+    "207.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0065",
+    "214.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0066",
+    "221.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0067",
+    "228.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0068",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0069",
+    "242.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0070",
+    "249.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0071",
+    "256.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0072",
+    "263.000",
+    "PUBLISHED",
+    "electronics"
    ]
   ]
  },
@@ -2960,20 +6726,6 @@
     "sf-promo-2:SEARCH_AND_CHAT"
    ],
    [
-    "sf-0012",
-    "260.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
-    "sf-0013",
-    "420.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
     "sf-0020",
     "15.000",
     "PUBLISHED",
@@ -2981,22 +6733,8 @@
     null
    ],
    [
-    "sf-0021",
-    null,
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
     "sf-0041",
     "30.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
-    "sf-0043",
-    "100.000",
     "PUBLISHED",
     "electronics",
     null
@@ -3030,7 +6768,42 @@
     null
    ],
    [
+    "sf-0043",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
     "sf-0048",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0053",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0058",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0063",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0068",
     "100.000",
     "PUBLISHED",
     "electronics",
@@ -3065,13 +6838,6 @@
     null
    ],
    [
-    "sf-0053",
-    "100.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
     "sf-0054",
     "137.000",
     "PUBLISHED",
@@ -3100,13 +6866,6 @@
     null
    ],
    [
-    "sf-0058",
-    "100.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
     "sf-0059",
     "172.000",
     "PUBLISHED",
@@ -3119,6 +6878,225 @@
     "PUBLISHED",
     "electronics",
     null
+   ],
+   [
+    "sf-0061",
+    "186.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ]
+  ],
+  "full": [
+   [
+    "sf-0012",
+    "260.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0013",
+    "420.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0020",
+    "15.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0021",
+    null,
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0041",
+    "30.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0043",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0044",
+    "67.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0045",
+    "74.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0046",
+    "81.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0047",
+    "88.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0048",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0049",
+    "102.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0050",
+    "109.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0051",
+    "116.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0052",
+    "123.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0053",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0054",
+    "137.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0055",
+    "144.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0056",
+    "151.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0057",
+    "158.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0058",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0059",
+    "172.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0060",
+    "179.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0061",
+    "186.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0062",
+    "193.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0063",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0064",
+    "207.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0065",
+    "214.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0066",
+    "221.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0067",
+    "228.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0068",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0069",
+    "242.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0070",
+    "249.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0071",
+    "256.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0072",
+    "263.000",
+    "PUBLISHED",
+    "electronics"
    ]
   ]
  },
@@ -3297,6 +7275,218 @@
     "electronics",
     null
    ]
+  ],
+  "full": [
+   [
+    "sf-0012",
+    "260.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0013",
+    "420.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0020",
+    "15.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0021",
+    null,
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0041",
+    "30.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0043",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0044",
+    "67.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0045",
+    "74.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0046",
+    "81.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0047",
+    "88.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0048",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0049",
+    "102.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0050",
+    "109.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0051",
+    "116.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0052",
+    "123.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0053",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0054",
+    "137.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0055",
+    "144.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0056",
+    "151.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0057",
+    "158.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0058",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0059",
+    "172.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0060",
+    "179.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0061",
+    "186.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0062",
+    "193.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0063",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0064",
+    "207.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0065",
+    "214.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0066",
+    "221.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0067",
+    "228.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0068",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0069",
+    "242.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0070",
+    "249.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0071",
+    "256.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0072",
+    "263.000",
+    "PUBLISHED",
+    "electronics"
+   ]
   ]
  },
  {
@@ -3474,6 +7664,218 @@
     "PUBLISHED",
     "electronics",
     null
+   ]
+  ],
+  "full": [
+   [
+    "sf-0012",
+    "260.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0013",
+    "420.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0020",
+    "15.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0021",
+    null,
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0041",
+    "30.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0043",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0044",
+    "67.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0045",
+    "74.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0046",
+    "81.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0047",
+    "88.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0048",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0049",
+    "102.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0050",
+    "109.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0051",
+    "116.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0052",
+    "123.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0053",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0054",
+    "137.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0055",
+    "144.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0056",
+    "151.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0057",
+    "158.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0058",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0059",
+    "172.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0060",
+    "179.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0061",
+    "186.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0062",
+    "193.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0063",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0064",
+    "207.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0065",
+    "214.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0066",
+    "221.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0067",
+    "228.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0068",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0069",
+    "242.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0070",
+    "249.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0071",
+    "256.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0072",
+    "263.000",
+    "PUBLISHED",
+    "electronics"
    ]
   ]
  },
@@ -3653,6 +8055,218 @@
     "electronics",
     null
    ]
+  ],
+  "full": [
+   [
+    "sf-0012",
+    "260.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0013",
+    "420.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0020",
+    "15.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0021",
+    null,
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0041",
+    "30.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0043",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0044",
+    "67.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0045",
+    "74.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0046",
+    "81.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0047",
+    "88.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0048",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0049",
+    "102.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0050",
+    "109.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0051",
+    "116.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0052",
+    "123.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0053",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0054",
+    "137.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0055",
+    "144.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0056",
+    "151.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0057",
+    "158.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0058",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0059",
+    "172.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0060",
+    "179.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0061",
+    "186.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0062",
+    "193.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0063",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0064",
+    "207.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0065",
+    "214.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0066",
+    "221.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0067",
+    "228.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0068",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0069",
+    "242.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0070",
+    "249.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0071",
+    "256.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0072",
+    "263.000",
+    "PUBLISHED",
+    "electronics"
+   ]
   ]
  },
  {
@@ -3831,6 +8445,218 @@
     "electronics",
     null
    ]
+  ],
+  "full": [
+   [
+    "sf-0012",
+    "260.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0013",
+    "420.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0020",
+    "15.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0021",
+    null,
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0041",
+    "30.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0043",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0044",
+    "67.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0045",
+    "74.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0046",
+    "81.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0047",
+    "88.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0048",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0049",
+    "102.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0050",
+    "109.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0051",
+    "116.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0052",
+    "123.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0053",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0054",
+    "137.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0055",
+    "144.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0056",
+    "151.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0057",
+    "158.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0058",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0059",
+    "172.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0060",
+    "179.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0061",
+    "186.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0062",
+    "193.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0063",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0064",
+    "207.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0065",
+    "214.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0066",
+    "221.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0067",
+    "228.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0068",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0069",
+    "242.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0070",
+    "249.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0071",
+    "256.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0072",
+    "263.000",
+    "PUBLISHED",
+    "electronics"
+   ]
   ]
  },
  {
@@ -3849,20 +8675,6 @@
     "sf-promo-2:SEARCH_AND_CHAT"
    ],
    [
-    "sf-0012",
-    "260.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
-    "sf-0013",
-    "420.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
     "sf-0020",
     "15.000",
     "PUBLISHED",
@@ -3870,22 +8682,8 @@
     null
    ],
    [
-    "sf-0021",
-    null,
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
     "sf-0041",
     "30.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
-    "sf-0043",
-    "100.000",
     "PUBLISHED",
     "electronics",
     null
@@ -3919,7 +8717,42 @@
     null
    ],
    [
+    "sf-0043",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
     "sf-0048",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0053",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0058",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0063",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0068",
     "100.000",
     "PUBLISHED",
     "electronics",
@@ -3954,13 +8787,6 @@
     null
    ],
    [
-    "sf-0053",
-    "100.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
     "sf-0054",
     "137.000",
     "PUBLISHED",
@@ -3989,13 +8815,6 @@
     null
    ],
    [
-    "sf-0058",
-    "100.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
     "sf-0059",
     "172.000",
     "PUBLISHED",
@@ -4008,6 +8827,225 @@
     "PUBLISHED",
     "electronics",
     null
+   ],
+   [
+    "sf-0061",
+    "186.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ]
+  ],
+  "full": [
+   [
+    "sf-0012",
+    "260.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0013",
+    "420.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0020",
+    "15.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0021",
+    null,
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0041",
+    "30.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0043",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0044",
+    "67.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0045",
+    "74.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0046",
+    "81.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0047",
+    "88.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0048",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0049",
+    "102.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0050",
+    "109.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0051",
+    "116.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0052",
+    "123.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0053",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0054",
+    "137.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0055",
+    "144.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0056",
+    "151.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0057",
+    "158.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0058",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0059",
+    "172.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0060",
+    "179.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0061",
+    "186.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0062",
+    "193.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0063",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0064",
+    "207.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0065",
+    "214.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0066",
+    "221.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0067",
+    "228.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0068",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0069",
+    "242.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0070",
+    "249.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0071",
+    "256.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0072",
+    "263.000",
+    "PUBLISHED",
+    "electronics"
    ]
   ]
  },
@@ -4186,6 +9224,218 @@
     "electronics",
     null
    ]
+  ],
+  "full": [
+   [
+    "sf-0012",
+    "260.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0013",
+    "420.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0020",
+    "15.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0021",
+    null,
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0041",
+    "30.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0043",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0044",
+    "67.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0045",
+    "74.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0046",
+    "81.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0047",
+    "88.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0048",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0049",
+    "102.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0050",
+    "109.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0051",
+    "116.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0052",
+    "123.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0053",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0054",
+    "137.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0055",
+    "144.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0056",
+    "151.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0057",
+    "158.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0058",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0059",
+    "172.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0060",
+    "179.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0061",
+    "186.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0062",
+    "193.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0063",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0064",
+    "207.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0065",
+    "214.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0066",
+    "221.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0067",
+    "228.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0068",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0069",
+    "242.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0070",
+    "249.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0071",
+    "256.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0072",
+    "263.000",
+    "PUBLISHED",
+    "electronics"
+   ]
   ]
  },
  {
@@ -4361,6 +9611,254 @@
     "PUBLISHED",
     "electronics",
     null
+   ]
+  ],
+  "full": [
+   [
+    "sf-0012",
+    "260.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0013",
+    "420.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0014",
+    "210.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0015",
+    "150.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0016",
+    "35.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0017",
+    "45.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0018",
+    "480.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0019",
+    "175.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0020",
+    "15.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0021",
+    null,
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0041",
+    "30.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0043",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0044",
+    "67.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0045",
+    "74.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0046",
+    "81.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0047",
+    "88.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0048",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0049",
+    "102.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0050",
+    "109.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0051",
+    "116.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0052",
+    "123.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0053",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0054",
+    "137.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0055",
+    "144.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0056",
+    "151.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0057",
+    "158.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0058",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0059",
+    "172.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0060",
+    "179.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0061",
+    "186.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0062",
+    "193.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0063",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0064",
+    "207.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0065",
+    "214.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0066",
+    "221.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0067",
+    "228.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0068",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0069",
+    "242.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0070",
+    "249.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0071",
+    "256.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0072",
+    "263.000",
+    "PUBLISHED",
+    "electronics"
    ]
   ]
  },
@@ -4657,6 +10155,254 @@
     "PUBLISHED",
     "electronics",
     null
+   ]
+  ],
+  "full": [
+   [
+    "sf-0012",
+    "260.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0013",
+    "420.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0014",
+    "210.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0015",
+    "150.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0016",
+    "35.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0017",
+    "45.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0018",
+    "480.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0019",
+    "175.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0020",
+    "15.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0021",
+    null,
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0041",
+    "30.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0043",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0044",
+    "67.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0045",
+    "74.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0046",
+    "81.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0047",
+    "88.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0048",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0049",
+    "102.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0050",
+    "109.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0051",
+    "116.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0052",
+    "123.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0053",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0054",
+    "137.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0055",
+    "144.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0056",
+    "151.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0057",
+    "158.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0058",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0059",
+    "172.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0060",
+    "179.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0061",
+    "186.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0062",
+    "193.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0063",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0064",
+    "207.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0065",
+    "214.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0066",
+    "221.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0067",
+    "228.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0068",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0069",
+    "242.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0070",
+    "249.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0071",
+    "256.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0072",
+    "263.000",
+    "PUBLISHED",
+    "electronics"
    ]
   ]
  },
@@ -4954,6 +10700,254 @@
     "electronics",
     null
    ]
+  ],
+  "full": [
+   [
+    "sf-0012",
+    "260.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0013",
+    "420.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0014",
+    "210.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0015",
+    "150.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0016",
+    "35.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0017",
+    "45.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0018",
+    "480.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0019",
+    "175.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0020",
+    "15.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0021",
+    null,
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0041",
+    "30.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0043",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0044",
+    "67.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0045",
+    "74.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0046",
+    "81.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0047",
+    "88.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0048",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0049",
+    "102.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0050",
+    "109.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0051",
+    "116.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0052",
+    "123.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0053",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0054",
+    "137.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0055",
+    "144.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0056",
+    "151.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0057",
+    "158.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0058",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0059",
+    "172.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0060",
+    "179.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0061",
+    "186.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0062",
+    "193.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0063",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0064",
+    "207.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0065",
+    "214.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0066",
+    "221.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0067",
+    "228.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0068",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0069",
+    "242.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0070",
+    "249.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0071",
+    "256.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0072",
+    "263.000",
+    "PUBLISHED",
+    "electronics"
+   ]
   ]
  },
  {
@@ -5011,6 +11005,50 @@
     "PUBLISHED",
     "cars",
     null
+   ]
+  ],
+  "full": [
+   [
+    "sf-0001",
+    "7000.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0002",
+    "9500.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0003",
+    "18000.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0004",
+    "3500.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0005",
+    "6800.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0006",
+    "4200.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0042",
+    "3000.000",
+    "PUBLISHED",
+    "cars"
    ]
   ]
  },
@@ -5071,6 +11109,50 @@
     "cars",
     null
    ]
+  ],
+  "full": [
+   [
+    "sf-0001",
+    "7000.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0002",
+    "9500.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0003",
+    "18000.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0004",
+    "3500.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0005",
+    "6800.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0006",
+    "4200.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0042",
+    "3000.000",
+    "PUBLISHED",
+    "cars"
+   ]
   ]
  },
  {
@@ -5130,6 +11212,50 @@
     "cars",
     null
    ]
+  ],
+  "full": [
+   [
+    "sf-0001",
+    "7000.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0002",
+    "9500.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0003",
+    "18000.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0004",
+    "3500.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0005",
+    "6800.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0006",
+    "4200.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0042",
+    "3000.000",
+    "PUBLISHED",
+    "cars"
+   ]
   ]
  },
  {
@@ -5160,6 +11286,50 @@
     "PUBLISHED",
     "cars",
     null
+   ]
+  ],
+  "full": [
+   [
+    "sf-0001",
+    "7000.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0002",
+    "9500.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0003",
+    "18000.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0004",
+    "3500.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0005",
+    "6800.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0006",
+    "4200.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0042",
+    "3000.000",
+    "PUBLISHED",
+    "cars"
    ]
   ]
  },
@@ -5198,6 +11368,26 @@
     "cars",
     null
    ]
+  ],
+  "full": [
+   [
+    "sf-0002",
+    "9500.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0003",
+    "18000.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0005",
+    "6800.000",
+    "PUBLISHED",
+    "cars"
+   ]
   ]
  },
  {
@@ -5228,6 +11418,20 @@
     "cars",
     null
    ]
+  ],
+  "full": [
+   [
+    "sf-0002",
+    "9500.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0003",
+    "18000.000",
+    "PUBLISHED",
+    "cars"
+   ]
   ]
  },
  {
@@ -5257,6 +11461,20 @@
     "PUBLISHED",
     "cars",
     null
+   ]
+  ],
+  "full": [
+   [
+    "sf-0001",
+    "7000.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0042",
+    "3000.000",
+    "PUBLISHED",
+    "cars"
    ]
   ]
  },
@@ -5309,6 +11527,38 @@
     "cars",
     null
    ]
+  ],
+  "full": [
+   [
+    "sf-0001",
+    "7000.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0004",
+    "3500.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0005",
+    "6800.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0006",
+    "4200.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0042",
+    "3000.000",
+    "PUBLISHED",
+    "cars"
+   ]
   ]
  },
  {
@@ -5353,6 +11603,32 @@
     "cars",
     null
    ]
+  ],
+  "full": [
+   [
+    "sf-0004",
+    "3500.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0005",
+    "6800.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0006",
+    "4200.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0042",
+    "3000.000",
+    "PUBLISHED",
+    "cars"
+   ]
   ]
  },
  {
@@ -5376,6 +11652,14 @@
     "cars",
     null
    ]
+  ],
+  "full": [
+   [
+    "sf-0003",
+    "18000.000",
+    "PUBLISHED",
+    "cars"
+   ]
   ]
  },
  {
@@ -5398,6 +11682,14 @@
     "PUBLISHED",
     "cars",
     null
+   ]
+  ],
+  "full": [
+   [
+    "sf-0002",
+    "9500.000",
+    "PUBLISHED",
+    "cars"
    ]
   ]
  },
@@ -5465,6 +11757,38 @@
     "cars",
     null
    ]
+  ],
+  "full": [
+   [
+    "sf-0001",
+    "7000.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0002",
+    "9500.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0005",
+    "6800.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0006",
+    "4200.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0042",
+    "3000.000",
+    "PUBLISHED",
+    "cars"
+   ]
   ]
  },
  {
@@ -5494,6 +11818,20 @@
     "PUBLISHED",
     "cars",
     null
+   ]
+  ],
+  "full": [
+   [
+    "sf-0003",
+    "18000.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0004",
+    "3500.000",
+    "PUBLISHED",
+    "cars"
    ]
   ]
  },
@@ -5551,6 +11889,38 @@
     "cars",
     null
    ]
+  ],
+  "full": [
+   [
+    "sf-0001",
+    "7000.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0002",
+    "9500.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0005",
+    "6800.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0006",
+    "4200.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0042",
+    "3000.000",
+    "PUBLISHED",
+    "cars"
+   ]
   ]
  },
  {
@@ -5580,6 +11950,20 @@
     "PUBLISHED",
     "property",
     null
+   ]
+  ],
+  "full": [
+   [
+    "sf-0032",
+    "45000.000",
+    "PUBLISHED",
+    "property"
+   ],
+   [
+    "sf-0033",
+    "90000.000",
+    "PUBLISHED",
+    "property"
    ]
   ]
  },
@@ -5612,6 +11996,26 @@
     "property",
     null
    ]
+  ],
+  "full": [
+   [
+    "sf-0031",
+    "550.000",
+    "PUBLISHED",
+    "property"
+   ],
+   [
+    "sf-0032",
+    "45000.000",
+    "PUBLISHED",
+    "property"
+   ],
+   [
+    "sf-0033",
+    "90000.000",
+    "PUBLISHED",
+    "property"
+   ]
   ]
  },
  {
@@ -5641,6 +12045,20 @@
     "PUBLISHED",
     "fashion",
     null
+   ]
+  ],
+  "full": [
+   [
+    "sf-0023",
+    "8.000",
+    "PUBLISHED",
+    "fashion"
+   ],
+   [
+    "sf-0025",
+    "35.000",
+    "PUBLISHED",
+    "fashion"
    ]
   ]
  },
@@ -5672,13 +12090,6 @@
     null
    ],
    [
-    "sf-0043",
-    "100.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
     "sf-0044",
     "67.000",
     "PUBLISHED",
@@ -5702,6 +12113,13 @@
    [
     "sf-0047",
     "88.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0043",
+    "100.000",
     "PUBLISHED",
     "electronics",
     null
@@ -5740,6 +12158,80 @@
     "PUBLISHED",
     "electronics",
     null
+   ]
+  ],
+  "full": [
+   [
+    "sf-0020",
+    "15.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0041",
+    "30.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0043",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0044",
+    "67.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0045",
+    "74.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0046",
+    "81.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0047",
+    "88.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0048",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0053",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0058",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0063",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0068",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
    ]
   ]
  },
@@ -5799,6 +12291,44 @@
     "electronics",
     null
    ]
+  ],
+  "full": [
+   [
+    "sf-0020",
+    "15.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0041",
+    "30.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0044",
+    "67.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0045",
+    "74.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0046",
+    "81.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0047",
+    "88.000",
+    "PUBLISHED",
+    "electronics"
+   ]
   ]
  },
  {
@@ -5823,13 +12353,6 @@
     "sf-promo-2:SEARCH_AND_CHAT"
    ],
    [
-    "sf-0043",
-    "100.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
     "sf-0045",
     "74.000",
     "PUBLISHED",
@@ -5844,6 +12367,27 @@
     null
    ],
    [
+    "sf-0043",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0053",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0063",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
     "sf-0049",
     "102.000",
     "PUBLISHED",
@@ -5853,13 +12397,6 @@
    [
     "sf-0051",
     "116.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
-    "sf-0053",
-    "100.000",
     "PUBLISHED",
     "electronics",
     null
@@ -5893,13 +12430,6 @@
     null
    ],
    [
-    "sf-0063",
-    "100.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
     "sf-0065",
     "214.000",
     "PUBLISHED",
@@ -5919,6 +12449,98 @@
     "PUBLISHED",
     "electronics",
     null
+   ]
+  ],
+  "full": [
+   [
+    "sf-0043",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0045",
+    "74.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0047",
+    "88.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0049",
+    "102.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0051",
+    "116.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0053",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0055",
+    "144.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0057",
+    "158.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0059",
+    "172.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0061",
+    "186.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0063",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0065",
+    "214.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0067",
+    "228.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0069",
+    "242.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0071",
+    "256.000",
+    "PUBLISHED",
+    "electronics"
    ]
   ]
  },
@@ -5957,6 +12579,32 @@
     "services",
     null
    ]
+  ],
+  "full": [
+   [
+    "sf-0034",
+    "15.000",
+    "PUBLISHED",
+    "services"
+   ],
+   [
+    "sf-0035",
+    "25.000",
+    "PUBLISHED",
+    "services"
+   ],
+   [
+    "sf-0036",
+    "20.000",
+    "PUBLISHED",
+    "services"
+   ],
+   [
+    "sf-0037",
+    "30.000",
+    "PUBLISHED",
+    "services"
+   ]
   ]
  },
  {
@@ -5965,13 +12613,35 @@
    "categoryId": "digital-services",
    "limit": 200
   },
-  "result": []
+  "result": [],
+  "full": []
  },
  {
   "options": {
    "search": "سيارة"
   },
   "result": [
+   [
+    "sf-0042",
+    "3000.000",
+    "PUBLISHED",
+    "cars",
+    null
+   ],
+   [
+    "sf-0004",
+    "3500.000",
+    "PUBLISHED",
+    "cars",
+    null
+   ],
+   [
+    "sf-0006",
+    "4200.000",
+    "PUBLISHED",
+    "cars",
+    null
+   ],
    [
     "sf-0001",
     "7000.000",
@@ -5992,27 +12662,44 @@
     "PUBLISHED",
     "cars",
     null
+   ]
+  ],
+  "full": [
+   [
+    "sf-0001",
+    "7000.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0002",
+    "9500.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0003",
+    "18000.000",
+    "PUBLISHED",
+    "cars"
    ],
    [
     "sf-0004",
     "3500.000",
     "PUBLISHED",
-    "cars",
-    null
+    "cars"
    ],
    [
     "sf-0006",
     "4200.000",
     "PUBLISHED",
-    "cars",
-    null
+    "cars"
    ],
    [
     "sf-0042",
     "3000.000",
     "PUBLISHED",
-    "cars",
-    null
+    "cars"
    ]
   ]
  },
@@ -6029,13 +12716,6 @@
     "sf-promo-2:SEARCH_AND_CHAT"
    ],
    [
-    "sf-0012",
-    "260.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
     "sf-0020",
     "15.000",
     "PUBLISHED",
@@ -6043,22 +12723,8 @@
     null
    ],
    [
-    "sf-0021",
-    null,
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
     "sf-0041",
     "30.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
-    "sf-0043",
-    "100.000",
     "PUBLISHED",
     "electronics",
     null
@@ -6092,7 +12758,42 @@
     null
    ],
    [
+    "sf-0043",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
     "sf-0048",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0053",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0058",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0063",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0068",
     "100.000",
     "PUBLISHED",
     "electronics",
@@ -6127,13 +12828,6 @@
     null
    ],
    [
-    "sf-0053",
-    "100.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
     "sf-0054",
     "137.000",
     "PUBLISHED",
@@ -6162,13 +12856,6 @@
     null
    ],
    [
-    "sf-0058",
-    "100.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
     "sf-0059",
     "172.000",
     "PUBLISHED",
@@ -6189,6 +12876,212 @@
     "electronics",
     null
    ]
+  ],
+  "full": [
+   [
+    "sf-0012",
+    "260.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0020",
+    "15.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0021",
+    null,
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0041",
+    "30.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0043",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0044",
+    "67.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0045",
+    "74.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0046",
+    "81.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0047",
+    "88.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0048",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0049",
+    "102.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0050",
+    "109.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0051",
+    "116.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0052",
+    "123.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0053",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0054",
+    "137.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0055",
+    "144.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0056",
+    "151.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0057",
+    "158.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0058",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0059",
+    "172.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0060",
+    "179.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0061",
+    "186.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0062",
+    "193.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0063",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0064",
+    "207.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0065",
+    "214.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0066",
+    "221.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0067",
+    "228.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0068",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0069",
+    "242.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0070",
+    "249.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0071",
+    "256.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0072",
+    "263.000",
+    "PUBLISHED",
+    "electronics"
+   ]
   ]
  },
  {
@@ -6197,13 +13090,6 @@
    "limit": 200
   },
   "result": [
-   [
-    "sf-0001",
-    "7000.000",
-    "PUBLISHED",
-    "cars",
-    null
-   ],
    [
     "sf-0020",
     "15.000",
@@ -6217,6 +13103,33 @@
     "PUBLISHED",
     "cars",
     null
+   ],
+   [
+    "sf-0001",
+    "7000.000",
+    "PUBLISHED",
+    "cars",
+    null
+   ]
+  ],
+  "full": [
+   [
+    "sf-0001",
+    "7000.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0020",
+    "15.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0042",
+    "3000.000",
+    "PUBLISHED",
+    "cars"
    ]
   ]
  },
@@ -6226,41 +13139,6 @@
    "limit": 200
   },
   "result": [
-   [
-    "sf-0003",
-    "18000.000",
-    "PUBLISHED",
-    "cars",
-    null
-   ],
-   [
-    "sf-0005",
-    "6800.000",
-    "PUBLISHED",
-    "cars",
-    null
-   ],
-   [
-    "sf-0013",
-    "420.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
-    "sf-0019",
-    "175.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
-    "sf-0028",
-    "120.000",
-    "PUBLISHED",
-    "home",
-    null
-   ],
    [
     "sf-0035",
     "25.000",
@@ -6283,6 +13161,20 @@
     null
    ],
    [
+    "sf-0053",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0068",
+    "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
     "sf-0050",
     "109.000",
     "PUBLISHED",
@@ -6290,10 +13182,10 @@
     null
    ],
    [
-    "sf-0053",
-    "100.000",
+    "sf-0028",
+    "120.000",
     "PUBLISHED",
-    "electronics",
+    "home",
     null
    ],
    [
@@ -6306,6 +13198,13 @@
    [
     "sf-0059",
     "172.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0019",
+    "175.000",
     "PUBLISHED",
     "electronics",
     null
@@ -6325,18 +13224,130 @@
     null
    ],
    [
-    "sf-0068",
-    "100.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
     "sf-0071",
     "256.000",
     "PUBLISHED",
     "electronics",
     null
+   ],
+   [
+    "sf-0013",
+    "420.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0005",
+    "6800.000",
+    "PUBLISHED",
+    "cars",
+    null
+   ],
+   [
+    "sf-0003",
+    "18000.000",
+    "PUBLISHED",
+    "cars",
+    null
+   ]
+  ],
+  "full": [
+   [
+    "sf-0003",
+    "18000.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0005",
+    "6800.000",
+    "PUBLISHED",
+    "cars"
+   ],
+   [
+    "sf-0013",
+    "420.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0019",
+    "175.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0028",
+    "120.000",
+    "PUBLISHED",
+    "home"
+   ],
+   [
+    "sf-0035",
+    "25.000",
+    "PUBLISHED",
+    "services"
+   ],
+   [
+    "sf-0044",
+    "67.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0047",
+    "88.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0050",
+    "109.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0053",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0056",
+    "151.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0059",
+    "172.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0062",
+    "193.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0065",
+    "214.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0068",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0071",
+    "256.000",
+    "PUBLISHED",
+    "electronics"
    ]
   ]
  },
@@ -6347,13 +13358,6 @@
    "conversational": true
   },
   "result": [
-   [
-    "sf-0013",
-    "420.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
    [
     "sf-0044",
     "67.000",
@@ -6369,15 +13373,22 @@
     null
    ],
    [
-    "sf-0050",
-    "109.000",
+    "sf-0053",
+    "100.000",
     "PUBLISHED",
     "electronics",
     null
    ],
    [
-    "sf-0053",
+    "sf-0068",
     "100.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ],
+   [
+    "sf-0050",
+    "109.000",
     "PUBLISHED",
     "electronics",
     null
@@ -6411,18 +13422,86 @@
     null
    ],
    [
-    "sf-0068",
-    "100.000",
-    "PUBLISHED",
-    "electronics",
-    null
-   ],
-   [
     "sf-0071",
     "256.000",
     "PUBLISHED",
     "electronics",
     null
+   ],
+   [
+    "sf-0013",
+    "420.000",
+    "PUBLISHED",
+    "electronics",
+    null
+   ]
+  ],
+  "full": [
+   [
+    "sf-0013",
+    "420.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0044",
+    "67.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0047",
+    "88.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0050",
+    "109.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0053",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0056",
+    "151.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0059",
+    "172.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0062",
+    "193.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0065",
+    "214.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0068",
+    "100.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0071",
+    "256.000",
+    "PUBLISHED",
+    "electronics"
    ]
   ]
  },
@@ -6431,7 +13510,8 @@
    "ownSellerId": "sf-seller-suspended",
    "limit": 200
   },
-  "result": []
+  "result": [],
+  "full": []
  },
  {
   "options": {
@@ -6467,6 +13547,26 @@
     "electronics",
     null
    ]
+  ],
+  "full": [
+   [
+    "sf-0013",
+    "420.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0044",
+    "67.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0049",
+    "102.000",
+    "PUBLISHED",
+    "electronics"
+   ]
   ]
  },
  {
@@ -6496,6 +13596,20 @@
     "electronics",
     null
    ]
+  ],
+  "full": [
+   [
+    "sf-0013",
+    "420.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0071",
+    "256.000",
+    "PUBLISHED",
+    "electronics"
+   ]
   ]
  },
  {
@@ -6519,6 +13633,14 @@
     "electronics",
     "LABEL:"
    ]
+  ],
+  "full": [
+   [
+    "sf-0071",
+    "256.000",
+    "PUBLISHED",
+    "electronics"
+   ]
   ]
  },
  {
@@ -6527,7 +13649,8 @@
    "allowedIds": [],
    "limit": 24
   },
-  "result": []
+  "result": [],
+  "full": []
  },
  {
   "options": {
@@ -6546,6 +13669,14 @@
     "PUBLISHED",
     "electronics",
     null
+   ]
+  ],
+  "full": [
+   [
+    "sf-0045",
+    "74.000",
+    "PUBLISHED",
+    "electronics"
    ]
   ]
  },
@@ -6575,6 +13706,20 @@
     "PUBLISHED",
     "electronics",
     null
+   ]
+  ],
+  "full": [
+   [
+    "sf-0013",
+    "420.000",
+    "PUBLISHED",
+    "electronics"
+   ],
+   [
+    "sf-0028",
+    "120.000",
+    "PUBLISHED",
+    "home"
    ]
   ]
  }
