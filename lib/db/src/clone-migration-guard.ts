@@ -45,7 +45,6 @@ export const REVIEWED_PENDING_MIGRATIONS: ReadonlyArray<{ tag: string; sha256: s
   // codes; marketplace_reports_target_type_valid is only widened. WhatsApp intents stay NOT_SENT.
   { tag: "0046_wave10_trust_support_whatsapp", sha256: "edb8ca5702215790271b405cc086152fb1fb8ea3090d599008a7a828b3bb50e0" },
 ];
-];
 export const EXPECTED_JOURNAL_ENTRIES =
   EXPECTED_BASELINE_MIGRATIONS + REVIEWED_PENDING_MIGRATIONS.length;
 

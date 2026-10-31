@@ -12,7 +12,6 @@ import {
   doublePrecision,
   type AnyPgColumn,
   bigint,
-  type AnyPgColumn,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 const dates = () => ({
