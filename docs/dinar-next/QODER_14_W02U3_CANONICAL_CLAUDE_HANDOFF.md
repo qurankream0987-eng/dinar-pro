@@ -6,8 +6,11 @@ This file is the operational handoff: what to trust, how to re-run, and where th
 ## Branch / commits
 
 - Baseline: `9a0f86f` (`claude/10-ultra-closure`).
-- Branch: `qoder/14-w02u3-canonical-reliability`, head `683e1da`.
+- Branch: `qoder/14-w02u3-canonical-reliability`, final tested head `b5a3772`.
 - Implementation commit: `be1c9dd`. RED tests commit: `eaadf0f`.
+- Acceptance closure (`683e1da..b5a3772`): test-only plus one Chromium install line
+  (`e869a1e`); six new browser journeys (sessions, expiry, recovery, concurrency, performance,
+  accessibility) and their wrappers. The documentation commit on top of `b5a3772` changes no code.
 - Draft PR is open against `claude/10-ultra-closure`; **not merged**. Do not merge without the
   owner's decision.
 
@@ -51,28 +54,45 @@ gh workflow run qoder-api-suite.yml \
   -f "flags=BDINAR_W02U3_TEST_DATABASE=development"
 ```
 
+The acceptance journeys use the same entry point: `w02u3-card-sessions-browser-journey.test`,
+`w02u3-card-expiry-browser-journey.test`, `w02u3-card-recovery-browser-journey.test`,
+`w02u3-card-concurrency-browser-journey.test`, `w02u3-card-performance-browser-journey.test` and
+`w02u3-card-accessibility-browser-journey.test`, each with
+`-f "flags=BDINAR_W02U3_BROWSER=development"`.
+
 Dispatches on the same branch are serialised by the workflow concurrency group; run them one at a
 time. Each run typechecks, builds api-server and web, runs `test:surfaces`, and then one isolated
 suite on a fresh disposable database with `env -i`, the net-guard and an outbound counter. Expected
 tail: `LOCAL_SUITE suite=… exit=0 outbound=0`.
 
-Regressions that are green on this branch: `wave03-card-envelope.test`,
-`w02-ultra-cards.test`, `wave03-card-envelope-browser-journey.test` (run IDs in the report).
+Regressions green on `b5a3772`: `wave03-card-envelope.test` `41246654084`,
+`wave03-card-envelope-browser-journey.test` `41246826500`, `w02-ultra-cards.test` `41247096828`,
+`w02-ultra-browser.test` `41247269702`, `api.test` `41247620760`, `conversation.test` `41249383853`,
+`commerce.test` `41249618801`, `security-acceptance.test` `41249857637`.
 
-`w02-ultra-browser.test` cannot run in this workflow: the Chromium install step is gated on suite
-names containing `browser-journey`/`security-acceptance`, so it launches a missing
-`chromium_headless_shell-1243`. If you need it, either widen that condition or pass an executable
-path via `DINAR_CHROMIUM`; do not read its absence as a product failure.
+`w02-ultra-browser.test` now runs in this workflow: `e869a1e` widened the Chromium install condition
+for that suite, and `41247269702` is green. The earlier run `41223814591` failed only because the
+browser was not installed; that is environmental, not a product failure.
 
 ## Known gaps (do not overclaim)
 
-- CR-04/CR-05 (account switch / re-login with a card visible) are implemented via scope reset and
-  proven only at the API layer (CR-12). A dedicated browser test is the next useful addition.
-- The client expiry re-read has no short-TTL browser test.
-- CR-15 has no benchmark.
-- No screen-reader (AT) session; only accessible names/focus order are asserted.
-- The "verify" button state (`verifyingTurn`) is exercised only by the delivered-unanswered server
-  path in unit-level logic; the browser run covers the answered reconciliation branch.
+- CR-04/CR-05 are browser-proven: `w02u3-card-sessions-browser-journey.test` (run `41245502937`)
+  holds A's re-read while the account switches, proves B inherits nothing and the backend 404s B's
+  read/turn, then proves A's re-login restores the server's CONFIRMED card and history.
+- The client expiry re-read is browser-proven with a short-TTL fixture (run `41245718734`), including
+  the "no turn POST during the automatic refresh" assertion. The production expiry rule was not
+  changed.
+- The "verify" button (`verifyingTurn`) is now browser-clicked: `w02u3-card-recovery-browser-journey`
+  (run `41245889451`) covers delivered-but-unanswered verify/adopt and the absent-turn retry with the
+  original `clientMessageId`.
+- CR-15 is benchmarked (run `41246348213`): medians ≤ 477 ms, p95 ≤ 485 ms, 40-bubble window,
+  ~522 DOM nodes from 40 to 500 messages.
+- Screen reader: `AT_MANUAL_BLOCKED` (run `41244786883`); keyboard/focus/names/announcement regions
+  are asserted, spoken output is not. Remaining manual checklist: NVDA + Firefox (Windows),
+  VoiceOver + Safari (iOS), TalkBack + Chrome (Android), and an announcement review of the busy state
+  and the settled card.
+- Two-tab confirmation is browser-proven with both POSTs held before either answer (run
+  `41246114023`); one effect, convergence and clean reloads are asserted.
 
 ## Invariants you must preserve
 
