@@ -47,7 +47,7 @@ jobs:
               await client.query(source.slice(source.indexOf('CREATE FUNCTION dinar_search_string')));
               await client.query(readFileSync('lib/db/drizzle/0045_c1_numeric_compat.sql','utf8'));
               let failures = 0;
-              for (const value of ['v12','12v','v','\u000b12\u000b','2e-999', '1e999', [null], ['v12'], [[7]], '0x20']) {
+              for (const value of ['v12','12v','v','\u000b12\u000b','2e-999', '1e999', [null], ['v12'], [[7]], '0x20', '3e-324', '2e-324', '0.'+'0'.repeat(400)+'1', '-0.'+'0'.repeat(400)+'1']) {
                 const number = Number(value); const expected = Number.isFinite(number) ? number : null;
                 const actual = (await client.query('SELECT dinar_search_number($1::jsonb) AS value',[JSON.stringify(value)])).rows[0].value;
                 const pass = actual === expected;
