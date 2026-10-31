@@ -127,12 +127,20 @@ const unpricedModeFor = (
     ? "OPEN_TO_OFFERS"
     : undefined;
 
+const PRICE_CURRENCY =
+  "(?:دينار(?:اً|ا)?|دنانير|ريال(?:اً|ا)?|ريالات|درهم|دراهم|دولار(?:اً|ا)?|دولارات|جنيه|جنيهات|فلس)";
+// The amount starts at the first digit of its run (a later start can only match where the first
+// does, and the first is leftmost), so a long digit run is scanned once instead of once per digit.
+/** Exported for the differential test only (hostile-input-performance HIP-04). Not global: exec from 0. */
+export const INITIAL_PRICE_AMOUNT = new RegExp(
+  `(?:بمبلغ\\s*|بسعر\\s*|سعر(?:ها|ه)?\\s*|بـ?\\s*)?(?<!\\d[\\d٬,]*)(\\d[\\d٬,]*(?:\\.\\d+)?)\\s*${PRICE_CURRENCY}`,
+);
+
 function extractInitialUnitPrice(
   message: string,
 ): { value: number; start: number; end: number } | undefined {
   const normalized = normalizeSearchNumberText(message);
-  const currency =
-    "(?:دينار(?:اً|ا)?|دنانير|ريال(?:اً|ا)?|ريالات|درهم|دراهم|دولار(?:اً|ا)?|دولارات|جنيه|جنيهات|فلس)";
+  const currency = PRICE_CURRENCY;
   const half = new RegExp(`(?:بنص|نصف|نص)\\s*${currency}`).exec(normalized);
   if (half)
     return {
@@ -141,9 +149,7 @@ function extractInitialUnitPrice(
       end: half.index + half[0].length,
     };
 
-  const amount = new RegExp(
-    `(?:بمبلغ\\s*|بسعر\\s*|سعر(?:ها|ه)?\\s*|بـ?\\s*)?(\\d[\\d٬,]*(?:\\.\\d+)?)\\s*${currency}`,
-  ).exec(normalized) ??
+  const amount = INITIAL_PRICE_AMOUNT.exec(normalized) ??
     // "بـ290" / "بسعر 290" without a currency word: the price phrase still owns the number.
     /(?:^|\s)(?:بمبلغ\s*|بسعر\s*|بـ\s*|ب\s?)(\d[\d٬,]*(?:\.\d+)?)(?=\s|$|[،,.])/u.exec(normalized);
   if (!amount) return undefined;

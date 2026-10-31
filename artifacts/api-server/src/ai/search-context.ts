@@ -37,22 +37,46 @@ function categoryTokenForms(value: string): string[] {
   return forms;
 }
 
+/**
+ * Bounded memo for the pure normalizers below. hasCategoryAlias runs once per category alias on
+ * the same message; without this it re-normalized the whole message per alias and every word per
+ * alias word, so a hostile 2,000-character message cost ≈0.8 s of CPU (hostile-input-performance).
+ * Entries are keyed by the exact input and the cache is simply cleared when full.
+ */
+function boundedMemo<T>(fn: (value: string) => T, limit: number, maxKeyLength = Infinity): (value: string) => T {
+  const cache = new Map<string, T>();
+  return (value) => {
+    if (value.length > maxKeyLength) return fn(value);
+    const hit = cache.get(value);
+    if (hit !== undefined) return hit;
+    const result = fn(value);
+    if (cache.size >= limit) cache.clear();
+    cache.set(value, result);
+    return result;
+  };
+}
+const messageWords = boundedMemo((message) => Object.freeze(normalizeSearch(message).split(/\s+/).filter(Boolean)), 32, 4_000);
+const aliasTokens = boundedMemo((alias) => Object.freeze(normalizeSearch(alias).split(/\s+/).filter(Boolean).map(normalizeCategoryToken)), 2_048, 200);
+const plainTokenForms = boundedMemo((word) => Object.freeze([normalizeCategoryToken(word)]), 8_192, 200);
+const possessiveTokenForms = boundedMemo((word) => Object.freeze(categoryTokenForms(word)), 8_192, 200);
+
 /** Match category aliases as complete words, allowing common attached Arabic articles and prepositions. */
 export function hasCategoryAlias(message: string, alias: string, options: { possessive?: boolean } = {}): boolean {
-  const words = normalizeSearch(message).split(/\s+/).filter(Boolean);
-  const aliasWords = normalizeSearch(alias).split(/\s+/).filter(Boolean);
-  if (!aliasWords.length || aliasWords.length > words.length) return false;
-
-  return words.some((_, start) =>
-    aliasWords.every(
-      (word, offset) =>
-        words[start + offset] !== undefined &&
-        (options.possessive
-          ? categoryTokenForms(words[start + offset]!)
-          : [normalizeCategoryToken(words[start + offset]!)]
-        ).includes(normalizeCategoryToken(word)),
-    ),
-  );
+  const words = messageWords(message);
+  const wanted = aliasTokens(alias);
+  if (!wanted.length || wanted.length > words.length) return false;
+  const formsOf = options.possessive ? possessiveTokenForms : plainTokenForms;
+  for (let start = 0; start + wanted.length <= words.length; start++) {
+    let matched = true;
+    for (let offset = 0; offset < wanted.length; offset++) {
+      if (!formsOf(words[start + offset]!).includes(wanted[offset]!)) {
+        matched = false;
+        break;
+      }
+    }
+    if (matched) return true;
+  }
+  return false;
 }
 
 /** Conservative fallback: preserve prior product/size constraints, replace only an explicit color. */

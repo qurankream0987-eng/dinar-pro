@@ -121,7 +121,8 @@ function cardinalWordValue(word: string): number | undefined {
  */
 export function normalizeNumberWords(value: string): string {
   let text = value
-    .replace(/(\d+(?:\.\d+)?)\s*k(?=\s|$)/gi, "$1 الف")
+    // Start only at the first digit of a run: a later start matches only where the first does.
+    .replace(/(?<!\d)(\d+(?:\.\d+)?)\s*k(?=\s|$)/gi, "$1 الف")
     .replace(/(^|\s)(?:غرفتين|غرفتان)(?=\s|$)/g, (_, lead: string) => `${lead}2 غرف`)
     .replace(/(^|\s)(?:حمامين|حمامتين|حمامان)(?=\s|$)/g, (_, lead: string) => `${lead}2 حمام`)
     .replace(/(^|\s)(?:الفين|ألفين)(?=\s|$)/g, (_, lead: string) => `${lead}2000`);
@@ -145,11 +146,13 @@ export function normalizeNumberWords(value: string): string {
       consumed = 1;
     }
     const following = words[index + 1 + consumed];
-    const preceding = output.join(" ");
+    // COMPARATOR_TAIL is anchored at the end and spans at most two words, so the last two output
+    // entries are enough (an entry boundary is a space in the joined text). Joining the whole
+    // output for every word made this quadratic on long messages (hostile-input-performance).
     if (
       numeric !== undefined &&
       ((following !== undefined && UNIT_NOUN.test(following)) ||
-        COMPARATOR_TAIL.test(preceding))
+        COMPARATOR_TAIL.test(output.slice(-2).join(" ")))
     ) {
       output.push(clitic ? `ب ${numeric}` : String(numeric));
       index += consumed;
