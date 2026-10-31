@@ -1,0 +1,1319 @@
+{
+ "0c79ce6e7dee4b4f": {
+  "sha256": "d9e9217d0198e72e3a9305b42dfc19278e0bc609dc242086df64033da13f3ef6"
+ },
+ "0f534495d44d1b44": {
+  "sha256": "96c57bfd504b47e296abc9c5cdddc7631d07718a28504f675a0fdbc7a9d61c04"
+ },
+ "02a4681e0c929ab7": {
+  "sha256": "c579be7bfb45edc72f70e27020ee417951084049fa0e7435b81076d8996c78d1"
+ },
+ "8d38938db9a6a9ef": {
+  "sha256": "d95513dc9ddad9977e582849921af0b851ca89adf646ab3add2b9ebd449ce7fe"
+ },
+ "68b1b91d31d04e48": {
+  "sha256": "287bc43e5294ef090ac0e0239e56fa53afb84b26a6950396949771866b071715"
+ },
+ "b0293b362f1ef8b8": {
+  "sha256": "86a6a5e6fb90018c7791339ba1626e1b5e6bd27aa2eb57440e2d9cc324cf1f55"
+ },
+ "c73eaa9d78f3fadf": {
+  "sha256": "b4f46c843b840a1d1f1ee6e1c67ae8bdb20a8ae6478a7af06053fe4ecb9868e9"
+ },
+ "dacea1a69adb12af": {
+  "sha256": "deaa099d9037f317ef4175e782822d35b0fadc7a3e78d61b7f93f6dd8a12424a"
+ },
+ "137a7cb7478ae40a": {
+  "sha256": "63eb5ab9713ddef676f2ef79106510a8555779c327e2b1a09729b038e7a09cc6"
+ },
+ "c7333f64e0517416": {
+  "sha256": "29fdf89ca3c16591a45202862e8081ce4b15b695e50aaa494f279a6afe74e315"
+ },
+ "0c289576c87170fd": {
+  "sha256": "0aa527135206ae85a05dd4d447040ca38b2f4e32007bdb770d689e57a7c8c5a7"
+ },
+ "0397292aa6e844b5": {
+  "sha256": "bb51fafb1a3fc25697a13024adb776d2fa1e183cee9c55a203a477af29c818ff"
+ },
+ "1eeb550087fbabbd": {
+  "sha256": "e6b4889d809f64d56b77108fe05971f8bc2832fa1d9231be34d6d95dd7db016b"
+ },
+ "f1f1325da02010a1": {
+  "sha256": "e6db129564e00305ec2bb98d83494b76eb865cc879b8d472222bdd2f5a70dadd"
+ },
+ "3024f5fac7545f0d": {
+  "message": "أبي سيارة مستعملة أقل من 8000 دينار",
+  "turn": {
+   "intent": "SEARCH",
+   "query": {
+    "search": "",
+    "categoryId": "cars",
+    "filters": [
+     {
+      "field": "condition",
+      "operator": "contains",
+      "value": "مستعمل"
+     },
+     {
+      "field": "price",
+      "operator": "lt",
+      "value": 8000
+     }
+    ]
+   },
+   "numbers": [
+    {
+     "value": 8000,
+     "kind": "PRICE",
+     "comparator": "lt",
+     "explicit": true,
+     "start": 24,
+     "end": 28
+    }
+   ],
+   "ambiguities": [],
+   "confidence": "HIGH"
+  },
+  "followUp": {
+   "intent": "REFINE_SEARCH",
+   "query": {
+    "search": "",
+    "categoryId": "cars",
+    "filters": [
+     {
+      "field": "condition",
+      "operator": "contains",
+      "value": "مستعمل"
+     },
+     {
+      "field": "price",
+      "operator": "lt",
+      "value": 8000
+     }
+    ]
+   },
+   "numbers": [
+    {
+     "value": 8000,
+     "kind": "PRICE",
+     "comparator": "lt",
+     "explicit": true,
+     "start": 24,
+     "end": 28
+    }
+   ],
+   "ambiguities": [],
+   "confidence": "HIGH"
+  },
+  "search": {
+   "search": "",
+   "categoryId": "cars",
+   "filters": [
+    {
+     "field": "condition",
+     "operator": "contains",
+     "value": "مستعمل"
+    },
+    {
+     "field": "price",
+     "operator": "lt",
+     "value": 8000
+    }
+   ]
+  },
+  "draft": {
+   "draft": {
+    "draftId": "<random-uuid>",
+    "title": "سيارة مستعملة أقل من",
+    "category": "سيارات",
+    "categoryId": "cars",
+    "pricingMode": "FIXED",
+    "unitPrice": "8000",
+    "inventoryMode": "LIMITED",
+    "availableQuantity": "1",
+    "attributes": {
+     "condition": "مستعمل"
+    },
+    "fulfilmentType": "PICKUP",
+    "sources": {
+     "title": "USER_DECLARED",
+     "unitPrice": "USER_DECLARED",
+     "availableQuantity": "USER_DECLARED",
+     "inventoryMode": "USER_DECLARED",
+     "fulfilmentType": "DINAR_DERIVED",
+     "category": "DINAR_DERIVED",
+     "attributes.condition": "USER_DECLARED"
+    }
+   },
+   "step": "attribute:model"
+  }
+ },
+ "ab5144248c669be0": {
+  "message": "ابحث عن كنب احمر في عمان",
+  "turn": {
+   "intent": "SEARCH",
+   "query": {
+    "search": "كنب احمر",
+    "filters": [
+     {
+      "field": "city",
+      "operator": "contains",
+      "value": "عمان"
+     }
+    ]
+   },
+   "numbers": [],
+   "ambiguities": [],
+   "confidence": "HIGH"
+  },
+  "followUp": {
+   "intent": "REFINE_SEARCH",
+   "query": {
+    "search": "",
+    "categoryId": "cars",
+    "filters": [
+     {
+      "field": "color",
+      "operator": "contains",
+      "value": "أحمر"
+     },
+     {
+      "field": "city",
+      "operator": "contains",
+      "value": "عمان"
+     }
+    ]
+   },
+   "numbers": [],
+   "ambiguities": [],
+   "confidence": "HIGH"
+  },
+  "search": {
+   "search": "كنب احمر",
+   "filters": [
+    {
+     "field": "city",
+     "operator": "contains",
+     "value": "عمان"
+    }
+   ]
+  },
+  "draft": {
+   "draft": {
+    "draftId": "<random-uuid>",
+    "title": "ابحث عن كنب احمر في عمان",
+    "sources": {
+     "title": "USER_DECLARED"
+    }
+   },
+   "step": "category"
+  }
+ },
+ "14f14b322c971700": {
+  "message": "أريد آيفون 15 برو ماكس 256GB",
+  "turn": {
+   "intent": "UNKNOWN",
+   "numbers": [
+    {
+     "value": 15,
+     "kind": "GENERAL",
+     "comparator": "eq",
+     "explicit": false,
+     "start": 11,
+     "end": 13
+    }
+   ],
+   "ambiguities": [],
+   "confidence": "LOW"
+  },
+  "followUp": {
+   "intent": "UNKNOWN",
+   "numbers": [
+    {
+     "value": 15,
+     "kind": "GENERAL",
+     "comparator": "eq",
+     "explicit": false,
+     "start": 11,
+     "end": 13
+    }
+   ],
+   "ambiguities": [],
+   "confidence": "LOW"
+  },
+  "search": null,
+  "draft": {
+   "draft": {
+    "draftId": "<random-uuid>",
+    "title": "آيفون 15 برو ماكس 256GB",
+    "sources": {
+     "title": "USER_DECLARED"
+    }
+   },
+   "step": "category"
+  }
+ },
+ "3f0eb82a42f63724": {
+  "message": "عندكم جوال سامسونج A12؟",
+  "turn": {
+   "intent": "UNKNOWN",
+   "numbers": [],
+   "ambiguities": [],
+   "confidence": "LOW"
+  },
+  "followUp": {
+   "intent": "UNKNOWN",
+   "numbers": [],
+   "ambiguities": [],
+   "confidence": "LOW"
+  },
+  "search": null,
+  "draft": {
+   "draft": {
+    "draftId": "<random-uuid>",
+    "title": "عندكم جوال سامسونج A12؟",
+    "sources": {
+     "title": "USER_DECLARED"
+    }
+   },
+   "step": "category"
+  }
+ },
+ "813711db6b197964": {
+  "message": "أبيع سيارة كيا سيراتو 2015 بـ 7000",
+  "turn": {
+   "intent": "SEARCH",
+   "query": {
+    "search": "ابيع كيا سيراتو ب",
+    "categoryId": "cars",
+    "filters": [
+     {
+      "field": "year",
+      "operator": "eq",
+      "value": 2015
+     }
+    ]
+   },
+   "numbers": [
+    {
+     "value": 2015,
+     "kind": "YEAR",
+     "comparator": "eq",
+     "explicit": false,
+     "start": 22,
+     "end": 26
+    },
+    {
+     "value": 7000,
+     "kind": "GENERAL",
+     "comparator": "eq",
+     "explicit": false,
+     "start": 29,
+     "end": 33
+    }
+   ],
+   "ambiguities": [],
+   "confidence": "HIGH"
+  },
+  "followUp": {
+   "intent": "SEARCH",
+   "query": {
+    "search": "ابيع كيا سيراتو ب",
+    "categoryId": "cars",
+    "filters": [
+     {
+      "field": "year",
+      "operator": "eq",
+      "value": 2015
+     }
+    ]
+   },
+   "numbers": [
+    {
+     "value": 2015,
+     "kind": "YEAR",
+     "comparator": "eq",
+     "explicit": false,
+     "start": 22,
+     "end": 26
+    },
+    {
+     "value": 7000,
+     "kind": "GENERAL",
+     "comparator": "eq",
+     "explicit": false,
+     "start": 29,
+     "end": 33
+    }
+   ],
+   "ambiguities": [],
+   "confidence": "HIGH"
+  },
+  "search": {
+   "search": "ابيع كيا سيراتو ب",
+   "categoryId": "cars",
+   "filters": [
+    {
+     "field": "year",
+     "operator": "eq",
+     "value": 2015
+    }
+   ]
+  },
+  "draft": {
+   "draft": {
+    "draftId": "<random-uuid>",
+    "title": "سيارة كيا سيراتو 2015",
+    "category": "سيارات",
+    "categoryId": "cars",
+    "pricingMode": "FIXED",
+    "unitPrice": "7000",
+    "inventoryMode": "LIMITED",
+    "availableQuantity": "1",
+    "attributes": {
+     "year": 2015
+    },
+    "fulfilmentType": "PICKUP",
+    "sources": {
+     "title": "USER_DECLARED",
+     "unitPrice": "USER_DECLARED",
+     "availableQuantity": "USER_DECLARED",
+     "inventoryMode": "USER_DECLARED",
+     "fulfilmentType": "DINAR_DERIVED",
+     "category": "DINAR_DERIVED",
+     "attributes.year": "USER_DECLARED"
+    }
+   },
+   "step": "attribute:model"
+  }
+ },
+ "8e49882053c0e0da": {
+  "message": "أبيع هاتفي الآيفون 13 بسعر ٤٥٠",
+  "turn": {
+   "intent": "SEARCH",
+   "query": {
+    "search": "ابيع هاتفي الايفون",
+    "filters": [
+     {
+      "field": "price",
+      "operator": "eq",
+      "value": 450
+     }
+    ]
+   },
+   "numbers": [
+    {
+     "value": 13,
+     "kind": "GENERAL",
+     "comparator": "eq",
+     "explicit": false,
+     "start": 19,
+     "end": 21
+    },
+    {
+     "value": 450,
+     "kind": "PRICE",
+     "comparator": "eq",
+     "explicit": true,
+     "start": 27,
+     "end": 30
+    }
+   ],
+   "ambiguities": [],
+   "confidence": "HIGH"
+  },
+  "followUp": {
+   "intent": "REFINE_SEARCH",
+   "query": {
+    "search": "",
+    "categoryId": "cars",
+    "filters": [
+     {
+      "field": "price",
+      "operator": "eq",
+      "value": 450
+     }
+    ]
+   },
+   "numbers": [
+    {
+     "value": 13,
+     "kind": "GENERAL",
+     "comparator": "eq",
+     "explicit": false,
+     "start": 19,
+     "end": 21
+    },
+    {
+     "value": 450,
+     "kind": "PRICE",
+     "comparator": "eq",
+     "explicit": true,
+     "start": 27,
+     "end": 30
+    }
+   ],
+   "ambiguities": [],
+   "confidence": "HIGH"
+  },
+  "search": {
+   "search": "ابيع هاتفي الايفون",
+   "filters": [
+    {
+     "field": "price",
+     "operator": "eq",
+     "value": 450
+    }
+   ]
+  },
+  "draft": {
+   "draft": {
+    "draftId": "<random-uuid>",
+    "title": "هاتفي الآيفون 13",
+    "unitPrice": "450",
+    "sources": {
+     "title": "USER_DECLARED",
+     "unitPrice": "USER_DECLARED"
+    }
+   },
+   "step": "category"
+  }
+ },
+ "8b4ec9885953bf75": {
+  "message": "أنا أصلح مكيفات، اعرض خدمتي بـ15",
+  "turn": {
+   "intent": "UNKNOWN",
+   "numbers": [],
+   "ambiguities": [],
+   "confidence": "LOW"
+  },
+  "followUp": {
+   "intent": "UNKNOWN",
+   "numbers": [],
+   "ambiguities": [],
+   "confidence": "LOW"
+  },
+  "search": null,
+  "draft": {
+   "draft": {
+    "draftId": "<random-uuid>",
+    "title": "أصلح مكيفات",
+    "description": "أنا اعرض خدمتي",
+    "unitPrice": "15",
+    "sources": {
+     "title": "USER_DECLARED",
+     "description": "USER_DECLARED",
+     "unitPrice": "USER_DECLARED"
+    }
+   },
+   "step": "category"
+  }
+ },
+ "f4e1b3f7425ecac2": {
+  "message": "أريد شقة مفروشة للإيجار في خلدا",
+  "turn": {
+   "intent": "SEARCH",
+   "query": {
+    "search": "مفروشة",
+    "categoryId": "property",
+    "filters": [
+     {
+      "field": "propertyType",
+      "operator": "contains",
+      "value": "شقة"
+     },
+     {
+      "field": "transactionType",
+      "operator": "contains",
+      "value": "إيجار"
+     },
+     {
+      "field": "city",
+      "operator": "contains",
+      "value": "خلدا"
+     }
+    ]
+   },
+   "numbers": [],
+   "ambiguities": [],
+   "confidence": "HIGH"
+  },
+  "followUp": {
+   "intent": "SEARCH",
+   "query": {
+    "search": "مفروشة",
+    "categoryId": "property",
+    "filters": [
+     {
+      "field": "propertyType",
+      "operator": "contains",
+      "value": "شقة"
+     },
+     {
+      "field": "transactionType",
+      "operator": "contains",
+      "value": "إيجار"
+     },
+     {
+      "field": "city",
+      "operator": "contains",
+      "value": "خلدا"
+     }
+    ]
+   },
+   "numbers": [],
+   "ambiguities": [],
+   "confidence": "HIGH"
+  },
+  "search": {
+   "search": "مفروشة",
+   "categoryId": "property",
+   "filters": [
+    {
+     "field": "propertyType",
+     "operator": "contains",
+     "value": "شقة"
+    },
+    {
+     "field": "transactionType",
+     "operator": "contains",
+     "value": "إيجار"
+    },
+    {
+     "field": "city",
+     "operator": "contains",
+     "value": "خلدا"
+    }
+   ]
+  },
+  "draft": {
+   "draft": {
+    "draftId": "<random-uuid>",
+    "title": "شقة مفروشة للإيجار في خلدا",
+    "area": "خلدا",
+    "city": "خلدا",
+    "category": "عقارات",
+    "categoryId": "property",
+    "pricingMode": "FIXED",
+    "inventoryMode": "LIMITED",
+    "availableQuantity": "1",
+    "attributes": {
+     "propertyType": "شقة",
+     "transactionType": "إيجار"
+    },
+    "fulfilmentType": "PICKUP",
+    "sources": {
+     "title": "USER_DECLARED",
+     "availableQuantity": "USER_DECLARED",
+     "inventoryMode": "USER_DECLARED",
+     "area": "USER_DECLARED",
+     "fulfilmentType": "DINAR_DERIVED",
+     "category": "DINAR_DERIVED",
+     "attributes.propertyType": "USER_DECLARED",
+     "attributes.transactionType": "USER_DECLARED"
+    }
+   },
+   "step": "description"
+  }
+ },
+ "480ff4dc76b7b230": {
+  "message": "ابغى بروستد رخيص",
+  "turn": {
+   "intent": "UNKNOWN",
+   "numbers": [],
+   "ambiguities": [],
+   "confidence": "LOW"
+  },
+  "followUp": {
+   "intent": "UNKNOWN",
+   "numbers": [],
+   "ambiguities": [],
+   "confidence": "LOW"
+  },
+  "search": null,
+  "draft": {
+   "draft": {
+    "draftId": "<random-uuid>",
+    "title": "بروستد رخيص",
+    "sources": {
+     "title": "USER_DECLARED"
+    }
+   },
+   "step": "category"
+  }
+ },
+ "fee5f81e7f0bf183": {
+  "message": "سيارة m3868fec",
+  "turn": {
+   "intent": "SEARCH",
+   "query": {
+    "search": "",
+    "categoryId": "cars",
+    "filters": [
+     {
+      "field": "model",
+      "operator": "contains",
+      "value": "m3868fec"
+     }
+    ]
+   },
+   "numbers": [],
+   "ambiguities": [],
+   "confidence": "HIGH"
+  },
+  "followUp": {
+   "intent": "REFINE_SEARCH",
+   "query": {
+    "search": "",
+    "categoryId": "cars",
+    "filters": [
+     {
+      "field": "model",
+      "operator": "contains",
+      "value": "m3868fec"
+     }
+    ]
+   },
+   "numbers": [],
+   "ambiguities": [],
+   "confidence": "HIGH"
+  },
+  "search": {
+   "search": "",
+   "categoryId": "cars",
+   "filters": [
+    {
+     "field": "model",
+     "operator": "contains",
+     "value": "m3868fec"
+    }
+   ]
+  },
+  "draft": {
+   "draft": {
+    "draftId": "<random-uuid>",
+    "title": "سيارة m3868fec",
+    "category": "سيارات",
+    "categoryId": "cars",
+    "pricingMode": "FIXED",
+    "inventoryMode": "LIMITED",
+    "availableQuantity": "1",
+    "attributes": {
+     "model": "m3868fec"
+    },
+    "fulfilmentType": "PICKUP",
+    "sources": {
+     "title": "USER_DECLARED",
+     "availableQuantity": "USER_DECLARED",
+     "inventoryMode": "USER_DECLARED",
+     "fulfilmentType": "DINAR_DERIVED",
+     "category": "DINAR_DERIVED",
+     "attributes.model": "USER_DECLARED"
+    }
+   },
+   "step": "attribute:year"
+  }
+ },
+ "bf757f6f781ddfa2": {
+  "message": "تي شيرت أسود مقاس L",
+  "turn": {
+   "intent": "UNKNOWN",
+   "numbers": [],
+   "ambiguities": [],
+   "confidence": "LOW"
+  },
+  "followUp": {
+   "intent": "REFINE_SEARCH",
+   "query": {
+    "search": "",
+    "categoryId": "cars",
+    "filters": [
+     {
+      "field": "color",
+      "operator": "contains",
+      "value": "أسود"
+     }
+    ]
+   },
+   "numbers": [],
+   "ambiguities": [],
+   "confidence": "HIGH"
+  },
+  "search": null,
+  "draft": {
+   "draft": {
+    "draftId": "<random-uuid>",
+    "title": "تي شيرت أسود مقاس L",
+    "sources": {
+     "title": "USER_DECLARED"
+    }
+   },
+   "step": "category"
+  }
+ },
+ "f89541f62b1a22f8": {
+  "message": "أريد سيارة بيضاء ممشى أقل من 50 ألف",
+  "turn": {
+   "intent": "SEARCH",
+   "query": {
+    "search": "",
+    "categoryId": "cars",
+    "filters": [
+     {
+      "field": "color",
+      "operator": "contains",
+      "value": "أبيض"
+     },
+     {
+      "field": "price",
+      "operator": "lt",
+      "value": 50000
+     }
+    ],
+    "sort": "MILEAGE_ASC"
+   },
+   "numbers": [
+    {
+     "value": 50000,
+     "kind": "GENERAL",
+     "comparator": "lt",
+     "explicit": false,
+     "start": 28,
+     "end": 34
+    }
+   ],
+   "ambiguities": [],
+   "confidence": "HIGH"
+  },
+  "followUp": {
+   "intent": "REFINE_SEARCH",
+   "query": {
+    "search": "",
+    "categoryId": "cars",
+    "filters": [
+     {
+      "field": "color",
+      "operator": "contains",
+      "value": "أبيض"
+     },
+     {
+      "field": "price",
+      "operator": "lt",
+      "value": 50000
+     }
+    ],
+    "sort": "MILEAGE_ASC"
+   },
+   "numbers": [
+    {
+     "value": 50000,
+     "kind": "GENERAL",
+     "comparator": "lt",
+     "explicit": false,
+     "start": 28,
+     "end": 34
+    }
+   ],
+   "ambiguities": [],
+   "confidence": "HIGH"
+  },
+  "search": {
+   "search": "",
+   "categoryId": "cars",
+   "filters": [
+    {
+     "field": "color",
+     "operator": "contains",
+     "value": "أبيض"
+    },
+    {
+     "field": "price",
+     "operator": "lt",
+     "value": 50000
+    }
+   ],
+   "sort": "MILEAGE_ASC"
+  },
+  "draft": {
+   "draft": {
+    "draftId": "<random-uuid>",
+    "title": "سيارة بيضاء ممشى أقل من 50 ألف",
+    "category": "سيارات",
+    "categoryId": "cars",
+    "pricingMode": "FIXED",
+    "inventoryMode": "LIMITED",
+    "availableQuantity": "1",
+    "attributes": {
+     "color": "أبيض"
+    },
+    "fulfilmentType": "PICKUP",
+    "sources": {
+     "title": "USER_DECLARED",
+     "availableQuantity": "USER_DECLARED",
+     "inventoryMode": "USER_DECLARED",
+     "fulfilmentType": "DINAR_DERIVED",
+     "category": "DINAR_DERIVED",
+     "attributes.color": "USER_DECLARED"
+    }
+   },
+   "step": "attribute:model"
+  }
+ },
+ "5e49a0de4866a8ed": {
+  "message": "من 100 الى 200 دينار",
+  "turn": {
+   "intent": "SEARCH",
+   "query": {
+    "search": "",
+    "filters": [
+     {
+      "field": "price",
+      "operator": "gte",
+      "value": 100
+     },
+     {
+      "field": "price",
+      "operator": "lte",
+      "value": 200
+     }
+    ]
+   },
+   "numbers": [
+    {
+     "value": 100,
+     "rangeTo": 200,
+     "kind": "PRICE",
+     "comparator": "gte",
+     "explicit": true,
+     "start": 3,
+     "end": 14
+    }
+   ],
+   "ambiguities": [],
+   "confidence": "HIGH"
+  },
+  "followUp": {
+   "intent": "REFINE_SEARCH",
+   "query": {
+    "search": "",
+    "categoryId": "cars",
+    "filters": [
+     {
+      "field": "price",
+      "operator": "gte",
+      "value": 100
+     },
+     {
+      "field": "price",
+      "operator": "lte",
+      "value": 200
+     }
+    ]
+   },
+   "numbers": [
+    {
+     "value": 100,
+     "rangeTo": 200,
+     "kind": "PRICE",
+     "comparator": "gte",
+     "explicit": true,
+     "start": 3,
+     "end": 14
+    }
+   ],
+   "ambiguities": [],
+   "confidence": "HIGH"
+  },
+  "search": {
+   "search": "",
+   "filters": [
+    {
+     "field": "price",
+     "operator": "gte",
+     "value": 100
+    },
+    {
+     "field": "price",
+     "operator": "lte",
+     "value": 200
+    }
+   ]
+  },
+  "draft": {
+   "draft": {
+    "draftId": "<random-uuid>",
+    "title": "من 100 الى",
+    "unitPrice": "200",
+    "sources": {
+     "title": "USER_DECLARED",
+     "unitPrice": "USER_DECLARED"
+    }
+   },
+   "step": "category"
+  }
+ },
+ "0f75e4be67d3f08d": {
+  "message": "أبيع كنبة زرقاء مستعملة بحالة ممتازة بسعر 120 دينار، الاستلام من الجبيهة",
+  "turn": {
+   "intent": "SEARCH",
+   "query": {
+    "search": "ابيع كنبة ازرق مستعمل بحالة ممتازة الاستلام الجبيهة",
+    "filters": [
+     {
+      "field": "price",
+      "operator": "eq",
+      "value": 120
+     }
+    ]
+   },
+   "numbers": [
+    {
+     "value": 120,
+     "kind": "PRICE",
+     "comparator": "eq",
+     "explicit": true,
+     "start": 40,
+     "end": 43
+    }
+   ],
+   "ambiguities": [],
+   "confidence": "HIGH"
+  },
+  "followUp": {
+   "intent": "REFINE_SEARCH",
+   "query": {
+    "search": "",
+    "categoryId": "cars",
+    "filters": [
+     {
+      "field": "condition",
+      "operator": "contains",
+      "value": "مستعمل"
+     },
+     {
+      "field": "color",
+      "operator": "contains",
+      "value": "أزرق"
+     },
+     {
+      "field": "price",
+      "operator": "eq",
+      "value": 120
+     }
+    ]
+   },
+   "numbers": [
+    {
+     "value": 120,
+     "kind": "PRICE",
+     "comparator": "eq",
+     "explicit": true,
+     "start": 40,
+     "end": 43
+    }
+   ],
+   "ambiguities": [],
+   "confidence": "HIGH"
+  },
+  "search": {
+   "search": "ابيع كنبة ازرق مستعمل بحالة ممتازة الاستلام الجبيهة",
+   "filters": [
+    {
+     "field": "price",
+     "operator": "eq",
+     "value": 120
+    }
+   ]
+  },
+  "draft": {
+   "draft": {
+    "draftId": "<random-uuid>",
+    "title": "كنبة زرقاء مستعملة",
+    "description": "مستعملة بحالة ممتازة الاستلام من الجبيهة",
+    "unitPrice": "120",
+    "attributes": {
+     "condition": "مستعمل"
+    },
+    "sources": {
+     "title": "USER_DECLARED",
+     "description": "USER_DECLARED",
+     "unitPrice": "USER_DECLARED",
+     "attributes.condition": "USER_DECLARED"
+    }
+   },
+   "step": "category"
+  }
+ },
+ "a7f8a113a1edaa7f": {
+  "message": "أبيع لابتوب ديل XPS 13 رام 16 جيجا",
+  "turn": {
+   "intent": "UNKNOWN",
+   "numbers": [
+    {
+     "value": 13,
+     "kind": "GENERAL",
+     "comparator": "eq",
+     "explicit": false,
+     "start": 20,
+     "end": 22
+    },
+    {
+     "value": 16,
+     "kind": "GENERAL",
+     "comparator": "eq",
+     "explicit": false,
+     "start": 27,
+     "end": 29
+    }
+   ],
+   "ambiguities": [],
+   "confidence": "LOW"
+  },
+  "followUp": {
+   "intent": "REFINE_SEARCH",
+   "query": {
+    "search": "",
+    "categoryId": "cars",
+    "filters": [
+     {
+      "field": "model",
+      "operator": "contains",
+      "value": "xps13"
+     }
+    ]
+   },
+   "numbers": [
+    {
+     "value": 13,
+     "kind": "GENERAL",
+     "comparator": "eq",
+     "explicit": false,
+     "start": 20,
+     "end": 22
+    },
+    {
+     "value": 16,
+     "kind": "GENERAL",
+     "comparator": "eq",
+     "explicit": false,
+     "start": 27,
+     "end": 29
+    }
+   ],
+   "ambiguities": [],
+   "confidence": "HIGH"
+  },
+  "search": null,
+  "draft": {
+   "draft": {
+    "draftId": "<random-uuid>",
+    "title": "لابتوب ديل XPS 13 رام 16 جيجا",
+    "sources": {
+     "title": "USER_DECLARED"
+    }
+   },
+   "step": "category"
+  }
+ },
+ "fa7710b744fbbd53": {
+  "message": "ابيع سيارتي هونداي النترا 2018",
+  "turn": {
+   "intent": "UNKNOWN",
+   "numbers": [
+    {
+     "value": 2018,
+     "kind": "YEAR",
+     "comparator": "eq",
+     "explicit": false,
+     "start": 26,
+     "end": 30
+    }
+   ],
+   "ambiguities": [],
+   "confidence": "LOW"
+  },
+  "followUp": {
+   "intent": "REFINE_SEARCH",
+   "query": {
+    "search": "",
+    "categoryId": "cars",
+    "filters": [
+     {
+      "field": "year",
+      "operator": "eq",
+      "value": 2018
+     }
+    ]
+   },
+   "numbers": [
+    {
+     "value": 2018,
+     "kind": "YEAR",
+     "comparator": "eq",
+     "explicit": false,
+     "start": 26,
+     "end": 30
+    }
+   ],
+   "ambiguities": [],
+   "confidence": "HIGH"
+  },
+  "search": null,
+  "draft": {
+   "draft": {
+    "draftId": "<random-uuid>",
+    "title": "سيارتي هونداي النترا 2018",
+    "category": "سيارات",
+    "categoryId": "cars",
+    "pricingMode": "FIXED",
+    "inventoryMode": "LIMITED",
+    "availableQuantity": "1",
+    "attributes": {
+     "year": 2018
+    },
+    "fulfilmentType": "PICKUP",
+    "sources": {
+     "title": "USER_DECLARED",
+     "availableQuantity": "USER_DECLARED",
+     "inventoryMode": "USER_DECLARED",
+     "fulfilmentType": "DINAR_DERIVED",
+     "category": "DINAR_DERIVED",
+     "attributes.year": "USER_DECLARED"
+    }
+   },
+   "step": "attribute:model"
+  }
+ },
+ "35ebde6955579249": {
+  "message": "بدي غسالة اوتوماتيك",
+  "turn": {
+   "intent": "UNKNOWN",
+   "numbers": [],
+   "ambiguities": [],
+   "confidence": "LOW"
+  },
+  "followUp": {
+   "intent": "UNKNOWN",
+   "numbers": [],
+   "ambiguities": [],
+   "confidence": "LOW"
+  },
+  "search": null,
+  "draft": {
+   "draft": {
+    "draftId": "<random-uuid>",
+    "title": "غسالة اوتوماتيك",
+    "description": "غسالة اوتوماتيك — بدي",
+    "sources": {
+     "title": "USER_DECLARED",
+     "description": "USER_DECLARED"
+    }
+   },
+   "step": "category"
+  }
+ },
+ "bfcaa4765e9a825a": {
+  "message": "عندي تيشيرت مقاس XL للبيع",
+  "turn": {
+   "intent": "UNKNOWN",
+   "numbers": [],
+   "ambiguities": [],
+   "confidence": "LOW"
+  },
+  "followUp": {
+   "intent": "UNKNOWN",
+   "numbers": [],
+   "ambiguities": [],
+   "confidence": "LOW"
+  },
+  "search": null,
+  "draft": {
+   "draft": {
+    "draftId": "<random-uuid>",
+    "title": "تيشيرت مقاس XL",
+    "description": "عندي للبيع",
+    "sources": {
+     "title": "USER_DECLARED",
+     "description": "USER_DECLARED"
+    }
+   },
+   "step": "category"
+  }
+ },
+ "1726b2a275e0c787": {
+  "message": "أريد خدمة تنظيف منازل",
+  "turn": {
+   "intent": "UNKNOWN",
+   "numbers": [],
+   "ambiguities": [],
+   "confidence": "LOW"
+  },
+  "followUp": {
+   "intent": "UNKNOWN",
+   "numbers": [],
+   "ambiguities": [],
+   "confidence": "LOW"
+  },
+  "search": null,
+  "draft": {
+   "draft": {
+    "draftId": "<random-uuid>",
+    "title": "خدمة تنظيف منازل",
+    "sources": {
+     "title": "USER_DECLARED"
+    }
+   },
+   "step": "category"
+  }
+ },
+ "772e9c4fcf34aee1": {
+  "message": "شو في سيارات تويوتا؟",
+  "turn": {
+   "intent": "SEARCH",
+   "query": {
+    "search": "تويوتا",
+    "categoryId": "cars",
+    "filters": []
+   },
+   "numbers": [],
+   "ambiguities": [],
+   "confidence": "HIGH"
+  },
+  "followUp": {
+   "intent": "SEARCH",
+   "query": {
+    "search": "تويوتا",
+    "categoryId": "cars",
+    "filters": []
+   },
+   "numbers": [],
+   "ambiguities": [],
+   "confidence": "HIGH"
+  },
+  "search": {
+   "search": "تويوتا",
+   "categoryId": "cars",
+   "filters": []
+  },
+  "draft": {
+   "draft": {
+    "draftId": "<random-uuid>",
+    "title": "شو في سيارات تويوتا؟",
+    "category": "سيارات",
+    "categoryId": "cars",
+    "pricingMode": "FIXED",
+    "inventoryMode": "LIMITED",
+    "availableQuantity": "1",
+    "fulfilmentType": "PICKUP",
+    "sources": {
+     "title": "USER_DECLARED",
+     "availableQuantity": "USER_DECLARED",
+     "inventoryMode": "USER_DECLARED",
+     "fulfilmentType": "DINAR_DERIVED",
+     "category": "USER_DECLARED"
+    }
+   },
+   "step": "attribute:model"
+  }
+ }
+}
