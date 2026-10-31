@@ -6,6 +6,7 @@ import {
   timestamp,
   jsonb,
   uniqueIndex,
+  foreignKey,
   index,
   primaryKey,
   check,
@@ -2716,6 +2717,7 @@ export const businessProfiles = pgTable(
   },
   (t) => [
     uniqueIndex("business_profiles_owner_idempotency_unique").on(t.ownerUserId, t.idempotencyKey),
+    uniqueIndex("business_profiles_identity_owner_market_uq").on(t.id, t.ownerUserId, t.marketId),
     // One open record per owner, market and name: a retry or a repeated introduction finds it.
     uniqueIndex("business_profiles_owner_name_open_unique")
       .on(t.ownerUserId, t.marketId, t.normalizedName)
@@ -2744,6 +2746,54 @@ export const businessProfiles = pgTable(
     check("business_profiles_suspended_at", sql`(${t.verificationStatus} = 'SUSPENDED') = (${t.suspendedAt} IS NOT NULL)`),
     check("business_profiles_revision_valid", sql`${t.revision} >= 1`),
   ],
+);
+
+// D3-A operating metadata is an extension of a D2 identity, never a second identity authority.
+export const businessOperatingProfiles = pgTable(
+  "business_operating_profiles",
+  {
+    id: text("id").primaryKey(),
+    d2BusinessId: text("d2_business_id").notNull(),
+    ownerUserId: text("owner_user_id").notNull().references(() => users.id),
+    marketId: text("market_id").notNull().references(() => markets.id),
+    operatingMode: text("operating_mode").default("INTERNAL_DINAR").notNull(),
+    businessType: text("business_type").notNull(),
+    displayName: text("display_name").notNull(),
+    description: text("description").default("").notNull(),
+    status: text("status").default("DRAFT").notNull(),
+    profile: jsonb("profile").$type<Record<string, unknown>>().default({}).notNull(),
+    version: integer("version").default(1).notNull(),
+    ...dates(),
+  },
+  (t) => [
+    uniqueIndex("business_operating_profiles_d2_business_unique").on(t.d2BusinessId),
+    index("business_operating_profiles_owner_idx").on(t.ownerUserId, t.marketId),
+    index("business_operating_profiles_market_status_idx").on(t.marketId, t.status),
+    foreignKey({
+      name: "business_operating_profiles_d2_identity_fk",
+      columns: [t.d2BusinessId, t.ownerUserId, t.marketId],
+      foreignColumns: [businessProfiles.id, businessProfiles.ownerUserId, businessProfiles.marketId],
+    }).onDelete("no action"),
+    check("business_operating_profiles_mode_valid", sql`${t.operatingMode} IN ('INTERNAL_DINAR')`),
+    check("business_operating_profiles_type_valid", sql`${t.businessType} IN ('RESTAURANT', 'SHOP', 'SERVICE_PROVIDER', 'OTHER')`),
+    check("business_operating_profiles_status_valid", sql`${t.status} IN ('DRAFT', 'ACTIVE', 'SUSPENDED', 'CLOSED')`),
+    check("business_operating_profiles_version_valid", sql`${t.version} >= 1`),
+  ],
+);
+
+export const businessAuditEvents = pgTable(
+  "business_audit_events",
+  {
+    id: text("id").primaryKey(),
+    businessId: text("business_id").notNull().references(() => businessOperatingProfiles.id),
+    actorId: text("actor_id").notNull().references(() => users.id),
+    action: text("action").notNull(),
+    resourceType: text("resource_type").notNull(),
+    resourceId: text("resource_id"),
+    detail: jsonb("detail").$type<Record<string, unknown>>().default({}).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [index("business_audit_events_business_idx").on(t.businessId, t.createdAt)],
 );
 
 /**

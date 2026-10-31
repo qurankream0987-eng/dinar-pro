@@ -97,6 +97,8 @@ export type ToolResult = {
   commerce?: Record<string, unknown>;
   /** Universal product control view (theme, market, profile); built only by product-control-turn. */
   control?: Record<string, unknown>;
+  /** D3-A: the owner's business card (setup, profile, catalog, orders, insights); server-built. */
+  business?: Record<string, unknown>;
   tutorial?: TutorialPayload;
   /**
    * G2: the pending action this answer discusses. Such an answer keeps that action

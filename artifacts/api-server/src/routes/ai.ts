@@ -48,6 +48,7 @@ import {
   refreshPromotionPayload,
 } from "../ai/promotion-turn";
 import { driverStateExpiry, refreshDriverPayload } from "../ai/driver-turn";
+import { refreshBusinessPayload } from "../ai/business-turn";
 import { createHmac, randomBytes, randomUUID } from "node:crypto";
 import express, { Router } from "express";
 import { and, desc, eq, inArray } from "drizzle-orm";
@@ -307,6 +308,7 @@ const SurfaceBlock = z.object({
     negotiation: z.record(z.string(), z.unknown()).optional(),
     inquiry: z.record(z.string(), z.unknown()).optional(),
     control: ProductControlPayload.optional(),
+    business: z.record(z.string(), z.unknown()).optional(),
     relatesToAction: z.string().uuid().optional(),
     listings: z.array(z.record(z.string(), z.unknown())),
     surface: conversationSurfaceTokenSchema,
@@ -496,6 +498,19 @@ async function freshBlocksForConversation(
         expiresAt: set?.expiresAt,
       });
     }
+  }
+  // D3-A business cards are rebuilt from the owner's live rows; a business that is no longer
+  // theirs (or no longer exists in this market) is dropped rather than shown stale.
+  const businessBlocks = surfaceBlocks.filter((item) => item.block.payload.business);
+  for (const item of businessBlocks) {
+    const refreshed = await refreshBusinessPayload(
+      item.block.payload.business as Record<string, unknown>,
+      conversationId,
+      actorId,
+      market,
+    );
+    if (refreshed) item.block.payload.business = refreshed as Record<string, unknown>;
+    else item.block.payload.business = undefined;
   }
   // Promotion blocks are rebuilt from their state row and live campaign/listing state.
   const promotionBlocks = surfaceBlocks.filter((item) => item.block.payload.promotion);
@@ -2105,6 +2120,7 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
         negotiation: toolResult.negotiation,
         inquiry: toolResult.inquiry,
         control: toolResult.control,
+        business: toolResult.business,
         relatesToAction: toolResult.relatesToAction,
       };
       const block = SurfaceBlock.parse({

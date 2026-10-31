@@ -68,6 +68,14 @@ const LABELS: Record<string, string> = {
   TUTORIAL_VIDEO_CARD: "شرح مصور",
   PRODUCT_CONTROL_SURFACE: "التحكم بالمنتج",
   VISION_SELLER_SURFACE: "مساعدة صور البائع",
+  BUSINESS_SETUP: "إعداد النشاط",
+  BUSINESS_PROFILE_REVIEW: "مراجعة النشاط",
+  BUSINESS_PROFILE: "نشاطي",
+  BUSINESS_CATALOG: "منتجات النشاط",
+  BUSINESS_CATALOG_DRAFT: "مسودات المنتجات",
+  BUSINESS_LISTING_REVIEW: "مراجعة تغيير المنتج",
+  BUSINESS_ORDERS: "طلبات النشاط",
+  BUSINESS_INSIGHTS: "أداء النشاط",
 };
 
 function purchaseCapabilities(review: Record<string, unknown>): string[] {
@@ -138,6 +146,13 @@ function semanticType(source: CardEnvelopeSource): string {
 }
 
 function lifecycleOf(payload: Record<string, unknown>): { lifecycle: SurfaceState; resource?: string } {
+  const business = record(payload.business);
+  if (business) {
+    const status = text(business.status);
+    if (text(business.pendingActionId)) return { lifecycle: "PENDING_REVIEW", resource: statusToken(status) };
+    if (business.stale === true) return { lifecycle: "EXPIRED", resource: statusToken(status) };
+    return { lifecycle: "READY", resource: statusToken(status) };
+  }
   const purchase = record(payload.purchaseReview);
   if (purchase) {
     const status = text(purchase.status);
@@ -166,6 +181,8 @@ function resourceOf(source: CardEnvelopeSource): { kind: CardEnvelopeInput["reso
   const purchase = record(payload.purchaseReview);
   const inquiry = record(payload.inquiry);
   const resourceId = text(payload.resourceId);
+  const business = record(payload.business);
+  if (business && text(business.businessId)) return { kind: "BUSINESS", id: text(business.businessId) };
   if (payload.control) return { kind: "CONTROL" };
   if (payload.delivery) return { kind: "DELIVERY" };
   if (payload.employment) return { kind: "EMPLOYMENT" };
@@ -205,6 +222,7 @@ export function buildCardEnvelope(source: CardEnvelopeSource): CardEnvelope | nu
   const purchase = record(payload.purchaseReview);
   const negotiation = record(payload.negotiation);
   const preview = record(payload.managementPreview);
+  const business = record(payload.business);
   const surfaceType = semanticType(source);
   const status = lifecycleOf(payload);
 
@@ -217,6 +235,7 @@ export function buildCardEnvelope(source: CardEnvelopeSource): CardEnvelope | nu
 
   const pendingReviewId = (() => {
     if (lifecycle !== "PENDING_REVIEW") return undefined;
+    if (business) return text(business.pendingActionId);
     if (purchase) return text(purchase.actionId);
     if (negotiation && text(negotiation.view) === "REVIEW") return text(negotiation.actionId);
     if (preview && text(preview.status) === "PENDING") return text(preview.previewId);
@@ -225,7 +244,11 @@ export function buildCardEnvelope(source: CardEnvelopeSource): CardEnvelope | nu
 
   const policyReview = record(payload.policyReview);
   let allowedActions: string[] | undefined;
-  if (purchase) allowedActions = lifecycle === "PENDING_REVIEW" && status.lifecycle === "PENDING_REVIEW" ? purchaseCapabilities(purchase) : [];
+  if (business) {
+    const listed = Array.isArray(business.allowedActions) ? business.allowedActions : [];
+    allowedActions = listed.filter((action): action is string => typeof action === "string" && /^[A-Z][A-Z0-9_]{0,39}$/.test(action)).slice(0, 12);
+  }
+  else if (purchase) allowedActions = lifecycle === "PENDING_REVIEW" && status.lifecycle === "PENDING_REVIEW" ? purchaseCapabilities(purchase) : [];
   else if (negotiation) allowedActions = lifecycle === "PENDING_REVIEW" && status.lifecycle === "PENDING_REVIEW" ? negotiationCapabilities(negotiation) : text(negotiation.view) === "REVIEW" ? [] : negotiationCapabilities(negotiation);
   else if (preview) allowedActions = lifecycle === "PENDING_REVIEW" ? ["CONFIRM", "CANCEL"] : [];
   else if (policyReview) allowedActions = policyReview.view === "REVIEW" ? ["ACCEPT", "DECLINE"] : [];
@@ -233,7 +256,9 @@ export function buildCardEnvelope(source: CardEnvelopeSource): CardEnvelope | nu
 
   const resource = resourceOf(source);
   const role =
-    negotiation?.role === "BUYER" || negotiation?.role === "SELLER"
+    business
+      ? "SELLER"
+      : negotiation?.role === "BUYER" || negotiation?.role === "SELLER"
       ? negotiation.role
       : purchase
         ? "BUYER"
@@ -243,7 +268,7 @@ export function buildCardEnvelope(source: CardEnvelopeSource): CardEnvelope | nu
   const refresh =
     pending
       ? "SSE"
-      : source.presentation || resource.id || purchase || negotiation || payload.control || preview
+      : source.presentation || resource.id || purchase || negotiation || payload.control || preview || business
         ? "REFETCH"
         : "RESTORE";
 

@@ -46,6 +46,8 @@ export const REVIEWED_PENDING_MIGRATIONS: ReadonlyArray<{ tag: string; sha256: s
   { tag: "0046_d1_d2_business_foundation", sha256: "5d2c6fc28d2f910528d43a3e4efb7676bf7839a1fd90a30c1c39a78d887765db" },
   // Integration: nullable offers.business_profile_id, an index and an owner/market guard trigger.
   { tag: "0047_business_listing_association", sha256: "f524e2c36c1304ef95accddf8f62c412eb2e8d08ca7f365a1f57d155aed45878" },
+  // D3-A operating metadata is one-to-one with D2 identity; no parallel listing link or verification state.
+  { tag: "0048_d3a_native_business_d2_link", sha256: "6c96315b377f0517ddfe15a88e3a72756643c858c0b0c552fb74b25198b6c125" },
 ];
 export const EXPECTED_JOURNAL_ENTRIES =
   EXPECTED_BASELINE_MIGRATIONS + REVIEWED_PENDING_MIGRATIONS.length;

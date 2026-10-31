@@ -2048,6 +2048,14 @@ export const AiUiBlockPayloadSurface = {
   CONTROL_NOTICE: 'CONTROL_NOTICE',
   PRIVACY_EXPORT: 'PRIVACY_EXPORT',
   TUTORIAL_VIDEO_CARD: 'TUTORIAL_VIDEO_CARD',
+  BUSINESS_SETUP: 'BUSINESS_SETUP',
+  BUSINESS_PROFILE: 'BUSINESS_PROFILE',
+  BUSINESS_PROFILE_REVIEW: 'BUSINESS_PROFILE_REVIEW',
+  BUSINESS_CATALOG: 'BUSINESS_CATALOG',
+  BUSINESS_CATALOG_DRAFT: 'BUSINESS_CATALOG_DRAFT',
+  BUSINESS_LISTING_REVIEW: 'BUSINESS_LISTING_REVIEW',
+  BUSINESS_ORDERS: 'BUSINESS_ORDERS',
+  BUSINESS_INSIGHTS: 'BUSINESS_INSIGHTS',
 } as const;
 
 export type AiTutorialPayloadId = typeof AiTutorialPayloadId[keyof typeof AiTutorialPayloadId];
@@ -2133,6 +2141,11 @@ export type AiUiBlockPayloadPurchaseReview = { [key: string]: unknown };
  * The versioned card envelope the server decides for this block (schemaVersion 1): surface type and identity, resource, conversation, market context, lifecycle, allowed actions, pending review, expiry, refresh strategy, source timestamp and accessibility label. The client validates it before rendering and never invents an action the server did not allow.
  */
 export type AiUiBlockPayloadCard = { [key: string]: unknown };
+
+/**
+ * D3-A owner business card (setup, profile, catalog, drafts, orders, insights). Server-built from the owner's own rows; display-only. Actions re-enter the conversation adapter and are authorized again by the server. It never carries contact details, identity documents, analytics exports or credentials.
+ */
+export type AiUiBlockPayloadBusiness = { [key: string]: unknown };
 
 /**
  * Seller insight from DINAR-internal facts only: price comparables (count, range, median), listing factors phrased as possibilities (never as causes), or a BUSINESS_SUMMARY of the seller's own stock, order counts or per-listing results (shape: SellerBusinessInsight in @workspace/api-zod/conversation-runtime).
@@ -2243,6 +2256,8 @@ export type AiUiBlockPayload = {
   purchaseReview?: AiUiBlockPayloadPurchaseReview;
   /** The versioned card envelope the server decides for this block (schemaVersion 1): surface type and identity, resource, conversation, market context, lifecycle, allowed actions, pending review, expiry, refresh strategy, source timestamp and accessibility label. The client validates it before rendering and never invents an action the server did not allow. */
   card?: AiUiBlockPayloadCard;
+  /** D3-A owner business card (setup, profile, catalog, drafts, orders, insights). Server-built from the owner's own rows; display-only. Actions re-enter the conversation adapter and are authorized again by the server. It never carries contact details, identity documents, analytics exports or credentials. */
+  business?: AiUiBlockPayloadBusiness;
   /** Seller insight from DINAR-internal facts only: price comparables (count, range, median), listing factors phrased as possibilities (never as causes), or a BUSINESS_SUMMARY of the seller's own stock, order counts or per-listing results (shape: SellerBusinessInsight in @workspace/api-zod/conversation-runtime). */
   sellerInsight?: AiUiBlockPayloadSellerInsight;
   attributes?: AiUiBlockPayloadAttributes;

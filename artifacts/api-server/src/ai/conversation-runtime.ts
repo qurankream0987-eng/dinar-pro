@@ -65,6 +65,7 @@ import { executeInquiryTurn } from "./inquiry-turn";
 import { executePolicyTurn } from "./policy-turn";
 import { aiRoutingMode, isDecisionUtterance } from "./routing-mode";
 import { executeProductControlTurn } from "./product-control-turn";
+import { executeBusinessTurn } from "./business-turn";
 import { aiUsagePolicyFor, globalGuardOpen, hasAiAllowance } from "../lib/ai-usage";
 import { meteredPlatformGateway } from "../lib/ai-spend";
 import { executeNegotiationTurn, isBestPriceRequest } from "./negotiation-turn";
@@ -652,6 +653,20 @@ async function executeRuntime(context: RuntimeContext, incoming: RuntimeOptions)
     if (control) {
       options.onToolSelected?.(control.tool);
       return control;
+    }
+  }
+  // D3-A: the owner's business (setup and catalog commands). An intent adapter over the same
+  // authorities; it claims only text it can resolve against this actor's own business rows.
+  if (context.actorId && !context.imageObjectPaths?.length && context.location === undefined) {
+    const business = await executeBusinessTurn({
+      conversationId: context.conversationId,
+      message: context.message,
+      market: context.market,
+      actorId: context.actorId,
+    });
+    if (business) {
+      options.onToolSelected?.(business.tool);
+      return business;
     }
   }
   if (

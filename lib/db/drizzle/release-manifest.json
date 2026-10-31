@@ -190,5 +190,9 @@
   {
     "tag": "0047_business_listing_association",
     "sha256": "f524e2c36c1304ef95accddf8f62c412eb2e8d08ca7f365a1f57d155aed45878"
+  },
+  {
+    "tag": "0048_d3a_native_business_d2_link",
+    "sha256": "6c96315b377f0517ddfe15a88e3a72756643c858c0b0c552fb74b25198b6c125"
   }
 ]

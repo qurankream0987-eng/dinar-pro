@@ -20,6 +20,7 @@ import {
   sellerDues,
   checkoutRequests,
   paymentIntents,
+  businessOperatingProfiles,
 } from "@workspace/db";
 import { and, eq, or, inArray, desc, lte, sql } from "drizzle-orm";
 import {
@@ -58,6 +59,7 @@ import {
   recordOrderFinancialEvent,
 } from "../lib/order-journal";
 import {
+  inactiveBusinessListingIds,
   listing,
   offerRowsByIds,
   searchMarketplaceListings,
@@ -94,6 +96,7 @@ import {
   validateListingImages,
   withPriceRepresentation,
 } from "../lib/listing-management";
+import { assertPublishable, requireBusinessCapability } from "../lib/business-access";
 
 function canonicalJson(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(canonicalJson);
@@ -311,6 +314,9 @@ router.get("/listings/:id", async (req, res) => {
   );
   if (!row) throw fail(404, "العرض غير موجود");
   if (row.offer.sellerId !== req.actor?.id) {
+    // A suspended or closed business's listings are not public, even by direct id.
+    if ((await inactiveBusinessListingIds(market.id)).has(row.offer.id))
+      throw fail(404, "العرض غير موجود");
     const categoriesById = new Map(
       (await listMarketplaceCategories(true)).map((item) => [item.id, item]),
     );
@@ -330,11 +336,19 @@ router.get("/listings/:id", async (req, res) => {
  * and the conversation (Block F5). Every validation, policy check and idempotency rule
  * lives here once; callers pass the authenticated actor row, never a client claim.
  */
+export type TrustedListingContext = {
+  /** Passed only by server services after business authorization; never read from a request body. */
+  businessId?: string;
+  tx?: typeof db;
+};
+
 export async function createListingForActor(
   actor: typeof users.$inferSelect,
   rawBody: unknown,
   idempotencyKey?: string,
+  trusted?: TrustedListingContext,
 ) {
+  const executor = trusted?.tx ?? db;
   const body = CreateListingBody.parse(rawBody);
   await assertSellerCanReceive(actor.id);
   const rawCity = (rawBody as { city?: unknown } | null)?.city;
@@ -359,6 +373,28 @@ export async function createListingForActor(
     throw fail(400, `أكمل خصائص العرض المطلوبة: ${attributes.missing.join("، ")}`);
   await assertPoliciesAccepted(actor.id);
   const market = await marketFor({ actor });
+  // The business association is applied inside the listing write trust boundary: the id comes
+  // from a server service, never from the request, and capability + verification are rechecked.
+  let business: typeof businessOperatingProfiles.$inferSelect | undefined;
+  if (trusted?.businessId) {
+    const [row] = await executor
+      .select()
+      .from(businessOperatingProfiles)
+      .where(and(
+        eq(businessOperatingProfiles.id, trusted.businessId),
+        eq(businessOperatingProfiles.marketId, market.id),
+      ))
+      .limit(1);
+    if (!row || row.ownerUserId !== actor.id) throw fail(404, "النشاط غير موجود");
+    const access = await requireBusinessCapability({
+      business: row,
+      actorId: actor.id,
+      marketId: market.id,
+      capability: "business.catalog.publish",
+    });
+    assertPublishable(access);
+    business = row;
+  }
   // A phone in the text would bypass the order-bound contact release (lib/contact-release.ts).
   if (findListingContactText(`${body.title}\n${body.description ?? ""}`, market.id)) throw listingContactTextRefusal();
   const photoPaths = await validateListingImages(
@@ -406,6 +442,7 @@ export async function createListingForActor(
           contactPhone,
           paymentMethods: body.paymentMethods ?? [],
           negotiable: body.negotiable === true,
+          businessId: business?.id ?? null,
         }),
       ),
     )
@@ -428,10 +465,11 @@ export async function createListingForActor(
         )
       : undefined;
     await makeListingPhotosPublic(finalPhotoPaths, actor.id);
-    const [published] = await db
+    const [published] = await executor
       .update(offers)
       .set({
         status: "PUBLISHED",
+        businessProfileId: business?.d2BusinessId ?? null,
         ...(finalData ? { data: finalData } : {}),
       })
       .where(
@@ -443,7 +481,7 @@ export async function createListingForActor(
       )
       .returning();
     if (published) return published;
-    const [current] = await db
+    const [current] = await executor
       .select()
       .from(offers)
       .where(eq(offers.id, row.id))
@@ -458,7 +496,7 @@ export async function createListingForActor(
     throw fail(409, "تعذر إكمال نشر العرض. حدّث المسودة ثم أعد المحاولة.");
   };
 
-  const existing = await db
+  const existing = await executor
     .select()
     .from(offers)
     .where(eq(offers.id, listingId))
@@ -471,6 +509,8 @@ export async function createListingForActor(
       existingFingerprint(existing) !== fingerprint
     )
       throw fail(409, "مفتاح النشر مستخدم لبيانات أخرى.");
+    if (existing.businessProfileId !== (business?.d2BusinessId ?? null))
+      throw fail(409, "هذا العرض مرتبط بهوية نشاط مختلفة.");
     if (existing.status === "DRAFT") {
       const published = await completePublish(
         existing,
@@ -482,12 +522,13 @@ export async function createListingForActor(
     return { status: 200 as const, listing: listing(existing, actor, market, true) };
   }
 
-  const [inserted] = await db
+  const [inserted] = await executor
     .insert(offers)
     .values({
       id: listingId,
       marketId: market.id,
       sellerId: actor.id,
+      businessProfileId: business?.d2BusinessId ?? null,
       status: "DRAFT",
       unitPriceMinor: behavior.unitPriceMinor,
       pricingMode: behavior.pricingMode,
@@ -519,7 +560,7 @@ export async function createListingForActor(
     return { status: 201 as const, listing: listing(published, actor, market, true) };
   }
 
-  const [raced] = await db
+  const [raced] = await executor
     .select()
     .from(offers)
     .where(eq(offers.id, listingId))
@@ -531,6 +572,8 @@ export async function createListingForActor(
     existingFingerprint(raced) !== fingerprint
   )
     throw fail(409, "مفتاح النشر مستخدم لبيانات أخرى.");
+  if (raced.businessProfileId !== (business?.d2BusinessId ?? null))
+    throw fail(409, "هذا العرض مرتبط بهوية نشاط مختلفة.");
   if (raced.status === "DRAFT") {
     const published = await completePublish(
       raced,

@@ -53,6 +53,11 @@ import {
   normalizePromotion,
   type PromotionPayload,
 } from "./promotion-types";
+import {
+  BUSINESS_SURFACES,
+  normalizeBusiness,
+  type BusinessPayload,
+} from "./business-types";
 
 export type AiRole = "USER" | "ASSISTANT";
 
@@ -103,6 +108,8 @@ export type AiUiBlock = {
     driver?: unknown;
     /** Server-built provider connection view (G1); never contains a key. */
     provider?: unknown;
+    /** D3-A server-built business view (setup, profile, catalog, orders, insights). */
+    business?: BusinessPayload;
     draft?: Record<string, unknown>;
     draftStep?: string;
     /** Block F1 server-built draft review and seller insight. */
@@ -287,6 +294,11 @@ function normalizeBlock(value: unknown): AiUiBlock | null {
     !normalizeEmployment(payload.employment, payload.surface)
   )
     return null;
+  if (payload.surface && (BUSINESS_SURFACES as readonly string[]).includes(payload.surface)) {
+    const business = normalizeBusiness(payload.business, payload.surface);
+    if (!business) return null;
+    payload.business = business;
+  }
   if (
     typeof payload.resultSetId !== "string" ||
     !Array.isArray(payload.listings) ||
