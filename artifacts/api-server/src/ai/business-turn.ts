@@ -356,7 +356,7 @@ async function resumeTurn(input: {
     return selectionTurn(rows, "لديك أكثر من نشاط. اختر النشاط الذي تريد إدارته:");
   }
   const business = rows.find((row) => row.status === "DRAFT") ?? rows[0]!;
-  const access = await resolveBusinessAccess({ business, actorId: input.actorId, marketId: input.marketId });
+  const access = await resolveBusinessAccess({ business, actorId: input.actorId, marketId: input.market.id });
   if (business.status === "DRAFT") {
     return businessOutput("BUSINESS_SETUP", setupPayload(business, access), SETUP_PROMPTS[nextSetupStep(business)] ?? "");
   }

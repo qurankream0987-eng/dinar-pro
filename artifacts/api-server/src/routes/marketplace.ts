@@ -738,6 +738,11 @@ async function checkout(
       );
     if (sellers.some((s) => s.status !== "ACTIVE"))
       throw fail(409, "البائع غير متاح");
+    // A suspended or closed business's catalog is not purchasable, even when a buyer kept the
+    // listing in the cart from before the suspension.
+    const inactive = await inactiveBusinessListingIds(market.id, tx);
+    if (locked.some((offer) => inactive.has(offer.id)))
+      throw fail(409, "أحد العروض لم يعد متاحًا");
     for (const seller of sellers) await assertSellerCanReceive(seller.id, tx);
     for (const offer of locked)
       await assertMarketPolicy(

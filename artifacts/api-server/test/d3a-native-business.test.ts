@@ -691,6 +691,8 @@ await focused("D3A-33", "a suspended business disappears from the storefront, se
   assert.ok(!found.data.some((listing: any) => listing.id === burgerId));
   const detail = await request(`/listings/${burgerId}`, "GET", undefined, buyer.cookie);
   assert.equal(detail.status, 404);
+  const cart = await request("/cart", "PUT", { marketId: "JO", items: [{ listingId: burgerId, quantity: 1 }] }, buyer.cookie);
+  assert.equal(cart.status, 409, cart.raw);
   const ownerView = await request(`/listings/${burgerId}`, "GET", undefined, verified.cookie);
   assert.equal(ownerView.status, 200);
   const access = await resolveBusinessAccess({ business: await businessOf(verifiedBusinessId), actorId: verified.id, marketId: "JO" });
