@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useParams } from "wouter";
+import { useLocation, useParams } from "wouter";
 import { BadgeCheck, MessagesSquare, Clock, MapPin, Store } from "lucide-react";
 import { api } from "@/account/Account";
 import { OfferCard, OfferGrid, OfferGridSkeleton } from "@/features/OfferCard";
@@ -34,6 +34,7 @@ type PublicBusiness = {
 
 export default function PublicBusinessPage() {
   const { id } = useParams<{ id: string }>();
+  const [, navigate] = useLocation();
   const business = useQuery<PublicBusiness>({
     queryKey: ["public-business", id],
     queryFn: async () => (await api(`/businesses/${encodeURIComponent(id ?? "")}`)) as PublicBusiness,
@@ -128,7 +129,14 @@ export default function PublicBusinessPage() {
           ) : (
             <OfferGrid>
               {data.listings.map((listing, index) => (
-                <OfferCard key={listing.id} offer={listing} eager={index < 4} />
+                <OfferCard
+                  key={listing.id}
+                  offer={listing}
+                  eager={index < 4}
+                  // In chat-only DINAR every purchase starts from the conversation: pre-type the
+                  // request (never send it) so the canonical search and checkout stay the only path.
+                  onOpen={() => navigate(`/ai?ask=${encodeURIComponent(`أبي ${listing.title}`)}`)}
+                />
               ))}
             </OfferGrid>
           )}
