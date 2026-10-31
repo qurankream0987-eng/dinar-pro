@@ -138,9 +138,13 @@ try {
   observations.keyboard.composerTabStops = composerReached;
   observations.keyboard.sendTabStops = sendReached;
 
+  let releaseTurn;
+  const turnGate = new Promise((resolve) => {
+    releaseTurn = resolve;
+  });
   await context.route(/\/api\/ai\/conversations\/[^/]+\/turns$/, async (route) => {
     if (route.request().method() !== "POST") return route.fallback();
-    await sleep(900);
+    await Promise.race([turnGate, sleep(15_000)]);
     await route.continue();
   });
   await page.keyboard.press("Enter");
@@ -151,10 +155,13 @@ try {
   const typing = page.locator('[data-testid="ai-typing"]');
   assert.equal(await typing.getAttribute("role"), "status", "progress is announced through a status region");
   assert.equal(await typing.isVisible(), true, "the progress region is visible while the answer is held");
-  assert.equal(await card.locator("fieldset").first().getAttribute("aria-busy"), "true", "the card is marked busy while the turn runs");
+  const actionGroup = card.locator('xpath=ancestor::fieldset[contains(@class, "dinar-action-group")][1]');
+  assert.equal(await actionGroup.getAttribute("aria-busy"), "true", "the card is marked busy while the turn runs");
+  assert.equal(await actionGroup.isDisabled(), true, "the card's controls are disabled while the turn runs");
   observations.card.busyLabel = busy.label;
   observations.card.progressRole = "status";
   checks.push("a11y: the busy state is disabled and announced while the answer is in flight");
+  releaseTurn();
 
   await waitForCardLifecycle(page, "CONFIRMED", 60_000);
   await page.waitForFunction(() => document.querySelector('[data-testid="button-send-ai-message"]')?.getAttribute("aria-label") === "إرسال الرسالة", null, { timeout: 30_000 });
