@@ -291,18 +291,18 @@ async function saveSetupState(business: BusinessProfile, patch: Record<string, u
 async function startSetup(input: {
   conversationId: string;
   actorId: string;
-  marketId: string;
+  market: Market;
   text: string;
 }): Promise<Turn> {
-  const rows = await ownerBusinesses(input.actorId, input.marketId);
+  const rows = await ownerBusinesses(input.actorId, input.market.id);
   const draft = rows.find((row) => row.status === "DRAFT");
   if (draft) {
-    const access = await resolveBusinessAccess({ business: draft, actorId: input.actorId, marketId: input.marketId });
+    const access = await resolveBusinessAccess({ business: draft, actorId: input.actorId, marketId: input.market.id });
     return businessOutput("BUSINESS_SETUP", setupPayload(draft, access), SETUP_PROMPTS[nextSetupStep(draft)] ?? "");
   }
   if (rows.length && !rows.some((row) => row.status === "DRAFT")) {
     // §C: an existing business is resumed, never duplicated.
-    return resumeTurn({ conversationId: input.conversationId, actorId: input.actorId, marketId: input.marketId, rows });
+    return resumeTurn({ conversationId: input.conversationId, actorId: input.actorId, market: input.market, rows });
   }
   const type = detectBusinessType(input.text);
   const name = extractBusinessName(input.text);
@@ -312,7 +312,7 @@ async function startSetup(input: {
     .values({
       id: randomUUID(),
       ownerUserId: input.actorId,
-      marketId: input.marketId,
+      marketId: input.market.id,
       operatingMode: "INTERNAL_DINAR",
       businessType: type,
       displayName: name ? normalizeName(name) : "",
@@ -332,7 +332,7 @@ async function startSetup(input: {
     resourceId: created!.id,
     detail: { businessType: created!.businessType, operatingMode: "INTERNAL_DINAR" },
   });
-  const access = await resolveBusinessAccess({ business: created!, actorId: input.actorId, marketId: input.marketId });
+  const access = await resolveBusinessAccess({ business: created!, actorId: input.actorId, marketId: input.market.id });
   const step = nextSetupStep(created!);
   return businessOutput(
     "BUSINESS_SETUP",
@@ -347,10 +347,10 @@ async function startSetup(input: {
 async function resumeTurn(input: {
   conversationId: string;
   actorId: string;
-  marketId: string;
+  market: Market;
   rows?: BusinessProfile[];
 }): Promise<Turn> {
-  const rows = input.rows ?? (await ownerBusinesses(input.actorId, input.marketId));
+  const rows = input.rows ?? (await ownerBusinesses(input.actorId, input.market.id));
   if (!rows.length) return businessOutput("BUSINESS_PROFILE", { view: "PROFILE", notice: "لا يوجد نشاط بعد.", allowedActions: [] }, "لا يوجد نشاط بعد؛ قل «عندي مطعم» لبدء تسجيل نشاطك.");
   if (rows.length > 1 && !rows.some((row) => row.status === "DRAFT")) {
     return selectionTurn(rows, "لديك أكثر من نشاط. اختر النشاط الذي تريد إدارته:");
@@ -360,8 +360,8 @@ async function resumeTurn(input: {
   if (business.status === "DRAFT") {
     return businessOutput("BUSINESS_SETUP", setupPayload(business, access), SETUP_PROMPTS[nextSetupStep(business)] ?? "");
   }
-  const listings = await businessListings(business, input.marketId);
-  const summary = await businessCatalogSummary(business, input.marketId);
+  const listings = await businessListings(business, input.market.id);
+  const summary = await businessCatalogSummary(business, input.market.id);
   return businessOutput(
     "BUSINESS_PROFILE",
     {
@@ -376,7 +376,7 @@ async function resumeTurn(input: {
       identityStatus: business.identityStatus,
       ...accessPayload(access),
       summary,
-      listings: listings.slice(0, 12).map(listingView),
+      listings: listings.slice(0, 12).map((row) => listingView(row, input.market)),
       blockedReason: publicationNotice(access),
       publicPath: `/business/${business.id}`,
       allowedActions: access.capabilities.has("business.catalog.read") ? ["CATALOG", "ORDERS", "INSIGHTS"] : [],
@@ -661,7 +661,7 @@ async function latestCatalogIds(conversationId: string, actorId: string): Promis
 }
 
 const ORDINALS: Record<string, number> = {
-  الاول: 1, الأول: 1, اول: 1, الثاني: 2, الثانى: 2, الثاني: 2, الثالث: 3, الرابع: 4, الخامس: 5, السادس: 6,
+  الاول: 1, الأول: 1, اول: 1, الثاني: 2, الثانى: 2, الثالث: 3, الرابع: 4, الخامس: 5, السادس: 6,
 };
 
 async function resolveListingTarget(input: {
@@ -786,7 +786,7 @@ async function handleCatalogCommand(input: {
     return insightsTurn({ actorId: input.actorId, market: input.market, business, access });
   }
   if (has(input.text, PROFILE_INTENT)) {
-    return resumeTurn({ conversationId: input.conversationId, actorId: input.actorId, marketId: input.market.id, rows: [business] });
+    return resumeTurn({ conversationId: input.conversationId, actorId: input.actorId, market: input.market, rows: [business] });
   }
   if (has(input.text, DRAFTS_INTENT)) {
     return prepareDrafts({
@@ -1550,7 +1550,7 @@ export async function executeBusinessTurn(input: {
 
   const setupIntent = SETUP_INTENT.some((pattern) => has(text, pattern));
   if (setupIntent) {
-    return startSetup({ conversationId: input.conversationId, actorId, marketId: input.market.id, text: input.message });
+    return startSetup({ conversationId: input.conversationId, actorId, market: input.market, text: input.message });
   }
 
   const resolved = await resolveBusiness({ actorId, marketId: input.market.id, text });
@@ -1586,7 +1586,7 @@ export async function executeBusinessTurn(input: {
     return resumeTurn({
       conversationId: input.conversationId,
       actorId,
-      marketId: input.market.id,
+      market: input.market,
       rows: [resolved.business],
     });
   }

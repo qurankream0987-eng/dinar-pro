@@ -213,7 +213,7 @@ export function recordBusinessAudit(input: {
   resourceType: string;
   resourceId?: string | null;
   detail?: Record<string, unknown>;
-  executor?: typeof db;
+  executor?: Parameters<Parameters<typeof db.transaction>[0]>[0] | typeof db;
 }) {
   const executor = input.executor ?? db;
   return executor.insert(businessAuditEvents).values({

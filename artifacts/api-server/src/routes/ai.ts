@@ -48,7 +48,7 @@ import {
   refreshPromotionPayload,
 } from "../ai/promotion-turn";
 import { driverStateExpiry, refreshDriverPayload } from "../ai/driver-turn";
-import { refreshBusinessPayload } from "../ai/business-turn";
+import { refreshBusinessPayload, type BusinessPayload } from "../ai/business-turn";
 import { createHmac, randomBytes, randomUUID } from "node:crypto";
 import express, { Router } from "express";
 import { and, desc, eq, inArray } from "drizzle-orm";
@@ -504,7 +504,7 @@ async function freshBlocksForConversation(
   const businessBlocks = surfaceBlocks.filter((item) => item.block.payload.business);
   for (const item of businessBlocks) {
     const refreshed = await refreshBusinessPayload(
-      item.block.payload.business as Record<string, unknown>,
+      item.block.payload.business as unknown as BusinessPayload,
       conversationId,
       actorId,
       market,
