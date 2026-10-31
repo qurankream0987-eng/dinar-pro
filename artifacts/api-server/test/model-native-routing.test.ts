@@ -218,6 +218,19 @@ await test("MN-05 SHADOW serves LEGACY and executes nothing the model read", asy
   });
 });
 
+await test("MN-06 MODEL_FIRST keeps DINAR's compound plan and its own answers when the model only talks", async () => {
+  await withMode("MODEL_FIRST", async () => {
+    const user = await fresh();
+    // The scripted model has nothing for these: it answers in plain text, never a canonical request.
+    const planned = await say(user.cookie, user.conv, `دور لي جوال ريدمي ${run} وجهز الطلب`);
+    assert.ok(planned.listingIds.includes(ids.redmi!), `step one is DINAR's search, not model text: ${planned.body}`);
+    const next = await say(user.cookie, user.conv, "التالي");
+    assert.equal(next.payload.surface, "PURCHASE_REVIEW", `step two is DINAR's review: ${next.body}`);
+    const price = await say(user.cookie, user.conv, "الأول كم سعره؟");
+    assert.match(price.body, /120/u, `DINAR's recorded price, never lost to model text: ${price.body}`);
+  });
+});
+
 after(async () => {
   server.close();
   await pool.end();

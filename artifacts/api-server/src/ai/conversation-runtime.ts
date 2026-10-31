@@ -561,7 +561,9 @@ async function executeWithRoutingMode(context: RuntimeContext, options: RuntimeO
   return legacy;
 }
 
-async function executeRuntime(context: RuntimeContext, options: RuntimeOptions): Promise<RuntimeTurn> {
+async function executeRuntime(context: RuntimeContext, incoming: RuntimeOptions): Promise<RuntimeTurn> {
+  // The model stage belongs to this call only: plan steps and canonical re-entries never inherit it.
+  const { modelStage, ...options } = incoming;
   // «تمام روجه», «طيب نفذ»: a leading acknowledgement is not part of the command.
   context = { ...context, message: withoutAcknowledgement(context.message) };
   if (
@@ -724,7 +726,7 @@ async function executeRuntime(context: RuntimeContext, options: RuntimeOptions):
   };
   // routing-mode.ts: only the model is consulted (MODEL_FIRST's first read, HYBRID's second look).
   // A decision turn never goes to the model; an unavailable model yields no result.
-  if (options.modelStage === "ONLY" && !options.noModel) {
+  if (modelStage === "ONLY" && !options.noModel) {
     const decision = isDecisionUtterance(context.message) || (await hasOpenReview(context.conversationId, context.market.id, context.actorId));
     if (!decision) {
       const first = await modelFallback();
