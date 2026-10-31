@@ -17,8 +17,10 @@ const conversationId = "6f1c1c61-1f6f-4c61-9f6f-3f0c6f0e2222";
 test("W02U3.1 a card sync event carries only its scope, its conversation and a timestamp", () => {
   const event = cardSyncEvent(userId, marketId, conversationId, 1_700_000_000_000);
   assert.deepEqual(Object.keys(event).sort(), ["conversationId", "issuedAt", "marketId", "type", "userId"]);
-  assert.equal(JSON.stringify(event).includes("card"), false, "no card payload is broadcast");
-  assert.equal(JSON.stringify(event).includes("price"), false, "no listing facts are broadcast");
+  assert.equal(Object.hasOwn(event, "card"), false, "no card payload is broadcast");
+  for (const key of ["card", "surface", "lifecycle", "amount", "price", "phone"]) {
+    assert.equal(Object.hasOwn(event, key), false, `no ${key} is broadcast`);
+  }
   assert.deepEqual(parseCardSyncEvent(JSON.parse(JSON.stringify(event)), userId, marketId), event);
 });
 
