@@ -199,6 +199,33 @@ export function plansSurface(plans: Plans): ComposedSurfaceInput {
     testId: "ai-plans",
     sections: [
       { type: "header", title: "باقات DINAR", subtitle: "القدرات نفسها في كل الباقات؛ الفرق في سعة الاستخدام.", icon: "SPARKLE" },
+      ...(plans.publicPlans?.length
+        ? [
+            {
+              type: "options" as const,
+              label: "خطط دينار",
+              layout: "GRID" as const,
+              items: plans.publicPlans.map((plan) => ({
+                key: plan.planCode.toLowerCase().replace(/_/g, "-"),
+                title: plan.name,
+                subtitle: plan.marketPriceLabel ?? plan.referencePriceLabel,
+                subtitleMuted: !plan.marketPriceLabel,
+                badge: plan.current ? { label: "خطتك", tone: "GOLD" as const } : { label: plan.statusLabel, tone: "NEUTRAL" as const },
+                highlighted: plan.current,
+                facts: [
+                  ...(plan.marketPriceLabel ? [{ label: "السعر المرجعي", value: plan.referencePriceLabel }] : []),
+                  ...plan.features.map((feature) => ({ label: "•", value: feature })),
+                  { label: "الأهلية", value: plan.eligibilityNote },
+                ].slice(0, 6),
+                actions: plan.current
+                  ? undefined
+                  : [{ kind: "SEND" as const, label: `مراجعة ${plan.name}`, message: plan.planCode === "DINAR_BUSINESS" ? "أبي أشترك في بزنس" : `اشترك في ${plan.planCode === "DINAR_PRO" ? "Pro" : "Go"}`, emphasis: "SECONDARY" as const }],
+                testId: "dinar-plan",
+              })),
+            },
+            ...(plans.publicPlansNote ? [{ type: "text" as const, muted: true, text: plans.publicPlansNote }] : []),
+          ]
+        : []),
       {
         type: "options",
         label: "الباقات",

@@ -5,10 +5,11 @@ import { friendlyError } from "@/lib/errors";
 import { ComposedSurfaceView } from "./surface/ComposedSurface";
 import { plansSurface, usageSurface } from "./surface/adapters";
 import { FactList, UsageMeter, factRows } from "./surface/primitives";
+import { BusinessCardSurface } from "./BusinessCardSurface";
 
 export { COMMERCIAL_SURFACES, normalizeCommercial, type CommercialPayload } from "./commercial-types";
 import type { CommercialPayload, CommercialProduct } from "./commercial-types";
-const TITLES: Record<string,string> = {COMMERCIAL_BALANCE:"الرصيد التجاري",COMMERCIAL_LEDGER_SUMMARY:"حركة الرصيد",COMMERCIAL_TOPUP_REVIEW:"مراجعة الشحن التجريبي",COMMERCIAL_PRODUCTS:"خيارات الترويج",FEATURED_REVIEW:"مراجعة الإعلان المميز",VIP_REVIEW:"مراجعة VIP",REFRESH_REVIEW:"تحديث ظهور الإعلان",BUNDLE_REVIEW:"مراجعة باقة الترويج",BUNDLE_STATUS:"رصيد الباقات",DEMAND_CAPTURE_REVIEW:"روح بِع لي",CAMPAIGN_STATUS:"حالة الحملة",CAMPAIGN_ANALYTICS:"نتائج الحملات",MARKET_PULSE:"نبض السوق",MARKET_OPPORTUNITY:"فرصة في السوق",BUSINESS_PLAN_REVIEW:"مراجعة دينار بزنس",BUSINESS_STATUS:"دينار بزنس",AI_USAGE:"استهلاكك للذكاء الاصطناعي",AI_PLANS:"باقات DINAR",PROMOTION_TYPE_OPTIONS:"اختيار الترويج",COMMERCIAL_PRODUCT_REVIEW:"مراجعة الترويج",COMMERCE_NOTICE:"خدمات دينار التجارية"};
+const TITLES: Record<string,string> = {COMMERCIAL_BALANCE:"الرصيد التجاري",COMMERCIAL_LEDGER_SUMMARY:"حركة الرصيد",COMMERCIAL_TOPUP_REVIEW:"مراجعة الشحن التجريبي",COMMERCIAL_PRODUCTS:"خيارات الترويج",FEATURED_REVIEW:"مراجعة الإعلان المميز",VIP_REVIEW:"مراجعة VIP",REFRESH_REVIEW:"تحديث ظهور الإعلان",BUNDLE_REVIEW:"مراجعة باقة الترويج",BUNDLE_STATUS:"رصيد الباقات",DEMAND_CAPTURE_REVIEW:"روح بِع لي",CAMPAIGN_STATUS:"حالة الحملة",CAMPAIGN_ANALYTICS:"نتائج الحملات",MARKET_PULSE:"نبض السوق",MARKET_OPPORTUNITY:"فرصة في السوق",BUSINESS_PLAN_REVIEW:"مراجعة دينار بزنس",BUSINESS_STATUS:"دينار بزنس",BUSINESS_PROFILE:"دينار بزنس",AI_USAGE:"استهلاكك للذكاء الاصطناعي",AI_PLANS:"باقات DINAR",PROMOTION_TYPE_OPTIONS:"اختيار الترويج",COMMERCIAL_PRODUCT_REVIEW:"مراجعة الترويج",COMMERCE_NOTICE:"خدمات دينار التجارية"};
 const STATUS: Record<string,string> = {ACTIVE:"نشط",PAUSED:"موقوف مؤقتًا",EXPIRED:"منتهٍ",CANCELLED:"ملغى",BUDGET_EXHAUSTED:"انتهت الميزانية",PENDING_PAYMENT:"بانتظار الدفع التجريبي",SCHEDULED:"مجدول",EXHAUSTED:"استُخدمت الوحدات",FREE:"الحساب المجاني"};
 const number = (value:number) => value.toLocaleString("en-US");
 function ProductFacts({product}:{product:CommercialProduct}) { return <div className="space-y-2"><h4 className="font-semibold">{product.name}</h4><FactList rows={factRows([["النوع",product.productTypeLabel],["السعر",product.priceLabel],["المدة",product.durationDays ? `${product.durationDays} يوم` : "لكل استخدام"],["أقل ميزانية",product.minBudgetLabel],["التفاعل المؤهل",product.unitChargeLabel]],"HIDE")}/>{product.bundleItems?.map((item,index) => <p className="text-xs text-muted-foreground" key={index}>{item.productTypeLabel}: <bdi>{item.units}</bdi> استخدام{item.durationDays ? ` · ${item.durationDays} يوم لكل استخدام` : ""}</p>)}</div>; }
@@ -18,6 +19,7 @@ export function CommercialSurface({commerce,active,onSend}:{commerce:CommercialP
   const [amount,setAmount] = useState("");
   // AI usage and plans are composed from the shared primitives; the rest keeps its own layout.
   if (commerce.usage && commerce.view === "AI_USAGE" && !commerce.action) return <ComposedSurfaceView surface={usageSurface(commerce.usage)} active={active} onSend={onSend}/>;
+  if (commerce.business && commerce.view === "BUSINESS_PROFILE") return <BusinessCardSurface business={commerce.business} active={active} onSend={onSend}/>;
   if (commerce.aiPlans && commerce.view === "AI_PLANS" && !commerce.action) return <ComposedSurfaceView surface={plansSurface(commerce.aiPlans)} active={active} onSend={onSend}/>;
   const send = active ? onSend : undefined;
   const pending = commerce.action?.status === "PENDING";

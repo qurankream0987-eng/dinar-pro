@@ -12,6 +12,7 @@ import {
   db,
   demandSignals,
   listingPromotions,
+  marketAudit,
   markets,
   promotionAttributions,
   promotionProducts,
@@ -60,10 +61,14 @@ import {
 } from "../lib/business";
 import { PaymentWebhookEventSchema } from "../lib/payments/contracts";
 import { applyCommerceAction } from "../ai/commerce-turn";
+import { BUSINESS_ENTITLEMENT_KEYS, PLAN_CODES, validateCatalogProductForPlan } from "../lib/subscription-plans";
+import { subscriptionPlansOverview } from "../lib/subscription-overview";
 import { resolveMarketplaceCategory } from "../lib/marketplace-categories";
 
 const router = Router();
 const fail = (status: number, message: string, code?: string) => Object.assign(new Error(message), { status, ...(code ? { code } : {}) });
+/** A deliberate, user-safe refusal whose message and code reach the client (D1 plan rules). */
+const refuse = (status: number, message: string, code: string) => Object.assign(new Error(message), { status, code, expose: true });
 const key = z.string().regex(/^[A-Za-z0-9._:-]{8,128}$/);
 
 const requireCommercialAdmin: RequestHandler = (req, res, next) => {
@@ -211,19 +216,24 @@ router.get("/business/plans", requireAuth, async (req, res) => {
   const market = await marketFor(req);
   res.json(await businessPlans(market));
 });
+/** D1: the Go / Pro / Business comparison for this account and market (prices from the server). */
+router.get("/subscriptions/plans", requireAuth, async (req, res) => {
+  const market = await marketFor(req);
+  res.json(await subscriptionPlansOverview(req.actor!.id, market));
+});
 router.get("/business/subscription", requireAuth, async (req, res) => {
   const market = await marketFor(req);
   res.json(await getBusinessStatus(req.actor!.id, market));
 });
 router.post("/business/subscription-review", requireAuth, async (req, res) => {
-  const body = z.object({ planId: z.string().min(1).max(80) }).strict().parse(req.body);
+  const body = z.object({ planId: z.string().min(1).max(80), businessId: z.string().uuid().optional() }).strict().parse(req.body);
   const market = await marketFor(req);
-  res.json(await reviewBusinessSubscription({ actorId: req.actor!.id, market, planId: body.planId }));
+  res.json(await reviewBusinessSubscription({ actorId: req.actor!.id, market, planId: body.planId, businessId: body.businessId }));
 });
 router.post("/business/subscriptions", requireAuth, async (req, res) => {
-  const body = z.object({ planId: z.string().min(1).max(80), idempotencyKey: key }).strict().parse(req.body);
+  const body = z.object({ planId: z.string().min(1).max(80), idempotencyKey: key, businessId: z.string().uuid().optional() }).strict().parse(req.body);
   const market = await marketFor(req);
-  res.status(201).json(await subscribeBusiness({ actorId: req.actor!.id, market, planId: body.planId, idempotencyKey: body.idempotencyKey }));
+  res.status(201).json(await subscribeBusiness({ actorId: req.actor!.id, market, planId: body.planId, idempotencyKey: body.idempotencyKey, businessId: body.businessId }));
 });
 router.post("/business/subscription/cancel", requireAuth, async (req, res) => {
   z.object({}).strict().parse(req.body ?? {});
@@ -255,7 +265,9 @@ const ProductBody = z
     refundPolicy: z.enum(["NON_REFUNDABLE_ON_ACTIVATION", "RELEASE_UNUSED_BUDGET", "UNUSED_UNITS_TO_CREDIT", "NO_REFUND"]).default("NON_REFUNDABLE_ON_ACTIVATION"),
     bundleItems: z.array(z.object({ productType: z.enum(["FEATURED_LISTING", "VIP_LISTING", "REFRESH_LISTING"]), units: z.number().int().min(1).max(1000), durationDays: z.number().int().min(1).max(365), priorityWeight: z.number().int().min(1).max(1000).optional() }).strict()).max(10).default([]),
     entitlementExpiryDays: z.number().int().min(1).max(3650).optional(),
-    businessEntitlements: z.array(z.enum(["MARKET_PULSE_ADVANCED", "CAMPAIGN_ANALYTICS_ADVANCED", "BUSINESS_REPORTING", "INVENTORY_INSIGHTS", "AI_USAGE_BUSINESS_GO", "AI_USAGE_BUSINESS_PRO"])).max(10).default([]),
+    businessEntitlements: z.array(z.enum(BUSINESS_ENTITLEMENT_KEYS)).max(10).default([]),
+    /** D1: the public plan a DINAR_BUSINESS product sells. */
+    planCode: z.enum(PLAN_CODES).optional(),
     pricingVersion: z.number().int().min(1).default(1),
     effectiveFrom: z.string().datetime().optional(),
     effectiveTo: z.string().datetime().optional(),
@@ -286,6 +298,11 @@ router.post("/admin/markets/:marketId/commercial-products", requireAuth, require
     if (!(await resolveMarketplaceCategory(body.categoryId, undefined))) throw fail(404, "التصنيف غير موجود");
   } else if (body.categoryId) throw fail(400, "هذا المنتج لا يرتبط بتصنيف");
   if (body.productType === "PROMOTION_BUNDLE" && !body.bundleItems.length) throw fail(400, "حدّد محتوى الباقة");
+  if (body.planCode && body.productType !== "DINAR_BUSINESS") throw refuse(400, "رمز الخطة يخص منتجات دينار بزنس فقط", "PLAN_CODE_INVALID");
+  if (body.productType === "DINAR_BUSINESS") {
+    const invalid = validateCatalogProductForPlan((await getCommercialPolicy(market.id)).subscriptionPlans, body.planCode ?? null, body.businessEntitlements);
+    if (invalid) throw refuse(400, invalid, "PLAN_ENTITLEMENTS_INVALID");
+  } else if (body.businessEntitlements.length) throw refuse(400, "المزايا التجارية تخص منتجات دينار بزنس فقط", "PLAN_ENTITLEMENTS_INVALID");
   if ((body.productType === "EXTRA_LISTING_QUOTA" || body.productType === "SPONSORED_SURFACE") && body.enabled)
     throw fail(409, "هذا المنتج مُعدّ ولم يُفعّل بعد (لا يوجد حد للإعلانات في دينار حاليًا)", "PREPARED_NOT_ENABLED");
   try {
@@ -309,6 +326,7 @@ router.post("/admin/markets/:marketId/commercial-products", requireAuth, require
         bundleItems: body.bundleItems,
         entitlementExpiryDays: body.entitlementExpiryDays ?? null,
         businessEntitlements: body.businessEntitlements,
+        planCode: body.planCode ?? null,
         priceMinor: body.priceMinor,
         currencyCode: market.currencyCode,
         durationDays: body.durationDays,
@@ -317,8 +335,11 @@ router.post("/admin/markets/:marketId/commercial-products", requireAuth, require
         updatedBy: req.actor!.id,
       })
       .returning();
+    await db.insert(marketAudit).values({ id: randomUUID(), marketId: market.id, actorId: req.actor!.id, action: "COMMERCIAL_PRODUCT_CREATED", data: { productId: row!.id, productType: row!.productType, planCode: row!.planCode, priceMinor: row!.priceMinor, currencyCode: row!.currencyCode, pricingVersion: row!.pricingVersion, durationDays: row!.durationDays, entitlements: row!.businessEntitlements, enabled: row!.enabled } });
     res.status(201).json(commercialProductView(row!, market));
   } catch (error) {
+    if ((error as { cause?: { code?: string }; code?: string }).cause?.code === "23505" || (error as { code?: string }).code === "23505")
+      throw refuse(409, "توجد خطة مفعّلة بالرمز نفسه في هذا السوق؛ أوقفها أولًا ثم أضف السعر الجديد بإصدار تسعير جديد", "PLAN_ALREADY_ENABLED");
     if ((error as { cause?: { code?: string }; code?: string }).cause?.code === "23514" || (error as { code?: string }).code === "23514")
       throw fail(400, "شروط المنتج غير متسقة (طريقة الاحتساب أو الميزانية أو الفئة)", "PRODUCT_INVALID");
     throw error;
@@ -332,7 +353,15 @@ router.patch("/admin/commercial-products/:id", requireAuth, requireCommercialAdm
   if (!current) throw fail(404, "المنتج غير موجود");
   if (body.enabled && ["EXTRA_LISTING_QUOTA", "SPONSORED_SURFACE"].includes(current.productType))
     throw fail(409, "هذا المنتج مُعدّ ولم يُفعّل بعد", "PREPARED_NOT_ENABLED");
-  const [row] = await db.update(promotionProducts).set({ enabled: body.enabled, updatedBy: req.actor!.id, updatedAt: new Date() }).where(eq(promotionProducts.id, current.id)).returning();
+  let row;
+  try {
+    [row] = await db.update(promotionProducts).set({ enabled: body.enabled, updatedBy: req.actor!.id, updatedAt: new Date() }).where(eq(promotionProducts.id, current.id)).returning();
+  } catch (error) {
+    if ((error as { cause?: { code?: string }; code?: string }).cause?.code === "23505" || (error as { code?: string }).code === "23505")
+      throw refuse(409, "توجد خطة مفعّلة بالرمز نفسه في هذا السوق", "PLAN_ALREADY_ENABLED");
+    throw error;
+  }
+  await db.insert(marketAudit).values({ id: randomUUID(), marketId: current.marketId, actorId: req.actor!.id, action: body.enabled ? "COMMERCIAL_PRODUCT_ENABLED" : "COMMERCIAL_PRODUCT_DISABLED", data: { productId: current.id, productType: current.productType, planCode: current.planCode, priceMinor: current.priceMinor, pricingVersion: current.pricingVersion } });
   res.json({ id: row!.id, enabled: row!.enabled });
 });
 
@@ -352,6 +381,14 @@ router.post("/admin/commercial-policies", requireAuth, requireCommercialAdmin, a
   const current = await getCommercialPolicy(body.marketId ?? "");
   const { version: _version, ...base } = current;
   const merged = CommercialPolicySchema.parse({ ...base, ...body.policy });
+  // D1: a changed reference price must carry a new price version (the history stays readable).
+  for (const code of PLAN_CODES) {
+    const before = base.subscriptionPlans.plans[code];
+    const after = merged.subscriptionPlans.plans[code];
+    if (JSON.stringify(before.referencePrice) !== JSON.stringify(after.referencePrice) && after.priceVersion <= before.priceVersion)
+      throw refuse(400, `تغيير سعر ${after.nameAr} يحتاج إصدار تسعير أعلى من ${before.priceVersion}`, "PRICE_VERSION_REQUIRED");
+    if (after.priceVersion < before.priceVersion) throw refuse(400, "لا يمكن إرجاع إصدار التسعير", "PRICE_VERSION_REQUIRED");
+  }
   const [latest] = await db
     .select({ version: sql<number>`coalesce(max(${commercialPolicies.version}), 0)::int` })
     .from(commercialPolicies)

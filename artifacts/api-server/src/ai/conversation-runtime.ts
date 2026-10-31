@@ -60,7 +60,7 @@ import { executeDriverTurn, isDriverOnboardingIntent, isDriverQuery } from "./dr
 import { executeDraftActionTurn } from "./draft-actions";
 import { executeProviderTurn, isExplicitProviderManagementIntent } from "./provider-turn";
 import { SMART_STATE_KINDS, executeModelFallback, executeSmartTurn } from "./smart-turn";
-import { executeCommerceTurn } from "./commerce-turn";
+import { executeBusinessOnboardingTurn, executeCommerceTurn } from "./commerce-turn";
 import { executeInquiryTurn } from "./inquiry-turn";
 import { executePolicyTurn } from "./policy-turn";
 import { aiRoutingMode, isDecisionUtterance } from "./routing-mode";
@@ -628,6 +628,16 @@ async function executeRuntime(context: RuntimeContext, incoming: RuntimeOptions)
         prompt: "اختر السوق أولًا لمتابعة هذا الطلب.",
       },
     };
+  }
+  // D2: DINAR Business onboarding («أنا صاحب مطعم …», «أبي أرفع السجل التجاري», and «وين وصل
+  // طلبي؟» right after its card). Before product control and orders, which would read «مطعمي» or
+  // «طلبي» as their own; it claims only business phrases or follow-ups of its own card.
+  if (!context.imageObjectPaths?.length && context.location === undefined) {
+    const business = await executeBusinessOnboardingTurn({ conversationId: context.conversationId, message: context.message, market: context.market, actorId: context.actorId });
+    if (business) {
+      options.onToolSelected?.(business.tool);
+      return business;
+    }
   }
   // Universal product control (theme, browsing market, profile, recipient-addressed location):
   // before order, inquiry and commerce adapters, which would read «أرسل موقعي للسائق» or

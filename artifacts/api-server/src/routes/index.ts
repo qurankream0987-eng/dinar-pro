@@ -17,6 +17,7 @@ import courier from "./courier";
 import privacy from "./privacy";
 import appeals from "./appeals";
 import integrations from "./integrations";
+import businessProfiles from "./business-profiles";
 const router: IRouter = Router();
 router.use(adminMarkets);
 router.use(adminDisputes);
@@ -32,6 +33,7 @@ router.use(commercial);
 router.use(privacy);
 router.use(appeals);
 router.use(integrations);
+router.use(businessProfiles);
 // Before payments: its router-wide simulation gate would hide every later route.
 router.use(provider);
 router.use(trustSafety);

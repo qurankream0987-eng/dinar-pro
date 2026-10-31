@@ -439,10 +439,10 @@ export async function executeProductControlTurn(input: Input): Promise<Turn | nu
 
   if (NAME_CHANGE.test(text)) return displayNameTurn(actor);
   if (BUSINESS_PROFILE.test(text))
-    return notice("لا يوجد ملف نشاط تجاري منفصل لتعديله", [
-      "DINAR لا يحفظ وصفًا أو عنوانًا لنشاطك خارج إعلاناتك؛ وصف كل إعلان يُعدّل من الإعلان نفسه.",
+    return notice("بيانات نشاطك في بطاقة دينار بزنس", [
+      "وصف نشاطك وساعات عمله وعنوانه تُعدّل من بطاقة دينار بزنس؛ وصف كل إعلان يُعدّل من الإعلان نفسه.",
       "لم يتغير شيء.",
-    ], "UNAVAILABLE", [{ label: "اعرض إعلاناتي", message: "اعرض إعلاناتي" }]);
+    ], "UNAVAILABLE", [{ label: "اعرض نشاطي", message: "اعرض نشاطي" }, { label: "اعرض إعلاناتي", message: "اعرض إعلاناتي" }]);
   if (ACCOUNT_VIEW.test(text)) {
     const surface = /اعدادات/u.test(text) ? "SETTINGS" : "ACCOUNT";
     return executeRegisteredTool("openSurface", JSON.stringify({ surface }), { conversationId: input.conversationId, market: input.market, actorId: input.actorId });

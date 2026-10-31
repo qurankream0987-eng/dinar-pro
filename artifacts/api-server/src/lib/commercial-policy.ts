@@ -5,6 +5,7 @@
  * overrides them. Nothing in search, recommendations or the UI hardcodes these values.
  */
 import { createHmac } from "node:crypto";
+import { DEFAULT_SUBSCRIPTION_PLANS_POLICY, SubscriptionPlansPolicySchema } from "./subscription-plans";
 import { and, desc, eq, isNull, lte, or } from "drizzle-orm";
 import { z } from "zod";
 import { commercialPolicies, db } from "@workspace/db";
@@ -57,6 +58,8 @@ export const CommercialPolicySchema = z
     demandSignalRetentionDays: z.number().int().min(1).max(365),
     /** G1: AI usage allowances per plan tier and the global AI spending guard. */
     aiUsage: AiUsagePolicySchema,
+    /** D1: the public Go / Pro / Business plan definitions (proposed until the owner approves). */
+    subscriptionPlans: SubscriptionPlansPolicySchema,
   })
   .strict();
 export type CommercialPolicy = z.infer<typeof CommercialPolicySchema> & { version: number };
@@ -87,6 +90,7 @@ export const DEFAULT_COMMERCIAL_POLICY: CommercialPolicy = {
   rawEventRetentionDays: 90,
   demandSignalRetentionDays: 90,
   aiUsage: DEFAULT_AI_USAGE_POLICY,
+  subscriptionPlans: DEFAULT_SUBSCRIPTION_PLANS_POLICY,
 };
 
 /** The effective policy for a market: its own latest version, else the global one, else v0. */

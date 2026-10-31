@@ -25,6 +25,7 @@ export const CONVERSATION_SURFACE_FAMILIES = {
     "MARKET_OPPORTUNITY",
     "BUSINESS_PLAN_REVIEW",
     "BUSINESS_STATUS",
+    "BUSINESS_PROFILE",
     "COMMERCE_NOTICE",
     "AI_USAGE",
     "AI_PLANS",
@@ -285,13 +286,14 @@ export const CONVERSATION_SURFACE_REGISTRY = {
   PROMOTION_CARD: surface(
     [
       ...CONVERSATION_SURFACE_FAMILIES.promotion,
-      ...CONVERSATION_SURFACE_FAMILIES.commercial,
+      // The DINAR Business identity card is its own semantic card, never a promotion card.
+      ...CONVERSATION_SURFACE_FAMILIES.commercial.filter((token) => token !== "BUSINESS_PROFILE"),
     ],
     "promotion-and-commerce",
   ),
   MARKET_PULSE_CARD: surface(["MARKET_PULSE", "MARKET_OPPORTUNITY"], "market-pulse"),
   DINAR_BUSINESS_CARD: surface(
-    ["BUSINESS_PLAN_REVIEW", "BUSINESS_STATUS"],
+    ["BUSINESS_PLAN_REVIEW", "BUSINESS_STATUS", "BUSINESS_PROFILE"],
     "dinar-business",
   ),
   AI_USAGE_CARD: surface(["AI_USAGE"], "ai-usage"),

@@ -15,7 +15,10 @@ import { describeAIModelReadiness } from "../ai/model-gateway";
 import { addModelPrice, aiSpendSummary, listModelPrices, spendRequired } from "../lib/ai-spend";
 import { monitoringStatus } from "../lib/monitoring";
 import { aiUsagePolicyFor } from "../lib/ai-usage";
-import { aiPlanFor, businessPlans } from "../lib/business";
+import { accessPlanFor, aiPlanFor, assertPlanEligibility, businessPlans } from "../lib/business";
+import { getCommercialPolicy } from "../lib/commercial-policy";
+import { planChangeKind, planCodeOfProduct } from "../lib/subscription-plans";
+import { subscriptionEconomics } from "../lib/subscription-economics";
 import { getSubscriptionBillingProvider, planChangePreview, receiveBillingWebhook, subscriptionBillingStatus, tierOfEntitlements } from "../lib/subscription-billing";
 import { retentionPolicy } from "../lib/privacy-rights";
 
@@ -88,11 +91,14 @@ router.get("/business/plan-change-preview", requireAuth, async (req, res) => {
   const plan = (await businessPlans(market)).find((item) => item.id === planId);
   if (!plan) throw fail(404, "خطة دينار بزنس غير متاحة في سوقك", "PRODUCT_DISABLED");
   const current = await aiPlanFor(req.actor!.id, market);
+  const access = await accessPlanFor(req.actor!.id, market);
   const policy = await aiUsagePolicyFor(market);
+  const plans = (await getCommercialPolicy(market.id)).subscriptionPlans;
   res.json({
-    plan: { id: plan.id, name: plan.name, priceLabel: plan.priceLabel, durationDays: plan.durationDays },
-    current: { tier: current.tier, periodEnd: current.periodEnd?.toISOString() ?? null },
+    plan: { id: plan.id, name: plan.name, planCode: plan.planCode, priceLabel: plan.priceLabel, durationDays: plan.durationDays },
+    current: { tier: current.tier, plan: access.plan, periodEnd: current.periodEnd?.toISOString() ?? null },
     change: planChangePreview(current, tierOfEntitlements(plan.businessEntitlements ?? [])),
+    ...(plan.planCode ? { planChange: planChangeKind(plans, access.plan, plan.planCode) } : {}),
     allowancesApproved: policy.approved,
     billing: subscriptionBillingStatus(),
   });
@@ -103,13 +109,16 @@ router.get("/business/plan-change-preview", requireAuth, async (req, res) => {
  * BILLING_PROVIDER_NOT_CONNECTED: no subscription row, no charge, no simulated success.
  */
 router.post("/business/subscription-checkout", requireAuth, async (req, res) => {
-  const body = z.object({ planId: z.string().min(1).max(80), idempotencyKey: z.string().regex(/^[A-Za-z0-9._:-]{8,128}$/) }).strict().parse(req.body);
+  const body = z.object({ planId: z.string().min(1).max(80), idempotencyKey: z.string().regex(/^[A-Za-z0-9._:-]{8,128}$/), businessId: z.string().uuid().optional() }).strict().parse(req.body);
   const billing = subscriptionBillingStatus();
   if (!billing.connected) throw fail(503, "الدفع الحقيقي للاشتراكات غير موصول بعد؛ لم يُنشأ اشتراك ولم يُخصم شيء.", "BILLING_PROVIDER_NOT_CONNECTED");
   const provider = getSubscriptionBillingProvider();
   const market = await marketFor(req);
   const [plan] = await db.select().from(promotionProducts).where(and(eq(promotionProducts.id, body.planId), eq(promotionProducts.marketId, market.id)));
   if (!plan || plan.productType !== "DINAR_BUSINESS" || !(await businessPlans(market)).some((item) => item.id === plan.id)) throw fail(404, "خطة دينار بزنس غير متاحة في سوقك", "PRODUCT_DISABLED");
+  // Eligibility is the server's: Business needs the actor's own VERIFIED business; payment never verifies.
+  const planCode = planCodeOfProduct(plan);
+  const businessProfileId = await assertPlanEligibility({ actorId: req.actor!.id, market, planCode, businessId: body.businessId });
   const [prior] = await db.select().from(businessSubscriptions).where(and(eq(businessSubscriptions.userId, req.actor!.id), eq(businessSubscriptions.idempotencyKey, body.idempotencyKey)));
   const [live] = prior ? [] : await db.select({ id: businessSubscriptions.id }).from(businessSubscriptions).where(and(eq(businessSubscriptions.userId, req.actor!.id), eq(businessSubscriptions.marketId, market.id), inArray(businessSubscriptions.status, ["PENDING", "ACTIVE", "PAST_DUE", "CANCEL_AT_PERIOD_END"])));
   if (live) throw fail(409, "لديك اشتراك دينار بزنس قائم أو قيد الدفع", "ALREADY_SUBSCRIBED");
@@ -126,12 +135,20 @@ router.post("/business/subscription-checkout", requireAuth, async (req, res) => 
       periodDaysSnapshot: plan.durationDays,
       pricingVersionSnapshot: plan.pricingVersion,
       entitlementsSnapshot: plan.businessEntitlements ?? [],
+      planCodeSnapshot: plan.planCode ?? null,
+      businessProfileId,
       status: "PENDING",
       idempotencyKey: body.idempotencyKey,
     });
   const checkout = await provider!.createCheckout({ subscriptionId, planId: plan.id, amountMinor: plan.priceMinor, currencyCode: plan.currencyCode, periodDays: plan.durationDays, idempotencyKey: body.idempotencyKey });
   // PENDING grants nothing: entitlements start only from a verified SUBSCRIPTION_ACTIVATED webhook.
   res.status(201).json({ subscriptionId, status: "PENDING", checkout, autoRenew: false });
+});
+
+/** D1.6: what each plan could cost DINAR in AI at full use, from configured prices only. */
+router.get("/admin/subscription-plans/economics", requireAuth, requireAdmin, async (req, res) => {
+  const marketId = z.string().regex(/^[A-Z]{2,8}$/).optional().parse(typeof req.query.marketId === "string" ? req.query.marketId : undefined);
+  res.json(await subscriptionEconomics(marketId ?? ""));
 });
 
 router.post("/billing/webhooks/:providerKey", async (req, res) => {

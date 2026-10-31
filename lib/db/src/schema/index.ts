@@ -10,6 +10,7 @@ import {
   primaryKey,
   check,
   doublePrecision,
+  type AnyPgColumn,
   bigint,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
@@ -386,6 +387,8 @@ export const promotionProducts = pgTable(
     bundleItems: jsonb("bundle_items").$type<{ productType: string; units: number; durationDays: number; priorityWeight?: number }[]>().default([]).notNull(),
     entitlementExpiryDays: integer("entitlement_expiry_days"),
     businessEntitlements: jsonb("business_entitlements").$type<string[]>().default([]).notNull(),
+    /** D1: the public subscription plan a DINAR_BUSINESS product sells (null: legacy plan, derived). */
+    planCode: text("plan_code"),
     taxPolicyVersion: text("tax_policy_version"),
     priceMinor: integer("price_minor").notNull(),
     currencyCode: text("currency_code").notNull(),
@@ -397,8 +400,16 @@ export const promotionProducts = pgTable(
   },
   (t) => [
     index("promotion_products_market_enabled_idx").on(t.marketId, t.enabled),
+    // D1: at most one enabled catalog product per public plan and market (no ambiguous plan price).
+    uniqueIndex("promotion_products_enabled_plan_unique")
+      .on(t.marketId, t.planCode)
+      .where(sql`${t.planCode} IS NOT NULL AND ${t.enabled}`),
     index("promotion_products_market_category_idx").on(t.marketId, t.categoryId),
     check("promotion_products_price_positive_check", sql`${t.priceMinor} > 0`),
+    check(
+      "promotion_products_plan_code_valid",
+      sql`${t.planCode} IS NULL OR (${t.productType} = 'DINAR_BUSINESS' AND ${t.planCode} IN ('DINAR_GO', 'DINAR_PRO', 'DINAR_BUSINESS'))`,
+    ),
     check(
       "promotion_products_duration_check",
       sql`${t.durationDays} >= 1 AND ${t.durationDays} <= 365`,
@@ -736,6 +747,10 @@ export const businessSubscriptions = pgTable(
     periodDaysSnapshot: integer("period_days_snapshot").notNull(),
     pricingVersionSnapshot: integer("pricing_version_snapshot").notNull(),
     entitlementsSnapshot: jsonb("entitlements_snapshot").$type<string[]>().default([]).notNull(),
+    /** D1: plan code at purchase (null: a subscription bought before D1; its plan is derived). */
+    planCodeSnapshot: text("plan_code_snapshot"),
+    /** D1/D2: the business a DINAR_BUSINESS subscription serves. Never a verification by itself. */
+    businessProfileId: text("business_profile_id").references((): AnyPgColumn => businessProfiles.id),
     status: text("status").default("PENDING").notNull(),
     autoRenew: boolean("auto_renew").default(false).notNull(),
     idempotencyKey: text("idempotency_key").notNull(),
@@ -755,6 +770,15 @@ export const businessSubscriptions = pgTable(
     ),
     // No silent recurring charge in this phase.
     check("business_subscriptions_no_auto_renew", sql`NOT ${t.autoRenew}`),
+    check(
+      "business_subscriptions_plan_code_valid",
+      sql`${t.planCodeSnapshot} IS NULL OR ${t.planCodeSnapshot} IN ('DINAR_GO', 'DINAR_PRO', 'DINAR_BUSINESS')`,
+    ),
+    // A DINAR Business subscription always names its business; Go and Pro never do.
+    check(
+      "business_subscriptions_business_link",
+      sql`(${t.planCodeSnapshot} = 'DINAR_BUSINESS') = (${t.businessProfileId} IS NOT NULL)`,
+    ),
     check(
       "business_subscriptions_period_valid",
       sql`${t.status} IN ('PENDING', 'PAYMENT_FAILED') OR (${t.currentPeriodStart} IS NOT NULL AND ${t.currentPeriodEnd} > ${t.currentPeriodStart})`,
@@ -2414,4 +2438,164 @@ export const trustAppealEvents = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [index("trust_appeal_events_appeal_idx").on(t.appealId, t.createdAt)],
+);
+
+// ─── D2: DINAR Business identity ─────────────────────────────────────────────
+
+export const BUSINESS_VERIFICATION_STATUSES = ["DRAFT", "DOCUMENTS_REQUIRED", "PENDING_REVIEW", "VERIFIED", "REJECTED", "SUSPENDED"] as const;
+
+/**
+ * A business introduced by an account. The display name is what the owner calls it; the legal
+ * name and registration are claims until a DINAR reviewer (never the owner, never payment, never
+ * the model) records VERIFIED. Publication requires VERIFIED.
+ */
+export const businessProfiles = pgTable(
+  "business_profiles",
+  {
+    id: text("id").primaryKey(),
+    /** The applicant: the authenticated account that created the record. Not a legal owner by itself. */
+    ownerUserId: text("owner_user_id").notNull().references(() => users.id),
+    marketId: text("market_id").notNull().references(() => markets.id),
+    displayName: text("display_name").notNull(),
+    /** Folded display name, for duplicate and impersonation review within a market. */
+    normalizedName: text("normalized_name").notNull(),
+    legalName: text("legal_name"),
+    legalForm: text("legal_form"),
+    categoryKey: text("category_key").notNull(),
+    description: text("description").default("").notNull(),
+    contact: jsonb("contact").$type<Record<string, string>>().default({}).notNull(),
+    address: jsonb("address").$type<Record<string, string>>().default({}).notNull(),
+    openingHours: jsonb("opening_hours").$type<Array<{ day: number; opens: string; closes: string }>>().default([]).notNull(),
+    servicePreferences: jsonb("service_preferences").$type<Record<string, unknown>>().default({}).notNull(),
+    integrationPreferences: jsonb("integration_preferences").$type<Record<string, unknown>>().default({}).notNull(),
+    /** sha256 of the normalised registration number the owner typed (never the number itself in logs). */
+    registrationNumberSha256: text("registration_number_sha256"),
+    registrationNumberLast4: text("registration_number_last4"),
+    verificationStatus: text("verification_status").default("DRAFT").notNull(),
+    publicationStatus: text("publication_status").default("UNPUBLISHED").notNull(),
+    verifiedAt: timestamp("verified_at", { withTimezone: true }),
+    verifiedBy: text("verified_by").references(() => users.id),
+    suspendedAt: timestamp("suspended_at", { withTimezone: true }),
+    revision: integer("revision").default(1).notNull(),
+    idempotencyKey: text("idempotency_key").notNull(),
+    ...dates(),
+  },
+  (t) => [
+    uniqueIndex("business_profiles_owner_idempotency_unique").on(t.ownerUserId, t.idempotencyKey),
+    // One open record per owner, market and name: a retry or a repeated introduction finds it.
+    uniqueIndex("business_profiles_owner_name_open_unique")
+      .on(t.ownerUserId, t.marketId, t.normalizedName)
+      .where(sql`${t.verificationStatus} <> 'REJECTED'`),
+    // One registration number per market among records under review or verified.
+    uniqueIndex("business_profiles_registration_unique")
+      .on(t.marketId, t.registrationNumberSha256)
+      .where(sql`${t.registrationNumberSha256} IS NOT NULL AND ${t.verificationStatus} IN ('PENDING_REVIEW', 'VERIFIED', 'SUSPENDED')`),
+    index("business_profiles_owner_idx").on(t.ownerUserId, t.marketId, t.createdAt),
+    index("business_profiles_queue_idx").on(t.verificationStatus, t.updatedAt),
+    index("business_profiles_market_name_idx").on(t.marketId, t.normalizedName),
+    check("business_profiles_display_name_valid", sql`char_length(btrim(${t.displayName})) BETWEEN 2 AND 120`),
+    check("business_profiles_normalized_name_valid", sql`char_length(${t.normalizedName}) BETWEEN 1 AND 120`),
+    check("business_profiles_legal_name_valid", sql`${t.legalName} IS NULL OR char_length(btrim(${t.legalName})) BETWEEN 2 AND 200`),
+    check("business_profiles_legal_form_valid", sql`${t.legalForm} IS NULL OR ${t.legalForm} IN ('SOLE_PROPRIETORSHIP', 'COMPANY', 'PARTNERSHIP', 'OTHER')`),
+    check("business_profiles_category_valid", sql`${t.categoryKey} ~ '^[A-Z][A-Z_]{1,39}$'`),
+    check("business_profiles_description_valid", sql`char_length(${t.description}) <= 1000`),
+    check("business_profiles_json_valid", sql`jsonb_typeof(${t.contact}) = 'object' AND jsonb_typeof(${t.address}) = 'object' AND jsonb_typeof(${t.openingHours}) = 'array' AND jsonb_typeof(${t.servicePreferences}) = 'object' AND jsonb_typeof(${t.integrationPreferences}) = 'object'`),
+    check("business_profiles_registration_valid", sql`(${t.registrationNumberSha256} IS NULL AND ${t.registrationNumberLast4} IS NULL) OR (${t.registrationNumberSha256} ~ '^[0-9a-f]{64}$' AND ${t.registrationNumberLast4} ~ '^[0-9A-Za-z]{1,4}$')`),
+    check("business_profiles_status_valid", sql`${t.verificationStatus} IN ('DRAFT', 'DOCUMENTS_REQUIRED', 'PENDING_REVIEW', 'VERIFIED', 'REJECTED', 'SUSPENDED')`),
+    check("business_profiles_publication_valid", sql`${t.publicationStatus} IN ('UNPUBLISHED', 'PUBLISHED')`),
+    // Only a verified business is ever published.
+    check("business_profiles_publication_requires_verified", sql`${t.publicationStatus} = 'UNPUBLISHED' OR ${t.verificationStatus} = 'VERIFIED'`),
+    // VERIFIED carries its reviewer, and the reviewer is never the applicant.
+    check("business_profiles_verified_by_reviewer", sql`${t.verificationStatus} NOT IN ('VERIFIED', 'SUSPENDED') OR (${t.verifiedAt} IS NOT NULL AND ${t.verifiedBy} IS NOT NULL AND ${t.verifiedBy} <> ${t.ownerUserId})`),
+    check("business_profiles_suspended_at", sql`(${t.verificationStatus} = 'SUSPENDED') = (${t.suspendedAt} IS NOT NULL)`),
+    check("business_profiles_revision_valid", sql`${t.revision} >= 1`),
+  ],
+);
+
+/**
+ * Who may act for a business. The applicant row is created with the business; VERIFIED_OWNER is
+ * written only by the review authority. ADMIN and STAFF are defined for later phases and have no
+ * grant path in D2.
+ */
+export const businessMemberships = pgTable(
+  "business_memberships",
+  {
+    id: text("id").primaryKey(),
+    businessId: text("business_id").notNull().references(() => businessProfiles.id),
+    userId: text("user_id").notNull().references(() => users.id),
+    role: text("role").notNull(),
+    status: text("status").default("ACTIVE").notNull(),
+    grantedBy: text("granted_by").references(() => users.id),
+    ...dates(),
+  },
+  (t) => [
+    uniqueIndex("business_memberships_business_user_unique").on(t.businessId, t.userId),
+    index("business_memberships_user_idx").on(t.userId, t.status),
+    check("business_memberships_role_valid", sql`${t.role} IN ('APPLICANT', 'VERIFIED_OWNER', 'ADMIN', 'STAFF')`),
+    check("business_memberships_status_valid", sql`${t.status} IN ('ACTIVE', 'REVOKED')`),
+  ],
+);
+
+/**
+ * A private verification document. Bytes live in private object storage under
+ * business-documents/<owner>/; this row never holds them and no public route serves the prefix.
+ * A document is reviewable only after a registered scanner reports CLEAN.
+ */
+export const businessVerificationDocuments = pgTable(
+  "business_verification_documents",
+  {
+    id: text("id").primaryKey(),
+    businessId: text("business_id").notNull().references(() => businessProfiles.id),
+    ownerUserId: text("owner_user_id").notNull().references(() => users.id),
+    kind: text("kind").notNull(),
+    objectPath: text("object_path").notNull(),
+    objectGeneration: text("object_generation"),
+    contentType: text("content_type").notNull(),
+    sizeBytes: integer("size_bytes").notNull(),
+    status: text("status").default("UPLOAD_PENDING").notNull(),
+    scanStatus: text("scan_status").default("NOT_SCANNED").notNull(),
+    purpose: text("purpose").default("BUSINESS_VERIFICATION").notNull(),
+    retainUntil: timestamp("retain_until", { withTimezone: true }),
+    reviewNote: text("review_note"),
+    idempotencyKey: text("idempotency_key").notNull(),
+    ...dates(),
+  },
+  (t) => [
+    uniqueIndex("business_verification_documents_path_unique").on(t.objectPath),
+    uniqueIndex("business_verification_documents_idempotency_unique").on(t.ownerUserId, t.idempotencyKey),
+    index("business_verification_documents_business_idx").on(t.businessId, t.kind, t.createdAt),
+    check("business_verification_documents_kind_valid", sql`${t.kind} IN ('COMMERCIAL_REGISTRATION', 'COMMERCIAL_LICENSE', 'MUNICIPALITY_LICENSE', 'AUTHORIZATION_LETTER', 'OWNER_IDENTITY')`),
+    check("business_verification_documents_path_valid", sql`${t.objectPath} ~ '^/objects/business-documents/[A-Za-z0-9-]+/[A-Za-z0-9.-]+$' AND position(${t.ownerUserId} in ${t.objectPath}) = 29`),
+    check("business_verification_documents_type_valid", sql`${t.contentType} IN ('application/pdf', 'image/jpeg', 'image/png')`),
+    check("business_verification_documents_size_valid", sql`${t.sizeBytes} BETWEEN 1 AND 10485760`),
+    check("business_verification_documents_status_valid", sql`${t.status} IN ('UPLOAD_PENDING', 'UPLOADED', 'ACCEPTED', 'REJECTED', 'SUPERSEDED')`),
+    check("business_verification_documents_scan_valid", sql`${t.scanStatus} IN ('NOT_SCANNED', 'CLEAN', 'INFECTED')`),
+    // A document is accepted only after a clean scan.
+    check("business_verification_documents_accept_requires_clean", sql`${t.status} <> 'ACCEPTED' OR ${t.scanStatus} = 'CLEAN'`),
+    check("business_verification_documents_purpose_valid", sql`${t.purpose} = 'BUSINESS_VERIFICATION'`),
+  ],
+);
+
+/** Every business status move and review decision, with actor and reason. Append-only by trigger. */
+export const businessVerificationEvents = pgTable(
+  "business_verification_events",
+  {
+    id: text("id").primaryKey(),
+    businessId: text("business_id").notNull().references(() => businessProfiles.id),
+    actorKind: text("actor_kind").notNull(),
+    actorId: text("actor_id").references(() => users.id),
+    action: text("action").notNull(),
+    fromStatus: text("from_status"),
+    toStatus: text("to_status").notNull(),
+    reason: text("reason"),
+    documentIds: jsonb("document_ids").$type<string[]>().default([]).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    index("business_verification_events_business_idx").on(t.businessId, t.createdAt),
+    check("business_verification_events_actor_valid", sql`${t.actorKind} IN ('OWNER', 'REVIEWER', 'SYSTEM')`),
+    check("business_verification_events_action_valid", sql`${t.action} IN ('CREATED', 'UPDATED', 'DOCUMENT_UPLOADED', 'DOCUMENT_SCANNED', 'SUBMITTED', 'VERIFIED', 'REJECTED', 'DOCUMENTS_REQUESTED', 'SUSPENDED', 'REINSTATED', 'PUBLISHED', 'UNPUBLISHED', 'DOCUMENT_ACCESSED')`),
+    check("business_verification_events_reviewer_reason", sql`${t.actorKind} <> 'REVIEWER' OR ${t.action} IN ('VERIFIED', 'DOCUMENT_ACCESSED') OR (${t.reason} IS NOT NULL AND btrim(${t.reason}) <> '')`),
+    check("business_verification_events_documents_valid", sql`jsonb_typeof(${t.documentIds}) = 'array'`),
+  ],
 );

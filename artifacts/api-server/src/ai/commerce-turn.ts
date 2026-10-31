@@ -8,7 +8,7 @@
  * business). Payloads are rebuilt from live server state; the client only renders them.
  * No model output can credit, charge, grant, activate or change any number here.
  */
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { and, desc, eq, gt, sql } from "drizzle-orm";
 import { z } from "zod";
 import {
@@ -64,6 +64,22 @@ import { plansCardPrompt, plansCardView, usageCardPrompt, usageCardView } from "
 import { AI_USAGE_QUESTION } from "./usage-intent";
 import { resumeConversationDraftById } from "./draft-actions";
 import type { ToolResult } from "./tool-registry";
+import { businessIntent, normalizeBusinessText, type BusinessIntent } from "./business-intent";
+import { subscriptionPlansOverview } from "../lib/subscription-overview";
+import {
+  createBusinessDraft,
+  getOwnBusiness,
+  listOwnBusinesses,
+  startBusinessVerification,
+  submitBusinessForReview,
+  updateBusinessProfile,
+  businessVerificationReadiness,
+  BUSINESS_CATEGORIES,
+  DOCUMENT_KIND_LABELS,
+  type BusinessOwnerView,
+} from "../lib/business-profiles";
+import { namedPlanCodes, PLAN_CODES, type PlanCode } from "../lib/subscription-plans";
+import { subscriptionBillingStatus } from "../lib/subscription-billing";
 
 type Market = Awaited<ReturnType<typeof marketFor>>;
 type Turn = { tool: string; version: number; result: ToolResult; redirectMessage?: string };
@@ -85,7 +101,7 @@ const PendingAction = z.discriminatedUnion("type", [
       paymentSource: z.enum(["COMMERCIAL_BALANCE", "BUNDLE_ENTITLEMENT"]),
     })
     .strict(),
-  z.object({ type: z.literal("SUBSCRIBE"), planId: z.string().min(1) }).strict(),
+  z.object({ type: z.literal("SUBSCRIBE"), planId: z.string().min(1), businessId: z.string().uuid().optional() }).strict(),
   z.object({ type: z.literal("CANCEL_SUBSCRIPTION") }).strict(),
 ]);
 type PendingAction = z.infer<typeof PendingAction>;
@@ -124,6 +140,11 @@ const CommerceQuery = z
     upsell: z.boolean().optional(),
     usageQuestion: z.enum(["SUMMARY", "RENEWAL", "WHY_STOPPED"]).optional(),
     planFocus: z.enum(["BUSINESS_GO", "BUSINESS_PRO"]).optional(),
+    /** D1: a public plan the user asked about (comparison or Business explanation). */
+    publicPlanFocus: z.array(z.enum(PLAN_CODES)).max(3).optional(),
+    /** D2: the actor's business shown on the DINAR Business card (re-read from the server). */
+    businessId: z.string().uuid().optional(),
+    businessFocus: z.enum(["OVERVIEW", "INFO", "UPLOAD", "STATUS", "CONNECT"]).optional(),
     action: PendingAction.optional(),
     status: z.enum(["PENDING", "CONFIRMED", "CANCELLED", "EXPIRED", "REJECTED"]).optional(),
     notice: z.string().max(600).optional(),
@@ -529,7 +550,7 @@ async function composePayload(state: CommerceQuery, resourceIds: string[], resul
         break;
       }
       case "BUSINESS_PLAN_REVIEW": {
-        if (state.action?.type === "SUBSCRIBE") payload.review = await reviewBusinessSubscription({ actorId, market, planId: state.action.planId });
+        if (state.action?.type === "SUBSCRIBE") payload.review = await reviewBusinessSubscription({ actorId, market, planId: state.action.planId, businessId: state.action.businessId });
         else payload.plans = await businessPlans(market);
         payload.status = await getBusinessStatus(actorId, market);
         break;
@@ -542,7 +563,19 @@ async function composePayload(state: CommerceQuery, resourceIds: string[], resul
         break;
       case "AI_PLANS":
         payload.aiPlans = await plansCardView(actorId, market);
+        if (state.publicPlanFocus) payload.publicPlanFocus = state.publicPlanFocus;
         break;
+      case "BUSINESS_PROFILE": {
+        // Rebuilt from the business authority on every read: status, documents and actions are
+        // never the stored card's; a stranger (or another market) gets the expired notice.
+        const business = state.businessId ? await getOwnBusiness(actorId, market, state.businessId).catch(() => undefined) : undefined;
+        if (!business) {
+          payload.notice = "لا يوجد نشاط تجاري مرتبط بهذه البطاقة في حسابك وسوقك الحاليين.";
+          break;
+        }
+        payload.business = businessCard(business, state.businessFocus ?? "OVERVIEW");
+        break;
+      }
       default:
         break;
     }
@@ -688,7 +721,7 @@ export async function applyCommerceAction(input: { actionId: string; actorId: st
           message: `أُضيفت وحدات الباقة إلى حسابك (${(purchase.entitlements ?? []).map((item) => `${item.unitsTotal} ${item.productType === "VIP_LISTING" ? "VIP" : item.productType === "REFRESH_LISTING" ? "تجديد" : "مميز"}`).join("، ")}). رصيدك المتاح الآن ${purchase.balance.availableLabel}.`,
         };
     } else if (action.type === "SUBSCRIBE") {
-      const subscription = await subscribeBusiness({ actorId: input.actorId, market: input.market, planId: action.planId, idempotencyKey: key });
+      const subscription = await subscribeBusiness({ actorId: input.actorId, market: input.market, planId: action.planId, idempotencyKey: key, businessId: action.businessId });
       outcome = { status: "CONFIRMED", view: "BUSINESS_STATUS", message: `اشتراكك في «${"planName" in subscription ? subscription.planName : "دينار بزنس"}» نشط حتى ${"currentPeriodEnd" in subscription ? String(subscription.currentPeriodEnd).slice(0, 10) : ""}. لا تجديد تلقائي، ولا يغيّر ترتيب نتائج البحث.` };
     } else {
       await cancelBusinessSubscription({ actorId: input.actorId, market: input.market });
@@ -1129,6 +1162,8 @@ async function aiUsageAndPlansTurn(text: string, actorId: string, market: Market
     const view = await usageCardView(actorId, market);
     return turnFor({ kind: "COMMERCE", ownerId: actorId, view: "AI_USAGE", usageQuestion: question }, [], usageCardPrompt(view, question), actorId, market);
   }
+  const publicPlans = await publicPlansTurn(text, actorId, market);
+  if (publicPlans) return publicPlans;
   const named = P.aiPlanTier.test(text) ? (/(?:^|\s)(?:pro|برو)(?:\s|$)/u.test(text) ? "BUSINESS_PRO" : "BUSINESS_GO") : undefined;
   // «اشترك» right after the plans card picks a tier from that card.
   const afterPlans = latest?.view === "AI_PLANS";
@@ -1152,6 +1187,221 @@ async function aiUsageAndPlansTurn(text: string, actorId: string, market: Market
     ? `${plansCardPrompt(view)}\nأي باقة تريد؟ قل «اشترك في Go» أو «اشترك في Pro». لن يتغير شيء قبل مراجعتك وتأكيدك.`
     : plansCardPrompt(view, named && ASKS_TIER_PRICE.test(text) ? named : undefined);
   return turnFor({ kind: "COMMERCE", ownerId: actorId, view: "AI_PLANS", ...(named ? { planFocus: named } : {}) }, [], prompt, actorId, market);
+}
+
+// ─── D2: DINAR Business onboarding (conversation) ────────────────────────────
+
+const BUSINESS_ACTION_LABELS: Record<string, { label: string; message?: string; kind: "SEND" | "FORM" | "UPLOAD" | "PUBLISH" }> = {
+  COMPLETE_INFO: { label: "أكمل بيانات النشاط", kind: "FORM" },
+  START_VERIFICATION: { label: "ارفع المستندات المطلوبة", message: "أبي أرفع السجل التجاري", kind: "SEND" },
+  UPLOAD_DOCUMENTS: { label: "ارفع المستند", kind: "UPLOAD" },
+  SUBMIT_FOR_REVIEW: { label: "أرسل الطلب للتحقق", message: "أرسل طلب التوثيق", kind: "SEND" },
+  VIEW_STATUS: { label: "حالة التحقق", message: "حالة توثيق نشاطي", kind: "SEND" },
+  ADD_CATALOG: { label: "أضف قائمة أو منتجات", message: "أريد أن أبيع", kind: "SEND" },
+  REVIEW_PLANS: { label: "خطط دينار", message: "ما الفرق بين جو وبرو وبزنس", kind: "SEND" },
+  PUBLISH: { label: "انشر صفحة النشاط", kind: "PUBLISH" },
+  UNPUBLISH: { label: "أوقف نشر الصفحة", kind: "PUBLISH" },
+  CONNECT_SYSTEM: { label: "ربط نظامك الحالي", message: "أريد ربط مطعمي بنظامي الحالي", kind: "SEND" },
+};
+
+/** The DINAR Business card: a projection of the owner's view; actions derive from server state only. */
+function businessCard(view: BusinessOwnerView, focus: NonNullable<CommerceQuery["businessFocus"]>) {
+  return {
+    brand: "DINAR BUSINESS",
+    id: view.id,
+    focus,
+    displayName: view.displayName,
+    legalName: view.legalName,
+    legalFormLabel: view.legalFormLabel,
+    marketId: view.marketId,
+    marketLabel: MARKET_LABELS[view.marketId] ?? view.marketId,
+    categoryLabel: view.categoryLabel,
+    city: view.address.city ?? null,
+    registrationNumberLast4: view.registrationNumberLast4,
+    status: view.verificationStatus,
+    statusLabel: view.verificationStatus === "PENDING_REVIEW" ? "بانتظار التحقق" : view.statusLabel,
+    verified: view.verified,
+    publicationStatus: view.publicationStatus,
+    revision: view.revision,
+    missingInfo: view.missingInfo,
+    requirements: view.requirements.map((group) => ({ labels: group.labels, kinds: group.anyOf, satisfied: group.satisfied })),
+    documents: view.documents.map((doc) => ({ id: doc.id, kindLabel: doc.kindLabel, status: doc.status, scanStatus: doc.scanStatus, scanLabel: doc.scanStatus === "CLEAN" ? "فُحص وسليم" : doc.scanStatus === "INFECTED" ? "رُفض لأسباب أمنية" : "في الحجر حتى يُفحص" })),
+    actions: view.actions.map((key) => ({ key, ...BUSINESS_ACTION_LABELS[key]! })),
+    listingCount: view.listingCount,
+    salesNote: view.listingCount ? `لديك ${view.listingCount} إعلان في هذا السوق.` : "لا توجد مبيعات أو إعلانات سابقة لهذا النشاط في دينار بعد.",
+    lastDecisionReason: view.lastDecisionReason ?? null,
+    readiness: view.verification,
+    ...(focus === "CONNECT" ? { integrations: view.integrations } : {}),
+    privacyNote: "مستندات التحقق خاصة: لا تظهر في الإعلانات ولا للمشترين ولا تُرسل إلى نموذج الذكاء الاصطناعي؛ يراها مراجع دينار فقط بعد فحصها.",
+    honestyNote: view.verified ? null : "هذه بيانات قدّمتها أنت ولم يوثّقها دينار بعد.",
+  };
+}
+
+const MARKET_LABELS: Record<string, string> = { KW: "الكويت", JO: "الأردن", SA: "السعودية" };
+
+function businessStatusPrompt(view: BusinessOwnerView): string {
+  const name = `«${view.displayName}»`;
+  switch (view.verificationStatus) {
+    case "DRAFT":
+      return `${name} مسودة لم تُرسل للتحقق بعد. ${view.missingInfo.length ? `أحتاج منك: ${view.missingInfo.join(" و")}. ` : ""}قل «أبي أرفع السجل التجاري» لبدء التحقق.`;
+    case "DOCUMENTS_REQUIRED": {
+      const unmet = view.requirements.filter((group) => !group.satisfied).map((group) => group.labels.join(" أو "));
+      return `${name} بانتظار مستنداتك${unmet.length ? `: ينقص ${unmet.join("، ")}` : ""}${view.missingInfo.length ? `، وأحتاج ${view.missingInfo.join(" و")}` : ""}. ${!unmet.length && !view.missingInfo.length ? "كل المطلوب موجود؛ قل «أرسل طلب التوثيق»." : ""}`.trim();
+    }
+    case "PENDING_REVIEW":
+      return `طلب توثيق ${name} بانتظار مراجع دينار. لم يُوثَّق بعد.${view.verification.scanner === "NOT_CONNECTED" ? " تنبيه: فحص المستندات غير موصول بعد، لذلك لا يمكن إكمال التوثيق الآن؛ طلبك محفوظ." : ""}`;
+    case "VERIFIED":
+      return `${name} نشاط موثّق من مراجع دينار.${view.publicationStatus === "PUBLISHED" ? " صفحته منشورة." : " صفحته غير منشورة بعد."}`;
+    case "REJECTED":
+      return `طلب ${name} مرفوض${view.lastDecisionReason ? `: ${view.lastDecisionReason}` : ""}. يمكنك تقديم طلب جديد بالبيانات الصحيحة.`;
+    case "SUSPENDED":
+      return `${name} موقوف حاليًا${view.lastDecisionReason ? `: ${view.lastDecisionReason}` : ""}، ومزايا النشاط الموثّق متوقفة حتى تُراجع حالته.`;
+    default:
+      return `حالة ${name}: ${view.statusLabel}.`;
+  }
+}
+
+async function businessTurn(actorId: string, market: Market, view: BusinessOwnerView, focus: NonNullable<CommerceQuery["businessFocus"]>, prompt: string, notice?: string) {
+  return turnFor({ kind: "COMMERCE", ownerId: actorId, view: "BUSINESS_PROFILE", businessId: view.id, businessFocus: focus, ...(notice ? { notice } : {}) }, [view.id], prompt, actorId, market);
+}
+
+/** The business a follow-up refers to: the card in context, else the actor's only open one. */
+async function businessInFocus(actorId: string, market: Market, latest: CommerceQuery | undefined): Promise<BusinessOwnerView | "AMBIGUOUS" | undefined> {
+  if (latest?.view === "BUSINESS_PROFILE" && latest.businessId) {
+    const view = await getOwnBusiness(actorId, market, latest.businessId).catch(() => undefined);
+    if (view) return view;
+  }
+  const own = (await listOwnBusinesses(actorId, market)).filter((item) => item.verificationStatus !== "REJECTED");
+  if (own.length === 1) return own[0];
+  return own.length ? "AMBIGUOUS" : undefined;
+}
+
+const NO_BUSINESS = "لا يوجد لديك نشاط تجاري في دينار في سوقك الحالي. قل مثلًا: «أنا صاحب مطعم اسمه …» مع اسم نشاطك، وأجهّز لك مسودة.";
+const AMBIGUOUS_BUSINESS = "لديك أكثر من نشاط؛ افتح بطاقة النشاط المقصود أولًا بقول «اعرض نشاطي» ثم أعد الطلب.";
+
+function errorText(error: unknown): string | undefined {
+  const status = (error as { status?: unknown }).status;
+  return typeof status === "number" && status >= 400 && status < 500 && error instanceof Error ? error.message : undefined;
+}
+
+/**
+ * D2.8: «أنا صاحب مطعم سمراء للمشاوي بالكويت», «أبي أرفع السجل التجاري», «وين وصل طلبي؟».
+ * Deterministic, no model: the intent is read here, every write goes through lib/business-profiles
+ * under the session's account, and the card is rebuilt from the server on every read.
+ */
+export async function executeBusinessOnboardingTurn(input: CommerceTurnInput): Promise<Turn | null> {
+  if (!input.actorId) {
+    const intent = businessIntent(input.message, false);
+    if (intent?.kind !== "INTRODUCE") return null;
+    return { tool: "openSurface", version: 1, result: { kind: "SURFACE", surface: "AUTH", query: {}, listings: [], prompt: "سجّل الدخول أولًا لإضافة نشاطك التجاري؛ يُنشأ النشاط باسم حسابك فقط." } };
+  }
+  const actorId = input.actorId;
+  const market = input.market;
+  const sets = await conversationSets(input.conversationId, market.id);
+  const latest = parseState(sets[0], actorId);
+  const inContext = latest?.view === "BUSINESS_PROFILE";
+  const intent: BusinessIntent | undefined = businessIntent(input.message, inContext);
+  if (!intent) return null;
+  const blank = (prompt: string) => turnFor({ kind: "COMMERCE", ownerId: actorId, view: "BUSINESS_PROFILE", notice: prompt }, [], prompt, actorId, market);
+  try {
+    if (intent.kind === "INTRODUCE") {
+      if (intent.marketId && intent.marketId !== market.id)
+        return blank(`سوقك الحالي هو ${MARKET_LABELS[market.id] ?? market.id}، والنشاط يُسجَّل في سوق البلد الذي يعمل فيه (${MARKET_LABELS[intent.marketId] ?? intent.marketId}). بدّل سوقك ثم أعد الطلب. لم يُنشأ شيء.`);
+      if (!intent.displayName) return blank(`ما اسم ${BUSINESS_CATEGORIES[intent.categoryKey] ?? "نشاطك"} كما تريده أن يظهر للناس؟ اكتب مثلًا: «مطعمي اسمه سمراء للمشاوي». لم يُنشأ شيء بعد.`);
+      const idempotencyKey = `conv:${createHash("sha256").update(`${input.conversationId}:${normalizeBusinessText(intent.displayName)}`).digest("hex").slice(0, 40)}`;
+      const { created, business } = await createBusinessDraft(actorId, market, { displayName: intent.displayName, categoryKey: intent.categoryKey, idempotencyKey });
+      const next = business.missingInfo.length ? `للتحقق أحتاج: ${business.missingInfo.join(" و")}، ثم صورة ${documentRequirementLabel(business)}.` : `للتحقق أحتاج صورة ${documentRequirementLabel(business)}.`;
+      const prompt = created
+        ? `جهّزت مسودة «${business.displayName}» (${business.categoryLabel}) في سوق ${MARKET_LABELS[market.id] ?? market.id}. المسودة غير موثّقة ولا تظهر للناس بعد، ولا تحتاج اشتراكًا مدفوعًا. ${next}`
+        : `لديك بالفعل نشاط «${business.displayName}» بحالة «${business.statusLabel}»؛ لم أنشئ نسخة ثانية. ${businessStatusPrompt(business)}`;
+      return businessTurn(actorId, market, business, "OVERVIEW", prompt);
+    }
+    const focused = await businessInFocus(actorId, market, latest);
+    if (!focused) return blank(NO_BUSINESS);
+    if (focused === "AMBIGUOUS") return blank(AMBIGUOUS_BUSINESS);
+    switch (intent.kind) {
+      case "SHOW":
+      case "STATUS":
+        return businessTurn(actorId, market, focused, "STATUS", businessStatusPrompt(focused));
+      case "UPLOAD_DOCUMENT": {
+        let view = focused;
+        if (view.verificationStatus === "DRAFT") view = await startBusinessVerification(actorId, market, view.id);
+        if (view.verificationStatus !== "DOCUMENTS_REQUIRED") return businessTurn(actorId, market, view, "STATUS", `لا يحتاج طلبك مستندات الآن. ${businessStatusPrompt(view)}`);
+        const label = DOCUMENT_KIND_LABELS[intent.documentKind];
+        return businessTurn(
+          actorId,
+          market,
+          view,
+          "UPLOAD",
+          `ارفع ${label} من زر «ارفع المستند» في البطاقة (PDF أو صورة JPEG/PNG حتى 10 ميغابايت). يُحفظ بشكل خاص لمراجع دينار فقط، ولا يظهر في الإعلانات ولا يُرسل إلى نموذج الذكاء.${view.missingInfo.length ? ` وأحتاج أيضًا: ${view.missingInfo.join(" و")}.` : ""}`,
+        );
+      }
+      case "INFO": {
+        const view = await updateBusinessProfile(actorId, market, focused.id, {
+          expectedRevision: focused.revision,
+          ...(intent.legalName ? { legalName: intent.legalName } : {}),
+          ...(intent.registrationNumber ? { registrationNumber: intent.registrationNumber } : {}),
+          ...(intent.city ? { address: { city: intent.city } } : {}),
+        });
+        return businessTurn(actorId, market, view, "INFO", `حدّثت بيانات «${view.displayName}» كما كتبتها (غير موثّقة بعد). ${businessStatusPrompt(view)}`);
+      }
+      case "SUBMIT": {
+        const view = await submitBusinessForReview(actorId, market, focused.id);
+        return businessTurn(actorId, market, view, "STATUS", businessStatusPrompt(view));
+      }
+      case "CONNECT_SYSTEM":
+        return businessTurn(
+          actorId,
+          market,
+          focused,
+          "CONNECT",
+          focused.verified
+            ? "يمكنك تسجيل طلب ربط بقراءة فقط (القائمة أو المخزون أو الطلبات) من البطاقة. لا يوجد موصّل جاهز لأي نظام حاليًا، ولم يُربط شيء. مفتاح مزوّد دينار يسمح لنظامك بالإرسال إلى دينار فقط، ولا يمنح دينار دخولًا إلى نظامك."
+            : "ربط نظامك متاح بعد توثيق النشاط. يمكنك الآن إضافة قائمتك أو منتجاتك داخل دينار مباشرة دون أي نظام خارجي. لم يُربط شيء.",
+        );
+    }
+  } catch (error) {
+    const message = errorText(error);
+    if (!message) throw error;
+    const view = await businessInFocus(actorId, market, latest).catch(() => undefined);
+    if (view && view !== "AMBIGUOUS") return businessTurn(actorId, market, view, "STATUS", `${message}. لم يتغير شيء.`, `${message}.`);
+    return blank(`${message}. لم يتغير شيء.`);
+  }
+  return null;
+}
+
+function documentRequirementLabel(view: BusinessOwnerView) {
+  return view.requirements.map((group) => group.labels.join(" أو ")).join(" و") || "السجل التجاري";
+}
+
+/** D1: «ما الفرق بين جو وبرو؟», «أبي أشترك في بزنس» — explained from the server's plan overview. */
+async function publicPlansTurn(text: string, actorId: string, market: Market): Promise<Turn | null> {
+  const named = namedPlanCodes(text);
+  const compares = /(?:^|\s)(?:الفرق|فرق|قارن|مقارنه|افضل|احسن)(?:\s|$)/u.test(text) && named.length >= 2;
+  const business = named.length === 1 && named[0] === "DINAR_BUSINESS" && (/(?:^|\s)(?:اشترك|اشتراك|ارقي|ترقي|سعر|كم|بكم|خطه|باقه)/u.test(text));
+  if (!compares && !business) return null;
+  const overview = await subscriptionPlansOverview(actorId, market);
+  const plan = (code: PlanCode) => overview.plans.find((item) => item.planCode === code)!;
+  if (compares) {
+    const lines = named.map((code) => {
+      const item = plan(code);
+      return `• ${item.name}: ${item.marketPrice?.label ?? "السعر غير معتمد بعملة سوقك بعد"} — ${item.referencePriceLabel}. ${item.description} ${item.eligibilityNote}`;
+    });
+    const prompt = [...lines, overview.approvals.note, overview.billing.note].filter(Boolean).join("\n");
+    return turnFor({ kind: "COMMERCE", ownerId: actorId, view: "AI_PLANS", publicPlanFocus: named }, [], prompt, actorId, market);
+  }
+  const item = plan("DINAR_BUSINESS");
+  const verified = overview.businesses.filter((entry) => entry.verificationStatus === "VERIFIED");
+  const pending = overview.businesses.filter((entry) => entry.verificationStatus !== "VERIFIED" && entry.verificationStatus !== "REJECTED");
+  const verification = verified.length
+    ? `نشاطك «${verified[0]!.displayName}» موثّق ويمكن ربط الاشتراك به.`
+    : pending.length
+      ? `نشاطك «${pending[0]!.displayName}» حالته «${pending[0]!.statusLabel}»؛ دينار بزنس يحتاج نشاطًا موثّقًا أولًا، والدفع لا يوثّق النشاط.`
+      : "دينار بزنس يحتاج نشاطًا تجاريًا موثّقًا من مراجع دينار. قل «أنا صاحب مطعم اسمه …» لنبدأ.";
+  const subscription = overview.subscription.status === "FREE" ? "أنت الآن على الحساب المجاني." : `اشتراكك الحالي: ${overview.currentPlanLabel} (${overview.subscription.statusLabel}).`;
+  const billing = subscriptionBillingStatus().connected ? "الدفع يتم عبر مزوّد الفوترة بعد تأكيدك، ولا تُفعّل الخطة قبل تأكيد موثّق منه." : "تفعيل الاشتراك المدفوع غير متاح الآن لأن الفوترة غير موصولة؛ لم يُنشأ اشتراك ولم يُخصم شيء.";
+  const prompt = `${item.name}: ${item.referencePriceLabel}${item.marketPrice ? `، وسعره في سوقك ${item.marketPrice.label}` : "؛ سعره بعملة سوقك غير معتمد بعد"}. ${item.description} ${verification} ${subscription} ${billing}`;
+  return turnFor({ kind: "COMMERCE", ownerId: actorId, view: "AI_PLANS", publicPlanFocus: ["DINAR_BUSINESS"] }, [], prompt, actorId, market);
 }
 
 async function analytics(actorId: string, market: Market, latest: CommerceQuery | undefined, latestSet: StoredSet | undefined): Promise<Turn> {

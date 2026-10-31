@@ -3,6 +3,7 @@
  * which metered resource a model turn consumes. Deterministic; no model call is needed to
  * explain usage, and ordinary marketplace actions never depend on an AI allowance.
  */
+import { subscriptionPlansOverview } from "../lib/subscription-overview";
 import { aiUsagePolicyFor, aiUsageSummary, globalGuardOpen, type AiUsageRefusal, type AiUsageSummary } from "../lib/ai-usage";
 import { AI_RESOURCE_LABELS, AI_TIER_LABELS, AI_USAGE_RESOURCES, type AiUsageResource } from "../lib/ai-usage-policy";
 import { businessPlans, getBusinessStatus, planAiTier } from "../lib/business";
@@ -153,10 +154,11 @@ export function usageCardPrompt(view: UsageCardView, question: "SUMMARY" | "RENE
 }
 
 export async function plansCardView(actorId: string, market: CardMarket) {
-  const [policy, plans, summary] = await Promise.all([
+  const [policy, plans, summary, overview] = await Promise.all([
     aiUsagePolicyFor(market),
     businessPlans(market as Parameters<typeof businessPlans>[0]).catch((): Awaited<ReturnType<typeof businessPlans>> => []),
     aiUsageSummary({ kind: "USER", userId: actorId, market }),
+    subscriptionPlansOverview(actorId, market as Parameters<typeof subscriptionPlansOverview>[1]),
   ]);
   const simulation = isPromotionSimulationEnabled();
   const tiers = (["FREE", "BUSINESS_GO", "BUSINESS_PRO"] as const).map((tier) => {
@@ -185,6 +187,21 @@ export async function plansCardView(actorId: string, market: CardMarket) {
         : "الفوترة غير متصلة بعد؛ لا يمكن تفعيل باقة مدفوعة الآن، ولن يُخصم أي مبلغ.",
     },
     renewalNote: "لا تجديد تلقائي؛ تنتهي الباقة المدفوعة بنهاية فترتها وتعود حصتك إلى المجاني.",
+    // D1: the three public plans as the server defines them (price, eligibility, status).
+    publicPlans: overview.plans.map((plan) => ({
+      planCode: plan.planCode,
+      name: plan.name,
+      description: plan.description,
+      features: plan.features.slice(0, 4),
+      statusLabel: plan.statusLabel,
+      referencePriceLabel: plan.referencePriceLabel,
+      marketPriceLabel: plan.marketPrice?.label ?? null,
+      requiresVerifiedBusiness: plan.requiresVerifiedBusiness,
+      eligible: plan.eligible,
+      eligibilityNote: plan.eligibilityNote,
+      current: plan.current,
+    })),
+    publicPlansNote: overview.approvals.note,
   };
 }
 export type PlansCardView = Awaited<ReturnType<typeof plansCardView>>;
