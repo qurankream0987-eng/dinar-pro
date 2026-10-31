@@ -2608,3 +2608,309 @@ export const trustAppealEvents = pgTable(
   },
   (t) => [index("trust_appeal_events_appeal_idx").on(t.appealId, t.createdAt)],
 );
+
+// Wave 09: policy lifecycle registry. Wording still comes from lib/policies.ts, which stays
+// PENDING_LEGAL_APPROVAL until counsel signs off. This table only records lifecycle state,
+// content hash and who moved it. Nothing is created APPROVED or PUBLISHED by a migration.
+export const policyRegistryVersions = pgTable(
+  "policy_registry_versions",
+  {
+    id: text("id").primaryKey(),
+    policyKey: text("policy_key").notNull(),
+    version: text("version").notNull(),
+    lifecycle: text("lifecycle").default("DRAFT").notNull(),
+    contentSha256: text("content_sha256").notNull(),
+    effectiveDate: text("effective_date").notNull(),
+    marketScope: text("market_scope").default("GLOBAL").notNull(),
+    requiresAcceptance: boolean("requires_acceptance").default(false).notNull(),
+    materialChange: boolean("material_change").default(false).notNull(),
+    legalReference: text("legal_reference"),
+    registeredBy: text("registered_by").references(() => users.id),
+    approvedBy: text("approved_by").references(() => users.id),
+    publishedBy: text("published_by").references(() => users.id),
+    supersededBy: text("superseded_by").references(() => users.id),
+    approvedAt: timestamp("approved_at", { withTimezone: true }),
+    publishedAt: timestamp("published_at", { withTimezone: true }),
+    supersededAt: timestamp("superseded_at", { withTimezone: true }),
+    ...dates(),
+  },
+  (t) => [
+    uniqueIndex("policy_registry_versions_unique").on(
+      t.policyKey,
+      t.version,
+      t.marketScope,
+    ),
+    index("policy_registry_versions_key_idx").on(t.policyKey, t.lifecycle),
+    check(
+      "policy_registry_versions_lifecycle_valid",
+      sql`${t.lifecycle} IN ('DRAFT', 'LEGAL_REVIEW', 'APPROVED', 'PUBLISHED', 'SUPERSEDED')`,
+    ),
+    check(
+      "policy_registry_versions_hash_valid",
+      sql`${t.contentSha256} ~ '^[0-9a-f]{64}$'`,
+    ),
+    check(
+      "policy_registry_versions_effective_valid",
+      sql`${t.effectiveDate} ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'`,
+    ),
+    check(
+      "policy_registry_versions_scope_valid",
+      sql`${t.marketScope} = 'GLOBAL' OR char_length(${t.marketScope}) BETWEEN 2 AND 32`,
+    ),
+    check(
+      "policy_registry_versions_state_valid",
+      sql`(${t.lifecycle} IN ('DRAFT', 'LEGAL_REVIEW') AND ${t.approvedAt} IS NULL AND ${t.publishedAt} IS NULL AND ${t.supersededAt} IS NULL AND ${t.legalReference} IS NULL)
+        OR (${t.lifecycle} = 'APPROVED' AND ${t.approvedAt} IS NOT NULL AND ${t.approvedBy} IS NOT NULL AND ${t.legalReference} IS NOT NULL AND ${t.publishedAt} IS NULL AND ${t.supersededAt} IS NULL)
+        OR (${t.lifecycle} = 'PUBLISHED' AND ${t.approvedAt} IS NOT NULL AND ${t.publishedAt} IS NOT NULL AND ${t.publishedBy} IS NOT NULL AND ${t.legalReference} IS NOT NULL AND ${t.supersededAt} IS NULL)
+        OR (${t.lifecycle} = 'SUPERSEDED' AND ${t.approvedAt} IS NOT NULL AND ${t.publishedAt} IS NOT NULL AND ${t.supersededAt} IS NOT NULL AND ${t.supersededBy} IS NOT NULL AND ${t.legalReference} IS NOT NULL)`,
+    ),
+  ],
+);
+
+/** Wave 09: every explicit policy decision, append-only. A chat message is never a row here. */
+export const policyConsentEvents = pgTable(
+  "policy_consent_events",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id),
+    policyKey: text("policy_key").notNull(),
+    policyVersion: text("policy_version").notNull(),
+    contentSha256: text("content_sha256").notNull(),
+    decision: text("decision").notNull(),
+    source: text("source").notNull(),
+    idempotencyKey: text("idempotency_key").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [
+    uniqueIndex("policy_consent_events_idempotency_unique").on(
+      t.userId,
+      t.idempotencyKey,
+    ),
+    index("policy_consent_events_user_idx").on(t.userId, t.createdAt),
+    check(
+      "policy_consent_events_decision_valid",
+      sql`${t.decision} IN ('ACCEPTED', 'DECLINED')`,
+    ),
+    check(
+      "policy_consent_events_source_valid",
+      sql`${t.source} IN ('SIGNUP', 'POLICY_REVIEW', 'API')`,
+    ),
+    check(
+      "policy_consent_events_hash_valid",
+      sql`${t.contentSha256} ~ '^[0-9a-f]{64}$'`,
+    ),
+  ],
+);
+
+/** Wave 09: per-market legal entity. No row exists by default and no entity is invented. */
+export const legalEntities = pgTable(
+  "legal_entities",
+  {
+    id: text("id").primaryKey(),
+    marketId: text("market_id")
+      .notNull()
+      .references(() => markets.id),
+    legalName: text("legal_name").notNull(),
+    entityType: text("entity_type").notNull(),
+    registrationCountry: text("registration_country").notNull(),
+    status: text("status").default("DISABLED").notNull(),
+    capabilities: jsonb("capabilities").$type<string[]>().default([]).notNull(),
+    activatedAt: timestamp("activated_at", { withTimezone: true }),
+    activatedBy: text("activated_by").references(() => users.id),
+    deactivatedAt: timestamp("deactivated_at", { withTimezone: true }),
+    deactivatedBy: text("deactivated_by").references(() => users.id),
+    createdBy: text("created_by").references(() => users.id),
+    ...dates(),
+  },
+  (t) => [
+    uniqueIndex("legal_entities_market_unique").on(t.marketId),
+    index("legal_entities_status_idx").on(t.status),
+    check(
+      "legal_entities_name_valid",
+      sql`char_length(btrim(${t.legalName})) BETWEEN 2 AND 200`,
+    ),
+    check(
+      "legal_entities_type_valid",
+      sql`${t.entityType} IN ('COMPANY', 'INDIVIDUAL', 'PARTNERSHIP')`,
+    ),
+    check(
+      "legal_entities_country_valid",
+      sql`${t.registrationCountry} ~ '^[A-Z]{2}$'`,
+    ),
+    check(
+      "legal_entities_status_valid",
+      sql`${t.status} IN ('DISABLED', 'ACTIVE')`,
+    ),
+    check(
+      "legal_entities_capabilities_valid",
+      sql`jsonb_typeof(${t.capabilities}) = 'array'`,
+    ),
+    check(
+      "legal_entities_active_valid",
+      sql`(${t.status} = 'DISABLED') OR (${t.activatedAt} IS NOT NULL AND ${t.activatedBy} IS NOT NULL AND jsonb_array_length(${t.capabilities}) > 0)`,
+    ),
+  ],
+);
+
+/** Wave 09: compliance switches; absence of a row means every safeguard is off. */
+export const marketComplianceSettings = pgTable(
+  "market_compliance_settings",
+  {
+    marketId: text("market_id")
+      .primaryKey()
+      .references(() => markets.id),
+    sellerVerificationRequired: boolean("seller_verification_required")
+      .default(false)
+      .notNull(),
+    minorProtectionEnabled: boolean("minor_protection_enabled")
+      .default(false)
+      .notNull(),
+    minimumAge: integer("minimum_age").default(18).notNull(),
+    guardianConsentRequired: boolean("guardian_consent_required")
+      .default(false)
+      .notNull(),
+    /** Enables the legal-entity capability gate for this market; off means the gate is not claimed. */
+    legalEntityRequired: boolean("legal_entity_required").default(false).notNull(),
+    updatedBy: text("updated_by").references(() => users.id),
+    ...dates(),
+  },
+  (t) => [
+    check(
+      "market_compliance_settings_age_valid",
+      sql`${t.minimumAge} BETWEEN 13 AND 21`,
+    ),
+    check(
+      "market_compliance_settings_guardian_valid",
+      sql`NOT ${t.guardianConsentRequired} OR ${t.minorProtectionEnabled}`,
+    ),
+  ],
+);
+
+/** Wave 09: risk-based seller verification. UNASSESSED is honest: no score is invented. */
+export const sellerVerificationProfiles = pgTable(
+  "seller_verification_profiles",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id),
+    marketId: text("market_id")
+      .notNull()
+      .references(() => markets.id),
+    requestedLevel: text("requested_level").notNull(),
+    status: text("status").default("PENDING").notNull(),
+    riskBasis: text("risk_basis").default("UNASSESSED").notNull(),
+    evidenceRefs: jsonb("evidence_refs").$type<string[]>().default([]).notNull(),
+    submittedAt: timestamp("submitted_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    decidedAt: timestamp("decided_at", { withTimezone: true }),
+    decidedBy: text("decided_by").references(() => users.id),
+    decisionReason: text("decision_reason"),
+    idempotencyKey: text("idempotency_key").notNull(),
+    ...dates(),
+  },
+  (t) => [
+    uniqueIndex("seller_verification_profiles_idempotency_unique").on(
+      t.userId,
+      t.idempotencyKey,
+    ),
+    index("seller_verification_profiles_user_idx").on(
+      t.userId,
+      t.marketId,
+      t.createdAt,
+    ),
+    index("seller_verification_profiles_queue_idx").on(t.status, t.createdAt),
+    check(
+      "seller_verification_profiles_level_valid",
+      sql`${t.requestedLevel} IN ('BASIC', 'ENHANCED')`,
+    ),
+    check(
+      "seller_verification_profiles_status_valid",
+      sql`${t.status} IN ('PENDING', 'VERIFIED', 'REJECTED')`,
+    ),
+    check(
+      "seller_verification_profiles_risk_valid",
+      sql`${t.riskBasis} IN ('UNASSESSED', 'LOW', 'MEDIUM', 'HIGH')`,
+    ),
+    check(
+      "seller_verification_profiles_evidence_valid",
+      sql`jsonb_typeof(${t.evidenceRefs}) = 'array'`,
+    ),
+    check(
+      "seller_verification_profiles_decision_valid",
+      sql`(${t.status} = 'PENDING' AND ${t.decidedAt} IS NULL AND ${t.decidedBy} IS NULL AND ${t.decisionReason} IS NULL)
+        OR (${t.status} IN ('VERIFIED', 'REJECTED') AND ${t.decidedAt} IS NOT NULL AND ${t.decidedBy} IS NOT NULL AND ${t.decidedBy} <> ${t.userId})`,
+    ),
+    check(
+      "seller_verification_profiles_rejection_reason",
+      sql`${t.status} <> 'REJECTED' OR (${t.decisionReason} IS NOT NULL AND btrim(${t.decisionReason}) <> '')`,
+    ),
+  ],
+);
+
+/**
+ * Wave 09: minor protection declarations. Append-only: the newest row wins, so a guardian
+ * decision never rewrites the self-declaration that preceded it. Only a hash of the guardian
+ * reference is stored.
+ */
+export const minorProtectionDeclarations = pgTable(
+  "minor_protection_declarations",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id),
+    marketId: text("market_id")
+      .notNull()
+      .references(() => markets.id),
+    declaredStatus: text("declared_status").notNull(),
+    guardianStatus: text("guardian_status").notNull(),
+    guardianReferenceSha256: text("guardian_reference_sha256"),
+    guardianDecidedAt: timestamp("guardian_decided_at", {
+      withTimezone: true,
+    }),
+    source: text("source").default("SELF_DECLARATION").notNull(),
+    idempotencyKey: text("idempotency_key").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [
+    uniqueIndex("minor_protection_declarations_idempotency_unique").on(
+      t.userId,
+      t.idempotencyKey,
+    ),
+    index("minor_protection_declarations_user_idx").on(
+      t.userId,
+      t.marketId,
+      t.createdAt,
+    ),
+    check(
+      "minor_protection_declarations_status_valid",
+      sql`${t.declaredStatus} IN ('ADULT', 'MINOR')`,
+    ),
+    check(
+      "minor_protection_declarations_guardian_status_valid",
+      sql`${t.guardianStatus} IN ('NOT_REQUIRED', 'PENDING', 'GRANTED', 'DENIED')`,
+    ),
+    check(
+      "minor_protection_declarations_source_valid",
+      sql`${t.source} IN ('SELF_DECLARATION', 'GUARDIAN_VERIFICATION')`,
+    ),
+    check(
+      "minor_protection_declarations_guardian_hash_valid",
+      sql`${t.guardianReferenceSha256} IS NULL OR ${t.guardianReferenceSha256} ~ '^[0-9a-f]{64}$'`,
+    ),
+    check(
+      "minor_protection_declarations_state_valid",
+      sql`(${t.declaredStatus} = 'ADULT' AND ${t.guardianStatus} = 'NOT_REQUIRED' AND ${t.guardianReferenceSha256} IS NULL AND ${t.guardianDecidedAt} IS NULL AND ${t.source} = 'SELF_DECLARATION')
+        OR (${t.declaredStatus} = 'MINOR' AND ${t.guardianStatus} IN ('NOT_REQUIRED', 'PENDING') AND ${t.guardianReferenceSha256} IS NULL AND ${t.guardianDecidedAt} IS NULL AND ${t.source} = 'SELF_DECLARATION')
+        OR (${t.declaredStatus} = 'MINOR' AND ${t.guardianStatus} IN ('GRANTED', 'DENIED') AND ${t.guardianReferenceSha256} IS NOT NULL AND ${t.guardianDecidedAt} IS NOT NULL AND ${t.source} = 'GUARDIAN_VERIFICATION')`,
+    ),
+  ],
+);

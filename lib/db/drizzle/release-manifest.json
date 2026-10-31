@@ -170,5 +170,9 @@
   {
     "tag": "0042_wave08_cash_engines",
     "sha256": "44e4a812ae36f25ef2210627741e76898e02ddf58c1e5ec78abb3379798a326d"
+  },
+  {
+    "tag": "0043_wave09_policy_consent_compliance",
+    "sha256": "29127432970d98e5a98e138ed78b9cfe781fa35a6f0366762b6ab36786b12316"
   }
 ]
