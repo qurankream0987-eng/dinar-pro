@@ -323,6 +323,11 @@ export const offers = pgTable(
     ),
     index("offers_market_status_idx").on(t.marketId, t.status),
     index("offers_seller_idx").on(t.sellerId),
+    index("offers_search_public_order_idx").on(t.marketId, t.status, t.createdAt, t.id),
+    index("offers_search_public_price_idx").on(t.marketId, t.status, t.unitPriceMinor, t.createdAt.desc(), t.id),
+    index("offers_search_owner_order_idx").on(t.marketId, t.sellerId, t.createdAt, t.id),
+    index("offers_search_category_idx").on(t.marketId, sql`(${t.data}->'categoryId')`, t.status),
+    index("offers_search_legacy_category_idx").on(t.marketId, sql`(${t.data}->'category')`, t.status),
   ],
 );
 export const promotionProducts = pgTable(

@@ -1,0 +1,62 @@
+name: codex-c1-number-audit
+on:
+  push:
+    branches: [codex/11-c1-sql-search]
+    paths: ['.github/workflows/codex-c1-number-audit.yml']
+permissions:
+  contents: read
+jobs:
+  numeric-compatibility:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: dinar_isolation
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_DB: postgres
+        ports: ['5432:5432']
+        options: --health-cmd "pg_isready -U dinar_isolation -d postgres" --health-interval 5s --health-retries 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1
+        with:
+          version: 10
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Compare edge conversions with JavaScript
+        shell: bash
+        run: |
+          env -i PATH="$PATH" HOME="$HOME" DINAR_ISOLATION_NET_LOG="$PWD/c1-number-net.log" NODE_OPTIONS="--import=file://$PWD/artifacts/api-server/test/isolation/net-guard.mjs" node <<'NODE'
+          const { Client } = require('./lib/db/node_modules/pg');
+          const { readFileSync } = require('node:fs');
+          (async () => {
+            const admin = new Client({connectionString:'postgres://dinar_isolation@127.0.0.1:5432/postgres'});
+            await admin.connect();
+            await admin.query('CREATE DATABASE dinar_test_c1_numeric');
+            const client = new Client({connectionString:'postgres://dinar_isolation@127.0.0.1:5432/dinar_test_c1_numeric'});
+            await client.connect();
+            try {
+              const source = readFileSync('lib/db/drizzle/0041_search_foundation.sql','utf8');
+              await client.query(source.slice(source.indexOf('CREATE FUNCTION dinar_search_string')));
+              await client.query(readFileSync('lib/db/drizzle/0045_c1_numeric_compat.sql','utf8'));
+              let failures = 0;
+              for (const value of ['v12','12v','v','\u000b12\u000b','2e-999', '1e999', [null], ['v12'], [[7]], '0x20', '3e-324', '2e-324', '0.'+'0'.repeat(400)+'1', '-0.'+'0'.repeat(400)+'1']) {
+                const number = Number(value); const expected = Number.isFinite(number) ? number : null;
+                const actual = (await client.query('SELECT dinar_search_number($1::jsonb) AS value',[JSON.stringify(value)])).rows[0].value;
+                const pass = actual === expected;
+                console.log(JSON.stringify({value,expected,actual,pass}));
+                if (!pass) failures++;
+              }
+              console.log('C1_NUMERIC_EDGE_FAILURES='+failures);
+              process.exitCode = failures ? 1 : 0;
+            } finally { await client.end(); await admin.query('DROP DATABASE dinar_test_c1_numeric'); await admin.end(); }
+          })().catch(error => { console.error(error); process.exitCode=1; });
+          NODE
+

@@ -14,7 +14,7 @@
  * Disabled plans: no new purchases; campaigns already bought keep their own window.
  */
 import { randomUUID } from "node:crypto";
-import { and, asc, desc, eq, gt, inArray, lte, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gt, inArray, lte, or, sql } from "drizzle-orm";
 import {
   commercialAccounts,
   commercialEntitlements,
@@ -150,6 +150,38 @@ export async function servingCampaignsFor(
       ),
     );
   return rows.filter((row) => hasBudgetForOneCharge(row));
+}
+
+/** Bounded search projection: representative plus eligible category representative per listing.
+ * Historical/stacked campaigns cannot grow a search batch in memory. Keep the existing
+ * semantics: ANY matching-category campaign establishes eligibility, while the strongest
+ * serving campaign represents the listing (even if a historical category differs).
+ */
+export async function servingSearchCampaignsFor(
+  marketId: string,
+  listings: { id: string; categoryId?: string }[],
+  now: Date,
+): Promise<PromotionRow[]> {
+  if (!listings.length || !isPromotionSimulationEnabled()) return [];
+  const conditions = [
+    eq(listingPromotions.marketId, marketId), eq(listingPromotions.status, "ACTIVE"),
+    inArray(listingPromotions.paymentStatus, [...SERVING_PAYMENT_STATUSES]),
+    eq(listingPromotions.paymentMode, "DEVELOPMENT_SIMULATED"),
+    inArray(listingPromotions.placementSnapshot, [...SEARCH_PLACEMENTS]),
+    lte(listingPromotions.startsAt, now), gt(listingPromotions.expiresAt, now),
+    inArray(listingPromotions.listingId, listings.map(item => item.id)),
+    sql`(${listingPromotions.budgetMinor} IS NULL OR
+      (${listingPromotions.unitChargeMinorSnapshot} IS NOT NULL AND
+       ${listingPromotions.budgetMinor} - coalesce(${listingPromotions.spentMinor}, 0) - coalesce(${listingPromotions.releasedMinor}, 0) >= ${listingPromotions.unitChargeMinorSnapshot}))`,
+  ];
+  const order = [asc(listingPromotions.listingId), desc(listingPromotions.priorityWeightSnapshot), desc(listingPromotions.startsAt), asc(listingPromotions.id)];
+  const categories = listings.filter(item => item.categoryId).map(item =>
+    and(eq(listingPromotions.listingId, item.id), eq(listingPromotions.categoryIdSnapshot, item.categoryId!))!);
+  const representative = await db.selectDistinctOn([listingPromotions.listingId]).from(listingPromotions)
+    .where(and(...conditions)).orderBy(...order);
+  const eligible = categories.length ? await db.selectDistinctOn([listingPromotions.listingId]).from(listingPromotions)
+    .where(and(...conditions, or(...categories))).orderBy(...order) : [];
+  return [...new Map([...representative, ...eligible].map(row => [row.id, row])).values()];
 }
 
 // ─── Sponsored score ─────────────────────────────────────────────────────────

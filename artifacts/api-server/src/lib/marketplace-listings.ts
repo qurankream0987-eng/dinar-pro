@@ -27,9 +27,10 @@ import {
   isEligibleSearchPromotion,
   isPromotionSimulationEnabled,
 } from "./promotion-policy";
-import { rankSponsored, representativeCampaign, servingCampaignsFor, sponsoredScore } from "./promotions";
+import { rankSponsored, representativeCampaign, servingSearchCampaignsFor, sponsoredScore } from "./promotions";
 import { getCommercialPolicy } from "./commercial-policy";
 import { itemTokens, textMatchesToken } from "./arabic-search-terms";
+import { searchCandidateBatches } from "./marketplace-search-cursor";
 import { redactListingContactText } from "./listing-contact";
 
 export type OfferRow = {
@@ -174,8 +175,7 @@ export async function searchMarketplaceListings(
     limit?: number;
   },
 ): Promise<ListingRecord[]> {
-  const [rows, allCategories, policyRules] = await Promise.all([
-    offerRows(market.id),
+  const [allCategories, policyRules] = await Promise.all([
     listMarketplaceCategories(true),
     activePolicyRules(market.id),
   ]);
@@ -276,9 +276,7 @@ export async function searchMarketplaceListings(
         .filter((value) => value != null)
         .join(" "),
     );
-  const matchedRows = rows
-    .filter(
-      ({ offer, seller }) =>
+  const matchesRow = ({ offer, seller }: OfferRow) =>
         seller.status === "ACTIVE" &&
         !market.restrictedCategories.includes(offer.data.category) &&
         !market.restrictedCategories.includes(offer.data.categoryId ?? "") &&
@@ -306,10 +304,10 @@ export async function searchMarketplaceListings(
                 (aliasTokens.has(token) && text.includes(tokenNeedle(token))) || textMatchesToken(text, token),
               );
             })()
-          : searchableText(offer).includes(normalizeSearch(term))),
-    );
+          : searchableText(offer).includes(normalizeSearch(term)));
   const requestedSort =
     options.sort ?? schema?.rules.sorting.defaultSort ?? undefined;
+  let nativeOrder: { field: string; direction: string; attribute?: string } | undefined;
   if (requestedSort && requestedSort !== "RELEVANCE") {
     const sortDefinition = schema?.rules.sorting.options.find(
       (option) => option.id === requestedSort,
@@ -327,23 +325,7 @@ export async function searchMarketplaceListings(
     const direction =
       sortDefinition?.direction ??
       (requestedSort === "PRICE_ASC" ? "ASC" : "DESC");
-    matchedRows.sort((a, b) => {
-      const getValue = (offer: typeof offers.$inferSelect) => {
-        if (field === "PRICE") return offer.unitPriceMinor;
-        if (field === "CREATED_AT") return offer.createdAt.getTime();
-        const attribute = sortDefinition?.attribute;
-        const raw = attribute ? offer.data.attributes?.[attribute] : undefined;
-        const numeric = typeof raw === "number" ? raw : Number(raw);
-        return Number.isFinite(numeric) ? numeric : null;
-      };
-      const av = getValue(a.offer);
-      const bv = getValue(b.offer);
-      if (av === null && bv !== null) return 1;
-      if (bv === null && av !== null) return -1;
-      if (av !== null && bv !== null && av !== bv)
-        return direction === "ASC" ? av - bv : bv - av;
-      return b.offer.createdAt.getTime() - a.offer.createdAt.getTime();
-    });
+    nativeOrder = { field, direction, attribute: sortDefinition?.attribute };
   }
   const limit = options.limit ?? 24;
   const toRecord = ({ offer, seller }: OfferRow, sponsored: boolean | PaidSlot): ListingRecord => {
@@ -361,17 +343,6 @@ export async function searchMarketplaceListings(
     };
   };
 
-  // A stored result keeps its order; a paid label is shown only where the stored
-  // placement was paid, and only for listings that are still publicly eligible.
-  if (options.allowedIds) {
-    const byId = new Map(matchedRows.map((row) => [row.offer.id, row]));
-    const paid = new Set(options.ownSellerId ? [] : options.sponsoredIds ?? []);
-    return options.allowedIds
-      .map((id) => byId.get(id))
-      .filter((row): row is OfferRow => !!row)
-      .slice(0, limit)
-      .map((row) => toRecord(row, paid.has(row.offer.id)));
-  }
 
   // Sponsored placement composes with organic relevance and never replaces it:
   // only rows that already passed market, moderation, seller, category, hard
@@ -383,31 +354,50 @@ export async function searchMarketplaceListings(
     !options.sort ||
     options.sort === "RELEVANCE" ||
     options.sort === (schema?.rules.sorting.defaultSort ?? "NEWEST");
-  const paidSlots: Map<string, PaidSlot> =
-    options.ownSellerId ||
-    options.sponsoredPlacement === false ||
-    !defaultView
-      ? new Map<string, PaidSlot>()
-      : await sponsoredPlacementIds(
-          market,
-          matchedRows,
-          {
-            categoryId: categoryRow?.id,
-            queryText: tokens.join(" "),
-            searchableText,
-            categoryIdOf: (offer) =>
-              typeof offer.data.categoryId === "string"
-                ? offer.data.categoryId
-                : categoryIdsByLabel.get(String(offer.data.category ?? "")),
-            activeCategoryIds,
-          },
-          options.sponsoredSlots ?? (await getCommercialPolicy(market.id)).searchSponsoredSlots,
-        );
+  const slots = !isPromotionSimulationEnabled() || options.ownSellerId || options.sponsoredPlacement === false || !defaultView || options.allowedIds
+    ? 0 : options.sponsoredSlots ?? (await getCommercialPolicy(market.id)).searchSponsoredSlots;
+  const organic: OfferRow[] = [];
+  let paidCandidates: { id: string; score: number; row: OfferRow; slot: PaidSlot }[] = [];
+  const stored = new Map<string, OfferRow>();
+  let organicOffset = 0;
+  const now = new Date();
+  for await (const batch of searchCandidateBatches({
+    marketId: market.id, ownSellerId: options.ownSellerId, allowedIds: options.allowedIds,
+    conversational: options.conversational, category: categoryRow, filters: options.filters,
+    minorUnitScale, order: nativeOrder,
+  })) {
+    const matched = batch.filter(matchesRow);
+    if (options.allowedIds) {
+      for (const row of matched) stored.set(row.offer.id, row);
+      continue;
+    }
+    for (const row of matched) if (organic.length < limit) organic.push(row);
+    if (slots > 0 && isPromotionSimulationEnabled()) {
+      const batchPaid = await sponsoredPlacementIds(market, matched, {
+        categoryId: categoryRow?.id, queryText: tokens.join(" "), searchableText,
+        categoryIdOf: (offer) => typeof offer.data.categoryId === "string"
+          ? offer.data.categoryId : categoryIdsByLabel.get(String(offer.data.category ?? "")),
+        activeCategoryIds,
+      }, slots, organicOffset, now);
+      const byId = new Map(matched.map(row => [row.offer.id, row]));
+      paidCandidates = rankSponsored([...paidCandidates, ...[...batchPaid].map(([id, slot]) =>
+        ({ id, score: slot.score, row: byId.get(id)!, slot }))], slots);
+    }
+    organicOffset += matched.length;
+    // With no paid ranking to compute, the ordered accepted prefix is the complete answer.
+    if (slots <= 0 && organic.length >= limit) break;
+  }
+  if (options.allowedIds) {
+    const paid = new Set(options.ownSellerId ? [] : options.sponsoredIds ?? []);
+    return options.allowedIds.map(id => stored.get(id)).filter((row): row is OfferRow => !!row)
+      .slice(0, limit).map(row => toRecord(row, paid.has(row.offer.id)));
+  }
+  const paidSlots = new Map(paidCandidates.map(item => [item.id, item.slot]));
+
   // Paid slots first in score order; the organic rest keeps its canonical order.
-  const rowsById = new Map(matchedRows.map((row) => [row.offer.id, row]));
   const ordered = [
-    ...[...paidSlots.keys()].map((id) => rowsById.get(id)!),
-    ...matchedRows.filter((row) => !paidSlots.has(row.offer.id)),
+    ...paidCandidates.map(item => item.row),
+    ...organic.filter(row => !paidSlots.has(row.offer.id)),
   ];
   return ordered.slice(0, limit).map((row) => toRecord(row, paidSlots.get(row.offer.id) ?? false));
 }
@@ -428,13 +418,14 @@ async function sponsoredPlacementIds(
     activeCategoryIds: Set<string>;
   },
   slots: number,
+  organicOffset = 0,
+  now = new Date(),
 ): Promise<Map<string, PaidSlot>> {
   if (slots <= 0 || !rankedRows.length || !isPromotionSimulationEnabled())
     return new Map();
-  const now = new Date();
-  const campaigns = await servingCampaignsFor(
+  const campaigns = await servingSearchCampaignsFor(
     market.id,
-    rankedRows.map((row) => row.offer.id),
+    rankedRows.map((row) => ({ id: row.offer.id, categoryId: context.categoryIdOf(row.offer) })),
     now,
   );
   const rowsById = new Map(rankedRows.map((row) => [row.offer.id, row]));
@@ -475,7 +466,7 @@ async function sponsoredPlacementIds(
       return [{
         id: row.offer.id,
         score: sponsoredScore({
-          organicIndex,
+          organicIndex: organicOffset + organicIndex,
           priorityWeight: campaign.priorityWeightSnapshot,
           unitChargeMinor: campaign.unitChargeMinorSnapshot,
           minorUnitScale: market.minorUnitScale,
@@ -488,8 +479,8 @@ async function sponsoredPlacementIds(
   );
   return new Map(ranked.map((item) => {
     const campaign = representativeCampaign(campaigns, item.id)!;
-    return [item.id, { promotionId: campaign.id, placement: campaign.placementSnapshot }];
+    return [item.id, { promotionId: campaign.id, placement: campaign.placementSnapshot, score: item.score }];
   }));
 }
 
-type PaidSlot = { promotionId: string; placement: string };
+type PaidSlot = { promotionId: string; placement: string; score: number };
