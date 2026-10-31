@@ -157,7 +157,8 @@ try {
   assert.equal(await typing.isVisible(), true, "the progress region is visible while the answer is held");
   const actionGroup = card.locator('xpath=ancestor::fieldset[contains(@class, "dinar-action-group")][1]');
   assert.equal(await actionGroup.getAttribute("aria-busy"), "true", "the card is marked busy while the turn runs");
-  assert.equal(await actionGroup.isDisabled(), true, "the card's controls are disabled while the turn runs");
+  assert.equal(await actionGroup.evaluate((node) => node.disabled), true, "the action group is disabled while the turn runs");
+  assert.equal(await card.getByTestId("purchase-confirm").isDisabled(), true, "the confirm control is disabled while the turn runs");
   observations.card.busyLabel = busy.label;
   observations.card.progressRole = "status";
   checks.push("a11y: the busy state is disabled and announced while the answer is in flight");
