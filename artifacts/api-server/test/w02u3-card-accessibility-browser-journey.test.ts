@@ -15,7 +15,7 @@ import { execFile } from "node:child_process";
 import { readFile, unlink } from "node:fs/promises";
 import { promisify } from "node:util";
 import { eq } from "drizzle-orm";
-import { aiResultSets, messages, pool } from "@workspace/db";
+import { aiResultSets, db, messages, pool } from "@workspace/db";
 import app from "../src/app";
 import { getModelGatewayCallCount } from "../src/ai/model-gateway";
 import { startDinarBrowserTestWeb } from "./browser-test-web-server";
