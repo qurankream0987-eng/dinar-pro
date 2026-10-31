@@ -164,11 +164,11 @@ test("clone migration accepts only the reviewed 44-entry journal, checked agains
     tag,
     sha256: createHash("sha256").update(readFileSync(new URL(`${tag}.sql`, migrations))).digest("hex"),
   }));
-  assert.equal(entries.length, 44);
-  assert.equal(REVIEWED_PENDING_MIGRATIONS.at(-1)?.tag, "0043_wave09_policy_consent_compliance");
+  assert.equal(entries.length, 45);
+  assert.equal(REVIEWED_PENDING_MIGRATIONS.at(-1)?.tag, "0044_wave10_trust_support_whatsapp");
   assert.doesNotThrow(() => assertCloneMigrationJournal(entries));
-  assert.throws(() => assertCloneMigrationJournal(entries.slice(0, 43)), /expects 44/);
-  assert.throws(() => assertCloneMigrationJournal([...entries, { tag: "0044_unreviewed", sha256: "0".repeat(64) }]), /expects 44/);
+  assert.throws(() => assertCloneMigrationJournal(entries.slice(0, 44)), /expects 45/);
+  assert.throws(() => assertCloneMigrationJournal([...entries, { tag: "0045_unreviewed", sha256: "0".repeat(64) }]), /expects 45/);
   const edited = entries.map((entry) => ({ ...entry }));
   edited[37].sha256 = "f".repeat(64);
   assert.throws(() => assertCloneMigrationJournal(edited), /0037_pre_integration_closure differs/);
