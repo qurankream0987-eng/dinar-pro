@@ -10,6 +10,7 @@
  * Context is bounded and redacted before it leaves the server: no auth phone, provider
  * key, payment number, coordinates or address; listing text is quoted as data.
  */
+import { CANONICAL_REQUEST_INSTRUCTION } from "./routing-mode";
 import { z } from "zod";
 import {
   MODEL_DISCOVERABLE_CAPABILITIES,
@@ -89,6 +90,12 @@ export const ModelTurnOutput = z
     capability: CapabilitySuggestion.optional(),
     confidence: z.number().min(0).max(1),
     conversationalReply: z.string().trim().min(1).max(MAX_REPLY),
+    /**
+     * Model-native mandate (additive, optional): the user's request restated in DINAR's own
+     * command words, re-entered through the deterministic runtime outside LEGACY (routing-mode.ts).
+     * An utterance, never an identifier or an action; decisions and contact details are refused.
+     */
+    canonicalRequest: z.string().trim().min(2).max(160).optional(),
   })
   .strict();
 export type ModelTurn = z.infer<typeof ModelTurnOutput>;
@@ -138,6 +145,11 @@ export const MODEL_TOOL: ModelToolDefinition = {
         additionalProperties: false,
       },
       confidence: { type: "number", minimum: 0, maximum: 1 },
+      canonicalRequest: {
+        type: "string",
+        maxLength: 160,
+        description: "Optional: the user's DINAR request restated as one short Arabic command (never a confirmation, payment, acceptance or contact detail).",
+      },
       conversationalReply: {
         type: "string",
         maxLength: MAX_REPLY,
@@ -268,6 +280,8 @@ export type ModelResult =
 
 export type ModelContext = {
   reasoningEffort?: ReasoningEffort;
+  /** Outside LEGACY: ask the model for a canonicalRequest (routing-mode.ts). */
+  canonicalRequests?: boolean;
   marketAvailable?: boolean;
   serverContext?: Record<string, unknown>;
   goal?: string | null;
@@ -435,7 +449,7 @@ export function clampAdvisoryFields(value: unknown): { value: unknown; normalize
  * the server context and the message, each joined by a newline. Tests hold every call to it.
  */
 export const MAX_MODEL_INPUT_CHARS =
-  SYSTEM_PROMPT.length + MAX_HISTORY_CHARS + MAX_CONTEXT + MAX_SERVER_CONTEXT + MAX_ACTION_RECEIPTS_CHARS + ACTION_RECEIPTS_FRAMING + MAX_MESSAGE + CONTEXT_FRAMING + 600 + HISTORY_TURNS + 3;
+  SYSTEM_PROMPT.length + CANONICAL_REQUEST_INSTRUCTION.length + 1 + MAX_HISTORY_CHARS + MAX_CONTEXT + MAX_SERVER_CONTEXT + MAX_ACTION_RECEIPTS_CHARS + ACTION_RECEIPTS_FRAMING + MAX_MESSAGE + CONTEXT_FRAMING + 600 + HISTORY_TURNS + 3;
 
 let sharedGateway: Promise<ConversationModelGateway> | undefined;
 const modelGatewayRegistration: ProviderRegistration<"AI_TEXT"> = {
@@ -484,7 +498,7 @@ export async function interpretWithModel(
 ): Promise<ModelResult> {
   const history = conversationHistory(context);
   const messages: ModelMessage[] = [
-    { role: "system", content: SYSTEM_PROMPT },
+    { role: "system", content: context.canonicalRequests ? `${SYSTEM_PROMPT}\n${CANONICAL_REQUEST_INSTRUCTION}` : SYSTEM_PROMPT },
     ...history.recent,
     { role: "user", content: contextMessage(message, context, history.earlierUserTopics) },
     ...(context.correction ? [{ role: "system" as const, content: context.correction.slice(0, 600) }] : []),

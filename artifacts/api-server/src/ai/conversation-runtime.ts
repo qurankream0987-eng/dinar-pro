@@ -33,8 +33,7 @@ import {
   updateMarketplaceCartLine,
 } from "../lib/marketplace-cart";
 import {
-  type ConversationModelGateway,
-} from "./model-gateway";
+  type ConversationModelGateway, getModelGatewayCallCount } from "./model-gateway";
 import {
   executeRegisteredTool,
   type ToolResult,
@@ -64,6 +63,7 @@ import { SMART_STATE_KINDS, executeModelFallback, executeSmartTurn } from "./sma
 import { executeCommerceTurn } from "./commerce-turn";
 import { executeInquiryTurn } from "./inquiry-turn";
 import { executePolicyTurn } from "./policy-turn";
+import { aiRoutingMode, isDecisionUtterance } from "./routing-mode";
 import { executeProductControlTurn } from "./product-control-turn";
 import { aiUsagePolicyFor, globalGuardOpen, hasAiAllowance } from "../lib/ai-usage";
 import { meteredPlatformGateway } from "../lib/ai-spend";
@@ -500,8 +500,68 @@ export async function executeAiConversationTurn(
     planStep?: boolean;
     /** A model-named capability re-entering the runtime: never consult the model again. */
     noModel?: boolean;
+    /** routing-mode.ts: ONLY runs just the model consultation (with its canonical re-entry). */
+    modelStage?: "ONLY";
   } = {},
 ): Promise<{ tool: string; version: number; result: ToolResult; taskPlan?: TaskPlan }> {
+  return executeWithRoutingMode(context, options);
+}
+
+type RuntimeContext = Parameters<typeof executeAiConversationTurn>[0];
+type RuntimeOptions = NonNullable<Parameters<typeof executeAiConversationTurn>[1]>;
+type RuntimeTurn = Awaited<ReturnType<typeof executeAiConversationTurn>>;
+
+/** A review this actor has not decided yet (purchase, inquiry, offer, policy): its reply is a decision. */
+async function hasOpenReview(conversationId: string, marketId: string, actorId: string | undefined): Promise<boolean> {
+  if (!actorId) return false;
+  const [latest] = await db
+    .select({ query: aiResultSets.query, expiresAt: aiResultSets.expiresAt })
+    .from(aiResultSets)
+    .where(and(eq(aiResultSets.conversationId, conversationId), eq(aiResultSets.marketId, marketId)))
+    .orderBy(desc(aiResultSets.createdAt))
+    .limit(1);
+  const query = latest?.query as { ownerId?: unknown; status?: unknown } | undefined;
+  return Boolean(query && query.ownerId === actorId && query.status === "PENDING" && (!latest!.expiresAt || latest!.expiresAt.getTime() > Date.now()));
+}
+
+const NO_MODEL_RESULT: RuntimeTurn = { tool: "__noModelResult", version: 1, result: { kind: "SURFACE", surface: "CLARIFY", query: {}, listings: [] } };
+
+/** An empty reading: DINAR searched and found nothing, or could only ask what was meant. */
+function isSoftMiss(turn: RuntimeTurn): boolean {
+  if (turn.result.kind === "SEARCH") return turn.result.listings.length === 0;
+  return turn.tool === "openSurface" && turn.result.kind === "SURFACE" && turn.result.surface === "CLARIFY" && !turn.result.policyReview;
+}
+const isModelAnswer = (turn: RuntimeTurn) => turn.tool === "smartConversation";
+
+/**
+ * The routing modes of routing-mode.ts around the one runtime. Re-entries (plan steps, model
+ * canonical requests) and image/location turns always run the runtime as it is.
+ */
+async function executeWithRoutingMode(context: RuntimeContext, options: RuntimeOptions): Promise<RuntimeTurn> {
+  const mode = aiRoutingMode();
+  const plain = mode === "LEGACY" || options.noModel || options.planStep || options.modelStage || !context.actorId || context.imageObjectPaths?.length || context.location !== undefined;
+  if (plain) return executeRuntime(context, options);
+  if (mode === "MODEL_FIRST") {
+    // The model reads first. A canonical request it restated re-entered DINAR and wins; otherwise
+    // DINAR's own path runs (model disabled: no second paid call), and the model's answer is kept
+    // only when DINAR had nothing. A capability DINAR handles is never lost to model text.
+    const first = await executeRuntime(context, { ...options, modelStage: "ONLY" });
+    if (first !== NO_MODEL_RESULT && !isModelAnswer(first)) return first;
+    const own = await executeRuntime(context, first === NO_MODEL_RESULT ? options : { ...options, noModel: true });
+    return first !== NO_MODEL_RESULT && isSoftMiss(own) ? first : own;
+  }
+  const before = getModelGatewayCallCount();
+  const legacy = await executeRuntime(context, options);
+  const consulted = getModelGatewayCallCount() > before;
+  if (mode === "HYBRID" && !consulted && isSoftMiss(legacy)) {
+    // One model consultation; only a DINAR re-entry that found something replaces the empty reading.
+    const second = await executeRuntime(context, { ...options, modelStage: "ONLY" });
+    if (second !== NO_MODEL_RESULT && !isModelAnswer(second) && !isSoftMiss(second)) return second;
+  }
+  return legacy;
+}
+
+async function executeRuntime(context: RuntimeContext, options: RuntimeOptions): Promise<RuntimeTurn> {
   // «تمام روجه», «طيب نفذ»: a leading acknowledgement is not part of the command.
   context = { ...context, message: withoutAcknowledgement(context.message) };
   if (
@@ -662,6 +722,16 @@ export async function executeAiConversationTurn(
     if (turn) options.onToolSelected?.(turn.tool);
     return turn;
   };
+  // routing-mode.ts: only the model is consulted (MODEL_FIRST's first read, HYBRID's second look).
+  // A decision turn never goes to the model; an unavailable model yields no result.
+  if (options.modelStage === "ONLY" && !options.noModel) {
+    const decision = isDecisionUtterance(context.message) || (await hasOpenReview(context.conversationId, context.market.id, context.actorId));
+    if (!decision) {
+      const first = await modelFallback();
+      if (first && !modelUnavailable(first)) return first;
+    }
+    return NO_MODEL_RESULT;
+  }
   // «راجع الشروط المحدثة», «أوافق على الشروط المحدثة»: deterministic, before any commerce flow.
   const policy = await executePolicyTurn({ conversationId: context.conversationId, message: context.message, market: context.market, actorId: context.actorId });
   if (policy) {

@@ -11,6 +11,7 @@
  * names comes from a persisted result set; it never mutates anything. The optional
  * model fallback (model-turn.ts) is reached only for genuinely open turns.
  */
+import { aiRoutingMode, canonicalRequestProblem } from "./routing-mode";
 import { randomUUID } from "node:crypto";
 import { and, desc, eq } from "drizzle-orm";
 import { CONVERSATION_SURFACE_FAMILIES, capabilityUtterance, type ProductCapabilityId } from "@workspace/api-zod/conversation-runtime";
@@ -1007,6 +1008,8 @@ export async function executeModelFallback(
     drafted = await draftWithClaimGuard(gateway, input.message, {
       ...context,
       reasoningEffort: input.reasoningEffort,
+      // Outside LEGACY the model may restate a DINAR request in DINAR's own words (routing-mode.ts).
+      canonicalRequests: aiRoutingMode() !== "LEGACY",
     });
   } catch (error) {
     await settleAiUsage(reserved.reservation.id, { outcome: "PROVIDER_FAILED", providerCalls: 1 }).catch(() => undefined);
@@ -1037,6 +1040,21 @@ export async function executeModelFallback(
     });
     const controlled = utterance ? await productControl(utterance) : null;
     if (controlled) return controlled;
+  }
+  // Model-native mandate: the model's restatement of a DINAR request re-enters the same runtime
+  // with the model disabled (depth one), so DINAR's own handlers, reviews and checks decide it.
+  // A decision, a contact detail or an unchanged restatement never re-enters (routing-mode.ts).
+  const mode = aiRoutingMode();
+  if (turn.canonicalRequest && mode !== "LEGACY") {
+    const problem = canonicalRequestProblem(turn.canonicalRequest, input.message, input.market.id);
+    logger.info(
+      { event: "dinar_ai_canonical_request", mode, accepted: !problem && mode !== "SHADOW", ...(problem ? { problem } : {}), chars: turn.canonicalRequest.length },
+      "DINAR AI canonical request",
+    );
+    if (!problem && mode !== "SHADOW" && productControl) {
+      const routed = await productControl(turn.canonicalRequest);
+      if (routed) return { ...routed, result: { ...routed.result, modelRouted: { canonicalRequest: turn.canonicalRequest } } };
+    }
   }
   const requestsMarketAction =
     turn.responseKind === "SEARCH_INTENT" ||

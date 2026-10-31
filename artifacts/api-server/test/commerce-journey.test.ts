@@ -38,7 +38,9 @@ async function request(path: string, method = "GET", body?: unknown, actor?: Act
 }
 let phoneCounter = 0;
 async function register(name: string): Promise<Actor> {
-  const number = `78${(Date.now() % 10_000_000).toString().padStart(7, "0")}`.slice(0, 8) + String(phoneCounter++ % 10);
+  // «79» + 7 digits is always a valid Jordanian mobile; «78» + clock digits fell outside the
+  // libphonenumber ranges on some clocks and failed registration at random.
+  const number = `79${((Date.now() + 7919 * phoneCounter) % 1_000_000).toString().padStart(6, "0")}${phoneCounter++ % 10}`;
   const password = "journey-password-0001";
   const response = await fetch(`${origin}/api/auth/register`, {
     method: "POST",
