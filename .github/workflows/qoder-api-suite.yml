@@ -52,6 +52,11 @@ on:
           - sc07-browser-journey.test
           - sc10-browser-journey.test
           - wave03-card-envelope-browser-journey.test
+      run_release_migration:
+        description: "Also run the journal and upgrade fixtures (PG16/18) plus the release runner (PG18)"
+        required: false
+        type: boolean
+        default: false
       flags:
         description: "Allowlisted KEY=VALUE switches, space separated"
         required: false
@@ -74,6 +79,7 @@ concurrency:
 
 jobs:
   release-migration:
+    if: inputs.run_release_migration
     # Journal/ledger fixtures on both supported majors, plus the release runner (PostgreSQL 18+ by
     # design) on 18. The plan itself refuses a non-increasing journal, a tag/hash that differs from
     # release-manifest.json, and a ledger that is not an exact prefix of the plan.
