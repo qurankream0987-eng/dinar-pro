@@ -1,0 +1,48 @@
+name: codex-c1-search
+on:
+  push:
+    branches: [codex/11-c1-sql-search]
+    paths:
+      - '.github/workflows/codex-c1-search.yml'
+      - 'artifacts/api-server/**'
+      - 'lib/**'
+permissions:
+  contents: read
+concurrency:
+  group: codex-c1-search
+  cancel-in-progress: false
+jobs:
+  postgres-search:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: dinar_isolation
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_DB: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U dinar_isolation"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1
+        with:
+          version: 10
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run typecheck
+      - name: Baseline Arabic search on disposable loopback PostgreSQL
+        working-directory: artifacts/api-server
+        env:
+          DINAR_LOCAL_PG: postgres://dinar_isolation@127.0.0.1:5432
+        run: sh test/isolation/local-suite.sh arabic-search-understanding.test BDINAR_TEST_DATABASE=development BDINAR_PROMOTIONS_ENABLED=true
