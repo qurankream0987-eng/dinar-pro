@@ -9,7 +9,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import app from "../src/app";
 import {
   aiResultSets,
@@ -314,7 +314,7 @@ await focused("D3A-08", "cancelling the setup review leaves the business a draft
     .from(aiResultSets)
     .where(and(
       eq(aiResultSets.conversationId, otherConv),
-      eq(aiResultSets.query.kind as any, "BUSINESS_SETUP"),
+      sql`${aiResultSets.query} ->> 'kind' = ${"BUSINESS_SETUP"}`,
     ));
   assert.equal((reviewRow!.query as { status: string }).status, "CANCELLED");
 });
@@ -347,7 +347,7 @@ await focused("D3A-10", "an unverified owner keeps drafts and publication is ref
     .from(aiResultSets)
     .where(and(
       eq(aiResultSets.conversationId, applicantConv),
-      eq(aiResultSets.query.kind as any, "BUSINESS_ACTION"),
+      sql`${aiResultSets.query} ->> 'kind' = ${"BUSINESS_ACTION"}`,
     ));
   assert.equal(pending.length, 0);
   const rows = await db.select().from(businessListingLinks).where(eq(businessListingLinks.businessId, applicantBusinessId));
@@ -475,7 +475,12 @@ await focused("D3A-17", "publishing needs a review; nothing is written before co
 
 await focused("D3A-18", "confirmation publishes through the canonical listing authority with a link and audit", async () => {
   const published = await turn(verified, verifiedConv, "أكد");
-  assert.equal(published.business.view, "PROFILE");
+  const [acted] = await db.select().from(aiResultSets).where(eq(aiResultSets.id, listingReviewPayload.business.pendingActionId));
+  assert.equal(
+    published.business.view,
+    "PROFILE",
+    JSON.stringify({ business: published.business, action: acted?.query }),
+  );
   assert.match(published.business.notice, /نُشر/u);
   shawarmaId = draftIds[0]!;
   const offer = await offerOf(shawarmaId);
