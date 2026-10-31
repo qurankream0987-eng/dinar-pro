@@ -660,7 +660,9 @@ async function sqlCandidates(input: {
   let orderedIds: string[] | undefined;
   if (textIdList) {
     const started = clock();
-    orderedIds = (await db.select({ id: offers.id }).from(offers).where(where).orderBy(...orderOf)).map((row) => row.id);
+    const orderedQuery = db.select({ id: offers.id }).from(offers).where(where).orderBy(...orderOf);
+    if (process.env.DINAR_SEARCH_CAPTURE_SQL === "1") stats.sql = orderedQuery.toSQL();
+    orderedIds = (await orderedQuery).map((row) => row.id);
     stats.ms!.batches += clock() - started;
   }
   let pendingSponsored = new Set<string>();

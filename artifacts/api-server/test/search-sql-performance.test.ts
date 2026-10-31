@@ -128,7 +128,9 @@ for (const scale of SCALES) {
     }
     // Write path: an edit pays one trigger; measured over 500 edits.
     const editStarted = performance.now();
-    await db.execute(sql`UPDATE offers SET data = data || jsonb_build_object('edited', true) WHERE id IN (SELECT id FROM offers WHERE id LIKE 'bench-%' ORDER BY id LIMIT 500)`);
+    // A real change each time (the scale), so every edit fires the trigger and needs a refresh.
+    await db.execute(sql`UPDATE offers SET data = data || jsonb_build_object('edited', ${scale}::int) WHERE id IN (SELECT id FROM offers WHERE id LIKE 'bench-%' ORDER BY id LIMIT 500)`);
+    assert.equal(Number(((await db.execute(sql`SELECT count(*)::int AS n FROM offers WHERE search_document_stale AND id LIKE 'bench-%'`)).rows[0] as { n: number }).n), 500, "each of the 500 edits marked its document stale");
     const editMs = performance.now() - editStarted;
     const reRefreshStarted = performance.now();
     while ((await refreshSearchDocuments({ limit: 2_000 })).refreshed);
