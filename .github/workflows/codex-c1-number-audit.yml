@@ -45,6 +45,7 @@ jobs:
             try {
               const source = readFileSync('lib/db/drizzle/0041_search_foundation.sql','utf8');
               await client.query(source.slice(source.indexOf('CREATE FUNCTION dinar_search_string')));
+              await client.query(readFileSync('lib/db/drizzle/0045_c1_numeric_compat.sql','utf8'));
               let failures = 0;
               for (const value of ['v12','12v','v','\u000b12\u000b','2e-999', '1e999', [null], ['v12'], [[7]], '0x20']) {
                 const number = Number(value); const expected = Number.isFinite(number) ? number : null;
@@ -58,3 +59,4 @@ jobs:
             } finally { await client.end(); await admin.query('DROP DATABASE dinar_test_c1_numeric'); await admin.end(); }
           })().catch(error => { console.error(error); process.exitCode=1; });
           NODE
+

@@ -166,5 +166,9 @@
   {
     "tag": "0041_search_foundation",
     "sha256": "5b6936207f534b2e26c4c7ee8cf350005ef836b2c920e83fe3d7d3eac17f2741"
+  },
+  {
+    "tag": "0045_c1_numeric_compat",
+    "sha256": "1b5eb00697e642444b0daed06b6639bc263988ae733af73e3d51cb705cf546d9"
   }
 ]

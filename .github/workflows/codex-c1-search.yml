@@ -10,7 +10,7 @@ permissions:
   contents: read
 concurrency:
   group: codex-c1-search
-  cancel-in-progress: false
+  cancel-in-progress: true
 jobs:
   postgres-search:
     runs-on: ubuntu-latest

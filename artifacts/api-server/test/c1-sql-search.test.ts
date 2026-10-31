@@ -81,7 +81,7 @@ await test("C1 selective retrieval never transfers a full market into Node", asy
 });
 
 await test("C1 numeric sort conversion agrees with finite JavaScript Number", async () => {
-  for (const value of [null, true, false, "", "  ", "12.5", "0x20", "0b11", "0o10", "bad", "Infinity", [], [null], [7], [1, 2], {}, 0, -7, 1e20]) {
+  for (const value of [null, true, false, "", "  ", "12.5", "0x20", "0b11", "0o10", "bad", "Infinity", [], [null], [7], [1, 2], {}, 0, -7, 1e20, "v12", "12v", "v", "\u000b12\u000b", "2e-999", "1e999", ["v12"], [[7]], "1e-999999", "3e-324", "2e-324"]) {
     const expected = Number(value);
     const result = await pool.query("select dinar_search_number($1::jsonb) as value", [JSON.stringify(value)]);
     assert.equal(result.rows[0].value, Number.isFinite(expected) ? expected : null, JSON.stringify(value));

@@ -31,6 +31,7 @@ export const REVIEWED_PENDING_MIGRATIONS: ReadonlyArray<{ tag: string; sha256: s
   // One new append-only table with guard triggers; payment_events_type_valid is only widened.
   { tag: "0040_refund_obligations", sha256: "211c7db104036fc74cb08c668e9bf5b26d8f038915b1ab8232d8a79d2e20bfbb" },
   { tag: "0041_search_foundation", sha256: "5b6936207f534b2e26c4c7ee8cf350005ef836b2c920e83fe3d7d3eac17f2741" },
+  { tag: "0045_c1_numeric_compat", sha256: "1b5eb00697e642444b0daed06b6639bc263988ae733af73e3d51cb705cf546d9" },
 ];
 export const EXPECTED_JOURNAL_ENTRIES =
   EXPECTED_BASELINE_MIGRATIONS + REVIEWED_PENDING_MIGRATIONS.length;
