@@ -1,9 +1,38 @@
 # مصفوفة مخاطر الدمج بين Qoder وClaude
 
-**الفرع Qoder:** `qoder/parallel-w07-w12-ultra` عند `939c64f`
+**الفرع Qoder:** `qoder/parallel-w07-w12-ultra` عند `6b702ae`
 **الأساس المشترك:** `b80c27b`
 **الاستخدام:** قبل `cherry-pick`، وبعد كل التزام، وفي المراجعة النهائية.
 **قاعدة عامة:** كل تعارض في Drizzle يُحل **بالجمع الإضافي** (احتفظ بالكتلتين)، ثم تُعاد بوابات الترحيل والهاش. لا يُحذف جانب موجة لحل تعارض.
+
+**تحديث W12.1 (2026-10-31) — مراجع مقروءة فعليًا من `origin`:**
+
+| الفرع | SHA | نقطة التفرع | الترحيل الأخير |
+|---|---|---|---|
+| `qoder/parallel-w07-w12-ultra` | `6b702ae` | `b80c27b` | `0044_wave10_trust_support_whatsapp` |
+| `claude/11-c1-sql-search` | `d94477b` | `b80c27b` | `0041_c1_sql_search` |
+| `qoder/14-w02u3-canonical-reliability` | `e869a1e` | `b80c27b` | `0040_refund_obligations` (بلا ترحيل جديد) |
+| `main` | `b1b20e5` | — | لم يُلمس |
+
+---
+
+## 0. تعارض تسلسل الترحيل 0041 — مؤكد، لا يُحل بإعادة الترقيم
+
+| البند | القيمة |
+|---|---|
+| ملف Qoder | `lib/db/drizzle/0041_wave07_financial_journal.sql` (W07) |
+| ملف Claude C1 | `lib/db/drizzle/0041_c1_sql_search.sql` (`CREATE EXTENSION pg_trgm`، `offer_search_documents`، عمودان على `offers`، فهارس، trigger إصدار) |
+| مدخلات `_journal.json` | Qoder 45، Claude C1 42، الأساس 41 |
+| الحالة | **تعارض رقم/موضع** إن جُمع الفرعان كما هما؛ لا يمكن أن يحملا الرقم 0041 معًا |
+
+**القاعدة الملزمة:** لا يُعاد ترقيم ترحيل Qoder، ولا يُعاد كتابة ترحيل Claude، ولا يُعدّل SQL بعد تطبيقه. عند الدمج:
+
+1. يُقرر Claude أي السلسلتين تُطبَّق أولًا على قاعدة الإنتاج.
+2. إن سبق تطبيق سلسلة في بيئة ما، يُنشأ ترحيل **جديد** بالرقم التالي المتاح يحمل الموجة المتأخرة، ويبقى الملفان الأصليان في تاريخهما.
+3. إن لم يكن أي منهما مطبّقًا بعد، فالأفضل: `0041` لـClaude و`0042…0045` لموجات Qoder الأربع، مع تحديث `release-manifest.json` و`clone-migration-guard.ts` و`EXPECTED_JOURNAL_ENTRIES` (45) و`readiness.test` و`development-tls.test` في التزام واحد.
+4. في كل الحالات: `sha256sum` لكل ملف، مقارنة بالمانيفست والحارس، مسح تدميري، `drizzle-kit migrate` على قاعدة disposable، ثم `readiness` و`development-tls`.
+
+**علاقة `qoder/14`:** لا ترحيل جديد فيها (تنتهي عند `0040`)، فلا تعارض رقم مع موجات Qoder. تعارضها الملفي فقط: `marketplace.ts`، `safe-development-database.ts`، `.github/workflows/qoder-api-suite.yml`.
 
 ---
 
@@ -43,6 +72,10 @@
 | S6 | تغيير Claude لـOpenAPI/`lib/api-zod` | عملاء مولّدون قد لا يعرفون المسارات الجديدة | `codegen` في CI | قرّر: أضف المسارات للمواصفة أو أبقها يدوية؛ لا تكسر التوليد |
 | S7 | ترقية Node/pnpm في Claude | سكربتات الاختبار تفترض Node 24 | `typecheck` | ثبّت الإصدارات في CI |
 | S8 | تشغيل مجموعات Qoder على قاعدة مشتركة | تلوث بين المجموعات | `LOCAL_SUITE` يطلب قاعدة عشوائية | لا تشغّل يدويًا على قاعدة مشتركة |
+| S9 | ازدواج بوابة الرضا: Claude C1 وqoder/14 يضيفان `lib/policy-gate.ts` (`assertPoliciesAccepted`) داخل `marketplace.ts`، وW09 يملك سجل `policy_consent_events` في `lib/compliance.ts` | بوابتان تقرآن مصدرين مختلفين؛ قد يمرّ طلب أحدهما ويرفضه الآخر | وجود `policy-gate.ts` بعد الدمج + `test:w09` «قرار صريح» | اجعل `assertPoliciesAccepted` تقرأ سجل W09 إن وُجد؛ لا تستبدل `lib/compliance.ts` ولا تحذف زرع التسجيل |
+| S10 | Claude C1 يغيّر `offerRows` إلى `offerRowsByIds` في `marketplace-listings.ts` ويعدّل `GET /listings/:id` | تعارض مباشر في كتلة الـimports والمسار داخل `marketplace.ts` | تعارض Git + `marketplace-intelligence.test` | اجمع الاستيرادين؛ أبقِ `offerRowsByIds` وأضف استيراد W07 (`recordOrderFinancialEvent`) كاملًا |
+| S11 | عكس ترتيب الأقفال بين `openCashRefundCase` (قفل الطلب ثم صفوف الاسترداد) و`confirmCashRefundReceipt` (قفل صف الاسترداد ثم الطلب) | deadlock محتمل عند فتح/تأكيد استرداد متزامنين لنفس الطلب؛ النتيجة 500 لطرف واحد وإعادة محاولة، لا فساد بيانات | مراجعة كود؛ لا اختبار يعيد إنتاجه | عند الدمج: اقفل الطلب أولًا في مسار التأكيد (قراءة غير قافلة للمعرّف، ثم `lockOrder`، ثم إعادة القراءة `FOR UPDATE`)، وأعد `test:w08` و`test:w12c` |
+| S12 | W12.1 يضيف مجموعة `wave07-w12-contract-hardening.test` ومفتاح `BDINAR_W12C_ACCEPTANCE` | تعارض سهل في `package.json` و`safe-development-database.ts` وسطر اختيار الـworkflow | تعارض Git صغير | اجمع الإضافات؛ لا تحذف أي مفتاح سابق من `approvalMessages`/`operationMessages` |
 
 ---
 
