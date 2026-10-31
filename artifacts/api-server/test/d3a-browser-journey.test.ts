@@ -61,7 +61,7 @@ async function request(path: string, method = "GET", body?: unknown, cookie = ""
 }
 
 type Actor = { id: string; name: string; phoneNumber: string; cookie: string };
-const phoneBase = 45_100_000 + ((Date.now() + process.pid) % 300_000);
+const phoneBase = 55_100_000 + ((Date.now() + process.pid) % 300_000);
 let phoneOffset = 0;
 const password = `D3A-UI-${randomUUID().slice(0, 12)}!`;
 async function register(label: string): Promise<Actor> {
