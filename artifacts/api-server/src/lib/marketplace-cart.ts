@@ -3,7 +3,7 @@ import { and, desc, eq, sql } from "drizzle-orm";
 import { aiResultSets, aiUiBlocks, cartItems, carts, conversations, db, messages, users } from "@workspace/db";
 import { isMarketAvailable, marketFor } from "./markets";
 import { categoryById } from "./marketplace-categories";
-import { listing, offerRowsByIds } from "./marketplace-listings";
+import { inactiveBusinessListingIds, listing, offerRowsByIds } from "./marketplace-listings";
 import { acceptedAgreementsByListing } from "./negotiations";
 import { directPurchaseAllowed, priceRepresentationOf } from "@workspace/api-zod/listing-pricing";
 
@@ -28,6 +28,7 @@ async function persistCart(
     throw fail(400, "السلة غير صالحة");
 
   const rows = await offerRowsByIds(market.id, items.map((item) => item?.listingId), tx);
+  const inactive = await inactiveBusinessListingIds(market.id, tx);
   const categoryRows = await Promise.all(
     [...new Set(rows.map(({ offer }) => offer.data.categoryId).filter(Boolean))]
       .map((id) => categoryById(String(id), tx)),
@@ -76,6 +77,7 @@ async function persistCart(
       item.quantity > 1000000 ||
       seen.has(item.listingId) ||
       !row ||
+      inactive.has(item.listingId) ||
       row.offer.status !== "PUBLISHED" ||
       priceRepresentationOf(row.offer) === null ||
       row.seller.status !== "ACTIVE"
@@ -205,6 +207,7 @@ async function validatedCartListing(
   const row = rows.find(({ offer }: any) => offer.id === listingId);
   if (
     !row ||
+    (await inactiveBusinessListingIds(market.id, tx)).has(listingId) ||
     row.offer.status !== "PUBLISHED" ||
     !["FIXED", "NEGOTIABLE"].includes(row.offer.pricingMode) ||
     row.offer.unitPriceMinor === null ||
@@ -499,10 +502,12 @@ export async function addMarketplaceCartItems(input: {
       quantity,
     }));
     const rows = await offerRowsByIds(market.id, input.items.map((item) => item?.listingId), tx);
+    const inactive = await inactiveBusinessListingIds(market.id, tx);
     for (const item of input.items) {
       const row = rows.find(({ offer }) => offer.id === item.listingId);
       if (
         !row ||
+        inactive.has(item.listingId) ||
         row.offer.status !== "PUBLISHED" ||
         !["FIXED", "NEGOTIABLE"].includes(row.offer.pricingMode) ||
         row.offer.unitPriceMinor === null ||

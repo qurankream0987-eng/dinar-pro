@@ -104,8 +104,11 @@ export function categoryAliasWords(
  * Listings whose business is not ACTIVE are never shown by search: a suspended or closed
  * business must not leak its catalog into buyer discovery. Unlinked listings are unaffected.
  */
-export async function inactiveBusinessListingIds(marketId: string): Promise<Set<string>> {
-  const rows = await db
+export async function inactiveBusinessListingIds(
+  marketId: string,
+  executor: Parameters<Parameters<typeof db.transaction>[0]>[0] | typeof db = db,
+): Promise<Set<string>> {
+  const rows = await executor
     .select({ listingId: businessListingLinks.listingId })
     .from(businessListingLinks)
     .innerJoin(
