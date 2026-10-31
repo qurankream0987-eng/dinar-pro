@@ -41,15 +41,17 @@
 
 ## 3. عزل النطاق (لا تعدي على عمل Claude)
 
-`git diff --name-only b80c27b..HEAD` = **46 ملفًا**، وكلها في ملكية Qoder:
+`git diff --name-only b80c27b..HEAD` = **53 ملفًا**، وكلها في ملكية Qoder (الرقم يعكس الحالة النهائية قبل النشر، بعد إضافة وثائق W11/W12 وتقوية CI):
 
 | المجموعة | العدد | أمثلة |
 |---|---|---|
 | قاعدة البيانات (ترحيلات + schema + حراس) | 8 | `0041…0044`، `schema/index.ts`، `clone-migration-guard.ts` |
-| محركات الخادم | 17 | `order-journal.ts`، `commission-policy.ts`، `payments/*`، `compliance.ts`، `fraud-signals.ts` |
+| محركات الخادم | 20 | `order-journal.ts`، `commission-policy.ts`، `payments/*`، `compliance.ts`، `fraud-signals.ts` |
 | المسارات | 6 | `cash.ts`، `compliance.ts`، `trust-ops.ts`، `trust-safety.ts` |
-| الاختبارات | 8 | أربع مجموعات موجة + `readiness`/`development-tls`/`safe-development-database` |
-| التقارير | 4 | `QODER_W07…W10` |
+| الاختبارات وبنيتها | 7 | أربع مجموعات موجة + `readiness`/`development-tls`/`safe-development-database` |
+| `package.json` (سكربتات الاختبار فقط) | 1 | لا تغيير في التبعيات |
+| التقارير والوثائق | 10 | `QODER_W07…W12` + خرائط العقود والمخاطر وقائمة المراجعة والبحث القانوني |
+| تقوية CI (بإذن المالك) | 1 | `.github/workflows/qoder-api-suite.yml` |
 
 **نتيجة فحص ملكية Claude:**
 
