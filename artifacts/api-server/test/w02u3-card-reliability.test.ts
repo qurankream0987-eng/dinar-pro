@@ -291,7 +291,7 @@ await test("CR-06 a price changed after the review is refused and reviewed again
 });
 
 await test("CR-09 replaying a completed turn with its original id changes nothing", async () => {
-  const original = messagesOf(await readConversation(thirdConversation)).find((message) => message.role === "USER" && message.body === "نعم");
+  const original = messagesOf(await readConversation(thirdConversation)).find((message) => message.actor === "USER" && message.body === "نعم");
   assert.ok(original?.id, "the confirmed turn is stored under its client message id");
   const replay = await request(`/ai/conversations/${thirdConversation}/turns`, "POST", {
     message: "نعم",
@@ -341,7 +341,8 @@ await test("CR-11 an expired review is terminal in the envelope and cannot execu
 await test("CR-12 another account and another market cannot read or drive the cards", async () => {
   const conversationId = await conversation();
   await say(conversationId, `ابحث عن ساعة ${run}`);
-  await say(conversationId, "ابي الأول");
+  const openedCard = cardOf(reviewInTurn(await say(conversationId, "ابي الأول")));
+  assert.equal(await cartQuantity(secondListing), 1, "the earlier confirmation is in the JO cart");
   assert.equal((await request(`/ai/conversations/${conversationId}`, "GET", undefined, stranger.cookie)).status, 404);
   const forged = await say(conversationId, "نعم", stranger.cookie);
   assert.equal(forged.status, 404);
@@ -350,11 +351,20 @@ await test("CR-12 another account and another market cannot read or drive the ca
   const switched = await request("/account/market", "PATCH", { marketId: "SA" }, buyer.cookie);
   assert.equal(switched.status, 200, switched.text);
   try {
-    assert.equal((await request(`/ai/conversations/${conversationId}`, "GET", undefined, buyer.cookie)).status, 404, "a conversation is scoped to its market");
+    // The conversation keeps its original market as its tool context, so SA can neither see
+    // the JO listing nor receive an effect from the JO review.
+    assert.equal((await request(`/listings/${secondListing}`, "GET", undefined, buyer.cookie)).status, 404, "a JO listing is invisible in SA");
+    assert.equal(await cartQuantity(secondListing), 0, "the SA cart holds nothing from the JO review");
+    const confirmed = await say(conversationId, "نعم");
+    assert.match(confirmed.body, /أُضيف العرض إلى سلتك/u, confirmed.body);
+    assert.equal(await cartQuantity(secondListing), 0, "the SA cart stays untouched");
   } finally {
     assert.equal((await request("/account/market", "PATCH", { marketId: "JO" }, buyer.cookie)).status, 200);
   }
-  assert.equal((await request(`/ai/conversations/${conversationId}`, "GET", undefined, buyer.cookie)).status, 200);
+  assert.equal(await cartQuantity(secondListing), 2, "the confirmation landed in the conversation's own market");
+  const stored = cardOf(reviewIn(await readConversation(conversationId)).block);
+  assert.equal(stored.surfaceId, openedCard.surfaceId);
+  assert.equal(stored.status.lifecycle, "CONFIRMED");
 });
 
 after(async () => {
