@@ -476,44 +476,74 @@ export function proposeThroughGateway(
 ): Promise<ProposedToolCall> {
   modelGatewayCallCount += 1;
   const provider = gateway.providerInfo?.provider;
-  if (!provider) return gateway.proposeToolCall(messages, tools, options);
+  if (!provider) {
+    // Without provider metadata nothing can be disabled, isolated or costed: production refuses it.
+    if (process.env.NODE_ENV === "production") return Promise.reject(refusedLocally("UNKNOWN" as AIProvider, "UNKNOWN", "NOT_CONFIGURED", "DISABLED"));
+    return gateway.proposeToolCall(messages, tools, options);
+  }
   const model = gateway.providerInfo?.requestedModel ?? "UNKNOWN";
-  // Owner switch, no deploy needed beyond the environment: the request is never sent.
-  const disabled = (process.env.DINAR_AI_DISABLED_PROVIDERS ?? "").split(",").map((value) => value.trim().toUpperCase()).filter(Boolean);
-  if (disabled.includes("*") || disabled.includes(provider)) return Promise.reject(refusedLocally(provider, model, "NOT_CONFIGURED", "DISABLED"));
+  // Owner switch (environment, read on every call): the request is never sent.
+  if (isProviderDisabled(provider, model)) return Promise.reject(refusedLocally(provider, model, "NOT_CONFIGURED", "DISABLED"));
   const threshold = breakerThreshold();
   if (!threshold) return gateway.proposeToolCall(messages, tools, options);
-  const state = breakers.get(provider) ?? { failures: 0, openUntil: 0, trial: false };
-  breakers.set(provider, state);
+  const key = `${provider}:${model}`;
+  const state = breakers.get(key) ?? { failures: 0, openUntil: 0, trialSince: 0, generation: 0 };
+  breakers.set(key, state);
   const now = Date.now();
-  if (state.openUntil > now || state.trial) return Promise.reject(refusedLocally(provider, model, "UNAVAILABLE", "CIRCUIT_OPEN"));
+  const cooldown = breakerCooldownMs();
+  // A trial that has not settled within one cool-down (hung connection) no longer holds the slot.
+  const trialLive = state.trialSince > 0 && now - state.trialSince < cooldown;
+  if (state.openUntil > now || trialLive) return Promise.reject(refusedLocally(provider, model, "UNAVAILABLE", "CIRCUIT_OPEN"));
   // After the cool-down exactly one trial request is let through; its outcome closes or reopens.
-  if (state.openUntil && state.openUntil <= now) state.trial = true;
+  const isTrial = state.openUntil > 0;
+  const generation = ++state.generation;
+  if (isTrial) state.trialSince = now;
+  // Only the latest request may move the breaker; a stale (expired) trial's late outcome is ignored.
+  const current = () => state.generation === generation || !isTrial;
   return gateway.proposeToolCall(messages, tools, options).then(
     (call) => {
-      state.failures = 0;
-      state.openUntil = 0;
-      state.trial = false;
+      if (current()) {
+        if (state.openUntil) breakerTransition(provider, model, "CLOSED", state.failures);
+        state.failures = 0;
+        state.openUntil = 0;
+        state.trialSince = 0;
+      }
       return call;
     },
     (error: unknown) => {
+      if (!current()) throw error;
+      if (isTrial) state.trialSince = 0;
+      // The caller's own cancellation (turn deadline, client gone) says nothing about the provider.
+      if (options?.signal?.aborted) throw error;
       // Outages count; a billed but unusable answer (OUTPUT_LIMIT, REFUSAL…) is the model, not the provider.
       const outage = !(error instanceof AIProviderError) || error.code === "UNAVAILABLE";
       if (outage) {
         state.failures += 1;
-        if (state.trial || state.failures >= threshold) state.openUntil = Date.now() + breakerCooldownMs();
+        if (isTrial || state.failures >= threshold) {
+          state.openUntil = Date.now() + cooldown;
+          breakerTransition(provider, model, "OPEN", state.failures);
+        }
       }
-      state.trial = false;
       throw error;
     },
   );
 }
 
 /**
- * Per-provider circuit breaker (§13). DINAR_AI_BREAKER_FAILURES consecutive outages open it for
- * DINAR_AI_BREAKER_COOLDOWN_MS; 0 disables it. Default 5, except in model-blocked test runs.
+ * DINAR_AI_DISABLED_PROVIDERS: comma-separated `*`, `PROVIDER` or `PROVIDER:model` (case-insensitive).
  */
-type BreakerState = { failures: number; openUntil: number; trial: boolean };
+export function isProviderDisabled(provider: string, model: string, env: NodeJS.ProcessEnv = process.env): boolean {
+  const disabled = (env.DINAR_AI_DISABLED_PROVIDERS ?? "").split(",").map((value) => value.trim().toUpperCase()).filter(Boolean);
+  const p = provider.toUpperCase();
+  return disabled.includes("*") || disabled.includes(p) || disabled.includes(`${p}:${model.toUpperCase()}`);
+}
+
+/**
+ * Per provider+model circuit breaker (§13). DINAR_AI_BREAKER_FAILURES consecutive outages open it
+ * for DINAR_AI_BREAKER_COOLDOWN_MS; 0 disables it. Default 5, except in model-blocked test runs.
+ * State is in this process only: each replica protects itself and a restart starts CLOSED.
+ */
+type BreakerState = { failures: number; openUntil: number; trialSince: number; generation: number };
 const breakers = new Map<string, BreakerState>();
 function breakerThreshold(env: NodeJS.ProcessEnv = process.env): number {
   if (env.DINAR_AI_BREAKER_FAILURES !== undefined) {
@@ -532,14 +562,32 @@ function refusedLocally(provider: AIProvider, model: string, code: AIProviderErr
   return error;
 }
 
-/** Health for monitoring: no prompts, no keys, only each provider's breaker state. */
-export function providerHealth(): Array<{ provider: string; state: "CLOSED" | "OPEN" | "HALF_OPEN"; consecutiveFailures: number }> {
+type BreakerListener = (event: { provider: string; model: string; state: "OPEN" | "CLOSED"; consecutiveFailures: number }) => void;
+let breakerListener: BreakerListener | undefined;
+/** The alert hook: called on every OPEN/CLOSED transition with no prompt, user or key. */
+export function onProviderBreakerTransition(listener: BreakerListener | undefined): void {
+  breakerListener = listener;
+}
+function breakerTransition(provider: string, model: string, state: "OPEN" | "CLOSED", consecutiveFailures: number): void {
+  try {
+    breakerListener?.({ provider, model, state, consecutiveFailures });
+  } catch {
+    // An alerting failure never changes the request's outcome.
+  }
+}
+
+/** Health for monitoring: no prompts, no keys, only each provider+model breaker state. */
+export function providerHealth(): Array<{ provider: string; model: string; state: "CLOSED" | "OPEN" | "HALF_OPEN"; consecutiveFailures: number }> {
   const now = Date.now();
-  return [...breakers].map(([provider, state]) => ({
-    provider,
-    state: state.trial || (state.openUntil && state.openUntil <= now) ? "HALF_OPEN" : state.openUntil > now ? "OPEN" : "CLOSED",
-    consecutiveFailures: state.failures,
-  }));
+  return [...breakers].map(([key, state]) => {
+    const split = key.indexOf(":");
+    return {
+      provider: key.slice(0, split),
+      model: key.slice(split + 1),
+      state: state.openUntil > now ? "OPEN" : state.openUntil ? "HALF_OPEN" : "CLOSED",
+      consecutiveFailures: state.failures,
+    };
+  });
 }
 
 /** Test-only: forget breaker state between scenarios. */

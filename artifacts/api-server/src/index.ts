@@ -1,10 +1,18 @@
 import app from "./app";
 import { logger } from "./lib/logger";
+import { onProviderBreakerTransition } from "./ai/model-gateway";
 import { releaseExpiredReservations } from "./routes/marketplace";
 import { scrubStaleLocationPreviews } from "./ai/delivery-turn";
 import { expireStalePromotions } from "./lib/promotions";
 import { validateObjectStorageConfiguration } from "./lib/objectStorage";
 import { deploymentConfigurationProblems } from "./lib/deployment-configuration";
+
+// Alerting: a provider/model circuit opening is a warning; closing is info. No prompt, user or key.
+onProviderBreakerTransition((event) =>
+  event.state === "OPEN"
+    ? logger.warn({ event: "dinar_ai_provider_circuit_open", ...event }, "AI provider circuit opened")
+    : logger.info({ event: "dinar_ai_provider_circuit_closed", ...event }, "AI provider circuit closed"),
+);
 
 validateObjectStorageConfiguration();
 // /readyz stays not_ready while any of these remain; the names (never values) help the operator.

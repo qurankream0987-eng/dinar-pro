@@ -608,6 +608,7 @@ export async function interpretWithModel(
     } catch (error) {
       // A request refused locally (provider disabled, circuit open) was never sent: no attempt, no cost.
       const notSent = error instanceof AIProviderError && (error.detail === "DISABLED" || error.detail === "CIRCUIT_OPEN");
+      if (notSent) issuedCalls -= 1;
       // A response that was billed but unusable keeps its provider-reported usage, so it is priced.
       const billed = error instanceof AIProviderError ? error.usage : undefined;
       if (!notSent) attempts.push({
