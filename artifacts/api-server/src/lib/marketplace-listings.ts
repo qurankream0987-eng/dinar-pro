@@ -5,12 +5,14 @@ import {
   type SearchSort,
 } from "@workspace/api-zod/marketplace-schemas";
 import {
+  businessListingLinks,
+  businessOperatingProfiles,
   db,
   offers,
   users,
   type markets,
 } from "@workspace/db";
-import { and, asc, desc, eq, inArray, or, sql, type SQL } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, ne, or, sql, type SQL } from "drizzle-orm";
 import type { ListingRecord } from "./dinar-data";
 import { acceptsPriceProposals, priceRepresentationOf } from "@workspace/api-zod/listing-pricing";
 import { marketError, type marketFor } from "./markets";
@@ -96,6 +98,25 @@ export function categoryAliasWords(
     aliasWords: words.filter((word) => aliases.has(word)),
     remaining: words.filter((word) => !aliases.has(word)).join(" "),
   };
+}
+
+/**
+ * Listings whose business is not ACTIVE are never shown by search: a suspended or closed
+ * business must not leak its catalog into buyer discovery. Unlinked listings are unaffected.
+ */
+export async function inactiveBusinessListingIds(marketId: string): Promise<Set<string>> {
+  const rows = await db
+    .select({ listingId: businessListingLinks.listingId })
+    .from(businessListingLinks)
+    .innerJoin(
+      businessOperatingProfiles,
+      eq(businessOperatingProfiles.id, businessListingLinks.businessId),
+    )
+    .where(and(
+      eq(businessListingLinks.marketId, marketId),
+      ne(businessOperatingProfiles.status, "ACTIVE"),
+    ));
+  return new Set(rows.map((row) => row.listingId));
 }
 
 export function listing(
@@ -198,9 +219,10 @@ export async function searchMarketplaceListings(
   },
 ): Promise<ListingRecord[]> {
   const engine = searchEngine();
-  const [allCategories, policyRules] = await Promise.all([
+  const [allCategories, policyRules, inactiveBusinessListings] = await Promise.all([
     listMarketplaceCategories(true),
     activePolicyRules(market.id),
+    inactiveBusinessListingIds(market.id),
   ]);
   const categoriesById = new Map(allCategories.map((item) => [item.id, item]));
   const schemasById = new Map(
@@ -283,7 +305,8 @@ export async function searchMarketplaceListings(
   const searchableText = (offer: typeof offers.$inferSelect) => searchableTextOf(offer, textContext);
   // Every server-side eligibility rule, applied to each candidate exactly as before C1.
   const accepted = ({ offer, seller }: OfferRow) =>
-        seller.status === "ACTIVE" &&
+    !inactiveBusinessListings.has(offer.id) &&
+    seller.status === "ACTIVE" &&
         !market.restrictedCategories.includes(offer.data.category) &&
         !market.restrictedCategories.includes(offer.data.categoryId ?? "") &&
         !market.restrictedCategories.includes(
@@ -596,6 +619,12 @@ async function sqlCandidates(input: {
   // rule stays in `accepted` (sellers are loaded per batch by id).
   const conditions: SQL[] = [eq(offers.marketId, market.id)];
   conditions.push(options.ownSellerId ? eq(offers.sellerId, options.ownSellerId) : eq(offers.status, "PUBLISHED"));
+  // Same rule as `accepted`: a listing whose business is not ACTIVE is not a candidate.
+  conditions.push(sql`NOT EXISTS (
+    SELECT 1 FROM business_listing_links bl
+    JOIN business_operating_profiles bp ON bp.id = bl.business_id
+    WHERE bl.listing_id = ${offers.id} AND bp.status <> 'ACTIVE'
+  )`);
   if (options.allowedIds) conditions.push(inArray(offers.id, [...new Set(options.allowedIds)]));
   if (options.conversational)
     conditions.push(sql`(${offers.inventoryMode} = 'UNLIMITED' OR coalesce(${offers.availableQuantity}, 0) - ${offers.reservedQuantity} > 0)`);

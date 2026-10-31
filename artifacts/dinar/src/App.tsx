@@ -44,6 +44,7 @@ const SettingsPage = lazy(() =>
 const NotificationsPage = lazy(() =>
   import("./pages/Account").then((m) => ({ default: m.NotificationsPage })),
 );
+const PublicBusinessPage = lazy(() => import("./pages/PublicBusiness"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -78,6 +79,8 @@ const CHAT_ONLY_ACCOUNT_ROUTES = new Set([
 // Policy surfaces stay reachable in chat-only mode (also linked from the chat).
 const isPolicyRoute = (location: string) =>
   location === "/terms" || location === "/policies" || location.startsWith("/policies/");
+// D3-A: a business's public storefront is a DINAR-hosted page, reachable from the conversation.
+const isBusinessRoute = (location: string) => /^\/business\/[A-Za-z0-9_-]{1,64}$/u.test(location);
 function PageFallback() {
   return (
     <div
@@ -104,7 +107,8 @@ function Routes() {
       location !== "/orders" &&
       !CHAT_ONLY_ADMIN_ROUTES.has(location) &&
       !CHAT_ONLY_ACCOUNT_ROUTES.has(location) &&
-      !isPolicyRoute(location)
+      !isPolicyRoute(location) &&
+      !isBusinessRoute(location)
     ) {
       setLocation("/", { replace: true });
     }
@@ -129,6 +133,7 @@ function Routes() {
       <Route path="/terms" component={PoliciesIndexPage} />
       <Route path="/policies" component={PoliciesIndexPage} />
       <Route path="/policies/:key" component={PolicyPage} />
+      <Route path="/business/:id" component={PublicBusinessPage} />
       <Route component={AiPage} />
     </Switch>
   ) : (
@@ -149,6 +154,7 @@ function Routes() {
       <Route path="/listings/:id">
         <OfferDetails />
       </Route>
+      <Route path="/business/:id" component={PublicBusinessPage} />
       <Route path="/cart">{guard(<CartPage />)}</Route>
       <Route path="/checkout">{guard(<CheckoutPage />)}</Route>
       <Route path="/orders">

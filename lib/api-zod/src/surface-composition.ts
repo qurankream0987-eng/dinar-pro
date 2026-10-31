@@ -260,7 +260,7 @@ export const CARD_SCHEMA_VERSION = 1 as const;
 
 export const CARD_RESOURCE_KINDS = [
   "NONE", "LISTING", "ORDER", "NEGOTIATION", "INQUIRY", "CART", "DELIVERY", "EMPLOYMENT",
-  "PROMOTION", "DRIVER", "PROVIDER", "CONTROL", "CONVERSATION", "MARKET",
+  "PROMOTION", "DRIVER", "PROVIDER", "CONTROL", "CONVERSATION", "MARKET", "BUSINESS",
 ] as const;
 /** The role the card is written for; omitted when the card is the same for every role. */
 export const CARD_ROLES = ["BUYER", "SELLER", "GUEST", "ADMIN", "DRIVER", "PROVIDER", "EMPLOYER", "CANDIDATE"] as const;

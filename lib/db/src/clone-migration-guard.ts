@@ -33,6 +33,9 @@ export const REVIEWED_PENDING_MIGRATIONS: ReadonlyArray<{ tag: string; sha256: s
   // C1 search foundation: one new table, two defaulted columns on offers, indexes, pg_trgm and two
   // triggers that only mark search documents stale. No existing value changes.
   { tag: "0041_c1_sql_search", sha256: "945ccc5622390b1a6a2e9af94aaa2d9010ac8b0e164de3b90571742dc1b05a5c" },
+  // D3-A native business: three new tables, indexes, foreign keys and an append-only audit trigger.
+  // Identity status is constrained to PENDING_D2; no existing row or listing changes.
+  { tag: "0042_d3a_native_business", sha256: "e4e0c0c1a66269887c308db707b892ea7889e566fb2d1e8539ba4a79616a70bb" },
 ];
 export const EXPECTED_JOURNAL_ENTRIES =
   EXPECTED_BASELINE_MIGRATIONS + REVIEWED_PENDING_MIGRATIONS.length;

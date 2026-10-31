@@ -109,6 +109,17 @@ export const CONVERSATION_SURFACE_FAMILIES = {
     "CONTROL_NOTICE",
     "PRIVACY_EXPORT",
   ],
+  /** D3-A: the owner's business inside DINAR (setup, catalog, orders, insights). */
+  business: [
+    "BUSINESS_SETUP",
+    "BUSINESS_PROFILE_REVIEW",
+    "BUSINESS_PROFILE",
+    "BUSINESS_CATALOG",
+    "BUSINESS_CATALOG_DRAFT",
+    "BUSINESS_LISTING_REVIEW",
+    "BUSINESS_ORDERS",
+    "BUSINESS_INSIGHTS",
+  ],
 } as const;
 
 export const TUTORIAL_IDS = [
@@ -224,6 +235,7 @@ export const CONVERSATION_SURFACE_TOKENS = [
   ...CONVERSATION_SURFACE_FAMILIES.negotiation,
   ...CONVERSATION_SURFACE_FAMILIES.inquiry,
   ...CONVERSATION_SURFACE_FAMILIES.control,
+  ...CONVERSATION_SURFACE_FAMILIES.business,
 ] as const;
 
 export type ConversationSurfaceToken =
@@ -364,6 +376,14 @@ export const CONVERSATION_SURFACE_REGISTRY = {
     CONVERSATION_SURFACE_FAMILIES.control,
     "product-control",
   ),
+  BUSINESS_SETUP: surface(["BUSINESS_SETUP"], "business"),
+  BUSINESS_PROFILE_REVIEW: surface(["BUSINESS_PROFILE_REVIEW"], "business"),
+  BUSINESS_PROFILE: surface(["BUSINESS_PROFILE"], "business"),
+  BUSINESS_CATALOG: surface(["BUSINESS_CATALOG"], "business"),
+  BUSINESS_CATALOG_DRAFT: surface(["BUSINESS_CATALOG_DRAFT"], "business"),
+  BUSINESS_LISTING_REVIEW: surface(["BUSINESS_LISTING_REVIEW"], "business"),
+  BUSINESS_ORDERS: surface(["BUSINESS_ORDERS"], "business"),
+  BUSINESS_INSIGHTS: surface(["BUSINESS_INSIGHTS"], "business"),
 } as const;
 
 export type ConversationSemanticSurface =

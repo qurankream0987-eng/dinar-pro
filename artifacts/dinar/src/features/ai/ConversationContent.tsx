@@ -81,6 +81,7 @@ const InquirySurface = lazy(() => import("./InquirySurface").then((m) => ({ defa
 const MemorySummary = lazy(() => import("./MemorySummary").then((m) => ({ default: m.MemorySummary })));
 const DriverPanel = lazy(() => import("./DriverPanel").then((m) => ({ default: m.DriverPanel })));
 const ProviderPanel = lazy(() => import("./ProviderPanel").then((m) => ({ default: m.ProviderPanel })));
+const BusinessSurface = lazy(() => import("./BusinessSurface").then((m) => ({ default: m.BusinessSurface })));
 function SurfaceLoading() {
   return (
     <div className="mt-3 max-w-xl" aria-busy="true" aria-label="جارٍ التحميل">
@@ -1034,6 +1035,16 @@ function ResultBlock({
       <Suspense fallback={<SurfaceLoading />}>
         <EmploymentSurface
           employment={block.payload.employment}
+          active={Boolean(activeWorkflow)}
+          onSend={onSend}
+        />
+      </Suspense>
+    );
+  if (block.type === "SURFACE" && block.payload.business)
+    return (
+      <Suspense fallback={<SurfaceLoading />}>
+        <BusinessSurface
+          business={block.payload.business}
           active={Boolean(activeWorkflow)}
           onSend={onSend}
         />

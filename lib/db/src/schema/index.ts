@@ -2415,3 +2415,80 @@ export const trustAppealEvents = pgTable(
   },
   (t) => [index("trust_appeal_events_appeal_idx").on(t.appealId, t.createdAt)],
 );
+
+// ─── D3-A: native DINAR businesses (INTERNAL_DINAR operating mode) ───────────
+
+/**
+ * A business as DINAR operates it without any external website/store/API. Identity and
+ * verification are D2's authority: `d2_business_id` is only set from the D2 port, and
+ * `identity_status` can only be PENDING_D2 until D2 publishes its contract. D3 never writes
+ * a verification result here.
+ */
+export const businessOperatingProfiles = pgTable(
+  "business_operating_profiles",
+  {
+    id: text("id").primaryKey(),
+    d2BusinessId: text("d2_business_id"),
+    ownerUserId: text("owner_user_id").notNull().references(() => users.id),
+    marketId: text("market_id").notNull().references(() => markets.id),
+    operatingMode: text("operating_mode").default("INTERNAL_DINAR").notNull(),
+    businessType: text("business_type").notNull(),
+    displayName: text("display_name").notNull(),
+    description: text("description").default("").notNull(),
+    status: text("status").default("DRAFT").notNull(),
+    identityStatus: text("identity_status").default("PENDING_D2").notNull(),
+    /** Public-facing operating details only: hours, service areas, contact preference, fulfilment. */
+    profile: jsonb("profile").$type<Record<string, unknown>>().default({}).notNull(),
+    version: integer("version").default(1).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    uniqueIndex("business_profiles_d2_unique")
+      .on(t.d2BusinessId, t.marketId)
+      .where(sql`${t.d2BusinessId} IS NOT NULL`),
+    index("business_profiles_owner_idx").on(t.ownerUserId, t.marketId),
+    index("business_profiles_market_status_idx").on(t.marketId, t.status),
+    check("business_profiles_mode_valid", sql`${t.operatingMode} IN ('INTERNAL_DINAR')`),
+    check("business_profiles_type_valid", sql`${t.businessType} IN ('RESTAURANT', 'SHOP', 'SERVICE_PROVIDER', 'OTHER')`),
+    check("business_profiles_status_valid", sql`${t.status} IN ('DRAFT', 'ACTIVE', 'SUSPENDED', 'CLOSED')`),
+    check("business_profiles_identity_pending_only", sql`${t.identityStatus} = 'PENDING_D2'`),
+  ],
+);
+
+/** One listing belongs to at most one business; the association is written only by the server. */
+export const businessListingLinks = pgTable(
+  "business_listing_links",
+  {
+    listingId: text("listing_id")
+      .primaryKey()
+      .references(() => offers.id, { onDelete: "cascade" }),
+    businessId: text("business_id")
+      .notNull()
+      .references(() => businessOperatingProfiles.id, { onDelete: "cascade" }),
+    marketId: text("market_id").notNull().references(() => markets.id),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    index("business_listing_links_business_idx").on(t.businessId, t.createdAt),
+    index("business_listing_links_market_idx").on(t.marketId),
+  ],
+);
+
+/** Append-only evidence for every business state change; guarded by database triggers. */
+export const businessAuditEvents = pgTable(
+  "business_audit_events",
+  {
+    id: text("id").primaryKey(),
+    businessId: text("business_id")
+      .notNull()
+      .references(() => businessOperatingProfiles.id, { onDelete: "cascade" }),
+    actorId: text("actor_id").notNull().references(() => users.id),
+    action: text("action").notNull(),
+    resourceType: text("resource_type").notNull(),
+    resourceId: text("resource_id"),
+    detail: jsonb("detail").$type<Record<string, unknown>>().default({}).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [index("business_audit_events_business_idx").on(t.businessId, t.createdAt)],
+);
