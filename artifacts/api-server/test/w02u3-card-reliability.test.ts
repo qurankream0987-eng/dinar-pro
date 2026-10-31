@@ -257,6 +257,7 @@ await test("CR-03 two sessions confirming at the same moment have one effect", a
   const card = cardOf(reviewIn(await readConversation(thirdConversation, secondSession)).block);
   assert.equal(card.status.lifecycle, "CONFIRMED");
   assert.equal(card.surfaceId, opened.card.surfaceId);
+  assert.equal(modelCalls, 0, "two concurrent confirmations never reach the model");
 });
 
 await test("CR-06 a price changed after the review is refused and reviewed again, never executed", async () => {
@@ -288,6 +289,7 @@ await test("CR-06 a price changed after the review is refused and reviewed again
   assert.deepEqual(staleCard?.allowedActions, [], "a superseded review cannot execute");
   assert.equal(freshStored?.status.lifecycle, "PENDING_REVIEW");
   assert.equal(await cartQuantity(fourthListing, secondSession), 0);
+  assert.equal(modelCalls, 0, "a stale confirmation never reaches the model");
 });
 
 await test("CR-09 replaying a completed turn with its original id changes nothing", async () => {
@@ -302,7 +304,7 @@ await test("CR-09 replaying a completed turn with its original id changes nothin
   assert.equal(await cartQuantity(thirdListing), 1, "the replay adds no unit");
   const card = cardOf(reviewIn(await readConversation(thirdConversation)).block);
   assert.equal(card.status.lifecycle, "CONFIRMED");
-  assert.equal(modelCalls, 0);
+  assert.equal(modelCalls, 0, "the replay never reaches the model");
 });
 
 await test("CR-10 reading again restores the same card identity and the stored transcript", async () => {
