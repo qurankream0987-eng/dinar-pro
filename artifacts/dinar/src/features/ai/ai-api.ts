@@ -618,20 +618,31 @@ export async function sendAiConversationTurn(
   location?: LocationSubmission,
   reasoningEffort?: "low" | "medium" | "high",
 ) {
-  const response = await fetch(
-    getSendAiConversationTurnUrl(encodeURIComponent(id)),
-    {
-      method: "POST",
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "text/event-stream",
+  let response: Response;
+  try {
+    response = await fetch(
+      getSendAiConversationTurnUrl(encodeURIComponent(id)),
+      {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "text/event-stream",
+        },
+        // An explicit location travels only in the POST body, never in a URL.
+        body: JSON.stringify({ message, clientMessageId, imageObjectPaths, reasoningEffort, ...(location ?? {}) }),
+        signal,
       },
-      // An explicit location travels only in the POST body, never in a URL.
-      body: JSON.stringify({ message, clientMessageId, imageObjectPaths, reasoningEffort, ...(location ?? {}) }),
-      signal,
-    },
-  );
+    );
+  } catch (cause) {
+    if (signal?.aborted) throw cause;
+    // The request may have reached the server before the connection failed: the outcome is
+    // unknown until the conversation is read again, never a failure to report.
+    throw Object.assign(
+      cause instanceof Error ? cause : new Error("تعذر إرسال رسالتك. حاول مرة أخرى."),
+      { deliveryUnknown: true },
+    );
+  }
 
   if (!response.ok) {
     const result = await response.json().catch(() => null);
@@ -682,9 +693,18 @@ export async function sendAiConversationTurn(
   };
 
   while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    consume(decoder.decode(value, { stream: true }));
+    let chunk: ReadableStreamReadResult<Uint8Array>;
+    try {
+      chunk = await reader.read();
+    } catch (cause) {
+      if (signal?.aborted) throw cause;
+      throw Object.assign(
+        cause instanceof Error ? cause : new Error("انتهت المحادثة قبل وصول نتيجة مكتملة. حاول مرة أخرى."),
+        { deliveryUnknown: true },
+      );
+    }
+    if (chunk.done) break;
+    consume(decoder.decode(chunk.value, { stream: true }));
   }
   consume(decoder.decode());
   if (buffer.startsWith("data:")) {
@@ -695,7 +715,10 @@ export async function sendAiConversationTurn(
     dispatch();
   }
   if (!terminalEventReceived)
-    throw new Error("انتهت المحادثة قبل وصول نتيجة مكتملة. حاول مرة أخرى.");
+    throw Object.assign(
+      new Error("انتهت المحادثة قبل وصول نتيجة مكتملة. حاول مرة أخرى."),
+      { deliveryUnknown: true },
+    );
 }
 
 function normalizeStreamEvent(value: unknown): AiStreamEvent | null {
