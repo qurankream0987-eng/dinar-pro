@@ -113,10 +113,11 @@ try {
     nodes.map((node) => (node.getAttribute("data-testid") ?? "").replace("card-listing-", "")).filter(Boolean),
   );
   assert.equal(listingIds.length, 3, "the storefront lists the published catalog");
-  const pageText = await owner.page.locator("body").innerText();
-  assert.ok(!pageText.includes("ownerUserId"), "the public page exposes no owner account field");
-  assert.ok(!pageText.includes(ownerPhone), "the public page never shows the owner's private phone");
-  assert.ok(!pageText.includes(ownerName), "the public page never shows the owner's account name");
+  // The public payload is the contract: no owner account, contact, audit or staff field.
+  const publicPayload = JSON.stringify(await owner.api(`/businesses/${businessId}`));
+  assert.ok(!publicPayload.includes(ownerName), "the public payload never carries the owner's account name");
+  assert.ok(!publicPayload.includes(ownerPhone), "the public payload never carries the owner's private phone");
+  assert.ok(!/ownerUserId|owner_user_id|audit|staff|registration|document|credential/i.test(publicPayload), "no private record key reaches the payload");
   await owner.widths("D3A public business page", owner.page.getByTestId("card-business-profile"));
   outcome.publicPath = `/business/${businessId}`;
   outcome.listingIds = listingIds;
@@ -125,6 +126,10 @@ try {
   // ── The buyer's view: the storefront and the canonical search ──
   await buyer.page.goto(`/business/${businessId}`);
   await buyer.page.getByTestId(`page-business-${businessId}`).waitFor({ timeout: 30_000 });
+  const buyerView = await buyer.page.locator("body").innerText();
+  assert.ok(!buyerView.includes(ownerName), "another account's view never shows the owner's account name");
+  assert.ok(!buyerView.includes(ownerPhone), "another account's view never shows the owner's phone");
+  assert.ok(!buyerView.includes("ownerUserId"), "the storefront exposes no owner account field");
   await buyer.widths("D3A buyer storefront", buyer.page.getByTestId("card-business-profile"));
   await buyer.page.locator(`[data-testid="card-listing-${listingIds[0]}"]`).first().click();
   await buyer.page.getByTestId("input-ai-composer").waitFor({ timeout: 30_000 });
