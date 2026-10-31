@@ -81,9 +81,10 @@ async function openHistory() {
 
 async function closeHistory() {
   if (!(await historyOpen())) return;
-  const close = page.getByTestId("button-close-conversation-drawer");
-  if (await close.isVisible().catch(() => false)) await close.click();
-  else await page.keyboard.press("Escape");
+  // Escape closes the Radix dialog without any pointer movement. A toast hosts above the
+  // drawer's own close button at the top-centre of the phone viewport, so a click there hovers
+  // the toast (which pauses its dismissal) and never reaches the button.
+  await page.keyboard.press("Escape");
   await page.waitForFunction(
     () => document.querySelector('[data-testid="button-toggle-conversation-history"]')?.getAttribute("aria-expanded") !== "true",
     null,
