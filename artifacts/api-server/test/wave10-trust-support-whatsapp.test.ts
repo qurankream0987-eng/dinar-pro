@@ -56,7 +56,7 @@ async function request(path: string, method = "GET", body?: unknown, actor?: Act
 
 let phoneCounter = 0;
 async function register(name: string): Promise<Actor> {
-  const number = `78${(Date.now() % 1_000_000).toString().padStart(6, "0")}${String(phoneCounter++ % 10)}`;
+  const number = `79${(Date.now() % 1_000_000).toString().padStart(6, "0")}${String(phoneCounter++ % 10)}`;
   const response = await fetch(`${origin}/api/auth/register`, {
     method: "POST",
     headers: { "content-type": "application/json", origin },
