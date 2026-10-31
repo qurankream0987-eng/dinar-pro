@@ -268,7 +268,12 @@ export async function commissionReversalsByOrder(
       ),
     )
     .groupBy(orderFinancialEvents.orderId);
-  return new Map(rows.map((row) => [row.orderId, Number(row.reversed)]));
+  return new Map(
+    rows.map((row: { orderId: string; reversed: string | number }) => [
+      row.orderId,
+      Number(row.reversed),
+    ]),
+  );
 }
 
 /** Net commission still owed after refund reversals. */
