@@ -24,7 +24,9 @@ requireSafeReplitDevelopmentDatabase("BDINAR_STOCK_SPEC_ACCEPTANCE");
 const server = app.listen(0);
 await new Promise<void>((resolve) => server.once("listening", resolve));
 const base = `http://127.0.0.1:${(server.address() as any).port}/api`;
-const runId = `m${randomUUID().replaceAll("-", "").slice(0, 7)}`;
+// Letters only: a letter+digit token after «سيارة» («m3868fec») is read as a car model code and
+// becomes a model filter, so a random hex id made MIX-3 miss its own cars about one run in seven.
+const runId = `m${randomUUID().replaceAll("-", "").slice(0, 7).replace(/[0-9]/g, (digit) => "ghijklmnop"[Number(digit)]!)}`;
 let ipSequence = 0;
 
 async function request(path: string, method = "GET", body?: unknown, cookie = "") {
