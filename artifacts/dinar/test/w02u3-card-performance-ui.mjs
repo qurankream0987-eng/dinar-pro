@@ -80,9 +80,12 @@ async function coldState(page) {
   await settleToasts(page);
 }
 
-async function openTarget(page, target) {
-  const toggle = page.getByTestId("button-toggle-conversation-history");
-  if ((await toggle.getAttribute("aria-expanded").catch(() => null)) !== "true") await toggle.click();
+async function openTarget(page, target, mobile) {
+  // Below 1024px the history lives in a drawer behind the toggle; above it the aside is persistent.
+  if (mobile) {
+    const toggle = page.getByTestId("button-toggle-conversation-history");
+    if ((await toggle.getAttribute("aria-expanded").catch(() => null)) !== "true") await toggle.click();
+  }
   const item = page.getByTestId(`conversation-${target.conversationId}`);
   await item.waitFor({ state: "visible", timeout: 45_000 });
   const startedAt = Date.now();
@@ -117,7 +120,7 @@ try {
     for (const target of targets) {
       for (let rep = 0; rep < reps; rep++) {
         await coldState(page);
-        const ms = await openTarget(page, target);
+        const ms = await openTarget(page, target, viewport.mobile);
         const bubbles = await bubblesOf(page);
         const shape = await threadShape(page);
         assert.equal(bubbles, budgets.bubbleCap, `${viewport.label} ${target.size}: the thread renders only its window (${bubbles} bubbles)`);
@@ -133,7 +136,7 @@ try {
     // One explicit window extension in the largest transcript: one more batch, still bounded.
     const largest = targets.reduce((best, target) => (target.size > best.size ? target : best), targets[0]);
     await coldState(page);
-    await openTarget(page, largest);
+    await openTarget(page, largest, viewport.mobile);
     const before = await bubblesOf(page);
     await page.getByTestId("button-load-older-messages").click();
     await page.waitForFunction((count) => document.querySelectorAll('[data-testid="conversation-thread"] [data-testid^="message-"]').length > count, before, { timeout: 15_000 });
