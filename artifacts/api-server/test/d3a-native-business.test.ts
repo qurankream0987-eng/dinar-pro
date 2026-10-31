@@ -684,6 +684,11 @@ await focused("D3A-32", "the public storefront exposes only public fields and li
   assert.deepEqual(page.data.listings.map((listing: any) => listing.id).sort(), [burgerId, juiceId].sort());
   assert.ok(!page.raw.includes("ownerUserId"));
   assert.ok(page.data.listings.every((listing: any) => listing.contactPhone === null));
+  // The page is the business's identity: the owner's personal account name and avatar are not republished.
+  assert.equal(page.data.name, "مطعم الأصيل");
+  assert.ok(page.data.listings.every((listing: any) => listing.sellerName === page.data.name));
+  assert.ok(page.data.listings.every((listing: any) => listing.sellerAvatarObjectPath === null));
+  assert.ok(!page.raw.includes("DINAR D3A Verified"));
   assert.ok(!page.raw.includes("audit"));
   assert.ok(!page.raw.includes("insights"));
 });

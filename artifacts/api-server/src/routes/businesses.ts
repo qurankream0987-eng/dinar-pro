@@ -53,6 +53,13 @@ router.get("/businesses/:id/storefront", async (req, res) => {
     ? await d2BusinessIdentity.forBusiness(business.d2BusinessId, market.id)
     : null;
   const verified = identity?.verificationStatus === "VERIFIED";
+  // The storefront publishes the business, not the person behind the account: the canonical
+  // listing record is reused as-is except for the seller identity shown on this page.
+  const storefrontListings = listings.map((listing) => ({
+    ...listing,
+    sellerName: business.displayName,
+    sellerAvatarObjectPath: null,
+  }));
   res.json({
     id: business.id,
     name: business.displayName,
@@ -66,8 +73,8 @@ router.get("/businesses/:id/storefront", async (req, res) => {
     verificationStatus: verified ? "VERIFIED" : "PENDING_D2",
     profile: publicProfile(business.profile ?? {}),
     // Only published listings of an ACTIVE business; publicBusiness already enforced ACTIVE.
-    listings,
-    listingCount: listings.length,
+    listings: storefrontListings,
+    listingCount: storefrontListings.length,
   });
 });
 
