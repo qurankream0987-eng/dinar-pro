@@ -65,6 +65,7 @@
     "test:model-native": "NODE_ENV=development BDINAR_TEST_DATABASE=development node test/run.mjs model-native-routing.test",
     "test:bounded-multistep": "NODE_ENV=development BDINAR_TEST_DATABASE=development node test/run.mjs bounded-multistep.test",
     "test:model-tiers": "NODE_ENV=development BDINAR_TEST_DATABASE=development node test/run.mjs model-tiers.test",
+    "test:operation-contracts": "NODE_ENV=development BDINAR_TEST_DATABASE=development node test/run.mjs operation-contracts.test",
     "test:provider-controls": "NODE_ENV=development BDINAR_TEST_DATABASE=development node test/run.mjs provider-controls.test"
   },
   "dependencies": {
