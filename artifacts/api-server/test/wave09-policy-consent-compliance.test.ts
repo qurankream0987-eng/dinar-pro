@@ -382,7 +382,7 @@ await test("the registry refuses to skip review steps or invent a legal approval
       `UPDATE policy_registry_versions SET legal_reference = 'forged' WHERE id = $1`,
       [draft!.id],
     ),
-    "an approved legal reference is immutable",
+    /an approved legal reference is immutable/,
   );
 });
 
@@ -826,10 +826,11 @@ await test("the personal data export includes the consent ledger", async () => {
     seller,
   );
   assert.equal(exported.status, 200, exported.text);
-  assert.ok(Array.isArray(exported.data.policyConsentEvents));
-  assert.ok(exported.data.policyConsentEvents.length >= 2);
+  const document = exported.data.export;
+  assert.ok(Array.isArray(document.policyConsentEvents));
+  assert.ok(document.policyConsentEvents.length >= 2);
   assert.ok(
-    exported.data.policyConsentEvents.some(
+    document.policyConsentEvents.some(
       (event: any) => event.source === "SIGNUP" && event.key === "terms",
     ),
   );

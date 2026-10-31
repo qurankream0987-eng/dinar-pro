@@ -26,9 +26,10 @@ router.use(adminDisputes);
 router.use(adminDrivers);
 router.use(categories);
 router.use(auth);
-router.use(marketplace);
-// Cash attestations live beside orders but have their own development-only gate.
+// Cash attestations live beside orders and must mount before the marketplace router, whose
+// generic POST /orders/:id/:action would otherwise swallow /orders/:id/cash-refunds.
 router.use(cash);
+router.use(marketplace);
 router.use(profileAvatar);
 router.use(listingPhotos);
 router.use(ai);
