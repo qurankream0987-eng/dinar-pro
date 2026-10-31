@@ -202,6 +202,11 @@ try {
   assert.doesNotMatch(bodyText, /تعذر إكمال الرد الآن/u, "a delivered turn is not reported as a failed reply");
   assert.equal(await cartQuantity(buyer, secondListingId), 0, "reconciliation executes nothing");
   checks.push("CR-08: a dropped response is reconciled from the server, not claimed as failure");
+  // The simulated transport failure is the only network error the browser may report; anything
+  // else in the console is a real defect and stays in the report.
+  const droppedConsole = recorder.consoleErrors.filter((entry) => entry.endsWith("net::ERR_CONNECTION_RESET"));
+  assert.equal(droppedConsole.length, 1, `one deliberate drop, not ${JSON.stringify(recorder.consoleErrors)}`);
+  recorder.consoleErrors = recorder.consoleErrors.filter((entry) => !entry.endsWith("net::ERR_CONNECTION_RESET"));
 
   // ── CR-13/CR-14: widths, touch targets, keyboard confirmation ───────────────
   await measure(page, "reconciled review", cardOf(page));
