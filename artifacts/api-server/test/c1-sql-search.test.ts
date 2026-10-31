@@ -42,6 +42,23 @@ await test("C1 golden: explicit ordering and stored references retain baseline r
 await test("C1 selective retrieval never transfers a full market into Node", async () => {
   const original = pool.query;
   let maximumOfferRows = 0;
+  let cursorFetches = 0;
+  const wrapped = new Map<any, any>();
+  const wrap = (client: any) => {
+    if (wrapped.has(client)) return;
+    const query = client.query;
+    wrapped.set(client, query);
+    client.query = function (...args: any[]) {
+      const text = typeof args[0] === "string" ? args[0] : args[0]?.text ?? "";
+      const result = query.apply(this, args);
+      return /^FETCH /i.test(text) ? result.then((value: any) => {
+        cursorFetches++;
+        maximumOfferRows = Math.max(maximumOfferRows, value.rows.length);
+        return value;
+      }) : result;
+    };
+  };
+  pool.on("acquire", wrap);
   (pool as any).query = function (...args: any[]) {
     const query = typeof args[0] === "string" ? args[0] : args[0]?.text ?? "";
     const result = (original as any).apply(this, args);
@@ -57,7 +74,9 @@ await test("C1 selective retrieval never transfers a full market into Node", asy
     const found = await searchMarketplaceListings(market, { search: "c1needle", conversational: true, limit: 1, sponsoredPlacement: false });
     assert.equal(found[0]?.id, ids[511]);
     assert.ok(maximumOfferRows <= 128, `unbounded transfer: ${maximumOfferRows} offer rows for one result`);
-  } finally { pool.query = original; }
+    assert.ok(cursorFetches > 0, "the production retrieval must expose measured bounded batches");
+    console.log("C1_TRANSFER", JSON.stringify({ maximumOfferRows, cursorFetches }));
+  } finally { pool.query = original; pool.off("acquire", wrap); for (const [client, query] of wrapped) client.query = query; }
 });
 
 after(async () => { await pool.end(); });
