@@ -306,6 +306,22 @@ async function moveSpend(
  * rolls the caller's transaction back) when a cap would be exceeded or none is configured where
  * one is required. `expectedModel` lets an unpriced model be refused before it is ever called.
  */
+/**
+ * Whether a model may be called under this spend policy: with `unpricedModel: "REFUSE"` it needs an
+ * applicable price in the policy currency, and where spend is required OpenAI models also need
+ * their cache-write rates. The usage hold checks the expected model; the conversation checks every
+ * other model a turn could reach (a separate HEAVY model, a provider fallback) the same way.
+ */
+export async function modelPricingAcceptable(policy: AiUsagePolicy, model: { provider: string; model: string }, now = new Date(), tx: Tx | typeof db = db): Promise<boolean> {
+  const spend = policy.spend;
+  const price = await applicablePrice(model.provider, [model.model], now, tx);
+  const missingRequiredOpenAiCacheRates =
+    spendRequired() &&
+    ["OPENAI", "OPENAI_COMPATIBLE"].includes(model.provider) &&
+    (!price || price.cacheWriteInputPerMillionMicros === null || price.cacheWrite12hInputPerMillionMicros === null);
+  return !(missingRequiredOpenAiCacheRates || (spend.unpricedModel === "REFUSE" && (!price || price.currencyCode !== spend.currencyCode)));
+}
+
 export async function holdAiSpend(
   tx: Tx,
   input: {
@@ -321,20 +337,7 @@ export async function holdAiSpend(
 ): Promise<Hold> {
   const spend = input.policy.spend;
   if (spendRequired() && spend.global.limitMicros === null) throw new SpendRefused("SPEND_BUDGET_UNCONFIGURED");
-  if (input.expectedModel) {
-    const price = await applicablePrice(input.expectedModel.provider, [input.expectedModel.model], input.now, tx);
-    const missingRequiredOpenAiCacheRates =
-      spendRequired() &&
-      ["OPENAI", "OPENAI_COMPATIBLE"].includes(input.expectedModel.provider) &&
-      (!price ||
-        price.cacheWriteInputPerMillionMicros === null ||
-        price.cacheWrite12hInputPerMillionMicros === null);
-    if (
-      missingRequiredOpenAiCacheRates ||
-      (spend.unpricedModel === "REFUSE" && (!price || price.currencyCode !== spend.currencyCode))
-    )
-      throw new SpendRefused("MODEL_UNPRICED");
-  }
+  if (input.expectedModel && !(await modelPricingAcceptable(input.policy, input.expectedModel, input.now, tx))) throw new SpendRefused("MODEL_UNPRICED");
   const amount = spend.holdMicros[input.resource];
   const scopes = scopesFor(input.policy, input.ownerKey, input.tier, input.now);
   // Fixed order (global → plan → account) so two holds never deadlock.

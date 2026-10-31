@@ -54,7 +54,8 @@ import {
 import { claimsCompletedAction, enforceModelAuthority, recentActionReceipts } from "./action-receipts";
 import { AUTH_RATE_LIMIT_SCOPE, consumeRateLimit } from "../lib/auth-rate-limiter";
 import { escalatesAfterLight, gatewayForTier, heavyTurnLimit, modelTieringEnabled, selectModelTier, type ModelTier, type TierDecision, type TierReason, type TierRoute } from "./model-tier";
-import { aiUsageSummary, reserveAiUsage, settleAiUsage, type AiUsageOutcome, type AiUsageOwner, type AiUsageRefusal } from "../lib/ai-usage";
+import { aiUsagePolicyFor, aiUsageSummary, reserveAiUsage, settleAiUsage, type AiUsageOutcome, type AiUsageOwner, type AiUsageRefusal } from "../lib/ai-usage";
+import { modelPricingAcceptable } from "../lib/ai-spend";
 import { businessPlans, planAiTier } from "../lib/business";
 import { nearLimitNote, PLAN_HINT_MARKER, usageLimitMessage, usageResourceFor } from "./usage-turn";
 import { createHash } from "node:crypto";
@@ -900,6 +901,39 @@ export async function draftWithClaimGuard(
 }
 type TierTrace = { tier: ModelTier; reason: TierReason; escalated: boolean; heavyKind?: "SEPARATE_MODEL" | "SAME_MODEL_HIGH_EFFORT" };
 
+/**
+ * The gateway with only the additional models (HEAVY, fallback) the spend policy allows. The
+ * primary was already checked by the usage hold. Pricing is read once per turn; any lookup error
+ * removes the extra model (fails toward fewer, priced models).
+ */
+async function withinSpendPolicy(gateway: ConversationModelGateway, market: AiUsageOwner["market"]): Promise<ConversationModelGateway> {
+  if (!gateway.heavy && !gateway.fallback) return gateway;
+  const policy = await aiUsagePolicyFor(market);
+  const allowed = async (candidate?: ConversationModelGateway) => {
+    if (!candidate?.providerInfo) return candidate;
+    try {
+      return (await modelPricingAcceptable(policy, { provider: candidate.providerInfo.provider, model: candidate.providerInfo.requestedModel })) ? candidate : undefined;
+    } catch {
+      return undefined;
+    }
+  };
+  const [heavy, fallback] = await Promise.all([allowed(gateway.heavy), allowed(gateway.fallback)]);
+  if (heavy === gateway.heavy && fallback === gateway.fallback) return gateway;
+  const restrictedHeavy = heavy && heavy.fallback && !(await allowed(heavy.fallback)) ? stripFallback(heavy) : heavy;
+  return {
+    providerInfo: gateway.providerInfo,
+    ...(gateway.perCallReasoningEffort !== undefined ? { perCallReasoningEffort: gateway.perCallReasoningEffort } : {}),
+    ...(restrictedHeavy ? { heavy: restrictedHeavy } : {}),
+    ...(fallback ? { fallback } : {}),
+    proposeToolCall: (messages, tools, options) => gateway.proposeToolCall(messages, tools, options),
+  };
+}
+const stripFallback = (gateway: ConversationModelGateway): ConversationModelGateway => ({
+  providerInfo: gateway.providerInfo,
+  ...(gateway.perCallReasoningEffort !== undefined ? { perCallReasoningEffort: gateway.perCallReasoningEffort } : {}),
+  proposeToolCall: (messages, tools, options) => gateway.proposeToolCall(messages, tools, options),
+});
+
 /** A HEAVY turn spends the actor's separate heavy allowance; any doubt keeps the turn LIGHT. */
 async function heavyAllowed(actorId: string): Promise<boolean> {
   const limit = heavyTurnLimit();
@@ -1056,6 +1090,9 @@ export async function executeModelFallback(
   try {
     context = await modelContext(input);
     const actorId = input.actorId;
+    // Every model this turn could reach must satisfy the spend policy, not only the primary the
+    // usage hold checked: an unpriced HEAVY model or fallback is removed under REFUSE.
+    gateway = await withinSpendPolicy(gateway, owner.market);
     let tiering: Parameters<typeof draftWithClaimGuard>[3];
     if (modelTieringEnabled()) {
       let decision = selectModelTier(input.message, process.env, { requestedEffort: input.reasoningEffort });

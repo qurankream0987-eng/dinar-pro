@@ -14,7 +14,8 @@ import { test, after, beforeEach } from "node:test";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { desc, eq } from "drizzle-orm";
-import { aiUsageReservations, carts, db, orders, pool } from "@workspace/db";
+import { aiCostEvents, aiModelPrices, aiSpendHolds, aiUsageReservations, carts, commercialPolicies, db, orders, pool } from "@workspace/db";
+import { DEFAULT_AI_USAGE_POLICY, type AiUsagePolicy } from "../src/lib/ai-usage-policy";
 import app from "../src/app";
 import { AIProviderError, createConversationModelGateway, describeAIModelReadiness, providerHealth, resetProviderBreakers, type ConversationModelGateway, type ModelCallOptions } from "../src/ai/model-gateway";
 import { selectModelTier } from "../src/ai/model-tier";
@@ -25,7 +26,7 @@ import { requireSafeReplitDevelopmentDatabase } from "./safe-development-databas
 requireSafeReplitDevelopmentDatabase("BDINAR_TEST_DATABASE");
 
 type Behaviour = "OK" | "MALFORMED" | "OUTAGE" | "UNKNOWN_ACTION" | "LOW_CONFIDENCE" | "QUOTA" | "HANG" | "PROPOSE_PURCHASE";
-function scripted(provider: "OPENAI" | "DEEPSEEK", model: string, reply: string) {
+function scripted(provider: "OPENAI" | "DEEPSEEK" | "GROQ", model: string, reply: string) {
   const state = { calls: 0, behaviour: "OK" as Behaviour, efforts: [] as Array<string | undefined>, prompts: [] as string[], effortSupport: true };
   const gateway: ConversationModelGateway & { heavy?: ConversationModelGateway } = {
     providerInfo: { provider, requestedModel: model },
@@ -57,8 +58,12 @@ function scripted(provider: "OPENAI" | "DEEPSEEK", model: string, reply: string)
 }
 const light = scripted("OPENAI", "light-test", "LIGHT_REPLY");
 const heavy = scripted("DEEPSEEK", "heavy-test", "HEAVY_REPLY");
+const backup = scripted("GROQ", "fallback-unpriced-test", "FALLBACK_REPLY");
 let withHeavy = true;
-app.locals.conversationModelGateway = new Proxy(light.gateway, { get: (target, key) => (key === "heavy" ? (withHeavy ? heavy.gateway : undefined) : Reflect.get(target, key)) });
+let withFallback = false;
+app.locals.conversationModelGateway = new Proxy(light.gateway, {
+  get: (target, key) => (key === "heavy" ? (withHeavy ? heavy.gateway : undefined) : key === "fallback" ? (withFallback ? backup.gateway : undefined) : Reflect.get(target, key)),
+});
 const server = app.listen(0, "127.0.0.1");
 await new Promise<void>((resolve) => server.once("listening", resolve));
 const origin = `http://127.0.0.1:${(server.address() as { port: number }).port}`;
@@ -75,13 +80,26 @@ async function request(path: string, method = "GET", body?: unknown, cookie = ""
   return { status: response.status, data, text, cookie: response.headers.getSetCookie().find((v) => v.startsWith("bdinar_session="))?.split(";")[0] ?? "" };
 }
 let phone = 0;
+// Registration is rate-limited per IP (20 per 15 minutes): after 16 accounts, conversations rotate
+// over them (each scenario still gets a new conversation; per-actor caps stay far from their limits).
+const accounts: Array<{ cookie: string; id: string }> = [];
 async function fresh() {
+  if (accounts.length >= 16) {
+    const account = accounts[phone++ % accounts.length]!;
+    const conv = (await request("/ai/conversations", "POST", {}, account.cookie)).data.id as string;
+    return { ...account, conv };
+  }
+  const created = await registerAccount();
+  accounts.push({ cookie: created.cookie, id: created.id });
+  const conv = (await request("/ai/conversations", "POST", {}, created.cookie)).data.id as string;
+  return { cookie: created.cookie, id: created.id, conv };
+}
+async function registerAccount() {
   const number = `79${((Date.now() + 7919 * phone++) % 1_000_000).toString().padStart(6, "0")}${phone % 10}`;
   const password = "model-tiers-password-1";
   const created = await request("/auth/register", "POST", { displayName: `مستخدم ${phone}`, phoneCountryCode: "+962", phoneNumber: number, accountCountry: "JO", password, confirmPassword: password, acceptTerms: true });
   assert.equal(created.status, 201, created.text);
-  const conv = (await request("/ai/conversations", "POST", {}, created.cookie)).data.id as string;
-  return { cookie: created.cookie, id: created.data.user.id as string, conv };
+  return { cookie: created.cookie, id: created.data.user.id as string };
 }
 async function say(user: { cookie: string; conv: string }, message: string, extra: Record<string, unknown> = {}) {
   const response = await fetch(`${origin}/api/ai/conversations/${user.conv}/turns`, { method: "POST", headers: { "content-type": "application/json", cookie: user.cookie, origin }, body: JSON.stringify({ message, clientMessageId: randomUUID(), ...extra }) });
@@ -110,6 +128,9 @@ beforeEach(() => {
   heavy.state.prompts = [];
   light.state.effortSupport = heavy.state.effortSupport = true;
   withHeavy = true;
+  withFallback = false;
+  backup.state.calls = 0;
+  backup.state.behaviour = "OK";
   env({ DINAR_AI_TIERING: "on", DINAR_AI_HEAVY_TURNS_PER_WINDOW: undefined, DINAR_AI_DISABLED_PROVIDERS: undefined, DINAR_AI_MAX_RETRIES: "0", DINAR_AI_BREAKER_FAILURES: undefined, DINAR_AI_BREAKER_COOLDOWN_MS: undefined, DINAR_MODEL_TIMEOUT_MS: undefined });
 });
 
@@ -315,6 +336,107 @@ await test("DT-18 a repeated identical request (same clientMessageId) is answere
   await say(user, SIMPLE, { clientMessageId });
   assert.deepEqual([light.state.calls, heavy.state.calls], first, "the replay sends nothing again");
   assert.deepEqual(first, [1, 1]);
+});
+
+// ─── Cost accounting (simulation only: scripted gateways and TEST_PLACEHOLDER prices) ─────────
+let policyVersion = 50_000;
+const setSpend = async (spend: Partial<AiUsagePolicy["spend"]>) =>
+  db.insert(commercialPolicies).values({ id: randomUUID(), marketId: "JO", version: ++policyVersion, effectiveFrom: new Date(Date.now() - 1_000), policy: { aiUsage: { ...DEFAULT_AI_USAGE_POLICY, spend: { ...DEFAULT_AI_USAGE_POLICY.spend, ...spend } } } });
+const placeholderPrice = (provider: string, model: string, inputPerMillionMicros: number, outputPerMillionMicros: number) =>
+  db.insert(aiModelPrices).values({ id: randomUUID(), provider, model, version: 1, currencyCode: "USD", inputPerMillionMicros, outputPerMillionMicros, source: "TEST_PLACEHOLDER", effectiveFrom: new Date(Date.now() - 86_400_000) });
+const costRows = async (userId: string) => {
+  const reservation = await lastReservation(userId);
+  const events = await db.select().from(aiCostEvents).where(eq(aiCostEvents.usageReservationId, reservation!.id)).orderBy(aiCostEvents.callIndex);
+  const [hold] = await db.select().from(aiSpendHolds).where(eq(aiSpendHolds.usageReservationId, reservation!.id));
+  return { reservation: reservation!, hold, events: events.map((event) => ({ model: event.model, kind: event.callKind, outcome: event.callOutcome, status: event.costStatus, micros: event.estimatedCostMicros, charged: event.budgetChargedMicros })) };
+};
+// LIGHT $1/$2 and HEAVY $10/$40 per 1M input/output tokens; each scripted call reports 100 in / 20 out.
+const LIGHT_MICROS = 100 * 1 + 20 * 2;
+const HEAVY_MICROS = 100 * 10 + 20 * 40;
+
+await test("DT-19 with unpricedModel=REFUSE an unpriced HEAVY model is never called; LIGHT (priced) answers", async () => {
+  await placeholderPrice("OPENAI", "light-test", 1_000_000, 2_000_000);
+  await setSpend({ unpricedModel: "REFUSE" });
+  const user = await fresh();
+  assert.match(await say(user, ANALYSIS), /LIGHT_REPLY/u, "HEAVY has no price: the turn stays on the priced model");
+  assert.equal(heavy.state.calls, 0, "an unpriced model is never sent to under REFUSE");
+  light.state.behaviour = "MALFORMED";
+  const other = await fresh();
+  await say(other, SIMPLE);
+  assert.equal(heavy.state.calls, 0, "nor escalated to");
+  await setSpend({ unpricedModel: "CHARGE_HOLD" });
+});
+
+await test("DT-20 accounting: LIGHT only, HEAVY directly, LIGHT→HEAVY — one priced row per sent call at its own model's price", async () => {
+  await placeholderPrice("DEEPSEEK", "heavy-test", 10_000_000, 40_000_000);
+  const a = await fresh();
+  await say(a, SIMPLE);
+  const lightOnly = await costRows(a.id);
+  assert.deepEqual(lightOnly.events.map((event) => [event.model, event.status, event.micros]), [["light-test", "ESTIMATED", LIGHT_MICROS]]);
+  assert.equal(lightOnly.hold?.chargedMicros, LIGHT_MICROS);
+  const b = await fresh();
+  await say(b, ANALYSIS);
+  const heavyOnly = await costRows(b.id);
+  assert.deepEqual(heavyOnly.events.map((event) => [event.model, event.status, event.micros]), [["heavy-test", "ESTIMATED", HEAVY_MICROS]], "the dearer model is priced at its own rate");
+  light.state.behaviour = "MALFORMED";
+  const c = await fresh();
+  await say(c, SIMPLE);
+  const escalated = await costRows(c.id);
+  assert.deepEqual(escalated.events.map((event) => [event.model, event.micros]), [["light-test", LIGHT_MICROS], ["heavy-test", HEAVY_MICROS]], "the billed but unusable LIGHT answer and the HEAVY answer are both costed");
+  assert.equal(escalated.hold?.chargedMicros, LIGHT_MICROS + HEAVY_MICROS);
+  assert.equal(escalated.reservation.providerCalls, 2);
+});
+
+await test("DT-21 accounting: a failed call is costed; a disabled model or an open breaker records nothing", async () => {
+  light.state.behaviour = "OUTAGE";
+  const failed = await fresh();
+  await say(failed, SIMPLE);
+  const failedRows = await costRows(failed.id);
+  assert.deepEqual(failedRows.events.map((event) => [event.model, event.outcome]), [["light-test", "FAILED"]], "a sent request that failed is still recorded");
+  assert.ok((failedRows.events[0]?.charged ?? 0) > 0, "and charged conservatively, never free");
+  light.state.behaviour = "OK";
+  env({ DINAR_AI_DISABLED_PROVIDERS: "OPENAI:light-test" });
+  const disabled = await fresh();
+  await say(disabled, SIMPLE);
+  const disabledRows = await costRows(disabled.id);
+  assert.deepEqual(disabledRows.events, [], "never sent, never recorded");
+  assert.equal(disabledRows.reservation.providerCalls, 0);
+  env({ DINAR_AI_DISABLED_PROVIDERS: undefined, DINAR_AI_BREAKER_FAILURES: "1", DINAR_AI_BREAKER_COOLDOWN_MS: "60000" });
+  light.state.behaviour = "OUTAGE";
+  await say(await fresh(), SIMPLE);
+  const open = await fresh();
+  await say(open, SIMPLE);
+  assert.deepEqual((await costRows(open.id)).events, [], "an open breaker sends nothing and records nothing");
+});
+
+await test("DT-22 accounting: a provider fallback is a separate row; an unpriced fallback is charged its hold, never zero", async () => {
+  withFallback = true;
+  light.state.behaviour = "OUTAGE";
+  const user = await fresh();
+  assert.match(await say(user, SIMPLE), /FALLBACK_REPLY/u);
+  const rows = await costRows(user.id);
+  assert.deepEqual(rows.events.map((event) => [event.model, event.kind, event.outcome]), [["light-test", "PRIMARY", "FAILED"], ["fallback-unpriced-test", "FALLBACK", "SUCCESS"]]);
+  assert.equal(rows.events[1]?.status, "UNPRICED");
+  assert.ok((rows.events[1]?.charged ?? 0) > 0, "unknown price: charged the hold");
+});
+
+await test("DT-24 with unpricedModel=REFUSE an unpriced provider fallback is never called either", async () => {
+  await setSpend({ unpricedModel: "REFUSE" });
+  withFallback = true;
+  light.state.behaviour = "OUTAGE";
+  const user = await fresh();
+  const body = await say(user, SIMPLE);
+  assert.doesNotMatch(body, /FALLBACK_REPLY/u, body);
+  assert.equal(backup.state.calls, 0, "the unpriced fallback model is never sent to");
+  await setSpend({ unpricedModel: "CHARGE_HOLD" });
+});
+
+await test("DT-23 an exhausted budget refuses before any model call", async () => {
+  await setSpend({ global: { period: { kind: "CALENDAR_DAY", timeZone: "UTC" }, limitMicros: 1 } });
+  const user = await fresh();
+  await say(user, ANALYSIS);
+  assert.deepEqual([light.state.calls, heavy.state.calls], [0, 0], "no tier is called past the budget");
+  await setSpend({});
 });
 
 after(async () => {
