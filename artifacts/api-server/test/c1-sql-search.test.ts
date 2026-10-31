@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import { db, offers, markets, pool } from "@workspace/db";
 import { resolveMarket } from "../src/lib/markets";
 import { searchMarketplaceListings } from "../src/lib/marketplace-listings";
+import { searchCandidateQuery } from "../src/lib/marketplace-search-cursor";
 import { searchMarketplaceListings as legacySearch } from "./fixtures/c1/legacy-marketplace-listings";
 import { requireSafeReplitDevelopmentDatabase } from "./safe-development-database";
 
@@ -77,6 +78,43 @@ await test("C1 selective retrieval never transfers a full market into Node", asy
     assert.ok(cursorFetches > 0, "the production retrieval must expose measured bounded batches");
     console.log("C1_TRANSFER", JSON.stringify({ maximumOfferRows, cursorFetches }));
   } finally { pool.query = original; pool.off("acquire", wrap); for (const [client, query] of wrapped) client.query = query; }
+});
+
+await test("C1 numeric sort conversion agrees with finite JavaScript Number", async () => {
+  for (const value of [null, true, false, "", "  ", "12.5", "0x20", "0b11", "0o10", "bad", "Infinity", [], [null], [7], [1, 2], {}, 0, -7, 1e20]) {
+    const expected = Number(value);
+    const result = await pool.query("select dinar_search_number($1::jsonb) as value", [JSON.stringify(value)]);
+    assert.equal(result.rows[0].value, Number.isFinite(expected) ? expected : null, JSON.stringify(value));
+  }
+  assert.equal((await pool.query("select dinar_search_number(NULL) as value")).rows[0].value, null);
+});
+
+await test("C1 measured selective retrieval on 20,000 synthetic offers", async () => {
+  const count = 20_000;
+  for (let start = 0; start < count; start += 500) {
+    await db.insert(offers).values(Array.from({ length: Math.min(500, count - start) }, (_, i) => ({
+      ...seed, id: `c1_perf_${String(start + i).padStart(6, "0")}`, status: "PUBLISHED", pricingMode: "FIXED",
+      unitPriceMinor: 1000 + start + i, inventoryMode: "LIMITED", availableQuantity: 3, reservedQuantity: 0,
+      data: { ...seed.data, title: "c1perf هاتف", description: "منتج اختبار اصطناعي" },
+    })));
+  }
+  await pool.query("ANALYZE offers");
+  const filters = [{ field: "price", operator: "eq" as const, value: (999 + count) / 10 ** market.minorUnitScale }];
+  const options = { search: "c1perf", filters, sort: "PRICE_ASC" as const, sponsoredPlacement: false as const, limit: 24 };
+  const query = searchCandidateQuery({ marketId: market.id, filters, minorUnitScale: market.minorUnitScale, order: { field: "PRICE", direction: "ASC" } }).toSQL();
+  const plan = await pool.query(`EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) ${query.sql}`, query.params);
+  const times: Record<string, number[]> = { legacy: [], sql: [] };
+  for (let trial = 0; trial < 3; trial++) {
+    let expected;
+    for (const [name, search] of [["legacy", legacySearch], ["sql", searchMarketplaceListings]] as const) {
+      const start = performance.now();
+      const found = await search(market, options);
+      times[name]!.push(performance.now() - start);
+      if (name === "legacy") expected = found;
+      else assert.deepEqual(found, expected);
+    }
+  }
+  console.log("C1_PERFORMANCE", JSON.stringify({ fixtureOffers: count + ids.length, timesMs: times, plan: plan.rows[0]["QUERY PLAN"] }));
 });
 
 after(async () => { await pool.end(); });

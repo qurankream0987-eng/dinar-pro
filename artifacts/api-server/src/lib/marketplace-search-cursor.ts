@@ -31,6 +31,14 @@ export function searchCandidateQuery(input: {
     const operators: Record<string, string> = { eq: "=", ne: "<>", gt: ">", gte: ">=", lt: "<", lte: "<=" };
     const operator = operators[filter.operator];
     if (!operator) continue;
+    // Coarse integer range is deliberately a superset (±1 minor unit), enabling the
+    // B-tree before the exact float comparison without changing boundary semantics.
+    const minor = filter.value * 10 ** input.minorUnitScale;
+    const clamp = (value: number) => Math.max(-2147483648, Math.min(2147483647, value));
+    if (Number.isFinite(minor)) {
+      if (["eq", "gt", "gte"].includes(filter.operator)) predicates.push(sql`${offers.unitPriceMinor} >= ${clamp(Math.floor(minor) - 1)}`);
+      if (["eq", "lt", "lte"].includes(filter.operator)) predicates.push(sql`${offers.unitPriceMinor} <= ${clamp(Math.ceil(minor) + 1)}`);
+    }
     // Preserve JS division/comparison rather than rounding a fractional minor-unit bound.
     predicates.push(sql`(${offers.unitPriceMinor}::float8 / ${10 ** input.minorUnitScale}::float8) ${sql.raw(operator)} ${filter.value}::float8`);
   }
