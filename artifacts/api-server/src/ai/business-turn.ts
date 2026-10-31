@@ -914,7 +914,7 @@ async function handleCatalogCommand(input: {
       title: `إيقاف «${target.listing.title}» لنفاد المخزون`,
       lines: [
         `المنتج: «${target.listing.title}»`,
-        "سيتوقف البيع فورًا حتى يتوفر المخزون",
+        "نفاد المخزون: يتوقف البيع فورًا حتى يتوفر المخزون",
         "الطلبات السابقة لا تتغير",
       ],
     });
