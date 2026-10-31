@@ -539,6 +539,15 @@ export async function confirmCashRefundReceipt(input: {
   refundId: string;
 }) {
   return db.transaction(async (tx) => {
+    // Lock order first, then the refund row: openCashRefundCase takes the same order -> refund
+    // order, so the confirmation path must not invert it (ABBA deadlock on concurrent cases).
+    const [preview] = await tx
+      .select({ orderId: cashRefundCases.orderId })
+      .from(cashRefundCases)
+      .where(eq(cashRefundCases.id, input.refundId));
+    if (!preview)
+      reject(404, "CASH_REFUND_NOT_FOUND", "حالة الاسترداد غير موجودة");
+    const order = await lockOrder(tx, preview.orderId);
     const [refund] = await tx
       .select()
       .from(cashRefundCases)
@@ -551,7 +560,6 @@ export async function confirmCashRefundReceipt(input: {
     if (refund.status !== "REPAYMENT_CLAIMED")
       reject(409, "CASH_REFUND_NOT_CONFIRMABLE", "لا يمكن تأكيد استلام الاسترداد في حالته الحالية");
 
-    const order = await lockOrder(tx, refund.orderId);
     const now = new Date();
     const [updated] = await tx
       .update(cashRefundCases)

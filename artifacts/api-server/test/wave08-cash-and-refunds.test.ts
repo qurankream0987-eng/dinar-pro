@@ -704,6 +704,59 @@ await test("cash refund database transitions and facts cannot be forged", async 
   );
 });
 
+await test("opening a refund while confirming another on the same order never deadlocks", async () => {
+  // S11 regression: openCashRefundCase takes order -> refund locks, so confirmation must too.
+  // Real PostgreSQL, real concurrent transactions; a 40P01 abort would surface as a 500 here.
+  const orderId = await confirmedCashOrder("سباق الأقفال");
+  const rounds = 10;
+  for (let round = 0; round < rounds; round++) {
+    const opened = await openRefund(orderId, 200 + round);
+    assert.equal(opened.status, 201, opened.text);
+    const refundId = opened.data.refund.id as string;
+    assert.equal((await claimRepayment(refundId)).status, 200);
+    const [opening, confirming] = await Promise.all([
+      openRefund(orderId, 100 + round, key(`race-open-${round}`)),
+      confirmRepayment(refundId),
+    ]);
+    for (const result of [opening, confirming]) {
+      assert.notEqual(
+        result.status,
+        500,
+        `deadlock or unhandled abort in round ${round}: ${result.text}`,
+      );
+      assert.equal(
+        /40P01|deadlock detected/i.test(result.text),
+        false,
+        `deadlock text in round ${round}: ${result.text}`,
+      );
+    }
+    assert.equal(confirming.status, 200, confirming.text);
+    assert.equal(confirming.data.refund.status, "CONFIRMED");
+  }
+  const confirmed = await db
+    .select()
+    .from(cashRefundCases)
+    .where(eq(cashRefundCases.orderId, orderId));
+  const refunded = confirmed
+    .filter((row) => row.status === "CONFIRMED")
+    .reduce((sum, row) => sum + row.amountMinor, 0);
+  const rows = await journal(orderId);
+  const journaled = rows
+    .filter((row) => row.eventType === "PAYMENT_REFUNDED")
+    .reduce((sum, row) => sum + Number(row.amountMinor), 0);
+  assert.equal(refunded, journaled, "the journal matches the confirmed refund rows");
+  const refundEvents = rows.filter((row) => row.eventType === "PAYMENT_REFUNDED");
+  assert.equal(
+    new Set(refundEvents.map((row) => row.businessRef)).size,
+    refundEvents.length,
+    "each confirmation wrote exactly one journal entry",
+  );
+  assert.equal(
+    confirmed.filter((row) => row.status === "CONFIRMED").length,
+    rounds,
+  );
+});
+
 after(async () => {
   server.close();
   await pool.end();
