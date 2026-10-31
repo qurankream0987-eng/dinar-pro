@@ -13,6 +13,7 @@ import { randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { db, marketplaceInquiries, pool } from "@workspace/db";
 import app from "../src/app";
+import { splitCompoundRequest } from "../src/ai/task-plan";
 import { requireSafeReplitDevelopmentDatabase } from "./safe-development-database";
 
 requireSafeReplitDevelopmentDatabase("BDINAR_TEST_DATABASE");
@@ -90,6 +91,12 @@ await test("§09 search → compare → unsent question to the cheapest seller �
   const confirmed = await say(conv, "أرسل");
   assert.match(confirmed.body, /أُرسلت رسالتك/u, confirmed.body);
   assert.equal(await sent(), 1, "exactly one message, after the user's own confirmation");
+});
+
+await test("a comma before a seller's own «اعرض خدمتي/منتجي» is one sell request, not a plan (block-f5 F5-16)", () => {
+  assert.equal(splitCompoundRequest("أنا أصلح مكيفات، اعرض خدمتي بـ15"), undefined);
+  assert.equal(splitCompoundRequest("عندي جوال مستعمل، اعرضه بـ100"), undefined);
+  assert.deepEqual(splitCompoundRequest("أبي هاتف أقل من 100، قارن الأول والثاني")?.steps, ["أبي هاتف أقل من 100", "قارن الأول والثاني"]);
 });
 
 await test("«صاحب الأرخص» with a tie asks which, never guesses", async () => {
