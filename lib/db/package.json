@@ -19,7 +19,8 @@
     "migration:check": "node --experimental-strip-types ./scripts/preview-migration-check.mjs",
     "check": "drizzle-kit check --dialect=postgresql --out=drizzle",
     "migrate:release": "node --experimental-strip-types ./scripts/migrate-release.mjs",
-    "test:release-migration": "node --experimental-strip-types --test ./scripts/release-migration.test.mjs ./scripts/release-migration-concurrency.test.mjs"
+    "test:release-migration": "node --experimental-strip-types --test ./scripts/release-migration.test.mjs ./scripts/release-migration-concurrency.test.mjs",
+    "test:migrate-upgrade": "node --experimental-strip-types --test ./scripts/migrate-upgrade-fixture.test.mjs"
   },
   "dependencies": {
     "drizzle-orm": "catalog:",
