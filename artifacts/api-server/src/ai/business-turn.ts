@@ -1014,6 +1014,13 @@ function splitDraftItems(rest: string): string[] {
   return parts.slice(0, 6);
 }
 
+function draftDescription(title: string, businessName: string): string {
+  // The canonical listing body requires a real description; the item's own name alone can be
+  // shorter than the minimum, so the seller's business name (never an invented claim) completes it.
+  const base = `${title} — ${businessName}`.trim();
+  return (base.length >= 10 ? base : `${base} — متاح عبر DINAR`).slice(0, 240);
+}
+
 async function prepareDrafts(input: {
   conversationId: string;
   actorId: string;
@@ -1044,7 +1051,7 @@ async function prepareDrafts(input: {
     drafts.push({
       draftId: randomUUID(),
       title: title.slice(0, 120),
-      description: title.slice(0, 120),
+      description: draftDescription(title, input.business.displayName),
       priceMinor: minor,
       price: money(minor, input.market),
       currency: input.market.currencyCode,
@@ -1462,7 +1469,13 @@ async function executeBusinessAction(input: {
       query.action === "PRICE" ? "تم تحديث السعر." : query.action === "RESUME" ? "أُعيد تفعيل المنتج." : "أُوقف المنتج ولم يعد ظاهرًا للمشترين.",
     );
   } catch (error) {
-    const message = error instanceof Error ? error.message : "تعذر تنفيذ الإجراء.";
+    // A Zod failure is a raw developer message: the seller needs an actionable Arabic sentence.
+    const message =
+      error instanceof Error
+        ? (error as { name?: string }).name === "ZodError"
+          ? "بيانات المسودة غير مكتملة؛ أعد إعداد المسودات ثم انشرها من جديد."
+          : error.message
+        : "تعذر تنفيذ الإجراء.";
     const status = (error as { status?: number }).status;
     await db.update(aiResultSets).set({ query: { ...claimed.query, status: "FAILED", notice: message } }).where(eq(aiResultSets.id, row.id));
     return businessOutput(
