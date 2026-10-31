@@ -1,0 +1,640 @@
+{
+ "scales": [
+  1000,
+  10000,
+  100000
+ ],
+ "postgres": {
+  "version": "PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit"
+ },
+ "scale_1000": {
+  "documents": 1020,
+  "refreshMs": 279,
+  "refreshPerSecond": 3654,
+  "edit500Ms": 26,
+  "refresh500Ms": 70,
+  "perQuery": {
+   "narrowText": {
+    "sql": {
+     "p50": 7.7,
+     "p95": 10,
+     "rowsRead": 0,
+     "batches": 0,
+     "heapGrowthKb": 594,
+     "stageMedianMs": {
+      "textCandidates": 3.1,
+      "sponsoredLookup": 0,
+      "batches": 0,
+      "sellers": 0,
+      "predicates": 0
+     }
+    },
+    "legacy": {
+     "p50": 49.9,
+     "p95": 72.9,
+     "rowsRead": 1006,
+     "heapGrowthKb": 12620
+    },
+    "results": 0
+   },
+   "broadText": {
+    "sql": {
+     "p50": 42.3,
+     "p95": 49.5,
+     "rowsRead": 139,
+     "batches": 2,
+     "heapGrowthKb": 2971,
+     "stageMedianMs": {
+      "textCandidates": 6,
+      "sponsoredLookup": 2.5,
+      "batches": 12.6,
+      "sellers": 2,
+      "predicates": 3.2
+     }
+    },
+    "legacy": {
+     "p50": 63.2,
+     "p95": 93.6,
+     "rowsRead": 1006,
+     "heapGrowthKb": 0
+    },
+    "results": 24,
+    "plan": "Sort  (cost=138.65..138.78 rows=50 width=22) (actual time=0.958..0.969 rows=139 loops=1)\n  Sort Key: offers.created_at, offers.id\n  Sort Method: quicksort  Memory: 31kB\n  Buffers: shared hit=110\n  ->  Hash Semi Join  (cost=2.94..137.24 rows=50 width=22) (actual time=0.178..0.916 rows=139 loops=1)\n        Hash Cond: (offers.id = (unnest('{bench-0000144,bench-0000732,bench-0000504,bench-0000636,bench-0000553,bench-0000829,bench-0000996,bench-0000205,bench-0000097,bench-0000468,bench-0000757,bench-0000577,bench-0000\n        Buffers: shared hit=110\n        ->  Seq Scan on offers  (cost=0.00..132.95 rows=303 width=22) (actual time=0.095..0.701 rows=819 loops=1)\n              Filter: ((market_id = 'JO'::text) AND (status = 'PUBLISHED'::text) AND ((inventory_mode = 'UNLIMITED'::text) OR ((COALESCE(available_quantity, 0) - reserved_quantity) > 0)))\n              Rows Removed by Filter: 201\n              Buffers: shared hit=110\n        ->  Hash  (cost=0.85..0.85 rows=167 width=32) (actual time=0.067..0.069 rows=167 loops=1)\n              Buckets: 1024  Batches: 1  Memory Usage: 16kB\n              ->  ProjectSet  (cost=0.00..0.85 rows=167 width=32) (actual time=0.003..0.027 rows=167 loops=1)\n                    ->  Result  (cost=0.00..0.01 rows=1 width=0) (actual time=0.001..0.001 rows=1 loops=1)\nPlanning Time: 0.432 ms\nExecution Time: 1.051 ms"
+   },
+   "categoryPrice": {
+    "sql": {
+     "p50": 15,
+     "p95": 21.3,
+     "rowsRead": 15,
+     "batches": 1,
+     "heapGrowthKb": 1637,
+     "stageMedianMs": {
+      "textCandidates": 0,
+      "sponsoredLookup": 2.6,
+      "batches": 2.6,
+      "sellers": 1.1,
+      "predicates": 0.3
+     }
+    },
+    "legacy": {
+     "p50": 33,
+     "p95": 38,
+     "rowsRead": 1006,
+     "heapGrowthKb": 9637
+    },
+    "results": 10,
+    "plan": "Limit  (cost=130.89..130.97 rows=33 width=412) (actual time=0.377..0.381 rows=15 loops=1)\n  Buffers: shared hit=112\n  ->  Sort  (cost=130.89..130.97 rows=33 width=412) (actual time=0.375..0.377 rows=15 loops=1)\n        Sort Key: created_at DESC, id\n        Sort Method: quicksort  Memory: 32kB\n        Buffers: shared hit=112\n        ->  Bitmap Heap Scan on offers  (cost=10.27..130.06 rows=33 width=412) (actual time=0.167..0.305 rows=15 loops=1)\n              Recheck Cond: (((market_id = 'JO'::text) AND ((data ->> 'categoryId'::text) = 'cars'::text)) OR ((market_id = 'JO'::text) AND ((data ->> 'category'::text) = 'سيارات'::text)))\n              Filter: ((unit_price_minor IS NOT NULL) AND (unit_price_minor <= 1000001) AND (status = 'PUBLISHED'::text))\n              Rows Removed by Filter: 69\n              Heap Blocks: exact=108\n              Buffers: shared hit=112\n              ->  BitmapOr  (cost=10.27..10.27 rows=170 width=0) (actual time=0.067..0.067 rows=0 loops=1)\n                    Buffers: shared hit=4\n                    ->  Bitmap Index Scan on offers_market_category_id_idx  (cost=0.00..5.11 rows=83 width=0) (actual time=0.050..0.050 rows=168 loops=1)\n                          Index Cond: ((market_id = 'JO'::text) AND ((data ->> 'categoryId'::text) = 'cars'::text))\n                          Buffers: shared hit=2\n                    ->  Bitmap Index Scan on offers_market_category_label_idx  (cost=0.00..5.15 rows=87 width=0) (actual time=0.016..0.016 rows=168 loops=1)\n                          Index Cond: ((market_id = 'JO'::text) AND ((data ->> 'category'::text) = 'سيارات'::text))\n                          Buffers: shared hit=2\nPlanning Time: 0.265 ms\nExecution Time: 0.431 ms"
+   },
+   "browse": {
+    "sql": {
+     "p50": 54,
+     "p95": 70.1,
+     "rowsRead": 901,
+     "batches": 5,
+     "heapGrowthKb": 11947,
+     "stageMedianMs": {
+      "textCandidates": 0,
+      "sponsoredLookup": 2,
+      "batches": 24.2,
+      "sellers": 3.4,
+      "predicates": 10.8
+     }
+    },
+    "legacy": {
+     "p50": 51.9,
+     "p95": 73.2,
+     "rowsRead": 1006,
+     "heapGrowthKb": 107
+    },
+    "results": 24,
+    "plan": "Limit  (cost=0.28..20.31 rows=50 width=412) (actual time=0.062..0.141 rows=50 loops=1)\n  Buffers: shared hit=102\n  ->  Index Scan using offers_market_status_created_idx on offers  (cost=0.28..361.66 rows=902 width=412) (actual time=0.061..0.135 rows=50 loops=1)\n        Index Cond: ((market_id = 'JO'::text) AND (status = 'PUBLISHED'::text))\n        Buffers: shared hit=102\nPlanning Time: 0.235 ms\nExecution Time: 0.192 ms"
+   },
+   "priceSort": {
+    "sql": {
+     "p50": 13.9,
+     "p95": 18.3,
+     "rowsRead": 50,
+     "batches": 1,
+     "heapGrowthKb": 1571,
+     "stageMedianMs": {
+      "textCandidates": 3.4,
+      "sponsoredLookup": 0,
+      "batches": 4.7,
+      "sellers": 1.1,
+      "predicates": 0.6
+     }
+    },
+    "legacy": {
+     "p50": 62.6,
+     "p95": 73.6,
+     "rowsRead": 1006,
+     "heapGrowthKb": 13198
+    },
+    "results": 24,
+    "plan": "Sort  (cost=138.78..138.90 rows=50 width=30) (actual time=0.884..0.899 rows=139 loops=1)\n  Sort Key: (((offers.unit_price_minor IS NULL))::integer), (COALESCE(offers.unit_price_minor, 0)), offers.created_at DESC, offers.id\n  Sort Method: quicksort  Memory: 32kB\n  Buffers: shared hit=110\n  ->  Hash Semi Join  (cost=2.94..137.37 rows=50 width=30) (actual time=0.115..0.740 rows=139 loops=1)\n        Hash Cond: (offers.id = (unnest('{bench-0000144,bench-0000732,bench-0000504,bench-0000636,bench-0000553,bench-0000829,bench-0000996,bench-0000205,bench-0000097,bench-0000468,bench-0000757,bench-0000577,bench-0000\n        Buffers: shared hit=110\n        ->  Seq Scan on offers  (cost=0.00..132.95 rows=303 width=26) (actual time=0.066..0.592 rows=819 loops=1)\n              Filter: ((market_id = 'JO'::text) AND (status = 'PUBLISHED'::text) AND ((inventory_mode = 'UNLIMITED'::text) OR ((COALESCE(available_quantity, 0) - reserved_quantity) > 0)))\n              Rows Removed by Filter: 201\n              Buffers: shared hit=110\n        ->  Hash  (cost=0.85..0.85 rows=167 width=32) (actual time=0.039..0.041 rows=167 loops=1)\n              Buckets: 1024  Batches: 1  Memory Usage: 16kB\n              ->  ProjectSet  (cost=0.00..0.85 rows=167 width=32) (actual time=0.003..0.018 rows=167 loops=1)\n                    ->  Result  (cost=0.00..0.01 rows=1 width=0) (actual time=0.000..0.001 rows=1 loops=1)\nPlanning Time: 0.256 ms\nExecution Time: 0.953 ms"
+   },
+   "ownSeller": {
+    "sql": {
+     "p50": 10.8,
+     "p95": 49.9,
+     "rowsRead": 50,
+     "batches": 1,
+     "heapGrowthKb": 1222,
+     "stageMedianMs": {
+      "textCandidates": 0,
+      "sponsoredLookup": 0,
+      "batches": 3.7,
+      "sellers": 1.7,
+      "predicates": 1.5
+     }
+    },
+    "legacy": {
+     "p50": 37,
+     "p95": 45.7,
+     "rowsRead": 1006,
+     "heapGrowthKb": 11517
+    },
+    "results": 24
+   },
+   "attributeSort": {
+    "sql": {
+     "p50": 9.1,
+     "p95": 15,
+     "rowsRead": 76,
+     "batches": 1,
+     "heapGrowthKb": 1889,
+     "stageMedianMs": {
+      "textCandidates": 0,
+      "sponsoredLookup": 0,
+      "batches": 2.7,
+      "sellers": 1,
+      "predicates": 0.9
+     }
+    },
+    "legacy": {
+     "p50": 30.5,
+     "p95": 34.2,
+     "rowsRead": 1006,
+     "heapGrowthKb": 9841
+    },
+    "results": 24
+   },
+   "restoreIds": {
+    "sql": {
+     "p50": 4.3,
+     "p95": 5,
+     "rowsRead": 3,
+     "batches": 1,
+     "heapGrowthKb": 644,
+     "stageMedianMs": {
+      "textCandidates": 0,
+      "sponsoredLookup": 0,
+      "batches": 1.3,
+      "sellers": 0.7,
+      "predicates": 0.1
+     }
+    },
+    "legacy": {
+     "p50": 26.8,
+     "p95": 35.7,
+     "rowsRead": 1006,
+     "heapGrowthKb": 9153
+    },
+    "results": 2
+   }
+  }
+ },
+ "scale_10000": {
+  "documents": 9000,
+  "refreshMs": 1398,
+  "refreshPerSecond": 6437,
+  "edit500Ms": 37,
+  "refresh500Ms": 88,
+  "perQuery": {
+   "narrowText": {
+    "sql": {
+     "p50": 25,
+     "p95": 27.2,
+     "rowsRead": 2,
+     "batches": 1,
+     "heapGrowthKb": 1010,
+     "stageMedianMs": {
+      "textCandidates": 12,
+      "sponsoredLookup": 1.4,
+      "batches": 3.4,
+      "sellers": 1.2,
+      "predicates": 0.1
+     }
+    },
+    "legacy": {
+     "p50": 353.8,
+     "p95": 425.9,
+     "rowsRead": 10006,
+     "heapGrowthKb": 34239
+    },
+    "results": 2,
+    "plan": "Sort  (cost=16.70..16.70 rows=1 width=22) (actual time=0.083..0.084 rows=2 loops=1)\n  Sort Key: offers.created_at, offers.id\n  Sort Method: quicksort  Memory: 25kB\n  Buffers: shared hit=6\n  ->  Nested Loop  (cost=0.32..16.69 rows=1 width=22) (actual time=0.059..0.073 rows=2 loops=1)\n        Buffers: shared hit=6\n        ->  Unique  (cost=0.04..0.05 rows=2 width=32) (actual time=0.016..0.018 rows=2 loops=1)\n              ->  Sort  (cost=0.04..0.04 rows=2 width=32) (actual time=0.014..0.015 rows=2 loops=1)\n                    Sort Key: (unnest('{bench-0005000,bench-0010000}'::text[]))\n                    Sort Method: quicksort  Memory: 25kB\n                    ->  ProjectSet  (cost=0.00..0.03 rows=2 width=32) (actual time=0.005..0.006 rows=2 loops=1)\n                          ->  Result  (cost=0.00..0.01 rows=1 width=0) (actual time=0.001..0.001 rows=1 loops=1)\n        ->  Index Scan using offers_pkey on offers  (cost=0.29..8.32 rows=1 width=22) (actual time=0.025..0.025 rows=1 loops=2)\n              Index Cond: (id = (unnest('{bench-0005000,bench-0010000}'::text[])))\n              Filter: ((market_id = 'JO'::text) AND (status = 'PUBLISHED'::text) AND ((inventory_mode = 'UNLIMITED'::text) OR ((COALESCE(available_quantity, 0) - reserved_quantity) > 0)))\n              Buffers: shared hit=6\nPlanning Time: 0.366 ms\nExecution Time: 0.134 ms"
+   },
+   "broadText": {
+    "sql": {
+     "p50": 72.9,
+     "p95": 79.9,
+     "rowsRead": 150,
+     "batches": 2,
+     "heapGrowthKb": 4307,
+     "stageMedianMs": {
+      "textCandidates": 34.9,
+      "sponsoredLookup": 2.2,
+      "batches": 23.1,
+      "sellers": 1.4,
+      "predicates": 1.8
+     }
+    },
+    "legacy": {
+     "p50": 343.8,
+     "p95": 455.2,
+     "rowsRead": 10006,
+     "heapGrowthKb": 26848
+    },
+    "results": 24,
+    "plan": "Sort  (cost=1102.23..1103.48 rows=500 width=22) (actual time=9.260..9.346 rows=1366 loops=1)\n  Sort Key: offers.created_at, offers.id\n  Sort Method: quicksort  Memory: 113kB\n  Buffers: shared hit=5701\n  ->  Nested Loop  (cost=12.81..1079.81 rows=500 width=22) (actual time=0.776..8.879 rows=1366 loops=1)\n        Buffers: shared hit=5701\n        ->  HashAggregate  (cost=12.52..14.52 rows=200 width=32) (actual time=0.728..1.003 rows=1667 loops=1)\n              Group Key: unnest('{bench-0008952,bench-0002052,bench-0001512,bench-0008736,bench-0003684,bench-0003421,bench-0001884,bench-0000360,bench-0004272,bench-0009829,bench-0007333,bench-0007153,bench-0004969,benc\n              Batches: 1  Memory Usage: 209kB\n              ->  ProjectSet  (cost=0.00..8.35 rows=1667 width=32) (actual time=0.005..0.142 rows=1667 loops=1)\n                    ->  Result  (cost=0.00..0.01 rows=1 width=0) (actual time=0.001..0.002 rows=1 loops=1)\n        ->  Index Scan using offers_pkey on offers  (cost=0.29..5.58 rows=1 width=22) (actual time=0.004..0.004 rows=1 loops=1667)\n              Index Cond: (id = (unnest('{bench-0008952,bench-0002052,bench-0001512,bench-0008736,bench-0003684,bench-0003421,bench-0001884,bench-0000360,bench-0004272,bench-0009829,bench-0007333,bench-0007153,bench-0004\n              Filter: ((market_id = 'JO'::text) AND (status = 'PUBLISHED'::text) AND ((inventory_mode = 'UNLIMITED'::text) OR ((COALESCE(available_quantity, 0) - reserved_quantity) > 0)))\n              Rows Removed by Filter: 0\n              Buffers: shared hit=5428\nPlanning Time: 0.415 ms\nExecution Time: 9.568 ms"
+   },
+   "categoryPrice": {
+    "sql": {
+     "p50": 16.4,
+     "p95": 40,
+     "rowsRead": 50,
+     "batches": 1,
+     "heapGrowthKb": 2042,
+     "stageMedianMs": {
+      "textCandidates": 0,
+      "sponsoredLookup": 1.9,
+      "batches": 4.7,
+      "sellers": 1.2,
+      "predicates": 0.6
+     }
+    },
+    "legacy": {
+     "p50": 249,
+     "p95": 331.7,
+     "rowsRead": 10006,
+     "heapGrowthKb": 21241
+    },
+    "results": 24,
+    "plan": "Limit  (cost=11.79..586.73 rows=50 width=404) (actual time=0.903..1.381 rows=50 loops=1)\n  Buffers: shared hit=379\n  ->  Incremental Sort  (cost=11.79..3323.45 rows=288 width=404) (actual time=0.902..1.376 rows=50 loops=1)\n        Sort Key: created_at DESC, id\n        Presorted Key: created_at\n        Full-sort Groups: 2  Sort Method: quicksort  Average Memory: 41kB  Peak Memory: 41kB\n        Buffers: shared hit=379\n        ->  Index Scan Backward using offers_market_status_created_idx on offers  (cost=0.29..3310.49 rows=288 width=404) (actual time=0.042..1.328 rows=51 loops=1)\n              Index Cond: ((market_id = 'JO'::text) AND (status = 'PUBLISHED'::text))\n              Filter: ((unit_price_minor IS NOT NULL) AND (unit_price_minor <= 1000001) AND (((data ->> 'categoryId'::text) = 'cars'::text) OR ((data ->> 'category'::text) = 'سيارات'::text)))\n              Rows Removed by Filter: 2726\n              Buffers: shared hit=379\nPlanning Time: 0.191 ms\nExecution Time: 1.412 ms"
+   },
+   "browse": {
+    "sql": {
+     "p50": 82,
+     "p95": 124.1,
+     "rowsRead": 1550,
+     "batches": 5,
+     "heapGrowthKb": 5695,
+     "stageMedianMs": {
+      "textCandidates": 0,
+      "sponsoredLookup": 1.7,
+      "batches": 34.8,
+      "sellers": 2.6,
+      "predicates": 20.5
+     }
+    },
+    "legacy": {
+     "p50": 368.7,
+     "p95": 506.9,
+     "rowsRead": 10006,
+     "heapGrowthKb": 29533
+    },
+    "results": 24,
+    "plan": "Limit  (cost=0.29..18.28 rows=50 width=404) (actual time=0.059..0.145 rows=50 loops=1)\n  Buffers: shared hit=128\n  ->  Index Scan using offers_market_status_created_idx on offers  (cost=0.29..3241.52 rows=9004 width=404) (actual time=0.058..0.138 rows=50 loops=1)\n        Index Cond: ((market_id = 'JO'::text) AND (status = 'PUBLISHED'::text))\n        Buffers: shared hit=128\nPlanning Time: 0.215 ms\nExecution Time: 0.213 ms"
+   },
+   "priceSort": {
+    "sql": {
+     "p50": 53.1,
+     "p95": 61.3,
+     "rowsRead": 50,
+     "batches": 1,
+     "heapGrowthKb": 2989,
+     "stageMedianMs": {
+      "textCandidates": 24.6,
+      "sponsoredLookup": 0,
+      "batches": 16.7,
+      "sellers": 1.5,
+      "predicates": 0.9
+     }
+    },
+    "legacy": {
+     "p50": 333,
+     "p95": 425.3,
+     "rowsRead": 10006,
+     "heapGrowthKb": 36979
+    },
+    "results": 24,
+    "plan": "Sort  (cost=1103.48..1104.73 rows=500 width=30) (actual time=7.180..7.240 rows=1366 loops=1)\n  Sort Key: (((offers.unit_price_minor IS NULL))::integer), (COALESCE(offers.unit_price_minor, 0)), offers.created_at DESC, offers.id\n  Sort Method: quicksort  Memory: 123kB\n  Buffers: shared hit=5701\n  ->  Nested Loop  (cost=12.81..1081.06 rows=500 width=30) (actual time=0.465..6.063 rows=1366 loops=1)\n        Buffers: shared hit=5701\n        ->  HashAggregate  (cost=12.52..14.52 rows=200 width=32) (actual time=0.432..0.653 rows=1667 loops=1)\n              Group Key: unnest('{bench-0008952,bench-0002052,bench-0001512,bench-0008736,bench-0003684,bench-0003421,bench-0001884,bench-0000360,bench-0004272,bench-0009829,bench-0007333,bench-0007153,bench-0004969,benc\n              Batches: 1  Memory Usage: 209kB\n              ->  ProjectSet  (cost=0.00..8.35 rows=1667 width=32) (actual time=0.004..0.105 rows=1667 loops=1)\n                    ->  Result  (cost=0.00..0.01 rows=1 width=0) (actual time=0.001..0.002 rows=1 loops=1)\n        ->  Index Scan using offers_pkey on offers  (cost=0.29..5.58 rows=1 width=26) (actual time=0.003..0.003 rows=1 loops=1667)\n              Index Cond: (id = (unnest('{bench-0008952,bench-0002052,bench-0001512,bench-0008736,bench-0003684,bench-0003421,bench-0001884,bench-0000360,bench-0004272,bench-0009829,bench-0007333,bench-0007153,bench-0004\n              Filter: ((market_id = 'JO'::text) AND (status = 'PUBLISHED'::text) AND ((inventory_mode = 'UNLIMITED'::text) OR ((COALESCE(available_quantity, 0) - reserved_quantity) > 0)))\n              Rows Removed by Filter: 0\n              Buffers: shared hit=5428\nPlanning Time: 0.266 ms\nExecution Time: 7.378 ms"
+   },
+   "ownSeller": {
+    "sql": {
+     "p50": 5.6,
+     "p95": 12.2,
+     "rowsRead": 50,
+     "batches": 1,
+     "heapGrowthKb": 1201,
+     "stageMedianMs": {
+      "textCandidates": 0,
+      "sponsoredLookup": 0,
+      "batches": 2,
+      "sellers": 0.9,
+      "predicates": 0.8
+     }
+    },
+    "legacy": {
+     "p50": 309.6,
+     "p95": 401.2,
+     "rowsRead": 10006,
+     "heapGrowthKb": 35034
+    },
+    "results": 24
+   },
+   "attributeSort": {
+    "sql": {
+     "p50": 28,
+     "p95": 28.9,
+     "rowsRead": 751,
+     "batches": 1,
+     "heapGrowthKb": 8999,
+     "stageMedianMs": {
+      "textCandidates": 0,
+      "sponsoredLookup": 0,
+      "batches": 13.4,
+      "sellers": 1.4,
+      "predicates": 6.8
+     }
+    },
+    "legacy": {
+     "p50": 253.2,
+     "p95": 336,
+     "rowsRead": 10006,
+     "heapGrowthKb": 22787
+    },
+    "results": 24
+   },
+   "restoreIds": {
+    "sql": {
+     "p50": 3.9,
+     "p95": 5.2,
+     "rowsRead": 3,
+     "batches": 1,
+     "heapGrowthKb": 655,
+     "stageMedianMs": {
+      "textCandidates": 0,
+      "sponsoredLookup": 0,
+      "batches": 1.2,
+      "sellers": 0.7,
+      "predicates": 0.1
+     }
+    },
+    "legacy": {
+     "p50": 297,
+     "p95": 352.8,
+     "rowsRead": 10006,
+     "heapGrowthKb": 30545
+    },
+    "results": 2
+   }
+  }
+ },
+ "scale_100000": {
+  "documents": 90000,
+  "refreshMs": 15353,
+  "refreshPerSecond": 5862,
+  "edit500Ms": 51,
+  "refresh500Ms": 101,
+  "perQuery": {
+   "narrowText": {
+    "sql": {
+     "p50": 22.4,
+     "p95": 23.9,
+     "rowsRead": 18,
+     "batches": 1,
+     "heapGrowthKb": 1276,
+     "stageMedianMs": {
+      "textCandidates": 6.8,
+      "sponsoredLookup": 1.7,
+      "batches": 3.8,
+      "sellers": 1.1,
+      "predicates": 0.3
+     }
+    },
+    "legacy": {
+     "p50": 3741.9,
+     "p95": 3770.2,
+     "rowsRead": 100006,
+     "heapGrowthKb": 220876
+    },
+    "results": 13,
+    "plan": "Sort  (cost=169.41..169.42 rows=6 width=22) (actual time=0.224..0.226 rows=18 loops=1)\n  Sort Key: offers.created_at, offers.id\n  Sort Method: quicksort  Memory: 25kB\n  Buffers: shared hit=80\n  ->  Nested Loop  (cost=0.58..169.33 rows=6 width=22) (actual time=0.045..0.213 rows=18 loops=1)\n        Buffers: shared hit=80\n        ->  HashAggregate  (cost=0.17..0.37 rows=20 width=32) (actual time=0.014..0.018 rows=20 loops=1)\n              Group Key: unnest('{bench-0040000,bench-0070000,bench-0035000,bench-0010000,bench-0020000,bench-0050000,bench-0030000,bench-0005000,bench-0045000,bench-0055000,bench-0015000,bench-0025000,bench-0085000,benc\n              Batches: 1  Memory Usage: 24kB\n              ->  ProjectSet  (cost=0.00..0.12 rows=20 width=32) (actual time=0.003..0.005 rows=20 loops=1)\n                    ->  Result  (cost=0.00..0.01 rows=1 width=0) (actual time=0.001..0.001 rows=1 loops=1)\n        ->  Index Scan using offers_pkey on offers  (cost=0.42..8.45 rows=1 width=22) (actual time=0.009..0.009 rows=1 loops=20)\n              Index Cond: (id = (unnest('{bench-0040000,bench-0070000,bench-0035000,bench-0010000,bench-0020000,bench-0050000,bench-0030000,bench-0005000,bench-0045000,bench-0055000,bench-0015000,bench-0025000,bench-0085\n              Filter: ((market_id = 'JO'::text) AND (status = 'PUBLISHED'::text) AND ((inventory_mode = 'UNLIMITED'::text) OR ((COALESCE(available_quantity, 0) - reserved_quantity) > 0)))\n              Rows Removed by Filter: 0\n              Buffers: shared hit=80\nPlanning Time: 0.226 ms\nExecution Time: 0.265 ms"
+   },
+   "broadText": {
+    "sql": {
+     "p50": 364.1,
+     "p95": 455.9,
+     "rowsRead": 150,
+     "batches": 2,
+     "heapGrowthKb": 5462,
+     "stageMedianMs": {
+      "textCandidates": 224.6,
+      "sponsoredLookup": 4.1,
+      "batches": 145.7,
+      "sellers": 1.1,
+      "predicates": 1.4
+     }
+    },
+    "legacy": {
+     "p50": 3880.9,
+     "p95": 3985.7,
+     "rowsRead": 100006,
+     "heapGrowthKb": 225119
+    },
+    "results": 24,
+    "plan": "Sort  (cost=1956.10..1968.56 rows=4986 width=22) (actual time=109.700..111.410 rows=13641 loops=1)\n  Sort Key: offers.created_at, offers.id\n  Sort Method: quicksort  Memory: 1024kB\n  Buffers: shared hit=67428\n  ->  Nested Loop  (cost=125.44..1649.87 rows=4986 width=22) (actual time=7.591..105.379 rows=13641 loops=1)\n        Buffers: shared hit=67428\n        ->  HashAggregate  (cost=125.02..127.02 rows=200 width=32) (actual time=7.500..10.636 rows=16667 loops=1)\n              Group Key: unnest('{bench-0074749,bench-0035329,bench-0082321,bench-0088164,bench-0089244,bench-0050413,bench-0089053,bench-0070188,bench-0052044,bench-0052008,bench-0018397,bench-0046009,bench-0063384,benc\n              Batches: 1  Memory Usage: 1569kB\n              ->  ProjectSet  (cost=0.00..83.35 rows=16667 width=32) (actual time=0.005..1.853 rows=16667 loops=1)\n                    ->  Result  (cost=0.00..0.01 rows=1 width=0) (actual time=0.001..0.003 rows=1 loops=1)\n        ->  Index Scan using offers_pkey on offers  (cost=0.42..7.97 rows=1 width=22) (actual time=0.005..0.005 rows=1 loops=16667)\n              Index Cond: (id = (unnest('{bench-0074749,bench-0035329,bench-0082321,bench-0088164,bench-0089244,bench-0050413,bench-0089053,bench-0070188,bench-0052044,bench-0052008,bench-0018397,bench-0046009,bench-0063\n              Filter: ((market_id = 'JO'::text) AND (status = 'PUBLISHED'::text) AND ((inventory_mode = 'UNLIMITED'::text) OR ((COALESCE(available_quantity, 0) - reserved_quantity) > 0)))\n              Rows Removed by Filter: 0\n              Buffers: shared hit=67343\nPlanning Time: 0.594 ms\nExecution Time: 112.749 ms"
+   },
+   "categoryPrice": {
+    "sql": {
+     "p50": 21.3,
+     "p95": 25.6,
+     "rowsRead": 50,
+     "batches": 1,
+     "heapGrowthKb": 1952,
+     "stageMedianMs": {
+      "textCandidates": 0,
+      "sponsoredLookup": 2.6,
+      "batches": 5.6,
+      "sellers": 1.6,
+      "predicates": 1
+     }
+    },
+    "legacy": {
+     "p50": 2766.5,
+     "p95": 3173,
+     "rowsRead": 100006,
+     "heapGrowthKb": 215705
+    },
+    "results": 24,
+    "plan": "Limit  (cost=9.50..465.14 rows=50 width=404) (actual time=1.827..2.768 rows=50 loops=1)\n  Buffers: shared hit=471\n  ->  Incremental Sort  (cost=9.50..25881.07 rows=2839 width=404) (actual time=1.826..2.760 rows=50 loops=1)\n        Sort Key: created_at DESC, id\n        Presorted Key: created_at\n        Full-sort Groups: 2  Sort Method: quicksort  Average Memory: 41kB  Peak Memory: 41kB\n        Buffers: shared hit=471\n        ->  Index Scan Backward using offers_market_status_created_idx on offers  (cost=0.42..25753.31 rows=2839 width=404) (actual time=0.067..2.668 rows=51 loops=1)\n              Index Cond: ((market_id = 'JO'::text) AND (status = 'PUBLISHED'::text))\n              Filter: ((unit_price_minor IS NOT NULL) AND (unit_price_minor <= 1000001) AND (((data ->> 'categoryId'::text) = 'cars'::text) OR ((data ->> 'category'::text) = 'سيارات'::text)))\n              Rows Removed by Filter: 3213\n              Buffers: shared hit=471\nPlanning Time: 0.310 ms\nExecution Time: 2.816 ms"
+   },
+   "browse": {
+    "sql": {
+     "p50": 75.4,
+     "p95": 78.9,
+     "rowsRead": 1550,
+     "batches": 5,
+     "heapGrowthKb": 5130,
+     "stageMedianMs": {
+      "textCandidates": 0,
+      "sponsoredLookup": 2,
+      "batches": 35.8,
+      "sellers": 3.1,
+      "predicates": 18
+     }
+    },
+    "legacy": {
+     "p50": 4189.5,
+     "p95": 4772.4,
+     "rowsRead": 100006,
+     "heapGrowthKb": 278088
+    },
+    "results": 24,
+    "plan": "Limit  (cost=0.42..16.71 rows=50 width=404) (actual time=0.045..0.084 rows=50 loops=1)\n  Buffers: shared hit=11\n  ->  Index Scan using offers_market_status_created_idx on offers  (cost=0.42..24717.70 rows=75843 width=404) (actual time=0.044..0.080 rows=50 loops=1)\n        Index Cond: ((market_id = 'JO'::text) AND (status = 'PUBLISHED'::text))\n        Buffers: shared hit=11\nPlanning Time: 0.163 ms\nExecution Time: 0.108 ms"
+   },
+   "priceSort": {
+    "sql": {
+     "p50": 201.6,
+     "p95": 249.9,
+     "rowsRead": 50,
+     "batches": 1,
+     "heapGrowthKb": 4401,
+     "stageMedianMs": {
+      "textCandidates": 36.6,
+      "sponsoredLookup": 0,
+      "batches": 147.3,
+      "sellers": 1.2,
+      "predicates": 0.9
+     }
+    },
+    "legacy": {
+     "p50": 3769,
+     "p95": 3952.2,
+     "rowsRead": 100006,
+     "heapGrowthKb": 217776
+    },
+    "results": 24,
+    "plan": "Sort  (cost=1979.06..1991.53 rows=4986 width=30) (actual time=186.676..189.000 rows=13641 loops=1)\n  Sort Key: (((offers.unit_price_minor IS NULL))::integer), (COALESCE(offers.unit_price_minor, 0)), offers.created_at DESC, offers.id\n  Sort Method: quicksort  Memory: 1130kB\n  Buffers: shared hit=66668\n  ->  Nested Loop  (cost=125.44..1672.83 rows=4986 width=30) (actual time=9.372..155.328 rows=13641 loops=1)\n        Buffers: shared hit=66668\n        ->  HashAggregate  (cost=125.02..127.02 rows=200 width=32) (actual time=9.281..13.929 rows=16667 loops=1)\n              Group Key: unnest('{bench-0074749,bench-0035329,bench-0082321,bench-0088164,bench-0089244,bench-0050413,bench-0089053,bench-0070188,bench-0052044,bench-0052008,bench-0018397,bench-0046009,bench-0063384,benc\n              Batches: 1  Memory Usage: 1569kB\n              ->  ProjectSet  (cost=0.00..83.35 rows=16667 width=32) (actual time=0.005..2.395 rows=16667 loops=1)\n                    ->  Result  (cost=0.00..0.01 rows=1 width=0) (actual time=0.001..0.003 rows=1 loops=1)\n        ->  Index Scan using offers_pkey on offers  (cost=0.42..7.97 rows=1 width=26) (actual time=0.008..0.008 rows=1 loops=16667)\n              Index Cond: (id = (unnest('{bench-0074749,bench-0035329,bench-0082321,bench-0088164,bench-0089244,bench-0050413,bench-0089053,bench-0070188,bench-0052044,bench-0052008,bench-0018397,bench-0046009,bench-0063\n              Filter: ((market_id = 'JO'::text) AND (status = 'PUBLISHED'::text) AND ((inventory_mode = 'UNLIMITED'::text) OR ((COALESCE(available_quantity, 0) - reserved_quantity) > 0)))\n              Rows Removed by Filter: 0\n              Buffers: shared hit=66668\nPlanning Time: 0.579 ms\nExecution Time: 191.367 ms"
+   },
+   "ownSeller": {
+    "sql": {
+     "p50": 5.7,
+     "p95": 8.2,
+     "rowsRead": 50,
+     "batches": 1,
+     "heapGrowthKb": 1208,
+     "stageMedianMs": {
+      "textCandidates": 0,
+      "sponsoredLookup": 0,
+      "batches": 2.2,
+      "sellers": 0.9,
+      "predicates": 0.8
+     }
+    },
+    "legacy": {
+     "p50": 3422.5,
+     "p95": 3479.9,
+     "rowsRead": 100006,
+     "heapGrowthKb": 220051
+    },
+    "results": 24
+   },
+   "attributeSort": {
+    "sql": {
+     "p50": 343.9,
+     "p95": 369.1,
+     "rowsRead": 7503,
+     "batches": 4,
+     "heapGrowthKb": 8316,
+     "stageMedianMs": {
+      "textCandidates": 0,
+      "sponsoredLookup": 0,
+      "batches": 227.4,
+      "sellers": 1.7,
+      "predicates": 102.2
+     }
+    },
+    "legacy": {
+     "p50": 3221.1,
+     "p95": 3579.1,
+     "rowsRead": 100006,
+     "heapGrowthKb": 210991
+    },
+    "results": 24
+   },
+   "restoreIds": {
+    "sql": {
+     "p50": 5.1,
+     "p95": 5.9,
+     "rowsRead": 3,
+     "batches": 1,
+     "heapGrowthKb": 662,
+     "stageMedianMs": {
+      "textCandidates": 0,
+      "sponsoredLookup": 0,
+      "batches": 1.7,
+      "sellers": 1,
+      "predicates": 0.1
+     }
+    },
+    "legacy": {
+     "p50": 2703.2,
+     "p95": 2772.1,
+     "rowsRead": 100006,
+     "heapGrowthKb": 216890
+    },
+    "results": 2
+   }
+  }
+ },
+ "relevance": {
+  "phoneBySynonym": {
+   "query": "هاتف",
+   "relevant": 9107,
+   "returned": 9107,
+   "recall": 1,
+   "precision": 1
+  },
+  "mobileBySynonym": {
+   "query": "جوال",
+   "relevant": 9107,
+   "returned": 9107,
+   "recall": 1,
+   "precision": 1
+  },
+  "sofa": {
+   "query": "كنب",
+   "relevant": 4550,
+   "returned": 4550,
+   "recall": 1,
+   "precision": 1
+  },
+  "acService": {
+   "query": "مكيفات",
+   "relevant": 4551,
+   "returned": 4551,
+   "recall": 1,
+   "precision": 1
+  },
+  "brandAndProduct": {
+   "query": "سيارة كيا",
+   "relevant": 1138,
+   "returned": 1138,
+   "recall": 1,
+   "precision": 1
+  }
+ }
+}
