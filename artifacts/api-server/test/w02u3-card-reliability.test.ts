@@ -298,7 +298,7 @@ await test("CR-09 replaying a completed turn with its original id changes nothin
     clientMessageId: original.id,
   }, buyer.cookie);
   assert.equal(replay.status, 409, replay.text);
-  assert.match(replay.data?.message ?? "", /اكتملت|قيد المعالجة/u);
+  assert.match(String(replay.data?.error ?? replay.data?.message ?? replay.text), /اكتملت|قيد المعالجة/u, replay.text);
   assert.equal(await cartQuantity(thirdListing), 1, "the replay adds no unit");
   const card = cardOf(reviewIn(await readConversation(thirdConversation)).block);
   assert.equal(card.status.lifecycle, "CONFIRMED");
