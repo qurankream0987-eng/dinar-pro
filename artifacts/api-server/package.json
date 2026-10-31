@@ -75,7 +75,9 @@
     "test:w08": "NODE_ENV=development BDINAR_W08_ACCEPTANCE=development BDINAR_WAVE4_ACCEPTANCE=development node test/run.mjs wave08-cash-and-refunds.test",
     "test:w09": "NODE_ENV=development BDINAR_W09_ACCEPTANCE=development BDINAR_WAVE4_ACCEPTANCE=development node test/run.mjs wave09-policy-consent-compliance.test",
     "test:w10": "NODE_ENV=development BDINAR_W10_ACCEPTANCE=development BDINAR_WAVE4_ACCEPTANCE=development node test/run.mjs wave10-trust-support-whatsapp.test",
-    "test:w12c": "NODE_ENV=development BDINAR_W12C_ACCEPTANCE=development BDINAR_WAVE4_ACCEPTANCE=development node test/run.mjs wave07-w12-contract-hardening.test"
+    "test:w12c": "NODE_ENV=development BDINAR_W12C_ACCEPTANCE=development BDINAR_WAVE4_ACCEPTANCE=development node test/run.mjs wave07-w12-contract-hardening.test",
+    "test:w02u3": "NODE_ENV=development BDINAR_W02U3_TEST_DATABASE=development node test/run.mjs w02u3-card-reliability.test",
+    "test:w02u3-browser": "NODE_ENV=development BDINAR_W02U3_BROWSER=development BDINAR_PROMOTIONS_ENABLED=true sh -c 'node test/run.mjs w02u3-card-reliability-browser-journey.test && node test/run.mjs w02u3-card-concurrency-browser-journey.test && node test/run.mjs w02u3-card-sessions-browser-journey.test && node test/run.mjs w02u3-card-recovery-browser-journey.test && node test/run.mjs w02u3-card-expiry-browser-journey.test && node test/run.mjs w02u3-card-accessibility-browser-journey.test && node test/run.mjs w02u3-card-performance-browser-journey.test'"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1155.0",
