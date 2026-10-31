@@ -41,8 +41,8 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm run typecheck
-      - name: Baseline Arabic search on disposable loopback PostgreSQL
+      - name: C1 regression on disposable loopback PostgreSQL
         working-directory: artifacts/api-server
         env:
           DINAR_LOCAL_PG: postgres://dinar_isolation@127.0.0.1:5432
-        run: sh test/isolation/local-suite.sh arabic-search-understanding.test BDINAR_TEST_DATABASE=development BDINAR_PROMOTIONS_ENABLED=true
+        run: sh test/isolation/local-suite.sh c1-sql-search.test BDINAR_TEST_DATABASE=development BDINAR_PROMOTIONS_ENABLED=true
