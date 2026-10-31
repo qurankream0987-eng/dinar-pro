@@ -62,7 +62,7 @@ async function request(
 
 let phoneCounter = 0;
 async function register(name: string): Promise<Actor> {
-  const number = `66${(Date.now() % 1_000_000).toString().padStart(6, "0")}${String(phoneCounter++ % 10)}`;
+  const number = `79${(Date.now() % 1_000_000).toString().padStart(6, "0")}${String(phoneCounter++ % 10)}`;
   const password = "w08-password-000000001";
   const response = await fetch(`${origin}/api/auth/register`, {
     method: "POST",
