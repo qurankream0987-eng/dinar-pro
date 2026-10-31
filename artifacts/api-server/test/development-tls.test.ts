@@ -165,7 +165,7 @@ test("clone migration accepts only the reviewed 43-entry journal, checked agains
     sha256: createHash("sha256").update(readFileSync(new URL(`${tag}.sql`, migrations))).digest("hex"),
   }));
   assert.equal(entries.length, 43);
-  assert.equal(REVIEWED_PENDING_MIGRATIONS.at(-1)?.tag, "0042_d1_d2_business_foundation");
+  assert.equal(REVIEWED_PENDING_MIGRATIONS.at(-1)?.tag, "0046_d1_d2_business_foundation");
   assert.doesNotThrow(() => assertCloneMigrationJournal(entries));
   assert.throws(() => assertCloneMigrationJournal(entries.slice(0, 42)), /expects 43/);
   assert.throws(() => assertCloneMigrationJournal([...entries, { tag: "0043_unreviewed", sha256: "0".repeat(64) }]), /expects 43/);
