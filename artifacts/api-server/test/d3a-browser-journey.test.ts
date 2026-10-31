@@ -137,6 +137,7 @@ await test("D3A REAL_UI: one business is created, activated, published, managed 
         D3A_USER_ID: owner.id,
         D3A_CONVERSATION_ID: conversationId,
         D3A_BUSINESS_ID: businessId,
+        D3A_BUSINESS_NAME: "مطعم الرمال",
         D3A_OWNER_NAME: owner.name,
         D3A_OWNER_PHONE: owner.phoneNumber,
         D3A_OWNER_COOKIE: owner.cookie,

@@ -21,6 +21,7 @@ const runId = env("D3A_RUN_ID");
 const userId = env("D3A_USER_ID");
 const conversationId = env("D3A_CONVERSATION_ID");
 const businessId = env("D3A_BUSINESS_ID");
+const businessName = env("D3A_BUSINESS_NAME");
 const ownerName = env("D3A_OWNER_NAME");
 const ownerPhone = env("D3A_OWNER_PHONE");
 const resultPath = env("D3A_UI_RESULT_PATH");
@@ -114,10 +115,12 @@ try {
   );
   assert.equal(listingIds.length, 3, "the storefront lists the published catalog");
   // The public payload is the contract: no owner account, contact, audit or staff field.
-  const publicPayload = JSON.stringify(await owner.api(`/businesses/${businessId}`));
-  assert.ok(!publicPayload.includes(ownerName), "the public payload never carries the owner's account name");
-  assert.ok(!publicPayload.includes(ownerPhone), "the public payload never carries the owner's private phone");
-  assert.ok(!/ownerUserId|owner_user_id|audit|staff|registration|document|credential/i.test(publicPayload), "no private record key reaches the payload");
+  const publicPayload = await owner.api(`/businesses/${businessId}`);
+  const publicJson = JSON.stringify(publicPayload);
+  assert.equal(publicPayload.name, businessName, "the payload names the business");
+  assert.ok(!publicJson.includes(ownerName), "the public payload never carries the owner's account name");
+  assert.ok(!publicJson.includes(ownerPhone), "the public payload never carries the owner's private phone");
+  assert.ok(!/ownerUserId|owner_user_id|audit|staff|registration|document|credential/i.test(publicJson), "no private record key reaches the payload");
   await owner.widths("D3A public business page", owner.page.getByTestId("card-business-profile"));
   outcome.publicPath = `/business/${businessId}`;
   outcome.listingIds = listingIds;
@@ -127,6 +130,7 @@ try {
   await buyer.page.goto(`/business/${businessId}`);
   await buyer.page.getByTestId(`page-business-${businessId}`).waitFor({ timeout: 30_000 });
   const buyerView = await buyer.page.locator("body").innerText();
+  assert.ok(buyerView.includes(businessName), "the storefront shows the business identity");
   assert.ok(!buyerView.includes(ownerName), "another account's view never shows the owner's account name");
   assert.ok(!buyerView.includes(ownerPhone), "another account's view never shows the owner's phone");
   assert.ok(!buyerView.includes("ownerUserId"), "the storefront exposes no owner account field");
