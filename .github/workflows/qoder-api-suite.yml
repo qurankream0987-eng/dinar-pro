@@ -66,7 +66,7 @@ jobs:
         run: pnpm --filter @workspace/dinar run test:surfaces
 
       - name: Install Chromium (browser journeys and XSS acceptance)
-        if: contains(env.SUITE, 'browser-journey') || contains(env.SUITE, 'security-acceptance')
+        if: contains(env.SUITE, 'browser-journey') || contains(env.SUITE, 'security-acceptance') || env.SUITE == 'w02-ultra-browser.test'
         working-directory: artifacts/dinar
         run: |
           pnpm exec playwright install --with-deps chromium

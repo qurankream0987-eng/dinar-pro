@@ -16,6 +16,7 @@ import type {
   GuestContext,
 } from "@/features/ai/conversation-storage";
 import { ChatComposer, type ReasoningEffort } from "@/features/ai/ChatComposer";
+import { publishCardSync, useCardSync } from "@/features/ai/card-sync";
 import { uploadListingPhoto } from "@/features/listing-photo-upload";
 import {
   MessageBubble,
@@ -170,6 +171,16 @@ export default function AiPage() {
     conversationId?: string;
     imageObjectPaths?: string[];
   } | null>(null);
+  /** A turn the server may have recorded whose response never arrived; never claimed as failed. */
+  const [verifyingTurn, setVerifyingTurn] = useState<{
+    text: string;
+    messageId: string;
+    conversationId: string;
+  } | null>(null);
+  /** Counts signals that say "re-read the server": another tab, focus, or a card expiry. */
+  const [externalCardSync, setExternalCardSync] = useState(0);
+  const localMessagesRef = useRef<AiMessage[] | null>(null);
+  localMessagesRef.current = localMessages;
   const conversationViewportRef = useRef<HTMLDivElement>(null);
   const conversationSearchRef = useRef<HTMLInputElement>(null);
   const contextButtonRef = useRef<HTMLButtonElement>(null);
@@ -502,6 +513,8 @@ export default function AiPage() {
       setDraft("");
       setHistoryQuery("");
       setFailedTurn(null);
+      setVerifyingTurn(null);
+      setExternalCardSync(0);
       requestEpoch.current += 1;
       sending.current = false;
       creating.current = false;
@@ -547,16 +560,33 @@ export default function AiPage() {
       initializedId.current = undefined;
       setLocalMessages(null);
     }
-    if (activeConversation && activeId && initializedId.current !== activeId) {
+    if (!activeConversation || !activeId) return;
+    if (initializedId.current !== activeId) {
       initializedId.current = activeId;
       setLocalMessages(activeConversation.messages);
+      return;
     }
-  }, [activeConversation, activeId]);
+    // A sibling tab, a focus return or a card expiry asked for a re-read: adopt the server's
+    // messages once they are at least as new as what is on screen, so a settled card is never
+    // revived from a local copy and an in-flight turn is never rolled back.
+    if (!externalCardSync) return;
+    if (streaming || sending.current || creating.current || failedTurn || verifyingTurn)
+      return;
+    const newest = (list: AiMessage[]) =>
+      list.reduce(
+        (latest, message) => Math.max(latest, Date.parse(message.createdAt) || 0),
+        0,
+      );
+    if (newest(activeConversation.messages) < newest(localMessagesRef.current ?? []))
+      return;
+    setLocalMessages(activeConversation.messages);
+  }, [activeConversation, activeId, externalCardSync, streaming, failedTurn, verifyingTurn]);
 
   useEffect(() => {
     setVisibleMessageCount(40);
     setError("");
     setFailedTurn(null);
+    setVerifyingTurn(null);
     shouldAutoFollow.current = true;
     userScrollUntil.current = 0;
     setShowJumpToBottom(false);
@@ -612,6 +642,59 @@ export default function AiPage() {
       queryKey: aiQueryKeys().conversation(conversationId),
     });
   };
+
+  const syncFromServer = (conversationId?: string) => {
+    setExternalCardSync((value) => value + 1);
+    const target = conversationId ?? activeId;
+    if (target) refreshConversationData(target);
+  };
+
+  // Another tab of this account announced a settled change: re-read, never copy its payload.
+  useCardSync(user?.id, market?.id, (event) => {
+    syncFromServer(event.conversationId);
+  });
+
+  // A tab that was hidden may have missed a BroadcastChannel message; returning to it re-reads.
+  useEffect(() => {
+    if (!user) return;
+    const revalidate = () => {
+      if (document.visibilityState !== "visible" || !activeId) return;
+      syncFromServer(activeId);
+    };
+    document.addEventListener("visibilitychange", revalidate);
+    window.addEventListener("focus", revalidate);
+    return () => {
+      document.removeEventListener("visibilitychange", revalidate);
+      window.removeEventListener("focus", revalidate);
+    };
+  }, [activeId, user?.id]);
+
+  // A pending review has a server expiry. When it passes, only a re-read is requested: the
+  // server shortens the card to EXPIRED; the client never extends or executes it.
+  useEffect(() => {
+    if (!activeId || !messages.length) return;
+    const now = Date.now();
+    let nextAt = Number.POSITIVE_INFINITY;
+    for (const message of messages)
+      for (const block of message.blocks) {
+        if (block.type !== "SURFACE") continue;
+        const card = (
+          block.payload as {
+            card?: { status?: { lifecycle?: string }; expiresAt?: string };
+          }
+        ).card;
+        if (card?.status?.lifecycle !== "PENDING_REVIEW") continue;
+        if (typeof card.expiresAt !== "string") continue;
+        const at = Date.parse(card.expiresAt);
+        if (Number.isFinite(at) && at > now) nextAt = Math.min(nextAt, at);
+      }
+    if (!Number.isFinite(nextAt)) return;
+    const timer = window.setTimeout(
+      () => syncFromServer(activeId),
+      Math.min(nextAt - now + 1_000, 2_000_000_000),
+    );
+    return () => window.clearTimeout(timer);
+  }, [activeId, messages]);
 
   const guestTurn = async (
     value: string,
@@ -913,6 +996,78 @@ export default function AiPage() {
     }
   };
 
+  /**
+   * A turn whose response was lost is decided by the server record, never by the browser's guess:
+   * an answered turn is adopted, a delivered but unfinished turn waits for verification, and only
+   * an unsent turn becomes a retry (with the same client message id, so the server cannot repeat it).
+   */
+  const reconcileDeliveredTurn = async (
+    conversationId: string,
+    text: string,
+    messageId: string,
+    epoch: number,
+  ): Promise<boolean> => {
+    try {
+      const restored = normalizeDetail(
+        await api(`/ai/conversations/${conversationId}`),
+      );
+      if (epoch !== requestEpoch.current) return true;
+      const index = restored.messages.findIndex(
+        (message) => message.id === messageId,
+      );
+      const answered =
+        index >= 0 &&
+        restored.messages
+          .slice(index + 1)
+          .some((message) => message.role === "ASSISTANT");
+      setLocalMessages(restored.messages);
+      if (answered) {
+        setError("");
+        setFailedTurn(null);
+        setVerifyingTurn(null);
+        setDraft((current) => (current === text ? "" : current));
+        if (user && market) publishCardSync(user.id, market.id, conversationId);
+        setExternalCardSync((value) => value + 1);
+        return true;
+      }
+      if (index >= 0) {
+        setFailedTurn(null);
+        setVerifyingTurn({ text, messageId, conversationId });
+        setError(
+          "وصل طلبك إلى DINAR، لكن تأكيد الرد لم يكتمل بعد. نتحقق من السجل — لا حاجة لإعادة الإرسال.",
+        );
+        return true;
+      }
+      setVerifyingTurn(null);
+      setDraft((current) => current || text);
+      setFailedTurn({ text, messageId, conversationId });
+      setError("لم يصل طلبك إلى DINAR. أعد المحاولة بأمان.");
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  const verifyTurn = async () => {
+    if (!verifyingTurn || sending.current || streaming) return;
+    const pending = verifyingTurn;
+    setVerifyingTurn(null);
+    const handled = await reconcileDeliveredTurn(
+      pending.conversationId,
+      pending.text,
+      pending.messageId,
+      requestEpoch.current,
+    );
+    if (handled) return;
+    setDraft((current) => current || pending.text);
+    setFailedTurn({
+      text: pending.text,
+      messageId: pending.messageId,
+      conversationId: pending.conversationId,
+    });
+    setError("تعذر التحقق من السجل الآن. أعد المحاولة بأمان بنفس الرسالة.");
+  };
+
   const sendMessage = async (
     conversationId: string,
     value: string,
@@ -928,6 +1083,7 @@ export default function AiPage() {
     sending.current = true;
     const epoch = requestEpoch.current;
     setError("");
+    setVerifyingTurn(null);
     const now = new Date().toISOString();
     const userMessage: AiMessage = {
       id: retryId ?? crypto.randomUUID(),
@@ -1006,6 +1162,9 @@ export default function AiPage() {
             });
             refreshConversationData(conversationId);
             setStage(null);
+            setVerifyingTurn(null);
+            if (user && market)
+              publishCardSync(user.id, market.id, conversationId);
             if (photos.length) {
               setSelectedPhotos([]);
               for (const file of photos)
@@ -1044,6 +1203,21 @@ export default function AiPage() {
       );
     } catch (cause) {
       if (epoch !== requestEpoch.current) return;
+      // A lost response, or a retry the server says is already settled, is reconciled from the
+      // record. The UI never claims that a possibly-executed turn failed, and never sends it again.
+      const status = (cause as { status?: unknown })?.status;
+      const deliveryUnknown =
+        (cause as { deliveryUnknown?: unknown })?.deliveryUnknown === true ||
+        status === 409;
+      if (deliveryUnknown && !location) {
+        const handled = await reconcileDeliveredTurn(
+          conversationId,
+          text,
+          userMessage.id,
+          epoch,
+        );
+        if (handled) return;
+      }
       refreshConversationData(conversationId);
       setError(friendlyError(cause));
       if (location) {
@@ -1097,6 +1271,7 @@ export default function AiPage() {
           assistantMessage,
         ]);
         refreshConversationData(activeId);
+        if (user && market) publishCardSync(user.id, market.id, activeId);
       } catch (cause) {
         if (epoch !== requestEpoch.current) return;
         setError(friendlyError(cause));
@@ -1643,6 +1818,17 @@ export default function AiPage() {
           role="alert"
         >
           <p>{error}</p>
+          {verifyingTurn && (
+            <button
+              type="button"
+              disabled={streaming}
+              onClick={() => void verifyTurn()}
+              className={buttonClass("ghost", "sm", false, "mt-1")}
+              data-testid="button-verify-ai-turn"
+            >
+              تحقق من النتيجة
+            </button>
+          )}
           {failedTurn && (
             <button
               type="button"
