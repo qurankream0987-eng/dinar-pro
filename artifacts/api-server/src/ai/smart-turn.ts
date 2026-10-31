@@ -53,7 +53,7 @@ import {
 } from "./model-turn";
 import { claimsCompletedAction, enforceModelAuthority, recentActionReceipts } from "./action-receipts";
 import { AUTH_RATE_LIMIT_SCOPE, consumeRateLimit } from "../lib/auth-rate-limiter";
-import { escalatesAfterLight, gatewayForTier, heavyTurnLimit, modelTieringEnabled, selectModelTier, type ModelTier, type TierDecision, type TierReason } from "./model-tier";
+import { escalatesAfterLight, gatewayForTier, heavyTurnLimit, modelTieringEnabled, selectModelTier, type ModelTier, type TierDecision, type TierReason, type TierRoute } from "./model-tier";
 import { aiUsageSummary, reserveAiUsage, settleAiUsage, type AiUsageOutcome, type AiUsageOwner, type AiUsageRefusal } from "../lib/ai-usage";
 import { businessPlans, planAiTier } from "../lib/business";
 import { nearLimitNote, PLAN_HINT_MARKER, usageLimitMessage, usageResourceFor } from "./usage-turn";
@@ -845,25 +845,37 @@ export async function draftWithClaimGuard(
   tiering?: { decision: TierDecision; allowEscalation: () => Promise<boolean> },
 ): Promise<{ outcome: Awaited<ReturnType<typeof interpretWithModel>>; blocked?: ClaimKind[]; metered: ModelMetering; tier?: TierTrace }> {
   const startedAt = Date.now();
-  let tier = tiering?.decision.tier ?? "LIGHT";
-  let chosen = tiering ? gatewayForTier(gateway, tier, context.reasoningEffort) : { gateway, reasoningEffort: context.reasoningEffort };
+  const deadlineLeft = () => Number(process.env.DINAR_MODEL_TIMEOUT_MS ?? 25000) - (Date.now() - startedAt);
+  let chosen: TierRoute = tiering
+    ? gatewayForTier(gateway, tiering.decision.tier, context.reasoningEffort)
+    : { tier: "LIGHT", gateway, ...(context.reasoningEffort ? { reasoningEffort: context.reasoningEffort } : {}) };
+  let reason: TierReason | undefined = chosen.degraded ?? tiering?.decision.reason;
   const outcomes: Awaited<ReturnType<typeof interpretWithModel>>[] = [];
   let outcome = await interpretWithModel(chosen.gateway, message, { ...context, reasoningEffort: chosen.reasoningEffort });
   outcomes.push(outcome);
   let escalated = false;
-  // One bounded escalation, inside the same turn deadline, with the same context.
-  if (tiering && tier === "LIGHT" && !outcome.ok && escalatesAfterLight(outcome.reason) && (await tiering.allowEscalation())) {
-    const left = Number(process.env.DINAR_MODEL_TIMEOUT_MS ?? 25000) - (Date.now() - startedAt);
-    if (left > 1000) {
-      tier = "HEAVY";
-      escalated = true;
-      chosen = gatewayForTier(gateway, "HEAVY", context.reasoningEffort);
-      outcome = await interpretWithModel(chosen.gateway, message, { ...context, reasoningEffort: chosen.reasoningEffort }, left);
+  if (tiering && !outcome.ok && deadlineLeft() > 1000) {
+    if (chosen.tier === "LIGHT" && escalatesAfterLight(outcome.reason) && tiering.decision.reason !== "DECISION_NEVER_ESCALATES") {
+      // One bounded escalation, inside the same turn deadline, with the same context. Only when
+      // HEAVY can actually be served now, so a refused attempt is never spent.
+      const heavyRoute = gatewayForTier(gateway, "HEAVY", context.reasoningEffort);
+      if (heavyRoute.tier === "HEAVY" && (await tiering.allowEscalation())) {
+        escalated = true;
+        reason = "LIGHT_OUTPUT_INVALID";
+        chosen = heavyRoute;
+        outcome = await interpretWithModel(chosen.gateway, message, { ...context, reasoningEffort: chosen.reasoningEffort }, deadlineLeft());
+        outcomes.push(outcome);
+      }
+    } else if (chosen.heavyKind === "SEPARATE_MODEL" && (outcome.reason === "UNAVAILABLE" || outcome.reason === "QUOTA_LIMITED" || outcome.reason === "NOT_CONFIGURED")) {
+      // The separate HEAVY model could not answer (its own fallback included): LIGHT answers once.
+      reason = "HEAVY_UNAVAILABLE";
+      chosen = gatewayForTier(gateway, "LIGHT", context.reasoningEffort);
+      outcome = await interpretWithModel(chosen.gateway, message, { ...context, reasoningEffort: chosen.reasoningEffort }, deadlineLeft());
       outcomes.push(outcome);
     }
   }
   const trace: TierTrace | undefined = tiering
-    ? { tier, reason: escalated ? "LIGHT_OUTPUT_INVALID" : tiering.decision.reason, escalated, ...("heavyKind" in chosen && chosen.heavyKind ? { heavyKind: chosen.heavyKind } : {}) }
+    ? { tier: chosen.tier, reason: reason!, escalated, ...(chosen.heavyKind ? { heavyKind: chosen.heavyKind } : {}) }
     : undefined;
   if (trace) logger.info({ event: "dinar_ai_model_tier", ...trace, outcome: outcome.ok ? "OK" : outcome.reason, provider: outcome.modelCall.provider, model: outcome.modelCall.actualModel ?? outcome.modelCall.requestedModel }, "model tier");
   const done = (extra: { blocked?: ClaimKind[] } = {}) => ({ outcome, ...extra, metered: metering(outcomes), ...(trace ? { tier: trace } : {}) });
@@ -1046,7 +1058,7 @@ export async function executeModelFallback(
     const actorId = input.actorId;
     let tiering: Parameters<typeof draftWithClaimGuard>[3];
     if (modelTieringEnabled()) {
-      let decision = selectModelTier(input.message);
+      let decision = selectModelTier(input.message, process.env, { requestedEffort: input.reasoningEffort });
       if (decision.tier === "HEAVY" && !(await heavyAllowed(actorId))) decision = { tier: "LIGHT", reason: "HEAVY_CAP_REACHED" };
       const noEscalation = decision.reason === "HEAVY_CAP_REACHED" || decision.reason === "DECISION_NEVER_ESCALATES";
       tiering = { decision, allowEscalation: () => (noEscalation ? Promise.resolve(false) : heavyAllowed(actorId)) };

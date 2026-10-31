@@ -11,7 +11,15 @@ export type AIProviderErrorCode =
 
 /** Why a provider answered without a usable DINAR turn (a model outcome, not a transport fault). */
 /** INCOMPLETE: the provider ended generation for a reason that leaves the call unfinished (DeepSeek `aborted`). */
-export type AIResponseDetail = "OUTPUT_LIMIT" | "REFUSAL" | "NO_TOOL_CALL" | "INCOMPLETE" | "DISABLED" | "CIRCUIT_OPEN";
+/** DISABLED, CIRCUIT_OPEN and UNSUPPORTED_OPTION are local refusals: nothing was sent to the provider. */
+export type AIResponseDetail = "OUTPUT_LIMIT" | "REFUSAL" | "NO_TOOL_CALL" | "INCOMPLETE" | "DISABLED" | "CIRCUIT_OPEN" | "UNSUPPORTED_OPTION";
+export const LOCAL_REFUSAL_DETAILS: readonly AIResponseDetail[] = ["DISABLED", "CIRCUIT_OPEN", "UNSUPPORTED_OPTION"];
+/** An option this model cannot take (a per-call reasoning effort), refused before any request. */
+function unsupportedOption(provider: AIProvider, model: string): AIProviderError {
+  const error = new AIProviderError(provider, "UNAVAILABLE", model);
+  error.detail = "UNSUPPORTED_OPTION";
+  return error;
+}
 
 export class AIProviderError extends Error {
   /** Usage the provider reported for a response that was billed but not usable. */
@@ -458,6 +466,11 @@ export interface ConversationModelGateway {
   readonly fallback?: ConversationModelGateway;
   /** The HEAVY tier (model-tier.ts): a stronger model for requests that earn it. Absent: same model, high effort. */
   readonly heavy?: ConversationModelGateway;
+  /**
+   * Whether a per-call reasoning effort is applied by this model (Groq gpt-oss today). Absent or
+   * false: sending one is refused locally, so model-tier.ts never relies on it.
+   */
+  readonly perCallReasoningEffort?: boolean;
 }
 
 /** Aborting cancels the provider request (turn timeout); it never retries a mutation. */
@@ -529,7 +542,7 @@ export function proposeThroughGateway(
       // The caller's own cancellation (turn deadline, client gone) says nothing about the provider.
       if (options?.signal?.aborted) throw error;
       // Outages count; a billed but unusable answer (OUTPUT_LIMIT, REFUSAL…) is the model, not the provider.
-      const outage = !(error instanceof AIProviderError) || error.code === "UNAVAILABLE";
+      const outage = !(error instanceof AIProviderError) || (error.code === "UNAVAILABLE" && !LOCAL_REFUSAL_DETAILS.includes(error.detail as AIResponseDetail));
       if (outage) {
         state.failures += 1;
         if (isTrial || state.failures >= threshold) {
@@ -549,6 +562,15 @@ export function isProviderDisabled(provider: string, model: string, env: NodeJS.
   const disabled = (env.DINAR_AI_DISABLED_PROVIDERS ?? "").split(",").map((value) => value.trim().toUpperCase()).filter(Boolean);
   const p = provider.toUpperCase();
   return disabled.includes("*") || disabled.includes(p) || disabled.includes(`${p}:${model.toUpperCase()}`);
+}
+
+/** Whether a request to this gateway would be sent now: not disabled and its breaker not open. */
+export function gatewayLocallyAvailable(gateway: ConversationModelGateway, now = Date.now()): boolean {
+  const info = gateway.providerInfo;
+  if (!info) return true;
+  if (isProviderDisabled(info.provider, info.requestedModel)) return false;
+  const state = breakers.get(`${info.provider}:${info.requestedModel}`);
+  return !state || state.openUntil <= now;
 }
 
 /**
@@ -653,6 +675,11 @@ class OpenAICompatibleChatGateway implements ConversationModelGateway {
     private readonly gemmaFreeOnly = false,
   ) {}
 
+  /** Only Groq's gpt-oss applies a per-call effort; DeepSeek ignores one (its turn stays non-thinking). */
+  get perCallReasoningEffort(): boolean {
+    return this.providerInfo.provider === "GROQ" && this.providerInfo.requestedModel === "openai/gpt-oss-120b";
+  }
+
   async proposeToolCall(
     messages: ModelMessage[],
     tools: ModelToolDefinition[],
@@ -664,14 +691,9 @@ class OpenAICompatibleChatGateway implements ConversationModelGateway {
     if (
       options.reasoningEffort &&
       this.providerInfo.provider !== "DEEPSEEK" &&
-      (this.providerInfo.provider !== "GROQ" ||
-        this.providerInfo.requestedModel !== "openai/gpt-oss-120b")
+      !this.perCallReasoningEffort
     )
-      throw new AIProviderError(
-        this.providerInfo.provider,
-        "UNAVAILABLE",
-        this.providerInfo.requestedModel,
-      );
+      throw unsupportedOption(this.providerInfo.provider, this.providerInfo.requestedModel);
     // DeepSeek rejects a forced tool call in thinking mode (HTTP 400): refuse it before a billed request.
     if (this.providerInfo.provider === "DEEPSEEK" && this.policy.toolChoice !== "AUTO" && this.policy.reasoningEffort !== "none")
       throw new AIProviderError(this.providerInfo.provider, "NOT_CONFIGURED", this.providerInfo.requestedModel);
@@ -832,7 +854,7 @@ class OpenAIResponsesGateway implements ConversationModelGateway {
     const startedAt = Date.now();
     // Per-call effort is a Groq gpt-oss feature; the configured effort is the only one here.
     if (options.reasoningEffort)
-      throw new AIProviderError(this.providerInfo.provider, "UNAVAILABLE", this.providerInfo.requestedModel);
+      throw unsupportedOption(this.providerInfo.provider, this.providerInfo.requestedModel);
     try {
       const result = await this.client.responses.create(
         {
@@ -915,7 +937,7 @@ class GeminiGenerateContentGateway implements ConversationModelGateway {
   async proposeToolCall(messages: ModelMessage[], tools: ModelToolDefinition[], options: ModelCallOptions = {}): Promise<ProposedToolCall> {
     const startedAt = Date.now();
     if (options.reasoningEffort)
-      throw new AIProviderError("GEMINI", "UNAVAILABLE", this.providerInfo.requestedModel);
+      throw unsupportedOption("GEMINI", this.providerInfo.requestedModel);
     const systemInstruction = messages.filter((message) => message.role === "system").map((message) => message.content).join("\n\n");
     const contents: { role: "user" | "model"; parts: { text: string }[] }[] = [];
     for (const message of messages) {
@@ -1094,6 +1116,7 @@ export async function createConversationModelGateway(
     providerInfo: primary.providerInfo,
     ...(primary.fallback ? { fallback: primary.fallback } : {}),
     heavy,
+    perCallReasoningEffort: (primary as ConversationModelGateway).perCallReasoningEffort === true,
     proposeToolCall: (messages, tools, options) => primary.proposeToolCall(messages, tools, options),
   };
 }

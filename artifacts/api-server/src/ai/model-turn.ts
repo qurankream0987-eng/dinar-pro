@@ -19,6 +19,7 @@ import {
 } from "@workspace/api-zod/conversation-runtime";
 import {
   AIProviderError,
+  LOCAL_REFUSAL_DETAILS,
   type AIProvider,
   type ConversationModelGateway,
   type ProposedToolCall,
@@ -607,7 +608,7 @@ export async function interpretWithModel(
         });
     } catch (error) {
       // A request refused locally (provider disabled, circuit open) was never sent: no attempt, no cost.
-      const notSent = error instanceof AIProviderError && (error.detail === "DISABLED" || error.detail === "CIRCUIT_OPEN");
+      const notSent = error instanceof AIProviderError && error.detail !== undefined && LOCAL_REFUSAL_DETAILS.includes(error.detail);
       if (notSent) issuedCalls -= 1;
       // A response that was billed but unusable keeps its provider-reported usage, so it is priced.
       const billed = error instanceof AIProviderError ? error.usage : undefined;

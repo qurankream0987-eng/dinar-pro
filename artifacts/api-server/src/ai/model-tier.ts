@@ -15,7 +15,7 @@
  *
  * Off by default (DINAR_AI_TIERING unset or "off"): the single-model behaviour is unchanged.
  */
-import type { ConversationModelGateway, ReasoningEffort } from "./model-gateway";
+import { gatewayLocallyAvailable, type ConversationModelGateway, type ReasoningEffort } from "./model-gateway";
 import type { ModelFailure } from "./model-turn";
 import { isDecisionUtterance } from "./routing-mode";
 import { normalizeSearch } from "./search-context";
@@ -25,12 +25,15 @@ export type TierReason =
   | "TIERING_OFF"
   | "DEFAULT_LIGHT"
   | "DECISION_NEVER_ESCALATES"
+  | "USER_PREFERENCE"
   | "LONG_REQUEST"
   | "ANALYSIS"
+  | "CALCULATION"
   | "MULTI_QUESTION"
   | "WRITING"
   | "LIGHT_OUTPUT_INVALID"
-  | "HEAVY_CAP_REACHED";
+  | "HEAVY_CAP_REACHED"
+  | "HEAVY_UNAVAILABLE";
 export type TierDecision = { tier: ModelTier; reason: TierReason };
 
 export function modelTieringEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
@@ -50,36 +53,85 @@ export function heavyTurnLimit(env: NodeJS.ProcessEnv = process.env): number {
   return Number.isInteger(value) && value >= 0 ? Math.min(value, 20) : 0;
 }
 
-const ANALYSIS = /(?:^|\s)(?:اشرح|اشرحلي|وضح|وضحلي|حلل|حللي|ليش|لماذا|ليه|خطه|خطة|استراتيجيه|استراتيجية|دراسه|دراسة|ما\s+الفرق|ايش\s+الفرق|شو\s+الفرق|وش\s+الفرق|ايهما\s+افضل|كيف\s+ابدا|كيف\s+أبدأ|نصيحه|نصيحة|انصحني)(?=\s|$)/u;
-const WRITING = /(?:^|\s)(?:اكتب|اكتبلي|صيغ|صيغلي|صغ|صغلي|ألف|الف|اعد\s+صياغه|اعد\s+صياغة|وصف\s+تسويقي|اعلان\s+تسويقي|منشور)(?=\s|$)/u;
+// Explaining one thing («اشرح», «ليش», «ما الفرق», «انصحني») is LIGHT work; these name reasoning load.
+const ANALYSIS = /(?:^|\s)(?:حلل|حللي|حللّي|تحليل|خطه|خطة|استراتيجيه|استراتيجية|دراسه\s+جدوى|دراسة\s+جدوى|بالتفصيل|خطوه\s+بخطوه|خطوة\s+بخطوة|نقطه\s+التعادل|نقطة\s+التعادل|قارن\s+(?:لي\s+)?بين|من\s+حيث)(?=\s|$)/u;
+// A calculation: three or more figures together with a money/arithmetic term.
+const CALCULATION_TERMS = /(?:^|\s)(?:احسب|احسبلي|حساب|ربح|ربحي|الربح|صافي|نسبه|نسبة|خصم|عموله|عمولة|ضريبه|ضريبة|تكلفه|تكلفة|التكلفه|التكلفة|هامش|مصاريف|يطلع)(?=\s|$)|%/u;
+const WRITE_VERB = /(?:^|\s)(?:اكتب|اكتبلي|صيغ|صيغلي|صغ|صغلي|جهزلي|جهز)(?=\s|$)/u;
+// Writing is HEAVY only when long-form or multi-variant; one listing's copy is LIGHT.
+const LONG_FORM = /(?:^|\s)(?:حمله|حملة|مقال|سلسله|سلسلة|نسخ|اساليب|أساليب|عده|عدة|خمس|ثلاث|عشر|كامله|كاملة)(?=\s|$)/u;
+// Quoted or pasted material is not the user's instruction: its length earns nothing.
+const QUOTED = /«[^»]*»|“[^”]*”|"[^"]*"|```[\s\S]*?```/gu;
 
-/** The deterministic, model-free tier choice for one message. */
-export function selectModelTier(message: string, env: NodeJS.ProcessEnv = process.env): TierDecision {
-  if (!modelTieringEnabled(env)) return { tier: "LIGHT", reason: "TIERING_OFF" };
-  if (isDecisionUtterance(message)) return { tier: "LIGHT", reason: "DECISION_NEVER_ESCALATES" };
-  if (message.trim().length >= heavyMinChars(env)) return { tier: "HEAVY", reason: "LONG_REQUEST" };
-  const text = normalizeSearch(message);
-  if (ANALYSIS.test(text)) return { tier: "HEAVY", reason: "ANALYSIS" };
-  if (WRITING.test(text)) return { tier: "HEAVY", reason: "WRITING" };
-  if ((message.match(/[?؟]/gu) ?? []).length >= 3) return { tier: "HEAVY", reason: "MULTI_QUESTION" };
-  return { tier: "LIGHT", reason: "DEFAULT_LIGHT" };
-}
-
-/** One bounded escalation: only a structured-output failure of LIGHT earns a HEAVY retry. */
-export function escalatesAfterLight(reason: ModelFailure): boolean {
-  return reason === "MALFORMED" || reason === "UNKNOWN_ACTION";
+/** The user's own words: the message without quoted or pasted spans. */
+export function instructionText(message: string): string {
+  return message.replace(QUOTED, " ").replace(/\s+/gu, " ").trim();
 }
 
 /**
- * The gateway and effort for a tier. HEAVY prefers the configured heavy model; otherwise it is
- * the LIGHT model at "high" effort (marked so observability does not claim a second model).
+ * The deterministic, model-free tier choice for one message. `requestedEffort` is the user's own
+ * depth preference from the composer, when given: «high» asks for HEAVY, «low» keeps LIGHT.
  */
-export function gatewayForTier(
-  light: ConversationModelGateway,
-  tier: ModelTier,
-  requestedEffort?: ReasoningEffort,
-): { gateway: ConversationModelGateway; reasoningEffort?: ReasoningEffort; heavyKind?: "SEPARATE_MODEL" | "SAME_MODEL_HIGH_EFFORT" } {
-  if (tier === "LIGHT") return { gateway: light, ...(requestedEffort ? { reasoningEffort: requestedEffort } : {}) };
-  if (light.heavy) return { gateway: light.heavy, ...(requestedEffort ? { reasoningEffort: requestedEffort } : {}), heavyKind: "SEPARATE_MODEL" };
-  return { gateway: light, reasoningEffort: "high", heavyKind: "SAME_MODEL_HIGH_EFFORT" };
+export function selectModelTier(
+  message: string,
+  env: NodeJS.ProcessEnv = process.env,
+  options: { requestedEffort?: ReasoningEffort } = {},
+): TierDecision {
+  if (!modelTieringEnabled(env)) return { tier: "LIGHT", reason: "TIERING_OFF" };
+  if (isDecisionUtterance(message)) return { tier: "LIGHT", reason: "DECISION_NEVER_ESCALATES" };
+  if (options.requestedEffort === "high") return { tier: "HEAVY", reason: "USER_PREFERENCE" };
+  if (options.requestedEffort === "low") return { tier: "LIGHT", reason: "USER_PREFERENCE" };
+  const instruction = instructionText(message);
+  if (instruction.length >= heavyMinChars(env)) return { tier: "HEAVY", reason: "LONG_REQUEST" };
+  const text = normalizeSearch(instruction);
+  if (ANALYSIS.test(text)) return { tier: "HEAVY", reason: "ANALYSIS" };
+  if ((text.match(/\d+(?:[.,]\d+)?/gu) ?? []).length >= 3 && CALCULATION_TERMS.test(text)) return { tier: "HEAVY", reason: "CALCULATION" };
+  if (WRITE_VERB.test(text) && LONG_FORM.test(text)) return { tier: "HEAVY", reason: "WRITING" };
+  if ((instruction.match(/[?؟]/gu) ?? []).length >= 3) return { tier: "HEAVY", reason: "MULTI_QUESTION" };
+  return { tier: "LIGHT", reason: "DEFAULT_LIGHT" };
+}
+
+/**
+ * One bounded escalation, for a malformed structure only (a format failure LIGHT could not meet).
+ * An out-of-allowlist action (UNKNOWN_ACTION) is not a capability gap but a refusal-worthy answer,
+ * often an injection attempt: escalating it would hand the attacker a second, stronger try.
+ * Outages belong to the fallback path, timeouts have spent the deadline, quota is a refusal.
+ */
+export function escalatesAfterLight(reason: ModelFailure): boolean {
+  return reason === "MALFORMED";
+}
+
+export type TierRoute = {
+  /** The tier actually used: HEAVY degrades to LIGHT when it cannot be served right now. */
+  tier: ModelTier;
+  gateway: ConversationModelGateway;
+  reasoningEffort?: ReasoningEffort;
+  heavyKind?: "SEPARATE_MODEL" | "SAME_MODEL_HIGH_EFFORT";
+  degraded?: "HEAVY_UNAVAILABLE";
+};
+
+/** A per-call effort only where the model takes it (DeepSeek accepts and ignores one; test doubles have no provider). */
+function effortFor(gateway: ConversationModelGateway, effort?: ReasoningEffort): ReasoningEffort | undefined {
+  if (!effort) return undefined;
+  return gateway.perCallReasoningEffort === true || gateway.providerInfo?.provider === "DEEPSEEK" || !gateway.providerInfo ? effort : undefined;
+}
+
+/**
+ * The gateway and effort for a tier. HEAVY prefers the configured heavy model when it is available
+ * (not disabled, breaker not open); otherwise the LIGHT model at "high" effort when that model
+ * applies a per-call effort; otherwise the turn degrades to LIGHT rather than failing.
+ */
+export function gatewayForTier(light: ConversationModelGateway, tier: ModelTier, requestedEffort?: ReasoningEffort): TierRoute {
+  const lightRoute = (degraded?: "HEAVY_UNAVAILABLE"): TierRoute => {
+    const reasoningEffort = effortFor(light, requestedEffort);
+    return { tier: "LIGHT", gateway: light, ...(reasoningEffort ? { reasoningEffort } : {}), ...(degraded ? { degraded } : {}) };
+  };
+  if (tier === "LIGHT") return lightRoute();
+  if (light.heavy && gatewayLocallyAvailable(light.heavy)) {
+    const reasoningEffort = effortFor(light.heavy, requestedEffort);
+    return { tier: "HEAVY", gateway: light.heavy, ...(reasoningEffort ? { reasoningEffort } : {}), heavyKind: "SEPARATE_MODEL" };
+  }
+  if (light.perCallReasoningEffort === true && gatewayLocallyAvailable(light))
+    return { tier: "HEAVY", gateway: light, reasoningEffort: "high", heavyKind: "SAME_MODEL_HIGH_EFFORT" };
+  return lightRoute("HEAVY_UNAVAILABLE");
 }
