@@ -82,6 +82,12 @@ try {
   await signIn(page, buyer);
   await openConversationFromHistory();
 
+  // Every execution attempt is a turn POST; expiry must never produce one by itself.
+  let turnPosts = 0;
+  page.on("request", (request) => {
+    if (request.method() === "POST" && new URL(request.url()).pathname === `/api/ai/conversations/${conversationId}/turns`) turnPosts++;
+  });
+
   // ── the review starts pending with the server identity ──────────────────────
   const started = await purchaseCard(page);
   assert.equal(started.lifecycle, "PENDING_REVIEW");
@@ -120,6 +126,8 @@ try {
   assert.equal(expiredServer?.status?.lifecycle, "EXPIRED", "the server reports EXPIRED");
   assert.deepEqual(expiredServer?.allowedActions, [], "the server allows no action");
   checks.push("CR-11: the client refreshes after expiry and the server returns EXPIRED with no action");
+  assert.equal(turnPosts, 0, "the expiry refresh sent no turn");
+  checks.push("CR-11: the automatic expiry refresh is a re-read, never an execution");
 
   // ── a late confirmation cannot revive or execute the review ─────────────────
   const late = await page.evaluate(
@@ -135,6 +143,7 @@ try {
   );
   assert.equal(late.status, 200, late.text.slice(0, 300));
   assert.match(late.text, /انتهت صلاحية/u, late.text.slice(0, 400));
+  assert.equal(turnPosts, 1, "only the deliberate late attempt ever sent a turn");
   await page.evaluate(() => window.dispatchEvent(new Event("focus")));
   await sleep(1500);
   const afterLate = await purchaseCard(page);
