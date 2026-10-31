@@ -1,20 +1,64 @@
 name: qoder-api-suite
 
+# Isolated, development-only acceptance runner.
+# - No repository secrets are referenced; nothing here can reach Railway, production, a payment
+#   provider or a paid AI provider.
+# - Every third-party action is pinned to a reviewed commit SHA (same pins as qoder-security.yml).
+# - The only database is the ephemeral PostgreSQL service below on 127.0.0.1, and local-suite.sh
+#   creates and drops a random throwaway database inside it.
+# - Inputs are closed allowlists: `suite` is a choice, and `flags` is validated against a fixed
+#   switch list before it reaches the shell. Values are never interpolated into shell source.
+
 on:
   workflow_dispatch:
     inputs:
       suite:
-        description: "test/run.mjs suite name (e.g. block-f2-buyer.test)"
+        description: "Allowlisted test/run.mjs suite"
         required: true
-        default: block-f2-buyer.test
+        type: choice
+        default: wave07-financial-journal.test
+        options:
+          - wave07-financial-journal.test
+          - wave08-cash-and-refunds.test
+          - wave09-policy-consent-compliance.test
+          - wave10-trust-support-whatsapp.test
+          - financial-state-machine.test
+          - payment-order-state.test
+          - wave4-payment-acceptance.test
+          - wave3-acceptance.test
+          - wave02-card-reliability.test
+          - r5-delivery-economics.test
+          - security-acceptance.test
+          - readiness.test
+          - development-tls.test
+          - phase1-acceptance.test
+          - commerce-journey.test
+          - sc01-browser-journey.test
+          - sc02-browser-journey.test
+          - sc03-browser-journey.test
+          - sc06-browser-journey.test
+          - sc07-browser-journey.test
+          - sc10-browser-journey.test
+          - wave03-card-envelope-browser-journey.test
       flags:
-        description: "Extra BDINAR_*/DINAR_* switches, space separated"
+        description: "Allowlisted KEY=VALUE switches, space separated"
         required: false
-        default: BDINAR_BLOCKF_ACCEPTANCE=development
+        default: ""
+      pg_version:
+        description: "PostgreSQL major version"
+        required: true
+        type: choice
+        default: "16"
+        options:
+          - "16"
+          - "18"
+
+permissions:
+  contents: read
 
 concurrency:
-  group: qoder-api-${{ github.ref }}
-  cancel-in-progress: true
+  group: qoder-api-${{ github.ref }}-${{ inputs.suite }}-${{ inputs.pg_version }}
+  cancel-in-progress: false
 
 jobs:
   suite:
@@ -22,7 +66,7 @@ jobs:
     timeout-minutes: 60
     services:
       postgres:
-        image: postgres:16
+        image: postgres:${{ inputs.pg_version }}
         env:
           POSTGRES_USER: dinar_isolation
           POSTGRES_HOST_AUTH_METHOD: trust
@@ -36,16 +80,63 @@ jobs:
           --health-retries 20
     env:
       DINAR_LOCAL_PG: postgres://dinar_isolation@127.0.0.1:5432
-      SUITE: ${{ github.event.inputs.suite || 'block-f2-buyer.test' }}
-      FLAGS: ${{ github.event.inputs.flags || 'BDINAR_BLOCKF_ACCEPTANCE=development' }}
+      SUITE: ${{ inputs.suite }}
+      FLAGS: ${{ inputs.flags }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Validate inputs
+        env:
+          PG_MAJOR: ${{ inputs.pg_version }}
+        run: |
+          set -eu
+          case "$PG_MAJOR" in 16|18) ;; *) echo "pg_version not allowlisted: $PG_MAJOR" >&2; exit 96 ;; esac
+          for pair in $FLAGS; do
+            case "$pair" in
+              *=*) ;;
+              *) echo "switch is not KEY=VALUE: $pair" >&2; exit 96 ;;
+            esac
+            key=${pair%%=*}
+            value=${pair#*=}
+            case "$key" in
+              BDINAR_W07_ACCEPTANCE|BDINAR_W08_ACCEPTANCE|BDINAR_W09_ACCEPTANCE|BDINAR_W10_ACCEPTANCE|BDINAR_WAVE4_ACCEPTANCE|BDINAR_WAVE3_ACCEPTANCE|BDINAR_WAVE02_ACCEPTANCE|BDINAR_PHASE1_ACCEPTANCE|BDINAR_SECURITY_ACCEPTANCE)
+                [ "$value" = development ] || { echo "$key must be development" >&2; exit 96; } ;;
+              BDINAR_LOG_SCAN)
+                case "$value" in 0|1) ;; *) echo "$key must be 0 or 1" >&2; exit 96 ;; esac ;;
+              BDINAR_PHASE1_SKIP_BROWSER)
+                [ "$value" = 1 ] || { echo "$key must be 1" >&2; exit 96; } ;;
+              DINAR_TLS_ACCEPTANCE)
+                [ "$value" = development ] || { echo "$key must be development" >&2; exit 96; } ;;
+              *)
+                echo "switch not allowlisted: $key" >&2
+                exit 96 ;;
+            esac
+          done
+          echo "INPUTS_OK suite=$SUITE pg=$PG_MAJOR switches=$(printf '%s' "$FLAGS" | wc -w)"
 
-      - uses: pnpm/action-setup@v4
+      - name: Confirm loopback-only database target
+        run: |
+          set -eu
+          case "$DINAR_LOCAL_PG" in
+            postgres://*@127.0.0.1:*) ;;
+            *) echo "DINAR_LOCAL_PG must be loopback" >&2; exit 96 ;;
+          esac
+          case "${DINAR_LOCAL_PG#*://*@*:}" in
+            */*) echo "DINAR_LOCAL_PG must not name a database" >&2; exit 96 ;;
+          esac
+          if [ -n "${DATABASE_URL:-}" ] || [ -n "${DINAR_DEV_DATABASE_URL:-}" ]; then
+            echo "ambient DATABASE_URL must not be inherited from the runner" >&2
+            exit 96
+          fi
+
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
         with:
           version: 10
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 24
           cache: pnpm
@@ -66,7 +157,7 @@ jobs:
         run: pnpm --filter @workspace/dinar run test:surfaces
 
       - name: Install Chromium (browser journeys and XSS acceptance)
-        if: contains(env.SUITE, 'browser-journey') || contains(env.SUITE, 'security-acceptance')
+        if: contains(env.SUITE, '-browser-journey') || env.SUITE == 'security-acceptance.test' || env.SUITE == 'phase1-acceptance.test' || env.SUITE == 'commerce-journey.test'
         working-directory: artifacts/dinar
         run: |
           pnpm exec playwright install --with-deps chromium
@@ -78,9 +169,10 @@ jobs:
 
       - name: Upload logs
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: suite-log
+          name: suite-log-${{ inputs.suite }}-pg${{ inputs.pg_version }}
           path: |
             artifacts/api-server/*.log
           if-no-files-found: ignore
+          retention-days: 14
