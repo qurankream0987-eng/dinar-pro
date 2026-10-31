@@ -334,6 +334,10 @@ export const offers = pgTable(
     index("offers_market_status_created_idx").on(t.marketId, t.status, t.createdAt, t.id),
     index("offers_market_status_price_idx").on(t.marketId, t.status, t.unitPriceMinor),
     index("offers_search_stale_idx").on(t.marketId).where(sql`${t.searchDocumentStale}`),
+    // C1: category predicates (by id, or by label on older rows) and a seller's own listings in order.
+    index("offers_market_category_id_idx").on(t.marketId, sql`(${t.data}->>'categoryId')`),
+    index("offers_market_category_label_idx").on(t.marketId, sql`(${t.data}->>'category')`),
+    index("offers_seller_created_idx").on(t.sellerId, t.createdAt, t.id),
   ],
 );
 /**

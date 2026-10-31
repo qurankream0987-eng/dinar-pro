@@ -1,5 +1,5 @@
 {
-  "id": "c5037f9d-300a-4989-a9e1-ae0958c03530",
+  "id": "5f2b08e2-9124-4354-9c7a-6774d430e2d1",
   "prevId": "6d55b5e2-2be8-49ef-8630-8ef16f9fee60",
   "version": "7",
   "dialect": "postgresql",
@@ -8075,6 +8075,75 @@
           ],
           "isUnique": false,
           "where": "\"offers\".\"search_document_stale\"",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "offers_market_category_id_idx": {
+          "name": "offers_market_category_id_idx",
+          "columns": [
+            {
+              "expression": "market_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "(\"data\"->>'categoryId')",
+              "asc": true,
+              "isExpression": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "offers_market_category_label_idx": {
+          "name": "offers_market_category_label_idx",
+          "columns": [
+            {
+              "expression": "market_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "(\"data\"->>'category')",
+              "asc": true,
+              "isExpression": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "offers_seller_created_idx": {
+          "name": "offers_seller_created_idx",
+          "columns": [
+            {
+              "expression": "seller_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
           "concurrently": false,
           "method": "btree",
           "with": {}

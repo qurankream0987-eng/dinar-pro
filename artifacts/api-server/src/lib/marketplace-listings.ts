@@ -521,7 +521,7 @@ export function searchEngine(env: NodeJS.ProcessEnv = process.env): "SQL" | "LEG
   return (env.DINAR_SEARCH_ENGINE ?? "").trim().toUpperCase() === "LEGACY" ? "LEGACY" : "SQL";
 }
 
-export type SearchStats = { engine: "SQL" | "LEGACY"; rowsRead: number; batches: number; matched: number; staleRows: number; textIndexUsed: boolean };
+export type SearchStats = { engine: "SQL" | "LEGACY"; rowsRead: number; batches: number; matched: number; staleRows: number; textIndexUsed: boolean; ms?: { textCandidates: number; sponsoredLookup: number; batches: number; sellers: number; predicates: number }; sql?: { sql: string; params: unknown[] } };
 let lastStats: SearchStats | undefined;
 /** Diagnostics of the most recent search in this process (tests and benchmarks). */
 export function lastSearchStats(): SearchStats | undefined {
@@ -542,6 +542,8 @@ async function legacyCandidates(marketId: string, accepted: (row: OfferRow) => b
   return matched;
 }
 
+/** Above this many text candidates the batches use the inline subquery instead of an id list. */
+const TEXT_CANDIDATE_CAP = 20_000;
 const likeNeedle = (needle: string) => `%${needle.replace(/[\\%_]/g, (character) => `\\${character}`)}%`;
 
 /**
@@ -565,10 +567,14 @@ async function sqlCandidates(input: {
   sponsoredSlots: number;
 }): Promise<OfferRow[]> {
   const { market, options } = input;
-  const stats: SearchStats = { engine: "SQL", rowsRead: 0, batches: 0, matched: 0, staleRows: 0, textIndexUsed: false };
+  const stats: SearchStats = { engine: "SQL", rowsRead: 0, batches: 0, matched: 0, staleRows: 0, textIndexUsed: false, ms: { textCandidates: 0, sponsoredLookup: 0, batches: 0, sellers: 0, predicates: 0 } };
+  const clock = () => performance.now();
   lastStats = stats;
   if (options.allowedIds && !options.allowedIds.length) return [];
-  const conditions: SQL[] = [eq(offers.marketId, market.id), eq(users.status, "ACTIVE")];
+  // Sellers are not joined: the candidate query reads offers alone, so PostgreSQL can walk the
+  // (market, status, created_at, id) index in order and stop at the batch size. The active-seller
+  // rule stays in `accepted` (sellers are loaded per batch by id).
+  const conditions: SQL[] = [eq(offers.marketId, market.id)];
   conditions.push(options.ownSellerId ? eq(offers.sellerId, options.ownSellerId) : eq(offers.status, "PUBLISHED"));
   if (options.allowedIds) conditions.push(inArray(offers.id, [...new Set(options.allowedIds)]));
   if (options.conversational)
@@ -586,13 +592,30 @@ async function sqlCandidates(input: {
     else if (filter.operator === "lt" || filter.operator === "lte") conditions.push(sql`${offers.unitPriceMinor} <= ${Math.ceil(target) + 1}`);
   }
   const needles = input.textNeedles.filter((group) => group.length && !group.includes(""));
+  // A bounded text candidate set is ordered once by PostgreSQL (ids only), then read in that order.
+  let textIdList = false;
   if (needles.length && (await searchTextVersionReady())) {
     stats.textIndexUsed = true;
+    // Each token: any of its needles (LIKE ANY lets pg_trgm combine the patterns in one GIN scan).
+    // No text_version predicate here: when any document has another version, documents are not used.
     const matching = sql.join(
-      needles.map((group) => sql`(${sql.join(group.map((needle) => sql`d.search_text LIKE ${likeNeedle(needle)}`), sql` OR `)})`),
+      needles.map((group) => sql`d.search_text LIKE ANY (${sql.param(group.map(likeNeedle))}::text[])`),
       sql` AND `,
     );
-    conditions.push(sql`(${offers.searchDocumentStale} OR ${offers.id} IN (SELECT d.offer_id FROM ${offerSearchDocuments} d WHERE d.text_version = ${SEARCH_TEXT_VERSION} AND ${matching}))`);
+    // Candidates: listings whose current document matches every token, plus every stale listing of
+    // this market (its document cannot be trusted, so it is always a candidate). Evaluated once per
+    // search and reused by every batch; a very broad match keeps the inline subquery instead.
+    const textCandidates = sql`SELECT d.offer_id AS id FROM ${offerSearchDocuments} d WHERE ${matching} UNION SELECT s.id FROM ${offers} s WHERE s.market_id = ${market.id} AND s.search_document_stale`;
+    const textStarted = clock();
+    const ids = (await db.execute(sql`${textCandidates} LIMIT ${TEXT_CANDIDATE_CAP + 1}`)).rows.map((row) => (row as { id: string }).id);
+    stats.ms!.textCandidates = clock() - textStarted;
+    if (!ids.length) return [];
+    textIdList = ids.length <= TEXT_CANDIDATE_CAP;
+    conditions.push(
+      textIdList
+        ? sql`${offers.id} IN (SELECT unnest(${sql.param(ids)}::text[]))`
+        : sql`${offers.id} IN (${textCandidates})`,
+    );
   }
   const where = and(...conditions)!;
 
@@ -609,11 +632,19 @@ async function sqlCandidates(input: {
       : input.sortField === "CREATED_AT"
         ? [{ ...created, dir: input.sortDirection }, id]
         : [created, id];
-  // Attribute sorts keep JavaScript's exact numeric coercion; their candidates are read in full.
-  // Stored results and a seller's own listings are bounded sets: read in full as well.
-  const readAll = input.sortField === "ATTRIBUTE" || Boolean(options.allowedIds) || Boolean(options.ownSellerId);
+  // Attribute sorts keep JavaScript's exact numeric coercion, and a stored result keeps its own id
+  // order: both read their (bounded) candidate set in full. Everything else may stop early.
+  const readAll = input.sortField === "ATTRIBUTE" || Boolean(options.allowedIds);
 
+  const orderOf = keys.map((key) => (key.dir === "ASC" ? asc(key.expr) : desc(key.expr)));
+  let orderedIds: string[] | undefined;
+  if (textIdList) {
+    const started = clock();
+    orderedIds = (await db.select({ id: offers.id }).from(offers).where(where).orderBy(...orderOf)).map((row) => row.id);
+    stats.ms!.batches += clock() - started;
+  }
   let pendingSponsored = new Set<string>();
+  const sponsoredStarted = clock();
   if (!readAll && input.sponsoredSlots > 0 && isPromotionSimulationEnabled()) {
     const now = new Date();
     const serving = await db
@@ -628,39 +659,69 @@ async function sqlCandidates(input: {
         sql`${listingPromotions.startsAt} <= ${now}`,
         sql`${listingPromotions.expiresAt} > ${now}`,
       ));
-    if (serving.length) {
+    if (serving.length && orderedIds) {
+      const candidates = new Set(orderedIds);
+      pendingSponsored = new Set(serving.map((row) => row.id).filter((id) => candidates.has(id)));
+    } else if (serving.length) {
       const inSuperset = await db
         .select({ id: offers.id })
         .from(offers)
-        .innerJoin(users, eq(users.id, offers.sellerId))
         .where(and(where, inArray(offers.id, serving.map((row) => row.id))));
       pendingSponsored = new Set(inSuperset.map((row) => row.id));
     }
   }
+  stats.ms!.sponsoredLookup = clock() - sponsoredStarted;
 
   const matched: OfferRow[] = [];
+  const sellers = new Map<string, typeof users.$inferSelect>();
   let cursor: string[] | undefined;
-  let batch = Math.min(Math.max(input.limit * 2, 50), 500);
+  // A set read in full starts large; an early-stopping scan starts near the requested size.
+  let batch = readAll ? 2_000 : Math.min(Math.max(input.limit * 2, 50), 500);
+  let position = 0;
   for (;;) {
+    let rows: Array<{ offer: typeof offers.$inferSelect; k?: string[] }>;
+    const batchStarted = clock();
+    if (orderedIds) {
+      const chunk = orderedIds.slice(position, position + batch);
+      position += chunk.length;
+      const byId = new Map(
+        (chunk.length ? await db.select().from(offers).where(sql`${offers.id} IN (SELECT unnest(${sql.param(chunk)}::text[]))`) : []).map((offer) => [offer.id, offer]),
+      );
+      // A row edited between the two reads keeps the eligibility checks below; one deleted is skipped.
+      rows = chunk.flatMap((id) => (byId.has(id) ? [{ offer: byId.get(id)! }] : []));
+      if (chunk.length < batch) position = Number.POSITIVE_INFINITY;
+    } else {
     const after = cursor ? keysetAfter(keys, cursor) : undefined;
-    const rows = await db
-      .select({ offer: offers, seller: users, k: sql<string[]>`ARRAY[${sql.join(keys.map((key) => sql`(${key.expr})::text`), sql`, `)}]` })
+    const query = db
+      .select({ offer: offers, k: sql<string[]>`ARRAY[${sql.join(keys.map((key) => sql`(${key.expr})::text`), sql`, `)}]` })
       .from(offers)
-      .innerJoin(users, eq(users.id, offers.sellerId))
       .where(after ? and(where, after) : where)
-      .orderBy(...keys.map((key) => (key.dir === "ASC" ? asc(key.expr) : desc(key.expr))))
+      .orderBy(...orderOf)
       .limit(batch);
+    // Benchmarks only (DINAR_SEARCH_CAPTURE_SQL=1): the first batch's statement, for EXPLAIN ANALYZE.
+    if (!stats.sql && process.env.DINAR_SEARCH_CAPTURE_SQL === "1") stats.sql = query.toSQL();
+    rows = await query;
+    }
+    stats.ms!.batches += clock() - batchStarted;
     stats.batches += 1;
     stats.rowsRead += rows.length;
+    const missingSellers = [...new Set(rows.map((row) => row.offer.sellerId))].filter((sellerId) => !sellers.has(sellerId));
+    const sellersStarted = clock();
+    if (missingSellers.length)
+      for (const seller of await db.select().from(users).where(inArray(users.id, missingSellers))) sellers.set(seller.id, seller);
+    stats.ms!.sellers += clock() - sellersStarted;
+    const predicatesStarted = clock();
     for (const row of rows) {
       pendingSponsored.delete(row.offer.id);
       if (row.offer.searchDocumentStale) stats.staleRows += 1;
-      if (input.accepted(row)) matched.push({ offer: row.offer, seller: row.seller });
+      const seller = sellers.get(row.offer.sellerId);
+      if (seller && input.accepted({ offer: row.offer, seller })) matched.push({ offer: row.offer, seller });
     }
+    stats.ms!.predicates += clock() - predicatesStarted;
     stats.matched = matched.length;
-    if (rows.length < batch) break;
+    if (orderedIds ? position >= orderedIds.length : rows.length < batch) break;
     if (!readAll && matched.length >= input.limit && pendingSponsored.size === 0) break;
-    cursor = rows.at(-1)!.k;
+    if (!orderedIds) cursor = rows.at(-1)!.k;
     batch = Math.min(batch * 2, 2_000);
   }
   return matched;

@@ -75,18 +75,21 @@ export async function refreshSearchDocuments(
   if (!rows.length) return { refreshed: 0, considered: 0 };
   const context = searchTextContext(await listMarketplaceCategories(true));
   let refreshed = 0;
-  for (const offer of rows) {
-    const text = searchableTextOf(offer, context);
-    // One statement: clear the flag only for the revision this text was built from, and write the
-    // document in the same step. A concurrent edit (new revision) makes the UPDATE match nothing.
+  for (let offset = 0; offset < rows.length; offset += 1_000) {
+    const chunk = rows.slice(offset, offset + 1_000);
+    // One statement per chunk: for each row, clear the flag only for the revision its text was built
+    // from, and write the document in the same step. A concurrent edit (a new revision) matches nothing.
     const result = await db.execute(sql`
-      WITH current AS (
-        UPDATE ${offers} SET search_document_stale = false
-        WHERE id = ${offer.id} AND search_revision = ${offer.searchRevision}
-        RETURNING id, search_revision
+      WITH input AS (
+        SELECT * FROM unnest(${sql.param(chunk.map((offer) => offer.id))}::text[], ${sql.param(chunk.map((offer) => String(offer.searchRevision)))}::bigint[], ${sql.param(chunk.map((offer) => searchableTextOf(offer, context)))}::text[]) AS i(id, revision, search_text)
+      ), current AS (
+        UPDATE ${offers} o SET search_document_stale = false
+        FROM input
+        WHERE o.id = input.id AND o.search_revision = input.revision
+        RETURNING o.id, o.search_revision, input.search_text
       )
       INSERT INTO ${offerSearchDocuments} (offer_id, search_text, source_revision, text_version, updated_at)
-      SELECT id, ${text}, search_revision, ${SEARCH_TEXT_VERSION}, now() FROM current
+      SELECT id, search_text, search_revision, ${SEARCH_TEXT_VERSION}, now() FROM current
       ON CONFLICT (offer_id) DO UPDATE SET
         search_text = excluded.search_text,
         source_revision = excluded.source_revision,

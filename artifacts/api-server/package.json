@@ -68,7 +68,8 @@
     "test:operation-contracts": "NODE_ENV=development BDINAR_TEST_DATABASE=development node test/run.mjs operation-contracts.test",
     "test:hostile-input-performance": "NODE_ENV=development BDINAR_TEST_DATABASE=development node test/run.mjs hostile-input-performance.test",
     "test:provider-controls": "NODE_ENV=development BDINAR_TEST_DATABASE=development node test/run.mjs provider-controls.test",
-    "test:search-sql-foundation": "NODE_ENV=development BDINAR_TEST_DATABASE=development BDINAR_PROMOTIONS_ENABLED=true node test/run.mjs search-sql-foundation.test"
+    "test:search-sql-foundation": "NODE_ENV=development BDINAR_TEST_DATABASE=development BDINAR_PROMOTIONS_ENABLED=true node test/run.mjs search-sql-foundation.test",
+    "test:search-sql-performance": "NODE_ENV=development BDINAR_TEST_DATABASE=development BDINAR_PROMOTIONS_ENABLED=true node test/run.mjs search-sql-performance.test"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1155.0",

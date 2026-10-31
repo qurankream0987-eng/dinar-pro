@@ -17,6 +17,9 @@ CREATE INDEX "offer_search_documents_version_idx" ON "offer_search_documents" US
 CREATE INDEX "offers_market_status_created_idx" ON "offers" USING btree ("market_id","status","created_at","id");--> statement-breakpoint
 CREATE INDEX "offers_market_status_price_idx" ON "offers" USING btree ("market_id","status","unit_price_minor");--> statement-breakpoint
 CREATE INDEX "offers_search_stale_idx" ON "offers" USING btree ("market_id") WHERE "offers"."search_document_stale";--> statement-breakpoint
+CREATE INDEX "offers_market_category_id_idx" ON "offers" USING btree ("market_id",("data"->>'categoryId'));--> statement-breakpoint
+CREATE INDEX "offers_market_category_label_idx" ON "offers" USING btree ("market_id",("data"->>'category'));--> statement-breakpoint
+CREATE INDEX "offers_seller_created_idx" ON "offers" USING btree ("seller_id","created_at","id");--> statement-breakpoint
 -- Any change to a listing's data advances its search revision and marks its document stale, so a
 -- document is trusted only for the exact revision it was built from. New rows always start stale.
 CREATE OR REPLACE FUNCTION offers_search_revision_guard() RETURNS trigger AS $$

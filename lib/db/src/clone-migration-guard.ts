@@ -32,7 +32,7 @@ export const REVIEWED_PENDING_MIGRATIONS: ReadonlyArray<{ tag: string; sha256: s
   { tag: "0040_refund_obligations", sha256: "211c7db104036fc74cb08c668e9bf5b26d8f038915b1ab8232d8a79d2e20bfbb" },
   // C1 search foundation: one new table, two defaulted columns on offers, indexes, pg_trgm and two
   // triggers that only mark search documents stale. No existing value changes.
-  { tag: "0041_c1_sql_search", sha256: "382b69bdee1927c544ef6496530e33d5fae5f34ed804dc39b85a98d104456fa5" },
+  { tag: "0041_c1_sql_search", sha256: "945ccc5622390b1a6a2e9af94aaa2d9010ac8b0e164de3b90571742dc1b05a5c" },
 ];
 export const EXPECTED_JOURNAL_ENTRIES =
   EXPECTED_BASELINE_MIGRATIONS + REVIEWED_PENDING_MIGRATIONS.length;
