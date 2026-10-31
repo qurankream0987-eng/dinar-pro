@@ -75,7 +75,8 @@
     "test:w07": "NODE_ENV=development BDINAR_W07_ACCEPTANCE=development BDINAR_WAVE4_ACCEPTANCE=development node test/run.mjs wave07-financial-journal.test",
     "test:w08": "NODE_ENV=development BDINAR_W08_ACCEPTANCE=development BDINAR_WAVE4_ACCEPTANCE=development node test/run.mjs wave08-cash-and-refunds.test",
     "test:w09": "NODE_ENV=development BDINAR_W09_ACCEPTANCE=development BDINAR_WAVE4_ACCEPTANCE=development node test/run.mjs wave09-policy-consent-compliance.test",
-    "test:w10": "NODE_ENV=development BDINAR_W10_ACCEPTANCE=development BDINAR_WAVE4_ACCEPTANCE=development node test/run.mjs wave10-trust-support-whatsapp.test"
+    "test:w10": "NODE_ENV=development BDINAR_W10_ACCEPTANCE=development BDINAR_WAVE4_ACCEPTANCE=development node test/run.mjs wave10-trust-support-whatsapp.test",
+    "test:w12c": "NODE_ENV=development BDINAR_W12C_ACCEPTANCE=development BDINAR_WAVE4_ACCEPTANCE=development node test/run.mjs wave07-w12-contract-hardening.test"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1155.0",
