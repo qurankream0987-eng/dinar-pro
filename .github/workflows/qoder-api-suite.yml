@@ -23,6 +23,9 @@ on:
           - wave09-policy-consent-compliance.test
           - wave10-trust-support-whatsapp.test
           - wave07-w12-contract-hardening.test
+          - d1-d2-business-foundation.test
+          - d1-d2-business-browser.test
+          - policy-consent-cards.test
           - w02u3-card-reliability.test
           - w02u3-card-reliability-browser-journey.test
           - w02u3-card-concurrency-browser-journey.test
@@ -173,7 +176,7 @@ jobs:
             key=${pair%%=*}
             value=${pair#*=}
             case "$key" in
-              BDINAR_W07_ACCEPTANCE|BDINAR_W08_ACCEPTANCE|BDINAR_W09_ACCEPTANCE|BDINAR_W10_ACCEPTANCE|BDINAR_W12C_ACCEPTANCE|BDINAR_W02U3_TEST_DATABASE|BDINAR_W02U3_BROWSER|BDINAR_WAVE4_ACCEPTANCE|BDINAR_WAVE3_ACCEPTANCE|BDINAR_WAVE02_ACCEPTANCE|BDINAR_PHASE1_ACCEPTANCE|BDINAR_SECURITY_ACCEPTANCE)
+              BDINAR_W07_ACCEPTANCE|BDINAR_W08_ACCEPTANCE|BDINAR_W09_ACCEPTANCE|BDINAR_W10_ACCEPTANCE|BDINAR_W12C_ACCEPTANCE|BDINAR_D1D2_ACCEPTANCE|BDINAR_W02U3_TEST_DATABASE|BDINAR_W02U3_BROWSER|BDINAR_WAVE4_ACCEPTANCE|BDINAR_WAVE3_ACCEPTANCE|BDINAR_WAVE02_ACCEPTANCE|BDINAR_PHASE1_ACCEPTANCE|BDINAR_SECURITY_ACCEPTANCE)
                 [ "$value" = development ] || { echo "$key must be development" >&2; exit 96; } ;;
               BDINAR_LOG_SCAN)
                 case "$value" in 0|1) ;; *) echo "$key must be 0 or 1" >&2; exit 96 ;; esac ;;
@@ -237,7 +240,7 @@ jobs:
         run: pnpm --filter @workspace/dinar run test:surfaces
 
       - name: Install Chromium (browser journeys and XSS acceptance)
-        if: contains(env.SUITE, 'browser-journey') || env.SUITE == 'security-acceptance.test' || env.SUITE == 'phase1-acceptance.test' || env.SUITE == 'commerce-journey.test' || env.SUITE == 'wave3-acceptance.test' || env.SUITE == 'w02-ultra-browser.test'
+        if: contains(env.SUITE, 'browser-journey') || env.SUITE == 'd1-d2-business-browser.test' || env.SUITE == 'security-acceptance.test' || env.SUITE == 'phase1-acceptance.test' || env.SUITE == 'commerce-journey.test' || env.SUITE == 'wave3-acceptance.test' || env.SUITE == 'w02-ultra-browser.test'
         working-directory: artifacts/dinar
         run: |
           pnpm exec playwright install --with-deps chromium
