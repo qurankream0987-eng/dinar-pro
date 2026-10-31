@@ -43,8 +43,8 @@ async function request(path: string, method = "GET", body?: unknown, cookie = ""
 }
 let phone = 0;
 async function register(name: string) {
-  // Jordanian mobiles are 7[789] + 7 digits; a random third digit would fail libphonenumber.
-  const number = `${["77", "78", "79"][phone % 3]}${((Date.now() + 104729 * ++phone) % 10_000_000).toString().padStart(7, "0")}`;
+  // Jordanian mobiles are 9 digits starting 79 (the format the other suites register with).
+  const number = `79${((Date.now() + 104729 * ++phone) % 10_000_000).toString().padStart(7, "0")}`;
   const password = "w02u3-browser-password-1";
   const created = await request("/auth/register", "POST", { displayName: name, phoneCountryCode: "+962", phoneNumber: number, accountCountry: "JO", password, confirmPassword: password, acceptTerms: true });
   assert.equal(created.status, 201, created.text);

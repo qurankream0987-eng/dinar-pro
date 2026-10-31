@@ -61,8 +61,8 @@ async function request(path: string, method = "GET", body?: unknown, cookie = ""
 type Actor = { id: string; cookie: string; phone: string; password: string };
 let phone = 0;
 async function register(name: string): Promise<Actor> {
-  // Jordanian mobiles are 7[789] + 7 digits; a random third digit would fail libphonenumber.
-  const number = `${["77", "78", "79"][phone % 3]}${((Date.now() + 7919 * ++phone) % 10_000_000).toString().padStart(7, "0")}`;
+  // Jordanian mobiles are 9 digits starting 79 (the format the other suites register with).
+  const number = `79${((Date.now() + 7919 * ++phone) % 10_000_000).toString().padStart(7, "0")}`;
   const password = "w02u3-password-1";
   const created = await request("/auth/register", "POST", {
     displayName: name,
