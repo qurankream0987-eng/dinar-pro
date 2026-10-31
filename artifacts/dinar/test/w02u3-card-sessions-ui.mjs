@@ -63,15 +63,32 @@ let aConversationId;
 
 const cardOf = () => page.locator('[data-testid="purchase-review"][data-card-lifecycle]').last();
 
-async function openHistory() {
+// The mobile history drawer is a Radix dialog: its overlay makes the toggle behind it
+// unclickable, so it is closed through its own control (or Escape), never through the toggle.
+async function historyOpen() {
   const toggle = page.getByTestId("button-toggle-conversation-history");
-  if ((await toggle.getAttribute("aria-expanded").catch(() => null)) !== "true") await toggle.click();
+  return (await toggle.getAttribute("aria-expanded").catch(() => null)) === "true";
+}
+
+async function openHistory() {
+  if (!(await historyOpen())) {
+    const toggle = page.getByTestId("button-toggle-conversation-history");
+    await toggle.waitFor({ state: "visible", timeout: 15_000 });
+    await toggle.click();
+  }
   await page.getByTestId("input-conversation-search").waitFor({ timeout: 15_000 });
 }
 
 async function closeHistory() {
-  const toggle = page.getByTestId("button-toggle-conversation-history");
-  if ((await toggle.getAttribute("aria-expanded").catch(() => null)) === "true") await toggle.click();
+  if (!(await historyOpen())) return;
+  const close = page.getByTestId("button-close-conversation-drawer");
+  if (await close.isVisible().catch(() => false)) await close.click();
+  else await page.keyboard.press("Escape");
+  await page.waitForFunction(
+    () => document.querySelector('[data-testid="button-toggle-conversation-history"]')?.getAttribute("aria-expanded") !== "true",
+    null,
+    { timeout: 15_000 },
+  );
 }
 
 async function noStaleData(label, extra = {}) {
@@ -220,7 +237,14 @@ try {
   await page.reload();
   await page.getByTestId("input-ai-composer").waitFor({ timeout: 45_000 });
   await sleep(1500);
-  await noStaleData("B after a planted foreign id", { conversationId: aConversationId, surfaceId: aCard.surfaceId, cards: 1 });
+  // The planted id is not in B's server list, so the page opens empty rather than opening it.
+  await noStaleData("B after a planted foreign id", { conversationId: aConversationId, surfaceId: aCard.surfaceId, cards: 0 });
+  await openHistory();
+  const bItem = page.getByTestId(`conversation-${bConversationId}`);
+  assert.equal(await bItem.isVisible().catch(() => false), true, "B's own conversation remains listed");
+  await bItem.click();
+  await waitForCardLifecycle(page, "CONFIRMED", 45_000);
+  await noStaleData("B restores their own conversation", { surfaceId: aCard.surfaceId, cards: 1 });
   checks.push("CR-05: a planted foreign conversation id is never opened by B");
 
   // ── CR-05: A's own client settles the review while A is signed out ─────────
