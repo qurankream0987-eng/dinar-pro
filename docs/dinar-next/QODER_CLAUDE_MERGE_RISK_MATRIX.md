@@ -11,7 +11,7 @@
 |---|---|---|---|
 | `qoder/parallel-w07-w12-ultra` | `6b702ae` | `b80c27b` | `0044_wave10_trust_support_whatsapp` |
 | `claude/11-c1-sql-search` | `d94477b` | `b80c27b` | `0041_c1_sql_search` |
-| `qoder/14-w02u3-canonical-reliability` | `e869a1e` | `b80c27b` | `0040_refund_obligations` (بلا ترحيل جديد) |
+| `qoder/14-w02u3-canonical-reliability` | `5a192d8` (تحقق 2026-11-01؛ `e869a1e` سلف) | `b80c27b` | `0040_refund_obligations` (بلا ترحيل جديد) |
 | `main` | `b1b20e5` | — | لم يُلمس |
 
 ---
@@ -32,7 +32,7 @@
 3. إن لم يكن أي منهما مطبّقًا بعد، فالأفضل: `0041` لـClaude و`0042…0045` لموجات Qoder الأربع، مع تحديث `release-manifest.json` و`clone-migration-guard.ts` و`EXPECTED_JOURNAL_ENTRIES` (45) و`readiness.test` و`development-tls.test` في التزام واحد.
 4. في كل الحالات: `sha256sum` لكل ملف، مقارنة بالمانيفست والحارس، مسح تدميري، `drizzle-kit migrate` على قاعدة disposable، ثم `readiness` و`development-tls`.
 
-**علاقة `qoder/14`:** لا ترحيل جديد فيها (تنتهي عند `0040`)، فلا تعارض رقم مع موجات Qoder. تعارضها الملفي فقط: `marketplace.ts`، `safe-development-database.ts`، `.github/workflows/qoder-api-suite.yml`.
+**علاقة `qoder/14`:** لا ترحيل جديد فيها (تنتهي عند `0040`؛ 49 التزامًا بعد الأساس عند `5a192d8`)، فلا تعارض رقم مع موجات Qoder. تعارضها الملفي فقط، مقيسًا بـ`comm` على قائمتي تغييرات الفرعين: `marketplace.ts`، `safe-development-database.ts`، `.github/workflows/qoder-api-suite.yml`، `artifacts/api-server/package.json`، `artifacts/api-server/test/commerce-journey.test.ts`.
 
 ---
 
@@ -76,6 +76,7 @@
 | S10 | Claude C1 يغيّر `offerRows` إلى `offerRowsByIds` في `marketplace-listings.ts` ويعدّل `GET /listings/:id` | تعارض مباشر في كتلة الـimports والمسار داخل `marketplace.ts` | تعارض Git + `marketplace-intelligence.test` | اجمع الاستيرادين؛ أبقِ `offerRowsByIds` وأضف استيراد W07 (`recordOrderFinancialEvent`) كاملًا |
 | S11 | عكس ترتيب الأقفال بين `openCashRefundCase` (قفل الطلب ثم صفوف الاسترداد) و`confirmCashRefundReceipt` (قفل صف الاسترداد ثم الطلب) | deadlock محتمل عند فتح/تأكيد استرداد متزامنين لنفس الطلب؛ النتيجة 500 لطرف واحد وإعادة محاولة، لا فساد بيانات | مراجعة كود؛ لا اختبار يعيد إنتاجه | عند الدمج: اقفل الطلب أولًا في مسار التأكيد (قراءة غير قافلة للمعرّف، ثم `lockOrder`، ثم إعادة القراءة `FOR UPDATE`)، وأعد `test:w08` و`test:w12c` |
 | S12 | W12.1 يضيف مجموعة `wave07-w12-contract-hardening.test` ومفتاح `BDINAR_W12C_ACCEPTANCE` | تعارض سهل في `package.json` و`safe-development-database.ts` وسطر اختيار الـworkflow | تعارض Git صغير | اجمع الإضافات؛ لا تحذف أي مفتاح سابق من `approvalMessages`/`operationMessages` |
+| S13 | `qoder/14` عند `5a192d8` يعدّل أيضًا `package.json` و`commerce-journey.test.ts` (توسيع اختبارات المتصفح) | تعارض نصي بسيط مع سكربت `test:w12c` ومفاتيح W12.1 | `comm` بين قائمتي تغييرات الفرعين | اجمع السكربتين والاختبارين؛ لا تُسقط سكربت `test:w02u3` ولا `test:w12c` |
 
 ---
 

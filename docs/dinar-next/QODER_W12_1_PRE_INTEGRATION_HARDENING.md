@@ -38,11 +38,11 @@
 |---|---|---|
 | `origin/qoder/parallel-w07-w12-ultra` | `6b702ae` | SHA الشيفرة المُختبَرة؛ يُدفع بعده التزام توثيقي (docs فقط) بلا force |
 | `claude/11-c1-sql-search` | `d94477b` | 37 التزامًا بعد الأساس، آخر ترحيل `0041_c1_sql_search` |
-| `qoder/14-w02u3-canonical-reliability` | `e869a1e` | 43 التزامًا بعد الأساس، آخر ترحيل `0040_refund_obligations` |
+| `qoder/14-w02u3-canonical-reliability` | `5a192d8` | 49 التزامًا بعد الأساس، آخر ترحيل `0040_refund_obligations` (تحقق 2026-11-01؛ `e869a1e` سلف) |
 | `main` | `b1b20e5` | لم يُلمس |
 | نقطة التفرع الثلاثية | `b80c27b` | مؤكدة بـ`git merge-base` |
 
-الفرع Qoder: 17 التزامًا بعد الأساس حتى `6b702ae` (`b80c27b..6b702ae`)، منها التزام W12.1 `6b702ae` وحده يمس الاختبارات ومدخلات السماح؛ يليه التزام توثيقي `4ac43b8`، ثم التزام توثيقي أخير يحمل هذا السطر (docs فقط).
+الفرع Qoder: 17 التزامًا بعد الأساس حتى `6b702ae` (`b80c27b..6b702ae`)، منها التزام W12.1 `6b702ae` وحده يمس الاختبارات ومدخلات السماح؛ تليه التزامات توثيقية (docs فقط) أولها `4ac43b8`.
 
 ---
 
@@ -117,7 +117,7 @@
 التفصيل الكامل في `QODER_CLAUDE_MERGE_RISK_MATRIX.md` §0 والصفوف S9–S12. الخلاصة:
 
 - **تعارض مؤكد:** `0041_wave07_financial_journal.sql` (Qoder) و`0041_c1_sql_search.sql` (Claude C1). لا يُعاد ترقيم أي منهما ولا يُعاد كتابة SQL؛ الحل ترحيل جديد للسلسلة المتأخرة أو إعادة ترتيب قبل أول تطبيق، مع تحديث المانيفست والحارس والعدّادات.
-- **`qoder/14`:** بلا ترحيل جديد؛ تعارض ملفي فقط (`marketplace.ts`، `safe-development-database.ts`، الـworkflow).
+- **`qoder/14`:** بلا ترحيل جديد (`0040`)؛ تعارض ملفي فقط مقيس بـ`comm`: `marketplace.ts`، `safe-development-database.ts`، الـworkflow، `package.json`، `commerce-journey.test.ts`.
 - **مدخلات W12.1:** `package.json`، `safe-development-database.ts`، `qoder-api-suite.yml` — تعارض صغير يُحل بالجمع.
 - **بوابتا رضا متوازيتان:** Claude C1 و`qoder/14` يضيفان `assertPoliciesAccepted` في `marketplace.ts`؛ يجب أن تقرأ سجل W09 (`policy_consent_events`) لا أن تحل محله.
 - **عكس ترتيب أقفال** بين فتح الاسترداد وتأكيده → deadlock محتمل (500 لطرف، إعادة محاولة تكفي، لا فساد بيانات). لم يُغيَّر الكود في W12.1؛ أُدرج كبند دمج S11.
