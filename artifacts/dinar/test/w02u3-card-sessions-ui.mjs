@@ -10,6 +10,7 @@ import {
   openPage,
   purchaseCard,
   sendTurn,
+  settleToasts,
   sleep,
   startConversation,
   signIn,
@@ -72,6 +73,7 @@ async function historyOpen() {
 
 async function openHistory() {
   if (!(await historyOpen())) {
+    await settleToasts(page);
     const toggle = page.getByTestId("button-toggle-conversation-history");
     await toggle.waitFor({ state: "visible", timeout: 15_000 });
     await toggle.click();

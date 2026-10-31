@@ -9,6 +9,18 @@ import { MODEL_FALLBACK_REPLY } from "./sc-ui-session.mjs";
  */
 export const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+/**
+ * Toasts are hosted above the phone viewport's top bar, where they can cover the sidebar
+ * trigger and the drawer header. Hovering pauses a toast's dismissal, and a Playwright click
+ * attempt keeps the pointer on it, so park the pointer first and let them clear.
+ */
+export async function settleToasts(page) {
+  await page.mouse.move(4, 4);
+  await page
+    .waitForFunction(() => document.querySelectorAll("[data-sonner-toast]").length === 0, null, { timeout: 12_000 })
+    .catch(() => undefined);
+}
+
 export async function openPage(browser, { webBase, label = "tab", recorder }) {
   const context = await browser.newContext({ baseURL: webBase, viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, locale: "ar" });
   const page = await context.newPage();
@@ -59,6 +71,7 @@ export async function signIn(page, { id, phone, password }) {
   assert.equal(response.status(), 200, `login for ${id}: ${response.status()} ${(await response.text()).slice(0, 300)}`);
   await waitForIdentity(page, id);
   await page.getByTestId("input-ai-composer").waitFor({ timeout: 45_000 });
+  await settleToasts(page);
 }
 
 /** Sign out through the account screen and its confirmation dialog. */
@@ -70,10 +83,12 @@ export async function signOut(page) {
   await page.getByTestId("button-confirm-action").click();
   await waitForIdentity(page, null);
   await page.getByTestId("input-ai-composer").waitFor({ timeout: 45_000 });
+  await settleToasts(page);
 }
 
 export async function startConversation(page) {
   await page.getByTestId("input-ai-composer").waitFor({ timeout: 45_000 });
+  await settleToasts(page);
   const button = page.locator('[data-testid="button-new-conversation-header"]:visible, [data-testid="button-new-conversation"]:visible').first();
   if (!(await button.isVisible())) await page.locator('[data-testid="button-toggle-conversation-history"]:visible').first().click();
   await button.waitFor({ state: "visible" });
