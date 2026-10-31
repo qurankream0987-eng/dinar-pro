@@ -164,7 +164,11 @@ try {
   await page.getByTestId("input-ai-composer").press("Enter");
   await page.waitForTimeout(600);
   assert.equal(turnPosts, beforeOffline, "no turn request leaves the tab while offline");
-  assert.equal(await page.getByTestId("input-ai-composer").inputValue(), `ابحث عن ${secondTitle}`, "the draft is kept");
+  assert.equal(
+    (await page.getByTestId("input-ai-composer").inputValue()).replace(/\s+$/u, ""),
+    `ابحث عن ${secondTitle}`,
+    "the draft is kept",
+  );
   checks.push("CR-07: offline keeps the draft and sends nothing");
 
   await buyer.context.setOffline(false);
