@@ -40,6 +40,11 @@ export type OfferRow = {
   seller: typeof users.$inferSelect;
 };
 
+/**
+ * Every listing of a market with its seller. Unbounded: no request path calls it since C1 (search
+ * reads indexed candidates; carts and listing pages read their ids with offerRowsByIds). Kept for
+ * maintenance tooling and comparison.
+ */
 export async function offerRows(
   marketId: string,
   tx: any = db,
@@ -49,6 +54,21 @@ export async function offerRows(
     .from(offers)
     .innerJoin(users, eq(users.id, offers.sellerId))
     .where(eq(offers.marketId, marketId));
+}
+
+/** The given listings of a market with their sellers: the same rows offerRows returns for those ids. */
+export async function offerRowsByIds(
+  marketId: string,
+  ids: readonly unknown[],
+  tx: any = db,
+): Promise<OfferRow[]> {
+  const wanted = [...new Set(ids.filter((id): id is string => typeof id === "string"))];
+  if (!wanted.length) return [];
+  return tx
+    .select({ offer: offers, seller: users })
+    .from(offers)
+    .innerJoin(users, eq(users.id, offers.sellerId))
+    .where(and(eq(offers.marketId, marketId), inArray(offers.id, wanted)));
 }
 
 /** Public city values of published DINAR inventory; lets parsing recognise a real place name. */

@@ -3,7 +3,7 @@ import { and, desc, eq, sql } from "drizzle-orm";
 import { aiResultSets, aiUiBlocks, cartItems, carts, conversations, db, messages, users } from "@workspace/db";
 import { isMarketAvailable, marketFor } from "./markets";
 import { categoryById } from "./marketplace-categories";
-import { listing, offerRows } from "./marketplace-listings";
+import { listing, offerRowsByIds } from "./marketplace-listings";
 import { acceptedAgreementsByListing } from "./negotiations";
 import { directPurchaseAllowed, priceRepresentationOf } from "@workspace/api-zod/listing-pricing";
 
@@ -27,7 +27,7 @@ async function persistCart(
   if (!Array.isArray(items) || items.length > 100)
     throw fail(400, "السلة غير صالحة");
 
-  const rows = await offerRows(market.id, tx);
+  const rows = await offerRowsByIds(market.id, items.map((item) => item?.listingId), tx);
   const categoryRows = await Promise.all(
     [...new Set(rows.map(({ offer }) => offer.data.categoryId).filter(Boolean))]
       .map((id) => categoryById(String(id), tx)),
@@ -129,10 +129,8 @@ export async function getMarketplaceCart(
     .where(and(eq(carts.userId, userId), eq(carts.marketId, market.id)));
   if (!cart) return [];
 
-  const [items, rows] = await Promise.all([
-    tx.select().from(cartItems).where(eq(cartItems.cartId, cart.id)),
-    offerRows(market.id, tx),
-  ]);
+  const items: Array<typeof cartItems.$inferSelect> = await tx.select().from(cartItems).where(eq(cartItems.cartId, cart.id));
+  const rows = await offerRowsByIds(market.id, items.map((item) => item.offerId), tx);
   const agreements = await acceptedAgreementsByListing(
     userId,
     market.id,
@@ -203,7 +201,7 @@ async function validatedCartListing(
   market: ResolvedMarket,
   listingId: string,
 ) {
-  const rows = await offerRows(market.id, tx);
+  const rows = await offerRowsByIds(market.id, [listingId], tx);
   const row = rows.find(({ offer }: any) => offer.id === listingId);
   if (
     !row ||
@@ -500,7 +498,7 @@ export async function addMarketplaceCartItems(input: {
       listingId,
       quantity,
     }));
-    const rows = await offerRows(market.id, tx);
+    const rows = await offerRowsByIds(market.id, input.items.map((item) => item?.listingId), tx);
     for (const item of input.items) {
       const row = rows.find(({ offer }) => offer.id === item.listingId);
       if (

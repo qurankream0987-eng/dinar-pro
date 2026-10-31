@@ -52,7 +52,7 @@ import {
 } from "../lib/market-pricing";
 import {
   listing,
-  offerRows,
+  offerRowsByIds,
   searchMarketplaceListings,
 } from "../lib/marketplace-listings";
 import {
@@ -293,7 +293,7 @@ router.delete("/listings/:id", requireAuth, async (req, res) => {
 router.get("/listings/:id", async (req, res) => {
   const market = await marketFor(req);
   assertMarketActive(market);
-  const rows = await offerRows(market.id);
+  const rows = await offerRowsByIds(market.id, [req.params.id]);
   const row = rows.find(
     ({ offer, seller }: any) =>
       offer.id === req.params.id &&
