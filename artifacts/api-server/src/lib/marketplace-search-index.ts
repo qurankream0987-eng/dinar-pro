@@ -1,5 +1,5 @@
 /**
- * C1 — the searchable text of each listing, stored in offer_search_documents (migration 0041).
+ * C1 — the searchable text of each listing, stored in offer_search_documents (migration 0045, originally 0041 on the C1 branch).
  *
  * The text is produced by exactly the function the search itself applies (`searchableTextOf`), so a
  * fresh document can stand in for the in-memory computation in the SQL candidate stage. Freshness

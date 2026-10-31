@@ -12,7 +12,6 @@ import {
   doublePrecision,
   type AnyPgColumn,
   bigint,
-  type AnyPgColumn,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 const dates = () => ({
@@ -309,7 +308,7 @@ export const offers = pgTable(
     reservedQuantity: integer("reserved_quantity").default(0).notNull(),
     data: jsonb("data").$type<Record<string, any>>().notNull(),
     /**
-     * C1 search index bookkeeping (migration 0041). A trigger bumps the revision and marks the row
+     * C1 search index bookkeeping (migration 0045, originally 0041 on the C1 branch). A trigger bumps the revision and marks the row
      * stale whenever `data` changes (or its category changes); only the search refresher clears it,
      * after writing offer_search_documents for that exact revision. Not listing content.
      */
