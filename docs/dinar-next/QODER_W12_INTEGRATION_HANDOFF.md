@@ -3,7 +3,7 @@
 **المستودع:** `qurankream0987-eng/dinar-pro`
 **الفرع:** `qoder/parallel-w07-w12-ultra` — منشور
 **الأساس:** `b80c27bf953fe99a370865e7793076eb2f3fe873`
-**رأس الفرع النهائي المدقق (محلي = بعيد):** `7b115dc015b0a390fb8bdd3040d21ac8e7137abe`
+**رأس الفرع النهائي المدقق (محلي = بعيد):** `6b702ae` (W12.1: مجموعة تقوية معزولة + مدخلات سماح؛ لا شيفرة إنتاجية جديدة)
 **حالة النشر:** دُفع الفرع فقط. **لا دمج، لا نشر، لا ترحيل إنتاجي، لا تفعيل مالي حي.**
 **التاريخ:** 2026-10-31
 
@@ -16,21 +16,21 @@
 | البند | القيمة | التحقق |
 |---|---|---|
 | الفرع البعيد | `origin/qoder/parallel-w07-w12-ultra` | `git rev-parse` |
-| SHA المحلي | `7b115dc015b0a390fb8bdd3040d21ac8e7137abe` | `git rev-parse HEAD` |
-| SHA البعيد | `7b115dc015b0a390fb8bdd3040d21ac8e7137abe` | `git rev-parse origin/qoder/parallel-w07-w12-ultra` |
+| SHA المحلي | `6b702aefaba1fe1a2431e625e30eae987f676189` | `git rev-parse HEAD` |
+| SHA البعيد | `6b702aefaba1fe1a2431e625e30eae987f676189` | `git rev-parse origin/qoder/parallel-w07-w12-ultra` |
 | `main` | `b1b20e513ed25952bc086778fb71af88adcc54ba` — **لم تتغير** | `git rev-parse main` = `origin/main` |
 | `claude/10-ultra-closure` | `9a0f86f0b3c727f48be58aee7db11a3045a94613` — **لم تتغير** | لا دفع إليها |
-| force push | **لم يحدث** | دفع عادي `57c9653..0bfdfd0` ثم `0bfdfd0..7b115dc` |
+| force push | **لم يحدث** | دفعات عادية `57c9653..0bfdfd0` ثم `0bfdfd0..7b115dc` ثم `7b115dc..e3122e8..6b702ae` |
 | فرع Claude/Codex/Gemini | **لم يُمس** | لا مراجع جديدة |
-| شجرة العمل | نظيفة | `git status --porcelain` فارغ |
+| شجرة العمل | نظيفة بعد التزام W12.1 | `git status --porcelain` فارغ |
 
 **قيود نُفِّذت:** لم يُطلب PAT في المحادثة أو الشيفرة، ولم يُكتب أي سر في الملفات. لا فرع آخر دُفع، ولا merge، ولا تغيير في `main`.
 
-> **ملاحظة على SHA التوثيق:** التزام تحديث هذه الوثيقة (W12 + W11) يلي `7b115dc` ويلمس ملفي التوثيق فقط؛ **SHA الشيفرة المُختبرة يبقى `7b115dc`**، ويمكن التحقق بـ`git diff --name-only 7b115dc..HEAD` (وثائق فقط).
+> **ملاحظة على SHA التوثيق:** `e3122e8` هو التزام W12 التوثيقي، و`6b702ae` هو التزام W12.1 (اختبار + مدخلات سماح). التزام W12.1 التوثيقي يليه ويلمس `docs/` فقط؛ **SHA الشيفرة المُختبرة يبقى `6b702ae`**، ويمكن التحقق بـ`git diff --name-only 6b702ae..HEAD` (وثائق فقط)، و`git diff --name-only 7b115dc..6b702ae` (اختبار + مدخلات سماح فقط).
 
 ---
 
-## 2. تاريخ الالتزامات (15 التزامًا بعد الأساس)
+## 2. تاريخ الالتزامات (17 التزامًا بعد الأساس)
 
 | # | الالتزام | الوصف |
 |---|---|---|
@@ -49,12 +49,14 @@
 | 13 | `57c9653` | قائمة سماح مفاتيح قاعدة الاختبار والعروض |
 | 14 | `0bfdfd0` | اختبار commerce: بادئة هاتف صالحة |
 | 15 | `7b115dc` | CI: تثبيت Chromium لمسار المتصفح في wave3 |
+| 16 | `e3122e8` | توثيق W12: أدلة CI وSHA والتشغيلات والمخاطر |
+| 17 | `6b702ae` | W12.1: تقوية ما قبل التكامل — مجموعة اختبار معزولة ومدخلات سماح |
 
-**المجموع منذ الأساس:** **54 ملفًا، +11,471/−84** (لا تغيير في `pnpm-lock.yaml` أو التبعيات، ولا merge commit).
+**المجموع منذ الأساس:** **55 ملفًا، +11,784/−84** (لا تغيير في `pnpm-lock.yaml` أو التبعيات، ولا merge commit).
 
 ---
 
-## 3. سجل الأدلة — كل التشغيلات على SHA النهائي `7b115dc` (PG16 ما لم يُذكر)
+## 3. سجل الأدلة — التشغيلات الأساسية على `7b115dc` (PG16 ما لم يُذكر)، وإعادة التحقق على `6b702ae` في §3.3
 
 الروابط: `https://github.com/qurankream0987-eng/dinar-pro/actions/runs/<id>`. كل تشغيل مجموعة يطبع `LOCAL_SUITE … outbound=0`، ويسبقه typecheck + بناء api-server + بناء الويب + `test:surfaces` (28/28).
 
@@ -111,6 +113,25 @@
 - `development-tls.test.ts` → «live TLS validates chain and service identity…» يتجاوز عندما `DINAR_TLS_ACCEPTANCE !== "1"`. خدمة PostgreSQL المعزولة في CI بلا TLS، فالسطر متجاوز عن قصد. بقية المجموعة (7/7) نُفِّذت، ومنها التحقق من سلاسة سجل الترحيلات (45 مدخلًا، آخرها `0044`) ورفض أي تعديل/إعادة تسمية/إضافة مدخل غير مراجع.
 - لا استثناءات أخرى: كل المجموعات الأخرى أبلغت `skipped 0`.
 
+### 3.3 W12.1 — إعادة تحقق على `6b702ae` (PG16، `outbound=0`، `conclusion=success`)
+
+كل الصفوف مقروءة من مخرج `node test/run.mjs` بعد تشغيل `typecheck` + بناء `api-server` + بناء الويب + `test:surfaces` (28/28 في كل تشغيل). الروابط بنمط `https://github.com/qurankream0987-eng/dinar-pro/actions/runs/<id>`.
+
+| المجموعة | التشغيل | tests | pass | fail | skipped | قاعدة |
+|---|---|---|---|---|---|---|
+| `wave07-w12-contract-hardening` (جديدة) | `41238837823` | 6 | 6 | 0 | 0 | `dinar_test_local_*` |
+| `wave07-financial-journal` | `41239477707` | 10 | 10 | 0 | 0 | `dinar_test_local_*` |
+| `wave08-cash-and-refunds` | `41239709487` | 12 | 12 | 0 | 0 | `dinar_test_local_*` |
+| `wave09-policy-consent-compliance` | `41239743543` | 19 | 19 | 0 | 0 | `dinar_test_local_*` |
+| `wave10-trust-support-whatsapp` | `41239785223` | 24 | 24 | 0 | 0 | `dinar_test_local_*` |
+| `readiness` | `41240157514` | 15 | 15 | 0 | 0 | `dinar_test_local_70045ec8762e` |
+| `development-tls` | `41240170480` | 8 | 7 | 0 | **1** | `dinar_test_local_0a985885f574` |
+| `payment-order-state` | `41240209945` | 3 | 3 | 0 | 0 | `dinar_test_local_7d9699ac4a3a` |
+
+**SKIP الوحيد:** `live TLS validates chain and service identity, rejecting wrong identity and CA` في `development-tls` — بلا هدف TLS حي، غير قابل للتحويل إلى PASS. يبقى بوابة إطلاق مفتوحة.
+
+**إجمالي اختبارات الموجات:** **71/71** (W07 10 + W08 12 + W09 19 + W10 24 + W12.1 6) على `6b702ae`، إضافة إلى 19/19 لـW09 على PG18 (`41225917027`). لا FAIL مفتوح، لا TIMEOUT، ولا BLOCKED في تشغيلات `6b702ae`.
+
 ---
 
 ## 4. البوابة الأمنية (Run 41225913028)
@@ -127,7 +148,7 @@
 | صلاحيات token | `permissions: contents: read` في الاثنين؛ checkout بـ`persist-credentials: false` |
 | أسرار إنتاج/دفع/Railway/AI مدفوعة | **صفر مراجع**؛ لا `secrets.*` في أي من الـworkflowين |
 | قاعدة البيانات | حاوية خدمة loopback فقط + قاعدة عشوائية تُنشأ وتُحذف؛ حارس يرفض أي `DINAR_LOCAL_PG` غير loopback أو أي `DATABASE_URL` خارجي |
-| مدخلات الـworkflow | `suite` قائمة اختيار مغلقة (22 مجموعة)؛ `flags` تُفحص مفتاح/قيمة ضد قائمة سماح ولا تُدرج أبدًا في نص shell؛ `pg_version ∈ {16,18}` |
+| مدخلات الـworkflow | `suite` قائمة اختيار مغلقة (23 مجموعة بعد إضافة W12.1)؛ `flags` تُفحص مفتاح/قيمة ضد قائمة سماح ولا تُدرج أبدًا في نص shell؛ `pg_version ∈ {16,18}` |
 | الشبكة الخارجية | `outbound=0` في كل تشغيل (net-guard) |
 
 ---
@@ -230,7 +251,8 @@ artifacts/api-server/src/
 4. **الموافقة القانونية:** نصوص السياسات والكيان القانوني وحماية القاصرين تنتظر قرارًا بشريًا/قانونيًا.
 5. **إبطال PAT:** يُثبت فقط بإجراء في GitHub، لا بفحص المستودع.
 6. **عيب 320px:** ملك Claude، غير ملموس هنا.
-7. **OpenAPI:** قرار Claude قبل أي عميل مولّد.
+7. **OpenAPI:** قرار Claude قبل أي عميل مولّد — 50 مسارًا جديدًا بلا عقد في `openapi.yaml` ولا عملاء (تفصيل W12.1 §4).
+8. **تعارض الترحيل `0041`:** `0041_wave07_financial_journal` (Qoder) و`0041_c1_sql_search` (Claude C1) يتصادمان. لا يُعاد ترقيم ولا يُعاد كتابة SQL؛ الحل ترحيل جديد في السلسلة المتأخرة أو إعادة ترتيب قبل أول تطبيق، مع تحديث المانيفست والحارس والعدّادات (W12.1 §7 و`QODER_CLAUDE_MERGE_RISK_MATRIX.md` §0).
 
 ---
 
@@ -249,11 +271,15 @@ artifacts/api-server/src/
 
 ```bash
 cd D:\DINAR\dinar-w0712
-git rev-parse HEAD origin/qoder/parallel-w07-w12-ultra   # كلاهما 7b115dc
+git rev-parse HEAD origin/qoder/parallel-w07-w12-ultra   # كلاهما 6b702ae (ثم HEAD التوثيقي في §1)
 
 gh workflow run qoder-api-suite.yml --ref qoder/parallel-w07-w12-ultra \
   -f suite=wave07-financial-journal.test \
   -f flags="BDINAR_W07_ACCEPTANCE=development BDINAR_WAVE4_ACCEPTANCE=development"
+# W12.1:
+gh workflow run qoder-api-suite.yml --ref qoder/parallel-w07-w12-ultra \
+  -f suite=wave07-w12-contract-hardening.test \
+  -f flags="BDINAR_W12C_ACCEPTANCE=development BDINAR_WAVE4_ACCEPTANCE=development"
 # ... نفس النمط لكل مجموعة، بالمفاتيح الموضحة في §14
 
 gh workflow run qoder-security.yml --ref qoder/parallel-w07-w12-ultra
@@ -275,7 +301,10 @@ git cherry-pick -x 09e8941 20ed66e 9af5170 9ae637c   # W07→W10 + 0041…0044
 git cherry-pick -x 939c64f   # W11 docs
 git cherry-pick -x 46489fe 1a5ed7e 3c80fc1 396a3f2  # W12 + تقوية CI + مزامنة
 git cherry-pick -x bda317f 74ca294 2dff3b9 57c9653 0bfdfd0 7b115dc  # إصلاحات CI
+git cherry-pick -x e3122e8 6b702ae  # توثيق W12 + تقوية W12.1
 ```
+
+**قبل أي `migrate`:** راجع تعارض `0041` مع Claude C1 (`0041_c1_sql_search`) في `QODER_CLAUDE_MERGE_RISK_MATRIX.md` §0؛ لا تُعاد ترقيمات ولا تُعاد كتابة SQL.
 
 **قواعد إلزامية:**
 1. لا تُعاد ترتيب الترحيلات 0041→0044؛ إن وُجد tag `0041+` مسبقًا على فرع Claude **توقف** وطابق الهاشات.
@@ -293,6 +322,7 @@ git cherry-pick -x bda317f 74ca294 2dff3b9 57c9653 0bfdfd0 7b115dc  # إصلاح
 | المجموعة | المفاتيح |
 |---|---|
 | W07 / W08 / W09 / W10 | `BDINAR_W0N_ACCEPTANCE=development` (+ `BDINAR_WAVE4_ACCEPTANCE=development` لـW07/W08) |
+| wave07-w12-contract-hardening (W12.1) | `BDINAR_W12C_ACCEPTANCE=development BDINAR_WAVE4_ACCEPTANCE=development` |
 | financial-state-machine / payment-order-state / wave4-payment-acceptance | `BDINAR_WAVE4_ACCEPTANCE=development` |
 | security-acceptance | `BDINAR_SECURITY_ACCEPTANCE=development` |
 | phase1-acceptance | `BDINAR_PHASE1_ACCEPTANCE=development BDINAR_TEST_DATABASE=development BDINAR_PROMOTIONS_ENABLED=true` |
@@ -314,7 +344,7 @@ git cherry-pick -x bda317f 74ca294 2dff3b9 57c9653 0bfdfd0 7b115dc  # إصلاح
 **قبل الدمج (الحالة الآن):** لا يلزم تراجع؛ الفرع منفصل و`main`/فرع Claude سليمان. لتعطيل النشر فقط (بأمر مالك): `git push origin --delete qoder/parallel-w07-w12-ultra` — إجراء مشترك/غير قابل للتراجع، لم يُنفَّذ.
 
 **بعد الدمج، إن حدث لاحقًا:**
-1. `git revert -m 1 <merge-sha>` أو revert عكسي للالتزامات الخمسة عشر؛ لا `reset --hard` ولا force push.
+1. `git revert -m 1 <merge-sha>` أو revert عكسي للالتزامات السبعة عشر؛ لا `reset --hard` ولا force push.
 2. لا تُسقط الترحيلات 0041–0044 تلقائيًا: هي إضافية والجداول غير مستخدمة قبل التفعيل. أي إسقاط يحتاج قرار مالك + نسخة احتياطية + مراجعة.
 3. أعد `typecheck` + المجموعات + فحص الهاشات بعد أي revert.
 4. لا تُعِد تفعيل أي ميزة مالية أثناء التراجع.
@@ -325,7 +355,7 @@ git cherry-pick -x bda317f 74ca294 2dff3b9 57c9653 0bfdfd0 7b115dc  # إصلاح
 
 | البوابة | الحكم |
 |---|---|
-| مراجعة التكامل على الفرع | ✅ **GO** — منشور، 54 ملفًا، 65 اختبار موجة + 22 مجموعة، كلها PASS على `7b115dc` |
+| مراجعة التكامل على الفرع | ✅ **GO** — منشور، 55 ملفًا، 71 اختبار موجة (65 + 6 W12.1) + 23 مجموعة، كلها PASS على `6b702ae` (SKIP واحد موثّق) |
 | التقاط الالتزامات بترتيبها | ✅ **GO** — بشرط إعادة البوابات بعد كل التقاط |
 | النشر/الإنتاج | ⛔ **NO-GO** — لا طلب، ولا مزود دفع، ولا اعتماد قانوني |
 | الدمج إلى `main` | ⛔ **NO-GO** — غير مصرح |
@@ -343,5 +373,6 @@ git cherry-pick -x bda317f 74ca294 2dff3b9 57c9653 0bfdfd0 7b115dc  # إصلاح
 - **W10:** مكتمل ومُنفَّذ — بلاغات/احتيال/دعم/جاهزية واتساب، 24/24 PASS.
 - **W11:** قبول بنيوي PASS + تشغيلي PASS بعد CI (تحديث في الملف).
 - **W12:** هذه الحزمة + خرائط العقود والمخاطر وقائمة المراجعة والبحث القانوني التحضيري.
-- **الفرع:** `qoder/parallel-w07-w12-ultra` @ `7b115dc` (بعيد = محلي).
+- **W12.1:** تدقيق ما قبل التكامل — 50 مسارًا بلا عقد، 6 اختبارات إغلاق فجوات، خريطة تعارض `0041`، بوابات إطلاق مفتوحة (`QODER_W12_1_PRE_INTEGRATION_HARDENING.md`).
+- **الفرع:** `qoder/parallel-w07-w12-ultra` @ `6b702ae` (بعيد = محلي؛ ما بعده وثائق فقط).
 - **النشر:** الفرع فقط. **الدمج:** لم يحدث. **الدفع الحي:** غير مفعّل. **AI مدفوع:** لم يُستخدم.
