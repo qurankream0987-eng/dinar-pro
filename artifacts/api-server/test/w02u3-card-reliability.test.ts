@@ -140,7 +140,7 @@ async function say(conversationId: string, message: string, cookie = buyer.cooki
     } catch {
       data = undefined;
     }
-    return { status: response.status, body: String(data?.message ?? raw), blocks: [], complete: undefined };
+    return { status: response.status, body: String(data?.message ?? data?.error ?? raw), blocks: [], complete: undefined };
   }
   const complete = raw
     .split(/\r?\n/)
@@ -355,16 +355,16 @@ await test("CR-12 another account and another market cannot read or drive the ca
     // the JO listing nor receive an effect from the JO review.
     assert.equal((await request(`/listings/${secondListing}`, "GET", undefined, buyer.cookie)).status, 404, "a JO listing is invisible in SA");
     assert.equal(await cartQuantity(secondListing), 0, "the SA cart holds nothing from the JO review");
-    const confirmed = await say(conversationId, "نعم");
-    assert.match(confirmed.body, /أُضيف العرض إلى سلتك/u, confirmed.body);
-    assert.equal(await cartQuantity(secondListing), 0, "the SA cart stays untouched");
+    const refused = await say(conversationId, "نعم");
+    assert.match(refused.body, /ليس في سوقك الحالي/u, refused.body);
+    assert.equal(await cartQuantity(secondListing), 0, "the SA market receives no effect");
   } finally {
     assert.equal((await request("/account/market", "PATCH", { marketId: "JO" }, buyer.cookie)).status, 200);
   }
-  assert.equal(await cartQuantity(secondListing), 2, "the confirmation landed in the conversation's own market");
+  assert.equal(await cartQuantity(secondListing), 1, "the cross-market confirmation changed nothing in JO either");
   const stored = cardOf(reviewIn(await readConversation(conversationId)).block);
   assert.equal(stored.surfaceId, openedCard.surfaceId);
-  assert.equal(stored.status.lifecycle, "CONFIRMED");
+  assert.notEqual(stored.status.lifecycle, "CONFIRMED", "a cross-market confirmation never executes");
 });
 
 after(async () => {
