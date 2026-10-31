@@ -12,10 +12,11 @@ import { test, after } from "node:test";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { and, desc, eq } from "drizzle-orm";
-import { aiResultSets, db, policyAcceptances, pool, privacyConsentEvents } from "@workspace/db";
+import { aiResultSets, db, policyAcceptances, policyConsentEvents, pool, privacyConsentEvents } from "@workspace/db";
 import app from "../src/app";
 import type { ConversationModelGateway } from "../src/ai/model-gateway";
 import { registrationAcceptancePolicies } from "../src/lib/policies";
+import { policyContentSha256 } from "../src/lib/policy-lifecycle";
 import { requireSafeReplitDevelopmentDatabase } from "./safe-development-database";
 
 requireSafeReplitDevelopmentDatabase("BDINAR_TEST_DATABASE");
@@ -135,6 +136,19 @@ await test("B10-02 review → decline → stale → accept, with exact versions 
   assert.deepEqual(await acceptances(legacy.id), required.map((policy) => `${policy.key}@${policy.version}`).sort(), "exactly the current versions");
   assert.match(accepted.body, /سُجّلت موافقتك/u);
   assert.equal(await consents(legacy.id), consentsBefore, "optional privacy consents are untouched");
+  // The W09 evidence ledger records the same decision the gate acted on, not a parallel truth.
+  const evidence = (await db.select().from(policyConsentEvents).where(eq(policyConsentEvents.userId, legacy.id)))
+    .filter((row) => row.source === "POLICY_REVIEW");
+  assert.deepEqual(
+    evidence.map((row) => `${row.policyKey}@${row.policyVersion}`).sort(),
+    required.map((policy) => `${policy.key}@${policy.version}`).sort(),
+    "the evidence ledger mirrors the accepted versions",
+  );
+  for (const row of evidence) {
+    const document = required.find((policy) => policy.key === row.policyKey)!;
+    assert.equal(row.decision, "ACCEPTED");
+    assert.equal(row.contentSha256, policyContentSha256(document), `${row.policyKey} evidence hashes the reviewed text`);
+  }
   assert.equal((await request("/listings", "POST", listing(), legacy.cookie)).status, 201, "publishing works after acceptance");
   assert.equal(modelCalls, 0, "no model call in any policy turn");
 });

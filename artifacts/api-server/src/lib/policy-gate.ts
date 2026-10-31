@@ -6,9 +6,11 @@
  * Contract acceptance (policy_acceptances) is separate from optional privacy consents
  * (privacy_consent_events): nothing here grants or withdraws an optional consent.
  */
+import { randomUUID } from "node:crypto";
 import { and, eq, inArray } from "drizzle-orm";
-import { db, policyAcceptances } from "@workspace/db";
+import { db, policyAcceptances, policyConsentEvents } from "@workspace/db";
 import { registrationAcceptancePolicies, type PolicyDocument } from "./policies";
+import { policyContentSha256 } from "./policy-lifecycle";
 
 type Tx = Pick<typeof db, "select" | "insert">;
 
@@ -45,15 +47,40 @@ export async function assertPoliciesAccepted(userId: string, tx: Tx = db): Promi
 export async function acceptReviewedPolicies(
   userId: string,
   reviewed: ReadonlyArray<{ key: string; version: string }>,
-  tx: Tx = db,
+  tx?: Tx,
 ): Promise<{ accepted: Array<{ key: string; version: string }>; stale: boolean }> {
-  const current = new Map(registrationAcceptancePolicies().map((policy) => [policy.key, policy.version]));
-  const stale = reviewed.some((item) => current.get(item.key) !== item.version);
-  if (stale) return { accepted: [], stale: true };
-  if (reviewed.length)
-    await tx
-      .insert(policyAcceptances)
-      .values(reviewed.map((item) => ({ userId, policyKey: item.key, policyVersion: item.version })))
-      .onConflictDoNothing();
-  return { accepted: [...reviewed], stale: false };
+  const write = async (target: Tx) => {
+    const current = new Map(registrationAcceptancePolicies().map((policy) => [policy.key, policy]));
+    const stale = reviewed.some((item) => current.get(item.key)?.version !== item.version);
+    if (stale) return { accepted: [], stale: true };
+    if (reviewed.length) {
+      await target
+        .insert(policyAcceptances)
+        .values(reviewed.map((item) => ({ userId, policyKey: item.key, policyVersion: item.version })))
+        .onConflictDoNothing();
+      // W09 keeps an append-only evidence ledger beside the gate. A conversation acceptance is
+      // the same explicit decision signup records, so it must appear there too; the deterministic
+      // key keeps repeated confirmations from duplicating evidence.
+      const events = reviewed.flatMap((item) => {
+        const document = current.get(item.key);
+        if (!document) return [];
+        return [
+          {
+            id: randomUUID(),
+            userId,
+            policyKey: item.key,
+            policyVersion: item.version,
+            contentSha256: policyContentSha256(document),
+            decision: "ACCEPTED" as const,
+            source: "POLICY_REVIEW" as const,
+            idempotencyKey: `policy-review:${item.key}:${item.version}`,
+          },
+        ];
+      });
+      if (events.length)
+        await target.insert(policyConsentEvents).values(events).onConflictDoNothing();
+    }
+    return { accepted: [...reviewed], stale: false };
+  };
+  return tx ? write(tx) : db.transaction((inner) => write(inner as Tx));
 }
