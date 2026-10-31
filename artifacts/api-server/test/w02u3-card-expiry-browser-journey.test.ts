@@ -15,7 +15,7 @@ import { createServer } from "node:http";
 import { readFile, unlink } from "node:fs/promises";
 import { promisify } from "node:util";
 import { eq } from "drizzle-orm";
-import { aiResultSets, db, pool } from "@workspace/db";
+import { aiResultSets, aiUiBlocks, db, pool } from "@workspace/db";
 import app from "../src/app";
 import { getModelGatewayCallCount } from "../src/ai/model-gateway";
 import { startDinarBrowserTestWeb } from "./browser-test-web-server";
@@ -144,6 +144,16 @@ const control = createServer(async (request_, response) => {
     if (request_.method === "POST" && request_.url === "/shorten") {
       const expiresAt = new Date(Date.now() + 9_000);
       await db.update(aiResultSets).set({ expiresAt }).where(eq(aiResultSets.id, openedCard.pendingReviewId));
+      // The envelope takes the review's own expiry snapshot, so the fixture shortens the stored
+      // snapshot to the same instant the row enforces: one coherent server deadline, no rule change.
+      const blocks = await db.select().from(aiUiBlocks).where(eq(aiUiBlocks.conversationId, conversationId));
+      const block = blocks.find((row) => row.blockType === "SURFACE" && (row.payload as { resultSetId?: unknown })?.resultSetId === openedCard.pendingReviewId);
+      if (!block) throw new Error("no stored surface block for the review");
+      const payload = block.payload as Record<string, any>;
+      await db
+        .update(aiUiBlocks)
+        .set({ payload: { ...payload, purchaseReview: { ...payload.purchaseReview, expiresAt: expiresAt.toISOString() } } })
+        .where(eq(aiUiBlocks.id, block.id));
       shortenedAt = expiresAt;
       response.setHeader("content-type", "application/json");
       response.end(JSON.stringify({ expiresAt: expiresAt.toISOString() }));
@@ -213,6 +223,11 @@ await test("W02U3 CR-11 real browser: a short-TTL review expires and refuses lat
   const [row] = await db.select().from(aiResultSets).where(eq(aiResultSets.id, openedCard.pendingReviewId));
   assert.ok(row, "the review row still exists");
   assert.equal(row.expiresAt.toISOString(), shortenedAt!.toISOString(), "the client never extended the server expiry");
+  const storedBlocks = await db.select().from(aiUiBlocks).where(eq(aiUiBlocks.conversationId, conversationId));
+  const storedReview = storedBlocks
+    .map((block) => block.payload as Record<string, any>)
+    .find((payload) => payload?.resultSetId === openedCard.pendingReviewId)?.purchaseReview;
+  assert.equal(storedReview?.expiresAt, shortenedAt!.toISOString(), "the stored review snapshot kept the shortened deadline");
   const stored = await readCard(conversationId);
   assert.equal(stored.status.lifecycle, "EXPIRED", "the stored review is terminal");
   assert.deepEqual(stored.allowedActions, []);
