@@ -133,6 +133,16 @@ async function acceptanceVersion(tx: any, document: PolicyDocument) {
   return (await publishedVersion(tx, document.key))?.version ?? document.version;
 }
 
+/**
+ * The one answer to "which version of each required policy must this user have accepted?",
+ * shared by the W09 consent API and the commerce gate (lib/policy-gate.ts): the registry's
+ * PUBLISHED version when there is one, else the wording's own version in lib/policies.ts.
+ */
+export async function requiredAcceptanceVersions(tx: any = db): Promise<Array<{ document: PolicyDocument; version: string }>> {
+  const required = currentPolicies().filter((document) => document.requiresAcceptance);
+  return Promise.all(required.map(async (document) => ({ document, version: await acceptanceVersion(tx, document) })));
+}
+
 export async function policyLifecycleFor(
   key: string,
   version: string,

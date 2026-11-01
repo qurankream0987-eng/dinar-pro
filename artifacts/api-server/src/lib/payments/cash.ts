@@ -539,19 +539,28 @@ export async function confirmCashRefundReceipt(input: {
   refundId: string;
 }) {
   return db.transaction(async (tx) => {
+    // Lock order: the order row first, then its refund rows — the same order as
+    // openCashRefundCase, so a concurrent open and confirm on one order wait instead of
+    // deadlocking. The first read takes no lock; it only finds the order to lock.
+    const [located] = await tx
+      .select({ orderId: cashRefundCases.orderId, buyerId: cashRefundCases.buyerId })
+      .from(cashRefundCases)
+      .where(eq(cashRefundCases.id, input.refundId));
+    if (!located || located.buyerId !== input.buyerId)
+      reject(404, "CASH_REFUND_NOT_FOUND", "حالة الاسترداد غير موجودة");
+    const order = await lockOrder(tx, located.orderId);
     const [refund] = await tx
       .select()
       .from(cashRefundCases)
       .where(eq(cashRefundCases.id, input.refundId))
       .for("update");
-    if (!refund || refund.buyerId !== input.buyerId)
+    if (!refund || refund.buyerId !== input.buyerId || refund.orderId !== order.id)
       reject(404, "CASH_REFUND_NOT_FOUND", "حالة الاسترداد غير موجودة");
     if (refund.status === "CONFIRMED")
       return { refund: cashRefundCaseView(refund), confirmed: false };
     if (refund.status !== "REPAYMENT_CLAIMED")
       reject(409, "CASH_REFUND_NOT_CONFIRMABLE", "لا يمكن تأكيد استلام الاسترداد في حالته الحالية");
 
-    const order = await lockOrder(tx, refund.orderId);
     const now = new Date();
     const [updated] = await tx
       .update(cashRefundCases)

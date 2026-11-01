@@ -8,13 +8,15 @@
  */
 import { and, eq, inArray } from "drizzle-orm";
 import { db, policyAcceptances } from "@workspace/db";
-import { registrationAcceptancePolicies, type PolicyDocument } from "./policies";
+import type { PolicyDocument } from "./policies";
+import { recordPolicyDecision, requiredAcceptanceVersions } from "./policy-lifecycle";
 
 type Tx = Pick<typeof db, "select" | "insert">;
 
 /** The current versions this user has not accepted yet (empty when nothing is pending). */
 export async function pendingPolicyAcceptances(userId: string, tx: Tx = db): Promise<PolicyDocument[]> {
-  const required = registrationAcceptancePolicies();
+  // Integration: the required versions are W09's (registry PUBLISHED version, else the wording's).
+  const required = (await requiredAcceptanceVersions(tx)).map(({ document, version }) => ({ ...document, version }));
   if (!required.length) return [];
   const accepted = await tx
     .select({ key: policyAcceptances.policyKey, version: policyAcceptances.policyVersion })
@@ -47,13 +49,19 @@ export async function acceptReviewedPolicies(
   reviewed: ReadonlyArray<{ key: string; version: string }>,
   tx: Tx = db,
 ): Promise<{ accepted: Array<{ key: string; version: string }>; stale: boolean }> {
-  const current = new Map(registrationAcceptancePolicies().map((policy) => [policy.key, policy.version]));
+  const current = new Map((await requiredAcceptanceVersions(tx)).map(({ document, version }) => [document.key, version]));
   const stale = reviewed.some((item) => current.get(item.key) !== item.version);
   if (stale) return { accepted: [], stale: true };
-  if (reviewed.length)
-    await tx
-      .insert(policyAcceptances)
-      .values(reviewed.map((item) => ({ userId, policyKey: item.key, policyVersion: item.version })))
-      .onConflictDoNothing();
+  // Integration: recorded through the W09 consent authority, so every card acceptance has the
+  // same hashed consent event as an API acceptance (and the policy_acceptances row it writes).
+  for (const item of reviewed)
+    await recordPolicyDecision({
+      userId,
+      key: item.key,
+      version: item.version,
+      decision: "ACCEPTED",
+      source: "POLICY_REVIEW",
+      idempotencyKey: `policy-card:${item.key}:${item.version}`.replace(/[^A-Za-z0-9._:-]/g, "-").slice(0, 128),
+    });
   return { accepted: [...reviewed], stale: false };
 }

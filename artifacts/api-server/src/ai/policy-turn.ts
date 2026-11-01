@@ -15,8 +15,12 @@ import { randomUUID } from "node:crypto";
 import { and, desc, eq } from "drizzle-orm";
 import { aiResultSets, db } from "@workspace/db";
 import type { marketFor } from "../lib/markets";
-import { registrationAcceptancePolicies, type PolicyDocument } from "../lib/policies";
+import type { PolicyDocument } from "../lib/policies";
 import { acceptReviewedPolicies, pendingPolicyAcceptances } from "../lib/policy-gate";
+import { requiredAcceptanceVersions } from "../lib/policy-lifecycle";
+
+/** The same required versions the commerce gate and the W09 consent API use. */
+const requiredPolicies = async (): Promise<PolicyDocument[]> => (await requiredAcceptanceVersions()).map(({ document, version }) => ({ ...document, version }));
 import type { ToolResult } from "./tool-registry";
 import { normalizeBuyerText } from "./buyer-turn";
 
@@ -82,7 +86,7 @@ async function latestReview(conversationId: string, marketId: string, actorId: s
 
 async function openReview(input: { conversationId: string; market: Market; actorId: string }, lead = ""): Promise<Turn> {
   const pending = await pendingPolicyAcceptances(input.actorId);
-  const required = registrationAcceptancePolicies();
+  const required = (await requiredPolicies());
   if (!pending.length)
     return card(
       { view: "CURRENT", policies: required.map((policy) => item(policy, true)), optionalConsentsUnaffected: true },
@@ -129,7 +133,7 @@ export async function executePolicyTurn(input: {
   }
   if (decline) {
     await db.update(aiResultSets).set({ query: { ...review.query, status: "DECLINED" } }).where(eq(aiResultSets.id, review.set.id));
-    const required = registrationAcceptancePolicies();
+    const required = (await requiredPolicies());
     const pending = await pendingPolicyAcceptances(input.actorId);
     return card(
       { view: "DECLINED", policies: required.map((policy) => item(policy, !pending.some((entry) => entry.key === policy.key))), optionalConsentsUnaffected: true },
@@ -142,7 +146,7 @@ export async function executePolicyTurn(input: {
     return openReview(actor, "تغيّرت إحدى السياسات بعد مراجعتك، فلم أسجّل الموافقة على النسخة القديمة. ");
   }
   await db.update(aiResultSets).set({ query: { ...review.query, status: "ACCEPTED" } }).where(eq(aiResultSets.id, review.set.id));
-  const required = registrationAcceptancePolicies();
+  const required = (await requiredPolicies());
   const pending = await pendingPolicyAcceptances(input.actorId);
   return card(
     { view: "ACCEPTED", policies: required.map((policy) => item(policy, !pending.some((entry) => entry.key === policy.key))), optionalConsentsUnaffected: true },
