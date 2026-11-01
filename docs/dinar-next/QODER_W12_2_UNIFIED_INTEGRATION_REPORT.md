@@ -76,8 +76,17 @@ c2c548e  fix(db): إزالة أثرَي دمج أفسدا typecheck
 a626509  ci(search): إتاحة مجموعتَي C1 Foundation/Performance للتحفيذ المعزول
 29c2af9  feat(d1-d2): (cherry-pick من كلود `8f46dfd`) بوابة نيّة الأعمال + عقد الكتالوج + OpenAPI
 2e985fe  docs(d1-d2): (cherry-pick من كلود `91b09ee`) دليل الدفعة النهائية وكلود هاندوف
-d593b0d  fix(test): إزالة تكرار مفتاح `BDINAR_D1D2_ACCEPTANCE` الذي أحدثه الدمج  ← HEAD
+d593b0d  fix(test): إزالة تكرار مفتاح `BDINAR_D1D2_ACCEPTANCE` الذي أحدثه الدمج  ← آخر التزام شيفرة منتج
+5c41ec2  docs(w12.2): حزمة أدلة التكامل الموحَّد
+9a4b5d0  docs(w12.2): تحديد الـ SHA الذي جرت عليه الدفعة
+0f4c518  docs(w12.2): كفّ تثبيت رأس الفرع داخل وثائق الأدلة
+8a7eef1  ci(isolation): سلاسل مجموعات عدة على هجرة+زرع واحد في job واحد
+8456dc9  ci(isolation): إضافة السلسلة التساعية المتداورة (سقطت فعلًا — N7)
+12a36d5  test(isolation): تنظيف سلّة الإبطاء المُسندة إلى الـ IP بين مجموعات السلسلة
+d572484  docs(runner): توثيق chaining في موضع الاستخدام
 ```
+
+الالتزامات ما بين `d593b0d` و`d572484` ليست شيفرة منتج: ملف الـ workflow، مشغّل العزل، ووثائق فقط — `git diff --stat d593b0d..d572484` لا يُظهر أي ملف تحت `src/` أو `lib/`. السلاسل أُعيد تشغيلها كاملة على `d572484` لأن المشغّل نفسه تغيّر، والأدلة في §2 ز من `QODER_W12_2_COMBINED_ACCEPTANCE.md`.
 
 الانتباه المطلوب: `claude/12` كان عند `4613d50` ثم تقدّم؛ لذا لم تُستخدَم SHA تاريخية كرأس حالي — أُعيد `git ls-remote` قبل الاستيراد، وقورن المحتوى بالـ blob بعد الاستيراد.
 
@@ -130,6 +139,6 @@ d593b0d  fix(test): إزالة تكرار مفتاح `BDINAR_D1D2_ACCEPTANCE` ا
 ## 8 — ما يلي هذه الوثيقة
 
 - `QODER_W12_2_MIGRATION_RECONCILIATION.md` — تسلسل 47، hashes، إثبات الترقية على PG16/18.
-- `QODER_W12_2_RISK_CLOSURE_MATRIX.md` — R1–R17، S1–S13، وأخطار جديدة N1–N4.
-- `QODER_W12_2_COMBINED_ACCEPTANCE.md` — أرقام تشغيل GitHub Actions، مسارات مركَّبة، Chromium، الأداء.
+- `QODER_W12_2_RISK_CLOSURE_MATRIX.md` — R1–R17، S1–S13، وأخطار جديدة N1–N7 (N6 أُغلق بالسلاسل، وN7 هو ما كشفته).
+- `QODER_W12_2_COMBINED_ACCEPTANCE.md` — أرقام تشغيل GitHub Actions، مسارات مركَّبة، Chromium، الأداء، و§2 ز للسلاسل المجمَّعة على قاعدة واحدة.
 - `QODER_W12_2_CLAUDE_HANDOFF.md` — ما على كلود مراجعته وقرار الدمج.
