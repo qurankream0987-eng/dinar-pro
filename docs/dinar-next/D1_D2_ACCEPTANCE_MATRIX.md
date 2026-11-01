@@ -84,4 +84,17 @@
   - closure-integrations (9)، next-g1-usage (21)، pro-subscription-honesty (2)؛
   - readiness (15)، development-tls، pre-switch، universal-control-acceptance (10)؛
   - conversation (29)، commerce (23)، promotions (6).
-- **البطارية الكاملة:** في `D1_D2_CLAUDE_HANDOFF.md` §3.
+- **البطارية الكاملة** على `75139b7`، 115 مجموعة:
+  - 114 PASS و1 FAIL، و0 TIMEOUT و0 BLOCKED؛
+  - 1265 اختبارًا PASS، و1 FAIL، و8 SKIP، كلها اختبارات حية تتطلب شبكة.
+- **الإصلاح:** الفشل الوحيد أُصلح وأعيد تشغيله أخضر على `8f46dfd`.
+- **GitHub Actions:** التشغيل `41265984814`، PG16 وPG18 كلاهما success.
+- التفاصيل في `D1_D2_CLAUDE_HANDOFF.md` §3.
+
+## إضافات بعد المراجعة (على `8f46dfd`)
+
+| # | المعيار | الاختبار | النتيجة |
+|---|---|---|---|
+| D2-17 | عقد الكتالوج يفصل التوثيق والنشر والعضوية والخطة المدفوعة | `d1-d2-business-foundation` | PASS |
+| D2-18 | بوابة النية لا تستعلم للرسائل العادية ولا تبتلع متابعات الطلبات والبحث | `d1-d2-business-foundation` | PASS |
+| D2-19 | كل مسار D1/D2 له عملية OpenAPI | `d1-d2-business-foundation` | PASS |
