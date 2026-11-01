@@ -1,0 +1,99 @@
+name: claude-integration
+
+# Integration-preflight evidence on the isolated Claude branch: typecheck, both builds, surface
+# composition, the release-migration tests and the integration/wave suites on disposable
+# PostgreSQL 16 and 18 services. No deployment, no provider keys, no paid calls, no production data.
+
+on:
+  workflow_dispatch:
+  # workflow_dispatch is only dispatchable from the default branch; this push trigger is limited
+  # to the isolated integration branch.
+  push:
+    branches: [claude/13-integration-preflight]
+    paths:
+      - "artifacts/api-server/**"
+      - "artifacts/dinar/**"
+      - "lib/**"
+      - ".github/workflows/claude-integration.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: claude-integration-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  suite:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        postgres: ["16", "18"]
+    services:
+      postgres:
+        image: postgres:${{ matrix.postgres }}
+        env:
+          POSTGRES_USER: dinar_isolation
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U dinar_isolation"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      DINAR_LOCAL_PG: postgres://dinar_isolation@127.0.0.1:5432
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run typecheck
+      - run: pnpm --filter @workspace/api-server run build
+      - run: pnpm --filter @workspace/dinar run build
+      - run: pnpm --filter @workspace/dinar run test:surfaces
+      - name: Release migration (PostgreSQL 18+ only)
+        if: matrix.postgres == '18'
+        working-directory: lib/db
+        env:
+          DINAR_RELEASE_MIGRATION_TEST_PG: postgres://dinar_isolation@127.0.0.1:5432
+        run: pnpm run test:release-migration
+      - name: Install Chromium
+        working-directory: artifacts/dinar
+        run: |
+          pnpm exec playwright install --with-deps chromium
+          echo "DINAR_CHROMIUM=$(node -e 'console.log(require("@playwright/test").chromium.executablePath())')" >> "$GITHUB_ENV"
+      - name: Migration ledger and readiness
+        working-directory: artifacts/api-server
+        run: |
+          DINAR_SUITE_SEED=none sh test/isolation/local-suite.sh readiness.test
+          sh test/isolation/local-suite.sh development-tls.test
+      - name: Integration suites
+        working-directory: artifacts/api-server
+        run: |
+          for s in integration-cash-lock-order integration-policy-consent integration-business-listings integration-openapi-coverage; do
+            sh test/isolation/local-suite.sh $s.test BDINAR_INTEGRATION_ACCEPTANCE=development BDINAR_WAVE4_ACCEPTANCE=development
+          done
+      - name: W07-W12.1
+        working-directory: artifacts/api-server
+        run: |
+          F="BDINAR_W07_ACCEPTANCE=development BDINAR_W08_ACCEPTANCE=development BDINAR_W09_ACCEPTANCE=development BDINAR_W10_ACCEPTANCE=development BDINAR_W12C_ACCEPTANCE=development BDINAR_WAVE4_ACCEPTANCE=development"
+          for s in wave07-financial-journal wave08-cash-and-refunds wave09-policy-consent-compliance wave10-trust-support-whatsapp wave07-w12-contract-hardening financial-state-machine payment-order-state; do
+            sh test/isolation/local-suite.sh $s.test $F
+          done
+      - name: C1, D1/D2, cards, cart and conversation
+        working-directory: artifacts/api-server
+        run: |
+          F="BDINAR_TEST_DATABASE=development BDINAR_D1D2_ACCEPTANCE=development BDINAR_WAVE03_ACCEPTANCE=development BDINAR_WAVE4_ACCEPTANCE=development BDINAR_W02U3_TEST_DATABASE=development BDINAR_CLOSURE_ACCEPTANCE=development BDINAR_PROMOTIONS_ENABLED=true"
+          for s in search-sql-foundation d1-d2-business-foundation d1-d2-business-browser policy-consent-cards w02u3-card-reliability wave03-card-envelope commerce-journey conversation closure-integrations; do
+            sh test/isolation/local-suite.sh $s.test $F
+          done
