@@ -1,6 +1,6 @@
 # DINAR NEXT — W12.2: تسوية هجرة Drizzle (Migration Reconciliation)
 
-**المرشّح:** `qoder/17-unified-integration-candidate` — الـ SHA المُختبَر `d593b0d` (التسوية نفسها مُقرة في `3856029`)؛ رأس الفرع الآن `5c41ec2` وهو هذه الوثائق فقط
+**المرشّح:** `qoder/17-unified-integration-candidate` — الـ SHA المُختبَر `d593b0d` (التسوية نفسها مُقرة في `3856029`)؛ ما فوقه التزامات وثائق فقط
 **المسار:** `lib/db/drizzle/` + `lib/db/drizzle/meta/_journal.json` + `lib/db/drizzle/release-manifest.json` + `lib/db/src/clone-migration-guard.ts`
 **التاريخ:** 2026-11-01
 **النتيجة:** تاريخ مُسوّى بالكامل من 47 مدخلًا، الرأس `0046_wave10_trust_support_whatsapp`، مُختبَر على PostgreSQL 16 و18، بلا تعديل أي هجرة طُبِّقت على قاعدة حقيقية، وبلا تنفيذ إنتاجي.
