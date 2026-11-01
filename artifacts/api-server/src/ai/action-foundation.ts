@@ -1243,7 +1243,13 @@ export async function pendingActionLapsed(set: { id: string; conversationId: str
 const settledBy = () => (currentTurnId() ? { settledByTurn: currentTurnId() } : {});
 
 export type ConfirmOutcome =
-  | { status: "CONFIRMED" | "CANCELLED" | "EXPIRED" | "REJECTED" | "IN_PROGRESS"; message: string; result?: Record<string, unknown> }
+  | {
+      status: "CONFIRMED" | "CANCELLED" | "EXPIRED" | "REJECTED" | "IN_PROGRESS";
+      message: string;
+      result?: Record<string, unknown>;
+      /** True only when this call performed the transition; a lost race is settled, not executed. */
+      executed?: boolean;
+    }
   | { status: "REVIEW_REQUIRED"; message: string; review: ActionReview };
 
 /**
@@ -1269,11 +1275,11 @@ export async function confirmPendingAction(input: {
     if (!conversation || set.marketId !== input.market.id) throw fail(404, "الإجراء غير موجود");
     const settle = async (status: PendingQuery["status"], message: string) => {
       await tx.update(aiResultSets).set({ query: { ...query, status, notice: message, ...settledBy() } }).where(eq(aiResultSets.id, set.id));
-      return { done: { status, message } as ConfirmOutcome };
+      return { done: { status, message, executed: status === "CANCELLED" } as ConfirmOutcome };
     };
-    if (query.status === "EXECUTING") return { done: { status: "IN_PROGRESS", message: "الإجراء قيد التنفيذ." } as ConfirmOutcome };
+    if (query.status === "EXECUTING") return { done: { status: "IN_PROGRESS", message: "الإجراء قيد التنفيذ.", executed: false } as ConfirmOutcome };
     if (query.status !== "PENDING")
-      return { done: { status: query.status === "SUPERSEDED" ? "EXPIRED" : query.status, message: "تمت معالجة هذا الإجراء من قبل؛ لم يتغير شيء." } as ConfirmOutcome };
+      return { done: { status: query.status === "SUPERSEDED" ? "EXPIRED" : query.status, message: "تمت معالجة هذا الإجراء من قبل؛ لم يتغير شيء.", executed: false } as ConfirmOutcome };
     if (await pendingActionLapsed(set, tx))
       return settle("EXPIRED", "انتهت صلاحية هذا التأكيد لأن المحادثة تابعت بعده أو مضى وقته. لم يتغير شيء.");
     if (input.decision === "CANCEL") return settle("CANCELLED", "أُلغي الإجراء. لم يتغير شيء.");
@@ -1309,7 +1315,7 @@ export async function confirmPendingAction(input: {
     return { status: "REVIEW_REQUIRED", message: "تغيّرت بيانات العرض منذ المراجعة. راجع التفاصيل الجديدة ثم أكّد.", review };
   }
   const values = Object.fromEntries(Object.entries(query.structuredInput).map(([key, fact]) => [key, fact.value]));
-  let outcome: { status: "CONFIRMED" | "REJECTED"; message: string; result?: Record<string, unknown> };
+  let outcome: { status: "CONFIRMED" | "REJECTED"; message: string; result?: Record<string, unknown>; executed: boolean };
   try {
     const result = await ACTION_REGISTRY[query.action]!.execute({
       actionId: input.actionId,
@@ -1319,14 +1325,14 @@ export async function confirmPendingAction(input: {
       values,
       expected: query.expected,
     });
-    outcome = { status: "CONFIRMED", message: "تم التنفيذ بعد تأكيدك والتحقق من البيانات الحالية.", ...(result ? { result } : {}) };
+    outcome = { status: "CONFIRMED", message: "تم التنفيذ بعد تأكيدك والتحقق من البيانات الحالية.", executed: true, ...(result ? { result } : {}) };
   } catch (error) {
     const status = (error as { status?: unknown }).status;
     if (!(typeof status === "number" && status < 500 && error instanceof Error)) {
       await db.update(aiResultSets).set({ query: { ...query, status: "REJECTED", notice: "تعذر التنفيذ.", ...settledBy() } }).where(eq(aiResultSets.id, input.actionId));
       throw error;
     }
-    outcome = { status: "REJECTED", message: `${error.message}. لم يتغير شيء.` };
+    outcome = { status: "REJECTED", message: `${error.message}. لم يتغير شيء.`, executed: false };
   }
   await db
     .update(aiResultSets)

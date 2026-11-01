@@ -257,7 +257,12 @@ await test("CR-03 two sessions confirming at the same moment have one effect", a
   const card = cardOf(reviewIn(await readConversation(thirdConversation, secondSession)).block);
   assert.equal(card.status.lifecycle, "CONFIRMED");
   assert.equal(card.surfaceId, opened.card.surfaceId);
-  assert.equal(modelCalls, 0, "two concurrent confirmations never reach the model");
+  // A decision repeated after the review settled answers deterministically, never through the model.
+  const repeat = await say(thirdConversation, "نعم", buyer.cookie);
+  assert.equal(repeat.status, 200, repeat.body);
+  assert.doesNotMatch(repeat.body, /أُضيف العرض إلى سلتك/u, "a settled confirmation never claims a second add");
+  assert.equal(await cartQuantity(thirdListing), 1, "a settled confirmation changes nothing");
+  assert.equal(modelCalls, 0, "a settled confirmation never reaches the model");
 });
 
 await test("CR-06 a price changed after the review is refused and reviewed again, never executed", async () => {
