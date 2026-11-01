@@ -6,6 +6,15 @@ name: claude-d1d2
 
 on:
   workflow_dispatch:
+  # A workflow_dispatch workflow is only dispatchable from the default branch; this push trigger
+  # is limited to the isolated Claude branch and its D1/D2 paths.
+  push:
+    branches: [claude/12-d1-d2-business-foundation]
+    paths:
+      - "artifacts/api-server/**"
+      - "artifacts/dinar/**"
+      - "lib/**"
+      - ".github/workflows/claude-d1d2.yml"
 
 permissions:
   contents: read

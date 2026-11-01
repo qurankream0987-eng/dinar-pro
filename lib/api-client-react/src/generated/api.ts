@@ -49,6 +49,16 @@ import type {
   AiVoiceTranscriptionResponse,
   AuthLoginRequest,
   AuthRegisterRequest,
+  BusinessDocumentUploadRequest,
+  BusinessDocumentUploadTicket,
+  BusinessDraftRequest,
+  BusinessDraftResult,
+  BusinessIntegrationRequest,
+  BusinessOwnerView,
+  BusinessPublicView,
+  BusinessPublicationRequest,
+  BusinessReviewDecisionRequest,
+  BusinessUpdateRequest,
   CancelInput,
   CheckoutConflict,
   CheckoutInput,
@@ -65,9 +75,12 @@ import type {
   CourierFareView,
   Dashboard,
   DeliveryInput,
+  EmptyObject,
   GetListingsParams,
   GetOrdersParams,
+  GetSubscriptionPlanEconomicsParams,
   HealthStatus,
+  ListBusinessVerificationQueueParams,
   Listing,
   ListingInput,
   ListingPhotoCompleteRequest,
@@ -92,6 +105,7 @@ import type {
   PhoneVerificationChallengeResponse,
   PhoneVerificationCodeRequest,
   PhoneVerificationCodeResponse,
+  PreviewBusinessPlanChangeParams,
   ProfileAvatarSetRequest,
   ProfileAvatarSetResponse,
   ProfileAvatarUploadRequest,
@@ -107,6 +121,8 @@ import type {
   SellerDue,
   SellerPromotion,
   SellerPromotionAction,
+  SubscriptionCheckoutRequest,
+  SubscriptionPlansOverview,
   TutorialLearningEvent,
   TutorialLearningEventInput
 } from './api.schemas';
@@ -9151,6 +9167,1867 @@ export function useGetAdminCommercialSummary<TData = Awaited<ReturnType<typeof g
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetAdminCommercialSummaryQueryOptions(marketId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetSubscriptionPlansUrl = () => {
+
+
+
+
+  return `/api/subscriptions/plans`
+}
+
+/**
+ * @summary D1: Free, DINAR Go, DINAR Pro and DINAR Business for this account and market (server prices, eligibility, billing state)
+ */
+export const getSubscriptionPlans = async ( options?: Parameters<typeof customFetch>[1]): Promise<SubscriptionPlansOverview> => {
+
+  return customFetch<SubscriptionPlansOverview>(getGetSubscriptionPlansUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetSubscriptionPlansQueryKey = () => {
+    return [
+    `/api/subscriptions/plans`
+    ] as const;
+    }
+
+
+export const getGetSubscriptionPlansQueryOptions = <TData = Awaited<ReturnType<typeof getSubscriptionPlans>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSubscriptionPlans>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetSubscriptionPlansQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSubscriptionPlans>>> = ({ signal }) => getSubscriptionPlans({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSubscriptionPlans>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetSubscriptionPlansQueryResult = NonNullable<Awaited<ReturnType<typeof getSubscriptionPlans>>>
+export type GetSubscriptionPlansQueryError = ErrorType<unknown>
+
+
+export function useGetSubscriptionPlans<TData = Awaited<ReturnType<typeof getSubscriptionPlans>>, TError = ErrorType<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSubscriptionPlans>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSubscriptionPlans>>,
+          TError,
+          Awaited<ReturnType<typeof getSubscriptionPlans>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSubscriptionPlans<TData = Awaited<ReturnType<typeof getSubscriptionPlans>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSubscriptionPlans>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSubscriptionPlans>>,
+          TError,
+          Awaited<ReturnType<typeof getSubscriptionPlans>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSubscriptionPlans<TData = Awaited<ReturnType<typeof getSubscriptionPlans>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSubscriptionPlans>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary D1: Free, DINAR Go, DINAR Pro and DINAR Business for this account and market (server prices, eligibility, billing state)
+ */
+
+export function useGetSubscriptionPlans<TData = Awaited<ReturnType<typeof getSubscriptionPlans>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSubscriptionPlans>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetSubscriptionPlansQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getPreviewBusinessPlanChangeUrl = (params: PreviewBusinessPlanChangeParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/business/plan-change-preview?${stringifiedParams}` : `/api/business/plan-change-preview`
+}
+
+/**
+ * @summary What a plan change would do; no proration is invented
+ */
+export const previewBusinessPlanChange = async (params: PreviewBusinessPlanChangeParams, options?: Parameters<typeof customFetch>[1]): Promise<CommercialJsonObject> => {
+
+  return customFetch<CommercialJsonObject>(getPreviewBusinessPlanChangeUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getPreviewBusinessPlanChangeQueryKey = (params?: PreviewBusinessPlanChangeParams,) => {
+    return [
+    `/api/business/plan-change-preview`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getPreviewBusinessPlanChangeQueryOptions = <TData = Awaited<ReturnType<typeof previewBusinessPlanChange>>, TError = ErrorType<unknown>>(params: PreviewBusinessPlanChangeParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof previewBusinessPlanChange>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getPreviewBusinessPlanChangeQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof previewBusinessPlanChange>>> = ({ signal }) => previewBusinessPlanChange(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof previewBusinessPlanChange>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type PreviewBusinessPlanChangeQueryResult = NonNullable<Awaited<ReturnType<typeof previewBusinessPlanChange>>>
+export type PreviewBusinessPlanChangeQueryError = ErrorType<unknown>
+
+
+export function usePreviewBusinessPlanChange<TData = Awaited<ReturnType<typeof previewBusinessPlanChange>>, TError = ErrorType<unknown>>(
+ params: PreviewBusinessPlanChangeParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof previewBusinessPlanChange>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof previewBusinessPlanChange>>,
+          TError,
+          Awaited<ReturnType<typeof previewBusinessPlanChange>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function usePreviewBusinessPlanChange<TData = Awaited<ReturnType<typeof previewBusinessPlanChange>>, TError = ErrorType<unknown>>(
+ params: PreviewBusinessPlanChangeParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof previewBusinessPlanChange>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof previewBusinessPlanChange>>,
+          TError,
+          Awaited<ReturnType<typeof previewBusinessPlanChange>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function usePreviewBusinessPlanChange<TData = Awaited<ReturnType<typeof previewBusinessPlanChange>>, TError = ErrorType<unknown>>(
+ params: PreviewBusinessPlanChangeParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof previewBusinessPlanChange>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary What a plan change would do; no proration is invented
+ */
+
+export function usePreviewBusinessPlanChange<TData = Awaited<ReturnType<typeof previewBusinessPlanChange>>, TError = ErrorType<unknown>>(
+ params: PreviewBusinessPlanChangeParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof previewBusinessPlanChange>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getPreviewBusinessPlanChangeQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getStartBusinessSubscriptionCheckoutUrl = () => {
+
+
+
+
+  return `/api/business/subscription-checkout`
+}
+
+/**
+ * @summary Real checkout; 503 BILLING_PROVIDER_NOT_CONNECTED without a registered adapter. DINAR Business needs businessId of a VERIFIED business
+ */
+export const startBusinessSubscriptionCheckout = async (subscriptionCheckoutRequest: SubscriptionCheckoutRequest, options?: Parameters<typeof customFetch>[1]): Promise<CommercialJsonObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<CommercialJsonObject>(getStartBusinessSubscriptionCheckoutUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(subscriptionCheckoutRequest)
+  }
+);}
+
+
+
+
+
+export const getStartBusinessSubscriptionCheckoutMutationKey = () => ['startBusinessSubscriptionCheckout'] as const;
+
+export const getStartBusinessSubscriptionCheckoutMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof startBusinessSubscriptionCheckout>>, TError,StartBusinessSubscriptionCheckoutMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof startBusinessSubscriptionCheckout>>, TError,StartBusinessSubscriptionCheckoutMutationVariables, TContext> => {
+
+const mutationKey = getStartBusinessSubscriptionCheckoutMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof startBusinessSubscriptionCheckout>>, StartBusinessSubscriptionCheckoutMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  startBusinessSubscriptionCheckout(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type StartBusinessSubscriptionCheckoutMutationResult = NonNullable<Awaited<ReturnType<typeof startBusinessSubscriptionCheckout>>>
+    export type StartBusinessSubscriptionCheckoutMutationBody = BodyType<SubscriptionCheckoutRequest>
+    export type StartBusinessSubscriptionCheckoutMutationError = ErrorType<unknown>
+    export type StartBusinessSubscriptionCheckoutMutationVariables = {data: BodyType<SubscriptionCheckoutRequest>}
+
+    /**
+ * @summary Real checkout; 503 BILLING_PROVIDER_NOT_CONNECTED without a registered adapter. DINAR Business needs businessId of a VERIFIED business
+ */
+export const useStartBusinessSubscriptionCheckout = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof startBusinessSubscriptionCheckout>>, TError,StartBusinessSubscriptionCheckoutMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof startBusinessSubscriptionCheckout>>,
+        TError,
+        StartBusinessSubscriptionCheckoutMutationVariables,
+        TContext
+      > => {
+      return useMutation(getStartBusinessSubscriptionCheckoutMutationOptions(options), queryClient);
+    }
+
+export const getReceiveBillingWebhookUrl = (providerKey: string,) => {
+
+
+
+
+  return `/api/billing/webhooks/${providerKey}`
+}
+
+/**
+ * @summary Signed, idempotent billing events from a registered provider adapter (503 when none)
+ */
+export const receiveBillingWebhook = async (providerKey: string,
+    commercialJsonObject: CommercialJsonObject, options?: Parameters<typeof customFetch>[1]): Promise<CommercialJsonObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<CommercialJsonObject>(getReceiveBillingWebhookUrl(providerKey),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(commercialJsonObject)
+  }
+);}
+
+
+
+
+
+export const getReceiveBillingWebhookMutationKey = () => ['receiveBillingWebhook'] as const;
+
+export const getReceiveBillingWebhookMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof receiveBillingWebhook>>, TError,ReceiveBillingWebhookMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof receiveBillingWebhook>>, TError,ReceiveBillingWebhookMutationVariables, TContext> => {
+
+const mutationKey = getReceiveBillingWebhookMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof receiveBillingWebhook>>, ReceiveBillingWebhookMutationVariables> = (props) => {
+          const {providerKey,data} = props ?? {};
+
+          return  receiveBillingWebhook(providerKey,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ReceiveBillingWebhookMutationResult = NonNullable<Awaited<ReturnType<typeof receiveBillingWebhook>>>
+    export type ReceiveBillingWebhookMutationBody = BodyType<CommercialJsonObject>
+    export type ReceiveBillingWebhookMutationError = ErrorType<unknown>
+    export type ReceiveBillingWebhookMutationVariables = {providerKey: string;data: BodyType<CommercialJsonObject>}
+
+    /**
+ * @summary Signed, idempotent billing events from a registered provider adapter (503 when none)
+ */
+export const useReceiveBillingWebhook = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof receiveBillingWebhook>>, TError,ReceiveBillingWebhookMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof receiveBillingWebhook>>,
+        TError,
+        ReceiveBillingWebhookMutationVariables,
+        TContext
+      > => {
+      return useMutation(getReceiveBillingWebhookMutationOptions(options), queryClient);
+    }
+
+export const getGetSubscriptionPlanEconomicsUrl = (params?: GetSubscriptionPlanEconomicsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/admin/subscription-plans/economics?${stringifiedParams}` : `/api/admin/subscription-plans/economics`
+}
+
+/**
+ * @summary Admin: worst-case AI cost per plan from configured model prices only
+ */
+export const getSubscriptionPlanEconomics = async (params?: GetSubscriptionPlanEconomicsParams, options?: Parameters<typeof customFetch>[1]): Promise<CommercialJsonObject> => {
+
+  return customFetch<CommercialJsonObject>(getGetSubscriptionPlanEconomicsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetSubscriptionPlanEconomicsQueryKey = (params?: GetSubscriptionPlanEconomicsParams,) => {
+    return [
+    `/api/admin/subscription-plans/economics`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetSubscriptionPlanEconomicsQueryOptions = <TData = Awaited<ReturnType<typeof getSubscriptionPlanEconomics>>, TError = ErrorType<unknown>>(params?: GetSubscriptionPlanEconomicsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSubscriptionPlanEconomics>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetSubscriptionPlanEconomicsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSubscriptionPlanEconomics>>> = ({ signal }) => getSubscriptionPlanEconomics(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSubscriptionPlanEconomics>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetSubscriptionPlanEconomicsQueryResult = NonNullable<Awaited<ReturnType<typeof getSubscriptionPlanEconomics>>>
+export type GetSubscriptionPlanEconomicsQueryError = ErrorType<unknown>
+
+
+export function useGetSubscriptionPlanEconomics<TData = Awaited<ReturnType<typeof getSubscriptionPlanEconomics>>, TError = ErrorType<unknown>>(
+ params: undefined |  GetSubscriptionPlanEconomicsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSubscriptionPlanEconomics>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSubscriptionPlanEconomics>>,
+          TError,
+          Awaited<ReturnType<typeof getSubscriptionPlanEconomics>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSubscriptionPlanEconomics<TData = Awaited<ReturnType<typeof getSubscriptionPlanEconomics>>, TError = ErrorType<unknown>>(
+ params?: GetSubscriptionPlanEconomicsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSubscriptionPlanEconomics>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSubscriptionPlanEconomics>>,
+          TError,
+          Awaited<ReturnType<typeof getSubscriptionPlanEconomics>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSubscriptionPlanEconomics<TData = Awaited<ReturnType<typeof getSubscriptionPlanEconomics>>, TError = ErrorType<unknown>>(
+ params?: GetSubscriptionPlanEconomicsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSubscriptionPlanEconomics>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Admin: worst-case AI cost per plan from configured model prices only
+ */
+
+export function useGetSubscriptionPlanEconomics<TData = Awaited<ReturnType<typeof getSubscriptionPlanEconomics>>, TError = ErrorType<unknown>>(
+ params?: GetSubscriptionPlanEconomicsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSubscriptionPlanEconomics>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetSubscriptionPlanEconomicsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getListOwnBusinessProfilesUrl = () => {
+
+
+
+
+  return `/api/business/profiles`
+}
+
+/**
+ * @summary D2: the session account's businesses in its active market
+ */
+export const listOwnBusinessProfiles = async ( options?: Parameters<typeof customFetch>[1]): Promise<BusinessOwnerView[]> => {
+
+  return customFetch<BusinessOwnerView[]>(getListOwnBusinessProfilesUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListOwnBusinessProfilesQueryKey = () => {
+    return [
+    `/api/business/profiles`
+    ] as const;
+    }
+
+
+export const getListOwnBusinessProfilesQueryOptions = <TData = Awaited<ReturnType<typeof listOwnBusinessProfiles>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOwnBusinessProfiles>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListOwnBusinessProfilesQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listOwnBusinessProfiles>>> = ({ signal }) => listOwnBusinessProfiles({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listOwnBusinessProfiles>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListOwnBusinessProfilesQueryResult = NonNullable<Awaited<ReturnType<typeof listOwnBusinessProfiles>>>
+export type ListOwnBusinessProfilesQueryError = ErrorType<unknown>
+
+
+export function useListOwnBusinessProfiles<TData = Awaited<ReturnType<typeof listOwnBusinessProfiles>>, TError = ErrorType<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOwnBusinessProfiles>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listOwnBusinessProfiles>>,
+          TError,
+          Awaited<ReturnType<typeof listOwnBusinessProfiles>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListOwnBusinessProfiles<TData = Awaited<ReturnType<typeof listOwnBusinessProfiles>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOwnBusinessProfiles>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listOwnBusinessProfiles>>,
+          TError,
+          Awaited<ReturnType<typeof listOwnBusinessProfiles>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListOwnBusinessProfiles<TData = Awaited<ReturnType<typeof listOwnBusinessProfiles>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOwnBusinessProfiles>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary D2: the session account's businesses in its active market
+ */
+
+export function useListOwnBusinessProfiles<TData = Awaited<ReturnType<typeof listOwnBusinessProfiles>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOwnBusinessProfiles>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListOwnBusinessProfilesQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getCreateBusinessDraftUrl = () => {
+
+
+
+
+  return `/api/business/profiles`
+}
+
+/**
+ * @summary D2: create (or find, on retry or repeated name) the applicant's DRAFT; never verified, never paid
+ */
+export const createBusinessDraft = async (businessDraftRequest: BusinessDraftRequest, options?: Parameters<typeof customFetch>[1]): Promise<BusinessDraftResult> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<BusinessDraftResult>(getCreateBusinessDraftUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(businessDraftRequest)
+  }
+);}
+
+
+
+
+
+export const getCreateBusinessDraftMutationKey = () => ['createBusinessDraft'] as const;
+
+export const getCreateBusinessDraftMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createBusinessDraft>>, TError,CreateBusinessDraftMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createBusinessDraft>>, TError,CreateBusinessDraftMutationVariables, TContext> => {
+
+const mutationKey = getCreateBusinessDraftMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createBusinessDraft>>, CreateBusinessDraftMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  createBusinessDraft(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateBusinessDraftMutationResult = NonNullable<Awaited<ReturnType<typeof createBusinessDraft>>>
+    export type CreateBusinessDraftMutationBody = BodyType<BusinessDraftRequest>
+    export type CreateBusinessDraftMutationError = ErrorType<unknown>
+    export type CreateBusinessDraftMutationVariables = {data: BodyType<BusinessDraftRequest>}
+
+    /**
+ * @summary D2: create (or find, on retry or repeated name) the applicant's DRAFT; never verified, never paid
+ */
+export const useCreateBusinessDraft = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createBusinessDraft>>, TError,CreateBusinessDraftMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createBusinessDraft>>,
+        TError,
+        CreateBusinessDraftMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCreateBusinessDraftMutationOptions(options), queryClient);
+    }
+
+export const getGetOwnBusinessProfileUrl = (id: string,) => {
+
+
+
+
+  return `/api/business/profiles/${id}`
+}
+
+export const getOwnBusinessProfile = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<BusinessOwnerView> => {
+
+  return customFetch<BusinessOwnerView>(getGetOwnBusinessProfileUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetOwnBusinessProfileQueryKey = (id: string,) => {
+    return [
+    `/api/business/profiles/${id}`
+    ] as const;
+    }
+
+
+export const getGetOwnBusinessProfileQueryOptions = <TData = Awaited<ReturnType<typeof getOwnBusinessProfile>>, TError = ErrorType<unknown>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOwnBusinessProfile>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetOwnBusinessProfileQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getOwnBusinessProfile>>> = ({ signal }) => getOwnBusinessProfile(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getOwnBusinessProfile>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetOwnBusinessProfileQueryResult = NonNullable<Awaited<ReturnType<typeof getOwnBusinessProfile>>>
+export type GetOwnBusinessProfileQueryError = ErrorType<unknown>
+
+
+export function useGetOwnBusinessProfile<TData = Awaited<ReturnType<typeof getOwnBusinessProfile>>, TError = ErrorType<unknown>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOwnBusinessProfile>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getOwnBusinessProfile>>,
+          TError,
+          Awaited<ReturnType<typeof getOwnBusinessProfile>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetOwnBusinessProfile<TData = Awaited<ReturnType<typeof getOwnBusinessProfile>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOwnBusinessProfile>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getOwnBusinessProfile>>,
+          TError,
+          Awaited<ReturnType<typeof getOwnBusinessProfile>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetOwnBusinessProfile<TData = Awaited<ReturnType<typeof getOwnBusinessProfile>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOwnBusinessProfile>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useGetOwnBusinessProfile<TData = Awaited<ReturnType<typeof getOwnBusinessProfile>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOwnBusinessProfile>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetOwnBusinessProfileQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getUpdateBusinessProfileUrl = (id: string,) => {
+
+
+
+
+  return `/api/business/profiles/${id}`
+}
+
+export const updateBusinessProfile = async (id: string,
+    businessUpdateRequest: BusinessUpdateRequest, options?: Parameters<typeof customFetch>[1]): Promise<BusinessOwnerView> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<BusinessOwnerView>(getUpdateBusinessProfileUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(businessUpdateRequest)
+  }
+);}
+
+
+
+
+
+export const getUpdateBusinessProfileMutationKey = () => ['updateBusinessProfile'] as const;
+
+export const getUpdateBusinessProfileMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateBusinessProfile>>, TError,UpdateBusinessProfileMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateBusinessProfile>>, TError,UpdateBusinessProfileMutationVariables, TContext> => {
+
+const mutationKey = getUpdateBusinessProfileMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateBusinessProfile>>, UpdateBusinessProfileMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateBusinessProfile(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateBusinessProfileMutationResult = NonNullable<Awaited<ReturnType<typeof updateBusinessProfile>>>
+    export type UpdateBusinessProfileMutationBody = BodyType<BusinessUpdateRequest>
+    export type UpdateBusinessProfileMutationError = ErrorType<unknown>
+    export type UpdateBusinessProfileMutationVariables = {id: string;data: BodyType<BusinessUpdateRequest>}
+
+    export const useUpdateBusinessProfile = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateBusinessProfile>>, TError,UpdateBusinessProfileMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateBusinessProfile>>,
+        TError,
+        UpdateBusinessProfileMutationVariables,
+        TContext
+      > => {
+      return useMutation(getUpdateBusinessProfileMutationOptions(options), queryClient);
+    }
+
+export const getStartBusinessVerificationUrl = (id: string,) => {
+
+
+
+
+  return `/api/business/profiles/${id}/start-verification`
+}
+
+export const startBusinessVerification = async (id: string,
+    emptyObject?: EmptyObject, options?: Parameters<typeof customFetch>[1]): Promise<BusinessOwnerView> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<BusinessOwnerView>(getStartBusinessVerificationUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(emptyObject)
+  }
+);}
+
+
+
+
+
+export const getStartBusinessVerificationMutationKey = () => ['startBusinessVerification'] as const;
+
+export const getStartBusinessVerificationMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof startBusinessVerification>>, TError,StartBusinessVerificationMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof startBusinessVerification>>, TError,StartBusinessVerificationMutationVariables, TContext> => {
+
+const mutationKey = getStartBusinessVerificationMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof startBusinessVerification>>, StartBusinessVerificationMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  startBusinessVerification(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type StartBusinessVerificationMutationResult = NonNullable<Awaited<ReturnType<typeof startBusinessVerification>>>
+    export type StartBusinessVerificationMutationBody = BodyType<EmptyObject> | undefined
+    export type StartBusinessVerificationMutationError = ErrorType<unknown>
+    export type StartBusinessVerificationMutationVariables = {id: string;data?: BodyType<EmptyObject>}
+
+    export const useStartBusinessVerification = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof startBusinessVerification>>, TError,StartBusinessVerificationMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof startBusinessVerification>>,
+        TError,
+        StartBusinessVerificationMutationVariables,
+        TContext
+      > => {
+      return useMutation(getStartBusinessVerificationMutationOptions(options), queryClient);
+    }
+
+export const getRequestBusinessDocumentUploadUrl = (id: string,) => {
+
+
+
+
+  return `/api/business/profiles/${id}/documents/upload-url`
+}
+
+export const requestBusinessDocumentUpload = async (id: string,
+    businessDocumentUploadRequest: BusinessDocumentUploadRequest, options?: Parameters<typeof customFetch>[1]): Promise<BusinessDocumentUploadTicket> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<BusinessDocumentUploadTicket>(getRequestBusinessDocumentUploadUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(businessDocumentUploadRequest)
+  }
+);}
+
+
+
+
+
+export const getRequestBusinessDocumentUploadMutationKey = () => ['requestBusinessDocumentUpload'] as const;
+
+export const getRequestBusinessDocumentUploadMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestBusinessDocumentUpload>>, TError,RequestBusinessDocumentUploadMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof requestBusinessDocumentUpload>>, TError,RequestBusinessDocumentUploadMutationVariables, TContext> => {
+
+const mutationKey = getRequestBusinessDocumentUploadMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof requestBusinessDocumentUpload>>, RequestBusinessDocumentUploadMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  requestBusinessDocumentUpload(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RequestBusinessDocumentUploadMutationResult = NonNullable<Awaited<ReturnType<typeof requestBusinessDocumentUpload>>>
+    export type RequestBusinessDocumentUploadMutationBody = BodyType<BusinessDocumentUploadRequest>
+    export type RequestBusinessDocumentUploadMutationError = ErrorType<unknown>
+    export type RequestBusinessDocumentUploadMutationVariables = {id: string;data: BodyType<BusinessDocumentUploadRequest>}
+
+    export const useRequestBusinessDocumentUpload = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestBusinessDocumentUpload>>, TError,RequestBusinessDocumentUploadMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof requestBusinessDocumentUpload>>,
+        TError,
+        RequestBusinessDocumentUploadMutationVariables,
+        TContext
+      > => {
+      return useMutation(getRequestBusinessDocumentUploadMutationOptions(options), queryClient);
+    }
+
+export const getCompleteBusinessDocumentUploadUrl = (id: string,
+    documentId: string,) => {
+
+
+
+
+  return `/api/business/profiles/${id}/documents/${documentId}/complete`
+}
+
+export const completeBusinessDocumentUpload = async (id: string,
+    documentId: string,
+    emptyObject?: EmptyObject, options?: Parameters<typeof customFetch>[1]): Promise<BusinessOwnerView> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<BusinessOwnerView>(getCompleteBusinessDocumentUploadUrl(id,documentId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(emptyObject)
+  }
+);}
+
+
+
+
+
+export const getCompleteBusinessDocumentUploadMutationKey = () => ['completeBusinessDocumentUpload'] as const;
+
+export const getCompleteBusinessDocumentUploadMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof completeBusinessDocumentUpload>>, TError,CompleteBusinessDocumentUploadMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof completeBusinessDocumentUpload>>, TError,CompleteBusinessDocumentUploadMutationVariables, TContext> => {
+
+const mutationKey = getCompleteBusinessDocumentUploadMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof completeBusinessDocumentUpload>>, CompleteBusinessDocumentUploadMutationVariables> = (props) => {
+          const {id,documentId,data} = props ?? {};
+
+          return  completeBusinessDocumentUpload(id,documentId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CompleteBusinessDocumentUploadMutationResult = NonNullable<Awaited<ReturnType<typeof completeBusinessDocumentUpload>>>
+    export type CompleteBusinessDocumentUploadMutationBody = BodyType<EmptyObject> | undefined
+    export type CompleteBusinessDocumentUploadMutationError = ErrorType<unknown>
+    export type CompleteBusinessDocumentUploadMutationVariables = {id: string;documentId: string;data?: BodyType<EmptyObject>}
+
+    export const useCompleteBusinessDocumentUpload = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof completeBusinessDocumentUpload>>, TError,CompleteBusinessDocumentUploadMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof completeBusinessDocumentUpload>>,
+        TError,
+        CompleteBusinessDocumentUploadMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCompleteBusinessDocumentUploadMutationOptions(options), queryClient);
+    }
+
+export const getSubmitBusinessForReviewUrl = (id: string,) => {
+
+
+
+
+  return `/api/business/profiles/${id}/submit`
+}
+
+export const submitBusinessForReview = async (id: string,
+    emptyObject?: EmptyObject, options?: Parameters<typeof customFetch>[1]): Promise<BusinessOwnerView> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<BusinessOwnerView>(getSubmitBusinessForReviewUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(emptyObject)
+  }
+);}
+
+
+
+
+
+export const getSubmitBusinessForReviewMutationKey = () => ['submitBusinessForReview'] as const;
+
+export const getSubmitBusinessForReviewMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitBusinessForReview>>, TError,SubmitBusinessForReviewMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof submitBusinessForReview>>, TError,SubmitBusinessForReviewMutationVariables, TContext> => {
+
+const mutationKey = getSubmitBusinessForReviewMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof submitBusinessForReview>>, SubmitBusinessForReviewMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  submitBusinessForReview(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SubmitBusinessForReviewMutationResult = NonNullable<Awaited<ReturnType<typeof submitBusinessForReview>>>
+    export type SubmitBusinessForReviewMutationBody = BodyType<EmptyObject> | undefined
+    export type SubmitBusinessForReviewMutationError = ErrorType<unknown>
+    export type SubmitBusinessForReviewMutationVariables = {id: string;data?: BodyType<EmptyObject>}
+
+    export const useSubmitBusinessForReview = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitBusinessForReview>>, TError,SubmitBusinessForReviewMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof submitBusinessForReview>>,
+        TError,
+        SubmitBusinessForReviewMutationVariables,
+        TContext
+      > => {
+      return useMutation(getSubmitBusinessForReviewMutationOptions(options), queryClient);
+    }
+
+export const getSetBusinessPublicationUrl = (id: string,) => {
+
+
+
+
+  return `/api/business/profiles/${id}/publication`
+}
+
+export const setBusinessPublication = async (id: string,
+    businessPublicationRequest: BusinessPublicationRequest, options?: Parameters<typeof customFetch>[1]): Promise<BusinessOwnerView> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<BusinessOwnerView>(getSetBusinessPublicationUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(businessPublicationRequest)
+  }
+);}
+
+
+
+
+
+export const getSetBusinessPublicationMutationKey = () => ['setBusinessPublication'] as const;
+
+export const getSetBusinessPublicationMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setBusinessPublication>>, TError,SetBusinessPublicationMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof setBusinessPublication>>, TError,SetBusinessPublicationMutationVariables, TContext> => {
+
+const mutationKey = getSetBusinessPublicationMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof setBusinessPublication>>, SetBusinessPublicationMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  setBusinessPublication(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SetBusinessPublicationMutationResult = NonNullable<Awaited<ReturnType<typeof setBusinessPublication>>>
+    export type SetBusinessPublicationMutationBody = BodyType<BusinessPublicationRequest>
+    export type SetBusinessPublicationMutationError = ErrorType<unknown>
+    export type SetBusinessPublicationMutationVariables = {id: string;data: BodyType<BusinessPublicationRequest>}
+
+    export const useSetBusinessPublication = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setBusinessPublication>>, TError,SetBusinessPublicationMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof setBusinessPublication>>,
+        TError,
+        SetBusinessPublicationMutationVariables,
+        TContext
+      > => {
+      return useMutation(getSetBusinessPublicationMutationOptions(options), queryClient);
+    }
+
+export const getRequestBusinessIntegrationUrl = (id: string,) => {
+
+
+
+
+  return `/api/business/profiles/${id}/integration-requests`
+}
+
+/**
+ * @summary Read-only integration request; no credentials; recorded ADAPTER_UNAVAILABLE
+ */
+export const requestBusinessIntegration = async (id: string,
+    businessIntegrationRequest: BusinessIntegrationRequest, options?: Parameters<typeof customFetch>[1]): Promise<BusinessOwnerView> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<BusinessOwnerView>(getRequestBusinessIntegrationUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(businessIntegrationRequest)
+  }
+);}
+
+
+
+
+
+export const getRequestBusinessIntegrationMutationKey = () => ['requestBusinessIntegration'] as const;
+
+export const getRequestBusinessIntegrationMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestBusinessIntegration>>, TError,RequestBusinessIntegrationMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof requestBusinessIntegration>>, TError,RequestBusinessIntegrationMutationVariables, TContext> => {
+
+const mutationKey = getRequestBusinessIntegrationMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof requestBusinessIntegration>>, RequestBusinessIntegrationMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  requestBusinessIntegration(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RequestBusinessIntegrationMutationResult = NonNullable<Awaited<ReturnType<typeof requestBusinessIntegration>>>
+    export type RequestBusinessIntegrationMutationBody = BodyType<BusinessIntegrationRequest>
+    export type RequestBusinessIntegrationMutationError = ErrorType<unknown>
+    export type RequestBusinessIntegrationMutationVariables = {id: string;data: BodyType<BusinessIntegrationRequest>}
+
+    /**
+ * @summary Read-only integration request; no credentials; recorded ADAPTER_UNAVAILABLE
+ */
+export const useRequestBusinessIntegration = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestBusinessIntegration>>, TError,RequestBusinessIntegrationMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof requestBusinessIntegration>>,
+        TError,
+        RequestBusinessIntegrationMutationVariables,
+        TContext
+      > => {
+      return useMutation(getRequestBusinessIntegrationMutationOptions(options), queryClient);
+    }
+
+export const getGetPublicBusinessUrl = (id: string,) => {
+
+
+
+
+  return `/api/businesses/${id}`
+}
+
+/**
+ * @summary Public view of a PUBLISHED, VERIFIED business (404 otherwise); no legal or document data
+ */
+export const getPublicBusiness = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<BusinessPublicView> => {
+
+  return customFetch<BusinessPublicView>(getGetPublicBusinessUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetPublicBusinessQueryKey = (id: string,) => {
+    return [
+    `/api/businesses/${id}`
+    ] as const;
+    }
+
+
+export const getGetPublicBusinessQueryOptions = <TData = Awaited<ReturnType<typeof getPublicBusiness>>, TError = ErrorType<unknown>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPublicBusiness>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPublicBusinessQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPublicBusiness>>> = ({ signal }) => getPublicBusiness(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPublicBusiness>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPublicBusinessQueryResult = NonNullable<Awaited<ReturnType<typeof getPublicBusiness>>>
+export type GetPublicBusinessQueryError = ErrorType<unknown>
+
+
+export function useGetPublicBusiness<TData = Awaited<ReturnType<typeof getPublicBusiness>>, TError = ErrorType<unknown>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPublicBusiness>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPublicBusiness>>,
+          TError,
+          Awaited<ReturnType<typeof getPublicBusiness>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPublicBusiness<TData = Awaited<ReturnType<typeof getPublicBusiness>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPublicBusiness>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPublicBusiness>>,
+          TError,
+          Awaited<ReturnType<typeof getPublicBusiness>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPublicBusiness<TData = Awaited<ReturnType<typeof getPublicBusiness>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPublicBusiness>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Public view of a PUBLISHED, VERIFIED business (404 otherwise); no legal or document data
+ */
+
+export function useGetPublicBusiness<TData = Awaited<ReturnType<typeof getPublicBusiness>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPublicBusiness>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPublicBusinessQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getListBusinessVerificationQueueUrl = (params?: ListBusinessVerificationQueueParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/admin/business-verification?${stringifiedParams}` : `/api/admin/business-verification`
+}
+
+/**
+ * @summary Reviewer queue (ADMIN)
+ */
+export const listBusinessVerificationQueue = async (params?: ListBusinessVerificationQueueParams, options?: Parameters<typeof customFetch>[1]): Promise<CommercialJsonObject[]> => {
+
+  return customFetch<CommercialJsonObject[]>(getListBusinessVerificationQueueUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListBusinessVerificationQueueQueryKey = (params?: ListBusinessVerificationQueueParams,) => {
+    return [
+    `/api/admin/business-verification`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListBusinessVerificationQueueQueryOptions = <TData = Awaited<ReturnType<typeof listBusinessVerificationQueue>>, TError = ErrorType<unknown>>(params?: ListBusinessVerificationQueueParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listBusinessVerificationQueue>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListBusinessVerificationQueueQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listBusinessVerificationQueue>>> = ({ signal }) => listBusinessVerificationQueue(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listBusinessVerificationQueue>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListBusinessVerificationQueueQueryResult = NonNullable<Awaited<ReturnType<typeof listBusinessVerificationQueue>>>
+export type ListBusinessVerificationQueueQueryError = ErrorType<unknown>
+
+
+export function useListBusinessVerificationQueue<TData = Awaited<ReturnType<typeof listBusinessVerificationQueue>>, TError = ErrorType<unknown>>(
+ params: undefined |  ListBusinessVerificationQueueParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listBusinessVerificationQueue>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listBusinessVerificationQueue>>,
+          TError,
+          Awaited<ReturnType<typeof listBusinessVerificationQueue>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListBusinessVerificationQueue<TData = Awaited<ReturnType<typeof listBusinessVerificationQueue>>, TError = ErrorType<unknown>>(
+ params?: ListBusinessVerificationQueueParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listBusinessVerificationQueue>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listBusinessVerificationQueue>>,
+          TError,
+          Awaited<ReturnType<typeof listBusinessVerificationQueue>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListBusinessVerificationQueue<TData = Awaited<ReturnType<typeof listBusinessVerificationQueue>>, TError = ErrorType<unknown>>(
+ params?: ListBusinessVerificationQueueParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listBusinessVerificationQueue>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Reviewer queue (ADMIN)
+ */
+
+export function useListBusinessVerificationQueue<TData = Awaited<ReturnType<typeof listBusinessVerificationQueue>>, TError = ErrorType<unknown>>(
+ params?: ListBusinessVerificationQueueParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listBusinessVerificationQueue>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListBusinessVerificationQueueQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetBusinessForReviewUrl = (id: string,) => {
+
+
+
+
+  return `/api/admin/business-verification/${id}`
+}
+
+export const getBusinessForReview = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<CommercialJsonObject> => {
+
+  return customFetch<CommercialJsonObject>(getGetBusinessForReviewUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetBusinessForReviewQueryKey = (id: string,) => {
+    return [
+    `/api/admin/business-verification/${id}`
+    ] as const;
+    }
+
+
+export const getGetBusinessForReviewQueryOptions = <TData = Awaited<ReturnType<typeof getBusinessForReview>>, TError = ErrorType<unknown>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getBusinessForReview>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetBusinessForReviewQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getBusinessForReview>>> = ({ signal }) => getBusinessForReview(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getBusinessForReview>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetBusinessForReviewQueryResult = NonNullable<Awaited<ReturnType<typeof getBusinessForReview>>>
+export type GetBusinessForReviewQueryError = ErrorType<unknown>
+
+
+export function useGetBusinessForReview<TData = Awaited<ReturnType<typeof getBusinessForReview>>, TError = ErrorType<unknown>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getBusinessForReview>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getBusinessForReview>>,
+          TError,
+          Awaited<ReturnType<typeof getBusinessForReview>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetBusinessForReview<TData = Awaited<ReturnType<typeof getBusinessForReview>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getBusinessForReview>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getBusinessForReview>>,
+          TError,
+          Awaited<ReturnType<typeof getBusinessForReview>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetBusinessForReview<TData = Awaited<ReturnType<typeof getBusinessForReview>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getBusinessForReview>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useGetBusinessForReview<TData = Awaited<ReturnType<typeof getBusinessForReview>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getBusinessForReview>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetBusinessForReviewQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getDecideBusinessVerificationUrl = (id: string,) => {
+
+
+
+
+  return `/api/admin/business-verification/${id}/decision`
+}
+
+/**
+ * @summary The only writer of VERIFIED / REJECTED / SUSPENDED; the reviewer is never the applicant
+ */
+export const decideBusinessVerification = async (id: string,
+    businessReviewDecisionRequest: BusinessReviewDecisionRequest, options?: Parameters<typeof customFetch>[1]): Promise<CommercialJsonObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<CommercialJsonObject>(getDecideBusinessVerificationUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(businessReviewDecisionRequest)
+  }
+);}
+
+
+
+
+
+export const getDecideBusinessVerificationMutationKey = () => ['decideBusinessVerification'] as const;
+
+export const getDecideBusinessVerificationMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof decideBusinessVerification>>, TError,DecideBusinessVerificationMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof decideBusinessVerification>>, TError,DecideBusinessVerificationMutationVariables, TContext> => {
+
+const mutationKey = getDecideBusinessVerificationMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof decideBusinessVerification>>, DecideBusinessVerificationMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  decideBusinessVerification(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DecideBusinessVerificationMutationResult = NonNullable<Awaited<ReturnType<typeof decideBusinessVerification>>>
+    export type DecideBusinessVerificationMutationBody = BodyType<BusinessReviewDecisionRequest>
+    export type DecideBusinessVerificationMutationError = ErrorType<unknown>
+    export type DecideBusinessVerificationMutationVariables = {id: string;data: BodyType<BusinessReviewDecisionRequest>}
+
+    /**
+ * @summary The only writer of VERIFIED / REJECTED / SUSPENDED; the reviewer is never the applicant
+ */
+export const useDecideBusinessVerification = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof decideBusinessVerification>>, TError,DecideBusinessVerificationMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof decideBusinessVerification>>,
+        TError,
+        DecideBusinessVerificationMutationVariables,
+        TContext
+      > => {
+      return useMutation(getDecideBusinessVerificationMutationOptions(options), queryClient);
+    }
+
+export const getGetBusinessDocumentForReviewUrl = (documentId: string,) => {
+
+
+
+
+  return `/api/admin/business-verification/documents/${documentId}/content`
+}
+
+/**
+ * @summary Reviewer-only bytes of a CLEAN document (Cache-Control no-store); every read is recorded
+ */
+export const getBusinessDocumentForReview = async (documentId: string, options?: Parameters<typeof customFetch>[1]): Promise<Blob> => {
+
+  return customFetch<Blob>(getGetBusinessDocumentForReviewUrl(documentId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetBusinessDocumentForReviewQueryKey = (documentId: string,) => {
+    return [
+    `/api/admin/business-verification/documents/${documentId}/content`
+    ] as const;
+    }
+
+
+export const getGetBusinessDocumentForReviewQueryOptions = <TData = Awaited<ReturnType<typeof getBusinessDocumentForReview>>, TError = ErrorType<unknown>>(documentId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getBusinessDocumentForReview>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetBusinessDocumentForReviewQueryKey(documentId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getBusinessDocumentForReview>>> = ({ signal }) => getBusinessDocumentForReview(documentId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: documentId !== null && documentId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getBusinessDocumentForReview>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetBusinessDocumentForReviewQueryResult = NonNullable<Awaited<ReturnType<typeof getBusinessDocumentForReview>>>
+export type GetBusinessDocumentForReviewQueryError = ErrorType<unknown>
+
+
+export function useGetBusinessDocumentForReview<TData = Awaited<ReturnType<typeof getBusinessDocumentForReview>>, TError = ErrorType<unknown>>(
+ documentId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getBusinessDocumentForReview>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getBusinessDocumentForReview>>,
+          TError,
+          Awaited<ReturnType<typeof getBusinessDocumentForReview>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetBusinessDocumentForReview<TData = Awaited<ReturnType<typeof getBusinessDocumentForReview>>, TError = ErrorType<unknown>>(
+ documentId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getBusinessDocumentForReview>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getBusinessDocumentForReview>>,
+          TError,
+          Awaited<ReturnType<typeof getBusinessDocumentForReview>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetBusinessDocumentForReview<TData = Awaited<ReturnType<typeof getBusinessDocumentForReview>>, TError = ErrorType<unknown>>(
+ documentId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getBusinessDocumentForReview>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Reviewer-only bytes of a CLEAN document (Cache-Control no-store); every read is recorded
+ */
+
+export function useGetBusinessDocumentForReview<TData = Awaited<ReturnType<typeof getBusinessDocumentForReview>>, TError = ErrorType<unknown>>(
+ documentId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getBusinessDocumentForReview>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetBusinessDocumentForReviewQueryOptions(documentId,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

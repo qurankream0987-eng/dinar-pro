@@ -36,7 +36,8 @@ const STATUS_EXPLICIT = new RegExp(
     String.raw`|هل\s+(?:تم\s+)?(?:توثيق|توثق|اعتماد|اعتمد|قبول|انقبل)\s+${MY_BUSINESS}`,
   "u",
 );
-const STATUS_IN_CONTEXT = /^(?:دينار\s+)?(?:وين|وش|ايش|شو|ماذا|ما)\s+(?:وصل|صار(?:\s+علي)?|حال|حاله|وضع)\s+(?:طلبي|الطلب)(?:\s|$)|^(?:حاله|وضع)\s+(?:طلبي|الطلب)$/u;
+// Only the whole short question («وين وصل طلبي؟»): «وين وصل طلبي رقم 12» stays an order.
+const STATUS_IN_CONTEXT = /^(?:دينار\s+)?(?:وين|وش|ايش|شو|ماذا|ما)\s+(?:وصل|صار(?:\s+علي)?|حال|حاله|وضع)\s+(?:طلبي|الطلب)(?:\s+(?:يا\s+)?دينار)?$|^(?:حاله|وضع)\s+(?:طلبي|الطلب)$/u;
 const SUBMIT_IN_CONTEXT = /(?:^|\s)(?:ارسل|قدم|اعتمد)\s+(?:ال)?طلب(?:ي)?(?:\s+(?:ال)?(?:توثيق|تحقق|مراجعه))?(?:\s|$)|(?:^|\s)(?:خلصت|انتهيت|رفعت)\s+(?:كل\s+)?(?:ال)?(?:مستندات|سجل|اوراق)/u;
 const CONNECT = new RegExp(String.raw`(?:اربط|ربط|وصل|اوصل)\s+${MY_BUSINESS}\s+(?:ب|مع)?\s*(?:نظامي|نظام|الكاشير|كاشير|برنامج|متجري\s+الالكتروني|موقعي)`, "u");
 const SHOW = new RegExp(String.raw`^(?:دينار\s+)?(?:اعرض|وريني|افتح|شوف)\s+(?:بطاقه\s+)?(?:${MY_BUSINESS}|دينار\s+بزنس\s+كارد|بطاقه\s+دينار\s+بزنس)$|^${MY_BUSINESS}$`, "u");
@@ -124,4 +125,13 @@ export function businessIntent(message: string, inContext: boolean): BusinessInt
   }
   if (SHOW.test(text)) return { kind: "SHOW" };
   return undefined;
+}
+
+/**
+ * Cheap pre-gate for the runtime (no I/O): could this message be a business request in ANY
+ * conversation context? Only these messages pay for the context lookup; everything else goes on to
+ * the other adapters untouched.
+ */
+export function isPossibleBusinessMessage(message: string): boolean {
+  return businessIntent(message, true) !== undefined;
 }
