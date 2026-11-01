@@ -63,6 +63,7 @@ on:
           - none
           - financial-waves-w07-w12c
           - business-cards-search-commerce
+          - integrated-nine-interleaved
       run_release_migration:
         description: "Also run the journal and upgrade fixtures (PG16/18) plus the release runner (PG18)"
         required: false
@@ -223,6 +224,7 @@ jobs:
             done
           }
           SUITES="$SUITE"
+          promotions=0
           case "$CHAIN" in
             none) ;;
             financial-waves-w07-w12c)
@@ -230,10 +232,20 @@ jobs:
               require_flags "BDINAR_TEST_DATABASE BDINAR_W07_ACCEPTANCE BDINAR_W08_ACCEPTANCE BDINAR_W09_ACCEPTANCE BDINAR_W10_ACCEPTANCE BDINAR_W12C_ACCEPTANCE BDINAR_WAVE4_ACCEPTANCE" ;;
             business-cards-search-commerce)
               SUITES="d1-d2-business-foundation.test w02u3-card-reliability.test search-sql-foundation.test commerce-journey.test"
-              require_flags "BDINAR_D1D2_ACCEPTANCE BDINAR_W02U3_TEST_DATABASE BDINAR_TEST_DATABASE BDINAR_WAVE4_ACCEPTANCE"
-              case " $FLAGS " in *" BDINAR_PROMOTIONS_ENABLED=true "*) ;; *) echo "chain $CHAIN requires BDINAR_PROMOTIONS_ENABLED=true" >&2; exit 96 ;; esac ;;
+              require_flags "BDINAR_TEST_DATABASE BDINAR_D1D2_ACCEPTANCE BDINAR_W02U3_TEST_DATABASE BDINAR_WAVE4_ACCEPTANCE"
+              promotions=1 ;;
+            integrated-nine-interleaved)
+              # Subsystems alternate rather than cluster: a chain that passed only because each family
+              # ran against an untouched corner of the database would prove nothing about coexistence.
+              SUITES="wave07-financial-journal.test d1-d2-business-foundation.test wave08-cash-and-refunds.test w02u3-card-reliability.test wave09-policy-consent-compliance.test search-sql-foundation.test wave10-trust-support-whatsapp.test commerce-journey.test wave07-w12-contract-hardening.test"
+              require_flags "BDINAR_TEST_DATABASE BDINAR_W07_ACCEPTANCE BDINAR_W08_ACCEPTANCE BDINAR_W09_ACCEPTANCE BDINAR_W10_ACCEPTANCE BDINAR_W12C_ACCEPTANCE BDINAR_D1D2_ACCEPTANCE BDINAR_W02U3_TEST_DATABASE BDINAR_WAVE4_ACCEPTANCE"
+              promotions=1 ;;
             *) echo "chain not allowlisted: $CHAIN" >&2; exit 96 ;;
           esac
+          if [ "$promotions" = 1 ]; then
+            case " $FLAGS " in *" BDINAR_PROMOTIONS_ENABLED=true "*) ;;
+              *) echo "chain $CHAIN requires BDINAR_PROMOTIONS_ENABLED=true" >&2; exit 96 ;; esac
+          fi
           echo "SUITES=$SUITES" >> "$GITHUB_ENV"
           # Chromium is decided from the resolved list, not from `suite`: a chain ignores that input,
           # and commerce-journey.test inside a chain still needs a real browser.
