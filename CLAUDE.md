@@ -13,7 +13,7 @@ negotiate in chat, orders reserve stock, payment is SIMULATION_ONLY. pnpm monore
   from model output.
 - `artifacts/api-server/src/lib/` — domain services: `negotiations.ts`, `commerce.ts`,
   `order-terminal-accounting.ts`, `payments/service.ts`, `auth.ts`, `auth-rate-limiter.ts` (DB-backed).
-- `lib/db/src/schema/` — schema; `lib/db/drizzle/` — the 41 checked-in migrations (release authority).
+- `lib/db/src/schema/` — schema; `lib/db/drizzle/` — the 49 checked-in migrations (release authority).
 - `lib/api-spec/openapi.yaml` → `lib/api-zod`, `lib/api-client-react` (generated; run codegen, never hand-edit).
 - `artifacts/dinar/` — web app. `threat_model.md` — trust boundaries.
 
@@ -37,7 +37,8 @@ negotiate in chat, orders reserve stock, payment is SIMULATION_ONLY. pnpm monore
 - Never connect to Railway, Replit, production or any non-loopback database. DB tests require
   `BDINAR_DISPOSABLE_ACCEPTANCE_DB=1`, a loopback URL and a name matching `dinar_(test|acceptance|wave<n>|migration)_*`.
 - No live AI calls (`test/run.mjs` strips provider keys and sets `BDINAR_BLOCK_MODEL_CALLS=1`), no real payments.
-- Do not push or merge without the owner's explicit approval; work on `claude/*` branches.
+- Do not push or merge without the owner's explicit approval; use the owner-assigned isolated
+  branch (for this handoff: `replit/dinar-next-complete-development`).
 
 ## Running tests
 
@@ -47,18 +48,24 @@ pnpm run typecheck
 pnpm --filter @workspace/api-server run build && pnpm --filter @workspace/dinar run build
 # one suite on a fresh loopback DB (migrate + fixtures + clean env + net-guard), from artifacts/api-server:
 DINAR_LOCAL_PG=postgres://user@127.0.0.1:55432 test/isolation/local-suite.sh <suite>.test BDINAR_<FLAG>=development
+# one chain on one fresh loopback DB:
+DINAR_LOCAL_PG=postgres://user@127.0.0.1:55432 test/isolation/local-suite.sh suite-a.test suite-b.test BDINAR_<FLAG>=development
 ```
 
 - `local-suite.sh` options: `DINAR_SUITE_SEED=fixtures|development|none` (default fixtures; most
   suites need the active JO market), `DINAR_SUITE_DB=<name>`, `DINAR_CHROMIUM=<browser>`.
+  Several suite names share one migration and seed, run in order, continue after failures, and
+  report per-suite exit status and outbound attempts. Named CI chains are closed allowlists in
+  `.github/workflows/qoder-api-suite.yml`; only disposable loopback DBs are valid.
   Where user namespaces and PostgreSQL 18 exist, `test/isolation/sandbox.sh` is the stronger option.
 - Unseeded: `admin-bootstrap`, `fresh-environment` (DB `dinar_test_fresh_*`), `readiness`.
   Development seed: `phase2-commission-acceptance`. `listing-pricing-invariants` needs `dinar_test_blockb_*`,
   `listing-image-publication-acceptance` needs `dinar_test_image_review*` and
   `BDINAR_IMAGE_PUBLICATION_ACCEPTANCE=disposable`; `personal-intelligence` needs its own server on 55479.
-- Browser suites read `CHROMIUM_PATH` / `REPLIT_PLAYWRIGHT_CHROMIUM_EXECUTABLE` (never a fixed path) and
-  need the Google Fonts stub (`test/isolation/third-party-stub.mjs`) or they fail on console errors.
-  Many assume `BDINAR_PROMOTIONS_ENABLED=true` (Replit's development default).
+- Browser suites read `CHROMIUM_PATH` / `REPLIT_PLAYWRIGHT_CHROMIUM_EXECUTABLE` (never a fixed path).
+  `local-suite.sh` starts a local Google Fonts stub and a certificate-pinned Chromium wrapper for
+  browser suites when `DINAR_CHROMIUM` is provided. Many suites assume `BDINAR_PROMOTIONS_ENABLED=true`
+  (development default).
 - Upload suites import `test/local-object-storage.ts` before the app: outside Replit it starts the
   loopback S3-compatible server. Do not run two copies of one suite at once (`run.mjs` shares `.test-build/<suite>.mjs`).
 - `lib/db` `test:release-migration` requires PostgreSQL 18+ (`DINAR_RELEASE_MIGRATION_TEST_PG`).

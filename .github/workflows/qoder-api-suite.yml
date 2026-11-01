@@ -6,8 +6,9 @@ name: qoder-api-suite
 # - Every third-party action is pinned to a reviewed commit SHA (same pins as qoder-security.yml).
 # - The only database is the ephemeral PostgreSQL service below on 127.0.0.1, and local-suite.sh
 #   creates and drops a random throwaway database inside it.
-# - Inputs are closed allowlists: `suite` is a choice, and `flags` is validated against a fixed
-#   switch list before it reaches the shell. Values are never interpolated into shell source.
+# - Inputs are closed allowlists: `suite` and `chain` are choices; chain members are fixed here;
+#   `flags` is validated against a fixed switch list before it reaches the shell.
+#   Values are never interpolated into shell source.
 
 on:
   workflow_dispatch:
@@ -23,6 +24,19 @@ on:
           - wave09-policy-consent-compliance.test
           - wave10-trust-support-whatsapp.test
           - wave07-w12-contract-hardening.test
+          - d1-d2-business-foundation.test
+          - d1-d2-business-browser.test
+          - policy-consent-cards.test
+          - w02u3-card-reliability.test
+          - w02u3-card-reliability-browser-journey.test
+          - w02u3-card-concurrency-browser-journey.test
+          - w02u3-card-sessions-browser-journey.test
+          - w02u3-card-recovery-browser-journey.test
+          - w02u3-card-expiry-browser-journey.test
+          - w02u3-card-accessibility-browser-journey.test
+          - w02u3-card-performance-browser-journey.test
+          - search-sql-foundation.test
+          - search-sql-performance.test
           - financial-state-machine.test
           - payment-order-state.test
           - wave4-payment-acceptance.test
@@ -41,6 +55,18 @@ on:
           - sc07-browser-journey.test
           - sc10-browser-journey.test
           - wave03-card-envelope-browser-journey.test
+          - d3a-native-business.test
+          - d3a-browser-journey.test
+      chain:
+        description: "Run a reviewed suite chain on one disposable migrated and seeded database"
+        required: false
+        type: choice
+        default: none
+        options:
+          - none
+          - financial-waves-w07-w12c
+          - business-cards-search-commerce
+          - integrated-nine-interleaved
       flags:
         description: "Allowlisted KEY=VALUE switches, space separated"
         required: false
@@ -58,13 +84,13 @@ permissions:
   contents: read
 
 concurrency:
-  group: qoder-api-${{ github.ref }}-${{ inputs.suite }}-${{ inputs.pg_version }}
+  group: qoder-api-${{ github.ref }}-${{ inputs.chain }}-${{ inputs.suite }}-${{ inputs.pg_version }}
   cancel-in-progress: false
 
 jobs:
   suite:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 120
     services:
       postgres:
         image: postgres:${{ inputs.pg_version }}
@@ -82,6 +108,7 @@ jobs:
     env:
       DINAR_LOCAL_PG: postgres://dinar_isolation@127.0.0.1:5432
       SUITE: ${{ inputs.suite }}
+      CHAIN: ${{ inputs.chain }}
       FLAGS: ${{ inputs.flags }}
     steps:
       - name: Validate inputs
@@ -98,7 +125,7 @@ jobs:
             key=${pair%%=*}
             value=${pair#*=}
             case "$key" in
-              BDINAR_W07_ACCEPTANCE|BDINAR_W08_ACCEPTANCE|BDINAR_W09_ACCEPTANCE|BDINAR_W10_ACCEPTANCE|BDINAR_W12C_ACCEPTANCE|BDINAR_WAVE4_ACCEPTANCE|BDINAR_WAVE3_ACCEPTANCE|BDINAR_WAVE02_ACCEPTANCE|BDINAR_PHASE1_ACCEPTANCE|BDINAR_SECURITY_ACCEPTANCE)
+              BDINAR_W07_ACCEPTANCE|BDINAR_W08_ACCEPTANCE|BDINAR_W09_ACCEPTANCE|BDINAR_W10_ACCEPTANCE|BDINAR_W12C_ACCEPTANCE|BDINAR_D1D2_ACCEPTANCE|BDINAR_W02U3_TEST_DATABASE|BDINAR_W02U3_BROWSER|BDINAR_D3A_ACCEPTANCE|BDINAR_WAVE4_ACCEPTANCE|BDINAR_WAVE3_ACCEPTANCE|BDINAR_WAVE02_ACCEPTANCE|BDINAR_PHASE1_ACCEPTANCE|BDINAR_SECURITY_ACCEPTANCE)
                 [ "$value" = development ] || { echo "$key must be development" >&2; exit 96; } ;;
               BDINAR_LOG_SCAN)
                 case "$value" in 0|1) ;; *) echo "$key must be 0 or 1" >&2; exit 96 ;; esac ;;
@@ -115,7 +142,51 @@ jobs:
                 exit 96 ;;
             esac
           done
-          echo "INPUTS_OK suite=$SUITE pg=$PG_MAJOR switches=$(printf '%s' "$FLAGS" | wc -w)"
+          # Chain contents are fixed here, never supplied by the dispatch payload. Validate their
+          # safety gates before expensive setup so a partial chain cannot start with missing approval.
+          has_flag() { case " $FLAGS " in *" $1=development "*) return 0 ;; *) return 1 ;; esac; }
+          require_flags() {
+            for key in $1; do
+              has_flag "$key" || { echo "chain $CHAIN requires $key=development" >&2; exit 96; }
+            done
+          }
+          SUITES="$SUITE"
+          promotions=0
+          case "$CHAIN" in
+            none) ;;
+            financial-waves-w07-w12c)
+              SUITES="wave07-financial-journal.test wave08-cash-and-refunds.test wave09-policy-consent-compliance.test wave10-trust-support-whatsapp.test wave07-w12-contract-hardening.test"
+              require_flags "BDINAR_TEST_DATABASE BDINAR_W07_ACCEPTANCE BDINAR_W08_ACCEPTANCE BDINAR_W09_ACCEPTANCE BDINAR_W10_ACCEPTANCE BDINAR_W12C_ACCEPTANCE BDINAR_WAVE4_ACCEPTANCE" ;;
+            business-cards-search-commerce)
+              SUITES="d1-d2-business-foundation.test w02u3-card-reliability.test search-sql-foundation.test commerce-journey.test"
+              require_flags "BDINAR_TEST_DATABASE BDINAR_D1D2_ACCEPTANCE BDINAR_W02U3_TEST_DATABASE BDINAR_WAVE4_ACCEPTANCE"
+              promotions=1 ;;
+            integrated-nine-interleaved)
+              SUITES="wave07-financial-journal.test d1-d2-business-foundation.test wave08-cash-and-refunds.test w02u3-card-reliability.test wave09-policy-consent-compliance.test search-sql-foundation.test wave10-trust-support-whatsapp.test commerce-journey.test wave07-w12-contract-hardening.test"
+              require_flags "BDINAR_TEST_DATABASE BDINAR_W07_ACCEPTANCE BDINAR_W08_ACCEPTANCE BDINAR_W09_ACCEPTANCE BDINAR_W10_ACCEPTANCE BDINAR_W12C_ACCEPTANCE BDINAR_D1D2_ACCEPTANCE BDINAR_W02U3_TEST_DATABASE BDINAR_WAVE4_ACCEPTANCE"
+              promotions=1 ;;
+            *) echo "chain not allowlisted: $CHAIN" >&2; exit 96 ;;
+          esac
+          if [ "$promotions" = 1 ]; then
+            case " $FLAGS " in *" BDINAR_PROMOTIONS_ENABLED=true "*) ;;
+              *) echo "chain $CHAIN requires BDINAR_PROMOTIONS_ENABLED=true" >&2; exit 96 ;; esac
+          fi
+          echo "SUITES=$SUITES" >> "$GITHUB_ENV"
+          # Resolve browser installation from the actual suite list, not the ignored suite input.
+          needs_chromium() {
+            case "$1" in
+              *browser-journey*|*browser.test|security-acceptance.test|wave3-acceptance.test|w02-ultra-browser.test) return 0 ;;
+              phase1-acceptance.test)
+                case " $FLAGS " in *" BDINAR_PHASE1_SKIP_BROWSER=1 "*) return 1 ;; *) return 0 ;; esac ;;
+              *) return 1 ;;
+            esac
+          }
+          chromium=0
+          for name in $SUITES; do
+            if needs_chromium "$name"; then chromium=1; fi
+          done
+          echo "NEEDS_CHROMIUM=$chromium" >> "$GITHUB_ENV"
+          echo "INPUTS_OK suite=$SUITE chain=$CHAIN chromium=$chromium pg=$PG_MAJOR switches=$(printf '%s' "$FLAGS" | wc -w)"
 
       - name: Confirm loopback-only database target
         run: |
@@ -162,21 +233,21 @@ jobs:
         run: pnpm --filter @workspace/dinar run test:surfaces
 
       - name: Install Chromium (browser journeys and XSS acceptance)
-        if: contains(env.SUITE, '-browser-journey') || env.SUITE == 'security-acceptance.test' || env.SUITE == 'phase1-acceptance.test' || env.SUITE == 'commerce-journey.test' || env.SUITE == 'w02-ultra-browser.test' || env.SUITE == 'wave3-acceptance.test'
+        if: env.NEEDS_CHROMIUM == '1'
         working-directory: artifacts/dinar
         run: |
           pnpm exec playwright install --with-deps chromium
           echo "DINAR_CHROMIUM=$(node -e 'console.log(require("@playwright/test").chromium.executablePath())')" >> "$GITHUB_ENV"
 
-      - name: Run one isolated suite
+      - name: Run an isolated suite or the selected shared-database chain
         working-directory: artifacts/api-server
-        run: sh test/isolation/local-suite.sh "$SUITE" $FLAGS
+        run: sh test/isolation/local-suite.sh $SUITES $FLAGS
 
       - name: Upload logs
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: suite-log-${{ inputs.suite }}-pg${{ inputs.pg_version }}
+          name: suite-log-${{ inputs.chain }}-${{ inputs.suite }}-pg${{ inputs.pg_version }}
           path: |
             artifacts/api-server/*.log
           if-no-files-found: ignore
