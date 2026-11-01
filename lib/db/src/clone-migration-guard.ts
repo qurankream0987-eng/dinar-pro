@@ -44,6 +44,8 @@ export const REVIEWED_PENDING_MIGRATIONS: ReadonlyArray<{ tag: string; sha256: s
   // triggers that only mark search documents stale. No existing value changes.
   { tag: "0045_c1_sql_search", sha256: "945ccc5622390b1a6a2e9af94aaa2d9010ac8b0e164de3b90571742dc1b05a5c" },
   { tag: "0046_d1_d2_business_foundation", sha256: "5d2c6fc28d2f910528d43a3e4efb7676bf7839a1fd90a30c1c39a78d887765db" },
+  // Integration: nullable offers.business_profile_id, an index and an owner/market guard trigger.
+  { tag: "0047_business_listing_association", sha256: "f524e2c36c1304ef95accddf8f62c412eb2e8d08ca7f365a1f57d155aed45878" },
 ];
 export const EXPECTED_JOURNAL_ENTRIES =
   EXPECTED_BASELINE_MIGRATIONS + REVIEWED_PENDING_MIGRATIONS.length;

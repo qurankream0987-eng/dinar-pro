@@ -5314,6 +5314,35 @@ export const RequestBusinessIntegrationResponse = zod.looseObject({
 
 
 /**
+ * @summary Integration: the business's catalog (explicit links; implicit only for a sole business)
+ */
+export const GetBusinessListingAssociationParams = zod.object({
+  "id": zod.uuid()
+})
+
+export const GetBusinessListingAssociationResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * @summary Integration: link or unlink one of the owner's listings to one of the owner's businesses (same owner and market)
+ */
+export const setBusinessListingLinkPathListingIdMax = 120;
+
+
+
+export const SetBusinessListingLinkParams = zod.object({
+  "id": zod.uuid(),
+  "listingId": zod.coerce.string().max(setBusinessListingLinkPathListingIdMax)
+})
+
+export const SetBusinessListingLinkBody = zod.object({
+  "linked": zod.boolean()
+})
+
+export const SetBusinessListingLinkResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
  * @summary Public view of a PUBLISHED, VERIFIED business (404 otherwise); no legal or document data
  */
 export const GetPublicBusinessParams = zod.object({
@@ -5382,5 +5411,585 @@ export const GetBusinessDocumentForReviewParams = zod.object({
 })
 
 export const GetBusinessDocumentForReviewResponse = zod.unknown()
+
+
+/**
+ * @summary W07–W10 (cash.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const postOrdersIdCashPaymentClaimPathIdMax = 120;
+
+
+
+export const PostOrdersIdCashPaymentClaimParams = zod.object({
+  "id": zod.coerce.string().max(postOrdersIdCashPaymentClaimPathIdMax)
+})
+
+export const postOrdersIdCashPaymentClaimHeaderIdempotencyKeyMin = 8;
+export const postOrdersIdCashPaymentClaimHeaderIdempotencyKeyMax = 128;
+
+
+
+export const PostOrdersIdCashPaymentClaimHeader = zod.object({
+  "Idempotency-Key": zod.string().min(postOrdersIdCashPaymentClaimHeaderIdempotencyKeyMin).max(postOrdersIdCashPaymentClaimHeaderIdempotencyKeyMax)
+})
+
+export const PostOrdersIdCashPaymentClaimBody = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+export const PostOrdersIdCashPaymentClaimResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * @summary W07–W10 (cash.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const postOrdersIdCashPaymentConfirmPathIdMax = 120;
+
+
+
+export const PostOrdersIdCashPaymentConfirmParams = zod.object({
+  "id": zod.coerce.string().max(postOrdersIdCashPaymentConfirmPathIdMax)
+})
+
+export const PostOrdersIdCashPaymentConfirmBody = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+export const PostOrdersIdCashPaymentConfirmResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * @summary W07–W10 (cash.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const postOrdersIdCashPaymentDenyPathIdMax = 120;
+
+
+
+export const PostOrdersIdCashPaymentDenyParams = zod.object({
+  "id": zod.coerce.string().max(postOrdersIdCashPaymentDenyPathIdMax)
+})
+
+export const PostOrdersIdCashPaymentDenyBody = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+export const PostOrdersIdCashPaymentDenyResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * @summary W07–W10 (cash.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const postOrdersIdCashPaymentDisputePathIdMax = 120;
+
+
+
+export const PostOrdersIdCashPaymentDisputeParams = zod.object({
+  "id": zod.coerce.string().max(postOrdersIdCashPaymentDisputePathIdMax)
+})
+
+export const PostOrdersIdCashPaymentDisputeBody = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+export const PostOrdersIdCashPaymentDisputeResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * @summary W07–W10 (cash.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const getOrdersIdCashPathIdMax = 120;
+
+
+
+export const GetOrdersIdCashParams = zod.object({
+  "id": zod.coerce.string().max(getOrdersIdCashPathIdMax)
+})
+
+export const GetOrdersIdCashResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * @summary W07–W10 (cash.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const postOrdersIdCashRefundsPathIdMax = 120;
+
+
+
+export const PostOrdersIdCashRefundsParams = zod.object({
+  "id": zod.coerce.string().max(postOrdersIdCashRefundsPathIdMax)
+})
+
+export const postOrdersIdCashRefundsHeaderIdempotencyKeyMin = 8;
+export const postOrdersIdCashRefundsHeaderIdempotencyKeyMax = 128;
+
+
+
+export const PostOrdersIdCashRefundsHeader = zod.object({
+  "Idempotency-Key": zod.string().min(postOrdersIdCashRefundsHeaderIdempotencyKeyMin).max(postOrdersIdCashRefundsHeaderIdempotencyKeyMax)
+})
+
+export const PostOrdersIdCashRefundsBody = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+export const PostOrdersIdCashRefundsResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * @summary W07–W10 (cash.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const postCashRefundsIdRepaymentClaimPathIdMax = 120;
+
+
+
+export const PostCashRefundsIdRepaymentClaimParams = zod.object({
+  "id": zod.coerce.string().max(postCashRefundsIdRepaymentClaimPathIdMax)
+})
+
+export const PostCashRefundsIdRepaymentClaimBody = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+export const PostCashRefundsIdRepaymentClaimResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * @summary W07–W10 (cash.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const postCashRefundsIdConfirmPathIdMax = 120;
+
+
+
+export const PostCashRefundsIdConfirmParams = zod.object({
+  "id": zod.coerce.string().max(postCashRefundsIdConfirmPathIdMax)
+})
+
+export const PostCashRefundsIdConfirmBody = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+export const PostCashRefundsIdConfirmResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * @summary W07–W10 (cash.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const postCashRefundsIdDisputePathIdMax = 120;
+
+
+
+export const PostCashRefundsIdDisputeParams = zod.object({
+  "id": zod.coerce.string().max(postCashRefundsIdDisputePathIdMax)
+})
+
+export const PostCashRefundsIdDisputeBody = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+export const PostCashRefundsIdDisputeResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * @summary W07–W10 (cash.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const postCashRefundsIdWithdrawPathIdMax = 120;
+
+
+
+export const PostCashRefundsIdWithdrawParams = zod.object({
+  "id": zod.coerce.string().max(postCashRefundsIdWithdrawPathIdMax)
+})
+
+export const PostCashRefundsIdWithdrawBody = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+export const PostCashRefundsIdWithdrawResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * @summary W07–W10 (compliance.ts). Access: PUBLIC. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const getMarketsMarketidCompliancePathMarketIdMax = 120;
+
+
+
+export const GetMarketsMarketidComplianceParams = zod.object({
+  "marketId": zod.coerce.string().max(getMarketsMarketidCompliancePathMarketIdMax)
+})
+
+export const GetMarketsMarketidComplianceResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * @summary W07–W10 (compliance.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const GetAccountPolicyConsentsResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * @summary W07–W10 (compliance.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const PostAccountPolicyDecisionsBody = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+export const PostAccountPolicyDecisionsResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * @summary W07–W10 (compliance.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const GetAccountComplianceResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * @summary W07–W10 (compliance.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const PostAccountAgeDeclarationBody = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+export const PostAccountAgeDeclarationResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * @summary W07–W10 (compliance.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const PostAccountGuardianConsentBody = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+export const PostAccountGuardianConsentResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * @summary W07–W10 (compliance.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const GetAccountSellerVerificationResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * @summary W07–W10 (compliance.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const PostAccountSellerVerificationBody = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+export const PostAccountSellerVerificationResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * @summary W07–W10 (compliance.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const GetAdminCompliancePoliciesResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * @summary W07–W10 (compliance.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const PostAdminCompliancePoliciesBody = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+export const PostAdminCompliancePoliciesResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * @summary W07–W10 (compliance.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const postAdminCompliancePoliciesIdTransitionPathIdMax = 120;
+
+
+
+export const PostAdminCompliancePoliciesIdTransitionParams = zod.object({
+  "id": zod.coerce.string().max(postAdminCompliancePoliciesIdTransitionPathIdMax)
+})
+
+export const PostAdminCompliancePoliciesIdTransitionBody = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+export const PostAdminCompliancePoliciesIdTransitionResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * @summary W07–W10 (compliance.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const GetAdminComplianceSellerVerificationsResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * @summary W07–W10 (compliance.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const postAdminComplianceSellerVerificationsIdDecisionPathIdMax = 120;
+
+
+
+export const PostAdminComplianceSellerVerificationsIdDecisionParams = zod.object({
+  "id": zod.coerce.string().max(postAdminComplianceSellerVerificationsIdDecisionPathIdMax)
+})
+
+export const PostAdminComplianceSellerVerificationsIdDecisionBody = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+export const PostAdminComplianceSellerVerificationsIdDecisionResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * @summary W07–W10 (compliance.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const GetAdminComplianceMarketsResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * @summary W07–W10 (compliance.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const getAdminComplianceMarketsMarketidPathMarketIdMax = 120;
+
+
+
+export const GetAdminComplianceMarketsMarketidParams = zod.object({
+  "marketId": zod.coerce.string().max(getAdminComplianceMarketsMarketidPathMarketIdMax)
+})
+
+export const GetAdminComplianceMarketsMarketidResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * @summary W07–W10 (compliance.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const putAdminComplianceMarketsMarketidPathMarketIdMax = 120;
+
+
+
+export const PutAdminComplianceMarketsMarketidParams = zod.object({
+  "marketId": zod.coerce.string().max(putAdminComplianceMarketsMarketidPathMarketIdMax)
+})
+
+export const PutAdminComplianceMarketsMarketidBody = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+export const PutAdminComplianceMarketsMarketidResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * @summary W07–W10 (compliance.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const GetAdminComplianceLegalEntitiesResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * @summary W07–W10 (compliance.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const PostAdminComplianceLegalEntitiesBody = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+export const PostAdminComplianceLegalEntitiesResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * @summary W07–W10 (compliance.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const postAdminComplianceLegalEntitiesMarketidActivatePathMarketIdMax = 120;
+
+
+
+export const PostAdminComplianceLegalEntitiesMarketidActivateParams = zod.object({
+  "marketId": zod.coerce.string().max(postAdminComplianceLegalEntitiesMarketidActivatePathMarketIdMax)
+})
+
+export const PostAdminComplianceLegalEntitiesMarketidActivateBody = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+export const PostAdminComplianceLegalEntitiesMarketidActivateResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * @summary W07–W10 (compliance.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const postAdminComplianceLegalEntitiesMarketidDeactivatePathMarketIdMax = 120;
+
+
+
+export const PostAdminComplianceLegalEntitiesMarketidDeactivateParams = zod.object({
+  "marketId": zod.coerce.string().max(postAdminComplianceLegalEntitiesMarketidDeactivatePathMarketIdMax)
+})
+
+export const PostAdminComplianceLegalEntitiesMarketidDeactivateBody = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+export const PostAdminComplianceLegalEntitiesMarketidDeactivateResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * @summary W07–W10 (trust-ops.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const GetAccountSupportCasesResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * @summary W07–W10 (trust-ops.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const PostAccountSupportCasesBody = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+export const PostAccountSupportCasesResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * @summary W07–W10 (trust-ops.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const getAccountSupportCasesIdPathIdMax = 120;
+
+
+
+export const GetAccountSupportCasesIdParams = zod.object({
+  "id": zod.coerce.string().max(getAccountSupportCasesIdPathIdMax)
+})
+
+export const GetAccountSupportCasesIdResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * @summary W07–W10 (trust-ops.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const postAccountSupportCasesIdMessagesPathIdMax = 120;
+
+
+
+export const PostAccountSupportCasesIdMessagesParams = zod.object({
+  "id": zod.coerce.string().max(postAccountSupportCasesIdMessagesPathIdMax)
+})
+
+export const PostAccountSupportCasesIdMessagesBody = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+export const PostAccountSupportCasesIdMessagesResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * @summary W07–W10 (trust-ops.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const GetAccountWhatsappConsentResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * @summary W07–W10 (trust-ops.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const PostAccountWhatsappConsentBody = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+export const PostAccountWhatsappConsentResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * @summary W07–W10 (trust-ops.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const GetAdminSupportCasesResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * @summary W07–W10 (trust-ops.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const getAdminSupportCasesIdPathIdMax = 120;
+
+
+
+export const GetAdminSupportCasesIdParams = zod.object({
+  "id": zod.coerce.string().max(getAdminSupportCasesIdPathIdMax)
+})
+
+export const GetAdminSupportCasesIdResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * @summary W07–W10 (trust-ops.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const postAdminSupportCasesIdMessagesPathIdMax = 120;
+
+
+
+export const PostAdminSupportCasesIdMessagesParams = zod.object({
+  "id": zod.coerce.string().max(postAdminSupportCasesIdMessagesPathIdMax)
+})
+
+export const PostAdminSupportCasesIdMessagesBody = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+export const PostAdminSupportCasesIdMessagesResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * @summary W07–W10 (trust-ops.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const postAdminSupportCasesIdAssignPathIdMax = 120;
+
+
+
+export const PostAdminSupportCasesIdAssignParams = zod.object({
+  "id": zod.coerce.string().max(postAdminSupportCasesIdAssignPathIdMax)
+})
+
+export const PostAdminSupportCasesIdAssignBody = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+export const PostAdminSupportCasesIdAssignResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * @summary W07–W10 (trust-ops.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const postAdminSupportCasesIdStatusPathIdMax = 120;
+
+
+
+export const PostAdminSupportCasesIdStatusParams = zod.object({
+  "id": zod.coerce.string().max(postAdminSupportCasesIdStatusPathIdMax)
+})
+
+export const PostAdminSupportCasesIdStatusBody = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+export const PostAdminSupportCasesIdStatusResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * @summary W07–W10 (trust-ops.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const GetAdminFraudSignalsResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * @summary W07–W10 (trust-ops.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const PostAdminFraudSignalsBody = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+export const PostAdminFraudSignalsResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * @summary W07–W10 (trust-ops.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const postAdminFraudSignalsIdReviewPathIdMax = 120;
+
+
+
+export const PostAdminFraudSignalsIdReviewParams = zod.object({
+  "id": zod.coerce.string().max(postAdminFraudSignalsIdReviewPathIdMax)
+})
+
+export const PostAdminFraudSignalsIdReviewBody = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+export const PostAdminFraudSignalsIdReviewResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * @summary W07–W10 (trust-ops.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const GetAdminFraudOverviewResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * @summary W07–W10 (trust-ops.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const GetAdminWhatsappTemplatesResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * @summary W07–W10 (trust-ops.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const PostAdminWhatsappTemplatesBody = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+export const PostAdminWhatsappTemplatesResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * @summary W07–W10 (trust-ops.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const postAdminWhatsappTemplatesKeyStatusPathKeyMax = 120;
+
+
+
+export const PostAdminWhatsappTemplatesKeyStatusParams = zod.object({
+  "key": zod.coerce.string().max(postAdminWhatsappTemplatesKeyStatusPathKeyMax)
+})
+
+export const PostAdminWhatsappTemplatesKeyStatusBody = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+export const PostAdminWhatsappTemplatesKeyStatusResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * @summary W07–W10 (trust-ops.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const PostAdminWhatsappIntentsBody = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+export const PostAdminWhatsappIntentsResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * @summary W07–W10 (trust-ops.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const GetAdminWhatsappOverviewResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
 
 

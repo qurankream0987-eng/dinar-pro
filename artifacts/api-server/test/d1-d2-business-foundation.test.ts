@@ -755,8 +755,9 @@ await test("D2-17 the typed catalog contract keeps verification, publication, me
   assert.deepEqual(await businessPlanStatus(samraa.id), { paid: false, status: "NONE", grantsOnlyWhileVerified: true });
   // Business ↔ listing association (v1): the owner's own listings in the business's market.
   const association = (await businessListingAssociation(verifiedId))!;
-  assert.equal(association.mode, "OWNER_MARKET_IMPLICIT");
-  assert.ok(association.listingIds.includes(`d12-rank-${runId}-0`), "the owner's KW listing belongs to the catalog");
+  assert.equal(association.mode, "EXPLICIT");
+  assert.equal(association.implicitUnlinked, false, "an owner with several businesses gets explicit links only");
+  assert.ok(!association.listingIds.includes(`d12-rank-${runId}-0`), "an unlinked listing is not silently assigned to one of several businesses");
   assert.ok(!association.listingIds.includes(`d12-rank-${runId}-1`), "another seller's listing never does");
   assert.ok(BUSINESS_LIFECYCLE.every((step) => step.to !== "VERIFIED" || step.actor === "REVIEWER"), "only a reviewer ever moves to VERIFIED");
 });

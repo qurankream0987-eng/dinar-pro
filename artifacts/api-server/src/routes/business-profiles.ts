@@ -7,6 +7,7 @@ import { Router, type RequestHandler } from "express";
 import { z } from "zod";
 import { requireAuth } from "../lib/auth";
 import { marketFor } from "../lib/markets";
+import { assignListingToBusiness, businessListingAssociation } from "../lib/business-catalog-contract";
 import {
   businessForReviewer,
   businessReviewQueue,
@@ -70,6 +71,18 @@ router.post("/business/profiles/:id/publication", requireAuth, async (req, res) 
 });
 router.post("/business/profiles/:id/integration-requests", requireAuth, async (req, res) => {
   res.status(201).json(await requestBusinessIntegration(req.actor!.id, await marketFor(req), id(req.params.id), req.body));
+});
+
+/** Integration: link or unlink one of the owner's listings to one of the owner's businesses. */
+router.post("/business/profiles/:id/listings/:listingId", requireAuth, async (req, res) => {
+  const body = z.object({ linked: z.boolean() }).strict().parse(req.body);
+  const market = await marketFor(req);
+  await getOwnBusiness(req.actor!.id, market, id(req.params.id));
+  res.json(await assignListingToBusiness({ actorId: req.actor!.id, marketId: market.id, listingId: id(req.params.listingId), businessId: body.linked ? id(req.params.id) : null, unlinkFrom: id(req.params.id) }));
+});
+router.get("/business/profiles/:id/listings", requireAuth, async (req, res) => {
+  await getOwnBusiness(req.actor!.id, await marketFor(req), id(req.params.id));
+  res.json(await businessListingAssociation(id(req.params.id)));
 });
 
 /** Public: a published, verified business only (404 for drafts, pending, rejected, suspended). */

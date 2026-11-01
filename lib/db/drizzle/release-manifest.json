@@ -186,5 +186,9 @@
   {
     "tag": "0046_d1_d2_business_foundation",
     "sha256": "5d2c6fc28d2f910528d43a3e4efb7676bf7839a1fd90a30c1c39a78d887765db"
+  },
+  {
+    "tag": "0047_business_listing_association",
+    "sha256": "f524e2c36c1304ef95accddf8f62c412eb2e8d08ca7f365a1f57d155aed45878"
   }
 ]

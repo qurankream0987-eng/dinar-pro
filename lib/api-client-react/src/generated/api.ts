@@ -54,6 +54,7 @@ import type {
   BusinessDraftRequest,
   BusinessDraftResult,
   BusinessIntegrationRequest,
+  BusinessListingLinkRequest,
   BusinessOwnerView,
   BusinessPublicView,
   BusinessPublicationRequest,
@@ -121,6 +122,7 @@ import type {
   SellerDue,
   SellerPromotion,
   SellerPromotionAction,
+  ServerValidatedObject,
   SubscriptionCheckoutRequest,
   SubscriptionPlansOverview,
   TutorialLearningEvent,
@@ -10546,6 +10548,198 @@ export const useRequestBusinessIntegration = <TError = ErrorType<unknown>,
       return useMutation(getRequestBusinessIntegrationMutationOptions(options), queryClient);
     }
 
+export const getGetBusinessListingAssociationUrl = (id: string,) => {
+
+
+
+
+  return `/api/business/profiles/${id}/listings`
+}
+
+/**
+ * @summary Integration: the business's catalog (explicit links; implicit only for a sole business)
+ */
+export const getBusinessListingAssociation = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+  return customFetch<ServerValidatedObject>(getGetBusinessListingAssociationUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetBusinessListingAssociationQueryKey = (id: string,) => {
+    return [
+    `/api/business/profiles/${id}/listings`
+    ] as const;
+    }
+
+
+export const getGetBusinessListingAssociationQueryOptions = <TData = Awaited<ReturnType<typeof getBusinessListingAssociation>>, TError = ErrorType<unknown>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getBusinessListingAssociation>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetBusinessListingAssociationQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getBusinessListingAssociation>>> = ({ signal }) => getBusinessListingAssociation(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getBusinessListingAssociation>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetBusinessListingAssociationQueryResult = NonNullable<Awaited<ReturnType<typeof getBusinessListingAssociation>>>
+export type GetBusinessListingAssociationQueryError = ErrorType<unknown>
+
+
+export function useGetBusinessListingAssociation<TData = Awaited<ReturnType<typeof getBusinessListingAssociation>>, TError = ErrorType<unknown>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getBusinessListingAssociation>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getBusinessListingAssociation>>,
+          TError,
+          Awaited<ReturnType<typeof getBusinessListingAssociation>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetBusinessListingAssociation<TData = Awaited<ReturnType<typeof getBusinessListingAssociation>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getBusinessListingAssociation>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getBusinessListingAssociation>>,
+          TError,
+          Awaited<ReturnType<typeof getBusinessListingAssociation>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetBusinessListingAssociation<TData = Awaited<ReturnType<typeof getBusinessListingAssociation>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getBusinessListingAssociation>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Integration: the business's catalog (explicit links; implicit only for a sole business)
+ */
+
+export function useGetBusinessListingAssociation<TData = Awaited<ReturnType<typeof getBusinessListingAssociation>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getBusinessListingAssociation>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetBusinessListingAssociationQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getSetBusinessListingLinkUrl = (id: string,
+    listingId: string,) => {
+
+
+
+
+  return `/api/business/profiles/${id}/listings/${listingId}`
+}
+
+/**
+ * @summary Integration: link or unlink one of the owner's listings to one of the owner's businesses (same owner and market)
+ */
+export const setBusinessListingLink = async (id: string,
+    listingId: string,
+    businessListingLinkRequest: BusinessListingLinkRequest, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getSetBusinessListingLinkUrl(id,listingId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(businessListingLinkRequest)
+  }
+);}
+
+
+
+
+
+export const getSetBusinessListingLinkMutationKey = () => ['setBusinessListingLink'] as const;
+
+export const getSetBusinessListingLinkMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setBusinessListingLink>>, TError,SetBusinessListingLinkMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof setBusinessListingLink>>, TError,SetBusinessListingLinkMutationVariables, TContext> => {
+
+const mutationKey = getSetBusinessListingLinkMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof setBusinessListingLink>>, SetBusinessListingLinkMutationVariables> = (props) => {
+          const {id,listingId,data} = props ?? {};
+
+          return  setBusinessListingLink(id,listingId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SetBusinessListingLinkMutationResult = NonNullable<Awaited<ReturnType<typeof setBusinessListingLink>>>
+    export type SetBusinessListingLinkMutationBody = BodyType<BusinessListingLinkRequest>
+    export type SetBusinessListingLinkMutationError = ErrorType<unknown>
+    export type SetBusinessListingLinkMutationVariables = {id: string;listingId: string;data: BodyType<BusinessListingLinkRequest>}
+
+    /**
+ * @summary Integration: link or unlink one of the owner's listings to one of the owner's businesses (same owner and market)
+ */
+export const useSetBusinessListingLink = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setBusinessListingLink>>, TError,SetBusinessListingLinkMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof setBusinessListingLink>>,
+        TError,
+        SetBusinessListingLinkMutationVariables,
+        TContext
+      > => {
+      return useMutation(getSetBusinessListingLinkMutationOptions(options), queryClient);
+    }
+
 export const getGetPublicBusinessUrl = (id: string,) => {
 
 
@@ -11028,6 +11222,4673 @@ export function useGetBusinessDocumentForReview<TData = Awaited<ReturnType<typeo
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetBusinessDocumentForReviewQueryOptions(documentId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getPostOrdersIdCashPaymentClaimUrl = (id: string,) => {
+
+
+
+
+  return `/api/orders/${id}/cash-payment/claim`
+}
+
+/**
+ * @summary W07–W10 (cash.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const postOrdersIdCashPaymentClaim = async (id: string,
+    serverValidatedObject?: ServerValidatedObject, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getPostOrdersIdCashPaymentClaimUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(serverValidatedObject)
+  }
+);}
+
+
+
+
+
+export const getPostOrdersIdCashPaymentClaimMutationKey = () => ['postOrdersIdCashPaymentClaim'] as const;
+
+export const getPostOrdersIdCashPaymentClaimMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postOrdersIdCashPaymentClaim>>, TError,PostOrdersIdCashPaymentClaimMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof postOrdersIdCashPaymentClaim>>, TError,PostOrdersIdCashPaymentClaimMutationVariables, TContext> => {
+
+const mutationKey = getPostOrdersIdCashPaymentClaimMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postOrdersIdCashPaymentClaim>>, PostOrdersIdCashPaymentClaimMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  postOrdersIdCashPaymentClaim(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostOrdersIdCashPaymentClaimMutationResult = NonNullable<Awaited<ReturnType<typeof postOrdersIdCashPaymentClaim>>>
+    export type PostOrdersIdCashPaymentClaimMutationBody = BodyType<ServerValidatedObject> | undefined
+    export type PostOrdersIdCashPaymentClaimMutationError = ErrorType<void>
+    export type PostOrdersIdCashPaymentClaimMutationVariables = {id: string;data?: BodyType<ServerValidatedObject>}
+
+    /**
+ * @summary W07–W10 (cash.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const usePostOrdersIdCashPaymentClaim = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postOrdersIdCashPaymentClaim>>, TError,PostOrdersIdCashPaymentClaimMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postOrdersIdCashPaymentClaim>>,
+        TError,
+        PostOrdersIdCashPaymentClaimMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPostOrdersIdCashPaymentClaimMutationOptions(options), queryClient);
+    }
+
+export const getPostOrdersIdCashPaymentConfirmUrl = (id: string,) => {
+
+
+
+
+  return `/api/orders/${id}/cash-payment/confirm`
+}
+
+/**
+ * @summary W07–W10 (cash.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const postOrdersIdCashPaymentConfirm = async (id: string,
+    serverValidatedObject?: ServerValidatedObject, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getPostOrdersIdCashPaymentConfirmUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(serverValidatedObject)
+  }
+);}
+
+
+
+
+
+export const getPostOrdersIdCashPaymentConfirmMutationKey = () => ['postOrdersIdCashPaymentConfirm'] as const;
+
+export const getPostOrdersIdCashPaymentConfirmMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postOrdersIdCashPaymentConfirm>>, TError,PostOrdersIdCashPaymentConfirmMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof postOrdersIdCashPaymentConfirm>>, TError,PostOrdersIdCashPaymentConfirmMutationVariables, TContext> => {
+
+const mutationKey = getPostOrdersIdCashPaymentConfirmMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postOrdersIdCashPaymentConfirm>>, PostOrdersIdCashPaymentConfirmMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  postOrdersIdCashPaymentConfirm(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostOrdersIdCashPaymentConfirmMutationResult = NonNullable<Awaited<ReturnType<typeof postOrdersIdCashPaymentConfirm>>>
+    export type PostOrdersIdCashPaymentConfirmMutationBody = BodyType<ServerValidatedObject> | undefined
+    export type PostOrdersIdCashPaymentConfirmMutationError = ErrorType<void>
+    export type PostOrdersIdCashPaymentConfirmMutationVariables = {id: string;data?: BodyType<ServerValidatedObject>}
+
+    /**
+ * @summary W07–W10 (cash.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const usePostOrdersIdCashPaymentConfirm = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postOrdersIdCashPaymentConfirm>>, TError,PostOrdersIdCashPaymentConfirmMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postOrdersIdCashPaymentConfirm>>,
+        TError,
+        PostOrdersIdCashPaymentConfirmMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPostOrdersIdCashPaymentConfirmMutationOptions(options), queryClient);
+    }
+
+export const getPostOrdersIdCashPaymentDenyUrl = (id: string,) => {
+
+
+
+
+  return `/api/orders/${id}/cash-payment/deny`
+}
+
+/**
+ * @summary W07–W10 (cash.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const postOrdersIdCashPaymentDeny = async (id: string,
+    serverValidatedObject?: ServerValidatedObject, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getPostOrdersIdCashPaymentDenyUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(serverValidatedObject)
+  }
+);}
+
+
+
+
+
+export const getPostOrdersIdCashPaymentDenyMutationKey = () => ['postOrdersIdCashPaymentDeny'] as const;
+
+export const getPostOrdersIdCashPaymentDenyMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postOrdersIdCashPaymentDeny>>, TError,PostOrdersIdCashPaymentDenyMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof postOrdersIdCashPaymentDeny>>, TError,PostOrdersIdCashPaymentDenyMutationVariables, TContext> => {
+
+const mutationKey = getPostOrdersIdCashPaymentDenyMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postOrdersIdCashPaymentDeny>>, PostOrdersIdCashPaymentDenyMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  postOrdersIdCashPaymentDeny(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostOrdersIdCashPaymentDenyMutationResult = NonNullable<Awaited<ReturnType<typeof postOrdersIdCashPaymentDeny>>>
+    export type PostOrdersIdCashPaymentDenyMutationBody = BodyType<ServerValidatedObject> | undefined
+    export type PostOrdersIdCashPaymentDenyMutationError = ErrorType<void>
+    export type PostOrdersIdCashPaymentDenyMutationVariables = {id: string;data?: BodyType<ServerValidatedObject>}
+
+    /**
+ * @summary W07–W10 (cash.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const usePostOrdersIdCashPaymentDeny = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postOrdersIdCashPaymentDeny>>, TError,PostOrdersIdCashPaymentDenyMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postOrdersIdCashPaymentDeny>>,
+        TError,
+        PostOrdersIdCashPaymentDenyMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPostOrdersIdCashPaymentDenyMutationOptions(options), queryClient);
+    }
+
+export const getPostOrdersIdCashPaymentDisputeUrl = (id: string,) => {
+
+
+
+
+  return `/api/orders/${id}/cash-payment/dispute`
+}
+
+/**
+ * @summary W07–W10 (cash.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const postOrdersIdCashPaymentDispute = async (id: string,
+    serverValidatedObject?: ServerValidatedObject, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getPostOrdersIdCashPaymentDisputeUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(serverValidatedObject)
+  }
+);}
+
+
+
+
+
+export const getPostOrdersIdCashPaymentDisputeMutationKey = () => ['postOrdersIdCashPaymentDispute'] as const;
+
+export const getPostOrdersIdCashPaymentDisputeMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postOrdersIdCashPaymentDispute>>, TError,PostOrdersIdCashPaymentDisputeMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof postOrdersIdCashPaymentDispute>>, TError,PostOrdersIdCashPaymentDisputeMutationVariables, TContext> => {
+
+const mutationKey = getPostOrdersIdCashPaymentDisputeMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postOrdersIdCashPaymentDispute>>, PostOrdersIdCashPaymentDisputeMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  postOrdersIdCashPaymentDispute(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostOrdersIdCashPaymentDisputeMutationResult = NonNullable<Awaited<ReturnType<typeof postOrdersIdCashPaymentDispute>>>
+    export type PostOrdersIdCashPaymentDisputeMutationBody = BodyType<ServerValidatedObject> | undefined
+    export type PostOrdersIdCashPaymentDisputeMutationError = ErrorType<void>
+    export type PostOrdersIdCashPaymentDisputeMutationVariables = {id: string;data?: BodyType<ServerValidatedObject>}
+
+    /**
+ * @summary W07–W10 (cash.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const usePostOrdersIdCashPaymentDispute = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postOrdersIdCashPaymentDispute>>, TError,PostOrdersIdCashPaymentDisputeMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postOrdersIdCashPaymentDispute>>,
+        TError,
+        PostOrdersIdCashPaymentDisputeMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPostOrdersIdCashPaymentDisputeMutationOptions(options), queryClient);
+    }
+
+export const getGetOrdersIdCashUrl = (id: string,) => {
+
+
+
+
+  return `/api/orders/${id}/cash`
+}
+
+/**
+ * @summary W07–W10 (cash.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const getOrdersIdCash = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+  return customFetch<ServerValidatedObject>(getGetOrdersIdCashUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetOrdersIdCashQueryKey = (id: string,) => {
+    return [
+    `/api/orders/${id}/cash`
+    ] as const;
+    }
+
+
+export const getGetOrdersIdCashQueryOptions = <TData = Awaited<ReturnType<typeof getOrdersIdCash>>, TError = ErrorType<void>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOrdersIdCash>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetOrdersIdCashQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getOrdersIdCash>>> = ({ signal }) => getOrdersIdCash(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getOrdersIdCash>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetOrdersIdCashQueryResult = NonNullable<Awaited<ReturnType<typeof getOrdersIdCash>>>
+export type GetOrdersIdCashQueryError = ErrorType<void>
+
+
+export function useGetOrdersIdCash<TData = Awaited<ReturnType<typeof getOrdersIdCash>>, TError = ErrorType<void>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOrdersIdCash>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getOrdersIdCash>>,
+          TError,
+          Awaited<ReturnType<typeof getOrdersIdCash>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetOrdersIdCash<TData = Awaited<ReturnType<typeof getOrdersIdCash>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOrdersIdCash>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getOrdersIdCash>>,
+          TError,
+          Awaited<ReturnType<typeof getOrdersIdCash>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetOrdersIdCash<TData = Awaited<ReturnType<typeof getOrdersIdCash>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOrdersIdCash>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary W07–W10 (cash.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+
+export function useGetOrdersIdCash<TData = Awaited<ReturnType<typeof getOrdersIdCash>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOrdersIdCash>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetOrdersIdCashQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getPostOrdersIdCashRefundsUrl = (id: string,) => {
+
+
+
+
+  return `/api/orders/${id}/cash-refunds`
+}
+
+/**
+ * @summary W07–W10 (cash.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const postOrdersIdCashRefunds = async (id: string,
+    serverValidatedObject?: ServerValidatedObject, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getPostOrdersIdCashRefundsUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(serverValidatedObject)
+  }
+);}
+
+
+
+
+
+export const getPostOrdersIdCashRefundsMutationKey = () => ['postOrdersIdCashRefunds'] as const;
+
+export const getPostOrdersIdCashRefundsMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postOrdersIdCashRefunds>>, TError,PostOrdersIdCashRefundsMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof postOrdersIdCashRefunds>>, TError,PostOrdersIdCashRefundsMutationVariables, TContext> => {
+
+const mutationKey = getPostOrdersIdCashRefundsMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postOrdersIdCashRefunds>>, PostOrdersIdCashRefundsMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  postOrdersIdCashRefunds(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostOrdersIdCashRefundsMutationResult = NonNullable<Awaited<ReturnType<typeof postOrdersIdCashRefunds>>>
+    export type PostOrdersIdCashRefundsMutationBody = BodyType<ServerValidatedObject> | undefined
+    export type PostOrdersIdCashRefundsMutationError = ErrorType<void>
+    export type PostOrdersIdCashRefundsMutationVariables = {id: string;data?: BodyType<ServerValidatedObject>}
+
+    /**
+ * @summary W07–W10 (cash.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const usePostOrdersIdCashRefunds = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postOrdersIdCashRefunds>>, TError,PostOrdersIdCashRefundsMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postOrdersIdCashRefunds>>,
+        TError,
+        PostOrdersIdCashRefundsMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPostOrdersIdCashRefundsMutationOptions(options), queryClient);
+    }
+
+export const getPostCashRefundsIdRepaymentClaimUrl = (id: string,) => {
+
+
+
+
+  return `/api/cash-refunds/${id}/repayment-claim`
+}
+
+/**
+ * @summary W07–W10 (cash.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const postCashRefundsIdRepaymentClaim = async (id: string,
+    serverValidatedObject?: ServerValidatedObject, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getPostCashRefundsIdRepaymentClaimUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(serverValidatedObject)
+  }
+);}
+
+
+
+
+
+export const getPostCashRefundsIdRepaymentClaimMutationKey = () => ['postCashRefundsIdRepaymentClaim'] as const;
+
+export const getPostCashRefundsIdRepaymentClaimMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postCashRefundsIdRepaymentClaim>>, TError,PostCashRefundsIdRepaymentClaimMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof postCashRefundsIdRepaymentClaim>>, TError,PostCashRefundsIdRepaymentClaimMutationVariables, TContext> => {
+
+const mutationKey = getPostCashRefundsIdRepaymentClaimMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postCashRefundsIdRepaymentClaim>>, PostCashRefundsIdRepaymentClaimMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  postCashRefundsIdRepaymentClaim(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostCashRefundsIdRepaymentClaimMutationResult = NonNullable<Awaited<ReturnType<typeof postCashRefundsIdRepaymentClaim>>>
+    export type PostCashRefundsIdRepaymentClaimMutationBody = BodyType<ServerValidatedObject> | undefined
+    export type PostCashRefundsIdRepaymentClaimMutationError = ErrorType<void>
+    export type PostCashRefundsIdRepaymentClaimMutationVariables = {id: string;data?: BodyType<ServerValidatedObject>}
+
+    /**
+ * @summary W07–W10 (cash.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const usePostCashRefundsIdRepaymentClaim = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postCashRefundsIdRepaymentClaim>>, TError,PostCashRefundsIdRepaymentClaimMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postCashRefundsIdRepaymentClaim>>,
+        TError,
+        PostCashRefundsIdRepaymentClaimMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPostCashRefundsIdRepaymentClaimMutationOptions(options), queryClient);
+    }
+
+export const getPostCashRefundsIdConfirmUrl = (id: string,) => {
+
+
+
+
+  return `/api/cash-refunds/${id}/confirm`
+}
+
+/**
+ * @summary W07–W10 (cash.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const postCashRefundsIdConfirm = async (id: string,
+    serverValidatedObject?: ServerValidatedObject, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getPostCashRefundsIdConfirmUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(serverValidatedObject)
+  }
+);}
+
+
+
+
+
+export const getPostCashRefundsIdConfirmMutationKey = () => ['postCashRefundsIdConfirm'] as const;
+
+export const getPostCashRefundsIdConfirmMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postCashRefundsIdConfirm>>, TError,PostCashRefundsIdConfirmMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof postCashRefundsIdConfirm>>, TError,PostCashRefundsIdConfirmMutationVariables, TContext> => {
+
+const mutationKey = getPostCashRefundsIdConfirmMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postCashRefundsIdConfirm>>, PostCashRefundsIdConfirmMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  postCashRefundsIdConfirm(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostCashRefundsIdConfirmMutationResult = NonNullable<Awaited<ReturnType<typeof postCashRefundsIdConfirm>>>
+    export type PostCashRefundsIdConfirmMutationBody = BodyType<ServerValidatedObject> | undefined
+    export type PostCashRefundsIdConfirmMutationError = ErrorType<void>
+    export type PostCashRefundsIdConfirmMutationVariables = {id: string;data?: BodyType<ServerValidatedObject>}
+
+    /**
+ * @summary W07–W10 (cash.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const usePostCashRefundsIdConfirm = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postCashRefundsIdConfirm>>, TError,PostCashRefundsIdConfirmMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postCashRefundsIdConfirm>>,
+        TError,
+        PostCashRefundsIdConfirmMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPostCashRefundsIdConfirmMutationOptions(options), queryClient);
+    }
+
+export const getPostCashRefundsIdDisputeUrl = (id: string,) => {
+
+
+
+
+  return `/api/cash-refunds/${id}/dispute`
+}
+
+/**
+ * @summary W07–W10 (cash.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const postCashRefundsIdDispute = async (id: string,
+    serverValidatedObject?: ServerValidatedObject, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getPostCashRefundsIdDisputeUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(serverValidatedObject)
+  }
+);}
+
+
+
+
+
+export const getPostCashRefundsIdDisputeMutationKey = () => ['postCashRefundsIdDispute'] as const;
+
+export const getPostCashRefundsIdDisputeMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postCashRefundsIdDispute>>, TError,PostCashRefundsIdDisputeMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof postCashRefundsIdDispute>>, TError,PostCashRefundsIdDisputeMutationVariables, TContext> => {
+
+const mutationKey = getPostCashRefundsIdDisputeMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postCashRefundsIdDispute>>, PostCashRefundsIdDisputeMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  postCashRefundsIdDispute(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostCashRefundsIdDisputeMutationResult = NonNullable<Awaited<ReturnType<typeof postCashRefundsIdDispute>>>
+    export type PostCashRefundsIdDisputeMutationBody = BodyType<ServerValidatedObject> | undefined
+    export type PostCashRefundsIdDisputeMutationError = ErrorType<void>
+    export type PostCashRefundsIdDisputeMutationVariables = {id: string;data?: BodyType<ServerValidatedObject>}
+
+    /**
+ * @summary W07–W10 (cash.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const usePostCashRefundsIdDispute = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postCashRefundsIdDispute>>, TError,PostCashRefundsIdDisputeMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postCashRefundsIdDispute>>,
+        TError,
+        PostCashRefundsIdDisputeMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPostCashRefundsIdDisputeMutationOptions(options), queryClient);
+    }
+
+export const getPostCashRefundsIdWithdrawUrl = (id: string,) => {
+
+
+
+
+  return `/api/cash-refunds/${id}/withdraw`
+}
+
+/**
+ * @summary W07–W10 (cash.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const postCashRefundsIdWithdraw = async (id: string,
+    serverValidatedObject?: ServerValidatedObject, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getPostCashRefundsIdWithdrawUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(serverValidatedObject)
+  }
+);}
+
+
+
+
+
+export const getPostCashRefundsIdWithdrawMutationKey = () => ['postCashRefundsIdWithdraw'] as const;
+
+export const getPostCashRefundsIdWithdrawMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postCashRefundsIdWithdraw>>, TError,PostCashRefundsIdWithdrawMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof postCashRefundsIdWithdraw>>, TError,PostCashRefundsIdWithdrawMutationVariables, TContext> => {
+
+const mutationKey = getPostCashRefundsIdWithdrawMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postCashRefundsIdWithdraw>>, PostCashRefundsIdWithdrawMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  postCashRefundsIdWithdraw(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostCashRefundsIdWithdrawMutationResult = NonNullable<Awaited<ReturnType<typeof postCashRefundsIdWithdraw>>>
+    export type PostCashRefundsIdWithdrawMutationBody = BodyType<ServerValidatedObject> | undefined
+    export type PostCashRefundsIdWithdrawMutationError = ErrorType<void>
+    export type PostCashRefundsIdWithdrawMutationVariables = {id: string;data?: BodyType<ServerValidatedObject>}
+
+    /**
+ * @summary W07–W10 (cash.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const usePostCashRefundsIdWithdraw = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postCashRefundsIdWithdraw>>, TError,PostCashRefundsIdWithdrawMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postCashRefundsIdWithdraw>>,
+        TError,
+        PostCashRefundsIdWithdrawMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPostCashRefundsIdWithdrawMutationOptions(options), queryClient);
+    }
+
+export const getGetMarketsMarketidComplianceUrl = (marketId: string,) => {
+
+
+
+
+  return `/api/markets/${marketId}/compliance`
+}
+
+/**
+ * @summary W07–W10 (compliance.ts). Access: PUBLIC. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const getMarketsMarketidCompliance = async (marketId: string, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+  return customFetch<ServerValidatedObject>(getGetMarketsMarketidComplianceUrl(marketId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetMarketsMarketidComplianceQueryKey = (marketId: string,) => {
+    return [
+    `/api/markets/${marketId}/compliance`
+    ] as const;
+    }
+
+
+export const getGetMarketsMarketidComplianceQueryOptions = <TData = Awaited<ReturnType<typeof getMarketsMarketidCompliance>>, TError = ErrorType<void>>(marketId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMarketsMarketidCompliance>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetMarketsMarketidComplianceQueryKey(marketId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMarketsMarketidCompliance>>> = ({ signal }) => getMarketsMarketidCompliance(marketId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: marketId !== null && marketId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMarketsMarketidCompliance>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetMarketsMarketidComplianceQueryResult = NonNullable<Awaited<ReturnType<typeof getMarketsMarketidCompliance>>>
+export type GetMarketsMarketidComplianceQueryError = ErrorType<void>
+
+
+export function useGetMarketsMarketidCompliance<TData = Awaited<ReturnType<typeof getMarketsMarketidCompliance>>, TError = ErrorType<void>>(
+ marketId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMarketsMarketidCompliance>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMarketsMarketidCompliance>>,
+          TError,
+          Awaited<ReturnType<typeof getMarketsMarketidCompliance>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMarketsMarketidCompliance<TData = Awaited<ReturnType<typeof getMarketsMarketidCompliance>>, TError = ErrorType<void>>(
+ marketId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMarketsMarketidCompliance>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMarketsMarketidCompliance>>,
+          TError,
+          Awaited<ReturnType<typeof getMarketsMarketidCompliance>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMarketsMarketidCompliance<TData = Awaited<ReturnType<typeof getMarketsMarketidCompliance>>, TError = ErrorType<void>>(
+ marketId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMarketsMarketidCompliance>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary W07–W10 (compliance.ts). Access: PUBLIC. Strangers get 404; bodies are validated strictly on the server.
+ */
+
+export function useGetMarketsMarketidCompliance<TData = Awaited<ReturnType<typeof getMarketsMarketidCompliance>>, TError = ErrorType<void>>(
+ marketId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMarketsMarketidCompliance>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetMarketsMarketidComplianceQueryOptions(marketId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetAccountPolicyConsentsUrl = () => {
+
+
+
+
+  return `/api/account/policy-consents`
+}
+
+/**
+ * @summary W07–W10 (compliance.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const getAccountPolicyConsents = async ( options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+  return customFetch<ServerValidatedObject>(getGetAccountPolicyConsentsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAccountPolicyConsentsQueryKey = () => {
+    return [
+    `/api/account/policy-consents`
+    ] as const;
+    }
+
+
+export const getGetAccountPolicyConsentsQueryOptions = <TData = Awaited<ReturnType<typeof getAccountPolicyConsents>>, TError = ErrorType<void>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAccountPolicyConsents>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAccountPolicyConsentsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAccountPolicyConsents>>> = ({ signal }) => getAccountPolicyConsents({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAccountPolicyConsents>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetAccountPolicyConsentsQueryResult = NonNullable<Awaited<ReturnType<typeof getAccountPolicyConsents>>>
+export type GetAccountPolicyConsentsQueryError = ErrorType<void>
+
+
+export function useGetAccountPolicyConsents<TData = Awaited<ReturnType<typeof getAccountPolicyConsents>>, TError = ErrorType<void>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAccountPolicyConsents>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAccountPolicyConsents>>,
+          TError,
+          Awaited<ReturnType<typeof getAccountPolicyConsents>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAccountPolicyConsents<TData = Awaited<ReturnType<typeof getAccountPolicyConsents>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAccountPolicyConsents>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAccountPolicyConsents>>,
+          TError,
+          Awaited<ReturnType<typeof getAccountPolicyConsents>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAccountPolicyConsents<TData = Awaited<ReturnType<typeof getAccountPolicyConsents>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAccountPolicyConsents>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary W07–W10 (compliance.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+
+export function useGetAccountPolicyConsents<TData = Awaited<ReturnType<typeof getAccountPolicyConsents>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAccountPolicyConsents>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetAccountPolicyConsentsQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getPostAccountPolicyDecisionsUrl = () => {
+
+
+
+
+  return `/api/account/policy-decisions`
+}
+
+/**
+ * @summary W07–W10 (compliance.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const postAccountPolicyDecisions = async (serverValidatedObject?: ServerValidatedObject, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getPostAccountPolicyDecisionsUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(serverValidatedObject)
+  }
+);}
+
+
+
+
+
+export const getPostAccountPolicyDecisionsMutationKey = () => ['postAccountPolicyDecisions'] as const;
+
+export const getPostAccountPolicyDecisionsMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAccountPolicyDecisions>>, TError,PostAccountPolicyDecisionsMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof postAccountPolicyDecisions>>, TError,PostAccountPolicyDecisionsMutationVariables, TContext> => {
+
+const mutationKey = getPostAccountPolicyDecisionsMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postAccountPolicyDecisions>>, PostAccountPolicyDecisionsMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  postAccountPolicyDecisions(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostAccountPolicyDecisionsMutationResult = NonNullable<Awaited<ReturnType<typeof postAccountPolicyDecisions>>>
+    export type PostAccountPolicyDecisionsMutationBody = BodyType<ServerValidatedObject> | undefined
+    export type PostAccountPolicyDecisionsMutationError = ErrorType<void>
+    export type PostAccountPolicyDecisionsMutationVariables = {data?: BodyType<ServerValidatedObject>}
+
+    /**
+ * @summary W07–W10 (compliance.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const usePostAccountPolicyDecisions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAccountPolicyDecisions>>, TError,PostAccountPolicyDecisionsMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postAccountPolicyDecisions>>,
+        TError,
+        PostAccountPolicyDecisionsMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPostAccountPolicyDecisionsMutationOptions(options), queryClient);
+    }
+
+export const getGetAccountComplianceUrl = () => {
+
+
+
+
+  return `/api/account/compliance`
+}
+
+/**
+ * @summary W07–W10 (compliance.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const getAccountCompliance = async ( options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+  return customFetch<ServerValidatedObject>(getGetAccountComplianceUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAccountComplianceQueryKey = () => {
+    return [
+    `/api/account/compliance`
+    ] as const;
+    }
+
+
+export const getGetAccountComplianceQueryOptions = <TData = Awaited<ReturnType<typeof getAccountCompliance>>, TError = ErrorType<void>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAccountCompliance>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAccountComplianceQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAccountCompliance>>> = ({ signal }) => getAccountCompliance({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAccountCompliance>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetAccountComplianceQueryResult = NonNullable<Awaited<ReturnType<typeof getAccountCompliance>>>
+export type GetAccountComplianceQueryError = ErrorType<void>
+
+
+export function useGetAccountCompliance<TData = Awaited<ReturnType<typeof getAccountCompliance>>, TError = ErrorType<void>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAccountCompliance>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAccountCompliance>>,
+          TError,
+          Awaited<ReturnType<typeof getAccountCompliance>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAccountCompliance<TData = Awaited<ReturnType<typeof getAccountCompliance>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAccountCompliance>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAccountCompliance>>,
+          TError,
+          Awaited<ReturnType<typeof getAccountCompliance>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAccountCompliance<TData = Awaited<ReturnType<typeof getAccountCompliance>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAccountCompliance>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary W07–W10 (compliance.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+
+export function useGetAccountCompliance<TData = Awaited<ReturnType<typeof getAccountCompliance>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAccountCompliance>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetAccountComplianceQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getPostAccountAgeDeclarationUrl = () => {
+
+
+
+
+  return `/api/account/age-declaration`
+}
+
+/**
+ * @summary W07–W10 (compliance.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const postAccountAgeDeclaration = async (serverValidatedObject?: ServerValidatedObject, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getPostAccountAgeDeclarationUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(serverValidatedObject)
+  }
+);}
+
+
+
+
+
+export const getPostAccountAgeDeclarationMutationKey = () => ['postAccountAgeDeclaration'] as const;
+
+export const getPostAccountAgeDeclarationMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAccountAgeDeclaration>>, TError,PostAccountAgeDeclarationMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof postAccountAgeDeclaration>>, TError,PostAccountAgeDeclarationMutationVariables, TContext> => {
+
+const mutationKey = getPostAccountAgeDeclarationMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postAccountAgeDeclaration>>, PostAccountAgeDeclarationMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  postAccountAgeDeclaration(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostAccountAgeDeclarationMutationResult = NonNullable<Awaited<ReturnType<typeof postAccountAgeDeclaration>>>
+    export type PostAccountAgeDeclarationMutationBody = BodyType<ServerValidatedObject> | undefined
+    export type PostAccountAgeDeclarationMutationError = ErrorType<void>
+    export type PostAccountAgeDeclarationMutationVariables = {data?: BodyType<ServerValidatedObject>}
+
+    /**
+ * @summary W07–W10 (compliance.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const usePostAccountAgeDeclaration = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAccountAgeDeclaration>>, TError,PostAccountAgeDeclarationMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postAccountAgeDeclaration>>,
+        TError,
+        PostAccountAgeDeclarationMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPostAccountAgeDeclarationMutationOptions(options), queryClient);
+    }
+
+export const getPostAccountGuardianConsentUrl = () => {
+
+
+
+
+  return `/api/account/guardian-consent`
+}
+
+/**
+ * @summary W07–W10 (compliance.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const postAccountGuardianConsent = async (serverValidatedObject?: ServerValidatedObject, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getPostAccountGuardianConsentUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(serverValidatedObject)
+  }
+);}
+
+
+
+
+
+export const getPostAccountGuardianConsentMutationKey = () => ['postAccountGuardianConsent'] as const;
+
+export const getPostAccountGuardianConsentMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAccountGuardianConsent>>, TError,PostAccountGuardianConsentMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof postAccountGuardianConsent>>, TError,PostAccountGuardianConsentMutationVariables, TContext> => {
+
+const mutationKey = getPostAccountGuardianConsentMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postAccountGuardianConsent>>, PostAccountGuardianConsentMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  postAccountGuardianConsent(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostAccountGuardianConsentMutationResult = NonNullable<Awaited<ReturnType<typeof postAccountGuardianConsent>>>
+    export type PostAccountGuardianConsentMutationBody = BodyType<ServerValidatedObject> | undefined
+    export type PostAccountGuardianConsentMutationError = ErrorType<void>
+    export type PostAccountGuardianConsentMutationVariables = {data?: BodyType<ServerValidatedObject>}
+
+    /**
+ * @summary W07–W10 (compliance.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const usePostAccountGuardianConsent = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAccountGuardianConsent>>, TError,PostAccountGuardianConsentMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postAccountGuardianConsent>>,
+        TError,
+        PostAccountGuardianConsentMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPostAccountGuardianConsentMutationOptions(options), queryClient);
+    }
+
+export const getGetAccountSellerVerificationUrl = () => {
+
+
+
+
+  return `/api/account/seller-verification`
+}
+
+/**
+ * @summary W07–W10 (compliance.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const getAccountSellerVerification = async ( options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+  return customFetch<ServerValidatedObject>(getGetAccountSellerVerificationUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAccountSellerVerificationQueryKey = () => {
+    return [
+    `/api/account/seller-verification`
+    ] as const;
+    }
+
+
+export const getGetAccountSellerVerificationQueryOptions = <TData = Awaited<ReturnType<typeof getAccountSellerVerification>>, TError = ErrorType<void>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAccountSellerVerification>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAccountSellerVerificationQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAccountSellerVerification>>> = ({ signal }) => getAccountSellerVerification({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAccountSellerVerification>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetAccountSellerVerificationQueryResult = NonNullable<Awaited<ReturnType<typeof getAccountSellerVerification>>>
+export type GetAccountSellerVerificationQueryError = ErrorType<void>
+
+
+export function useGetAccountSellerVerification<TData = Awaited<ReturnType<typeof getAccountSellerVerification>>, TError = ErrorType<void>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAccountSellerVerification>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAccountSellerVerification>>,
+          TError,
+          Awaited<ReturnType<typeof getAccountSellerVerification>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAccountSellerVerification<TData = Awaited<ReturnType<typeof getAccountSellerVerification>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAccountSellerVerification>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAccountSellerVerification>>,
+          TError,
+          Awaited<ReturnType<typeof getAccountSellerVerification>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAccountSellerVerification<TData = Awaited<ReturnType<typeof getAccountSellerVerification>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAccountSellerVerification>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary W07–W10 (compliance.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+
+export function useGetAccountSellerVerification<TData = Awaited<ReturnType<typeof getAccountSellerVerification>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAccountSellerVerification>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetAccountSellerVerificationQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getPostAccountSellerVerificationUrl = () => {
+
+
+
+
+  return `/api/account/seller-verification`
+}
+
+/**
+ * @summary W07–W10 (compliance.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const postAccountSellerVerification = async (serverValidatedObject?: ServerValidatedObject, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getPostAccountSellerVerificationUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(serverValidatedObject)
+  }
+);}
+
+
+
+
+
+export const getPostAccountSellerVerificationMutationKey = () => ['postAccountSellerVerification'] as const;
+
+export const getPostAccountSellerVerificationMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAccountSellerVerification>>, TError,PostAccountSellerVerificationMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof postAccountSellerVerification>>, TError,PostAccountSellerVerificationMutationVariables, TContext> => {
+
+const mutationKey = getPostAccountSellerVerificationMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postAccountSellerVerification>>, PostAccountSellerVerificationMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  postAccountSellerVerification(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostAccountSellerVerificationMutationResult = NonNullable<Awaited<ReturnType<typeof postAccountSellerVerification>>>
+    export type PostAccountSellerVerificationMutationBody = BodyType<ServerValidatedObject> | undefined
+    export type PostAccountSellerVerificationMutationError = ErrorType<void>
+    export type PostAccountSellerVerificationMutationVariables = {data?: BodyType<ServerValidatedObject>}
+
+    /**
+ * @summary W07–W10 (compliance.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const usePostAccountSellerVerification = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAccountSellerVerification>>, TError,PostAccountSellerVerificationMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postAccountSellerVerification>>,
+        TError,
+        PostAccountSellerVerificationMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPostAccountSellerVerificationMutationOptions(options), queryClient);
+    }
+
+export const getGetAdminCompliancePoliciesUrl = () => {
+
+
+
+
+  return `/api/admin/compliance/policies`
+}
+
+/**
+ * @summary W07–W10 (compliance.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const getAdminCompliancePolicies = async ( options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+  return customFetch<ServerValidatedObject>(getGetAdminCompliancePoliciesUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAdminCompliancePoliciesQueryKey = () => {
+    return [
+    `/api/admin/compliance/policies`
+    ] as const;
+    }
+
+
+export const getGetAdminCompliancePoliciesQueryOptions = <TData = Awaited<ReturnType<typeof getAdminCompliancePolicies>>, TError = ErrorType<void>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminCompliancePolicies>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAdminCompliancePoliciesQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminCompliancePolicies>>> = ({ signal }) => getAdminCompliancePolicies({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdminCompliancePolicies>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetAdminCompliancePoliciesQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminCompliancePolicies>>>
+export type GetAdminCompliancePoliciesQueryError = ErrorType<void>
+
+
+export function useGetAdminCompliancePolicies<TData = Awaited<ReturnType<typeof getAdminCompliancePolicies>>, TError = ErrorType<void>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminCompliancePolicies>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAdminCompliancePolicies>>,
+          TError,
+          Awaited<ReturnType<typeof getAdminCompliancePolicies>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAdminCompliancePolicies<TData = Awaited<ReturnType<typeof getAdminCompliancePolicies>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminCompliancePolicies>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAdminCompliancePolicies>>,
+          TError,
+          Awaited<ReturnType<typeof getAdminCompliancePolicies>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAdminCompliancePolicies<TData = Awaited<ReturnType<typeof getAdminCompliancePolicies>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminCompliancePolicies>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary W07–W10 (compliance.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+
+export function useGetAdminCompliancePolicies<TData = Awaited<ReturnType<typeof getAdminCompliancePolicies>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminCompliancePolicies>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetAdminCompliancePoliciesQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getPostAdminCompliancePoliciesUrl = () => {
+
+
+
+
+  return `/api/admin/compliance/policies`
+}
+
+/**
+ * @summary W07–W10 (compliance.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const postAdminCompliancePolicies = async (serverValidatedObject?: ServerValidatedObject, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getPostAdminCompliancePoliciesUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(serverValidatedObject)
+  }
+);}
+
+
+
+
+
+export const getPostAdminCompliancePoliciesMutationKey = () => ['postAdminCompliancePolicies'] as const;
+
+export const getPostAdminCompliancePoliciesMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAdminCompliancePolicies>>, TError,PostAdminCompliancePoliciesMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof postAdminCompliancePolicies>>, TError,PostAdminCompliancePoliciesMutationVariables, TContext> => {
+
+const mutationKey = getPostAdminCompliancePoliciesMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postAdminCompliancePolicies>>, PostAdminCompliancePoliciesMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  postAdminCompliancePolicies(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostAdminCompliancePoliciesMutationResult = NonNullable<Awaited<ReturnType<typeof postAdminCompliancePolicies>>>
+    export type PostAdminCompliancePoliciesMutationBody = BodyType<ServerValidatedObject> | undefined
+    export type PostAdminCompliancePoliciesMutationError = ErrorType<void>
+    export type PostAdminCompliancePoliciesMutationVariables = {data?: BodyType<ServerValidatedObject>}
+
+    /**
+ * @summary W07–W10 (compliance.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const usePostAdminCompliancePolicies = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAdminCompliancePolicies>>, TError,PostAdminCompliancePoliciesMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postAdminCompliancePolicies>>,
+        TError,
+        PostAdminCompliancePoliciesMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPostAdminCompliancePoliciesMutationOptions(options), queryClient);
+    }
+
+export const getPostAdminCompliancePoliciesIdTransitionUrl = (id: string,) => {
+
+
+
+
+  return `/api/admin/compliance/policies/${id}/transition`
+}
+
+/**
+ * @summary W07–W10 (compliance.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const postAdminCompliancePoliciesIdTransition = async (id: string,
+    serverValidatedObject?: ServerValidatedObject, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getPostAdminCompliancePoliciesIdTransitionUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(serverValidatedObject)
+  }
+);}
+
+
+
+
+
+export const getPostAdminCompliancePoliciesIdTransitionMutationKey = () => ['postAdminCompliancePoliciesIdTransition'] as const;
+
+export const getPostAdminCompliancePoliciesIdTransitionMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAdminCompliancePoliciesIdTransition>>, TError,PostAdminCompliancePoliciesIdTransitionMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof postAdminCompliancePoliciesIdTransition>>, TError,PostAdminCompliancePoliciesIdTransitionMutationVariables, TContext> => {
+
+const mutationKey = getPostAdminCompliancePoliciesIdTransitionMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postAdminCompliancePoliciesIdTransition>>, PostAdminCompliancePoliciesIdTransitionMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  postAdminCompliancePoliciesIdTransition(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostAdminCompliancePoliciesIdTransitionMutationResult = NonNullable<Awaited<ReturnType<typeof postAdminCompliancePoliciesIdTransition>>>
+    export type PostAdminCompliancePoliciesIdTransitionMutationBody = BodyType<ServerValidatedObject> | undefined
+    export type PostAdminCompliancePoliciesIdTransitionMutationError = ErrorType<void>
+    export type PostAdminCompliancePoliciesIdTransitionMutationVariables = {id: string;data?: BodyType<ServerValidatedObject>}
+
+    /**
+ * @summary W07–W10 (compliance.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const usePostAdminCompliancePoliciesIdTransition = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAdminCompliancePoliciesIdTransition>>, TError,PostAdminCompliancePoliciesIdTransitionMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postAdminCompliancePoliciesIdTransition>>,
+        TError,
+        PostAdminCompliancePoliciesIdTransitionMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPostAdminCompliancePoliciesIdTransitionMutationOptions(options), queryClient);
+    }
+
+export const getGetAdminComplianceSellerVerificationsUrl = () => {
+
+
+
+
+  return `/api/admin/compliance/seller-verifications`
+}
+
+/**
+ * @summary W07–W10 (compliance.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const getAdminComplianceSellerVerifications = async ( options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+  return customFetch<ServerValidatedObject>(getGetAdminComplianceSellerVerificationsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAdminComplianceSellerVerificationsQueryKey = () => {
+    return [
+    `/api/admin/compliance/seller-verifications`
+    ] as const;
+    }
+
+
+export const getGetAdminComplianceSellerVerificationsQueryOptions = <TData = Awaited<ReturnType<typeof getAdminComplianceSellerVerifications>>, TError = ErrorType<void>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminComplianceSellerVerifications>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAdminComplianceSellerVerificationsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminComplianceSellerVerifications>>> = ({ signal }) => getAdminComplianceSellerVerifications({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdminComplianceSellerVerifications>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetAdminComplianceSellerVerificationsQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminComplianceSellerVerifications>>>
+export type GetAdminComplianceSellerVerificationsQueryError = ErrorType<void>
+
+
+export function useGetAdminComplianceSellerVerifications<TData = Awaited<ReturnType<typeof getAdminComplianceSellerVerifications>>, TError = ErrorType<void>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminComplianceSellerVerifications>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAdminComplianceSellerVerifications>>,
+          TError,
+          Awaited<ReturnType<typeof getAdminComplianceSellerVerifications>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAdminComplianceSellerVerifications<TData = Awaited<ReturnType<typeof getAdminComplianceSellerVerifications>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminComplianceSellerVerifications>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAdminComplianceSellerVerifications>>,
+          TError,
+          Awaited<ReturnType<typeof getAdminComplianceSellerVerifications>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAdminComplianceSellerVerifications<TData = Awaited<ReturnType<typeof getAdminComplianceSellerVerifications>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminComplianceSellerVerifications>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary W07–W10 (compliance.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+
+export function useGetAdminComplianceSellerVerifications<TData = Awaited<ReturnType<typeof getAdminComplianceSellerVerifications>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminComplianceSellerVerifications>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetAdminComplianceSellerVerificationsQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getPostAdminComplianceSellerVerificationsIdDecisionUrl = (id: string,) => {
+
+
+
+
+  return `/api/admin/compliance/seller-verifications/${id}/decision`
+}
+
+/**
+ * @summary W07–W10 (compliance.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const postAdminComplianceSellerVerificationsIdDecision = async (id: string,
+    serverValidatedObject?: ServerValidatedObject, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getPostAdminComplianceSellerVerificationsIdDecisionUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(serverValidatedObject)
+  }
+);}
+
+
+
+
+
+export const getPostAdminComplianceSellerVerificationsIdDecisionMutationKey = () => ['postAdminComplianceSellerVerificationsIdDecision'] as const;
+
+export const getPostAdminComplianceSellerVerificationsIdDecisionMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAdminComplianceSellerVerificationsIdDecision>>, TError,PostAdminComplianceSellerVerificationsIdDecisionMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof postAdminComplianceSellerVerificationsIdDecision>>, TError,PostAdminComplianceSellerVerificationsIdDecisionMutationVariables, TContext> => {
+
+const mutationKey = getPostAdminComplianceSellerVerificationsIdDecisionMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postAdminComplianceSellerVerificationsIdDecision>>, PostAdminComplianceSellerVerificationsIdDecisionMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  postAdminComplianceSellerVerificationsIdDecision(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostAdminComplianceSellerVerificationsIdDecisionMutationResult = NonNullable<Awaited<ReturnType<typeof postAdminComplianceSellerVerificationsIdDecision>>>
+    export type PostAdminComplianceSellerVerificationsIdDecisionMutationBody = BodyType<ServerValidatedObject> | undefined
+    export type PostAdminComplianceSellerVerificationsIdDecisionMutationError = ErrorType<void>
+    export type PostAdminComplianceSellerVerificationsIdDecisionMutationVariables = {id: string;data?: BodyType<ServerValidatedObject>}
+
+    /**
+ * @summary W07–W10 (compliance.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const usePostAdminComplianceSellerVerificationsIdDecision = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAdminComplianceSellerVerificationsIdDecision>>, TError,PostAdminComplianceSellerVerificationsIdDecisionMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postAdminComplianceSellerVerificationsIdDecision>>,
+        TError,
+        PostAdminComplianceSellerVerificationsIdDecisionMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPostAdminComplianceSellerVerificationsIdDecisionMutationOptions(options), queryClient);
+    }
+
+export const getGetAdminComplianceMarketsUrl = () => {
+
+
+
+
+  return `/api/admin/compliance/markets`
+}
+
+/**
+ * @summary W07–W10 (compliance.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const getAdminComplianceMarkets = async ( options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+  return customFetch<ServerValidatedObject>(getGetAdminComplianceMarketsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAdminComplianceMarketsQueryKey = () => {
+    return [
+    `/api/admin/compliance/markets`
+    ] as const;
+    }
+
+
+export const getGetAdminComplianceMarketsQueryOptions = <TData = Awaited<ReturnType<typeof getAdminComplianceMarkets>>, TError = ErrorType<void>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminComplianceMarkets>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAdminComplianceMarketsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminComplianceMarkets>>> = ({ signal }) => getAdminComplianceMarkets({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdminComplianceMarkets>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetAdminComplianceMarketsQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminComplianceMarkets>>>
+export type GetAdminComplianceMarketsQueryError = ErrorType<void>
+
+
+export function useGetAdminComplianceMarkets<TData = Awaited<ReturnType<typeof getAdminComplianceMarkets>>, TError = ErrorType<void>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminComplianceMarkets>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAdminComplianceMarkets>>,
+          TError,
+          Awaited<ReturnType<typeof getAdminComplianceMarkets>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAdminComplianceMarkets<TData = Awaited<ReturnType<typeof getAdminComplianceMarkets>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminComplianceMarkets>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAdminComplianceMarkets>>,
+          TError,
+          Awaited<ReturnType<typeof getAdminComplianceMarkets>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAdminComplianceMarkets<TData = Awaited<ReturnType<typeof getAdminComplianceMarkets>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminComplianceMarkets>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary W07–W10 (compliance.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+
+export function useGetAdminComplianceMarkets<TData = Awaited<ReturnType<typeof getAdminComplianceMarkets>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminComplianceMarkets>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetAdminComplianceMarketsQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetAdminComplianceMarketsMarketidUrl = (marketId: string,) => {
+
+
+
+
+  return `/api/admin/compliance/markets/${marketId}`
+}
+
+/**
+ * @summary W07–W10 (compliance.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const getAdminComplianceMarketsMarketid = async (marketId: string, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+  return customFetch<ServerValidatedObject>(getGetAdminComplianceMarketsMarketidUrl(marketId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAdminComplianceMarketsMarketidQueryKey = (marketId: string,) => {
+    return [
+    `/api/admin/compliance/markets/${marketId}`
+    ] as const;
+    }
+
+
+export const getGetAdminComplianceMarketsMarketidQueryOptions = <TData = Awaited<ReturnType<typeof getAdminComplianceMarketsMarketid>>, TError = ErrorType<void>>(marketId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminComplianceMarketsMarketid>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAdminComplianceMarketsMarketidQueryKey(marketId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminComplianceMarketsMarketid>>> = ({ signal }) => getAdminComplianceMarketsMarketid(marketId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: marketId !== null && marketId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdminComplianceMarketsMarketid>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetAdminComplianceMarketsMarketidQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminComplianceMarketsMarketid>>>
+export type GetAdminComplianceMarketsMarketidQueryError = ErrorType<void>
+
+
+export function useGetAdminComplianceMarketsMarketid<TData = Awaited<ReturnType<typeof getAdminComplianceMarketsMarketid>>, TError = ErrorType<void>>(
+ marketId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminComplianceMarketsMarketid>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAdminComplianceMarketsMarketid>>,
+          TError,
+          Awaited<ReturnType<typeof getAdminComplianceMarketsMarketid>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAdminComplianceMarketsMarketid<TData = Awaited<ReturnType<typeof getAdminComplianceMarketsMarketid>>, TError = ErrorType<void>>(
+ marketId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminComplianceMarketsMarketid>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAdminComplianceMarketsMarketid>>,
+          TError,
+          Awaited<ReturnType<typeof getAdminComplianceMarketsMarketid>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAdminComplianceMarketsMarketid<TData = Awaited<ReturnType<typeof getAdminComplianceMarketsMarketid>>, TError = ErrorType<void>>(
+ marketId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminComplianceMarketsMarketid>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary W07–W10 (compliance.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+
+export function useGetAdminComplianceMarketsMarketid<TData = Awaited<ReturnType<typeof getAdminComplianceMarketsMarketid>>, TError = ErrorType<void>>(
+ marketId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminComplianceMarketsMarketid>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetAdminComplianceMarketsMarketidQueryOptions(marketId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getPutAdminComplianceMarketsMarketidUrl = (marketId: string,) => {
+
+
+
+
+  return `/api/admin/compliance/markets/${marketId}`
+}
+
+/**
+ * @summary W07–W10 (compliance.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const putAdminComplianceMarketsMarketid = async (marketId: string,
+    serverValidatedObject?: ServerValidatedObject, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getPutAdminComplianceMarketsMarketidUrl(marketId),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(serverValidatedObject)
+  }
+);}
+
+
+
+
+
+export const getPutAdminComplianceMarketsMarketidMutationKey = () => ['putAdminComplianceMarketsMarketid'] as const;
+
+export const getPutAdminComplianceMarketsMarketidMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putAdminComplianceMarketsMarketid>>, TError,PutAdminComplianceMarketsMarketidMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof putAdminComplianceMarketsMarketid>>, TError,PutAdminComplianceMarketsMarketidMutationVariables, TContext> => {
+
+const mutationKey = getPutAdminComplianceMarketsMarketidMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof putAdminComplianceMarketsMarketid>>, PutAdminComplianceMarketsMarketidMutationVariables> = (props) => {
+          const {marketId,data} = props ?? {};
+
+          return  putAdminComplianceMarketsMarketid(marketId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PutAdminComplianceMarketsMarketidMutationResult = NonNullable<Awaited<ReturnType<typeof putAdminComplianceMarketsMarketid>>>
+    export type PutAdminComplianceMarketsMarketidMutationBody = BodyType<ServerValidatedObject> | undefined
+    export type PutAdminComplianceMarketsMarketidMutationError = ErrorType<void>
+    export type PutAdminComplianceMarketsMarketidMutationVariables = {marketId: string;data?: BodyType<ServerValidatedObject>}
+
+    /**
+ * @summary W07–W10 (compliance.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const usePutAdminComplianceMarketsMarketid = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putAdminComplianceMarketsMarketid>>, TError,PutAdminComplianceMarketsMarketidMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof putAdminComplianceMarketsMarketid>>,
+        TError,
+        PutAdminComplianceMarketsMarketidMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPutAdminComplianceMarketsMarketidMutationOptions(options), queryClient);
+    }
+
+export const getGetAdminComplianceLegalEntitiesUrl = () => {
+
+
+
+
+  return `/api/admin/compliance/legal-entities`
+}
+
+/**
+ * @summary W07–W10 (compliance.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const getAdminComplianceLegalEntities = async ( options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+  return customFetch<ServerValidatedObject>(getGetAdminComplianceLegalEntitiesUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAdminComplianceLegalEntitiesQueryKey = () => {
+    return [
+    `/api/admin/compliance/legal-entities`
+    ] as const;
+    }
+
+
+export const getGetAdminComplianceLegalEntitiesQueryOptions = <TData = Awaited<ReturnType<typeof getAdminComplianceLegalEntities>>, TError = ErrorType<void>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminComplianceLegalEntities>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAdminComplianceLegalEntitiesQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminComplianceLegalEntities>>> = ({ signal }) => getAdminComplianceLegalEntities({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdminComplianceLegalEntities>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetAdminComplianceLegalEntitiesQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminComplianceLegalEntities>>>
+export type GetAdminComplianceLegalEntitiesQueryError = ErrorType<void>
+
+
+export function useGetAdminComplianceLegalEntities<TData = Awaited<ReturnType<typeof getAdminComplianceLegalEntities>>, TError = ErrorType<void>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminComplianceLegalEntities>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAdminComplianceLegalEntities>>,
+          TError,
+          Awaited<ReturnType<typeof getAdminComplianceLegalEntities>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAdminComplianceLegalEntities<TData = Awaited<ReturnType<typeof getAdminComplianceLegalEntities>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminComplianceLegalEntities>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAdminComplianceLegalEntities>>,
+          TError,
+          Awaited<ReturnType<typeof getAdminComplianceLegalEntities>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAdminComplianceLegalEntities<TData = Awaited<ReturnType<typeof getAdminComplianceLegalEntities>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminComplianceLegalEntities>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary W07–W10 (compliance.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+
+export function useGetAdminComplianceLegalEntities<TData = Awaited<ReturnType<typeof getAdminComplianceLegalEntities>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminComplianceLegalEntities>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetAdminComplianceLegalEntitiesQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getPostAdminComplianceLegalEntitiesUrl = () => {
+
+
+
+
+  return `/api/admin/compliance/legal-entities`
+}
+
+/**
+ * @summary W07–W10 (compliance.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const postAdminComplianceLegalEntities = async (serverValidatedObject?: ServerValidatedObject, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getPostAdminComplianceLegalEntitiesUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(serverValidatedObject)
+  }
+);}
+
+
+
+
+
+export const getPostAdminComplianceLegalEntitiesMutationKey = () => ['postAdminComplianceLegalEntities'] as const;
+
+export const getPostAdminComplianceLegalEntitiesMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAdminComplianceLegalEntities>>, TError,PostAdminComplianceLegalEntitiesMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof postAdminComplianceLegalEntities>>, TError,PostAdminComplianceLegalEntitiesMutationVariables, TContext> => {
+
+const mutationKey = getPostAdminComplianceLegalEntitiesMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postAdminComplianceLegalEntities>>, PostAdminComplianceLegalEntitiesMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  postAdminComplianceLegalEntities(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostAdminComplianceLegalEntitiesMutationResult = NonNullable<Awaited<ReturnType<typeof postAdminComplianceLegalEntities>>>
+    export type PostAdminComplianceLegalEntitiesMutationBody = BodyType<ServerValidatedObject> | undefined
+    export type PostAdminComplianceLegalEntitiesMutationError = ErrorType<void>
+    export type PostAdminComplianceLegalEntitiesMutationVariables = {data?: BodyType<ServerValidatedObject>}
+
+    /**
+ * @summary W07–W10 (compliance.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const usePostAdminComplianceLegalEntities = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAdminComplianceLegalEntities>>, TError,PostAdminComplianceLegalEntitiesMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postAdminComplianceLegalEntities>>,
+        TError,
+        PostAdminComplianceLegalEntitiesMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPostAdminComplianceLegalEntitiesMutationOptions(options), queryClient);
+    }
+
+export const getPostAdminComplianceLegalEntitiesMarketidActivateUrl = (marketId: string,) => {
+
+
+
+
+  return `/api/admin/compliance/legal-entities/${marketId}/activate`
+}
+
+/**
+ * @summary W07–W10 (compliance.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const postAdminComplianceLegalEntitiesMarketidActivate = async (marketId: string,
+    serverValidatedObject?: ServerValidatedObject, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getPostAdminComplianceLegalEntitiesMarketidActivateUrl(marketId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(serverValidatedObject)
+  }
+);}
+
+
+
+
+
+export const getPostAdminComplianceLegalEntitiesMarketidActivateMutationKey = () => ['postAdminComplianceLegalEntitiesMarketidActivate'] as const;
+
+export const getPostAdminComplianceLegalEntitiesMarketidActivateMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAdminComplianceLegalEntitiesMarketidActivate>>, TError,PostAdminComplianceLegalEntitiesMarketidActivateMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof postAdminComplianceLegalEntitiesMarketidActivate>>, TError,PostAdminComplianceLegalEntitiesMarketidActivateMutationVariables, TContext> => {
+
+const mutationKey = getPostAdminComplianceLegalEntitiesMarketidActivateMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postAdminComplianceLegalEntitiesMarketidActivate>>, PostAdminComplianceLegalEntitiesMarketidActivateMutationVariables> = (props) => {
+          const {marketId,data} = props ?? {};
+
+          return  postAdminComplianceLegalEntitiesMarketidActivate(marketId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostAdminComplianceLegalEntitiesMarketidActivateMutationResult = NonNullable<Awaited<ReturnType<typeof postAdminComplianceLegalEntitiesMarketidActivate>>>
+    export type PostAdminComplianceLegalEntitiesMarketidActivateMutationBody = BodyType<ServerValidatedObject> | undefined
+    export type PostAdminComplianceLegalEntitiesMarketidActivateMutationError = ErrorType<void>
+    export type PostAdminComplianceLegalEntitiesMarketidActivateMutationVariables = {marketId: string;data?: BodyType<ServerValidatedObject>}
+
+    /**
+ * @summary W07–W10 (compliance.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const usePostAdminComplianceLegalEntitiesMarketidActivate = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAdminComplianceLegalEntitiesMarketidActivate>>, TError,PostAdminComplianceLegalEntitiesMarketidActivateMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postAdminComplianceLegalEntitiesMarketidActivate>>,
+        TError,
+        PostAdminComplianceLegalEntitiesMarketidActivateMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPostAdminComplianceLegalEntitiesMarketidActivateMutationOptions(options), queryClient);
+    }
+
+export const getPostAdminComplianceLegalEntitiesMarketidDeactivateUrl = (marketId: string,) => {
+
+
+
+
+  return `/api/admin/compliance/legal-entities/${marketId}/deactivate`
+}
+
+/**
+ * @summary W07–W10 (compliance.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const postAdminComplianceLegalEntitiesMarketidDeactivate = async (marketId: string,
+    serverValidatedObject?: ServerValidatedObject, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getPostAdminComplianceLegalEntitiesMarketidDeactivateUrl(marketId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(serverValidatedObject)
+  }
+);}
+
+
+
+
+
+export const getPostAdminComplianceLegalEntitiesMarketidDeactivateMutationKey = () => ['postAdminComplianceLegalEntitiesMarketidDeactivate'] as const;
+
+export const getPostAdminComplianceLegalEntitiesMarketidDeactivateMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAdminComplianceLegalEntitiesMarketidDeactivate>>, TError,PostAdminComplianceLegalEntitiesMarketidDeactivateMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof postAdminComplianceLegalEntitiesMarketidDeactivate>>, TError,PostAdminComplianceLegalEntitiesMarketidDeactivateMutationVariables, TContext> => {
+
+const mutationKey = getPostAdminComplianceLegalEntitiesMarketidDeactivateMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postAdminComplianceLegalEntitiesMarketidDeactivate>>, PostAdminComplianceLegalEntitiesMarketidDeactivateMutationVariables> = (props) => {
+          const {marketId,data} = props ?? {};
+
+          return  postAdminComplianceLegalEntitiesMarketidDeactivate(marketId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostAdminComplianceLegalEntitiesMarketidDeactivateMutationResult = NonNullable<Awaited<ReturnType<typeof postAdminComplianceLegalEntitiesMarketidDeactivate>>>
+    export type PostAdminComplianceLegalEntitiesMarketidDeactivateMutationBody = BodyType<ServerValidatedObject> | undefined
+    export type PostAdminComplianceLegalEntitiesMarketidDeactivateMutationError = ErrorType<void>
+    export type PostAdminComplianceLegalEntitiesMarketidDeactivateMutationVariables = {marketId: string;data?: BodyType<ServerValidatedObject>}
+
+    /**
+ * @summary W07–W10 (compliance.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const usePostAdminComplianceLegalEntitiesMarketidDeactivate = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAdminComplianceLegalEntitiesMarketidDeactivate>>, TError,PostAdminComplianceLegalEntitiesMarketidDeactivateMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postAdminComplianceLegalEntitiesMarketidDeactivate>>,
+        TError,
+        PostAdminComplianceLegalEntitiesMarketidDeactivateMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPostAdminComplianceLegalEntitiesMarketidDeactivateMutationOptions(options), queryClient);
+    }
+
+export const getGetAccountSupportCasesUrl = () => {
+
+
+
+
+  return `/api/account/support/cases`
+}
+
+/**
+ * @summary W07–W10 (trust-ops.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const getAccountSupportCases = async ( options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+  return customFetch<ServerValidatedObject>(getGetAccountSupportCasesUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAccountSupportCasesQueryKey = () => {
+    return [
+    `/api/account/support/cases`
+    ] as const;
+    }
+
+
+export const getGetAccountSupportCasesQueryOptions = <TData = Awaited<ReturnType<typeof getAccountSupportCases>>, TError = ErrorType<void>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAccountSupportCases>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAccountSupportCasesQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAccountSupportCases>>> = ({ signal }) => getAccountSupportCases({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAccountSupportCases>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetAccountSupportCasesQueryResult = NonNullable<Awaited<ReturnType<typeof getAccountSupportCases>>>
+export type GetAccountSupportCasesQueryError = ErrorType<void>
+
+
+export function useGetAccountSupportCases<TData = Awaited<ReturnType<typeof getAccountSupportCases>>, TError = ErrorType<void>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAccountSupportCases>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAccountSupportCases>>,
+          TError,
+          Awaited<ReturnType<typeof getAccountSupportCases>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAccountSupportCases<TData = Awaited<ReturnType<typeof getAccountSupportCases>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAccountSupportCases>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAccountSupportCases>>,
+          TError,
+          Awaited<ReturnType<typeof getAccountSupportCases>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAccountSupportCases<TData = Awaited<ReturnType<typeof getAccountSupportCases>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAccountSupportCases>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary W07–W10 (trust-ops.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+
+export function useGetAccountSupportCases<TData = Awaited<ReturnType<typeof getAccountSupportCases>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAccountSupportCases>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetAccountSupportCasesQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getPostAccountSupportCasesUrl = () => {
+
+
+
+
+  return `/api/account/support/cases`
+}
+
+/**
+ * @summary W07–W10 (trust-ops.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const postAccountSupportCases = async (serverValidatedObject?: ServerValidatedObject, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getPostAccountSupportCasesUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(serverValidatedObject)
+  }
+);}
+
+
+
+
+
+export const getPostAccountSupportCasesMutationKey = () => ['postAccountSupportCases'] as const;
+
+export const getPostAccountSupportCasesMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAccountSupportCases>>, TError,PostAccountSupportCasesMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof postAccountSupportCases>>, TError,PostAccountSupportCasesMutationVariables, TContext> => {
+
+const mutationKey = getPostAccountSupportCasesMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postAccountSupportCases>>, PostAccountSupportCasesMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  postAccountSupportCases(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostAccountSupportCasesMutationResult = NonNullable<Awaited<ReturnType<typeof postAccountSupportCases>>>
+    export type PostAccountSupportCasesMutationBody = BodyType<ServerValidatedObject> | undefined
+    export type PostAccountSupportCasesMutationError = ErrorType<void>
+    export type PostAccountSupportCasesMutationVariables = {data?: BodyType<ServerValidatedObject>}
+
+    /**
+ * @summary W07–W10 (trust-ops.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const usePostAccountSupportCases = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAccountSupportCases>>, TError,PostAccountSupportCasesMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postAccountSupportCases>>,
+        TError,
+        PostAccountSupportCasesMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPostAccountSupportCasesMutationOptions(options), queryClient);
+    }
+
+export const getGetAccountSupportCasesIdUrl = (id: string,) => {
+
+
+
+
+  return `/api/account/support/cases/${id}`
+}
+
+/**
+ * @summary W07–W10 (trust-ops.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const getAccountSupportCasesId = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+  return customFetch<ServerValidatedObject>(getGetAccountSupportCasesIdUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAccountSupportCasesIdQueryKey = (id: string,) => {
+    return [
+    `/api/account/support/cases/${id}`
+    ] as const;
+    }
+
+
+export const getGetAccountSupportCasesIdQueryOptions = <TData = Awaited<ReturnType<typeof getAccountSupportCasesId>>, TError = ErrorType<void>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAccountSupportCasesId>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAccountSupportCasesIdQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAccountSupportCasesId>>> = ({ signal }) => getAccountSupportCasesId(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAccountSupportCasesId>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetAccountSupportCasesIdQueryResult = NonNullable<Awaited<ReturnType<typeof getAccountSupportCasesId>>>
+export type GetAccountSupportCasesIdQueryError = ErrorType<void>
+
+
+export function useGetAccountSupportCasesId<TData = Awaited<ReturnType<typeof getAccountSupportCasesId>>, TError = ErrorType<void>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAccountSupportCasesId>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAccountSupportCasesId>>,
+          TError,
+          Awaited<ReturnType<typeof getAccountSupportCasesId>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAccountSupportCasesId<TData = Awaited<ReturnType<typeof getAccountSupportCasesId>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAccountSupportCasesId>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAccountSupportCasesId>>,
+          TError,
+          Awaited<ReturnType<typeof getAccountSupportCasesId>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAccountSupportCasesId<TData = Awaited<ReturnType<typeof getAccountSupportCasesId>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAccountSupportCasesId>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary W07–W10 (trust-ops.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+
+export function useGetAccountSupportCasesId<TData = Awaited<ReturnType<typeof getAccountSupportCasesId>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAccountSupportCasesId>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetAccountSupportCasesIdQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getPostAccountSupportCasesIdMessagesUrl = (id: string,) => {
+
+
+
+
+  return `/api/account/support/cases/${id}/messages`
+}
+
+/**
+ * @summary W07–W10 (trust-ops.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const postAccountSupportCasesIdMessages = async (id: string,
+    serverValidatedObject?: ServerValidatedObject, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getPostAccountSupportCasesIdMessagesUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(serverValidatedObject)
+  }
+);}
+
+
+
+
+
+export const getPostAccountSupportCasesIdMessagesMutationKey = () => ['postAccountSupportCasesIdMessages'] as const;
+
+export const getPostAccountSupportCasesIdMessagesMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAccountSupportCasesIdMessages>>, TError,PostAccountSupportCasesIdMessagesMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof postAccountSupportCasesIdMessages>>, TError,PostAccountSupportCasesIdMessagesMutationVariables, TContext> => {
+
+const mutationKey = getPostAccountSupportCasesIdMessagesMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postAccountSupportCasesIdMessages>>, PostAccountSupportCasesIdMessagesMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  postAccountSupportCasesIdMessages(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostAccountSupportCasesIdMessagesMutationResult = NonNullable<Awaited<ReturnType<typeof postAccountSupportCasesIdMessages>>>
+    export type PostAccountSupportCasesIdMessagesMutationBody = BodyType<ServerValidatedObject> | undefined
+    export type PostAccountSupportCasesIdMessagesMutationError = ErrorType<void>
+    export type PostAccountSupportCasesIdMessagesMutationVariables = {id: string;data?: BodyType<ServerValidatedObject>}
+
+    /**
+ * @summary W07–W10 (trust-ops.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const usePostAccountSupportCasesIdMessages = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAccountSupportCasesIdMessages>>, TError,PostAccountSupportCasesIdMessagesMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postAccountSupportCasesIdMessages>>,
+        TError,
+        PostAccountSupportCasesIdMessagesMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPostAccountSupportCasesIdMessagesMutationOptions(options), queryClient);
+    }
+
+export const getGetAccountWhatsappConsentUrl = () => {
+
+
+
+
+  return `/api/account/whatsapp/consent`
+}
+
+/**
+ * @summary W07–W10 (trust-ops.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const getAccountWhatsappConsent = async ( options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+  return customFetch<ServerValidatedObject>(getGetAccountWhatsappConsentUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAccountWhatsappConsentQueryKey = () => {
+    return [
+    `/api/account/whatsapp/consent`
+    ] as const;
+    }
+
+
+export const getGetAccountWhatsappConsentQueryOptions = <TData = Awaited<ReturnType<typeof getAccountWhatsappConsent>>, TError = ErrorType<void>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAccountWhatsappConsent>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAccountWhatsappConsentQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAccountWhatsappConsent>>> = ({ signal }) => getAccountWhatsappConsent({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAccountWhatsappConsent>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetAccountWhatsappConsentQueryResult = NonNullable<Awaited<ReturnType<typeof getAccountWhatsappConsent>>>
+export type GetAccountWhatsappConsentQueryError = ErrorType<void>
+
+
+export function useGetAccountWhatsappConsent<TData = Awaited<ReturnType<typeof getAccountWhatsappConsent>>, TError = ErrorType<void>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAccountWhatsappConsent>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAccountWhatsappConsent>>,
+          TError,
+          Awaited<ReturnType<typeof getAccountWhatsappConsent>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAccountWhatsappConsent<TData = Awaited<ReturnType<typeof getAccountWhatsappConsent>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAccountWhatsappConsent>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAccountWhatsappConsent>>,
+          TError,
+          Awaited<ReturnType<typeof getAccountWhatsappConsent>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAccountWhatsappConsent<TData = Awaited<ReturnType<typeof getAccountWhatsappConsent>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAccountWhatsappConsent>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary W07–W10 (trust-ops.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+
+export function useGetAccountWhatsappConsent<TData = Awaited<ReturnType<typeof getAccountWhatsappConsent>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAccountWhatsappConsent>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetAccountWhatsappConsentQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getPostAccountWhatsappConsentUrl = () => {
+
+
+
+
+  return `/api/account/whatsapp/consent`
+}
+
+/**
+ * @summary W07–W10 (trust-ops.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const postAccountWhatsappConsent = async (serverValidatedObject?: ServerValidatedObject, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getPostAccountWhatsappConsentUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(serverValidatedObject)
+  }
+);}
+
+
+
+
+
+export const getPostAccountWhatsappConsentMutationKey = () => ['postAccountWhatsappConsent'] as const;
+
+export const getPostAccountWhatsappConsentMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAccountWhatsappConsent>>, TError,PostAccountWhatsappConsentMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof postAccountWhatsappConsent>>, TError,PostAccountWhatsappConsentMutationVariables, TContext> => {
+
+const mutationKey = getPostAccountWhatsappConsentMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postAccountWhatsappConsent>>, PostAccountWhatsappConsentMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  postAccountWhatsappConsent(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostAccountWhatsappConsentMutationResult = NonNullable<Awaited<ReturnType<typeof postAccountWhatsappConsent>>>
+    export type PostAccountWhatsappConsentMutationBody = BodyType<ServerValidatedObject> | undefined
+    export type PostAccountWhatsappConsentMutationError = ErrorType<void>
+    export type PostAccountWhatsappConsentMutationVariables = {data?: BodyType<ServerValidatedObject>}
+
+    /**
+ * @summary W07–W10 (trust-ops.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const usePostAccountWhatsappConsent = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAccountWhatsappConsent>>, TError,PostAccountWhatsappConsentMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postAccountWhatsappConsent>>,
+        TError,
+        PostAccountWhatsappConsentMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPostAccountWhatsappConsentMutationOptions(options), queryClient);
+    }
+
+export const getGetAdminSupportCasesUrl = () => {
+
+
+
+
+  return `/api/admin/support/cases`
+}
+
+/**
+ * @summary W07–W10 (trust-ops.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const getAdminSupportCases = async ( options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+  return customFetch<ServerValidatedObject>(getGetAdminSupportCasesUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAdminSupportCasesQueryKey = () => {
+    return [
+    `/api/admin/support/cases`
+    ] as const;
+    }
+
+
+export const getGetAdminSupportCasesQueryOptions = <TData = Awaited<ReturnType<typeof getAdminSupportCases>>, TError = ErrorType<void>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminSupportCases>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAdminSupportCasesQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminSupportCases>>> = ({ signal }) => getAdminSupportCases({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdminSupportCases>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetAdminSupportCasesQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminSupportCases>>>
+export type GetAdminSupportCasesQueryError = ErrorType<void>
+
+
+export function useGetAdminSupportCases<TData = Awaited<ReturnType<typeof getAdminSupportCases>>, TError = ErrorType<void>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminSupportCases>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAdminSupportCases>>,
+          TError,
+          Awaited<ReturnType<typeof getAdminSupportCases>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAdminSupportCases<TData = Awaited<ReturnType<typeof getAdminSupportCases>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminSupportCases>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAdminSupportCases>>,
+          TError,
+          Awaited<ReturnType<typeof getAdminSupportCases>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAdminSupportCases<TData = Awaited<ReturnType<typeof getAdminSupportCases>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminSupportCases>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary W07–W10 (trust-ops.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+
+export function useGetAdminSupportCases<TData = Awaited<ReturnType<typeof getAdminSupportCases>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminSupportCases>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetAdminSupportCasesQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetAdminSupportCasesIdUrl = (id: string,) => {
+
+
+
+
+  return `/api/admin/support/cases/${id}`
+}
+
+/**
+ * @summary W07–W10 (trust-ops.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const getAdminSupportCasesId = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+  return customFetch<ServerValidatedObject>(getGetAdminSupportCasesIdUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAdminSupportCasesIdQueryKey = (id: string,) => {
+    return [
+    `/api/admin/support/cases/${id}`
+    ] as const;
+    }
+
+
+export const getGetAdminSupportCasesIdQueryOptions = <TData = Awaited<ReturnType<typeof getAdminSupportCasesId>>, TError = ErrorType<void>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminSupportCasesId>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAdminSupportCasesIdQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminSupportCasesId>>> = ({ signal }) => getAdminSupportCasesId(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdminSupportCasesId>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetAdminSupportCasesIdQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminSupportCasesId>>>
+export type GetAdminSupportCasesIdQueryError = ErrorType<void>
+
+
+export function useGetAdminSupportCasesId<TData = Awaited<ReturnType<typeof getAdminSupportCasesId>>, TError = ErrorType<void>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminSupportCasesId>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAdminSupportCasesId>>,
+          TError,
+          Awaited<ReturnType<typeof getAdminSupportCasesId>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAdminSupportCasesId<TData = Awaited<ReturnType<typeof getAdminSupportCasesId>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminSupportCasesId>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAdminSupportCasesId>>,
+          TError,
+          Awaited<ReturnType<typeof getAdminSupportCasesId>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAdminSupportCasesId<TData = Awaited<ReturnType<typeof getAdminSupportCasesId>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminSupportCasesId>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary W07–W10 (trust-ops.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+
+export function useGetAdminSupportCasesId<TData = Awaited<ReturnType<typeof getAdminSupportCasesId>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminSupportCasesId>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetAdminSupportCasesIdQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getPostAdminSupportCasesIdMessagesUrl = (id: string,) => {
+
+
+
+
+  return `/api/admin/support/cases/${id}/messages`
+}
+
+/**
+ * @summary W07–W10 (trust-ops.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const postAdminSupportCasesIdMessages = async (id: string,
+    serverValidatedObject?: ServerValidatedObject, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getPostAdminSupportCasesIdMessagesUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(serverValidatedObject)
+  }
+);}
+
+
+
+
+
+export const getPostAdminSupportCasesIdMessagesMutationKey = () => ['postAdminSupportCasesIdMessages'] as const;
+
+export const getPostAdminSupportCasesIdMessagesMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAdminSupportCasesIdMessages>>, TError,PostAdminSupportCasesIdMessagesMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof postAdminSupportCasesIdMessages>>, TError,PostAdminSupportCasesIdMessagesMutationVariables, TContext> => {
+
+const mutationKey = getPostAdminSupportCasesIdMessagesMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postAdminSupportCasesIdMessages>>, PostAdminSupportCasesIdMessagesMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  postAdminSupportCasesIdMessages(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostAdminSupportCasesIdMessagesMutationResult = NonNullable<Awaited<ReturnType<typeof postAdminSupportCasesIdMessages>>>
+    export type PostAdminSupportCasesIdMessagesMutationBody = BodyType<ServerValidatedObject> | undefined
+    export type PostAdminSupportCasesIdMessagesMutationError = ErrorType<void>
+    export type PostAdminSupportCasesIdMessagesMutationVariables = {id: string;data?: BodyType<ServerValidatedObject>}
+
+    /**
+ * @summary W07–W10 (trust-ops.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const usePostAdminSupportCasesIdMessages = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAdminSupportCasesIdMessages>>, TError,PostAdminSupportCasesIdMessagesMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postAdminSupportCasesIdMessages>>,
+        TError,
+        PostAdminSupportCasesIdMessagesMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPostAdminSupportCasesIdMessagesMutationOptions(options), queryClient);
+    }
+
+export const getPostAdminSupportCasesIdAssignUrl = (id: string,) => {
+
+
+
+
+  return `/api/admin/support/cases/${id}/assign`
+}
+
+/**
+ * @summary W07–W10 (trust-ops.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const postAdminSupportCasesIdAssign = async (id: string,
+    serverValidatedObject?: ServerValidatedObject, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getPostAdminSupportCasesIdAssignUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(serverValidatedObject)
+  }
+);}
+
+
+
+
+
+export const getPostAdminSupportCasesIdAssignMutationKey = () => ['postAdminSupportCasesIdAssign'] as const;
+
+export const getPostAdminSupportCasesIdAssignMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAdminSupportCasesIdAssign>>, TError,PostAdminSupportCasesIdAssignMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof postAdminSupportCasesIdAssign>>, TError,PostAdminSupportCasesIdAssignMutationVariables, TContext> => {
+
+const mutationKey = getPostAdminSupportCasesIdAssignMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postAdminSupportCasesIdAssign>>, PostAdminSupportCasesIdAssignMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  postAdminSupportCasesIdAssign(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostAdminSupportCasesIdAssignMutationResult = NonNullable<Awaited<ReturnType<typeof postAdminSupportCasesIdAssign>>>
+    export type PostAdminSupportCasesIdAssignMutationBody = BodyType<ServerValidatedObject> | undefined
+    export type PostAdminSupportCasesIdAssignMutationError = ErrorType<void>
+    export type PostAdminSupportCasesIdAssignMutationVariables = {id: string;data?: BodyType<ServerValidatedObject>}
+
+    /**
+ * @summary W07–W10 (trust-ops.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const usePostAdminSupportCasesIdAssign = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAdminSupportCasesIdAssign>>, TError,PostAdminSupportCasesIdAssignMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postAdminSupportCasesIdAssign>>,
+        TError,
+        PostAdminSupportCasesIdAssignMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPostAdminSupportCasesIdAssignMutationOptions(options), queryClient);
+    }
+
+export const getPostAdminSupportCasesIdStatusUrl = (id: string,) => {
+
+
+
+
+  return `/api/admin/support/cases/${id}/status`
+}
+
+/**
+ * @summary W07–W10 (trust-ops.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const postAdminSupportCasesIdStatus = async (id: string,
+    serverValidatedObject?: ServerValidatedObject, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getPostAdminSupportCasesIdStatusUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(serverValidatedObject)
+  }
+);}
+
+
+
+
+
+export const getPostAdminSupportCasesIdStatusMutationKey = () => ['postAdminSupportCasesIdStatus'] as const;
+
+export const getPostAdminSupportCasesIdStatusMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAdminSupportCasesIdStatus>>, TError,PostAdminSupportCasesIdStatusMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof postAdminSupportCasesIdStatus>>, TError,PostAdminSupportCasesIdStatusMutationVariables, TContext> => {
+
+const mutationKey = getPostAdminSupportCasesIdStatusMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postAdminSupportCasesIdStatus>>, PostAdminSupportCasesIdStatusMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  postAdminSupportCasesIdStatus(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostAdminSupportCasesIdStatusMutationResult = NonNullable<Awaited<ReturnType<typeof postAdminSupportCasesIdStatus>>>
+    export type PostAdminSupportCasesIdStatusMutationBody = BodyType<ServerValidatedObject> | undefined
+    export type PostAdminSupportCasesIdStatusMutationError = ErrorType<void>
+    export type PostAdminSupportCasesIdStatusMutationVariables = {id: string;data?: BodyType<ServerValidatedObject>}
+
+    /**
+ * @summary W07–W10 (trust-ops.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const usePostAdminSupportCasesIdStatus = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAdminSupportCasesIdStatus>>, TError,PostAdminSupportCasesIdStatusMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postAdminSupportCasesIdStatus>>,
+        TError,
+        PostAdminSupportCasesIdStatusMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPostAdminSupportCasesIdStatusMutationOptions(options), queryClient);
+    }
+
+export const getGetAdminFraudSignalsUrl = () => {
+
+
+
+
+  return `/api/admin/fraud/signals`
+}
+
+/**
+ * @summary W07–W10 (trust-ops.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const getAdminFraudSignals = async ( options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+  return customFetch<ServerValidatedObject>(getGetAdminFraudSignalsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAdminFraudSignalsQueryKey = () => {
+    return [
+    `/api/admin/fraud/signals`
+    ] as const;
+    }
+
+
+export const getGetAdminFraudSignalsQueryOptions = <TData = Awaited<ReturnType<typeof getAdminFraudSignals>>, TError = ErrorType<void>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminFraudSignals>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAdminFraudSignalsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminFraudSignals>>> = ({ signal }) => getAdminFraudSignals({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdminFraudSignals>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetAdminFraudSignalsQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminFraudSignals>>>
+export type GetAdminFraudSignalsQueryError = ErrorType<void>
+
+
+export function useGetAdminFraudSignals<TData = Awaited<ReturnType<typeof getAdminFraudSignals>>, TError = ErrorType<void>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminFraudSignals>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAdminFraudSignals>>,
+          TError,
+          Awaited<ReturnType<typeof getAdminFraudSignals>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAdminFraudSignals<TData = Awaited<ReturnType<typeof getAdminFraudSignals>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminFraudSignals>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAdminFraudSignals>>,
+          TError,
+          Awaited<ReturnType<typeof getAdminFraudSignals>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAdminFraudSignals<TData = Awaited<ReturnType<typeof getAdminFraudSignals>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminFraudSignals>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary W07–W10 (trust-ops.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+
+export function useGetAdminFraudSignals<TData = Awaited<ReturnType<typeof getAdminFraudSignals>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminFraudSignals>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetAdminFraudSignalsQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getPostAdminFraudSignalsUrl = () => {
+
+
+
+
+  return `/api/admin/fraud/signals`
+}
+
+/**
+ * @summary W07–W10 (trust-ops.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const postAdminFraudSignals = async (serverValidatedObject?: ServerValidatedObject, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getPostAdminFraudSignalsUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(serverValidatedObject)
+  }
+);}
+
+
+
+
+
+export const getPostAdminFraudSignalsMutationKey = () => ['postAdminFraudSignals'] as const;
+
+export const getPostAdminFraudSignalsMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAdminFraudSignals>>, TError,PostAdminFraudSignalsMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof postAdminFraudSignals>>, TError,PostAdminFraudSignalsMutationVariables, TContext> => {
+
+const mutationKey = getPostAdminFraudSignalsMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postAdminFraudSignals>>, PostAdminFraudSignalsMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  postAdminFraudSignals(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostAdminFraudSignalsMutationResult = NonNullable<Awaited<ReturnType<typeof postAdminFraudSignals>>>
+    export type PostAdminFraudSignalsMutationBody = BodyType<ServerValidatedObject> | undefined
+    export type PostAdminFraudSignalsMutationError = ErrorType<void>
+    export type PostAdminFraudSignalsMutationVariables = {data?: BodyType<ServerValidatedObject>}
+
+    /**
+ * @summary W07–W10 (trust-ops.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const usePostAdminFraudSignals = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAdminFraudSignals>>, TError,PostAdminFraudSignalsMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postAdminFraudSignals>>,
+        TError,
+        PostAdminFraudSignalsMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPostAdminFraudSignalsMutationOptions(options), queryClient);
+    }
+
+export const getPostAdminFraudSignalsIdReviewUrl = (id: string,) => {
+
+
+
+
+  return `/api/admin/fraud/signals/${id}/review`
+}
+
+/**
+ * @summary W07–W10 (trust-ops.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const postAdminFraudSignalsIdReview = async (id: string,
+    serverValidatedObject?: ServerValidatedObject, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getPostAdminFraudSignalsIdReviewUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(serverValidatedObject)
+  }
+);}
+
+
+
+
+
+export const getPostAdminFraudSignalsIdReviewMutationKey = () => ['postAdminFraudSignalsIdReview'] as const;
+
+export const getPostAdminFraudSignalsIdReviewMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAdminFraudSignalsIdReview>>, TError,PostAdminFraudSignalsIdReviewMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof postAdminFraudSignalsIdReview>>, TError,PostAdminFraudSignalsIdReviewMutationVariables, TContext> => {
+
+const mutationKey = getPostAdminFraudSignalsIdReviewMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postAdminFraudSignalsIdReview>>, PostAdminFraudSignalsIdReviewMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  postAdminFraudSignalsIdReview(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostAdminFraudSignalsIdReviewMutationResult = NonNullable<Awaited<ReturnType<typeof postAdminFraudSignalsIdReview>>>
+    export type PostAdminFraudSignalsIdReviewMutationBody = BodyType<ServerValidatedObject> | undefined
+    export type PostAdminFraudSignalsIdReviewMutationError = ErrorType<void>
+    export type PostAdminFraudSignalsIdReviewMutationVariables = {id: string;data?: BodyType<ServerValidatedObject>}
+
+    /**
+ * @summary W07–W10 (trust-ops.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const usePostAdminFraudSignalsIdReview = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAdminFraudSignalsIdReview>>, TError,PostAdminFraudSignalsIdReviewMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postAdminFraudSignalsIdReview>>,
+        TError,
+        PostAdminFraudSignalsIdReviewMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPostAdminFraudSignalsIdReviewMutationOptions(options), queryClient);
+    }
+
+export const getGetAdminFraudOverviewUrl = () => {
+
+
+
+
+  return `/api/admin/fraud/overview`
+}
+
+/**
+ * @summary W07–W10 (trust-ops.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const getAdminFraudOverview = async ( options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+  return customFetch<ServerValidatedObject>(getGetAdminFraudOverviewUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAdminFraudOverviewQueryKey = () => {
+    return [
+    `/api/admin/fraud/overview`
+    ] as const;
+    }
+
+
+export const getGetAdminFraudOverviewQueryOptions = <TData = Awaited<ReturnType<typeof getAdminFraudOverview>>, TError = ErrorType<void>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminFraudOverview>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAdminFraudOverviewQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminFraudOverview>>> = ({ signal }) => getAdminFraudOverview({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdminFraudOverview>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetAdminFraudOverviewQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminFraudOverview>>>
+export type GetAdminFraudOverviewQueryError = ErrorType<void>
+
+
+export function useGetAdminFraudOverview<TData = Awaited<ReturnType<typeof getAdminFraudOverview>>, TError = ErrorType<void>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminFraudOverview>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAdminFraudOverview>>,
+          TError,
+          Awaited<ReturnType<typeof getAdminFraudOverview>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAdminFraudOverview<TData = Awaited<ReturnType<typeof getAdminFraudOverview>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminFraudOverview>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAdminFraudOverview>>,
+          TError,
+          Awaited<ReturnType<typeof getAdminFraudOverview>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAdminFraudOverview<TData = Awaited<ReturnType<typeof getAdminFraudOverview>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminFraudOverview>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary W07–W10 (trust-ops.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+
+export function useGetAdminFraudOverview<TData = Awaited<ReturnType<typeof getAdminFraudOverview>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminFraudOverview>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetAdminFraudOverviewQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetAdminWhatsappTemplatesUrl = () => {
+
+
+
+
+  return `/api/admin/whatsapp/templates`
+}
+
+/**
+ * @summary W07–W10 (trust-ops.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const getAdminWhatsappTemplates = async ( options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+  return customFetch<ServerValidatedObject>(getGetAdminWhatsappTemplatesUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAdminWhatsappTemplatesQueryKey = () => {
+    return [
+    `/api/admin/whatsapp/templates`
+    ] as const;
+    }
+
+
+export const getGetAdminWhatsappTemplatesQueryOptions = <TData = Awaited<ReturnType<typeof getAdminWhatsappTemplates>>, TError = ErrorType<void>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminWhatsappTemplates>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAdminWhatsappTemplatesQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminWhatsappTemplates>>> = ({ signal }) => getAdminWhatsappTemplates({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdminWhatsappTemplates>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetAdminWhatsappTemplatesQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminWhatsappTemplates>>>
+export type GetAdminWhatsappTemplatesQueryError = ErrorType<void>
+
+
+export function useGetAdminWhatsappTemplates<TData = Awaited<ReturnType<typeof getAdminWhatsappTemplates>>, TError = ErrorType<void>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminWhatsappTemplates>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAdminWhatsappTemplates>>,
+          TError,
+          Awaited<ReturnType<typeof getAdminWhatsappTemplates>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAdminWhatsappTemplates<TData = Awaited<ReturnType<typeof getAdminWhatsappTemplates>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminWhatsappTemplates>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAdminWhatsappTemplates>>,
+          TError,
+          Awaited<ReturnType<typeof getAdminWhatsappTemplates>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAdminWhatsappTemplates<TData = Awaited<ReturnType<typeof getAdminWhatsappTemplates>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminWhatsappTemplates>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary W07–W10 (trust-ops.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+
+export function useGetAdminWhatsappTemplates<TData = Awaited<ReturnType<typeof getAdminWhatsappTemplates>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminWhatsappTemplates>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetAdminWhatsappTemplatesQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getPostAdminWhatsappTemplatesUrl = () => {
+
+
+
+
+  return `/api/admin/whatsapp/templates`
+}
+
+/**
+ * @summary W07–W10 (trust-ops.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const postAdminWhatsappTemplates = async (serverValidatedObject?: ServerValidatedObject, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getPostAdminWhatsappTemplatesUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(serverValidatedObject)
+  }
+);}
+
+
+
+
+
+export const getPostAdminWhatsappTemplatesMutationKey = () => ['postAdminWhatsappTemplates'] as const;
+
+export const getPostAdminWhatsappTemplatesMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAdminWhatsappTemplates>>, TError,PostAdminWhatsappTemplatesMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof postAdminWhatsappTemplates>>, TError,PostAdminWhatsappTemplatesMutationVariables, TContext> => {
+
+const mutationKey = getPostAdminWhatsappTemplatesMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postAdminWhatsappTemplates>>, PostAdminWhatsappTemplatesMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  postAdminWhatsappTemplates(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostAdminWhatsappTemplatesMutationResult = NonNullable<Awaited<ReturnType<typeof postAdminWhatsappTemplates>>>
+    export type PostAdminWhatsappTemplatesMutationBody = BodyType<ServerValidatedObject> | undefined
+    export type PostAdminWhatsappTemplatesMutationError = ErrorType<void>
+    export type PostAdminWhatsappTemplatesMutationVariables = {data?: BodyType<ServerValidatedObject>}
+
+    /**
+ * @summary W07–W10 (trust-ops.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const usePostAdminWhatsappTemplates = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAdminWhatsappTemplates>>, TError,PostAdminWhatsappTemplatesMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postAdminWhatsappTemplates>>,
+        TError,
+        PostAdminWhatsappTemplatesMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPostAdminWhatsappTemplatesMutationOptions(options), queryClient);
+    }
+
+export const getPostAdminWhatsappTemplatesKeyStatusUrl = (key: string,) => {
+
+
+
+
+  return `/api/admin/whatsapp/templates/${key}/status`
+}
+
+/**
+ * @summary W07–W10 (trust-ops.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const postAdminWhatsappTemplatesKeyStatus = async (key: string,
+    serverValidatedObject?: ServerValidatedObject, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getPostAdminWhatsappTemplatesKeyStatusUrl(key),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(serverValidatedObject)
+  }
+);}
+
+
+
+
+
+export const getPostAdminWhatsappTemplatesKeyStatusMutationKey = () => ['postAdminWhatsappTemplatesKeyStatus'] as const;
+
+export const getPostAdminWhatsappTemplatesKeyStatusMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAdminWhatsappTemplatesKeyStatus>>, TError,PostAdminWhatsappTemplatesKeyStatusMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof postAdminWhatsappTemplatesKeyStatus>>, TError,PostAdminWhatsappTemplatesKeyStatusMutationVariables, TContext> => {
+
+const mutationKey = getPostAdminWhatsappTemplatesKeyStatusMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postAdminWhatsappTemplatesKeyStatus>>, PostAdminWhatsappTemplatesKeyStatusMutationVariables> = (props) => {
+          const {key,data} = props ?? {};
+
+          return  postAdminWhatsappTemplatesKeyStatus(key,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostAdminWhatsappTemplatesKeyStatusMutationResult = NonNullable<Awaited<ReturnType<typeof postAdminWhatsappTemplatesKeyStatus>>>
+    export type PostAdminWhatsappTemplatesKeyStatusMutationBody = BodyType<ServerValidatedObject> | undefined
+    export type PostAdminWhatsappTemplatesKeyStatusMutationError = ErrorType<void>
+    export type PostAdminWhatsappTemplatesKeyStatusMutationVariables = {key: string;data?: BodyType<ServerValidatedObject>}
+
+    /**
+ * @summary W07–W10 (trust-ops.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const usePostAdminWhatsappTemplatesKeyStatus = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAdminWhatsappTemplatesKeyStatus>>, TError,PostAdminWhatsappTemplatesKeyStatusMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postAdminWhatsappTemplatesKeyStatus>>,
+        TError,
+        PostAdminWhatsappTemplatesKeyStatusMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPostAdminWhatsappTemplatesKeyStatusMutationOptions(options), queryClient);
+    }
+
+export const getPostAdminWhatsappIntentsUrl = () => {
+
+
+
+
+  return `/api/admin/whatsapp/intents`
+}
+
+/**
+ * @summary W07–W10 (trust-ops.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const postAdminWhatsappIntents = async (serverValidatedObject?: ServerValidatedObject, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getPostAdminWhatsappIntentsUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(serverValidatedObject)
+  }
+);}
+
+
+
+
+
+export const getPostAdminWhatsappIntentsMutationKey = () => ['postAdminWhatsappIntents'] as const;
+
+export const getPostAdminWhatsappIntentsMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAdminWhatsappIntents>>, TError,PostAdminWhatsappIntentsMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof postAdminWhatsappIntents>>, TError,PostAdminWhatsappIntentsMutationVariables, TContext> => {
+
+const mutationKey = getPostAdminWhatsappIntentsMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postAdminWhatsappIntents>>, PostAdminWhatsappIntentsMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  postAdminWhatsappIntents(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostAdminWhatsappIntentsMutationResult = NonNullable<Awaited<ReturnType<typeof postAdminWhatsappIntents>>>
+    export type PostAdminWhatsappIntentsMutationBody = BodyType<ServerValidatedObject> | undefined
+    export type PostAdminWhatsappIntentsMutationError = ErrorType<void>
+    export type PostAdminWhatsappIntentsMutationVariables = {data?: BodyType<ServerValidatedObject>}
+
+    /**
+ * @summary W07–W10 (trust-ops.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const usePostAdminWhatsappIntents = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAdminWhatsappIntents>>, TError,PostAdminWhatsappIntentsMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postAdminWhatsappIntents>>,
+        TError,
+        PostAdminWhatsappIntentsMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPostAdminWhatsappIntentsMutationOptions(options), queryClient);
+    }
+
+export const getGetAdminWhatsappOverviewUrl = () => {
+
+
+
+
+  return `/api/admin/whatsapp/overview`
+}
+
+/**
+ * @summary W07–W10 (trust-ops.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+export const getAdminWhatsappOverview = async ( options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+  return customFetch<ServerValidatedObject>(getGetAdminWhatsappOverviewUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAdminWhatsappOverviewQueryKey = () => {
+    return [
+    `/api/admin/whatsapp/overview`
+    ] as const;
+    }
+
+
+export const getGetAdminWhatsappOverviewQueryOptions = <TData = Awaited<ReturnType<typeof getAdminWhatsappOverview>>, TError = ErrorType<void>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminWhatsappOverview>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAdminWhatsappOverviewQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminWhatsappOverview>>> = ({ signal }) => getAdminWhatsappOverview({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdminWhatsappOverview>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetAdminWhatsappOverviewQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminWhatsappOverview>>>
+export type GetAdminWhatsappOverviewQueryError = ErrorType<void>
+
+
+export function useGetAdminWhatsappOverview<TData = Awaited<ReturnType<typeof getAdminWhatsappOverview>>, TError = ErrorType<void>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminWhatsappOverview>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAdminWhatsappOverview>>,
+          TError,
+          Awaited<ReturnType<typeof getAdminWhatsappOverview>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAdminWhatsappOverview<TData = Awaited<ReturnType<typeof getAdminWhatsappOverview>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminWhatsappOverview>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAdminWhatsappOverview>>,
+          TError,
+          Awaited<ReturnType<typeof getAdminWhatsappOverview>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAdminWhatsappOverview<TData = Awaited<ReturnType<typeof getAdminWhatsappOverview>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminWhatsappOverview>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary W07–W10 (trust-ops.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
+ */
+
+export function useGetAdminWhatsappOverview<TData = Awaited<ReturnType<typeof getAdminWhatsappOverview>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminWhatsappOverview>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetAdminWhatsappOverviewQueryOptions(options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

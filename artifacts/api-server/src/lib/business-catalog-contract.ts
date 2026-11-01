@@ -10,12 +10,13 @@
  *   3. membership     — APPLICANT / VERIFIED_OWNER (ADMIN / STAFF defined, not grantable yet);
  *   4. paid plan      — a live DINAR_BUSINESS subscription linked to the business (billing authority).
  *
- * Contract version 1. Additive changes keep the version; any change of meaning bumps it.
+ * Contract version 2 (integration): explicit business ↔ listing links (offers.business_profile_id,
+ * migration 0047) so one owner can run several businesses. Additive changes keep the version.
  */
 import { and, eq, inArray } from "drizzle-orm";
 import { businessMemberships, businessProfiles, businessSubscriptions, db, offers } from "@workspace/db";
 
-export const BUSINESS_CATALOG_CONTRACT_VERSION = 1 as const;
+export const BUSINESS_CATALOG_CONTRACT_VERSION = 2 as const;
 
 export const BUSINESS_VERIFICATION_STATES = ["DRAFT", "DOCUMENTS_REQUIRED", "PENDING_REVIEW", "VERIFIED", "REJECTED", "SUSPENDED"] as const;
 export type BusinessVerificationState = (typeof BUSINESS_VERIFICATION_STATES)[number];
@@ -131,27 +132,57 @@ export async function authorizeBusinessAction(userId: string, businessId: string
 }
 
 /**
- * Business ↔ listing association, version 1: IMPLICIT. A business's catalog is its owner's own
- * listings in the business's market (the canonical listing and inventory services, no copy).
- * There is no business_id on offers yet; adding one (and which listings belong to which of several
- * businesses of one owner) is the catalog phase's decision and a new migration.
+ * Business ↔ listing association, version 2: EXPLICIT. A listing belongs to a business only when
+ * offers.business_profile_id names it (same owner and market, enforced by service and DB trigger).
+ * Compatibility: an owner with exactly one open business keeps the v1 meaning for listings not
+ * linked to any business (they count as that business's catalog) until they link them.
  */
 export async function businessListingAssociation(businessId: string) {
   const identity = await businessIdentity(businessId);
   if (!identity) return undefined;
+  const open = await db
+    .select({ id: businessProfiles.id })
+    .from(businessProfiles)
+    .where(and(eq(businessProfiles.ownerUserId, identity.ownerUserId), eq(businessProfiles.marketId, identity.marketId), inArray(businessProfiles.verificationStatus, ["DRAFT", "DOCUMENTS_REQUIRED", "PENDING_REVIEW", "VERIFIED", "SUSPENDED"])));
+  const soleBusiness = open.length === 1 && open[0]!.id === businessId;
   const rows = await db
-    .select({ id: offers.id, status: offers.status })
+    .select({ id: offers.id, status: offers.status, businessProfileId: offers.businessProfileId })
     .from(offers)
     .where(and(eq(offers.sellerId, identity.ownerUserId), eq(offers.marketId, identity.marketId), inArray(offers.status, ["DRAFT", "PUBLISHED", "PAUSED", "SOLD_OUT"])));
+  const mine = rows.filter((row) => row.businessProfileId === businessId || (soleBusiness && row.businessProfileId === null));
   return {
-    mode: "OWNER_MARKET_IMPLICIT" as const,
+    mode: "EXPLICIT" as const,
+    implicitUnlinked: soleBusiness,
     businessId,
     ownerUserId: identity.ownerUserId,
     marketId: identity.marketId,
-    listingIds: rows.map((row) => row.id),
-    publishedListingIds: rows.filter((row) => row.status === "PUBLISHED").map((row) => row.id),
+    listingIds: mine.map((row) => row.id),
+    linkedListingIds: mine.filter((row) => row.businessProfileId === businessId).map((row) => row.id),
+    publishedListingIds: mine.filter((row) => row.status === "PUBLISHED").map((row) => row.id),
     showAsBusiness: publicationEligibility(identity).catalogAsBusiness,
   };
+}
+
+const refuse = (status: number, message: string, code: string) => Object.assign(new Error(message), { status, code, expose: true });
+
+/**
+ * Links (or unlinks, businessId = null) one of the owner's listings to one of the owner's
+ * businesses in the same market. Strangers get 404 for both. REJECTED businesses take no
+ * listings; DRAFT ones may (preparation), but nothing is shown as the business until VERIFIED.
+ */
+export async function assignListingToBusiness(input: { actorId: string; marketId: string; listingId: string; businessId: string | null; unlinkFrom?: string }) {
+  return db.transaction(async (tx) => {
+    const [listing] = await tx.select({ id: offers.id, sellerId: offers.sellerId, marketId: offers.marketId, businessProfileId: offers.businessProfileId }).from(offers).where(eq(offers.id, input.listingId)).for("update");
+    if (!listing || listing.sellerId !== input.actorId || listing.marketId !== input.marketId) throw refuse(404, "الإعلان غير موجود", "LISTING_NOT_FOUND");
+    if (!input.businessId && input.unlinkFrom && listing.businessProfileId !== input.unlinkFrom) throw refuse(409, "الإعلان غير مرتبط بهذا النشاط", "LISTING_NOT_LINKED");
+    if (input.businessId) {
+      const [business] = await tx.select().from(businessProfiles).where(eq(businessProfiles.id, input.businessId));
+      if (!business || business.ownerUserId !== input.actorId || business.marketId !== listing.marketId) throw refuse(404, "النشاط التجاري غير موجود", "BUSINESS_NOT_FOUND");
+      if (business.verificationStatus === "REJECTED") throw refuse(409, "لا يمكن ربط إعلان بطلب مرفوض", "BUSINESS_REJECTED");
+    }
+    await tx.update(offers).set({ businessProfileId: input.businessId }).where(eq(offers.id, listing.id));
+    return { listingId: listing.id, businessId: input.businessId };
+  });
 }
 
 /** The paid-plan fact, kept apart: a live DINAR_BUSINESS subscription linked to this business. */

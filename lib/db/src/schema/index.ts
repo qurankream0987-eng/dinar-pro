@@ -300,6 +300,12 @@ export const offers = pgTable(
     marketId: text("market_id")
       .notNull()
       .references(() => markets.id),
+    /**
+     * Integration: the DINAR Business this listing belongs to (null: the seller's own listing).
+     * Written only by lib/business-catalog-contract.assignListingToBusiness, which requires the
+     * same owner and market; shown "as the business" only while that business is VERIFIED.
+     */
+    businessProfileId: text("business_profile_id").references((): AnyPgColumn => businessProfiles.id),
     status: text("status").notNull(),
     unitPriceMinor: integer("unit_price_minor"),
     pricingMode: text("pricing_mode").default("FIXED").notNull(),
@@ -317,6 +323,7 @@ export const offers = pgTable(
     ...dates(),
   },
   (t) => [
+    index("offers_business_profile_idx").on(t.businessProfileId).where(sql`${t.businessProfileId} IS NOT NULL`),
     check(
       "offers_inventory_valid",
       sql`reserved_quantity >= 0 AND ((inventory_mode = 'LIMITED' AND available_quantity IS NOT NULL AND available_quantity >= reserved_quantity) OR (inventory_mode = 'UNLIMITED' AND available_quantity IS NULL))`,

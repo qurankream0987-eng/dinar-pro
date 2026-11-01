@@ -5,6 +5,15 @@
  * DINAR general marketplace API with seller-defined listing prices
  * OpenAPI spec version: 0.1.0
  */
+export interface BusinessListingLinkRequest {
+  linked: boolean;
+}
+
+/**
+ * W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server's own view.
+ */
+export interface ServerValidatedObject { [key: string]: unknown }
+
 export interface EmptyObject { [key: string]: unknown }
 
 export interface SubscriptionCheckoutRequest {

@@ -12,6 +12,12 @@ tags:
     description: Health operations
   - name: business
     description: DINAR Business identity, verification and publication (D2)
+  - name: cash
+    description: W08 direct cash attestations and cash refunds (SIMULATION/development only)
+  - name: compliance
+    description: W09 policy lifecycle, explicit consent and market compliance gates
+  - name: trust
+    description: W10 support cases, fraud signals and WhatsApp readiness (no message is ever sent)
   - name: commercial
     description: DINAR commercial economy (prepaid commercial balance, paid placements, Market Pulse, DINAR Business)
   - name: auth
@@ -2162,6 +2168,38 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/BusinessOwnerView" }
+  /business/profiles/{id}/listings:
+    get:
+      operationId: getBusinessListingAssociation
+      tags: [business]
+      summary: "Integration: the business's catalog (explicit links; implicit only for a sole business)"
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: OK (404 for strangers)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+  /business/profiles/{id}/listings/{listingId}:
+    post:
+      operationId: setBusinessListingLink
+      tags: [business]
+      summary: "Integration: link or unlink one of the owner's listings to one of the owner's businesses (same owner and market)"
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: listingId, in: path, required: true, schema: { type: string, maxLength: 120 } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BusinessListingLinkRequest" }
+      responses:
+        "200":
+          description: OK (404 for strangers, 409 when not linked or the business is rejected)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ServerValidatedObject" }
   /businesses/{id}:
     get:
       operationId: getPublicBusiness
@@ -2233,8 +2271,868 @@ paths:
             application/pdf: { schema: { type: string, format: binary } }
             image/jpeg: { schema: { type: string, format: binary } }
             image/png: { schema: { type: string, format: binary } }
+  /orders/{id}/cash-payment/claim:
+    post:
+      operationId: postOrdersIdCashPaymentClaim
+      tags: [cash]
+      summary: "W07–W10 (cash.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server."
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, maxLength: 120 } }
+        - { name: Idempotency-Key, in: header, required: true, schema: { type: string, minLength: 8, maxLength: 128 } }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+        "401": { description: Not signed in }
+        "404": { description: Not found (also for records of other accounts) }
+  /orders/{id}/cash-payment/confirm:
+    post:
+      operationId: postOrdersIdCashPaymentConfirm
+      tags: [cash]
+      summary: "W07–W10 (cash.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server."
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, maxLength: 120 } }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+        "401": { description: Not signed in }
+        "404": { description: Not found (also for records of other accounts) }
+  /orders/{id}/cash-payment/deny:
+    post:
+      operationId: postOrdersIdCashPaymentDeny
+      tags: [cash]
+      summary: "W07–W10 (cash.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server."
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, maxLength: 120 } }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+        "401": { description: Not signed in }
+        "404": { description: Not found (also for records of other accounts) }
+  /orders/{id}/cash-payment/dispute:
+    post:
+      operationId: postOrdersIdCashPaymentDispute
+      tags: [cash]
+      summary: "W07–W10 (cash.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server."
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, maxLength: 120 } }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+        "401": { description: Not signed in }
+        "404": { description: Not found (also for records of other accounts) }
+  /orders/{id}/cash:
+    get:
+      operationId: getOrdersIdCash
+      tags: [cash]
+      summary: "W07–W10 (cash.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server."
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, maxLength: 120 } }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+        "401": { description: Not signed in }
+        "404": { description: Not found (also for records of other accounts) }
+  /orders/{id}/cash-refunds:
+    post:
+      operationId: postOrdersIdCashRefunds
+      tags: [cash]
+      summary: "W07–W10 (cash.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server."
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, maxLength: 120 } }
+        - { name: Idempotency-Key, in: header, required: true, schema: { type: string, minLength: 8, maxLength: 128 } }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+        "401": { description: Not signed in }
+        "404": { description: Not found (also for records of other accounts) }
+  /cash-refunds/{id}/repayment-claim:
+    post:
+      operationId: postCashRefundsIdRepaymentClaim
+      tags: [cash]
+      summary: "W07–W10 (cash.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server."
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, maxLength: 120 } }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+        "401": { description: Not signed in }
+        "404": { description: Not found (also for records of other accounts) }
+  /cash-refunds/{id}/confirm:
+    post:
+      operationId: postCashRefundsIdConfirm
+      tags: [cash]
+      summary: "W07–W10 (cash.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server."
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, maxLength: 120 } }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+        "401": { description: Not signed in }
+        "404": { description: Not found (also for records of other accounts) }
+  /cash-refunds/{id}/dispute:
+    post:
+      operationId: postCashRefundsIdDispute
+      tags: [cash]
+      summary: "W07–W10 (cash.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server."
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, maxLength: 120 } }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+        "401": { description: Not signed in }
+        "404": { description: Not found (also for records of other accounts) }
+  /cash-refunds/{id}/withdraw:
+    post:
+      operationId: postCashRefundsIdWithdraw
+      tags: [cash]
+      summary: "W07–W10 (cash.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server."
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, maxLength: 120 } }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+        "401": { description: Not signed in }
+        "404": { description: Not found (also for records of other accounts) }
+  /markets/{marketId}/compliance:
+    get:
+      operationId: getMarketsMarketidCompliance
+      tags: [compliance]
+      summary: "W07–W10 (compliance.ts). Access: PUBLIC. Strangers get 404; bodies are validated strictly on the server."
+      security: []
+      parameters:
+        - { name: marketId, in: path, required: true, schema: { type: string, maxLength: 120 } }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+        "404": { description: Not found }
+        "409": { description: Refused by state }
+  /account/policy-consents:
+    get:
+      operationId: getAccountPolicyConsents
+      tags: [compliance]
+      summary: "W07–W10 (compliance.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server."
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+        "401": { description: Not signed in }
+        "404": { description: Not found (also for records of other accounts) }
+  /account/policy-decisions:
+    post:
+      operationId: postAccountPolicyDecisions
+      tags: [compliance]
+      summary: "W07–W10 (compliance.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server."
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+        "401": { description: Not signed in }
+        "404": { description: Not found (also for records of other accounts) }
+  /account/compliance:
+    get:
+      operationId: getAccountCompliance
+      tags: [compliance]
+      summary: "W07–W10 (compliance.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server."
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+        "401": { description: Not signed in }
+        "404": { description: Not found (also for records of other accounts) }
+  /account/age-declaration:
+    post:
+      operationId: postAccountAgeDeclaration
+      tags: [compliance]
+      summary: "W07–W10 (compliance.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server."
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+        "401": { description: Not signed in }
+        "404": { description: Not found (also for records of other accounts) }
+  /account/guardian-consent:
+    post:
+      operationId: postAccountGuardianConsent
+      tags: [compliance]
+      summary: "W07–W10 (compliance.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server."
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+        "401": { description: Not signed in }
+        "404": { description: Not found (also for records of other accounts) }
+  /account/seller-verification:
+    get:
+      operationId: getAccountSellerVerification
+      tags: [compliance]
+      summary: "W07–W10 (compliance.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server."
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+        "401": { description: Not signed in }
+        "404": { description: Not found (also for records of other accounts) }
+    post:
+      operationId: postAccountSellerVerification
+      tags: [compliance]
+      summary: "W07–W10 (compliance.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server."
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+        "401": { description: Not signed in }
+        "404": { description: Not found (also for records of other accounts) }
+  /admin/compliance/policies:
+    get:
+      operationId: getAdminCompliancePolicies
+      tags: [compliance]
+      summary: "W07–W10 (compliance.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server."
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+        "401": { description: Not signed in }
+        "404": { description: Not found (also for records of other accounts) }
+    post:
+      operationId: postAdminCompliancePolicies
+      tags: [compliance]
+      summary: "W07–W10 (compliance.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server."
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+        "401": { description: Not signed in }
+        "404": { description: Not found (also for records of other accounts) }
+  /admin/compliance/policies/{id}/transition:
+    post:
+      operationId: postAdminCompliancePoliciesIdTransition
+      tags: [compliance]
+      summary: "W07–W10 (compliance.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server."
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, maxLength: 120 } }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+        "401": { description: Not signed in }
+        "404": { description: Not found (also for records of other accounts) }
+  /admin/compliance/seller-verifications:
+    get:
+      operationId: getAdminComplianceSellerVerifications
+      tags: [compliance]
+      summary: "W07–W10 (compliance.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server."
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+        "401": { description: Not signed in }
+        "404": { description: Not found (also for records of other accounts) }
+  /admin/compliance/seller-verifications/{id}/decision:
+    post:
+      operationId: postAdminComplianceSellerVerificationsIdDecision
+      tags: [compliance]
+      summary: "W07–W10 (compliance.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server."
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, maxLength: 120 } }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+        "401": { description: Not signed in }
+        "404": { description: Not found (also for records of other accounts) }
+  /admin/compliance/markets:
+    get:
+      operationId: getAdminComplianceMarkets
+      tags: [compliance]
+      summary: "W07–W10 (compliance.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server."
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+        "401": { description: Not signed in }
+        "404": { description: Not found (also for records of other accounts) }
+  /admin/compliance/markets/{marketId}:
+    get:
+      operationId: getAdminComplianceMarketsMarketid
+      tags: [compliance]
+      summary: "W07–W10 (compliance.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server."
+      parameters:
+        - { name: marketId, in: path, required: true, schema: { type: string, maxLength: 120 } }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+        "401": { description: Not signed in }
+        "404": { description: Not found (also for records of other accounts) }
+    put:
+      operationId: putAdminComplianceMarketsMarketid
+      tags: [compliance]
+      summary: "W07–W10 (compliance.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server."
+      parameters:
+        - { name: marketId, in: path, required: true, schema: { type: string, maxLength: 120 } }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+        "401": { description: Not signed in }
+        "404": { description: Not found (also for records of other accounts) }
+  /admin/compliance/legal-entities:
+    get:
+      operationId: getAdminComplianceLegalEntities
+      tags: [compliance]
+      summary: "W07–W10 (compliance.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server."
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+        "401": { description: Not signed in }
+        "404": { description: Not found (also for records of other accounts) }
+    post:
+      operationId: postAdminComplianceLegalEntities
+      tags: [compliance]
+      summary: "W07–W10 (compliance.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server."
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+        "401": { description: Not signed in }
+        "404": { description: Not found (also for records of other accounts) }
+  /admin/compliance/legal-entities/{marketId}/activate:
+    post:
+      operationId: postAdminComplianceLegalEntitiesMarketidActivate
+      tags: [compliance]
+      summary: "W07–W10 (compliance.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server."
+      parameters:
+        - { name: marketId, in: path, required: true, schema: { type: string, maxLength: 120 } }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+        "401": { description: Not signed in }
+        "404": { description: Not found (also for records of other accounts) }
+  /admin/compliance/legal-entities/{marketId}/deactivate:
+    post:
+      operationId: postAdminComplianceLegalEntitiesMarketidDeactivate
+      tags: [compliance]
+      summary: "W07–W10 (compliance.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server."
+      parameters:
+        - { name: marketId, in: path, required: true, schema: { type: string, maxLength: 120 } }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+        "401": { description: Not signed in }
+        "404": { description: Not found (also for records of other accounts) }
+  /account/support/cases:
+    get:
+      operationId: getAccountSupportCases
+      tags: [trust]
+      summary: "W07–W10 (trust-ops.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server."
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+        "401": { description: Not signed in }
+        "404": { description: Not found (also for records of other accounts) }
+    post:
+      operationId: postAccountSupportCases
+      tags: [trust]
+      summary: "W07–W10 (trust-ops.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server."
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+        "401": { description: Not signed in }
+        "404": { description: Not found (also for records of other accounts) }
+  /account/support/cases/{id}:
+    get:
+      operationId: getAccountSupportCasesId
+      tags: [trust]
+      summary: "W07–W10 (trust-ops.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server."
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, maxLength: 120 } }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+        "401": { description: Not signed in }
+        "404": { description: Not found (also for records of other accounts) }
+  /account/support/cases/{id}/messages:
+    post:
+      operationId: postAccountSupportCasesIdMessages
+      tags: [trust]
+      summary: "W07–W10 (trust-ops.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server."
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, maxLength: 120 } }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+        "401": { description: Not signed in }
+        "404": { description: Not found (also for records of other accounts) }
+  /account/whatsapp/consent:
+    get:
+      operationId: getAccountWhatsappConsent
+      tags: [trust]
+      summary: "W07–W10 (trust-ops.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server."
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+        "401": { description: Not signed in }
+        "404": { description: Not found (also for records of other accounts) }
+    post:
+      operationId: postAccountWhatsappConsent
+      tags: [trust]
+      summary: "W07–W10 (trust-ops.ts). Access: AUTHENTICATED. Strangers get 404; bodies are validated strictly on the server."
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+        "401": { description: Not signed in }
+        "404": { description: Not found (also for records of other accounts) }
+  /admin/support/cases:
+    get:
+      operationId: getAdminSupportCases
+      tags: [trust]
+      summary: "W07–W10 (trust-ops.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server."
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+        "401": { description: Not signed in }
+        "404": { description: Not found (also for records of other accounts) }
+  /admin/support/cases/{id}:
+    get:
+      operationId: getAdminSupportCasesId
+      tags: [trust]
+      summary: "W07–W10 (trust-ops.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server."
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, maxLength: 120 } }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+        "401": { description: Not signed in }
+        "404": { description: Not found (also for records of other accounts) }
+  /admin/support/cases/{id}/messages:
+    post:
+      operationId: postAdminSupportCasesIdMessages
+      tags: [trust]
+      summary: "W07–W10 (trust-ops.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server."
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, maxLength: 120 } }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+        "401": { description: Not signed in }
+        "404": { description: Not found (also for records of other accounts) }
+  /admin/support/cases/{id}/assign:
+    post:
+      operationId: postAdminSupportCasesIdAssign
+      tags: [trust]
+      summary: "W07–W10 (trust-ops.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server."
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, maxLength: 120 } }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+        "401": { description: Not signed in }
+        "404": { description: Not found (also for records of other accounts) }
+  /admin/support/cases/{id}/status:
+    post:
+      operationId: postAdminSupportCasesIdStatus
+      tags: [trust]
+      summary: "W07–W10 (trust-ops.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server."
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, maxLength: 120 } }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+        "401": { description: Not signed in }
+        "404": { description: Not found (also for records of other accounts) }
+  /admin/fraud/signals:
+    get:
+      operationId: getAdminFraudSignals
+      tags: [trust]
+      summary: "W07–W10 (trust-ops.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server."
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+        "401": { description: Not signed in }
+        "404": { description: Not found (also for records of other accounts) }
+    post:
+      operationId: postAdminFraudSignals
+      tags: [trust]
+      summary: "W07–W10 (trust-ops.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server."
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+        "401": { description: Not signed in }
+        "404": { description: Not found (also for records of other accounts) }
+  /admin/fraud/signals/{id}/review:
+    post:
+      operationId: postAdminFraudSignalsIdReview
+      tags: [trust]
+      summary: "W07–W10 (trust-ops.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server."
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, maxLength: 120 } }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+        "401": { description: Not signed in }
+        "404": { description: Not found (also for records of other accounts) }
+  /admin/fraud/overview:
+    get:
+      operationId: getAdminFraudOverview
+      tags: [trust]
+      summary: "W07–W10 (trust-ops.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server."
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+        "401": { description: Not signed in }
+        "404": { description: Not found (also for records of other accounts) }
+  /admin/whatsapp/templates:
+    get:
+      operationId: getAdminWhatsappTemplates
+      tags: [trust]
+      summary: "W07–W10 (trust-ops.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server."
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+        "401": { description: Not signed in }
+        "404": { description: Not found (also for records of other accounts) }
+    post:
+      operationId: postAdminWhatsappTemplates
+      tags: [trust]
+      summary: "W07–W10 (trust-ops.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server."
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+        "401": { description: Not signed in }
+        "404": { description: Not found (also for records of other accounts) }
+  /admin/whatsapp/templates/{key}/status:
+    post:
+      operationId: postAdminWhatsappTemplatesKeyStatus
+      tags: [trust]
+      summary: "W07–W10 (trust-ops.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server."
+      parameters:
+        - { name: key, in: path, required: true, schema: { type: string, maxLength: 120 } }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+        "401": { description: Not signed in }
+        "404": { description: Not found (also for records of other accounts) }
+  /admin/whatsapp/intents:
+    post:
+      operationId: postAdminWhatsappIntents
+      tags: [trust]
+      summary: "W07–W10 (trust-ops.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server."
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+        "401": { description: Not signed in }
+        "404": { description: Not found (also for records of other accounts) }
+  /admin/whatsapp/overview:
+    get:
+      operationId: getAdminWhatsappOverview
+      tags: [trust]
+      summary: "W07–W10 (trust-ops.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server."
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+        "401": { description: Not signed in }
+        "404": { description: Not found (also for records of other accounts) }
 components:
   schemas:
+    BusinessListingLinkRequest:
+      type: object
+      additionalProperties: false
+      required: [linked]
+      properties:
+        linked: { type: boolean }
+    ServerValidatedObject:
+      type: object
+      additionalProperties: true
+      description: "W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server's own view."
     EmptyObject:
       type: object
       additionalProperties: false
