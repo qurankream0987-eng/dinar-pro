@@ -75,6 +75,18 @@ base() {
 }
 # shellcheck disable=SC2086
 run() { base $EXTRA "$@"; }
+# The auth throttle is an IP-keyed fixed-window counter that lives in the database. A standalone
+# run always started it empty (fresh database); a chained suite would otherwise inherit its
+# siblings' counts and fail on 429 for reasons that have nothing to do with the subsystems under
+# test. Only the throwaway chain database is cleared, and only between suites — the product gate,
+# its window and its limit are untouched.
+clear_auth_throttle_state() {
+  node -e "
+const pg = require('$REPO/lib/db/node_modules/pg');
+const c = new pg.Client({ connectionString: process.argv[1] });
+c.connect().then(() => c.query('DELETE FROM auth_rate_limit_buckets RETURNING key_hash')).then((r) => c.end().then(() => console.log('rows=' + r.rowCount))).catch((e) => { console.error(e.message); process.exit(91); });
+" "$URL"
+}
 cleanup() {
   [ "${DINAR_SUITE_KEEP_DB:-0}" = 1 ] || node -e "
 const pg = require('$REPO/lib/db/node_modules/pg');
@@ -98,8 +110,14 @@ esac
 
 status=0
 first_failed=""
+prev_suite=""
 # shellcheck disable=SC2086  # $SUITES is word-split on purpose; every name passed the charset check.
 for SUITE in $SUITES; do
+  if [ -n "$prev_suite" ]; then
+    cleared=$(clear_auth_throttle_state) || { echo "LOCAL_SUITE: the auth throttle could not be cleared ($cleared)" >&2; exit 91; }
+    echo "LOCAL_SUITE_THROTTLE_RESET after=$prev_suite before=$SUITE $cleared"
+  fi
+  prev_suite=$SUITE
   before=$(wc -l < "$NETLOG" | tr -d ' ')
   suite_status=0
   run node test/run.mjs "$SUITE" || suite_status=$?
