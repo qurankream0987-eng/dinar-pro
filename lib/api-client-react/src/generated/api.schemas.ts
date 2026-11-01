@@ -5,6 +5,396 @@
  * DINAR general marketplace API with seller-defined listing prices
  * OpenAPI spec version: 0.1.0
  */
+export interface EmptyObject { [key: string]: unknown }
+
+export interface SubscriptionCheckoutRequest {
+  /** @maxLength 80 */
+  planId: string;
+  /** @pattern ^[A-Za-z0-9._:-]{8,128}$ */
+  idempotencyKey: string;
+  businessId?: string;
+}
+
+export type SubscriptionPlansOverviewCurrentPlan = typeof SubscriptionPlansOverviewCurrentPlan[keyof typeof SubscriptionPlansOverviewCurrentPlan];
+
+
+export const SubscriptionPlansOverviewCurrentPlan = {
+  FREE: 'FREE',
+  DINAR_GO: 'DINAR_GO',
+  DINAR_PRO: 'DINAR_PRO',
+  DINAR_BUSINESS: 'DINAR_BUSINESS',
+} as const;
+
+export type SubscriptionPlansOverviewPlansItemPlanCode = typeof SubscriptionPlansOverviewPlansItemPlanCode[keyof typeof SubscriptionPlansOverviewPlansItemPlanCode];
+
+
+export const SubscriptionPlansOverviewPlansItemPlanCode = {
+  DINAR_GO: 'DINAR_GO',
+  DINAR_PRO: 'DINAR_PRO',
+  DINAR_BUSINESS: 'DINAR_BUSINESS',
+} as const;
+
+export type SubscriptionPlansOverviewPlansItem = {
+  planCode: SubscriptionPlansOverviewPlansItemPlanCode;
+  name: string;
+  referencePriceLabel: string;
+  requiresVerifiedBusiness: boolean;
+  eligible: boolean;
+  current: boolean;
+  [key: string]: unknown;
+ };
+
+export type SubscriptionPlansOverviewBillingStatus = typeof SubscriptionPlansOverviewBillingStatus[keyof typeof SubscriptionPlansOverviewBillingStatus];
+
+
+export const SubscriptionPlansOverviewBillingStatus = {
+  CONNECTED: 'CONNECTED',
+  NOT_CONNECTED: 'NOT_CONNECTED',
+} as const;
+
+export type SubscriptionPlansOverviewBillingActivation = typeof SubscriptionPlansOverviewBillingActivation[keyof typeof SubscriptionPlansOverviewBillingActivation];
+
+
+export const SubscriptionPlansOverviewBillingActivation = {
+  DISABLED: 'DISABLED',
+} as const;
+
+export type SubscriptionPlansOverviewBilling = {
+  status: SubscriptionPlansOverviewBillingStatus;
+  activation: SubscriptionPlansOverviewBillingActivation;
+  [key: string]: unknown;
+ };
+
+export interface SubscriptionPlansOverview {
+  marketId: string;
+  currentPlan: SubscriptionPlansOverviewCurrentPlan;
+  /** @maxItems 3 */
+  plans: SubscriptionPlansOverviewPlansItem[];
+  billing: SubscriptionPlansOverviewBilling;
+  [key: string]: unknown;
+ }
+
+export type BusinessDraftRequestCategoryKey = typeof BusinessDraftRequestCategoryKey[keyof typeof BusinessDraftRequestCategoryKey];
+
+
+export const BusinessDraftRequestCategoryKey = {
+  RESTAURANT: 'RESTAURANT',
+  GRILL_RESTAURANT: 'GRILL_RESTAURANT',
+  CAFE: 'CAFE',
+  BAKERY: 'BAKERY',
+  GROCERY: 'GROCERY',
+  RETAIL: 'RETAIL',
+  FASHION: 'FASHION',
+  ELECTRONICS: 'ELECTRONICS',
+  BEAUTY: 'BEAUTY',
+  AUTOMOTIVE: 'AUTOMOTIVE',
+  HOME_SERVICES: 'HOME_SERVICES',
+  SERVICES: 'SERVICES',
+  OTHER: 'OTHER',
+} as const;
+
+export type BusinessDraftRequestLegalForm = typeof BusinessDraftRequestLegalForm[keyof typeof BusinessDraftRequestLegalForm];
+
+
+export const BusinessDraftRequestLegalForm = {
+  SOLE_PROPRIETORSHIP: 'SOLE_PROPRIETORSHIP',
+  COMPANY: 'COMPANY',
+  PARTNERSHIP: 'PARTNERSHIP',
+  OTHER: 'OTHER',
+} as const;
+
+export interface BusinessAddress {
+  /** @maxLength 60 */
+  city?: string;
+  /** @maxLength 60 */
+  area?: string;
+  /** @maxLength 160 */
+  line?: string;
+}
+
+export interface BusinessDraftRequest {
+  /**
+     * @minLength 2
+     * @maxLength 120
+     */
+  displayName: string;
+  categoryKey: BusinessDraftRequestCategoryKey;
+  /** @maxLength 1000 */
+  description?: string;
+  /**
+     * @minLength 2
+     * @maxLength 200
+     */
+  legalName?: string;
+  legalForm?: BusinessDraftRequestLegalForm;
+  address?: BusinessAddress;
+  /** @pattern ^[A-Za-z0-9._:-]{8,128}$ */
+  idempotencyKey: string;
+}
+
+export type BusinessUpdateRequestLegalForm = typeof BusinessUpdateRequestLegalForm[keyof typeof BusinessUpdateRequestLegalForm];
+
+
+export const BusinessUpdateRequestLegalForm = {
+  SOLE_PROPRIETORSHIP: 'SOLE_PROPRIETORSHIP',
+  COMPANY: 'COMPANY',
+  PARTNERSHIP: 'PARTNERSHIP',
+  OTHER: 'OTHER',
+} as const;
+
+export type BusinessUpdateRequestContact = {
+  /** @maxLength 20 */
+  phone?: string;
+  /** @maxLength 160 */
+  email?: string;
+  /** @maxLength 200 */
+  website?: string;
+};
+
+export type BusinessUpdateRequestOpeningHoursItem = {
+  /**
+     * @minimum 0
+     * @maximum 6
+     */
+  day: number;
+  /** @pattern ^(?:[01]\d|2[0-3]):[0-5]\d$ */
+  opens: string;
+  /** @pattern ^(?:[01]\d|2[0-3]):[0-5]\d$ */
+  closes: string;
+};
+
+export type BusinessUpdateRequestServicePreferencesInquiries = typeof BusinessUpdateRequestServicePreferencesInquiries[keyof typeof BusinessUpdateRequestServicePreferencesInquiries];
+
+
+export const BusinessUpdateRequestServicePreferencesInquiries = {
+  OPEN: 'OPEN',
+  CLOSED: 'CLOSED',
+} as const;
+
+export type BusinessUpdateRequestServicePreferences = {
+  delivery?: boolean;
+  pickup?: boolean;
+  dineIn?: boolean;
+  inquiries?: BusinessUpdateRequestServicePreferencesInquiries;
+};
+
+export interface BusinessUpdateRequest {
+  /** @minimum 1 */
+  expectedRevision: number;
+  /**
+     * @minLength 2
+     * @maxLength 120
+     */
+  displayName?: string;
+  categoryKey?: string;
+  /** @maxLength 1000 */
+  description?: string;
+  /**
+     * @minLength 2
+     * @maxLength 200
+     */
+  legalName?: string;
+  legalForm?: BusinessUpdateRequestLegalForm;
+  /**
+     * @minLength 4
+     * @maxLength 60
+     */
+  registrationNumber?: string;
+  address?: BusinessAddress;
+  contact?: BusinessUpdateRequestContact;
+  /** @maxItems 21 */
+  openingHours?: BusinessUpdateRequestOpeningHoursItem[];
+  servicePreferences?: BusinessUpdateRequestServicePreferences;
+}
+
+export type BusinessDocumentUploadRequestKind = typeof BusinessDocumentUploadRequestKind[keyof typeof BusinessDocumentUploadRequestKind];
+
+
+export const BusinessDocumentUploadRequestKind = {
+  COMMERCIAL_REGISTRATION: 'COMMERCIAL_REGISTRATION',
+  COMMERCIAL_LICENSE: 'COMMERCIAL_LICENSE',
+  MUNICIPALITY_LICENSE: 'MUNICIPALITY_LICENSE',
+  AUTHORIZATION_LETTER: 'AUTHORIZATION_LETTER',
+  OWNER_IDENTITY: 'OWNER_IDENTITY',
+} as const;
+
+export type BusinessDocumentUploadRequestContentType = typeof BusinessDocumentUploadRequestContentType[keyof typeof BusinessDocumentUploadRequestContentType];
+
+
+export const BusinessDocumentUploadRequestContentType = {
+  'application/pdf': 'application/pdf',
+  'image/jpeg': 'image/jpeg',
+  'image/png': 'image/png',
+} as const;
+
+export interface BusinessDocumentUploadRequest {
+  kind: BusinessDocumentUploadRequestKind;
+  contentType: BusinessDocumentUploadRequestContentType;
+  /**
+     * @minimum 1
+     * @maximum 10485760
+     */
+  size: number;
+  /** @pattern ^[A-Za-z0-9._:-]{8,128}$ */
+  idempotencyKey: string;
+}
+
+export interface BusinessDocumentUploadTicket {
+  documentId: string;
+  uploadURL: string;
+  expiresInSeconds: number;
+  maxBytes: number;
+}
+
+export interface BusinessPublicationRequest {
+  publish: boolean;
+}
+
+export type BusinessIntegrationRequestKind = typeof BusinessIntegrationRequestKind[keyof typeof BusinessIntegrationRequestKind];
+
+
+export const BusinessIntegrationRequestKind = {
+  POS: 'POS',
+  ONLINE_STORE: 'ONLINE_STORE',
+  ACCOUNTING: 'ACCOUNTING',
+  DELIVERY_PLATFORM: 'DELIVERY_PLATFORM',
+  CUSTOM_API: 'CUSTOM_API',
+} as const;
+
+export type BusinessIntegrationRequestScopesItem = typeof BusinessIntegrationRequestScopesItem[keyof typeof BusinessIntegrationRequestScopesItem];
+
+
+export const BusinessIntegrationRequestScopesItem = {
+  CATALOG_READ: 'CATALOG_READ',
+  ORDERS_READ: 'ORDERS_READ',
+  INVENTORY_READ: 'INVENTORY_READ',
+} as const;
+
+export interface BusinessIntegrationRequest {
+  kind: BusinessIntegrationRequestKind;
+  /**
+     * @minLength 2
+     * @maxLength 80
+     */
+  systemName: string;
+  /** @maxLength 300 */
+  endpointUrl?: string;
+  /**
+     * @minItems 1
+     * @maxItems 3
+     */
+  scopes: BusinessIntegrationRequestScopesItem[];
+}
+
+export type BusinessReviewDecisionRequestDecision = typeof BusinessReviewDecisionRequestDecision[keyof typeof BusinessReviewDecisionRequestDecision];
+
+
+export const BusinessReviewDecisionRequestDecision = {
+  VERIFY: 'VERIFY',
+  REJECT: 'REJECT',
+  REQUEST_DOCUMENTS: 'REQUEST_DOCUMENTS',
+  SUSPEND: 'SUSPEND',
+  REINSTATE: 'REINSTATE',
+} as const;
+
+export interface BusinessReviewDecisionRequest {
+  decision: BusinessReviewDecisionRequestDecision;
+  /** @maxLength 500 */
+  reason?: string;
+  /** @minimum 1 */
+  expectedRevision: number;
+}
+
+export type BusinessOwnerViewVerificationStatus = typeof BusinessOwnerViewVerificationStatus[keyof typeof BusinessOwnerViewVerificationStatus];
+
+
+export const BusinessOwnerViewVerificationStatus = {
+  DRAFT: 'DRAFT',
+  DOCUMENTS_REQUIRED: 'DOCUMENTS_REQUIRED',
+  PENDING_REVIEW: 'PENDING_REVIEW',
+  VERIFIED: 'VERIFIED',
+  REJECTED: 'REJECTED',
+  SUSPENDED: 'SUSPENDED',
+} as const;
+
+export type BusinessOwnerViewPublicationStatus = typeof BusinessOwnerViewPublicationStatus[keyof typeof BusinessOwnerViewPublicationStatus];
+
+
+export const BusinessOwnerViewPublicationStatus = {
+  UNPUBLISHED: 'UNPUBLISHED',
+  PUBLISHED: 'PUBLISHED',
+} as const;
+
+export type BusinessOwnerViewActionsItem = typeof BusinessOwnerViewActionsItem[keyof typeof BusinessOwnerViewActionsItem];
+
+
+export const BusinessOwnerViewActionsItem = {
+  COMPLETE_INFO: 'COMPLETE_INFO',
+  START_VERIFICATION: 'START_VERIFICATION',
+  UPLOAD_DOCUMENTS: 'UPLOAD_DOCUMENTS',
+  SUBMIT_FOR_REVIEW: 'SUBMIT_FOR_REVIEW',
+  VIEW_STATUS: 'VIEW_STATUS',
+  ADD_CATALOG: 'ADD_CATALOG',
+  REVIEW_PLANS: 'REVIEW_PLANS',
+  PUBLISH: 'PUBLISH',
+  UNPUBLISH: 'UNPUBLISH',
+  CONNECT_SYSTEM: 'CONNECT_SYSTEM',
+} as const;
+
+export type BusinessOwnerViewSalesHistory = typeof BusinessOwnerViewSalesHistory[keyof typeof BusinessOwnerViewSalesHistory];
+
+
+export const BusinessOwnerViewSalesHistory = {
+  NONE_IN_DINAR: 'NONE_IN_DINAR',
+} as const;
+
+/**
+ * The applicant's view. Never an object path, never the full registration number, never the reviewer's identity.
+ */
+export interface BusinessOwnerView {
+  id: string;
+  marketId: string;
+  displayName: string;
+  categoryKey: string;
+  categoryLabel?: string;
+  /** @nullable */
+  legalName?: string | null;
+  /** @nullable */
+  registrationNumberLast4?: string | null;
+  verificationStatus: BusinessOwnerViewVerificationStatus;
+  verified: boolean;
+  publicationStatus: BusinessOwnerViewPublicationStatus;
+  revision: number;
+  actions: BusinessOwnerViewActionsItem[];
+  salesHistory?: BusinessOwnerViewSalesHistory;
+  [key: string]: unknown;
+ }
+
+export interface BusinessDraftResult {
+  created: boolean;
+  business: BusinessOwnerView;
+}
+
+export type BusinessPublicViewOpeningHoursItem = { [key: string]: unknown };
+
+export type BusinessPublicViewServicePreferences = { [key: string]: unknown };
+
+export interface BusinessPublicView {
+  id: string;
+  marketId: string;
+  displayName: string;
+  categoryLabel: string;
+  description?: string;
+  /** @nullable */
+  city?: string | null;
+  /** @nullable */
+  area?: string | null;
+  openingHours?: BusinessPublicViewOpeningHoursItem[];
+  servicePreferences?: BusinessPublicViewServicePreferences;
+  verified: true;
+  verifiedLabel: string;
+}
+
 /**
  * Commercial economy request/response object; bodies are validated strictly on the server and never accept owners, prices, balances or paid flags.
  */
@@ -3323,5 +3713,35 @@ export type GetOrdersRole = typeof GetOrdersRole[keyof typeof GetOrdersRole];
 export const GetOrdersRole = {
   buyer: 'buyer',
   seller: 'seller',
+} as const;
+
+export type PreviewBusinessPlanChangeParams = {
+/**
+ * @maxLength 80
+ */
+planId: string;
+};
+
+export type GetSubscriptionPlanEconomicsParams = {
+/**
+ * @pattern ^[A-Z]{2,8}$
+ */
+marketId?: string;
+};
+
+export type ListBusinessVerificationQueueParams = {
+status?: ListBusinessVerificationQueueStatus;
+};
+
+export type ListBusinessVerificationQueueStatus = typeof ListBusinessVerificationQueueStatus[keyof typeof ListBusinessVerificationQueueStatus];
+
+
+export const ListBusinessVerificationQueueStatus = {
+  DRAFT: 'DRAFT',
+  DOCUMENTS_REQUIRED: 'DOCUMENTS_REQUIRED',
+  PENDING_REVIEW: 'PENDING_REVIEW',
+  VERIFIED: 'VERIFIED',
+  REJECTED: 'REJECTED',
+  SUSPENDED: 'SUSPENDED',
 } as const;
 

@@ -4883,3 +4883,504 @@ export const GetAdminCommercialSummaryParams = zod.object({
 export const GetAdminCommercialSummaryResponse = zod.record(zod.string(), zod.unknown()).describe('Commercial economy request/response object; bodies are validated strictly on the server and never accept owners, prices, balances or paid flags.')
 
 
+/**
+ * @summary D1: Free, DINAR Go, DINAR Pro and DINAR Business for this account and market (server prices, eligibility, billing state)
+ */
+export const getSubscriptionPlansResponsePlansMax = 3;
+
+
+
+export const GetSubscriptionPlansResponse = zod.looseObject({
+  "marketId": zod.string(),
+  "currentPlan": zod.enum(['FREE', 'DINAR_GO', 'DINAR_PRO', 'DINAR_BUSINESS']),
+  "plans": zod.array(zod.looseObject({
+  "planCode": zod.enum(['DINAR_GO', 'DINAR_PRO', 'DINAR_BUSINESS']),
+  "name": zod.string(),
+  "referencePriceLabel": zod.string(),
+  "requiresVerifiedBusiness": zod.boolean(),
+  "eligible": zod.boolean(),
+  "current": zod.boolean()
+})).max(getSubscriptionPlansResponsePlansMax),
+  "billing": zod.looseObject({
+  "status": zod.enum(['CONNECTED', 'NOT_CONNECTED']),
+  "activation": zod.enum(['DISABLED'])
+})
+})
+
+
+/**
+ * @summary What a plan change would do; no proration is invented
+ */
+export const previewBusinessPlanChangeQueryPlanIdMax = 80;
+
+
+
+export const PreviewBusinessPlanChangeQueryParams = zod.object({
+  "planId": zod.coerce.string().max(previewBusinessPlanChangeQueryPlanIdMax)
+})
+
+export const PreviewBusinessPlanChangeResponse = zod.record(zod.string(), zod.unknown()).describe('Commercial economy request/response object; bodies are validated strictly on the server and never accept owners, prices, balances or paid flags.')
+
+
+/**
+ * @summary Real checkout; 503 BILLING_PROVIDER_NOT_CONNECTED without a registered adapter. DINAR Business needs businessId of a VERIFIED business
+ */
+export const startBusinessSubscriptionCheckoutBodyPlanIdMax = 80;
+
+export const startBusinessSubscriptionCheckoutBodyIdempotencyKeyRegExp = new RegExp('^[A-Za-z0-9._:-]{8,128}$');
+
+
+export const StartBusinessSubscriptionCheckoutBody = zod.object({
+  "planId": zod.string().max(startBusinessSubscriptionCheckoutBodyPlanIdMax),
+  "idempotencyKey": zod.string().regex(startBusinessSubscriptionCheckoutBodyIdempotencyKeyRegExp),
+  "businessId": zod.uuid().optional()
+})
+
+export const StartBusinessSubscriptionCheckoutResponse = zod.record(zod.string(), zod.unknown()).describe('Commercial economy request/response object; bodies are validated strictly on the server and never accept owners, prices, balances or paid flags.')
+
+
+/**
+ * @summary Signed, idempotent billing events from a registered provider adapter (503 when none)
+ */
+export const receiveBillingWebhookPathProviderKeyRegExp = new RegExp('^[a-z0-9-]{2,40}$');
+
+
+export const ReceiveBillingWebhookParams = zod.object({
+  "providerKey": zod.coerce.string().regex(receiveBillingWebhookPathProviderKeyRegExp)
+})
+
+export const ReceiveBillingWebhookBody = zod.record(zod.string(), zod.unknown()).describe('Commercial economy request/response object; bodies are validated strictly on the server and never accept owners, prices, balances or paid flags.')
+
+export const ReceiveBillingWebhookResponse = zod.record(zod.string(), zod.unknown()).describe('Commercial economy request/response object; bodies are validated strictly on the server and never accept owners, prices, balances or paid flags.')
+
+
+/**
+ * @summary Admin: worst-case AI cost per plan from configured model prices only
+ */
+export const getSubscriptionPlanEconomicsQueryMarketIdRegExp = new RegExp('^[A-Z]{2,8}$');
+
+
+export const GetSubscriptionPlanEconomicsQueryParams = zod.object({
+  "marketId": zod.coerce.string().regex(getSubscriptionPlanEconomicsQueryMarketIdRegExp).optional()
+})
+
+export const GetSubscriptionPlanEconomicsResponse = zod.record(zod.string(), zod.unknown()).describe('Commercial economy request/response object; bodies are validated strictly on the server and never accept owners, prices, balances or paid flags.')
+
+
+/**
+ * @summary D2: the session account's businesses in its active market
+ */
+export const ListOwnBusinessProfilesResponseItem = zod.looseObject({
+  "id": zod.uuid(),
+  "marketId": zod.string(),
+  "displayName": zod.string(),
+  "categoryKey": zod.string(),
+  "categoryLabel": zod.string().optional(),
+  "legalName": zod.string().nullish(),
+  "registrationNumberLast4": zod.string().nullish(),
+  "verificationStatus": zod.enum(['DRAFT', 'DOCUMENTS_REQUIRED', 'PENDING_REVIEW', 'VERIFIED', 'REJECTED', 'SUSPENDED']),
+  "verified": zod.boolean(),
+  "publicationStatus": zod.enum(['UNPUBLISHED', 'PUBLISHED']),
+  "revision": zod.int(),
+  "actions": zod.array(zod.enum(['COMPLETE_INFO', 'START_VERIFICATION', 'UPLOAD_DOCUMENTS', 'SUBMIT_FOR_REVIEW', 'VIEW_STATUS', 'ADD_CATALOG', 'REVIEW_PLANS', 'PUBLISH', 'UNPUBLISH', 'CONNECT_SYSTEM'])),
+  "salesHistory": zod.enum(['NONE_IN_DINAR']).optional()
+}).describe('The applicant\'s view. Never an object path, never the full registration number, never the reviewer\'s identity.')
+export const ListOwnBusinessProfilesResponse = zod.array(ListOwnBusinessProfilesResponseItem).max(20)
+
+
+/**
+ * @summary D2: create (or find, on retry or repeated name) the applicant's DRAFT; never verified, never paid
+ */
+export const createBusinessDraftBodyDisplayNameMin = 2;
+export const createBusinessDraftBodyDisplayNameMax = 120;
+
+export const createBusinessDraftBodyDescriptionMax = 1000;
+
+export const createBusinessDraftBodyLegalNameMin = 2;
+export const createBusinessDraftBodyLegalNameMax = 200;
+
+export const createBusinessDraftBodyAddressCityMax = 60;
+
+export const createBusinessDraftBodyAddressAreaMax = 60;
+
+export const createBusinessDraftBodyAddressLineMax = 160;
+
+export const createBusinessDraftBodyIdempotencyKeyRegExp = new RegExp('^[A-Za-z0-9._:-]{8,128}$');
+
+
+export const CreateBusinessDraftBody = zod.object({
+  "displayName": zod.string().min(createBusinessDraftBodyDisplayNameMin).max(createBusinessDraftBodyDisplayNameMax),
+  "categoryKey": zod.enum(['RESTAURANT', 'GRILL_RESTAURANT', 'CAFE', 'BAKERY', 'GROCERY', 'RETAIL', 'FASHION', 'ELECTRONICS', 'BEAUTY', 'AUTOMOTIVE', 'HOME_SERVICES', 'SERVICES', 'OTHER']),
+  "description": zod.string().max(createBusinessDraftBodyDescriptionMax).optional(),
+  "legalName": zod.string().min(createBusinessDraftBodyLegalNameMin).max(createBusinessDraftBodyLegalNameMax).optional(),
+  "legalForm": zod.enum(['SOLE_PROPRIETORSHIP', 'COMPANY', 'PARTNERSHIP', 'OTHER']).optional(),
+  "address": zod.object({
+  "city": zod.string().max(createBusinessDraftBodyAddressCityMax).optional(),
+  "area": zod.string().max(createBusinessDraftBodyAddressAreaMax).optional(),
+  "line": zod.string().max(createBusinessDraftBodyAddressLineMax).optional()
+}).optional(),
+  "idempotencyKey": zod.string().regex(createBusinessDraftBodyIdempotencyKeyRegExp)
+})
+
+export const CreateBusinessDraftResponse = zod.object({
+  "created": zod.boolean(),
+  "business": zod.looseObject({
+  "id": zod.uuid(),
+  "marketId": zod.string(),
+  "displayName": zod.string(),
+  "categoryKey": zod.string(),
+  "categoryLabel": zod.string().optional(),
+  "legalName": zod.string().nullish(),
+  "registrationNumberLast4": zod.string().nullish(),
+  "verificationStatus": zod.enum(['DRAFT', 'DOCUMENTS_REQUIRED', 'PENDING_REVIEW', 'VERIFIED', 'REJECTED', 'SUSPENDED']),
+  "verified": zod.boolean(),
+  "publicationStatus": zod.enum(['UNPUBLISHED', 'PUBLISHED']),
+  "revision": zod.int(),
+  "actions": zod.array(zod.enum(['COMPLETE_INFO', 'START_VERIFICATION', 'UPLOAD_DOCUMENTS', 'SUBMIT_FOR_REVIEW', 'VIEW_STATUS', 'ADD_CATALOG', 'REVIEW_PLANS', 'PUBLISH', 'UNPUBLISH', 'CONNECT_SYSTEM'])),
+  "salesHistory": zod.enum(['NONE_IN_DINAR']).optional()
+}).describe('The applicant\'s view. Never an object path, never the full registration number, never the reviewer\'s identity.')
+})
+
+
+export const GetOwnBusinessProfileParams = zod.object({
+  "id": zod.uuid()
+})
+
+export const GetOwnBusinessProfileResponse = zod.looseObject({
+  "id": zod.uuid(),
+  "marketId": zod.string(),
+  "displayName": zod.string(),
+  "categoryKey": zod.string(),
+  "categoryLabel": zod.string().optional(),
+  "legalName": zod.string().nullish(),
+  "registrationNumberLast4": zod.string().nullish(),
+  "verificationStatus": zod.enum(['DRAFT', 'DOCUMENTS_REQUIRED', 'PENDING_REVIEW', 'VERIFIED', 'REJECTED', 'SUSPENDED']),
+  "verified": zod.boolean(),
+  "publicationStatus": zod.enum(['UNPUBLISHED', 'PUBLISHED']),
+  "revision": zod.int(),
+  "actions": zod.array(zod.enum(['COMPLETE_INFO', 'START_VERIFICATION', 'UPLOAD_DOCUMENTS', 'SUBMIT_FOR_REVIEW', 'VIEW_STATUS', 'ADD_CATALOG', 'REVIEW_PLANS', 'PUBLISH', 'UNPUBLISH', 'CONNECT_SYSTEM'])),
+  "salesHistory": zod.enum(['NONE_IN_DINAR']).optional()
+}).describe('The applicant\'s view. Never an object path, never the full registration number, never the reviewer\'s identity.')
+
+
+export const UpdateBusinessProfileParams = zod.object({
+  "id": zod.uuid()
+})
+
+
+export const updateBusinessProfileBodyDisplayNameMin = 2;
+export const updateBusinessProfileBodyDisplayNameMax = 120;
+
+export const updateBusinessProfileBodyDescriptionMax = 1000;
+
+export const updateBusinessProfileBodyLegalNameMin = 2;
+export const updateBusinessProfileBodyLegalNameMax = 200;
+
+export const updateBusinessProfileBodyRegistrationNumberMin = 4;
+export const updateBusinessProfileBodyRegistrationNumberMax = 60;
+
+export const updateBusinessProfileBodyAddressCityMax = 60;
+
+export const updateBusinessProfileBodyAddressAreaMax = 60;
+
+export const updateBusinessProfileBodyAddressLineMax = 160;
+
+export const updateBusinessProfileBodyContactPhoneMax = 20;
+
+export const updateBusinessProfileBodyContactEmailMax = 160;
+
+export const updateBusinessProfileBodyContactWebsiteMax = 200;
+
+export const updateBusinessProfileBodyOpeningHoursItemDayMin = 0;
+export const updateBusinessProfileBodyOpeningHoursItemDayMax = 6;
+
+export const updateBusinessProfileBodyOpeningHoursItemOpensRegExp = new RegExp('^(?:[01]\\d|2[0-3]):[0-5]\\d$');
+export const updateBusinessProfileBodyOpeningHoursItemClosesRegExp = new RegExp('^(?:[01]\\d|2[0-3]):[0-5]\\d$');
+export const updateBusinessProfileBodyOpeningHoursMax = 21;
+
+
+
+export const UpdateBusinessProfileBody = zod.object({
+  "expectedRevision": zod.int().min(1),
+  "displayName": zod.string().min(updateBusinessProfileBodyDisplayNameMin).max(updateBusinessProfileBodyDisplayNameMax).optional(),
+  "categoryKey": zod.string().optional(),
+  "description": zod.string().max(updateBusinessProfileBodyDescriptionMax).optional(),
+  "legalName": zod.string().min(updateBusinessProfileBodyLegalNameMin).max(updateBusinessProfileBodyLegalNameMax).optional(),
+  "legalForm": zod.enum(['SOLE_PROPRIETORSHIP', 'COMPANY', 'PARTNERSHIP', 'OTHER']).optional(),
+  "registrationNumber": zod.string().min(updateBusinessProfileBodyRegistrationNumberMin).max(updateBusinessProfileBodyRegistrationNumberMax).optional(),
+  "address": zod.object({
+  "city": zod.string().max(updateBusinessProfileBodyAddressCityMax).optional(),
+  "area": zod.string().max(updateBusinessProfileBodyAddressAreaMax).optional(),
+  "line": zod.string().max(updateBusinessProfileBodyAddressLineMax).optional()
+}).optional(),
+  "contact": zod.object({
+  "phone": zod.string().max(updateBusinessProfileBodyContactPhoneMax).optional(),
+  "email": zod.email().max(updateBusinessProfileBodyContactEmailMax).optional(),
+  "website": zod.url().max(updateBusinessProfileBodyContactWebsiteMax).optional()
+}).optional(),
+  "openingHours": zod.array(zod.object({
+  "day": zod.int().min(updateBusinessProfileBodyOpeningHoursItemDayMin).max(updateBusinessProfileBodyOpeningHoursItemDayMax),
+  "opens": zod.string().regex(updateBusinessProfileBodyOpeningHoursItemOpensRegExp),
+  "closes": zod.string().regex(updateBusinessProfileBodyOpeningHoursItemClosesRegExp)
+})).max(updateBusinessProfileBodyOpeningHoursMax).optional(),
+  "servicePreferences": zod.object({
+  "delivery": zod.boolean().optional(),
+  "pickup": zod.boolean().optional(),
+  "dineIn": zod.boolean().optional(),
+  "inquiries": zod.enum(['OPEN', 'CLOSED']).optional()
+}).optional()
+})
+
+export const UpdateBusinessProfileResponse = zod.looseObject({
+  "id": zod.uuid(),
+  "marketId": zod.string(),
+  "displayName": zod.string(),
+  "categoryKey": zod.string(),
+  "categoryLabel": zod.string().optional(),
+  "legalName": zod.string().nullish(),
+  "registrationNumberLast4": zod.string().nullish(),
+  "verificationStatus": zod.enum(['DRAFT', 'DOCUMENTS_REQUIRED', 'PENDING_REVIEW', 'VERIFIED', 'REJECTED', 'SUSPENDED']),
+  "verified": zod.boolean(),
+  "publicationStatus": zod.enum(['UNPUBLISHED', 'PUBLISHED']),
+  "revision": zod.int(),
+  "actions": zod.array(zod.enum(['COMPLETE_INFO', 'START_VERIFICATION', 'UPLOAD_DOCUMENTS', 'SUBMIT_FOR_REVIEW', 'VIEW_STATUS', 'ADD_CATALOG', 'REVIEW_PLANS', 'PUBLISH', 'UNPUBLISH', 'CONNECT_SYSTEM'])),
+  "salesHistory": zod.enum(['NONE_IN_DINAR']).optional()
+}).describe('The applicant\'s view. Never an object path, never the full registration number, never the reviewer\'s identity.')
+
+
+export const StartBusinessVerificationParams = zod.object({
+  "id": zod.uuid()
+})
+
+export const StartBusinessVerificationBody = zod.object({
+
+})
+
+export const StartBusinessVerificationResponse = zod.looseObject({
+  "id": zod.uuid(),
+  "marketId": zod.string(),
+  "displayName": zod.string(),
+  "categoryKey": zod.string(),
+  "categoryLabel": zod.string().optional(),
+  "legalName": zod.string().nullish(),
+  "registrationNumberLast4": zod.string().nullish(),
+  "verificationStatus": zod.enum(['DRAFT', 'DOCUMENTS_REQUIRED', 'PENDING_REVIEW', 'VERIFIED', 'REJECTED', 'SUSPENDED']),
+  "verified": zod.boolean(),
+  "publicationStatus": zod.enum(['UNPUBLISHED', 'PUBLISHED']),
+  "revision": zod.int(),
+  "actions": zod.array(zod.enum(['COMPLETE_INFO', 'START_VERIFICATION', 'UPLOAD_DOCUMENTS', 'SUBMIT_FOR_REVIEW', 'VIEW_STATUS', 'ADD_CATALOG', 'REVIEW_PLANS', 'PUBLISH', 'UNPUBLISH', 'CONNECT_SYSTEM'])),
+  "salesHistory": zod.enum(['NONE_IN_DINAR']).optional()
+}).describe('The applicant\'s view. Never an object path, never the full registration number, never the reviewer\'s identity.')
+
+
+export const RequestBusinessDocumentUploadParams = zod.object({
+  "id": zod.uuid()
+})
+
+export const requestBusinessDocumentUploadBodySizeMax = 10485760;
+
+export const requestBusinessDocumentUploadBodyIdempotencyKeyRegExp = new RegExp('^[A-Za-z0-9._:-]{8,128}$');
+
+
+export const RequestBusinessDocumentUploadBody = zod.object({
+  "kind": zod.enum(['COMMERCIAL_REGISTRATION', 'COMMERCIAL_LICENSE', 'MUNICIPALITY_LICENSE', 'AUTHORIZATION_LETTER', 'OWNER_IDENTITY']),
+  "contentType": zod.enum(['application/pdf', 'image/jpeg', 'image/png']),
+  "size": zod.int().min(1).max(requestBusinessDocumentUploadBodySizeMax),
+  "idempotencyKey": zod.string().regex(requestBusinessDocumentUploadBodyIdempotencyKeyRegExp)
+})
+
+export const RequestBusinessDocumentUploadResponse = zod.object({
+  "documentId": zod.uuid(),
+  "uploadURL": zod.string(),
+  "expiresInSeconds": zod.int(),
+  "maxBytes": zod.int()
+})
+
+
+export const CompleteBusinessDocumentUploadParams = zod.object({
+  "id": zod.uuid(),
+  "documentId": zod.uuid()
+})
+
+export const CompleteBusinessDocumentUploadBody = zod.object({
+
+})
+
+export const CompleteBusinessDocumentUploadResponse = zod.looseObject({
+  "id": zod.uuid(),
+  "marketId": zod.string(),
+  "displayName": zod.string(),
+  "categoryKey": zod.string(),
+  "categoryLabel": zod.string().optional(),
+  "legalName": zod.string().nullish(),
+  "registrationNumberLast4": zod.string().nullish(),
+  "verificationStatus": zod.enum(['DRAFT', 'DOCUMENTS_REQUIRED', 'PENDING_REVIEW', 'VERIFIED', 'REJECTED', 'SUSPENDED']),
+  "verified": zod.boolean(),
+  "publicationStatus": zod.enum(['UNPUBLISHED', 'PUBLISHED']),
+  "revision": zod.int(),
+  "actions": zod.array(zod.enum(['COMPLETE_INFO', 'START_VERIFICATION', 'UPLOAD_DOCUMENTS', 'SUBMIT_FOR_REVIEW', 'VIEW_STATUS', 'ADD_CATALOG', 'REVIEW_PLANS', 'PUBLISH', 'UNPUBLISH', 'CONNECT_SYSTEM'])),
+  "salesHistory": zod.enum(['NONE_IN_DINAR']).optional()
+}).describe('The applicant\'s view. Never an object path, never the full registration number, never the reviewer\'s identity.')
+
+
+export const SubmitBusinessForReviewParams = zod.object({
+  "id": zod.uuid()
+})
+
+export const SubmitBusinessForReviewBody = zod.object({
+
+})
+
+export const SubmitBusinessForReviewResponse = zod.looseObject({
+  "id": zod.uuid(),
+  "marketId": zod.string(),
+  "displayName": zod.string(),
+  "categoryKey": zod.string(),
+  "categoryLabel": zod.string().optional(),
+  "legalName": zod.string().nullish(),
+  "registrationNumberLast4": zod.string().nullish(),
+  "verificationStatus": zod.enum(['DRAFT', 'DOCUMENTS_REQUIRED', 'PENDING_REVIEW', 'VERIFIED', 'REJECTED', 'SUSPENDED']),
+  "verified": zod.boolean(),
+  "publicationStatus": zod.enum(['UNPUBLISHED', 'PUBLISHED']),
+  "revision": zod.int(),
+  "actions": zod.array(zod.enum(['COMPLETE_INFO', 'START_VERIFICATION', 'UPLOAD_DOCUMENTS', 'SUBMIT_FOR_REVIEW', 'VIEW_STATUS', 'ADD_CATALOG', 'REVIEW_PLANS', 'PUBLISH', 'UNPUBLISH', 'CONNECT_SYSTEM'])),
+  "salesHistory": zod.enum(['NONE_IN_DINAR']).optional()
+}).describe('The applicant\'s view. Never an object path, never the full registration number, never the reviewer\'s identity.')
+
+
+export const SetBusinessPublicationParams = zod.object({
+  "id": zod.uuid()
+})
+
+export const SetBusinessPublicationBody = zod.object({
+  "publish": zod.boolean()
+})
+
+export const SetBusinessPublicationResponse = zod.looseObject({
+  "id": zod.uuid(),
+  "marketId": zod.string(),
+  "displayName": zod.string(),
+  "categoryKey": zod.string(),
+  "categoryLabel": zod.string().optional(),
+  "legalName": zod.string().nullish(),
+  "registrationNumberLast4": zod.string().nullish(),
+  "verificationStatus": zod.enum(['DRAFT', 'DOCUMENTS_REQUIRED', 'PENDING_REVIEW', 'VERIFIED', 'REJECTED', 'SUSPENDED']),
+  "verified": zod.boolean(),
+  "publicationStatus": zod.enum(['UNPUBLISHED', 'PUBLISHED']),
+  "revision": zod.int(),
+  "actions": zod.array(zod.enum(['COMPLETE_INFO', 'START_VERIFICATION', 'UPLOAD_DOCUMENTS', 'SUBMIT_FOR_REVIEW', 'VIEW_STATUS', 'ADD_CATALOG', 'REVIEW_PLANS', 'PUBLISH', 'UNPUBLISH', 'CONNECT_SYSTEM'])),
+  "salesHistory": zod.enum(['NONE_IN_DINAR']).optional()
+}).describe('The applicant\'s view. Never an object path, never the full registration number, never the reviewer\'s identity.')
+
+
+/**
+ * @summary Read-only integration request; no credentials; recorded ADAPTER_UNAVAILABLE
+ */
+export const RequestBusinessIntegrationParams = zod.object({
+  "id": zod.uuid()
+})
+
+export const requestBusinessIntegrationBodySystemNameMin = 2;
+export const requestBusinessIntegrationBodySystemNameMax = 80;
+
+export const requestBusinessIntegrationBodyEndpointUrlMax = 300;
+
+export const requestBusinessIntegrationBodyScopesMax = 3;
+
+
+
+export const RequestBusinessIntegrationBody = zod.object({
+  "kind": zod.enum(['POS', 'ONLINE_STORE', 'ACCOUNTING', 'DELIVERY_PLATFORM', 'CUSTOM_API']),
+  "systemName": zod.string().min(requestBusinessIntegrationBodySystemNameMin).max(requestBusinessIntegrationBodySystemNameMax),
+  "endpointUrl": zod.string().max(requestBusinessIntegrationBodyEndpointUrlMax).optional(),
+  "scopes": zod.array(zod.enum(['CATALOG_READ', 'ORDERS_READ', 'INVENTORY_READ'])).min(1).max(requestBusinessIntegrationBodyScopesMax)
+})
+
+export const RequestBusinessIntegrationResponse = zod.looseObject({
+  "id": zod.uuid(),
+  "marketId": zod.string(),
+  "displayName": zod.string(),
+  "categoryKey": zod.string(),
+  "categoryLabel": zod.string().optional(),
+  "legalName": zod.string().nullish(),
+  "registrationNumberLast4": zod.string().nullish(),
+  "verificationStatus": zod.enum(['DRAFT', 'DOCUMENTS_REQUIRED', 'PENDING_REVIEW', 'VERIFIED', 'REJECTED', 'SUSPENDED']),
+  "verified": zod.boolean(),
+  "publicationStatus": zod.enum(['UNPUBLISHED', 'PUBLISHED']),
+  "revision": zod.int(),
+  "actions": zod.array(zod.enum(['COMPLETE_INFO', 'START_VERIFICATION', 'UPLOAD_DOCUMENTS', 'SUBMIT_FOR_REVIEW', 'VIEW_STATUS', 'ADD_CATALOG', 'REVIEW_PLANS', 'PUBLISH', 'UNPUBLISH', 'CONNECT_SYSTEM'])),
+  "salesHistory": zod.enum(['NONE_IN_DINAR']).optional()
+}).describe('The applicant\'s view. Never an object path, never the full registration number, never the reviewer\'s identity.')
+
+
+/**
+ * @summary Public view of a PUBLISHED, VERIFIED business (404 otherwise); no legal or document data
+ */
+export const GetPublicBusinessParams = zod.object({
+  "id": zod.uuid()
+})
+
+export const GetPublicBusinessResponse = zod.object({
+  "id": zod.uuid(),
+  "marketId": zod.string(),
+  "displayName": zod.string(),
+  "categoryLabel": zod.string(),
+  "description": zod.string().optional(),
+  "city": zod.string().nullish(),
+  "area": zod.string().nullish(),
+  "openingHours": zod.array(zod.record(zod.string(), zod.unknown())).optional(),
+  "servicePreferences": zod.record(zod.string(), zod.unknown()).optional(),
+  "verified": zod.literal(true),
+  "verifiedLabel": zod.string()
+})
+
+
+/**
+ * @summary Reviewer queue (ADMIN)
+ */
+export const ListBusinessVerificationQueueQueryParams = zod.object({
+  "status": zod.enum(['DRAFT', 'DOCUMENTS_REQUIRED', 'PENDING_REVIEW', 'VERIFIED', 'REJECTED', 'SUSPENDED']).optional()
+})
+
+export const ListBusinessVerificationQueueResponseItem = zod.record(zod.string(), zod.unknown()).describe('Commercial economy request/response object; bodies are validated strictly on the server and never accept owners, prices, balances or paid flags.')
+export const ListBusinessVerificationQueueResponse = zod.array(ListBusinessVerificationQueueResponseItem).max(50)
+
+
+export const GetBusinessForReviewParams = zod.object({
+  "id": zod.uuid()
+})
+
+export const GetBusinessForReviewResponse = zod.record(zod.string(), zod.unknown()).describe('Commercial economy request/response object; bodies are validated strictly on the server and never accept owners, prices, balances or paid flags.')
+
+
+/**
+ * @summary The only writer of VERIFIED / REJECTED / SUSPENDED; the reviewer is never the applicant
+ */
+export const DecideBusinessVerificationParams = zod.object({
+  "id": zod.uuid()
+})
+
+export const decideBusinessVerificationBodyReasonMax = 500;
+
+
+
+
+export const DecideBusinessVerificationBody = zod.object({
+  "decision": zod.enum(['VERIFY', 'REJECT', 'REQUEST_DOCUMENTS', 'SUSPEND', 'REINSTATE']),
+  "reason": zod.string().max(decideBusinessVerificationBodyReasonMax).optional(),
+  "expectedRevision": zod.int().min(1)
+})
+
+export const DecideBusinessVerificationResponse = zod.record(zod.string(), zod.unknown()).describe('Commercial economy request/response object; bodies are validated strictly on the server and never accept owners, prices, balances or paid flags.')
+
+
+/**
+ * @summary Reviewer-only bytes of a CLEAN document (Cache-Control no-store); every read is recorded
+ */
+export const GetBusinessDocumentForReviewParams = zod.object({
+  "documentId": zod.uuid()
+})
+
+export const GetBusinessDocumentForReviewResponse = zod.unknown()
+
+

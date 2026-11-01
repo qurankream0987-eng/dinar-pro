@@ -64,7 +64,7 @@ import { plansCardPrompt, plansCardView, usageCardPrompt, usageCardView } from "
 import { AI_USAGE_QUESTION } from "./usage-intent";
 import { resumeConversationDraftById } from "./draft-actions";
 import type { ToolResult } from "./tool-registry";
-import { businessIntent, normalizeBusinessText, type BusinessIntent } from "./business-intent";
+import { businessIntent, isPossibleBusinessMessage, normalizeBusinessText, type BusinessIntent } from "./business-intent";
 import { subscriptionPlansOverview } from "../lib/subscription-overview";
 import {
   createBusinessDraft,
@@ -1295,6 +1295,8 @@ export async function executeBusinessOnboardingTurn(input: CommerceTurnInput): P
     if (intent?.kind !== "INTRODUCE") return null;
     return { tool: "openSurface", version: 1, result: { kind: "SURFACE", surface: "AUTH", query: {}, listings: [], prompt: "سجّل الدخول أولًا لإضافة نشاطك التجاري؛ يُنشأ النشاط باسم حسابك فقط." } };
   }
+  // No database work for messages that cannot be a business request in any context.
+  if (!isPossibleBusinessMessage(input.message)) return null;
   const actorId = input.actorId;
   const market = input.market;
   const sets = await conversationSets(input.conversationId, market.id);
