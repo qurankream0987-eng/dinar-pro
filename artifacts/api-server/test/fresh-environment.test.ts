@@ -201,9 +201,10 @@ await test("market activation: only the administrator, only the chosen market, a
   assert.equal(listed.status, 200);
   assert.equal(listed.json.length, 249);
 
-  // Activation without a configured unit price is refused: nothing is activated implicitly.
+  // Owner decision 2026-10-30 #3 (W07): a legacy unit price no longer gates activation; the
+  // administrator's explicit configuration does. A price can still be recorded and is audited.
   const unpriced = await call("/admin/markets/JO", { method: "PATCH", body: configuration, session: admin });
-  assert.equal(unpriced.status, 409, unpriced.text);
+  assert.equal(unpriced.status, 200, unpriced.text);
   const price = await call("/admin/markets/JO/prices", { method: "POST", body: { currencyCode: "JOD", unitPriceMinor: 1000 }, session: admin });
   assert.ok([200, 201].includes(price.status), price.text);
   const activated = await call("/admin/markets/JO", { method: "PATCH", body: configuration, session: admin });

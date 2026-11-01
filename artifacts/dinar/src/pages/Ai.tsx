@@ -659,7 +659,13 @@ export default function AiPage() {
     if (!user) return;
     const revalidate = () => {
       if (document.visibilityState !== "visible" || !activeId) return;
-      syncFromServer(activeId);
+      // Integration: the identity is re-read on the same event; re-read the conversation only if
+      // this tab is still the same account (a signed-out or switched tab must not ask at all).
+      const expected = user.id;
+      void queryClient.refetchQueries({ queryKey: ["identity"] }).then(() => {
+        const current = queryClient.getQueryData<{ user: { id: string } | null }>(["identity"]);
+        if (current?.user?.id === expected) syncFromServer(activeId);
+      });
     };
     document.addEventListener("visibilitychange", revalidate);
     window.addEventListener("focus", revalidate);

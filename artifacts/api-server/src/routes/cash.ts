@@ -29,7 +29,9 @@ const requireCashEngine: RequestHandler = (_req, res, next) => {
   }
   next();
 };
-router.use(requireCashEngine);
+// Integration fix: the guard covers the cash paths only. A path-less router.use here hid every
+// route mounted after this router (the whole API) whenever the engine is off, i.e. in production.
+router.use(["/orders/:id/cash-payment", "/orders/:id/cash", "/orders/:id/cash-refunds", "/cash-refunds"], requireCashEngine);
 
 const Evidence = z.array(z.string().trim().min(1).max(500)).max(10).default([]);
 const ClaimBody = z
