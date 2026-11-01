@@ -52,6 +52,8 @@ on:
           - sc07-browser-journey.test
           - sc10-browser-journey.test
           - wave03-card-envelope-browser-journey.test
+          - search-sql-foundation.test
+          - search-sql-performance.test
       run_release_migration:
         description: "Also run the journal and upgrade fixtures (PG16/18) plus the release runner (PG18)"
         required: false
