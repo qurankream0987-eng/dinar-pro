@@ -51,6 +51,10 @@ DINAR_LOCAL_PG=postgres://user@127.0.0.1:55432 test/isolation/local-suite.sh <su
 
 - `local-suite.sh` options: `DINAR_SUITE_SEED=fixtures|development|none` (default fixtures; most
   suites need the active JO market), `DINAR_SUITE_DB=<name>`, `DINAR_CHROMIUM=<browser>`.
+  Several suite names may be given: they then share ONE migrate+seed and run in order, which is how
+  a chain proves subsystem coexistence; the chain runs continue past a failure and report per-suite
+  exit and per-suite outbound count. Named chains live in the `chain:` allowlist of
+  `.github/workflows/qoder-api-suite.yml`.
   Where user namespaces and PostgreSQL 18 exist, `test/isolation/sandbox.sh` is the stronger option.
 - Unseeded: `admin-bootstrap`, `fresh-environment` (DB `dinar_test_fresh_*`), `readiness`.
   Development seed: `phase2-commission-acceptance`. `listing-pricing-invariants` needs `dinar_test_blockb_*`,
