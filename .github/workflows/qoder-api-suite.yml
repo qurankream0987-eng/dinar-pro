@@ -54,6 +54,15 @@ on:
           - wave03-card-envelope-browser-journey.test
           - search-sql-foundation.test
           - search-sql-performance.test
+      chain:
+        description: "Combined chain on ONE migrated+seeded database (ignores `suite`); 'none' runs the single suite"
+        required: false
+        type: choice
+        default: none
+        options:
+          - none
+          - financial-waves-w07-w12c
+          - business-cards-search-commerce
       run_release_migration:
         description: "Also run the journal and upgrade fixtures (PG16/18) plus the release runner (PG18)"
         required: false
@@ -150,7 +159,9 @@ jobs:
 
   suite:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    # A combined chain runs several suites against one migrate+seed inside a single job, so the
+    # ceiling is the whole chain, not one suite.
+    timeout-minutes: 120
     services:
       postgres:
         image: postgres:${{ inputs.pg_version }}
@@ -168,6 +179,7 @@ jobs:
     env:
       DINAR_LOCAL_PG: postgres://dinar_isolation@127.0.0.1:5432
       SUITE: ${{ inputs.suite }}
+      CHAIN: ${{ inputs.chain }}
       FLAGS: ${{ inputs.flags }}
     steps:
       - name: Validate inputs
@@ -201,7 +213,38 @@ jobs:
                 exit 96 ;;
             esac
           done
-          echo "INPUTS_OK suite=$SUITE pg=$PG_MAJOR switches=$(printf '%s' "$FLAGS" | wc -w)"
+          # A chain names its suites here, in the workflow, so no chain content ever comes from the
+          # dispatch payload. Flags are checked against what the chain actually requires, so a missing
+          # approval gate fails at validation instead of half-way through a long run.
+          has_flag() { case " $FLAGS " in *" $1=development "*) return 0 ;; *) return 1 ;; esac; }
+          require_flags() {
+            for key in $1; do
+              has_flag "$key" || { echo "chain $CHAIN requires $key=development" >&2; exit 96; }
+            done
+          }
+          SUITES="$SUITE"
+          case "$CHAIN" in
+            none) ;;
+            financial-waves-w07-w12c)
+              SUITES="wave07-financial-journal.test wave08-cash-and-refunds.test wave09-policy-consent-compliance.test wave10-trust-support-whatsapp.test wave07-w12-contract-hardening.test"
+              require_flags "BDINAR_TEST_DATABASE BDINAR_W07_ACCEPTANCE BDINAR_W08_ACCEPTANCE BDINAR_W09_ACCEPTANCE BDINAR_W10_ACCEPTANCE BDINAR_W12C_ACCEPTANCE BDINAR_WAVE4_ACCEPTANCE" ;;
+            business-cards-search-commerce)
+              SUITES="d1-d2-business-foundation.test w02u3-card-reliability.test search-sql-foundation.test commerce-journey.test"
+              require_flags "BDINAR_D1D2_ACCEPTANCE BDINAR_W02U3_TEST_DATABASE BDINAR_TEST_DATABASE BDINAR_WAVE4_ACCEPTANCE"
+              case " $FLAGS " in *" BDINAR_PROMOTIONS_ENABLED=true "*) ;; *) echo "chain $CHAIN requires BDINAR_PROMOTIONS_ENABLED=true" >&2; exit 96 ;; esac ;;
+            *) echo "chain not allowlisted: $CHAIN" >&2; exit 96 ;;
+          esac
+          echo "SUITES=$SUITES" >> "$GITHUB_ENV"
+          # Chromium is decided from the resolved list, not from `suite`: a chain ignores that input,
+          # and commerce-journey.test inside a chain still needs a real browser.
+          chromium=0
+          for name in $SUITES; do
+            case "$name" in
+              *browser-journey*|*browser*|*ui.test|security-acceptance.test|phase1-acceptance.test|commerce-journey.test|wave3-acceptance.test) chromium=1 ;;
+            esac
+          done
+          echo "NEEDS_CHROMIUM=$chromium" >> "$GITHUB_ENV"
+          echo "INPUTS_OK suite=$SUITE chain=$CHAIN chromium=$chromium pg=$PG_MAJOR switches=$(printf '%s' "$FLAGS" | wc -w)"
 
       - name: Confirm loopback-only database target
         run: |
@@ -248,21 +291,21 @@ jobs:
         run: pnpm --filter @workspace/dinar run test:surfaces
 
       - name: Install Chromium (browser journeys and XSS acceptance)
-        if: contains(env.SUITE, 'browser-journey') || env.SUITE == 'd1-d2-business-browser.test' || env.SUITE == 'security-acceptance.test' || env.SUITE == 'phase1-acceptance.test' || env.SUITE == 'commerce-journey.test' || env.SUITE == 'wave3-acceptance.test' || env.SUITE == 'w02-ultra-browser.test'
+        if: env.NEEDS_CHROMIUM == '1'
         working-directory: artifacts/dinar
         run: |
           pnpm exec playwright install --with-deps chromium
           echo "DINAR_CHROMIUM=$(node -e 'console.log(require("@playwright/test").chromium.executablePath())')" >> "$GITHUB_ENV"
 
-      - name: Run one isolated suite
+      - name: Run the isolated suite (or the combined chain, sharing one database)
         working-directory: artifacts/api-server
-        run: sh test/isolation/local-suite.sh "$SUITE" $FLAGS
+        run: sh test/isolation/local-suite.sh $SUITES $FLAGS
 
       - name: Upload logs
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: suite-log-${{ inputs.suite }}-pg${{ inputs.pg_version }}
+          name: suite-log-${{ inputs.chain }}-${{ inputs.suite }}-pg${{ inputs.pg_version }}
           path: |
             artifacts/api-server/*.log
           if-no-files-found: ignore

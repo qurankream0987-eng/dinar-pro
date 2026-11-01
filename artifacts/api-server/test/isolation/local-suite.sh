@@ -1,10 +1,14 @@
 #!/bin/sh
-# Runs one test/run.mjs suite against a fresh database on an existing LOOPBACK PostgreSQL server,
+# Runs test/run.mjs suites against a fresh database on an existing LOOPBACK PostgreSQL server,
 # for hosts where sandbox.sh cannot run (root containers, no user namespaces, no PostgreSQL 18).
 # Weaker than sandbox.sh: there is no network namespace; isolation is a clean environment
 # (env -i) plus the net-guard preload, which refuses and records every non-loopback attempt.
 #
-#   DINAR_LOCAL_PG=postgres://user@127.0.0.1:55432 test/isolation/local-suite.sh <suite> [VAR=value ...]
+#   DINAR_LOCAL_PG=postgres://user@127.0.0.1:55432 test/isolation/local-suite.sh <suite.test> [more.test ...] [VAR=value ...]
+#
+# Several suites may be named: they then share ONE migrated and seeded database and run in the
+# order given. That is what makes a combined chain prove subsystem coexistence, which isolated
+# per-suite runs never do. The exit code is the first failing suite's (98 for any outbound attempt).
 #
 # Optional: DINAR_SUITE_DB (default dinar_test_local_<random>), DINAR_SUITE_SEED
 # (fixtures|development|none, default fixtures), DINAR_SUITE_KEEP_DB=1, DINAR_CHROMIUM.
@@ -13,8 +17,6 @@ set -eu
 HERE=$(cd "$(dirname "$0")" && pwd)
 API=$(cd "$HERE/../.." && pwd)
 REPO=$(cd "$API/../.." && pwd)
-SUITE=${1:?usage: local-suite.sh <suite> [VAR=value ...]}
-shift
 
 : "${DINAR_LOCAL_PG:?set DINAR_LOCAL_PG to a loopback PostgreSQL server URL without a database}"
 case "$DINAR_LOCAL_PG" in
@@ -28,16 +30,25 @@ case "$DB" in *development*|*production*|*staging*|*canonical*|*legacy*)
   echo "LOCAL_SUITE: database name $DB is reserved" >&2; exit 96 ;; esac
 URL="$DINAR_LOCAL_PG/$DB"
 
+SUITES=""
 EXTRA=""
-for pair in "$@"; do
-  case "$pair" in
-    BDINAR_*=*|DINAR_*=*) ;;
-    *) echo "LOCAL_SUITE: only BDINAR_*/DINAR_* switches may be passed ($pair)" >&2; exit 96 ;;
+for arg in "$@"; do
+  case "$arg" in
+    BDINAR_*=*|DINAR_*=*)
+      case "${arg%%=*}" in *KEY*|*SECRET*|*TOKEN*|*PASSWORD*|*DATABASE_URL*)
+        echo "LOCAL_SUITE: refusing credential-like variable ${arg%%=*}" >&2; exit 96 ;; esac
+      EXTRA="$EXTRA $arg" ;;
+    **=**)
+      echo "LOCAL_SUITE: switch must be a BDINAR_*/DINAR_* allowlisted variable ($arg)" >&2; exit 96 ;;
+    *)
+      # A suite name is a bare *.test token; anything else is refused rather than interpolated.
+      case "$arg" in *[!a-zA-Z0-9._-]*)
+        echo "LOCAL_SUITE: invalid suite name ($arg)" >&2; exit 96 ;; esac
+      case "$arg" in *.test) SUITES="$SUITES $arg" ;;
+        *) echo "LOCAL_SUITE: suite arguments must end in .test ($arg)" >&2; exit 96 ;; esac ;;
   esac
-  case "${pair%%=*}" in *KEY*|*SECRET*|*TOKEN*|*PASSWORD*|*DATABASE_URL*)
-    echo "LOCAL_SUITE: refusing credential-like variable ${pair%%=*}" >&2; exit 96 ;; esac
-  EXTRA="$EXTRA $pair"
 done
+[ -n "$SUITES" ] || { echo "usage: local-suite.sh <suite.test> [more.test ...] [VAR=value ...]" >&2; exit 96; }
 
 node -e "
 const pg = require('$REPO/lib/db/node_modules/pg');
@@ -86,12 +97,26 @@ case "${DINAR_SUITE_SEED:-fixtures}" in
 esac
 
 status=0
-run node test/run.mjs "$SUITE" || status=$?
-attempts=$(wc -l < "$NETLOG" | tr -d ' ')
-if [ "$attempts" != 0 ]; then
-  echo "LOCAL_SUITE_NET: FAIL — $attempts outbound attempts:" >&2
-  cat "$NETLOG" >&2
-  [ "$status" -eq 0 ] && status=98
-fi
-echo "LOCAL_SUITE suite=$SUITE db=$DB exit=$status outbound=$attempts"
+first_failed=""
+# shellcheck disable=SC2086  # $SUITES is word-split on purpose; every name passed the charset check.
+for SUITE in $SUITES; do
+  before=$(wc -l < "$NETLOG" | tr -d ' ')
+  suite_status=0
+  run node test/run.mjs "$SUITE" || suite_status=$?
+  total=$(wc -l < "$NETLOG" | tr -d ' ')
+  outbound=$((total - before))
+  if [ "$outbound" != 0 ]; then
+    echo "LOCAL_SUITE_NET: FAIL — suite $SUITE made $outbound outbound attempt(s):" >&2
+    tail -n "$outbound" "$NETLOG" >&2
+    [ "$suite_status" -eq 0 ] && suite_status=98
+  fi
+  echo "LOCAL_SUITE suite=$SUITE db=$DB exit=$suite_status outbound=$outbound"
+  # The chain continues after a failure: which later suites still pass on the same mutated database
+  # is the coexistence evidence, and a rerun per suite would cost a full migrate+seed each time.
+  if [ "$suite_status" != 0 ] && [ -z "$first_failed" ]; then
+    status=$suite_status
+    first_failed=$SUITE
+  fi
+done
+echo "LOCAL_SUITE_CHAIN suites=$(printf '%s' "$SUITES" | wc -w) db=$DB exit=$status first_failed=${first_failed:-none}"
 exit "$status"
