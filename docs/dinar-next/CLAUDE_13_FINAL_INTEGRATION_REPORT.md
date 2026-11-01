@@ -33,7 +33,7 @@
 |---|---|
 | البطارية على `7cd334d` | <!-- RESULT-7CD334D --> |
 | البطارية على `6a335ac` | 130/130 مجموعة، و1366 اختبارًا PASS، و0 FAIL، و8 SKIP (شبكة حية)، و0 اتصال خارجي |
-| CI PG16/PG18 على `7cd334d` | <!-- RESULT-CI --> |
+| CI PG16/PG18 على `7cd334d` | التشغيل `41275493692` success: PG16 وPG18، ومنه `test:release-migration` على PG18 |
 | typecheck، والبناءان، و`test:surfaces` | نظيفة، و31/31 |
 
 ## 3. ما تغيّر في COMMAND 13

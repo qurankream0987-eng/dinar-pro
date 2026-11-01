@@ -54,7 +54,7 @@
 
 **محليًا:** غير متاح في الحاوية، و`test:release-migration` يشترط `serverVersionNum >= 180000`.
 
-**في CI:** أُضيف `.github/workflows/claude-integration.yml`، بمصفوفة PG16 وPG18، ومُشغّل `push` محصور بهذا الفرع. يشغّل:
+**في CI:** (التشغيل `41275493692` على `7cd334d`: success على PG16 وPG18، و`test:release-migration` على PG18 success.) أُضيف `.github/workflows/claude-integration.yml`، بمصفوفة PG16 وPG18، ومُشغّل `push` محصور بهذا الفرع. يشغّل:
 - typecheck والبناءين و`test:surfaces`؛
 - `test:release-migration` على PG18؛
 - readiness وdevelopment-tls ومجموعات التكامل وW07–W12.1 وC1 وD1/D2 والبطاقات والسلة والمحادثة.

@@ -78,7 +78,29 @@
 
 ## 3. PostgreSQL 16 و18 في GitHub Actions
 
-<!-- CI-7CD334D -->
+**التشغيل:** `claude-integration`، رقم `41275493692`، على `7cd334d9389652c1ebba710c55d806461fe34505`. النتيجة **success**.
+
+| المهمة | النتيجة |
+|---|---|
+| `suite (16)` (job `124756728976`) | success |
+| `suite (18)` (job `124756728658`) | success |
+
+**الخطوات:** متطابقة في المهمتين.
+1. `pnpm install --frozen-lockfile`؛
+2. typecheck؛
+3. بناء الخادم والواجهة؛
+4. `test:surfaces`؛
+5. readiness وdevelopment-tls؛
+6. مجموعات `integration-*` الأربع؛
+7. W07–W12.1: `wave07`، `wave08`، `wave09`، `wave10`، `wave07-w12-contract-hardening`، `financial-state-machine`، `payment-order-state`؛
+8. C1 وD1/D2 والبطاقات والسلة والمحادثة: `search-sql-foundation`، `d1-d2-business-foundation`، `d1-d2-business-browser`، `policy-consent-cards`، `w02u3-card-reliability`، `wave03-card-envelope`، `commerce-journey`، `conversation`، `closure-integrations`.
+
+**على PG18 وحده:** `lib/db` `test:release-migration` = success. وهو مُتخطى على PG16 بالتصميم، لأنه يشترط `serverVersionNum >= 180000`.
+
+**طريقة التشغيل:**
+- مُشغّل `push` محصور بهذا الفرع؛
+- لا `workflow_dispatch` لأن الملف ليس على الفرع الافتراضي؛
+- لا رمز شخصي مستخدم أو مكشوف.
 
 ## 4. الأدلة المطلوبة في COMMAND 13 ومكانها
 
