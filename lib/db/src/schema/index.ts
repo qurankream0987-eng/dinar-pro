@@ -1658,7 +1658,7 @@ export const marketplaceReports = pgTable(
   (t) => [
     check(
       "marketplace_reports_target_type_valid",
-      sql`${t.targetType} IN ('LISTING', 'USER', 'ORDER')`,
+      sql`${t.targetType} IN ('LISTING', 'USER', 'ORDER', 'MESSAGE', 'AI_ANSWER')`,
     ),
     check(
       "marketplace_reports_status_valid",
