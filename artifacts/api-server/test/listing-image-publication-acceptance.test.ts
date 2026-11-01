@@ -1,4 +1,5 @@
 import { after, test } from "node:test";
+import { deleteDisposableUsers } from "./disposable-user-cleanup";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { eq, inArray } from "drizzle-orm";
@@ -594,8 +595,7 @@ after(async () => {
           createdChallengeIds,
         ),
       );
-  if (createdUserIds.length)
-    await db.delete(users).where(inArray(users.id, createdUserIds));
+  await deleteDisposableUsers(createdUserIds);
   globalThis.fetch = originalFetch;
   await pool.end();
   await localObjectStorage?.close();

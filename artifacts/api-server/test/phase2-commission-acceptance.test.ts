@@ -1,4 +1,5 @@
 import { after, test } from "node:test";
+import { deleteDisposableUsers } from "./disposable-user-cleanup";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { execFile } from "node:child_process";
@@ -827,7 +828,7 @@ await test("Phase 2 snapshots the current 10% commission through checkout and or
       await db
         .delete(sessions)
         .where(inArray(sessions.userId, createdUserIds));
-      await db.delete(users).where(inArray(users.id, createdUserIds));
+      await deleteDisposableUsers(createdUserIds);
       const remainingUsers = await db
         .select({ id: users.id })
         .from(users)

@@ -1,4 +1,5 @@
 import { after, test } from "node:test";
+import { deleteDisposableUsers } from "./disposable-user-cleanup";
 import assert from "node:assert/strict";
 import { eq } from "drizzle-orm";
 import app from "../src/app";
@@ -108,7 +109,7 @@ after(async () => {
   if (userId) {
     await db.delete(sessions).where(eq(sessions.userId, userId));
     await db.delete(policyAcceptances).where(eq(policyAcceptances.userId, userId));
-    await db.delete(users).where(eq(users.id, userId));
+    await deleteDisposableUsers([userId]);
   }
   await new Promise<void>((resolve, reject) =>
     server.close((error) => (error ? reject(error) : resolve())),

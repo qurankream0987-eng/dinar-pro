@@ -1,4 +1,5 @@
 import { after, test } from "node:test";
+import { deleteDisposableUsers } from "./disposable-user-cleanup";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { execFile } from "node:child_process";
@@ -2017,7 +2018,7 @@ await test("Phase 1 persisted marketplace acceptance journeys", async () => {
         await db
           .delete(sessions)
           .where(inArray(sessions.userId, createdUserIds));
-        await db.delete(users).where(inArray(users.id, createdUserIds));
+        await deleteDisposableUsers(createdUserIds);
 
         const remainingUsers = await db
           .select({ id: users.id })
