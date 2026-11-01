@@ -21,6 +21,7 @@ const approvalMessages: Record<string, string> = {
   BDINAR_XP_ACCEPTANCE: "BDINAR_XP_ACCEPTANCE=development",
   BDINAR_UCC_ACCEPTANCE: "BDINAR_UCC_ACCEPTANCE=development",
   BDINAR_CLOSURE_ACCEPTANCE: "BDINAR_CLOSURE_ACCEPTANCE=development",
+  BDINAR_D1D2_ACCEPTANCE: "BDINAR_D1D2_ACCEPTANCE=development",
   BDINAR_ACCEPTANCE_FIXTURES: "BDINAR_ACCEPTANCE_FIXTURES=development",
   BDINAR_DEEPSEEK_CHAT_ACCEPTANCE: "BDINAR_DEEPSEEK_CHAT_ACCEPTANCE=development",
 };
@@ -84,6 +85,7 @@ const operationMessages: Record<keyof typeof approvalMessages, string> = {
   BDINAR_XP_ACCEPTANCE: "Experience upgrade acceptance run",
   BDINAR_UCC_ACCEPTANCE: "Universal conversational control acceptance run",
   BDINAR_CLOSURE_ACCEPTANCE: "Pre-integration engineering closure acceptance run",
+  BDINAR_D1D2_ACCEPTANCE: "D1/D2 subscription and DINAR Business acceptance run",
   BDINAR_ACCEPTANCE_FIXTURES: "Disposable acceptance fixture setup",
   BDINAR_DEEPSEEK_CHAT_ACCEPTANCE: "DeepSeek canonical chat compatibility run",
 };

@@ -15,6 +15,7 @@ import { localObjectStorage } from "./local-object-storage";
 import { test, after } from "node:test";
 import assert from "node:assert/strict";
 import { createHmac, randomUUID } from "node:crypto";
+import { readFileSync } from "node:fs";
 import { and, eq, sql } from "drizzle-orm";
 import {
   billingWebhookEvents,
@@ -40,7 +41,8 @@ import {
   type SubscriptionBillingProvider,
 } from "../src/lib/subscription-billing";
 import { registerBusinessDocumentScanner, unregisterBusinessDocumentScanner, validateIntegrationEndpoint } from "../src/lib/business-profiles";
-import { businessIntent, businessNameFrom } from "../src/ai/business-intent";
+import { businessIntent, businessNameFrom, isPossibleBusinessMessage } from "../src/ai/business-intent";
+import { authorizeBusinessAction, BUSINESS_CATALOG_CONTRACT_VERSION, BUSINESS_LIFECYCLE, businessIdentity, businessListingAssociation, businessPermission, businessPlanStatus, publicationEligibility } from "../src/lib/business-catalog-contract";
 import { searchMarketplaceListings } from "../src/lib/marketplace-listings";
 import { marketFor } from "../src/lib/markets";
 import { getModelGatewayCallCount } from "../src/ai/model-gateway";
@@ -727,6 +729,74 @@ await test("D2-15 the DINAR Business card persists and rehydrates from the serve
   const status = await turn(other, conv, "وين وصل طلبي؟");
   assert.equal(status.payload.surface, "BUSINESS_PROFILE", "«طلبي» right after the card is the business request");
   assert.match(status.payload.prompt, /بانتظار مستنداتك/u);
+});
+
+await test("D2-17 the typed catalog contract keeps verification, publication, membership and paid plan apart", async () => {
+  const verifiedId = samraa.verifiedSibling;
+  const identity = (await businessIdentity(verifiedId))!;
+  assert.deepEqual([identity.contractVersion, identity.verification, identity.verified, identity.suspended], [BUSINESS_CATALOG_CONTRACT_VERSION, "VERIFIED", true, false]);
+  const draftIdentity = (await businessIdentity(samraa.id))!;
+  assert.equal(draftIdentity.verification, "DRAFT");
+  // Permissions: owner of the verified business may publish; the stranger may not even read.
+  assert.deepEqual((await authorizeBusinessAction(owner.id, verifiedId, "PUBLISH_CATALOG_AS_BUSINESS")).decision, { allowed: true, reason: "OK" });
+  assert.equal((await authorizeBusinessAction(other.id, verifiedId, "VIEW_PRIVATE")).decision.reason, "NOT_A_MEMBER");
+  assert.equal((await authorizeBusinessAction(owner.id, samraa.id, "PUBLISH_PROFILE")).decision.reason, "NOT_VERIFIED", "a draft is never shown as a business");
+  assert.equal((await authorizeBusinessAction(owner.id, samraa.id, "PREPARE_CATALOG")).decision.allowed, true, "a draft may prepare ordinary listings");
+  const member = { businessId: verifiedId, userId: owner.id, role: "VERIFIED_OWNER" as const, active: true };
+  assert.equal(businessPermission({ ...identity, verification: "SUSPENDED", verified: false, suspended: true }, member, "PUBLISH_PROFILE").reason, "SUSPENDED");
+  assert.equal(businessPermission(identity, { ...member, role: "STAFF" }, "VIEW_PRIVATE").reason, "ROLE_NOT_GRANTABLE");
+  assert.equal(businessPermission(identity, { ...member, active: false }, "VIEW_PRIVATE").reason, "MEMBERSHIP_REVOKED");
+  assert.equal(businessPermission(identity, { ...member, role: "APPLICANT" }, "SUBSCRIBE_BUSINESS_PLAN").reason, "NOT_VERIFIED_OWNER");
+  // Publication eligibility never needs (nor is satisfied by) a paid plan.
+  assert.deepEqual(publicationEligibility(draftIdentity), { profile: false, catalogAsBusiness: false, reasons: ["NOT_VERIFIED"], paidPlanRequired: false });
+  assert.equal(publicationEligibility(identity).profile, true);
+  // The paid plan is its own fact: the verified business has one (D2-12), the draft none.
+  assert.equal((await businessPlanStatus(verifiedId)).paid, true);
+  assert.deepEqual(await businessPlanStatus(samraa.id), { paid: false, status: "NONE", grantsOnlyWhileVerified: true });
+  // Business ↔ listing association (v1): the owner's own listings in the business's market.
+  const association = (await businessListingAssociation(verifiedId))!;
+  assert.equal(association.mode, "OWNER_MARKET_IMPLICIT");
+  assert.ok(association.listingIds.includes(`d12-rank-${runId}-0`), "the owner's KW listing belongs to the catalog");
+  assert.ok(!association.listingIds.includes(`d12-rank-${runId}-1`), "another seller's listing never does");
+  assert.ok(BUSINESS_LIFECYCLE.every((step) => step.to !== "VERIFIED" || step.actor === "REVIEWER"), "only a reviewer ever moves to VERIFIED");
+});
+
+await test("D2-18 the business pre-gate costs no query for ordinary messages and never swallows other follow-ups", async () => {
+  for (const message of ["ابحث عن هاتف", "تتبع طلبي", "نعم", "اعرض إعلاناتي", "كم سعر برو", "أريد أن أبيع", "رصيدي", "شكرا", "وين وصل طلبي رقم 12345", "ما الفرق بين جو وبرو", "كم بقي من استخدامي؟", "أبي أشترك في بزنس"])
+    assert.equal(isPossibleBusinessMessage(message), false, message);
+  for (const message of ["وين وصل طلبي؟", "أنا صاحب مطعم اسمه زاد", "أبي أرفع السجل التجاري", "أرسل طلب التوثيق"]) assert.equal(isPossibleBusinessMessage(message), true, message);
+  const router = await register("router");
+  await newBusiness(router, `مطعم التوجيه ${runId}`);
+  const conv = await conversation(router);
+  const fresh = await turn(router, conv, "وين وصل طلبي؟");
+  assert.notEqual(fresh.payload.surface, "BUSINESS_PROFILE", "without its card, «طلبي» stays an order question");
+  const card = await turn(router, conv, "اعرض نشاطي");
+  assert.equal(card.payload.surface, "BUSINESS_PROFILE", card.raw);
+  for (const message of ["تتبع طلبي", "وين وصل طلبي رقم 12345", "ابحث عن هاتف"]) {
+    const reply = await turn(router, conv, message);
+    assert.notEqual(reply.payload.surface, "BUSINESS_PROFILE", message);
+    assert.equal((await turn(router, conv, "اعرض نشاطي")).payload.commerce.business.status, "DRAFT");
+  }
+  const status = await turn(router, conv, "وين وصل طلبي؟");
+  assert.equal(status.payload.surface, "BUSINESS_PROFILE");
+  assert.match(status.text, /مسودة لم تُرسل للتحقق/u);
+});
+
+await test("D2-19 every D1/D2 route has an OpenAPI contract", () => {
+  const spec = readFileSync(new URL("../../../lib/api-spec/openapi.yaml", import.meta.url.replace("/.test-build/", "/test/")), "utf8");
+  const routes = ["../src/routes/business-profiles.ts", "../src/routes/integrations.ts", "../src/routes/commercial.ts"].flatMap((file) =>
+    [...readFileSync(new URL(file, import.meta.url.replace("/.test-build/", "/test/")), "utf8").matchAll(/router\.(get|post|patch|put|delete)\("([^"]+)"/g)].map((match) => ({ method: match[1]!, path: match[2]!.replace(/:([A-Za-z]+)/g, "{$1}") })),
+  );
+  const d1d2 = routes.filter((route) => /^\/(?:business|businesses|subscriptions|billing|admin\/business-verification|admin\/subscription-plans)/.test(route.path));
+  assert.ok(d1d2.length >= 20, `${d1d2.length} D1/D2 routes`);
+  const operation = (path: string, method: string) => {
+    const at = spec.indexOf(`\n  ${path}:\n`);
+    if (at < 0) return false;
+    const next = spec.slice(at + 1).search(/\n  \/|\ncomponents:/);
+    return spec.slice(at, next < 0 ? undefined : at + 1 + next).includes(`\n    ${method}:`);
+  };
+  const missing = d1d2.filter((route) => !operation(route.path, route.method));
+  assert.deepEqual(missing, [], "routes without an OpenAPI operation");
 });
 
 // ─── Shared journey ──────────────────────────────────────────────────────────

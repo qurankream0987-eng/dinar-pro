@@ -199,31 +199,26 @@ export function plansSurface(plans: Plans): ComposedSurfaceInput {
     testId: "ai-plans",
     sections: [
       { type: "header", title: "باقات DINAR", subtitle: "القدرات نفسها في كل الباقات؛ الفرق في سعة الاستخدام.", icon: "SPARKLE" },
+      // D1: the three public plans as one facts list (the tier grid above stays the only options grid).
       ...(plans.publicPlans?.length
         ? [
+            { type: "text" as const, text: "خطط دينار: جو وبرو لحساب دينار، وبزنس لنشاط تجاري موثّق." },
             {
-              type: "options" as const,
-              label: "خطط دينار",
-              layout: "GRID" as const,
-              items: plans.publicPlans.map((plan) => ({
-                key: plan.planCode.toLowerCase().replace(/_/g, "-"),
-                title: plan.name,
-                subtitle: plan.marketPriceLabel ?? plan.referencePriceLabel,
-                subtitleMuted: !plan.marketPriceLabel,
-                badge: plan.current ? { label: "خطتك", tone: "GOLD" as const } : { label: plan.statusLabel, tone: "NEUTRAL" as const },
-                highlighted: plan.current,
-                facts: [
-                  ...(plan.marketPriceLabel ? [{ label: "السعر المرجعي", value: plan.referencePriceLabel }] : []),
-                  ...plan.features.map((feature) => ({ label: "•", value: feature })),
-                  { label: "الأهلية", value: plan.eligibilityNote },
-                ].slice(0, 6),
-                actions: plan.current
-                  ? undefined
-                  : [{ kind: "SEND" as const, label: `مراجعة ${plan.name}`, message: plan.planCode === "DINAR_BUSINESS" ? "أبي أشترك في بزنس" : `اشترك في ${plan.planCode === "DINAR_PRO" ? "Pro" : "Go"}`, emphasis: "SECONDARY" as const }],
+              type: "facts" as const,
+              rows: plans.publicPlans.map((plan) => ({
+                label: `${plan.name}${plan.current ? " (خطتك)" : ""} — ${plan.statusLabel}`,
+                value: (plan.marketPriceLabel ?? plan.referencePriceLabel).slice(0, 120),
                 testId: "dinar-plan",
               })),
             },
+            ...plans.publicPlans.filter((plan) => plan.requiresVerifiedBusiness).map((plan) => ({ type: "text" as const, muted: true, text: plan.eligibilityNote })),
             ...(plans.publicPlansNote ? [{ type: "text" as const, muted: true, text: plans.publicPlansNote }] : []),
+            {
+              type: "actions" as const,
+              items: plans.publicPlans
+                .filter((plan) => !plan.current)
+                .map((plan) => ({ kind: "SEND" as const, label: `مراجعة ${plan.name}`, message: plan.planCode === "DINAR_BUSINESS" ? "أبي أشترك في بزنس" : `اشترك في ${plan.planCode === "DINAR_PRO" ? "Pro" : "Go"}`, emphasis: "SECONDARY" as const })),
+            },
           ]
         : []),
       {
