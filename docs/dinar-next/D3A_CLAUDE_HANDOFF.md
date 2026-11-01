@@ -237,9 +237,15 @@ audit events, zero orders, zero model calls.
 
 ## 12. Integration status
 
-- D3-A is preserved on `replit/dinar-next-complete-development`: 41/41 API tests, a real-UI
-  journey across all eight cards, the storefront and canonical search, with database proof in §7.
-- D2 is the only blocker to real verification. Until §4 ships, every production business is an
-  applicant (drafts and profile only, publish 409) and every storefront is honestly unverified.
-- Independent Claude Code review: PENDING; perform it separately after this branch is pushed.
+- D3-A product code and migrations remain unchanged from base
+  `d60fd749317d0df8357224e6e7f7bdaf8a2ec33f`. The runner-only integration was tested at
+  `907f43cb8a49a9aa0949eb0f66b8c9174360d36e`; the final PostgreSQL 18.6 native and real-UI
+  results, migration status, N7 assessment, and Actions limitation are in
+  [the W12.2 integration report](./D3A_QODER_W12_2_INTEGRATION_REPORT.md). Earlier D3-A API
+  acceptance evidence remains as recorded above; it is not represented as a new 41-test rerun.
+- D2 remains the product blocker to production business verification. Until §4 ships, every
+  production business is an applicant (drafts and profile only, publish 409) and every storefront
+  is honestly unverified.
+- Independent Claude Code review: PENDING on tested implementation commit
+  `907f43cb8a49a9aa0949eb0f66b8c9174360d36e`; no review findings or approval are claimed here.
 - Nothing is merged, nothing is deployed, and no production data was read or written.
