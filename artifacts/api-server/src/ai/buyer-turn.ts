@@ -647,7 +647,8 @@ export async function executeBuyerTurn(input: {
   const actorId = input.actorId;
   const text = normalizeBuyerText(input.message);
 
-  // Decisions on this actor's own latest pending purchase review.
+  // Decisions on this actor's own latest purchase review, pending or already settled:
+  // a repeated or concurrent decision answers deterministically and never reaches the model.
   const [latest] = await db
     .select()
     .from(aiResultSets)
@@ -655,7 +656,7 @@ export async function executeBuyerTurn(input: {
     .orderBy(desc(aiResultSets.createdAt))
     .limit(1);
   const pending = latest?.query as { kind?: unknown; ownerId?: unknown; status?: unknown; action?: unknown } | undefined;
-  if (pending?.kind === "ACTION" && pending.ownerId === actorId && pending.status === "PENDING" && pending.action === "ADD_TO_CART" && (CONFIRM.test(text) || CANCEL.test(text))) {
+  if (pending?.kind === "ACTION" && pending.ownerId === actorId && pending.action === "ADD_TO_CART" && (CONFIRM.test(text) || CANCEL.test(text))) {
     const outcome = await confirmPendingAction({ actionId: latest!.id, actorId, market: input.market, decision: CONFIRM.test(text) ? "CONFIRM" : "CANCEL" });
     if (outcome.status === "REVIEW_REQUIRED") {
       // Price or stock changed since the review: the old confirmation is void; review again.
@@ -664,7 +665,7 @@ export async function executeBuyerTurn(input: {
       turn.result.prompt = `${outcome.message} ${turn.result.prompt}`;
       return turn;
     }
-    if (outcome.status === "CONFIRMED")
+    if (outcome.status === "CONFIRMED" && outcome.executed)
       return { tool: "buyerSelect", version: 1, result: { kind: "SURFACE", surface: "CART", query: {}, listings: [], prompt: "أُضيف العرض إلى سلتك بعد التحقق من السعر والتوفر الحاليين. راجع السلة قبل إكمال الطلب؛ لم يُدفع أي شيء." } };
     return notice(outcome.message);
   }
