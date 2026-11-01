@@ -7,19 +7,25 @@ canonical listing/cart/checkout/card authorities.
 ## 1. The model
 
 ```
-users ──owner── business_operating_profiles ──1:1── business_listing_links ──> offers
+users ──owner── business_profiles (D2 identity)
+                          │ 1:1, same owner and market
+                          ▼
+             business_operating_profiles (D3 operating metadata)
+                          │
+                          └── offers.business_profile_id ──> offers
                         │                                   (one listing, one business)
                         └── business_audit_events (append-only)
-D2 identity (not published) ──PENDING_D2 port──> capabilities, verification, eligibility
+D2 identity and membership ──canonical authority──> capabilities, verification, eligibility
 ```
 
 - `operating_mode` is `INTERNAL_DINAR` and is enforced by a database check. There is no
   `EXTERNAL_*` branch, no domain, no website URL, no API key to store.
-- `identity_status` is `PENDING_D2` and a database check refuses any other value until the D2
-  migration lands. A D3 row can never claim verification.
-- `business_listing_links` is the only business→listing association. It is written by
-  `createListingForActor` in the same transaction as the listing, from a server-supplied
-  `businessId`; the HTTP body's `businessId` is ignored.
+- D3 stores no verification state. Every operating profile has a required `d2_business_id`;
+  a composite foreign key guarantees the D2 identity has the same owner and market.
+- There is one business→listing association: `offers.business_profile_id`, written by the
+  canonical listing authority and protected by the database owner/market guard.
+- D2 membership, verification and publication eligibility are read from the real D2 business
+  profile service. D3 does not grant `STAFF` or reviewer access.
 
 ## 2. Identity and onboarding (cases A–D)
 
@@ -27,10 +33,10 @@ All conversation flows start in Arabic in the existing chat; no separate busines
 
 | Case | Who | What the conversation does | What is blocked |
 | --- | --- | --- | --- |
-| A. `PENDING_D2` / no commercial registration | An owner who has not been verified (or said «ما عندي سجل تجاري») | Honest notice: the business can be prepared and drafts stored inside DINAR, but identity verification and public publishing wait for the commercial-registry review. The refusal text is not stored as a field. | `business.catalog.publish`, `business.listing.update`, `business.inventory.manage`; storefront 404. |
+| A. D2 not `VERIFIED` / no commercial registration | An owner whose canonical D2 identity is not verified (or said «ما عندي سجل تجاري») | Honest notice: the business can be prepared and drafts stored inside DINAR, but identity verification and public publishing wait for the commercial-registry review. The refusal text is not stored as a field. | `business.catalog.publish`, `business.listing.update`, `business.inventory.manage`; storefront 404. |
 | B. Existing draft | Same owner repeating «عندي مطعم …» | Resumes the same draft (one row per owner per market); nothing is duplicated. | — |
 | C. Verified owner (D2) | Owner whose D2 identity is `VERIFIED` + `ELIGIBLE` + `ACTIVE` | Full capability set; publish, edit, inventory, orders, analytics. | Nothing beyond D2's own policy. |
-| D. Staff / suspended / stranger | D2 `STAFF` membership, or a suspended business, or a buyer | Only the intersection of D2-granted capabilities; suspended businesses keep `business.read` only; a stranger or buyer receives `NONE` and 404/403 from services. | Everything outside the granted set; publish always requires verification and eligibility. |
+| D. Staff / suspended / stranger | Staff without a supported D2 grant, a suspended business, or a buyer | Staff and strangers receive `NONE`; suspended businesses fail closed; services return no access. | No staff access until an explicit D2 grant path exists; publish always requires verification and eligibility. |
 
 Rules that hold in every case:
 
@@ -38,8 +44,8 @@ Rules that hold in every case:
    bodies, display names and model output cannot grant one.
 2. `assertPublishable` is re-evaluated at transaction time, not only when the card was built.
 3. A draft that fails verification stays `DRAFT`; payment or subscription state is never read.
-4. The D2 port returns `PENDING_D2` in production. A fixture registry exists only when
-   `BDINAR_D3A_D2_FIXTURES=development`; tests prove the guard rejects it otherwise.
+4. The live D2 adapter reads canonical identity and membership records. Its fixture registry is
+   available only when `BDINAR_D3A_D2_FIXTURES=development`; tests prove the guard rejects it otherwise.
 
 ## 3. Conversation surface (the whole product)
 
@@ -122,7 +128,7 @@ Eight tokens are added: `BUSINESS_SETUP`, `BUSINESS_PROFILE`, `BUSINESS_PROFILE_
 
 | Situation | Behavior |
 | --- | --- |
-| D2 not published | `PENDING_D2`, publish refused, drafts kept (case A). |
+| D2 not verified/eligible | Current D2 status is shown, publish is refused, drafts are kept (case A). |
 | D2 says not verified / not eligible / not active | publish refused with a specific Arabic reason. |
 | Business suspended | only `business.read`; storefront 404; search, listing detail and cart/checkout exclude its listings. |
 | Listing changed after review | 409, action `FAILED`, no overwrite; a fresh review is required. |

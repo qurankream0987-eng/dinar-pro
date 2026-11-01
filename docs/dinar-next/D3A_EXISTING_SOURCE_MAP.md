@@ -35,8 +35,8 @@ write still passes through the authority that owns that rule.
 | Module | Purpose | Depends on |
 | --- | --- | --- |
 | `artifacts/api-server/src/lib/business-capabilities.ts` | The nine capability names, Arabic labels, publication subset. | nothing |
-| `artifacts/api-server/src/lib/d2-business-identity.ts` | Typed `PENDING_D2` port with a development-only fixture registry; production always reports `PENDING_D2`. | `BDINAR_D3A_D2_FIXTURES` |
-| `artifacts/api-server/src/lib/business-access.ts` | `resolveBusinessAccess` (APPLICANT / VERIFIED_OWNER / STAFF / NONE, CLOSED/SUSPENDED fail-closed) and `requireBusinessCapability` / `assertPublishable` / `assertVerifiedOwner` / `assertStaffCapability`. | D2 port, operating profile |
+| `artifacts/api-server/src/lib/d2-business-identity.ts` | Reads canonical D2 business and owner-membership records; test fixtures are development-guarded. | `BDINAR_D3A_D2_FIXTURES` |
+| `artifacts/api-server/src/lib/business-access.ts` | `resolveBusinessAccess` (APPLICANT / VERIFIED_OWNER / NONE; no D3 STAFF grant path), `requireBusinessCapability`, `assertPublishable`. | D2 port, operating profile |
 | `artifacts/api-server/src/lib/business-catalog.ts` | Catalog summaries, draft publish, price/status/archive wrappers, orders, analytics, `publicBusiness`. | `createListingForActor`, `updateOwnedListing`, `changeOwnedListingStatus`, `archiveOwnedListing`, `searchMarketplaceListings` |
 | `artifacts/api-server/src/ai/business-turn.ts` | Arabic intent adapter: setup, profile review, catalog, drafts, price review, pause/resume/stock, orders, insights, refresh. | business-access, business-catalog, pending actions |
 | `artifacts/api-server/src/routes/businesses.ts` | `GET /businesses/:id` public storefront projection. | `publicBusiness`, `businessPublicListingIds`, `searchMarketplaceListings`, D2 port |
@@ -45,13 +45,12 @@ write still passes through the authority that owns that rule.
 
 ## 3. Data model (migration `0042_d3a_native_business.sql`)
 
-- `business_operating_profiles` — one row per business: owner user, market, display name,
-  type, description, published profile JSON, `operating_mode` (DB check `INTERNAL_DINAR`),
-  `identity_status` (DB check `PENDING_D2` until D2 ships), nullable `d2_business_id`,
-  `status` (DRAFT/ACTIVE/SUSPENDED/CLOSED), `version` for optimistic updates,
-  `pending_action_id`, timestamps.
-- `business_listing_links` — `listingId` PK/FK, `businessId` FK, `marketId`; written only in
-  the same transaction that publishes the listing.
+- `business_operating_profiles` — one row per canonical D2 business: required `d2_business_id`,
+  same-owner/same-market composite FK, operating metadata, mode fixed to `INTERNAL_DINAR`,
+  status (DRAFT/ACTIVE/SUSPENDED/CLOSED), and version for optimistic updates. Verification is
+  never stored here; pending actions remain in `ai_result_sets`.
+- `offers.business_profile_id` — the single business→listing association; the database guard
+  checks the linked D2 owner and market during the canonical offer write.
 - `business_audit_events` — append-only (`BEFORE UPDATE/DELETE/TRUNCATE` trigger raising
   `ERRCODE 23514`), business/market/actor/action/listing/price/version columns.
 
@@ -74,17 +73,14 @@ Journal entry idx 42; release manifest and clone guard carry sha256
 
 ## 5. What D2 must provide when it lands
 
-1. `forActor(actorId, marketId)` returning membership role (`OWNER`/`STAFF`), permissions,
-   and the identity (`businessId`, `marketId`, `ownerUserId`, `businessStatus`,
-   `verificationStatus`, `publicationEligibility`, `policyVersion`).
-2. `forBusiness(d2BusinessId, marketId)` for the storefront verified badge.
-3. A reviewed mapping between `business_operating_profiles.d2_business_id` and the D2
-   business id; until then the DB check keeps every D3 row `PENDING_D2`.
-4. Suspension propagation: D2 `businessStatus !== ACTIVE` or `verificationStatus ===
-   SUSPENDED` is already fail-closed in `resolveBusinessAccess`.
+1. `forActor(actorId, marketId)` and `forBusiness(d2BusinessId, marketId)` read the canonical
+   D2 owner, membership and identity records used by access checks and the public storefront.
+2. The D3 `d2_business_id` is required; a composite foreign key pins its owner and market to D2.
+3. D2 verification/publication eligibility and D3 operating status both fail closed when
+   suspended or ineligible. No D3 `STAFF` grant path is enabled.
 
-D3-A does not attempt verification, does not accept documents, and cannot flip
-`identity_status`. A D3 draft is never VERIFIED; payment/subscription state is never read.
+D3-A does not perform verification or accept documents, and cannot write D2 verification state.
+Payment/subscription state is never read for D3 access.
 
 ## 6. Deliberate non-goals (unchanged behavior)
 

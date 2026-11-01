@@ -59,6 +59,7 @@ import type {
   BusinessPublicView,
   BusinessPublicationRequest,
   BusinessReviewDecisionRequest,
+  BusinessStorefront,
   BusinessUpdateRequest,
   CancelInput,
   CheckoutConflict,
@@ -10829,6 +10830,107 @@ export function useGetPublicBusiness<TData = Awaited<ReturnType<typeof getPublic
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetPublicBusinessQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetBusinessStorefrontUrl = (id: string,) => {
+
+
+
+
+  return `/api/businesses/${id}/storefront`
+}
+
+/**
+ * @summary Public DINAR storefront for a verified and published business
+ */
+export const getBusinessStorefront = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<BusinessStorefront> => {
+
+  return customFetch<BusinessStorefront>(getGetBusinessStorefrontUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetBusinessStorefrontQueryKey = (id: string,) => {
+    return [
+    `/api/businesses/${id}/storefront`
+    ] as const;
+    }
+
+
+export const getGetBusinessStorefrontQueryOptions = <TData = Awaited<ReturnType<typeof getBusinessStorefront>>, TError = ErrorType<void>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getBusinessStorefront>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetBusinessStorefrontQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getBusinessStorefront>>> = ({ signal }) => getBusinessStorefront(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getBusinessStorefront>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetBusinessStorefrontQueryResult = NonNullable<Awaited<ReturnType<typeof getBusinessStorefront>>>
+export type GetBusinessStorefrontQueryError = ErrorType<void>
+
+
+export function useGetBusinessStorefront<TData = Awaited<ReturnType<typeof getBusinessStorefront>>, TError = ErrorType<void>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getBusinessStorefront>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getBusinessStorefront>>,
+          TError,
+          Awaited<ReturnType<typeof getBusinessStorefront>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetBusinessStorefront<TData = Awaited<ReturnType<typeof getBusinessStorefront>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getBusinessStorefront>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getBusinessStorefront>>,
+          TError,
+          Awaited<ReturnType<typeof getBusinessStorefront>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetBusinessStorefront<TData = Awaited<ReturnType<typeof getBusinessStorefront>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getBusinessStorefront>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Public DINAR storefront for a verified and published business
+ */
+
+export function useGetBusinessStorefront<TData = Awaited<ReturnType<typeof getBusinessStorefront>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getBusinessStorefront>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetBusinessStorefrontQueryOptions(id,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

@@ -271,7 +271,11 @@ function normalizeBlock(value: unknown): AiUiBlock | null {
     const memory = normalizeMemory(payload.memory);
     if (!memory || memory.view !== payload.surface) return null;
   }
-  if (payload.surface && (COMMERCIAL_SURFACES as readonly string[]).includes(payload.surface)) {
+  if (
+    payload.commerce !== undefined &&
+    payload.surface &&
+    (COMMERCIAL_SURFACES as readonly string[]).includes(payload.surface)
+  ) {
     const commerce = normalizeCommercial(payload.commerce);
     if (!commerce || commerce.view !== payload.surface) return null;
     payload.commerce = commerce;
@@ -294,7 +298,11 @@ function normalizeBlock(value: unknown): AiUiBlock | null {
     !normalizeEmployment(payload.employment, payload.surface)
   )
     return null;
-  if (payload.surface && (BUSINESS_SURFACES as readonly string[]).includes(payload.surface)) {
+  if (
+    payload.business !== undefined &&
+    payload.surface &&
+    (BUSINESS_SURFACES as readonly string[]).includes(payload.surface)
+  ) {
     const business = normalizeBusiness(payload.business, payload.surface);
     if (!business) return null;
     payload.business = business;

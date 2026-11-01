@@ -2,7 +2,7 @@
  * D3-A: the business owner's conversation adapter. Not a second runtime — an intent adapter in the
  * same DINAR conversation that reads the seller's Arabic, resolves the business from server rows,
  * and hands every mutation to the existing authorities:
- *  - setup/profile      → `business_operating_profiles` (D3 own record; identity stays PENDING_D2)
+ *  - setup/profile      → D3 operating metadata linked to canonical D2 identity
  *  - catalog publish    → `createListingForActor` (via lib/business-catalog)
  *  - edit/price/status  → `updateOwnedListing` / `changeOwnedListingStatus`
  *  - orders/insights    → read-only server queries scoped to this business
@@ -140,7 +140,7 @@ function setupState(business: BusinessProfile): Record<string, unknown> {
 
 function nextSetupStep(business: BusinessProfile): "name" | "type" | "description" | "area" | "fulfilment" | "review" {
   const state = setupState(business);
-  if (!business.displayName.trim()) return "name";
+  if (state.setupName !== true) return "name";
   if (state.setupType !== true) return "type";
   if (state.setupDescription !== true) return "description";
   if (state.setupArea !== true && !(typeof state.area === "string" && state.area.trim())) return "area";
@@ -158,11 +158,12 @@ const SETUP_PROMPTS: Record<string, string> = {
 };
 
 function setupPayload(business: BusinessProfile, access: BusinessAccess, extra: Record<string, unknown> = {}): BusinessPayload {
+  const state = setupState(business);
   const step = nextSetupStep(business);
   return {
     view: "SETUP",
     businessId: business.id,
-    name: business.displayName || undefined,
+    name: state.setupName === true ? business.displayName || undefined : undefined,
     businessType: business.businessType,
     businessTypeLabel: TYPE_LABELS[business.businessType] ?? "نشاط",
     status: business.status,
@@ -234,7 +235,8 @@ async function resolveBusiness(input: {
   const rows = await ownerBusinesses(input.actorId, input.marketId);
   if (!rows.length) return undefined;
   const mentioned = businessMentioned(rows, input.text);
-  const chosen = mentioned ?? (rows.length === 1 ? rows[0] : rows.find((row) => row.status === "ACTIVE"));
+  // An active business is not an implicit default when the owner has several.
+  const chosen = mentioned ?? (rows.length === 1 ? rows[0] : undefined);
   if (!chosen) return { business: rows[0]!, access: await resolveBusinessAccess({ business: rows[0]!, actorId: input.actorId, marketId: input.marketId }), rows, ambiguous: true };
   const access = await resolveBusinessAccess({
     business: chosen,
@@ -317,6 +319,15 @@ async function startSetup(input: {
   text: string;
 }): Promise<Turn> {
   const rows = await ownerBusinesses(input.actorId, input.market.id);
+  if (rows.length > 1) {
+    const mentioned = businessMentioned(rows, input.text);
+    if (!mentioned)
+      return selectionTurn(rows, "لديك أكثر من نشاط. اختر النشاط الذي تريد إدارته:");
+    if (mentioned.status !== "DRAFT")
+      return resumeTurn({ conversationId: input.conversationId, actorId: input.actorId, market: input.market, rows: [mentioned] });
+    const access = await resolveBusinessAccess({ business: mentioned, actorId: input.actorId, marketId: input.market.id });
+    return businessOutput("BUSINESS_SETUP", setupPayload(mentioned, access), SETUP_PROMPTS[nextSetupStep(mentioned)] ?? "");
+  }
   const draft = rows.find((row) => row.status === "DRAFT");
   if (draft) {
     const access = await resolveBusinessAccess({ business: draft, actorId: input.actorId, marketId: input.market.id });
@@ -338,7 +349,7 @@ async function startSetup(input: {
         : "OTHER";
   const identity = await createBusinessDraft(
     input.actorId,
-    { id: input.marketId },
+    { id: input.market.id },
     {
       displayName: name ? normalizeName(name) : "نشاط جديد",
       categoryKey,
@@ -355,7 +366,7 @@ async function startSetup(input: {
     .limit(1);
   if (priorOperatingProfile) {
     const linked = await businessWithD2Identity(priorOperatingProfile);
-    const access = await resolveBusinessAccess({ business: linked, actorId: input.actorId, marketId: input.marketId });
+    const access = await resolveBusinessAccess({ business: linked, actorId: input.actorId, marketId: input.market.id });
     return businessOutput("BUSINESS_SETUP", setupPayload(linked, access), SETUP_PROMPTS[nextSetupStep(linked)] ?? "");
   }
   const [created] = await db
@@ -371,6 +382,7 @@ async function startSetup(input: {
       description: "",
       status: "DRAFT",
       profile: {
+        setupName: Boolean(name),
         ...(hasTypeInText ? { setupType: true } : {}),
       },
     })
@@ -390,7 +402,7 @@ async function startSetup(input: {
     resourceId: linked.id,
     detail: { businessType: linked.businessType, operatingMode: "INTERNAL_DINAR", d2BusinessId: linked.d2BusinessId },
   });
-  const access = await resolveBusinessAccess({ business: linked, actorId: input.actorId, marketId: input.marketId });
+  const access = await resolveBusinessAccess({ business: linked, actorId: input.actorId, marketId: input.market.id });
   const step = nextSetupStep(linked);
   return businessOutput(
     "BUSINESS_SETUP",
@@ -410,7 +422,7 @@ async function resumeTurn(input: {
 }): Promise<Turn> {
   const rows = input.rows ?? (await ownerBusinesses(input.actorId, input.market.id));
   if (!rows.length) return businessOutput("BUSINESS_PROFILE", { view: "PROFILE", notice: "لا يوجد نشاط بعد.", allowedActions: [] }, "لا يوجد نشاط بعد؛ قل «عندي مطعم» لبدء تسجيل نشاطك.");
-  if (rows.length > 1 && !rows.some((row) => row.status === "DRAFT")) {
+  if (rows.length > 1) {
     return selectionTurn(rows, "لديك أكثر من نشاط. اختر النشاط الذي تريد إدارته:");
   }
   const business = rows.find((row) => row.status === "DRAFT") ?? rows[0]!;
@@ -471,6 +483,7 @@ async function answerSetupStep(input: {
     );
 
   if (step === "name") {
+    if (skip) return businessOutput("BUSINESS_SETUP", setupPayload(business, access), SETUP_PROMPTS.name!);
     const name = extractBusinessName(input.text) ?? input.raw.trim();
     if (name.length < 2) return businessOutput("BUSINESS_SETUP", setupPayload(business, access), SETUP_PROMPTS.name!);
     const displayName = normalizeName(name);
@@ -480,7 +493,7 @@ async function answerSetupStep(input: {
       .set({ displayName, updatedAt: new Date() })
       .where(eq(businessOperatingProfiles.id, business.id))
       .returning();
-    business = updated ? await businessWithD2Identity(updated) : business;
+    business = await saveSetupState(updated ? await businessWithD2Identity(updated) : business, { setupName: true });
   } else if (step === "type") {
     const type = detectBusinessType(input.text);
     const categoryKey = type === "RESTAURANT"
@@ -1284,27 +1297,50 @@ type PendingBusinessQuery = {
   newPriceMinor: number | null;
   body?: Record<string, unknown>;
   idempotencyKey?: string;
-  status: "PENDING" | "EXECUTING" | "CONFIRMED" | "CANCELLED" | "EXPIRED" | "FAILED";
+  status: "PENDING" | "EXECUTING" | "CONFIRMED" | "CANCELLED" | "EXPIRED" | "FAILED" | "SUPERSEDED";
   review: string[];
   expiresAt: string;
 };
 
-async function latestPendingBusinessAction(conversationId: string, actorId: string) {
+async function pendingBusinessAction(conversationId: string, actorId: string, actionId: string) {
   const [row] = await db
     .select()
     .from(aiResultSets)
     .where(and(
+      eq(aiResultSets.id, actionId),
       eq(aiResultSets.conversationId, conversationId),
       sql`${aiResultSets.query} ->> 'kind' = 'BUSINESS_ACTION'`,
       sql`${aiResultSets.query} ->> 'ownerId' = ${actorId}`,
       sql`${aiResultSets.query} ->> 'status' = 'PENDING'`,
     ))
-    .orderBy(desc(aiResultSets.createdAt))
     .limit(1);
   if (!row) return undefined;
   const query = row.query as PendingBusinessQuery;
   if (row.expiresAt && row.expiresAt.getTime() <= Date.now()) return undefined;
   return { row, query };
+}
+
+async function supersedeVisibleBusinessReview(conversationId: string, actorId: string, actionId?: string) {
+  if (!actionId) return;
+  const [row] = await db
+    .select()
+    .from(aiResultSets)
+    .where(and(
+      eq(aiResultSets.id, actionId),
+      eq(aiResultSets.conversationId, conversationId),
+      sql`${aiResultSets.query} ->> 'ownerId' = ${actorId}`,
+      sql`${aiResultSets.query} ->> 'kind' IN ('BUSINESS_SETUP', 'BUSINESS_ACTION')`,
+      sql`${aiResultSets.query} ->> 'status' = 'PENDING'`,
+    ))
+    .limit(1);
+  if (!row) return;
+  await db
+    .update(aiResultSets)
+    .set({ query: { ...row.query, status: "SUPERSEDED" } })
+    .where(and(
+      eq(aiResultSets.id, row.id),
+      sql`${aiResultSets.query} ->> 'status' = 'PENDING'`,
+    ));
 }
 
 /** The newest decision record in this conversation: in flight, or already settled. */
@@ -1316,24 +1352,24 @@ async function settledBusinessDecision(conversationId: string, actorId: string) 
       eq(aiResultSets.conversationId, conversationId),
       sql`${aiResultSets.query} ->> 'kind' IN ('BUSINESS_SETUP', 'BUSINESS_ACTION')`,
       sql`${aiResultSets.query} ->> 'ownerId' = ${actorId}`,
-      sql`${aiResultSets.query} ->> 'status' IN ('EXECUTING', 'CONFIRMED', 'CANCELLED', 'EXPIRED', 'FAILED')`,
+      sql`${aiResultSets.query} ->> 'status' IN ('EXECUTING', 'CONFIRMED', 'CANCELLED', 'EXPIRED', 'FAILED', 'SUPERSEDED')`,
     ))
     .orderBy(desc(aiResultSets.createdAt))
     .limit(1);
   return row;
 }
 
-async function setupReviewPending(conversationId: string, actorId: string) {
+async function setupReviewPending(conversationId: string, actorId: string, reviewId: string) {
   const [row] = await db
     .select()
     .from(aiResultSets)
     .where(and(
+      eq(aiResultSets.id, reviewId),
       eq(aiResultSets.conversationId, conversationId),
       sql`${aiResultSets.query} ->> 'kind' = 'BUSINESS_SETUP'`,
       sql`${aiResultSets.query} ->> 'ownerId' = ${actorId}`,
       sql`${aiResultSets.query} ->> 'status' = 'PENDING'`,
     ))
-    .orderBy(desc(aiResultSets.createdAt))
     .limit(1);
   return row;
 }
@@ -1342,8 +1378,9 @@ async function activateBusiness(input: {
   conversationId: string;
   actorId: string;
   marketId: string;
+  reviewId: string;
 }): Promise<Turn> {
-  const review = await setupReviewPending(input.conversationId, input.actorId);
+  const review = await setupReviewPending(input.conversationId, input.actorId, input.reviewId);
   if (!review) return businessOutput("BUSINESS_PROFILE_REVIEW", { view: "PROFILE_REVIEW", allowedActions: [] }, "لا توجد مراجعة تشغيل معلّقة؛ راجع النشاط من جديد.");
   const query = review.query as { businessId?: string; expectedVersion?: number; status?: string };
   if (query.status !== "PENDING") return businessOutput("BUSINESS_PROFILE_REVIEW", { view: "PROFILE_REVIEW", allowedActions: [] }, "تمت معالجة هذه المراجعة من قبل.");
@@ -1353,19 +1390,9 @@ async function activateBusiness(input: {
   }
   const business = await ownedBusinessFor(input.actorId, input.marketId, query.businessId);
   if (!business) return businessOutput("BUSINESS_PROFILE", { view: "PROFILE", allowedActions: [] }, "النشاط غير موجود.");
-  const access = await requireBusinessCapability({ business, actorId: input.actorId, marketId: input.marketId, capability: "business.profile.manage" });
-  if (
-    !access.verified ||
-    access.publicationEligibility !== "ELIGIBLE" ||
-    access.businessStatus !== "ACTIVE"
-  ) {
-    const message = publicationNotice(access) ?? "لا يمكن تشغيل النشاط قبل اعتماد DINAR.";
-    return businessOutput(
-      "BUSINESS_PROFILE_REVIEW",
-      { view: "PROFILE_REVIEW", notice: message, allowedActions: [] },
-      `${message} بقيت المراجعة معلّقة ولم يتغير النشاط.`,
-    );
-  }
+  // Activating the D3 operating profile only makes the business manageable inside DINAR.
+  // D2 verification and publication eligibility remain mandatory for public listing writes.
+  await requireBusinessCapability({ business, actorId: input.actorId, marketId: input.marketId, capability: "business.profile.manage" });
   // One claim only: a second confirmation sees a settled review and changes nothing.
   const [claimed] = await db
     .update(aiResultSets)
@@ -1426,8 +1453,8 @@ async function ownedBusinessFor(actorId: string, marketId: string, businessId?: 
   return ownedBusinessForActor({ businessId, actorId, marketId });
 }
 
-async function cancelBusinessAction(input: { conversationId: string; actorId: string }): Promise<Turn | null> {
-  const pending = await latestPendingBusinessAction(input.conversationId, input.actorId);
+async function cancelBusinessAction(input: { conversationId: string; actorId: string; actionId: string }): Promise<Turn | null> {
+  const pending = await pendingBusinessAction(input.conversationId, input.actorId, input.actionId);
   if (!pending) return null;
   await db
     .update(aiResultSets)
@@ -1441,8 +1468,8 @@ async function cancelBusinessAction(input: { conversationId: string; actorId: st
 }
 
 /** A reviewed setup can be abandoned: the card offered CANCEL, so CANCEL must settle it. */
-async function cancelSetupReview(conversationId: string, actorId: string): Promise<Turn | null> {
-  const review = await setupReviewPending(conversationId, actorId);
+async function cancelSetupReview(conversationId: string, actorId: string, reviewId: string): Promise<Turn | null> {
+  const review = await setupReviewPending(conversationId, actorId, reviewId);
   if (!review) return null;
   const query = review.query as { businessId?: string; status?: string };
   if (query.status !== "PENDING") return null;
@@ -1462,8 +1489,9 @@ async function executeBusinessAction(input: {
   conversationId: string;
   actorId: string;
   market: Market;
+  actionId: string;
 }): Promise<Turn | null> {
-  const pending = await latestPendingBusinessAction(input.conversationId, input.actorId);
+  const pending = await pendingBusinessAction(input.conversationId, input.actorId, input.actionId);
   if (!pending) return null;
   const { row, query } = pending;
   const [claimed] = await db
@@ -1607,16 +1635,20 @@ export async function executeBusinessTurn(input: {
   // the conversation showed; otherwise it belongs to whatever review the user is answering.
   const lastPrompt = await latestBusinessPrompt(input.conversationId);
   if (DECISION.test(text) && lastPrompt) {
-    // Two reviews can be open at once in a long conversation; only the newer one is the
-    // decision the seller is answering.
-    const [activated, action] = await Promise.all([
-      setupReviewPending(input.conversationId, actorId),
-      latestPendingBusinessAction(input.conversationId, actorId),
-    ]);
-    if (activated && (!action || activated.createdAt >= action.row.createdAt))
-      return activateBusiness({ conversationId: input.conversationId, actorId, marketId: input.market.id });
-    if (action)
-      return executeBusinessAction({ conversationId: input.conversationId, actorId, market: input.market });
+    if (lastPrompt.view === "PROFILE_REVIEW" && lastPrompt.pendingActionId)
+      return activateBusiness({
+        conversationId: input.conversationId,
+        actorId,
+        marketId: input.market.id,
+        reviewId: lastPrompt.pendingActionId,
+      });
+    if (lastPrompt.view === "LISTING_REVIEW" && lastPrompt.pendingActionId)
+      return executeBusinessAction({
+        conversationId: input.conversationId,
+        actorId,
+        market: input.market,
+        actionId: lastPrompt.pendingActionId,
+      });
     // Nothing is pending: a repeated «أكد» over a settled business card is answered honestly and
     // executes nothing, instead of falling through to an unrelated handler.
     if (["LISTING_REVIEW", "PROFILE_REVIEW", "PROFILE", "CATALOG"].includes(lastPrompt.view)) {
@@ -1635,12 +1667,22 @@ export async function executeBusinessTurn(input: {
       }
     }
   }
-  if (CANCEL.test(text) && lastPrompt) {
-    const cancelled =
-      (await cancelBusinessAction({ conversationId: input.conversationId, actorId })) ??
-      (await cancelSetupReview(input.conversationId, actorId));
-    if (cancelled) return cancelled;
+  if (CANCEL.test(text) && lastPrompt?.pendingActionId) {
+    if (lastPrompt.view === "LISTING_REVIEW") {
+      const cancelled = await cancelBusinessAction({
+        conversationId: input.conversationId,
+        actorId,
+        actionId: lastPrompt.pendingActionId,
+      });
+      if (cancelled) return cancelled;
+    }
+    if (lastPrompt.view === "PROFILE_REVIEW") {
+      const cancelled = await cancelSetupReview(input.conversationId, actorId, lastPrompt.pendingActionId);
+      if (cancelled) return cancelled;
+    }
   }
+  if (!DECISION.test(text) && !CANCEL.test(text) && lastPrompt?.pendingActionId)
+    await supersedeVisibleBusinessReview(input.conversationId, actorId, lastPrompt.pendingActionId);
 
   const setupIntent = SETUP_INTENT.some((pattern) => has(text, pattern));
   if (setupIntent) {

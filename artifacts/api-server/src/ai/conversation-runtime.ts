@@ -630,16 +630,6 @@ async function executeRuntime(context: RuntimeContext, incoming: RuntimeOptions)
       },
     };
   }
-  // D2: DINAR Business onboarding («أنا صاحب مطعم …», «أبي أرفع السجل التجاري», and «وين وصل
-  // طلبي؟» right after its card). Before product control and orders, which would read «مطعمي» or
-  // «طلبي» as their own; it claims only business phrases or follow-ups of its own card.
-  if (!context.imageObjectPaths?.length && context.location === undefined) {
-    const business = await executeBusinessOnboardingTurn({ conversationId: context.conversationId, message: context.message, market: context.market, actorId: context.actorId });
-    if (business) {
-      options.onToolSelected?.(business.tool);
-      return business;
-    }
-  }
   // Universal product control (theme, browsing market, profile, recipient-addressed location):
   // before order, inquiry and commerce adapters, which would read «أرسل موقعي للسائق» or
   // «حوّل سوقي للكويت» as their own. It claims only what it can resolve.
@@ -655,8 +645,10 @@ async function executeRuntime(context: RuntimeContext, incoming: RuntimeOptions)
       return control;
     }
   }
-  // D3-A: the owner's business (setup and catalog commands). An intent adapter over the same
-  // authorities; it claims only text it can resolve against this actor's own business rows.
+  // D3-A: the owner's operating profile and catalog. It runs before the legacy D2 onboarding
+  // adapter so an introduction creates one linked D2 identity and D3 operating profile instead
+  // of a competing verification-only profile. Unhandled D2 document/status intents still fall
+  // through to that adapter below.
   if (context.actorId && !context.imageObjectPaths?.length && context.location === undefined) {
     const business = await executeBusinessTurn({
       conversationId: context.conversationId,
@@ -664,6 +656,15 @@ async function executeRuntime(context: RuntimeContext, incoming: RuntimeOptions)
       market: context.market,
       actorId: context.actorId,
     });
+    if (business) {
+      options.onToolSelected?.(business.tool);
+      return business;
+    }
+  }
+  // D2: canonical identity verification, document intake and submission. Kept after D3 so it
+  // handles only D2-specific intents or follow-ups that the operating-profile adapter declines.
+  if (!context.imageObjectPaths?.length && context.location === undefined) {
+    const business = await executeBusinessOnboardingTurn({ conversationId: context.conversationId, message: context.message, market: context.market, actorId: context.actorId });
     if (business) {
       options.onToolSelected?.(business.tool);
       return business;

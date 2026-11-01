@@ -5,6 +5,7 @@
  * audit, internal notes) is exposed. A suspended, closed or unpublished business is a 404.
  */
 import { Router } from "express";
+import { GetBusinessStorefrontResponse } from "@workspace/api-zod";
 import { searchMarketplaceListings } from "../lib/marketplace-listings";
 import { assertMarketActive, marketFor } from "../lib/markets";
 import { businessPublicListingIds, publicBusiness } from "../lib/business-catalog";
@@ -52,7 +53,10 @@ router.get("/businesses/:id/storefront", async (req, res) => {
   const identity = business.d2BusinessId
     ? await d2BusinessIdentity.forBusiness(business.d2BusinessId, market.id)
     : null;
-  const verified = identity?.verificationStatus === "VERIFIED";
+  if (
+    identity?.verificationStatus !== "VERIFIED" ||
+    identity.publicationEligibility !== "ELIGIBLE"
+  ) throw fail(404, "النشاط غير موجود");
   // The storefront publishes the business, not the person behind the account: the canonical
   // listing record is reused as-is except for the seller identity shown on this page.
   const storefrontListings = listings.map((listing) => ({
@@ -60,7 +64,7 @@ router.get("/businesses/:id/storefront", async (req, res) => {
     sellerName: business.displayName,
     sellerAvatarObjectPath: null,
   }));
-  res.json({
+  res.json(GetBusinessStorefrontResponse.parse({
     id: business.id,
     name: business.displayName,
     description: business.description,
@@ -69,13 +73,13 @@ router.get("/businesses/:id/storefront", async (req, res) => {
     operatingMode: business.operatingMode,
     marketId: market.id,
     currency: market.currencyCode,
-    verified,
-    verificationStatus: verified ? "VERIFIED" : "PENDING_D2",
+    verified: true,
+    verificationStatus: "VERIFIED",
     profile: publicProfile(business.profile ?? {}),
     // Only published listings of an ACTIVE business; publicBusiness already enforced ACTIVE.
     listings: storefrontListings,
     listingCount: storefrontListings.length,
-  });
+  }));
 });
 
 export default router;

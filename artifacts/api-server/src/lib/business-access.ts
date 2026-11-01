@@ -104,7 +104,8 @@ export async function resolveBusinessAccess(input: {
     return { ...NO_ACCESS, business, identity };
   const role = "OWNER";
   const suspended =
-    identity.businessStatus !== "ACTIVE" ||
+    identity.businessStatus === "SUSPENDED" ||
+    identity.businessStatus === "CLOSED" ||
     identity.verificationStatus === "SUSPENDED" ||
     business.status === "SUSPENDED";
   const verified = identity.verificationStatus === "VERIFIED";
@@ -135,7 +136,7 @@ export async function resolveBusinessAccess(input: {
 
   return {
     business,
-    actorClass: role === "STAFF" ? "STAFF" : verified ? "VERIFIED_OWNER" : "APPLICANT",
+    actorClass: verified ? "VERIFIED_OWNER" : "APPLICANT",
     role,
     capabilities,
     identity,

@@ -16,9 +16,9 @@ Derivation (`resolveBusinessAccess`):
 | Actor class | Capabilities |
 | --- | --- |
 | `NONE` (buyer, stranger, mismatched D2/D3) | none |
-| `APPLICANT` (D3 owner, D2 `PENDING_D2` or missing) | read, profile.manage, catalog.read/draft, orders.read, analytics.read |
-| `STAFF` | exactly the intersection of D2 `permissions` and the nine known names |
-| `VERIFIED_OWNER` | all nine, but only while the business is `ACTIVE` and not suspended |
+| `APPLICANT` (D3 owner, D2 not verified or not eligible) | read, profile.manage, catalog.read/draft, orders.read, analytics.read |
+| `STAFF` (no D3 grant path) | none |
+| `VERIFIED_OWNER` | approved owner capabilities only while D2 is verified/eligible and D3 is `ACTIVE` |
 | Suspended business | owner: `business.read` only; staff: `business.catalog.read` only if granted; closed: owner read only |
 
 `PUBLICATION_CAPABILITIES` = publish, listing.update, inventory.manage. They require
@@ -42,12 +42,12 @@ staff-supplied string, a payment receipt, a subscription, or a D3 row claiming v
    `changeBusinessListingStatus`, `archiveBusinessListing` re-resolve access inside their
    transaction, lock the business row (`FOR SHARE`), re-check capabilities and
    `assertPublishable` before delegating to the canonical listing functions.
-4. **Listing authority**: `createListingForActor` re-checks the business capability and
-   publishability itself, inside the same transaction, and writes `business_listing_links`
-   there; a mismatch aborts the whole publish.
-5. **Database**: checks pin `operating_mode = 'INTERNAL_DINAR'`, `identity_status =
-   'PENDING_D2'`, the four statuses and the four business types; FKs tie listings, audits and
-   links to real rows; audit triggers raise `23514` on UPDATE/DELETE/TRUNCATE.
+4. **Listing authority**: `createListingForActor` re-checks business capability and
+   publishability inside the same transaction, and writes `offers.business_profile_id`; a
+   mismatch aborts the whole publish.
+5. **Database**: D3 has no verification column. Its required `d2_business_id` has a composite
+   same-owner/same-market FK to D2; `offers.business_profile_id` is the only listing association.
+   Mode/status/type checks and append-only audit triggers remain enforced in SQL.
 6. **Card envelope**: server-built only; allowed actions are filtered by regex and length;
    actions are utterances re-authorized on the next turn; rehydration re-checks ownership.
 
@@ -84,13 +84,13 @@ Suspension is enforced in four places so a stale card or a saved cart cannot lea
 
 ## 5. Verification (explicitly not faked)
 
-- Production: `d2BusinessIdentity.status()` returns `PENDING_D2`; `forActor`/`forBusiness`
-  return nothing; all verification-dependent capabilities are denied.
+- Production: the adapter reads canonical D2 business and membership records; verification-
+  dependent capabilities require D2 `VERIFIED` and publication `ELIGIBLE`.
 - Tests: a fixture registry exists only if `BDINAR_D3A_D2_FIXTURES=development`. The registry
   throws otherwise (test D3A-11). Fixtures live in the test process only; no endpoint can
   register one.
-- The database refuses a D3 row with any other identity status (test D3A-38), and the test
-  that flips `d2BusinessId` documents that it is D2-owned data.
+- D3 has no identity status to set (test D3A-38 receives PostgreSQL `42703`). Verification remains
+  in D2's `business_profiles`; D3 cannot change it through the operating-profile schema.
 
 ## 6. Moderation, search and isolation
 
@@ -110,5 +110,5 @@ Suspension is enforced in four places so a stale card or a saved cart cannot lea
 - `lockedBusiness` uses `FOR SHARE` on the profile; listing writes additionally lock the
   listing row through the canonical authorities. If D2 introduces concurrent membership
   changes, the port should expose a version to include in the access decision.
-- The storefront verified badge depends on `d2_business_id`; until D2 supplies the mapping,
-  no D3 business is shown as verified even if a test fixture is temporarily registered.
+- The storefront requires the existing D2 identity linked by `d2_business_id`; it returns 404
+  unless D2 verification/publication and D3 operating status are all currently eligible.

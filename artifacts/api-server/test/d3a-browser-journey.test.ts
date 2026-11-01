@@ -16,16 +16,14 @@ import { eq } from "drizzle-orm";
 import app from "../src/app";
 import {
   businessAuditEvents,
-  businessListingLinks,
   businessOperatingProfiles,
+  businessProfiles,
   db,
   offers,
   orders,
   pool,
 } from "@workspace/db";
 import { getModelGatewayCallCount } from "../src/ai/model-gateway";
-import { registerBusinessIdentityFixture } from "../src/lib/d2-business-identity";
-import { BUSINESS_CAPABILITIES } from "../src/lib/business-capabilities";
 import { startDinarBrowserTestWeb } from "./browser-test-web-server";
 import { requireSafeReplitDevelopmentDatabase } from "./safe-development-database";
 
@@ -107,21 +105,16 @@ await test("D3A REAL_UI: one business is created, activated, published, managed 
   assert.equal(started.business.view, "SETUP", JSON.stringify(started.business));
   const businessId = started.business.businessId as string;
   assert.ok(businessId, "the intro created the operating profile");
-  // D2's trusted identity is injected only through the hard-guarded fixture port; D3 never writes a
-  // verification result, and the D3 profile's own identity_status stays PENDING_D2.
-  registerBusinessIdentityFixture({
-    businessId,
-    ownerUserId: owner.id,
-    marketId: "JO",
-    businessType: "RESTAURANT",
+  const [operatingProfile] = await db.select().from(businessOperatingProfiles).where(eq(businessOperatingProfiles.id, businessId));
+  const d2BusinessId = operatingProfile!.d2BusinessId;
+  // Verification is promoted only in this disposable acceptance database. Leave D2 reads backed
+  // by the canonical row so profile edits use its real revision and owner membership.
+  await db.update(businessProfiles).set({
     verificationStatus: "VERIFIED",
-    publicationEligibility: "ELIGIBLE",
-    membershipPermissions: [...BUSINESS_CAPABILITIES],
-    businessStatus: "ACTIVE",
-    policyVersion: "D2-2026-11",
-  });
-  await db.update(businessOperatingProfiles).set({ d2BusinessId: businessId }).where(eq(businessOperatingProfiles.id, businessId));
-
+    publicationStatus: "PUBLISHED",
+    verifiedAt: new Date(),
+    verifiedBy: buyer.id,
+  }).where(eq(businessProfiles.id, d2BusinessId));
   const modelCallsBefore = getModelGatewayCallCount();
   const web = await startDinarBrowserTestWeb(origin);
   const resultPath = `/tmp/dinar-d3a-ui-${runId}.json`;
@@ -177,8 +170,9 @@ await test("D3A REAL_UI: one business is created, activated, published, managed 
   // ── Database proof ──
   const [business] = await db.select().from(businessOperatingProfiles).where(eq(businessOperatingProfiles.id, businessId));
   assert.equal(business!.status, "ACTIVE");
-  assert.equal(business!.identityStatus, "PENDING_D2", "D3 never turns its own profile into a verification");
-  assert.equal(business!.d2BusinessId, businessId);
+  assert.equal(business!.d2BusinessId, d2BusinessId);
+  const [identity] = await db.select().from(businessProfiles).where(eq(businessProfiles.id, d2BusinessId));
+  assert.equal(identity!.verificationStatus, "VERIFIED", "the trusted fixture exists only in the disposable database");
 
   const rows = await db.select().from(offers).where(eq(offers.sellerId, owner.id));
   assert.equal(rows.length, 3, "exactly the three drafts became listings");
@@ -191,9 +185,9 @@ await test("D3A REAL_UI: one business is created, activated, published, managed 
     "the storefront shows exactly the published listings",
   );
 
-  const links = await db.select().from(businessListingLinks).where(eq(businessListingLinks.businessId, businessId));
-  assert.equal(links.length, 3, "every published listing is linked to the business");
-  assert.ok(links.every((link) => link.marketId === "JO"));
+  const linkedListings = await db.select().from(offers).where(eq(offers.businessProfileId, d2BusinessId));
+  assert.equal(linkedListings.length, 3, "every published listing is linked to the canonical D2 business");
+  assert.ok(linkedListings.every((offer) => offer.marketId === "JO"));
 
   const audits = await db.select().from(businessAuditEvents).where(eq(businessAuditEvents.businessId, businessId));
   assert.equal(audits.filter((event) => event.action === "BUSINESS_ACTIVATED").length, 1);

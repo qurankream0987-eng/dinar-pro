@@ -404,6 +404,190 @@ export interface BusinessPublicView {
   verifiedLabel: string;
 }
 
+export type BusinessStorefrontBusinessType = typeof BusinessStorefrontBusinessType[keyof typeof BusinessStorefrontBusinessType];
+
+
+export const BusinessStorefrontBusinessType = {
+  RESTAURANT: 'RESTAURANT',
+  SHOP: 'SHOP',
+  SERVICE_PROVIDER: 'SERVICE_PROVIDER',
+  OTHER: 'OTHER',
+} as const;
+
+export type BusinessStorefrontOperatingMode = typeof BusinessStorefrontOperatingMode[keyof typeof BusinessStorefrontOperatingMode];
+
+
+export const BusinessStorefrontOperatingMode = {
+  INTERNAL_DINAR: 'INTERNAL_DINAR',
+} as const;
+
+export type BusinessStorefrontVerificationStatus = typeof BusinessStorefrontVerificationStatus[keyof typeof BusinessStorefrontVerificationStatus];
+
+
+export const BusinessStorefrontVerificationStatus = {
+  VERIFIED: 'VERIFIED',
+} as const;
+
+export type BusinessStorefrontProfile = {
+  area?: string;
+  fulfilment?: string;
+  hours?: string;
+  /** @maxItems 12 */
+  serviceAreas?: string[];
+};
+
+/**
+ * Paid tier of a sponsored slot; VIP is shown together with «ممول» and never means a verified seller.
+ */
+export type ListingSponsoredTier = typeof ListingSponsoredTier[keyof typeof ListingSponsoredTier];
+
+
+export const ListingSponsoredTier = {
+  STANDARD: 'STANDARD',
+  VIP: 'VIP',
+} as const;
+
+export type ListingPaymentMethodsItem = typeof ListingPaymentMethodsItem[keyof typeof ListingPaymentMethodsItem];
+
+
+export const ListingPaymentMethodsItem = {
+  CASH_DIRECT: 'CASH_DIRECT',
+  CARD: 'CARD',
+} as const;
+
+export type ListingPricingMode = typeof ListingPricingMode[keyof typeof ListingPricingMode];
+
+
+export const ListingPricingMode = {
+  FIXED: 'FIXED',
+  NEGOTIABLE: 'NEGOTIABLE',
+  OPEN_TO_OFFERS: 'OPEN_TO_OFFERS',
+} as const;
+
+/**
+ * What the price means. STARTING_FROM (a starting amount) and QUOTE_REQUIRED (no price; the seller quotes) are stored as pricingMode OPEN_TO_OFFERS and are never bought directly. Only FIXED is purchasable without an agreement; every representation accepts buyer proposals.
+ */
+export type ListingPriceRepresentation = typeof ListingPriceRepresentation[keyof typeof ListingPriceRepresentation];
+
+
+export const ListingPriceRepresentation = {
+  FIXED: 'FIXED',
+  NEGOTIABLE: 'NEGOTIABLE',
+  OPEN_TO_OFFERS: 'OPEN_TO_OFFERS',
+  STARTING_FROM: 'STARTING_FROM',
+  QUOTE_REQUIRED: 'QUOTE_REQUIRED',
+} as const;
+
+export type ListingInventoryMode = typeof ListingInventoryMode[keyof typeof ListingInventoryMode];
+
+
+export const ListingInventoryMode = {
+  LIMITED: 'LIMITED',
+  UNLIMITED: 'UNLIMITED',
+} as const;
+
+export type ListingFulfilmentType = typeof ListingFulfilmentType[keyof typeof ListingFulfilmentType];
+
+
+export const ListingFulfilmentType = {
+  PICKUP: 'PICKUP',
+  DELIVERY: 'DELIVERY',
+  DIGITAL: 'DIGITAL',
+  SERVICE: 'SERVICE',
+} as const;
+
+export type ListingStatus = typeof ListingStatus[keyof typeof ListingStatus];
+
+
+export const ListingStatus = {
+  DRAFT: 'DRAFT',
+  PUBLISHED: 'PUBLISHED',
+  PAUSED: 'PAUSED',
+  ARCHIVED: 'ARCHIVED',
+} as const;
+
+export type ListingAttributes = { [key: string]: unknown };
+
+export interface Listing {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  categoryId?: string;
+  /** Set only by the server for a paid placement; always rendered with a visible «إعلان ممول» label. */
+  isSponsored?: boolean;
+  /** Paid tier of a sponsored slot; VIP is shown together with «ممول» and never means a verified seller. */
+  sponsoredTier?: ListingSponsoredTier;
+  /**
+     * Opaque signed attribution token for a delivered paid card (no personal data); the server alone decides any charge.
+     * @maxLength 1024
+     */
+  sponsoredToken?: string;
+  /**
+     * Recommendation and buyer-ranking surfaces only; each reason is a deterministic signal that matched.
+     * @maxItems 6
+     * @items.maxLength 120
+     */
+  recommendationReasons?: string[];
+  area: string;
+  city?: string;
+  attributes?: ListingAttributes;
+  /** @maxItems 2 */
+  paymentMethods?: ListingPaymentMethodsItem[];
+  /** @nullable */
+  unitPrice: string | null;
+  pricingMode: ListingPricingMode;
+  priceRepresentation?: ListingPriceRepresentation;
+  currency: string;
+  /**
+     * @minimum 0
+     * @nullable
+     */
+  availableQuantity: number | null;
+  reservedQuantity: number;
+  inventoryMode: ListingInventoryMode;
+  fulfilmentType: ListingFulfilmentType;
+  sellerName: string;
+  sellerId?: string;
+  /** @nullable */
+  sellerAvatarObjectPath?: string | null;
+  rating: number;
+  reviewCount?: number;
+  imageUrl: string;
+  /**
+     * @maxItems 6
+     * @items.maxLength 2000
+     */
+  imageUrls?: string[];
+  /**
+     * @maxLength 30
+     * @nullable
+     */
+  contactPhone: string | null;
+  /** A buyer may propose a price on this listing (true for every listing with a known price representation). An agreed price is private to that buyer; the public price never changes. */
+  negotiable?: boolean;
+  status: ListingStatus;
+  createdAt?: string;
+}
+
+export interface BusinessStorefront {
+  id: string;
+  name: string;
+  description: string;
+  businessType: BusinessStorefrontBusinessType;
+  businessTypeLabel: string;
+  operatingMode: BusinessStorefrontOperatingMode;
+  marketId: string;
+  currency: string;
+  verified: true;
+  verificationStatus: BusinessStorefrontVerificationStatus;
+  profile: BusinessStorefrontProfile;
+  /** @maxItems 48 */
+  listings: Listing[];
+  /** @minimum 0 */
+  listingCount: number;
+}
+
 /**
  * Commercial economy request/response object; bodies are validated strictly on the server and never accept owners, prices, balances or paid flags.
  */
@@ -963,140 +1147,6 @@ export interface MarketCategoryPolicyAuditRecord {
   action: MarketCategoryPolicyAuditRecordAction;
   data: MarketCategoryPolicyAuditData;
   createdAt: string;
-}
-
-export type ListingPricingMode = typeof ListingPricingMode[keyof typeof ListingPricingMode];
-
-
-export const ListingPricingMode = {
-  FIXED: 'FIXED',
-  NEGOTIABLE: 'NEGOTIABLE',
-  OPEN_TO_OFFERS: 'OPEN_TO_OFFERS',
-} as const;
-
-/**
- * What the price means. STARTING_FROM (a starting amount) and QUOTE_REQUIRED (no price; the seller quotes) are stored as pricingMode OPEN_TO_OFFERS and are never bought directly. Only FIXED is purchasable without an agreement; every representation accepts buyer proposals.
- */
-export type ListingPriceRepresentation = typeof ListingPriceRepresentation[keyof typeof ListingPriceRepresentation];
-
-
-export const ListingPriceRepresentation = {
-  FIXED: 'FIXED',
-  NEGOTIABLE: 'NEGOTIABLE',
-  OPEN_TO_OFFERS: 'OPEN_TO_OFFERS',
-  STARTING_FROM: 'STARTING_FROM',
-  QUOTE_REQUIRED: 'QUOTE_REQUIRED',
-} as const;
-
-/**
- * Paid tier of a sponsored slot; VIP is shown together with «ممول» and never means a verified seller.
- */
-export type ListingSponsoredTier = typeof ListingSponsoredTier[keyof typeof ListingSponsoredTier];
-
-
-export const ListingSponsoredTier = {
-  STANDARD: 'STANDARD',
-  VIP: 'VIP',
-} as const;
-
-export type ListingAttributes = { [key: string]: unknown };
-
-export type ListingPaymentMethodsItem = typeof ListingPaymentMethodsItem[keyof typeof ListingPaymentMethodsItem];
-
-
-export const ListingPaymentMethodsItem = {
-  CASH_DIRECT: 'CASH_DIRECT',
-  CARD: 'CARD',
-} as const;
-
-export type ListingInventoryMode = typeof ListingInventoryMode[keyof typeof ListingInventoryMode];
-
-
-export const ListingInventoryMode = {
-  LIMITED: 'LIMITED',
-  UNLIMITED: 'UNLIMITED',
-} as const;
-
-export type ListingFulfilmentType = typeof ListingFulfilmentType[keyof typeof ListingFulfilmentType];
-
-
-export const ListingFulfilmentType = {
-  PICKUP: 'PICKUP',
-  DELIVERY: 'DELIVERY',
-  DIGITAL: 'DIGITAL',
-  SERVICE: 'SERVICE',
-} as const;
-
-export type ListingStatus = typeof ListingStatus[keyof typeof ListingStatus];
-
-
-export const ListingStatus = {
-  DRAFT: 'DRAFT',
-  PUBLISHED: 'PUBLISHED',
-  PAUSED: 'PAUSED',
-  ARCHIVED: 'ARCHIVED',
-} as const;
-
-export interface Listing {
-  id: string;
-  title: string;
-  description: string;
-  category: string;
-  categoryId?: string;
-  /** Set only by the server for a paid placement; always rendered with a visible «إعلان ممول» label. */
-  isSponsored?: boolean;
-  /** Paid tier of a sponsored slot; VIP is shown together with «ممول» and never means a verified seller. */
-  sponsoredTier?: ListingSponsoredTier;
-  /**
-     * Opaque signed attribution token for a delivered paid card (no personal data); the server alone decides any charge.
-     * @maxLength 1024
-     */
-  sponsoredToken?: string;
-  /**
-     * Recommendation and buyer-ranking surfaces only; each reason is a deterministic signal that matched.
-     * @maxItems 6
-     * @items.maxLength 120
-     */
-  recommendationReasons?: string[];
-  area: string;
-  city?: string;
-  attributes?: ListingAttributes;
-  /** @maxItems 2 */
-  paymentMethods?: ListingPaymentMethodsItem[];
-  /** @nullable */
-  unitPrice: string | null;
-  pricingMode: ListingPricingMode;
-  priceRepresentation?: ListingPriceRepresentation;
-  currency: string;
-  /**
-     * @minimum 0
-     * @nullable
-     */
-  availableQuantity: number | null;
-  reservedQuantity: number;
-  inventoryMode: ListingInventoryMode;
-  fulfilmentType: ListingFulfilmentType;
-  sellerName: string;
-  sellerId?: string;
-  /** @nullable */
-  sellerAvatarObjectPath?: string | null;
-  rating: number;
-  reviewCount?: number;
-  imageUrl: string;
-  /**
-     * @maxItems 6
-     * @items.maxLength 2000
-     */
-  imageUrls?: string[];
-  /**
-     * @maxLength 30
-     * @nullable
-     */
-  contactPhone: string | null;
-  /** A buyer may propose a price on this listing (true for every listing with a known price representation). An agreed price is private to that buyer; the public price never changes. */
-  negotiable?: boolean;
-  status: ListingStatus;
-  createdAt?: string;
 }
 
 export type ListingInputAttributes = { [key: string]: unknown };
@@ -2031,7 +2081,14 @@ export const AiUiBlockPayloadSurface = {
   MARKET_OPPORTUNITY: 'MARKET_OPPORTUNITY',
   BUSINESS_PLAN_REVIEW: 'BUSINESS_PLAN_REVIEW',
   BUSINESS_STATUS: 'BUSINESS_STATUS',
+  BUSINESS_SETUP: 'BUSINESS_SETUP',
+  BUSINESS_PROFILE_REVIEW: 'BUSINESS_PROFILE_REVIEW',
   BUSINESS_PROFILE: 'BUSINESS_PROFILE',
+  BUSINESS_CATALOG: 'BUSINESS_CATALOG',
+  BUSINESS_CATALOG_DRAFT: 'BUSINESS_CATALOG_DRAFT',
+  BUSINESS_LISTING_REVIEW: 'BUSINESS_LISTING_REVIEW',
+  BUSINESS_ORDERS: 'BUSINESS_ORDERS',
+  BUSINESS_INSIGHTS: 'BUSINESS_INSIGHTS',
   COMMERCE_NOTICE: 'COMMERCE_NOTICE',
   AI_USAGE: 'AI_USAGE',
   AI_PLANS: 'AI_PLANS',
@@ -2048,14 +2105,6 @@ export const AiUiBlockPayloadSurface = {
   CONTROL_NOTICE: 'CONTROL_NOTICE',
   PRIVACY_EXPORT: 'PRIVACY_EXPORT',
   TUTORIAL_VIDEO_CARD: 'TUTORIAL_VIDEO_CARD',
-  BUSINESS_SETUP: 'BUSINESS_SETUP',
-  BUSINESS_PROFILE: 'BUSINESS_PROFILE',
-  BUSINESS_PROFILE_REVIEW: 'BUSINESS_PROFILE_REVIEW',
-  BUSINESS_CATALOG: 'BUSINESS_CATALOG',
-  BUSINESS_CATALOG_DRAFT: 'BUSINESS_CATALOG_DRAFT',
-  BUSINESS_LISTING_REVIEW: 'BUSINESS_LISTING_REVIEW',
-  BUSINESS_ORDERS: 'BUSINESS_ORDERS',
-  BUSINESS_INSIGHTS: 'BUSINESS_INSIGHTS',
 } as const;
 
 export type AiTutorialPayloadId = typeof AiTutorialPayloadId[keyof typeof AiTutorialPayloadId];
@@ -2143,11 +2192,6 @@ export type AiUiBlockPayloadPurchaseReview = { [key: string]: unknown };
 export type AiUiBlockPayloadCard = { [key: string]: unknown };
 
 /**
- * D3-A owner business card (setup, profile, catalog, drafts, orders, insights). Server-built from the owner's own rows; display-only. Actions re-enter the conversation adapter and are authorized again by the server. It never carries contact details, identity documents, analytics exports or credentials.
- */
-export type AiUiBlockPayloadBusiness = { [key: string]: unknown };
-
-/**
  * Seller insight from DINAR-internal facts only: price comparables (count, range, median), listing factors phrased as possibilities (never as causes), or a BUSINESS_SUMMARY of the seller's own stock, order counts or per-listing results (shape: SellerBusinessInsight in @workspace/api-zod/conversation-runtime).
  */
 export type AiUiBlockPayloadSellerInsight = { [key: string]: unknown };
@@ -2189,6 +2233,11 @@ export type AiUiBlockPayloadDriver = { [key: string]: unknown };
  * Allowlisted provider connection view (review, status, safe key prefix). Never contains a key, secret or credential hash.
  */
 export type AiUiBlockPayloadProvider = { [key: string]: unknown };
+
+/**
+ * Allowlisted D3-A business view (setup, profile, catalog, orders, insights), refreshed from the owner's live D2 identity and D3 operating rows on every read.
+ */
+export type AiUiBlockPayloadBusiness = { [key: string]: unknown };
 
 /**
  * Policy review card (W02-ULTRA B10): the current version, effective date, legal-review status and reading path of each policy that requires acceptance, whether this user accepted it, and the review id whose exact versions an acceptance records. Contract acceptance only; optional privacy consents are unaffected.
@@ -2256,8 +2305,6 @@ export type AiUiBlockPayload = {
   purchaseReview?: AiUiBlockPayloadPurchaseReview;
   /** The versioned card envelope the server decides for this block (schemaVersion 1): surface type and identity, resource, conversation, market context, lifecycle, allowed actions, pending review, expiry, refresh strategy, source timestamp and accessibility label. The client validates it before rendering and never invents an action the server did not allow. */
   card?: AiUiBlockPayloadCard;
-  /** D3-A owner business card (setup, profile, catalog, drafts, orders, insights). Server-built from the owner's own rows; display-only. Actions re-enter the conversation adapter and are authorized again by the server. It never carries contact details, identity documents, analytics exports or credentials. */
-  business?: AiUiBlockPayloadBusiness;
   /** Seller insight from DINAR-internal facts only: price comparables (count, range, median), listing factors phrased as possibilities (never as causes), or a BUSINESS_SUMMARY of the seller's own stock, order counts or per-listing results (shape: SellerBusinessInsight in @workspace/api-zod/conversation-runtime). */
   sellerInsight?: AiUiBlockPayloadSellerInsight;
   attributes?: AiUiBlockPayloadAttributes;
@@ -2287,6 +2334,8 @@ export type AiUiBlockPayload = {
   driver?: AiUiBlockPayloadDriver;
   /** Allowlisted provider connection view (review, status, safe key prefix). Never contains a key, secret or credential hash. */
   provider?: AiUiBlockPayloadProvider;
+  /** Allowlisted D3-A business view (setup, profile, catalog, orders, insights), refreshed from the owner's live D2 identity and D3 operating rows on every read. */
+  business?: AiUiBlockPayloadBusiness;
   /** Policy review card (W02-ULTRA B10): the current version, effective date, legal-review status and reading path of each policy that requires acceptance, whether this user accepted it, and the review id whose exact versions an acceptance records. Contract acceptance only; optional privacy consents are unaffected. */
   policyReview?: AiUiBlockPayloadPolicyReview;
   /** Private structured memory summary, returned only to the authenticated owner. */

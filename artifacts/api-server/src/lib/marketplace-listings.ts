@@ -5,8 +5,8 @@ import {
   type SearchSort,
 } from "@workspace/api-zod/marketplace-schemas";
 import {
-  businessListingLinks,
   businessOperatingProfiles,
+  businessProfiles,
   db,
   offers,
   users,
@@ -109,15 +109,27 @@ export async function inactiveBusinessListingIds(
   executor: Parameters<Parameters<typeof db.transaction>[0]>[0] | typeof db = db,
 ): Promise<Set<string>> {
   const rows = await executor
-    .select({ listingId: businessListingLinks.listingId })
-    .from(businessListingLinks)
+    .select({ listingId: offers.id })
+    .from(offers)
     .innerJoin(
+      businessProfiles,
+      eq(businessProfiles.id, offers.businessProfileId),
+    )
+    .leftJoin(
       businessOperatingProfiles,
-      eq(businessOperatingProfiles.id, businessListingLinks.businessId),
+      eq(businessOperatingProfiles.d2BusinessId, offers.businessProfileId),
     )
     .where(and(
-      eq(businessListingLinks.marketId, marketId),
-      ne(businessOperatingProfiles.status, "ACTIVE"),
+      eq(offers.marketId, marketId),
+      eq(businessProfiles.marketId, marketId),
+      sql`(
+        ${businessProfiles.verificationStatus} <> 'VERIFIED'
+        OR ${businessProfiles.publicationStatus} <> 'PUBLISHED'
+        OR (
+          ${businessOperatingProfiles.id} IS NOT NULL
+          AND (${businessOperatingProfiles.marketId} <> ${marketId} OR ${businessOperatingProfiles.status} <> 'ACTIVE')
+        )
+      )`,
     ));
   return new Set(rows.map((row) => row.listingId));
 }
@@ -624,9 +636,12 @@ async function sqlCandidates(input: {
   conditions.push(options.ownSellerId ? eq(offers.sellerId, options.ownSellerId) : eq(offers.status, "PUBLISHED"));
   // Same rule as `accepted`: a listing whose business is not ACTIVE is not a candidate.
   conditions.push(sql`NOT EXISTS (
-    SELECT 1 FROM business_listing_links bl
-    JOIN business_operating_profiles bp ON bp.id = bl.business_id
-    WHERE bl.listing_id = ${offers.id} AND bp.status <> 'ACTIVE'
+    SELECT 1
+    FROM business_profiles d2
+    LEFT JOIN business_operating_profiles bp ON bp.d2_business_id = d2.id
+    WHERE d2.id = ${offers.businessProfileId}
+      AND (d2.verification_status <> 'VERIFIED' OR d2.publication_status <> 'PUBLISHED'
+        OR (bp.id IS NOT NULL AND (bp.market_id <> ${market.id} OR bp.status <> 'ACTIVE')))
   )`);
   if (options.allowedIds) conditions.push(inArray(offers.id, [...new Set(options.allowedIds)]));
   if (options.conversational)

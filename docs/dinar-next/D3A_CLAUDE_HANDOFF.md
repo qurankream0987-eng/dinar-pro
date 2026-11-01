@@ -1,5 +1,13 @@
 # D3-A → D2 / Claude handoff
 
+> **Integration update (2026-11-02):** Preserved on
+> `replit/dinar-next-complete-development`; each D3 operating profile links to the canonical D2
+> business, and `offers.business_profile_id` is the only business-listing association. D3 stores
+> no verification status and has no `STAFF` grant path. Native acceptance is 41/41; independent
+> Claude Code review remains PENDING until after push.
+> The sections below preserve the original contribution handoff and are historical; see
+> `D3A_EXISTING_SOURCE_MAP.md` and `D3A_ACCEPTANCE_MATRIX.md` for the current design and evidence.
+
 Branch `qoder/15-d3a-native-business`, base `d94477b` (Claude D1/D2 baseline). Never merged to
 `main`, never deployed. This document is the integration contract: what D3-A reused, what it
 added, what D2 must publish before a business can be verified, and how to undo it.
@@ -9,7 +17,7 @@ Companion documents:
 - `D3A_EXISTING_SOURCE_MAP.md` — what existed before D3-A and where.
 - `D3A_NATIVE_BUSINESS_DESIGN.md` — the model, conversation surface, cards, failure modes.
 - `D3A_SECURITY_AND_PERMISSIONS.md` — capabilities, defense in depth, public exposure.
-- `D3A_ACCEPTANCE_MATRIX.md` — the 40 executable tests, negatives, runs.
+- `D3A_ACCEPTANCE_MATRIX.md` — the 41 executable tests, negatives, runs.
 
 ## 1. Branch, commits, scope
 
@@ -155,9 +163,9 @@ the suite.
 
 | Suite | Evidence |
 | --- | --- |
-| `d3a-native-business.test` | run 41252858333 at `363d9be`: `D3A_SUMMARY {"passed":40,"total":40,…, "modelCalls":0}`, `outbound=0` |
-| `d3a-browser-journey.test` | run 41252571040 at `363d9be`: `D3A_UI_SUMMARY {"result":"PASS","surfaces":8,"checks":20,"steps":11,"searchHits":1}`, `outbound=0`, zero page/console errors, zero external requests, overflow 0 |
-| `test:surfaces` | composed-surface protocol incl. the eight business views (new test composes every view through `ComposedSurfaceSchema`) |
+| `d3a-native-business.test` | 2026-11-02 isolated PostgreSQL 18 run: `D3A_SUMMARY {"passed":41,"total":41,…,"modelCalls":0}`, `outbound=0`; earlier CI run 41252858333 at `363d9be` passed 40/40 |
+| `d3a-browser-journey.test` | 2026-11-02 isolated PostgreSQL 18 run: `D3A_UI_SUMMARY {"result":"PASS","surfaces":8,"checks":20,"steps":11,"searchHits":1}`, `outbound=0`, zero page/console errors, zero external requests, overflow 0; earlier CI run 41252571040 at `363d9be` also passed |
+| `test:surfaces` | 2026-11-02: 32/32, incl. all eight business views through `ComposedSurfaceSchema` |
 | `search-sql-foundation.test` | C1 PostgreSQL search regression (`BDINAR_TEST_DATABASE=development`): run 41253038310, 6 pass / 0 fail, outbound 0 |
 | `wave03-card-envelope.test` | Card Envelope v1 regression (`BDINAR_WAVE03_ACCEPTANCE=development`): run 41253321070, 9 pass / 0 fail, outbound 0 |
 | `commerce-journey.test` | canonical cart/checkout regression (`BDINAR_WAVE4_ACCEPTANCE=development`): run 41253537556, 8 pass / 0 fail, outbound 0 |
@@ -229,8 +237,9 @@ audit events, zero orders, zero model calls.
 
 ## 12. Integration status
 
-- D3-A is complete on its branch: 40/40 API tests, a real-UI journey across all eight cards, the
-  storefront and canonical search, with the database proof in §7.
+- D3-A is preserved on `replit/dinar-next-complete-development`: 41/41 API tests, a real-UI
+  journey across all eight cards, the storefront and canonical search, with database proof in §7.
 - D2 is the only blocker to real verification. Until §4 ships, every production business is an
   applicant (drafts and profile only, publish 409) and every storefront is honestly unverified.
+- Independent Claude Code review: PENDING; perform it separately after this branch is pushed.
 - Nothing is merged, nothing is deployed, and no production data was read or written.

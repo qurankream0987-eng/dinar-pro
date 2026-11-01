@@ -1,8 +1,9 @@
 # D3-A — Acceptance matrix
 
-Branch `qoder/15-d3a-native-business`. Every entry below is an executable assertion that ran in
-isolated CI, not a design intention. Only tests whose body executed are counted; the suite
-prints `D3A_SUMMARY {"passed":40,"total":40,…}` from the same objects that build this table.
+Branch `replit/dinar-next-complete-development`, preserved from `qoder/15-d3a-native-business`.
+Every entry below is an executable assertion, not a design intention. Only tests whose body
+executed are counted; the suite prints `D3A_SUMMARY {"passed":41,"total":41,…}` from the same
+objects that build this table.
 
 ## 1. How it runs
 
@@ -24,30 +25,30 @@ Every dispatch also runs `pnpm run typecheck`, the api-server build, the web bui
 `pnpm --filter @workspace/dinar run test:surfaces` before the suite, so a green run is also a
 typecheck/build/surface-protocol regression result.
 
-## 2. API acceptance — 40 tests
+## 2. API acceptance — 41 tests
 
 | ID | Executed assertion (abridged) | Requirement |
 | --- | --- | --- |
-| D3A-01 | «عندي مطعم …» creates one `business_operating_profiles` row: `operatingMode=INTERNAL_DINAR`, `status=DRAFT`, `identityStatus=PENDING_D2`, no `d2BusinessId`, owner/market set; one `BUSINESS_DRAFT_CREATED` audit; card resource is `BUSINESS`. | 02, 04 |
+| D3A-01 | «عندي مطعم …» creates one D3 draft linked to its D2 business; D2 remains `DRAFT`, owner/market match, one `BUSINESS_DRAFT_CREATED` audit, and the card resource is `BUSINESS`. If no name is given, the placeholder is hidden and the required name cannot be skipped. | 02, 04 |
 | D3A-02 | Repeating the setup sentence resumes the same row; the owner still has exactly one business. | 03-B |
 | D3A-03 | Each answer stores one field and the prompt asks for exactly the next missing field (`area` → `fulfilment`); final state is `PROFILE_REVIEW`. | 03 |
 | D3A-04 | «ما عندي سجل تجاري» receives the honest registration notice; the refusal text is not written into any profile field. | 03-A |
 | D3A-05 | A review exists before activation; the business is still `DRAFT` and nothing is public. | 03 |
-| D3A-06 | Only an explicit «أكد» activates, once: `ACTIVE`, `BUSINESS_ACTIVATED` audit, `identityStatus` still `PENDING_D2`, card lifecycle READY. | 03, 12 |
+| D3A-06 | Only an explicit «أكد» activates once; D2 identity remains unchanged, with one `BUSINESS_ACTIVATED` audit and card lifecycle READY. | 03, 12 |
 | D3A-07 | A repeated «أكد» is answered and does not activate twice or duplicate the audit. | 12 |
 | D3A-08 | «إلغاء» leaves the business a draft; no activation audit. | 03 |
 | D3A-09 | A buyer gets no authority, including a direct `resolveBusinessAccess` call (`NONE`, empty capabilities). | 11 |
-| D3A-10 | An unverified owner keeps all three drafts; publishing is refused with the PENDING_D2 reason; no offer row exists. | 01, 03-A |
-| D3A-11 | The fixture hook throws without `BDINAR_D3A_D2_FIXTURES=development`; the production port reports `PENDING_D2`. | 01, 11 |
-| D3A-12 | A business whose D2 identity is verified runs its own onboarding inside DINAR and activates honestly (D3 row still PENDING_D2). | 03-C |
-| D3A-13 | VERIFIED_OWNER access comes only from the D2 fixture: all nine capabilities, `publishable=true`, policy version recorded; the D3 row alone grants nothing. | 01, 11 |
-| D3A-14 | Staff receive exactly the D2-granted intersection; `business.catalog.publish` is denied (403) even by direct service call. | 11 |
+| D3A-10 | An unverified owner keeps all three drafts; publishing is refused with the canonical D2 `DRAFT` status; no offer row exists. | 01, 03-A |
+| D3A-11 | The fixture hook throws without `BDINAR_D3A_D2_FIXTURES=development`; the live adapter reports `CONNECTED`. | 01, 11 |
+| D3A-12 | A D2-verified business runs its onboarding and activates; the verification fixture is confined to the disposable acceptance database. | 03-C |
+| D3A-13 | Verified owner access comes from the canonical D2 identity and eligibility; the D3 profile alone grants nothing. | 01, 11 |
+| D3A-14 | Staff receive no D3 grant; business access and direct publication are denied (404). | 11 |
 | D3A-15 | «جهز لي ثلاث عروض…» yields three typed drafts with titles, `priceMinor` 2500/3250/1000, JOD, category `other`, area عمان; zero offers written. | 05, 10 |
 | D3A-16 | Repeating the draft command creates new draft ids and still zero offers. | 10 |
 | D3A-17 | «انشر المسودة 1» returns a review with a pending `BUSINESS_ACTION` (`PUBLISH_DRAFT`, idempotency key = draft id); nothing is written before confirmation. | 12 |
-| D3A-18 | «أكد» publishes through the canonical authority: `offers` row PUBLISHED at 2500, `business_listing_links` row, `LISTING_PUBLISHED` audit, notice «نُشر». | 04, 08 |
-| D3A-19 | Repeating the confirmed publish returns the same listing and one link; no duplicate. | 12 |
-| D3A-20 | The remaining drafts publish at 3250 and 1000; three links for the business. | 04 |
+| D3A-18 | «أكد» publishes through the canonical authority: `offers` row PUBLISHED at 2500 with `business_profile_id`, `LISTING_PUBLISHED` audit, notice «نُشر». | 04, 08 |
+| D3A-19 | Repeating the confirmed publish returns the same listing without duplication. | 12 |
+| D3A-20 | The remaining drafts publish at 3250 and 1000; all three offers reference the same D2 business. | 04 |
 | D3A-21 | The catalog card is the server summary: 3 total/3 published/0 paused, prices 1000/2500/3250, allowed actions include PAUSE and PRICE. | 04, 13 |
 | D3A-22 | «غير سعر البرجر إلى 3.750» shows a review; «إلغاء» changes nothing. | 12 |
 | D3A-23 | Confirming a price review updates the canonical listing and writes an audit. | 08, 12 |
@@ -65,9 +66,10 @@ typecheck/build/surface-protocol regression result.
 | D3A-35 | Another account cannot change a business listing through the business; ownership is re-checked. | 08, 11 |
 | D3A-36 | Direct service calls deny a buyer and a staff member without publication grants. | 11 |
 | D3A-37 | Audit rows are append-only: UPDATE, DELETE and TRUNCATE all raise `23514`. | 12 |
-| D3A-38 | The database refuses an `identity_status` other than `PENDING_D2` and any operating mode other than `INTERNAL_DINAR`. | 01, 02, 11 |
+| D3A-38 | The D3 table has no identity column (PostgreSQL `42703`) and rejects operating modes other than `INTERNAL_DINAR`. | 01, 02, 11 |
 | D3A-39 | Editing through the business keeps seller, market and creation snapshot; only allowed fields change. | 08, 12 |
 | D3A-40 | All eight surfaces carry a Card Envelope with stable identity, safe resource, no secret-looking keys, and allowed actions only from the server list. | 13 |
+| D3A-41 | Multiple owned businesses require an explicit choice before setup or catalog commands; an active business is never silently selected. | 03-B |
 
 ## 3. Real-browser acceptance — 1 test, 8 families
 
@@ -91,9 +93,9 @@ work by typing Arabic into the conversation:
 
 Asserted browser conditions: no page error, no console error, no external request, zero
 horizontal overflow at 320/390/1280 in RTL with named ≥32 px buttons, zero model calls.
-Database proof after the run: exactly three PUBLISHED offers at 2500/3250/1000, three
-`business_listing_links`, one `BUSINESS_ACTIVATED` and three `LISTING_PUBLISHED` audits, no
-order, `identity_status = PENDING_D2`.
+Database proof after the run: exactly three PUBLISHED offers at 2500/3250/1000, each associated
+through `offers.business_profile_id` to the canonical D2 business, one `BUSINESS_ACTIVATED` and
+three `LISTING_PUBLISHED` audits, no order, and no D3 verification state.
 
 It found and forced the fix of a real UI defect: the insights metric carried a non-protocol
 `ltr` key, so the strict composition schema dropped the whole card. All eight views now have a
@@ -102,7 +104,8 @@ composition test in `test:surfaces`.
 ## 4. Negative coverage (assertions, not prose)
 
 - Model/client/body/display name cannot grant a capability: D3A-09, 13, 14, 34, 36, 40.
-- No fake verification: D3A-11, 12, 13, 38 (D3 row stays PENDING_D2 in every test).
+- No D3 self-verification: D3A-11, 12, 13, 38; any verified fixture is guarded and limited to the
+  disposable acceptance database, while production access reads D2.
 - Payment/subscription never consulted: no test path reads any payment or plan state; publish
   gating calls only D2 access + D3 status (D3A-10, 13, 36).
 - Moderation/search not bypassed: every publish goes through `createListingForActor`
@@ -117,17 +120,17 @@ composition test in `test:surfaces`.
 
 | Suite | What it protects | Run |
 | --- | --- | --- |
-| `d3a-native-business.test` | the 40 D3-A tests | 41252858333 at `363d9be` (40/40, outbound 0, modelCalls 0) |
-| `d3a-browser-journey.test` | the real-UI journey + 8 card families | 41252571040 (`D3A_UI_SUMMARY {"result":"PASS","surfaces":8,"checks":20,"steps":11,"searchHits":1}`, outbound 0) |
+| `d3a-native-business.test` | the 41 D3-A tests | 2026-11-02, isolated PostgreSQL 18: 41/41, outbound 0, modelCalls 0; earlier CI run 41252858333 at `363d9be` passed 40/40 |
+| `d3a-browser-journey.test` | the real-UI journey + 8 card families | 2026-11-02, isolated PostgreSQL 18: PASS, 20 checks / 11 steps / 8 surfaces / 1 search hit, outbound 0, no browser or console errors, no external requests, overflow 0 |
 | `search-sql-foundation.test` | C1 PostgreSQL search (flags `BDINAR_TEST_DATABASE=development`) | 41253038310 — 6 pass / 0 fail, outbound 0 |
 | `wave03-card-envelope.test` | Card Envelope v1 (flags `BDINAR_WAVE03_ACCEPTANCE=development`) | 41253321070 — 9 pass / 0 fail, outbound 0 |
 | `commerce-journey.test` | canonical cart/checkout (flags `BDINAR_WAVE4_ACCEPTANCE=development`) | 41253537556 — 8 pass / 0 fail, outbound 0 |
-| `pnpm --filter @workspace/dinar run test:surfaces` | composed-surface protocol, card lifecycle/envelope, checkout key | runs in every dispatch; 29 pass / 0 fail in 41252571040 (28 before the D3-A addition) |
+| `pnpm --filter @workspace/dinar run test:surfaces` | composed-surface protocol, card lifecycle/envelope, checkout key | 2026-11-02: 32 pass / 0 fail |
 
 ## 6. What this does not prove
 
-- D2 is not published: verification is exercised only through the guarded fixture port; the
-  production answer remains `PENDING_D2` (no real commercial-registry review exists yet).
+- D2's external commercial-registry review is not integrated; production visibility depends on
+  a real approved D2 status, never a D3 status or test fixture.
 - Restaurant modifiers/reservations/POS are out of scope; drafts use category «أخرى» and offer
   no modifier checkout could ignore.
 - The public page is proven as an unauthenticated data contract and a two-account browser

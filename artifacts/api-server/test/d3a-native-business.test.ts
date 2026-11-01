@@ -2,9 +2,9 @@
  * D3-A acceptance: a business runs entirely inside DINAR with no external website.
  *
  * Every test below executes against the real HTTP app and the disposable PostgreSQL database:
- * the same conversation adapter, the same listing authority, the same search and cart. D2 is not
- * published, so a VERIFIED identity exists only through the hard-guarded fixture hook; the
- * production path is proven to stay PENDING_D2 and to refuse publication honestly.
+ * the same conversation adapter, the same listing authority, the same search and cart. The normal
+ * D2 DRAFT identity proves publication stays blocked; a VERIFIED identity exists only through the
+ * hard-guarded fixture hook.
  */
 import { test } from "node:test";
 import assert from "node:assert/strict";
@@ -14,8 +14,8 @@ import app from "../src/app";
 import {
   aiResultSets,
   businessAuditEvents,
-  businessListingLinks,
   businessOperatingProfiles,
+  businessProfiles,
   db,
   markets,
   offers,
@@ -25,6 +25,7 @@ import {
 } from "@workspace/db";
 import { buildListingUpdateBody } from "../src/lib/listing-management";
 import { resolveMarket } from "../src/lib/markets";
+import { createBusinessDraft } from "../src/lib/business-profiles";
 import { getModelGatewayCallCount } from "../src/ai/model-gateway";
 import { requireSafeReplitDevelopmentDatabase } from "./safe-development-database";
 import {
@@ -148,9 +149,33 @@ let burgerSnapshot: { createdAt: string; sellerId: string; marketId: string } | 
 const surfacesSeen: { payload: Record<string, any>; expected: string }[] = [];
 const businessOf = async (id: string) =>
   (await db.select().from(businessOperatingProfiles).where(eq(businessOperatingProfiles.id, id)))[0]!;
+const d2BusinessIdOf = async (id: string) => (await businessOf(id)).d2BusinessId;
+const linkedOffers = async (id: string) =>
+  db.select().from(offers).where(eq(offers.businessProfileId, await d2BusinessIdOf(id)));
 const offerOf = async (id: string) => (await db.select().from(offers).where(eq(offers.id, id)))[0]!;
 const businessOffers = async (sellerId: string) =>
   db.select().from(offers).where(eq(offers.sellerId, sellerId));
+
+async function registerVerifiedD2Identity(id: string, owner: Actor) {
+  const business = await businessOf(id);
+  await db.update(businessProfiles).set({
+    verificationStatus: "VERIFIED",
+    publicationStatus: "PUBLISHED",
+    verifiedAt: new Date(),
+    verifiedBy: applicant.id,
+  }).where(eq(businessProfiles.id, business.d2BusinessId));
+  registerBusinessIdentityFixture({
+    businessId: business.d2BusinessId,
+    ownerUserId: owner.id,
+    marketId: business.marketId,
+    businessType: business.businessType as "RESTAURANT" | "SHOP" | "SERVICE_PROVIDER" | "OTHER",
+    verificationStatus: "VERIFIED",
+    publicationEligibility: "ELIGIBLE",
+    membershipPermissions: [],
+    businessStatus: "ACTIVE",
+    policyVersion: "D2-2026-11",
+  });
+}
 const audits = async (businessId: string) =>
   db.select().from(businessAuditEvents).where(eq(businessAuditEvents.businessId, businessId));
 
@@ -202,15 +227,37 @@ await focused("D3A-01", "a stated business becomes an INTERNAL_DINAR draft, neve
   const business = setupPayload.business;
   assert.equal(business.view, "SETUP");
   assert.equal(business.operatingMode, "INTERNAL_DINAR");
-  assert.equal(business.identityStatus, "PENDING_D2");
+  assert.equal(business.identityStatus, "DRAFT");
   assert.equal(business.canPublish, false);
   applicantBusinessId = business.businessId;
   assert.ok(applicantBusinessId);
   const [row] = await db.select().from(businessOperatingProfiles).where(eq(businessOperatingProfiles.id, applicantBusinessId));
   assert.equal(row!.status, "DRAFT");
   assert.equal(row!.operatingMode, "INTERNAL_DINAR");
-  assert.equal(row!.identityStatus, "PENDING_D2");
-  assert.equal(row!.d2BusinessId, null);
+  assert.equal(row!.d2BusinessId.length > 0, true);
+  const [canonical] = await db.select().from(businessProfiles).where(eq(businessProfiles.id, row!.d2BusinessId));
+  assert.equal(canonical!.verificationStatus, "DRAFT");
+
+  const unnamedConversation = await conversation(staffMember);
+  const unnamedSetup = await turn(staffMember, unnamedConversation, "عندي مطعم في عمان");
+  assert.equal(unnamedSetup.business.missingField, "name");
+  assert.equal(unnamedSetup.business.name, undefined, "the D2 placeholder is not shown as the business name");
+  const unnamedBusinessId = unnamedSetup.business.businessId as string;
+  const skippedName = await turn(staffMember, unnamedConversation, "تخطى");
+  assert.equal(skippedName.business.missingField, "name", "a required name cannot be skipped");
+  const [unnamedOperatingProfile] = await db
+    .select()
+    .from(businessOperatingProfiles)
+    .where(eq(businessOperatingProfiles.id, unnamedBusinessId));
+  const [unnamedIdentity] = await db
+    .select()
+    .from(businessProfiles)
+    .where(eq(businessProfiles.id, unnamedOperatingProfile!.d2BusinessId));
+  assert.equal(unnamedIdentity!.displayName, "نشاط جديد", "skipping the name does not write the skip word");
+  const namedSetup = await turn(staffMember, unnamedConversation, "اسم النشاط مطعم الشاطئ");
+  assert.equal(namedSetup.business.name, "مطعم الشاطئ");
+  assert.equal(namedSetup.business.missingField, "description");
+
   assert.equal(row!.ownerUserId, applicant.id);
   assert.equal(row!.marketId, "JO");
   const created = (await audits(applicantBusinessId)).filter((event) => event.action === "BUSINESS_DRAFT_CREATED");
@@ -257,7 +304,8 @@ await focused("D3A-04", "no commercial registration is answered honestly and is 
   assert.match(refusal.business.registrationNotice, /بدون سجل تجاري/u);
   const [row] = await db.select().from(businessOperatingProfiles).where(eq(businessOperatingProfiles.id, otherBusinessId));
   assert.equal(row!.description, "");
-  assert.equal(row!.identityStatus, "PENDING_D2");
+  const [otherIdentity] = await db.select().from(businessProfiles).where(eq(businessProfiles.id, row!.d2BusinessId));
+  assert.equal(otherIdentity!.verificationStatus, "DRAFT");
   const review = await completeSetup(other, otherConv, "عندي متجر اسمه «متجر النسيم»", "هدايا صغيرة", "في عمان", "استلام من الفرع");
   assert.equal(review.business.view, "PROFILE_REVIEW");
 });
@@ -284,11 +332,12 @@ await focused("D3A-06", "only an explicit decision activates the business, once,
   surfacesSeen.push({ payload: activatedPayload, expected: "BUSINESS_PROFILE" });
   assert.equal(activatedPayload.business.view, "PROFILE");
   assert.equal(activatedPayload.business.status, "ACTIVE");
-  assert.match(activatedPayload.business.blockedReason, /اعتماد هوية النشاط التجاري/u);
+  assert.match(activatedPayload.business.blockedReason, /هوية النشاط \(DRAFT\)/u);
   const [row] = await db.select().from(businessOperatingProfiles).where(eq(businessOperatingProfiles.id, applicantBusinessId));
   assert.equal(row!.status, "ACTIVE");
   assert.equal(row!.version, 2);
-  assert.equal(row!.identityStatus, "PENDING_D2");
+  const [applicantIdentity] = await db.select().from(businessProfiles).where(eq(businessProfiles.id, row!.d2BusinessId));
+  assert.equal(applicantIdentity!.verificationStatus, "DRAFT");
   assert.equal((await audits(applicantBusinessId)).filter((event) => event.action === "BUSINESS_ACTIVATED").length, 1);
   assert.equal(activatedPayload.card.status.lifecycle, "READY");
   assert.equal(activatedPayload.card.resource.id, applicantBusinessId);
@@ -331,7 +380,7 @@ await focused("D3A-09", "a buyer has no business authority, even by direct servi
   );
 });
 
-await focused("D3A-10", "an unverified owner keeps drafts and publication is refused with PENDING_D2", async () => {
+await focused("D3A-10", "an unverified D2 owner keeps drafts and publication is refused", async () => {
   const drafts = await turn(applicant, applicantConv, "جهز لي ثلاث عروض: شاورما 2.500، برجر 3.250، عصير 1.000");
   assert.equal(drafts.business.view, "CATALOG_DRAFT");
   assert.equal(drafts.business.drafts.length, 3);
@@ -339,7 +388,7 @@ await focused("D3A-10", "an unverified owner keeps drafts and publication is ref
   const before = (await businessOffers(applicant.id)).length;
   const publish = await turn(applicant, applicantConv, "انشر المسودة 1");
   assert.equal(publish.business.view, "LISTING_REVIEW");
-  assert.match(publish.business.notice, /اعتماد هوية النشاط التجاري/u);
+  assert.match(publish.business.notice, /التحقق من هويته التجارية/u);
   assert.deepEqual(publish.business.allowedActions, []);
   assert.equal((await businessOffers(applicant.id)).length, before);
   const pending = await db
@@ -350,14 +399,14 @@ await focused("D3A-10", "an unverified owner keeps drafts and publication is ref
       sql`${aiResultSets.query} ->> 'kind' = ${"BUSINESS_ACTION"}`,
     ));
   assert.equal(pending.length, 0);
-  const rows = await db.select().from(businessListingLinks).where(eq(businessListingLinks.businessId, applicantBusinessId));
+  const rows = await linkedOffers(applicantBusinessId);
   assert.equal(rows.length, 0);
 });
 
-await focused("D3A-11", "the D2 fixture hook is hard-guarded; production reporting stays PENDING_D2", () => {
+await focused("D3A-11", "the D2 fixture hook is hard-guarded and the live adapter is connected", () => {
   delete process.env.BDINAR_D3A_D2_FIXTURES;
   try {
-    assert.equal(d2IntegrationStatus(), "PENDING_D2");
+    assert.equal(d2IntegrationStatus(), "CONNECTED");
     assert.throws(
       () => registerBusinessIdentityFixture({
         businessId: applicantBusinessId,
@@ -370,7 +419,7 @@ await focused("D3A-11", "the D2 fixture hook is hard-guarded; production reporti
         businessStatus: "ACTIVE",
         policyVersion: "D2-test",
       }),
-      /BDINAR_D3A_D2_FIXTURES/u,
+      /D2 fixtures are restricted to the development acceptance suite/u,
     );
   } finally {
     process.env.BDINAR_D3A_D2_FIXTURES = "development";
@@ -383,32 +432,16 @@ await focused("D3A-11", "the D2 fixture hook is hard-guarded; production reporti
 await focused("D3A-12", "a verified business exists inside DINAR and starts from its own onboarding", async () => {
   const review = await completeSetup(verified, verifiedConv, "عندي مطعم اسمه «مطعم الأصيل»", "مأكولات بحرية", "في عمان", "استلام وتوصيل");
   verifiedBusinessId = review.business.businessId;
+  await registerVerifiedD2Identity(verifiedBusinessId, verified);
   const activated = await turn(verified, verifiedConv, "أكد");
   assert.equal(activated.business.view, "PROFILE");
   assert.equal(activated.business.status, "ACTIVE");
   const [row] = await db.select().from(businessOperatingProfiles).where(eq(businessOperatingProfiles.id, verifiedBusinessId));
   assert.equal(row!.ownerUserId, verified.id);
-  assert.equal(row!.identityStatus, "PENDING_D2");
 });
 
 await focused("D3A-13", "verified access comes from the D2 identity, never from the D3 record", async () => {
-  registerBusinessIdentityFixture({
-    businessId: verifiedBusinessId,
-    ownerUserId: verified.id,
-    marketId: "JO",
-    businessType: "RESTAURANT",
-    verificationStatus: "VERIFIED",
-    publicationEligibility: "ELIGIBLE",
-    membershipPermissions: [...BUSINESS_CAPABILITIES],
-    businessStatus: "ACTIVE",
-    policyVersion: "D2-2026-11",
-    memberships: [{
-      userId: staffMember.id,
-      role: "STAFF",
-      permissions: ["business.catalog.read", "business.orders.read", "business.catalog.draft"],
-    }],
-  });
-  await db.update(businessOperatingProfiles).set({ d2BusinessId: verifiedBusinessId }).where(eq(businessOperatingProfiles.id, verifiedBusinessId));
+  await registerVerifiedD2Identity(verifiedBusinessId, verified);
   const business = await businessOf(verifiedBusinessId);
   const access = await resolveBusinessAccess({ business, actorId: verified.id, marketId: "JO" });
   assert.equal(access.actorClass, "VERIFIED_OWNER");
@@ -418,16 +451,15 @@ await focused("D3A-13", "verified access comes from the D2 identity, never from 
   assert.deepEqual([...access.capabilities].sort(), [...BUSINESS_CAPABILITIES].sort());
 });
 
-await focused("D3A-14", "staff receive only the D2-granted capabilities", async () => {
+await focused("D3A-14", "staff are denied until D2 provides an explicit staff grant", async () => {
   const business = await businessOf(verifiedBusinessId);
   const access = await resolveBusinessAccess({ business, actorId: staffMember.id, marketId: "JO" });
-  assert.equal(access.role, "STAFF");
-  assert.equal(access.actorClass, "STAFF");
-  assert.deepEqual([...access.capabilities].sort(), ["business.catalog.draft", "business.catalog.read", "business.orders.read"]);
-  assert.equal(access.capabilities.has("business.catalog.publish"), false);
+  assert.equal(access.role, "NONE");
+  assert.equal(access.actorClass, "NONE");
+  assert.equal(access.capabilities.size, 0);
   await assert.rejects(
     requireBusinessCapability({ business, actorId: staffMember.id, marketId: "JO", capability: "business.catalog.publish" }),
-    (error: any) => error.status === 403,
+    (error: any) => error.status === 404,
   );
 });
 
@@ -473,7 +505,7 @@ await focused("D3A-17", "publishing needs a review; nothing is written before co
   assert.equal(action!.query.idempotencyKey, draftIds[0]);
 });
 
-await focused("D3A-18", "confirmation publishes through the canonical listing authority with a link and audit", async () => {
+await focused("D3A-18", "confirmation publishes through the canonical listing association and audit", async () => {
   const published = await turn(verified, verifiedConv, "أكد");
   const [acted] = await db.select().from(aiResultSets).where(eq(aiResultSets.id, listingReviewPayload.business.pendingActionId));
   assert.equal(
@@ -488,20 +520,17 @@ await focused("D3A-18", "confirmation publishes through the canonical listing au
   assert.equal(offer.unitPriceMinor, 2500);
   assert.equal(offer.sellerId, verified.id);
   assert.equal(offer.marketId, "JO");
-  const [link] = await db.select().from(businessListingLinks).where(eq(businessListingLinks.listingId, shawarmaId));
-  assert.equal(link!.businessId, verifiedBusinessId);
-  assert.equal(link!.marketId, "JO");
+  assert.equal(offer.businessProfileId, await d2BusinessIdOf(verifiedBusinessId));
   assert.ok((await audits(verifiedBusinessId)).some((event) => event.action === "LISTING_PUBLISHED" && event.resourceId === shawarmaId));
   burgerSnapshot = undefined;
   assert.equal((await businessOffers(verified.id)).length, 1);
 });
 
-await focused("D3A-19", "repeating a confirmed publish never duplicates the listing or its link", async () => {
+await focused("D3A-19", "repeating a confirmed publish never duplicates its listing", async () => {
   await publishDraft(verified, verifiedConv, 1);
   const rows = await db.select().from(offers).where(eq(offers.id, shawarmaId));
   assert.equal(rows.length, 1);
-  const links = await db.select().from(businessListingLinks).where(eq(businessListingLinks.listingId, shawarmaId));
-  assert.equal(links.length, 1);
+  assert.equal((await offerOf(shawarmaId)).businessProfileId, await d2BusinessIdOf(verifiedBusinessId));
   assert.equal((await businessOffers(verified.id)).length, 1);
   assert.equal((await offerOf(shawarmaId)).unitPriceMinor, 2500);
 });
@@ -517,7 +546,7 @@ await focused("D3A-20", "the remaining drafts publish with their stated prices",
   assert.equal(juice.unitPriceMinor, 1000);
   assert.equal(burger.status, "PUBLISHED");
   assert.equal(juice.status, "PUBLISHED");
-  const links = await db.select().from(businessListingLinks).where(eq(businessListingLinks.businessId, verifiedBusinessId));
+  const links = await linkedOffers(verifiedBusinessId);
   assert.equal(links.length, 3);
   burgerSnapshot = { createdAt: burger.createdAt.toISOString(), sellerId: burger.sellerId, marketId: burger.marketId };
 });
@@ -537,7 +566,7 @@ await focused("D3A-21", "the catalog card is the server's own catalog summary", 
   assert.equal(catalogPayload.card.surfaceType, "BUSINESS_CATALOG");
   assert.equal(catalogPayload.card.resource.kind, "BUSINESS");
   assert.deepEqual(
-    (await db.select().from(businessListingLinks).where(eq(businessListingLinks.businessId, verifiedBusinessId))).length,
+    (await linkedOffers(verifiedBusinessId)).length,
     3,
   );
 });
@@ -569,6 +598,20 @@ await focused("D3A-23", "a confirmed price change updates the canonical listing 
 });
 
 await focused("D3A-24", "a listing changed after its review is refused, never overwritten", async () => {
+  const supersededReview = await turn(verified, verifiedConv, "غير سعر العصير إلى 1.650");
+  assert.equal(supersededReview.business.view, "LISTING_REVIEW");
+  const supersededActionId = supersededReview.business.pendingActionId;
+  await turn(verified, verifiedConv, "منتجاتي");
+  const lateConfirmation = await turn(verified, verifiedConv, "أكد");
+  assert.equal(
+    (await offerOf(juiceId)).unitPriceMinor,
+    1000,
+    "a confirmation after a newer catalog card must not execute the older review",
+  );
+  const [supersededAction] = await db.select().from(aiResultSets).where(eq(aiResultSets.id, supersededActionId));
+  assert.equal(supersededAction!.query.status, "SUPERSEDED");
+  assert.deepEqual(lateConfirmation.business.allowedActions, []);
+
   const review = await turn(verified, verifiedConv, "غير سعر العصير إلى 1.500");
   assert.equal(review.business.view, "LISTING_REVIEW");
   await db.update(offers).set({ unitPriceMinor: 1750, updatedAt: new Date() }).where(eq(offers.id, juiceId));
@@ -664,12 +707,12 @@ await focused("D3A-31", "the insights card is derived from the same rows the own
   assert.equal(insights.completedOrders, 0);
   assert.equal(insights.completedRevenueMinor, 0);
   assert.equal(insights.completedRevenue, "0.000 JOD");
-  const links = await db.select().from(businessListingLinks).where(eq(businessListingLinks.businessId, verifiedBusinessId));
+  const links = await linkedOffers(verifiedBusinessId);
   assert.equal(links.length, insights.listings);
 });
 
 await focused("D3A-32", "the public storefront exposes only public fields and live listings", async () => {
-  const page = await request(`/businesses/${verifiedBusinessId}`, "GET", undefined, buyer.cookie);
+  const page = await request(`/businesses/${verifiedBusinessId}/storefront`, "GET", undefined, buyer.cookie);
   assert.equal(page.status, 200, page.raw);
   assert.deepEqual(
     Object.keys(page.data).sort(),
@@ -695,7 +738,7 @@ await focused("D3A-32", "the public storefront exposes only public fields and li
 
 await focused("D3A-33", "a suspended business disappears from the storefront, search and listing pages", async () => {
   await db.update(businessOperatingProfiles).set({ status: "SUSPENDED", updatedAt: new Date() }).where(eq(businessOperatingProfiles.id, verifiedBusinessId));
-  const page = await request(`/businesses/${verifiedBusinessId}`, "GET", undefined, buyer.cookie);
+  const page = await request(`/businesses/${verifiedBusinessId}/storefront`, "GET", undefined, buyer.cookie);
   assert.equal(page.status, 404);
   const found = await request(`/listings?search=${encodeURIComponent("برجر")}`, "GET", undefined, buyer.cookie);
   assert.ok(!found.data.some((listing: any) => listing.id === burgerId));
@@ -709,7 +752,7 @@ await focused("D3A-33", "a suspended business disappears from the storefront, se
   assert.deepEqual([...access.capabilities], ["business.read"]);
   assert.equal(access.publishable, false);
   await db.update(businessOperatingProfiles).set({ status: "ACTIVE", updatedAt: new Date() }).where(eq(businessOperatingProfiles.id, verifiedBusinessId));
-  const restored = await request(`/businesses/${verifiedBusinessId}`, "GET", undefined, buyer.cookie);
+  const restored = await request(`/businesses/${verifiedBusinessId}/storefront`, "GET", undefined, buyer.cookie);
   assert.equal(restored.status, 200);
 });
 
@@ -733,10 +776,8 @@ await focused("D3A-34", "a request body cannot attach a listing to a business", 
   assert.equal(own.status, 201, own.raw);
   const foreign = await request("/listings", "POST", listingBody("إعلان حقن آخر", "3.000", { businessId: applicantBusinessId }), verified.cookie);
   assert.equal(foreign.status, 201, foreign.raw);
-  for (const id of [own.data.id, foreign.data.id]) {
-    const links = await db.select().from(businessListingLinks).where(eq(businessListingLinks.listingId, id));
-    assert.equal(links.length, 0);
-  }
+  for (const id of [own.data.id, foreign.data.id])
+    assert.equal((await offerOf(id)).businessProfileId, null);
 });
 
 await focused("D3A-35", "another account's listing cannot be changed through a business", async () => {
@@ -767,7 +808,7 @@ await focused("D3A-36", "direct service calls deny buyers and staff without publ
   const [staffRow] = await db.select().from(users).where(eq(users.id, staffMember.id));
   await assert.rejects(
     publishBusinessDraft({ businessId: verifiedBusinessId, actor: staffRow!, market: JO, body: listingBody("ممنوع", "2.000"), idempotencyKey: randomUUID() }),
-    (error: any) => error.status === 403,
+    (error: any) => error.status === 404,
   );
   assert.equal((await businessOffers(buyer.id)).length, 0);
 });
@@ -790,17 +831,16 @@ await focused("D3A-37", "the audit trail is append-only for updates, deletes and
   assert.ok((await audits(verifiedBusinessId)).length >= 1);
 });
 
-await focused("D3A-38", "the database rejects any D3-claimed identity or external operating mode", async () => {
+await focused("D3A-38", "the D3 table has no identity column and rejects external operating modes", async () => {
   await assert.rejects(
     pool.query("UPDATE business_operating_profiles SET identity_status = 'VERIFIED' WHERE id = $1", [verifiedBusinessId]),
-    (error: any) => error.code === "23514",
+    (error: any) => error.code === "42703",
   );
   await assert.rejects(
     pool.query("UPDATE business_operating_profiles SET operating_mode = 'EXTERNAL_WEBSITE' WHERE id = $1", [verifiedBusinessId]),
     (error: any) => error.code === "23514",
   );
   const [row] = await db.select().from(businessOperatingProfiles).where(eq(businessOperatingProfiles.id, verifiedBusinessId));
-  assert.equal(row!.identityStatus, "PENDING_D2");
   assert.equal(row!.operatingMode, "INTERNAL_DINAR");
 });
 
@@ -809,9 +849,7 @@ await focused("D3A-39", "editing through the business keeps ownership and the hi
   assert.equal(offer.sellerId, burgerSnapshot!.sellerId);
   assert.equal(offer.marketId, burgerSnapshot!.marketId);
   assert.equal(offer.createdAt.toISOString(), burgerSnapshot!.createdAt);
-  const [link] = await db.select().from(businessListingLinks).where(eq(businessListingLinks.listingId, burgerId));
-  assert.equal(link!.businessId, verifiedBusinessId);
-  assert.equal(link!.marketId, "JO");
+  assert.equal(offer.businessProfileId, await d2BusinessIdOf(verifiedBusinessId));
 });
 
 await focused("D3A-40", "all eight business surfaces carry a safe envelope with a stable identity", async () => {
@@ -820,8 +858,12 @@ await focused("D3A-40", "all eight business surfaces carry a safe envelope with 
   for (const { payload, expected: surface } of surfacesSeen) {
     const business = payload.business;
     assert.ok(payload.card, `${surface} must carry a card envelope`);
+    assert.equal(payload.surface, surface);
     assert.equal(payload.card.schemaVersion, 1);
-    assert.equal(payload.card.surfaceType, surface);
+    assert.ok(
+      payload.card.surfaceType === surface || payload.card.surfaceType === "DINAR_BUSINESS_CARD",
+      `${surface} must retain a business-specific or shared DINAR business card type`,
+    );
     assert.equal(payload.card.resource.kind, "BUSINESS");
     assert.equal(payload.card.resource.id, business.businessId);
     assert.equal(payload.card.context.role, "SELLER");
@@ -845,6 +887,45 @@ await focused("D3A-40", "all eight business surfaces carry a safe envelope with 
   assert.equal(stored.payload.card.resource.id, verifiedBusinessId);
   assert.equal(stored.payload.business.listings.find((listing: any) => listing.listingId === shawarmaId).status, "PAUSED");
   assert.equal(getModelGatewayCallCount(), 0);
+});
+
+await focused("D3A-41", "an owner with multiple businesses must choose before a catalog command", async () => {
+  const name = `مطعم الاختيار ${randomUUID().slice(0, 6)}`;
+  const identity = await createBusinessDraft(verified.id, { id: JO.id }, {
+    displayName: name,
+    categoryKey: "RESTAURANT",
+    description: "",
+    idempotencyKey: randomUUID(),
+  });
+  const secondBusinessId = randomUUID();
+  await db.insert(businessOperatingProfiles).values({
+    id: secondBusinessId,
+    d2BusinessId: identity.business.id,
+    ownerUserId: verified.id,
+    marketId: JO.id,
+    operatingMode: "INTERNAL_DINAR",
+    businessType: "RESTAURANT",
+    displayName: name,
+    description: "",
+    status: "DRAFT",
+    profile: {},
+  });
+
+  const setupConversation = await conversation(verified);
+  const setupSelection = await turn(verified, setupConversation, "عندي مطعم");
+  assert.equal(setupSelection.business.selection, true);
+  const chosenSetup = await turn(verified, setupConversation, `افتح نشاط ${name}`);
+  assert.equal(chosenSetup.business.view, "SETUP");
+  assert.equal(chosenSetup.business.businessId, secondBusinessId);
+
+  const selectionConversation = await conversation(verified);
+  const selection = await turn(verified, selectionConversation, "منتجاتي");
+  assert.equal(selection.business.view, "PROFILE");
+  assert.equal(selection.business.selection, true);
+  assert.deepEqual(
+    selection.business.businesses.map((business: { businessId: string }) => business.businessId).sort(),
+    [secondBusinessId, verifiedBusinessId].sort(),
+  );
 });
 
 await test("summary", async () => {

@@ -10,6 +10,7 @@ import type { AiSearchState } from './aiSearchState';
 import type { AiTutorialPayload } from './aiTutorialPayload';
 import type { AiUiBlockPayloadAdvice } from './aiUiBlockPayloadAdvice';
 import type { AiUiBlockPayloadAttributes } from './aiUiBlockPayloadAttributes';
+import type { AiUiBlockPayloadBusiness } from './aiUiBlockPayloadBusiness';
 import type { AiUiBlockPayloadCard } from './aiUiBlockPayloadCard';
 import type { AiUiBlockPayloadCommerce } from './aiUiBlockPayloadCommerce';
 import type { AiUiBlockPayloadComparison } from './aiUiBlockPayloadComparison';
@@ -73,6 +74,8 @@ export type AiUiBlockPayload = {
   driver?: AiUiBlockPayloadDriver;
   /** Allowlisted provider connection view (review, status, safe key prefix). Never contains a key, secret or credential hash. */
   provider?: AiUiBlockPayloadProvider;
+  /** Allowlisted D3-A business view (setup, profile, catalog, orders, insights), refreshed from the owner's live D2 identity and D3 operating rows on every read. */
+  business?: AiUiBlockPayloadBusiness;
   /** Policy review card (W02-ULTRA B10): the current version, effective date, legal-review status and reading path of each policy that requires acceptance, whether this user accepted it, and the review id whose exact versions an acceptance records. Contract acceptance only; optional privacy consents are unaffected. */
   policyReview?: AiUiBlockPayloadPolicyReview;
   /** Private structured memory summary, returned only to the authenticated owner. */

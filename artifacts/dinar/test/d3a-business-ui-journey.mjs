@@ -115,7 +115,7 @@ try {
   );
   assert.equal(listingIds.length, 3, "the storefront lists the published catalog");
   // The public payload is the contract: no owner account, contact, audit or staff field.
-  const publicPayload = await owner.api(`/businesses/${businessId}`);
+  const publicPayload = await owner.api(`/businesses/${businessId}/storefront`);
   const publicJson = JSON.stringify(publicPayload);
   assert.equal(publicPayload.name, businessName, "the payload names the business");
   assert.ok(!publicJson.includes(ownerName), "the public payload never carries the owner's account name");
