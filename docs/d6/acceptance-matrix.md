@@ -5,6 +5,7 @@
 - Branch: `replit/dinar-next-complete-development`
 - Baseline SHA: `3847ad79fd808775f9a6b403ad9697baa49d6080`
 - Tested application/source SHA: `41f112f69b6339735727ed5d8138d32d084cc013`
+- The tested source SHA applies to every D6-01–D6-25 row; no application or test source changed between these suite runs.
 - Database: disposable PostgreSQL 16 bound to loopback `127.0.0.1:55432`; every integration suite below ran on a fresh database.
 - Test accounts and listings were synthetic and created by the suites through DINAR's own registration and listing routes.
 - The test harness blocked or replaced live model calls. No real payment, buyer/seller contact, production database, or outbound network request was used.
