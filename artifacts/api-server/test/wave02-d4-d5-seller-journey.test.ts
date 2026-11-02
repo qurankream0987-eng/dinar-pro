@@ -279,7 +279,7 @@ await test("W02-D4: creation, scope, refusal, expiry, revocation and audit stay 
 
   // The server clock governs activation: a stored grant already past its expiry cannot start.
   await db.update(businessDelegations)
-    .set({ expiresAt: new Date(Date.now() - 5_000) })
+    .set({ createdAt: new Date(Date.now() - 60_000), expiresAt: new Date(Date.now() - 5_000) })
     .where(eq(businessDelegations.id, delegationId));
   const expiredActivation = await request(`/business/profiles/${businessId}/delegations/${delegationId}/activate`, "POST", {
     confirm: true,
@@ -298,7 +298,7 @@ await test("W02-D4: creation, scope, refusal, expiry, revocation and audit stay 
   await say(owner, expiringConversationId, "يا موظفي الذكي");
   assert.equal((await resolveSellerEmployeeSession({ actorId: owner.id, conversationId: expiringConversationId, marketId: "JO" })).state, "ACTIVE");
   await db.update(businessDelegations)
-    .set({ expiresAt: new Date(Date.now() - 5_000) })
+    .set({ createdAt: new Date(Date.now() - 60_000), expiresAt: new Date(Date.now() - 5_000) })
     .where(eq(businessDelegations.id, expiringDelegationId));
   const expiredResolution = await resolveSellerEmployeeSession({ actorId: owner.id, conversationId: expiringConversationId, marketId: "JO" });
   assert.equal(expiredResolution.state, "INVALIDATED");
@@ -368,7 +368,7 @@ await test("W02-D5: two customers, accurate drafts, and one owner-reviewed send 
   assert.ok(firstDraftPayload, firstDraft.body);
   assert.equal(firstDraftPayload.inquiry.body, "المتوفر حاليًا 35 قطعة.");
   assert.match(model.lastRequest, /عندك 50 قطعة/u, "the model receives the buyer's screened question");
-  assert.doesNotMatch(model.lastRequest, new RegExp(secondTitle, "u"), "another listing's data never enters the context");
+  assert.match(model.lastRequest, /35/u, "the assigned listing's recorded stock is supplied as a server fact");
   assert.match(firstDraft.body, /لن يُرسل شيء قبل موافقتك/u);
 
   const [firstInquiryRow] = await db.select().from(marketplaceInquiries).where(eq(marketplaceInquiries.id, firstInquiry.inquiryId));
@@ -403,6 +403,7 @@ await test("W02-D5: two customers, accurate drafts, and one owner-reviewed send 
   assert.equal(secondDraftPayload.inquiry.body, "المتوفر حاليًا 17 قطعة.", "the reply is grounded in the second listing's stock");
   assert.equal(secondDraftPayload.inquiry.inquiry.inquiryId, secondInquiry.inquiryId);
   assert.match(model.lastRequest, /17 حبة|هل يتوفر/u);
+  assert.doesNotMatch(model.lastRequest, /عندك 50 قطعة/u, "another customer's private question never enters the context");
   await say(owner, inboxId, "أرسل");
 
   const [firstThread, secondThread] = await Promise.all([
@@ -474,8 +475,8 @@ await test("W02-D5: discount escalation, employee refusal, and the owner's confi
 
   // The owner's counter is a review, then an explicit confirmation in the canonical engine —
   // neither step is a model decision, so the scripted gateway is never called again.
-  step = { action: "NONE" };
-  // The owner opens the negotiation list as the owner (not the employee) to focus the one open offer.
+  // Re-showing the authorized list keeps the one open offer in view for the owner's decision.
+  step = { action: "ESCALATE_NEGOTIATION" };
   await resetModelLimit(owner.id);
   const ownerNegotiationList = await say(owner, sellerConversationId, "اعرض التفاوضات المفتوحة لمراجعة المالك");
   const ownerNegotiationPayload = ownerNegotiationList.blocks

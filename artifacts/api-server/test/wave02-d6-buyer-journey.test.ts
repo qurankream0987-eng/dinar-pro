@@ -169,7 +169,8 @@ await test("setup: fresh sellers, resident buyers and one real listing in each o
     quantity: 1,
     category: "سيارات",
     categoryId: "cars",
-    attributes: { make: "Toyota", model: "Corolla", year: 2020, condition: "مستعمل" },
+    // The canonical search intent maps «تويوتا»/«كورولا» to the stored Arabic make and model.
+    attributes: { make: "تويوتا", model: "كورولا", year: 2020, condition: "مستعمل" },
   });
   T.lamp = await publish(sellerB, { title: "مصباح مكتبي قابل للتعديل", price: "12", quantity: 8, category: "منزل", categoryId: "home" });
   const [row] = await db.select().from(markets).where(eq(markets.id, "JO"));
@@ -299,6 +300,7 @@ await test("W02-D6: cart review, server-authoritative checkout and one replay-sa
   assert.equal(order?.status, "CREATED");
   assert.equal(order?.data.paymentMode, "TEST_NO_TRANSFER");
   assert.equal(order?.data.commissionRateBps, 1000);
+  assert.equal(order?.quantity, 2, "the order carries both reviewed units");
   assert.equal(order?.subtotalMinor, (await listingOf(T.navy!)).unitPriceMinor! + (await listingOf(T.grey!)).unitPriceMinor!);
   assert.equal(order?.platformFeeMinor, Math.round(order!.subtotalMinor * 0.1));
   assert.deepEqual((await orderListings(orderId)).sort(), [...pair].sort(), "exactly the reviewed lines");
