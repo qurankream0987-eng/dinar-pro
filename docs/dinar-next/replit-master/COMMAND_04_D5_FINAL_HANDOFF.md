@@ -22,7 +22,7 @@
 
 ## Verification
 
-Typecheck, API build, web build, database schema check, the secret test, targeted D4 acceptance, seven regression suites, SAST, and HoundDog passed. The workspace-root dependency scan reported one high and one moderate finding; it does not establish the target checkout’s dependency status. Chromium D5 acceptance and live-provider acceptance were not run. Full counts and the D5-01..25 statuses are in the acceptance evidence.
+Typecheck, API build, web build, database schema check, the secret test, targeted D4 acceptance, and seven regression suites passed. Replit SAST and HoundDog reported zero findings at workspace scope, but target-checkout scan coverage is unconfirmed. The workspace-root dependency scan reported one high and one moderate finding; it does not establish the target checkout’s dependency status. Chromium D5 acceptance and live-provider acceptance were not run. Full counts and the D5-01..25 statuses are in the acceptance evidence.
 
 ## Handoff decision
 

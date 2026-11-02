@@ -17,12 +17,14 @@ Owner approval capabilities that appear in D4 records are not granted to the int
 
 ## Security scans and secret check
 
-- SAST: completed, zero findings.
-- HoundDog: completed, zero findings.
+The automated Replit scanners ran at workspace scope. The workspace-root workflow and dependency lock are separate from the nested target checkout, so zero findings in these scanners are not confirmed target-checkout results.
+
+- SAST: completed, zero findings reported for the scanner's workspace scope; target checkout coverage is unconfirmed.
+- HoundDog: completed, zero findings reported for the scanner's workspace scope; target checkout coverage is unconfirmed.
 - Dependency audit: one high and one moderate finding. It reported `zod@3.25.76` (high) and `qs@6.16.0` (moderate); both versions are present in the workspace-root lockfile. The target checkout lockfile instead contains `zod@4.6.7` and `qs@6.16.1`. The scan therefore does not establish the target checkout's dependency status.
 - Repository secret scan: 1 test passed, 0 failed.
 - No dependency was changed during D5.
 
 ## Residual security validation
 
-Run a target-checkout-specific dependency audit and reconcile the workspace-root findings before release. D5 has no live-model prompt-injection acceptance and no browser-session isolation acceptance. No production database or production deployment was tested.
+Run target-checkout-specific dependency, SAST, and HoundDog scans before release. D5 has no live-model prompt-injection acceptance and no browser-session isolation acceptance. No production database or production deployment was tested.

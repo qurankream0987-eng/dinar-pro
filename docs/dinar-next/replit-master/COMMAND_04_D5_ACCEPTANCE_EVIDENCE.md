@@ -18,7 +18,7 @@
 | `pnpm run test:secrets` in `artifacts/api-server` | PASS, 1 test |
 | `test/isolation/local-suite.sh business-delegations.test BDINAR_D4_ACCEPTANCE=development` | PASS, 4 tests; `outbound=0` |
 | D1/D2, D3-A native business, D4, G2 inquiry, G2 smart conversation, universal negotiation, AI authority chain | PASS, 221 Node tests across 7 suites; `outbound=0` |
-| SAST / HoundDog | PASS, zero findings from each |
+| SAST / HoundDog | PARTIAL: zero findings reported at Replit workspace scope; target-checkout coverage unconfirmed |
 | Dependency audit | PARTIAL/OPEN: workspace-root scan found 1 high and 1 moderate; target-checkout scan not established, see security document |
 | Chromium/browser D5 acceptance | NOT_RUN |
 | Live-provider/model acceptance | NOT_RUN |

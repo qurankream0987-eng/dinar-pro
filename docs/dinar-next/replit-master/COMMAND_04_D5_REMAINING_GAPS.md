@@ -25,7 +25,7 @@ D5 is **PARTIAL**, not complete. The committed feature is limited to a safe, rea
 - The repository’s current D4 intelligent capability is `business.catalog.read`; it does not include draft, publish, inventory, order, message, price, promotion, or payment authority. Expanding those powers requires an explicit owner-approval/security design and canonical backend authority, not a model prompt change.
 - Conversation UI ownership remains with Codex; no chat UI or browser acceptance was changed here.
 - Live model quality and provider charging remain unverified by design.
-- The security scan ran against the workspace-root dependency graph; its reported vulnerable versions are in the workspace-root lockfile but not the target checkout lockfile. Run a target-specific audit before release.
+- The automated security scans ran at workspace scope. Their zero SAST/HoundDog results and dependency findings are not confirmed against the nested target checkout; run target-specific scans before release.
 - A target-checkout preview/runtime integration was not verified because the configured API workflow points at a different workspace path.
 
 ## Known regressions
