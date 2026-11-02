@@ -41,7 +41,7 @@ import {
   BUSINESS_CAPABILITIES,
   type BusinessCapability,
 } from "../src/lib/business-capabilities";
-import { publishBusinessDraft, updateBusinessListing } from "../src/lib/business-catalog";
+import { businessOrders, publishBusinessDraft, updateBusinessListing } from "../src/lib/business-catalog";
 
 requireSafeReplitDevelopmentDatabase("BDINAR_D3A_ACCEPTANCE");
 process.env.BDINAR_BLOCK_MODEL_CALLS = "1";
@@ -925,6 +925,73 @@ await focused("D3A-41", "an owner with multiple businesses must choose before a 
   assert.deepEqual(
     selection.business.businesses.map((business: { businessId: string }) => business.businessId).sort(),
     [secondBusinessId, verifiedBusinessId].sort(),
+  );
+});
+
+await focused("D3A-42", "orders and money stay scoped to one business when one seller owns two", async () => {
+  const name = `مطعم المحفظة ${randomUUID().slice(0, 6)}`;
+  const identity = await createBusinessDraft(verified.id, { id: JO.id }, {
+    displayName: name,
+    categoryKey: "RESTAURANT",
+    description: "",
+    idempotencyKey: randomUUID(),
+  });
+  const secondBusinessId = randomUUID();
+  await db.insert(businessOperatingProfiles).values({
+    id: secondBusinessId,
+    d2BusinessId: identity.business.id,
+    ownerUserId: verified.id,
+    marketId: JO.id,
+    operatingMode: "INTERNAL_DINAR",
+    businessType: "RESTAURANT",
+    displayName: name,
+    description: "",
+    status: "ACTIVE",
+    profile: {},
+  });
+  await registerVerifiedD2Identity(secondBusinessId, verified);
+  const [verifiedRow] = await db.select().from(users).where(eq(users.id, verified.id));
+  const second = await publishBusinessDraft({
+    businessId: secondBusinessId,
+    actor: verifiedRow!,
+    market: JO,
+    body: listingBody("عصير المحفظة", "1.500"),
+    idempotencyKey: randomUUID(),
+  });
+  const secondListingId = second.listing.id;
+  const burger = await offerOf(burgerId);
+
+  // One seller, two businesses, one checkout: the canonical order still groups the seller.
+  const added = await request("/cart", "PUT", { marketId: "JO", items: [
+    { listingId: burgerId, quantity: 1 },
+    { listingId: secondListingId, quantity: 1 },
+  ] }, buyer.cookie);
+  assert.equal(added.status, 200, added.raw);
+  const checkedOut = await request("/checkout", "POST", {
+    items: [
+      { listingId: burgerId, quantity: 1, fulfilmentType: "PICKUP" },
+      { listingId: secondListingId, quantity: 1, fulfilmentType: "PICKUP" },
+    ],
+    idempotencyKey: `d3a-42-${randomUUID()}`,
+  }, buyer.cookie);
+  assert.equal(checkedOut.status, 201, checkedOut.raw);
+  const orderId = checkedOut.data.orders[0].id as string;
+  const [orderRow] = await db.select().from(orders).where(eq(orders.id, orderId));
+  assert.equal(orderRow!.subtotalMinor, burger.unitPriceMinor + 1500);
+
+  const firstRow = (await businessOrders(await businessOf(verifiedBusinessId), JO.id)).find((row) => row.orderId === orderId);
+  const secondRow = (await businessOrders(await businessOf(secondBusinessId), JO.id)).find((row) => row.orderId === orderId);
+  assert.ok(firstRow && secondRow, "both businesses see the shared order, each with its own line");
+  assert.equal(firstRow.itemCount, 1, "only this business's item is counted");
+  assert.equal(secondRow.itemCount, 1);
+  assert.equal(firstRow.subtotalMinor, burger.unitPriceMinor, "the card never reports the other business's item");
+  assert.equal(secondRow.subtotalMinor, 1500);
+  assert.equal(firstRow.subtotalMinor + secondRow.subtotalMinor, orderRow!.subtotalMinor);
+  assert.ok(firstRow.sellerAmountMinor < orderRow!.sellerAmountMinor);
+  assert.ok(secondRow.sellerAmountMinor < orderRow!.sellerAmountMinor);
+  assert.ok(
+    Math.abs(firstRow.sellerAmountMinor + secondRow.sellerAmountMinor - orderRow!.sellerAmountMinor) <= 1,
+    "the display allocation preserves the stored order total up to one minor unit",
   );
 });
 
