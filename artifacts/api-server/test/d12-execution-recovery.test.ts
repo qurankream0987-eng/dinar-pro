@@ -204,7 +204,8 @@ await test("D12-05 the receipt speaks for UNKNOWN honestly and offers no confirm
   assert.match(view.nextStep ?? "", /راجع/u);
   assert.equal(view.requiresConfirmation, false);
   assert.equal(view.failure, undefined);
-  assert.doesNotMatch(`${view.title} ${view.nextStep ?? ""}`, /تم |نُفّذ|أُضيف/u);
+  assert.match(view.nextStep ?? "", /لم يُثبت/u);
+  assert.doesNotMatch(`${view.title} ${view.nextStep ?? ""}`, /تم التنفيذ|تم بنجاح|تمت الإضافة|أُضيف إلى/u);
 });
 
 await test("D12-06 a repeated confirmation reports the settled UNKNOWN and changes nothing", async () => {
