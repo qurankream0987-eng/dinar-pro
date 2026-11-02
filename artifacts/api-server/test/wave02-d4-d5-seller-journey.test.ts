@@ -421,7 +421,7 @@ await test("W02-D5: two customers, accurate drafts, and one owner-reviewed send 
 
   // Replaying the approval: the review is settled, nothing else is sent and nothing claims success.
   const replay = await say(owner, inboxId, "أرسل");
-  assert.match(replay.body, /لا توجد رسالة بانتظار الإرسال/u, replay.body);
+  assert.match(replay.body, /لم يُرسل شيء/u, replay.body);
   assert.doesNotMatch(replay.body, /أُرسلت رسالتك ووصلت/u, replay.body);
   assert.equal((await threadMessages(secondThread.threadConversationId)).filter((row) => row.senderId === owner.id).length, 1,
     "a replayed approval must not send a second message");

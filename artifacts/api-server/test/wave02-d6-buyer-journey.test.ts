@@ -220,12 +220,28 @@ await test("W02-D6: three actual offers are compared, one is selected, and histo
   const firstSet = await resultSetOf(found.payload.resultSetId);
   assert.ok(firstSet.resourceIds.length >= 3, found.body);
 
-  // A second search moves the view; «رجعني» restores the stored fashion result set.
-  const carFound = await turn(buyer, conv, "أريد سيارة تويوتا كورولا");
-  assert.ok((await resultSetOf(carFound.payload.resultSetId)).resourceIds.includes(T.car!));
+  // Opening one offer moves the view without searching; «رجعني» restores the stored set, in order.
+  const opened = await turn(buyer, conv, "افتح الأول");
+  assert.equal(opened.payload.presentation, "DETAILS", opened.body);
+  assert.equal(opened.payload.resultSetId, firstSet.id);
+  const setCount = (await db.select().from(aiResultSets).where(eq(aiResultSets.conversationId, conv))).length;
   const restored = await turn(buyer, conv, "رجعني");
   const restoredSet = await resultSetOf(restored.payload.resultSetId);
   assert.deepEqual(restoredSet.resourceIds, firstSet.resourceIds, "the earlier result set is restored, not rebuilt");
+  assert.equal(
+    (await db.select().from(aiResultSets).where(eq(aiResultSets.conversationId, conv))).length,
+    setCount,
+    "back never searches again",
+  );
+
+  // A reload keeps the same stored set, so an ordinal still resolves against the server rows.
+  const reloaded = await request(`/ai/conversations/${conv}`, "GET", undefined, buyer.cookie);
+  assert.equal(reloaded.status, 200, reloaded.raw);
+  const reloadedSets = (reloaded.data.messages as any[])
+    .flatMap((message) => message.blocks ?? [])
+    .filter((block) => block.type === "LISTING_RESULTS" && block.payload?.resultSetId === firstSet.id);
+  assert.ok(reloadedSets.length >= 1, "the earlier result set card survives a reload");
+  assert.deepEqual(reloadedSets.at(-1).payload.resourceIds, firstSet.resourceIds);
 
   const [first, second, third] = restoredSet.resourceIds;
   const compared = await turn(buyer, conv, "قارن الأول والثاني والثالث");
