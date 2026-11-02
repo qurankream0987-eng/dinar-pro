@@ -75,6 +75,7 @@ import type { AiCallRecord } from "../lib/ai-spend";
 import { normalizeSearch } from "./search-context";
 import { isMarketingRequest, sellerListingFacts, unsupportedCopyClaims } from "./seller-management";
 import { executeModelTool, modelToolDefinitions, ToolRejectedError, type ToolResult } from "./tool-registry";
+import { MODEL_CAPABILITY_TOOL_NAMES, modelRolesForActor } from "./model-capability-tools";
 
 type Market = Awaited<ReturnType<typeof marketFor>>;
 type DelegatedSellerSnapshot = NonNullable<Awaited<ReturnType<typeof delegatedSellerModelContext>>>;
@@ -1237,6 +1238,18 @@ function modelToolLoopLimits() {
   };
 }
 
+/** F01 reads plus every F02 capability tool; a continuation may only replay the same set. */
+const MODEL_TOOL_LOOP_NAMES = [
+  "searchListings",
+  "getResource",
+  "compareListings",
+  ...MODEL_CAPABILITY_TOOL_NAMES,
+] as const;
+const MODEL_TOOL_SIGNATURE = new RegExp(
+  `^(?:${MODEL_TOOL_LOOP_NAMES.join("|")}):[a-f0-9]{64}$`,
+);
+const MODEL_TOOL_FEEDBACK_NAMES = new Set<string>(MODEL_TOOL_LOOP_NAMES);
+
 function validModelToolContinuation(value: unknown, input: Input): ModelToolContinuation | undefined {
   if (!input.actorId || !input.currentMessageId || !value || typeof value !== "object") return undefined;
   const raw = value as Partial<ModelToolContinuation>;
@@ -1251,7 +1264,7 @@ function validModelToolContinuation(value: unknown, input: Input): ModelToolCont
     raw.resumeCount! > 5 ||
     !Array.isArray(raw.signatures) ||
     raw.signatures.length > 3 ||
-    !raw.signatures.every((item) => typeof item === "string" && /^(?:searchListings|getResource|compareListings):[a-f0-9]{64}$/.test(item)) ||
+    !raw.signatures.every((item) => typeof item === "string" && MODEL_TOOL_SIGNATURE.test(item)) ||
     !Array.isArray(raw.feedback) ||
     raw.feedback.length > 6
   )
@@ -1259,7 +1272,7 @@ function validModelToolContinuation(value: unknown, input: Input): ModelToolCont
   const feedback = raw.feedback.filter((item) =>
     item &&
     typeof item === "object" &&
-    ["searchListings", "getResource", "compareListings"].includes(item.tool) &&
+    MODEL_TOOL_FEEDBACK_NAMES.has(item.tool) &&
     ["SUCCEEDED", "REJECTED", "FAILED"].includes(item.status),
   );
   while (JSON.stringify(feedback).length > MAX_TOOL_FEEDBACK_CHARS && feedback.length) feedback.shift();
@@ -1285,7 +1298,89 @@ function stableJson(value: unknown): string {
   return JSON.stringify(value);
 }
 
+/** F02 reads: only the verified fields the model needs to answer, never a full row. */
+function compactCapabilityRead(result: ToolResult) {
+  if (result.kind !== "SURFACE") return undefined;
+  if (result.inventory)
+    return {
+      kind: "INVENTORY",
+      inventory: result.inventory.slice(0, 12).map((row) => ({
+        listingId: String(row.listingId ?? ""),
+        title: String(row.title ?? "").slice(0, 120),
+        status: row.status,
+        unitPrice: row.unitPrice,
+        currency: row.currency,
+        availableQuantity: row.availableQuantity,
+      })),
+    };
+  if (result.inquiries)
+    return {
+      kind: "INQUIRIES",
+      inquiries: result.inquiries.slice(0, 10).map((row) => ({
+        inquiryId: String(row.inquiryId ?? ""),
+        listingId: String(row.listingId ?? ""),
+        role: row.role,
+        status: row.status,
+        lastMessageAt: row.lastMessageAt,
+      })),
+    };
+  if (result.orders)
+    return {
+      kind: "ORDERS",
+      orders: result.orders.slice(0, 10).map((row) => ({
+        orderId: String(row.orderId ?? ""),
+        role: row.role,
+        status: row.status,
+        quantity: row.quantity,
+        subtotal: row.subtotal,
+        currency: row.currency,
+      })),
+    };
+  if (result.cart)
+    return {
+      kind: "CART",
+      cart: result.cart.slice(0, 12).map((row) => ({
+        listingId: String(row.listingId ?? ""),
+        title: String(row.title ?? "").slice(0, 120),
+        quantity: row.quantity,
+        unitPrice: row.unitPrice,
+        currency: row.currency,
+        availableQuantity: row.availableQuantity,
+      })),
+      ...(result.checkout ? { checkout: result.checkout } : {}),
+    };
+  if (result.fulfillment)
+    return {
+      kind: "FULFILLMENT",
+      fulfillment: {
+        method: result.fulfillment.method,
+        status: result.fulfillment.status,
+        statusLabel: result.fulfillment.statusLabel,
+        failureLabel: result.fulfillment.failureLabel,
+        updatedAt: result.fulfillment.updatedAt,
+      },
+    };
+  if (result.surface === "NEGOTIATION_STATUS" && result.negotiation)
+    return {
+      kind: "NEGOTIATION",
+      negotiation: {
+        negotiationId: result.negotiation.negotiationId,
+        listingId: result.negotiation.listingId,
+        title: result.negotiation.title,
+        role: result.negotiation.role,
+        status: result.negotiation.status,
+        quantity: result.negotiation.quantity,
+        offerAmount: result.negotiation.offerAmount,
+        counterAmount: result.negotiation.counterAmount,
+        currency: result.negotiation.currency,
+      },
+    };
+  return undefined;
+}
+
 function compactModelToolResult(result: ToolResult) {
+  const capabilityRead = compactCapabilityRead(result);
+  if (capabilityRead) return capabilityRead;
   if (result.kind === "SURFACE" && result.surface === "COMPARISON") {
     const comparison = (result.comparison ?? {}) as {
       resultSetId?: string;
@@ -1480,8 +1575,12 @@ export async function executeModelFallback(
   let lastSearchResult: ToolResult | undefined;
   let lastResourceResult: ToolResult | undefined;
   let lastComparisonResult: ToolResult | undefined;
+  let lastCapabilityRead: ToolResult | undefined;
+  let lastCapabilityReadTool: string | undefined;
+  let lastPreparedResult: ToolResult | undefined;
+  let lastPreparedTool: string | undefined;
   let lastRejectedReadCode: string | undefined;
-  let toolLoopStopReason: "CALL_LIMIT" | "DUPLICATE" | "TIME_LIMIT" | "USAGE_LIMIT" | undefined;
+  let toolLoopStopReason: "CALL_LIMIT" | "DUPLICATE" | "TIME_LIMIT" | "USAGE_LIMIT" | "PREPARED" | undefined;
   const toolFeedback: NonNullable<ModelContext["toolFeedback"]> = [...(resumedContinuation?.feedback ?? [])];
   const seenToolCalls = new Set<string>(resumedContinuation?.signatures ?? []);
   let toolCallCount = seenToolCalls.size;
@@ -1511,9 +1610,13 @@ export async function executeModelFallback(
       actorId: input.actorId,
       ...(input.currentMessageId ? { currentMessageId: input.currentMessageId } : {}),
     };
+    const toolRoles =
+      !input.sellerEmployeeMode && input.currentMessageId
+        ? await modelRolesForActor(input.actorId, input.market.id)
+        : [];
     const availableTools =
       !input.sellerEmployeeMode && input.currentMessageId
-        ? modelToolDefinitions(toolContext)
+        ? modelToolDefinitions(toolContext, toolRoles)
         : [];
     const loopContext: ModelContext = {
       ...context,
@@ -1621,6 +1724,18 @@ export async function executeModelFallback(
             };
           }
         }
+        // F02: a prepared action is returned as the server-built review; the model never
+        // confirms it, and no later model text may replace the review card.
+        if (result.preparedAction || result.preparedDraft) {
+          lastPreparedResult = result;
+          lastPreparedTool = execution.tool;
+          toolLoopStopReason = "PREPARED";
+          break;
+        }
+        if (result.kind === "SURFACE" && (result.inventory || result.inquiries || result.orders || result.cart || result.fulfillment)) {
+          lastCapabilityRead = result;
+          lastCapabilityReadTool = execution.tool;
+        }
       }
       const persistedFeedback = [...toolFeedback].slice(-6);
       while (JSON.stringify(persistedFeedback).length > MAX_TOOL_FEEDBACK_CHARS && persistedFeedback.length)
@@ -1696,6 +1811,17 @@ export async function executeModelFallback(
     );
   const outcome = drafted.outcome;
   if (!outcome.ok) {
+    // A provider outage after a prepared review must not discard the server-built action card.
+    if (lastPreparedResult) {
+      const note = outcome.reason === "TIMEOUT"
+        ? "انتهى وقت الرد قبل اكتماله؛ هذه مراجعة الإجراء التي أنشأها DINAR، ولم يُنفّذ شيء بعد."
+        : `${modelFailureMessage(outcome.reason)} هذه مراجعة الإجراء التي أنشأها DINAR، ولم يُنفّذ شيء بعد.`;
+      return {
+        tool: lastPreparedTool ?? "dinarConversationTurn",
+        version: 1,
+        result: withModelToolNote(lastPreparedResult, note),
+      };
+    }
     // A provider outage after a verified read must not discard what DINAR already established.
     const partialRead = lastComparisonResult ?? lastSearchResult ?? lastResourceResult;
     if (partialRead) {
@@ -1715,6 +1841,16 @@ export async function executeModelFallback(
     );
   }
   if (outcome.toolRequest) {
+    if (lastPreparedResult) {
+      const note = toolLoopStopReason === "PREPARED"
+        ? "هذه مراجعة الإجراء التي أنشأها DINAR؛ لم يُنفّذ شيء بعد."
+        : "توقفت بعد إنشاء مراجعة الإجراء، ولم أنفّذ أي تغيير.";
+      return {
+        tool: lastPreparedTool ?? "dinarConversationTurn",
+        version: 1,
+        result: withModelToolNote(lastPreparedResult, note),
+      };
+    }
     const partialResult = lastComparisonResult ?? lastSearchResult ?? lastResourceResult;
     if (partialResult) {
       const stopMessages = {
@@ -1736,6 +1872,12 @@ export async function executeModelFallback(
       { ownerId: input.actorId },
     );
   }
+  if (lastPreparedResult)
+    return {
+      tool: lastPreparedTool ?? "dinarConversationTurn",
+      version: 1,
+      result: usageNote ? withModelToolNote(lastPreparedResult, usageNote) : lastPreparedResult,
+    };
   if (lastComparisonResult)
     return {
       tool: "compareListings",
@@ -1780,6 +1922,19 @@ export async function executeModelFallback(
       tool: result.kind === "SEARCH" ? "searchListings" : "getResource",
       version: 1,
       result: withModelToolAnswer(result, `${groundedAnswer}${usageNote ? `\n\n${usageNote}` : ""}`, result.kind === "RESOURCE"),
+    };
+  }
+  if (lastCapabilityRead) {
+    // The card is DINAR's own rows; the model's prose is attached as an answer note only.
+    const text = outcome.replyFiltered
+      ? "هذه بيانات DINAR الحالية. لم أنفّذ أي إجراء."
+      : claimsCompletedAction(outcome.turn.conversationalReply)
+        ? "هذه بيانات DINAR الحالية. لم أنفّذ أي إجراء."
+        : outcome.turn.conversationalReply;
+    return {
+      tool: lastCapabilityReadTool ?? "dinarConversationTurn",
+      version: 1,
+      result: withModelToolNote(lastCapabilityRead, `${text}${usageNote ? `\n\n${usageNote}` : ""}`),
     };
   }
   const turn = outcome.turn;

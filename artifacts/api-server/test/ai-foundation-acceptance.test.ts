@@ -14,6 +14,7 @@ import { AIProviderError, type ConversationModelGateway } from "../src/ai/model-
 import {
   MODEL_LOOP_TOOL_ALLOWLIST,
   executeModelTool,
+  modelToolDefinitions,
   ToolRejectedError,
 } from "../src/ai/tool-registry";
 import {
@@ -245,7 +246,7 @@ const stableJson = (value: unknown): string => {
 const signatureOf = (tool: string, args: unknown) =>
   `${tool}:${createHash("sha256").update(stableJson(args)).digest("hex")}`;
 
-test("AI-F01 the capability registry names all fifteen capabilities and only three model tools", () => {
+test("AI-F02 the capability registry names all fifteen capabilities and advertises them under one tool each", async () => {
   assert.equal(CAPABILITY_NAMES.length, 15);
   assert.equal(new Set(CAPABILITY_NAMES).size, 15);
   for (const name of CAPABILITY_NAMES) {
@@ -258,25 +259,38 @@ test("AI-F01 the capability registry names all fifteen capabilities and only thr
     assert.ok(definition.timeoutMs > 0, name);
     assert.ok(definition.inputSchema && definition.outputSchema, name);
     assert.equal((definition.actors as readonly string[]).includes("ADMIN"), false, `${name} grants no hidden admin`);
-    if (definition.mutation !== "READ_ONLY")
-      assert.equal(definition.confirmation, "USER_CONFIRMATION", `${name} needs confirmation`);
-    if (definition.availability === "MODEL_TOOL") {
-      assert.equal(definition.mutation, "READ_ONLY", name);
+    assert.equal(definition.availability, "MODEL_TOOL", `${name} is exposed once F02 is complete`);
+    assert.ok(definition.modelActors.length > 0, name);
+    assert.equal((definition.modelActors as readonly string[]).includes("SELLER_EMPLOYEE"), false, name);
+    if (definition.mutation === "READ_ONLY") {
       assert.equal(definition.confirmation, "NONE", name);
       assert.equal(definition.idempotency, "READ_ONLY", name);
-      assert.ok(definition.modelActors.length > 0, name);
+      assert.equal(definition.audit, "REDACTED_TURN_METADATA", name);
     } else {
-      assert.deepEqual(definition.modelActors, [], `${name} is not advertised to the model`);
+      assert.equal(definition.confirmation, "USER_CONFIRMATION", `${name} needs confirmation`);
+      assert.notEqual(definition.idempotency, "READ_ONLY", `${name} is idempotent by key`);
+      assert.notEqual(definition.audit, "REDACTED_TURN_METADATA", `${name} records an action audit`);
     }
   }
-  assert.deepEqual(MODEL_TOOL_CAPABILITIES, ["searchListings", "listingFacts", "compareListings"]);
+  assert.deepEqual([...MODEL_TOOL_CAPABILITIES].sort(), [...CAPABILITY_NAMES].sort());
+  const toolNames = MODEL_TOOL_CAPABILITIES.map((name) => CAPABILITY_REGISTRY[name].toolName);
+  assert.equal(new Set(toolNames).size, 15, "every capability owns one distinct model tool name");
   assert.deepEqual(
-    MODEL_TOOL_CAPABILITIES.map((name) => CAPABILITY_REGISTRY[name].toolName).sort(),
+    [...toolNames].filter((name) => (MODEL_LOOP_TOOL_ALLOWLIST as readonly string[]).includes(name)).sort(),
     [...MODEL_LOOP_TOOL_ALLOWLIST].sort(),
+    "the three F01 tools keep their names",
   );
-  assert.equal(CAPABILITY_REGISTRY.prepareCartMutation.availability, "SERVER_ONLY");
+  const market = await marketFor({ actor: { activeMarketId: "JO" }, cookies: {} } as any);
+  const advertised = modelToolDefinitions(
+    { actorId: "registry-viewer", conversationId: "registry-conversation", market },
+    ["BUYER", "SELLER"],
+  ).map((tool) => tool.name);
+  assert.deepEqual([...advertised].sort(), [...toolNames].sort());
   assert.equal(CAPABILITY_REGISTRY.prepareCartMutation.mutation, "MUTATING");
+  assert.equal(CAPABILITY_REGISTRY.prepareCartMutation.toolName, "prepareCartChange");
+  assert.deepEqual(CAPABILITY_REGISTRY.prepareCartMutation.modelActors, ["BUYER"]);
   assert.equal(CAPABILITY_REGISTRY.prepareInquiryReply.mutation, "PREPARE_ONLY");
+  assert.deepEqual(CAPABILITY_REGISTRY.readInventory.modelActors, ["SELLER"]);
   assert.equal(CAPABILITY_REGISTRY.readInventory.permissions.includes("business.inventory.read"), true);
   assert.equal(LIVE_PROVIDER_STATUS, "LIVE_PROVIDER_NOT_VERIFIED");
 });

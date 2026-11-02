@@ -71,6 +71,7 @@ on:
           - block-f2-buyer.test
           - block-f3-commerce.test
           - ai-foundation-acceptance.test
+          - ai-foundation-02-acceptance.test
           - ai-authority-boundary.test
       chain:
         description: "Run a reviewed suite chain on one disposable migrated and seeded database"
@@ -191,7 +192,7 @@ jobs:
               require_flags "BDINAR_G2_ACCEPTANCE BDINAR_WAVE4_ACCEPTANCE BDINAR_TEST_DATABASE BDINAR_BLOCKF_ACCEPTANCE"
               promotions=1 ;;
             ai-foundation)
-              SUITES="ai-foundation-acceptance.test ai-authority-boundary.test bounded-multistep.test"
+              SUITES="ai-foundation-acceptance.test ai-foundation-02-acceptance.test ai-authority-boundary.test bounded-multistep.test"
               require_flags "BDINAR_AI_FOUNDATION BDINAR_TEST_DATABASE" ;;
             *) echo "chain not allowlisted: $CHAIN" >&2; exit 96 ;;
           esac

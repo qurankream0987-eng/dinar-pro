@@ -139,7 +139,7 @@ async function stateTurn(actorId: string, market: Market, view: "STATUS" | "LIST
   return surfaceTurn(view === "LIST" ? "INQUIRY_LIST" : "INQUIRY_STATUS", payload, prompt, { query });
 }
 
-function reviewTurn(review: ActionReview, body: string, provenance: InquiryProvenance, prompt: string, extra: Record<string, unknown> = {}): Turn {
+export function reviewTurn(review: ActionReview, body: string, provenance: InquiryProvenance, prompt: string, extra: Record<string, unknown> = {}): Turn {
   const listingId = review.targetResource.startsWith("listing:") ? review.targetResource.slice(8) : undefined;
   return surfaceTurn(
     "INQUIRY_DRAFT",

@@ -277,6 +277,21 @@ const SurfaceBlock = z.object({
     sellerInsight: z.record(z.string(), z.unknown()).optional(),
     comparison: z.record(z.string(), z.unknown()).optional(),
     purchaseReview: z.record(z.string(), z.unknown()).optional(),
+    // AI-F02: capability reads and prepare reviews; every list is server-built and party-scoped.
+    inventory: z.array(z.record(z.string(), z.unknown())).max(12).optional(),
+    inquiries: z.array(z.record(z.string(), z.unknown())).max(20).optional(),
+    orders: z.array(z.record(z.string(), z.unknown())).max(20).optional(),
+    cart: z.array(z.record(z.string(), z.unknown())).max(24).optional(),
+    checkout: z.record(z.string(), z.unknown()).optional(),
+    fulfillment: z.record(z.string(), z.unknown()).optional(),
+    preparedAction: z
+      .object({
+        actionId: z.string(),
+        action: z.string(),
+        targetResource: z.string(),
+      })
+      .optional(),
+    preparedDraft: z.object({ draftId: z.string().optional() }).optional(),
     commerce: z.record(z.string(), z.unknown()).optional(),
     tutorial: TutorialPayloadSchema.optional(),
     photoSuggestionStatus: z.enum([
@@ -2154,6 +2169,14 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
         sellerInsight: toolResult.sellerInsight,
         comparison: toolResult.comparison,
         purchaseReview: toolResult.purchaseReview,
+        inventory: toolResult.inventory,
+        inquiries: toolResult.inquiries,
+        orders: toolResult.orders,
+        cart: toolResult.cart,
+        checkout: toolResult.checkout,
+        fulfillment: toolResult.fulfillment,
+        preparedAction: toolResult.preparedAction,
+        preparedDraft: toolResult.preparedDraft,
         photoSuggestionStatus: toolResult.photoSuggestionStatus,
         photoSuggestions: toolResult.photoSuggestions,
         photoSuggestionUncertainties:
