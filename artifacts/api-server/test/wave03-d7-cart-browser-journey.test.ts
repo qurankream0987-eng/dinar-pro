@@ -323,6 +323,34 @@ await test("D7 conversation cart: confirmed flight, truthful failure, reduced mo
     "the card key is written once",
   );
 
+  // A double click sends two requests at once: the owner row lock serialises them and both
+  // read the one stored receipt back, so the cart still holds a single unit.
+  const [parallelA, parallelB] = await Promise.all([
+    request(
+      `/ai/conversations/${normalId}/actions/add-to-cart`,
+      "POST",
+      { resultSetId: normalSet, resourceId: listings[0]!.id },
+      buyer.cookie,
+    ),
+    request(
+      `/ai/conversations/${normalId}/actions/add-to-cart`,
+      "POST",
+      { resultSetId: normalSet, resourceId: listings[0]!.id },
+      buyer.cookie,
+    ),
+  ]);
+  assert.equal(parallelA.status, 200, parallelA.text);
+  assert.equal(parallelB.status, 200, parallelB.text);
+  assert.equal(parallelA.data.assistantMessage.id, first.data.assistantMessage.id);
+  assert.equal(parallelB.data.assistantMessage.id, first.data.assistantMessage.id);
+  assert.equal(await cartQuantity(listings[0]!.id, buyer.cookie), 1, "concurrent taps add one unit");
+  const afterParallel = await db.select().from(messages).where(eq(messages.conversationId, normalId));
+  assert.equal(
+    afterParallel.filter((row) => Boolean((row.metadata as any)?.cardAddKey)).length,
+    1,
+    "concurrent taps write one card key",
+  );
+
   // A stale/unknown result set is rejected and changes nothing.
   const desktopId = conversations.desktop.conversationId as string;
   const rejected = await request(
@@ -341,7 +369,8 @@ await test("D7 conversation cart: confirmed flight, truthful failure, reduced mo
     const production = await fetch(`${origin}/api/healthz`);
     assert.equal(
       production.headers.get("strict-transport-security"),
-      "max-age=31536000; includeSubDomains",
+      "max-age=31536000",
+      "host-only HSTS by default",
     );
   } finally {
     process.env.NODE_ENV = previousEnv;

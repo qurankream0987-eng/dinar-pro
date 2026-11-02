@@ -79,7 +79,7 @@ await test("the shell and API carry the browser security policy", async () => {
   assert.equal(api.headers.get("x-frame-options"), "DENY");
 });
 
-await test("HSTS is sent in production", async () => {
+await test("HSTS is sent in production, subdomains only when explicitly enabled", async () => {
   const previous = process.env.NODE_ENV;
   process.env.NODE_ENV = "production";
   try {
@@ -87,10 +87,52 @@ await test("HSTS is sent in production", async () => {
     assert.equal(response.status, 200);
     assert.equal(
       response.headers.get("strict-transport-security"),
+      "max-age=31536000",
+      "host-only HSTS until every approved subdomain is HTTPS-only",
+    );
+    process.env.HSTS_INCLUDE_SUBDOMAINS = "true";
+    const subdomains = await fetch(`${origin}/api/healthz`);
+    assert.equal(
+      subdomains.headers.get("strict-transport-security"),
       "max-age=31536000; includeSubDomains",
     );
   } finally {
+    delete process.env.HSTS_INCLUDE_SUBDOMAINS;
     process.env.NODE_ENV = previous;
+  }
+});
+
+await test("the connect sources grow only through an explicit origin allowlist", async () => {
+  const baseline = (await fetch(`${origin}/api/healthz`)).headers.get("content-security-policy") ?? "";
+  assert.match(baseline, /connect-src 'self'(;|$)/, "no external connection by default");
+  process.env.CSP_CONNECT_EXTRA_ORIGINS = "https://cdn.example.test, not-a-url, javascript:alert(1)";
+  try {
+    const csp = (await fetch(`${origin}/api/healthz`)).headers.get("content-security-policy") ?? "";
+    assert.match(csp, /connect-src 'self' https:\/\/cdn\.example\.test(;|$)/);
+    assert.doesNotMatch(csp, /not-a-url|javascript:/, "invalid allowlist entries are dropped");
+    assert.equal(csp.match(/connect-src/g)?.length, 1, "the directive is not duplicated");
+  } finally {
+    delete process.env.CSP_CONNECT_EXTRA_ORIGINS;
+  }
+});
+
+await test("a configured S3 upload endpoint is the only storage origin allowed", async () => {
+  const previousProvider = process.env.OBJECT_STORAGE_PROVIDER;
+  const previousEndpoint = process.env.OBJECT_STORAGE_S3_ENDPOINT;
+  process.env.OBJECT_STORAGE_PROVIDER = "s3";
+  process.env.OBJECT_STORAGE_S3_ENDPOINT = "https://objects.example.test";
+  try {
+    const csp = (await fetch(`${origin}/api/healthz`)).headers.get("content-security-policy") ?? "";
+    assert.match(
+      csp,
+      /connect-src 'self' https:\/\/objects\.example\.test(;|$)/,
+      "the presigned PUT origin is reachable without widening anything else",
+    );
+  } finally {
+    if (previousProvider === undefined) delete process.env.OBJECT_STORAGE_PROVIDER;
+    else process.env.OBJECT_STORAGE_PROVIDER = previousProvider;
+    if (previousEndpoint === undefined) delete process.env.OBJECT_STORAGE_S3_ENDPOINT;
+    else process.env.OBJECT_STORAGE_S3_ENDPOINT = previousEndpoint;
   }
 });
 

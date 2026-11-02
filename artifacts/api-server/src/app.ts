@@ -106,22 +106,42 @@ app.disable("x-powered-by");
 /**
  * The built SPA loads only its own modules, styles and API. Google Fonts is the one
  * declared external origin; images and recorded audio stay same-origin or blob/data.
+ * Listing photos upload straight to the configured object store with a presigned PUT, so that
+ * origin (and an explicit deployment allowlist) is added to connect-src and nothing else.
  */
-const CONTENT_SECURITY_POLICY = [
+const CONTENT_SECURITY_POLICY_DIRECTIVES = [
   "default-src 'self'",
   "script-src 'self'",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' data: https://fonts.gstatic.com",
   "img-src 'self' data: blob:",
   "media-src 'self' blob:",
-  "connect-src 'self'",
   "worker-src 'self' blob:",
   "manifest-src 'self'",
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
   "frame-ancestors 'none'",
-].join("; ");
+];
+function browserConnectOrigins() {
+  const origins = new Set<string>();
+  const configured = process.env.CSP_CONNECT_EXTRA_ORIGINS ?? "";
+  for (const value of configured.split(",")) {
+    const origin = normalizeOrigin(value.trim());
+    if (origin) origins.add(origin);
+  }
+  if (process.env.OBJECT_STORAGE_PROVIDER === "s3") {
+    const origin = normalizeOrigin(process.env.OBJECT_STORAGE_S3_ENDPOINT);
+    if (origin) origins.add(origin);
+  }
+  return ["'self'", ...origins].join(" ");
+}
+function contentSecurityPolicy() {
+  return [
+    ...CONTENT_SECURITY_POLICY_DIRECTIVES,
+    `connect-src ${browserConnectOrigins()}`,
+  ].join("; ");
+}
 const PERMISSIONS_POLICY = [
   "camera=(self)",
   "microphone=(self)",
@@ -135,13 +155,17 @@ app.use((req, res, next) => {
   res.setHeader("X-Request-Id", String(req.id));
   res.setHeader("X-Content-Type-Options", "nosniff");
   res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
-  res.setHeader("Content-Security-Policy", CONTENT_SECURITY_POLICY);
+  res.setHeader("Content-Security-Policy", contentSecurityPolicy());
   res.setHeader("X-Frame-Options", "DENY");
   res.setHeader("Permissions-Policy", PERMISSIONS_POLICY);
   if (process.env.NODE_ENV === "production")
+    // Subdomain coverage stays opt-in: it is only safe once every subdomain of the approved
+    // domain is HTTPS-only, and no approved domain inventory exists in this repository yet.
     res.setHeader(
       "Strict-Transport-Security",
-      "max-age=31536000; includeSubDomains",
+      process.env.HSTS_INCLUDE_SUBDOMAINS === "true"
+        ? "max-age=31536000; includeSubDomains"
+        : "max-age=31536000",
     );
   if (!["GET", "HEAD", "OPTIONS"].includes(req.method)) {
     const origin = req.headers.origin;
