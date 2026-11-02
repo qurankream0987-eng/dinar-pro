@@ -11,8 +11,8 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { eq, inArray } from "drizzle-orm";
 import app from "../src/app";
-import { aiResultSets, db, pool } from "@workspace/db";
-import { confirmPendingAction } from "../src/ai/action-foundation";
+import { aiResultSets, db, pool, users } from "@workspace/db";
+import { ACTION_REGISTRY, confirmPendingAction, createPendingAction, profileKey } from "../src/ai/action-foundation";
 import {
   ACTION_EXECUTION_LEASE_MS,
   EXECUTION_UNKNOWN_NOTICE,
@@ -163,6 +163,12 @@ await test("D12-03 the sweep settles only abandoned executions of the action led
     rowExpiresAt: new Date(Date.now() - 20 * 60_000),
     queryExpiresAt: new Date(Date.now() - 20 * 60_000).toISOString(),
   });
+  const legacySetup = await plant({
+    kind: "BUSINESS_SETUP",
+    status: "EXECUTING",
+    rowExpiresAt: new Date(Date.now() - 20 * 60_000),
+    queryExpiresAt: new Date(Date.now() - 20 * 60_000).toISOString(),
+  });
   const liveLegacy = await plant({
     kind: "BUSINESS_SETUP",
     status: "EXECUTING",
@@ -173,13 +179,14 @@ await test("D12-03 the sweep settles only abandoned executions of the action led
   const foreignKind = await plant({ kind: "COMMERCE", status: "EXECUTING", executingAt: oldClaim() });
 
   const settled = await settleAbandonedExecutions({ limit: 100 });
-  assert.equal(settled, 2, "exactly the stale ACTION and the expired legacy BUSINESS_ACTION");
+  assert.equal(settled, 3, "exactly the stale ACTION and the expired legacy BUSINESS_ACTION/BUSINESS_SETUP");
 
-  const rows = new Map((await db.select().from(aiResultSets).where(inArray(aiResultSets.id, [stale, fresh, legacy, liveLegacy, pending, foreignKind]))).map((row) => [row.id, row] as const));
+  const rows = new Map((await db.select().from(aiResultSets).where(inArray(aiResultSets.id, [stale, fresh, legacy, legacySetup, liveLegacy, pending, foreignKind]))).map((row) => [row.id, row] as const));
   assert.equal((rows.get(stale)!.query as any).status, "UNKNOWN");
   assert.equal((rows.get(stale)!.query as any).notice, EXECUTION_UNKNOWN_NOTICE);
   assert.equal((rows.get(fresh)!.query as any).status, "EXECUTING");
   assert.equal((rows.get(legacy)!.query as any).status, "UNKNOWN");
+  assert.equal((rows.get(legacySetup)!.query as any).status, "UNKNOWN");
   assert.equal((rows.get(liveLegacy)!.query as any).status, "EXECUTING");
   assert.equal((rows.get(pending)!.query as any).status, "PENDING");
   assert.equal((rows.get(foreignKind)!.query as any).status, "EXECUTING", "another ledger kind is never touched");
@@ -205,6 +212,10 @@ await test("D12-05 the receipt speaks for UNKNOWN honestly and offers no confirm
   assert.equal(view.requiresConfirmation, false);
   assert.equal(view.failure, undefined);
   assert.match(view.nextStep ?? "", /لم يُثبت/u);
+  assert.match(view.nextStep ?? "", /الطلبات|المحادثة/u, "reconciliation points at canonical history");
+  assert.equal(view.outcome, undefined, "UNKNOWN is neither a rejection nor a cancellation");
+  assert.equal(view.amount, undefined, "UNKNOWN reports no money");
+  assert.equal(view.paymentState, undefined, "UNKNOWN reports no payment state");
   assert.doesNotMatch(`${view.title} ${view.nextStep ?? ""}`, /تم التنفيذ|تم بنجاح|تمت الإضافة|أُضيف إلى/u);
 });
 
@@ -216,6 +227,102 @@ await test("D12-06 a repeated confirmation reports the settled UNKNOWN and chang
   assert.equal(replay.message, EXECUTION_UNKNOWN_NOTICE);
   assert.equal(replay.executed, false);
   assert.equal(((await rowOf(actionId)).query as any).status, "UNKNOWN");
+});
+
+// ─── Race safety: concurrent workers, replicas, slow and late completion ─────
+
+await test("D12-07 two concurrent confirmations execute the authority exactly once", async () => {
+  const [before] = await db.select({ displayName: users.displayName }).from(users).where(eq(users.id, actor.id));
+  const target = `D12 concurrent ${randomUUID().slice(0, 6)}`;
+  const review = await createPendingAction({
+    conversationId: await conversation(actor),
+    actorId: actor.id,
+    market,
+    proposal: {
+      action: "UPDATE_DISPLAY_NAME",
+      targetResource: profileKey(actor.id, market.id),
+      structuredInput: {
+        displayName: { value: target, source: "USER_DECLARED" },
+        before: { value: before!.displayName, source: "SERVER_FACT" },
+      },
+      missingFields: [],
+      requiresConfirmation: true,
+    },
+  });
+  const original = ACTION_REGISTRY.UPDATE_DISPLAY_NAME.execute;
+  let executions = 0;
+  ACTION_REGISTRY.UPDATE_DISPLAY_NAME.execute = (async (input: any) => {
+    executions += 1;
+    await new Promise((resolve) => setTimeout(resolve, 120));
+    return original(input);
+  }) as typeof original;
+  try {
+    const outcomes = await Promise.all([
+      confirmPendingAction({ actionId: review.actionId, actorId: actor.id, market, decision: "CONFIRM" }),
+      confirmPendingAction({ actionId: review.actionId, actorId: actor.id, market, decision: "CONFIRM" }),
+    ]);
+    assert.equal(executions, 1, "the lost racer never runs the authority");
+    assert.equal(outcomes.filter((outcome) => outcome.executed === true).length, 1, "exactly one call performs the transition");
+    assert.ok(outcomes.every((outcome) => outcome.status !== "UNKNOWN"), "a live claim is never mistaken for an abandoned one");
+    assert.equal(((await rowOf(review.actionId)).query as any).status, "CONFIRMED");
+    const [after] = await db.select({ displayName: users.displayName }).from(users).where(eq(users.id, actor.id));
+    assert.equal(after!.displayName, target, "the mutation happened once and is durable");
+  } finally {
+    ACTION_REGISTRY.UPDATE_DISPLAY_NAME.execute = original;
+  }
+});
+
+await test("D12-08 concurrent sweeps from several replicas settle each abandoned claim once", async () => {
+  const stale = await Promise.all([0, 1, 2, 3].map(() => plant({ status: "EXECUTING", executingAt: oldClaim() })));
+  const staleBusiness = await plant({ kind: "BUSINESS_ACTION", status: "EXECUTING", executingAt: oldClaim() });
+  const fresh = await Promise.all([0, 1].map(() => plant({ status: "EXECUTING", executingAt: new Date().toISOString() })));
+  const counts = await Promise.all([
+    settleAbandonedExecutions({ limit: 100 }),
+    settleAbandonedExecutions({ limit: 100 }),
+    settleAbandonedExecutions({ limit: 100 }),
+  ]);
+  assert.equal(counts.reduce((total, count) => total + count, 0), 5, "each stale row is settled exactly once across replicas");
+  const rows = new Map((await db.select().from(aiResultSets).where(inArray(aiResultSets.id, [...stale, staleBusiness, ...fresh]))).map((row) => [row.id, row] as const));
+  for (const id of [...stale, staleBusiness]) assert.equal((rows.get(id)!.query as any).status, "UNKNOWN");
+  for (const id of fresh) assert.equal((rows.get(id)!.query as any).status, "EXECUTING", "a live replica claim keeps its lease");
+  assert.equal(await settleAbandonedExecutions({ limit: 100 }), 0, "nothing is settled twice");
+});
+
+await test("D12-09 a late authoritative completion wins and a sweep can never overwrite it", async () => {
+  for (let index = 0; index < 8; index += 1) {
+    const actionId = await plant({ status: "EXECUTING", executingAt: oldClaim() });
+    const row = await rowOf(actionId);
+    const snapshot = { ...(row.query as any) };
+    delete snapshot.executingAt;
+    const complete = () =>
+      db.update(aiResultSets)
+        .set({ query: { ...snapshot, status: "CONFIRMED", notice: "تم التنفيذ بعد تأكيدك." } })
+        .where(eq(aiResultSets.id, actionId));
+    await Promise.all([settleAbandonedExecutions({ limit: 100 }), complete()]);
+    assert.equal(((await rowOf(actionId)).query as any).status, "CONFIRMED", `race ${index}: the authority's success survives`);
+  }
+  assert.equal(await settleAbandonedExecutions({ limit: 100 }), 0, "a confirmed row is not an abandoned execution");
+});
+
+await test("D12-10 recovery and retried confirmation never invoke the action authority", async () => {
+  const actionId = await plant({ status: "EXECUTING", executingAt: oldClaim() });
+  const original = ACTION_REGISTRY.ADD_TO_CART.execute;
+  let executions = 0;
+  ACTION_REGISTRY.ADD_TO_CART.execute = (async (input: any) => {
+    executions += 1;
+    return original(input);
+  }) as typeof original;
+  try {
+    const first = await confirmPendingAction({ actionId, actorId: actor.id, market, decision: "CONFIRM" });
+    const second = await confirmPendingAction({ actionId, actorId: actor.id, market, decision: "CONFIRM" });
+    assert.equal(first.status, "UNKNOWN");
+    assert.equal(second.status, "UNKNOWN");
+    assert.equal(executions, 0, "no order, payment, message or publication is replayed");
+    const row = await rowOf(actionId);
+    assert.equal((row.query as any).result, undefined, "recovery records no result");
+  } finally {
+    ACTION_REGISTRY.ADD_TO_CART.execute = original;
+  }
 });
 
 assert.equal(external.length, 0, `outbound requests: ${external.join(", ")}`);

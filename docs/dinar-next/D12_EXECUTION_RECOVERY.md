@@ -1,7 +1,8 @@
 # D12 — execution-lease recovery for abandoned actions
 
-Status: **implemented, pending integrated verification** (isolated branch `qoder/closure-12-executing-recovery`).
-Baseline: Replit `da3170e38fa1b4d5de4499185907b70709e80f25`.
+Status: **integrated and verified against the Replit baseline** (branch `qoder/d12-replit-integration`,
+fast-forwarded to `replit/dinar-next-complete-development` after review).
+Baseline: Replit `da3170e38fa1b4d5de4499185907b70709e80f25` (unchanged at integration time).
 
 ## 1. Gap
 
@@ -51,7 +52,7 @@ reported as success nor as failure (the authority may have committed before the 
 | `artifacts/api-server/src/ai/action-receipts.ts` | explicit `UNKNOWN` lifecycle and honest receipt text |
 | `artifacts/api-server/src/ai/business-turn.ts` | stamp `executingAt`; `UNKNOWN` in settled-decision set and message |
 | `artifacts/api-server/src/index.ts` | run the sweep with the existing housekeeping interval |
-| `artifacts/api-server/test/d12-execution-recovery.test.ts` | D12-01…D12-06 |
+| `artifacts/api-server/test/d12-execution-recovery.test.ts` | D12-01…D12-10 (recovery, races, replicas, late success) |
 | `.github/workflows/qoder-api-suite.yml` | allowlist the suite |
 
 ## 5. What this does not do
@@ -74,9 +75,14 @@ CI: `.github/workflows/qoder-api-suite.yml`, suite `d12-execution-recovery.test`
 `BDINAR_TEST_DATABASE=development`, PostgreSQL 16 and 18, loopback only, `outbound=0`.
 
 Expected evidence: D12-01 stale claim → `UNKNOWN` with no result; D12-02 live claim → `IN_PROGRESS`;
-D12-03 sweep settles exactly the abandoned action rows and is idempotent; D12-04 lease boundaries;
-D12-05 receipt text; D12-06 repeat confirmation. The suite also asserts zero model calls and zero
-outbound requests.
+D12-03 sweep settles exactly the abandoned `ACTION`/`BUSINESS_ACTION`/`BUSINESS_SETUP` rows and is
+idempotent; D12-04 lease boundaries; D12-05 receipt text; D12-06 repeat confirmation; D12-07 two
+concurrent confirmations execute the authority once (`FOR UPDATE` claim, one `CONFIRMED`, one
+settled); D12-08 concurrent sweeps from several replicas settle each stale row exactly once and
+leave live claims; D12-09 a late authoritative `CONFIRMED` survives a concurrent sweep in every
+iteration; D12-10 recovery and retried confirmation never invoke the action authority (no order,
+payment, message or publication replay). The suite also asserts zero model calls and zero outbound
+requests.
 
 ## 7. Integration notes
 
@@ -84,7 +90,20 @@ outbound requests.
   contract except adding the `UNKNOWN` value to the confirmation outcome, which callers already
   treat through their generic `outcome.message` path.
 - A concurrent completion after a takeover writes `CONFIRMED` over `UNKNOWN` (the final write is
-  unconditional on the row id), so a late success still appears as success.
+  unconditional on the row id), so a late success still appears as success. The reverse never
+  happens: the sweep's write requires `status = 'EXECUTING'` **and** the same `executingAt` it
+  read, so a `CONFIRMED` row can never be downgraded by recovery. PostgreSQL re-checks that
+  predicate against the current row version, so the guarantee holds under real concurrency.
+- Multiple replicas are safe without coordination: every sweep in every process is idempotent,
+  and each stale row is settled by exactly one conditional update (verified in D12-08).
+- The lease assumes a single authority execution is DB-bound and finishes well inside two
+  minutes. An action that ever gains a slow external call must raise
+  `ACTION_EXECUTION_LEASE_MS` deliberately; the sweep never waits for or re-runs it.
+- Integration procedure: cherry-pick the three reviewed commits onto a branch cut from the
+  Replit baseline, add the race tests, run PG16 + PG18 acceptance, then fast-forward only
+  (`git push origin HEAD:replit/dinar-next-complete-development`) after re-checking that the
+  canonical HEAD has not moved. No merge commit, no force-push.
 - Re-run `d12-execution-recovery.test`, `universal-negotiation-acceptance.test`,
-  `ai-provider.test`, `block-f3-commerce.test`, `d4-d5-isolation-security.test` and
-  `business-delegations.test` on the integrated SHA.
+  `ai-provider.test`, `block-f3-commerce.test`, `d4-d5-isolation-security.test`,
+  `business-delegations.test`, `block-f2-buyer.test` and `next-g2-inquiry.test` on the
+  integrated SHA.
