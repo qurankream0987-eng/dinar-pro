@@ -102,10 +102,47 @@ app.use(
   }),
 );
 app.disable("x-powered-by");
+
+/**
+ * The built SPA loads only its own modules, styles and API. Google Fonts is the one
+ * declared external origin; images and recorded audio stay same-origin or blob/data.
+ */
+const CONTENT_SECURITY_POLICY = [
+  "default-src 'self'",
+  "script-src 'self'",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "font-src 'self' data: https://fonts.gstatic.com",
+  "img-src 'self' data: blob:",
+  "media-src 'self' blob:",
+  "connect-src 'self'",
+  "worker-src 'self' blob:",
+  "manifest-src 'self'",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+].join("; ");
+const PERMISSIONS_POLICY = [
+  "camera=(self)",
+  "microphone=(self)",
+  "geolocation=(self)",
+  "payment=()",
+  "usb=()",
+  "interest-cohort=()",
+].join(", ");
+
 app.use((req, res, next) => {
   res.setHeader("X-Request-Id", String(req.id));
   res.setHeader("X-Content-Type-Options", "nosniff");
   res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  res.setHeader("Content-Security-Policy", CONTENT_SECURITY_POLICY);
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("Permissions-Policy", PERMISSIONS_POLICY);
+  if (process.env.NODE_ENV === "production")
+    res.setHeader(
+      "Strict-Transport-Security",
+      "max-age=31536000; includeSubDomains",
+    );
   if (!["GET", "HEAD", "OPTIONS"].includes(req.method)) {
     const origin = req.headers.origin;
     const normalizedOrigin = normalizeOrigin(origin);

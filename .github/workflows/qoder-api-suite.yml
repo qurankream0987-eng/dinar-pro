@@ -35,6 +35,9 @@ on:
           - w02u3-card-expiry-browser-journey.test
           - w02u3-card-accessibility-browser-journey.test
           - w02u3-card-performance-browser-journey.test
+          - wave03-d7-cart-browser-journey.test
+          - wave03-d9-campaign-audit.test
+          - same-origin-web.test
           - search-sql-foundation.test
           - search-sql-performance.test
           - financial-state-machine.test
@@ -143,7 +146,7 @@ jobs:
             key=${pair%%=*}
             value=${pair#*=}
             case "$key" in
-              BDINAR_W07_ACCEPTANCE|BDINAR_W08_ACCEPTANCE|BDINAR_W09_ACCEPTANCE|BDINAR_W10_ACCEPTANCE|BDINAR_W12C_ACCEPTANCE|BDINAR_D1D2_ACCEPTANCE|BDINAR_W02U3_TEST_DATABASE|BDINAR_W02U3_BROWSER|BDINAR_D3A_ACCEPTANCE|BDINAR_WAVE4_ACCEPTANCE|BDINAR_WAVE3_ACCEPTANCE|BDINAR_WAVE02_ACCEPTANCE|BDINAR_PHASE1_ACCEPTANCE|BDINAR_SECURITY_ACCEPTANCE|BDINAR_D4_ACCEPTANCE|BDINAR_D5_ACCEPTANCE|BDINAR_A02_ISOLATION|BDINAR_G2_ACCEPTANCE|BDINAR_BLOCKF_ACCEPTANCE|BDINAR_AI_FOUNDATION)
+              BDINAR_W07_ACCEPTANCE|BDINAR_W08_ACCEPTANCE|BDINAR_W09_ACCEPTANCE|BDINAR_W10_ACCEPTANCE|BDINAR_W12C_ACCEPTANCE|BDINAR_D1D2_ACCEPTANCE|BDINAR_W02U3_TEST_DATABASE|BDINAR_W02U3_BROWSER|BDINAR_WAVE03_ACCEPTANCE|BDINAR_D3A_ACCEPTANCE|BDINAR_WAVE4_ACCEPTANCE|BDINAR_WAVE3_ACCEPTANCE|BDINAR_WAVE02_ACCEPTANCE|BDINAR_PHASE1_ACCEPTANCE|BDINAR_SECURITY_ACCEPTANCE|BDINAR_D4_ACCEPTANCE|BDINAR_D5_ACCEPTANCE|BDINAR_A02_ISOLATION|BDINAR_G2_ACCEPTANCE|BDINAR_BLOCKF_ACCEPTANCE|BDINAR_AI_FOUNDATION)
                 [ "$value" = development ] || { echo "$key must be development" >&2; exit 96; } ;;
               BDINAR_LOG_SCAN)
                 case "$value" in 0|1) ;; *) echo "$key must be 0 or 1" >&2; exit 96 ;; esac ;;

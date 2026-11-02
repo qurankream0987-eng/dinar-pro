@@ -58,6 +58,7 @@ import {
 } from "lucide-react";
 import type { Listing } from "@workspace/api-client-react";
 import { api, useAccount } from "@/account/Account";
+import { useCart } from "@/cart/CartContext";
 import { cn } from "@/lib/utils";
 import { friendlyError } from "@/lib/errors";
 import { iconButtonClass, buttonClass } from "@/ui/Button";
@@ -152,6 +153,7 @@ export default function AiPage() {
   const [visibleMessageCount, setVisibleMessageCount] = useState(40);
   const [showJumpToBottom, setShowJumpToBottom] = useState(false);
   const [addingListingId, setAddingListingId] = useState<string>();
+  const { refreshFromServer: refreshCartFromServer } = useCart();
   const [conversationToDelete, setConversationToDelete] = useState<{
     id: string;
     title: string;
@@ -1253,14 +1255,14 @@ export default function AiPage() {
 
   const addListing = useCallback(
     async (listing: Listing, resultSetId: string) => {
-      if (sending.current || streaming) return;
+      if (sending.current || streaming) return false;
       if (!user) {
         setError("سجّل الدخول لإضافة العرض إلى سلتك.");
-        return;
+        return false;
       }
       if (!activeId) {
         setError("ابدأ محادثة محفوظة ثم أعد البحث لإضافة العرض إلى السلة.");
-        return;
+        return false;
       }
       sending.current = true;
       const epoch = requestEpoch.current;
@@ -1271,16 +1273,19 @@ export default function AiPage() {
           resultSetId,
           resourceId: listing.id,
         });
-        if (epoch !== requestEpoch.current) return;
+        if (epoch !== requestEpoch.current) return false;
         setLocalMessages((current) => [
           ...(current ?? messages),
           assistantMessage,
         ]);
+        await refreshCartFromServer();
         refreshConversationData(activeId);
         if (user && market) publishCardSync(user.id, market.id, activeId);
+        return true;
       } catch (cause) {
-        if (epoch !== requestEpoch.current) return;
+        if (epoch !== requestEpoch.current) return false;
         setError(friendlyError(cause));
+        return false;
       } finally {
         if (epoch === requestEpoch.current) {
           sending.current = false;
@@ -1288,7 +1293,7 @@ export default function AiPage() {
         }
       }
     },
-    [activeId, user, streaming, messages, queryClient],
+    [activeId, user, streaming, messages, queryClient, refreshCartFromServer],
   );
 
   const submit = async () => {

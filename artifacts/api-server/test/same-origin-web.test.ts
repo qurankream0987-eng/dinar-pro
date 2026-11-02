@@ -54,6 +54,46 @@ await test("missing files are 404, never the SPA shell", async () => {
   }
 });
 
+await test("the shell and API carry the browser security policy", async () => {
+  const shell = await fetch(`${origin}/`, { headers: { Accept: "text/html" } });
+  const csp = shell.headers.get("content-security-policy") ?? "";
+  assert.match(csp, /default-src 'self'/);
+  assert.match(csp, /script-src 'self'(;|$)/, "no remote or inline script is allowed");
+  assert.match(csp, /object-src 'none'/);
+  assert.match(csp, /frame-ancestors 'none'/);
+  assert.match(csp, /base-uri 'self'/);
+  assert.match(csp, /form-action 'self'/);
+  assert.match(csp, /connect-src 'self'/);
+  assert.equal(shell.headers.get("x-frame-options"), "DENY");
+  assert.equal(shell.headers.get("x-content-type-options"), "nosniff");
+  assert.equal(shell.headers.get("referrer-policy"), "strict-origin-when-cross-origin");
+  const permissions = shell.headers.get("permissions-policy") ?? "";
+  assert.match(permissions, /camera=\(self\)/);
+  assert.match(permissions, /microphone=\(self\)/);
+  assert.match(permissions, /payment=\(\)/);
+  assert.equal(shell.headers.get("strict-transport-security"), null, "HSTS is production-only");
+
+  const api = await fetch(`${origin}/api/healthz`);
+  assert.equal(api.status, 200);
+  assert.equal(api.headers.get("content-security-policy"), csp);
+  assert.equal(api.headers.get("x-frame-options"), "DENY");
+});
+
+await test("HSTS is sent in production", async () => {
+  const previous = process.env.NODE_ENV;
+  process.env.NODE_ENV = "production";
+  try {
+    const response = await fetch(`${origin}/api/healthz`);
+    assert.equal(response.status, 200);
+    assert.equal(
+      response.headers.get("strict-transport-security"),
+      "max-age=31536000; includeSubDomains",
+    );
+  } finally {
+    process.env.NODE_ENV = previous;
+  }
+});
+
 await test("unknown /api routes stay JSON 404 and are never answered with the SPA", async () => {
   const response = await fetch(`${origin}/api/does-not-exist`, { headers: { Accept: "text/html" } });
   assert.equal(response.status, 404);

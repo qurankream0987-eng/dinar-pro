@@ -30,6 +30,7 @@ const approvalMessages: Record<string, string> = {
   BDINAR_WAVE02_ACCEPTANCE: "BDINAR_WAVE02_ACCEPTANCE=development",
   BDINAR_W02U3_TEST_DATABASE: "BDINAR_W02U3_TEST_DATABASE=development",
   BDINAR_W02U3_BROWSER: "BDINAR_W02U3_BROWSER=development",
+  BDINAR_WAVE03_ACCEPTANCE: "BDINAR_WAVE03_ACCEPTANCE=development",
   BDINAR_GFINAL_ACCEPTANCE: "BDINAR_GFINAL_ACCEPTANCE=development",
   BDINAR_XP_ACCEPTANCE: "BDINAR_XP_ACCEPTANCE=development",
   BDINAR_UCC_ACCEPTANCE: "BDINAR_UCC_ACCEPTANCE=development",
@@ -113,4 +114,6 @@ const operationMessages: Record<keyof typeof approvalMessages, string> = {
   BDINAR_DEEPSEEK_CHAT_ACCEPTANCE: "DeepSeek canonical chat compatibility run",
   BDINAR_AI_FOUNDATION:
     "AI foundation capability registry and bounded tool-loop acceptance run",
+  BDINAR_WAVE03_ACCEPTANCE:
+    "Wave 03 conversation cart, security and campaign acceptance run",
 };
