@@ -584,7 +584,7 @@ type RuntimeTurn = Awaited<ReturnType<typeof executeAiConversationTurn>>;
 function sellerEmployeeActionHandler(
   context: RuntimeContext,
 ): SellerEmployeeActionHandler {
-  return async ({ action, message, session }) => {
+  return async ({ action, message, session, replyText }) => {
     const requireCapability = (capability: Parameters<typeof requireSellerEmployeeCapability>[0]["capability"]) =>
       requireSellerEmployeeCapability({
         actorId: context.actorId!,
@@ -670,6 +670,7 @@ function sellerEmployeeActionHandler(
         market: context.market,
         actorId: context.actorId,
         employeeSession: session,
+        employeeReply: replyText,
       });
     }
     if (action === "ESCALATE_NEGOTIATION") {

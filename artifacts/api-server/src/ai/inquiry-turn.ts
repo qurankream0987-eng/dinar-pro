@@ -9,7 +9,7 @@
 import { randomUUID } from "node:crypto";
 import { and, desc, eq } from "drizzle-orm";
 import { CONVERSATION_SURFACE_FAMILIES } from "@workspace/api-zod/conversation-runtime";
-import { aiResultSets, aiUiBlocks, db, offers } from "@workspace/db";
+import { aiResultSets, aiUiBlocks, db, marketplaceInquiries, messages, offers } from "@workspace/db";
 import type { marketFor } from "../lib/markets";
 import {
   containsPriceOffer,
@@ -34,7 +34,10 @@ import {
   type ActionReview,
   type DelegatedActionAuthority,
 } from "./action-foundation";
-import type { SellerEmployeeSessionContext } from "../lib/business-delegations";
+import {
+  requireSellerEmployeeCapability,
+  type SellerEmployeeSessionContext,
+} from "../lib/business-delegations";
 import { focusedListing, isBestPriceRequest } from "./negotiation-turn";
 import { latestListingSet } from "./buyer-turn";
 import { searchMarketplaceListings } from "../lib/marketplace-listings";
@@ -50,6 +53,7 @@ type Input = {
   market: Market;
   actorId?: string;
   employeeSession?: SellerEmployeeSessionContext;
+  employeeReply?: string;
 };
 
 export const INQUIRY_SURFACES = CONVERSATION_SURFACE_FAMILIES.inquiry;
@@ -234,11 +238,28 @@ async function listingFacts(listingId: string) {
   if (!row) return undefined;
   return {
     title: typeof row.data.title === "string" ? row.data.title : "الإعلان",
-    available: row.inventoryMode === "LIMITED" ? Math.max(0, (row.availableQuantity ?? 0) - row.reservedQuantity) : null,
+    available: row.inventoryMode === "LIMITED" && typeof row.availableQuantity === "number"
+      ? Math.max(0, row.availableQuantity - row.reservedQuantity)
+      : null,
   };
 }
 
-async function draft(input: Input & { actorId: string }, target: InquiryTarget, body: string, provenance: InquiryProvenance, lead: string, extra: Record<string, unknown> = {}): Promise<Turn> {
+type InventorySnapshot = {
+  inventoryMode: "LIMITED" | "UNLIMITED";
+  availableQuantity: number | null;
+  recordedAvailableQuantity: number | null;
+  reservedQuantity: number;
+};
+
+async function draft(
+  input: Input & { actorId: string },
+  target: InquiryTarget,
+  body: string,
+  provenance: InquiryProvenance,
+  lead: string,
+  extra: Record<string, unknown> = {},
+  evidence?: { sourceQuestion: string; inventorySnapshot: InventorySnapshot },
+): Promise<Turn> {
   const quoted = target.kind === "LISTING" ? (await listingFacts(target.listingId))?.title : undefined;
   const problem = inquiryBodyProblem(body, quoted);
   if (problem) return notice(`${problem}. لم يُرسل شيء.`);
@@ -253,8 +274,11 @@ async function draft(input: Input & { actorId: string }, target: InquiryTarget, 
       if (!listingId) return notice("تعذر ربط الرسالة بمنتج النشاط. لم يُرسل شيء.");
       delegatedAuthority = {
         sessionId: input.employeeSession.id,
-        capabilities: ["business.inquiries.reply", "business.messages.send"],
+        capabilities: evidence
+          ? ["business.inquiries.reply", "business.messages.send", "business.inventory.read"]
+          : ["business.inquiries.reply", "business.messages.send"],
         listingId,
+        ...(evidence ? { inventorySnapshot: evidence.inventorySnapshot } : {}),
       };
     }
     const review = await createPendingAction({
@@ -265,7 +289,16 @@ async function draft(input: Input & { actorId: string }, target: InquiryTarget, 
       proposal: {
         action: ACTION,
         targetResource: targetKey(target),
-        structuredInput: { body: { value: body, source: "USER_DECLARED" }, provenance: { value: provenance, source: "USER_DECLARED" } },
+        structuredInput: {
+          body: { value: body, source: "USER_DECLARED" },
+          provenance: { value: provenance, source: "USER_DECLARED" },
+          ...(evidence
+            ? {
+                sourceQuestion: { value: evidence.sourceQuestion, source: "SERVER_FACT" },
+                inventorySnapshot: { value: evidence.inventorySnapshot, source: "SERVER_FACT" },
+              }
+            : {}),
+        },
         missingFields: [],
         requiresConfirmation: true,
       },
@@ -276,6 +309,180 @@ async function draft(input: Input & { actorId: string }, target: InquiryTarget, 
     if (typeof status === "number" && status < 500 && error instanceof Error) return notice(`${error.message}. لم يُرسل شيء.`);
     throw error;
   }
+}
+
+type AssignedSellerInquiry = {
+  inquiry: typeof marketplaceInquiries.$inferSelect;
+  question: string;
+  listingTitle: string;
+  inventorySnapshot: InventorySnapshot;
+};
+
+async function assignedSellerInquiry(input: {
+  actorId: string;
+  conversationId: string;
+  market: Market;
+  session: SellerEmployeeSessionContext;
+}): Promise<AssignedSellerInquiry | null> {
+  const [inquiry] = await db
+    .select()
+    .from(marketplaceInquiries)
+    .where(and(
+      eq(marketplaceInquiries.sellerId, input.actorId),
+      eq(marketplaceInquiries.sellerConversationId, input.conversationId),
+      eq(marketplaceInquiries.marketId, input.market.id),
+      eq(marketplaceInquiries.status, "AWAITING_SELLER"),
+    ))
+    .orderBy(desc(marketplaceInquiries.lastMessageAt))
+    .limit(1);
+  if (!inquiry) return null;
+
+  const [listing] = await db.select().from(offers).where(eq(offers.id, inquiry.listingId));
+  if (!listing || listing.sellerId !== input.actorId || listing.marketId !== input.market.id ||
+      listing.status !== "PUBLISHED")
+    return null;
+  // Inventory facts are sensitive to both grants and listing scope; no model-visible context
+  // is constructed until all three live D5 capabilities authorize this exact listing.
+  try {
+    for (const capability of [
+      "business.inquiries.reply",
+      "business.messages.send",
+      "business.inventory.read",
+    ] as const) {
+      await requireSellerEmployeeCapability({
+        actorId: input.actorId,
+        conversationId: input.conversationId,
+        marketId: input.market.id,
+        sessionId: input.session.id,
+        capability,
+        listingId: inquiry.listingId,
+      });
+    }
+  } catch {
+    return null;
+  }
+
+  const [lastMessage] = await db
+    .select({ senderId: messages.senderId, body: messages.body, metadata: messages.metadata })
+    .from(messages)
+    .where(eq(messages.conversationId, inquiry.threadConversationId))
+    .orderBy(desc(messages.createdAt))
+    .limit(1);
+  if (!lastMessage || lastMessage.senderId !== inquiry.buyerId ||
+      lastMessage.metadata?.authorRole !== "BUYER" ||
+      inquiryBodyProblem(lastMessage.body) ||
+      containsPriceOffer(lastMessage.body))
+    return null;
+
+  const inventorySnapshot: InventorySnapshot = {
+    inventoryMode: listing.inventoryMode as InventorySnapshot["inventoryMode"],
+    availableQuantity: listing.inventoryMode === "LIMITED" && typeof listing.availableQuantity === "number"
+      ? Math.max(0, listing.availableQuantity - listing.reservedQuantity)
+      : null,
+    recordedAvailableQuantity: listing.availableQuantity,
+    reservedQuantity: listing.reservedQuantity,
+  };
+  return {
+    inquiry,
+    question: lastMessage.body,
+    listingTitle: typeof listing.data.title === "string" ? listing.data.title : "الإعلان",
+    inventorySnapshot,
+  };
+}
+
+/** Only screened, currently assigned buyer text and server inventory facts reach the model. */
+export async function sellerEmployeeInquiryModelContext(input: {
+  actorId: string;
+  conversationId: string;
+  market: Market;
+  session: SellerEmployeeSessionContext;
+}) {
+  const assigned = await assignedSellerInquiry(input);
+  if (!assigned) return null;
+  return {
+    question: assigned.question,
+    listingTitle: assigned.listingTitle,
+    inventoryMode: assigned.inventorySnapshot.inventoryMode,
+    availableQuantity: assigned.inventorySnapshot.availableQuantity,
+  };
+}
+
+async function draftSellerEmployeeInquiryReply(input: Input & {
+  actorId: string;
+  employeeSession: SellerEmployeeSessionContext;
+  employeeReply: string;
+}): Promise<Turn> {
+  if (!/(?:جهز|حضر|اكتب|صغ|اعد|رد|جاوب)/u.test(normalizeInquiryText(input.message)))
+    return notice("لم أتعرف على طلب إعداد رد للمشتري. لم يُرسل شيء.");
+  const assigned = await assignedSellerInquiry({
+    actorId: input.actorId,
+    conversationId: input.conversationId,
+    market: input.market,
+    session: input.employeeSession,
+  });
+  if (!assigned)
+    return notice("لا يوجد استفسار بانتظار ردك ضمن نطاق التفويض، أو تعذر التحقق من صلاحياته ومحتواه. لم يُرسل شيء.");
+
+  const body = input.employeeReply.trim();
+  const bodyProblem = inquiryBodyProblem(body, assigned.listingTitle);
+  if (bodyProblem || containsPriceOffer(body))
+    return notice(`${bodyProblem ?? "الرد يتضمن عرضًا ماليًا، ويجب أن يمر عبر التفاوض"}. لم يُرسل شيء.`);
+  const quantityAssertions = [
+    ...body.matchAll(/(\d+)\s*(?:قطعة|قطع|حبة|حبات|وحدة|وحدات|pcs|pieces|units)/giu),
+    ...body.matchAll(/(?:ال)?(?:متاح|متوف|موجود)\w*\s*(?:حاليًا|حاليا)?\s*(\d+)/giu),
+  ].map((match) => Number(match[1]));
+  if (quantityAssertions.some((quantity) => quantity !== assigned.inventorySnapshot.availableQuantity))
+    return notice("الرد يتضمن كمية لا تطابق المخزون المسجل حاليًا؛ لم أعدّه للإرسال.");
+  const normalizedBody = normalizeInquiryText(body);
+  const claimsUnavailable = /(?:غير\s+(?:متاح|متوف\w*|موجود\w*)|لا\s+(?:يوجد|توجد)\s+(?:مخزون|كمية)|نفد(?:ت)?(?:\s+(?:المخزون|الكمية))?|out\s+of\s+stock|not\s+available)/u.test(normalizedBody);
+  const positiveAvailabilityText = normalizedBody.replace(
+    /(?:غير\s+(?:متاح|متوف\w*|موجود\w*)|لا\s+(?:يوجد|توجد)\s+(?:مخزون|كمية)|نفد(?:ت)?(?:\s+(?:المخزون|الكمية))?|out\s+of\s+stock|not\s+available)/gu,
+    "",
+  );
+  const claimsAvailable = /(?:متاح|متوف|موجود|available|in\s+stock)/u.test(positiveAvailabilityText);
+  const unknownQuantity = assigned.inventorySnapshot.inventoryMode === "LIMITED" &&
+    assigned.inventorySnapshot.availableQuantity === null;
+  if (unknownQuantity && (claimsAvailable || claimsUnavailable))
+    return notice("لم تُسجل كمية محددة تكفي لتأكيد توفر المنتج أو نفاده؛ لم أعدّه للإرسال.");
+  if (assigned.inventorySnapshot.inventoryMode === "LIMITED" &&
+      assigned.inventorySnapshot.availableQuantity === 0 && claimsAvailable)
+    return notice("المخزون المسجل صفر؛ لا يمكن تأكيد توفر المنتج في الرد. لم أعدّه للإرسال.");
+  if (claimsUnavailable && (
+    assigned.inventorySnapshot.inventoryMode === "UNLIMITED" ||
+    (assigned.inventorySnapshot.inventoryMode === "LIMITED" &&
+      typeof assigned.inventorySnapshot.availableQuantity === "number" &&
+      assigned.inventorySnapshot.availableQuantity > 0)
+  ))
+    return notice("الرد ينفي توفرًا يخالف المخزون المسجل؛ لم أعدّه للإرسال.");
+  if (/(?:سيصل|راح\s+يتوفر|رح\s+يتوفر|سيتوفر|يتوفر\s+(?:غدًا|غدا|بكرة|لاحقًا|لاحقا|خلال|بعد)|restock|back\s+in\s+stock|available\s+(?:tomorrow|next|in)\b)/u.test(normalizedBody))
+    return notice("لا يوجد موعد إعادة توفير مسجل؛ لم أعدّه للإرسال.");
+
+  const evidence = {
+    sourceQuestion: assigned.question,
+    inventorySnapshot: assigned.inventorySnapshot,
+  };
+  return draft(
+    input,
+    { kind: "INQUIRY", inquiryId: assigned.inquiry.id },
+    body,
+    "DINAR_DRAFT_APPROVED",
+    `رد مقترح للمشتري بخصوص «${assigned.listingTitle}»:`,
+    {
+      inquiry: {
+        view: "DRAFT",
+        inquiryId: assigned.inquiry.id,
+        status: "PENDING",
+        provenance: "DINAR_DRAFT_APPROVED",
+        body,
+        sourceQuestion: assigned.question,
+        inventory: {
+          mode: assigned.inventorySnapshot.inventoryMode,
+          availableQuantity: assigned.inventorySnapshot.availableQuantity,
+        },
+      },
+    },
+    evidence,
+  );
 }
 
 async function guardedPreconditions(actorId: string, market: Market, target: InquiryTarget): Promise<Turn | undefined> {
@@ -377,6 +584,12 @@ export async function executeInquiryTurn(input: Input): Promise<Turn | null> {
   const actor = { ...input, actorId: input.actorId };
   const text = normalizeInquiryText(input.message);
   if (!text) return null;
+  if (input.employeeSession && input.employeeReply)
+    return draftSellerEmployeeInquiryReply({
+      ...actor,
+      employeeSession: input.employeeSession,
+      employeeReply: input.employeeReply,
+    });
   const sets = await recentSets(input.conversationId, input.market.id);
   const latest = sets[0];
   const pending = latest?.query as Pending | undefined;

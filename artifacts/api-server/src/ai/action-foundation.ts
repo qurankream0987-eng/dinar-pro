@@ -313,6 +313,7 @@ type ActionDefinition = {
     resourceId: string;
     values: Record<string, unknown>;
     expected: ServerSnapshot;
+    delegatedAuthority?: DelegatedActionAuthority;
   }) => Promise<void | Record<string, unknown>>;
 };
 
@@ -479,12 +480,25 @@ export const ACTION_REGISTRY: Record<string, ActionDefinition> = {
     },
     reviewLines: (snapshot, input) => [
       `إلى: ${snapshot.inquiryRole === "SELLER" ? "المشتري" : "البائع"} — بخصوص «${snapshot.inquiryTitle ?? "الإعلان"}»`,
+      ...(typeof input.sourceQuestion === "string"
+        ? [`سؤال المشتري: «${String(input.sourceQuestion).slice(0, 240)}»`]
+        : []),
+      ...(input.inventorySnapshot && typeof input.inventorySnapshot === "object"
+        ? [(() => {
+            const fact = input.inventorySnapshot as { inventoryMode?: unknown; availableQuantity?: unknown };
+            if (fact.inventoryMode === "UNLIMITED")
+              return "نمط المخزون المسجل عند إعداد الرد: غير محدود؛ لا يوجد رقم كمية.";
+            return typeof fact.availableQuantity === "number"
+              ? `المخزون المحدود المسجل عند إعداد الرد: ${fact.availableQuantity} متاح`
+              : "المخزون المحدود المسجل عند إعداد الرد: لا يوجد رقم محدد للكمية.";
+          })()]
+        : []),
       `الرسالة كما ستصل: «${String(input.body)}»`,
       input.provenance === "DINAR_DRAFT_APPROVED" ? "صاغ DINAR هذه الرسالة؛ لن تُرسل إلا بموافقتك" : "بكلماتك كما كتبتها",
       "استفسار وليس عرض سعر ولا طلب شراء، ولا يغيّر المخزون",
       "لا يُشارك رقم هاتفك أو عنوانك",
     ],
-    execute: async ({ actionId, actorId, market, resourceId, values }) => {
+    execute: async ({ actionId, actorId, market, resourceId, values, delegatedAuthority }) => {
       const [set] = await db.select({ conversationId: aiResultSets.conversationId }).from(aiResultSets).where(eq(aiResultSets.id, actionId));
       const sent = await submitInquiryMessage({
         actionId,
@@ -494,6 +508,8 @@ export const ACTION_REGISTRY: Record<string, ActionDefinition> = {
         body: String(values.body),
         provenance: values.provenance as InquiryProvenance,
         originConversationId: set!.conversationId,
+        ...(typeof values.sourceQuestion === "string" ? { sourceQuestion: values.sourceQuestion } : {}),
+        ...(delegatedAuthority ? { delegatedAuthority } : {}),
       });
       return { inquiryId: sent.inquiryId, messageId: sent.messageId, duplicate: sent.duplicate, replied: sent.replied };
     },
@@ -1169,6 +1185,12 @@ type PendingQuery = {
     sessionId: string;
     capabilities: SellerEmployeeCapability[];
     listingId: string;
+    inventorySnapshot?: {
+      inventoryMode: "LIMITED" | "UNLIMITED";
+      availableQuantity: number | null;
+      recordedAvailableQuantity: number | null;
+      reservedQuantity: number;
+    };
   };
 };
 
@@ -1373,6 +1395,7 @@ export async function confirmPendingAction(input: {
       resourceId: query.targetResource,
       values,
       expected: query.expected,
+      ...(query.delegatedAuthority ? { delegatedAuthority: query.delegatedAuthority } : {}),
     });
     outcome = { status: "CONFIRMED", message: "تم التنفيذ بعد تأكيدك والتحقق من البيانات الحالية.", executed: true, ...(result ? { result } : {}) };
   } catch (error) {

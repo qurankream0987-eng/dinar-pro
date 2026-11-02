@@ -27,6 +27,8 @@ import {
   users,
 } from "@workspace/db";
 import { AUTH_RATE_LIMIT_SCOPE, consumeRateLimit } from "./auth-rate-limiter";
+import { assertSellerEmployeeCapabilityTx } from "./business-delegations";
+import type { SellerEmployeeCapability } from "./business-delegations";
 import { logger } from "./logger";
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
@@ -192,6 +194,17 @@ async function listingTitle(listingId: string, tx: Tx | typeof db = db) {
 }
 
 export type SubmitResult = { inquiryId: string; messageId: string; duplicate: boolean; deliveredConversationId: string | null; replied: boolean };
+type DelegatedInquiryAuthority = {
+  sessionId: string;
+  capabilities: SellerEmployeeCapability[];
+  listingId: string;
+  inventorySnapshot?: {
+    inventoryMode: "LIMITED" | "UNLIMITED";
+    availableQuantity: number | null;
+    recordedAvailableQuantity: number | null;
+    reservedQuantity: number;
+  };
+};
 
 /**
  * Stores one message verbatim and delivers it in-app to the other party's DINAR conversation,
@@ -206,20 +219,84 @@ export async function submitInquiryMessage(input: {
   body: string;
   provenance: InquiryProvenance;
   originConversationId: string;
+  sourceQuestion?: string;
+  delegatedAuthority?: DelegatedInquiryAuthority;
 }): Promise<SubmitResult> {
   const problem = inquiryBodyProblem(input.body, input.target.kind === "LISTING" ? await listingTitle(input.target.listingId) : undefined);
   if (problem) throw fail(400, problem, "INVALID_BODY");
   if (containsPriceOffer(input.body)) throw fail(409, "الرسالة تتضمن عرض سعر؛ العروض المالية تُرسل عبر التفاوض لا عبر الاستفسار", "PRICE_OFFER");
   const messageId = `inq-${input.actionId}`;
-  const [already] = await db.select({ conversationId: messages.conversationId }).from(messages).where(eq(messages.id, messageId));
+  const [already] = input.delegatedAuthority
+    ? []
+    : await db.select({ conversationId: messages.conversationId, senderId: messages.senderId, body: messages.body }).from(messages).where(eq(messages.id, messageId));
   if (already) {
     const [inquiry] = await db.select().from(marketplaceInquiries).where(eq(marketplaceInquiries.threadConversationId, already.conversationId));
-    return { inquiryId: inquiry!.id, messageId, duplicate: true, deliveredConversationId: null, replied: false };
+    if (already.senderId !== input.actorId || already.body !== input.body.trim() || !inquiry)
+      throw fail(409, "معرّف الإرسال مرتبط برسالة أخرى؛ لم أكررها", "IDEMPOTENCY_CONFLICT");
+    return { inquiryId: inquiry.id, messageId, duplicate: true, deliveredConversationId: null, replied: false };
   }
   const limited = await consumeRateLimit([{ scope: AUTH_RATE_LIMIT_SCOPE.inquiryActor, value: input.actorId }], 3600, INQUIRIES_PER_HOUR).catch(() => ({ retryAfterSeconds: 60 }));
   if (limited) throw fail(429, `أرسلت رسائل كثيرة خلال وقت قصير. حاول بعد ${Math.max(1, Math.ceil(limited.retryAfterSeconds / 60))} دقيقة`, "RATE_LIMITED");
   const result = await db.transaction(async (tx) => {
-    const relationship = await resolveRelationship(input.actorId, input.market, input.target, tx);
+    let relationship = await resolveRelationship(input.actorId, input.market, input.target, tx);
+    let delegatedListing: typeof offers.$inferSelect | undefined;
+    if (input.delegatedAuthority) {
+      const authority = input.delegatedAuthority;
+      if (input.target.kind !== "INQUIRY" || relationship.actorRole !== "SELLER" ||
+          relationship.inquiry?.sellerId !== input.actorId ||
+          relationship.listingId !== authority.listingId ||
+          authority.capabilities.length !== 3 ||
+          !authority.capabilities.includes("business.inquiries.reply") ||
+          !authority.capabilities.includes("business.messages.send") ||
+          !authority.capabilities.includes("business.inventory.read"))
+        throw fail(403, "لا يمكن استخدام التفويض لهذا الاستفسار", "D5_INQUIRY_SCOPE_CHANGED");
+
+      // Consistent lock order: live D4 grant/business, assigned listing, then inquiry thread.
+      for (const capability of authority.capabilities) {
+        await assertSellerEmployeeCapabilityTx(tx, {
+          actorId: input.actorId,
+          conversationId: input.originConversationId,
+          marketId: input.market.id,
+          sessionId: authority.sessionId,
+          capability,
+          listingId: authority.listingId,
+        });
+      }
+      [delegatedListing] = await tx.select().from(offers)
+        .where(and(eq(offers.id, authority.listingId), eq(offers.marketId, input.market.id)))
+        .for("update")
+        .limit(1);
+      if (!delegatedListing || delegatedListing.sellerId !== input.actorId ||
+          delegatedListing.status !== "PUBLISHED")
+        throw fail(409, "تغير الإعلان أو لم يعد منشورًا؛ لم تُرسل الرسالة", "D5_LISTING_CHANGED");
+      const [existing] = await tx.select({
+        conversationId: messages.conversationId,
+        senderId: messages.senderId,
+        body: messages.body,
+      }).from(messages).where(eq(messages.id, messageId));
+      if (existing) {
+        if (existing.senderId !== input.actorId || existing.body !== input.body.trim() ||
+            existing.conversationId !== relationship.inquiry!.threadConversationId)
+          throw fail(409, "معرّف الإرسال مرتبط برسالة أخرى؛ لم أكررها", "IDEMPOTENCY_CONFLICT");
+        return {
+          inquiryId: relationship.inquiry!.id,
+          messageId,
+          duplicate: true,
+          deliveredConversationId: null,
+          replied: false,
+        };
+      }
+      if (!authority.inventorySnapshot ||
+          authority.inventorySnapshot.inventoryMode !== delegatedListing.inventoryMode ||
+          authority.inventorySnapshot.recordedAvailableQuantity !== delegatedListing.availableQuantity ||
+          authority.inventorySnapshot.reservedQuantity !== delegatedListing.reservedQuantity ||
+          authority.inventorySnapshot.availableQuantity !== (
+            delegatedListing.inventoryMode === "LIMITED" && typeof delegatedListing.availableQuantity === "number"
+              ? Math.max(0, delegatedListing.availableQuantity - delegatedListing.reservedQuantity)
+              : null
+          ))
+        throw fail(409, "تغير المخزون منذ إعداد الرد؛ راجعه وأعد صياغته. لم تُرسل الرسالة", "D5_INVENTORY_CHANGED");
+    }
     const statuses = await userStatuses([relationship.buyerId, relationship.sellerId], tx);
     if (statuses.get(input.actorId) !== "ACTIVE") throw fail(403, "حسابك غير نشط حاليًا", "ACTOR_INACTIVE");
     const counterpartId = relationship.actorRole === "BUYER" ? relationship.sellerId : relationship.buyerId;
@@ -230,6 +307,25 @@ export async function submitInquiryMessage(input: {
     let inquiry = relationship.inquiry
       ? (await tx.select().from(marketplaceInquiries).where(eq(marketplaceInquiries.id, relationship.inquiry.id)).for("update"))[0]
       : undefined;
+    if (input.delegatedAuthority) {
+      if (!inquiry || inquiry.sellerId !== input.actorId || inquiry.sellerConversationId !== input.originConversationId ||
+          inquiry.status !== "AWAITING_SELLER" || typeof input.sourceQuestion !== "string")
+        throw fail(409, "لم يعد هذا الاستفسار بانتظار رد البائع؛ لم تُرسل الرسالة", "D5_INQUIRY_CHANGED");
+      const [latestBuyerMessage] = await tx.select({
+        senderId: messages.senderId,
+        body: messages.body,
+        metadata: messages.metadata,
+      }).from(messages)
+        .where(eq(messages.conversationId, inquiry.threadConversationId))
+        .orderBy(desc(messages.createdAt))
+        .limit(1);
+      if (!latestBuyerMessage || latestBuyerMessage.senderId !== inquiry.buyerId ||
+          latestBuyerMessage.metadata?.authorRole !== "BUYER" ||
+          latestBuyerMessage.body !== input.sourceQuestion)
+        throw fail(409, "تغير سؤال المشتري منذ إعداد الرد؛ راجعه مجددًا. لم تُرسل الرسالة", "D5_INQUIRY_CHANGED");
+      const problem = inquiryBodyProblem(input.body, typeof delegatedListing?.data.title === "string" ? delegatedListing.data.title : undefined);
+      if (problem) throw fail(400, problem, "INVALID_BODY");
+    }
     if (inquiry && ["CLOSED", "BLOCKED"].includes(inquiry.status)) {
       if (input.target.kind === "INQUIRY") throw fail(409, inquiry.status === "BLOCKED" ? "المراسلة في هذا الاستفسار موقوفة" : "هذا الاستفسار مغلق؛ ابدأ استفسارًا جديدًا من الإعلان", "INQUIRY_CLOSED");
       inquiry = undefined;
