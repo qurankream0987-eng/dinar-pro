@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
 import app from "../src/app";
 import { businessAuditEvents, businessDelegations, businessMemberships, businessOperatingProfiles, db } from "@workspace/db";
+import { marketFor } from "../src/lib/markets";
 import { requireSafeReplitDevelopmentDatabase } from "./safe-development-database";
 
 requireSafeReplitDevelopmentDatabase("BDINAR_D4_ACCEPTANCE");
@@ -273,12 +274,79 @@ await test("D4 expiration removes staff access and intelligent grants cannot be 
     ),
     (error: any) => error?.code === "DELEGATION_NOT_ACTIVE",
   );
+  const { delegatedSellerModelContext } = await import("../src/lib/business-delegations");
+  assert.equal(await delegatedSellerModelContext({ actorId: owner.id, marketId: delegationRow!.marketId }), null);
   const [expired] = await db
     .select()
     .from(businessDelegations)
     .where(eq(businessDelegations.id, delegationRow.id));
   assert.equal(expired!.status, "EXPIRED");
   assert.ok(expired!.expiredAt);
+});
+
+await test("D5 model context is available only through one live D4 intelligent read grant", async () => {
+  const owner = await register("D5ContextOwner");
+  const businessId = await createBusiness(owner);
+  const ownerPath = businessPath(businessId);
+  const createAiGrant = (label: string) => request(ownerPath, "POST", {
+    employee: { type: "INTELLIGENT" },
+    capabilities: ["business.catalog.read"],
+    resourceScope: { kind: "BUSINESS" },
+    expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+    idempotencyKey: `d5-${label}-${randomUUID()}`,
+  }, owner.cookie);
+
+  const { delegatedSellerModelContext } = await import("../src/lib/business-delegations");
+  assert.equal(typeof delegatedSellerModelContext, "function");
+  assert.equal(await delegatedSellerModelContext({ actorId: owner.id, marketId: "JO" }), null);
+
+  const first = await createAiGrant("one");
+  assert.equal(first.status, 201, first.raw);
+  const firstId = first.data.delegation.id as string;
+  const activated = await request(`${ownerPath}/${firstId}/activate`, "POST", {
+    confirm: true,
+    expectedVersion: 1,
+  }, owner.cookie);
+  assert.equal(activated.status, 200, activated.raw);
+
+  const context = await delegatedSellerModelContext({ actorId: owner.id, marketId: "JO" });
+  assert.ok(context);
+  assert.equal(context?.businessId, businessId);
+  assert.equal(context?.policyVersion, "D4_READ_ONLY_V1");
+  assert.deepEqual(context?.listings, []);
+  assert.equal("configurationId" in context!, false);
+  assert.equal("delegationId" in context!, false);
+  assert.equal(await delegatedSellerModelContext({ actorId: randomUUID(), marketId: "JO" }), null);
+  assert.equal(await delegatedSellerModelContext({ actorId: owner.id, marketId: "KW" }), null);
+  const { modelContext } = await import("../src/ai/smart-turn");
+  const modelInput = {
+    conversationId: await conversation(owner),
+    message: "كيف أكتب رد لزبائني عن منتجاتي؟",
+    market: await marketFor({ actor: { activeMarketId: "JO" } }),
+    actorId: owner.id,
+  };
+  const prompted = await modelContext(modelInput);
+  assert.equal((prompted.serverContext as any).sellerEmployee.status, "ACTIVE");
+  const unrelated = await modelContext({ ...modelInput, message: "اشرح لي معنى كلمة الوفاء" });
+  assert.equal("sellerEmployee" in (unrelated.serverContext as any), false);
+
+  const second = await createAiGrant("two");
+  assert.equal(second.status, 201, second.raw);
+  const secondId = second.data.delegation.id as string;
+  const secondActivated = await request(`${ownerPath}/${secondId}/activate`, "POST", {
+    confirm: true,
+    expectedVersion: 1,
+  }, owner.cookie);
+  assert.equal(secondActivated.status, 200, secondActivated.raw);
+  assert.equal(await delegatedSellerModelContext({ actorId: owner.id, marketId: "JO" }), null,
+    "the model must not choose between multiple grants");
+
+  const revoked = await request(`${ownerPath}/${secondId}/revoke`, "POST", {
+    confirm: true,
+    expectedVersion: 2,
+  }, owner.cookie);
+  assert.equal(revoked.status, 200, revoked.raw);
+  assert.equal((await delegatedSellerModelContext({ actorId: owner.id, marketId: "JO" }))?.businessId, businessId);
 });
 
 await new Promise<void>((resolve, reject) =>

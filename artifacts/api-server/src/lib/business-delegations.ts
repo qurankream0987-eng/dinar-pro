@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { and, asc, eq, inArray, lte, ne } from "drizzle-orm";
+import { and, asc, eq, gt, inArray, lte, ne } from "drizzle-orm";
 import {
   businessAuditEvents,
   businessDelegations,
@@ -679,4 +679,47 @@ export async function delegatedBusinessCatalog(input: {
   if ("denied" in result && result.denied)
     throw fail(result.denied.status, result.denied.message, result.denied.code);
   return result.data;
+}
+
+/**
+ * Resolve the seller employee only from the authenticated owner's live D4 grants.
+ * No grant id, business id, employee identity, capability, or scope is model-selectable.
+ * Ambiguous grants fail closed instead of letting the model choose its own authority.
+ */
+export async function delegatedSellerModelContext(input: {
+  actorId: string;
+  marketId: string;
+}) {
+  const rows = await db
+    .select()
+    .from(businessDelegations)
+    .where(and(
+      eq(businessDelegations.grantorActorId, input.actorId),
+      eq(businessDelegations.marketId, input.marketId),
+      eq(businessDelegations.employeeType, "INTELLIGENT"),
+      eq(businessDelegations.status, "ACTIVE"),
+      gt(businessDelegations.expiresAt, new Date()),
+    ))
+    .orderBy(asc(businessDelegations.createdAt), asc(businessDelegations.id))
+    .limit(2);
+  if (rows.length !== 1) return null;
+
+  const grant = rows[0]!;
+  if (!grant.agentConfigurationId) return null;
+  try {
+    return await delegatedBusinessCatalog({
+      delegationId: grant.id,
+      marketId: input.marketId,
+      principal: { type: "INTELLIGENT", configurationId: grant.agentConfigurationId },
+    });
+  } catch (error) {
+    const code = (error as { code?: unknown } | null)?.code;
+    if ([
+      "DELEGATION_NOT_FOUND",
+      "DELEGATION_NOT_ACTIVE",
+      "DELEGATION_CAPABILITY_DENIED",
+      "DELEGATION_BUSINESS_BLOCKED",
+    ].includes(String(code))) return null;
+    throw error;
+  }
 }
