@@ -3,9 +3,10 @@
 ## Scope and tested source
 
 - Branch: `replit/dinar-next-complete-development`
-- Baseline SHA: `3847ad79fd808775f9a6b403ad9697baa49d6080`
-- Tested application/source SHA: `41f112f69b6339735727ed5d8138d32d084cc013`
-- The tested source SHA applies to every D6-01–D6-25 row; no application or test source changed between these suite runs.
+- Baseline SHA: `ee51f3595fc73f630c35e7bd88bf5dfadd91aaa6`
+- Previously recorded D6-01–D6-25 application/test source SHA: `41f112f69b6339735727ed5d8138d32d084cc013`
+- D6-AI-01 and focused regression application/test source SHA: `bc1e005f97e50cf80c04602cfb4b1528bd2779d3`
+- The original C1–C13 evidence remains tied to its recorded source. C14, `ai-authority-boundary.test`, `d4-d5-isolation-security.test`, and fresh reruns of `g2-smart-conversation.test` and `bounded-multistep.test` were verified against the D6-AI-01 source; source did not change during these focused runs.
 - Database: disposable PostgreSQL 16 bound to loopback `127.0.0.1:55432`; every integration suite below ran on a fresh database.
 - Test accounts and listings were synthetic and created by the suites through DINAR's own registration and listing routes.
 - The test harness blocked or replaced live model calls. No real payment, buyer/seller contact, production database, or outbound network request was used.
@@ -31,6 +32,7 @@ Run these from `artifacts/api-server` in the checked-out repository. Each `local
 | C11 | `DINAR_LOCAL_PG=postgres://user@127.0.0.1:55432 DINAR_CHROMIUM=/repl/tools/bin/chromium test/isolation/local-suite.sh w02u3-card-recovery-browser-journey.test BDINAR_TEST_DATABASE=development BDINAR_W02U3_BROWSER=development` |
 | C12 | `DINAR_LOCAL_PG=postgres://user@127.0.0.1:55432 test/isolation/local-suite.sh w02u3-card-reliability.test BDINAR_W02U3_TEST_DATABASE=development` |
 | C13 | `DINAR_LOCAL_PG=postgres://user@127.0.0.1:55432 test/isolation/local-suite.sh promotion-intent.test` |
+| C14 | `DINAR_LOCAL_PG=postgres://user@127.0.0.1:55432 test/isolation/local-suite.sh model-native-routing.test BDINAR_TEST_DATABASE=development` |
 
 All listed suites passed when run with their required development gates and returned `outbound=0`. C1–C12 used fresh databases; the C13 test is a local intent unit test and makes no database or network calls.
 
@@ -40,6 +42,7 @@ All listed suites passed when run with their required development gates and retu
 | --- | --- | --- | --- | --- |
 | D6-01 | `routes/ai.ts` conversation create/turn routes; `executeAiConversationTurn`; authenticated actor and conversation ownership | Synthetic buyers; foreign actor receives no private conversation or buyer state, and cannot execute another buyer's card action | C3, C5, C8, C12; G2 authorization cases and W02U-05/CR-12 | **PASS** — ordinary buyer authority is separate from D4/D5 seller authority. |
 | D6-02 | `model-turn.ts`, `smart-turn.ts`, and the existing model gateway; model output is validated and routed back through server authorities | Arabic scripted/injected requests; assertions cover validated surfaces, action counts, and zero unauthorized effects | C5 and C6; G2 smart summary: 83/83, 57 model turns, zero outbound calls | **PARTIAL** — contract and fallback behavior passed, but no live provider call was authorized; live Arabic quality is unverified. |
+| D6-AI-01 | Existing unified model turn; contextual `searchListings` and `getResource` calls execute through the canonical registry | Scripted buyer searches real synthetic rows, resolves a returned resource, then answers; duplicate reads are blocked, saved progress resumes, and a model-proposed cart mutation is rejected | C14; `model-native-routing.test`: 13/13 passed on a fresh disposable PostgreSQL 16 database, `outbound=0`; API-server typecheck passed | **PARTIAL** — bounded read-only continuation is implemented and contract-tested. No live model quality, hard process-restart recovery, or full buyer-journey acceptance is claimed. |
 | D6-03 | `tool-registry.ts: searchListings`; `searchMarketplaceListings`; buyer result-set persistence | Published synthetic marketplace records; returned resource IDs match actual listings and current market | C1, C8, C9, C10; F2 and search foundation SF-01–SF-06 | **PASS** — real DINAR inventory is used; no external marketplace or fabricated records. |
 | D6-04 | Canonical search plus `executeBuyerTurn`; service pricing remains governed by the listing's recorded price mode | Published service listing with `QUOTE_REQUIRED`; buyer resolves the real listing and requests a seller quote without an invented amount | C4; U-06 and U-22, 36/36 negotiation cases passed | **PASS** — covers the tested quote-required service path; not every service category or remote-service filter. |
 | D6-05 | Canonical marketplace search and persisted result identities | Real synthetic car listings and a toy-vehicle listing appear in the cross-category browser result set; comparison reads current listing records | C10; captured W02 browser trace and W02U-01 | **PARTIAL** — vehicle records were discovered and compared, but a vehicle-specific natural-language filter journey was not separately asserted. |
@@ -73,8 +76,9 @@ All listed suites passed when run with their required development gates and retu
 ## Build, security, database, and performance evidence
 
 - `pnpm run typecheck`: passed.
-- `pnpm --filter @workspace/api-server run build`: passed.
+- `pnpm --filter @workspace/api-server typecheck` and `pnpm --filter @workspace/api-server run build`: passed after D6-AI-01.
 - `pnpm --filter @workspace/dinar run build`: passed. Vite emitted existing dependency annotation and large-chunk warnings; build completed.
+- Focused PostgreSQL 16 regression suites: `model-native-routing.test` 13/13, `ai-authority-boundary.test` 4/4, `d4-d5-isolation-security.test` 8/8, `g2-smart-conversation.test` 91/91, and `bounded-multistep.test` 3/3; each used a fresh loopback database and reported `outbound=0`.
 - Dependency audit: one high Zod finding (`zod` 3.25.76; suggested fix requires a major upgrade) and one moderate `qs` finding (6.16.0; fix available in 6.16.1). No dependency change was made because the Zod remediation is a potentially breaking major upgrade and is outside this D6 change.
 - SAST and HoundDog scans: no findings reported.
 - PostgreSQL 16 loopback disposable suites passed; PostgreSQL 18 was unavailable in this environment.
@@ -83,3 +87,7 @@ All listed suites passed when run with their required development gates and retu
 ## Overall status
 
 **D6 remains PARTIAL, not ready for full acceptance.** The existing authenticated buyer runtime and canonical inquiry, negotiation, cart, checkout, and order services passed the listed scoped tests. Remaining evidence includes live Arabic model quality under explicit provider approval, focused vehicle/location discovery, a single full signed-in journey through inquiry/negotiation/cart/checkout, and the independent D4/D5 revocation audit.
+
+## Mandatory external-AI directive
+
+The bounded iterative tool-selection loop is now implemented in the existing runtime for contextual, authenticated, read-only listing search and result lookup. `LEGACY` remains the routing default and model-first behavior is opt-in. The scripted contract evidence does not establish live Arabic quality, hard process-interruption recovery, or complete D6 acceptance. No live provider call was authorized or made. See [`external-ai-acceptance-plan.md`](external-ai-acceptance-plan.md) for the remaining approval-gated evidence.

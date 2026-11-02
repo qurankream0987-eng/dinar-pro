@@ -17,7 +17,7 @@ The buyer employee is a capability of the existing authenticated conversation, n
 | --- | --- | --- |
 | Authenticated conversation | `artifacts/api-server/src/routes/ai.ts`: `POST /ai/conversations` and `POST /ai/conversations/:id/turns` | Both routes require authentication. Turn handling verifies conversation ownership before invoking the runtime. |
 | Unified turn routing | `artifacts/api-server/src/ai/conversation-runtime.ts`: `executeAiConversationTurn`, `executeWithRoutingMode` | Buyer turns re-enter the common router. Seller employee handling is conditional on an actual persisted D5 session; an ordinary buyer does not receive delegated seller privileges. |
-| Flexible language understanding | `artifacts/api-server/src/ai/model-turn.ts`: strict `ModelTurnOutput`, `MODEL_TOOL`, and canonical-request contract; `artifacts/api-server/src/ai/smart-turn.ts`: `executeModelFallback` | The model may interpret or restate intent. The server validates the output and re-enters the same deterministic runtime; model output is not an authority to write data. |
+| Flexible language understanding | `artifacts/api-server/src/ai/model-turn.ts`: strict `ModelTurnOutput`, `MODEL_TOOL`, and canonical-request contract; `artifacts/api-server/src/ai/smart-turn.ts`: `executeModelFallback`; `artifacts/api-server/src/ai/routing-mode.ts` | `HYBRID` and `MODEL_FIRST` let the model interpret a turn and return one canonical request for server re-entry. `LEGACY` remains the default. The model cannot write data. |
 | Canonical search | `artifacts/api-server/src/ai/tool-registry.ts`: `searchListings`; `artifacts/api-server/src/lib/marketplace-listings.ts`: `searchMarketplaceListings` | Results come from published marketplace records in the current market. Search output does not create inventory or seller facts. |
 | Buyer discovery and result state | `artifacts/api-server/src/ai/buyer-turn.ts`: `executeBuyerTurn`, `runBuyerSearch`, refinement/ranking/comparison and selection handlers | Search constraints and stable resource identities are persisted in conversation result sets; selection resolves against those server records, not client-provided listing IDs. |
 | Comparison and unknown facts | `buyer-turn.ts` comparison handlers and the typed conversation response schemas in `packages/api-zod/src/conversation-runtime.ts` | Comparison values are read from current server records; missing attributes stay missing. |
@@ -33,6 +33,21 @@ The buyer employee is a capability of the existing authenticated conversation, n
 | Purchase review and order creation | `artifacts/api-server/src/ai/buyer-turn.ts`: `executePurchaseTurn`; action authority in `artifacts/api-server/src/ai/action-foundation.ts` | Review and explicit confirmation precede canonical order creation. Changed price/stock requires a fresh review. Test payment remains `SIMULATION_ONLY`; no real transfer is authorized here. |
 | Order history and tracking | `artifacts/api-server/src/ai/order-context.ts` and the existing order/fulfillment services | Reads only participant-owned orders and recorded fulfillment state; it does not invent tracking or delivery status. |
 | Recovery and idempotency | persisted `messages`, `ai_result_sets`, `ai_ui_blocks`, pending actions, and action receipts | Reload and retry resolve against persisted actor/conversation/market/resource identities rather than process-local buyer state. |
+
+## External-AI directive alignment
+
+The external model is the language-reasoning component; DINAR remains the authority for identity, permissions, facts, reviews, execution, and receipts. The D6 branch already contains a provider-neutral gateway, schema-validated model output, model-first/hybrid routing modes, bounded task plans, server-side canonical re-entry, and tested fallback behavior.
+
+The current implementation advances the mandatory external-AI directive but does **not** meet every acceptance requirement:
+
+- `LEGACY` is the routing default. Model-first and hybrid behavior are opt-in; no provider setting was changed because doing so could trigger paid calls without approval.
+- The unified model turn can now make a bounded sequence of contextual, read-only `searchListings` and `getResource` calls. Each result is validated by the canonical tool registry and returned as untrusted feedback; model output never authorizes cart, inquiry, offer, publication, purchase, or payment mutations.
+- The loop is capped at three read-only calls and 25 seconds total; the per-tool timeout defaults to 3.5 seconds and is hard-capped at 10 seconds. Duplicate calls are blocked. Intermediate progress is persisted against the owning actor, conversation, market, and message so stale read-only turns can resume after the 60-second claim window.
+- Scripted tests cover search → resource lookup → answer, duplicate-read blocking, stale persisted-progress resumption, and rejection of a model-proposed cart mutation. The fresh PostgreSQL 16 run passed 13/13 tests with outbound access blocked; API-server typecheck passed.
+- Scripted gateways establish orchestration and safety contracts, not real Arabic/dialect quality. Hard process-restart recovery, aggregate live token/spend ceilings, and a complete live-model D6 journey remain unverified.
+- D5 revocation remains an independent acceptance gap; D6 does not infer or grant seller-delegation authority.
+
+See [`external-ai-acceptance-plan.md`](external-ai-acceptance-plan.md) for the controlled live-provider plan and its approval gates. Until the implementation gaps and required evidence are closed, D6 remains PARTIAL.
 
 ## Existing UI and typed contracts
 
@@ -62,3 +77,4 @@ The buyer employee is a capability of the existing authenticated conversation, n
 3. Browser evidence is valid only when the test launches the checked-out target application and authenticates a synthetic account. The workspace preview URL is not evidence for this nested target checkout.
 4. PostgreSQL 18 is not installed in this environment; only the available PostgreSQL 16 loopback instance can be validated.
 5. Any untested case remains PARTIAL, BLOCKED, or NOT_RUN in `acceptance-matrix.md`; passing neighboring assertions is not a substitute.
+6. The mandatory external-AI directive still requires explicit routing-policy approval and end-to-end live-provider evidence. The implemented read-only loop and scripted tests are not sufficient to claim full alignment.
