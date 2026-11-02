@@ -23,3 +23,15 @@ The model still proposes interpretation; DINAR's server remains the authority fo
 - **Remaining limitation:** No real provider request was sent, so the exact live provider/model and its Arabic, dialect, reasoning, and planning quality are unverified. Do not interpret scripted responses as real-model evidence.
 
 No paid provider was activated, no live provider call was made, and no real customer communication or payment was attempted.
+
+## Command 02B revalidation
+
+**Implementation/test commit:** `792d0f4da3500d00915e178d73f713d2a822a8be`
+
+The server-side gateway in `artifacts/api-server/src/ai/model-gateway.ts` retains provider-neutral adapters for Groq, OpenRouter, OpenAI, Replit AI Integrations, OpenAI-compatible endpoints, Gemini, and DeepSeek. At source level, primary-provider resolution falls back to Groq if `DINAR_AI_PROVIDER` is absent; an environment override can change the effective selection. Active provider values and credentials were not inspected, so the effective runtime provider remains unverified.
+
+`plannedSteps` is still part of the existing structured response; the server accepts only bounded, ordered excerpts from the current message. The commerce-route regression also now lets an unscoped real-world current-demand question reach the general model. The system prompt explicitly says the model has no live internet or real-time data, so this does not authorize a current-market claim.
+
+Controlled verification: provider 47/47, model tiers 24/24, operation contracts 7/7, model-native routing 9/9, command-A acceptance 22/22. These establish contracts and routing only. XP-19 passed after the routing correction; the XP suite remains 21/22 because its browser report recorded one failed resource load. No model answer quality was independently judged.
+
+**Status remains:** `LIVE_MODEL_NOT_VERIFIED`; `REAL_LLM_ACCEPTANCE_BLOCKED`. Owner-approved provider selection and explicit live-test authorization are still required.

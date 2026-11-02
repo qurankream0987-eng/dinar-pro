@@ -29,3 +29,14 @@ Relevant source:
 - **Limitations:** This change does not validate every correction, ambiguous ordinal, account switch, interrupted general question, inquiry resumption, or cross-account isolation scenario. The standalone signed-in `conversation-quality.mjs` browser flow was not run against the managed development database.
 
 No vector-memory service, new personal-data store, schema change, or migration was added.
+
+## Command 02B state and recovery update
+
+**Implementation/test commit:** `792d0f4da3500d00915e178d73f713d2a822a8be`
+
+- A model plan may preserve a conditional purchase as `BLOCKED` while executing a separate, safe search. The user must select an actual result and ask for the normal purchase review; the plan cannot add a cart item or create an order.
+- The conditional step is persisted with its condition and can be cancelled. A failed search is recorded as `FAILED`, prevents subsequent steps from running, and offers a bounded retry. A possibly mutating step is not automatically retried.
+- Actor, market, confirmation, and canonical action handling continue to come from the server on each turn; the model cannot supply IDs or server authority.
+- `model-native-routing.test.ts` passed 9/9, including persistence, cancellation, stop-on-failure, and retry eligibility. `bounded-multistep.test.ts` passed 3/3. The full conversation browser suite remains partial; see the 02B evidence report.
+
+No durable schema, new memory store, or API response schema was added.

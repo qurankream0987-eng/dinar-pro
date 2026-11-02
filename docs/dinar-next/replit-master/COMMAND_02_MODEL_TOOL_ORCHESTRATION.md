@@ -31,3 +31,13 @@ Safety cases added or strengthened:
 ## Distinguish proposals from actions
 
 The model output is a proposal. A task step is performed only when DINAR's existing handler returns its actual result. A purchase, publication, contact, payment, or other consequential action remains subject to its existing authorization and confirmation rules; the model cannot report success based solely on its own text.
+
+## Command 02B orchestration update
+
+**Implementation/test commit:** `792d0f4da3500d00915e178d73f713d2a822a8be`
+
+- Conditional text is preserved as a blocked plan step rather than rejecting the whole plan. The safe search can run; purchase remains a separate user-selected, reviewed action. MN-08 verifies the persisted status, no cart/order side effect, and cancellation.
+- A thrown read-only search failure is recorded, later plan steps stop, and only that search can be retried. Mutating step failures are not swallowed or automatically replayed. MN-09 verifies the state transition and retry eligibility.
+- XP-19 verifies that a general current-demand question without DINAR market scope routes to the model, while the explicit DINAR-scoped equivalent remains on the platform market-pulse path.
+
+Latest focused results: `model-native-routing` 9/9, `command-a-acceptance` 22/22, `bounded-multistep` 3/3, and XP-19 PASS. The 35-category matrix and browser exceptions are in the separate 02B reports; overall Command 02 stays **PARTIAL**.

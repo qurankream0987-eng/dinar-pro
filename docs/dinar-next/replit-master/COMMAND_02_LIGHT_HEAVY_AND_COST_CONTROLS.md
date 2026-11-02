@@ -23,3 +23,11 @@ The cost and provider-failure suite uses scripted gateways and test placeholder 
 ## Security scan note
 
 The recorded SAST and HoundDog scans had no findings. The dependency audit reported one high-severity Zod 3.25.76 finding and one moderate qs 6.16.0 finding. Neither dependency was changed in this orchestration task; the Zod remediation requires a major-version decision, and dependency remediation was outside this scoped change.
+
+## Command 02B revalidation
+
+**Implementation/test commit:** `792d0f4da3500d00915e178d73f713d2a822a8be`
+
+No LIGHT/HEAVY routing, pricing policy, or retry count was changed. The new plan uses the already-resolved model turn and existing bounded task runtime; it does not add a classifier call. Verification on disposable PostgreSQL: `model-tiers` 24/24, `ai-provider` 47/47, `closure-ai-cost` 19/19, `command-a-acceptance` 22/22, and `model-native-routing` 9/9. Every successful local-suite summary reported zero outbound attempts.
+
+The branch-local production dependency audit was clean. The workspace-root audit findings cited in the prior section refer to another lock/tree and are not branch findings; SAST/HoundDog were likewise run against the general workspace, not the isolated checkout. Real provider latency, billing reconciliation, and LIGHT-versus-HEAVY quality remain unverified.

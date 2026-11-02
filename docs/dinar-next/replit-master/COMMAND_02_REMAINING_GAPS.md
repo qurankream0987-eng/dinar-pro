@@ -24,3 +24,21 @@ The controlled test evidence is in `COMMAND_02_ACCEPTANCE_EVIDENCE.md`, includin
 ## Next development command
 
 The planned next mission is **REPLIT COMMAND 03 — D4 INTELLIGENT BUSINESS EMPLOYEE DELEGATION**. Do not represent Command 02 as fully accepted until its live-provider blockers and remaining acceptance categories are either completed with authorization or explicitly accepted as blocked/not run. Do not implement D4 here.
+
+## Command 02B update — remaining evidence
+
+**Implementation/test commit:** `792d0f4da3500d00915e178d73f713d2a822a8be`
+**Overall status remains:** **PARTIAL**
+
+| Area | Latest status | Remaining evidence |
+|---|---|---|
+| Real external model | **BLOCKED** | Owner-approved provider/model and explicit authorization for live requests. No live request was made. |
+| General intelligence quality | **PARTIAL / NOT LIVE-TESTED** | XP-19 now routes the uncovered general-demand question correctly, but no model answer quality was judged; the prompt states it has no real-time data. |
+| Full 35-category matrix | **PARTIAL** | See `COMMAND_02B_ACCEPTANCE_MATRIX_35.md`; multiple categories remain not run or only controlled-route tested. |
+| XP browser acceptance | **PARTIAL 21/22** | 13 journeys and 22 layout checks passed functional assertions; one `registered-users` resource error failed the console gate. |
+| SC01/SC03/SC10 checkout/dispute end-to-end | **BLOCKED in this environment** | Each test expects a payment review, but development reports payment unavailable. Preserve this financial boundary; do not manufacture a payment event. |
+| G2 smart conversation | **PARTIAL 90/91** | G2-36B expects `PAYMENT_REVIEW`; current development behavior refuses payment. The inquiry suite passed 17/17. |
+| Dependency scan scope | **PARTIAL** | Branch-local `pnpm audit --prod` returned zero advisories. Generic workspace SAST/HoundDog and root audit were not branch-isolated. |
+| Remote CI | **NOT_RUN** | No GitHub Actions run or remote CI pass is claimed. |
+
+SC07 and W02 Ultra passed their real Chromium journeys. The remaining SC status and all category-level evidence are recorded in `COMMAND_02B_SOURCE_AND_SC_TRACEABILITY.md` and `COMMAND_02B_ACCEPTANCE_MATRIX_35.md`. Do not upgrade Command 02 from PARTIAL based on controlled fixtures.
