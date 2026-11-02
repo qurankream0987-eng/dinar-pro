@@ -664,6 +664,7 @@ await test("XP-19 hybrid routing: each request finds its class — general, DINA
     "أبي أتعلم كيف أصور منتجات احترافية", "شنو أحسن لغة برمجة أتعلمها؟", "Explain recursion with a JS example",
     "عندي error في الـ useEffect يعيد التحميل للأبد", "سوي لي خطة غذائية أسبوعية",
   ]) await check(message, general, "is a general question for the model");
+  await check("هل الطلب على الذهب عالي هالأيام في سوق دينار؟", dinar("COMMERCE_NOTICE"), "uses DINAR's market pulse only when the user scopes the question to DINAR");
 
   // DINAR's own features, phrased differently each time, stay deterministic.
   for (const message of ["كيف أبيع هاتفي في دينار؟", "كيف أبيع؟", "شلون أبيع هنا؟"]) await check(message, dinar("TUTORIAL_VIDEO_CARD"), "is DINAR's selling tutorial");
@@ -943,6 +944,7 @@ await test("BROWSER header, sidebar, starters, free topic changes, rendering and
         XP_TOKEN: TOKEN,
         XP_OUT: OUT,
         XP_RESULT: resultPath,
+        ...(process.env.DINAR_CHROMIUM ? { CHROMIUM_PATH: process.env.DINAR_CHROMIUM } : {}),
       },
       maxBuffer: 64 * 1024 * 1024,
       timeout: 1_700_000,

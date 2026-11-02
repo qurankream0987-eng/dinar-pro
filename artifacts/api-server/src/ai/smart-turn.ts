@@ -262,7 +262,7 @@ function safeTaskPlanGap(gap: string): boolean {
  * dropped conditions.
  */
 function groundedTaskPlan(message: string, steps: string[]): string[] | undefined {
-  if (steps.length < 2 || steps.length > 3 || CONDITIONAL_TASK_LANGUAGE.test(message)) return undefined;
+  if (steps.length < 2 || steps.length > 3) return undefined;
   let cursor = 0;
   for (const step of steps) {
     if (step.length < 2 || step.length > 400) return undefined;

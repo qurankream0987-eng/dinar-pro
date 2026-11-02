@@ -81,10 +81,14 @@ import {
   buildTaskPlan,
   cancelPending,
   completeStep,
+  failStep,
   isPlanCancellation,
   isPlanContinuation,
+  isPlanRetry,
+  isRetryablePlanStep,
   latestTaskPlan,
   nextPendingStep,
+  retryFailedStep,
   splitCompoundRequest,
   type TaskPlan,
   type TaskStep,
@@ -445,20 +449,46 @@ async function executeTaskPlanTurn(
 ): Promise<TurnExecution | undefined> {
   const actorId = context.actorId!;
   const runStep = async (plan: TaskPlan, step: TaskStep): Promise<TurnExecution> => {
-    const executed = await executeAiConversationTurn(
-      { ...context, message: step.text },
-      { ...options, planStep: true },
-    );
-    const result = executed.result as { kind: string; surface?: string };
-    return {
-      ...executed,
-      taskPlan: completeStep(plan, step.index, { tool: executed.tool, surface: result.surface ?? result.kind }),
-    };
+    try {
+      const executed = await executeAiConversationTurn(
+        { ...context, message: step.text },
+        { ...options, planStep: true },
+      );
+      const result = executed.result as { kind: string; surface?: string };
+      return {
+        ...executed,
+        taskPlan: completeStep(plan, step.index, { tool: executed.tool, surface: result.surface ?? result.kind }),
+      };
+    } catch (error) {
+      // Search is read-only and safe to retry. Do not swallow write failures or invite retries
+      // where an interrupted response could conceal an already-applied mutation.
+      if (step.intent !== "SEARCH_LISTINGS") throw error;
+      return {
+        ...planNotice("تعذّر إكمال البحث؛ لم أتابع أي خطوة لاحقة. يمكنك طلب إعادة المحاولة."),
+        taskPlan: failStep(plan, step.index, "STEP_EXECUTION_FAILED"),
+      };
+    }
   };
   if (isPlanCancellation(context.message)) {
     const live = await latestTaskPlan(context.conversationId, actorId);
-    if (!live || !nextPendingStep(live.plan)) return undefined;
+    if (!live || !live.plan.steps.some((step) =>
+      step.status === "PENDING" ||
+      step.status === "FAILED" ||
+      (step.status === "BLOCKED" && step.reason === "CONDITIONAL_FUTURE_ACTION"),
+    )) return undefined;
     return { ...planNotice("ألغيت باقي خطوات طلبك المركّب؛ لم يُنفّذ منها شيء."), taskPlan: cancelPending(live.plan) };
+  }
+  if (isPlanRetry(context.message)) {
+    const live = await latestTaskPlan(context.conversationId, actorId);
+    const failed = live?.plan.steps.find(isRetryablePlanStep);
+    if (!live || !failed) return undefined;
+    if (live.plan.marketId !== context.market.id)
+      return { ...planNotice("بدأ هذا الطلب في سوق آخر؛ لن أعيد تنفيذه هنا. أعد كتابة طلبك في هذا السوق."), taskPlan: cancelPending(live.plan) };
+    const plan = retryFailedStep(live.plan, failed.index);
+    const step = plan.steps.find((candidate) => candidate.index === failed.index);
+    if (!step) return undefined;
+    options.onToolSelected?.("taskPlan");
+    return runStep(plan, step);
   }
   if (isPlanContinuation(context.message)) {
     const live = await latestTaskPlan(context.conversationId, actorId);

@@ -52,6 +52,12 @@ const CONTINUE =
   /^(?:(?:يا\s+)?دينار\s+)?(?:التالي|الخطوه\s+التاليه|الخطوة\s+التالية|كمل\s+(?:الطلب|الخطوه|الخطوة)\s+(?:التالي|الثاني|التالية|التاليه)|نفذ\s+(?:التالي|الخطوه\s+التاليه|الخطوة\s+التالية)|next(?:\s+step)?)[.!؟?]*$/iu;
 const CANCEL_PLAN =
   /^(?:الغ|الغي|ألغ|ألغي|الغاء|إلغاء)\s+(?:الخطوات|باقي\s+(?:الطلب|الخطوات)|الخطوات\s+الباقيه|الخطوات\s+الباقية)$/iu;
+const RETRY_PLAN_STEP =
+  /^(?:(?:أعد|اعد)\s+(?:المحاولة|الخطوة)|حاول\s+(?:مرة\s+)?(?:أخرى|ثانية)|retry(?:\s+step)?)[.!؟?]*$/iu;
+const CONDITIONAL_LANGUAGE =
+  /(?:^|\s|و|ف)(?:if|when|once|unless|اذا|إذا|لو|لما|متى|عندما|حالما|بمجرد|في\s+حال)(?=\s|$)/iu;
+const PURCHASE_ACTION =
+  /(?:اشتر|اشتري|اطلب(?:ه|ي)?|ادفع|purchase|checkout|buy|order)/iu;
 
 export function splitCompoundRequest(message: string): { steps: string[]; truncated: boolean } | undefined {
   const parts = message
@@ -65,6 +71,7 @@ export function splitCompoundRequest(message: string): { steps: string[]; trunca
 
 export const isPlanContinuation = (message: string) => CONTINUE.test(message.trim());
 export const isPlanCancellation = (message: string) => CANCEL_PLAN.test(message.trim());
+export const isPlanRetry = (message: string) => RETRY_PLAN_STEP.test(message.trim());
 
 export function buildTaskPlan(input: {
   steps: string[];
@@ -84,21 +91,34 @@ export function buildTaskPlan(input: {
       const intent = input.intentOf(text);
       const definition = CONVERSATION_ACTION_REGISTRY[intent];
       // A confirmation must answer a review the user has seen; it is never queued.
-      const blocked = CONFIRMATION_ONLY.test(text.trim());
+      const conditional = CONDITIONAL_LANGUAGE.test(text);
+      const confirmationOnly = CONFIRMATION_ONLY.test(text.trim());
+      const blocked = conditional || confirmationOnly;
       return {
         index,
         text,
         intent,
         requiresConfirmation: definition.confirmationRequired,
         status: blocked ? "BLOCKED" : "PENDING",
-        ...(blocked ? { reason: "CONFIRMATION_MUST_BE_EXPLICIT" } : {}),
+        ...(conditional
+          ? { reason: "CONDITIONAL_FUTURE_ACTION" }
+          : confirmationOnly
+            ? { reason: "CONFIRMATION_MUST_BE_EXPLICIT" }
+            : {}),
       };
     }),
   };
 }
 
 export function nextPendingStep(plan: TaskPlan): TaskStep | undefined {
+  // A later step must not silently run after an earlier step failed.
+  if (plan.steps.some((step) => step.status === "FAILED")) return undefined;
   return plan.steps.find((step) => step.status === "PENDING");
+}
+
+export function isRetryablePlanStep(step: TaskStep): boolean {
+  // Repeating a read-only search cannot duplicate a marketplace write.
+  return step.status === "FAILED" && step.intent === "SEARCH_LISTINGS";
 }
 
 export function completeStep(plan: TaskPlan, index: number, result: TaskStep["result"]): TaskPlan {
@@ -117,10 +137,27 @@ export function failStep(plan: TaskPlan, index: number, reason: string): TaskPla
   };
 }
 
+export function retryFailedStep(plan: TaskPlan, index: number): TaskPlan {
+  return {
+    ...plan,
+    steps: plan.steps.map((step) => {
+      if (step.index !== index || !isRetryablePlanStep(step)) return step;
+      const { reason: _reason, ...retryable } = step;
+      return { ...retryable, status: "PENDING" };
+    }),
+  };
+}
+
 export function cancelPending(plan: TaskPlan): TaskPlan {
   return {
     ...plan,
-    steps: plan.steps.map((step) => (step.status === "PENDING" ? { ...step, status: "CANCELLED" } : step)),
+    steps: plan.steps.map((step) =>
+      step.status === "PENDING" ||
+      step.status === "FAILED" ||
+      (step.status === "BLOCKED" && step.reason === "CONDITIONAL_FUTURE_ACTION")
+        ? { ...step, status: "CANCELLED" }
+        : step,
+    ),
   };
 }
 
@@ -166,12 +203,30 @@ export async function latestTaskPlan(
 export function taskPlanNotice(plan: TaskPlan): string {
   const next = nextPendingStep(plan);
   const blocked = plan.steps.filter((step) => step.status === "BLOCKED");
+  const conditional = blocked.filter((step) => step.reason === "CONDITIONAL_FUTURE_ACTION");
+  const confirmationOnly = blocked.filter((step) => step.reason !== "CONDITIONAL_FUTURE_ACTION");
+  const failed = plan.steps.find((step) => step.status === "FAILED");
   const lines: string[] = [];
   if (next) lines.push(`الخطوة التالية من طلبك: «${next.text}». قل «التالي» لأنفذها، أو «ألغ باقي الطلب».`);
-  else if (plan.steps.every((step) => step.status !== "PENDING") && plan.steps.length > 1)
+  else if (plan.steps.length > 1 && plan.steps.every((step) => step.status === "DONE" || step.status === "CANCELLED"))
     lines.push("انتهت خطوات طلبك المركّب.");
-  if (blocked.length)
-    lines.push(`لم أضع «${blocked.map((step) => step.text).join("»، «")}» في الطابور: التأكيد يكون برسالة مستقلة بعد أن ترى المراجعة.`);
+  if (conditional.length) {
+    const purchases = conditional.filter((step) => PURCHASE_ACTION.test(step.text));
+    const other = conditional.filter((step) => !PURCHASE_ACTION.test(step.text));
+    if (purchases.length)
+      lines.push(`أحتفظ بطلب الشراء «${purchases.map((step) => step.text).join("»، «")}» دون تنفيذه تلقائيًا؛ اختر الإعلان أولًا، ثم اطلب مراجعة الشراء وقرّر بعد رؤيتها.`);
+    if (other.length)
+      lines.push(`أحتفظ بالخطوة الشرطية «${other.map((step) => step.text).join("»، «")}»، ولن أنفذها تلقائيًا قبل أن تؤكد تحقق شرطها.`);
+  }
+  if (confirmationOnly.length)
+    lines.push(`لم أضع «${confirmationOnly.map((step) => step.text).join("»، «")}» في الطابور: التأكيد يكون برسالة مستقلة بعد أن ترى المراجعة.`);
+  if (failed) {
+    lines.push(
+      isRetryablePlanStep(failed)
+        ? `تعذّر تنفيذ «${failed.text}»، ولم أتابع الخطوات التالية. قل «أعد المحاولة» لإعادة البحث.`
+        : `تعذّر تأكيد نتيجة «${failed.text}»، ولم أتابع الخطوات التالية. راجع حالة الإجراء قبل إعادة طلبه.`,
+    );
+  }
   if (plan.truncated) lines.push(`أتابع حتى ${MAX_STEPS} خطوات في الطلب الواحد؛ أرسل الباقي بعد ذلك.`);
   return lines.join("\n");
 }

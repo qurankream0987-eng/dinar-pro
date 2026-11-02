@@ -19,6 +19,16 @@ import { cartItems, carts, db, orders, policyAcceptances, pool } from "@workspac
 import app from "../src/app";
 import { AIProviderError, type ConversationModelGateway } from "../src/ai/model-gateway";
 import { CANONICAL_REQUEST_INSTRUCTION } from "../src/ai/routing-mode";
+import {
+  buildTaskPlan,
+  failStep,
+  isPlanRetry,
+  isRetryablePlanStep,
+  latestTaskPlan,
+  nextPendingStep,
+  retryFailedStep,
+  taskPlanNotice,
+} from "../src/ai/task-plan";
 import { requireSafeReplitDevelopmentDatabase } from "./safe-development-database";
 
 requireSafeReplitDevelopmentDatabase("BDINAR_TEST_DATABASE");
@@ -264,20 +274,31 @@ await test("MN-07 model semantic plans reuse exact user clauses for seller and b
   });
 });
 
-await test("MN-08 model plans cannot invent clauses or execute conditional future purchases", async () => {
+await test("MN-08 model plans preserve conditional purchases without executing them", async () => {
   await withMode("MODEL_FIRST", async () => {
     const user = await fresh();
     const requestText = `ابحث عن جوال بكسل ${run} وإذا أعجبني اشتريه`;
     script.unshift({
       key: requestText,
       canonical: "اشتريه",
-      plannedSteps: [`ابحث عن جوال بكسل ${run}`, "اشتريه"],
+      plannedSteps: [`ابحث عن جوال بكسل ${run}`, "إذا أعجبني اشتريه"],
     });
     const conditional = await say(user.cookie, user.conv, requestText);
-    assert.doesNotMatch(conditional.body, /الخطوة التالية/u, "a conditional purchase is not queued for later execution");
+    assert.ok(conditional.listingIds.includes(ids.pixel!), `the safe search runs while the conditional purchase waits: ${conditional.body}`);
+    assert.match(conditional.body, /أحتفظ بطلب الشراء/u, "the conditional intent is retained for the user");
     assert.notEqual(conditional.payload.surface, "PURCHASE_REVIEW", "the model cannot move a conditional purchase ahead of user selection");
     assert.equal(await cartLines(user.id), 0, "no purchase is executed or added to the cart");
     assert.equal((await db.select().from(orders).where(eq(orders.buyerId, user.id))).length, 0, "no order is created");
+    const persisted = await latestTaskPlan(user.conv, user.id);
+    assert.ok(persisted, "the plan is stored in the conversation's user message metadata");
+    assert.deepEqual(persisted.plan.steps.map(({ text, status, reason }) => ({ text, status, reason })), [
+      { text: `ابحث عن جوال بكسل ${run}`, status: "DONE", reason: undefined },
+      { text: "إذا أعجبني اشتريه", status: "BLOCKED", reason: "CONDITIONAL_FUTURE_ACTION" },
+    ]);
+    const cancelled = await say(user.cookie, user.conv, "ألغ باقي الطلب");
+    assert.match(cancelled.body, /ألغيت باقي خطوات طلبك المركّب/u);
+    const cancelledPlan = await latestTaskPlan(user.conv, user.id);
+    assert.equal(cancelledPlan?.plan.steps[1]?.status, "CANCELLED", "the user can cancel a retained conditional action");
 
     const inventedUser = await fresh();
     const inventedRequest = `وريني جوال بكسل ${run} وقارن`;
@@ -288,6 +309,26 @@ await test("MN-08 model plans cannot invent clauses or execute conditional futur
     const invented = await say(inventedUser.cookie, inventedUser.conv, inventedRequest);
     assert.doesNotMatch(invented.body, /الخطوة التالية/u, "a plan with text absent from the user message is rejected");
   });
+});
+
+await test("MN-09 failed plan steps stop later work and allow retry only for read-only search", async () => {
+  const base = buildTaskPlan({
+    steps: ["ابحث عن هاتف", "أنشئ مسودة إعلان"],
+    truncated: false,
+    actorId: randomUUID(),
+    marketId: "jo",
+    intentOf: (text) => text.startsWith("ابحث") ? "SEARCH_LISTINGS" : "CREATE_PRODUCT_DRAFT",
+  });
+  const failed = failStep(base, 0, "STEP_EXECUTION_FAILED");
+  assert.equal(nextPendingStep(failed), undefined, "later work waits until the failed step is resolved");
+  assert.equal(isRetryablePlanStep(failed.steps[0]!), true);
+  assert.equal(isPlanRetry("أعد المحاولة"), true);
+  assert.match(taskPlanNotice(failed), /أعد المحاولة/u);
+  const retried = retryFailedStep(failed, 0);
+  assert.equal(retried.steps[0]!.status, "PENDING");
+  assert.equal(nextPendingStep(retried)?.index, 0);
+  assert.equal(isRetryablePlanStep(failStep(base, 1, "STEP_EXECUTION_FAILED").steps[1]!), false,
+    "a possibly mutating seller-draft operation is not offered for automatic retry");
 });
 
 after(async () => {

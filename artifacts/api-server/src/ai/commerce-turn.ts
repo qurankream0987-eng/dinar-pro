@@ -298,7 +298,13 @@ const TUTORIALS: Record<TutorialPayload["id"], TutorialPayload> = {
  * wider scope DINAR has no data for, so it is a general question for the model.
  */
 const BEYOND_DINAR_MARKET = /(?:^|\s)(?:في\s+)?(?:العالم|عالميا|دوليا|الدول|globally|worldwide)(?:\s|$)|بشكل\s+عام|عموما/u;
-const isMarketPulseQuestion = (text: string) => P.pulse.test(text) && !BEYOND_DINAR_MARKET.test(text);
+const GENERAL_CURRENT_DEMAND_QUESTION =
+  /(?:الطلب\s+علي|فيه\s+طلب\s+علي)\s+.+\s+(?:عالي|مرتفع|كبير).*(?:هالايام|هذه\s+الايام|هالفتره|هذه\s+الفتره)/u;
+const EXPLICIT_DINAR_MARKET_SCOPE = /(?:في\s+(?:سوق\s+)?دينار|داخل\s+(?:السوق|المنصه)\s+دينار|سوقنا|منصتنا)/u;
+const isMarketPulseQuestion = (text: string) =>
+  P.pulse.test(text) &&
+  !BEYOND_DINAR_MARKET.test(text) &&
+  !(GENERAL_CURRENT_DEMAND_QUESTION.test(text) && !EXPLICIT_DINAR_MARKET_SCOPE.test(text));
 
 function tutorialFor(text: string): TutorialPayload | undefined {
   const semantic = promotionIntent(text);

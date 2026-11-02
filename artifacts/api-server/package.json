@@ -72,7 +72,6 @@
     "test:search-sql-foundation": "NODE_ENV=development BDINAR_TEST_DATABASE=development BDINAR_PROMOTIONS_ENABLED=true node test/run.mjs search-sql-foundation.test",
     "test:search-sql-performance": "NODE_ENV=development BDINAR_TEST_DATABASE=development BDINAR_PROMOTIONS_ENABLED=true node test/run.mjs search-sql-performance.test",
     "test:w07": "NODE_ENV=development BDINAR_W07_ACCEPTANCE=development BDINAR_WAVE4_ACCEPTANCE=development node test/run.mjs wave07-financial-journal.test",
-    "test:w07": "NODE_ENV=development BDINAR_W07_ACCEPTANCE=development BDINAR_WAVE4_ACCEPTANCE=development node test/run.mjs wave07-financial-journal.test",
     "test:w08": "NODE_ENV=development BDINAR_W08_ACCEPTANCE=development BDINAR_WAVE4_ACCEPTANCE=development node test/run.mjs wave08-cash-and-refunds.test",
     "test:w09": "NODE_ENV=development BDINAR_W09_ACCEPTANCE=development BDINAR_WAVE4_ACCEPTANCE=development node test/run.mjs wave09-policy-consent-compliance.test",
     "test:w10": "NODE_ENV=development BDINAR_W10_ACCEPTANCE=development BDINAR_WAVE4_ACCEPTANCE=development node test/run.mjs wave10-trust-support-whatsapp.test",
