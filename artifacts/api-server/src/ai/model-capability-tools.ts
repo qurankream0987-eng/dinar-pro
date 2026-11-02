@@ -107,9 +107,12 @@ export async function modelRolesForActor(actorId: string, marketId: string): Pro
 }
 
 export function modelCapabilityToolNamesForRoles(roles: readonly ModelCapabilityRole[]): string[] {
+  // A tool shared by both sets needs either role; a role-exclusive tool needs exactly that role.
+  const sellerOnly = (name: string) => SELLER_TOOLS.has(name) && !BUYER_TOOLS.has(name);
+  const buyerOnly = (name: string) => BUYER_TOOLS.has(name) && !SELLER_TOOLS.has(name);
   return MODEL_CAPABILITY_TOOL_NAMES.filter((name) =>
-    (SELLER_TOOLS.has(name) ? roles.includes("SELLER") : true) &&
-    (BUYER_TOOLS.has(name) ? roles.includes("BUYER") : true),
+    (!sellerOnly(name) || roles.includes("SELLER")) &&
+    (!buyerOnly(name) || roles.includes("BUYER")),
   );
 }
 

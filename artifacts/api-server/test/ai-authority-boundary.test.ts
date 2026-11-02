@@ -58,19 +58,20 @@ test("every advertised capability is registered, non-admin and approved before a
   assert.equal(advertised.includes("addToCart"), false);
 });
 
-test("seller-only capabilities are not advertised to a buyer role and vice versa", () => {
+test("seller-only capabilities are not advertised to a buyer role", () => {
   const buyer = modelCapabilityToolDefinitions(["BUYER"]).map((definition) => definition.name);
   const seller = modelCapabilityToolDefinitions(["SELLER"]).map((definition) => definition.name);
-  for (const name of ["readInventory", "prepareListingDraft", "requestPublicationReview"])
+  // A seller account is also a marketplace buyer, so its toolset is the superset.
+  for (const name of ["readInventory", "prepareListingDraft", "requestPublicationReview"]) {
     assert.equal(buyer.includes(name), false, `${name} is seller-only`);
-  for (const name of ["readCart", "prepareCartChange", "reviewCheckout", "readFulfillment"])
-    assert.equal(seller.includes(name), false, `${name} is buyer-only`);
-  for (const name of ["readBusinessInquiries", "prepareInquiryMessage", "readNegotiationStatus", "prepareNegotiationProposal", "readOrders"]) {
-    assert.equal(buyer.includes(name), true, name);
     assert.equal(seller.includes(name), true, name);
   }
+  for (const name of ["readBusinessInquiries", "prepareInquiryMessage", "readNegotiationStatus", "prepareNegotiationProposal", "readOrders", "readCart", "prepareCartChange", "reviewCheckout", "readFulfillment"]) {
+    assert.equal(buyer.includes(name), true, name);
+    assert.equal(seller.includes(name), true, `${name} is shared`);
+  }
   assert.equal(modelCapabilityToolDefinitions(["BUYER"]).length, 9);
-  assert.equal(modelCapabilityToolDefinitions(["SELLER"]).length, 6);
+  assert.equal(modelCapabilityToolDefinitions(["SELLER"]).length, 12);
 });
 
 test("a model-proposed financial or order tool is rejected before anything runs", async () => {

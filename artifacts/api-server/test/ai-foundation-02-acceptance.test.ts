@@ -214,10 +214,13 @@ test("F02-01 roles and advertised tools come from server rows, never from the me
     assert.equal(buyerTools.includes(name), false, `${name} is seller-only`);
     assert.equal(sellerTools.includes(name), true, name);
   }
+  // A seller is also a buyer here, so every buyer tool is advertised to the seller too.
   for (const name of ["readCart", "prepareCartChange", "reviewCheckout", "readFulfillment"]) {
-    assert.equal(sellerTools.includes(name), false, `${name} is buyer-only`);
     assert.equal(buyerTools.includes(name), true, name);
+    assert.equal(sellerTools.includes(name), true, `${name} is shared`);
   }
+  assert.equal(buyerTools.length, 9);
+  assert.equal(sellerTools.length, 12);
   assert.deepEqual([...MODEL_TOOL_CAPABILITIES].sort(), [
     "compareListings", "listingFacts", "prepareCartMutation", "prepareInquiryReply", "prepareListingDraft",
     "prepareNegotiationProposal", "readAuthorizedOrders", "readBusinessInquiries", "readBuyerCart",
@@ -471,7 +474,7 @@ test("F02-11 cart proposal → explicit confirmation → one cart line → reloa
   const review = await executeModelTool("reviewCheckout", "{}", contextFor(actor, actor.conv));
   assert.equal(review.result.surface, "CHECKOUT");
   assert.equal((review.result.checkout as any).readOnly, true);
-  assert.equal((review.result.checkout as any).total, "120.00");
+  assert.equal((review.result.checkout as any).total, "120.000");
   assert.equal((await db.select().from(orders).where(eq(orders.buyerId, actor.id))).length, 0, "checkout review creates no order");
 });
 
