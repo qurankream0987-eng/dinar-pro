@@ -223,6 +223,8 @@ const buyer = await register(`مشتري الموجة الثانية ${runId}`);
 let businessId = "";
 let delegationId = "";
 let inboxId = "";
+let secondListingId = "";
+let originConversationId = "";
 let firstThreadConversationId = "";
 let secondThreadConversationId = "";
 
@@ -233,7 +235,7 @@ await test("W02-D5 browser setup: business, grant, session and two customer inqu
   assert.ok(businessId, businessTurn.body);
 
   const firstListingId = await publish(owner, `جاكيت متصفح أ ${runId}`, 35);
-  const secondListingId = await publish(owner, `جاكيت متصفح ب ${runId}`, 17);
+  secondListingId = await publish(owner, `جاكيت متصفح ب ${runId}`, 17);
   await attachToListingBusiness(owner, businessId, firstListingId);
   await attachToListingBusiness(owner, businessId, secondListingId);
 
@@ -282,19 +284,7 @@ await test("W02-D5 browser setup: business, grant, session and two customer inqu
   const [firstInquiryRow] = await db.select().from(marketplaceInquiries).where(eq(marketplaceInquiries.id, firstInquiry.inquiryId));
   assert.ok(firstInquiryRow);
   firstThreadConversationId = firstInquiryRow!.threadConversationId;
-  const [secondMarket] = await db.select().from(markets).where(eq(markets.id, "JO"));
-  const secondInquiry = await submitInquiryMessage({
-    actionId: randomUUID(),
-    actorId: buyer.id,
-    market: secondMarket!,
-    target: { kind: "LISTING", listingId: secondListingId },
-    body: "هل يتوفر 17 حبة؟",
-    provenance: "BUYER_AUTHORED",
-    originConversationId: buyerConversation,
-  });
-  const [secondInquiryRow] = await db.select().from(marketplaceInquiries).where(eq(marketplaceInquiries.id, secondInquiry.inquiryId));
-  assert.ok(secondInquiryRow);
-  secondThreadConversationId = secondInquiryRow!.threadConversationId;
+  originConversationId = buyerConversation;
 });
 
 await test("W02-D5 browser: the pending reply survives a reload and is sent exactly once from the page", async () => {
@@ -305,7 +295,22 @@ await test("W02-D5 browser: the pending reply survives a reload and is sent exac
 });
 
 await test("W02-D5 browser: revocation rebuilds the card rejected with nothing left to approve", async () => {
-  // A fresh pending draft for a second customer is what revocation must invalidate.
+  // The second customer writes only now, so the first draft stays the newest card the page shows.
+  const [secondMarket] = await db.select().from(markets).where(eq(markets.id, "JO"));
+  const secondInquiry = await submitInquiryMessage({
+    actionId: randomUUID(),
+    actorId: buyer.id,
+    market: secondMarket!,
+    target: { kind: "LISTING", listingId: secondListingId },
+    body: "هل يتوفر 17 حبة؟",
+    provenance: "BUYER_AUTHORED",
+    originConversationId,
+  });
+  const [secondInquiryRow] = await db.select().from(marketplaceInquiries).where(eq(marketplaceInquiries.id, secondInquiry.inquiryId));
+  assert.ok(secondInquiryRow);
+  secondThreadConversationId = secondInquiryRow!.threadConversationId;
+
+  // A fresh pending draft for the second customer is what revocation must invalidate.
   step = { action: "DRAFT_INQUIRY_REPLY", replyText: "المتوفر حاليًا 17 قطعة." };
   await resetModelLimit(owner.id);
   const draft = await say(owner, inboxId, "جهز ردًا على استفسار المشتري اعتمادًا على مخزوني");
@@ -321,7 +326,7 @@ await test("W02-D5 browser: revocation rebuilds the card rejected with nothing l
 
   const report = await runUi("revoked");
   assert.ok(report.checks.length >= 4, `expected the revoked journey, got ${report.checks.length}`);
-  assert.equal(report.draft.status, "REJECTED");
+  assert.equal(report.draft.status, "لم تُرسل؛ لم يتغير شيء", "the rebuilt card shows DINAR's rejected status");
   assert.equal(await threadOwnerMessages(secondThreadConversationId), 0, "a revoked approval sends nothing");
 });
 
