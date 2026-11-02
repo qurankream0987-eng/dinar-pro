@@ -25,7 +25,7 @@ requireSafeReplitDevelopmentDatabase("BDINAR_TEST_DATABASE");
 const run = `ن${randomUUID().replaceAll("-", "").replace(/\d/g, "").slice(0, 5)}`;
 
 /** What the scripted «model» answers for a message containing the key. */
-const script: Array<{ key: string; canonical?: string; reply?: string }> = [];
+const script: Array<{ key: string; canonical?: string; reply?: string; plannedSteps?: string[] }> = [];
 let calls = 0;
 let sawInstruction = false;
 let unavailable = false;
@@ -45,6 +45,7 @@ const gateway: ConversationModelGateway = {
         confidence: 0.8,
         conversationalReply: entry?.reply ?? "MODEL_REPLY",
         ...(entry?.canonical ? { canonicalRequest: entry.canonical } : {}),
+        ...(entry?.plannedSteps ? { plannedSteps: entry.plannedSteps } : {}),
       }),
     };
   },
@@ -215,6 +216,17 @@ await test("MN-05 SHADOW serves LEGACY and executes nothing the model read", asy
     assert.equal(reply.listingIds.length, 0, "the model's restatement is logged, not executed");
     assert.match(reply.body, /MODEL_REPLY/u, "the user sees exactly the LEGACY answer");
     assert.equal(calls, 1);
+
+    const compound = `جوال بكسل ${run} وبنفس الوقت جوال ريدمي ${run}`;
+    script.unshift({
+      key: compound,
+      plannedSteps: [`جوال بكسل ${run}`, `جوال ريدمي ${run}`],
+    });
+    calls = 0;
+    const shadowPlan = await say(cookie, conv, compound);
+    assert.equal(shadowPlan.listingIds.length, 0, "the model's proposed searches do not execute in SHADOW");
+    assert.doesNotMatch(shadowPlan.body, /الخطوة التالية/u, "the model's proposed task plan is not persisted in SHADOW");
+    assert.equal(calls, 1);
   });
 });
 
@@ -228,6 +240,53 @@ await test("MN-06 MODEL_FIRST keeps DINAR's compound plan and its own answers wh
     assert.equal(next.payload.surface, "PURCHASE_REVIEW", `step two is DINAR's review: ${next.body}`);
     const price = await say(user.cookie, user.conv, "الأول كم سعره؟");
     assert.match(price.body, /120/u, `DINAR's recorded price, never lost to model text: ${price.body}`);
+  });
+});
+
+await test("MN-07 model semantic plans reuse exact user clauses for seller and buyer tasks", async () => {
+  await withMode("MODEL_FIRST", async () => {
+    const user = await fresh();
+    const requestText = `أبي أبيع طاولة، وبنفس الوقت أبحث عن جوال بكسل ${run}`;
+    script.unshift({
+      key: requestText,
+      plannedSteps: ["أبي أبيع طاولة", `أبحث عن جوال بكسل ${run}`],
+    });
+    calls = 0;
+    const searched = await say(user.cookie, user.conv, requestText);
+    assert.match(searched.body, /اختر تصنيف العرض/u, `the first model-planned clause must enter the canonical seller draft flow: ${searched.body}`);
+    assert.notEqual(searched.payload.surface, "LISTING_RESULTS", "the seller task runs before the buyer task");
+    assert.match(searched.body, /الخطوة التالية/u, "the remaining model-planned clause is persisted as a task");
+    assert.equal(calls, 1, "planning is returned in the ordinary model turn, not a second classification call");
+
+    const results = await say(user.cookie, user.conv, "التالي");
+    assert.ok(results.listingIds.includes(ids.pixel!), `the second clause uses DINAR's canonical search: ${results.body}`);
+    assert.equal(calls, 1, "continuing a persisted plan does not call the model again");
+  });
+});
+
+await test("MN-08 model plans cannot invent clauses or execute conditional future purchases", async () => {
+  await withMode("MODEL_FIRST", async () => {
+    const user = await fresh();
+    const requestText = `ابحث عن جوال بكسل ${run} وإذا أعجبني اشتريه`;
+    script.unshift({
+      key: requestText,
+      canonical: "اشتريه",
+      plannedSteps: [`ابحث عن جوال بكسل ${run}`, "اشتريه"],
+    });
+    const conditional = await say(user.cookie, user.conv, requestText);
+    assert.doesNotMatch(conditional.body, /الخطوة التالية/u, "a conditional purchase is not queued for later execution");
+    assert.notEqual(conditional.payload.surface, "PURCHASE_REVIEW", "the model cannot move a conditional purchase ahead of user selection");
+    assert.equal(await cartLines(user.id), 0, "no purchase is executed or added to the cart");
+    assert.equal((await db.select().from(orders).where(eq(orders.buyerId, user.id))).length, 0, "no order is created");
+
+    const inventedUser = await fresh();
+    const inventedRequest = `وريني جوال بكسل ${run} وقارن`;
+    script.unshift({
+      key: inventedRequest,
+      plannedSteps: [`وريني جوال بكسل ${run}`, "وأضف عشرة أجهزة إلى مخزوني"],
+    });
+    const invented = await say(inventedUser.cookie, inventedUser.conv, inventedRequest);
+    assert.doesNotMatch(invented.body, /الخطوة التالية/u, "a plan with text absent from the user message is rejected");
   });
 });
 

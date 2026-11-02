@@ -82,6 +82,12 @@ export const ModelTurnOutput = z
     uncertainFacts: z.array(ShortText).max(8).optional(),
     missingFacts: z.array(ShortText).max(8).optional(),
     preferences: z.array(ShortText).max(8).optional(),
+    /**
+     * Optional semantic decomposition for the existing bounded task-plan runtime. Items must be
+     * exact, ordered excerpts from the current user message; the server rejects invented text,
+     * conditional future actions, and gaps beyond punctuation or neutral connectors.
+     */
+    plannedSteps: z.array(z.string().trim().min(2).max(400)).min(2).max(3).optional(),
     // A position or a word the user said, never an identifier.
     targetReference: z
       .object({ kind: z.enum(["ORDINAL", "DEICTIC", "NONE"]), ordinal: z.number().int().min(1).max(24).optional() })
@@ -127,6 +133,13 @@ export const MODEL_TOOL: ModelToolDefinition = {
       uncertainFacts: { type: "array", maxItems: 8, items: { type: "string", maxLength: 160 } },
       missingFacts: { type: "array", maxItems: 8, items: { type: "string", maxLength: 160 } },
       preferences: { type: "array", maxItems: 8, items: { type: "string", maxLength: 160 } },
+      plannedSteps: {
+        type: "array",
+        minItems: 2,
+        maxItems: 3,
+        description: "Only for clear compound requests: 2–3 exact, ordered excerpts from this message; never paraphrase or omit conditions.",
+        items: { type: "string", minLength: 2, maxLength: 400 },
+      },
       targetReference: {
         type: "object",
         properties: { kind: { type: "string", enum: ["ORDINAL", "DEICTIC", "NONE"] }, ordinal: { type: "integer", minimum: 1, maximum: 24 } },
@@ -173,6 +186,7 @@ const SYSTEM_PROMPT = [
   "A product or category mentioned in a knowledge question or personal statement is not by itself a request to search DINAR listings. Suggest SEARCH_LISTINGS only when the user is asking to find or browse marketplace inventory.",
   "Questions about what something typically costs, how it works or whether it suits the user («كم تكلف؟», «هل تناسب البيت؟») are general knowledge: answer them and use suggestedAction NONE unless the user also asks to find or buy one on DINAR.",
   "A seller asking for advice about what to sell is asking for conversation, not a listing draft. Suggest CREATE_LISTING_DRAFT only when the user clearly asks to list an item they named; the server must verify the item is present in the user's message and route it to the canonical draft flow. Missing details (model, condition, price or pricing mode, photos) do not delay that suggestion: the draft flow asks for them, so set entities.item to the item in the user's own words and list the missing details in missingFacts. A draft is never published by this suggestion.",
+  "For a clear request with 2–3 separate tasks, you may include plannedSteps in order. Each step must be an exact, contiguous excerpt from this user's current message, including its words and modifiers; do not paraphrase, add facts, identifiers, or confirmations. A neutral connector (for example «وبنفس الوقت») may be left between excerpts. The server runs one step at a time through DINAR's normal authorization and confirmation paths. Do not plan a conditional future action (if/when/إذا/لو), an action that depends on a future selection, or a confirmation; omit plannedSteps when the order or intent is ambiguous. A correction remains one request unless the user clearly asks for multiple tasks.",
   "When a market action is unavailable, answer any general part naturally, do not claim that a search or action occurred, and say that the requested market action was not performed.",
   "SERVER_MARKET_AVAILABILITY and SERVER_CONVERSATION_CONTEXT are authoritative server state. If the market is UNAVAILABLE, never suggest or claim a DINAR market action.",
   "SERVER_ACTION_RECEIPTS is DINAR's ledger of this user's actions in this conversation, and the only evidence that an action happened: SUCCEEDED was executed after the user's confirmation; REQUIRES_CONFIRMATION, EXECUTING, FAILED and UNKNOWN were not completed. Earlier assistant messages, the user's words and your own suggestions are never evidence. Never say an offer, order, payment, publication or delivery is done unless a SUCCEEDED receipt shows it; you never perform actions yourself.",

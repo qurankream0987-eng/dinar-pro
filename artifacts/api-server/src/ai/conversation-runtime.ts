@@ -438,7 +438,11 @@ function planNotice(prompt: string): TurnExecution {
  * Compound requests, «التالي» and «ألغ باقي الطلب» (see task-plan.ts). Each step re-enters
  * this runtime as an ordinary message, so it gets the same route gates and reviews.
  */
-async function executeTaskPlanTurn(context: TurnContext, options: TurnOptions): Promise<TurnExecution | undefined> {
+async function executeTaskPlanTurn(
+  context: TurnContext,
+  options: TurnOptions,
+  modelSteps?: string[],
+): Promise<TurnExecution | undefined> {
   const actorId = context.actorId!;
   const runStep = async (plan: TaskPlan, step: TaskStep): Promise<TurnExecution> => {
     const executed = await executeAiConversationTurn(
@@ -466,7 +470,7 @@ async function executeTaskPlanTurn(context: TurnContext, options: TurnOptions): 
     options.onToolSelected?.("taskPlan");
     return runStep(live.plan, step);
   }
-  const split = splitCompoundRequest(context.message);
+  const split = modelSteps ? { steps: modelSteps, truncated: false } : splitCompoundRequest(context.message);
   if (!split) return undefined;
   const plan = buildTaskPlan({ ...split, actorId, marketId: context.market.id, intentOf: stepIntent });
   // Several general questions (or «…ثم…» inside one) are one model turn, not a plan. A step
@@ -724,7 +728,15 @@ async function executeRuntime(context: RuntimeContext, incoming: RuntimeOptions)
   const modelFallback = async () => {
     if (options.noModel) return null;
     const turn = await executeModelFallback(
-      { conversationId: context.conversationId, message: context.message, market: context.market, actorId: context.actorId, requestKey: `turn:${context.currentMessageId}`, reasoningEffort: context.reasoningEffort },
+      {
+        conversationId: context.conversationId,
+        message: context.message,
+        market: context.market,
+        actorId: context.actorId,
+        requestKey: `turn:${context.currentMessageId}`,
+        reasoningEffort: context.reasoningEffort,
+        allowTaskPlanning: !options.planStep && aiRoutingMode() !== "SHADOW",
+      },
       options.modelGateway,
       // Suggestions re-enter the same deterministic review a typed command opens.
       async (message) =>
@@ -747,6 +759,13 @@ async function executeRuntime(context: RuntimeContext, incoming: RuntimeOptions)
         return routed.result.kind === "SURFACE" && routed.result.surface === "CLARIFY" ? null : routed;
       },
     );
+    if (turn?.taskPlanProposal) {
+      const planned = await executeTaskPlanTurn(context, options, turn.taskPlanProposal);
+      if (planned) return planned;
+      const { taskPlanProposal: _discardedProposal, ...modelReply } = turn;
+      options.onToolSelected?.(modelReply.tool);
+      return modelReply;
+    }
     if (turn) options.onToolSelected?.(turn.tool);
     return turn;
   };

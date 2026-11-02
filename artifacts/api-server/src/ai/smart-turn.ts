@@ -66,8 +66,16 @@ import { isMarketingRequest, sellerListingFacts, unsupportedCopyClaims } from ".
 import type { ToolResult } from "./tool-registry";
 
 type Market = Awaited<ReturnType<typeof marketFor>>;
-type Turn = { tool: string; version: number; result: ToolResult };
-type Input = { conversationId: string; message: string; market: Market; actorId?: string; requestKey?: string; reasoningEffort?: ReasoningEffort };
+type Turn = { tool: string; version: number; result: ToolResult; taskPlanProposal?: string[] };
+type Input = {
+  conversationId: string;
+  message: string;
+  market: Market;
+  actorId?: string;
+  requestKey?: string;
+  reasoningEffort?: ReasoningEffort;
+  allowTaskPlanning?: boolean;
+};
 
 export const SMART_SURFACES = CONVERSATION_SURFACE_FAMILIES.smart;
 /** Conversation state rows written by this layer; never a listing result set. */
@@ -220,6 +228,50 @@ async function recentSets(conversationId: string, marketId: string) {
 }
 
 const live = (set: { expiresAt: Date | null }) => !set.expiresAt || set.expiresAt.getTime() > Date.now();
+
+const CONDITIONAL_TASK_LANGUAGE =
+  /(?:^|\s|و|ف)(?:if|when|once|unless|اذا|إذا|لو|لما|متى|عندما|حالما|بمجرد|في\s+حال)(?=\s|$)/iu;
+const PURCHASE_ACTION_TEXT = /(?:اشتر|اشتري|اطلب(?:ه|ي)?|ادفع|purchase|checkout|buy|order)/iu;
+const NEUTRAL_TASK_CONNECTORS = new Set([
+  "و",
+  "ثم",
+  "وبعدها",
+  "بعدها",
+  "وبنفسالوقت",
+  "بنفسالوقت",
+  "وفينفسالوقت",
+  "فينفسالوقت",
+  "and",
+  "andthen",
+  "andalso",
+  "then",
+  "also",
+  "atthesametime",
+  "meanwhile",
+]);
+function safeTaskPlanGap(gap: string): boolean {
+  const normalized = gap
+    .toLocaleLowerCase()
+    .replace(/[\s\p{P}\u064b-\u065f\u0670]/gu, "");
+  return normalized.length === 0 || NEUTRAL_TASK_CONNECTORS.has(normalized);
+}
+
+/**
+ * The model may choose task boundaries, but it cannot rewrite the user's instructions. Exact,
+ * ordered excerpts with punctuation-only or neutral-connector gaps prevent added facts or
+ * dropped conditions.
+ */
+function groundedTaskPlan(message: string, steps: string[]): string[] | undefined {
+  if (steps.length < 2 || steps.length > 3 || CONDITIONAL_TASK_LANGUAGE.test(message)) return undefined;
+  let cursor = 0;
+  for (const step of steps) {
+    if (step.length < 2 || step.length > 400) return undefined;
+    const start = message.indexOf(step, cursor);
+    if (start < 0 || !safeTaskPlanGap(message.slice(cursor, start))) return undefined;
+    cursor = start + step.length;
+  }
+  return safeTaskPlanGap(message.slice(cursor)) ? steps : undefined;
+}
 
 type Consultation = { kind: "CONSULTATION"; ownerId: string; goal: "BUY"; item: string; budget?: number; preferences: string[] };
 
@@ -1126,8 +1178,28 @@ export async function executeModelFallback(
       { ownerId: input.actorId },
     );
   const turn = outcome.turn;
+  const taskPlanProposal =
+    input.allowTaskPlanning && turn.plannedSteps
+      ? groundedTaskPlan(input.message, turn.plannedSteps)
+      : undefined;
+  const conditionalPurchase =
+    CONDITIONAL_TASK_LANGUAGE.test(input.message) &&
+    (turn.suggestedAction === "REVIEW_PURCHASE" || PURCHASE_ACTION_TEXT.test(turn.canonicalRequest ?? ""));
+  if (input.allowTaskPlanning && turn.plannedSteps) {
+    logger.info(
+      {
+        event: "dinar_model_task_plan",
+        accepted: Boolean(taskPlanProposal),
+        stepCount: turn.plannedSteps.length,
+        ...(taskPlanProposal
+          ? {}
+          : { rejection: CONDITIONAL_TASK_LANGUAGE.test(input.message) ? "CONDITIONAL_ACTION" : "NOT_EXACT_ORDERED_EXCERPTS" }),
+      },
+      "DINAR model task plan",
+    );
+  }
   // A named DINAR capability (theme, market, plans…) is resolved by the server before anything else.
-  if (turn.suggestedAction === "PRODUCT_CONTROL" && turn.capability && productControl) {
+  if (!taskPlanProposal && turn.suggestedAction === "PRODUCT_CONTROL" && turn.capability && productControl) {
     const country = turn.capability.countryCode ? countryByCode.get(turn.capability.countryCode) : undefined;
     const utterance = capabilityUtterance(turn.capability.id as ProductCapabilityId, {
       ...(turn.capability.theme ? { theme: turn.capability.theme } : {}),
@@ -1140,23 +1212,30 @@ export async function executeModelFallback(
   // with the model disabled (depth one), so DINAR's own handlers, reviews and checks decide it.
   // A decision, a contact detail or an unchanged restatement never re-enters (routing-mode.ts).
   const mode = aiRoutingMode();
-  if (turn.canonicalRequest && mode !== "LEGACY") {
+  if (!taskPlanProposal && turn.canonicalRequest && mode !== "LEGACY") {
     const problem = canonicalRequestProblem(turn.canonicalRequest, input.message, input.market.id);
     logger.info(
-      { event: "dinar_ai_canonical_request", mode, accepted: !problem && mode !== "SHADOW", ...(problem ? { problem } : {}), chars: turn.canonicalRequest.length },
+      {
+        event: "dinar_ai_canonical_request",
+        mode,
+        accepted: !problem && !conditionalPurchase && mode !== "SHADOW",
+        ...((problem || conditionalPurchase) ? { problem: conditionalPurchase ? "CONDITIONAL_ACTION" : problem } : {}),
+        chars: turn.canonicalRequest.length,
+      },
       "DINAR AI canonical request",
     );
-    if (!problem && mode !== "SHADOW" && productControl) {
+    if (!problem && !conditionalPurchase && mode !== "SHADOW" && productControl) {
       const routed = await productControl(turn.canonicalRequest);
       if (routed) return { ...routed, result: { ...routed.result, modelRouted: { canonicalRequest: turn.canonicalRequest } } };
     }
   }
-  const requestsMarketAction =
+  const requestsMarketAction = !taskPlanProposal && (
     turn.responseKind === "SEARCH_INTENT" ||
     turn.responseKind === "ACTION_PROPOSAL" ||
     (turn.suggestedAction !== undefined && turn.suggestedAction !== "NONE" && turn.suggestedAction !== "PRODUCT_CONTROL") ||
-    hasExplicitMarketplaceSearchIntent(input.message);
-  if (!isMarketAvailable(input.market) && requestsMarketAction) {
+    hasExplicitMarketplaceSearchIntent(input.message)
+  );
+  if (!taskPlanProposal && !isMarketAvailable(input.market) && requestsMarketAction) {
     const message = turn.conversationalReply.trim();
     const actionClaim =
       /(?:سأبحث|بحثت|وجدت|لقيت|سأنفذ|نفذت|سأشتري|اشتريت|أرسلت|تم\s+(?:الشراء|التنفيذ)|i(?:'ll| will) search|i searched|i found|i bought|i sent|done)/iu;
@@ -1178,7 +1257,7 @@ export async function executeModelFallback(
   // A search suggestion is the canonical read-only search of the named item and budget.
   // A general question («طيب وكم تكلف؟ وهل تناسب البيت؟») keeps its answer: the model may
   // not swap it for listings the user never asked to browse.
-  if ((turn.suggestedAction === "SEARCH_LISTINGS" || turn.responseKind === "SEARCH_INTENT") && turn.entities?.item && !isGeneralQuestion(input.message))
+  if (!taskPlanProposal && (turn.suggestedAction === "SEARCH_LISTINGS" || turn.responseKind === "SEARCH_INTENT") && turn.entities?.item && !isGeneralQuestion(input.message))
     return consultationSearch(input.market, {
       kind: "CONSULTATION",
       ownerId: input.actorId,
@@ -1187,7 +1266,7 @@ export async function executeModelFallback(
       ...(turn.entities.maxPrice ? { budget: turn.entities.maxPrice } : {}),
       preferences: [],
     });
-  if (turn.suggestedAction === "CREATE_LISTING_DRAFT") {
+  if (!taskPlanProposal && turn.suggestedAction === "CREATE_LISTING_DRAFT") {
     if (!isGroundedSellerDraftRequest(input.message, turn) || !createSellerDraft)
       return adviceTurn(
         "لم أبدأ مسودة إعلان. اذكر اسم الغرض الذي تريد عرضه بوضوح.",
@@ -1203,18 +1282,19 @@ export async function executeModelFallback(
     );
   }
   // Purchase and price-offer suggestions only open the same review a typed command opens.
-  if (turn.suggestedAction === "REVIEW_PURCHASE" && reference) {
+  if (!taskPlanProposal && !conditionalPurchase && turn.suggestedAction === "REVIEW_PURCHASE" && reference) {
     const reviewed = await review(`أبي ${reference}`);
     if (reviewed) return reviewed;
   }
-  if (turn.suggestedAction === "REVIEW_PRICE_OFFER" && turn.entities?.amount) {
+  if (!taskPlanProposal && turn.suggestedAction === "REVIEW_PRICE_OFFER" && turn.entities?.amount) {
     const reviewed = await review(`${reference ? `${reference} ` : ""}أعطيه ${turn.entities.amount}`);
     if (reviewed) return reviewed;
   }
   // Every action the server performs or opens has returned above, so this turn changed nothing:
   // the reply is the model's (authority MODEL) and a suggested action is at most PROPOSED. The
   // ledger, not this text, is the evidence of any action (action-receipts.ts).
-  const commercialTurn = requestsMarketAction || turn.goal === "BUY" || turn.goal === "SELL" || turn.goal === "NEGOTIATE";
+  const commercialTurn =
+    requestsMarketAction || turn.goal === "BUY" || turn.goal === "SELL" || turn.goal === "NEGOTIATE" || Boolean(taskPlanProposal);
   const answer = outcome.replyFiltered
     ? "لا أملك بيانات داخل DINAR تؤكد حجم الطلب أو تضمن البيع. أستطيع مقارنة الأسعار المعروضة داخل DINAR إن أردت."
     : turn.conversationalReply;
@@ -1233,12 +1313,16 @@ export async function executeModelFallback(
       ...(turn.missingFacts?.length ? { missingFacts: turn.missingFacts } : {}),
       authority: "MODEL",
       commercial: commercialTurn && !groundedCopy,
-      ...(turn.suggestedAction && turn.suggestedAction !== "NONE" ? { actionLifecycle: "PROPOSED" } : {}),
+      ...(!taskPlanProposal && turn.suggestedAction && turn.suggestedAction !== "NONE" ? { actionLifecycle: "PROPOSED" } : {}),
     },
     { ownerId: input.actorId },
   );
   const enforced = enforceModelAuthority(advised.result as typeof advised.result & { advice?: Record<string, unknown> }, context.actionReceipts ?? []);
-  return { ...advised, result: { ...enforced, prompt: usageNote ? `${enforced.prompt}\n\n${usageNote}` : enforced.prompt } };
+  return {
+    ...advised,
+    result: { ...enforced, prompt: usageNote ? `${enforced.prompt}\n\n${usageNote}` : enforced.prompt },
+    ...(taskPlanProposal ? { taskPlanProposal } : {}),
+  };
 }
 
 /** One honest line when this answer took the allowance across the near-limit share. */
