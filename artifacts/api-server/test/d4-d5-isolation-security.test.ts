@@ -579,6 +579,16 @@ await test("a pending D5 approval cannot execute after grant expiry, and replayi
   await db.update(businessDelegations)
     .set({ createdAt: new Date(expiredAt.getTime() - 60 * 60 * 1000), expiresAt: expiredAt })
     .where(eq(businessDelegations.id, delegationId));
+  const [staffSession] = await db.select().from(businessEmployeeSessions)
+    .where(eq(businessEmployeeSessions.delegationId, delegationId));
+  assert.ok(staffSession, "the drafted reply must be bound to a D5 session");
+  const [pendingBeforeExpiry] = await db.select().from(aiResultSets).where(eq(aiResultSets.id, actionId));
+  assert.equal((pendingBeforeExpiry!.query as any).status, "PENDING");
+  assert.equal((pendingBeforeExpiry!.query as any).delegatedAuthority?.sessionId, staffSession!.id);
+  const [grantBeforeConfirm] = await db.select().from(businessDelegations)
+    .where(eq(businessDelegations.id, delegationId));
+  assert.equal(grantBeforeConfirm!.status, "ACTIVE");
+  assert.ok(grantBeforeConfirm!.expiresAt.getTime() < Date.now());
   const marketRef = await marketFor({ actor: { activeMarketId: "JO" } });
   const denied = await confirmPendingAction({
     actionId,
@@ -589,8 +599,15 @@ await test("a pending D5 approval cannot execute after grant expiry, and replayi
   assert.equal(denied.status, "REJECTED");
   assert.equal(denied.executed, false);
   const [rejected] = await db.select().from(aiResultSets).where(eq(aiResultSets.id, actionId));
-  assert.equal((rejected!.query as any).status, "REJECTED");
-  assert.equal((rejected!.query as any).invalidationReason, "AUTHORIZATION_RECHECK_FAILED");
+  assert.equal((rejected!.query as any).status, "EXPIRED");
+  assert.equal((rejected!.query as any).invalidationReason, "GRANT_EXPIRED");
+  const invalidationAudits = (await auditRows(businessId))
+    .filter((event) => event.action === "D5_PENDING_ACTION_INVALIDATED");
+  assert.ok(invalidationAudits.some((event) =>
+    event.detail.actionId === actionId &&
+    event.detail.status === "EXPIRED" &&
+    event.detail.reason === "GRANT_EXPIRED",
+  ), "grant expiry must record why the pending employee action was invalidated");
 
   const replay = await confirmPendingAction({
     actionId,
@@ -598,7 +615,7 @@ await test("a pending D5 approval cannot execute after grant expiry, and replayi
     market: marketRef,
     decision: "CONFIRM",
   });
-  assert.equal(replay.status, "REJECTED");
+  assert.equal(replay.status, "EXPIRED");
   assert.equal(replay.executed, false);
   const afterReplay = await db.select().from(messages)
     .where(eq(messages.conversationId, inquiry!.threadConversationId));
