@@ -49,6 +49,7 @@ on:
           - development-tls.test
           - phase1-acceptance.test
           - commerce-journey.test
+          - api.test
           - sc01-browser-journey.test
           - sc02-browser-journey.test
           - sc03-browser-journey.test
