@@ -2,58 +2,37 @@
 
 ## Tested implementation
 
-- Starting SHA: `f939595922171974626ef2cfd2c516aec8b86428`
-- Tested source SHA: `08cba5e841f08fd37ae838d989372eef2cc2f33a`
+- Starting SHA: `3b962027d09c3e4a2eedfa49e4edad6e00e96dc2`
+- Tested source SHA: `bb037d896d51faf58a66b399b25058678bf2a9dc`
 - Branch: `replit/dinar-next-complete-development`
-- Database: fresh loopback PostgreSQL test database, dropped after the suite; not a managed or production database.
+- Database: isolated loopback PostgreSQL databases created by `test/isolation/local-suite.sh`; each suite dropped its database afterward. No managed or production database was used.
 
-## Commands and results
+## Checks and results
 
 | Check | Result |
 |---|---|
-| `pnpm --filter @workspace/api-server typecheck` | PASS |
+| `pnpm --filter @workspace/api-spec run codegen` | PASS; generated client/Zod types and workspace library typecheck |
+| `pnpm --filter @workspace/api-server run typecheck` | PASS |
 | `pnpm --filter @workspace/api-server run build` | PASS |
-| `node test/run.mjs business-delegations.test` from `artifacts/api-server` | PASS, 4 tests, using a fresh loopback database that was dropped afterward; provider calls blocked by the test runner |
-| Previous D1/D2, D3-A native business, D4, G2 inquiry, G2 smart conversation, universal negotiation, AI authority chain | PASS, 221 Node tests across 7 suites on the previous source SHA `d0b63b36b9d4b4982ed192126682c51fa3882e0f`; not rerun for this update |
-| SAST / HoundDog | PARTIAL: zero findings reported at Replit workspace scope; target-checkout coverage unconfirmed |
-| Dependency audit | PARTIAL/OPEN: workspace-root scan found 1 high and 1 moderate; target-checkout scan not established, see security document |
+| `local-suite.sh business-delegations.test BDINAR_D4_ACCEPTANCE=development` | PASS, 4/4; outbound=0 |
+| `local-suite.sh ai-authority-boundary.test` | PASS, 4/4; outbound=0 |
+| `local-suite.sh next-g2-inquiry.test BDINAR_G2_ACCEPTANCE=development` | PASS, 17/17; outbound=0 |
+| `local-suite.sh g2-smart-conversation.test BDINAR_G2_ACCEPTANCE=development BDINAR_WAVE4_ACCEPTANCE=development` | PASS, 91/91; outbound=0; payment simulation stayed in the disposable test database |
+| `local-suite.sh readiness.test development-tls.test` | PASS; readiness 15/15, development TLS 7 passed/0 failed; outbound=0 |
+| Apply migration 0050 using the isolated suite prelude | PASS; the test databases were dropped |
+| Target-checkout SAST / HoundDog | NOT_RUN |
+| Target-checkout dependency audit | NOT_RUN |
 | Chromium/browser D5 acceptance | NOT_RUN |
-| Live-provider/model acceptance | NOT_RUN |
+| Live model/provider acceptance | NOT_RUN |
 
-The D5 integration test proves: an explicit Arabic employee invocation with no grant is denied before the provider path; ordinary seller-help wording does not receive D5 context; one active intelligent read grant gives context only for explicit invocation; expired grants, another actor, and another market give no context; two active grants are ambiguous and give no context; and the employee context excludes search results, conversation history, personal memories, owner listing facts, and grant/configuration identifiers. A focused guard test rejects model-proposed writes and other actions. No live model answer was tested.
+The D5 suite uses an injected test gateway, not a live model. It verifies that an explicit Arabic invocation without a grant is denied before a model call; an authorized invocation creates a persisted session; a follow-up without invocation wording reuses that session; inventory reads require the granted capability; grant revocation invalidates the session and prevents another model call; market change, account switch, and logout invalidate sessions; owner stop ends the session; and D5 session/capability audit events are recorded. The same suite checks wrong-actor, wrong-market, expired-grant, and ambiguous-grant behavior. The test catalog is empty, so populated product facts and stock quantities remain unverified.
 
-The broader chain on the previous source SHA recorded: D1/D2 24/24, D3-A native business 43/43 (including 41 D3A cases), D4 4/4, G2 inquiry 17/17, G2 smart conversation 91/91 (including 83 G2 cases), universal negotiation 38/38 (36 acceptance cases), and model-authority boundary 4/4. Every isolated suite reported `outbound=0`; those suites were not rerun for the current source SHA.
+G2 suites ran with the test runner's provider keys removed and its outbound guard enabled. The G2 payment simulation was enabled only because that suite exercises the simulated payment review path; its loopback database was dropped afterward. No real payment, live message, live provider call, production check, browser UI change, or deployment was made.
 
 ## D5-01 through D5-25
 
-| ID | Scenario | Result | Evidence |
-|---|---|---:|---|
-| D5-01 | Prepare a used phone listing | BLOCKED | No D5 employee draft workflow. |
-| D5-02 | Correct price in the same draft | BLOCKED | No D5 employee draft workflow. |
-| D5-03 | Publish only through permitted approval | BLOCKED | No D5 employee publication workflow. |
-| D5-04 | Answer a known product fact | PARTIAL | Bounded catalog context is implemented; no populated-listing/model answer was tested. |
-| D5-05 | Refuse an unknown specification | PARTIAL | No-invention instruction is present; no actual model answer was tested. |
-| D5-06 | Answer actual stock availability | BLOCKED | The D4 grant returns no inventory quantity to D5. |
-| D5-07 | Buyer requests 50 units through G2 | PARTIAL | G2 regressions pass; no D5 employee participates. |
-| D5-08 | Draft a reply requiring owner approval | BLOCKED | No employee reply-draft path. |
-| D5-09 | Approve once; duplicate approval sends no duplicate | BLOCKED | No D5 reply approval or sender. |
-| D5-10 | Escalate a discount request | PARTIAL | Existing negotiation tests pass; no D5 employee escalation. |
-| D5-11 | Do not accept a negotiated price without authority | PARTIAL | General negotiation/model-authority regressions pass; no D5-specific journey. |
-| D5-12 | Read an authorized order status | BLOCKED | D4 intelligent grant is catalog-read only. |
-| D5-13 | Reject a fabricated payment claim | PARTIAL | Financial/order model tools remain blocked; no D5 employee response test. |
-| D5-14 | Revoke during a pending task | PARTIAL | Each request re-resolves the grant; pending-task cancellation test absent. |
-| D5-15 | Deny another business | PARTIAL | Wrong-actor denial is tested; separate-business D5 journey absent. |
-| D5-16 | Deny another market | PASS | D5 integration test returns no context for the other market. |
-| D5-17 | Create truthful marketing text without publishing | PARTIAL | Prompt context is gated; no model generation/publication journey. |
-| D5-18 | Handle a service listing | BLOCKED | No D5 employee workflow. |
-| D5-19 | Handle a vehicle listing | BLOCKED | No D5 employee workflow. |
-| D5-20 | Handle bulk industrial/business inquiry | PARTIAL | Existing G2/business tests pass; no D5 employee path. |
-| D5-21 | Multi-turn correction and resumption | BLOCKED | No D5 task/draft state. |
-| D5-22 | Tool failure followed by safe retry | PARTIAL | Existing G2 regressions pass; no D5 employee retry journey. |
-| D5-23 | Reject malicious customer prompt injection | PARTIAL | Existing G2 injection tests pass; D5 catalog-content injection not tested. |
-| D5-24 | Match response to database and audit evidence | PARTIAL | Existing D4 service audits reads; new D5 audit evidence is not asserted. |
-| D5-25 | Browser reload preserves authorized state and blocks stale actions | NOT_RUN | No D5 browser run; no UI change was made. |
+The scenario-by-scenario source paths, direct test evidence, status, and database result are maintained in `COMMAND_04_D5_SELLER_CAPABILITY_MATRIX.md`. D5 remains **PARTIAL**; D6 has not started. Publication, refunds, financial commitments, private-contact disclosure, and bulk messaging remain unavailable to the intelligent employee.
 
 ## Runtime and browser evidence
 
-The API server workflow was restarted, but the configured workflow runs from `/home/runner/workspace/artifacts/api-server`, separate from this nested target checkout. Its successful startup is not D5 runtime evidence for the tested source SHA. No target-checkout Chromium/browser acceptance was run. No screenshots or production checks are claimed.
+The configured API workflow points to the workspace-root artifact rather than this nested target checkout, so it was not used as source validation. The target checkout passed its typecheck, build, and isolated database suites. No browser screenshot, authenticated UI journey, or production check is claimed.
