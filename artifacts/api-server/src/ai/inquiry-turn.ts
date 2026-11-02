@@ -323,8 +323,9 @@ async function assignedSellerInquiry(input: {
   conversationId: string;
   market: Market;
   session: SellerEmployeeSessionContext;
+  inquiryId?: string;
 }): Promise<AssignedSellerInquiry | null> {
-  const [inquiry] = await db
+  const candidates = await db
     .select()
     .from(marketplaceInquiries)
     .where(and(
@@ -334,7 +335,12 @@ async function assignedSellerInquiry(input: {
       eq(marketplaceInquiries.status, "AWAITING_SELLER"),
     ))
     .orderBy(desc(marketplaceInquiries.lastMessageAt))
-    .limit(1);
+    .limit(20);
+  const selectedInquiryId = input.inquiryId ??
+    threadInView(await recentSets(input.conversationId, input.market.id), input.actorId);
+  const inquiry = selectedInquiryId
+    ? candidates.find((candidate) => candidate.id === selectedInquiryId)
+    : candidates.length === 1 ? candidates[0] : undefined;
   if (!inquiry) return null;
 
   const [listing] = await db.select().from(offers).where(eq(offers.id, inquiry.listingId));
@@ -396,10 +402,12 @@ export async function sellerEmployeeInquiryModelContext(input: {
   conversationId: string;
   market: Market;
   session: SellerEmployeeSessionContext;
+  inquiryId?: string;
 }) {
   const assigned = await assignedSellerInquiry(input);
   if (!assigned) return null;
   return {
+    inquiryId: assigned.inquiry.id,
     question: assigned.question,
     listingTitle: assigned.listingTitle,
     inventoryMode: assigned.inventorySnapshot.inventoryMode,
@@ -411,14 +419,19 @@ async function draftSellerEmployeeInquiryReply(input: Input & {
   actorId: string;
   employeeSession: SellerEmployeeSessionContext;
   employeeReply: string;
+  employeeInquiryId?: string;
 }): Promise<Turn> {
-  if (!/(?:جهز|حضر|اكتب|صغ|اعد|رد|جاوب)/u.test(normalizeInquiryText(input.message)))
+  const requestText = normalizeInquiryText(input.message);
+  if (!/(?:جهز|حضر|اكتب|صغ|اعد|رد|جاوب)/u.test(requestText))
     return notice("لم أتعرف على طلب إعداد رد للمشتري. لم يُرسل شيء.");
+  if (/(?:\b(?:كل|جميع|كافة)\s+(?:المشترين|العملاء|الزبائن)|(?:لجميع|لكل)\s+(?:المشترين|العملاء|الزبائن)|bulk|mass\s+message)/u.test(requestText))
+    return notice("لا يرسل موظف D5 رسائل جماعية. اختر استفسارًا واحدًا، وسيبقى الرد للمراجعة قبل الإرسال.");
   const assigned = await assignedSellerInquiry({
     actorId: input.actorId,
     conversationId: input.conversationId,
     market: input.market,
     session: input.employeeSession,
+    inquiryId: input.employeeInquiryId,
   });
   if (!assigned)
     return notice("لا يوجد استفسار بانتظار ردك ضمن نطاق التفويض، أو تعذر التحقق من صلاحياته ومحتواه. لم يُرسل شيء.");
@@ -579,7 +592,7 @@ export function isInquiryCommand(message: string): boolean {
   return [ASK_SELLER, ASK_BUYER, TELL_BUYER, TELL_SELLER, STATUS, LIST, REPLY_EXPLICIT, SEND_THIS].some((pattern) => pattern.test(text));
 }
 
-export async function executeInquiryTurn(input: Input): Promise<Turn | null> {
+export async function executeInquiryTurn(input: Input & { employeeInquiryId?: string }): Promise<Turn | null> {
   if (!input.actorId) return null;
   const actor = { ...input, actorId: input.actorId };
   const text = normalizeInquiryText(input.message);
@@ -589,6 +602,7 @@ export async function executeInquiryTurn(input: Input): Promise<Turn | null> {
       ...actor,
       employeeSession: input.employeeSession,
       employeeReply: input.employeeReply,
+      employeeInquiryId: input.employeeInquiryId,
     });
   const sets = await recentSets(input.conversationId, input.market.id);
   const latest = sets[0];

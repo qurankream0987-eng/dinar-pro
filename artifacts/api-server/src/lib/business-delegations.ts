@@ -213,6 +213,21 @@ export async function sellerEmployeeDraftBinding(input: {
   };
 }
 
+export type SellerEmployeeDraftBinding = NonNullable<
+  Awaited<ReturnType<typeof sellerEmployeeDraftBinding>>
+>;
+
+export function sellerEmployeeDraftBindingMatches(
+  binding: SellerEmployeeDraftBinding | undefined,
+  expected: SellerEmployeeDraftBinding,
+): boolean {
+  return Boolean(binding &&
+    binding.businessId === expected.businessId &&
+    binding.conversationId === expected.conversationId &&
+    binding.marketId === expected.marketId &&
+    binding.sessionId === expected.sessionId);
+}
+
 /**
  * Lock and verify the established D2 owner and D3 operating rows. D4 never creates a parallel
  * business identity; grants are rejected if the canonical owner relationship has drifted.

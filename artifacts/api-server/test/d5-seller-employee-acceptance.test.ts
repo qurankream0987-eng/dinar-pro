@@ -20,11 +20,15 @@ import {
 import { eq, inArray } from "drizzle-orm";
 import app from "../src/app";
 import { refreshInquiryPayload, sellerEmployeeInquiryModelContext } from "../src/ai/inquiry-turn";
-import { resolveSellerEmployeeSession } from "../src/lib/business-delegations";
+import {
+  resolveSellerEmployeeSession,
+  sellerEmployeeDraftBindingMatches,
+} from "../src/lib/business-delegations";
 import { authRateLimitKeyHash, AUTH_RATE_LIMIT_SCOPE } from "../src/lib/auth-rate-limiter";
 import { assignListingToBusiness } from "../src/lib/business-catalog-contract";
 import { openNegotiation } from "../src/lib/negotiations";
 import { INQUIRY_INBOX_TITLE, submitInquiryMessage } from "../src/lib/inquiries";
+import { categorySchema, listMarketplaceCategories } from "../src/lib/marketplace-categories";
 import { requireSafeReplitDevelopmentDatabase } from "./safe-development-database";
 
 requireSafeReplitDevelopmentDatabase("BDINAR_D5_ACCEPTANCE");
@@ -59,6 +63,7 @@ async function request(path: string, method = "GET", body?: unknown, cookie = ""
 
 const phoneBase = 55_800_000 + ((Date.now() + process.pid) % 100_000);
 let phoneOffset = 0;
+const safeTag = () => randomUUID().replace(/[0-9]/g, "x").slice(0, 8);
 async function register(label: string): Promise<Actor> {
   const phoneNumber = String(phoneBase + 3 * phoneOffset++);
   const started = await request("/auth/phone-verification/challenges", "POST", { phoneCountryCode: "+965", phoneNumber });
@@ -138,7 +143,7 @@ await test("D5 owner approves one model-drafted G2 reply grounded in the assigne
     .where(eq(businessOperatingProfiles.id, businessId));
   assert.ok(business);
 
-  const listingTitle = `جاكيت شتوي D5 ${randomUUID().slice(0, 8)}`;
+  const listingTitle = `جاكيت شتوي D5 ${safeTag()}`;
   const listingId = await publish(owner, listingTitle, 35);
   await assignListingToBusiness({
     actorId: owner.id,
@@ -146,7 +151,7 @@ await test("D5 owner approves one model-drafted G2 reply grounded in the assigne
     listingId,
     businessId: business!.d2BusinessId,
   });
-  const secondListingTitle = `جاكيت صيفي D5 ${randomUUID().slice(0, 8)}`;
+  const secondListingTitle = `جاكيت صيفي D5 ${safeTag()}`;
   const secondListingId = await publish(owner, secondListingTitle, 17, true);
   await assignListingToBusiness({
     actorId: owner.id,
@@ -159,7 +164,7 @@ await test("D5 owner approves one model-drafted G2 reply grounded in the assigne
   const [otherBusiness] = await db.select().from(businessOperatingProfiles)
     .where(eq(businessOperatingProfiles.id, otherBusinessId));
   assert.ok(otherBusiness);
-  const outsideTitle = `مروحة خارج التفويض ${randomUUID().slice(0, 8)}`;
+  const outsideTitle = `مروحة خارج التفويض ${safeTag()}`;
   const outsideListingId = await publish(otherOwner, outsideTitle, 11);
   await assignListingToBusiness({
     actorId: otherOwner.id,
@@ -329,7 +334,7 @@ await test("D5 owner approves one model-drafted G2 reply grounded in the assigne
   assert.equal(openedNegotiation.status, "OPEN");
   const negotiationTurn = await say(owner, sellerConversationId, "اعرض التفاوضات المفتوحة لمراجعة المالك");
   assert.ok(negotiationTurn.body.includes(secondListingTitle), negotiationTurn.body);
-  assert.match(negotiationTurn.body, /لم أقبل عرضًا أو أرسل مقابلاً/u);
+  assert.match(negotiationTurn.body, /لم يقبل عرضًا أو يرسل عرضًا مضادًا/u);
   employeeSuggestedAction = "REVIEW_PRICE_OFFER";
   const deniedNegotiation = await say(owner, sellerConversationId, "اقبل عرض السعر المقترح على الجاكيت");
   assert.match(deniedNegotiation.body, /خارج صلاحيات جلسة الموظف/u);
@@ -337,6 +342,143 @@ await test("D5 owner approves one model-drafted G2 reply grounded in the assigne
     .where(eq(negotiations.listingId, secondListingId));
   assert.equal(unchangedNegotiation?.status, "OPEN", "a D5 proposal must not accept or counter a negotiation");
   employeeSuggestedAction = "NONE";
+  const ownerNegotiationList = await say(owner, sellerConversationId, "اعرض التفاوضات المفتوحة لمراجعة المالك");
+  const ownerNegotiationPayload = ownerNegotiationList.blocks
+    .find((block) => block.payload?.surface === "NEGOTIATION_LIST")?.payload;
+  assert.ok(ownerNegotiationPayload, ownerNegotiationList.body);
+  assert.ok(ownerNegotiationList.body.includes("لم يقبل عرضًا") &&
+    ownerNegotiationList.body.includes("تأكيد المالك"), ownerNegotiationList.body);
+  const modelCallsBeforeOwnerDecision = modelCalls;
+  const counterReview = await say(owner, sellerConversationId, "عرض مضاد 2.75");
+  assert.match(counterReview.body, /راجع عرضك المضاد/u, counterReview.body);
+  const counterReviewPayload = counterReview.blocks
+    .find((block) => block.payload?.negotiation?.actionId)?.payload;
+  assert.ok(counterReviewPayload, counterReview.body);
+  const counterActionId = String(counterReviewPayload.negotiation.actionId);
+  const [pendingCounter] = await db.select().from(aiResultSets).where(eq(aiResultSets.id, counterActionId));
+  assert.equal((pendingCounter?.query as { action?: string; status?: string } | undefined)?.action, "COUNTER_NEGOTIATION");
+  assert.equal((pendingCounter?.query as { status?: string } | undefined)?.status, "PENDING");
+  const [beforeCounterConfirmation] = await db.select().from(negotiations)
+    .where(eq(negotiations.listingId, secondListingId));
+  assert.equal(beforeCounterConfirmation?.status, "OPEN");
+  const countered = await say(owner, sellerConversationId, "نعم");
+  assert.match(countered.body, /أُرسل عرضك المضاد|أُرسل العرض المضاد|تم إرسال العرض المضاد/u, countered.body);
+  const [afterCounterConfirmation] = await db.select().from(negotiations)
+    .where(eq(negotiations.listingId, secondListingId));
+  assert.equal(afterCounterConfirmation?.status, "COUNTERED");
+  assert.ok(Number(afterCounterConfirmation?.counterAmountMinor) > Number(afterCounterConfirmation?.offerAmountMinor));
+  assert.equal(modelCalls, modelCallsBeforeOwnerDecision,
+    "owner counter and confirmation must use the canonical negotiation engine without an AI call");
+
+  employeeAction = "DRAFT_LISTING";
+  const categorySchemas = new Map(
+    (await listMarketplaceCategories()).map((row) => [row.id, categorySchema(row)]),
+  );
+  const categoryDraftCases = [
+    { categoryId: "services", itemHint: "خدمة تنظيف", request: "جهز مسودة لخدمة تنظيف منازل" },
+    { categoryId: "digital-services", itemHint: "تصميم شعار رقمي", request: "جهز مسودة لخدمة رقمية تصميم شعار" },
+    { categoryId: "cars", itemHint: "تويوتا كورولا", request: "جهز مسودة سيارة تويوتا كورولا 2020 مستعملة" },
+    { categoryId: "other", itemHint: "ماكينة صناعية", request: "جهز مسودة ماكينة صناعية", chooseCategory: "أخرى" },
+  ];
+  for (const scenario of categoryDraftCases) {
+    const categoryConversationId = await conversation(owner);
+    employeeAction = "NONE";
+    employeeItemHint = undefined;
+    await resetConversationModelLimit();
+    await say(owner, categoryConversationId, "يا موظفي الذكي");
+    employeeAction = "DRAFT_LISTING";
+    employeeItemHint = scenario.itemHint;
+    await resetConversationModelLimit();
+    let categoryDraftTurn = await say(owner, categoryConversationId, scenario.request);
+    let categoryDraft = categoryDraftTurn.blocks
+      .find((block) => block.payload?.surface === "SELL")?.payload;
+    assert.ok(categoryDraft, categoryDraftTurn.body);
+    if (!categoryDraft.draft?.categoryId && "chooseCategory" in scenario) {
+      await resetConversationModelLimit();
+      categoryDraftTurn = await say(owner, categoryConversationId, scenario.chooseCategory);
+      categoryDraft = categoryDraftTurn.blocks
+        .find((block) => block.payload?.surface === "SELL")?.payload;
+      assert.ok(categoryDraft, categoryDraftTurn.body);
+    }
+    assert.equal(categoryDraft.draft?.categoryId, scenario.categoryId, categoryDraftTurn.body);
+    const schema = categorySchemas.get(scenario.categoryId);
+    assert.ok(schema, `acceptance fixture must include category ${scenario.categoryId}`);
+    const allowedAttributes = new Set(Object.keys(schema!.attributes));
+    const providedAttributes = Object.keys(categoryDraft.draft?.attributes ?? {});
+    assert.ok(providedAttributes.every((key) => allowedAttributes.has(key)),
+      `${scenario.categoryId} draft must not invent category attributes: ${providedAttributes.join(",")}`);
+    const requiredAttributes = Object.entries(schema!.attributes)
+      .filter(([, attribute]) => attribute.requiredForPublish)
+      .map(([key]) => key);
+    const missingAttributes = new Set(
+      (categoryDraft.draftReview?.missingFields ?? []).map((field: { field: string }) => field.field),
+    );
+    for (const key of requiredAttributes)
+      assert.ok(categoryDraft.draft?.attributes?.[key] != null || missingAttributes.has(key),
+        `${scenario.categoryId} must provide or request required ${key}`);
+
+    if (scenario.categoryId === "services" || scenario.categoryId === "cars") {
+      const answers: Record<string, string> = scenario.categoryId === "cars"
+        ? {
+            category: "سيارات",
+            title: "تويوتا كورولا 2020 مستعملة",
+            description: "سيارة تويوتا كورولا مستعملة بحالة جيدة",
+            price: "12000",
+            quantity: "1",
+            area: "عمان خلدا",
+            fulfilment: "استلام",
+            contact: "محادثة DINAR فقط",
+            payment_methods: "كاش",
+            "attribute:make": "تويوتا",
+            "attribute:model": "كورولا",
+            "attribute:year": "2020",
+            "attribute:condition": "مستعمل",
+          }
+        : {
+            category: "خدمات",
+            title: "خدمة تنظيف منازل",
+            description: "خدمة تنظيف منازل في عمان مع تحديد الموعد مع المالك",
+            price: "حسب الطلب",
+            quantity: "1",
+            area: "عمان خلدا",
+            fulfilment: "خدمة داخل عمان",
+            contact: "محادثة DINAR فقط",
+            payment_methods: "كاش",
+          };
+      for (let attempt = 0; attempt < 16; attempt += 1) {
+        const missing = (categoryDraft.draftReview?.missingFields ?? []) as Array<{ field: string }>;
+        if (!missing.length) break;
+        const answer = answers[missing[0]!.field];
+        assert.ok(answer, `${scenario.categoryId} workflow needs an owner-provided answer for ${missing[0]!.field}`);
+        await resetConversationModelLimit();
+        categoryDraftTurn = await say(owner, categoryConversationId, answer);
+        categoryDraft = categoryDraftTurn.blocks
+          .find((block) => block.payload?.surface === "SELL")?.payload;
+        assert.ok(categoryDraft, categoryDraftTurn.body);
+      }
+      assert.equal(categoryDraft.draftReview?.missingFields?.length, 0,
+        `${scenario.categoryId} owner journey must collect all required fields: ${JSON.stringify(categoryDraft.draftReview?.missingFields)}`);
+
+      employeeAction = "REQUEST_PUBLICATION_REVIEW";
+      await resetConversationModelLimit();
+      const ownerReview = await say(owner, categoryConversationId, "أرسل المسودة لي للمراجعة");
+      const ownerReviewPayload = ownerReview.blocks.find((block) => block.payload?.surface === "SELL")?.payload;
+      assert.equal(ownerReviewPayload?.draftStep, "publish_review", ownerReview.body);
+      const ownerReviewId = String(ownerReviewPayload.resultSetId);
+      const [pendingOwnerReview] = await db.select().from(aiResultSets)
+        .where(eq(aiResultSets.id, ownerReviewId));
+      assert.equal(pendingOwnerReview?.query.action, "PUBLISH_LISTING");
+      assert.equal(pendingOwnerReview?.query.status, "PENDING");
+      const offersBeforeCategoryApproval = (await db.select({ id: offers.id }).from(offers)
+        .where(eq(offers.sellerId, owner.id))).length;
+      const approvedCategoryDraft = await say(owner, categoryConversationId, "نعم");
+      assert.match(approvedCategoryDraft.body, /تم نشر الإعلان/u, approvedCategoryDraft.body);
+      assert.equal((await db.select({ id: offers.id }).from(offers)
+        .where(eq(offers.sellerId, owner.id))).length, offersBeforeCategoryApproval + 1,
+      `${scenario.categoryId} listing is published only after owner confirmation`);
+      employeeAction = "DRAFT_LISTING";
+    }
+  }
 
   employeeAction = "DRAFT_LISTING";
   employeeItemHint = "iPhone 13";
@@ -350,11 +492,23 @@ await test("D5 owner approves one model-drafted G2 reply grounded in the assigne
   assert.equal(sellerDraftPayload.draft?.unitPrice, "12");
   const d5DraftBindings = await db.select().from(businessAuditEvents)
     .where(eq(businessAuditEvents.resourceId, String(sellerDraftPayload.draft?.draftId)));
-  assert.ok(d5DraftBindings.some((event) =>
+  const d5DraftBinding = d5DraftBindings.find((event) =>
     event.action === "D5_DRAFT_SCOPE_BOUND" &&
     event.businessId === businessId &&
     event.detail.conversationId === sellerConversationId,
-  ), "D5 draft scope must be stored server-side, not exposed in the conversation card");
+  );
+  assert.ok(d5DraftBinding, "D5 draft scope must be stored server-side, not exposed in the conversation card");
+  const boundDraftScope = {
+    businessId: d5DraftBinding!.businessId,
+    conversationId: String(d5DraftBinding!.detail.conversationId),
+    marketId: String(d5DraftBinding!.detail.marketId),
+    sessionId: String(d5DraftBinding!.detail.sessionId),
+  };
+  assert.equal(sellerEmployeeDraftBindingMatches(boundDraftScope, boundDraftScope), true);
+  assert.equal(sellerEmployeeDraftBindingMatches(boundDraftScope, {
+    ...boundDraftScope,
+    sessionId: "another-d5-session",
+  }), false, "a new or switched D5 session must not inherit an older draft binding");
   const offersAfterDraft = await db.select({ id: offers.id }).from(offers)
     .where(eq(offers.sellerId, owner.id));
   assert.equal(offersAfterDraft.length, offersBeforeDraft.length, "D5 may draft but must not publish a listing");
@@ -461,7 +615,7 @@ await test("D5 owner approves one model-drafted G2 reply grounded in the assigne
     .where(eq(offers.sellerId, owner.id))).length;
   assert.equal(countAfterRepeatedApproval, countAfterOwnerApproval, "a repeated owner confirmation cannot publish a duplicate");
 
-  const marketingTitle = `آيفون 13 مستعمل D5 ${randomUUID().slice(0, 8)}`;
+  const marketingTitle = `آيفون 13 مستعمل D5 ${safeTag()}`;
   const marketingListingId = await publish(owner, marketingTitle, 8);
   await assignListingToBusiness({
     actorId: owner.id,
@@ -556,6 +710,14 @@ await test("D5 owner approves one model-drafted G2 reply grounded in the assigne
   draftedReply = standardStockReply;
   await db.update(offers).set({ inventoryMode: "LIMITED", availableQuantity: 35 }).where(eq(offers.id, listingId));
 
+  const refusedBulkReply = await say(owner, inbox.id, "يا موظفي الذكي، جهز ردًا لكل المشترين");
+  assert.match(refusedBulkReply.body, /لا يرسل موظف D5 رسائل جماعية/u);
+  assert.notEqual(inquiryOf(refusedBulkReply)?.surface, "INQUIRY_DRAFT");
+  assert.equal((await db.select().from(messages)
+    .where(eq(messages.conversationId, inquiryRow!.threadConversationId)))
+    .filter((row) => row.senderId === owner.id).length, 0,
+  "a bulk request must not create a buyer message");
+
   const employeeDraft = await say(owner, inbox.id, "جهز ردًا على استفسار المشتري اعتمادًا على مخزوني");
   const review = inquiryOf(employeeDraft);
   assert.equal(review?.surface, "INQUIRY_DRAFT", employeeDraft.body);
@@ -617,6 +779,7 @@ await test("D5 owner approves one model-drafted G2 reply grounded in the assigne
     originConversationId: buyerConversationId,
   });
   assert.equal(nextQuestion.inquiryId, inquiryId);
+
   draftedReply = "سأراجع خيارات التسليم المتاحة وأوافيك بالتفاصيل.";
   const pendingBeforeRevoke = await say(owner, inbox.id, "يا موظفي الذكي، جهز ردًا على استفسار المشتري");
   const revokeReview = inquiryOf(pendingBeforeRevoke);
@@ -695,6 +858,199 @@ await test("D5 owner approves one model-drafted G2 reply grounded in the assigne
   assert.ok(JSON.stringify(buyerReload.data).includes("المتوفر حاليًا 34 قطعة."), "the buyer receives the one approved reply in DINAR");
 
   app.locals.conversationModelGateway = undefined;
+});
+
+await test("D5 tool failure, retry, and revoked publication review stay safe", async () => {
+  const owner = await register("Retry Owner");
+  const businessId = await createBusiness(owner);
+  const grant = await request(`/business/profiles/${businessId}/delegations`, "POST", {
+    employee: { type: "INTELLIGENT" },
+    capabilities: [
+      "business.catalog.read",
+      "business.catalog.draft",
+      "business.catalog.draft.price",
+    ],
+    resourceScope: { kind: "BUSINESS" },
+    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+    idempotencyKey: `d5-retry-${randomUUID()}`,
+  }, owner.cookie);
+  assert.equal(grant.status, 201, grant.raw);
+  const delegationId = grant.data.delegation.id as string;
+  const activated = await request(`/business/profiles/${businessId}/delegations/${delegationId}/activate`, "POST", {
+    confirm: true,
+    expectedVersion: 1,
+  }, owner.cookie);
+  assert.equal(activated.status, 200, activated.raw);
+  const conversationId = await conversation(owner);
+  let shouldFail = true;
+  let action = "DRAFT_LISTING";
+  app.locals.conversationModelGateway = {
+    proposeToolCall: async () => {
+      if (shouldFail) throw new Error("simulated local tool failure");
+      return {
+        id: `d5-retry-${randomUUID()}`,
+        name: "dinarConversationTurn",
+        arguments: JSON.stringify({
+          responseKind: "CONVERSATIONAL_RESPONSE",
+          goal: "SELL",
+          sellerEmployeeAction: action,
+          entities: { item: "iPhone 13" },
+          confidence: 1,
+          conversationalReply: "أجهز المسودة وفق التفاصيل التي قدمتها.",
+        }),
+      };
+    },
+  } as any;
+
+  const offersBefore = (await db.select({ id: offers.id }).from(offers)
+    .where(eq(offers.sellerId, owner.id))).length;
+  const failedTool = await say(owner, conversationId, "يا موظفي الذكي، جهز مسودة لهاتف آيفون 13 مستعمل بسعر 12");
+  assert.match(failedTool.body, /لم يتغير شيء|لم ينفّذ أي إجراء/u);
+  assert.equal((await db.select({ id: offers.id }).from(offers)
+    .where(eq(offers.sellerId, owner.id))).length, offersBefore);
+  assert.equal((await db.select().from(businessAuditEvents)
+    .where(eq(businessAuditEvents.actorId, owner.id)))
+    .filter((event) => event.action === "D5_DRAFT_SCOPE_BOUND").length, 0,
+  "a failed model/tool turn must not bind or persist a draft");
+
+  shouldFail = false;
+  const retry = await say(owner, conversationId, "جهز مسودة لهاتف آيفون 13 مستعمل بسعر 12");
+  let draftPayload = retry.blocks.find((block) => block.payload?.surface === "SELL")?.payload;
+  assert.ok(draftPayload, retry.body);
+  const firstDraftId = String(draftPayload.draft?.draftId);
+  const repeatedRetry = await say(owner, conversationId, "جهز مسودة لهاتف آيفون 13 مستعمل بسعر 12");
+  draftPayload = repeatedRetry.blocks.find((block) => block.payload?.surface === "SELL")?.payload;
+  assert.equal(draftPayload?.draft?.draftId, firstDraftId,
+    "replaying a drafting turn after a lost response must resume the same conversation draft");
+  assert.equal((await db.select({ id: offers.id }).from(offers)
+    .where(eq(offers.sellerId, owner.id))).length, offersBefore,
+  "D5 retries must not publish an offer");
+
+  const answers: Record<string, string> = {
+    category: "إلكترونيات",
+    title: "هاتف آيفون 13 مستعمل",
+    description: "هاتف مستعمل بحالة جيدة",
+    price: "12",
+    quantity: "1",
+    area: "عمان خلدا",
+    fulfilment: "استلام",
+    contact: "محادثة DINAR فقط",
+    payment_methods: "كاش",
+  };
+  for (let attempt = 0; attempt < 16; attempt += 1) {
+    const missing = (draftPayload.draftReview?.missingFields ?? []) as Array<{ field: string }>;
+    if (!missing.length) break;
+    const answer = answers[missing[0]!.field];
+    assert.ok(answer, `test fixture needs an owner-provided answer for ${missing[0]!.field}`);
+    await db.delete(authRateLimitBuckets).where(inArray(authRateLimitBuckets.keyHash, [
+      authRateLimitKeyHash(AUTH_RATE_LIMIT_SCOPE.conversationModelActor, owner.id),
+      authRateLimitKeyHash(AUTH_RATE_LIMIT_SCOPE.conversationModelHeavyActor, owner.id),
+    ]));
+    const completion = await say(owner, conversationId, answer);
+    draftPayload = completion.blocks.find((block) => block.payload?.surface === "SELL")?.payload;
+    assert.ok(draftPayload, completion.body);
+  }
+  assert.equal(draftPayload.draftReview?.missingFields?.length, 0,
+    `owner must provide every required field before publication review: ${JSON.stringify(draftPayload.draftReview?.missingFields)}`);
+
+  action = "REQUEST_PUBLICATION_REVIEW";
+  const review = await say(owner, conversationId, "أرسل المسودة لي للمراجعة");
+  const reviewPayload = review.blocks.find((block) => block.payload?.surface === "SELL")?.payload;
+  assert.equal(reviewPayload?.draftStep, "publish_review", review.body);
+  const reviewActionId = String(reviewPayload.resultSetId);
+  const [pendingReview] = await db.select().from(aiResultSets).where(eq(aiResultSets.id, reviewActionId));
+  assert.equal(pendingReview?.query.action, "PUBLISH_LISTING");
+  assert.equal(pendingReview?.query.status, "PENDING");
+
+  const revoked = await request(`/business/profiles/${businessId}/delegations/${delegationId}/revoke`, "POST", {
+    confirm: true,
+    expectedVersion: 2,
+  }, owner.cookie);
+  assert.equal(revoked.status, 200, revoked.raw);
+  const ownerApprovalAfterRevoke = await say(owner, conversationId, "نعم");
+  assert.doesNotMatch(ownerApprovalAfterRevoke.body, /تم نشر الإعلان/u);
+  assert.equal((await db.select({ id: offers.id }).from(offers)
+    .where(eq(offers.sellerId, owner.id))).length, offersBefore,
+  "a pending owner publication review cannot publish after D5 grant revocation");
+  const [revokedReview] = await db.select().from(aiResultSets).where(eq(aiResultSets.id, reviewActionId));
+  assert.notEqual(revokedReview?.query.status, "PENDING");
+  app.locals.conversationModelGateway = undefined;
+});
+
+await test("D5 withholds inquiry context when multiple buyer threads are unselected", async () => {
+  const owner = await register("Multi Inquiry Owner");
+  const businessId = await createBusiness(owner);
+  const [business] = await db.select().from(businessOperatingProfiles)
+    .where(eq(businessOperatingProfiles.id, businessId));
+  assert.ok(business);
+  const listingId = await publish(owner, `مخزون متعدد المحادثات ${safeTag()}`, 35);
+  await assignListingToBusiness({
+    actorId: owner.id,
+    marketId: "JO",
+    listingId,
+    businessId: business!.d2BusinessId,
+  });
+  const grant = await request(`/business/profiles/${businessId}/delegations`, "POST", {
+    employee: { type: "INTELLIGENT" },
+    capabilities: [
+      "business.catalog.read",
+      "business.inventory.read",
+      "business.inquiries.reply",
+      "business.messages.send",
+    ],
+    resourceScope: { kind: "BUSINESS" },
+    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+    idempotencyKey: `d5-multi-inquiry-${randomUUID()}`,
+  }, owner.cookie);
+  assert.equal(grant.status, 201, grant.raw);
+  const delegationId = grant.data.delegation.id as string;
+  const activated = await request(`/business/profiles/${businessId}/delegations/${delegationId}/activate`, "POST", {
+    confirm: true,
+    expectedVersion: 1,
+  }, owner.cookie);
+  assert.equal(activated.status, 200, activated.raw);
+
+  const [market] = await db.select().from(markets).where(eq(markets.id, "JO"));
+  assert.ok(market);
+  const sellerConversationId = await conversation(owner);
+  await say(owner, sellerConversationId, "يا موظفي الذكي");
+  const inquiryIds: string[] = [];
+  for (const label of ["First", "Second"]) {
+    const buyer = await register(`${label} Multi Buyer`);
+    const originConversationId = await conversation(buyer);
+    const inquiry = await submitInquiryMessage({
+      actionId: randomUUID(),
+      actorId: buyer.id,
+      market: market!,
+      target: { kind: "LISTING", listingId },
+      body: "هل لديكم مخزون؟",
+      provenance: "BUYER_AUTHORED",
+      originConversationId,
+    });
+    inquiryIds.push(inquiry.inquiryId);
+  }
+  assert.equal(new Set(inquiryIds).size, 2);
+  await db.update(marketplaceInquiries).set({ sellerConversationId })
+    .where(inArray(marketplaceInquiries.id, inquiryIds));
+  const rows = await db.select().from(marketplaceInquiries)
+    .where(eq(marketplaceInquiries.sellerConversationId, sellerConversationId));
+  assert.equal(rows.filter((row) => inquiryIds.includes(row.id) && row.status === "AWAITING_SELLER").length, 2);
+
+  const session = await resolveSellerEmployeeSession({
+    actorId: owner.id,
+    conversationId: sellerConversationId,
+    marketId: "JO",
+  });
+  assert.equal(session.state, "ACTIVE");
+  if (session.state !== "ACTIVE") throw new Error("expected active D5 session");
+  const context = await sellerEmployeeInquiryModelContext({
+    actorId: owner.id,
+    conversationId: sellerConversationId,
+    market: market!,
+    session: session.session,
+  });
+  assert.equal(context, null,
+    "two open buyer questions without an explicitly selected inquiry must not enter model context");
 });
 
 await new Promise<void>((resolve, reject) =>

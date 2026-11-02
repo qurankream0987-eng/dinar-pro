@@ -76,7 +76,11 @@ import { executeProductControlTurn } from "./product-control-turn";
 import { executeBusinessTurn } from "./business-turn";
 import { aiUsagePolicyFor, globalGuardOpen, hasAiAllowance } from "../lib/ai-usage";
 import { meteredPlatformGateway } from "../lib/ai-spend";
-import { executeNegotiationTurn, isBestPriceRequest } from "./negotiation-turn";
+import {
+  executeNegotiationTurn,
+  isBestPriceRequest,
+  sellerEmployeeNegotiationReviewTurn,
+} from "./negotiation-turn";
 import { recommendationIntent } from "./intent";
 import { storedSponsoredIds } from "../lib/recommendations";
 import {
@@ -85,6 +89,7 @@ import {
   readSellerEmployeeOrders,
   requireSellerEmployeeCapability,
   sellerEmployeeDraftBinding,
+  sellerEmployeeDraftBindingMatches,
 } from "../lib/business-delegations";
 import type { ListingPhotoSuggestionProvider } from "./listing-photo-intelligence";
 import { personalContext } from "./personal-context-service";
@@ -587,7 +592,7 @@ type RuntimeTurn = Awaited<ReturnType<typeof executeAiConversationTurn>>;
 function sellerEmployeeActionHandler(
   context: RuntimeContext,
 ): SellerEmployeeActionHandler {
-  return async ({ action, message, session, replyText, itemHint }) => {
+  return async ({ action, message, session, replyText, itemHint, employeeInquiryId }) => {
     const requireCapability = (capability: Parameters<typeof requireSellerEmployeeCapability>[0]["capability"]) =>
       requireSellerEmployeeCapability({
         actorId: context.actorId!,
@@ -757,12 +762,12 @@ function sellerEmployeeActionHandler(
         actorId: context.actorId!,
         draftId: String(latestPayload.draft.draftId),
       });
-      if (
-        !draftBinding ||
-        draftBinding.businessId !== session.businessId ||
-        draftBinding.conversationId !== context.conversationId ||
-        draftBinding.marketId !== context.market.id
-      )
+      if (!sellerEmployeeDraftBindingMatches(draftBinding, {
+        businessId: session.businessId,
+        conversationId: context.conversationId,
+        marketId: context.market.id,
+        sessionId: session.id,
+      }))
         return sellerEmployeeFactResponse(
           "هذه المسودة غير مرتبطة بالنشاط المفوّض الحالي؛ لم أفتح مراجعة ولم أكشف بيانات نشاط آخر.",
           "PUBLICATION_DRAFT_OUT_OF_SCOPE",
@@ -809,13 +814,12 @@ function sellerEmployeeActionHandler(
       const existingBinding = existingDraftActive
         ? await sellerEmployeeDraftBinding({ actorId: context.actorId!, draftId: existingDraftId })
         : undefined;
-      if (
-        existingDraftActive &&
-        (!existingBinding ||
-          existingBinding.businessId !== session.businessId ||
-          existingBinding.conversationId !== context.conversationId ||
-          existingBinding.marketId !== context.market.id)
-      )
+      if (existingDraftActive && !sellerEmployeeDraftBindingMatches(existingBinding, {
+        businessId: session.businessId,
+        conversationId: context.conversationId,
+        marketId: context.market.id,
+        sessionId: session.id,
+      }))
         return sellerEmployeeFactResponse(
           "هذه المسودة غير مرتبطة بالنشاط المفوّض الحالي. لم أعدّلها أو أستخدم بيانات نشاط آخر.",
           "SELLER_DRAFT_OUT_OF_SCOPE",
@@ -856,6 +860,7 @@ function sellerEmployeeActionHandler(
         actorId: context.actorId,
         employeeSession: session,
         employeeReply: replyText,
+        employeeInquiryId,
       });
     }
     if (action === "ESCALATE_NEGOTIATION") {
@@ -871,18 +876,18 @@ function sellerEmployeeActionHandler(
           "NEGOTIATION_ESCALATION_EMPTY",
           context.actorId,
         );
-      const details = rows.map((row) => {
-        const amount = row.amountMinor === null
-          ? "بانتظار اقتراح سعر"
-          : `${(row.amountMinor / 10 ** context.market.minorUnitScale).toFixed(context.market.minorUnitScale)} ${row.currencyCode}`;
-        const waiting = row.awaitingSeller ? "بانتظار قرار المالك" : "بانتظار رد المشتري";
-        return `• ${row.title} — ${amount} — كمية ${row.quantity} — ${waiting}`;
-      });
-      return sellerEmployeeFactResponse(
-        `عروض التفاوض المفتوحة ضمن نطاق التفويض، لمراجعة المالك:\n${details.join("\n")}\nلم أقبل عرضًا أو أرسل مقابلاً.`,
-        "NEGOTIATION_ESCALATED",
-        context.actorId,
-      );
+      const awaitingOwner = rows.filter((row) => row.awaitingSeller);
+      if (!awaitingOwner.length)
+        return sellerEmployeeFactResponse(
+          "لا يوجد عرض بانتظار قرار المالك الآن. لم أقبل عرضًا أو أرسل مقابلاً.",
+          "NEGOTIATION_ESCALATED_NO_OWNER_DECISION",
+          context.actorId,
+        );
+      return sellerEmployeeNegotiationReviewTurn({
+        conversationId: context.conversationId,
+        market: context.market,
+        actorId: context.actorId!,
+      }, awaitingOwner.map((row) => row.negotiationId));
     }
     return null;
   };

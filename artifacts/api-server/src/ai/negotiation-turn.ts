@@ -391,6 +391,36 @@ async function listTurn(input: { conversationId: string; market: Market; actorId
   };
 }
 
+/** Build an owner decision list only from IDs returned by the live D5 business-scope query. */
+export async function sellerEmployeeNegotiationReviewTurn(
+  input: { conversationId: string; market: Market; actorId: string },
+  allowedNegotiationIds: string[],
+): Promise<Turn> {
+  const ids = [...new Set(allowedNegotiationIds)].slice(0, 20);
+  const rows = (await Promise.all(ids.map((id) => negotiationForParty(input.actorId, id))))
+    .filter((row): row is NonNullable<typeof row> => Boolean(row));
+  const views = (await Promise.all(rows.map((row) => negotiationView(row, input.actorId))))
+    .filter((view): view is NonNullable<typeof view> => Boolean(view))
+    .filter((view) => view.role === "SELLER" && view.yourTurn);
+  const prompt = views.length
+    ? `لديك ${views.length} ${views.length === 1 ? "عرض سعر" : "عروض أسعار"} بانتظار ردك. ${views.map((view, index) => `${index + 1}. «${view.title}» — ${view.offerAmount === null ? "طلب معرفة أفضل سعر" : `عرض ${view.offerAmount} ${view.currency}`} (المعلن ${view.listedPrice ?? "غير معلن"})`).join("، ")}. اكتب «قبول» أو «رفض» أو «عرض مضاد 8»${views.length > 1 ? " مع رقم العرض" : ""}.`
+    : "لا توجد عروض أسعار جديدة بانتظار ردك ضمن نطاق التفويض.";
+  return {
+    tool: "negotiation",
+    version: 1,
+    result: {
+      kind: "SURFACE",
+      surface: "NEGOTIATION_LIST",
+      resultSetId: randomUUID(),
+      resourceIds: views.map((view) => view.negotiationId),
+      query: { kind: "NEGOTIATIONS", ownerId: input.actorId, role: "SELLER" },
+      listings: [],
+      negotiation: { view: "LIST", role: "SELLER", items: views },
+      prompt: `${prompt}\nعرض الموظف هذه الطلبات للمراجعة فقط؛ لم يقبل عرضًا أو يرسل عرضًا مضادًا. قرارات القبول أو الرفض أو المقابلة تتطلب تأكيد المالك عبر التفاوض.`,
+    },
+  };
+}
+
 /** The seller's negotiation a decision is about: the one in view, a numbered one, or the only one. */
 async function sellerTarget(input: { conversationId: string; market: Market; actorId: string; message: string }): Promise<string | "AMBIGUOUS" | undefined> {
   const set = await latestSet(input.conversationId, input.market.id);

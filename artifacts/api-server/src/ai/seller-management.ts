@@ -18,7 +18,10 @@ import { SellerBusinessInsight } from "@workspace/api-zod/conversation-runtime";
 import { buildDraftReview, ConversationDraft } from "./listing-draft";
 import { listMarketplaceCategories } from "../lib/marketplace-categories";
 import { UpdateListingBody } from "@workspace/api-zod";
-import { sellerEmployeeDraftBinding } from "../lib/business-delegations";
+import {
+  sellerEmployeeDraftBinding,
+  sellerEmployeeDraftBindingMatches,
+} from "../lib/business-delegations";
 import {
   type ListingPricingMode,
   type MarketplaceCategorySchema,
@@ -1285,6 +1288,7 @@ export async function sellerListingFacts(input: {
   allowedListingIds?: string[];
   /** D5 drafts are usable only when the server marked them for this business. */
   employeeBusinessId?: string;
+  employeeSessionId?: string;
 }): Promise<SellerListingFacts | null> {
   const allowedIds = input.allowedListingIds
     ? [...new Set(input.allowedListingIds)].slice(0, 100)
@@ -1340,12 +1344,12 @@ export async function sellerListingFacts(input: {
     const binding = draft.data.draftId
       ? await sellerEmployeeDraftBinding({ actorId: input.actorId, draftId: draft.data.draftId })
       : undefined;
-    if (
-      !binding ||
-      binding.businessId !== input.employeeBusinessId ||
-      binding.conversationId !== input.conversationId ||
-      binding.marketId !== input.market.id
-    ) return null;
+    if (!sellerEmployeeDraftBindingMatches(binding, {
+      businessId: input.employeeBusinessId,
+      conversationId: input.conversationId,
+      marketId: input.market.id,
+      sessionId: input.employeeSessionId ?? "",
+    })) return null;
     const title = normalizeSearch(draft.data.title);
     const query = normalizeSearch(input.message);
     const refersToDraft = title.length >= 3 && query.includes(title) ||
