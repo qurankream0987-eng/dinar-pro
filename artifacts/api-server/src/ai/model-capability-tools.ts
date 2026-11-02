@@ -560,7 +560,7 @@ async function readNegotiationStatus(input: { negotiationId: string }, context: 
     role: row.buyerId === context.actorId ? "BUYER" : "SELLER",
     status: row.status,
     quantity: row.quantity,
-    offerAmount: money(row.offerAmountMinor, context.market),
+    offerAmount: row.offerAmountMinor === null ? null : money(row.offerAmountMinor, context.market),
     counterAmount: row.counterAmountMinor === null ? null : money(row.counterAmountMinor, context.market),
     currency: row.currencyCode,
   };

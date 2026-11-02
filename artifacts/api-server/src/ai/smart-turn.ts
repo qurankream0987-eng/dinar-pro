@@ -1853,11 +1853,12 @@ export async function executeModelFallback(
     }
     const partialResult = lastComparisonResult ?? lastSearchResult ?? lastResourceResult;
     if (partialResult) {
-      const stopMessages = {
+      const stopMessages: Record<NonNullable<typeof toolLoopStopReason>, string> = {
         CALL_LIMIT: "توقفت بعد الحد الآمن لخطوات القراءة؛ هذه هي النتائج التي تحققت منها.",
         DUPLICATE: "توقفت لأن طلب القراءة تكرر؛ لم أكرر البحث، وهذه النتائج التي تحققت منها.",
         TIME_LIMIT: "انتهى الوقت المحدد للقراءة؛ هذه هي النتائج التي تحققت منها.",
         USAGE_LIMIT: "وصلت إلى حد استخدام المساعد لهذا الطلب؛ هذه هي النتائج التي تحققت منها.",
+        PREPARED: "هذه النتائج التي تحققت منها قبل إيقاف الخطوات.",
       };
       const answer = stopMessages[toolLoopStopReason ?? "CALL_LIMIT"];
       return {

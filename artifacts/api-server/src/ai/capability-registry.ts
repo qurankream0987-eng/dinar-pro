@@ -295,7 +295,7 @@ export const CAPABILITY_REGISTRY: Record<CapabilityName, CapabilityDefinition> =
         role: z.enum(["BUYER", "SELLER"]),
         status: z.string(),
         quantity: z.number().int(),
-        offerAmount: z.string(),
+        offerAmount: z.string().nullable(),
         counterAmount: z.string().nullable(),
         currency: z.string(),
       }),
