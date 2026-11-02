@@ -575,8 +575,9 @@ await test("a pending D5 approval cannot execute after grant expiry, and replayi
     .where(eq(messages.conversationId, inquiry!.threadConversationId));
   assert.equal(threadBefore.filter((row) => row.senderId === owner.id).length, 0);
 
+  const expiredAt = new Date(Date.now() - 60_000);
   await db.update(businessDelegations)
-    .set({ expiresAt: new Date(Date.now() - 1_000) })
+    .set({ createdAt: new Date(expiredAt.getTime() - 60 * 60 * 1000), expiresAt: expiredAt })
     .where(eq(businessDelegations.id, delegationId));
   const marketRef = await marketFor({ actor: { activeMarketId: "JO" } });
   const denied = await confirmPendingAction({
