@@ -1087,6 +1087,11 @@ router.post("/ai/preview", async (req, res) => {
         body: modelFailureMessage(outcome.reason),
         blocks: [],
       });
+    if (outcome.toolRequest)
+      return sendGuestPreview(res, {
+        body: modelFailureMessage("MALFORMED"),
+        blocks: [],
+      });
 
     const turn = outcome.turn;
     const isSearchSuggestion =
@@ -2005,6 +2010,7 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
   const turnId = randomUUID();
   const userMessageId = input.clientMessageId ?? randomUUID();
   let createdAt = new Date();
+  let modelToolContinuation: unknown;
   const title =
     conversation.title === NEW_CONVERSATION_TITLE
       ? conversationTitle(redactListingContactPhone(message))
@@ -2030,9 +2036,32 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
       if (existing.metadata.locationDigest !== locationDigest)
         throw fail(409, "لا يمكن تغيير الموقع عند إعادة المحاولة. شارك الموقع من جديد.");
       const [latest] = await tx.select({ id: messages.id }).from(messages).where(eq(messages.conversationId, conversation.id)).orderBy(desc(messages.createdAt)).limit(1);
-      if (existing.metadata.turnStatus !== "failed" || latest?.id !== existing.id) throw fail(409, "هذه الرسالة قيد المعالجة أو اكتملت بالفعل. حدّث المحادثة قبل متابعة الإجراء.");
+      const rawContinuation = existing.metadata.modelToolContinuation;
+      const hasContinuation = Boolean(rawContinuation && typeof rawContinuation === "object" && !Array.isArray(rawContinuation));
+      const continuationResumeCount =
+        hasContinuation && Number.isInteger((rawContinuation as Record<string, unknown>).resumeCount)
+          ? Number((rawContinuation as Record<string, unknown>).resumeCount)
+          : 0;
+      const canResume = hasContinuation && continuationResumeCount < 5;
+      const staleReadOnlyTurn =
+        existing.metadata.turnStatus === "pending" &&
+        Date.now() - existing.createdAt.getTime() >= 60_000 &&
+        canResume;
+      const failedTurnCanRetry =
+        existing.metadata.turnStatus === "failed" &&
+        (!hasContinuation || canResume);
+      if ((!failedTurnCanRetry && !staleReadOnlyTurn) || latest?.id !== existing.id)
+        throw fail(409, "هذه الرسالة قيد المعالجة أو اكتملت بالفعل. حدّث المحادثة قبل متابعة الإجراء.");
       // Atomic claim: simultaneous retries cannot execute the same turn twice.
-      const [claimed] = await tx.update(messages).set({ metadata: { turnStatus: "pending", ...turnMetadata } }).where(and(eq(messages.id, existing.id), eq(messages.metadata, existing.metadata))).returning();
+      const claimedMetadata: Record<string, unknown> = { turnStatus: "pending", ...turnMetadata };
+      if (hasContinuation && canResume) {
+        modelToolContinuation = {
+          ...(rawContinuation as Record<string, unknown>),
+          resumeCount: continuationResumeCount + 1,
+        };
+        claimedMetadata.modelToolContinuation = modelToolContinuation;
+      }
+      const [claimed] = await tx.update(messages).set({ metadata: claimedMetadata }).where(and(eq(messages.id, existing.id), eq(messages.metadata, existing.metadata))).returning();
       if (!claimed) throw fail(409, "هذه الرسالة قيد المعالجة. انتظر قليلًا ثم حدّث المحادثة.");
       createdAt = existing.createdAt;
     } else { createdAt = inserted.createdAt; }
@@ -2056,6 +2085,7 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
       {
         conversationId: conversation.id,
         currentMessageId: userMessageId,
+        modelToolContinuation,
         message,
         market,
           actorId: req.actor!.id,
@@ -2070,6 +2100,26 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
         onToolSelected(name) {
           toolName = name;
           send(res, { type: "status", stage: name === "searchListings" || name === "getResource" ? "searching" : "understanding" });
+        },
+        async onModelToolProgress(state) {
+          const resumeCount =
+            modelToolContinuation &&
+            typeof modelToolContinuation === "object" &&
+            Number.isInteger((modelToolContinuation as Record<string, unknown>).resumeCount)
+              ? Number((modelToolContinuation as Record<string, unknown>).resumeCount)
+              : state.resumeCount;
+          await db.update(messages).set({
+            metadata: {
+              turnStatus: "pending",
+              ...turnMetadata,
+              modelToolContinuation: { ...state, resumeCount },
+            },
+          }).where(and(
+            eq(messages.id, userMessageId),
+            eq(messages.conversationId, conversation.id),
+            eq(messages.senderId, req.actor!.id),
+            eq(messages.actor, "USER"),
+          ));
         },
       },
     ));
@@ -2329,9 +2379,11 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
         : "";
     const assistantText = (
       toolResult.kind === "RESOURCE"
-        ? toolResult.listings.length
-          ? "هذا هو العرض الذي أشرت إليه. افتح البطاقة لمراجعة التفاصيل الحالية."
-          : "لم يعد هذا العرض متاحًا في سوقك الحالي. يمكنك متابعة البحث من جديد."
+        ? typeof (toolResult.query.buyer as { message?: unknown } | undefined)?.message === "string"
+          ? String((toolResult.query.buyer as { message: string }).message)
+          : toolResult.listings.length
+            ? "هذا هو العرض الذي أشرت إليه. افتح البطاقة لمراجعة التفاصيل الحالية."
+            : "لم يعد هذا العرض متاحًا في سوقك الحالي. يمكنك متابعة البحث من جديد."
         : toolResult.kind === "RESULTS"
           ? toolResult.listings.length
             ? `عدت إلى نتائجك السابقة (${toolResult.listings.length}) بالترتيب نفسه.`
@@ -2483,7 +2535,16 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
     res.end();
   } catch (error) {
     // A mutation may have committed before a response failed. Never replay it blindly.
-    await db.update(messages).set({ metadata: { turnStatus: addToCartIntent(message) || toolName === "addToCart" ? "uncertain" : "failed", ...turnMetadata } }).where(and(eq(messages.id, userMessageId), eq(messages.metadata, { turnStatus: "pending", ...turnMetadata })));
+    await db.transaction(async (tx) => {
+      const [current] = await tx.select().from(messages).where(eq(messages.id, userMessageId)).for("update");
+      if (current?.metadata.turnStatus === "pending")
+        await tx.update(messages).set({
+          metadata: {
+            ...current.metadata,
+            turnStatus: addToCartIntent(message) || toolName === "addToCart" ? "uncertain" : "failed",
+          },
+        }).where(eq(messages.id, userMessageId));
+    });
     const code =
       error instanceof ToolRejectedError
         ? "AI_TOOL_REJECTED"

@@ -44,6 +44,7 @@ import { ConversationDraft, buildDraftReview, isGeneralRequest } from "./listing
 import { conversationGuidance } from "./conversation-guidance";
 import { AIProviderError, type ConversationModelGateway, type ReasoningEffort } from "./model-gateway";
 import {
+  MAX_TOOL_FEEDBACK_CHARS,
   interpretWithModel,
   modelGatewayFor,
   HISTORY_SCAN_ROWS,
@@ -73,16 +74,30 @@ import { logger } from "../lib/logger";
 import type { AiCallRecord } from "../lib/ai-spend";
 import { normalizeSearch } from "./search-context";
 import { isMarketingRequest, sellerListingFacts, unsupportedCopyClaims } from "./seller-management";
-import type { ToolResult } from "./tool-registry";
+import { executeModelTool, modelToolDefinitions, ToolRejectedError, type ToolResult } from "./tool-registry";
 
 type Market = Awaited<ReturnType<typeof marketFor>>;
 type DelegatedSellerSnapshot = NonNullable<Awaited<ReturnType<typeof delegatedSellerModelContext>>>;
 type Turn = { tool: string; version: number; result: ToolResult; taskPlanProposal?: string[] };
+export type ModelToolContinuation = {
+  version: 1;
+  actorId: string;
+  conversationId: string;
+  marketId: string;
+  messageId: string;
+  resumeCount: number;
+  signatures: string[];
+  feedback: NonNullable<ModelContext["toolFeedback"]>;
+};
 type Input = {
   conversationId: string;
+  currentMessageId?: string;
   message: string;
   market: Market;
   actorId?: string;
+  onToolSelected?: (name: string) => void;
+  modelToolContinuation?: unknown;
+  onModelToolProgress?: (state: ModelToolContinuation) => Promise<void>;
   requestKey?: string;
   reasoningEffort?: ReasoningEffort;
   allowTaskPlanning?: boolean;
@@ -1044,15 +1059,18 @@ export async function draftWithClaimGuard(
   context: ModelContext,
   /** Dual-tier routing (model-tier.ts); absent = the single-model behaviour. */
   tiering?: { decision: TierDecision; allowEscalation: () => Promise<boolean> },
+  deadlineAt?: number,
 ): Promise<{ outcome: Awaited<ReturnType<typeof interpretWithModel>>; blocked?: ClaimKind[]; metered: ModelMetering; tier?: TierTrace }> {
   const startedAt = Date.now();
-  const deadlineLeft = () => Number(process.env.DINAR_MODEL_TIMEOUT_MS ?? 25000) - (Date.now() - startedAt);
+  const configuredTimeout = Math.max(50, Number(process.env.DINAR_MODEL_TIMEOUT_MS ?? 25000));
+  const deadline = deadlineAt ?? startedAt + configuredTimeout;
+  const deadlineLeft = () => Math.min(configuredTimeout, deadline - Date.now());
   let chosen: TierRoute = tiering
     ? gatewayForTier(gateway, tiering.decision.tier, context.reasoningEffort)
     : { tier: "LIGHT", gateway, ...(context.reasoningEffort ? { reasoningEffort: context.reasoningEffort } : {}) };
   let reason: TierReason | undefined = chosen.degraded ?? tiering?.decision.reason;
   const outcomes: Awaited<ReturnType<typeof interpretWithModel>>[] = [];
-  let outcome = await interpretWithModel(chosen.gateway, message, { ...context, reasoningEffort: chosen.reasoningEffort });
+  let outcome = await interpretWithModel(chosen.gateway, message, { ...context, reasoningEffort: chosen.reasoningEffort }, deadlineLeft());
   outcomes.push(outcome);
   let escalated = false;
   if (tiering && !outcome.ok && deadlineLeft() > 1000) {
@@ -1080,7 +1098,7 @@ export async function draftWithClaimGuard(
     : undefined;
   if (trace) logger.info({ event: "dinar_ai_model_tier", ...trace, outcome: outcome.ok ? "OK" : outcome.reason, provider: outcome.modelCall.provider, model: outcome.modelCall.actualModel ?? outcome.modelCall.requestedModel }, "model tier");
   const done = (extra: { blocked?: ClaimKind[] } = {}) => ({ outcome, ...extra, metered: metering(outcomes), ...(trace ? { tier: trace } : {}) });
-  if (!outcome.ok || !isMarketingRequest(message)) return done();
+  if (!outcome.ok || outcome.toolRequest || !isMarketingRequest(message)) return done();
   const facts = context.sellerListing ?? null;
   const violations = unsupportedCopyClaims(outcome.turn.conversationalReply, facts);
   if (!violations.length) return done();
@@ -1091,7 +1109,7 @@ export async function draftWithClaimGuard(
     correction: `SERVER_CHECK: your draft stated claims the listing facts do not support (${violations.join(", ")}). Rewrite the whole answer without them: no such wording anywhere in suggested text, not even conditionally.`,
   });
   outcomes.push(outcome);
-  if (!outcome.ok) return done();
+  if (!outcome.ok || outcome.toolRequest) return done();
   const remaining = unsupportedCopyClaims(outcome.turn.conversationalReply, facts);
   if (remaining.length) {
     logger.info({ event: "dinar_marketing_claims_rejected", claims: remaining, attempt: 2 }, "marketing draft refused");
@@ -1206,6 +1224,111 @@ function isGeneralQuestion(message: string): boolean {
 
 const ORDINAL_WORDS = ["", "الأول", "الثاني", "الثالث", "الرابع", "الخامس", "السادس"];
 
+function boundedPositiveInteger(value: string | undefined, fallback: number, maximum: number) {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) ? Math.max(1, Math.min(maximum, parsed)) : fallback;
+}
+
+function modelToolLoopLimits() {
+  return {
+    maxToolCalls: boundedPositiveInteger(process.env.DINAR_MODEL_TOOL_MAX_CALLS, 3, 3),
+    toolTimeoutMs: boundedPositiveInteger(process.env.DINAR_MODEL_TOOL_TIMEOUT_MS, 3500, 10000),
+    totalTimeoutMs: boundedPositiveInteger(process.env.DINAR_MODEL_TOOL_LOOP_TIMEOUT_MS, 25000, 25000),
+  };
+}
+
+function validModelToolContinuation(value: unknown, input: Input): ModelToolContinuation | undefined {
+  if (!input.actorId || !input.currentMessageId || !value || typeof value !== "object") return undefined;
+  const raw = value as Partial<ModelToolContinuation>;
+  if (
+    raw.version !== 1 ||
+    raw.actorId !== input.actorId ||
+    raw.conversationId !== input.conversationId ||
+    raw.marketId !== input.market.id ||
+    raw.messageId !== input.currentMessageId ||
+    !Number.isInteger(raw.resumeCount) ||
+    raw.resumeCount! < 0 ||
+    raw.resumeCount! > 5 ||
+    !Array.isArray(raw.signatures) ||
+    raw.signatures.length > 3 ||
+    !raw.signatures.every((item) => typeof item === "string" && /^(?:searchListings|getResource):[a-f0-9]{64}$/.test(item)) ||
+    !Array.isArray(raw.feedback) ||
+    raw.feedback.length > 6
+  )
+    return undefined;
+  const feedback = raw.feedback.filter((item) =>
+    item &&
+    typeof item === "object" &&
+    ["searchListings", "getResource"].includes(item.tool) &&
+    ["SUCCEEDED", "REJECTED", "FAILED"].includes(item.status),
+  );
+  while (JSON.stringify(feedback).length > MAX_TOOL_FEEDBACK_CHARS && feedback.length) feedback.shift();
+  return {
+    version: 1,
+    actorId: input.actorId,
+    conversationId: input.conversationId,
+    marketId: input.market.id,
+    messageId: input.currentMessageId,
+    resumeCount: raw.resumeCount!,
+    signatures: raw.signatures,
+    feedback,
+  };
+}
+
+function stableJson(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(stableJson).join(",")}]`;
+  if (value && typeof value === "object")
+    return `{${Object.entries(value as Record<string, unknown>)
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([key, entry]) => `${JSON.stringify(key)}:${stableJson(entry)}`)
+      .join(",")}}`;
+  return JSON.stringify(value);
+}
+
+function compactModelToolResult(result: ToolResult) {
+  const listings = result.listings.slice(0, 5).map((listing) => ({
+    id: listing.id,
+    title: listing.title.slice(0, 180),
+    description: listing.description.slice(0, 240),
+    category: listing.category.slice(0, 100),
+    area: listing.area.slice(0, 100),
+    ...(listing.city ? { city: listing.city.slice(0, 100) } : {}),
+    unitPrice: listing.unitPrice,
+    currency: listing.currency,
+    pricingMode: listing.pricingMode,
+    ...(listing.priceRepresentation ? { priceRepresentation: listing.priceRepresentation } : {}),
+    availableQuantity: listing.availableQuantity,
+    fulfilmentType: listing.fulfilmentType,
+    ...(listing.attributes
+      ? { attributes: Object.fromEntries(Object.entries(listing.attributes).slice(0, 8).map(([key, value]) => [key.slice(0, 60), typeof value === "string" ? value.slice(0, 120) : value])) }
+      : {}),
+  }));
+  if (result.kind === "SEARCH")
+    return {
+      kind: result.kind,
+      ...(result.resultSetId ? { resultSetId: result.resultSetId } : {}),
+      resourceIds: listings.map((listing) => listing.id),
+      listings,
+    };
+  return {
+    kind: result.kind,
+    ...(result.resultSetId ? { resultSetId: result.resultSetId } : {}),
+    ...(result.resourceId ? { resourceId: result.resourceId } : {}),
+    listings,
+  };
+}
+
+function withModelToolAnswer(result: ToolResult, answer: string, preserveResultSetId = false): ToolResult {
+  return {
+    ...result,
+    ...(result.kind === "SEARCH" && !preserveResultSetId ? { resultSetId: undefined } : {}),
+    query: {
+      ...result.query,
+      buyer: { message: answer.slice(0, 1600), authority: "MODEL" },
+    },
+  };
+}
+
 /**
  * The model's turn for genuinely open messages. Its structured, allowlisted suggestion is
  * mapped onto the deterministic read or review path a typed command takes; a failure of any
@@ -1281,9 +1404,13 @@ export async function executeModelFallback(
   // G1: every model turn reserves its allowance first; ordinary marketplace actions never get here.
   const owner: AiUsageOwner = { kind: "USER", userId: input.actorId, market: input.market };
   const resource = usageResourceFor(input.message);
-  const requestKey = input.requestKey
+  const resumedContinuation = validModelToolContinuation(input.modelToolContinuation, input);
+  const baseRequestKey = input.requestKey
     ? `${input.requestKey}:${createHash("sha256").update(input.message).digest("hex").slice(0, 12)}`
     : `turn:${input.conversationId}:${randomUUID()}`;
+  const requestKey = resumedContinuation
+    ? `model-resume:${createHash("sha256").update(baseRequestKey).digest("hex").slice(0, 24)}:${resumedContinuation.resumeCount}`
+    : baseRequestKey;
   let sellerEmployeeSnapshot = input.sellerEmployeeSnapshot;
   if (input.sellerEmployeeMode) {
     const current = await delegatedSellerModelContext({
@@ -1301,8 +1428,19 @@ export async function executeModelFallback(
   }
   const reserved = await reserveAiUsage({ owner, resource, idempotencyKey: requestKey, ...(gateway.providerInfo ? { expectedModel: { provider: gateway.providerInfo.provider, model: gateway.providerInfo.requestedModel } } : {}) });
   if (!reserved.ok) return usageRefusalTurn(reserved, owner, input.conversationId, input.market, input.actorId);
-  let drafted: Awaited<ReturnType<typeof draftWithClaimGuard>>;
+  let drafted: Awaited<ReturnType<typeof draftWithClaimGuard>> | undefined;
   let context: ModelContext;
+  let usageNote: string | undefined;
+  let lastSearchResult: ToolResult | undefined;
+  let lastResourceResult: ToolResult | undefined;
+  let toolLoopStopReason: "CALL_LIMIT" | "DUPLICATE" | "TIME_LIMIT" | "USAGE_LIMIT" | undefined;
+  const toolFeedback: NonNullable<ModelContext["toolFeedback"]> = [...(resumedContinuation?.feedback ?? [])];
+  const seenToolCalls = new Set<string>(resumedContinuation?.signatures ?? []);
+  let toolCallCount = seenToolCalls.size;
+  const limits = modelToolLoopLimits();
+  const deadlineAt = Date.now() + limits.totalTimeoutMs;
+  let currentReservationId = reserved.reservation.id;
+  let currentReservationSettled = false;
   try {
     context = await modelContext({
       ...input,
@@ -1319,18 +1457,154 @@ export async function executeModelFallback(
       const noEscalation = decision.reason === "HEAVY_CAP_REACHED" || decision.reason === "DECISION_NEVER_ESCALATES";
       tiering = { decision, allowEscalation: () => (noEscalation ? Promise.resolve(false) : heavyAllowed(actorId)) };
     }
-    drafted = await draftWithClaimGuard(gateway, input.message, {
+    const toolContext = {
+      conversationId: input.conversationId,
+      market: input.market,
+      actorId: input.actorId,
+      ...(input.currentMessageId ? { currentMessageId: input.currentMessageId } : {}),
+    };
+    const availableTools =
+      !input.sellerEmployeeMode && input.currentMessageId
+        ? modelToolDefinitions(toolContext)
+        : [];
+    const loopContext: ModelContext = {
       ...context,
       reasoningEffort: input.reasoningEffort,
       // Outside LEGACY the model may restate a DINAR request in DINAR's own words (routing-mode.ts).
       canonicalRequests: aiRoutingMode() !== "LEGACY",
-    }, tiering);
+      modelTools: availableTools,
+      toolFeedback,
+    };
+    for (let round = 0; round <= limits.maxToolCalls; round += 1) {
+      drafted = await draftWithClaimGuard(gateway, input.message, loopContext, tiering, deadlineAt);
+      const settledRound = await settleAiUsage(currentReservationId, {
+        outcome: usageOutcome(drafted.outcome),
+        ...drafted.metered,
+      });
+      currentReservationSettled = true;
+      if (settledRound.reservation.status === "SETTLED")
+        usageNote ??= await nearLimitFor(owner, resource);
+
+      const request = drafted.outcome.ok ? drafted.outcome.toolRequest : undefined;
+      if (!request) break;
+      if (toolCallCount >= limits.maxToolCalls) {
+        toolLoopStopReason = "CALL_LIMIT";
+        break;
+      }
+      if (Date.now() >= deadlineAt) {
+        toolLoopStopReason = "TIME_LIMIT";
+        break;
+      }
+      let args: unknown;
+      let signature: string;
+      try {
+        args = JSON.parse(request.arguments);
+        signature = `${request.name}:${createHash("sha256").update(stableJson(args)).digest("hex")}`;
+      } catch {
+        toolFeedback.push({ tool: request.name, status: "REJECTED", code: "INVALID_ARGUMENTS" });
+        toolLoopStopReason = "DUPLICATE";
+        break;
+      }
+      if (seenToolCalls.has(signature)) {
+        toolFeedback.push({ tool: request.name, status: "REJECTED", code: "REPEATED_READ_BLOCKED" });
+        toolLoopStopReason = "DUPLICATE";
+        break;
+      }
+      seenToolCalls.add(signature);
+      toolCallCount += 1;
+
+      let toolTimer: NodeJS.Timeout | undefined;
+      let execution: Awaited<ReturnType<typeof executeModelTool>> | undefined;
+      let toolFailureRecorded = false;
+      try {
+        input.onToolSelected?.(request.name);
+        execution = await Promise.race([
+          executeModelTool(request.name, request.arguments, toolContext),
+          new Promise<undefined>((resolve) => {
+            toolTimer = setTimeout(() => resolve(undefined), Math.min(limits.toolTimeoutMs, Math.max(1, deadlineAt - Date.now())));
+          }),
+        ]);
+      } catch (error) {
+        toolFailureRecorded = true;
+        toolFeedback.push({
+          tool: request.name,
+          status: error instanceof ToolRejectedError ? "REJECTED" : "FAILED",
+          code: error instanceof ToolRejectedError ? "CANONICAL_TOOL_REJECTED" : "READ_FAILED",
+        });
+      } finally {
+        if (toolTimer) clearTimeout(toolTimer);
+      }
+      if (!execution && !toolFailureRecorded) {
+        toolFeedback.push({ tool: request.name, status: "FAILED", code: "READ_TIMEOUT" });
+        toolLoopStopReason = "TIME_LIMIT";
+        await input.onModelToolProgress?.({
+          version: 1,
+          actorId: input.actorId,
+          conversationId: input.conversationId,
+          marketId: input.market.id,
+          messageId: input.currentMessageId!,
+          resumeCount: resumedContinuation?.resumeCount ?? 0,
+          signatures: [...seenToolCalls],
+          feedback: [...toolFeedback].slice(-6),
+        });
+        break;
+      }
+      if (execution) {
+        const result = execution.result;
+        toolFeedback.push({
+          tool: execution.tool,
+          status: "SUCCEEDED",
+          result: compactModelToolResult(result),
+        });
+        if (result.kind === "SEARCH") lastSearchResult = result;
+        if (result.kind === "RESOURCE") {
+          lastResourceResult = result;
+          if (lastSearchResult && result.listings[0]) {
+            const refreshed = result.listings[0];
+            lastSearchResult = {
+              ...lastSearchResult,
+              listings: lastSearchResult.listings.map((listing) => listing.id === refreshed.id ? refreshed : listing),
+            };
+          }
+        }
+      }
+      const persistedFeedback = [...toolFeedback].slice(-6);
+      while (JSON.stringify(persistedFeedback).length > MAX_TOOL_FEEDBACK_CHARS && persistedFeedback.length)
+        persistedFeedback.shift();
+      await input.onModelToolProgress?.({
+        version: 1,
+        actorId: input.actorId,
+        conversationId: input.conversationId,
+        marketId: input.market.id,
+        messageId: input.currentMessageId!,
+        resumeCount: resumedContinuation?.resumeCount ?? 0,
+        signatures: [...seenToolCalls],
+        feedback: persistedFeedback,
+      });
+      if (Date.now() >= deadlineAt) {
+        toolLoopStopReason = "TIME_LIMIT";
+        break;
+      }
+      const nextKey = `model-tool:${createHash("sha256").update(requestKey).digest("hex").slice(0, 24)}:${toolCallCount}`;
+      const nextReservation = await reserveAiUsage({
+        owner,
+        resource,
+        idempotencyKey: nextKey,
+        ...(gateway.providerInfo ? { expectedModel: { provider: gateway.providerInfo.provider, model: gateway.providerInfo.requestedModel } } : {}),
+      });
+      if (!nextReservation.ok) {
+        toolLoopStopReason = "USAGE_LIMIT";
+        break;
+      }
+      currentReservationId = nextReservation.reservation.id;
+      currentReservationSettled = false;
+    }
   } catch (error) {
-    await settleAiUsage(reserved.reservation.id, { outcome: "PROVIDER_FAILED", providerCalls: 1 }).catch(() => undefined);
+    if (!currentReservationSettled)
+      await settleAiUsage(currentReservationId, { outcome: "PROVIDER_FAILED", providerCalls: 1 }).catch(() => undefined);
     throw error;
   }
-  const settled = await settleAiUsage(reserved.reservation.id, { outcome: usageOutcome(drafted.outcome), ...drafted.metered });
-  const usageNote = settled.reservation.status === "SETTLED" ? await nearLimitFor(owner, resource) : undefined;
+  if (!drafted) throw new Error("The model turn did not run.");
   if (input.sellerEmployeeMode) {
     const liveSession = input.sellerEmployeeSession
       ? await resolveSellerEmployeeSession({
@@ -1373,6 +1647,42 @@ export async function executeModelFallback(
       { kind: "CLARIFICATION_REQUIRED", scope: "CONVERSATION", modelStatus: outcome.reason },
       { ownerId: input.actorId },
     );
+  if (outcome.toolRequest) {
+    const partialResult = lastSearchResult ?? lastResourceResult;
+    if (partialResult) {
+      const stopMessages = {
+        CALL_LIMIT: "توقفت بعد الحد الآمن لخطوات القراءة؛ هذه هي النتائج التي تحققت منها.",
+        DUPLICATE: "توقفت لأن طلب القراءة تكرر؛ لم أكرر البحث، وهذه النتائج التي تحققت منها.",
+        TIME_LIMIT: "انتهى الوقت المحدد للقراءة؛ هذه هي النتائج التي تحققت منها.",
+        USAGE_LIMIT: "وصلت إلى حد استخدام المساعد لهذا الطلب؛ هذه هي النتائج التي تحققت منها.",
+      };
+      const answer = stopMessages[toolLoopStopReason ?? "CALL_LIMIT"];
+      return {
+        tool: partialResult.kind === "SEARCH" ? "searchListings" : "getResource",
+        version: 1,
+        result: withModelToolAnswer(partialResult, answer, partialResult.kind === "RESOURCE"),
+      };
+    }
+    return adviceTurn(
+      "لم أتمكن من إكمال القراءة بأمان. لم أغيّر بيانات أو أنفّذ أي إجراء؛ أعد صياغة طلب البحث.",
+      { kind: "CLARIFICATION_REQUIRED", scope: "CONVERSATION", modelStatus: "MALFORMED" },
+      { ownerId: input.actorId },
+    );
+  }
+  if (lastSearchResult || lastResourceResult) {
+    const text = outcome.replyFiltered
+      ? "هذه نتائج القراءة الحالية من DINAR. راجع تفاصيل العروض وبطاقاتها؛ لم أنفّذ أي إجراء."
+      : outcome.turn.conversationalReply;
+    const groundedAnswer = claimsCompletedAction(text)
+      ? "هذه نتائج القراءة الحالية من DINAR. راجع تفاصيل العروض وبطاقاتها؛ لم أنفّذ أي إجراء."
+      : text;
+    const result = lastSearchResult ?? lastResourceResult!;
+    return {
+      tool: result.kind === "SEARCH" ? "searchListings" : "getResource",
+      version: 1,
+      result: withModelToolAnswer(result, `${groundedAnswer}${usageNote ? `\n\n${usageNote}` : ""}`, result.kind === "RESOURCE"),
+    };
+  }
   const turn = outcome.turn;
   if (
     input.sellerEmployeeMode &&

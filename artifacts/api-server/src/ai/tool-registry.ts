@@ -1,8 +1,9 @@
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
+import { randomUUID } from "node:crypto";
 import { aiResultSets, db } from "@workspace/db";
 import type { ListingRecord } from "../lib/dinar-data";
-import type { marketFor } from "../lib/markets";
+import { isMarketAvailable, type marketFor } from "../lib/markets";
 import { addMarketplaceCartItem, addMarketplaceCartItemOnce } from "../lib/marketplace-cart";
 import {
   categoryAliasWords,
@@ -38,6 +39,8 @@ export type ToolContext = {
   conversationId: string;
   market: Awaited<ReturnType<typeof marketFor>>;
   actorId?: string;
+  /** The owning user-message row for any result set created during a model tool round. */
+  currentMessageId?: string;
 };
 
 export type ToolResult = {
@@ -161,6 +164,7 @@ export const aiToolRegistry: Record<string, ToolDefinition> = {
     riskLevel: "LOW",
     idempotency: "READ_ONLY",
     auditPolicy: "REDACTED_TURN_METADATA",
+    exposedToModel: true,
      inputSchema: z
        .object({
          surface: modelOpenSurfaceSchema,
@@ -284,6 +288,7 @@ export const aiToolRegistry: Record<string, ToolDefinition> = {
     riskLevel: "LOW",
     idempotency: "READ_ONLY",
     auditPolicy: "REDACTED_TURN_METADATA",
+    exposedToModel: true,
     inputSchema: SearchListingsInput,
     modelDefinition: {
       name: "searchListings",
@@ -405,6 +410,7 @@ export const aiToolRegistry: Record<string, ToolDefinition> = {
     riskLevel: "LOW",
     idempotency: "READ_ONLY",
     auditPolicy: "REDACTED_TURN_METADATA",
+    exposedToModel: true,
     inputSchema: GetResourceInput,
     modelDefinition: {
       name: "getResource",
@@ -577,10 +583,52 @@ export const aiToolRegistry: Record<string, ToolDefinition> = {
   },
 };
 
-export function modelToolDefinitions(): ModelToolDefinition[] {
+export function modelToolDefinitions(context?: ToolContext): ModelToolDefinition[] {
+  if (context && (!context.actorId || !context.conversationId || !isMarketAvailable(context.market)))
+    return [];
   return Object.values(aiToolRegistry)
-    .filter((tool) => tool.exposedToModel !== false)
+    .filter((tool) =>
+      tool.exposedToModel === true &&
+      (!context || ["searchListings", "getResource"].includes(tool.name)) &&
+      tool.riskLevel === "LOW" &&
+      tool.idempotency === "READ_ONLY" &&
+      tool.permissions.every((permission) => permission === "marketplace.read"),
+    )
     .map((tool) => tool.modelDefinition);
+}
+
+/**
+ * The model's read-only allowlist is checked again at execution time. This wrapper is the
+ * only model entry point to the registry; ordinary typed UI actions keep their existing path.
+ */
+export async function executeModelTool(
+  name: string,
+  rawArguments: string,
+  context: ToolContext,
+): Promise<{ tool: string; version: number; result: ToolResult }> {
+  if (
+    !context.actorId ||
+    !context.currentMessageId ||
+    !modelToolDefinitions(context).some((definition) => definition.name === name)
+  )
+    throw new ToolRejectedError("This read-only tool is not available in the current conversation.");
+  const execution = await executeRegisteredTool(name, rawArguments, context);
+  if (execution.result.kind === "SEARCH") {
+    const resultSetId = randomUUID();
+    const resourceIds = execution.result.listings.map((listing) => listing.id);
+    await db.insert(aiResultSets).values({
+      id: resultSetId,
+      conversationId: context.conversationId,
+      marketId: context.market.id,
+      messageId: context.currentMessageId,
+      query: execution.result.query,
+      resourceIds,
+      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+    });
+    execution.result.resultSetId = resultSetId;
+    execution.result.resourceIds = resourceIds;
+  }
+  return execution;
 }
 
 export async function executeRegisteredTool(

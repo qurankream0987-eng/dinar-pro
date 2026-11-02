@@ -539,6 +539,7 @@ export async function executeAiConversationTurn(
     message: string;
     market: ConversationMarket;
     actorId?: string;
+    modelToolContinuation?: unknown;
     imageObjectPaths?: string[];
     reasoningEffort?: "low" | "medium" | "high";
     /** Explicit one-time location submission against a delivery request (Block D). */
@@ -548,6 +549,7 @@ export async function executeAiConversationTurn(
   options: {
     modelGateway?: ConversationModelGateway;
     onToolSelected?: (name: string) => void;
+    onModelToolProgress?: (state: import("./smart-turn").ModelToolContinuation) => Promise<void>;
     onRouteDecision?: (decision: ConversationRouteDecision) => void;
     photoSuggestionProvider?: ListingPhotoSuggestionProvider;
     personalContextService?: import("./personal-context-service").PersonalContextService;
@@ -1107,9 +1109,13 @@ async function executeRuntime(context: RuntimeContext, incoming: RuntimeOptions)
     const turn = await executeModelFallback(
       {
         conversationId: context.conversationId,
+        currentMessageId: context.currentMessageId,
+        modelToolContinuation: context.modelToolContinuation,
         message: context.message,
         market: context.market,
         actorId: context.actorId,
+        onToolSelected: options.onToolSelected,
+        onModelToolProgress: options.onModelToolProgress,
         requestKey: `turn:${context.currentMessageId}`,
         reasoningEffort: context.reasoningEffort,
         allowTaskPlanning: !options.planStep && aiRoutingMode() !== "SHADOW",

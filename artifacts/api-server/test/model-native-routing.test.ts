@@ -13,9 +13,9 @@
  */
 import { test, after } from "node:test";
 import assert from "node:assert/strict";
-import { randomUUID } from "node:crypto";
-import { eq } from "drizzle-orm";
-import { cartItems, carts, db, orders, policyAcceptances, pool } from "@workspace/db";
+import { createHash, randomUUID } from "node:crypto";
+import { and, eq } from "drizzle-orm";
+import { aiResultSets, cartItems, carts, db, messages, orders, policyAcceptances, pool } from "@workspace/db";
 import app from "../src/app";
 import { AIProviderError, type ConversationModelGateway } from "../src/ai/model-gateway";
 import { CANONICAL_REQUEST_INSTRUCTION } from "../src/ai/routing-mode";
@@ -35,18 +35,55 @@ requireSafeReplitDevelopmentDatabase("BDINAR_TEST_DATABASE");
 const run = `ن${randomUUID().replaceAll("-", "").replace(/\d/g, "").slice(0, 5)}`;
 
 /** What the scripted «model» answers for a message containing the key. */
-const script: Array<{ key: string; canonical?: string; reply?: string; plannedSteps?: string[] }> = [];
+const script: Array<{
+  key: string;
+  canonical?: string;
+  reply?: string;
+  plannedSteps?: string[];
+  toolSequence?: Array<{ name: string; arguments: Record<string, unknown> }>;
+}> = [];
+const toolSequenceCalls = new Map<string, number>();
 let calls = 0;
 let sawInstruction = false;
+let sawToolFeedback = false;
+let sawUntrustedToolFeedbackRule = false;
+let observedToolNames: string[] = [];
+let matchedScriptKey = "";
 let unavailable = false;
 const gateway: ConversationModelGateway = {
-  async proposeToolCall(messages) {
+  async proposeToolCall(messages, tools) {
     calls++;
+    observedToolNames = tools.map((tool) => tool.name);
     if (unavailable) throw new AIProviderError("OPENAI", "UNAVAILABLE", "scripted");
     sawInstruction = messages.some((message) => message.role === "system" && String(message.content).includes(CANONICAL_REQUEST_INSTRUCTION));
     const user = [...messages].reverse().find((message) => message.role === "user");
     const text = String(user?.content ?? "");
     const entry = script.find((item) => text.includes(item.key));
+    matchedScriptKey = entry?.key ?? "";
+    const feedbackMatch = text.match(/<dinar_tool_results>([\s\S]*?)<\/dinar_tool_results>/u);
+    let feedback: any[] = [];
+    try { feedback = JSON.parse(feedbackMatch?.[1] ?? "[]"); } catch { feedback = []; }
+    if (feedback.length) sawToolFeedback = true;
+    sawUntrustedToolFeedbackRule = messages.some((message) =>
+      message.role === "system" &&
+      String(message.content).includes("<dinar_tool_results>") &&
+      String(message.content).includes("untrusted listing data"),
+    );
+    if (entry?.toolSequence?.length) {
+      const index = toolSequenceCalls.get(entry.key) ?? 0;
+      const step = entry.toolSequence[index];
+      if (step) {
+        toolSequenceCalls.set(entry.key, index + 1);
+        let args = step.arguments;
+        if (step.name === "getResource" && args.fromLatestSearch === true) {
+          const priorSearch = [...feedback].reverse().find((item) => item.tool === "searchListings" && item.status === "SUCCEEDED")?.result;
+          const first = priorSearch?.listings?.[0];
+          if (priorSearch?.resultSetId && first?.id)
+            args = { resultSetId: priorSearch.resultSetId, resourceId: first.id };
+        }
+        return { id: "scripted-tool", name: step.name, arguments: JSON.stringify(args) };
+      }
+    }
     return {
       id: "scripted",
       name: "dinarConversationTurn",
@@ -99,8 +136,8 @@ await publish("pixel", `جوال بكسل 7 ${run}`, "180");
 await publish("redmi", `جوال ريدمي نوت ${run}`, "120");
 
 type Reply = { status: number; tool?: string; body: string; payload: any; listingIds: string[]; routed?: string };
-async function say(cookie: string, conv: string, message: string): Promise<Reply> {
-  const response = await fetch(`${origin}/api/ai/conversations/${conv}/turns`, { method: "POST", headers: { "content-type": "application/json", cookie, origin }, body: JSON.stringify({ message, clientMessageId: randomUUID() }) });
+async function say(cookie: string, conv: string, message: string, clientMessageId = randomUUID()): Promise<Reply> {
+  const response = await fetch(`${origin}/api/ai/conversations/${conv}/turns`, { method: "POST", headers: { "content-type": "application/json", cookie, origin }, body: JSON.stringify({ message, clientMessageId }) });
   const raw = await response.text();
   const complete = raw.split(/\r?\n/).filter((line) => line.startsWith("data:")).map((line) => { try { return JSON.parse(line.slice(5)); } catch { return {}; } }).find((event: any) => event.type === "complete");
   const blocks = complete?.assistantMessage?.blocks ?? [];
@@ -329,6 +366,160 @@ await test("MN-09 failed plan steps stop later work and allow retry only for rea
   assert.equal(nextPendingStep(retried)?.index, 0);
   assert.equal(isRetryablePlanStep(failStep(base, 1, "STEP_EXECUTION_FAILED").steps[1]!), false,
     "a possibly mutating seller-draft operation is not offered for automatic retry");
+});
+
+await test("D6-AI-01 scripted read-only tool results ground the final comparison", async () => {
+  await withMode("LEGACY", async () => {
+    const user = await fresh();
+    const text = `هل يناسب جوال ${run} للاستخدام اليومي؟`;
+    const clientMessageId = randomUUID();
+    script.unshift({
+      key: text,
+      reply: "SCRIPTED_GROUNDED_COMPARISON",
+      toolSequence: [
+        { name: "searchListings", arguments: { query: `جوال ${run}` } },
+        { name: "getResource", arguments: { fromLatestSearch: true } },
+      ],
+    });
+    toolSequenceCalls.delete(text);
+    calls = 0;
+    sawToolFeedback = false;
+    sawUntrustedToolFeedbackRule = false;
+    matchedScriptKey = "";
+
+    const reply = await say(user.cookie, user.conv, text, clientMessageId);
+    assert.equal(matchedScriptKey, text, "the scripted request must match the model's user context");
+    assert.deepEqual(observedToolNames.sort(), ["dinarConversationTurn", "getResource", "searchListings"]);
+    assert.equal(calls, 3, "search, a canonical live result lookup, then a final answer");
+    assert.equal(sawToolFeedback, true, "the second and final model calls receive canonical tool results");
+    assert.equal(sawUntrustedToolFeedbackRule, true, "listing text is explicitly framed as untrusted");
+    assert.match(reply.body, /SCRIPTED_GROUNDED_COMPARISON/u);
+    assert.ok(reply.listingIds.includes(ids.pixel!));
+    assert.ok(reply.listingIds.includes(ids.redmi!));
+    const resultSets = await db.select().from(aiResultSets).where(eq(aiResultSets.conversationId, user.conv));
+    assert.equal(resultSets.filter((row) => row.messageId === clientMessageId).length, 1, "the intermediate search result is persisted against the user turn");
+    assert.equal(await cartLines(user.id), 0, "read-only model tools do not alter the cart");
+    assert.equal((await db.select().from(orders).where(eq(orders.buyerId, user.id))).length, 0, "no order is created");
+  });
+});
+
+await test("D6-AI-01 blocks a repeated identical read and returns only verified partial results", async () => {
+  await withMode("LEGACY", async () => {
+    const user = await fresh();
+    const text = `هل يوجد جوال ${run}؟`;
+    const clientMessageId = randomUUID();
+    const args = { query: `جوال ${run}` };
+    script.unshift({
+      key: text,
+      toolSequence: [
+        { name: "searchListings", arguments: args },
+        { name: "searchListings", arguments: args },
+      ],
+    });
+    toolSequenceCalls.delete(text);
+    calls = 0;
+
+    const reply = await say(user.cookie, user.conv, text, clientMessageId);
+    assert.equal(calls, 2, "the second identical request is rejected before another canonical execution");
+    assert.match(reply.body, /تكرر/u);
+    assert.ok(reply.listingIds.includes(ids.pixel!));
+    const intermediate = await db.select().from(aiResultSets).where(eq(aiResultSets.messageId, clientMessageId));
+    assert.equal(intermediate.length, 1, "only one intermediate result set exists");
+    assert.equal(await cartLines(user.id), 0);
+  });
+});
+
+await test("D6-AI-01 resumes a stale read-only loop from persisted feedback", async () => {
+  await withMode("LEGACY", async () => {
+    const user = await fresh();
+    const text = `هل يناسب جوال ${run} للاستخدام اليومي؟`;
+    const clientMessageId = randomUUID();
+    script.unshift({
+      key: text,
+      reply: "INITIAL_GROUNDED_ANSWER",
+      toolSequence: [{ name: "searchListings", arguments: { query: `جوال ${run}` } }],
+    });
+    toolSequenceCalls.delete(text);
+    const first = await say(user.cookie, user.conv, text, clientMessageId);
+    assert.ok(first.listingIds.includes(ids.pixel!));
+    const [searchSet] = await db.select().from(aiResultSets).where(eq(aiResultSets.messageId, clientMessageId));
+    assert.ok(searchSet, "the canonical search result survives the interrupted response");
+
+    const signatures = [
+      `searchListings:${createHash("sha256").update(JSON.stringify({ query: `جوال ${run}` })).digest("hex")}`,
+    ];
+    const compactListings = first.payload.listings.slice(0, 5).map((listing: any) => ({
+      id: listing.id,
+      title: String(listing.title ?? "").slice(0, 180),
+      description: String(listing.description ?? "").slice(0, 240),
+      category: String(listing.category ?? "").slice(0, 100),
+      area: String(listing.area ?? "").slice(0, 100),
+      unitPrice: listing.unitPrice,
+      currency: listing.currency,
+      pricingMode: listing.pricingMode,
+      availableQuantity: listing.availableQuantity,
+      fulfilmentType: listing.fulfilmentType,
+    }));
+    await db.delete(messages).where(and(eq(messages.conversationId, user.conv), eq(messages.actor, "ASSISTANT")));
+    await db.update(messages).set({
+      createdAt: new Date(Date.now() - 61_000),
+      metadata: {
+        turnStatus: "pending",
+        imageObjectPaths: [],
+        modelToolContinuation: {
+          version: 1,
+          actorId: user.id,
+          conversationId: user.conv,
+          marketId: searchSet.marketId,
+          messageId: clientMessageId,
+          resumeCount: 0,
+          signatures,
+          feedback: [{
+            tool: "searchListings",
+            status: "SUCCEEDED",
+            result: {
+              kind: "SEARCH",
+              resultSetId: searchSet.id,
+              resourceIds: searchSet.resourceIds,
+              listings: compactListings,
+            },
+          }],
+        },
+      },
+    }).where(eq(messages.id, clientMessageId));
+
+    script.unshift({
+      key: text,
+      reply: "RESUMED_FROM_PERSISTED_RESULTS",
+      toolSequence: [{ name: "getResource", arguments: { fromLatestSearch: true } }],
+    });
+    toolSequenceCalls.delete(text);
+    calls = 0;
+    const resumed = await say(user.cookie, user.conv, text, clientMessageId);
+    assert.equal(calls, 2, "the resumed turn uses prior search feedback instead of repeating the search");
+    assert.match(resumed.body, /RESUMED_FROM_PERSISTED_RESULTS/u);
+    assert.ok(resumed.listingIds.includes(ids.pixel!));
+    assert.equal((await db.select().from(aiResultSets).where(eq(aiResultSets.messageId, clientMessageId))).length, 1);
+  });
+});
+
+await test("D6-AI-01 does not expose model-proposed cart mutations", async () => {
+  await withMode("LEGACY", async () => {
+    const user = await fresh();
+    const text = `هل يناسب جوال ${run} للاستخدام اليومي؟`;
+    script.unshift({
+      key: text,
+      reply: "SHOULD_NOT_BE_USED",
+      toolSequence: [{ name: "addToCart", arguments: { resultSetId: randomUUID(), resourceId: ids.pixel, quantity: 1 } }],
+    });
+    toolSequenceCalls.delete(text);
+    calls = 0;
+    const reply = await say(user.cookie, user.conv, text);
+    assert.equal(calls, 1);
+    assert.doesNotMatch(reply.body, /SHOULD_NOT_BE_USED/u);
+    assert.equal(await cartLines(user.id), 0);
+    assert.equal((await db.select().from(orders).where(eq(orders.buyerId, user.id))).length, 0);
+  });
 });
 
 after(async () => {
