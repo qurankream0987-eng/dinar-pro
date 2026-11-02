@@ -218,6 +218,9 @@ await test("D7 conversation cart: confirmed flight, truthful failure, reduced mo
   assert.match(health.headers.get("permissions-policy") ?? "", /microphone=\(self\)/);
   assert.equal(health.headers.get("strict-transport-security"), null, "HSTS stays production-only");
   const web = await startDinarBrowserTestWeb(origin);
+  // The browser talks to the web server only; the /api proxy forwards same-origin, as in the
+  // built deployment. Writes are origin-checked against this exact web origin.
+  process.env.APP_ORIGIN = web.baseUrl;
   const resultPath = join(tmpdir(), `dinar-wave03-d7-${runId}.json`);
   let browserError: unknown;
   try {
@@ -237,7 +240,8 @@ await test("D7 conversation cart: confirmed flight, truthful failure, reduced mo
           WAVE03_LISTINGS: JSON.stringify(listings),
           WAVE03_RESULT_PATH: resultPath,
         },
-        timeout: 900_000,
+        timeout: 600_000,
+        killSignal: "SIGKILL",
         maxBuffer: 20 * 1024 * 1024,
       },
     );
@@ -245,6 +249,7 @@ await test("D7 conversation cart: confirmed flight, truthful failure, reduced mo
     browserError = error;
   } finally {
     await web.stop();
+    delete process.env.APP_ORIGIN;
   }
 
   let report: any;
@@ -267,6 +272,7 @@ await test("D7 conversation cart: confirmed flight, truthful failure, reduced mo
   assert.equal(report.observations.normal.busyObserved, true);
   assert.equal(report.observations.normal.flightStarted, true);
   assert.equal(report.observations.normal.flightRemoved, true);
+  assert.equal(report.observations.normal.repeatFlightCount, 0, "a repeated confirmation never animates again");
   assert.equal(report.observations.reduced.skippedReason, "reduced-motion");
   assert.equal(report.observations.reduced.cartQuantity, 1, "reduced motion still commits the cart once");
   assert.equal(report.observations.desktop.flightCount, 0, "a failed add never animates");
@@ -343,6 +349,8 @@ await test("D7 conversation cart: confirmed flight, truthful failure, reduced mo
 });
 
 after(async () => {
+  // A killed browser can leave its stream open; never let the suite wait on it forever.
+  server.closeAllConnections();
   await new Promise<void>((resolve) => server.close(() => resolve()));
   await pool.end();
 });

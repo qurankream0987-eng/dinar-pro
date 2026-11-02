@@ -153,6 +153,8 @@ export default function AiPage() {
   const [visibleMessageCount, setVisibleMessageCount] = useState(40);
   const [showJumpToBottom, setShowJumpToBottom] = useState(false);
   const [addingListingId, setAddingListingId] = useState<string>();
+  // A stored cart receipt is returned again on every retry. It is shown and acknowledged once.
+  const confirmedReceipts = useRef<Set<string>>(new Set());
   const { refreshFromServer: refreshCartFromServer } = useCart();
   const [conversationToDelete, setConversationToDelete] = useState<{
     id: string;
@@ -1274,14 +1276,20 @@ export default function AiPage() {
           resourceId: listing.id,
         });
         if (epoch !== requestEpoch.current) return false;
-        setLocalMessages((current) => [
-          ...(current ?? messages),
-          assistantMessage,
-        ]);
+        const alreadyConfirmed =
+          confirmedReceipts.current.has(assistantMessage.id) ||
+          (messages ?? []).some((message) => message.id === assistantMessage.id);
+        if (!alreadyConfirmed) {
+          confirmedReceipts.current.add(assistantMessage.id);
+          setLocalMessages((current) => [
+            ...(current ?? messages),
+            assistantMessage,
+          ]);
+        }
         await refreshCartFromServer();
         refreshConversationData(activeId);
         if (user && market) publishCardSync(user.id, market.id, activeId);
-        return true;
+        return !alreadyConfirmed;
       } catch (cause) {
         if (epoch !== requestEpoch.current) return false;
         setError(friendlyError(cause));

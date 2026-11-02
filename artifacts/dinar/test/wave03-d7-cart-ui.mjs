@@ -73,15 +73,8 @@ async function openPass(label, viewport, reducedMotion) {
       secure: false,
     },
   ]);
-  await context.route("**/api/**", async (route) => {
-    const request = route.request();
-    const url = new URL(request.url());
-    const headers = await request.allHeaders();
-    for (const header of ["host", "origin", "referer", "content-length", "sec-fetch-site"]) delete headers[header];
-    headers.origin = apiOrigin;
-    headers.referer = `${apiOrigin}/`;
-    await route.fulfill({ response: await route.fetch({ url: `${apiOrigin}${url.pathname}${url.search}`, headers }) });
-  });
+  // Requests stay same-origin through the web server's /api proxy, exactly like the built
+  // deployment. Buffering the turn's SSE response through route.fetch would stall it.
   const page = await context.newPage();
   watch(page, label);
   return { context, page };
@@ -247,6 +240,23 @@ try {
     );
     assert.equal(await visibleBadge(page), "1", "the server-confirmed add updates the cart badge");
     assert.equal(await cartQuantity(normalListing.id), 1, "the canonical cart holds one unit");
+    const flightsBeforeRepeat = (await page.evaluate(() => window.__wave03.flights)).length;
+    const repeatResponse = page.waitForResponse(
+      (response) =>
+        new URL(response.url()).pathname === `/api/ai/conversations/${conversationId}/actions/add-to-cart` &&
+        response.request().method() === "POST",
+      { timeout: 60_000 },
+    );
+    await add.click();
+    assert.equal((await repeatResponse).status(), 200, "a repeated tap reads the stored receipt back");
+    await sleep(400);
+    assert.equal(
+      (await page.evaluate(() => window.__wave03.flights)).length,
+      flightsBeforeRepeat,
+      "a repeated confirmation of the same card never animates again",
+    );
+    assert.equal(await visibleBadge(page), "1", "a repeated confirmation adds no second unit");
+    assert.equal(await cartQuantity(normalListing.id), 1, "the retry leaves the canonical quantity at one");
     const receipts = (await backend(`/ai/conversations/${conversationId}`)).messages
       .flatMap((message) => message.blocks ?? [])
       .filter((block) => block?.payload?.surface === "CART");
@@ -257,6 +267,7 @@ try {
       busyObserved: true,
       flightStarted: true,
       flightRemoved: true,
+      repeatFlightCount: 0,
       badge: "1",
       cartQuantity: 1,
       receiptCount: receipts.length,
