@@ -950,6 +950,60 @@ async function executeRuntime(context: RuntimeContext, incoming: RuntimeOptions)
   const { modelStage, ...options } = incoming;
   // «تمام روجه», «طيب نفذ»: a leading acknowledgement is not part of the command.
   context = { ...context, message: withoutAcknowledgement(context.message) };
+  const modelFallback = async () => {
+    if (options.noModel) return null;
+    const turn = await executeModelFallback(
+      {
+        conversationId: context.conversationId,
+        currentMessageId: context.currentMessageId,
+        modelToolContinuation: context.modelToolContinuation,
+        message: context.message,
+        market: context.market,
+        actorId: context.actorId,
+        onToolSelected: options.onToolSelected,
+        onModelToolProgress: options.onModelToolProgress,
+        requestKey: `turn:${context.currentMessageId}`,
+        reasoningEffort: context.reasoningEffort,
+        allowTaskPlanning: !options.planStep && aiRoutingMode() !== "SHADOW",
+      },
+      options.modelGateway,
+      // Suggestions re-enter the same deterministic review a typed command opens.
+      async (message) =>
+        (await executeNegotiationTurn({ conversationId: context.conversationId, message, market: context.market, actorId: context.actorId })) ??
+        executeBuyerTurn({ conversationId: context.conversationId, message, market: context.market, actorId: context.actorId }),
+      async (message) => {
+        const result = await listingDraft(
+          context.conversationId,
+          message,
+          "SELL",
+          context.imageObjectPaths,
+          options.photoSuggestionProvider,
+          context.actorId,
+        );
+        return result ? { tool: "openSurface", version: 1, result } : null;
+      },
+      // A capability the model named re-enters the whole deterministic runtime, model disabled.
+      async (message) => {
+        const routed = await executeAiConversationTurn({ ...context, message }, { ...options, planStep: true, noModel: true });
+        return routed.result.kind === "SURFACE" && routed.result.surface === "CLARIFY" ? null : routed;
+      },
+    );
+    if (turn?.taskPlanProposal) {
+      const planned = await executeTaskPlanTurn(context, options, turn.taskPlanProposal);
+      if (planned) return planned;
+      const { taskPlanProposal: _discardedProposal, ...modelReply } = turn;
+      options.onToolSelected?.(modelReply.tool);
+      return modelReply;
+    }
+    if (turn) options.onToolSelected?.(turn.tool);
+    return turn;
+  };
+  // A turn that died mid read resumes the same bounded model loop: its signatures and
+  // verified feedback belong to that loop, not to a fresh deterministic reading.
+  if (!options.noModel && !options.planStep && context.modelToolContinuation) {
+    const resumed = await modelFallback();
+    if (resumed) return resumed;
+  }
   if (
     !options.planStep &&
     context.actorId &&
@@ -1104,54 +1158,6 @@ async function executeRuntime(context: RuntimeContext, incoming: RuntimeOptions)
     if (control) return control;
     interactionToProcess = interaction;
   }
-  const modelFallback = async () => {
-    if (options.noModel) return null;
-    const turn = await executeModelFallback(
-      {
-        conversationId: context.conversationId,
-        currentMessageId: context.currentMessageId,
-        modelToolContinuation: context.modelToolContinuation,
-        message: context.message,
-        market: context.market,
-        actorId: context.actorId,
-        onToolSelected: options.onToolSelected,
-        onModelToolProgress: options.onModelToolProgress,
-        requestKey: `turn:${context.currentMessageId}`,
-        reasoningEffort: context.reasoningEffort,
-        allowTaskPlanning: !options.planStep && aiRoutingMode() !== "SHADOW",
-      },
-      options.modelGateway,
-      // Suggestions re-enter the same deterministic review a typed command opens.
-      async (message) =>
-        (await executeNegotiationTurn({ conversationId: context.conversationId, message, market: context.market, actorId: context.actorId })) ??
-        executeBuyerTurn({ conversationId: context.conversationId, message, market: context.market, actorId: context.actorId }),
-      async (message) => {
-        const result = await listingDraft(
-          context.conversationId,
-          message,
-          "SELL",
-          context.imageObjectPaths,
-          options.photoSuggestionProvider,
-          context.actorId,
-        );
-        return result ? { tool: "openSurface", version: 1, result } : null;
-      },
-      // A capability the model named re-enters the whole deterministic runtime, model disabled.
-      async (message) => {
-        const routed = await executeAiConversationTurn({ ...context, message }, { ...options, planStep: true, noModel: true });
-        return routed.result.kind === "SURFACE" && routed.result.surface === "CLARIFY" ? null : routed;
-      },
-    );
-    if (turn?.taskPlanProposal) {
-      const planned = await executeTaskPlanTurn(context, options, turn.taskPlanProposal);
-      if (planned) return planned;
-      const { taskPlanProposal: _discardedProposal, ...modelReply } = turn;
-      options.onToolSelected?.(modelReply.tool);
-      return modelReply;
-    }
-    if (turn) options.onToolSelected?.(turn.tool);
-    return turn;
-  };
   // routing-mode.ts: only the model is consulted (MODEL_FIRST's first read, HYBRID's second look).
   // A decision turn never goes to the model; an unavailable model yields no result.
   if (modelStage === "ONLY" && !options.noModel) {

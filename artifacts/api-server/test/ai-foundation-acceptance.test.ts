@@ -182,6 +182,12 @@ type Reply = {
   listingIds: string[];
 };
 async function say(cookie: string, conv: string, message: string, clientMessageId = randomUUID()): Promise<Reply> {
+  calls = 0;
+  observedToolNames = [];
+  sawUntrustedRule = false;
+  lastPromptText = "";
+  lastFeedback = [];
+  lastFeedbackRaw = "[]";
   const response = await fetch(`${origin}/api/ai/conversations/${conv}/turns`, {
     method: "POST",
     headers: { "content-type": "application/json", cookie, origin },
@@ -403,11 +409,20 @@ test("AI-F05 an expired result set is rejected before any listing fact is return
   const user = await fresh();
   const market = await marketFor({ actor: { activeMarketId: "JO" }, cookies: {} } as any);
   const resultSetId = randomUUID();
+  const contextMessageId = randomUUID();
+  await db.insert(messages).values({
+    id: contextMessageId,
+    conversationId: user.conv,
+    senderId: user.id,
+    body: `سياق جوال ${run}`,
+    actor: "USER",
+    contentType: "TEXT",
+  });
   await db.insert(aiResultSets).values({
     id: resultSetId,
     conversationId: user.conv,
     marketId: market.id,
-    messageId: randomUUID(),
+    messageId: contextMessageId,
     query: { search: `جوال ${run}` },
     resourceIds: [ids.pixel!],
     expiresAt: new Date(Date.now() - 1_000),
@@ -455,7 +470,7 @@ test("AI-F06 a repeated comparison is blocked and the verified comparison is ret
 
 test("AI-F07 the call limit stops a fourth read and returns the verified comparison", async () => {
   const user = await fresh();
-  const text = `ابحث وقارن جوالات ${run} ثم افتح الأول`;
+  const text = `أي جوال ${run} أفضل للاستخدام اليومي؟`;
   const clientMessageId = randomUUID();
   script.unshift({
     key: text,
@@ -553,7 +568,7 @@ test("AI-F11 oversized results are bounded for the model while the stored result
   for (let index = 0; index < 7; index += 1)
     await publish(`bulk-${index}`, `جوال ${many} إصدار ${index}`, String(200 + index));
   const user = await fresh();
-  const text = `ابحث عن جوال ${many}`;
+  const text = `هل يناسب جوال ${many} للاستخدام اليومي؟`;
   const clientMessageId = randomUUID();
   script.unshift({
     key: text,
@@ -562,6 +577,7 @@ test("AI-F11 oversized results are bounded for the model while the stored result
   toolSequenceCalls.delete(text);
   const reply = await say(user.cookie, user.conv, text, clientMessageId);
   assert.equal(reply.status, 200, reply.body);
+  assert.ok(calls >= 2, "the search ran through the production model loop");
   const searchFeedback = lastFeedback.find((item) => item.tool === "searchListings" && item.status === "SUCCEEDED");
   assert.ok(searchFeedback);
   assert.ok(searchFeedback.result.listings.length <= 5, "the model sees at most five listings");
@@ -622,6 +638,7 @@ test("AI-F12 persisted comparison signatures block a replay after a stale turn r
   toolSequenceCalls.delete(text);
   calls = 0;
   const resumed = await say(user.cookie, user.conv, text, clientMessageId);
+  assert.equal(resumed.status, 200, resumed.body || "the stale turn was not resumed");
   assert.equal(calls, 1, "the replayed signature is blocked before another tool execution");
   assert.match(resumed.body, /لم أتمكن من إكمال القراءة/u);
   assert.doesNotMatch(resumed.body, /RESUMED_COMPARISON_TEXT/u);

@@ -1760,6 +1760,14 @@ export async function executeModelFallback(
       { ownerId: input.actorId },
     );
   }
+  // Reads were attempted and every one was refused: the model has no verified DINAR data for
+  // this turn, so its prose is withheld rather than shown as if it had read anything.
+  if (toolFeedback.length && !toolFeedback.some((item) => item.status === "SUCCEEDED"))
+    return adviceTurn(
+      "لم أستطع التحقق من البيانات المطلوبة داخل DINAR، فلم أعرض أي معلومات ولم أعتمد على تخمين. لم يتغير شيء؛ أعد صياغة طلبك أو ابدأ بحثًا جديدًا.",
+      { kind: "CLARIFICATION_REQUIRED", scope: "DINAR_INTERNAL", topic: "MODEL_READ_UNVERIFIED" },
+      { ownerId: input.actorId },
+    );
   if (lastSearchResult || lastResourceResult) {
     const text = outcome.replyFiltered
       ? "هذه نتائج القراءة الحالية من DINAR. راجع تفاصيل العروض وبطاقاتها؛ لم أنفّذ أي إجراء."
