@@ -134,7 +134,8 @@ async function request(path: string, method = "GET", body?: unknown, cookie = ""
 
 let phone = 0;
 async function register(name: string) {
-  const number = `78${((Date.now() + 7307 * phone++) % 1_000_000).toString().padStart(6, "0")}${phone % 10}`;
+  // JO mobile numbers are 7[789] + 7 digits; a fixed 79 prefix keeps every generated number valid.
+  const number = `79${String((Date.now() + 7919 * phone++) % 10_000_000).padStart(7, "0")}`;
   const password = "ai-foundation-password-1";
   const created = await request("/auth/register", "POST", {
     displayName: name,
