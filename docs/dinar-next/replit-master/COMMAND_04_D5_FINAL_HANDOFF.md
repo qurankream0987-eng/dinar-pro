@@ -2,12 +2,12 @@
 
 ## Result
 
-**PARTIAL.** A bounded D4 intelligent catalog-read context is wired into the existing smart-turn model context. The broader Universal Intelligent Seller Employee is not implemented; see `COMMAND_04_D5_REMAINING_GAPS.md` and `COMMAND_04_D5_ACCEPTANCE_EVIDENCE.md`.
+**PARTIAL.** D5 now has an explicitly invoked, read-only seller-employee path in the existing conversation runtime. Ordinary seller questions remain on the owner's existing D3 path. The broader Universal Intelligent Seller Employee is not implemented; see `COMMAND_04_D5_REMAINING_GAPS.md` and `COMMAND_04_D5_ACCEPTANCE_EVIDENCE.md`.
 
 ## Git
 
 - Starting SHA: `f939595922171974626ef2cfd2c516aec8b86428`
-- Tested source commit: `d0b63b36b9d4b4982ed192126682c51fa3882e0f`
+- Tested source commit: `08cba5e841f08fd37ae838d989372eef2cc2f33a`
 - Authorized branch: `replit/dinar-next-complete-development`
 - No merge to `main` and no deployment were made.
 - The source commit link is reported in the final owner message after the branch push.
@@ -15,14 +15,15 @@
 ## Architecture and authority
 
 - D2/D3 business identity and D4 delegation remain canonical.
-- The model can receive a compact published-catalog summary only from one live intelligent `business.catalog.read` grant for the authenticated actor and current market.
-- Ambiguous, expired, absent, wrong-actor, and wrong-market grants fail closed.
-- No D5 permission, route, API contract, generated client, schema, migration, model tool, or UI was added.
+- The model receives a compact published-catalog summary only after an explicit employee invocation and one live intelligent `business.catalog.read` grant for the authenticated actor and current market.
+- Ambiguous, expired, absent, wrong-actor, and wrong-market grants fail closed. The grant is rechecked before model context is sent and after the model returns.
+- The employee model context excludes marketplace search results, conversation history, personal memories, and the owner's broader listing context.
+- Model-proposed writes, searches, plans, and canonical requests are rejected server-side. No D5 write permission, HTTP route, API contract, generated client, schema, migration, model tool, or UI was added.
 - The real model/provider was not called for D5 acceptance.
 
 ## Verification
 
-Typecheck, API build, web build, database schema check, the secret test, targeted D4 acceptance, and seven regression suites passed. Replit SAST and HoundDog reported zero findings at workspace scope, but target-checkout scan coverage is unconfirmed. The workspace-root dependency scan reported one high and one moderate finding; it does not establish the target checkout’s dependency status. Chromium D5 acceptance and live-provider acceptance were not run. Full counts and the D5-01..25 statuses are in the acceptance evidence.
+API typecheck, API build, and targeted D4/D5 acceptance passed against a fresh loopback PostgreSQL database that was dropped after the test. The test runner blocked provider calls; no production or managed database was used. Earlier regression and scan results remain as recorded in the acceptance evidence and were not rerun against this source commit. Chromium D5 acceptance and live-provider acceptance were not run.
 
 ## Handoff decision
 

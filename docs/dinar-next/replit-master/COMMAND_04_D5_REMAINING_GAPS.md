@@ -2,7 +2,7 @@
 
 ## Release status
 
-D5 is **PARTIAL**, not complete. The committed feature is limited to a safe, read-only catalog context for the existing AI model path. It does not provide the universal seller employee specified in Command 04.
+D5 is **PARTIAL**, not complete. The committed feature provides an explicit-invocation, read-only catalog context for the existing AI model path. Ordinary seller questions remain in the owner route. It does not provide the universal seller employee specified in Command 04.
 
 ## Functional gaps
 
@@ -19,6 +19,13 @@ D5 is **PARTIAL**, not complete. The committed feature is limited to a safe, rea
 - D5 catalog-content prompt-injection coverage.
 - D5-specific persisted-state and audit-event assertions.
 - D5-25 authenticated browser reload and stale-action acceptance.
+
+## Current invocation boundary
+
+- D5 starts only when the user explicitly addresses the seller employee; ordinary seller requests keep their existing owner-authorized D3 behavior.
+- One active intelligent `business.catalog.read` grant is required for the authenticated owner and current market.
+- The model receives only the scoped published-catalog summary. Proposed writes, searches, planning, and canonical actions are rejected; no D5 mutation permission has been added.
+- Image/location employee requests are refused. No live-model answer or signed-in browser journey has been verified.
 
 ## Constraints and dependencies
 

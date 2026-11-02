@@ -3,29 +3,26 @@
 ## Tested implementation
 
 - Starting SHA: `f939595922171974626ef2cfd2c516aec8b86428`
-- Tested source SHA: `d0b63b36b9d4b4982ed192126682c51fa3882e0f`
+- Tested source SHA: `08cba5e841f08fd37ae838d989372eef2cc2f33a`
 - Branch: `replit/dinar-next-complete-development`
-- Database: isolated loopback PostgreSQL created by `test/isolation/local-suite.sh`; not a permanent or production database.
+- Database: fresh loopback PostgreSQL test database, dropped after the suite; not a managed or production database.
 
 ## Commands and results
 
 | Check | Result |
 |---|---|
-| `pnpm -w run typecheck` | PASS |
+| `pnpm --filter @workspace/api-server typecheck` | PASS |
 | `pnpm --filter @workspace/api-server run build` | PASS |
-| `pnpm --filter @workspace/dinar run build` | PASS; existing vendor-annotation and large-chunk warnings remain |
-| `pnpm --filter @workspace/db run check` | PASS; no schema changes |
-| `pnpm run test:secrets` in `artifacts/api-server` | PASS, 1 test |
-| `test/isolation/local-suite.sh business-delegations.test BDINAR_D4_ACCEPTANCE=development` | PASS, 4 tests; `outbound=0` |
-| D1/D2, D3-A native business, D4, G2 inquiry, G2 smart conversation, universal negotiation, AI authority chain | PASS, 221 Node tests across 7 suites; `outbound=0` |
+| `node test/run.mjs business-delegations.test` from `artifacts/api-server` | PASS, 4 tests, using a fresh loopback database that was dropped afterward; provider calls blocked by the test runner |
+| Previous D1/D2, D3-A native business, D4, G2 inquiry, G2 smart conversation, universal negotiation, AI authority chain | PASS, 221 Node tests across 7 suites on the previous source SHA `d0b63b36b9d4b4982ed192126682c51fa3882e0f`; not rerun for this update |
 | SAST / HoundDog | PARTIAL: zero findings reported at Replit workspace scope; target-checkout coverage unconfirmed |
 | Dependency audit | PARTIAL/OPEN: workspace-root scan found 1 high and 1 moderate; target-checkout scan not established, see security document |
 | Chromium/browser D5 acceptance | NOT_RUN |
 | Live-provider/model acceptance | NOT_RUN |
 
-The D5 integration test proves: no grant gives no context; one active intelligent read grant gives context; expired grants, another actor, and another market give no context; two active grants are ambiguous and give no context; seller-help wording receives the bounded server context; unrelated wording does not; and the context includes no grant/configuration identifier.
+The D5 integration test proves: an explicit Arabic employee invocation with no grant is denied before the provider path; ordinary seller-help wording does not receive D5 context; one active intelligent read grant gives context only for explicit invocation; expired grants, another actor, and another market give no context; two active grants are ambiguous and give no context; and the employee context excludes search results, conversation history, personal memories, owner listing facts, and grant/configuration identifiers. A focused guard test rejects model-proposed writes and other actions. No live model answer was tested.
 
-The broader chain recorded: D1/D2 24/24, D3-A native business 43/43 (including 41 D3A cases), D4 4/4, G2 inquiry 17/17, G2 smart conversation 91/91 (including 83 G2 cases), universal negotiation 38/38 (36 acceptance cases), and model-authority boundary 4/4. Every isolated suite reported `outbound=0`.
+The broader chain on the previous source SHA recorded: D1/D2 24/24, D3-A native business 43/43 (including 41 D3A cases), D4 4/4, G2 inquiry 17/17, G2 smart conversation 91/91 (including 83 G2 cases), universal negotiation 38/38 (36 acceptance cases), and model-authority boundary 4/4. Every isolated suite reported `outbound=0`; those suites were not rerun for the current source SHA.
 
 ## D5-01 through D5-25
 
