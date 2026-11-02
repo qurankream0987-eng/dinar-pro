@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
 import app from "../src/app";
+import { executeAiConversationTurn } from "../src/ai/conversation-runtime";
 import { businessAuditEvents, businessDelegations, businessMemberships, businessOperatingProfiles, db } from "@workspace/db";
 import { marketFor } from "../src/lib/markets";
 import { requireSafeReplitDevelopmentDatabase } from "./safe-development-database";
@@ -297,8 +298,29 @@ await test("D5 model context is available only through one live D4 intelligent r
   }, owner.cookie);
 
   const { delegatedSellerModelContext } = await import("../src/lib/business-delegations");
+  const { isExplicitSellerEmployeeInvocation, sellerEmployeeActionIsBlocked } = await import("../src/ai/smart-turn");
   assert.equal(typeof delegatedSellerModelContext, "function");
   assert.equal(await delegatedSellerModelContext({ actorId: owner.id, marketId: "JO" }), null);
+  assert.equal(isExplicitSellerEmployeeInvocation("يا موظفي الذكي، اكتب وصفًا للمنتج"), true);
+  assert.equal(isExplicitSellerEmployeeInvocation("كيف أكتب رد لزبائني عن منتجاتي؟"), false);
+  assert.equal(sellerEmployeeActionIsBlocked({
+    responseKind: "ACTION_PROPOSAL",
+    suggestedAction: "CREATE_LISTING_DRAFT",
+    conversationalReply: "سأبدأ مسودة",
+  } as any), true);
+  assert.equal(sellerEmployeeActionIsBlocked({
+    responseKind: "CONVERSATIONAL_RESPONSE",
+    suggestedAction: "NONE",
+    conversationalReply: "الوصف المنشور يذكر اللون الأسود فقط.",
+  } as any), false);
+  const noGrantTurn = await executeAiConversationTurn({
+    conversationId: await conversation(owner),
+    currentMessageId: randomUUID(),
+    message: "يا موظفي الذكي، أنشئ إعلانًا لمنتجي",
+    market: await marketFor({ actor: { activeMarketId: "JO" } }),
+    actorId: owner.id,
+  });
+  assert.equal((noGrantTurn.result as any).advice.topic, "SELLER_EMPLOYEE_GRANT_UNAVAILABLE");
 
   const first = await createAiGrant("one");
   assert.equal(first.status, 201, first.raw);
@@ -326,7 +348,16 @@ await test("D5 model context is available only through one live D4 intelligent r
     actorId: owner.id,
   };
   const prompted = await modelContext(modelInput);
-  assert.equal((prompted.serverContext as any).sellerEmployee.status, "ACTIVE");
+  assert.equal("sellerEmployee" in (prompted.serverContext as any), false,
+    "ordinary seller questions must remain in the owner's existing route");
+  const explicitPrompted = await modelContext({
+    ...modelInput,
+    message: "يا موظفي الذكي، كيف أكتب ردًا لزبائني عن منتجاتي؟",
+  });
+  assert.equal((explicitPrompted.serverContext as any).sellerEmployee.status, "ACTIVE");
+  assert.deepEqual(explicitPrompted.results, []);
+  assert.deepEqual(explicitPrompted.history, []);
+  assert.equal(explicitPrompted.sellerListing, undefined);
   const unrelated = await modelContext({ ...modelInput, message: "اشرح لي معنى كلمة الوفاء" });
   assert.equal("sellerEmployee" in (unrelated.serverContext as any), false);
 

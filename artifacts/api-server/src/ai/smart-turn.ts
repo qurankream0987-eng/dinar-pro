@@ -67,6 +67,7 @@ import { isMarketingRequest, sellerListingFacts, unsupportedCopyClaims } from ".
 import type { ToolResult } from "./tool-registry";
 
 type Market = Awaited<ReturnType<typeof marketFor>>;
+type DelegatedSellerSnapshot = NonNullable<Awaited<ReturnType<typeof delegatedSellerModelContext>>>;
 type Turn = { tool: string; version: number; result: ToolResult; taskPlanProposal?: string[] };
 type Input = {
   conversationId: string;
@@ -76,6 +77,8 @@ type Input = {
   requestKey?: string;
   reasoningEffort?: ReasoningEffort;
   allowTaskPlanning?: boolean;
+  sellerEmployeeMode?: boolean;
+  sellerEmployeeSnapshot?: DelegatedSellerSnapshot;
 };
 
 export const SMART_SURFACES = CONVERSATION_SURFACE_FAMILIES.smart;
@@ -94,7 +97,22 @@ const ITEM_STOP = /^(?:اشتري|اخذ|اختار|بس|لكن|وش|شو|شي|�
 const SHOW = /(?:^|\s)(?:شوف|وريني|ورني|اعرض|اعرضلي|طلع|طلعلي|دور|دورلي|ابحث)(?:\s+(?:لي|الموجود|اللي عندك|عندك|الموجود عندك|الخيارات))*$|(?:وش|شو|ايش|شنو) (?:عندك|الموجود|فيه|في)(?:\s|$)|الموجود عندك/u;
 const IMPORTANT = /(?:^|\s)(?:يهمني|تهمني|مهمه لي|مهم لي|اهم شي)(?:\s|$)/u;
 const SELLING = /(?:^|\s)(?:ابيع|بيع|اعرض للبيع|انشر)(?:\s|$)/u;
-const SELLER_EMPLOYEE_CONTEXT_REQUEST = /(?:موظف(?:ي|نا)?\s+(?:ال)?ذكي|الموظف الذكي|موظفي|منتجاتي|عروضي|إعلاناتي|اعلاناتي|المتجر|النشاط التجاري|زبائني|الزبائن|مخزوني|مخزون النشاط)/u;
+const EXPLICIT_SELLER_EMPLOYEE_INVOCATION =
+  /(?:^|[\s،,])(?:يا\s+)?(?:موظف(?:ي|نا)?\s+(?:ال)?ذكي|الموظف(?:ة)?\s+الذكي(?:ة)?|smart\s+seller\s+employee)(?=$|[\s،,!.؟?])/iu;
+
+export function isExplicitSellerEmployeeInvocation(message: string): boolean {
+  return EXPLICIT_SELLER_EMPLOYEE_INVOCATION.test(normalizeSearch(message));
+}
+
+export function sellerEmployeeActionIsBlocked(turn: ModelTurn): boolean {
+  return Boolean(
+    turn.plannedSteps?.length ||
+    turn.canonicalRequest ||
+    turn.responseKind === "ACTION_PROPOSAL" ||
+    turn.responseKind === "SEARCH_INTENT" ||
+    (turn.suggestedAction && turn.suggestedAction !== "NONE"),
+  );
+}
 const BUDGET = /(?:حدي|ميزانيتي|ميزانيه|بحدود|حدود|اقل من|تحت|لحد|ما يتعدي|ما يزيد عن|اقصي|الحد)\s*(?:هو\s+)?(\d+(?:\.\d+)?)/u;
 const PREFERENCES: [RegExp, string, string][] = [
   [/(?:^|\s)(?:ال)?سعر(?:ه|ها)?(?:\s|$)|(?:^|\s)رخيص|(?:^|\s)ارخص/u, "PRICE", "السعر"],
@@ -791,9 +809,10 @@ export async function modelContext(input: Input): Promise<ModelContext> {
   const order = new Map(set?.resourceIds.map((id, index) => [id, index + 1]) ?? []);
   const sellerEmployeeRequested =
     Boolean(input.actorId && marketAvailable) &&
-    (isMarketingRequest(input.message) || SELLER_EMPLOYEE_CONTEXT_REQUEST.test(input.message));
+    isExplicitSellerEmployeeInvocation(input.message);
   const delegatedCatalog = sellerEmployeeRequested
-    ? await delegatedSellerModelContext({ actorId: input.actorId!, marketId: input.market.id })
+    ? input.sellerEmployeeSnapshot ??
+      await delegatedSellerModelContext({ actorId: input.actorId!, marketId: input.market.id })
     : null;
   const serverContext = conversationGuidance(
     input.market,
@@ -830,9 +849,9 @@ export async function modelContext(input: Input): Promise<ModelContext> {
     marketAvailable,
     serverContext: contextualServerFacts,
     goal: null,
-    preferences: input.actorId ? (await personalContext.getRelevantContext(input.actorId, input.message, input.conversationId)).map(m => `${m.kind}: ${m.label}${m.value ? ` (${m.value})` : ""}; ${m.reason}`) : [],
+    preferences: input.actorId && !sellerEmployeeRequested ? (await personalContext.getRelevantContext(input.actorId, input.message, input.conversationId)).map(m => `${m.kind}: ${m.label}${m.value ? ` (${m.value})` : ""}; ${m.reason}`) : [],
     // Only coarse listing facts; never seller contact, coordinates or ids.
-    results: listings.map((listing) => ({
+    results: sellerEmployeeRequested ? [] : listings.map((listing) => ({
       position: order.get(listing.id) ?? 0,
       title: listing.title,
       price: listing.unitPrice,
@@ -843,11 +862,11 @@ export async function modelContext(input: Input): Promise<ModelContext> {
     })),
     pendingAction: null,
     // The ledger, not the assistant's earlier words, is what the model may treat as done.
-    ...(input.actorId ? { actionReceipts: await recentActionReceipts(input.conversationId, input.actorId) } : {}),
+    ...(input.actorId && !sellerEmployeeRequested ? { actionReceipts: await recentActionReceipts(input.conversationId, input.actorId) } : {}),
     // Another party's words delivered by an inquiry are never model instructions or history.
-    history: history.slice(1).reverse().filter((row) => row.metadata?.inquiryDelivery !== true && row.metadata?.inquiryContent !== true).map((row) => ({ actor: row.actor, body: row.body })),
+    history: sellerEmployeeRequested ? [] : history.slice(1).reverse().filter((row) => row.metadata?.inquiryDelivery !== true && row.metadata?.inquiryContent !== true).map((row) => ({ actor: row.actor, body: row.body })),
     // Marketing help is grounded in the seller's own listing or draft, with provenance.
-    ...(input.actorId && marketAvailable && isMarketingRequest(input.message)
+    ...(input.actorId && marketAvailable && !sellerEmployeeRequested && isMarketingRequest(input.message)
       ? { sellerListing: await sellerListingFacts({ conversationId: input.conversationId, message: input.message, market: input.market, actorId: input.actorId }) }
       : {}),
   };
@@ -1170,12 +1189,26 @@ export async function executeModelFallback(
   const requestKey = input.requestKey
     ? `${input.requestKey}:${createHash("sha256").update(input.message).digest("hex").slice(0, 12)}`
     : `turn:${input.conversationId}:${randomUUID()}`;
+  let sellerEmployeeSnapshot = input.sellerEmployeeSnapshot;
+  if (input.sellerEmployeeMode) {
+    const current = await delegatedSellerModelContext({ actorId: input.actorId, marketId: input.market.id });
+    if (!sellerEmployeeSnapshot || !current || JSON.stringify(current) !== JSON.stringify(sellerEmployeeSnapshot))
+      return adviceTurn(
+        "تغير التفويض قبل بدء الرد؛ لم أرسل بيانات الكتالوج إلى النموذج. تحقق من الصلاحيات ثم أعد الاستدعاء.",
+        { kind: "CLARIFICATION_REQUIRED", scope: "D4_AUTHORIZATION", topic: "SELLER_EMPLOYEE_GRANT_CHANGED", authority: "DINAR" },
+        { ownerId: input.actorId },
+      );
+    sellerEmployeeSnapshot = current;
+  }
   const reserved = await reserveAiUsage({ owner, resource, idempotencyKey: requestKey, ...(gateway.providerInfo ? { expectedModel: { provider: gateway.providerInfo.provider, model: gateway.providerInfo.requestedModel } } : {}) });
   if (!reserved.ok) return usageRefusalTurn(reserved, owner, input.conversationId, input.market, input.actorId);
   let drafted: Awaited<ReturnType<typeof draftWithClaimGuard>>;
   let context: ModelContext;
   try {
-    context = await modelContext(input);
+    context = await modelContext({
+      ...input,
+      ...(input.sellerEmployeeMode && sellerEmployeeSnapshot ? { sellerEmployeeSnapshot } : {}),
+    });
     const actorId = input.actorId;
     // Every model this turn could reach must satisfy the spend policy, not only the primary the
     // usage hold checked: an unpriced HEAVY model or fallback is removed under REFUSE.
@@ -1199,6 +1232,15 @@ export async function executeModelFallback(
   }
   const settled = await settleAiUsage(reserved.reservation.id, { outcome: usageOutcome(drafted.outcome), ...drafted.metered });
   const usageNote = settled.reservation.status === "SETTLED" ? await nearLimitFor(owner, resource) : undefined;
+  if (input.sellerEmployeeMode) {
+    const current = await delegatedSellerModelContext({ actorId: input.actorId, marketId: input.market.id });
+    if (!sellerEmployeeSnapshot || !current || JSON.stringify(current) !== JSON.stringify(sellerEmployeeSnapshot))
+      return adviceTurn(
+        "تغير التفويض أو بيانات الكتالوج أثناء إعداد الرد؛ لم أعرض معلومات قديمة. أعد الاستدعاء بعد التحقق من الصلاحيات.",
+        { kind: "CLARIFICATION_REQUIRED", scope: "D4_READ_ONLY", topic: "SELLER_EMPLOYEE_CONTEXT_STALE", authority: "DINAR" },
+        { ownerId: input.actorId },
+      );
+  }
   if (drafted.blocked)
     return adviceTurn(
       `لم أستطع صياغة نص تسويقي دون ادعاءات لا تدعمها بيانات إعلانك (${drafted.blocked.map((claim) => CLAIM_LABELS[claim]).join("، ")}). لم يتغير شيء. إن كانت المعلومة صحيحة فأضفها لوصف إعلانك أولًا، أو اطلب صياغة بدونها.`,
@@ -1213,6 +1255,12 @@ export async function executeModelFallback(
       { ownerId: input.actorId },
     );
   const turn = outcome.turn;
+  if (input.sellerEmployeeMode && sellerEmployeeActionIsBlocked(turn))
+    return adviceTurn(
+      "التفويض الحالي يسمح بقراءة حقائق الكتالوج المنشور فقط. لم أنشئ مسودة أو أبحث أو أرسل رسالة أو أغيّر أي بيانات.",
+      { kind: "CLARIFICATION_REQUIRED", scope: "D4_READ_ONLY", topic: "SELLER_EMPLOYEE_ACTION_BLOCKED", authority: "DINAR" },
+      { ownerId: input.actorId },
+    );
   const taskPlanProposal =
     input.allowTaskPlanning && turn.plannedSteps
       ? groundedTaskPlan(input.message, turn.plannedSteps)
@@ -1358,6 +1406,56 @@ export async function executeModelFallback(
     result: { ...enforced, prompt: usageNote ? `${enforced.prompt}\n\n${usageNote}` : enforced.prompt },
     ...(taskPlanProposal ? { taskPlanProposal } : {}),
   };
+}
+
+export async function executeSellerEmployeeTurn(
+  input: Omit<Input, "sellerEmployeeMode" | "sellerEmployeeSnapshot">,
+  injected?: ConversationModelGateway,
+  unavailableInput?: { hasImages?: boolean; hasLocation?: boolean; modelDisabled?: boolean },
+): Promise<Turn | null> {
+  if (!isExplicitSellerEmployeeInvocation(input.message)) return null;
+  if (!input.actorId)
+    return adviceTurn(
+      "تشغيل الموظف الذكي يتطلب تسجيل الدخول إلى حساب المالك؛ لم يُنفّذ أي إجراء.",
+      { kind: "CLARIFICATION_REQUIRED", scope: "D4_AUTHORIZATION", topic: "SELLER_EMPLOYEE_AUTH_REQUIRED", authority: "DINAR" },
+    );
+  if (unavailableInput?.hasImages || unavailableInput?.hasLocation)
+    return adviceTurn(
+      "لا يستطيع الموظف المفوّض حاليًا معالجة الصور أو الموقع. لم أستخدمهما ولم أنفّذ أي إجراء.",
+      { kind: "CLARIFICATION_REQUIRED", scope: "D4_READ_ONLY", topic: "SELLER_EMPLOYEE_INPUT_UNSUPPORTED", authority: "DINAR" },
+      { ownerId: input.actorId },
+    );
+  if (unavailableInput?.modelDisabled)
+    return adviceTurn(
+      "لا يمكن تشغيل الموظف الذكي في إعادة توجيه بلا نموذج. لم يُنفّذ أي إجراء.",
+      { kind: "CLARIFICATION_REQUIRED", scope: "D4_READ_ONLY", topic: "SELLER_EMPLOYEE_MODEL_DISABLED", authority: "DINAR" },
+      { ownerId: input.actorId },
+    );
+  if (!isMarketAvailable(input.market))
+    return adviceTurn(
+      "لا يمكن تشغيل الموظف الذكي في سوق غير نشط؛ لم أقرأ بيانات أو أنفّذ إجراءً.",
+      { kind: "CLARIFICATION_REQUIRED", scope: "D4_AUTHORIZATION", topic: "SELLER_EMPLOYEE_MARKET_UNAVAILABLE", authority: "DINAR" },
+      { ownerId: input.actorId },
+    );
+  const snapshot = await delegatedSellerModelContext({ actorId: input.actorId, marketId: input.market.id });
+  if (!snapshot)
+    return adviceTurn(
+      "لم أشغّل الموظف الذكي: لا يوجد تفويض D4 نشط ووحيد لقراءة كتالوج هذا السوق. راجع التفويضات أولًا؛ لم يُنفّذ أي إجراء.",
+      { kind: "CLARIFICATION_REQUIRED", scope: "D4_AUTHORIZATION", topic: "SELLER_EMPLOYEE_GRANT_UNAVAILABLE", authority: "DINAR" },
+      { ownerId: input.actorId },
+    );
+  return executeModelFallback(
+    {
+      ...input,
+      sellerEmployeeMode: true,
+      sellerEmployeeSnapshot: snapshot,
+      allowTaskPlanning: false,
+    },
+    injected,
+    async () => null,
+    async () => null,
+    async () => null,
+  );
 }
 
 /** One honest line when this answer took the allowance across the near-limit share. */

@@ -59,7 +59,13 @@ import { isAiUsageQuestion } from "./usage-intent";
 import { executeDriverTurn, isDriverOnboardingIntent, isDriverQuery } from "./driver-turn";
 import { executeDraftActionTurn } from "./draft-actions";
 import { executeProviderTurn, isExplicitProviderManagementIntent } from "./provider-turn";
-import { SMART_STATE_KINDS, executeModelFallback, executeSmartTurn } from "./smart-turn";
+import {
+  SMART_STATE_KINDS,
+  executeModelFallback,
+  executeSellerEmployeeTurn,
+  executeSmartTurn,
+  isExplicitSellerEmployeeInvocation,
+} from "./smart-turn";
 import { executeBusinessOnboardingTurn, executeCommerceTurn } from "./commerce-turn";
 import { executeInquiryTurn } from "./inquiry-turn";
 import { executePolicyTurn } from "./policy-turn";
@@ -539,6 +545,28 @@ export async function executeAiConversationTurn(
     modelStage?: "ONLY";
   } = {},
 ): Promise<{ tool: string; version: number; result: ToolResult; taskPlan?: TaskPlan }> {
+  if (isExplicitSellerEmployeeInvocation(context.message)) {
+    const employee = await executeSellerEmployeeTurn(
+      {
+        conversationId: context.conversationId,
+        message: context.message,
+        market: context.market,
+        actorId: context.actorId,
+        requestKey: `turn:${context.currentMessageId}`,
+        reasoningEffort: context.reasoningEffort,
+      },
+      options.modelGateway,
+      {
+        hasImages: Boolean(context.imageObjectPaths?.length),
+        hasLocation: context.location !== undefined,
+        modelDisabled: options.noModel || options.planStep || options.modelStage === "ONLY",
+      },
+    );
+    if (employee) {
+      options.onToolSelected?.(employee.tool);
+      return employee;
+    }
+  }
   return executeWithRoutingMode(context, options);
 }
 
