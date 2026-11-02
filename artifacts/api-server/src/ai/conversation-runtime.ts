@@ -84,6 +84,7 @@ import {
   escalateSellerEmployeeNegotiations,
   readSellerEmployeeOrders,
   requireSellerEmployeeCapability,
+  sellerEmployeeDraftBinding,
 } from "../lib/business-delegations";
 import type { ListingPhotoSuggestionProvider } from "./listing-photo-intelligence";
 import { personalContext } from "./personal-context-service";
@@ -732,14 +733,105 @@ function sellerEmployeeActionHandler(
         context.actorId,
       );
     }
+    if (action === "REQUEST_PUBLICATION_REVIEW") {
+      await requireCapability("business.catalog.draft");
+      if (!/(?:مراجعه|راجع|للمراجعه|قبل\s+النشر)/u.test(normalizeSearch(message)))
+        throw new Error("لا يمكن للموظف طلب النشر مباشرة؛ اكتب صراحةً أنك تريد مراجعة المسودة");
+      const [latest] = await db.select({ payload: aiUiBlocks.payload })
+        .from(aiUiBlocks)
+        .where(eq(aiUiBlocks.conversationId, context.conversationId))
+        .orderBy(desc(aiUiBlocks.createdAt))
+        .limit(1);
+      const latestPayload = latest?.payload as Record<string, any> | undefined;
+      if (
+        latestPayload?.surface !== "SELL" ||
+        !latestPayload.draft?.draftId ||
+        ["published", "cancelled", "choose_draft"].includes(String(latestPayload.draftStep ?? ""))
+      )
+        return sellerEmployeeFactResponse(
+          "لا توجد مسودة نشطة في هذه المحادثة لإرسالها للمراجعة. لم يُنشأ إعلان ولم يتغير شيء.",
+          "PUBLICATION_DRAFT_NOT_FOUND",
+          context.actorId,
+        );
+      const draftBinding = await sellerEmployeeDraftBinding({
+        actorId: context.actorId!,
+        draftId: String(latestPayload.draft.draftId),
+      });
+      if (
+        !draftBinding ||
+        draftBinding.businessId !== session.businessId ||
+        draftBinding.conversationId !== context.conversationId ||
+        draftBinding.marketId !== context.market.id
+      )
+        return sellerEmployeeFactResponse(
+          "هذه المسودة غير مرتبطة بالنشاط المفوّض الحالي؛ لم أفتح مراجعة ولم أكشف بيانات نشاط آخر.",
+          "PUBLICATION_DRAFT_OUT_OF_SCOPE",
+          context.actorId,
+        );
+      const review = await executeDraftActionTurn({
+        conversationId: context.conversationId,
+        message: "انشره",
+        market: context.market,
+        actorId: context.actorId,
+        delegatedAuthority: {
+          sessionId: session.id,
+          capabilities: ["business.catalog.draft"],
+        },
+      });
+      if (!review)
+        return sellerEmployeeFactResponse(
+          "تعذر تحديد مسودة حالية صالحة للمراجعة؛ لم يُنشر شيء.",
+          "PUBLICATION_REVIEW_NOT_CREATED",
+          context.actorId,
+        );
+      return review;
+    }
     if (action === "DRAFT_LISTING") {
       await requireCapability("business.catalog.draft");
       const includesPublish =
         /(?:انشر|نشر|اعتمد|أكد|اكد|تأكيد|موافق|نعم|publish|confirm)/iu.test(message);
       if (includesPublish)
         throw new Error("يمكن للموظف إعداد مسودة نشاط مدعومة فقط؛ النشر يحتاج مراجعة المالك");
-      await requireCapability("business.catalog.draft.price");
+      if (/(?:سعر|السعر|بسعر|بمبلغ|مبلغ|price)/iu.test(message))
+        await requireCapability("business.catalog.draft.price");
+      const [latest] = await db.select({ payload: aiUiBlocks.payload })
+        .from(aiUiBlocks)
+        .where(eq(aiUiBlocks.conversationId, context.conversationId))
+        .orderBy(desc(aiUiBlocks.createdAt))
+        .limit(1);
+      const latestPayload = latest?.payload as Record<string, any> | undefined;
+      const existingDraftId = typeof latestPayload?.draft?.draftId === "string"
+        ? latestPayload.draft.draftId as string
+        : undefined;
+      const existingDraftActive = latestPayload?.surface === "SELL" &&
+        existingDraftId &&
+        !["published", "cancelled", "choose_draft"].includes(String(latestPayload.draftStep ?? ""));
+      const existingBinding = existingDraftActive
+        ? await sellerEmployeeDraftBinding({ actorId: context.actorId!, draftId: existingDraftId })
+        : undefined;
+      if (
+        existingDraftActive &&
+        (!existingBinding ||
+          existingBinding.businessId !== session.businessId ||
+          existingBinding.conversationId !== context.conversationId ||
+          existingBinding.marketId !== context.market.id)
+      )
+        return sellerEmployeeFactResponse(
+          "هذه المسودة غير مرتبطة بالنشاط المفوّض الحالي. لم أعدّلها أو أستخدم بيانات نشاط آخر.",
+          "SELLER_DRAFT_OUT_OF_SCOPE",
+          context.actorId,
+        );
       const draft = await listingDraft(context.conversationId, message, "SELL", [], undefined, context.actorId);
+      if (draft?.kind === "SURFACE" && draft.surface === "SELL" && draft.draft?.draftId) {
+        const boundDraft = Object.assign({}, draft, {
+          d5DraftBinding: {
+            sessionId: session.id,
+            businessId: session.businessId,
+            draftId: draft.draft.draftId,
+          },
+        }) as ToolResult & { d5DraftBinding: { sessionId: string; businessId: string; draftId: string } };
+        return { tool: "openSurface", version: 1, result: boundDraft };
+      }
       return draft
         ? { tool: "openSurface", version: 1, result: draft }
         : sellerEmployeeFactResponse(

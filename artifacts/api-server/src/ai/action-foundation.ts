@@ -499,6 +499,8 @@ export const ACTION_REGISTRY: Record<string, ActionDefinition> = {
       "لا يُشارك رقم هاتفك أو عنوانك",
     ],
     execute: async ({ actionId, actorId, market, resourceId, values, delegatedAuthority }) => {
+      if (delegatedAuthority && !delegatedAuthority.listingId)
+        throw fail(403, "الرد المفوّض غير مرتبط بعرض محدد", "D5_INQUIRY_SCOPE_REQUIRED");
       const [set] = await db.select({ conversationId: aiResultSets.conversationId }).from(aiResultSets).where(eq(aiResultSets.id, actionId));
       const sent = await submitInquiryMessage({
         actionId,
@@ -509,7 +511,9 @@ export const ACTION_REGISTRY: Record<string, ActionDefinition> = {
         provenance: values.provenance as InquiryProvenance,
         originConversationId: set!.conversationId,
         ...(typeof values.sourceQuestion === "string" ? { sourceQuestion: values.sourceQuestion } : {}),
-        ...(delegatedAuthority ? { delegatedAuthority } : {}),
+        ...(delegatedAuthority
+          ? { delegatedAuthority: { ...delegatedAuthority, listingId: delegatedAuthority.listingId! } }
+          : {}),
       });
       return { inquiryId: sent.inquiryId, messageId: sent.messageId, duplicate: sent.duplicate, replied: sent.replied };
     },
@@ -1184,7 +1188,7 @@ type PendingQuery = {
   delegatedAuthority?: {
     sessionId: string;
     capabilities: SellerEmployeeCapability[];
-    listingId: string;
+    listingId?: string;
     inventorySnapshot?: {
       inventoryMode: "LIMITED" | "UNLIMITED";
       availableQuantity: number | null;

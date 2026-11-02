@@ -49,6 +49,7 @@ import {
 } from "../ai/promotion-turn";
 import { driverStateExpiry, refreshDriverPayload } from "../ai/driver-turn";
 import { refreshBusinessPayload, type BusinessPayload } from "../ai/business-turn";
+import { recordSellerEmployeeDraftBindingTx } from "../lib/business-delegations";
 import { createHmac, randomBytes, randomUUID } from "node:crypto";
 import express, { Router } from "express";
 import { and, desc, eq, inArray } from "drizzle-orm";
@@ -2176,6 +2177,23 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
               : { ...block.payload, card: undefined },
             ordinal: 0,
           });
+        const d5DraftBinding = (toolResult as typeof toolResult & {
+          d5DraftBinding?: {
+            sessionId: string;
+            businessId: string;
+            draftId: string;
+          };
+        }).d5DraftBinding;
+        if (d5DraftBinding) {
+          await recordSellerEmployeeDraftBindingTx(tx, {
+            actorId: req.actor!.id,
+            conversationId: conversation.id,
+            marketId: market.id,
+            sessionId: d5DraftBinding.sessionId,
+            expectedBusinessId: d5DraftBinding.businessId,
+            draftId: d5DraftBinding.draftId,
+          });
+        }
         if (
           (toolResult.query?.kind === "SELLER_CONTEXT" ||
             toolResult.query?.kind === "LISTING_PREVIEW" ||

@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { and, asc, desc, eq, gt, inArray, lte, ne, sql } from "drizzle-orm";
 import {
+  aiUiBlocks,
   aiResultSets,
   businessAuditEvents,
   businessDelegations,
@@ -133,6 +134,83 @@ async function recordDelegationAudit(
     resourceId: input.delegationId,
     detail: { policyVersion: POLICY_VERSION, ...(input.detail ?? {}) },
   });
+}
+
+/** A server-side scope binding for D5 drafts, kept out of the public conversation card. */
+export async function recordSellerEmployeeDraftBindingTx(
+  tx: Tx,
+  input: {
+    actorId: string;
+    conversationId: string;
+    marketId: string;
+    sessionId: string;
+    expectedBusinessId: string;
+    draftId: string;
+  },
+) {
+  const authorized = await authorizeEmployeeSessionTx(tx, {
+    actorId: input.actorId,
+    conversationId: input.conversationId,
+    marketId: input.marketId,
+    sessionId: input.sessionId,
+    capability: "business.catalog.draft",
+  });
+  if (!authorized.session) throw fail(403, "جلسة الموظف لم تعد مخولة لربط المسودة", "D5_DRAFT_SCOPE_DENIED");
+  if (authorized.session.businessId !== input.expectedBusinessId)
+    throw fail(409, "تغير نطاق النشاط؛ لم تُربط المسودة", "D5_DRAFT_SCOPE_CHANGED");
+  const [persistedDraft] = await tx.select({ id: aiUiBlocks.id })
+    .from(aiUiBlocks)
+    .where(and(
+      eq(aiUiBlocks.conversationId, input.conversationId),
+      sql`${aiUiBlocks.payload}->'draft'->>'draftId' = ${input.draftId}`,
+    ))
+    .orderBy(desc(aiUiBlocks.createdAt))
+    .limit(1);
+  if (!persistedDraft) throw fail(409, "لم تُحفظ المسودة بعد", "D5_DRAFT_NOT_PERSISTED");
+  await tx.insert(businessAuditEvents).values({
+    id: randomUUID(),
+    businessId: authorized.session.businessId,
+    actorId: input.actorId,
+    action: "D5_DRAFT_SCOPE_BOUND",
+    resourceType: "LISTING_DRAFT",
+    resourceId: input.draftId,
+    detail: {
+      policyVersion: D5_SESSION_POLICY_VERSION,
+      sessionId: input.sessionId,
+      delegationId: authorized.session.delegationId,
+      conversationId: input.conversationId,
+      marketId: input.marketId,
+    },
+  });
+  return authorized.session.businessId;
+}
+
+export async function sellerEmployeeDraftBinding(input: {
+  actorId: string;
+  draftId: string;
+}) {
+  const [event] = await db.select({
+    businessId: businessAuditEvents.businessId,
+    detail: businessAuditEvents.detail,
+  }).from(businessAuditEvents).where(and(
+    eq(businessAuditEvents.actorId, input.actorId),
+    eq(businessAuditEvents.action, "D5_DRAFT_SCOPE_BOUND"),
+    eq(businessAuditEvents.resourceType, "LISTING_DRAFT"),
+    eq(businessAuditEvents.resourceId, input.draftId),
+  )).orderBy(desc(businessAuditEvents.createdAt), desc(businessAuditEvents.id)).limit(1);
+  const detail = event?.detail;
+  if (
+    !event ||
+    typeof detail?.conversationId !== "string" ||
+    typeof detail?.marketId !== "string" ||
+    typeof detail?.sessionId !== "string"
+  ) return undefined;
+  return {
+    businessId: event.businessId,
+    conversationId: detail.conversationId,
+    marketId: detail.marketId,
+    sessionId: detail.sessionId,
+  };
 }
 
 /**

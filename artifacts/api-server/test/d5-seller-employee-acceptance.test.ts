@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import {
   authRateLimitBuckets,
   aiResultSets,
+  businessAuditEvents,
   businessDelegations,
   businessOperatingProfiles,
   marketplaceInquiryEvents,
@@ -126,6 +127,12 @@ async function publish(actor: Actor, title: string, quantity: number, negotiable
 await test("D5 owner approves one model-drafted G2 reply grounded in the assigned inquiry", async () => {
   const owner = await register("Reply Owner");
   const buyer = await register("Reply Buyer");
+  const resetConversationModelLimit = async () => {
+    await db.delete(authRateLimitBuckets).where(inArray(authRateLimitBuckets.keyHash, [
+      authRateLimitKeyHash(AUTH_RATE_LIMIT_SCOPE.conversationModelActor, owner.id),
+      authRateLimitKeyHash(AUTH_RATE_LIMIT_SCOPE.conversationModelHeavyActor, owner.id),
+    ]));
+  };
   const businessId = await createBusiness(owner);
   const [business] = await db.select().from(businessOperatingProfiles)
     .where(eq(businessOperatingProfiles.id, businessId));
@@ -209,6 +216,8 @@ await test("D5 owner approves one model-drafted G2 reply grounded in the assigne
   let employeeAction = "DRAFT_INQUIRY_REPLY";
   let employeeSuggestedAction = "NONE";
   let employeeItemHint: string | undefined;
+  let employeeConversationalReply = "أعددت ردًا للمشتري لمراجعتك.";
+  let employeeReplyAfterCorrection: string | undefined;
   let modelRequest = "";
   let modelCalls = 0;
   app.locals.conversationModelGateway = {
@@ -226,7 +235,9 @@ await test("D5 owner approves one model-drafted G2 reply grounded in the assigne
           ...(employeeAction === "DRAFT_INQUIRY_REPLY" ? { sellerEmployeeReply: draftedReply } : {}),
           ...(employeeItemHint ? { entities: { item: employeeItemHint } } : {}),
           confidence: 1,
-          conversationalReply: "أعددت ردًا للمشتري لمراجعتك.",
+          conversationalReply: modelRequest.includes("SERVER_CHECK") && employeeReplyAfterCorrection
+            ? employeeReplyAfterCorrection
+            : employeeConversationalReply,
         }),
       };
     },
@@ -337,6 +348,13 @@ await test("D5 owner approves one model-drafted G2 reply grounded in the assigne
   assert.match(String(sellerDraftPayload.draft?.title ?? ""), /آيفون 13/u);
   assert.equal(sellerDraftPayload.draft?.attributes?.condition, "مستعمل");
   assert.equal(sellerDraftPayload.draft?.unitPrice, "12");
+  const d5DraftBindings = await db.select().from(businessAuditEvents)
+    .where(eq(businessAuditEvents.resourceId, String(sellerDraftPayload.draft?.draftId)));
+  assert.ok(d5DraftBindings.some((event) =>
+    event.action === "D5_DRAFT_SCOPE_BOUND" &&
+    event.businessId === businessId &&
+    event.detail.conversationId === sellerConversationId,
+  ), "D5 draft scope must be stored server-side, not exposed in the conversation card");
   const offersAfterDraft = await db.select({ id: offers.id }).from(offers)
     .where(eq(offers.sellerId, owner.id));
   assert.equal(offersAfterDraft.length, offersBeforeDraft.length, "D5 may draft but must not publish a listing");
@@ -349,6 +367,132 @@ await test("D5 owner approves one model-drafted G2 reply grounded in the assigne
   const offersAfterDeniedPublish = await db.select({ id: offers.id }).from(offers)
     .where(eq(offers.sellerId, owner.id));
   assert.equal(offersAfterDeniedPublish.length, offersBeforeDraft.length, "D5 must not publish a drafted listing");
+
+  const reviewAnswers: Record<string, string> = {
+    category: "أخرى",
+    title: "هاتف آيفون 13 مستعمل",
+    description: "هاتف مستعمل مع خدش بسيط على الشاشة",
+    price: "15",
+    quantity: "1",
+    area: "عمان خلدا",
+    fulfilment: "استلام",
+    contact: "محادثة DINAR فقط",
+    payment_methods: "كاش",
+  };
+  let completedDraftPayload = correctedDraftPayload;
+  for (let attempt = 0; attempt < 16; attempt += 1) {
+    const missing = (completedDraftPayload.draftReview?.missingFields ?? []) as Array<{ field: string }>;
+    if (!missing.length) break;
+    const answer = reviewAnswers[missing[0]!.field];
+    assert.ok(answer, `test fixture needs a seller-provided answer for ${missing[0]!.field}`);
+    await resetConversationModelLimit();
+    const completion = await say(owner, sellerConversationId, answer);
+    completedDraftPayload = completion.blocks.find((block) => block.payload?.surface === "SELL")?.payload;
+    assert.ok(completedDraftPayload, completion.body);
+  }
+  assert.equal(completedDraftPayload.draftReview?.missingFields?.length, 0,
+    `the owner completes only required draft fields before review: ${JSON.stringify(completedDraftPayload.draftReview?.missingFields)}`);
+  employeeAction = "REQUEST_PUBLICATION_REVIEW";
+  await resetConversationModelLimit();
+  const publicationReview = await say(owner, sellerConversationId, "أرسل المسودة لي للمراجعة");
+  const publicationReviewPayload = publicationReview.blocks.find((block) => block.payload?.surface === "SELL")?.payload;
+  assert.equal(publicationReviewPayload?.draftStep, "publish_review", publicationReview.body);
+  const publicationActionId = publicationReviewPayload.resultSetId as string;
+  const [publicationAction] = await db.select().from(aiResultSets).where(eq(aiResultSets.id, publicationActionId));
+  assert.equal(publicationAction?.query.action, "PUBLISH_LISTING");
+  assert.equal(publicationAction?.query.status, "PENDING");
+  assert.equal(publicationAction?.query.delegatedAuthority?.sessionId, (
+    await resolveSellerEmployeeSession({ actorId: owner.id, conversationId: sellerConversationId, marketId: "JO" })
+  ).state === "ACTIVE" ? (
+    await resolveSellerEmployeeSession({ actorId: owner.id, conversationId: sellerConversationId, marketId: "JO" })
+  ).session.id : undefined, "publication approval must remain bound to the live D5 grant");
+  const duplicatePublicationReview = await say(owner, sellerConversationId, "أرسل المسودة لي للمراجعة");
+  const duplicateReviewPayload = duplicatePublicationReview.blocks
+    .find((block) => block.payload?.surface === "SELL")?.payload;
+  assert.equal(duplicateReviewPayload?.resultSetId, publicationActionId,
+    "repeated review requests must reuse the same pending owner review");
+
+  employeeAction = "DRAFT_LISTING";
+  employeeItemHint = "iPhone 13";
+  const editedAfterReview = await say(owner, sellerConversationId, "خلي السعر 16");
+  const editedAfterReviewPayload = editedAfterReview.blocks
+    .find((block) => block.payload?.surface === "SELL")?.payload;
+  assert.equal(editedAfterReviewPayload?.draft?.unitPrice, "16");
+  const staleOwnerApproval = await say(owner, sellerConversationId, "نعم");
+  assert.doesNotMatch(staleOwnerApproval.body, /تم نشر الإعلان/u,
+    "approval for an older draft version must not publish the edited draft");
+  const [unconfirmedStaleAction] = await db.select().from(aiResultSets).where(eq(aiResultSets.id, publicationActionId));
+  assert.equal(unconfirmedStaleAction?.query.status, "EXPIRED",
+    "an approval tied to the previous draft version must be expired, not left reusable");
+
+  employeeAction = "REQUEST_PUBLICATION_REVIEW";
+  await resetConversationModelLimit();
+  const refreshedPublicationReview = await say(owner, sellerConversationId, "أرسل المسودة لي للمراجعة");
+  const refreshedReviewPayload = refreshedPublicationReview.blocks
+    .find((block) => block.payload?.surface === "SELL")?.payload;
+  const refreshedPublicationActionId = String(refreshedReviewPayload?.resultSetId);
+  assert.equal(refreshedReviewPayload?.draftStep, "publish_review", refreshedPublicationReview.body);
+  assert.notEqual(refreshedPublicationActionId, publicationActionId,
+    "an edited draft requires a fresh owner review");
+  const [refreshedPublicationAction] = await db.select().from(aiResultSets)
+    .where(eq(aiResultSets.id, refreshedPublicationActionId));
+  assert.equal(refreshedPublicationAction?.query.kind, "ACTION");
+  assert.equal(refreshedPublicationAction?.query.action, "PUBLISH_LISTING");
+  assert.equal(refreshedPublicationAction?.query.status, "PENDING");
+  const refreshedSession = await resolveSellerEmployeeSession({
+    actorId: owner.id,
+    conversationId: sellerConversationId,
+    marketId: "JO",
+  });
+  assert.equal(refreshedSession.state, "ACTIVE");
+  assert.equal(refreshedPublicationAction?.query.delegatedAuthority?.sessionId,
+    refreshedSession.state === "ACTIVE" ? refreshedSession.session.id : undefined);
+  const countBeforeOwnerApproval = (await db.select({ id: offers.id }).from(offers)
+    .where(eq(offers.sellerId, owner.id))).length;
+  const ownerApprovedPublication = await say(owner, sellerConversationId, "نعم");
+  assert.match(ownerApprovedPublication.body, /تم نشر الإعلان/u);
+  const countAfterOwnerApproval = (await db.select({ id: offers.id }).from(offers)
+    .where(eq(offers.sellerId, owner.id))).length;
+  assert.equal(countAfterOwnerApproval, countBeforeOwnerApproval + 1, "only the owner's confirmed canonical publication creates the listing");
+  const [settledPublicationAction] = await db.select().from(aiResultSets).where(eq(aiResultSets.id, refreshedPublicationActionId));
+  assert.equal(settledPublicationAction?.query.status, "CONFIRMED");
+  const repeatedApproval = await say(owner, sellerConversationId, "نعم");
+  const countAfterRepeatedApproval = (await db.select({ id: offers.id }).from(offers)
+    .where(eq(offers.sellerId, owner.id))).length;
+  assert.equal(countAfterRepeatedApproval, countAfterOwnerApproval, "a repeated owner confirmation cannot publish a duplicate");
+
+  const marketingTitle = `آيفون 13 مستعمل D5 ${randomUUID().slice(0, 8)}`;
+  const marketingListingId = await publish(owner, marketingTitle, 8);
+  await assignListingToBusiness({
+    actorId: owner.id,
+    marketId: "JO",
+    listingId: marketingListingId,
+    businessId: business!.d2BusinessId,
+  });
+  const [marketingListing] = await db.select().from(offers).where(eq(offers.id, marketingListingId));
+  assert.ok(marketingListing);
+  await db.update(offers).set({
+    data: {
+      ...marketingListing!.data,
+      description: "هاتف مستعمل مع خدش واضح على الشاشة",
+      attributes: { condition: "مستعمل", defect: "خدش واضح على الشاشة" },
+    },
+  }).where(eq(offers.id, marketingListingId));
+  employeeAction = "NONE";
+  employeeConversationalReply = "هاتف مضمون لسنتين، الكمية محدودة، وأفضل صفقة اليوم.";
+  employeeReplyAfterCorrection = "هاتف آيفون 13 مستعمل يظهر في وصفه خدش واضح على الشاشة.";
+  await resetConversationModelLimit();
+  const marketingCopy = await say(owner, sellerConversationId, `اكتب إعلانًا جذابًا لهاتف ${marketingTitle} مع الحفاظ على ذكر الخدش والضمان`);
+  assert.ok(modelRequest.includes("خدش واضح على الشاشة"), "the model receives defect details from the authorized business listing");
+  assert.ok(marketingCopy.body.includes("خدش واضح على الشاشة"), marketingCopy.body);
+  assert.ok(!marketingCopy.body.includes("مضمون لسنتين") && !marketingCopy.body.includes("الكمية محدودة"),
+    "unsupported warranty and scarcity claims must be rejected and rewritten");
+  const [unchangedMarketingListing] = await db.select().from(offers).where(eq(offers.id, marketingListingId));
+  assert.equal(unchangedMarketingListing?.data.description, "هاتف مستعمل مع خدش واضح على الشاشة",
+    "proposed marketing copy is not silently saved into the published listing");
+  employeeConversationalReply = "أعددت ردًا للمشتري لمراجعتك.";
+  employeeReplyAfterCorrection = undefined;
+
   employeeAction = "DRAFT_INQUIRY_REPLY";
   employeeItemHint = undefined;
   draftedReply = "تم استلام المبلغ بالكامل.";

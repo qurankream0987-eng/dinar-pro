@@ -14,7 +14,7 @@ import { aiResultSets, aiUiBlocks, conversations, db, users } from "@workspace/d
 import type { marketFor } from "../lib/markets";
 import { categorySchema, listMarketplaceCategories } from "../lib/marketplace-categories";
 import { createListingForActor } from "../routes/marketplace";
-import { confirmPendingAction, createPendingAction, proposeAction } from "./action-foundation";
+import { confirmPendingAction, createPendingAction, proposeAction, type DelegatedActionAuthority } from "./action-foundation";
 import { findOrdinalMention, parseResultReference } from "./arabic-normalization";
 import { ConversationDraft, buildDraftReview, promptForDraftStep } from "./listing-draft";
 import { normalizeSearch } from "./search-context";
@@ -35,6 +35,7 @@ const REVIEW =
 export const isDraftResumeRequest = (message: string) => RESUME.test(text(message));
 const CONFIRM = /^(?:نعم|اكيد|اكد|تاكيد|موافق|تمام|اوكي|ok|yes|نفذ|انشره|نعم انشر|تاكيد النشر)$/u;
 const CANCEL = /^(?:لا|كلا|الغاء|الغ|الغي|تراجع|لا تنشر)$/u;
+const REQUEST_CHANGES = /^(?:احتاج\s+تعديل(?:ات)?|تحتاج\s+تعديل(?:ات)?|خلني\s+اعدل(?:ها)?|دعني\s+اعدل(?:ها)?|عدل(?:ها)?\s+قبل\s+النشر|راجعها\s+بعد\s+التعديل)$/u;
 const CLOSED_STEPS = ["published", "cancelled", "choose_draft"];
 const ORDINAL_WORDS = ["الأول", "الثاني", "الثالث", "الرابع"];
 
@@ -202,7 +203,13 @@ export async function resumeConversationDraftById(input: {
  * Claims «انشره» on the draft in focus, decisions on the actor's own PUBLISH_LISTING
  * review, «كمل الإعلان», and the choice that follows it. Everything else passes on.
  */
-export async function executeDraftActionTurn(input: { conversationId: string; message: string; market: Market; actorId?: string }) {
+export async function executeDraftActionTurn(input: {
+  conversationId: string;
+  message: string;
+  market: Market;
+  actorId?: string;
+  delegatedAuthority?: DelegatedActionAuthority;
+}) {
   if (!input.actorId) return null;
   const actorId = input.actorId;
   const said = text(input.message);
@@ -212,24 +219,86 @@ export async function executeDraftActionTurn(input: { conversationId: string; me
     .where(and(eq(aiResultSets.conversationId, input.conversationId), eq(aiResultSets.marketId, input.market.id)))
     .orderBy(desc(aiResultSets.createdAt))
     .limit(1);
-  const pending = latestSet?.query as { kind?: unknown; ownerId?: unknown; status?: unknown; action?: unknown; targetResource?: unknown } | undefined;
   const [latestBlock] = await db.select({ payload: aiUiBlocks.payload }).from(aiUiBlocks).where(eq(aiUiBlocks.conversationId, input.conversationId)).orderBy(desc(aiUiBlocks.createdAt)).limit(1);
+  const referencedSetId = typeof latestBlock?.payload.resultSetId === "string"
+    ? latestBlock.payload.resultSetId
+    : undefined;
+  const [referencedSet] = referencedSetId
+    ? await db.select().from(aiResultSets).where(and(
+        eq(aiResultSets.id, referencedSetId),
+        eq(aiResultSets.conversationId, input.conversationId),
+        eq(aiResultSets.marketId, input.market.id),
+      ))
+    : [];
+  // The latest card is the authority for review focus. Created-at ties must not let an older
+  // pending action shadow a newer review card in the same millisecond.
+  const pendingSet = referencedSet?.query.kind === "ACTION" ? referencedSet : latestSet;
+  const pending = pendingSet?.query as { kind?: unknown; ownerId?: unknown; status?: unknown; action?: unknown; targetResource?: unknown } | undefined;
   const reviewOpen =
     pending?.kind === "ACTION" && pending.ownerId === actorId && pending.status === "PENDING" && pending.action === "PUBLISH_LISTING" &&
-    latestBlock?.payload.resultSetId === latestSet!.id;
+    latestBlock?.payload.resultSetId === pendingSet!.id;
+
+  // A draft edit or intervening turn can make the old review card disappear from focus.
+  // Consume the stale decision through the action authority (which expires it), then put
+  // the current draft back in focus so the owner can request a fresh review explicitly.
+  if (
+    !reviewOpen &&
+    pending?.kind === "ACTION" &&
+    pending.ownerId === actorId &&
+    pending.status === "PENDING" &&
+    pending.action === "PUBLISH_LISTING" &&
+    (CONFIRM.test(said) || CANCEL.test(said) || REQUEST_CHANGES.test(said))
+  ) {
+    const draftId = String(pending.targetResource);
+    const read = await readDraftSnapshot(actorId, draftId);
+    const outcome = await confirmPendingAction({
+      actionId: pendingSet!.id,
+      actorId,
+      market: input.market,
+      decision: CANCEL.test(said) || REQUEST_CHANGES.test(said) ? "CANCEL" : "CONFIRM",
+    });
+    if (outcome.status === "REVIEW_REQUIRED" && read?.draft)
+      return reviewTurn(input, read.draft, outcome.review.actionId, "تغيّرت المسودة منذ المراجعة السابقة. ");
+    if (read?.draft)
+      return sellTurn(
+        read.draft,
+        "review",
+        "تغيّرت المحادثة أو المسودة بعد المراجعة السابقة؛ لم يُنشر شيء. راجع المسودة ثم اطلب مراجعة جديدة.",
+        { draftReview: buildDraftReview(read.draft, await configured()) },
+      );
+    return sellTurn({}, "review", `${outcome.message} لم يُنشر شيء.`);
+  }
 
   // ── The seller's decision on its own publish review.
-  if (reviewOpen && (CONFIRM.test(said) || CANCEL.test(said))) {
+  if (reviewOpen && PUBLISH.test(said)) {
     const draftId = String(pending!.targetResource);
     const read = await readDraftSnapshot(actorId, draftId);
-    const outcome = await confirmPendingAction({ actionId: latestSet!.id, actorId, market: input.market, decision: CANCEL.test(said) ? "CANCEL" : "CONFIRM" });
+    if (read?.draft) return reviewTurn(input, read.draft, pendingSet!.id);
+  }
+
+  if (reviewOpen && (CONFIRM.test(said) || CANCEL.test(said) || REQUEST_CHANGES.test(said))) {
+    const draftId = String(pending!.targetResource);
+    const read = await readDraftSnapshot(actorId, draftId);
+    const changeRequested = REQUEST_CHANGES.test(said);
+    const outcome = await confirmPendingAction({
+      actionId: pendingSet!.id,
+      actorId,
+      market: input.market,
+      decision: CANCEL.test(said) || changeRequested ? "CANCEL" : "CONFIRM",
+    });
     if (outcome.status === "CONFIRMED" && outcome.result?.listingId)
       return sellTurn(read!.draft!, "published", `تم نشر الإعلان «${String(outcome.result.title)}» عبر نموذج النشر نفسه بعد التحقق من البيانات الحالية. يظهر الآن في «إعلاناتي».`, {
         resourceId: String(outcome.result.listingId),
         resourceIds: [String(outcome.result.listingId)],
       });
     if (outcome.status === "CANCELLED")
-      return sellTurn(read!.draft!, "review", "لم يُنشر الإعلان؛ بقيت المسودة كما هي. عدّلها أو قل «انشره» عندما تكون جاهزًا.");
+      return sellTurn(
+        read!.draft!,
+        "review",
+        changeRequested
+          ? "أعدت المسودة للتعديل؛ لم يُنشر الإعلان. عدّلها ثم اطلب مراجعة جديدة."
+          : "لم يُنشر الإعلان؛ بقيت المسودة كما هي. عدّلها أو اطلب مراجعة جديدة عندما تكون جاهزًا.",
+      );
     if (outcome.status === "REVIEW_REQUIRED") return reviewTurn(input, read!.draft!, outcome.review.actionId, "تغيّرت المسودة منذ المراجعة. ");
     return sellTurn(read?.draft ?? {}, "review", `لم يُنشر الإعلان: ${outcome.message}`);
   }
@@ -253,7 +322,13 @@ export async function executeDraftActionTurn(input: { conversationId: string; me
       const step = String(latestBlock!.payload.draftStep ?? "review");
       return sellTurn(draft, step, `لا يمكن النشر بعد؛ ينقص: ${review.missingFields.map((field) => field.label).join("، ")}. ${promptForDraftStep(step, draft, categories)}`, { draftReview: review });
     }
-    const action = await createPendingAction({ conversationId: input.conversationId, actorId, market: input.market, proposal: proposeAction({ action: "PUBLISH_LISTING", targetResource: draft.draftId! }) });
+    const action = await createPendingAction({
+      conversationId: input.conversationId,
+      actorId,
+      market: input.market,
+      proposal: proposeAction({ action: "PUBLISH_LISTING", targetResource: draft.draftId! }),
+      ...(input.delegatedAuthority ? { delegatedAuthority: input.delegatedAuthority } : {}),
+    });
     return reviewTurn(input, draft, action.actionId);
   }
 

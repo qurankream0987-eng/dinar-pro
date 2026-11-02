@@ -18,6 +18,7 @@ import { SellerBusinessInsight } from "@workspace/api-zod/conversation-runtime";
 import { buildDraftReview, ConversationDraft } from "./listing-draft";
 import { listMarketplaceCategories } from "../lib/marketplace-categories";
 import { UpdateListingBody } from "@workspace/api-zod";
+import { sellerEmployeeDraftBinding } from "../lib/business-delegations";
 import {
   type ListingPricingMode,
   type MarketplaceCategorySchema,
@@ -1275,10 +1276,45 @@ function checkClaims(message: string, record: SellerListingFacts["dinarRecord"],
  * The seller's own listing (or draft) in focus, as provenance-labelled facts for the model's
  * marketing help. Only the actor's own rows in the active market; never contact or location.
  */
-export async function sellerListingFacts(input: { conversationId: string; message: string; market: Market; actorId: string }): Promise<SellerListingFacts | null> {
-  const listingId = await adviceTarget(input).catch(() => undefined);
+export async function sellerListingFacts(input: {
+  conversationId: string;
+  message: string;
+  market: Market;
+  actorId: string;
+  /** Present for D5: only these catalog rows are inside the employee's live business grant. */
+  allowedListingIds?: string[];
+  /** D5 drafts are usable only when the server marked them for this business. */
+  employeeBusinessId?: string;
+}): Promise<SellerListingFacts | null> {
+  const allowedIds = input.allowedListingIds
+    ? [...new Set(input.allowedListingIds)].slice(0, 100)
+    : undefined;
+  if (allowedIds && !allowedIds.length) return null;
+  const requestedListingId = await adviceTarget(input).catch(() => undefined);
+  let listingId = allowedIds
+    ? requestedListingId && allowedIds.includes(requestedListingId) ? requestedListingId : undefined
+    : requestedListingId;
+  if (allowedIds && !listingId) {
+    const rows = await db.select().from(offers).where(and(
+      eq(offers.sellerId, input.actorId),
+      eq(offers.marketId, input.market.id),
+      inArray(offers.id, allowedIds),
+    ));
+    const query = normalizeSearch(input.message);
+    const named = rows.filter((row) => {
+      const title = normalizeSearch(String(row.data.title ?? ""));
+      return title.length >= 3 && query.includes(title);
+    });
+    if (named.length === 1) listingId = named[0]!.id;
+    else if (!named.length && rows.length === 1) listingId = rows[0]!.id;
+  }
   if (listingId) {
-    const [row] = await db.select().from(offers).where(and(eq(offers.id, listingId), eq(offers.sellerId, input.actorId), eq(offers.marketId, input.market.id)));
+    const [row] = await db.select().from(offers).where(and(
+      eq(offers.id, listingId),
+      eq(offers.sellerId, input.actorId),
+      eq(offers.marketId, input.market.id),
+      ...(allowedIds ? [inArray(offers.id, allowedIds)] : []),
+    ));
     if (row) {
       const record: SellerListingFacts["dinarRecord"] = {
         price: row.unitPriceMinor === null ? null : formatMinor(row.unitPriceMinor, input.market.minorUnitScale),
@@ -1300,6 +1336,22 @@ export async function sellerListingFacts(input: { conversationId: string; messag
   const payload = latest?.payload as Record<string, unknown> | undefined;
   const draft = payload?.surface === "SELL" && payload.draftStep !== "cancelled" ? ConversationDraft.safeParse(payload.draft) : undefined;
   if (!draft?.success || !draft.data.title) return null;
+  if (input.employeeBusinessId) {
+    const binding = draft.data.draftId
+      ? await sellerEmployeeDraftBinding({ actorId: input.actorId, draftId: draft.data.draftId })
+      : undefined;
+    if (
+      !binding ||
+      binding.businessId !== input.employeeBusinessId ||
+      binding.conversationId !== input.conversationId ||
+      binding.marketId !== input.market.id
+    ) return null;
+    const title = normalizeSearch(draft.data.title);
+    const query = normalizeSearch(input.message);
+    const refersToDraft = title.length >= 3 && query.includes(title) ||
+      /(?:هذا|هذه|المسوده|مسودتي|اعلاني|اعلانه)/u.test(query);
+    if (!refersToDraft) return null;
+  }
   const record: SellerListingFacts["dinarRecord"] = {
     price: draft.data.unitPrice ?? null,
     currency: input.market.currencyCode,

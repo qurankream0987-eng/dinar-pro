@@ -37,7 +37,7 @@ import {
   stateOf,
 } from "./buyer-turn";
 import { executeSellerAdviceTurn, makeSellerContextResult } from "./seller-management";
-import { resumeNamedDraft } from "./draft-actions";
+import { executeDraftActionTurn, resumeNamedDraft } from "./draft-actions";
 import { executeInquiryTurn, sellerEmployeeInquiryModelContext } from "./inquiry-turn";
 import { ConversationDraft, buildDraftReview, isGeneralRequest } from "./listing-draft";
 import { conversationGuidance } from "./conversation-guidance";
@@ -933,8 +933,20 @@ export async function modelContext(input: Input): Promise<ModelContext> {
     // Another party's words delivered by an inquiry are never model instructions or history.
     history: history.slice(1).reverse().filter((row) => row.metadata?.inquiryDelivery !== true && row.metadata?.inquiryContent !== true).map((row) => ({ actor: row.actor, body: row.body })),
     // Marketing help is grounded in the seller's own listing or draft, with provenance.
-    ...(input.actorId && marketAvailable && !sellerEmployeeRequested && isMarketingRequest(input.message)
-      ? { sellerListing: await sellerListingFacts({ conversationId: input.conversationId, message: input.message, market: input.market, actorId: input.actorId }) }
+    ...(input.actorId && marketAvailable && isMarketingRequest(input.message) &&
+      (!sellerEmployeeRequested || Boolean(delegatedCatalog && employeeCapabilities.includes("business.catalog.read")))
+      ? {
+          sellerListing: await sellerListingFacts({
+            conversationId: input.conversationId,
+            message: input.message,
+            market: input.market,
+            actorId: input.actorId,
+            ...(sellerEmployeeRequested ? {
+              allowedListingIds: delegatedCatalog?.listings.map((listing) => listing.id) ?? [],
+              employeeBusinessId: input.sellerEmployeeSession?.businessId,
+            } : {}),
+          }),
+        }
       : {}),
   };
 }
@@ -1655,6 +1667,29 @@ export async function executeSellerEmployeeTurn(
     } | undefined;
     if (
       pending?.kind === "ACTION" &&
+      pending.action === "PUBLISH_LISTING" &&
+      pending.ownerId === input.actorId &&
+      pending.status === "PENDING" &&
+      (!pending.delegatedAuthority || pending.delegatedAuthority.sessionId === session.id)
+    ) {
+      try {
+        const decision = await executeDraftActionTurn({
+          conversationId: input.conversationId,
+          message: input.message,
+          market: input.market,
+          actorId: input.actorId,
+        });
+        if (decision) return decision;
+      } catch (error) {
+        return adviceTurn(
+          `${error instanceof Error ? error.message : "تعذر إكمال مراجعة النشر"}. لم يتغير شيء.`,
+          { kind: "CLARIFICATION_REQUIRED", scope: "D5_AUTHORIZATION", topic: "SELLER_EMPLOYEE_PUBLICATION_REVIEW_BLOCKED", authority: "DINAR" },
+          { ownerId: input.actorId },
+        );
+      }
+    }
+    if (
+      pending?.kind === "ACTION" &&
       pending.action === "SEND_INQUIRY_MESSAGE" &&
       pending.ownerId === input.actorId &&
       pending.status === "PENDING" &&
@@ -1690,6 +1725,22 @@ export async function executeSellerEmployeeTurn(
       { kind: "CLARIFICATION_REQUIRED", scope: "D5_AUTHORIZATION", topic: "SELLER_EMPLOYEE_CONTEXT_UNAVAILABLE", authority: "DINAR" },
       { ownerId: input.actorId },
     );
+  if (isMarketingRequest(input.message)) {
+    const facts = await sellerListingFacts({
+      conversationId: input.conversationId,
+      message: input.message,
+      market: input.market,
+      actorId: input.actorId,
+      allowedListingIds: snapshot.listings.map((listing) => listing.id),
+      employeeBusinessId: session.businessId,
+    });
+    if (!facts)
+      return sellerEmployeeFactResponse(
+        "اذكر اسم عرض منشور ضمن النشاط المفوّض أو حدّد المسودة التي تريد صياغة نص لها. لم أستخدم بيانات خارج التفويض.",
+        "MARKETING_LISTING_CLARIFICATION",
+        input.actorId,
+      );
+  }
   return executeModelFallback(
     {
       ...input,
