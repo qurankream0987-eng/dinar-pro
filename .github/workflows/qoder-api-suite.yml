@@ -70,6 +70,7 @@ on:
           - promotion-intent.test
           - block-f2-buyer.test
           - block-f3-commerce.test
+          - ai-authority-boundary.test
       chain:
         description: "Run a reviewed suite chain on one disposable migrated and seeded database"
         required: false
