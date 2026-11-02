@@ -2,7 +2,7 @@
 
 Branch `replit/dinar-next-complete-development`, preserved from `qoder/15-d3a-native-business`.
 Every entry below is an executable assertion, not a design intention. Only tests whose body
-executed are counted; the suite prints `D3A_SUMMARY {"passed":41,"total":41,…}` from the same
+executed are counted; the suite prints `D3A_SUMMARY {"passed":43,"total":43,…}` from the same
 objects that build this table.
 
 ## 1. How it runs
@@ -25,7 +25,7 @@ Every dispatch also runs `pnpm run typecheck`, the api-server build, the web bui
 `pnpm --filter @workspace/dinar run test:surfaces` before the suite, so a green run is also a
 typecheck/build/surface-protocol regression result.
 
-## 2. API acceptance — 41 tests
+## 2. API acceptance — 43 tests
 
 | ID | Executed assertion (abridged) | Requirement |
 | --- | --- | --- |
@@ -70,6 +70,8 @@ typecheck/build/surface-protocol regression result.
 | D3A-39 | Editing through the business keeps seller, market and creation snapshot; only allowed fields change. | 08, 12 |
 | D3A-40 | All eight surfaces carry a Card Envelope with stable identity, safe resource, no secret-looking keys, and allowed actions only from the server list. | 13 |
 | D3A-41 | Multiple owned businesses require an explicit choice before setup or catalog commands; an active business is never silently selected. | 03-B |
+| D3A-42 | One seller owning two businesses checks out both listings in one canonical order; each business's orders card counts and sums only its own line, and the two display allocations add back to the stored order amount within one minor unit. | 09, 13 |
+| D3A-43 | One seller with differently priced lines checks out into one order per price, each row satisfying `subtotal = quantity × unit_price` and `seller_amount = subtotal − fee`; the grand total is unchanged and a replayed idempotency key returns the same orders without charging again. | 09, 12 |
 
 ## 3. Real-browser acceptance — 1 test, 8 families
 
@@ -115,12 +117,14 @@ composition test in `test:surfaces`.
   timeout/claim races answered without a write (D3A-07, 19, 24).
 - Suspension cannot leak listings through a stale card, link, cart or checkout: D3A-33.
 - Audit immutability enforced by the database: D3A-37.
+- Order money can never blend prices or leak another business's line: D3A-42 (business-scoped
+  card) and D3A-43 (one price per order under `order_money_valid`, idempotent replay).
 
 ## 5. Regressions and runs
 
 | Suite | What it protects | Run |
 | --- | --- | --- |
-| `d3a-native-business.test` | the 41 D3-A tests | 2026-11-02, isolated PostgreSQL 18: 41/41, outbound 0, modelCalls 0; earlier CI run 41252858333 at `363d9be` passed 40/40 |
+| `d3a-native-business.test` | the 43 D3-A tests | 2026-11-02, CI `qoder-api-suite` at `28f7a3b`: PostgreSQL 16 run 41534215112 and PostgreSQL 18 run 41534221867 — both `D3A_SUMMARY passed=43 total=43`, outbound 0, modelCalls 0 |
 | `d3a-browser-journey.test` | the real-UI journey + 8 card families | 2026-11-02, isolated PostgreSQL 18: PASS, 20 checks / 11 steps / 8 surfaces / 1 search hit, outbound 0, no browser or console errors, no external requests, overflow 0 |
 | `search-sql-foundation.test` | C1 PostgreSQL search (flags `BDINAR_TEST_DATABASE=development`) | 41253038310 — 6 pass / 0 fail, outbound 0 |
 | `wave03-card-envelope.test` | Card Envelope v1 (flags `BDINAR_WAVE03_ACCEPTANCE=development`) | 41253321070 — 9 pass / 0 fail, outbound 0 |
