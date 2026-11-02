@@ -11,4 +11,11 @@ export type BusinessDelegationCapabilitiesItem = typeof BusinessDelegationCapabi
 
 export const BusinessDelegationCapabilitiesItem = {
   businesscatalogread: 'business.catalog.read',
+  businesscatalogdraft: 'business.catalog.draft',
+  businesscatalogdraftprice: 'business.catalog.draft.price',
+  businessinventoryread: 'business.inventory.read',
+  businessordersread: 'business.orders.read',
+  businessinquiriesreply: 'business.inquiries.reply',
+  businessmessagessend: 'business.messages.send',
+  businessnegotiationsescalate: 'business.negotiations.escalate',
 } as const;

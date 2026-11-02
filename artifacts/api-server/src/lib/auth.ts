@@ -36,6 +36,10 @@ import {
   marketFor,
   resolveMarket,
 } from "./markets";
+import {
+  invalidateSellerEmployeeSessionsForActor,
+  invalidateSellerEmployeeSessionsForActorTx,
+} from "./business-delegations";
 import { DEFAULT_MARKET } from "@workspace/global";
 import {
   AUTH_RATE_LIMIT_SCOPE,
@@ -531,6 +535,8 @@ router.post("/auth/register", registrationLimit, async (req, res) => {
     });
     return;
   }
+  if (req.actor && req.actor.id !== user.user.id)
+    await invalidateSellerEmployeeSessionsForActor(req.actor.id, "ACCOUNT_SWITCH");
   res.status(201).json({
     user: await startSession(
       res,
@@ -616,6 +622,14 @@ router.post("/auth/login", loginLimit, async (req, res): Promise<void> => {
     }
     sessionUser = verifiedUser;
   }
+  if (req.actor && req.actor.id !== sessionUser.id)
+    await invalidateSellerEmployeeSessionsForActor(req.actor.id, "ACCOUNT_SWITCH");
+  else if (
+    req.actor &&
+    typeof req.cookies?.[GUEST_MARKET_COOKIE] === "string" &&
+    req.cookies[GUEST_MARKET_COOKIE] !== req.actor.activeMarketId
+  )
+    await invalidateSellerEmployeeSessionsForActor(req.actor.id, "MARKET_CHANGE");
   if (req.sessionHash)
     await db.delete(sessions).where(eq(sessions.id, req.sessionHash));
   res.json({
@@ -627,6 +641,8 @@ router.post("/auth/login", loginLimit, async (req, res): Promise<void> => {
   });
 });
 router.post("/auth/logout", async (req, res) => {
+  if (req.actor)
+    await invalidateSellerEmployeeSessionsForActor(req.actor.id, "LOGOUT");
   if (req.sessionHash)
     await db.delete(sessions).where(eq(sessions.id, req.sessionHash));
   res.clearCookie("bdinar_session", cookieOptions);
@@ -662,6 +678,8 @@ router.patch("/account/market", async (req, res): Promise<void> => {
     res.json({ marketId: market.id });
     return;
   }
+  if (req.actor.activeMarketId !== market.id)
+    await invalidateSellerEmployeeSessionsForActor(req.actor.id, "MARKET_CHANGE");
   const [user] = await db
     .update(users)
     .set({ activeMarketId: market.id, updatedAt: new Date() })
@@ -723,6 +741,7 @@ router.post(
   }
   const passwordHash = await hashPassword(password);
   await db.transaction(async (tx) => {
+    await invalidateSellerEmployeeSessionsForActorTx(tx, req.actor!.id, "LOGOUT");
     await tx
       .update(users)
       .set({ passwordHash, updatedAt: new Date() })

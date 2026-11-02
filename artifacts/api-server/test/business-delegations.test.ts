@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
 import app from "../src/app";
 import { executeAiConversationTurn } from "../src/ai/conversation-runtime";
-import { businessAuditEvents, businessDelegations, businessMemberships, businessOperatingProfiles, db } from "@workspace/db";
+import { businessAuditEvents, businessDelegations, businessEmployeeSessions, businessMemberships, businessOperatingProfiles, db } from "@workspace/db";
 import { marketFor } from "../src/lib/markets";
 import { requireSafeReplitDevelopmentDatabase } from "./safe-development-database";
 
@@ -36,7 +36,7 @@ async function request(path: string, method = "GET", body?: unknown, cookie = ""
   return { status: response.status, data, raw, cookie: response.headers.get("set-cookie")?.split(";")[0] ?? "" };
 }
 
-type Actor = { id: string; cookie: string };
+type Actor = { id: string; cookie: string; phoneNumber: string; password: string };
 const phoneBase = 55_600_000 + ((Date.now() + process.pid) % 300_000);
 let phoneOffset = 0;
 async function register(label: string): Promise<Actor> {
@@ -49,7 +49,7 @@ async function register(label: string): Promise<Actor> {
   });
   assert.equal(registered.status, 201, registered.raw);
   assert.equal((await request("/account/market", "PATCH", { marketId: "JO" }, registered.cookie)).status, 200);
-  return { id: registered.data.user.id, cookie: registered.cookie };
+  return { id: registered.data.user.id, cookie: registered.cookie, phoneNumber, password };
 }
 
 async function conversation(actor: Actor): Promise<string> {
@@ -289,9 +289,9 @@ await test("D5 model context is available only through one live D4 intelligent r
   const owner = await register("D5ContextOwner");
   const businessId = await createBusiness(owner);
   const ownerPath = businessPath(businessId);
-  const createAiGrant = (label: string) => request(ownerPath, "POST", {
+  const createAiGrant = (label: string, capabilities = ["business.catalog.read"]) => request(ownerPath, "POST", {
     employee: { type: "INTELLIGENT" },
-    capabilities: ["business.catalog.read"],
+    capabilities,
     resourceScope: { kind: "BUSINESS" },
     expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
     idempotencyKey: `d5-${label}-${randomUUID()}`,
@@ -350,9 +350,30 @@ await test("D5 model context is available only through one live D4 intelligent r
   const prompted = await modelContext(modelInput);
   assert.equal("sellerEmployee" in (prompted.serverContext as any), false,
     "ordinary seller questions must remain in the owner's existing route");
+  const {
+    activateSellerEmployeeSession,
+    endSellerEmployeeSession,
+    resolveSellerEmployeeSession,
+  } = await import("../src/lib/business-delegations");
+  const session = await activateSellerEmployeeSession({
+    actorId: owner.id,
+    conversationId: modelInput.conversationId,
+    marketId: "JO",
+  });
+  const restored = await resolveSellerEmployeeSession({
+    actorId: owner.id,
+    conversationId: modelInput.conversationId,
+    marketId: "JO",
+  });
+  assert.equal(restored.state, "ACTIVE");
+  if (restored.state !== "ACTIVE") throw new Error("persisted employee session did not restore");
+  assert.equal(restored.session.id, session.id);
   const explicitPrompted = await modelContext({
     ...modelInput,
-    message: "يا موظفي الذكي، كيف أكتب ردًا لزبائني عن منتجاتي؟",
+    message: "كيف أكتب ردًا لزبائني عن منتجاتي؟",
+    sellerEmployeeMode: true,
+    sellerEmployeeSnapshot: context!,
+    sellerEmployeeSession: restored.session,
   });
   assert.equal((explicitPrompted.serverContext as any).sellerEmployee.status, "ACTIVE");
   assert.deepEqual(explicitPrompted.results, []);
@@ -371,6 +392,23 @@ await test("D5 model context is available only through one live D4 intelligent r
   assert.equal(secondActivated.status, 200, secondActivated.raw);
   assert.equal(await delegatedSellerModelContext({ actorId: owner.id, marketId: "JO" }), null,
     "the model must not choose between multiple grants");
+  const tiedToFirstGrant = await resolveSellerEmployeeSession({
+    actorId: owner.id,
+    conversationId: modelInput.conversationId,
+    marketId: "JO",
+  });
+  assert.equal(tiedToFirstGrant.state, "ACTIVE");
+  if (tiedToFirstGrant.state !== "ACTIVE") throw new Error("existing session lost its bound grant");
+  assert.equal(tiedToFirstGrant.session.delegationId, firstId);
+  const ambiguousConversationId = await conversation(owner);
+  await assert.rejects(
+    () => activateSellerEmployeeSession({
+      actorId: owner.id,
+      conversationId: ambiguousConversationId,
+      marketId: "JO",
+    }),
+    (error: any) => error?.code === "EMPLOYEE_SESSION_GRANT_UNAVAILABLE",
+  );
 
   const revoked = await request(`${ownerPath}/${secondId}/revoke`, "POST", {
     confirm: true,
@@ -378,6 +416,180 @@ await test("D5 model context is available only through one live D4 intelligent r
   }, owner.cookie);
   assert.equal(revoked.status, 200, revoked.raw);
   assert.equal((await delegatedSellerModelContext({ actorId: owner.id, marketId: "JO" }))?.businessId, businessId);
+  const firstRevoked = await request(`${ownerPath}/${firstId}/revoke`, "POST", {
+    confirm: true,
+    expectedVersion: 2,
+  }, owner.cookie);
+  assert.equal(firstRevoked.status, 200, firstRevoked.raw);
+  const [invalidatedSession] = await db.select().from(businessEmployeeSessions)
+    .where(eq(businessEmployeeSessions.id, session.id));
+  assert.equal(invalidatedSession?.status, "INVALIDATED");
+  assert.equal(invalidatedSession?.endReason, "GRANT_REVOKED");
+  assert.equal(await delegatedSellerModelContext({ actorId: owner.id, marketId: "JO" }), null);
+
+  const third = await createAiGrant("three", [
+    "business.catalog.read",
+    "business.inventory.read",
+  ]);
+  assert.equal(third.status, 201, third.raw);
+  const thirdId = third.data.delegation.id as string;
+  const thirdActivated = await request(`${ownerPath}/${thirdId}/activate`, "POST", {
+    confirm: true,
+    expectedVersion: 1,
+  }, owner.cookie);
+  assert.equal(thirdActivated.status, 200, thirdActivated.raw);
+  const runtimeConversationId = await conversation(owner);
+  let modelCalls = 0;
+  const testGateway = {
+    proposeToolCall: async () => {
+      modelCalls += 1;
+      return {
+        id: `d5-test-${modelCalls}`,
+        name: "dinarConversationTurn",
+        arguments: JSON.stringify({
+          responseKind: "CONVERSATIONAL_RESPONSE",
+          goal: "SELL",
+          suggestedAction: "NONE",
+          sellerEmployeeAction: "READ_INVENTORY",
+          confidence: 1,
+          conversationalReply: "سأتحقق من السجل المعتمد.",
+        }),
+      };
+    },
+  };
+  const explicitRuntimeTurn = await executeAiConversationTurn({
+    conversationId: runtimeConversationId,
+    currentMessageId: randomUUID(),
+    message: "يا موظفي الذكي، ما المخزون المتاح؟",
+    market: await marketFor({ actor: { activeMarketId: "JO" } }),
+    actorId: owner.id,
+  }, { modelGateway: testGateway });
+  assert.equal((explicitRuntimeTurn.result as any).advice.topic, "INVENTORY_EMPTY");
+  const followupRuntimeTurn = await executeAiConversationTurn({
+    conversationId: runtimeConversationId,
+    currentMessageId: randomUUID(),
+    message: "هل يوجد شيء متاح الآن؟",
+    market: await marketFor({ actor: { activeMarketId: "JO" } }),
+    actorId: owner.id,
+  }, { modelGateway: testGateway });
+  assert.equal((followupRuntimeTurn.result as any).advice.topic, "INVENTORY_EMPTY");
+  assert.equal(modelCalls, 2, "the follow-up should reuse the persisted session without an invocation phrase");
+  const runtimeSession = await resolveSellerEmployeeSession({
+    actorId: owner.id,
+    conversationId: runtimeConversationId,
+    marketId: "JO",
+  });
+  assert.equal(runtimeSession.state, "ACTIVE");
+  if (runtimeSession.state !== "ACTIVE") throw new Error("runtime activation did not persist");
+  const revokedRuntimeGrant = await request(`${ownerPath}/${thirdId}/revoke`, "POST", {
+    confirm: true,
+    expectedVersion: 2,
+  }, owner.cookie);
+  assert.equal(revokedRuntimeGrant.status, 200, revokedRuntimeGrant.raw);
+  const afterRuntimeRevoke = await executeAiConversationTurn({
+    conversationId: runtimeConversationId,
+    currentMessageId: randomUUID(),
+    message: "هل يوجد شيء آخر؟",
+    market: await marketFor({ actor: { activeMarketId: "JO" } }),
+    actorId: owner.id,
+  }, { modelGateway: testGateway });
+  assert.equal((afterRuntimeRevoke.result as any).advice.topic, "SELLER_EMPLOYEE_SESSION_INVALIDATED");
+  assert.equal(modelCalls, 2, "revocation must stop the follow-up before another model call");
+
+  const fourth = await createAiGrant("four");
+  assert.equal(fourth.status, 201, fourth.raw);
+  const fourthId = fourth.data.delegation.id as string;
+  const fourthActivated = await request(`${ownerPath}/${fourthId}/activate`, "POST", {
+    confirm: true,
+    expectedVersion: 1,
+  }, owner.cookie);
+  assert.equal(fourthActivated.status, 200, fourthActivated.raw);
+
+  const stopConversationId = await conversation(owner);
+  const stopSession = await activateSellerEmployeeSession({
+    actorId: owner.id,
+    conversationId: stopConversationId,
+    marketId: "JO",
+  });
+  assert.equal(await endSellerEmployeeSession({
+    actorId: owner.id,
+    conversationId: stopConversationId,
+    sessionId: stopSession.id,
+  }), true);
+  const [endedSession] = await db.select().from(businessEmployeeSessions)
+    .where(eq(businessEmployeeSessions.id, stopSession.id));
+  assert.equal(endedSession?.status, "ENDED");
+  assert.equal(endedSession?.endReason, "OWNER_STOP");
+
+  const marketConversationId = await conversation(owner);
+  const marketSession = await activateSellerEmployeeSession({
+    actorId: owner.id,
+    conversationId: marketConversationId,
+    marketId: "JO",
+  });
+  const switchedMarket = await request("/account/market", "PATCH", { marketId: "KW" }, owner.cookie);
+  assert.equal(switchedMarket.status, 200, switchedMarket.raw);
+  const [marketInvalidated] = await db.select().from(businessEmployeeSessions)
+    .where(eq(businessEmployeeSessions.id, marketSession.id));
+  assert.equal(marketInvalidated?.status, "INVALIDATED");
+  assert.equal(marketInvalidated?.endReason, "MARKET_CHANGE");
+  assert.equal((await request("/account/market", "PATCH", { marketId: "JO" }, owner.cookie)).status, 200);
+
+  const switchConversationId = await conversation(owner);
+  const switchSession = await activateSellerEmployeeSession({
+    actorId: owner.id,
+    conversationId: switchConversationId,
+    marketId: "JO",
+  });
+  const otherOwner = await register("AccountSwitchTarget");
+  const switchedAccount = await request("/auth/login", "POST", {
+    phoneCountryCode: "+965",
+    phoneNumber: otherOwner.phoneNumber,
+    password: otherOwner.password,
+  }, owner.cookie);
+  assert.equal(switchedAccount.status, 200, switchedAccount.raw);
+  const [accountInvalidated] = await db.select().from(businessEmployeeSessions)
+    .where(eq(businessEmployeeSessions.id, switchSession.id));
+  assert.equal(accountInvalidated?.status, "INVALIDATED");
+  assert.equal(accountInvalidated?.endReason, "ACCOUNT_SWITCH");
+
+  const returnedToOwner = await request("/auth/login", "POST", {
+    phoneCountryCode: "+965",
+    phoneNumber: owner.phoneNumber,
+    password: owner.password,
+  }, switchedAccount.cookie);
+  assert.equal(returnedToOwner.status, 200, returnedToOwner.raw);
+  const logoutConversationId = await conversation({
+    id: owner.id,
+    cookie: returnedToOwner.cookie,
+    phoneNumber: owner.phoneNumber,
+    password: owner.password,
+  });
+  const logoutSession = await activateSellerEmployeeSession({
+    actorId: owner.id,
+    conversationId: logoutConversationId,
+    marketId: "JO",
+  });
+  assert.equal((await request("/auth/logout", "POST", {}, returnedToOwner.cookie)).status, 200);
+  const [logoutInvalidated] = await db.select().from(businessEmployeeSessions)
+    .where(eq(businessEmployeeSessions.id, logoutSession.id));
+  assert.equal(logoutInvalidated?.status, "INVALIDATED");
+  assert.equal(logoutInvalidated?.endReason, "LOGOUT");
+  const d5Audits = await db.select().from(businessAuditEvents)
+    .where(eq(businessAuditEvents.businessId, businessId));
+  const d5Actions = new Set(d5Audits
+    .filter((event) => event.resourceType === "DELEGATION")
+    .map((event) => event.action));
+  for (const action of [
+    "D5_EMPLOYEE_SESSION_STARTED",
+    "D5_EMPLOYEE_CAPABILITY_AUTHORIZED",
+    "D5_EMPLOYEE_SESSION_INVALIDATED",
+    "D5_EMPLOYEE_SESSION_ENDED",
+  ]) assert.ok(d5Actions.has(action), `missing D5 audit action ${action}`);
+  assert.ok(d5Audits.some((event) =>
+    event.action === "D5_EMPLOYEE_CAPABILITY_AUTHORIZED" &&
+    (event.detail as any)?.capability === "business.inventory.read",
+  ), "the read result must have a matching capability audit");
 });
 
 await new Promise<void>((resolve, reject) =>

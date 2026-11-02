@@ -65,6 +65,8 @@ import {
   executeSellerEmployeeTurn,
   executeSmartTurn,
   isExplicitSellerEmployeeInvocation,
+  sellerEmployeeFactResponse,
+  type SellerEmployeeActionHandler,
 } from "./smart-turn";
 import { executeBusinessOnboardingTurn, executeCommerceTurn } from "./commerce-turn";
 import { executeInquiryTurn } from "./inquiry-turn";
@@ -77,6 +79,10 @@ import { meteredPlatformGateway } from "../lib/ai-spend";
 import { executeNegotiationTurn, isBestPriceRequest } from "./negotiation-turn";
 import { recommendationIntent } from "./intent";
 import { storedSponsoredIds } from "../lib/recommendations";
+import {
+  delegatedSellerModelContext,
+  requireSellerEmployeeCapability,
+} from "../lib/business-delegations";
 import type { ListingPhotoSuggestionProvider } from "./listing-photo-intelligence";
 import { personalContext } from "./personal-context-service";
 import { executePersonalMemoryTurn, memoryAcknowledgement } from "./personal-memory-turn";
@@ -545,7 +551,8 @@ export async function executeAiConversationTurn(
     modelStage?: "ONLY";
   } = {},
 ): Promise<{ tool: string; version: number; result: ToolResult; taskPlan?: TaskPlan }> {
-  if (isExplicitSellerEmployeeInvocation(context.message)) {
+  if ((!options.noModel && !options.planStep) &&
+      (Boolean(context.actorId) || isExplicitSellerEmployeeInvocation(context.message))) {
     const employee = await executeSellerEmployeeTurn(
       {
         conversationId: context.conversationId,
@@ -559,8 +566,8 @@ export async function executeAiConversationTurn(
       {
         hasImages: Boolean(context.imageObjectPaths?.length),
         hasLocation: context.location !== undefined,
-        modelDisabled: options.noModel || options.planStep || options.modelStage === "ONLY",
       },
+      sellerEmployeeActionHandler(context),
     );
     if (employee) {
       options.onToolSelected?.(employee.tool);
@@ -573,6 +580,110 @@ export async function executeAiConversationTurn(
 type RuntimeContext = Parameters<typeof executeAiConversationTurn>[0];
 type RuntimeOptions = NonNullable<Parameters<typeof executeAiConversationTurn>[1]>;
 type RuntimeTurn = Awaited<ReturnType<typeof executeAiConversationTurn>>;
+
+function sellerEmployeeActionHandler(
+  context: RuntimeContext,
+): SellerEmployeeActionHandler {
+  return async ({ action, message, session }) => {
+    const requireCapability = (capability: Parameters<typeof requireSellerEmployeeCapability>[0]["capability"]) =>
+      requireSellerEmployeeCapability({
+        actorId: context.actorId!,
+        conversationId: context.conversationId,
+        marketId: context.market.id,
+        sessionId: session.id,
+        capability,
+      });
+
+    if (action === "ANSWER_CATALOG") {
+      await requireCapability("business.catalog.read");
+      return null;
+    }
+    if (action === "READ_INVENTORY") {
+      await requireCapability("business.inventory.read");
+      const catalog = await delegatedSellerModelContext({
+        actorId: context.actorId!,
+        marketId: context.market.id,
+        delegationId: session.delegationId,
+      });
+      if (!catalog) throw new Error("تعذر التحقق من المخزون الحالي للنشاط");
+      const available = catalog.listings.filter(
+        (listing) => Object.prototype.hasOwnProperty.call(listing, "availableQuantity"),
+      );
+      if (!available.length)
+        return sellerEmployeeFactResponse(
+          "لا توجد عروض منشورة ضمن نطاق التفويض.",
+          "INVENTORY_EMPTY",
+          context.actorId,
+        );
+      const normalize = (value: string) =>
+        value.toLocaleLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+      const normalizedMessage = normalize(message);
+      const matches = available.filter((listing) =>
+        normalizedMessage.includes(normalize(listing.title)),
+      );
+      const rows = matches.length ? matches : available.slice(0, 10);
+      const details = rows.map((listing) => {
+        const quantity = listing.availableQuantity;
+        if (listing.inventoryMode !== "LIMITED" || typeof quantity !== "number")
+          return `• ${listing.title}: الكمية غير محددة في سجل المخزون`;
+        return `• ${listing.title}: ${quantity > 0
+          ? `${quantity} متاح`
+          : "غير متاح حاليًا"}`;
+      });
+      return sellerEmployeeFactResponse(
+        `${matches.length > 1 ? "اختر المنتج المقصود:\n" : matches.length === 0 && available.length > rows.length ? "بعض المنتجات ضمن التفويض:\n" : "المخزون المسجل:\n"}${details.join("\n")}`,
+        matches.length > 1 ? "INVENTORY_AMBIGUOUS" : "INVENTORY_READ",
+        context.actorId,
+      );
+    }
+    if (action === "READ_ORDERS") {
+      await requireCapability("business.orders.read");
+      return executeBusinessTurn({
+        conversationId: context.conversationId,
+        message: "اعرض طلبات النشاط",
+        market: context.market,
+        actorId: context.actorId,
+      });
+    }
+    if (action === "DRAFT_LISTING") {
+      await requireCapability("business.catalog.draft");
+      const draftIntent =
+        /^(?:جهز|حضر|حضّر|اعد|أعد|انشئ|أنشئ|سوي|اعمل|اقترح)\s+(?:لي\s+)?(?:ثلاث|3|ثلاثه|ثلاثة)\s+(?:عروض|منتجات|اصناف|أصناف|اطباق|أطباق)(?=$|\s|[:：])/u.test(message.trim());
+      const includesPublish =
+        /(?:انشر|نشر|اعتمد|أكد|اكد|تأكيد|موافق|نعم|publish|confirm)/iu.test(message);
+      if (!draftIntent || includesPublish)
+        throw new Error("يمكن للموظف إعداد مسودة نشاط مدعومة فقط؛ النشر يحتاج مراجعة المالك");
+      await requireCapability("business.catalog.draft.price");
+      return executeBusinessTurn({
+        conversationId: context.conversationId,
+        message,
+        market: context.market,
+        actorId: context.actorId,
+      });
+    }
+    if (action === "DRAFT_INQUIRY_REPLY") {
+      await requireCapability("business.inquiries.reply");
+      await requireCapability("business.messages.send");
+      return executeInquiryTurn({
+        conversationId: context.conversationId,
+        message,
+        market: context.market,
+        actorId: context.actorId,
+        employeeSession: session,
+      });
+    }
+    if (action === "ESCALATE_NEGOTIATION") {
+      await requireCapability("business.negotiations.escalate");
+      return executeNegotiationTurn({
+        conversationId: context.conversationId,
+        message: "اعرض عروض السعر",
+        market: context.market,
+        actorId: context.actorId,
+      });
+    }
+    return null;
+  };
+}
 
 /** A review this actor has not decided yet (purchase, inquiry, offer, policy): its reply is a decision. */
 async function hasOpenReview(conversationId: string, marketId: string, actorId: string | undefined): Promise<boolean> {

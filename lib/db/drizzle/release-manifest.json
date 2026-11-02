@@ -198,5 +198,9 @@
   {
     "tag": "0049_d4_business_delegations",
     "sha256": "74cabd4bd6ce17220af24c783d0522cf0c87901f91b5263503595799c2d37591"
+  },
+  {
+    "tag": "0050_normal_nico_minoru",
+    "sha256": "50cc9e7ca9ec351d26df4ca0e8e0fc5d7c19d1c9e724b0735b91d0908bb121ac"
   }
 ]

@@ -15,7 +15,7 @@ export interface BusinessDelegationInput {
   employee: BusinessHumanEmployee | BusinessIntelligentEmployee;
   /**
      * @minItems 1
-     * @maxItems 1
+     * @maxItems 8
      */
   capabilities: BusinessDelegationInputCapabilitiesItem[];
   resourceScope: BusinessWideDelegationScope | BusinessListingDelegationScope;

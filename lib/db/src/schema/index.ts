@@ -983,6 +983,7 @@ export const conversations = pgTable("conversations", {
 }, (t) => [
   index("conversations_owner_updated_idx").on(t.ownerUserId, t.updatedAt),
   index("conversations_market_updated_idx").on(t.marketId, t.updatedAt),
+  uniqueIndex("conversations_owner_market_unique").on(t.id, t.ownerUserId, t.marketId),
   check("conversations_shape_check", sql`(kind = 'ORDER' AND order_id IS NOT NULL) OR (kind = 'AI' AND order_id IS NULL AND owner_user_id IS NOT NULL AND market_id IS NOT NULL) OR (kind = 'INQUIRY' AND order_id IS NULL AND owner_user_id IS NULL AND market_id IS NOT NULL)`),
 ]);
 export const messages = pgTable(
@@ -2856,6 +2857,8 @@ export const businessDelegations = pgTable(
   },
   (t) => [
     uniqueIndex("business_delegations_idempotency_unique").on(t.businessId, t.grantorActorId, t.idempotencyKey),
+    uniqueIndex("business_delegations_session_authority_unique")
+      .on(t.id, t.businessId, t.grantorActorId, t.marketId),
     uniqueIndex("business_delegations_agent_configuration_unique")
       .on(t.agentConfigurationId)
       .where(sql`${t.agentConfigurationId} IS NOT NULL`),
@@ -2871,7 +2874,10 @@ export const businessDelegations = pgTable(
       "business_delegations_employee_identity_valid",
       sql`(${t.employeeType} = 'HUMAN' AND ${t.employeeUserId} IS NOT NULL AND ${t.agentConfigurationId} IS NULL AND ${t.employeeUserId} <> ${t.grantorActorId}) OR (${t.employeeType} = 'INTELLIGENT' AND ${t.employeeUserId} IS NULL AND ${t.agentConfigurationId} IS NOT NULL)`,
     ),
-    check("business_delegations_capabilities_valid", sql`jsonb_typeof(${t.capabilities}) = 'array' AND jsonb_array_length(${t.capabilities}) = 1 AND ${t.capabilities}->>0 = 'business.catalog.read'`),
+    check(
+      "business_delegations_capabilities_valid",
+      sql`jsonb_typeof(${t.capabilities}) = 'array' AND jsonb_array_length(${t.capabilities}) BETWEEN 1 AND 8 AND ${t.capabilities} <@ '["business.catalog.read","business.catalog.draft","business.catalog.draft.price","business.inventory.read","business.orders.read","business.inquiries.reply","business.messages.send","business.negotiations.escalate"]'::jsonb`,
+    ),
     check(
       "business_delegations_resource_scope_valid",
       sql`jsonb_typeof(${t.resourceScope}) = 'object' AND (${t.resourceScope} = jsonb_build_object('kind', 'BUSINESS') OR (${t.resourceScope}->>'kind' = 'LISTING_ALLOWLIST' AND ${t.resourceScope} = jsonb_build_object('kind', 'LISTING_ALLOWLIST', 'listingIds', ${t.resourceScope}->'listingIds') AND jsonb_typeof(${t.resourceScope}->'listingIds') = 'array' AND jsonb_array_length(${t.resourceScope}->'listingIds') BETWEEN 1 AND 100))`,
@@ -2884,6 +2890,71 @@ export const businessDelegations = pgTable(
     check("business_delegations_revoked_timestamp_valid", sql`(${t.status} = 'REVOKED') = (${t.revokedAt} IS NOT NULL)`),
     check("business_delegations_expired_timestamp_valid", sql`(${t.status} = 'EXPIRED') = (${t.expiredAt} IS NOT NULL)`),
     check("business_delegations_activated_timestamp_valid", sql`${t.status} NOT IN ('ACTIVE', 'SUSPENDED', 'REVOKED', 'EXPIRED') OR ${t.activatedAt} IS NOT NULL`),
+  ],
+);
+
+export type BusinessEmployeeSessionStatus = "ACTIVE" | "ENDED" | "INVALIDATED" | "EXPIRED";
+export type BusinessEmployeeSessionEndReason =
+  | "OWNER_STOP"
+  | "LOGOUT"
+  | "ACCOUNT_SWITCH"
+  | "MARKET_CHANGE"
+  | "GRANT_SUSPENDED"
+  | "GRANT_REVOKED"
+  | "GRANT_EXPIRED"
+  | "BUSINESS_BLOCKED"
+  | "SESSION_EXPIRED"
+  | "SESSION_RESTARTED";
+
+/** Persisted D5 conversational authority; message history remains the session's context store. */
+export const businessEmployeeSessions = pgTable(
+  "business_employee_sessions",
+  {
+    id: text("id").primaryKey(),
+    conversationId: text("conversation_id").notNull(),
+    businessId: text("business_id").notNull(),
+    ownerUserId: text("owner_user_id").notNull(),
+    delegationId: text("delegation_id").notNull(),
+    marketId: text("market_id").notNull(),
+    status: text("status").$type<BusinessEmployeeSessionStatus>().default("ACTIVE").notNull(),
+    startedAt: timestamp("started_at", { withTimezone: true }).defaultNow().notNull(),
+    lastActivityAt: timestamp("last_activity_at", { withTimezone: true }).defaultNow().notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    endedAt: timestamp("ended_at", { withTimezone: true }),
+    endReason: text("end_reason").$type<BusinessEmployeeSessionEndReason>(),
+    ...dates(),
+  },
+  (t) => [
+    uniqueIndex("business_employee_sessions_one_active_conversation_unique")
+      .on(t.conversationId)
+      .where(sql`${t.status} = 'ACTIVE'`),
+    index("business_employee_sessions_owner_status_idx").on(t.ownerUserId, t.status, t.lastActivityAt),
+    index("business_employee_sessions_delegation_status_idx").on(t.delegationId, t.status),
+    foreignKey({
+      name: "business_employee_sessions_conversation_owner_market_fk",
+      columns: [t.conversationId, t.ownerUserId, t.marketId],
+      foreignColumns: [conversations.id, conversations.ownerUserId, conversations.marketId],
+    }).onDelete("cascade"),
+    foreignKey({
+      name: "business_employee_sessions_delegation_authority_fk",
+      columns: [t.delegationId, t.businessId, t.ownerUserId, t.marketId],
+      foreignColumns: [
+        businessDelegations.id,
+        businessDelegations.businessId,
+        businessDelegations.grantorActorId,
+        businessDelegations.marketId,
+      ],
+    }).onDelete("no action"),
+    check("business_employee_sessions_status_valid", sql`${t.status} IN ('ACTIVE', 'ENDED', 'INVALIDATED', 'EXPIRED')`),
+    check(
+      "business_employee_sessions_end_state_valid",
+      sql`(${t.status} = 'ACTIVE' AND ${t.endedAt} IS NULL AND ${t.endReason} IS NULL) OR (${t.status} <> 'ACTIVE' AND ${t.endedAt} IS NOT NULL AND ${t.endReason} IS NOT NULL)`,
+    ),
+    check(
+      "business_employee_sessions_end_reason_valid",
+      sql`${t.endReason} IS NULL OR ${t.endReason} IN ('OWNER_STOP', 'LOGOUT', 'ACCOUNT_SWITCH', 'MARKET_CHANGE', 'GRANT_SUSPENDED', 'GRANT_REVOKED', 'GRANT_EXPIRED', 'BUSINESS_BLOCKED', 'SESSION_EXPIRED', 'SESSION_RESTARTED')`,
+    ),
+    check("business_employee_sessions_expiry_valid", sql`${t.expiresAt} > ${t.startedAt}`),
   ],
 );
 

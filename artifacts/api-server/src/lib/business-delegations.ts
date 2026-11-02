@@ -1,29 +1,46 @@
 import { randomUUID } from "node:crypto";
-import { and, asc, eq, gt, inArray, lte, ne } from "drizzle-orm";
+import { and, asc, desc, eq, gt, inArray, lte, ne } from "drizzle-orm";
 import {
   businessAuditEvents,
   businessDelegations,
+  businessEmployeeSessions,
   businessMemberships,
   businessOperatingProfiles,
   businessProfiles,
+  conversations,
   db,
   offers,
   users,
+  type BusinessEmployeeSessionEndReason,
 } from "@workspace/db";
 import { z } from "zod";
 
 const POLICY_VERSION = "D4_READ_ONLY_V1";
+const D5_SESSION_POLICY_VERSION = "D5_EMPLOYEE_SESSION_V1";
 const MAX_GRANT_DAYS = 90;
 const MAX_CATALOG_ROWS = 100;
-const DELEGATABLE_CAPABILITIES = ["business.catalog.read"] as const;
+const D5_SESSION_TTL_MS = 24 * 60 * 60_000;
+const DELEGATABLE_CAPABILITIES = [
+  "business.catalog.read",
+  "business.catalog.draft",
+  "business.catalog.draft.price",
+  "business.inventory.read",
+  "business.orders.read",
+  "business.inquiries.reply",
+  "business.messages.send",
+  "business.negotiations.escalate",
+] as const;
+export type SellerEmployeeCapability = typeof DELEGATABLE_CAPABILITIES[number];
+const D5_ONLY_CAPABILITIES = DELEGATABLE_CAPABILITIES.filter(
+  (capability) => capability !== "business.catalog.read",
+);
+const BUSINESS_WIDE_CAPABILITIES = new Set<string>(D5_ONLY_CAPABILITIES);
 const OWNER_APPROVAL_CAPABILITIES = [
   "business.catalog.draft",
-  "business.catalog.publish",
-  "business.listing.update",
-  "business.inventory.manage",
-  "business.orders.read",
-  "business.analytics.read",
-  "business.profile.manage",
+  "business.catalog.draft.price",
+  "business.messages.send",
+  "business.inquiries.reply",
+  "business.negotiations.escalate",
 ] as const;
 
 const capabilitySchema = z.enum(DELEGATABLE_CAPABILITIES);
@@ -48,6 +65,12 @@ export const createBusinessDelegationSchema = z.object({
   if (new Set(input.capabilities).size !== input.capabilities.length) {
     context.addIssue({ code: z.ZodIssueCode.custom, path: ["capabilities"], message: "Duplicate capabilities are not allowed" });
   }
+  if (input.employee.type === "HUMAN" && input.capabilities.some((capability) => D5_ONLY_CAPABILITIES.includes(capability as typeof D5_ONLY_CAPABILITIES[number]))) {
+    context.addIssue({ code: z.ZodIssueCode.custom, path: ["capabilities"], message: "D5 capabilities are available only to the intelligent employee" });
+  }
+  if (input.capabilities.some((capability) => BUSINESS_WIDE_CAPABILITIES.has(capability)) && input.resourceScope.kind !== "BUSINESS") {
+    context.addIssue({ code: z.ZodIssueCode.custom, path: ["resourceScope"], message: "This capability requires business-wide scope" });
+  }
 });
 
 const confirmationSchema = z.object({
@@ -56,6 +79,7 @@ const confirmationSchema = z.object({
 }).strict();
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
+export type BusinessDelegationTx = Tx;
 type DelegationScope = z.infer<typeof scopeSchema>;
 type Principal =
   | { type: "HUMAN"; userId: string }
@@ -244,7 +268,9 @@ export async function createBusinessDelegation(input: {
         resourceScope: body.resourceScope,
         approvalRequiredCapabilities: [...OWNER_APPROVAL_CAPABILITIES],
         status: "DRAFT",
-        policyVersion: POLICY_VERSION,
+        policyVersion: body.capabilities.some((capability) =>
+          D5_ONLY_CAPABILITIES.includes(capability as typeof D5_ONLY_CAPABILITIES[number]),
+        ) ? D5_SESSION_POLICY_VERSION : POLICY_VERSION,
         idempotencyKey: body.idempotencyKey,
         version: 1,
         expiresAt,
@@ -399,6 +425,15 @@ async function mutateDelegation(input: {
       .returning();
     if (!updated) throw fail(409, "تغير التفويض؛ حدّث الصفحة ثم أعد التأكيد", "DELEGATION_VERSION_CONFLICT");
 
+    if (row.employeeType === "INTELLIGENT" && status !== "ACTIVE") {
+      await invalidateEmployeeSessionsForDelegationTx(
+        tx,
+        row.id,
+        input.action === "REVOKE" ? "GRANT_REVOKED" : "GRANT_SUSPENDED",
+        input.actorId,
+      );
+    }
+
     if (row.employeeType === "HUMAN" && row.employeeUserId && status !== "ACTIVE" &&
         !(await hasOtherActiveHumanGrant(tx, { delegationId: row.id, businessId: row.businessId, userId: row.employeeUserId }))) {
       await setStaffMembership(tx, {
@@ -477,6 +512,8 @@ async function expireGrantIfNeeded(
     ))
     .returning();
   if (!expired) return row;
+  if (expired.employeeType === "INTELLIGENT")
+    await invalidateEmployeeSessionsForDelegationTx(tx, expired.id, "GRANT_EXPIRED", actorId);
   if (expired.employeeType === "HUMAN" && expired.employeeUserId &&
       !(await hasOtherActiveHumanGrant(tx, {
         delegationId: expired.id,
@@ -568,7 +605,8 @@ export async function delegatedBusinessCatalog(input: {
       });
       return { denied: { status: 403, message: "هذا التفويض غير نشط", code: "DELEGATION_NOT_ACTIVE" } as const };
     }
-    if (!liveRow.capabilities.includes("business.catalog.read")) {
+    if (!liveRow.capabilities.includes("business.catalog.read") &&
+        !liveRow.capabilities.includes("business.inventory.read")) {
       await recordDelegationAudit(tx, {
         businessId: row.businessId,
         actorId,
@@ -649,6 +687,9 @@ export async function delegatedBusinessCatalog(input: {
         id: offers.id,
         unitPriceMinor: offers.unitPriceMinor,
         pricingMode: offers.pricingMode,
+        inventoryMode: offers.inventoryMode,
+        availableQuantity: offers.availableQuantity,
+        reservedQuantity: offers.reservedQuantity,
         data: offers.data,
       })
       .from(offers)
@@ -666,13 +707,25 @@ export async function delegatedBusinessCatalog(input: {
     return { data: {
       businessId: row.businessId,
       businessName: business.displayName,
-      policyVersion: POLICY_VERSION,
+      policyVersion: liveRow.policyVersion,
       listings: rows.map((listing) => ({
         id: listing.id,
         title: typeof listing.data.title === "string" ? listing.data.title : "منتج",
-        category: typeof listing.data.category === "string" ? listing.data.category : null,
-        priceMinor: listing.unitPriceMinor,
-        pricingMode: listing.pricingMode,
+        ...(liveRow.capabilities.includes("business.catalog.read")
+          ? {
+              category: typeof listing.data.category === "string" ? listing.data.category : null,
+              priceMinor: listing.unitPriceMinor,
+              pricingMode: listing.pricingMode,
+            }
+          : {}),
+        ...(liveRow.capabilities.includes("business.inventory.read")
+          ? {
+              inventoryMode: listing.inventoryMode,
+              availableQuantity: listing.inventoryMode === "LIMITED"
+                ? Math.max(0, (listing.availableQuantity ?? 0) - listing.reservedQuantity)
+                : null,
+            }
+          : {}),
       })),
     } };
   });
@@ -689,6 +742,7 @@ export async function delegatedBusinessCatalog(input: {
 export async function delegatedSellerModelContext(input: {
   actorId: string;
   marketId: string;
+  delegationId?: string;
 }) {
   const rows = await db
     .select()
@@ -699,10 +753,11 @@ export async function delegatedSellerModelContext(input: {
       eq(businessDelegations.employeeType, "INTELLIGENT"),
       eq(businessDelegations.status, "ACTIVE"),
       gt(businessDelegations.expiresAt, new Date()),
+      input.delegationId ? eq(businessDelegations.id, input.delegationId) : undefined,
     ))
     .orderBy(asc(businessDelegations.createdAt), asc(businessDelegations.id))
-    .limit(2);
-  if (rows.length !== 1) return null;
+    .limit(input.delegationId ? 1 : 2);
+  if (!rows.length || (!input.delegationId && rows.length !== 1)) return null;
 
   const grant = rows[0]!;
   if (!grant.agentConfigurationId) return null;
@@ -722,4 +777,478 @@ export async function delegatedSellerModelContext(input: {
     ].includes(String(code))) return null;
     throw error;
   }
+}
+
+export type SellerEmployeeSessionContext = {
+  id: string;
+  delegationId: string;
+  businessId: string;
+  ownerUserId: string;
+  marketId: string;
+  capabilities: SellerEmployeeCapability[];
+  resourceScope: DelegationScope;
+  startedAt: Date;
+  expiresAt: Date;
+};
+
+export type SellerEmployeeSessionResolution =
+  | { state: "NONE" }
+  | { state: "ACTIVE"; session: SellerEmployeeSessionContext }
+  | { state: "INVALIDATED"; reason: string };
+
+const sessionEndReasonForDelegation = (
+  reason: "GRANT_SUSPENDED" | "GRANT_REVOKED" | "GRANT_EXPIRED",
+) => reason;
+
+async function invalidateEmployeeSessionsForDelegationTx(
+  tx: Tx,
+  delegationId: string,
+  reason: "GRANT_SUSPENDED" | "GRANT_REVOKED" | "GRANT_EXPIRED",
+  actorId: string,
+) {
+  const now = new Date();
+  const rows = await tx
+    .update(businessEmployeeSessions)
+    .set({
+      status: "INVALIDATED",
+      endedAt: now,
+      endReason: sessionEndReasonForDelegation(reason),
+      updatedAt: now,
+    })
+    .where(and(
+      eq(businessEmployeeSessions.delegationId, delegationId),
+      eq(businessEmployeeSessions.status, "ACTIVE"),
+    ))
+    .returning({
+      id: businessEmployeeSessions.id,
+      businessId: businessEmployeeSessions.businessId,
+      ownerUserId: businessEmployeeSessions.ownerUserId,
+    });
+  for (const row of rows) {
+    await recordDelegationAudit(tx, {
+      businessId: row.businessId,
+      actorId,
+      action: "D5_EMPLOYEE_SESSION_INVALIDATED",
+      delegationId,
+      detail: { sessionId: row.id, reason, policyVersion: D5_SESSION_POLICY_VERSION },
+    });
+  }
+}
+
+async function invalidateEmployeeSessionTx(
+  tx: Tx,
+  session: typeof businessEmployeeSessions.$inferSelect,
+  reason: BusinessEmployeeSessionEndReason,
+  actorId: string,
+  status: "ENDED" | "INVALIDATED" | "EXPIRED" = "INVALIDATED",
+) {
+  const now = new Date();
+  const [updated] = await tx
+    .update(businessEmployeeSessions)
+    .set({ status, endedAt: now, endReason: reason, updatedAt: now })
+    .where(and(
+      eq(businessEmployeeSessions.id, session.id),
+      eq(businessEmployeeSessions.status, "ACTIVE"),
+    ))
+    .returning({ id: businessEmployeeSessions.id });
+  if (updated) {
+    await recordDelegationAudit(tx, {
+      businessId: session.businessId,
+      actorId,
+      action: status === "ENDED" ? "D5_EMPLOYEE_SESSION_ENDED" : "D5_EMPLOYEE_SESSION_INVALIDATED",
+      delegationId: session.delegationId,
+      detail: { sessionId: session.id, reason, policyVersion: D5_SESSION_POLICY_VERSION },
+    });
+  }
+  return Boolean(updated);
+}
+
+function employeeSessionContext(
+  row: typeof businessEmployeeSessions.$inferSelect,
+  grant: typeof businessDelegations.$inferSelect,
+): SellerEmployeeSessionContext {
+  return {
+    id: row.id,
+    delegationId: row.delegationId,
+    businessId: row.businessId,
+    ownerUserId: row.ownerUserId,
+    marketId: row.marketId,
+    capabilities: grant.capabilities.filter(
+      (capability): capability is SellerEmployeeCapability =>
+        (DELEGATABLE_CAPABILITIES as readonly string[]).includes(capability),
+    ),
+    resourceScope: grant.resourceScope as DelegationScope,
+    startedAt: row.startedAt,
+    expiresAt: row.expiresAt,
+  };
+}
+
+async function authorizeEmployeeSessionTx(
+  tx: Tx,
+  input: {
+    sessionId: string;
+    actorId: string;
+    conversationId: string;
+    marketId: string;
+    capability?: SellerEmployeeCapability;
+    listingId?: string;
+    touch?: boolean;
+  },
+): Promise<{ session?: SellerEmployeeSessionContext; reason?: string }> {
+  const [session] = await tx
+    .select()
+    .from(businessEmployeeSessions)
+    .where(and(
+      eq(businessEmployeeSessions.id, input.sessionId),
+      eq(businessEmployeeSessions.ownerUserId, input.actorId),
+      eq(businessEmployeeSessions.conversationId, input.conversationId),
+    ))
+    .limit(1);
+  if (!session || session.status !== "ACTIVE") return { reason: "SESSION_NOT_ACTIVE" };
+
+  const now = new Date();
+  const end = async (
+    reason: BusinessEmployeeSessionEndReason,
+    status: "INVALIDATED" | "EXPIRED" = "INVALIDATED",
+  ) => {
+    await invalidateEmployeeSessionTx(tx, session, reason, input.actorId, status);
+    return { reason };
+  };
+  if (session.expiresAt <= now)
+    return end("SESSION_EXPIRED", "EXPIRED");
+  if (session.marketId !== input.marketId)
+    return end("MARKET_CHANGE");
+
+  const [conversation] = await tx
+    .select({ id: conversations.id, ownerUserId: conversations.ownerUserId, marketId: conversations.marketId, kind: conversations.kind })
+    .from(conversations)
+    .where(eq(conversations.id, input.conversationId))
+    .for("share")
+    .limit(1);
+  const [owner] = await tx
+    .select({ id: users.id, status: users.status, activeMarketId: users.activeMarketId })
+    .from(users)
+    .where(eq(users.id, input.actorId))
+    .for("share")
+    .limit(1);
+  if (!conversation || conversation.ownerUserId !== input.actorId || conversation.kind !== "AI")
+    return end("ACCOUNT_SWITCH");
+  if (!owner || owner.status !== "ACTIVE")
+    return end("ACCOUNT_SWITCH");
+  if (owner.activeMarketId !== input.marketId || conversation.marketId !== input.marketId)
+    return end("MARKET_CHANGE");
+
+  const [grant] = await tx
+    .select()
+    .from(businessDelegations)
+    .where(and(
+      eq(businessDelegations.id, session.delegationId),
+      eq(businessDelegations.businessId, session.businessId),
+      eq(businessDelegations.grantorActorId, input.actorId),
+      eq(businessDelegations.marketId, input.marketId),
+      eq(businessDelegations.employeeType, "INTELLIGENT"),
+    ))
+    .for("update")
+    .limit(1);
+  if (!grant) return end("GRANT_REVOKED");
+
+  let business: typeof businessOperatingProfiles.$inferSelect;
+  let identity: typeof businessProfiles.$inferSelect;
+  try {
+    ({ business, identity } = await lockOwnedBusiness(tx, {
+      businessId: grant.businessId,
+      actorId: input.actorId,
+      marketId: input.marketId,
+    }));
+  } catch (error) {
+    if ((error as { code?: unknown })?.code === "BUSINESS_NOT_FOUND")
+      return end("BUSINESS_BLOCKED");
+    throw error;
+  }
+  const liveGrant = await expireGrantIfNeeded(tx, grant, business.d2BusinessId, input.actorId);
+  if (liveGrant.status !== "ACTIVE")
+    return end(
+      liveGrant.status === "EXPIRED" ? "GRANT_EXPIRED" : "GRANT_REVOKED",
+      liveGrant.status === "EXPIRED" ? "EXPIRED" : "INVALIDATED",
+    );
+  if (input.capability && !liveGrant.capabilities.includes(input.capability))
+    return { reason: "CAPABILITY_NOT_GRANTED" };
+
+  const resourceScope = liveGrant.resourceScope as DelegationScope;
+  if (input.listingId) {
+    const [listing] = await tx
+      .select({ id: offers.id })
+      .from(offers)
+      .where(and(
+        eq(offers.id, input.listingId),
+        eq(offers.businessProfileId, identity.id),
+        eq(offers.marketId, input.marketId),
+      ))
+      .for("share")
+      .limit(1);
+    if (!listing || (resourceScope.kind === "LISTING_ALLOWLIST" &&
+        !resourceScope.listingIds.includes(input.listingId)))
+      return { reason: "RESOURCE_OUT_OF_SCOPE" };
+  }
+
+  if (input.touch) {
+    await tx.update(businessEmployeeSessions)
+      .set({ lastActivityAt: now, updatedAt: now })
+      .where(and(
+        eq(businessEmployeeSessions.id, session.id),
+        eq(businessEmployeeSessions.status, "ACTIVE"),
+      ));
+  }
+  if (input.capability) {
+    await recordDelegationAudit(tx, {
+      businessId: liveGrant.businessId,
+      actorId: input.actorId,
+      action: "D5_EMPLOYEE_CAPABILITY_AUTHORIZED",
+      delegationId: liveGrant.id,
+      detail: {
+        sessionId: session.id,
+        capability: input.capability,
+        ...(input.listingId ? { listingId: input.listingId } : {}),
+        policyVersion: D5_SESSION_POLICY_VERSION,
+      },
+    });
+  }
+  return { session: employeeSessionContext(session, liveGrant) };
+}
+
+export async function activateSellerEmployeeSession(input: {
+  actorId: string;
+  conversationId: string;
+  marketId: string;
+}): Promise<SellerEmployeeSessionContext> {
+  return db.transaction(async (tx) => {
+    const [conversation] = await tx
+      .select({ id: conversations.id, ownerUserId: conversations.ownerUserId, marketId: conversations.marketId, kind: conversations.kind })
+      .from(conversations)
+      .where(and(
+        eq(conversations.id, input.conversationId),
+        eq(conversations.ownerUserId, input.actorId),
+        eq(conversations.marketId, input.marketId),
+        eq(conversations.kind, "AI"),
+      ))
+      .for("share")
+      .limit(1);
+    const [owner] = await tx
+      .select({ status: users.status, activeMarketId: users.activeMarketId })
+      .from(users)
+      .where(eq(users.id, input.actorId))
+      .for("share")
+      .limit(1);
+    if (!conversation || !owner || owner.status !== "ACTIVE" || owner.activeMarketId !== input.marketId)
+      throw fail(403, "لا يمكن تفعيل جلسة الموظف لهذا الحساب أو السوق", "EMPLOYEE_SESSION_CONTEXT_INVALID");
+
+    const candidates = await tx
+      .select()
+      .from(businessDelegations)
+      .where(and(
+        eq(businessDelegations.grantorActorId, input.actorId),
+        eq(businessDelegations.marketId, input.marketId),
+        eq(businessDelegations.employeeType, "INTELLIGENT"),
+        eq(businessDelegations.status, "ACTIVE"),
+        gt(businessDelegations.expiresAt, new Date()),
+      ))
+      .orderBy(asc(businessDelegations.createdAt), asc(businessDelegations.id))
+      .limit(2);
+    if (candidates.length !== 1)
+      throw fail(403, "لا يوجد تفويض D4 نشط ووحيد لهذا السوق", "EMPLOYEE_SESSION_GRANT_UNAVAILABLE");
+
+    const grant = candidates[0]!;
+    if (!grant.agentConfigurationId ||
+        !grant.capabilities.some((capability) => (DELEGATABLE_CAPABILITIES as readonly string[]).includes(capability)))
+      throw fail(403, "لا يتيح التفويض صلاحية للموظف الذكي", "EMPLOYEE_SESSION_CAPABILITY_UNAVAILABLE");
+
+    const { business } = await lockOwnedBusiness(tx, {
+      businessId: grant.businessId,
+      actorId: input.actorId,
+      marketId: input.marketId,
+    });
+    const liveGrant = await expireGrantIfNeeded(tx, grant, business.d2BusinessId, input.actorId);
+    if (liveGrant.status !== "ACTIVE")
+      throw fail(403, "هذا التفويض غير نشط", "EMPLOYEE_SESSION_GRANT_UNAVAILABLE");
+
+    const previous = await tx
+      .select()
+      .from(businessEmployeeSessions)
+      .where(and(
+        eq(businessEmployeeSessions.conversationId, input.conversationId),
+        eq(businessEmployeeSessions.ownerUserId, input.actorId),
+        eq(businessEmployeeSessions.status, "ACTIVE"),
+      ))
+      .for("update");
+    for (const session of previous)
+      await invalidateEmployeeSessionTx(tx, session, "SESSION_RESTARTED", input.actorId, "ENDED");
+
+    const now = new Date();
+    const [session] = await tx
+      .insert(businessEmployeeSessions)
+      .values({
+        id: randomUUID(),
+        conversationId: input.conversationId,
+        businessId: grant.businessId,
+        ownerUserId: input.actorId,
+        delegationId: grant.id,
+        marketId: input.marketId,
+        status: "ACTIVE",
+        startedAt: now,
+        lastActivityAt: now,
+        expiresAt: new Date(Math.min(grant.expiresAt.getTime(), now.getTime() + D5_SESSION_TTL_MS)),
+      })
+      .returning();
+    await recordDelegationAudit(tx, {
+      businessId: grant.businessId,
+      actorId: input.actorId,
+      action: "D5_EMPLOYEE_SESSION_STARTED",
+      delegationId: grant.id,
+      detail: {
+        sessionId: session!.id,
+        capabilities: liveGrant.capabilities,
+        scopeKind: (liveGrant.resourceScope as DelegationScope).kind,
+        policyVersion: D5_SESSION_POLICY_VERSION,
+      },
+    });
+    return employeeSessionContext(session!, liveGrant);
+  });
+}
+
+export async function resolveSellerEmployeeSession(input: {
+  actorId: string;
+  conversationId: string;
+  marketId: string;
+}): Promise<SellerEmployeeSessionResolution> {
+  const [session] = await db
+    .select()
+    .from(businessEmployeeSessions)
+    .where(and(
+      eq(businessEmployeeSessions.conversationId, input.conversationId),
+      eq(businessEmployeeSessions.ownerUserId, input.actorId),
+      eq(businessEmployeeSessions.status, "ACTIVE"),
+    ))
+    .limit(1);
+  if (!session) {
+    const [latest] = await db
+      .select()
+      .from(businessEmployeeSessions)
+      .where(and(
+        eq(businessEmployeeSessions.conversationId, input.conversationId),
+        eq(businessEmployeeSessions.ownerUserId, input.actorId),
+      ))
+      .orderBy(desc(businessEmployeeSessions.updatedAt), desc(businessEmployeeSessions.createdAt))
+      .limit(1);
+    if (!latest || (latest.status === "ENDED" && latest.endReason === "OWNER_STOP"))
+      return { state: "NONE" };
+    return {
+      state: "INVALIDATED",
+      reason: latest.endReason ?? "SESSION_NOT_ACTIVE",
+    };
+  }
+  const result = await db.transaction((tx) => authorizeEmployeeSessionTx(tx, {
+    ...input,
+    sessionId: session.id,
+    touch: true,
+  }));
+  if (!result.session)
+    return { state: "INVALIDATED", reason: result.reason ?? "SESSION_NOT_ACTIVE" };
+  return { state: "ACTIVE", session: result.session };
+}
+
+export async function requireSellerEmployeeCapability(input: {
+  actorId: string;
+  conversationId: string;
+  marketId: string;
+  sessionId: string;
+  capability: SellerEmployeeCapability;
+  listingId?: string;
+}): Promise<SellerEmployeeSessionContext> {
+  return db.transaction((tx) => assertSellerEmployeeCapabilityTx(tx, input));
+}
+
+export async function assertSellerEmployeeCapabilityTx(
+  tx: BusinessDelegationTx,
+  input: {
+    actorId: string;
+    conversationId: string;
+    marketId: string;
+    sessionId: string;
+    capability: SellerEmployeeCapability;
+    listingId?: string;
+  },
+): Promise<SellerEmployeeSessionContext> {
+  const result = await authorizeEmployeeSessionTx(tx, input);
+  if (!result.session) {
+    const reason = result.reason ?? "SESSION_NOT_ACTIVE";
+    const message = reason === "CAPABILITY_NOT_GRANTED"
+      ? "لا يتيح التفويض هذا الإجراء."
+      : reason === "RESOURCE_OUT_OF_SCOPE"
+        ? "هذا المورد خارج نطاق التفويض."
+        : "انتهت صلاحية جلسة الموظف أو لم تعد مخولة. أعد التفعيل بعد مراجعة التفويض.";
+    throw fail(403, message, reason);
+  }
+  return result.session;
+}
+
+export async function invalidateSellerEmployeeSessionsForActorTx(
+  tx: BusinessDelegationTx,
+  actorId: string,
+  reason: "LOGOUT" | "ACCOUNT_SWITCH" | "MARKET_CHANGE" | "OWNER_STOP",
+) {
+  const rows = await tx
+    .select()
+    .from(businessEmployeeSessions)
+    .where(and(
+      eq(businessEmployeeSessions.ownerUserId, actorId),
+      eq(businessEmployeeSessions.status, "ACTIVE"),
+    ))
+    .for("update");
+  for (const session of rows) {
+    await invalidateEmployeeSessionTx(
+      tx,
+      session,
+      reason,
+      actorId,
+      reason === "OWNER_STOP" ? "ENDED" : "INVALIDATED",
+    );
+  }
+  return rows.length;
+}
+
+export async function invalidateSellerEmployeeSessionsForActor(
+  actorId: string,
+  reason: "LOGOUT" | "ACCOUNT_SWITCH" | "MARKET_CHANGE" | "OWNER_STOP",
+) {
+  return db.transaction((tx) =>
+    invalidateSellerEmployeeSessionsForActorTx(tx, actorId, reason),
+  );
+}
+
+export async function endSellerEmployeeSession(input: {
+  actorId: string;
+  conversationId: string;
+  sessionId: string;
+}): Promise<boolean> {
+  return db.transaction(async (tx) => {
+    const [session] = await tx
+      .select()
+      .from(businessEmployeeSessions)
+      .where(and(
+        eq(businessEmployeeSessions.id, input.sessionId),
+        eq(businessEmployeeSessions.conversationId, input.conversationId),
+        eq(businessEmployeeSessions.ownerUserId, input.actorId),
+        eq(businessEmployeeSessions.status, "ACTIVE"),
+      ))
+      .for("update")
+      .limit(1);
+    if (!session) return false;
+    return invalidateEmployeeSessionTx(
+      tx,
+      session,
+      "OWNER_STOP",
+      input.actorId,
+      "ENDED",
+    );
+  });
 }

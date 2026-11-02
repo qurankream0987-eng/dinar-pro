@@ -5372,14 +5372,14 @@ export const ListBusinessDelegationsResponse = zod.object({
   "type": zod.enum(['INTELLIGENT']),
   "configurationId": zod.uuid().nullable()
 })]),
-  "capabilities": zod.array(zod.enum(['business.catalog.read'])),
+  "capabilities": zod.array(zod.enum(['business.catalog.read', 'business.catalog.draft', 'business.catalog.draft.price', 'business.inventory.read', 'business.orders.read', 'business.inquiries.reply', 'business.messages.send', 'business.negotiations.escalate'])),
   "resourceScope": zod.union([zod.object({
   "kind": zod.enum(['BUSINESS'])
 }),zod.object({
   "kind": zod.enum(['LISTING_ALLOWLIST']),
   "listingIds": zod.array(zod.uuid()).min(1).max(listBusinessDelegationsResponseDelegationsItemResourceScopeTwoListingIdsMax)
 })]),
-  "approvalRequiredCapabilities": zod.array(zod.string()),
+  "approvalRequiredCapabilities": zod.array(zod.enum(['business.catalog.draft', 'business.catalog.draft.price', 'business.inquiries.reply', 'business.messages.send', 'business.negotiations.escalate'])),
   "status": zod.enum(['DRAFT', 'ACTIVE', 'SUSPENDED', 'REVOKED', 'EXPIRED']),
   "policyVersion": zod.string(),
   "version": zod.int().min(1),
@@ -5399,7 +5399,7 @@ export const CreateBusinessDelegationParams = zod.object({
   "id": zod.uuid()
 })
 
-export const createBusinessDelegationBodyCapabilitiesMax = 1;
+export const createBusinessDelegationBodyCapabilitiesMax = 8;
 
 export const createBusinessDelegationBodyResourceScopeTwoListingIdsMax = 100;
 
@@ -5415,7 +5415,7 @@ export const CreateBusinessDelegationBody = zod.object({
 }),zod.object({
   "type": zod.enum(['INTELLIGENT'])
 })]),
-  "capabilities": zod.array(zod.enum(['business.catalog.read'])).min(1).max(createBusinessDelegationBodyCapabilitiesMax),
+  "capabilities": zod.array(zod.enum(['business.catalog.read', 'business.catalog.draft', 'business.catalog.draft.price', 'business.inventory.read', 'business.orders.read', 'business.inquiries.reply', 'business.messages.send', 'business.negotiations.escalate'])).min(1).max(createBusinessDelegationBodyCapabilitiesMax),
   "resourceScope": zod.union([zod.object({
   "kind": zod.enum(['BUSINESS'])
 }),zod.object({
@@ -5444,14 +5444,14 @@ export const CreateBusinessDelegationResponse = zod.object({
   "type": zod.enum(['INTELLIGENT']),
   "configurationId": zod.uuid().nullable()
 })]),
-  "capabilities": zod.array(zod.enum(['business.catalog.read'])),
+  "capabilities": zod.array(zod.enum(['business.catalog.read', 'business.catalog.draft', 'business.catalog.draft.price', 'business.inventory.read', 'business.orders.read', 'business.inquiries.reply', 'business.messages.send', 'business.negotiations.escalate'])),
   "resourceScope": zod.union([zod.object({
   "kind": zod.enum(['BUSINESS'])
 }),zod.object({
   "kind": zod.enum(['LISTING_ALLOWLIST']),
   "listingIds": zod.array(zod.uuid()).min(1).max(createBusinessDelegationResponseDelegationResourceScopeTwoListingIdsMax)
 })]),
-  "approvalRequiredCapabilities": zod.array(zod.string()),
+  "approvalRequiredCapabilities": zod.array(zod.enum(['business.catalog.draft', 'business.catalog.draft.price', 'business.inquiries.reply', 'business.messages.send', 'business.negotiations.escalate'])),
   "status": zod.enum(['DRAFT', 'ACTIVE', 'SUSPENDED', 'REVOKED', 'EXPIRED']),
   "policyVersion": zod.string(),
   "version": zod.int().min(1),
@@ -5496,14 +5496,14 @@ export const ActivateBusinessDelegationResponse = zod.object({
   "type": zod.enum(['INTELLIGENT']),
   "configurationId": zod.uuid().nullable()
 })]),
-  "capabilities": zod.array(zod.enum(['business.catalog.read'])),
+  "capabilities": zod.array(zod.enum(['business.catalog.read', 'business.catalog.draft', 'business.catalog.draft.price', 'business.inventory.read', 'business.orders.read', 'business.inquiries.reply', 'business.messages.send', 'business.negotiations.escalate'])),
   "resourceScope": zod.union([zod.object({
   "kind": zod.enum(['BUSINESS'])
 }),zod.object({
   "kind": zod.enum(['LISTING_ALLOWLIST']),
   "listingIds": zod.array(zod.uuid()).min(1).max(activateBusinessDelegationResponseResourceScopeTwoListingIdsMax)
 })]),
-  "approvalRequiredCapabilities": zod.array(zod.string()),
+  "approvalRequiredCapabilities": zod.array(zod.enum(['business.catalog.draft', 'business.catalog.draft.price', 'business.inquiries.reply', 'business.messages.send', 'business.negotiations.escalate'])),
   "status": zod.enum(['DRAFT', 'ACTIVE', 'SUSPENDED', 'REVOKED', 'EXPIRED']),
   "policyVersion": zod.string(),
   "version": zod.int().min(1),
@@ -5547,14 +5547,14 @@ export const SuspendBusinessDelegationResponse = zod.object({
   "type": zod.enum(['INTELLIGENT']),
   "configurationId": zod.uuid().nullable()
 })]),
-  "capabilities": zod.array(zod.enum(['business.catalog.read'])),
+  "capabilities": zod.array(zod.enum(['business.catalog.read', 'business.catalog.draft', 'business.catalog.draft.price', 'business.inventory.read', 'business.orders.read', 'business.inquiries.reply', 'business.messages.send', 'business.negotiations.escalate'])),
   "resourceScope": zod.union([zod.object({
   "kind": zod.enum(['BUSINESS'])
 }),zod.object({
   "kind": zod.enum(['LISTING_ALLOWLIST']),
   "listingIds": zod.array(zod.uuid()).min(1).max(suspendBusinessDelegationResponseResourceScopeTwoListingIdsMax)
 })]),
-  "approvalRequiredCapabilities": zod.array(zod.string()),
+  "approvalRequiredCapabilities": zod.array(zod.enum(['business.catalog.draft', 'business.catalog.draft.price', 'business.inquiries.reply', 'business.messages.send', 'business.negotiations.escalate'])),
   "status": zod.enum(['DRAFT', 'ACTIVE', 'SUSPENDED', 'REVOKED', 'EXPIRED']),
   "policyVersion": zod.string(),
   "version": zod.int().min(1),
@@ -5598,14 +5598,14 @@ export const ResumeBusinessDelegationResponse = zod.object({
   "type": zod.enum(['INTELLIGENT']),
   "configurationId": zod.uuid().nullable()
 })]),
-  "capabilities": zod.array(zod.enum(['business.catalog.read'])),
+  "capabilities": zod.array(zod.enum(['business.catalog.read', 'business.catalog.draft', 'business.catalog.draft.price', 'business.inventory.read', 'business.orders.read', 'business.inquiries.reply', 'business.messages.send', 'business.negotiations.escalate'])),
   "resourceScope": zod.union([zod.object({
   "kind": zod.enum(['BUSINESS'])
 }),zod.object({
   "kind": zod.enum(['LISTING_ALLOWLIST']),
   "listingIds": zod.array(zod.uuid()).min(1).max(resumeBusinessDelegationResponseResourceScopeTwoListingIdsMax)
 })]),
-  "approvalRequiredCapabilities": zod.array(zod.string()),
+  "approvalRequiredCapabilities": zod.array(zod.enum(['business.catalog.draft', 'business.catalog.draft.price', 'business.inquiries.reply', 'business.messages.send', 'business.negotiations.escalate'])),
   "status": zod.enum(['DRAFT', 'ACTIVE', 'SUSPENDED', 'REVOKED', 'EXPIRED']),
   "policyVersion": zod.string(),
   "version": zod.int().min(1),
@@ -5649,14 +5649,14 @@ export const RevokeBusinessDelegationResponse = zod.object({
   "type": zod.enum(['INTELLIGENT']),
   "configurationId": zod.uuid().nullable()
 })]),
-  "capabilities": zod.array(zod.enum(['business.catalog.read'])),
+  "capabilities": zod.array(zod.enum(['business.catalog.read', 'business.catalog.draft', 'business.catalog.draft.price', 'business.inventory.read', 'business.orders.read', 'business.inquiries.reply', 'business.messages.send', 'business.negotiations.escalate'])),
   "resourceScope": zod.union([zod.object({
   "kind": zod.enum(['BUSINESS'])
 }),zod.object({
   "kind": zod.enum(['LISTING_ALLOWLIST']),
   "listingIds": zod.array(zod.uuid()).min(1).max(revokeBusinessDelegationResponseResourceScopeTwoListingIdsMax)
 })]),
-  "approvalRequiredCapabilities": zod.array(zod.string()),
+  "approvalRequiredCapabilities": zod.array(zod.enum(['business.catalog.draft', 'business.catalog.draft.price', 'business.inquiries.reply', 'business.messages.send', 'business.negotiations.escalate'])),
   "status": zod.enum(['DRAFT', 'ACTIVE', 'SUSPENDED', 'REVOKED', 'EXPIRED']),
   "policyVersion": zod.string(),
   "version": zod.int().min(1),

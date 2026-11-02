@@ -103,6 +103,7 @@ export * from './authLoginRequest';
 export * from './authRegisterRequest';
 export * from './businessAddress';
 export * from './businessDelegation';
+export * from './businessDelegationApprovalRequiredCapabilitiesItem';
 export * from './businessDelegationCapabilitiesItem';
 export * from './businessDelegationConfirmation';
 export * from './businessDelegationInput';

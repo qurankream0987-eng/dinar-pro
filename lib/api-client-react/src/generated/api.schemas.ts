@@ -16,6 +16,13 @@ export type BusinessDelegationInputCapabilitiesItem = typeof BusinessDelegationI
 
 export const BusinessDelegationInputCapabilitiesItem = {
   businesscatalogread: 'business.catalog.read',
+  businesscatalogdraft: 'business.catalog.draft',
+  businesscatalogdraftprice: 'business.catalog.draft.price',
+  businessinventoryread: 'business.inventory.read',
+  businessordersread: 'business.orders.read',
+  businessinquiriesreply: 'business.inquiries.reply',
+  businessmessagessend: 'business.messages.send',
+  businessnegotiationsescalate: 'business.negotiations.escalate',
 } as const;
 
 export type BusinessHumanEmployeeType = typeof BusinessHumanEmployeeType[keyof typeof BusinessHumanEmployeeType];
@@ -72,7 +79,7 @@ export interface BusinessDelegationInput {
   employee: BusinessHumanEmployee | BusinessIntelligentEmployee;
   /**
      * @minItems 1
-     * @maxItems 1
+     * @maxItems 8
      */
   capabilities: BusinessDelegationInputCapabilitiesItem[];
   resourceScope: BusinessWideDelegationScope | BusinessListingDelegationScope;
@@ -115,6 +122,24 @@ export type BusinessDelegationCapabilitiesItem = typeof BusinessDelegationCapabi
 
 export const BusinessDelegationCapabilitiesItem = {
   businesscatalogread: 'business.catalog.read',
+  businesscatalogdraft: 'business.catalog.draft',
+  businesscatalogdraftprice: 'business.catalog.draft.price',
+  businessinventoryread: 'business.inventory.read',
+  businessordersread: 'business.orders.read',
+  businessinquiriesreply: 'business.inquiries.reply',
+  businessmessagessend: 'business.messages.send',
+  businessnegotiationsescalate: 'business.negotiations.escalate',
+} as const;
+
+export type BusinessDelegationApprovalRequiredCapabilitiesItem = typeof BusinessDelegationApprovalRequiredCapabilitiesItem[keyof typeof BusinessDelegationApprovalRequiredCapabilitiesItem];
+
+
+export const BusinessDelegationApprovalRequiredCapabilitiesItem = {
+  businesscatalogdraft: 'business.catalog.draft',
+  businesscatalogdraftprice: 'business.catalog.draft.price',
+  businessinquiriesreply: 'business.inquiries.reply',
+  businessmessagessend: 'business.messages.send',
+  businessnegotiationsescalate: 'business.negotiations.escalate',
 } as const;
 
 export type BusinessDelegationStatus = typeof BusinessDelegationStatus[keyof typeof BusinessDelegationStatus];
@@ -135,7 +160,7 @@ export interface BusinessDelegation {
   employee: BusinessHumanEmployeeView | BusinessIntelligentEmployeeView;
   capabilities: BusinessDelegationCapabilitiesItem[];
   resourceScope: BusinessWideDelegationScope | BusinessListingDelegationScope;
-  approvalRequiredCapabilities: string[];
+  approvalRequiredCapabilities: BusinessDelegationApprovalRequiredCapabilitiesItem[];
   status: BusinessDelegationStatus;
   policyVersion: string;
   /** @minimum 1 */

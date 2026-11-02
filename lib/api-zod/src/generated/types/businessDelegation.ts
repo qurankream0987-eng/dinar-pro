@@ -5,6 +5,7 @@
  * DINAR general marketplace API with seller-defined listing prices
  * OpenAPI spec version: 0.1.0
  */
+import type { BusinessDelegationApprovalRequiredCapabilitiesItem } from './businessDelegationApprovalRequiredCapabilitiesItem';
 import type { BusinessDelegationCapabilitiesItem } from './businessDelegationCapabilitiesItem';
 import type { BusinessDelegationStatus } from './businessDelegationStatus';
 import type { BusinessHumanEmployeeView } from './businessHumanEmployeeView';
@@ -19,7 +20,7 @@ export interface BusinessDelegation {
   employee: BusinessHumanEmployeeView | BusinessIntelligentEmployeeView;
   capabilities: BusinessDelegationCapabilitiesItem[];
   resourceScope: BusinessWideDelegationScope | BusinessListingDelegationScope;
-  approvalRequiredCapabilities: string[];
+  approvalRequiredCapabilities: BusinessDelegationApprovalRequiredCapabilitiesItem[];
   status: BusinessDelegationStatus;
   policyVersion: string;
   /** @minimum 1 */

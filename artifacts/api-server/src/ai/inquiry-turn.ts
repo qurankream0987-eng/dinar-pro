@@ -28,7 +28,13 @@ import {
   type InquiryProvenance,
   type InquiryTarget,
 } from "../lib/inquiries";
-import { confirmPendingAction, createPendingAction, type ActionReview } from "./action-foundation";
+import {
+  confirmPendingAction,
+  createPendingAction,
+  type ActionReview,
+  type DelegatedActionAuthority,
+} from "./action-foundation";
+import type { SellerEmployeeSessionContext } from "../lib/business-delegations";
 import { focusedListing, isBestPriceRequest } from "./negotiation-turn";
 import { latestListingSet } from "./buyer-turn";
 import { searchMarketplaceListings } from "../lib/marketplace-listings";
@@ -38,7 +44,13 @@ import type { ToolResult } from "./tool-registry";
 
 type Market = Awaited<ReturnType<typeof marketFor>>;
 type Turn = { tool: string; version: number; result: ToolResult };
-type Input = { conversationId: string; message: string; market: Market; actorId?: string };
+type Input = {
+  conversationId: string;
+  message: string;
+  market: Market;
+  actorId?: string;
+  employeeSession?: SellerEmployeeSessionContext;
+};
 
 export const INQUIRY_SURFACES = CONVERSATION_SURFACE_FAMILIES.inquiry;
 const ACTION = "SEND_INQUIRY_MESSAGE";
@@ -231,10 +243,25 @@ async function draft(input: Input & { actorId: string }, target: InquiryTarget, 
   const problem = inquiryBodyProblem(body, quoted);
   if (problem) return notice(`${problem}. لم يُرسل شيء.`);
   try {
+    let delegatedAuthority: DelegatedActionAuthority | undefined;
+    if (input.employeeSession) {
+      const listingId = target.kind === "LISTING"
+        ? target.listingId
+        : target.kind === "INQUIRY"
+          ? (await inquiryForParty(input.actorId, target.inquiryId))?.listingId
+          : undefined;
+      if (!listingId) return notice("تعذر ربط الرسالة بمنتج النشاط. لم يُرسل شيء.");
+      delegatedAuthority = {
+        sessionId: input.employeeSession.id,
+        capabilities: ["business.inquiries.reply", "business.messages.send"],
+        listingId,
+      };
+    }
     const review = await createPendingAction({
       conversationId: input.conversationId,
       actorId: input.actorId,
       market: input.market,
+      ...(delegatedAuthority ? { delegatedAuthority } : {}),
       proposal: {
         action: ACTION,
         targetResource: targetKey(target),

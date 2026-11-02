@@ -17,6 +17,12 @@ import {
 } from "@workspace/api-zod/conversation-runtime";
 import { aiResultSets, aiUiBlocks, conversations, db, driverProfiles, markets, messages, offers, orders, paymentIntents, providerConnections, providerCredentials, users } from "@workspace/db";
 import { isMarketAvailable, resolveMarket, type marketFor } from "../lib/markets";
+import {
+  assertSellerEmployeeCapabilityTx,
+  invalidateSellerEmployeeSessionsForActorTx,
+  requireSellerEmployeeCapability,
+  type SellerEmployeeCapability,
+} from "../lib/business-delegations";
 import { buildListingUpdateBody, parseListingPriceMinor, updateOwnedListing } from "../lib/listing-management";
 import { addMarketplaceCartItem } from "../lib/marketplace-cart";
 import { METHOD_LABELS, deliveryOptions, selectDeliveryMethod, type DeliveryMethod } from "../lib/delivery";
@@ -426,6 +432,7 @@ export const ACTION_REGISTRY: Record<string, ActionDefinition> = {
       return db.transaction(async (tx) => {
         const [row] = await tx.select().from(markets).where(eq(markets.id, to)).for("share");
         if (!row || !isMarketAvailable(await resolveMarket(row, tx))) throw fail(409, "السوق لم يعد متاحًا للتصفح", "MARKET_UNAVAILABLE");
+        await invalidateSellerEmployeeSessionsForActorTx(tx, actorId, "MARKET_CHANGE");
         const [set] = await tx.select({ conversationId: aiResultSets.conversationId }).from(aiResultSets).where(eq(aiResultSets.id, actionId));
         await tx.update(users).set({ activeMarketId: to, updatedAt: new Date() }).where(eq(users.id, actorId));
         await tx
@@ -1157,7 +1164,15 @@ type PendingQuery = {
   settledByTurn?: string;
   /** What the authority created, e.g. the order id; set only after it succeeded. */
   result?: Record<string, unknown>;
+  /** D5 send reviews are bound to the active session and exact business listing. */
+  delegatedAuthority?: {
+    sessionId: string;
+    capabilities: SellerEmployeeCapability[];
+    listingId: string;
+  };
 };
+
+export type DelegatedActionAuthority = NonNullable<PendingQuery["delegatedAuthority"]>;
 
 export type ActionReview = { actionId: string; action: string; targetResource: string; lines: string[]; expiresAt: string };
 
@@ -1170,6 +1185,7 @@ export async function createPendingAction(input: {
   actorId: string;
   market: Market;
   proposal: ActionProposal;
+  delegatedAuthority?: DelegatedActionAuthority;
 }): Promise<ActionReview> {
   const { proposal } = input;
   const definition = Object.prototype.hasOwnProperty.call(ACTION_REGISTRY, proposal.action) ? ACTION_REGISTRY[proposal.action] : undefined;
@@ -1185,6 +1201,18 @@ export async function createPendingAction(input: {
   const values = Object.fromEntries(Object.entries(proposal.structuredInput).map(([key, fact]) => [key, fact.value]));
   const reason = invalidReason(snapshot, input.actorId, input.market, definition, values);
   if (reason) throw fail(409, reason);
+  if (input.delegatedAuthority) {
+    for (const capability of input.delegatedAuthority.capabilities) {
+      await requireSellerEmployeeCapability({
+        actorId: input.actorId,
+        conversationId: input.conversationId,
+        marketId: input.market.id,
+        sessionId: input.delegatedAuthority.sessionId,
+        capability,
+        listingId: input.delegatedAuthority.listingId,
+      });
+    }
+  }
   const review = definition.reviewLines(snapshot!, values, input.market);
   const id = randomUUID();
   const expiresAt = new Date(Date.now() + ACTION_PENDING_TTL_MS);
@@ -1197,6 +1225,7 @@ export async function createPendingAction(input: {
     expected: snapshot!,
     status: "PENDING",
     review,
+    ...(input.delegatedAuthority ? { delegatedAuthority: input.delegatedAuthority } : {}),
     ...(currentTurnId() ? { openedByTurn: currentTurnId() } : {}),
   };
   await db.insert(aiResultSets).values({
@@ -1283,6 +1312,25 @@ export async function confirmPendingAction(input: {
     if (await pendingActionLapsed(set, tx))
       return settle("EXPIRED", "انتهت صلاحية هذا التأكيد لأن المحادثة تابعت بعده أو مضى وقته. لم يتغير شيء.");
     if (input.decision === "CANCEL") return settle("CANCELLED", "أُلغي الإجراء. لم يتغير شيء.");
+    if (query.delegatedAuthority) {
+      try {
+        for (const capability of query.delegatedAuthority.capabilities) {
+          await assertSellerEmployeeCapabilityTx(tx, {
+            actorId: input.actorId,
+            conversationId: set.conversationId,
+            marketId: input.market.id,
+            sessionId: query.delegatedAuthority.sessionId,
+            capability,
+            listingId: query.delegatedAuthority.listingId,
+          });
+        }
+      } catch (error) {
+        return settle(
+          "REJECTED",
+          `${error instanceof Error ? error.message : "انتهت صلاحية التفويض"}. لم تُرسل الرسالة.`,
+        );
+      }
+    }
     const definition = ACTION_REGISTRY[query.action];
     if (!definition) return settle("REJECTED", "إجراء غير مسجل؛ لم يتغير شيء.");
     const current = await readFor(definition)(input.actorId, query.targetResource, tx);
@@ -1311,6 +1359,7 @@ export async function confirmPendingAction(input: {
         missingFields: [],
         requiresConfirmation: true,
       },
+      ...(query.delegatedAuthority ? { delegatedAuthority: query.delegatedAuthority } : {}),
     });
     return { status: "REVIEW_REQUIRED", message: "تغيّرت بيانات العرض منذ المراجعة. راجع التفاصيل الجديدة ثم أكّد.", review };
   }

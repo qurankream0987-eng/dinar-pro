@@ -3291,9 +3291,19 @@ components:
         capabilities:
           type: array
           minItems: 1
-          maxItems: 1
+          maxItems: 8
           uniqueItems: true
-          items: { type: string, enum: [business.catalog.read] }
+          items:
+            type: string
+            enum:
+              - business.catalog.read
+              - business.catalog.draft
+              - business.catalog.draft.price
+              - business.inventory.read
+              - business.orders.read
+              - business.inquiries.reply
+              - business.messages.send
+              - business.negotiations.escalate
         resourceScope:
           oneOf:
             - $ref: "#/components/schemas/BusinessWideDelegationScope"
@@ -3352,12 +3362,33 @@ components:
           oneOf:
             - $ref: "#/components/schemas/BusinessHumanEmployeeView"
             - $ref: "#/components/schemas/BusinessIntelligentEmployeeView"
-        capabilities: { type: array, items: { type: string, enum: [business.catalog.read] } }
+        capabilities:
+          type: array
+          items:
+            type: string
+            enum:
+              - business.catalog.read
+              - business.catalog.draft
+              - business.catalog.draft.price
+              - business.inventory.read
+              - business.orders.read
+              - business.inquiries.reply
+              - business.messages.send
+              - business.negotiations.escalate
         resourceScope:
           oneOf:
             - $ref: "#/components/schemas/BusinessWideDelegationScope"
             - $ref: "#/components/schemas/BusinessListingDelegationScope"
-        approvalRequiredCapabilities: { type: array, items: { type: string } }
+        approvalRequiredCapabilities:
+          type: array
+          items:
+            type: string
+            enum:
+              - business.catalog.draft
+              - business.catalog.draft.price
+              - business.inquiries.reply
+              - business.messages.send
+              - business.negotiations.escalate
         status: { type: string, enum: [DRAFT, ACTIVE, SUSPENDED, REVOKED, EXPIRED] }
         policyVersion: { type: string }
         version: { type: integer, minimum: 1 }

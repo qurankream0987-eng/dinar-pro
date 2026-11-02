@@ -351,6 +351,13 @@
       "when": 1793600091580,
       "tag": "0049_d4_business_delegations",
       "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "7",
+      "when": 1793606821612,
+      "tag": "0050_normal_nico_minoru",
+      "breakpoints": true
     }
   ]
 }
