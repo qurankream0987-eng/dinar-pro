@@ -4,7 +4,7 @@
 **المستودع:** `qurankream0987-eng/dinar-pro` (الريموت المحلي ما زال بالاسم القديم `dinar.git` ويُحوَّل تلقائيًا).
 **فرع الأساس:** `replit/dinar-next-complete-development` **مجمَّد** على `1a194fee08c4b113085f97c222fc50bf17fc8e87`.
 **فرع Qoder:** `qoder/a01-baseline-audit`.
-**SHA الإصلاح/الاختبار:** `1b4adf3d2b87a1a82ccff30804ecd419bf119fb2`.
+**SHA الإصلاح/الاختبار:** `1b4adf3d2b87a1a82ccff30804ecd419bf119fb2` (كل تشغيلات الاختبار جرت عليه؛ ما بعده في الفرع وثائقي فقط).
 **تاريخ التنفيذ:** 2026-11-02.
 
 ---
