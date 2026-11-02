@@ -144,7 +144,9 @@ export function promotionIntent(message: string): PromotionIntent | undefined {
     .replace(/[؟?!،,.«»"'():;]+/g, " ")
     .replace(/\s+/g, " ")
     .trim();
-  const hasAd = /اعلان|اعلاني|اعلانات|عرض|منتج|listing|ad\b/u.test(text);
+  // Generic «offer/product/listing» words belong to buyer discovery too; they are not proof
+  // that a question concerns paid seller promotion.
+  const hasAd = /اعلان|اعلاني|اعلانات|ممول|ترويج|تسويق|featured|vip|sponsor|promot|boost|(?:^|\s)ads?(?=\s|$)/u.test(text);
   const productType =
     // Whole words: «مديري يبيع لي فكرة» is not DINAR selling for the user.
     /روح\s+بيع|(?:ساعدني|يساعدني).{0,24}(?:(?:^|\s)(?:ابيع|بيع|البيع)(?:\s|$)|مشتري)|(?:^|\s)(?:بيع|بع)\s+لي(?:\s|$)|sell\s+for\s+me/u.test(text)
@@ -172,7 +174,8 @@ export function promotionIntent(message: string): PromotionIntent | undefined {
     /^(?:كيف|شلون|طريقة|طريقه)(?:\s|$)|^how(?:\s|$)/u.test(text);
   if (adviceQuestion && (productType || hasAd)) return { kind: "ADVICE" };
   const marketingAdvice =
-    asksHow && /(?:اسوق|سوق|روج|روّج|اعلن|اعلاني|منتجي|اعلاني)/u.test(text);
+    asksHow &&
+    /(?:^|\s)(?:اسوق|سوق|روج|روّج|اعلن|اعلاني|منتجي|منتجاتي)(?=\s|$)/u.test(text);
   if (asksMeaning && (productType || hasAd)) return { kind: "EXPLAIN", ...(productType ? { productType } : {}) };
   if (marketingAdvice) return { kind: "ADVICE" };
 

@@ -77,8 +77,11 @@ app.locals.conversationModelGateway = controlledModel;
 const server = app.listen(0);
 await new Promise<void>((resolve) => server.once("listening", resolve));
 const base = `http://127.0.0.1:${(server.address() as any).port}/api`;
-const runId = randomUUID().slice(0, 6);
-const TOKEN = [...runId].map((char) => "قمزدلفنسعرطبكهوج"[parseInt(char, 16)]).join("");
+const runId = randomUUID()
+  .replaceAll("-", "")
+  .slice(0, 6)
+  .replace(/\d/g, (digit) => String.fromCharCode(97 + Number(digit)));
+const TOKEN = runId;
 const CITY = `المفرق ${Date.now() % 100_000}`;
 let ipSequence = 0;
 

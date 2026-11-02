@@ -65,8 +65,13 @@ try {
   const which = await buyer.say("أيهم السعر أقل؟");
   assert.equal(await which.getByTestId("comparison").count(), 0, "a one-line answer is text, not another comparison card");
 
+  // A buyer's choice between marketplace offers is not seller promotion education.
+  const choiceAdvice = await buyer.say("كيف أختار بين عرضين؟", { allowFallback: true });
+  const choiceAdviceText = (await choiceAdvice.innerText()).replace(/\s+/gu, " ");
+  assert.doesNotMatch(choiceAdviceText, /كيف يعمل الترويج|اختيار الخطة والميزانية|ميزانية للحملة/u);
+  recorder.checks.push("buyer advice about choosing between offers does not open seller promotion education");
+
   // ── Scroll stability: back to the older card, then the viewport changes ──
-  await buyer.say("كيف أختار بين عرضين؟", { allowFallback: true });
   await buyer.say("شكرا", { allowFallback: true });
   // The comparison is now an older message: address it directly, not as «the latest reply».
   const older = buyer.page.getByTestId("comparison").first();

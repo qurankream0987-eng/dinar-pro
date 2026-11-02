@@ -49,3 +49,9 @@ test("a buyer's own search request is never a sponsored-search purchase", () => 
   assert.equal(promotionIntent("أبي أبيع طاولة، وبعدها ابحث لي عن كرسي"), undefined);
   assert.deepEqual(promotionIntent("أبي إعلاني ممول في البحث"), { kind: "ACTION", productType: "SPONSORED_SEARCH" });
 });
+
+test("ordinary buyer choices between products are not promotion tutorials", () => {
+  assert.equal(promotionIntent("كيف أختار بين عرضين؟"), undefined);
+  assert.equal(promotionIntent("كيف أختار بين منتجين؟"), undefined);
+  assert.equal(promotionIntent("How do I choose between two listings?"), undefined);
+});
