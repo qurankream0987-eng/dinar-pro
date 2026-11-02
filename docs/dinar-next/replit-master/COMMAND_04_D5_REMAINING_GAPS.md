@@ -2,34 +2,34 @@
 
 ## Release status
 
-D5 is **PARTIAL**, not complete. The committed feature provides an explicit-invocation, read-only catalog context for the existing AI model path. Ordinary seller questions remain in the owner route. It does not provide the universal seller employee specified in Command 04.
+D5 is **PARTIAL**, not complete. The feature provides a scoped published-catalog context and one bounded owner-approved G2 inquiry-reply path grounded in a screened buyer question and current stock. Ordinary seller questions remain in the owner route. It does not provide the universal seller employee specified in Command 04.
 
 ## Functional gaps
 
 - Seller listing draft creation, correction, review, and publication.
-- Stock/inventory facts and truthful stock responses.
-- D5 participation in G2 buyer inquiries.
-- Reply drafts, owner approval, exactly-once approval, and a message sender.
+- General D5 inventory-answer journeys beyond the scoped G2 reply context.
+- Multi-inquiry routing and broader D5 participation in buyer workflows.
+- Pending D5 action cancellation when its delegation is revoked.
 - Discount escalation and seller-side negotiation decisions.
 - Authorized order-status assistance.
 - D5-specific payment-claim refusal journey.
-- Pending-task cancellation on revoke and multi-turn task resumption.
+- Correction and resumption of pending multi-turn D5 tasks.
 - Service, vehicle, and bulk-business listing journeys.
 - Tool-failure safe retry.
 - D5 catalog-content prompt-injection coverage.
-- D5-specific persisted-state and audit-event assertions.
+- Additional D5-specific audit assertions for failed or stale reply attempts.
 - D5-25 authenticated browser reload and stale-action acceptance.
 
 ## Current invocation boundary
 
-- D5 starts only when the user explicitly addresses the seller employee; ordinary seller requests keep their existing owner-authorized D3 behavior.
-- One active intelligent `business.catalog.read` grant is required for the authenticated owner and current market.
-- The model receives only the scoped published-catalog summary. Proposed writes, searches, planning, and canonical actions are rejected; no D5 mutation permission has been added.
+- D5 starts only when the user explicitly addresses the seller employee; an authorized persisted session permits subsequent turns without repeating the invocation. Ordinary seller requests keep their existing owner-authorized D3 behavior.
+- The authenticated owner needs a live intelligent D4 grant for the current market. G2 reply context additionally requires listing-scoped `business.inquiries.reply`, `business.messages.send`, and `business.inventory.read`.
+- The model receives the scoped published catalog and, only for an authorized G2 reply, the screened latest unanswered question and current inventory. A proposed reply uses the existing G2 confirmation and send path; the employee cannot send directly.
 - Image/location employee requests are refused. No live-model answer or signed-in browser journey has been verified.
 
 ## Constraints and dependencies
 
-- The repository’s current D4 intelligent capability is `business.catalog.read`; it does not include draft, publish, inventory, order, message, price, promotion, or payment authority. Expanding those powers requires an explicit owner-approval/security design and canonical backend authority, not a model prompt change.
+- Preserve D4's narrow capability grants and canonical backend authorities. The G2 reply path uses the existing inquiry, message, and inventory capabilities; it does not add general publish, price, promotion, order, or payment authority.
 - Conversation UI ownership remains with Codex; no chat UI or browser acceptance was changed here.
 - Live model quality and provider charging remain unverified by design.
 - The automated security scans ran at workspace scope. Their zero SAST/HoundDog results and dependency findings are not confirmed against the nested target checkout; run target-specific scans before release.
@@ -37,8 +37,8 @@ D5 is **PARTIAL**, not complete. The committed feature provides an explicit-invo
 
 ## Known regressions
 
-No regression was observed in the executed typecheck, builds, database schema check, D1/D2, D3-A, D4, G2, universal negotiation, or model-authority suites. This is not a production or full D5 acceptance claim.
+The target checkout passed API typecheck/build, the D5 G2 reply acceptance, D4 delegation, AI-authority, G2 inquiry, and G2 smart-conversation suites. This is not a production, browser, or full D5 acceptance claim.
 
 ## D6 readiness
 
-Do not treat D5 as a completed prerequisite for D6 until the blocked seller workflows, browser acceptance, database/audit assertions, real-model review, and dependency finding reconciliation are completed or explicitly descoped by the owner.
+Do not treat D5 as a completed prerequisite for D6 until the blocked seller workflows, browser acceptance, remaining database/audit assertions, real-model review, and dependency finding reconciliation are completed or explicitly descoped by the owner.
