@@ -3510,3 +3510,442 @@ export const whatsappIntents = pgTable(
     check("whatsapp_intents_never_sent", sql`${t.deliveryState} = 'NOT_SENT'`),
   ],
 );
+
+/**
+ * D16: country-by-country operational capabilities. Missing rows are disabled. The two-person
+ * review fields record references and actors only; they do not attest that a legal conclusion
+ * is correct or that a regulator has approved DINAR.
+ */
+export const marketLegalCapabilityApprovals = pgTable(
+  "market_legal_capability_approvals",
+  {
+    id: text("id").primaryKey(),
+    marketId: text("market_id")
+      .notNull()
+      .references(() => markets.id),
+    capability: text("capability").notNull(),
+    status: text("status").default("DISABLED").notNull(),
+    counselReference: text("counsel_reference"),
+    counselReviewedBy: text("counsel_reviewed_by").references(() => users.id),
+    counselReviewedAt: timestamp("counsel_reviewed_at", { withTimezone: true }),
+    ownerApprovalReference: text("owner_approval_reference"),
+    ownerApprovedBy: text("owner_approved_by").references(() => users.id),
+    ownerApprovedAt: timestamp("owner_approved_at", { withTimezone: true }),
+    ...dates(),
+  },
+  (t) => [
+    uniqueIndex("market_legal_capability_market_capability_unique").on(
+      t.marketId,
+      t.capability,
+    ),
+    index("market_legal_capability_status_idx").on(t.status, t.marketId),
+    check(
+      "market_legal_capability_name_valid",
+      sql`${t.capability} IN ('INFORMATION_ONLY', 'BROWSING', 'LISTING_PUBLICATION', 'TRANSACTIONS', 'CASH_PAYMENT', 'ELECTRONIC_PAYMENT', 'BUSINESS_ONBOARDING', 'DELIVERY_OPERATIONS', 'RESTRICTED_CATEGORIES')`,
+    ),
+    check(
+      "market_legal_capability_status_valid",
+      sql`${t.status} IN ('DISABLED', 'COUNSEL_REVIEW_REQUIRED', 'OWNER_APPROVAL_REQUIRED', 'ENABLED', 'BLOCKED')`,
+    ),
+    check(
+      "market_legal_capability_review_valid",
+      sql`${t.status} NOT IN ('OWNER_APPROVAL_REQUIRED', 'ENABLED') OR (${t.counselReference} IS NOT NULL AND ${t.counselReviewedBy} IS NOT NULL AND ${t.counselReviewedAt} IS NOT NULL)`,
+    ),
+    check(
+      "market_legal_capability_owner_valid",
+      sql`${t.status} <> 'ENABLED' OR (${t.ownerApprovalReference} IS NOT NULL AND ${t.ownerApprovedBy} IS NOT NULL AND ${t.ownerApprovedAt} IS NOT NULL AND ${t.ownerApprovedBy} <> ${t.counselReviewedBy})`,
+    ),
+  ],
+);
+
+/** Append-only audit trail for country capability review and activation decisions. */
+export const marketLegalCapabilityEvents = pgTable(
+  "market_legal_capability_events",
+  {
+    id: text("id").primaryKey(),
+    marketId: text("market_id")
+      .notNull()
+      .references(() => markets.id),
+    capability: text("capability").notNull(),
+    eventType: text("event_type").notNull(),
+    fromStatus: text("from_status"),
+    toStatus: text("to_status").notNull(),
+    actorId: text("actor_id").notNull().references(() => users.id),
+    reference: text("reference"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    index("market_legal_capability_events_market_idx").on(
+      t.marketId,
+      t.capability,
+      t.createdAt,
+    ),
+    check(
+      "market_legal_capability_events_type_valid",
+      sql`${t.eventType} IN ('REVIEW_REQUESTED', 'COUNSEL_REVIEWED', 'COUNSEL_BLOCKED', 'OWNER_ENABLED', 'CAPABILITY_DISABLED')`,
+    ),
+    check(
+      "market_legal_capability_events_status_valid",
+      sql`${t.toStatus} IN ('DISABLED', 'COUNSEL_REVIEW_REQUIRED', 'OWNER_APPROVAL_REQUIRED', 'ENABLED', 'BLOCKED') AND (${t.fromStatus} IS NULL OR ${t.fromStatus} IN ('DISABLED', 'COUNSEL_REVIEW_REQUIRED', 'OWNER_APPROVAL_REQUIRED', 'ENABLED', 'BLOCKED'))`,
+    ),
+  ],
+);
+
+/** D16-B: country intake packages remain blocked until separately verified approvals exist. */
+export const marketLegalIntakes = pgTable(
+  "market_legal_intakes",
+  {
+    id: text("id").primaryKey(),
+    marketId: text("market_id")
+      .notNull()
+      .references(() => markets.id),
+    reviewStatus: text("review_status").default("NOT_REVIEWED").notNull(),
+    counselApprovalStatus: text("counsel_approval_status")
+      .default("BLOCKED")
+      .notNull(),
+    counselApprovalBlocker: text("counsel_approval_blocker")
+      .default("COUNSEL_SIGNATURE_VERIFICATION_UNAVAILABLE")
+      .notNull(),
+    ownerApprovalStatus: text("owner_approval_status").default("BLOCKED").notNull(),
+    technicalVerificationStatus: text("technical_verification_status")
+      .default("NOT_RUN")
+      .notNull(),
+    activationStatus: text("activation_status").default("DISABLED").notNull(),
+    reviewRequestedBy: text("review_requested_by").references(() => users.id),
+    reviewRequestedAt: timestamp("review_requested_at", { withTimezone: true }),
+    counselReviewedBy: text("counsel_reviewed_by").references(() => users.id),
+    counselReviewedAt: timestamp("counsel_reviewed_at", { withTimezone: true }),
+    counselReviewReference: text("counsel_review_reference"),
+    counselApprovedBy: text("counsel_approved_by").references(() => users.id),
+    counselApprovedAt: timestamp("counsel_approved_at", { withTimezone: true }),
+    counselApprovalReference: text("counsel_approval_reference"),
+    ownerApprovedBy: text("owner_approved_by").references(() => users.id),
+    ownerApprovedAt: timestamp("owner_approved_at", { withTimezone: true }),
+    ownerApprovalReference: text("owner_approval_reference"),
+    technicalVerifiedBy: text("technical_verified_by").references(() => users.id),
+    technicalVerifiedAt: timestamp("technical_verified_at", { withTimezone: true }),
+    technicalVerificationReference: text("technical_verification_reference"),
+    activatedBy: text("activated_by").references(() => users.id),
+    activatedAt: timestamp("activated_at", { withTimezone: true }),
+    suspendedBy: text("suspended_by").references(() => users.id),
+    suspendedAt: timestamp("suspended_at", { withTimezone: true }),
+    suspensionReference: text("suspension_reference"),
+    ...dates(),
+  },
+  (t) => [
+    uniqueIndex("market_legal_intakes_market_unique").on(t.marketId),
+    index("market_legal_intakes_activation_idx").on(
+      t.activationStatus,
+      t.marketId,
+    ),
+    check(
+      "market_legal_intakes_review_status_valid",
+      sql`${t.reviewStatus} IN ('NOT_REVIEWED', 'COUNSEL_REVIEW_REQUIRED', 'COUNSEL_REVIEWED', 'BLOCKED')`,
+    ),
+    check(
+      "market_legal_intakes_counsel_approval_status_valid",
+      sql`${t.counselApprovalStatus} IN ('BLOCKED', 'APPROVED')`,
+    ),
+    check(
+      "market_legal_intakes_owner_status_valid",
+      sql`${t.ownerApprovalStatus} IN ('BLOCKED', 'APPROVED')`,
+    ),
+    check(
+      "market_legal_intakes_technical_status_valid",
+      sql`${t.technicalVerificationStatus} IN ('NOT_RUN', 'PASSED', 'FAILED')`,
+    ),
+    check(
+      "market_legal_intakes_activation_status_valid",
+      sql`${t.activationStatus} IN ('DISABLED', 'ACTIVE', 'SUSPENDED')`,
+    ),
+    check(
+      "market_legal_intakes_counsel_approval_guard",
+      sql`${t.counselApprovalStatus} <> 'APPROVED' OR (${t.counselReviewedBy} IS NOT NULL AND ${t.counselReviewedAt} IS NOT NULL AND ${t.counselApprovalReference} IS NOT NULL AND ${t.counselApprovedBy} IS NOT NULL AND ${t.counselApprovedAt} IS NOT NULL)`,
+    ),
+    check(
+      "market_legal_intakes_owner_approval_guard",
+      sql`${t.ownerApprovalStatus} <> 'APPROVED' OR (${t.counselApprovalStatus} = 'APPROVED' AND ${t.technicalVerificationStatus} = 'PASSED' AND ${t.ownerApprovalReference} IS NOT NULL AND ${t.ownerApprovedBy} IS NOT NULL AND ${t.ownerApprovedAt} IS NOT NULL)`,
+    ),
+    check(
+      "market_legal_intakes_activation_guard",
+      sql`${t.activationStatus} <> 'ACTIVE' OR (${t.counselApprovalStatus} = 'APPROVED' AND ${t.ownerApprovalStatus} = 'APPROVED' AND ${t.technicalVerificationStatus} = 'PASSED' AND ${t.activatedBy} IS NOT NULL AND ${t.activatedAt} IS NOT NULL)`,
+    ),
+    check(
+      "market_legal_intakes_suspension_guard",
+      sql`${t.activationStatus} <> 'SUSPENDED' OR (${t.suspendedBy} IS NOT NULL AND ${t.suspendedAt} IS NOT NULL AND ${t.suspensionReference} IS NOT NULL)`,
+    ),
+    check(
+      "market_legal_intakes_references_valid",
+      sql`(${t.counselReviewReference} IS NULL OR ${t.counselReviewReference} ~ '^[A-Za-z][A-Za-z0-9._:/-]{2,199}$') AND (${t.counselApprovalReference} IS NULL OR ${t.counselApprovalReference} ~ '^[A-Za-z][A-Za-z0-9._:/-]{2,199}$') AND (${t.ownerApprovalReference} IS NULL OR ${t.ownerApprovalReference} ~ '^[A-Za-z][A-Za-z0-9._:/-]{2,199}$') AND (${t.technicalVerificationReference} IS NULL OR ${t.technicalVerificationReference} ~ '^[A-Za-z][A-Za-z0-9._:/-]{2,199}$') AND (${t.suspensionReference} IS NULL OR ${t.suspensionReference} ~ '^[A-Za-z][A-Za-z0-9._:/-]{2,199}$')`,
+    ),
+  ],
+);
+
+/** A country topic has no legal conclusion until a designated reviewer records one. */
+export const marketLegalIntakeTopics = pgTable(
+  "market_legal_intake_topics",
+  {
+    id: text("id").primaryKey(),
+    intakeId: text("intake_id")
+      .notNull()
+      .references(() => marketLegalIntakes.id),
+    topicKey: text("topic_key").notNull(),
+    disposition: text("disposition").default("UNRESOLVED").notNull(),
+    reviewStatus: text("review_status").default("NOT_REVIEWED").notNull(),
+    evidenceRequirementStatus: text("evidence_requirement_status")
+      .default("NOT_REVIEWED")
+      .notNull(),
+    policyRequirementStatus: text("policy_requirement_status")
+      .default("NOT_REVIEWED")
+      .notNull(),
+    counselFinding: text("counsel_finding"),
+    qualifications: text("qualifications"),
+    requiredAmendments: text("required_amendments"),
+    officialReference: text("official_reference"),
+    effectiveFrom: timestamp("effective_from", { withTimezone: true }),
+    effectiveUntil: timestamp("effective_until", { withTimezone: true }),
+    requiredEvidenceTypes: jsonb("required_evidence_types")
+      .$type<string[]>()
+      .default([])
+      .notNull(),
+    requiredPolicyVersions: jsonb("required_policy_versions")
+      .$type<Array<{ policyKey: string; version: string }>>()
+      .default([])
+      .notNull(),
+    reviewedBy: text("reviewed_by").references(() => users.id),
+    reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+    ...dates(),
+  },
+  (t) => [
+    uniqueIndex("market_legal_intake_topics_unique").on(t.intakeId, t.topicKey),
+    index("market_legal_intake_topics_status_idx").on(
+      t.intakeId,
+      t.reviewStatus,
+      t.topicKey,
+    ),
+    check(
+      "market_legal_intake_topics_key_valid",
+      sql`${t.topicKey} IN ('OPERATING_ENTITY', 'MARKETPLACE_RULES', 'SELLER_ELIGIBILITY', 'BUSINESS_KYC', 'CONSUMER_PROTECTION', 'FEES_AND_TAX', 'PAYMENTS', 'DELIVERY_LOGISTICS', 'PERSONAL_DATA', 'EXTERNAL_AI', 'MINORS_RESTRICTED_GOODS_ADVERTISING', 'IP_COMPLAINTS_DISPUTES', 'INCIDENT_NOTIFICATION', 'POLICY_VERSIONS', 'OFFICIAL_REFERENCES', 'COUNSEL_FINDINGS')`,
+    ),
+    check(
+      "market_legal_intake_topics_disposition_valid",
+      sql`${t.disposition} IN ('UNRESOLVED', 'REQUIRED', 'NOT_REQUIRED', 'NOT_APPLICABLE', 'BLOCKED')`,
+    ),
+    check(
+      "market_legal_intake_topics_review_status_valid",
+      sql`${t.reviewStatus} IN ('NOT_REVIEWED', 'COUNSEL_REVIEWED', 'BLOCKED')`,
+    ),
+    check(
+      "market_legal_intake_topics_evidence_status_valid",
+      sql`${t.evidenceRequirementStatus} IN ('NOT_REVIEWED', 'REQUIREMENTS_SET', 'NO_REQUIREMENTS')`,
+    ),
+    check(
+      "market_legal_intake_topics_policy_status_valid",
+      sql`${t.policyRequirementStatus} IN ('NOT_REVIEWED', 'VERSIONS_SET', 'NO_POLICY_REQUIREMENT')`,
+    ),
+    check(
+      "market_legal_intake_topics_review_guard",
+      sql`${t.reviewStatus} <> 'COUNSEL_REVIEWED' OR (${t.disposition} <> 'UNRESOLVED' AND ${t.counselFinding} IS NOT NULL AND char_length(btrim(${t.counselFinding})) >= 3 AND ${t.officialReference} IS NOT NULL AND ${t.reviewedBy} IS NOT NULL AND ${t.reviewedAt} IS NOT NULL)`,
+    ),
+    check(
+      "market_legal_intake_topics_evidence_requirement_guard",
+      sql`(${t.evidenceRequirementStatus} = 'NOT_REVIEWED') OR (${t.evidenceRequirementStatus} = 'NO_REQUIREMENTS' AND jsonb_array_length(${t.requiredEvidenceTypes}) = 0) OR (${t.evidenceRequirementStatus} = 'REQUIREMENTS_SET' AND jsonb_array_length(${t.requiredEvidenceTypes}) > 0)`,
+    ),
+    check(
+      "market_legal_intake_topics_policy_requirement_guard",
+      sql`(${t.policyRequirementStatus} = 'NOT_REVIEWED') OR (${t.policyRequirementStatus} = 'NO_POLICY_REQUIREMENT' AND jsonb_array_length(${t.requiredPolicyVersions}) = 0) OR (${t.policyRequirementStatus} = 'VERSIONS_SET' AND jsonb_array_length(${t.requiredPolicyVersions}) > 0)`,
+    ),
+    check(
+      "market_legal_intake_topics_effective_range_valid",
+      sql`${t.effectiveFrom} IS NULL OR ${t.effectiveUntil} IS NULL OR ${t.effectiveUntil} >= ${t.effectiveFrom}`,
+    ),
+    check(
+      "market_legal_intake_topics_reference_valid",
+      sql`${t.officialReference} IS NULL OR ${t.officialReference} ~ '^[A-Za-z][A-Za-z0-9._:/-]{2,199}$'`,
+    ),
+  ],
+);
+
+/** Private-vault pointers only; no legal, identity, or customer document bytes enter PostgreSQL. */
+export const marketLegalEvidence = pgTable(
+  "market_legal_evidence",
+  {
+    id: text("id").primaryKey(),
+    intakeId: text("intake_id")
+      .notNull()
+      .references(() => marketLegalIntakes.id),
+    topicKey: text("topic_key").notNull(),
+    evidenceType: text("evidence_type").notNull(),
+    documentVersion: text("document_version").notNull(),
+    referenceCode: text("reference_code").notNull(),
+    issuedAt: timestamp("issued_at", { withTimezone: true }),
+    expiresAt: timestamp("expires_at", { withTimezone: true }),
+    status: text("status").default("SUBMITTED_UNVERIFIED").notNull(),
+    idempotencyKey: text("idempotency_key").notNull(),
+    submittedBy: text("submitted_by").notNull().references(() => users.id),
+    submittedAt: timestamp("submitted_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    reviewedBy: text("reviewed_by").references(() => users.id),
+    reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+    ...dates(),
+  },
+  (t) => [
+    uniqueIndex("market_legal_evidence_idempotency_unique").on(
+      t.intakeId,
+      t.idempotencyKey,
+    ),
+    index("market_legal_evidence_topic_idx").on(
+      t.intakeId,
+      t.topicKey,
+      t.evidenceType,
+      t.createdAt,
+    ),
+    check(
+      "market_legal_evidence_topic_valid",
+      sql`${t.topicKey} IN ('OPERATING_ENTITY', 'MARKETPLACE_RULES', 'SELLER_ELIGIBILITY', 'BUSINESS_KYC', 'CONSUMER_PROTECTION', 'FEES_AND_TAX', 'PAYMENTS', 'DELIVERY_LOGISTICS', 'PERSONAL_DATA', 'EXTERNAL_AI', 'MINORS_RESTRICTED_GOODS_ADVERTISING', 'IP_COMPLAINTS_DISPUTES', 'INCIDENT_NOTIFICATION', 'POLICY_VERSIONS', 'OFFICIAL_REFERENCES', 'COUNSEL_FINDINGS')`,
+    ),
+    check(
+      "market_legal_evidence_type_valid",
+      sql`${t.evidenceType} ~ '^[A-Z][A-Z0-9_]{1,63}$'`,
+    ),
+    check(
+      "market_legal_evidence_version_valid",
+      sql`char_length(btrim(${t.documentVersion})) BETWEEN 1 AND 80`,
+    ),
+    check(
+      "market_legal_evidence_reference_valid",
+      sql`${t.referenceCode} ~ '^[A-Za-z][A-Za-z0-9._:/-]{2,199}$'`,
+    ),
+    check(
+      "market_legal_evidence_status_valid",
+      sql`${t.status} IN ('SUBMITTED_UNVERIFIED', 'COUNSEL_REVIEWED', 'REJECTED', 'SUPERSEDED')`,
+    ),
+    check(
+      "market_legal_evidence_review_guard",
+      sql`${t.status} NOT IN ('COUNSEL_REVIEWED', 'REJECTED', 'SUPERSEDED') OR (${t.reviewedBy} IS NOT NULL AND ${t.reviewedAt} IS NOT NULL)`,
+    ),
+    check(
+      "market_legal_evidence_expiry_valid",
+      sql`${t.expiresAt} IS NULL OR ${t.issuedAt} IS NULL OR ${t.expiresAt} >= ${t.issuedAt}`,
+    ),
+  ],
+);
+
+/** Append-only audit record for country intake, evidence, and activation decisions. */
+export const marketLegalIntakeEvents = pgTable(
+  "market_legal_intake_events",
+  {
+    id: text("id").primaryKey(),
+    intakeId: text("intake_id")
+      .notNull()
+      .references(() => marketLegalIntakes.id),
+    eventType: text("event_type").notNull(),
+    topicKey: text("topic_key"),
+    evidenceId: text("evidence_id").references(() => marketLegalEvidence.id),
+    actorId: text("actor_id").notNull().references(() => users.id),
+    fromStatus: text("from_status"),
+    toStatus: text("to_status").notNull(),
+    referenceCode: text("reference_code"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [
+    index("market_legal_intake_events_intake_idx").on(
+      t.intakeId,
+      t.createdAt,
+    ),
+    check(
+      "market_legal_intake_events_type_valid",
+      sql`${t.eventType} IN ('PACKAGE_INITIALIZED', 'EVIDENCE_SUBMITTED', 'EVIDENCE_REVIEWED', 'EVIDENCE_REJECTED', 'COUNSEL_REVIEW_REQUESTED', 'TOPIC_REVIEWED', 'COUNSEL_REVIEW_RECORDED', 'COUNSEL_APPROVAL_BLOCKED', 'OWNER_APPROVAL_BLOCKED', 'TECHNICAL_VERIFICATION_BLOCKED', 'ACTIVATION_BLOCKED', 'MARKET_ACTIVATED', 'MARKET_SUSPENDED')`,
+    ),
+    check(
+      "market_legal_intake_events_reference_valid",
+      sql`${t.referenceCode} IS NULL OR ${t.referenceCode} ~ '^[A-Za-z][A-Za-z0-9._:/-]{2,199}$'`,
+    ),
+  ],
+);
+
+/** Internal incident register. It stores pointers to evidence, never evidence contents or secrets. */
+export const securityIncidents = pgTable(
+  "security_incidents",
+  {
+    id: text("id").primaryKey(),
+    category: text("category").notNull(),
+    severity: text("severity").notNull(),
+    status: text("status").default("OPEN").notNull(),
+    summary: text("summary").notNull(),
+    affectedSystems: jsonb("affected_systems").$type<string[]>().default([]).notNull(),
+    detectedAt: timestamp("detected_at", { withTimezone: true }).notNull(),
+    openedBy: text("opened_by").notNull().references(() => users.id),
+    evidenceReference: text("evidence_reference"),
+    containmentSummary: text("containment_summary"),
+    recoverySummary: text("recovery_summary"),
+    postIncidentSummary: text("post_incident_summary"),
+    counselAssessment: text("counsel_assessment").default("NOT_ASSESSED").notNull(),
+    counselReference: text("counsel_reference"),
+    counselReviewedBy: text("counsel_reviewed_by").references(() => users.id),
+    counselReviewedAt: timestamp("counsel_reviewed_at", { withTimezone: true }),
+    ...dates(),
+  },
+  (t) => [
+    index("security_incidents_status_severity_idx").on(t.status, t.severity, t.createdAt),
+    check(
+      "security_incidents_category_valid",
+      sql`${t.category} IN ('SECURITY', 'PRIVACY', 'AVAILABILITY', 'DATA_INTEGRITY', 'THIRD_PARTY', 'OTHER')`,
+    ),
+    check(
+      "security_incidents_severity_valid",
+      sql`${t.severity} IN ('LOW', 'MEDIUM', 'HIGH', 'CRITICAL')`,
+    ),
+    check(
+      "security_incidents_status_valid",
+      sql`${t.status} IN ('OPEN', 'CONTAINED', 'RECOVERED', 'CLOSED')`,
+    ),
+    check(
+      "security_incidents_assessment_valid",
+      sql`${t.counselAssessment} IN ('NOT_ASSESSED', 'REVIEW_REQUIRED', 'REVIEWED')`,
+    ),
+    check(
+      "security_incidents_counsel_review_valid",
+      sql`${t.counselAssessment} <> 'REVIEWED' OR (${t.counselReference} IS NOT NULL AND ${t.counselReviewedBy} IS NOT NULL AND ${t.counselReviewedAt} IS NOT NULL)`,
+    ),
+    check(
+      "security_incidents_summary_valid",
+      sql`char_length(btrim(${t.summary})) BETWEEN 3 AND 1200 AND jsonb_typeof(${t.affectedSystems}) = 'array'`,
+    ),
+    check(
+      "security_incidents_closure_valid",
+      sql`${t.status} <> 'CLOSED' OR (${t.postIncidentSummary} IS NOT NULL AND char_length(btrim(${t.postIncidentSummary})) >= 3)`,
+    ),
+  ],
+);
+
+/** Append-only incident lifecycle; transition snapshots exclude raw personal data and secrets. */
+export const securityIncidentEvents = pgTable(
+  "security_incident_events",
+  {
+    id: text("id").primaryKey(),
+    incidentId: text("incident_id")
+      .notNull()
+      .references(() => securityIncidents.id),
+    eventType: text("event_type").notNull(),
+    fromStatus: text("from_status"),
+    toStatus: text("to_status").notNull(),
+    actorId: text("actor_id").notNull().references(() => users.id),
+    reference: text("reference"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    index("security_incident_events_incident_idx").on(t.incidentId, t.createdAt),
+    check(
+      "security_incident_events_type_valid",
+      sql`${t.eventType} IN ('OPENED', 'CONTAINMENT_RECORDED', 'RECOVERY_RECORDED', 'POST_INCIDENT_RECORDED', 'COUNSEL_REVIEW_REQUESTED', 'COUNSEL_REVIEW_RECORDED', 'SEVERITY_CHANGED', 'EVIDENCE_REFERENCE_ADDED')`,
+    ),
+    check(
+      "security_incident_events_status_valid",
+      sql`${t.toStatus} IN ('OPEN', 'CONTAINED', 'RECOVERED', 'CLOSED') AND (${t.fromStatus} IS NULL OR ${t.fromStatus} IN ('OPEN', 'CONTAINED', 'RECOVERED', 'CLOSED'))`,
+    ),
+  ],
+);

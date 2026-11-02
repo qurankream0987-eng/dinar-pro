@@ -3949,6 +3949,714 @@ export type AdminPromotion = SellerPromotion & {
   sellerId: string;
 };
 
+export type CountryLegalTopicKey = typeof CountryLegalTopicKey[keyof typeof CountryLegalTopicKey];
+
+
+export const CountryLegalTopicKey = {
+  OPERATING_ENTITY: 'OPERATING_ENTITY',
+  MARKETPLACE_RULES: 'MARKETPLACE_RULES',
+  SELLER_ELIGIBILITY: 'SELLER_ELIGIBILITY',
+  BUSINESS_KYC: 'BUSINESS_KYC',
+  CONSUMER_PROTECTION: 'CONSUMER_PROTECTION',
+  FEES_AND_TAX: 'FEES_AND_TAX',
+  PAYMENTS: 'PAYMENTS',
+  DELIVERY_LOGISTICS: 'DELIVERY_LOGISTICS',
+  PERSONAL_DATA: 'PERSONAL_DATA',
+  EXTERNAL_AI: 'EXTERNAL_AI',
+  MINORS_RESTRICTED_GOODS_ADVERTISING: 'MINORS_RESTRICTED_GOODS_ADVERTISING',
+  IP_COMPLAINTS_DISPUTES: 'IP_COMPLAINTS_DISPUTES',
+  INCIDENT_NOTIFICATION: 'INCIDENT_NOTIFICATION',
+  POLICY_VERSIONS: 'POLICY_VERSIONS',
+  OFFICIAL_REFERENCES: 'OFFICIAL_REFERENCES',
+  COUNSEL_FINDINGS: 'COUNSEL_FINDINGS',
+} as const;
+
+export interface CountryLegalReadinessSummary {
+  marketId: string;
+  countryCode: string;
+  countryNameAr: string;
+  countryNameEn: string;
+  marketActive: boolean;
+  reviewStatus: string;
+  counselApprovalStatus: string;
+  ownerApprovalStatus: string;
+  technicalVerificationStatus: string;
+  activationStatus: string;
+  blockers: string[];
+  topicCount: number;
+  reviewedTopicCount: number;
+}
+
+export type CountryLegalIntakeReviewStatus = typeof CountryLegalIntakeReviewStatus[keyof typeof CountryLegalIntakeReviewStatus];
+
+
+export const CountryLegalIntakeReviewStatus = {
+  NOT_REVIEWED: 'NOT_REVIEWED',
+  COUNSEL_REVIEW_REQUIRED: 'COUNSEL_REVIEW_REQUIRED',
+  COUNSEL_REVIEWED: 'COUNSEL_REVIEWED',
+  BLOCKED: 'BLOCKED',
+} as const;
+
+export type CountryLegalIntakeCounselApprovalStatus = typeof CountryLegalIntakeCounselApprovalStatus[keyof typeof CountryLegalIntakeCounselApprovalStatus];
+
+
+export const CountryLegalIntakeCounselApprovalStatus = {
+  BLOCKED: 'BLOCKED',
+  APPROVED: 'APPROVED',
+} as const;
+
+export type CountryLegalIntakeOwnerApprovalStatus = typeof CountryLegalIntakeOwnerApprovalStatus[keyof typeof CountryLegalIntakeOwnerApprovalStatus];
+
+
+export const CountryLegalIntakeOwnerApprovalStatus = {
+  BLOCKED: 'BLOCKED',
+  APPROVED: 'APPROVED',
+} as const;
+
+export type CountryLegalIntakeTechnicalVerificationStatus = typeof CountryLegalIntakeTechnicalVerificationStatus[keyof typeof CountryLegalIntakeTechnicalVerificationStatus];
+
+
+export const CountryLegalIntakeTechnicalVerificationStatus = {
+  NOT_RUN: 'NOT_RUN',
+  PASSED: 'PASSED',
+  FAILED: 'FAILED',
+} as const;
+
+export type CountryLegalIntakeActivationStatus = typeof CountryLegalIntakeActivationStatus[keyof typeof CountryLegalIntakeActivationStatus];
+
+
+export const CountryLegalIntakeActivationStatus = {
+  DISABLED: 'DISABLED',
+  ACTIVE: 'ACTIVE',
+  SUSPENDED: 'SUSPENDED',
+} as const;
+
+export interface CountryLegalIntake {
+  id: string;
+  marketId: string;
+  reviewStatus: CountryLegalIntakeReviewStatus;
+  counselApprovalStatus: CountryLegalIntakeCounselApprovalStatus;
+  counselApprovalBlocker: string;
+  ownerApprovalStatus: CountryLegalIntakeOwnerApprovalStatus;
+  technicalVerificationStatus: CountryLegalIntakeTechnicalVerificationStatus;
+  activationStatus: CountryLegalIntakeActivationStatus;
+  /** @nullable */
+  reviewRequestedBy: string | null;
+  /** @nullable */
+  reviewRequestedAt: string | null;
+  /** @nullable */
+  counselReviewedBy: string | null;
+  /** @nullable */
+  counselReviewedAt: string | null;
+  /** @nullable */
+  counselReviewReference: string | null;
+  /** @nullable */
+  counselApprovedBy: string | null;
+  /** @nullable */
+  counselApprovedAt: string | null;
+  /** @nullable */
+  counselApprovalReference: string | null;
+  /** @nullable */
+  ownerApprovedBy: string | null;
+  /** @nullable */
+  ownerApprovedAt: string | null;
+  /** @nullable */
+  ownerApprovalReference: string | null;
+  /** @nullable */
+  technicalVerifiedBy: string | null;
+  /** @nullable */
+  technicalVerifiedAt: string | null;
+  /** @nullable */
+  technicalVerificationReference: string | null;
+  /** @nullable */
+  activatedBy: string | null;
+  /** @nullable */
+  activatedAt: string | null;
+  /** @nullable */
+  suspendedBy: string | null;
+  /** @nullable */
+  suspendedAt: string | null;
+  /** @nullable */
+  suspensionReference: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CountryLegalPolicyVersionRequirement {
+  /**
+     * @minLength 1
+     * @maxLength 120
+     */
+  policyKey: string;
+  /**
+     * @minLength 1
+     * @maxLength 80
+     */
+  version: string;
+}
+
+export type CountryLegalTopicDisposition = typeof CountryLegalTopicDisposition[keyof typeof CountryLegalTopicDisposition];
+
+
+export const CountryLegalTopicDisposition = {
+  UNRESOLVED: 'UNRESOLVED',
+  REQUIRED: 'REQUIRED',
+  NOT_REQUIRED: 'NOT_REQUIRED',
+  NOT_APPLICABLE: 'NOT_APPLICABLE',
+  BLOCKED: 'BLOCKED',
+} as const;
+
+export type CountryLegalTopicReviewStatus = typeof CountryLegalTopicReviewStatus[keyof typeof CountryLegalTopicReviewStatus];
+
+
+export const CountryLegalTopicReviewStatus = {
+  NOT_REVIEWED: 'NOT_REVIEWED',
+  COUNSEL_REVIEWED: 'COUNSEL_REVIEWED',
+  BLOCKED: 'BLOCKED',
+} as const;
+
+export type CountryLegalTopicEvidenceRequirementStatus = typeof CountryLegalTopicEvidenceRequirementStatus[keyof typeof CountryLegalTopicEvidenceRequirementStatus];
+
+
+export const CountryLegalTopicEvidenceRequirementStatus = {
+  NOT_REVIEWED: 'NOT_REVIEWED',
+  REQUIREMENTS_SET: 'REQUIREMENTS_SET',
+  NO_REQUIREMENTS: 'NO_REQUIREMENTS',
+} as const;
+
+export type CountryLegalTopicPolicyRequirementStatus = typeof CountryLegalTopicPolicyRequirementStatus[keyof typeof CountryLegalTopicPolicyRequirementStatus];
+
+
+export const CountryLegalTopicPolicyRequirementStatus = {
+  NOT_REVIEWED: 'NOT_REVIEWED',
+  VERSIONS_SET: 'VERSIONS_SET',
+  NO_POLICY_REQUIREMENT: 'NO_POLICY_REQUIREMENT',
+} as const;
+
+export interface CountryLegalTopic {
+  id: string;
+  intakeId: string;
+  topicKey: CountryLegalTopicKey;
+  labelAr: string;
+  disposition: CountryLegalTopicDisposition;
+  reviewStatus: CountryLegalTopicReviewStatus;
+  evidenceRequirementStatus: CountryLegalTopicEvidenceRequirementStatus;
+  policyRequirementStatus: CountryLegalTopicPolicyRequirementStatus;
+  /** @nullable */
+  counselFinding: string | null;
+  /** @nullable */
+  qualifications: string | null;
+  /** @nullable */
+  requiredAmendments: string | null;
+  /** @nullable */
+  officialReference: string | null;
+  /** @nullable */
+  effectiveFrom: string | null;
+  /** @nullable */
+  effectiveUntil: string | null;
+  requiredEvidenceTypes: string[];
+  requiredPolicyVersions: CountryLegalPolicyVersionRequirement[];
+  /** @nullable */
+  reviewedBy: string | null;
+  /** @nullable */
+  reviewedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type CountryLegalEvidenceStatus = typeof CountryLegalEvidenceStatus[keyof typeof CountryLegalEvidenceStatus];
+
+
+export const CountryLegalEvidenceStatus = {
+  SUBMITTED_UNVERIFIED: 'SUBMITTED_UNVERIFIED',
+  COUNSEL_REVIEWED: 'COUNSEL_REVIEWED',
+  REJECTED: 'REJECTED',
+  SUPERSEDED: 'SUPERSEDED',
+} as const;
+
+export interface CountryLegalEvidence {
+  id: string;
+  intakeId: string;
+  topicKey: CountryLegalTopicKey;
+  evidenceType: string;
+  documentVersion: string;
+  referenceCode: string;
+  /** @nullable */
+  issuedAt: string | null;
+  /** @nullable */
+  expiresAt: string | null;
+  status: CountryLegalEvidenceStatus;
+  idempotencyKey: string;
+  submittedBy: string;
+  submittedAt: string;
+  /** @nullable */
+  reviewedBy: string | null;
+  /** @nullable */
+  reviewedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  expired: boolean;
+}
+
+export interface CountryLegalIntakeEvent {
+  id: string;
+  intakeId: string;
+  eventType: string;
+  /** @nullable */
+  topicKey: string | null;
+  /** @nullable */
+  evidenceId: string | null;
+  actorId: string;
+  /** @nullable */
+  fromStatus: string | null;
+  toStatus: string;
+  /** @nullable */
+  referenceCode: string | null;
+  createdAt: string;
+}
+
+export interface CountryLegalReadinessSummaryPolicy {
+  policyKey: string;
+  version: string;
+  marketScope: string;
+  effectiveDate: string;
+  contentSha256: string;
+}
+
+export type MarketLegalCapabilityName = typeof MarketLegalCapabilityName[keyof typeof MarketLegalCapabilityName];
+
+
+export const MarketLegalCapabilityName = {
+  INFORMATION_ONLY: 'INFORMATION_ONLY',
+  BROWSING: 'BROWSING',
+  LISTING_PUBLICATION: 'LISTING_PUBLICATION',
+  TRANSACTIONS: 'TRANSACTIONS',
+  CASH_PAYMENT: 'CASH_PAYMENT',
+  ELECTRONIC_PAYMENT: 'ELECTRONIC_PAYMENT',
+  BUSINESS_ONBOARDING: 'BUSINESS_ONBOARDING',
+  DELIVERY_OPERATIONS: 'DELIVERY_OPERATIONS',
+  RESTRICTED_CATEGORIES: 'RESTRICTED_CATEGORIES',
+} as const;
+
+export interface CountryLegalCapabilitySummary {
+  capability: MarketLegalCapabilityName;
+  status: string;
+  enabled: boolean;
+}
+
+export type CountryLegalReadinessDetailMarket = {
+  id: string;
+  countryCode: string;
+  countryNameAr: string;
+  countryNameEn: string;
+  isActive: boolean;
+  status: string;
+};
+
+export interface CountryLegalReadinessDetail {
+  market: CountryLegalReadinessDetailMarket;
+  intake: CountryLegalIntake;
+  topics: CountryLegalTopic[];
+  evidence: CountryLegalEvidence[];
+  publishedPolicyVersions: CountryLegalReadinessSummaryPolicy[];
+  capabilities: CountryLegalCapabilitySummary[];
+  blockers: string[];
+  events: CountryLegalIntakeEvent[];
+}
+
+export interface CountryLegalEvidenceInput {
+  topicKey: CountryLegalTopicKey;
+  /**
+     * @minLength 2
+     * @maxLength 64
+     * @pattern ^[A-Za-z][A-Za-z0-9_]{1,63}$
+     */
+  evidenceType: string;
+  /**
+     * @minLength 1
+     * @maxLength 80
+     */
+  documentVersion: string;
+  /**
+     * @minLength 3
+     * @maxLength 200
+     * @pattern ^[A-Za-z][A-Za-z0-9._:/-]{2,199}$
+     */
+  referenceCode: string;
+  /**
+     * @minLength 8
+     * @maxLength 128
+     * @pattern ^[A-Za-z0-9._:-]{8,128}$
+     */
+  idempotencyKey: string;
+  /** @nullable */
+  issuedAt?: string | null;
+  /** @nullable */
+  expiresAt?: string | null;
+}
+
+export type CountryLegalEvidenceReviewInputOutcome = typeof CountryLegalEvidenceReviewInputOutcome[keyof typeof CountryLegalEvidenceReviewInputOutcome];
+
+
+export const CountryLegalEvidenceReviewInputOutcome = {
+  COUNSEL_REVIEWED: 'COUNSEL_REVIEWED',
+  REJECTED: 'REJECTED',
+} as const;
+
+export interface CountryLegalEvidenceReviewInput {
+  outcome: CountryLegalEvidenceReviewInputOutcome;
+}
+
+export type CountryLegalTopicReviewInputDisposition = typeof CountryLegalTopicReviewInputDisposition[keyof typeof CountryLegalTopicReviewInputDisposition];
+
+
+export const CountryLegalTopicReviewInputDisposition = {
+  REQUIRED: 'REQUIRED',
+  NOT_REQUIRED: 'NOT_REQUIRED',
+  NOT_APPLICABLE: 'NOT_APPLICABLE',
+  BLOCKED: 'BLOCKED',
+} as const;
+
+export type CountryLegalTopicReviewInputEvidenceRequirementStatus = typeof CountryLegalTopicReviewInputEvidenceRequirementStatus[keyof typeof CountryLegalTopicReviewInputEvidenceRequirementStatus];
+
+
+export const CountryLegalTopicReviewInputEvidenceRequirementStatus = {
+  REQUIREMENTS_SET: 'REQUIREMENTS_SET',
+  NO_REQUIREMENTS: 'NO_REQUIREMENTS',
+} as const;
+
+export type CountryLegalTopicReviewInputPolicyRequirementStatus = typeof CountryLegalTopicReviewInputPolicyRequirementStatus[keyof typeof CountryLegalTopicReviewInputPolicyRequirementStatus];
+
+
+export const CountryLegalTopicReviewInputPolicyRequirementStatus = {
+  VERSIONS_SET: 'VERSIONS_SET',
+  NO_POLICY_REQUIREMENT: 'NO_POLICY_REQUIREMENT',
+} as const;
+
+export interface CountryLegalTopicReviewInput {
+  disposition: CountryLegalTopicReviewInputDisposition;
+  /**
+     * @minLength 3
+     * @maxLength 4000
+     */
+  counselFinding: string;
+  /**
+     * @maxLength 2000
+     * @nullable
+     */
+  qualifications?: string | null;
+  /**
+     * @maxLength 2000
+     * @nullable
+     */
+  requiredAmendments?: string | null;
+  /**
+     * @minLength 3
+     * @maxLength 200
+     * @pattern ^[A-Za-z][A-Za-z0-9._:/-]{2,199}$
+     */
+  officialReference: string;
+  /** @nullable */
+  effectiveFrom?: string | null;
+  /** @nullable */
+  effectiveUntil?: string | null;
+  evidenceRequirementStatus: CountryLegalTopicReviewInputEvidenceRequirementStatus;
+  /**
+     * @maxItems 32
+     * @items.minLength 2
+     * @items.maxLength 64
+     * @items.pattern ^[A-Za-z][A-Za-z0-9_]{1,63}$
+     */
+  requiredEvidenceTypes: string[];
+  policyRequirementStatus: CountryLegalTopicReviewInputPolicyRequirementStatus;
+  /** @maxItems 32 */
+  requiredPolicyVersions: CountryLegalPolicyVersionRequirement[];
+}
+
+export interface CountryLegalReferenceInput {
+  /**
+     * @minLength 3
+     * @maxLength 200
+     * @pattern ^[A-Za-z][A-Za-z0-9._:/-]{2,199}$
+     */
+  referenceCode: string;
+}
+
+export type LegalReadinessMarketStatus = typeof LegalReadinessMarketStatus[keyof typeof LegalReadinessMarketStatus];
+
+
+export const LegalReadinessMarketStatus = {
+  ACTIVE: 'ACTIVE',
+  LIMITED: 'LIMITED',
+  COMING_SOON: 'COMING_SOON',
+  DISABLED: 'DISABLED',
+} as const;
+
+export interface LegalReadinessMarket {
+  id: string;
+  status: LegalReadinessMarketStatus;
+  isActive: boolean;
+  countryNameAr: string;
+  countryNameEn: string;
+}
+
+export interface EmptyInput { [key: string]: unknown }
+
+export type MarketLegalCapabilityStatus = typeof MarketLegalCapabilityStatus[keyof typeof MarketLegalCapabilityStatus];
+
+
+export const MarketLegalCapabilityStatus = {
+  DISABLED: 'DISABLED',
+  COUNSEL_REVIEW_REQUIRED: 'COUNSEL_REVIEW_REQUIRED',
+  OWNER_APPROVAL_REQUIRED: 'OWNER_APPROVAL_REQUIRED',
+  ENABLED: 'ENABLED',
+  BLOCKED: 'BLOCKED',
+} as const;
+
+export interface MarketLegalCapabilityState {
+  marketId: string;
+  capability: MarketLegalCapabilityName;
+  status: MarketLegalCapabilityStatus;
+  enabled: boolean;
+  counselReviewRecorded: boolean;
+  ownerApprovalRecorded: boolean;
+  /** @nullable */
+  updatedAt: string | null;
+}
+
+export type AdminMarketLegalCapabilityState = MarketLegalCapabilityState & ({
+  /** @nullable */
+  counselReference: string | null;
+  /** @nullable */
+  counselReviewedBy: string | null;
+  /** @nullable */
+  counselReviewedAt: string | null;
+  /** @nullable */
+  ownerApprovalReference: string | null;
+  /** @nullable */
+  ownerApprovedBy: string | null;
+  /** @nullable */
+  ownerApprovedAt: string | null;
+});
+
+export interface MarketLegalCapabilityEvent {
+  id: string;
+  marketId: string;
+  capability: MarketLegalCapabilityName;
+  eventType: string;
+  /** @nullable */
+  fromStatus: string | null;
+  toStatus: MarketLegalCapabilityStatus;
+  actorId: string;
+  /** @nullable */
+  reference: string | null;
+  createdAt: string;
+}
+
+export interface AdminMarketLegalCapabilityOverview {
+  marketId: string;
+  capabilities: AdminMarketLegalCapabilityState[];
+  events: MarketLegalCapabilityEvent[];
+}
+
+export type MarketCapabilityCounselReviewInputOutcome = typeof MarketCapabilityCounselReviewInputOutcome[keyof typeof MarketCapabilityCounselReviewInputOutcome];
+
+
+export const MarketCapabilityCounselReviewInputOutcome = {
+  READY_FOR_OWNER_REVIEW: 'READY_FOR_OWNER_REVIEW',
+  BLOCK: 'BLOCK',
+} as const;
+
+export interface MarketCapabilityCounselReviewInput {
+  outcome: MarketCapabilityCounselReviewInputOutcome;
+  /**
+     * @minLength 3
+     * @maxLength 200
+     * @pattern ^[A-Za-z][A-Za-z0-9._:/-]{2,199}$
+     */
+  reference: string;
+}
+
+export interface MarketCapabilityOwnerApprovalInput {
+  /**
+     * @minLength 3
+     * @maxLength 200
+     * @pattern ^[A-Za-z][A-Za-z0-9._:/-]{2,199}$
+     */
+  reference: string;
+}
+
+export type SecurityIncidentStatus = typeof SecurityIncidentStatus[keyof typeof SecurityIncidentStatus];
+
+
+export const SecurityIncidentStatus = {
+  OPEN: 'OPEN',
+  CONTAINED: 'CONTAINED',
+  RECOVERED: 'RECOVERED',
+  CLOSED: 'CLOSED',
+} as const;
+
+export type SecurityIncidentCategory = typeof SecurityIncidentCategory[keyof typeof SecurityIncidentCategory];
+
+
+export const SecurityIncidentCategory = {
+  SECURITY: 'SECURITY',
+  PRIVACY: 'PRIVACY',
+  AVAILABILITY: 'AVAILABILITY',
+  DATA_INTEGRITY: 'DATA_INTEGRITY',
+  THIRD_PARTY: 'THIRD_PARTY',
+  OTHER: 'OTHER',
+} as const;
+
+export type SecurityIncidentSeverity = typeof SecurityIncidentSeverity[keyof typeof SecurityIncidentSeverity];
+
+
+export const SecurityIncidentSeverity = {
+  LOW: 'LOW',
+  MEDIUM: 'MEDIUM',
+  HIGH: 'HIGH',
+  CRITICAL: 'CRITICAL',
+} as const;
+
+export type SecurityIncidentCounselAssessment = typeof SecurityIncidentCounselAssessment[keyof typeof SecurityIncidentCounselAssessment];
+
+
+export const SecurityIncidentCounselAssessment = {
+  NOT_ASSESSED: 'NOT_ASSESSED',
+  REVIEW_REQUIRED: 'REVIEW_REQUIRED',
+  REVIEWED: 'REVIEWED',
+} as const;
+
+export interface SecurityIncident {
+  id: string;
+  category: SecurityIncidentCategory;
+  severity: SecurityIncidentSeverity;
+  status: SecurityIncidentStatus;
+  summary: string;
+  affectedSystems: string[];
+  detectedAt: string;
+  openedBy: string;
+  /** @nullable */
+  evidenceReference: string | null;
+  /** @nullable */
+  containmentSummary: string | null;
+  /** @nullable */
+  recoverySummary: string | null;
+  /** @nullable */
+  postIncidentSummary: string | null;
+  counselAssessment: SecurityIncidentCounselAssessment;
+  /** @nullable */
+  counselReference: string | null;
+  /** @nullable */
+  counselReviewedBy: string | null;
+  /** @nullable */
+  counselReviewedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SecurityIncidentEvent {
+  id: string;
+  incidentId: string;
+  eventType: string;
+  /** @nullable */
+  fromStatus: string | null;
+  toStatus: SecurityIncidentStatus;
+  actorId: string;
+  /** @nullable */
+  reference: string | null;
+  createdAt: string;
+}
+
+export interface SecurityIncidentDetails {
+  incident: SecurityIncident;
+  events: SecurityIncidentEvent[];
+}
+
+export type SecurityIncidentInputCategory = typeof SecurityIncidentInputCategory[keyof typeof SecurityIncidentInputCategory];
+
+
+export const SecurityIncidentInputCategory = {
+  SECURITY: 'SECURITY',
+  PRIVACY: 'PRIVACY',
+  AVAILABILITY: 'AVAILABILITY',
+  DATA_INTEGRITY: 'DATA_INTEGRITY',
+  THIRD_PARTY: 'THIRD_PARTY',
+  OTHER: 'OTHER',
+} as const;
+
+export type SecurityIncidentInputSeverity = typeof SecurityIncidentInputSeverity[keyof typeof SecurityIncidentInputSeverity];
+
+
+export const SecurityIncidentInputSeverity = {
+  LOW: 'LOW',
+  MEDIUM: 'MEDIUM',
+  HIGH: 'HIGH',
+  CRITICAL: 'CRITICAL',
+} as const;
+
+export interface SecurityIncidentInput {
+  category: SecurityIncidentInputCategory;
+  severity: SecurityIncidentInputSeverity;
+  /**
+     * @minLength 3
+     * @maxLength 1200
+     */
+  summary: string;
+  /**
+     * @maxItems 12
+     * @items.minLength 1
+     * @items.maxLength 80
+     */
+  affectedSystems?: string[];
+  detectedAt?: string;
+  /**
+     * @minLength 3
+     * @maxLength 200
+     * @pattern ^[A-Za-z][A-Za-z0-9._:/-]{2,199}$
+     */
+  evidenceReference?: string;
+}
+
+export type SecurityIncidentTransitionInputAction = typeof SecurityIncidentTransitionInputAction[keyof typeof SecurityIncidentTransitionInputAction];
+
+
+export const SecurityIncidentTransitionInputAction = {
+  RECORD_CONTAINMENT: 'RECORD_CONTAINMENT',
+  RECORD_RECOVERY: 'RECORD_RECOVERY',
+  CLOSE_WITH_POSTMORTEM: 'CLOSE_WITH_POSTMORTEM',
+  REQUEST_COUNSEL_REVIEW: 'REQUEST_COUNSEL_REVIEW',
+  RECORD_COUNSEL_REVIEW: 'RECORD_COUNSEL_REVIEW',
+  CHANGE_SEVERITY: 'CHANGE_SEVERITY',
+  ADD_EVIDENCE_REFERENCE: 'ADD_EVIDENCE_REFERENCE',
+} as const;
+
+export type SecurityIncidentTransitionInputSeverity = typeof SecurityIncidentTransitionInputSeverity[keyof typeof SecurityIncidentTransitionInputSeverity];
+
+
+export const SecurityIncidentTransitionInputSeverity = {
+  LOW: 'LOW',
+  MEDIUM: 'MEDIUM',
+  HIGH: 'HIGH',
+  CRITICAL: 'CRITICAL',
+} as const;
+
+export interface SecurityIncidentTransitionInput {
+  action: SecurityIncidentTransitionInputAction;
+  /**
+     * @minLength 3
+     * @maxLength 1200
+     */
+  summary?: string;
+  /**
+     * @minLength 3
+     * @maxLength 200
+     * @pattern ^[A-Za-z][A-Za-z0-9._:/-]{2,199}$
+     */
+  reference?: string;
+  severity?: SecurityIncidentTransitionInputSeverity;
+}
+
 export type GetListingsParams = {
 search?: string;
 category?: string;
@@ -4024,4 +4732,8 @@ export const ListBusinessVerificationQueueStatus = {
   REJECTED: 'REJECTED',
   SUSPENDED: 'SUSPENDED',
 } as const;
+
+export type ListAdminSecurityIncidentsParams = {
+status?: SecurityIncidentStatus;
+};
 
