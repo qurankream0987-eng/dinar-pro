@@ -66,5 +66,7 @@ wholesale, partial returns, company accounts.
 
 ## F. Git
 
-Base `claude/02-sc-acceptance`. One branch per command: `qoder/<NN>-<topic>`. Small commits with
-reasons. No force-push, no rebase of others' commits, no merge to `main`, no tags, no releases.
+Base `replit/dinar-next-complete-development`, frozen at the mission's recorded SHA; historical
+`claude/*` and `qoder/*` branches are not baselines. One branch per command: `qoder/<NN>-<topic>`.
+Small commits with reasons. No force-push, no rebase of others' commits, no merge to `main`, no
+tags, no releases.

@@ -13,7 +13,7 @@ negotiate in chat, orders reserve stock, payment is SIMULATION_ONLY. pnpm monore
   from model output.
 - `artifacts/api-server/src/lib/` — domain services: `negotiations.ts`, `commerce.ts`,
   `order-terminal-accounting.ts`, `payments/service.ts`, `auth.ts`, `auth-rate-limiter.ts` (DB-backed).
-- `lib/db/src/schema/` — schema; `lib/db/drizzle/` — the 49 checked-in migrations (release authority).
+- `lib/db/src/schema/` — schema; `lib/db/drizzle/` — the 51 checked-in migrations (release authority).
 - `lib/api-spec/openapi.yaml` → `lib/api-zod`, `lib/api-client-react` (generated; run codegen, never hand-edit).
 - `artifacts/dinar/` — web app. `threat_model.md` — trust boundaries.
 
