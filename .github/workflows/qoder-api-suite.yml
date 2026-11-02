@@ -57,6 +57,17 @@ on:
           - wave03-card-envelope-browser-journey.test
           - d3a-native-business.test
           - d3a-browser-journey.test
+          - business-delegations.test
+          - d5-seller-employee-acceptance.test
+          - d4-d5-isolation-security.test
+          - next-g2-inquiry.test
+          - universal-negotiation-acceptance.test
+          - g2-smart-conversation.test
+          - model-native-routing.test
+          - bounded-multistep.test
+          - promotion-intent.test
+          - block-f2-buyer.test
+          - block-f3-commerce.test
       chain:
         description: "Run a reviewed suite chain on one disposable migrated and seeded database"
         required: false
@@ -67,6 +78,8 @@ on:
           - financial-waves-w07-w12c
           - business-cards-search-commerce
           - integrated-nine-interleaved
+          - d4-d5-authorization
+          - d6-g2-negotiation
       flags:
         description: "Allowlisted KEY=VALUE switches, space separated"
         required: false
@@ -125,7 +138,7 @@ jobs:
             key=${pair%%=*}
             value=${pair#*=}
             case "$key" in
-              BDINAR_W07_ACCEPTANCE|BDINAR_W08_ACCEPTANCE|BDINAR_W09_ACCEPTANCE|BDINAR_W10_ACCEPTANCE|BDINAR_W12C_ACCEPTANCE|BDINAR_D1D2_ACCEPTANCE|BDINAR_W02U3_TEST_DATABASE|BDINAR_W02U3_BROWSER|BDINAR_D3A_ACCEPTANCE|BDINAR_WAVE4_ACCEPTANCE|BDINAR_WAVE3_ACCEPTANCE|BDINAR_WAVE02_ACCEPTANCE|BDINAR_PHASE1_ACCEPTANCE|BDINAR_SECURITY_ACCEPTANCE)
+              BDINAR_W07_ACCEPTANCE|BDINAR_W08_ACCEPTANCE|BDINAR_W09_ACCEPTANCE|BDINAR_W10_ACCEPTANCE|BDINAR_W12C_ACCEPTANCE|BDINAR_D1D2_ACCEPTANCE|BDINAR_W02U3_TEST_DATABASE|BDINAR_W02U3_BROWSER|BDINAR_D3A_ACCEPTANCE|BDINAR_WAVE4_ACCEPTANCE|BDINAR_WAVE3_ACCEPTANCE|BDINAR_WAVE02_ACCEPTANCE|BDINAR_PHASE1_ACCEPTANCE|BDINAR_SECURITY_ACCEPTANCE|BDINAR_D4_ACCEPTANCE|BDINAR_D5_ACCEPTANCE|BDINAR_A02_ISOLATION|BDINAR_G2_ACCEPTANCE|BDINAR_BLOCKF_ACCEPTANCE)
                 [ "$value" = development ] || { echo "$key must be development" >&2; exit 96; } ;;
               BDINAR_LOG_SCAN)
                 case "$value" in 0|1) ;; *) echo "$key must be 0 or 1" >&2; exit 96 ;; esac ;;
@@ -164,6 +177,13 @@ jobs:
             integrated-nine-interleaved)
               SUITES="wave07-financial-journal.test d1-d2-business-foundation.test wave08-cash-and-refunds.test w02u3-card-reliability.test wave09-policy-consent-compliance.test search-sql-foundation.test wave10-trust-support-whatsapp.test commerce-journey.test wave07-w12-contract-hardening.test"
               require_flags "BDINAR_TEST_DATABASE BDINAR_W07_ACCEPTANCE BDINAR_W08_ACCEPTANCE BDINAR_W09_ACCEPTANCE BDINAR_W10_ACCEPTANCE BDINAR_W12C_ACCEPTANCE BDINAR_D1D2_ACCEPTANCE BDINAR_W02U3_TEST_DATABASE BDINAR_WAVE4_ACCEPTANCE"
+              promotions=1 ;;
+            d4-d5-authorization)
+              SUITES="business-delegations.test d5-seller-employee-acceptance.test d4-d5-isolation-security.test"
+              require_flags "BDINAR_D4_ACCEPTANCE BDINAR_D5_ACCEPTANCE BDINAR_A02_ISOLATION" ;;
+            d6-g2-negotiation)
+              SUITES="next-g2-inquiry.test universal-negotiation-acceptance.test g2-smart-conversation.test model-native-routing.test bounded-multistep.test promotion-intent.test block-f2-buyer.test block-f3-commerce.test"
+              require_flags "BDINAR_G2_ACCEPTANCE BDINAR_WAVE4_ACCEPTANCE BDINAR_TEST_DATABASE BDINAR_BLOCKF_ACCEPTANCE"
               promotions=1 ;;
             *) echo "chain not allowlisted: $CHAIN" >&2; exit 96 ;;
           esac

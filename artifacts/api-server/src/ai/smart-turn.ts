@@ -926,6 +926,22 @@ export async function modelContext(input: Input): Promise<ModelContext> {
   // The model prompt has a strict size bound. Put the task-specific employee facts first so
   // assignedInquiry and its recorded inventory cannot be truncated by generic market guidance.
   const contextualServerFacts = { ...employeeServerFacts, ...serverContext };
+  // Marketing help is grounded in the seller's own listing or draft, with provenance. The key is
+  // omitted entirely when there is no fact to ground (no listing, or an empty delegated catalog):
+  // a null `sellerListing` would tell callers facts exist while exposing nothing.
+  const marketingFacts = input.actorId && marketAvailable && isMarketingRequest(input.message) &&
+    (!sellerEmployeeRequested || Boolean(delegatedCatalog && employeeCapabilities.includes("business.catalog.read")))
+    ? await sellerListingFacts({
+        conversationId: input.conversationId,
+        message: input.message,
+        market: input.market,
+        actorId: input.actorId,
+        ...(sellerEmployeeRequested ? {
+          allowedListingIds: delegatedCatalog?.listings.map((listing) => listing.id) ?? [],
+          employeeBusinessId: input.sellerEmployeeSession?.businessId,
+        } : {}),
+      })
+    : null;
   return {
     marketAvailable,
     serverContext: contextualServerFacts,
@@ -946,22 +962,7 @@ export async function modelContext(input: Input): Promise<ModelContext> {
     ...(input.actorId && !sellerEmployeeRequested ? { actionReceipts: await recentActionReceipts(input.conversationId, input.actorId) } : {}),
     // Another party's words delivered by an inquiry are never model instructions or history.
     history: history.slice(1).reverse().filter((row) => row.metadata?.inquiryDelivery !== true && row.metadata?.inquiryContent !== true).map((row) => ({ actor: row.actor, body: row.body })),
-    // Marketing help is grounded in the seller's own listing or draft, with provenance.
-    ...(input.actorId && marketAvailable && isMarketingRequest(input.message) &&
-      (!sellerEmployeeRequested || Boolean(delegatedCatalog && employeeCapabilities.includes("business.catalog.read")))
-      ? {
-          sellerListing: await sellerListingFacts({
-            conversationId: input.conversationId,
-            message: input.message,
-            market: input.market,
-            actorId: input.actorId,
-            ...(sellerEmployeeRequested ? {
-              allowedListingIds: delegatedCatalog?.listings.map((listing) => listing.id) ?? [],
-              employeeBusinessId: input.sellerEmployeeSession?.businessId,
-            } : {}),
-          }),
-        }
-      : {}),
+    ...(marketingFacts ? { sellerListing: marketingFacts } : {}),
   };
 }
 
