@@ -42,6 +42,7 @@ import {
   type BusinessCapability,
 } from "../src/lib/business-capabilities";
 import { businessOrders, publishBusinessDraft, updateBusinessListing } from "../src/lib/business-catalog";
+import { checkoutForActor } from "../src/routes/marketplace";
 
 requireSafeReplitDevelopmentDatabase("BDINAR_D3A_ACCEPTANCE");
 process.env.BDINAR_BLOCK_MODEL_CALLS = "1";
@@ -974,6 +975,18 @@ await focused("D3A-42", "orders and money stay scoped to one business when one s
     ],
     idempotencyKey: `d3a-42-${randomUUID()}`,
   }, buyer.cookie);
+  if (checkedOut.status !== 201) {
+    try {
+      await checkoutForActor(buyer.id, [
+        { listingId: burgerId, quantity: 1, fulfilmentType: "PICKUP" },
+        { listingId: secondListingId, quantity: 1, fulfilmentType: "PICKUP" },
+      ], `d3a-42-diag-${randomUUID()}`);
+      console.log("D3A-42_DIAG direct=ok");
+    } catch (error: any) {
+      console.log("D3A-42_DIAG", String(error?.name), String(error?.message), String(error?.stack).slice(0, 1500));
+      console.log("D3A-42_DIAG_CAUSE", String(error?.cause?.message), String(error?.cause?.stack).slice(0, 1500));
+    }
+  }
   assert.equal(checkedOut.status, 201, checkedOut.raw);
   const orderId = checkedOut.data.orders[0].id as string;
   const [orderRow] = await db.select().from(orders).where(eq(orders.id, orderId));

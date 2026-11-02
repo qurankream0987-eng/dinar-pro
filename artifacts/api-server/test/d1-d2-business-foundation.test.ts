@@ -555,7 +555,9 @@ await test("D2-06 VERIFIED requires an authorized reviewer, a clean scan and no 
 });
 
 await test("D2-20 a rejected verification publishes nothing, keeps its reason and allows a corrected application", async () => {
-  const rejected = await readyForReview(owner, `مطعم مرفوض ${runId}`, "99007777");
+  // A separate applicant: the owner already holds other open businesses, and one owner is
+  // limited in how many unfinished applications it may keep.
+  const rejected = await readyForReview(catalogAdmin, `مطعم مرفوض ${runId}`, "99007777");
   assert.equal(rejected.verificationStatus, "PENDING_REVIEW");
   assert.equal((await decide(rejected.id, "REJECT")).status, 400, "a rejection needs a reason");
   const decision = await decide(rejected.id, "REJECT", "رقم السجل غير مطابق للسجل التجاري");
@@ -568,10 +570,10 @@ await test("D2-20 a rejected verification publishes nothing, keeps its reason an
     "a rejection never creates a verified owner",
   );
   assert.equal((await request(`/businesses/${rejected.id}`)).status, 404, "a rejected business has no public surface");
-  assert.equal((await request(`/business/profiles/${rejected.id}/publication`, "POST", { publish: true }, owner.cookie)).status, 409);
+  assert.equal((await request(`/business/profiles/${rejected.id}/publication`, "POST", { publish: true }, catalogAdmin.cookie)).status, 409);
   const events = await db.select().from(businessVerificationEvents).where(eq(businessVerificationEvents.businessId, rejected.id));
   assert.ok(events.some((event) => event.action === "REJECTED" && event.reason?.includes("غير مطابق") && event.actorId === reviewer.id));
-  const retry = await newBusiness(owner, `مطعم مرفوض ${runId}`);
+  const retry = await newBusiness(catalogAdmin, `مطعم مرفوض ${runId}`);
   assert.notEqual(retry.id, rejected.id, "a rejected name can be applied for again");
 });
 
