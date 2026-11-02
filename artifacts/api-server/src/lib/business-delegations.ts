@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
-import { and, asc, desc, eq, gt, inArray, lte, ne } from "drizzle-orm";
+import { and, asc, desc, eq, gt, inArray, lte, ne, sql } from "drizzle-orm";
 import {
+  aiResultSets,
   businessAuditEvents,
   businessDelegations,
   businessEmployeeSessions,
@@ -9,7 +10,10 @@ import {
   businessProfiles,
   conversations,
   db,
+  negotiations,
   offers,
+  orderItems,
+  orders,
   users,
   type BusinessEmployeeSessionEndReason,
 } from "@workspace/db";
@@ -800,6 +804,59 @@ const sessionEndReasonForDelegation = (
   reason: "GRANT_SUSPENDED" | "GRANT_REVOKED" | "GRANT_EXPIRED",
 ) => reason;
 
+async function invalidatePendingEmployeeActionsForSessionTx(
+  tx: Tx,
+  input: {
+    sessionId: string;
+    conversationId: string;
+    businessId: string;
+    delegationId: string;
+    actorId: string;
+    reason: BusinessEmployeeSessionEndReason;
+  },
+) {
+  const rows = await tx
+    .select()
+    .from(aiResultSets)
+    .where(and(
+      eq(aiResultSets.conversationId, input.conversationId),
+      sql`${aiResultSets.query} ->> 'kind' = 'ACTION'`,
+      sql`${aiResultSets.query} ->> 'status' in ('PENDING', 'EXECUTING')`,
+      sql`${aiResultSets.query} -> 'delegatedAuthority' ->> 'sessionId' = ${input.sessionId}`,
+    ))
+    .for("update");
+  const now = new Date();
+  const status = input.reason === "OWNER_STOP"
+    ? "CANCELLED"
+    : input.reason.includes("EXPIRED") ? "EXPIRED" : "REJECTED";
+  for (const row of rows) {
+    const query = row.query;
+    await tx.update(aiResultSets).set({
+      query: {
+        ...query,
+        status,
+        notice: "أُبطل الإجراء المعلّق لانتهاء أو إيقاف جلسة الموظف. لم يُنفّذ شيء.",
+        invalidatedAt: now.toISOString(),
+        invalidationReason: input.reason,
+      },
+    }).where(eq(aiResultSets.id, row.id));
+    await recordDelegationAudit(tx, {
+      businessId: input.businessId,
+      actorId: input.actorId,
+      action: "D5_PENDING_ACTION_INVALIDATED",
+      delegationId: input.delegationId,
+      detail: {
+        sessionId: input.sessionId,
+        actionId: row.id,
+        action: query.action,
+        previousStatus: query.status,
+        status,
+        reason: input.reason,
+      },
+    });
+  }
+}
+
 async function invalidateEmployeeSessionsForDelegationTx(
   tx: Tx,
   delegationId: string,
@@ -823,8 +880,17 @@ async function invalidateEmployeeSessionsForDelegationTx(
       id: businessEmployeeSessions.id,
       businessId: businessEmployeeSessions.businessId,
       ownerUserId: businessEmployeeSessions.ownerUserId,
+      conversationId: businessEmployeeSessions.conversationId,
     });
   for (const row of rows) {
+    await invalidatePendingEmployeeActionsForSessionTx(tx, {
+      sessionId: row.id,
+      conversationId: row.conversationId,
+      businessId: row.businessId,
+      delegationId,
+      actorId,
+      reason,
+    });
     await recordDelegationAudit(tx, {
       businessId: row.businessId,
       actorId,
@@ -852,6 +918,14 @@ async function invalidateEmployeeSessionTx(
     ))
     .returning({ id: businessEmployeeSessions.id });
   if (updated) {
+    await invalidatePendingEmployeeActionsForSessionTx(tx, {
+      sessionId: session.id,
+      conversationId: session.conversationId,
+      businessId: session.businessId,
+      delegationId: session.delegationId,
+      actorId,
+      reason,
+    });
     await recordDelegationAudit(tx, {
       businessId: session.businessId,
       actorId,
@@ -1189,6 +1263,160 @@ export async function assertSellerEmployeeCapabilityTx(
     throw fail(403, message, reason);
   }
   return result.session;
+}
+
+export type SellerEmployeeOrderSummary = {
+  orderId: string;
+  status: string;
+  currencyCode: string;
+  scopedSubtotalMinor: number;
+  scopedItemCount: number;
+  createdAt: string;
+};
+
+/** Reads only order lines belonging to this D5 session's business and resource scope. */
+export async function readSellerEmployeeOrders(input: {
+  actorId: string;
+  conversationId: string;
+  marketId: string;
+  sessionId: string;
+}): Promise<SellerEmployeeOrderSummary[]> {
+  return db.transaction(async (tx) => {
+    const session = await assertSellerEmployeeCapabilityTx(tx, {
+      ...input,
+      capability: "business.orders.read",
+    });
+    const [business] = await tx.select({
+      d2BusinessId: businessOperatingProfiles.d2BusinessId,
+    }).from(businessOperatingProfiles).where(and(
+      eq(businessOperatingProfiles.id, session.businessId),
+      eq(businessOperatingProfiles.ownerUserId, input.actorId),
+      eq(businessOperatingProfiles.marketId, input.marketId),
+    )).for("share").limit(1);
+    if (!business) throw fail(403, "تعذر التحقق من نشاط التفويض", "D5_BUSINESS_SCOPE_INVALID");
+    const scope = session.resourceScope as DelegationScope;
+    const listingScope = scope.kind === "LISTING_ALLOWLIST"
+      ? inArray(offers.id, scope.listingIds)
+      : undefined;
+    const rows = await tx.select({
+      orderId: orders.id,
+      status: orders.status,
+      currencyCode: orders.currencyCode,
+      scopedSubtotalMinor: sql<number>`coalesce(sum(${orderItems.subtotalMinor}), 0)::int`,
+      scopedItemCount: sql<number>`count(${orderItems.id})::int`,
+      createdAt: orders.createdAt,
+    }).from(orders)
+      .innerJoin(orderItems, eq(orderItems.orderId, orders.id))
+      .innerJoin(offers, eq(offers.id, orderItems.offerId))
+      .where(and(
+        eq(orders.sellerId, input.actorId),
+        eq(orders.marketId, input.marketId),
+        eq(offers.businessProfileId, business.d2BusinessId),
+        eq(offers.marketId, input.marketId),
+        listingScope,
+      ))
+      .groupBy(orders.id)
+      .orderBy(desc(orders.createdAt))
+      .limit(20);
+    await recordDelegationAudit(tx, {
+      businessId: session.businessId,
+      actorId: input.actorId,
+      action: "D5_EMPLOYEE_ORDERS_READ",
+      delegationId: session.delegationId,
+      detail: { resultCount: rows.length, scopeKind: scope.kind },
+    });
+    return rows.map((row) => ({
+      ...row,
+      createdAt: row.createdAt.toISOString(),
+    }));
+  });
+}
+
+export type SellerEmployeeNegotiationSummary = {
+  negotiationId: string;
+  listingId: string;
+  title: string;
+  status: "OPEN" | "COUNTERED";
+  currencyCode: string;
+  amountMinor: number | null;
+  quantity: number;
+  awaitingSeller: boolean;
+  expiresAt: string;
+};
+
+/** Escalation is a scoped read and audit event; it never accepts or counters an offer. */
+export async function escalateSellerEmployeeNegotiations(input: {
+  actorId: string;
+  conversationId: string;
+  marketId: string;
+  sessionId: string;
+}): Promise<SellerEmployeeNegotiationSummary[]> {
+  return db.transaction(async (tx) => {
+    const session = await assertSellerEmployeeCapabilityTx(tx, {
+      ...input,
+      capability: "business.negotiations.escalate",
+    });
+    const [business] = await tx.select({
+      d2BusinessId: businessOperatingProfiles.d2BusinessId,
+    }).from(businessOperatingProfiles).where(and(
+      eq(businessOperatingProfiles.id, session.businessId),
+      eq(businessOperatingProfiles.ownerUserId, input.actorId),
+      eq(businessOperatingProfiles.marketId, input.marketId),
+    )).for("share").limit(1);
+    if (!business) throw fail(403, "تعذر التحقق من نشاط التفويض", "D5_BUSINESS_SCOPE_INVALID");
+    const scope = session.resourceScope as DelegationScope;
+    const listingScope = scope.kind === "LISTING_ALLOWLIST"
+      ? inArray(offers.id, scope.listingIds)
+      : undefined;
+    const now = new Date();
+    const rows = await tx.select({
+      negotiationId: negotiations.id,
+      listingId: offers.id,
+      title: offers.data,
+      status: negotiations.status,
+      lastActor: negotiations.lastActor,
+      currencyCode: negotiations.currencyCode,
+      offerAmountMinor: negotiations.offerAmountMinor,
+      counterAmountMinor: negotiations.counterAmountMinor,
+      quantity: negotiations.quantity,
+      expiresAt: negotiations.expiresAt,
+    }).from(negotiations)
+      .innerJoin(offers, eq(offers.id, negotiations.listingId))
+      .where(and(
+        eq(negotiations.sellerId, input.actorId),
+        eq(negotiations.marketId, input.marketId),
+        eq(offers.businessProfileId, business.d2BusinessId),
+        eq(offers.marketId, input.marketId),
+        inArray(negotiations.status, ["OPEN", "COUNTERED"]),
+        gt(negotiations.expiresAt, now),
+        listingScope,
+      ))
+      .orderBy(desc(negotiations.updatedAt))
+      .limit(20);
+    const summaries = rows.map((row) => ({
+      negotiationId: row.negotiationId,
+      listingId: row.listingId,
+      title: typeof row.title.title === "string" ? row.title.title : "منتج",
+      status: row.status as "OPEN" | "COUNTERED",
+      currencyCode: row.currencyCode,
+      amountMinor: row.counterAmountMinor ?? row.offerAmountMinor,
+      quantity: row.quantity,
+      awaitingSeller: row.lastActor === "BUYER",
+      expiresAt: row.expiresAt.toISOString(),
+    }));
+    await recordDelegationAudit(tx, {
+      businessId: session.businessId,
+      actorId: input.actorId,
+      action: "D5_NEGOTIATION_ESCALATED",
+      delegationId: session.delegationId,
+      detail: {
+        count: summaries.length,
+        negotiationIds: summaries.map((row) => row.negotiationId),
+        scopeKind: scope.kind,
+      },
+    });
+    return summaries;
+  });
 }
 
 export async function invalidateSellerEmployeeSessionsForActorTx(

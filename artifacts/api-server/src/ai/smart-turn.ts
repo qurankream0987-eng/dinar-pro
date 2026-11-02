@@ -145,6 +145,7 @@ export type SellerEmployeeActionHandler = (input: {
   message: string;
   session: SellerEmployeeSessionContext;
   replyText?: string;
+  itemHint?: string;
 }) => Promise<Turn | null>;
 const BUDGET = /(?:حدي|ميزانيتي|ميزانيه|بحدود|حدود|اقل من|تحت|لحد|ما يتعدي|ما يزيد عن|اقصي|الحد)\s*(?:هو\s+)?(\d+(?:\.\d+)?)/u;
 const PREFERENCES: [RegExp, string, string][] = [
@@ -1346,6 +1347,15 @@ export async function executeModelFallback(
       { ownerId: input.actorId },
     );
   const turn = outcome.turn;
+  if (
+    input.sellerEmployeeMode &&
+    /(?:تم(?:ت)?\s+(?:الدفع|السداد|استلام\s+(?:المبلغ|الدفعة))|استلم(?:نا|ت)\s+(?:المبلغ|الدفع)|وصل(?:نا|ت)\s+(?:المبلغ|الدفعة)|payment\s+(?:received|confirmed)|\bpaid\b)/iu.test(turn.conversationalReply)
+  )
+    return adviceTurn(
+      "لا أملك سجلًا ماليًا معتمدًا لتأكيد الدفع أو استلام المبلغ؛ لم أغيّر شيئًا.",
+      { kind: "CLARIFICATION_REQUIRED", scope: "D5_AUTHORIZATION", topic: "PAYMENT_CLAIM_UNVERIFIED", authority: "DINAR" },
+      { ownerId: input.actorId },
+    );
   const inventoryQuestion =
     /(?:مخزون|كمية|المتبقي|المتبقية|متوفر|متوفرة|stock|inventory|available)/iu.test(
       normalizeSearch(input.message),
@@ -1376,6 +1386,7 @@ export async function executeModelFallback(
         message: input.message,
         session: input.sellerEmployeeSession,
         ...(turn.sellerEmployeeReply ? { replyText: turn.sellerEmployeeReply } : {}),
+        ...(turn.entities?.item ? { itemHint: turn.entities.item } : {}),
       });
     } catch (error) {
       return adviceTurn(

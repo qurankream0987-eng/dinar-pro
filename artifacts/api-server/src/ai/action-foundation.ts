@@ -1315,15 +1315,62 @@ export async function confirmPendingAction(input: {
   decision: "CONFIRM" | "CANCEL";
 }): Promise<ConfirmOutcome> {
   const claimed = await db.transaction(async (tx) => {
-    const [set] = await tx.select().from(aiResultSets).where(eq(aiResultSets.id, input.actionId)).for("update");
-    const query = set?.query as PendingQuery | undefined;
-    if (!set || query?.kind !== ACTION_KIND || query.ownerId !== input.actorId)
+    // D5 lock order is grant → action. Revocation takes the same order before
+    // invalidating pending rows, so a confirmation cannot deadlock or pass a
+    // revocation that already owns the grant lock.
+    const [candidate] = await tx.select().from(aiResultSets)
+      .where(eq(aiResultSets.id, input.actionId))
+      .limit(1);
+    const candidateQuery = candidate?.query as PendingQuery | undefined;
+    if (!candidate || candidateQuery?.kind !== ACTION_KIND || candidateQuery.ownerId !== input.actorId)
       throw fail(404, "الإجراء غير موجود");
     const [conversation] = await tx
       .select({ id: conversations.id })
       .from(conversations)
-      .where(and(eq(conversations.id, set.conversationId), eq(conversations.ownerUserId, input.actorId)));
-    if (!conversation || set.marketId !== input.market.id) throw fail(404, "الإجراء غير موجود");
+      .where(and(eq(conversations.id, candidate.conversationId), eq(conversations.ownerUserId, input.actorId)));
+    if (!conversation || candidate.marketId !== input.market.id) throw fail(404, "الإجراء غير موجود");
+    if (input.decision === "CONFIRM" && candidateQuery.status === "PENDING" && candidateQuery.delegatedAuthority) {
+      try {
+        for (const capability of candidateQuery.delegatedAuthority.capabilities) {
+          await assertSellerEmployeeCapabilityTx(tx, {
+            actorId: input.actorId,
+            conversationId: candidate.conversationId,
+            marketId: input.market.id,
+            sessionId: candidateQuery.delegatedAuthority.sessionId,
+            capability,
+            listingId: candidateQuery.delegatedAuthority.listingId,
+          });
+        }
+      } catch (error) {
+        const errorStatus = (error as { status?: unknown })?.status;
+        if (typeof errorStatus !== "number" || errorStatus >= 500) throw error;
+        const [set] = await tx.select().from(aiResultSets)
+          .where(eq(aiResultSets.id, input.actionId))
+          .for("update");
+        const query = set?.query as PendingQuery | undefined;
+        const message = `${error instanceof Error ? error.message : "انتهت صلاحية التفويض"}. لم يُنفّذ شيء.`;
+        if (set && query?.kind === ACTION_KIND && query.ownerId === input.actorId && query.status === "PENDING") {
+          await tx.update(aiResultSets).set({
+            query: {
+              ...query,
+              status: "REJECTED",
+              notice: message,
+              invalidatedAt: new Date().toISOString(),
+              invalidationReason: "AUTHORIZATION_RECHECK_FAILED",
+            },
+          }).where(eq(aiResultSets.id, set.id));
+        }
+        return { done: { status: "REJECTED", message, executed: false } as ConfirmOutcome };
+      }
+    }
+    const [set] = await tx.select().from(aiResultSets)
+      .where(eq(aiResultSets.id, input.actionId))
+      .for("update");
+    const query = set?.query as PendingQuery | undefined;
+    if (!set || query?.kind !== ACTION_KIND || query.ownerId !== input.actorId)
+      throw fail(404, "الإجراء غير موجود");
+    if (set.conversationId !== candidate.conversationId || set.marketId !== candidate.marketId)
+      throw fail(404, "الإجراء غير موجود");
     const settle = async (status: PendingQuery["status"], message: string) => {
       await tx.update(aiResultSets).set({ query: { ...query, status, notice: message, ...settledBy() } }).where(eq(aiResultSets.id, set.id));
       return { done: { status, message, executed: status === "CANCELLED" } as ConfirmOutcome };
@@ -1334,25 +1381,6 @@ export async function confirmPendingAction(input: {
     if (await pendingActionLapsed(set, tx))
       return settle("EXPIRED", "انتهت صلاحية هذا التأكيد لأن المحادثة تابعت بعده أو مضى وقته. لم يتغير شيء.");
     if (input.decision === "CANCEL") return settle("CANCELLED", "أُلغي الإجراء. لم يتغير شيء.");
-    if (query.delegatedAuthority) {
-      try {
-        for (const capability of query.delegatedAuthority.capabilities) {
-          await assertSellerEmployeeCapabilityTx(tx, {
-            actorId: input.actorId,
-            conversationId: set.conversationId,
-            marketId: input.market.id,
-            sessionId: query.delegatedAuthority.sessionId,
-            capability,
-            listingId: query.delegatedAuthority.listingId,
-          });
-        }
-      } catch (error) {
-        return settle(
-          "REJECTED",
-          `${error instanceof Error ? error.message : "انتهت صلاحية التفويض"}. لم تُرسل الرسالة.`,
-        );
-      }
-    }
     const definition = ACTION_REGISTRY[query.action];
     if (!definition) return settle("REJECTED", "إجراء غير مسجل؛ لم يتغير شيء.");
     const current = await readFor(definition)(input.actorId, query.targetResource, tx);

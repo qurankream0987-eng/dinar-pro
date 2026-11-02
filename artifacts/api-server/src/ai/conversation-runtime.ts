@@ -81,6 +81,8 @@ import { recommendationIntent } from "./intent";
 import { storedSponsoredIds } from "../lib/recommendations";
 import {
   delegatedSellerModelContext,
+  escalateSellerEmployeeNegotiations,
+  readSellerEmployeeOrders,
   requireSellerEmployeeCapability,
 } from "../lib/business-delegations";
 import type { ListingPhotoSuggestionProvider } from "./listing-photo-intelligence";
@@ -584,7 +586,7 @@ type RuntimeTurn = Awaited<ReturnType<typeof executeAiConversationTurn>>;
 function sellerEmployeeActionHandler(
   context: RuntimeContext,
 ): SellerEmployeeActionHandler {
-  return async ({ action, message, session, replyText }) => {
+  return async ({ action, message, session, replyText, itemHint }) => {
     const requireCapability = (capability: Parameters<typeof requireSellerEmployeeCapability>[0]["capability"]) =>
       requireSellerEmployeeCapability({
         actorId: context.actorId!,
@@ -596,7 +598,62 @@ function sellerEmployeeActionHandler(
 
     if (action === "ANSWER_CATALOG") {
       await requireCapability("business.catalog.read");
-      return null;
+      const catalog = await delegatedSellerModelContext({
+        actorId: context.actorId!,
+        marketId: context.market.id,
+        delegationId: session.delegationId,
+      });
+      if (!catalog) throw new Error("تعذر تحميل كتالوج النشاط ضمن التفويض الحالي");
+      const normalize = (value: string) => normalizeSearch(value)
+        .replace(/[^\p{L}\p{N}]+/gu, " ")
+        .trim();
+      const queries = [itemHint, message]
+        .filter((value): value is string => typeof value === "string")
+        .map(normalize)
+        .filter((value) => value.length >= 2);
+      const matches = catalog.listings.filter((listing) => {
+        const title = normalize(listing.title);
+        return title.length > 0 && queries.some((query) =>
+          query === title || query.includes(title) || title.includes(query),
+        );
+      });
+      if (!matches.length)
+        return sellerEmployeeFactResponse(
+          "لم أتمكن من تحديد عرض منشور ضمن نطاق التفويض. اذكر اسمه؛ لن أخمّن مواصفاته.",
+          "CATALOG_ITEM_CLARIFICATION",
+          context.actorId,
+        );
+      if (matches.length > 1)
+        return sellerEmployeeFactResponse(
+          `وجدت أكثر من عرض مطابق. اختر واحدًا بالاسم:\n${matches.slice(0, 8).map((listing) => `• ${listing.title}`).join("\n")}`,
+          "CATALOG_ITEM_AMBIGUOUS",
+          context.actorId,
+        );
+      const listing = matches[0]!;
+      const normalizedMessage = normalize(message);
+      const asksPrice = /(?:سعر|كم\s*(?:السعر|يكلف)|price|cost)/u.test(normalizedMessage);
+      const asksCategory = /(?:تصنيف|فئة|category|نوع\s*المنتج)/u.test(normalizedMessage);
+      const asksUnrecordedSpec = /(?:بطاري|ضمان|مقاس|قياس|لون|كامير|ذاكر|مساح|موديل|أصلي|اصلي|مواصفات)/u.test(normalizedMessage);
+      if (asksUnrecordedSpec)
+        return sellerEmployeeFactResponse(
+          `لا تسجل بيانات العرض الحالية هذه المواصفة لـ«${listing.title}». لم أخمّنها.`,
+          "CATALOG_SPEC_NOT_RECORDED",
+          context.actorId,
+        );
+      if (asksPrice) {
+        const price = listing.priceMinor === null || typeof listing.priceMinor !== "number"
+          ? "لا يوجد سعر ثابت مسجل."
+          : `السعر المسجل ${(
+              listing.priceMinor / 10 ** context.market.minorUnitScale
+            ).toFixed(context.market.minorUnitScale)} ${context.market.currencyCode}.`;
+        return sellerEmployeeFactResponse(`«${listing.title}»: ${price}`, "CATALOG_PRICE_READ", context.actorId);
+      }
+      const category = listing.category ? `التصنيف المسجل: ${listing.category}.` : "لا يوجد تصنيف مسجل.";
+      return sellerEmployeeFactResponse(
+        `العرض المنشور ضمن التفويض هو «${listing.title}». ${asksCategory ? category : `${category} لم أضف مواصفات غير موجودة في سجل الكتالوج.`}`,
+        "CATALOG_FACT_READ",
+        context.actorId,
+      );
     }
     if (action === "READ_INVENTORY") {
       await requireCapability("business.inventory.read");
@@ -615,53 +672,89 @@ function sellerEmployeeActionHandler(
           "INVENTORY_EMPTY",
           context.actorId,
         );
-      const normalize = (value: string) =>
-        value.toLocaleLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
-      const normalizedMessage = normalize(message);
-      const matches = available.filter((listing) =>
-        normalizedMessage.includes(normalize(listing.title)),
-      );
-      const rows = matches.length ? matches : available.slice(0, 10);
-      const details = rows.map((listing) => {
-        const quantity = listing.availableQuantity;
-        if (listing.inventoryMode !== "LIMITED" || typeof quantity !== "number")
-          return `• ${listing.title}: الكمية غير محددة في سجل المخزون`;
-        return `• ${listing.title}: ${quantity > 0
-          ? `${quantity} متاح`
-          : "غير متاح حاليًا"}`;
+      const normalize = (value: string) => normalizeSearch(value)
+        .replace(/[^\p{L}\p{N}]+/gu, " ")
+        .trim();
+      const queries = [itemHint, message]
+        .filter((value): value is string => typeof value === "string")
+        .map(normalize)
+        .filter((value) => value.length >= 2);
+      const matches = available.filter((listing) => {
+        const title = normalize(listing.title);
+        return title.length > 0 && queries.some((query) =>
+          query === title || query.includes(title) || title.includes(query),
+        );
       });
+      if (!matches.length)
+        return sellerEmployeeFactResponse(
+          "لم أتمكن من تحديد عرض واحد منشور ضمن نطاق التفويض. اذكر اسم المنتج؛ لم أذكر مخزونًا غير متحقق.",
+          "INVENTORY_ITEM_CLARIFICATION",
+          context.actorId,
+        );
+      if (matches.length > 1)
+        return sellerEmployeeFactResponse(
+          `وجدت أكثر من عرض مطابق. اختر واحدًا بالاسم:\n${matches.slice(0, 8).map((listing) => `• ${listing.title}`).join("\n")}`,
+          "INVENTORY_AMBIGUOUS",
+          context.actorId,
+        );
+      const [listing] = matches;
+      const quantity = listing!.availableQuantity;
+      const detail = listing!.inventoryMode !== "LIMITED" || typeof quantity !== "number"
+        ? `«${listing!.title}»: الكمية غير محددة في سجل المخزون`
+        : `«${listing!.title}»: ${quantity > 0 ? `${quantity} متاح` : "غير متاح حاليًا"}`;
       return sellerEmployeeFactResponse(
-        `${matches.length > 1 ? "اختر المنتج المقصود:\n" : matches.length === 0 && available.length > rows.length ? "بعض المنتجات ضمن التفويض:\n" : "المخزون المسجل:\n"}${details.join("\n")}`,
-        matches.length > 1 ? "INVENTORY_AMBIGUOUS" : "INVENTORY_READ",
+        `المخزون المسجل: ${detail}.`,
+        "INVENTORY_READ",
         context.actorId,
       );
     }
     if (action === "READ_ORDERS") {
-      await requireCapability("business.orders.read");
-      return executeBusinessTurn({
+      const rows = await readSellerEmployeeOrders({
+        actorId: context.actorId!,
         conversationId: context.conversationId,
-        message: "اعرض طلبات النشاط",
-        market: context.market,
-        actorId: context.actorId,
+        marketId: context.market.id,
+        sessionId: session.id,
       });
+      if (!rows.length)
+        return sellerEmployeeFactResponse(
+          "لا توجد طلبات ضمن نشاطك ونطاق التفويض الحالي.",
+          "ORDERS_EMPTY",
+          context.actorId,
+        );
+      const details = rows.map((row) => {
+        const amount = (row.scopedSubtotalMinor / 10 ** context.market.minorUnitScale)
+          .toFixed(context.market.minorUnitScale);
+        return `• طلب ${row.orderId.slice(-8)} — ${row.status} — ${row.scopedItemCount} منتج ضمن الصلاحية — ${amount} ${row.currencyCode}`;
+      });
+      return sellerEmployeeFactResponse(
+        `طلبات النشاط ضمن نطاق التفويض:\n${details.join("\n")}\nلم أعرض بيانات المشتري أو منتجات خارج النطاق.`,
+        "ORDERS_READ",
+        context.actorId,
+      );
     }
     if (action === "DRAFT_LISTING") {
       await requireCapability("business.catalog.draft");
-      const draftIntent =
-        /^(?:جهز|حضر|حضّر|اعد|أعد|انشئ|أنشئ|سوي|اعمل|اقترح)\s+(?:لي\s+)?(?:ثلاث|3|ثلاثه|ثلاثة)\s+(?:عروض|منتجات|اصناف|أصناف|اطباق|أطباق)(?=$|\s|[:：])/u.test(message.trim());
       const includesPublish =
         /(?:انشر|نشر|اعتمد|أكد|اكد|تأكيد|موافق|نعم|publish|confirm)/iu.test(message);
-      if (!draftIntent || includesPublish)
+      if (includesPublish)
         throw new Error("يمكن للموظف إعداد مسودة نشاط مدعومة فقط؛ النشر يحتاج مراجعة المالك");
       await requireCapability("business.catalog.draft.price");
-      return executeBusinessTurn({
-        conversationId: context.conversationId,
-        message,
-        market: context.market,
-        actorId: context.actorId,
-      });
+      const draft = await listingDraft(context.conversationId, message, "SELL", [], undefined, context.actorId);
+      return draft
+        ? { tool: "openSurface", version: 1, result: draft }
+        : sellerEmployeeFactResponse(
+            "اذكر اسم المنتج والتفاصيل التي تريد إدخالها في المسودة. لم يُنشر شيء.",
+            "SELLER_DRAFT_CLARIFICATION",
+            context.actorId,
+          );
     }
     if (action === "DRAFT_INQUIRY_REPLY") {
+      if (replyText && /(?:تم(?:ت)?\s+(?:الدفع|السداد|استلام\s+(?:المبلغ|الدفعة))|استلم(?:نا|ت)\s+(?:المبلغ|الدفع)|وصل(?:نا|ت)\s+(?:المبلغ|الدفعة)|payment\s+(?:received|confirmed)|\bpaid\b)/iu.test(replyText))
+        return sellerEmployeeFactResponse(
+          "لا يوجد في جلسة الموظف سجل مالي يؤكد الدفع أو استلام المبلغ؛ لم أعدّ هذا الرد.",
+          "PAYMENT_CLAIM_UNVERIFIED",
+          context.actorId,
+        );
       await requireCapability("business.inquiries.reply");
       await requireCapability("business.messages.send");
       return executeInquiryTurn({
@@ -674,13 +767,30 @@ function sellerEmployeeActionHandler(
       });
     }
     if (action === "ESCALATE_NEGOTIATION") {
-      await requireCapability("business.negotiations.escalate");
-      return executeNegotiationTurn({
+      const rows = await escalateSellerEmployeeNegotiations({
+        actorId: context.actorId!,
         conversationId: context.conversationId,
-        message: "اعرض عروض السعر",
-        market: context.market,
-        actorId: context.actorId,
+        marketId: context.market.id,
+        sessionId: session.id,
       });
+      if (!rows.length)
+        return sellerEmployeeFactResponse(
+          "لا توجد عروض تفاوض مفتوحة ضمن نشاطك ونطاق التفويض.",
+          "NEGOTIATION_ESCALATION_EMPTY",
+          context.actorId,
+        );
+      const details = rows.map((row) => {
+        const amount = row.amountMinor === null
+          ? "بانتظار اقتراح سعر"
+          : `${(row.amountMinor / 10 ** context.market.minorUnitScale).toFixed(context.market.minorUnitScale)} ${row.currencyCode}`;
+        const waiting = row.awaitingSeller ? "بانتظار قرار المالك" : "بانتظار رد المشتري";
+        return `• ${row.title} — ${amount} — كمية ${row.quantity} — ${waiting}`;
+      });
+      return sellerEmployeeFactResponse(
+        `عروض التفاوض المفتوحة ضمن نطاق التفويض، لمراجعة المالك:\n${details.join("\n")}\nلم أقبل عرضًا أو أرسل مقابلاً.`,
+        "NEGOTIATION_ESCALATED",
+        context.actorId,
+      );
     }
     return null;
   };
