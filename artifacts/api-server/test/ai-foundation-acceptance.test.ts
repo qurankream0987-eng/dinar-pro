@@ -312,7 +312,7 @@ test("AI-F02 search then compare renders DINAR's own side-by-side surface and pe
   const reply = await say(user.cookie, user.conv, text, clientMessageId);
   assert.equal(reply.status, 200, reply.body);
   assert.equal(matchedScriptKey, text);
-  assert.deepEqual(observedToolNames.sort(), ["compareListings", "dinarConversationTurn", "getResource", "prepareCartChange", "readBusinessInquiries", "readCart", "readFulfillment", "readOrders", "reviewCheckout", "searchListings"]);
+  assert.deepEqual(observedToolNames.sort(), ["compareListings", "dinarConversationTurn", "getResource", "prepareCartChange", "prepareInquiryMessage", "prepareNegotiationProposal", "readBusinessInquiries", "readCart", "readFulfillment", "readNegotiationStatus", "readOrders", "reviewCheckout", "searchListings"]);
   assert.equal(calls, 3, "search, comparison, final answer");
   assert.equal(sawUntrustedRule, true);
   assert.equal(reply.payload.surface, "COMPARISON", reply.body);
@@ -568,7 +568,7 @@ test("AI-F10 instructions inside listing text stay data: no cart or publication 
   calls = 0;
   const reply = await say(user.cookie, user.conv, text);
   assert.equal(reply.status, 200, reply.body);
-  assert.deepEqual(observedToolNames.sort(), ["compareListings", "dinarConversationTurn", "getResource", "prepareCartChange", "readBusinessInquiries", "readCart", "readFulfillment", "readOrders", "reviewCheckout", "searchListings"]);
+  assert.deepEqual(observedToolNames.sort(), ["compareListings", "dinarConversationTurn", "getResource", "prepareCartChange", "prepareInquiryMessage", "prepareNegotiationProposal", "readBusinessInquiries", "readCart", "readFulfillment", "readNegotiationStatus", "readOrders", "reviewCheckout", "searchListings"]);
   assert.equal(observedToolNames.includes("addToCart"), false);
   assert.equal(sawUntrustedRule, true, "tool results are framed as untrusted listing data");
   assert.match(lastPromptText, /<dinar_tool_results>/u, "listing text is delivered inside the data envelope");

@@ -214,13 +214,12 @@ test("F02-01 roles and advertised tools come from server rows, never from the me
     assert.equal(buyerTools.includes(name), false, `${name} is seller-only`);
     assert.equal(sellerTools.includes(name), true, name);
   }
-  // A seller is also a buyer here, so every buyer tool is advertised to the seller too.
   for (const name of ["readCart", "prepareCartChange", "reviewCheckout", "readFulfillment"]) {
     assert.equal(buyerTools.includes(name), true, name);
-    assert.equal(sellerTools.includes(name), true, `${name} is shared`);
+    assert.equal(sellerTools.includes(name), false, `${name} is buyer-only`);
   }
   assert.equal(buyerTools.length, 9);
-  assert.equal(sellerTools.length, 12);
+  assert.equal(sellerTools.length, 8);
   assert.deepEqual([...MODEL_TOOL_CAPABILITIES].sort(), [
     "compareListings", "listingFacts", "prepareCartMutation", "prepareInquiryReply", "prepareListingDraft",
     "prepareNegotiationProposal", "readAuthorizedOrders", "readBusinessInquiries", "readBuyerCart",

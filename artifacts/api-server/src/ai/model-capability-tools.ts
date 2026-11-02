@@ -47,11 +47,13 @@ export class ModelCapabilityRejected extends Error {
 
 const SELLER_TOOLS = new Set([
   "readInventory",
+  "readBusinessInquiries",
   "prepareInquiryMessage",
   "prepareListingDraft",
   "requestPublicationReview",
   "readNegotiationStatus",
   "prepareNegotiationProposal",
+  "readOrders",
 ]);
 
 const BUYER_TOOLS = new Set([
