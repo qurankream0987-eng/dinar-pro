@@ -48,6 +48,7 @@ import {
 } from "../lib/provider-connections";
 import { UpdateListingBody } from "@workspace/api-zod";
 import { findOrdinalMention, foldArabicLetters, normalizeDigits, parseResultReference } from "./arabic-normalization";
+import { EXECUTION_UNKNOWN_NOTICE, executionLeaseExpired } from "./action-recovery";
 import { parsePromotionDuration } from "./promotion-turn";
 import {
   acceptedNegotiationForCheckout,
@@ -1176,7 +1177,9 @@ type PendingQuery = {
   targetResource: string;
   structuredInput: Record<string, Fact>;
   expected: ServerSnapshot;
-  status: "PENDING" | "EXECUTING" | "CONFIRMED" | "CANCELLED" | "EXPIRED" | "SUPERSEDED" | "REJECTED";
+  status: "PENDING" | "EXECUTING" | "CONFIRMED" | "CANCELLED" | "EXPIRED" | "SUPERSEDED" | "REJECTED" | "UNKNOWN";
+  /** When the EXECUTING claim was written (D12 execution lease). */
+  executingAt?: string;
   review: string[];
   notice?: string;
   /** The turns that opened and last settled this action (turn-context.ts). */
@@ -1299,7 +1302,7 @@ const settledBy = () => (currentTurnId() ? { settledByTurn: currentTurnId() } : 
 
 export type ConfirmOutcome =
   | {
-      status: "CONFIRMED" | "CANCELLED" | "EXPIRED" | "REJECTED" | "IN_PROGRESS";
+      status: "CONFIRMED" | "CANCELLED" | "EXPIRED" | "REJECTED" | "UNKNOWN" | "IN_PROGRESS";
       message: string;
       result?: Record<string, unknown>;
       /** True only when this call performed the transition; a lost race is settled, not executed. */
@@ -1379,9 +1382,18 @@ export async function confirmPendingAction(input: {
       await tx.update(aiResultSets).set({ query: { ...query, status, notice: message, ...settledBy() } }).where(eq(aiResultSets.id, set.id));
       return { done: { status, message, executed: status === "CANCELLED" } as ConfirmOutcome };
     };
-    if (query.status === "EXECUTING") return { done: { status: "IN_PROGRESS", message: "الإجراء قيد التنفيذ.", executed: false } as ConfirmOutcome };
-    if (query.status !== "PENDING")
+    if (query.status === "EXECUTING") {
+      // D12: a claim whose process died is not "in progress" forever. It is settled as UNKNOWN
+      // and never re-executed; a still-running claim keeps its lease and is left alone.
+      if (executionLeaseExpired({ expiresAt: set.expiresAt, query }))
+        return settle("UNKNOWN", EXECUTION_UNKNOWN_NOTICE);
+      return { done: { status: "IN_PROGRESS", message: "الإجراء قيد التنفيذ.", executed: false } as ConfirmOutcome };
+    }
+    if (query.status !== "PENDING") {
+      if (query.status === "UNKNOWN")
+        return { done: { status: "UNKNOWN", message: EXECUTION_UNKNOWN_NOTICE, executed: false } as ConfirmOutcome };
       return { done: { status: query.status === "SUPERSEDED" ? "EXPIRED" : query.status, message: "تمت معالجة هذا الإجراء من قبل؛ لم يتغير شيء.", executed: false } as ConfirmOutcome };
+    }
     if (await pendingActionLapsed(set, tx))
       return settle("EXPIRED", "انتهت صلاحية هذا التأكيد لأن المحادثة تابعت بعده أو مضى وقته. لم يتغير شيء.");
     if (input.decision === "CANCEL") return settle("CANCELLED", "أُلغي الإجراء. لم يتغير شيء.");
@@ -1395,7 +1407,7 @@ export async function confirmPendingAction(input: {
       await settle("SUPERSEDED", "تغيّرت بيانات العرض منذ المراجعة؛ يلزم تأكيد جديد.");
       return { stale: true, query };
     }
-    await tx.update(aiResultSets).set({ query: { ...query, status: "EXECUTING", ...settledBy() } }).where(eq(aiResultSets.id, set.id));
+    await tx.update(aiResultSets).set({ query: { ...query, status: "EXECUTING", executingAt: new Date().toISOString(), ...settledBy() } }).where(eq(aiResultSets.id, set.id));
     return { execute: true, query, conversationId: set.conversationId };
   });
   if ("done" in claimed) return claimed.done!;
