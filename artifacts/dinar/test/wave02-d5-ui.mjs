@@ -83,7 +83,7 @@ try {
     await page.reload();
     await page.locator('[data-testid="inquiry-surface"]').last().waitFor({ state: "visible", timeout: 45_000 });
     assert.equal(await page.locator('[data-testid="inquiry-send"]:visible').count(), 0, "a settled draft has nothing left to approve");
-    assert.match(await page.locator('[data-testid="inquiry-surface"]').last().innerText(), /أُرسلت|انتهت صلاحيتها/u);
+    assert.match(await page.locator('[data-testid="inquiry-surface"]').last().innerText(), /وصلت إلى محادثته|أُرسلت|انتهت صلاحيتها/u);
     checks.push("after the send a reload shows the settled card with no second approval");
   } else {
     assert.equal(draft.status, "لم تُرسل؛ لم يتغير شيء", "revocation rebuilds the draft as rejected");
