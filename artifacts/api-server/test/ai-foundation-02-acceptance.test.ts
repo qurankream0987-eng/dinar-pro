@@ -214,12 +214,14 @@ test("F02-01 roles and advertised tools come from server rows, never from the me
     assert.equal(buyerTools.includes(name), false, `${name} is seller-only`);
     assert.equal(sellerTools.includes(name), true, name);
   }
+  // This seller actor also holds the BUYER role from server rows, so the runtime toolset it is
+  // offered is the union of both roles: all twelve capabilities.
   for (const name of ["readCart", "prepareCartChange", "reviewCheckout", "readFulfillment"]) {
     assert.equal(buyerTools.includes(name), true, name);
-    assert.equal(sellerTools.includes(name), false, `${name} is buyer-only`);
+    assert.equal(sellerTools.includes(name), true, `${name} is reachable for a seller as a buyer`);
   }
   assert.equal(buyerTools.length, 9);
-  assert.equal(sellerTools.length, 8);
+  assert.equal(sellerTools.length, 12);
   assert.deepEqual([...MODEL_TOOL_CAPABILITIES].sort(), [
     "compareListings", "listingFacts", "prepareCartMutation", "prepareInquiryReply", "prepareListingDraft",
     "prepareNegotiationProposal", "readAuthorizedOrders", "readBusinessInquiries", "readBuyerCart",
