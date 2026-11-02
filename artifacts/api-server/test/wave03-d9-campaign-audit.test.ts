@@ -169,7 +169,11 @@ await test("D9 seller campaign lifecycle writes one audit row per real change an
   const cancelled = await act(seller.cookie, "CANCEL");
   assert.equal(cancelled.status, 200, cancelled.text);
   assert.equal(cancelled.data.status, "CANCELLED");
-  assert.ok(cancelled.data.endedAt, "cancellation records its end");
+  const [cancelledRow] = await db
+    .select()
+    .from(listingPromotions)
+    .where(eq(listingPromotions.id, promotionId));
+  assert.ok(cancelledRow?.endedAt, "cancellation records its end on the canonical row");
   assert.equal((await servingCampaignsFor("JO", [listingId])).length, 0, "a cancelled campaign never serves");
   assert.equal((await act(seller.cookie, "CANCEL")).status, 200);
 
