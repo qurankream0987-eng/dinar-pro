@@ -68,7 +68,7 @@ async function request(path: string, method = "GET", body?: unknown, cookie = ""
   return { status: response.status, data, raw, cookie: response.headers.get("set-cookie")?.split(";")[0] ?? "" };
 }
 
-const phoneBase = 56_100_000 + ((Date.now() + process.pid) % 200_000);
+const phoneBase = 51_690_000 + ((Date.now() + process.pid) % 4_000);
 let phoneOffset = 0;
 const safeTag = () => randomUUID().replace(/[0-9]/g, "x").slice(0, 8);
 async function register(label: string): Promise<Actor> {
