@@ -48,7 +48,7 @@ async function request(path: string, method = "GET", body?: unknown, cookie = ""
   } catch {
     data = undefined;
   }
-  return { status: response.status, data, text };
+  return { status: response.status, data, text, setCookies: response.headers.getSetCookie() };
 }
 
 let phone = 0;
@@ -64,7 +64,7 @@ async function register(name: string) {
     acceptTerms: true,
   });
   assert.equal(created.status, 201, created.text);
-  const cookie = created.cookie;
+  const cookie = created.setCookies.find((value) => value.startsWith("bdinar_session="))!.split(";")[0]!;
   return { id: created.data.user.id as string, cookie };
 }
 
