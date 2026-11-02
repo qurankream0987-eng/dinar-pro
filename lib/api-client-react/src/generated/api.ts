@@ -49,6 +49,11 @@ import type {
   AiVoiceTranscriptionResponse,
   AuthLoginRequest,
   AuthRegisterRequest,
+  BusinessDelegation,
+  BusinessDelegationConfirmation,
+  BusinessDelegationInput,
+  BusinessDelegationList,
+  BusinessDelegationResult,
   BusinessDocumentUploadRequest,
   BusinessDocumentUploadTicket,
   BusinessDraftRequest,
@@ -76,6 +81,7 @@ import type {
   CourierFareProposalResult,
   CourierFareView,
   Dashboard,
+  DelegatedBusinessCatalog,
   DeliveryInput,
   EmptyObject,
   GetListingsParams,
@@ -10740,6 +10746,661 @@ export const useSetBusinessListingLink = <TError = ErrorType<unknown>,
       > => {
       return useMutation(getSetBusinessListingLinkMutationOptions(options), queryClient);
     }
+
+export const getListBusinessDelegationsUrl = (id: string,) => {
+
+
+
+
+  return `/api/business/profiles/${id}/delegations`
+}
+
+/**
+ * @summary D4: list owner-controlled employee grants for this business and market
+ */
+export const listBusinessDelegations = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<BusinessDelegationList> => {
+
+  return customFetch<BusinessDelegationList>(getListBusinessDelegationsUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListBusinessDelegationsQueryKey = (id: string,) => {
+    return [
+    `/api/business/profiles/${id}/delegations`
+    ] as const;
+    }
+
+
+export const getListBusinessDelegationsQueryOptions = <TData = Awaited<ReturnType<typeof listBusinessDelegations>>, TError = ErrorType<void>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listBusinessDelegations>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListBusinessDelegationsQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listBusinessDelegations>>> = ({ signal }) => listBusinessDelegations(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listBusinessDelegations>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListBusinessDelegationsQueryResult = NonNullable<Awaited<ReturnType<typeof listBusinessDelegations>>>
+export type ListBusinessDelegationsQueryError = ErrorType<void>
+
+
+export function useListBusinessDelegations<TData = Awaited<ReturnType<typeof listBusinessDelegations>>, TError = ErrorType<void>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listBusinessDelegations>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listBusinessDelegations>>,
+          TError,
+          Awaited<ReturnType<typeof listBusinessDelegations>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListBusinessDelegations<TData = Awaited<ReturnType<typeof listBusinessDelegations>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listBusinessDelegations>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listBusinessDelegations>>,
+          TError,
+          Awaited<ReturnType<typeof listBusinessDelegations>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListBusinessDelegations<TData = Awaited<ReturnType<typeof listBusinessDelegations>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listBusinessDelegations>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary D4: list owner-controlled employee grants for this business and market
+ */
+
+export function useListBusinessDelegations<TData = Awaited<ReturnType<typeof listBusinessDelegations>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listBusinessDelegations>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListBusinessDelegationsQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getCreateBusinessDelegationUrl = (id: string,) => {
+
+
+
+
+  return `/api/business/profiles/${id}/delegations`
+}
+
+/**
+ * @summary D4: create an inactive, read-only grant draft; no access is created before explicit owner activation
+ */
+export const createBusinessDelegation = async (id: string,
+    businessDelegationInput: BusinessDelegationInput, options?: Parameters<typeof customFetch>[1]): Promise<BusinessDelegationResult> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<BusinessDelegationResult>(getCreateBusinessDelegationUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(businessDelegationInput)
+  }
+);}
+
+
+
+
+
+export const getCreateBusinessDelegationMutationKey = () => ['createBusinessDelegation'] as const;
+
+export const getCreateBusinessDelegationMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createBusinessDelegation>>, TError,CreateBusinessDelegationMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createBusinessDelegation>>, TError,CreateBusinessDelegationMutationVariables, TContext> => {
+
+const mutationKey = getCreateBusinessDelegationMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createBusinessDelegation>>, CreateBusinessDelegationMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  createBusinessDelegation(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateBusinessDelegationMutationResult = NonNullable<Awaited<ReturnType<typeof createBusinessDelegation>>>
+    export type CreateBusinessDelegationMutationBody = BodyType<BusinessDelegationInput>
+    export type CreateBusinessDelegationMutationError = ErrorType<void>
+    export type CreateBusinessDelegationMutationVariables = {id: string;data: BodyType<BusinessDelegationInput>}
+
+    /**
+ * @summary D4: create an inactive, read-only grant draft; no access is created before explicit owner activation
+ */
+export const useCreateBusinessDelegation = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createBusinessDelegation>>, TError,CreateBusinessDelegationMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createBusinessDelegation>>,
+        TError,
+        CreateBusinessDelegationMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCreateBusinessDelegationMutationOptions(options), queryClient);
+    }
+
+export const getActivateBusinessDelegationUrl = (id: string,
+    delegationId: string,) => {
+
+
+
+
+  return `/api/business/profiles/${id}/delegations/${delegationId}/activate`
+}
+
+/**
+ * @summary D4: activate only after explicit owner confirmation and current-version check
+ */
+export const activateBusinessDelegation = async (id: string,
+    delegationId: string,
+    businessDelegationConfirmation: BusinessDelegationConfirmation, options?: Parameters<typeof customFetch>[1]): Promise<BusinessDelegation> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<BusinessDelegation>(getActivateBusinessDelegationUrl(id,delegationId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(businessDelegationConfirmation)
+  }
+);}
+
+
+
+
+
+export const getActivateBusinessDelegationMutationKey = () => ['activateBusinessDelegation'] as const;
+
+export const getActivateBusinessDelegationMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof activateBusinessDelegation>>, TError,ActivateBusinessDelegationMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof activateBusinessDelegation>>, TError,ActivateBusinessDelegationMutationVariables, TContext> => {
+
+const mutationKey = getActivateBusinessDelegationMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof activateBusinessDelegation>>, ActivateBusinessDelegationMutationVariables> = (props) => {
+          const {id,delegationId,data} = props ?? {};
+
+          return  activateBusinessDelegation(id,delegationId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ActivateBusinessDelegationMutationResult = NonNullable<Awaited<ReturnType<typeof activateBusinessDelegation>>>
+    export type ActivateBusinessDelegationMutationBody = BodyType<BusinessDelegationConfirmation>
+    export type ActivateBusinessDelegationMutationError = ErrorType<void>
+    export type ActivateBusinessDelegationMutationVariables = {id: string;delegationId: string;data: BodyType<BusinessDelegationConfirmation>}
+
+    /**
+ * @summary D4: activate only after explicit owner confirmation and current-version check
+ */
+export const useActivateBusinessDelegation = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof activateBusinessDelegation>>, TError,ActivateBusinessDelegationMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof activateBusinessDelegation>>,
+        TError,
+        ActivateBusinessDelegationMutationVariables,
+        TContext
+      > => {
+      return useMutation(getActivateBusinessDelegationMutationOptions(options), queryClient);
+    }
+
+export const getSuspendBusinessDelegationUrl = (id: string,
+    delegationId: string,) => {
+
+
+
+
+  return `/api/business/profiles/${id}/delegations/${delegationId}/suspend`
+}
+
+/**
+ * @summary D4: suspend a grant immediately, with optimistic version checking
+ */
+export const suspendBusinessDelegation = async (id: string,
+    delegationId: string,
+    businessDelegationConfirmation: BusinessDelegationConfirmation, options?: Parameters<typeof customFetch>[1]): Promise<BusinessDelegation> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<BusinessDelegation>(getSuspendBusinessDelegationUrl(id,delegationId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(businessDelegationConfirmation)
+  }
+);}
+
+
+
+
+
+export const getSuspendBusinessDelegationMutationKey = () => ['suspendBusinessDelegation'] as const;
+
+export const getSuspendBusinessDelegationMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof suspendBusinessDelegation>>, TError,SuspendBusinessDelegationMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof suspendBusinessDelegation>>, TError,SuspendBusinessDelegationMutationVariables, TContext> => {
+
+const mutationKey = getSuspendBusinessDelegationMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof suspendBusinessDelegation>>, SuspendBusinessDelegationMutationVariables> = (props) => {
+          const {id,delegationId,data} = props ?? {};
+
+          return  suspendBusinessDelegation(id,delegationId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SuspendBusinessDelegationMutationResult = NonNullable<Awaited<ReturnType<typeof suspendBusinessDelegation>>>
+    export type SuspendBusinessDelegationMutationBody = BodyType<BusinessDelegationConfirmation>
+    export type SuspendBusinessDelegationMutationError = ErrorType<void>
+    export type SuspendBusinessDelegationMutationVariables = {id: string;delegationId: string;data: BodyType<BusinessDelegationConfirmation>}
+
+    /**
+ * @summary D4: suspend a grant immediately, with optimistic version checking
+ */
+export const useSuspendBusinessDelegation = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof suspendBusinessDelegation>>, TError,SuspendBusinessDelegationMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof suspendBusinessDelegation>>,
+        TError,
+        SuspendBusinessDelegationMutationVariables,
+        TContext
+      > => {
+      return useMutation(getSuspendBusinessDelegationMutationOptions(options), queryClient);
+    }
+
+export const getResumeBusinessDelegationUrl = (id: string,
+    delegationId: string,) => {
+
+
+
+
+  return `/api/business/profiles/${id}/delegations/${delegationId}/resume`
+}
+
+/**
+ * @summary D4: resume an unexpired suspended grant after explicit owner confirmation
+ */
+export const resumeBusinessDelegation = async (id: string,
+    delegationId: string,
+    businessDelegationConfirmation: BusinessDelegationConfirmation, options?: Parameters<typeof customFetch>[1]): Promise<BusinessDelegation> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<BusinessDelegation>(getResumeBusinessDelegationUrl(id,delegationId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(businessDelegationConfirmation)
+  }
+);}
+
+
+
+
+
+export const getResumeBusinessDelegationMutationKey = () => ['resumeBusinessDelegation'] as const;
+
+export const getResumeBusinessDelegationMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof resumeBusinessDelegation>>, TError,ResumeBusinessDelegationMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof resumeBusinessDelegation>>, TError,ResumeBusinessDelegationMutationVariables, TContext> => {
+
+const mutationKey = getResumeBusinessDelegationMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof resumeBusinessDelegation>>, ResumeBusinessDelegationMutationVariables> = (props) => {
+          const {id,delegationId,data} = props ?? {};
+
+          return  resumeBusinessDelegation(id,delegationId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ResumeBusinessDelegationMutationResult = NonNullable<Awaited<ReturnType<typeof resumeBusinessDelegation>>>
+    export type ResumeBusinessDelegationMutationBody = BodyType<BusinessDelegationConfirmation>
+    export type ResumeBusinessDelegationMutationError = ErrorType<void>
+    export type ResumeBusinessDelegationMutationVariables = {id: string;delegationId: string;data: BodyType<BusinessDelegationConfirmation>}
+
+    /**
+ * @summary D4: resume an unexpired suspended grant after explicit owner confirmation
+ */
+export const useResumeBusinessDelegation = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof resumeBusinessDelegation>>, TError,ResumeBusinessDelegationMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof resumeBusinessDelegation>>,
+        TError,
+        ResumeBusinessDelegationMutationVariables,
+        TContext
+      > => {
+      return useMutation(getResumeBusinessDelegationMutationOptions(options), queryClient);
+    }
+
+export const getRevokeBusinessDelegationUrl = (id: string,
+    delegationId: string,) => {
+
+
+
+
+  return `/api/business/profiles/${id}/delegations/${delegationId}/revoke`
+}
+
+/**
+ * @summary D4: revoke an employee grant with explicit owner confirmation
+ */
+export const revokeBusinessDelegation = async (id: string,
+    delegationId: string,
+    businessDelegationConfirmation: BusinessDelegationConfirmation, options?: Parameters<typeof customFetch>[1]): Promise<BusinessDelegation> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<BusinessDelegation>(getRevokeBusinessDelegationUrl(id,delegationId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(businessDelegationConfirmation)
+  }
+);}
+
+
+
+
+
+export const getRevokeBusinessDelegationMutationKey = () => ['revokeBusinessDelegation'] as const;
+
+export const getRevokeBusinessDelegationMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revokeBusinessDelegation>>, TError,RevokeBusinessDelegationMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof revokeBusinessDelegation>>, TError,RevokeBusinessDelegationMutationVariables, TContext> => {
+
+const mutationKey = getRevokeBusinessDelegationMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof revokeBusinessDelegation>>, RevokeBusinessDelegationMutationVariables> = (props) => {
+          const {id,delegationId,data} = props ?? {};
+
+          return  revokeBusinessDelegation(id,delegationId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RevokeBusinessDelegationMutationResult = NonNullable<Awaited<ReturnType<typeof revokeBusinessDelegation>>>
+    export type RevokeBusinessDelegationMutationBody = BodyType<BusinessDelegationConfirmation>
+    export type RevokeBusinessDelegationMutationError = ErrorType<void>
+    export type RevokeBusinessDelegationMutationVariables = {id: string;delegationId: string;data: BodyType<BusinessDelegationConfirmation>}
+
+    /**
+ * @summary D4: revoke an employee grant with explicit owner confirmation
+ */
+export const useRevokeBusinessDelegation = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revokeBusinessDelegation>>, TError,RevokeBusinessDelegationMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof revokeBusinessDelegation>>,
+        TError,
+        RevokeBusinessDelegationMutationVariables,
+        TContext
+      > => {
+      return useMutation(getRevokeBusinessDelegationMutationOptions(options), queryClient);
+    }
+
+export const getGetDelegatedBusinessCatalogUrl = (delegationId: string,) => {
+
+
+
+
+  return `/api/business/delegations/${delegationId}/catalog`
+}
+
+/**
+ * @summary D4: read only published catalog rows covered by the authenticated employee's active grant
+ */
+export const getDelegatedBusinessCatalog = async (delegationId: string, options?: Parameters<typeof customFetch>[1]): Promise<DelegatedBusinessCatalog> => {
+
+  return customFetch<DelegatedBusinessCatalog>(getGetDelegatedBusinessCatalogUrl(delegationId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetDelegatedBusinessCatalogQueryKey = (delegationId: string,) => {
+    return [
+    `/api/business/delegations/${delegationId}/catalog`
+    ] as const;
+    }
+
+
+export const getGetDelegatedBusinessCatalogQueryOptions = <TData = Awaited<ReturnType<typeof getDelegatedBusinessCatalog>>, TError = ErrorType<void>>(delegationId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDelegatedBusinessCatalog>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetDelegatedBusinessCatalogQueryKey(delegationId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getDelegatedBusinessCatalog>>> = ({ signal }) => getDelegatedBusinessCatalog(delegationId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: delegationId !== null && delegationId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getDelegatedBusinessCatalog>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetDelegatedBusinessCatalogQueryResult = NonNullable<Awaited<ReturnType<typeof getDelegatedBusinessCatalog>>>
+export type GetDelegatedBusinessCatalogQueryError = ErrorType<void>
+
+
+export function useGetDelegatedBusinessCatalog<TData = Awaited<ReturnType<typeof getDelegatedBusinessCatalog>>, TError = ErrorType<void>>(
+ delegationId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDelegatedBusinessCatalog>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getDelegatedBusinessCatalog>>,
+          TError,
+          Awaited<ReturnType<typeof getDelegatedBusinessCatalog>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetDelegatedBusinessCatalog<TData = Awaited<ReturnType<typeof getDelegatedBusinessCatalog>>, TError = ErrorType<void>>(
+ delegationId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDelegatedBusinessCatalog>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getDelegatedBusinessCatalog>>,
+          TError,
+          Awaited<ReturnType<typeof getDelegatedBusinessCatalog>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetDelegatedBusinessCatalog<TData = Awaited<ReturnType<typeof getDelegatedBusinessCatalog>>, TError = ErrorType<void>>(
+ delegationId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDelegatedBusinessCatalog>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary D4: read only published catalog rows covered by the authenticated employee's active grant
+ */
+
+export function useGetDelegatedBusinessCatalog<TData = Awaited<ReturnType<typeof getDelegatedBusinessCatalog>>, TError = ErrorType<void>>(
+ delegationId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDelegatedBusinessCatalog>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetDelegatedBusinessCatalogQueryOptions(delegationId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 
 export const getGetPublicBusinessUrl = (id: string,) => {
 

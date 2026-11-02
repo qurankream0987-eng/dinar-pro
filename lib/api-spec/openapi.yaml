@@ -2200,6 +2200,139 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ServerValidatedObject" }
+  /business/profiles/{id}/delegations:
+    get:
+      operationId: listBusinessDelegations
+      tags: [business]
+      summary: "D4: list owner-controlled employee grants for this business and market"
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Current grants and policy version
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BusinessDelegationList" }
+        "404": { description: Not found (also for another owner or market) }
+    post:
+      operationId: createBusinessDelegation
+      tags: [business]
+      summary: "D4: create an inactive, read-only grant draft; no access is created before explicit owner activation"
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BusinessDelegationInput" }
+      responses:
+        "200":
+          description: Existing identical request (idempotent retry)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BusinessDelegationResult" }
+        "201":
+          description: Draft created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BusinessDelegationResult" }
+        "400": { description: "Unsupported capability, scope, or expiry" }
+        "404": { description: Not found (also for another owner or market) }
+  /business/profiles/{id}/delegations/{delegationId}/activate:
+    post:
+      operationId: activateBusinessDelegation
+      tags: [business]
+      summary: "D4: activate only after explicit owner confirmation and current-version check"
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: delegationId, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BusinessDelegationConfirmation" }
+      responses:
+        "200":
+          description: Activated grant
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BusinessDelegation" }
+        "409": { description: Stale version or invalid state transition }
+  /business/profiles/{id}/delegations/{delegationId}/suspend:
+    post:
+      operationId: suspendBusinessDelegation
+      tags: [business]
+      summary: "D4: suspend a grant immediately, with optimistic version checking"
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: delegationId, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BusinessDelegationConfirmation" }
+      responses:
+        "200":
+          description: Suspended grant
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BusinessDelegation" }
+        "409": { description: Stale version or invalid state transition }
+  /business/profiles/{id}/delegations/{delegationId}/resume:
+    post:
+      operationId: resumeBusinessDelegation
+      tags: [business]
+      summary: "D4: resume an unexpired suspended grant after explicit owner confirmation"
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: delegationId, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BusinessDelegationConfirmation" }
+      responses:
+        "200":
+          description: Resumed grant
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BusinessDelegation" }
+        "409": { description: Stale version or invalid state transition }
+  /business/profiles/{id}/delegations/{delegationId}/revoke:
+    post:
+      operationId: revokeBusinessDelegation
+      tags: [business]
+      summary: "D4: revoke an employee grant with explicit owner confirmation"
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: delegationId, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BusinessDelegationConfirmation" }
+      responses:
+        "200":
+          description: Revoked grant
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BusinessDelegation" }
+        "409": { description: Stale version or invalid state transition }
+  /business/delegations/{delegationId}/catalog:
+    get:
+      operationId: getDelegatedBusinessCatalog
+      tags: [business]
+      summary: "D4: read only published catalog rows covered by the authenticated employee's active grant"
+      parameters:
+        - { name: delegationId, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Scoped catalog; no owner, buyer, or unpublished listing details
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DelegatedBusinessCatalog" }
+        "403": { description: "Grant inactive, expired, or no longer authorized" }
+        "404": { description: Not found (also for a different employee or market) }
   /businesses/{id}:
     get:
       operationId: getPublicBusiness
@@ -3139,6 +3272,135 @@ paths:
         "404": { description: Not found (also for records of other accounts) }
 components:
   schemas:
+    BusinessDelegationConfirmation:
+      type: object
+      additionalProperties: false
+      required: [confirm, expectedVersion]
+      properties:
+        confirm: { type: boolean, enum: [true] }
+        expectedVersion: { type: integer, minimum: 1 }
+    BusinessDelegationInput:
+      type: object
+      additionalProperties: false
+      required: [employee, capabilities, resourceScope, expiresAt, idempotencyKey]
+      properties:
+        employee:
+          oneOf:
+            - $ref: "#/components/schemas/BusinessHumanEmployee"
+            - $ref: "#/components/schemas/BusinessIntelligentEmployee"
+        capabilities:
+          type: array
+          minItems: 1
+          maxItems: 1
+          uniqueItems: true
+          items: { type: string, enum: [business.catalog.read] }
+        resourceScope:
+          oneOf:
+            - $ref: "#/components/schemas/BusinessWideDelegationScope"
+            - $ref: "#/components/schemas/BusinessListingDelegationScope"
+        expiresAt: { type: string, format: date-time }
+        idempotencyKey: { type: string, minLength: 8, maxLength: 120 }
+    BusinessHumanEmployee:
+      type: object
+      additionalProperties: false
+      required: [type, userId]
+      properties:
+        type: { type: string, enum: [HUMAN] }
+        userId: { type: string, format: uuid }
+    BusinessIntelligentEmployee:
+      type: object
+      additionalProperties: false
+      required: [type]
+      properties:
+        type: { type: string, enum: [INTELLIGENT] }
+    BusinessWideDelegationScope:
+      type: object
+      additionalProperties: false
+      required: [kind]
+      properties:
+        kind: { type: string, enum: [BUSINESS] }
+    BusinessListingDelegationScope:
+      type: object
+      additionalProperties: false
+      required: [kind, listingIds]
+      properties:
+        kind: { type: string, enum: [LISTING_ALLOWLIST] }
+        listingIds: { type: array, minItems: 1, maxItems: 100, uniqueItems: true, items: { type: string, format: uuid } }
+    BusinessDelegationList:
+      type: object
+      additionalProperties: false
+      required: [delegations, policyVersion]
+      properties:
+        policyVersion: { type: string }
+        delegations: { type: array, items: { $ref: "#/components/schemas/BusinessDelegation" } }
+    BusinessDelegationResult:
+      type: object
+      additionalProperties: false
+      required: [created, delegation]
+      properties:
+        created: { type: boolean }
+        delegation: { $ref: "#/components/schemas/BusinessDelegation" }
+    BusinessDelegation:
+      type: object
+      additionalProperties: false
+      required: [id, businessId, marketId, employee, capabilities, resourceScope, approvalRequiredCapabilities, status, policyVersion, version, createdAt, activatedAt, expiresAt, revokedAt, expiredAt]
+      properties:
+        id: { type: string, format: uuid }
+        businessId: { type: string, format: uuid }
+        marketId: { type: string }
+        employee:
+          oneOf:
+            - $ref: "#/components/schemas/BusinessHumanEmployeeView"
+            - $ref: "#/components/schemas/BusinessIntelligentEmployeeView"
+        capabilities: { type: array, items: { type: string, enum: [business.catalog.read] } }
+        resourceScope:
+          oneOf:
+            - $ref: "#/components/schemas/BusinessWideDelegationScope"
+            - $ref: "#/components/schemas/BusinessListingDelegationScope"
+        approvalRequiredCapabilities: { type: array, items: { type: string } }
+        status: { type: string, enum: [DRAFT, ACTIVE, SUSPENDED, REVOKED, EXPIRED] }
+        policyVersion: { type: string }
+        version: { type: integer, minimum: 1 }
+        createdAt: { type: string, format: date-time }
+        activatedAt: { type: ["string", "null"], format: date-time }
+        expiresAt: { type: string, format: date-time }
+        revokedAt: { type: ["string", "null"], format: date-time }
+        expiredAt: { type: ["string", "null"], format: date-time }
+    BusinessHumanEmployeeView:
+      type: object
+      additionalProperties: false
+      required: [type, userId]
+      properties:
+        type: { type: string, enum: [HUMAN] }
+        userId: { type: ["string", "null"], format: uuid }
+    BusinessIntelligentEmployeeView:
+      type: object
+      additionalProperties: false
+      required: [type, configurationId]
+      properties:
+        type: { type: string, enum: [INTELLIGENT] }
+        configurationId: { type: ["string", "null"], format: uuid }
+    DelegatedBusinessCatalog:
+      type: object
+      additionalProperties: false
+      required: [businessId, businessName, policyVersion, listings]
+      properties:
+        businessId: { type: string, format: uuid }
+        businessName: { type: string }
+        policyVersion: { type: string }
+        listings:
+          type: array
+          maxItems: 100
+          items:
+            type: object
+            additionalProperties: false
+            required: [id, title, category, priceMinor, pricingMode]
+            properties:
+              id: { type: string, format: uuid }
+              title: { type: string }
+              category: { type: ["string", "null"] }
+              priceMinor: { type: ["integer", "null"] }
+              pricingMode: { type: string, enum: [FIXED, NEGOTIABLE, OPEN_TO_OFFERS] }
     BusinessListingLinkRequest:
       type: object
       additionalProperties: false

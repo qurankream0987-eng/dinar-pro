@@ -5348,6 +5348,352 @@ export const SetBusinessListingLinkResponse = zod.record(zod.string(), zod.unkno
 
 
 /**
+ * @summary D4: list owner-controlled employee grants for this business and market
+ */
+export const ListBusinessDelegationsParams = zod.object({
+  "id": zod.uuid()
+})
+
+export const listBusinessDelegationsResponseDelegationsItemResourceScopeTwoListingIdsMax = 100;
+
+
+
+
+export const ListBusinessDelegationsResponse = zod.object({
+  "policyVersion": zod.string(),
+  "delegations": zod.array(zod.object({
+  "id": zod.uuid(),
+  "businessId": zod.uuid(),
+  "marketId": zod.string(),
+  "employee": zod.union([zod.object({
+  "type": zod.enum(['HUMAN']),
+  "userId": zod.uuid().nullable()
+}),zod.object({
+  "type": zod.enum(['INTELLIGENT']),
+  "configurationId": zod.uuid().nullable()
+})]),
+  "capabilities": zod.array(zod.enum(['business.catalog.read'])),
+  "resourceScope": zod.union([zod.object({
+  "kind": zod.enum(['BUSINESS'])
+}),zod.object({
+  "kind": zod.enum(['LISTING_ALLOWLIST']),
+  "listingIds": zod.array(zod.uuid()).min(1).max(listBusinessDelegationsResponseDelegationsItemResourceScopeTwoListingIdsMax)
+})]),
+  "approvalRequiredCapabilities": zod.array(zod.string()),
+  "status": zod.enum(['DRAFT', 'ACTIVE', 'SUSPENDED', 'REVOKED', 'EXPIRED']),
+  "policyVersion": zod.string(),
+  "version": zod.int().min(1),
+  "createdAt": zod.coerce.date(),
+  "activatedAt": zod.coerce.date().nullable(),
+  "expiresAt": zod.coerce.date(),
+  "revokedAt": zod.coerce.date().nullable(),
+  "expiredAt": zod.coerce.date().nullable()
+}))
+})
+
+
+/**
+ * @summary D4: create an inactive, read-only grant draft; no access is created before explicit owner activation
+ */
+export const CreateBusinessDelegationParams = zod.object({
+  "id": zod.uuid()
+})
+
+export const createBusinessDelegationBodyCapabilitiesMax = 1;
+
+export const createBusinessDelegationBodyResourceScopeTwoListingIdsMax = 100;
+
+export const createBusinessDelegationBodyIdempotencyKeyMin = 8;
+export const createBusinessDelegationBodyIdempotencyKeyMax = 120;
+
+
+
+export const CreateBusinessDelegationBody = zod.object({
+  "employee": zod.union([zod.object({
+  "type": zod.enum(['HUMAN']),
+  "userId": zod.uuid()
+}),zod.object({
+  "type": zod.enum(['INTELLIGENT'])
+})]),
+  "capabilities": zod.array(zod.enum(['business.catalog.read'])).min(1).max(createBusinessDelegationBodyCapabilitiesMax),
+  "resourceScope": zod.union([zod.object({
+  "kind": zod.enum(['BUSINESS'])
+}),zod.object({
+  "kind": zod.enum(['LISTING_ALLOWLIST']),
+  "listingIds": zod.array(zod.uuid()).min(1).max(createBusinessDelegationBodyResourceScopeTwoListingIdsMax)
+})]),
+  "expiresAt": zod.coerce.date(),
+  "idempotencyKey": zod.string().min(createBusinessDelegationBodyIdempotencyKeyMin).max(createBusinessDelegationBodyIdempotencyKeyMax)
+})
+
+export const createBusinessDelegationResponseDelegationResourceScopeTwoListingIdsMax = 100;
+
+
+
+
+export const CreateBusinessDelegationResponse = zod.object({
+  "created": zod.boolean(),
+  "delegation": zod.object({
+  "id": zod.uuid(),
+  "businessId": zod.uuid(),
+  "marketId": zod.string(),
+  "employee": zod.union([zod.object({
+  "type": zod.enum(['HUMAN']),
+  "userId": zod.uuid().nullable()
+}),zod.object({
+  "type": zod.enum(['INTELLIGENT']),
+  "configurationId": zod.uuid().nullable()
+})]),
+  "capabilities": zod.array(zod.enum(['business.catalog.read'])),
+  "resourceScope": zod.union([zod.object({
+  "kind": zod.enum(['BUSINESS'])
+}),zod.object({
+  "kind": zod.enum(['LISTING_ALLOWLIST']),
+  "listingIds": zod.array(zod.uuid()).min(1).max(createBusinessDelegationResponseDelegationResourceScopeTwoListingIdsMax)
+})]),
+  "approvalRequiredCapabilities": zod.array(zod.string()),
+  "status": zod.enum(['DRAFT', 'ACTIVE', 'SUSPENDED', 'REVOKED', 'EXPIRED']),
+  "policyVersion": zod.string(),
+  "version": zod.int().min(1),
+  "createdAt": zod.coerce.date(),
+  "activatedAt": zod.coerce.date().nullable(),
+  "expiresAt": zod.coerce.date(),
+  "revokedAt": zod.coerce.date().nullable(),
+  "expiredAt": zod.coerce.date().nullable()
+})
+})
+
+
+/**
+ * @summary D4: activate only after explicit owner confirmation and current-version check
+ */
+export const ActivateBusinessDelegationParams = zod.object({
+  "id": zod.uuid(),
+  "delegationId": zod.uuid()
+})
+
+
+
+
+export const ActivateBusinessDelegationBody = zod.object({
+  "confirm": zod.literal(true),
+  "expectedVersion": zod.int().min(1)
+})
+
+export const activateBusinessDelegationResponseResourceScopeTwoListingIdsMax = 100;
+
+
+
+
+export const ActivateBusinessDelegationResponse = zod.object({
+  "id": zod.uuid(),
+  "businessId": zod.uuid(),
+  "marketId": zod.string(),
+  "employee": zod.union([zod.object({
+  "type": zod.enum(['HUMAN']),
+  "userId": zod.uuid().nullable()
+}),zod.object({
+  "type": zod.enum(['INTELLIGENT']),
+  "configurationId": zod.uuid().nullable()
+})]),
+  "capabilities": zod.array(zod.enum(['business.catalog.read'])),
+  "resourceScope": zod.union([zod.object({
+  "kind": zod.enum(['BUSINESS'])
+}),zod.object({
+  "kind": zod.enum(['LISTING_ALLOWLIST']),
+  "listingIds": zod.array(zod.uuid()).min(1).max(activateBusinessDelegationResponseResourceScopeTwoListingIdsMax)
+})]),
+  "approvalRequiredCapabilities": zod.array(zod.string()),
+  "status": zod.enum(['DRAFT', 'ACTIVE', 'SUSPENDED', 'REVOKED', 'EXPIRED']),
+  "policyVersion": zod.string(),
+  "version": zod.int().min(1),
+  "createdAt": zod.coerce.date(),
+  "activatedAt": zod.coerce.date().nullable(),
+  "expiresAt": zod.coerce.date(),
+  "revokedAt": zod.coerce.date().nullable(),
+  "expiredAt": zod.coerce.date().nullable()
+})
+
+
+/**
+ * @summary D4: suspend a grant immediately, with optimistic version checking
+ */
+export const SuspendBusinessDelegationParams = zod.object({
+  "id": zod.uuid(),
+  "delegationId": zod.uuid()
+})
+
+
+
+
+export const SuspendBusinessDelegationBody = zod.object({
+  "confirm": zod.literal(true),
+  "expectedVersion": zod.int().min(1)
+})
+
+export const suspendBusinessDelegationResponseResourceScopeTwoListingIdsMax = 100;
+
+
+
+
+export const SuspendBusinessDelegationResponse = zod.object({
+  "id": zod.uuid(),
+  "businessId": zod.uuid(),
+  "marketId": zod.string(),
+  "employee": zod.union([zod.object({
+  "type": zod.enum(['HUMAN']),
+  "userId": zod.uuid().nullable()
+}),zod.object({
+  "type": zod.enum(['INTELLIGENT']),
+  "configurationId": zod.uuid().nullable()
+})]),
+  "capabilities": zod.array(zod.enum(['business.catalog.read'])),
+  "resourceScope": zod.union([zod.object({
+  "kind": zod.enum(['BUSINESS'])
+}),zod.object({
+  "kind": zod.enum(['LISTING_ALLOWLIST']),
+  "listingIds": zod.array(zod.uuid()).min(1).max(suspendBusinessDelegationResponseResourceScopeTwoListingIdsMax)
+})]),
+  "approvalRequiredCapabilities": zod.array(zod.string()),
+  "status": zod.enum(['DRAFT', 'ACTIVE', 'SUSPENDED', 'REVOKED', 'EXPIRED']),
+  "policyVersion": zod.string(),
+  "version": zod.int().min(1),
+  "createdAt": zod.coerce.date(),
+  "activatedAt": zod.coerce.date().nullable(),
+  "expiresAt": zod.coerce.date(),
+  "revokedAt": zod.coerce.date().nullable(),
+  "expiredAt": zod.coerce.date().nullable()
+})
+
+
+/**
+ * @summary D4: resume an unexpired suspended grant after explicit owner confirmation
+ */
+export const ResumeBusinessDelegationParams = zod.object({
+  "id": zod.uuid(),
+  "delegationId": zod.uuid()
+})
+
+
+
+
+export const ResumeBusinessDelegationBody = zod.object({
+  "confirm": zod.literal(true),
+  "expectedVersion": zod.int().min(1)
+})
+
+export const resumeBusinessDelegationResponseResourceScopeTwoListingIdsMax = 100;
+
+
+
+
+export const ResumeBusinessDelegationResponse = zod.object({
+  "id": zod.uuid(),
+  "businessId": zod.uuid(),
+  "marketId": zod.string(),
+  "employee": zod.union([zod.object({
+  "type": zod.enum(['HUMAN']),
+  "userId": zod.uuid().nullable()
+}),zod.object({
+  "type": zod.enum(['INTELLIGENT']),
+  "configurationId": zod.uuid().nullable()
+})]),
+  "capabilities": zod.array(zod.enum(['business.catalog.read'])),
+  "resourceScope": zod.union([zod.object({
+  "kind": zod.enum(['BUSINESS'])
+}),zod.object({
+  "kind": zod.enum(['LISTING_ALLOWLIST']),
+  "listingIds": zod.array(zod.uuid()).min(1).max(resumeBusinessDelegationResponseResourceScopeTwoListingIdsMax)
+})]),
+  "approvalRequiredCapabilities": zod.array(zod.string()),
+  "status": zod.enum(['DRAFT', 'ACTIVE', 'SUSPENDED', 'REVOKED', 'EXPIRED']),
+  "policyVersion": zod.string(),
+  "version": zod.int().min(1),
+  "createdAt": zod.coerce.date(),
+  "activatedAt": zod.coerce.date().nullable(),
+  "expiresAt": zod.coerce.date(),
+  "revokedAt": zod.coerce.date().nullable(),
+  "expiredAt": zod.coerce.date().nullable()
+})
+
+
+/**
+ * @summary D4: revoke an employee grant with explicit owner confirmation
+ */
+export const RevokeBusinessDelegationParams = zod.object({
+  "id": zod.uuid(),
+  "delegationId": zod.uuid()
+})
+
+
+
+
+export const RevokeBusinessDelegationBody = zod.object({
+  "confirm": zod.literal(true),
+  "expectedVersion": zod.int().min(1)
+})
+
+export const revokeBusinessDelegationResponseResourceScopeTwoListingIdsMax = 100;
+
+
+
+
+export const RevokeBusinessDelegationResponse = zod.object({
+  "id": zod.uuid(),
+  "businessId": zod.uuid(),
+  "marketId": zod.string(),
+  "employee": zod.union([zod.object({
+  "type": zod.enum(['HUMAN']),
+  "userId": zod.uuid().nullable()
+}),zod.object({
+  "type": zod.enum(['INTELLIGENT']),
+  "configurationId": zod.uuid().nullable()
+})]),
+  "capabilities": zod.array(zod.enum(['business.catalog.read'])),
+  "resourceScope": zod.union([zod.object({
+  "kind": zod.enum(['BUSINESS'])
+}),zod.object({
+  "kind": zod.enum(['LISTING_ALLOWLIST']),
+  "listingIds": zod.array(zod.uuid()).min(1).max(revokeBusinessDelegationResponseResourceScopeTwoListingIdsMax)
+})]),
+  "approvalRequiredCapabilities": zod.array(zod.string()),
+  "status": zod.enum(['DRAFT', 'ACTIVE', 'SUSPENDED', 'REVOKED', 'EXPIRED']),
+  "policyVersion": zod.string(),
+  "version": zod.int().min(1),
+  "createdAt": zod.coerce.date(),
+  "activatedAt": zod.coerce.date().nullable(),
+  "expiresAt": zod.coerce.date(),
+  "revokedAt": zod.coerce.date().nullable(),
+  "expiredAt": zod.coerce.date().nullable()
+})
+
+
+/**
+ * @summary D4: read only published catalog rows covered by the authenticated employee's active grant
+ */
+export const GetDelegatedBusinessCatalogParams = zod.object({
+  "delegationId": zod.uuid()
+})
+
+export const getDelegatedBusinessCatalogResponseListingsMax = 100;
+
+
+
+export const GetDelegatedBusinessCatalogResponse = zod.object({
+  "businessId": zod.uuid(),
+  "businessName": zod.string(),
+  "policyVersion": zod.string(),
+  "listings": zod.array(zod.object({
+  "id": zod.uuid(),
+  "title": zod.string(),
+  "category": zod.string().nullable(),
+  "priceMinor": zod.int().nullable(),
+  "pricingMode": zod.enum(['FIXED', 'NEGOTIABLE', 'OPEN_TO_OFFERS'])
+})).max(getDelegatedBusinessCatalogResponseListingsMax)
+})
+
+
+/**
  * @summary Public view of a PUBLISHED, VERIFIED business (404 otherwise); no legal or document data
  */
 export const GetPublicBusinessParams = zod.object({

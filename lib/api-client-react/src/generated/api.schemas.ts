@@ -5,6 +5,188 @@
  * DINAR general marketplace API with seller-defined listing prices
  * OpenAPI spec version: 0.1.0
  */
+export interface BusinessDelegationConfirmation {
+  confirm: true;
+  /** @minimum 1 */
+  expectedVersion: number;
+}
+
+export type BusinessDelegationInputCapabilitiesItem = typeof BusinessDelegationInputCapabilitiesItem[keyof typeof BusinessDelegationInputCapabilitiesItem];
+
+
+export const BusinessDelegationInputCapabilitiesItem = {
+  businesscatalogread: 'business.catalog.read',
+} as const;
+
+export type BusinessHumanEmployeeType = typeof BusinessHumanEmployeeType[keyof typeof BusinessHumanEmployeeType];
+
+
+export const BusinessHumanEmployeeType = {
+  HUMAN: 'HUMAN',
+} as const;
+
+export interface BusinessHumanEmployee {
+  type: BusinessHumanEmployeeType;
+  userId: string;
+}
+
+export type BusinessIntelligentEmployeeType = typeof BusinessIntelligentEmployeeType[keyof typeof BusinessIntelligentEmployeeType];
+
+
+export const BusinessIntelligentEmployeeType = {
+  INTELLIGENT: 'INTELLIGENT',
+} as const;
+
+export interface BusinessIntelligentEmployee {
+  type: BusinessIntelligentEmployeeType;
+}
+
+export type BusinessWideDelegationScopeKind = typeof BusinessWideDelegationScopeKind[keyof typeof BusinessWideDelegationScopeKind];
+
+
+export const BusinessWideDelegationScopeKind = {
+  BUSINESS: 'BUSINESS',
+} as const;
+
+export interface BusinessWideDelegationScope {
+  kind: BusinessWideDelegationScopeKind;
+}
+
+export type BusinessListingDelegationScopeKind = typeof BusinessListingDelegationScopeKind[keyof typeof BusinessListingDelegationScopeKind];
+
+
+export const BusinessListingDelegationScopeKind = {
+  LISTING_ALLOWLIST: 'LISTING_ALLOWLIST',
+} as const;
+
+export interface BusinessListingDelegationScope {
+  kind: BusinessListingDelegationScopeKind;
+  /**
+     * @minItems 1
+     * @maxItems 100
+     */
+  listingIds: string[];
+}
+
+export interface BusinessDelegationInput {
+  employee: BusinessHumanEmployee | BusinessIntelligentEmployee;
+  /**
+     * @minItems 1
+     * @maxItems 1
+     */
+  capabilities: BusinessDelegationInputCapabilitiesItem[];
+  resourceScope: BusinessWideDelegationScope | BusinessListingDelegationScope;
+  expiresAt: string;
+  /**
+     * @minLength 8
+     * @maxLength 120
+     */
+  idempotencyKey: string;
+}
+
+export type BusinessHumanEmployeeViewType = typeof BusinessHumanEmployeeViewType[keyof typeof BusinessHumanEmployeeViewType];
+
+
+export const BusinessHumanEmployeeViewType = {
+  HUMAN: 'HUMAN',
+} as const;
+
+export interface BusinessHumanEmployeeView {
+  type: BusinessHumanEmployeeViewType;
+  /** @nullable */
+  userId: string | null;
+}
+
+export type BusinessIntelligentEmployeeViewType = typeof BusinessIntelligentEmployeeViewType[keyof typeof BusinessIntelligentEmployeeViewType];
+
+
+export const BusinessIntelligentEmployeeViewType = {
+  INTELLIGENT: 'INTELLIGENT',
+} as const;
+
+export interface BusinessIntelligentEmployeeView {
+  type: BusinessIntelligentEmployeeViewType;
+  /** @nullable */
+  configurationId: string | null;
+}
+
+export type BusinessDelegationCapabilitiesItem = typeof BusinessDelegationCapabilitiesItem[keyof typeof BusinessDelegationCapabilitiesItem];
+
+
+export const BusinessDelegationCapabilitiesItem = {
+  businesscatalogread: 'business.catalog.read',
+} as const;
+
+export type BusinessDelegationStatus = typeof BusinessDelegationStatus[keyof typeof BusinessDelegationStatus];
+
+
+export const BusinessDelegationStatus = {
+  DRAFT: 'DRAFT',
+  ACTIVE: 'ACTIVE',
+  SUSPENDED: 'SUSPENDED',
+  REVOKED: 'REVOKED',
+  EXPIRED: 'EXPIRED',
+} as const;
+
+export interface BusinessDelegation {
+  id: string;
+  businessId: string;
+  marketId: string;
+  employee: BusinessHumanEmployeeView | BusinessIntelligentEmployeeView;
+  capabilities: BusinessDelegationCapabilitiesItem[];
+  resourceScope: BusinessWideDelegationScope | BusinessListingDelegationScope;
+  approvalRequiredCapabilities: string[];
+  status: BusinessDelegationStatus;
+  policyVersion: string;
+  /** @minimum 1 */
+  version: number;
+  createdAt: string;
+  /** @nullable */
+  activatedAt: string | null;
+  expiresAt: string;
+  /** @nullable */
+  revokedAt: string | null;
+  /** @nullable */
+  expiredAt: string | null;
+}
+
+export interface BusinessDelegationList {
+  policyVersion: string;
+  delegations: BusinessDelegation[];
+}
+
+export interface BusinessDelegationResult {
+  created: boolean;
+  delegation: BusinessDelegation;
+}
+
+export type DelegatedBusinessCatalogListingsItemPricingMode = typeof DelegatedBusinessCatalogListingsItemPricingMode[keyof typeof DelegatedBusinessCatalogListingsItemPricingMode];
+
+
+export const DelegatedBusinessCatalogListingsItemPricingMode = {
+  FIXED: 'FIXED',
+  NEGOTIABLE: 'NEGOTIABLE',
+  OPEN_TO_OFFERS: 'OPEN_TO_OFFERS',
+} as const;
+
+export type DelegatedBusinessCatalogListingsItem = {
+  id: string;
+  title: string;
+  /** @nullable */
+  category: string | null;
+  /** @nullable */
+  priceMinor: number | null;
+  pricingMode: DelegatedBusinessCatalogListingsItemPricingMode;
+};
+
+export interface DelegatedBusinessCatalog {
+  businessId: string;
+  businessName: string;
+  policyVersion: string;
+  /** @maxItems 100 */
+  listings: DelegatedBusinessCatalogListingsItem[];
+}
+
 export interface BusinessListingLinkRequest {
   linked: boolean;
 }

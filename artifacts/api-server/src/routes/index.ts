@@ -20,6 +20,7 @@ import privacy from "./privacy";
 import appeals from "./appeals";
 import integrations from "./integrations";
 import businessProfiles from "./business-profiles";
+import businessDelegations from "./business-delegations";
 import businesses from "./businesses";
 import cash from "./cash";
 const router: IRouter = Router();
@@ -41,6 +42,7 @@ router.use(privacy);
 router.use(appeals);
 router.use(integrations);
 router.use(businessProfiles);
+router.use(businessDelegations);
 router.use(businesses);
 // Before payments: its router-wide simulation gate would hide every later route.
 router.use(provider);

@@ -48,6 +48,7 @@ export const REVIEWED_PENDING_MIGRATIONS: ReadonlyArray<{ tag: string; sha256: s
   { tag: "0047_business_listing_association", sha256: "f524e2c36c1304ef95accddf8f62c412eb2e8d08ca7f365a1f57d155aed45878" },
   // D3-A operating metadata is one-to-one with D2 identity; no parallel listing link or verification state.
   { tag: "0048_d3a_native_business_d2_link", sha256: "9beee24dbfd31cd5f58b0705348266930baf5004cdb21ee0b2cdddd833af7003" },
+  { tag: "0049_d4_business_delegations", sha256: "74cabd4bd6ce17220af24c783d0522cf0c87901f91b5263503595799c2d37591" },
 ];
 export const EXPECTED_JOURNAL_ENTRIES =
   EXPECTED_BASELINE_MIGRATIONS + REVIEWED_PENDING_MIGRATIONS.length;

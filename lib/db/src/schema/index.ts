@@ -2768,6 +2768,7 @@ export const businessOperatingProfiles = pgTable(
   },
   (t) => [
     uniqueIndex("business_operating_profiles_d2_business_unique").on(t.d2BusinessId),
+    uniqueIndex("business_operating_profiles_owner_market_unique").on(t.id, t.ownerUserId, t.marketId),
     index("business_operating_profiles_owner_idx").on(t.ownerUserId, t.marketId),
     index("business_operating_profiles_market_status_idx").on(t.marketId, t.status),
     foreignKey({
@@ -2818,6 +2819,71 @@ export const businessMemberships = pgTable(
     index("business_memberships_user_idx").on(t.userId, t.status),
     check("business_memberships_role_valid", sql`${t.role} IN ('APPLICANT', 'VERIFIED_OWNER', 'ADMIN', 'STAFF')`),
     check("business_memberships_status_valid", sql`${t.status} IN ('ACTIVE', 'REVOKED')`),
+  ],
+);
+
+export type BusinessDelegationResourceScope =
+  | { kind: "BUSINESS" }
+  | { kind: "LISTING_ALLOWLIST"; listingIds: string[] };
+
+/**
+ * D4 grants are scoped extensions of an existing D2/D3 business, not a new user or business
+ * identity. Human employees reference an authenticated user; an intelligent employee uses a
+ * server-generated configuration id bound to this grant.
+ */
+export const businessDelegations = pgTable(
+  "business_delegations",
+  {
+    id: text("id").primaryKey(),
+    businessId: text("business_id").notNull(),
+    marketId: text("market_id").notNull().references(() => markets.id),
+    grantorActorId: text("grantor_actor_id").notNull().references(() => users.id),
+    employeeType: text("employee_type").$type<"HUMAN" | "INTELLIGENT">().notNull(),
+    employeeUserId: text("employee_user_id").references(() => users.id),
+    agentConfigurationId: text("agent_configuration_id"),
+    capabilities: jsonb("capabilities").$type<string[]>().notNull(),
+    resourceScope: jsonb("resource_scope").$type<BusinessDelegationResourceScope>().notNull(),
+    approvalRequiredCapabilities: jsonb("approval_required_capabilities").$type<string[]>().default([]).notNull(),
+    status: text("status").$type<"DRAFT" | "ACTIVE" | "SUSPENDED" | "REVOKED" | "EXPIRED">().default("DRAFT").notNull(),
+    policyVersion: text("policy_version").notNull(),
+    idempotencyKey: text("idempotency_key").notNull(),
+    version: integer("version").default(1).notNull(),
+    activatedAt: timestamp("activated_at", { withTimezone: true }),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+    expiredAt: timestamp("expired_at", { withTimezone: true }),
+    ...dates(),
+  },
+  (t) => [
+    uniqueIndex("business_delegations_idempotency_unique").on(t.businessId, t.grantorActorId, t.idempotencyKey),
+    uniqueIndex("business_delegations_agent_configuration_unique")
+      .on(t.agentConfigurationId)
+      .where(sql`${t.agentConfigurationId} IS NOT NULL`),
+    index("business_delegations_business_status_idx").on(t.businessId, t.status, t.createdAt),
+    index("business_delegations_human_employee_idx").on(t.employeeUserId, t.status),
+    foreignKey({
+      name: "business_delegations_owner_market_fk",
+      columns: [t.businessId, t.grantorActorId, t.marketId],
+      foreignColumns: [businessOperatingProfiles.id, businessOperatingProfiles.ownerUserId, businessOperatingProfiles.marketId],
+    }).onDelete("no action"),
+    check("business_delegations_employee_type_valid", sql`${t.employeeType} IN ('HUMAN', 'INTELLIGENT')`),
+    check(
+      "business_delegations_employee_identity_valid",
+      sql`(${t.employeeType} = 'HUMAN' AND ${t.employeeUserId} IS NOT NULL AND ${t.agentConfigurationId} IS NULL AND ${t.employeeUserId} <> ${t.grantorActorId}) OR (${t.employeeType} = 'INTELLIGENT' AND ${t.employeeUserId} IS NULL AND ${t.agentConfigurationId} IS NOT NULL)`,
+    ),
+    check("business_delegations_capabilities_valid", sql`jsonb_typeof(${t.capabilities}) = 'array' AND jsonb_array_length(${t.capabilities}) = 1 AND ${t.capabilities}->>0 = 'business.catalog.read'`),
+    check(
+      "business_delegations_resource_scope_valid",
+      sql`jsonb_typeof(${t.resourceScope}) = 'object' AND (${t.resourceScope} = jsonb_build_object('kind', 'BUSINESS') OR (${t.resourceScope}->>'kind' = 'LISTING_ALLOWLIST' AND ${t.resourceScope} = jsonb_build_object('kind', 'LISTING_ALLOWLIST', 'listingIds', ${t.resourceScope}->'listingIds') AND jsonb_typeof(${t.resourceScope}->'listingIds') = 'array' AND jsonb_array_length(${t.resourceScope}->'listingIds') BETWEEN 1 AND 100))`,
+    ),
+    check("business_delegations_approval_capabilities_valid", sql`jsonb_typeof(${t.approvalRequiredCapabilities}) = 'array'`),
+    check("business_delegations_status_valid", sql`${t.status} IN ('DRAFT', 'ACTIVE', 'SUSPENDED', 'REVOKED', 'EXPIRED')`),
+    check("business_delegations_policy_version_valid", sql`char_length(btrim(${t.policyVersion})) BETWEEN 1 AND 80`),
+    check("business_delegations_version_valid", sql`${t.version} >= 1`),
+    check("business_delegations_expiry_valid", sql`${t.expiresAt} > ${t.createdAt}`),
+    check("business_delegations_revoked_timestamp_valid", sql`(${t.status} = 'REVOKED') = (${t.revokedAt} IS NOT NULL)`),
+    check("business_delegations_expired_timestamp_valid", sql`(${t.status} = 'EXPIRED') = (${t.expiredAt} IS NOT NULL)`),
+    check("business_delegations_activated_timestamp_valid", sql`${t.status} NOT IN ('ACTIVE', 'SUSPENDED', 'REVOKED', 'EXPIRED') OR ${t.activatedAt} IS NOT NULL`),
   ],
 );
 

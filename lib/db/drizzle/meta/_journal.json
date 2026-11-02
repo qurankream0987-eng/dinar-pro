@@ -344,6 +344,13 @@
       "when": 1793540000000,
       "tag": "0048_d3a_native_business_d2_link",
       "breakpoints": true
+    },
+    {
+      "idx": 49,
+      "version": "7",
+      "when": 1793600091580,
+      "tag": "0049_d4_business_delegations",
+      "breakpoints": true
     }
   ]
 }
