@@ -45,6 +45,7 @@ on:
           - r5-delivery-economics.test
           - security-acceptance.test
           - readiness.test
+          - ai-provider.test
           - development-tls.test
           - phase1-acceptance.test
           - commerce-journey.test
