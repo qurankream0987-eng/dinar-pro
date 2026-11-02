@@ -32,7 +32,7 @@ import { confirmPendingAction } from "../src/ai/action-foundation";
 import { marketFor } from "../src/lib/markets";
 import { requireSafeReplitDevelopmentDatabase } from "./safe-development-database";
 
-requireSafeReplitDevelopmentDatabase("BDINAR_AI_FOUNDATION_02");
+requireSafeReplitDevelopmentDatabase("BDINAR_AI_FOUNDATION");
 const run = `ن${randomUUID().replaceAll("-", "").replace(/\d/g, "").slice(0, 5)}`;
 
 type Step = { name: string; arguments: Record<string, unknown> };
