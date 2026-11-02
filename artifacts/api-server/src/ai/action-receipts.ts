@@ -25,6 +25,7 @@ const LEDGER_LIFECYCLE: Record<string, ActionLifecycle> = {
   CANCELLED: "FAILED",
   EXPIRED: "FAILED",
   SUPERSEDED: "FAILED",
+  UNKNOWN: "UNKNOWN",
 };
 
 export function lifecycleOfLedgerStatus(status: unknown): ActionLifecycle {
@@ -183,6 +184,10 @@ export function describeReceipt(facts: ReceiptFacts): ActionReceiptView {
       title = "قيد التحقق من نتيجة التنفيذ";
       nextStep = "لا تكرر الطلب؛ تظهر النتيجة المؤكدة هنا عند تحديث المحادثة.";
       amount = money(facts.amountMinor, "PROPOSED");
+      break;
+    case "UNKNOWN":
+      title = "تعذر التحقق من نتيجة التنفيذ";
+      nextStep = "لم يُثبت أن الإجراء نُفّذ؛ راجع سجل المحادثة أو الطلبات قبل إعادة المحاولة.";
       break;
     case "SUCCEEDED":
       title =

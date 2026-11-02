@@ -1297,7 +1297,8 @@ type PendingBusinessQuery = {
   newPriceMinor: number | null;
   body?: Record<string, unknown>;
   idempotencyKey?: string;
-  status: "PENDING" | "EXECUTING" | "CONFIRMED" | "CANCELLED" | "EXPIRED" | "FAILED" | "SUPERSEDED";
+  status: "PENDING" | "EXECUTING" | "CONFIRMED" | "CANCELLED" | "EXPIRED" | "FAILED" | "SUPERSEDED" | "UNKNOWN";
+  executingAt?: string;
   review: string[];
   expiresAt: string;
 };
@@ -1352,7 +1353,7 @@ async function settledBusinessDecision(conversationId: string, actorId: string) 
       eq(aiResultSets.conversationId, conversationId),
       sql`${aiResultSets.query} ->> 'kind' IN ('BUSINESS_SETUP', 'BUSINESS_ACTION')`,
       sql`${aiResultSets.query} ->> 'ownerId' = ${actorId}`,
-      sql`${aiResultSets.query} ->> 'status' IN ('EXECUTING', 'CONFIRMED', 'CANCELLED', 'EXPIRED', 'FAILED', 'SUPERSEDED')`,
+      sql`${aiResultSets.query} ->> 'status' IN ('EXECUTING', 'UNKNOWN', 'CONFIRMED', 'CANCELLED', 'EXPIRED', 'FAILED', 'SUPERSEDED')`,
     ))
     .orderBy(desc(aiResultSets.createdAt))
     .limit(1);
@@ -1396,7 +1397,7 @@ async function activateBusiness(input: {
   // One claim only: a second confirmation sees a settled review and changes nothing.
   const [claimed] = await db
     .update(aiResultSets)
-    .set({ query: { ...review.query, status: "EXECUTING" } })
+    .set({ query: { ...review.query, status: "EXECUTING", executingAt: new Date().toISOString() } })
     .where(and(
       eq(aiResultSets.id, review.id),
       sql`${aiResultSets.query} ->> 'status' = 'PENDING'`,
@@ -1496,7 +1497,7 @@ async function executeBusinessAction(input: {
   const { row, query } = pending;
   const [claimed] = await db
     .update(aiResultSets)
-    .set({ query: { ...query, status: "EXECUTING" } })
+    .set({ query: { ...query, status: "EXECUTING", executingAt: new Date().toISOString() } })
     .where(and(eq(aiResultSets.id, row.id), sql`${aiResultSets.query} ->> 'status' = 'PENDING'`))
     .returning();
   if (!claimed) return businessOutput("BUSINESS_LISTING_REVIEW", { view: "LISTING_REVIEW", allowedActions: [] }, "تمت معالجة هذا الإجراء من قبل؛ لم يتغير شيء.");
@@ -1658,7 +1659,9 @@ export async function executeBusinessTurn(input: {
         const message =
           status === "EXECUTING"
             ? "هذا الإجراء قيد المعالجة؛ لن يُنفَّذ مرتين."
-            : "تمت معالجة هذا الإجراء من قبل؛ لم يتغير شيء.";
+            : status === "UNKNOWN"
+              ? "لم يتأكد تنفيذ هذا الإجراء؛ راجع النشاط ثم أعد المحاولة."
+              : "تمت معالجة هذا الإجراء من قبل؛ لم يتغير شيء.";
         return businessOutput(
           "BUSINESS_PROFILE_REVIEW",
           { view: "LISTING_REVIEW", businessId: lastPrompt.businessId, notice: message, allowedActions: [] },

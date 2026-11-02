@@ -4,6 +4,7 @@ import { startSearchIndexMaintenance } from "./lib/marketplace-search-index";
 import { onProviderBreakerTransition } from "./ai/model-gateway";
 import { releaseExpiredReservations } from "./routes/marketplace";
 import { scrubStaleLocationPreviews } from "./ai/delivery-turn";
+import { settleAbandonedExecutions } from "./ai/action-recovery";
 import { expireStalePromotions } from "./lib/promotions";
 import { validateObjectStorageConfiguration } from "./lib/objectStorage";
 import { deploymentConfigurationProblems } from "./lib/deployment-configuration";
@@ -51,6 +52,15 @@ const sweepExpiredReservations = () => {
     })
     .catch((err) =>
       logger.error({ err }, "Failed to release expired order reservations"),
+    );
+  // An EXECUTING claim whose process died is settled as UNKNOWN, never re-executed.
+  void settleAbandonedExecutions()
+    .then((count) => {
+      if (count > 0)
+        logger.warn({ count }, "Abandoned action executions settled as unknown");
+    })
+    .catch((err) =>
+      logger.error({ err }, "Failed to settle abandoned action executions"),
     );
 };
 sweepExpiredReservations();

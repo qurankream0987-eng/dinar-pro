@@ -60,6 +60,7 @@ on:
           - business-delegations.test
           - d5-seller-employee-acceptance.test
           - d4-d5-isolation-security.test
+          - d12-execution-recovery.test
           - next-g2-inquiry.test
           - universal-negotiation-acceptance.test
           - g2-smart-conversation.test
