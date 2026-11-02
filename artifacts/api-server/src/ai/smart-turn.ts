@@ -1251,7 +1251,7 @@ function validModelToolContinuation(value: unknown, input: Input): ModelToolCont
     raw.resumeCount! > 5 ||
     !Array.isArray(raw.signatures) ||
     raw.signatures.length > 3 ||
-    !raw.signatures.every((item) => typeof item === "string" && /^(?:searchListings|getResource):[a-f0-9]{64}$/.test(item)) ||
+    !raw.signatures.every((item) => typeof item === "string" && /^(?:searchListings|getResource|compareListings):[a-f0-9]{64}$/.test(item)) ||
     !Array.isArray(raw.feedback) ||
     raw.feedback.length > 6
   )
@@ -1259,7 +1259,7 @@ function validModelToolContinuation(value: unknown, input: Input): ModelToolCont
   const feedback = raw.feedback.filter((item) =>
     item &&
     typeof item === "object" &&
-    ["searchListings", "getResource"].includes(item.tool) &&
+    ["searchListings", "getResource", "compareListings"].includes(item.tool) &&
     ["SUCCEEDED", "REJECTED", "FAILED"].includes(item.status),
   );
   while (JSON.stringify(feedback).length > MAX_TOOL_FEEDBACK_CHARS && feedback.length) feedback.shift();
@@ -1286,6 +1286,36 @@ function stableJson(value: unknown): string {
 }
 
 function compactModelToolResult(result: ToolResult) {
+  if (result.kind === "SURFACE" && result.surface === "COMPARISON") {
+    const comparison = (result.comparison ?? {}) as {
+      resultSetId?: string;
+      positions?: number[];
+      listings?: { title?: string; isSponsored?: boolean }[];
+      rows?: { label?: string; source?: string; values?: unknown[] }[];
+      highlights?: { label?: string; text?: string }[];
+    };
+    return {
+      kind: "COMPARISON",
+      ...(comparison.resultSetId ? { resultSetId: comparison.resultSetId } : {}),
+      ...(result.resourceIds ? { resourceIds: result.resourceIds } : {}),
+      ...(comparison.positions ? { positions: comparison.positions } : {}),
+      listings: (comparison.listings ?? []).slice(0, 6).map((listing) => ({
+        title: String(listing.title ?? "").slice(0, 120),
+        isSponsored: Boolean(listing.isSponsored),
+      })),
+      rows: (comparison.rows ?? []).slice(0, 12).map((row) => ({
+        label: String(row.label ?? "").slice(0, 80),
+        source: String(row.source ?? "").slice(0, 20),
+        values: (row.values ?? []).slice(0, 6).map((value) =>
+          value === null ? null : String(value).slice(0, 120),
+        ),
+      })),
+      highlights: (comparison.highlights ?? []).slice(0, 8).map((highlight) => ({
+        label: String(highlight.label ?? "").slice(0, 80),
+        text: String(highlight.text ?? "").slice(0, 160),
+      })),
+    };
+  }
   const listings = result.listings.slice(0, 5).map((listing) => ({
     id: listing.id,
     title: listing.title.slice(0, 180),
@@ -1327,6 +1357,22 @@ function withModelToolAnswer(result: ToolResult, answer: string, preserveResultS
       buyer: { message: answer.slice(0, 1600), authority: "MODEL" },
     },
   };
+}
+
+/**
+ * A comparison surface is rendered from DINAR's own rows; its body comes from `prompt`, not from
+ * the model. A stop or failure note is appended there so the user is never shown a partial
+ * comparison as if it were complete.
+ */
+function withModelToolNote(result: ToolResult, note: string): ToolResult {
+  if (result.kind !== "SURFACE") return withModelToolAnswer(result, note, result.kind === "RESOURCE");
+  const prompt = `${result.prompt ?? ""}${result.prompt ? "\n\n" : ""}${note}`.slice(0, 2000);
+  return { ...result, prompt };
+}
+
+function readResultTool(result: ToolResult): "searchListings" | "getResource" | "compareListings" {
+  if (result.kind === "SURFACE" && result.surface === "COMPARISON") return "compareListings";
+  return result.kind === "SEARCH" ? "searchListings" : "getResource";
 }
 
 /**
@@ -1433,6 +1479,8 @@ export async function executeModelFallback(
   let usageNote: string | undefined;
   let lastSearchResult: ToolResult | undefined;
   let lastResourceResult: ToolResult | undefined;
+  let lastComparisonResult: ToolResult | undefined;
+  let lastRejectedReadCode: string | undefined;
   let toolLoopStopReason: "CALL_LIMIT" | "DUPLICATE" | "TIME_LIMIT" | "USAGE_LIMIT" | undefined;
   const toolFeedback: NonNullable<ModelContext["toolFeedback"]> = [...(resumedContinuation?.feedback ?? [])];
   const seenToolCalls = new Set<string>(resumedContinuation?.signatures ?? []);
@@ -1526,10 +1574,12 @@ export async function executeModelFallback(
         ]);
       } catch (error) {
         toolFailureRecorded = true;
+        const code = error instanceof ToolRejectedError ? error.code : "READ_FAILED";
+        if (error instanceof ToolRejectedError) lastRejectedReadCode = error.code;
         toolFeedback.push({
           tool: request.name,
           status: error instanceof ToolRejectedError ? "REJECTED" : "FAILED",
-          code: error instanceof ToolRejectedError ? "CANONICAL_TOOL_REJECTED" : "READ_FAILED",
+          code,
         });
       } finally {
         if (toolTimer) clearTimeout(toolTimer);
@@ -1551,11 +1601,15 @@ export async function executeModelFallback(
       }
       if (execution) {
         const result = execution.result;
+        // A later verified read answers the turn; an earlier stale refusal no longer describes it.
+        lastRejectedReadCode = undefined;
         toolFeedback.push({
           tool: execution.tool,
           status: "SUCCEEDED",
           result: compactModelToolResult(result),
         });
+        if (result.kind === "SURFACE" && result.surface === "COMPARISON")
+          lastComparisonResult = result;
         if (result.kind === "SEARCH") lastSearchResult = result;
         if (result.kind === "RESOURCE") {
           lastResourceResult = result;
@@ -1641,14 +1695,27 @@ export async function executeModelFallback(
       { ownerId: input.actorId },
     );
   const outcome = drafted.outcome;
-  if (!outcome.ok)
+  if (!outcome.ok) {
+    // A provider outage after a verified read must not discard what DINAR already established.
+    const partialRead = lastComparisonResult ?? lastSearchResult ?? lastResourceResult;
+    if (partialRead) {
+      const note = outcome.reason === "TIMEOUT"
+        ? "انتهى وقت الرد قبل اكتماله؛ هذه النتائج التي تحققت منها، ولم أغيّر شيئًا."
+        : `${modelFailureMessage(outcome.reason)} وهذه النتائج التي تحققت منها، ولم أغيّر شيئًا.`;
+      return {
+        tool: readResultTool(partialRead),
+        version: 1,
+        result: withModelToolNote(partialRead, note),
+      };
+    }
     return adviceTurn(
       modelFailureMessage(outcome.reason),
       { kind: "CLARIFICATION_REQUIRED", scope: "CONVERSATION", modelStatus: outcome.reason },
       { ownerId: input.actorId },
     );
+  }
   if (outcome.toolRequest) {
-    const partialResult = lastSearchResult ?? lastResourceResult;
+    const partialResult = lastComparisonResult ?? lastSearchResult ?? lastResourceResult;
     if (partialResult) {
       const stopMessages = {
         CALL_LIMIT: "توقفت بعد الحد الآمن لخطوات القراءة؛ هذه هي النتائج التي تحققت منها.",
@@ -1658,14 +1725,38 @@ export async function executeModelFallback(
       };
       const answer = stopMessages[toolLoopStopReason ?? "CALL_LIMIT"];
       return {
-        tool: partialResult.kind === "SEARCH" ? "searchListings" : "getResource",
+        tool: readResultTool(partialResult),
         version: 1,
-        result: withModelToolAnswer(partialResult, answer, partialResult.kind === "RESOURCE"),
+        result: withModelToolNote(partialResult, answer),
       };
     }
     return adviceTurn(
       "لم أتمكن من إكمال القراءة بأمان. لم أغيّر بيانات أو أنفّذ أي إجراء؛ أعد صياغة طلب البحث.",
       { kind: "CLARIFICATION_REQUIRED", scope: "CONVERSATION", modelStatus: "MALFORMED" },
+      { ownerId: input.actorId },
+    );
+  }
+  if (lastComparisonResult)
+    return {
+      tool: "compareListings",
+      version: 1,
+      result: usageNote ? withModelToolNote(lastComparisonResult, usageNote) : lastComparisonResult,
+    };
+  // A read was refused because its target is gone: never let the model answer from the
+  // earlier snapshot or a guess, even when an earlier read in the same turn succeeded.
+  if (lastRejectedReadCode === "TARGET_UNAVAILABLE") {
+    const staleNote =
+      "أحد العروض المطلوب لم يعد متاحًا، فلم أعرض أو أقارن بيانات قديمة. لم يتغير شيء؛ حدّث البحث أو اختر عرضًا آخر.";
+    const verifiedRead = lastSearchResult ?? lastResourceResult;
+    if (verifiedRead)
+      return {
+        tool: readResultTool(verifiedRead),
+        version: 1,
+        result: withModelToolNote(verifiedRead, staleNote),
+      };
+    return adviceTurn(
+      staleNote,
+      { kind: "CLARIFICATION_REQUIRED", scope: "DINAR_INTERNAL", topic: "STALE_LISTING_REFUSED" },
       { ownerId: input.actorId },
     );
   }

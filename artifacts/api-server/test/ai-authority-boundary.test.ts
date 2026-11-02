@@ -9,12 +9,23 @@ import assert from "node:assert/strict";
 import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { pool } from "@workspace/db";
-import { aiToolRegistry, executeRegisteredTool, modelToolDefinitions, ToolRejectedError } from "../src/ai/tool-registry";
+import {
+  MODEL_LOOP_TOOL_ALLOWLIST,
+  aiToolRegistry,
+  executeRegisteredTool,
+  modelToolDefinitions,
+  ToolRejectedError,
+} from "../src/ai/tool-registry";
 import { ACTION_REGISTRY } from "../src/ai/action-foundation";
 
-test("the model sees only three read-only tools; the one registered writer is not exposed to it", () => {
+test("the model sees only read-only tools; the one registered writer is not exposed to it", () => {
   const names = modelToolDefinitions().map((definition: any) => definition.function?.name ?? definition.name).sort();
-  assert.deepEqual(names, ["getResource", "openSurface", "searchListings"]);
+  assert.deepEqual(names, ["compareListings", "getResource", "openSurface", "searchListings"]);
+  assert.deepEqual([...MODEL_LOOP_TOOL_ALLOWLIST].sort(), ["compareListings", "getResource", "searchListings"],
+    "the bounded turn loop advertises exactly the three marketplace reads");
+  assert.equal(aiToolRegistry.compareListings?.exposedToModel, true);
+  assert.equal(aiToolRegistry.compareListings?.idempotency, "READ_ONLY");
+  assert.deepEqual(aiToolRegistry.compareListings?.permissions, ["marketplace.read"]);
   assert.equal(aiToolRegistry.addToCart?.exposedToModel, false, "addToCart runs only from confirmed user actions");
   for (const tool of Object.values(aiToolRegistry)) {
     const writes = tool.permissions.filter((permission) => permission !== "marketplace.read");

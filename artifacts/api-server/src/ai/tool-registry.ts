@@ -17,6 +17,7 @@ import {
   recommendListings,
   storedSponsoredIds,
 } from "../lib/recommendations";
+import { compareRows } from "./buyer-turn";
 import type { ModelToolDefinition } from "./model-gateway";
 import {
   SEARCH_OPERATORS,
@@ -113,7 +114,7 @@ export type ToolResult = {
   listings: ListingRecord[];
 };
 
-const SearchListingsInput = z
+export const SearchListingsInput = z
   .object({
     query: z.string().trim().max(200).default(""),
     category: z.string().trim().min(1).max(80).optional(),
@@ -123,20 +124,44 @@ const SearchListingsInput = z
   })
   .strict();
 
-const GetResourceInput = z
+export const GetResourceInput = z
   .object({
     resultSetId: z.string().uuid(),
     resourceId: z.string().min(1).max(200),
   })
   .strict();
 
+/**
+ * Positions, not listing ids: the model may only name what the user can see in the current
+ * result set, and the server resolves those positions to the stored, live-validated listings.
+ */
+export const CompareListingsInput = z
+  .object({
+    resultSetId: z.string().uuid(),
+    positions: z
+      .array(z.number().int().min(1).max(50))
+      .min(2)
+      .max(6)
+      .refine((positions) => new Set(positions).size === positions.length, "Positions must be unique."),
+  })
+  .strict();
+
 type SearchListingsArgs = z.infer<typeof SearchListingsInput>;
 type GetResourceArgs = z.infer<typeof GetResourceInput>;
+type CompareListingsArgs = z.infer<typeof CompareListingsInput>;
+
+export type ToolRejectionCode =
+  | "CANONICAL_TOOL_REJECTED"
+  | "TOOL_NOT_ALLOWED"
+  | "TARGET_UNAVAILABLE";
 
 export class ToolRejectedError extends Error {
-  constructor(message: string) {
+  readonly code: ToolRejectionCode;
+
+  constructor(message: string, code: ToolRejectionCode = "CANONICAL_TOOL_REJECTED") {
     super(message);
     this.name = "ToolRejectedError";
+    this.code = code;
   }
 }
 
@@ -465,6 +490,101 @@ export const aiToolRegistry: Record<string, ToolDefinition> = {
       };
     },
   },
+  compareListings: {
+    name: "compareListings",
+    version: 1,
+    description:
+      "Compare two to six listings from one previous result set in this conversation, using DINAR's live records only.",
+    permissions: ["marketplace.read"],
+    riskLevel: "LOW",
+    idempotency: "READ_ONLY",
+    auditPolicy: "REDACTED_TURN_METADATA",
+    exposedToModel: true,
+    inputSchema: CompareListingsInput,
+    modelDefinition: {
+      name: "compareListings",
+      description:
+        "Compare two to six positions (1-based) from a result set returned by searchListings in this conversation. Values come from DINAR's live records; unknown seller values are never inferred.",
+      parameters: {
+        type: "object",
+        properties: {
+          resultSetId: { type: "string", format: "uuid" },
+          positions: {
+            type: "array",
+            minItems: 2,
+            maxItems: 6,
+            items: { type: "integer", minimum: 1, maximum: 50 },
+          },
+        },
+        required: ["resultSetId", "positions"],
+        additionalProperties: false,
+      },
+    },
+    execute: async (input: CompareListingsArgs, context: ToolContext): Promise<ToolResult> => {
+      const [resultSet] = await db
+        .select()
+        .from(aiResultSets)
+        .where(
+          and(
+            eq(aiResultSets.id, input.resultSetId),
+            eq(aiResultSets.conversationId, context.conversationId),
+            eq(aiResultSets.marketId, context.market.id),
+          ),
+        );
+      if (!resultSet || (resultSet.expiresAt && resultSet.expiresAt.getTime() <= Date.now()))
+        throw new ToolRejectedError(
+          "The requested results are not available in this conversation.",
+        );
+      const ids = input.positions.map((position) => resultSet.resourceIds[position - 1]);
+      if (ids.some((id) => !id))
+        throw new ToolRejectedError("A requested position is not in this result set.");
+      const live = await searchMarketplaceListings(context.market, {
+        search: "",
+        allowedIds: ids as string[],
+        sponsoredIds: storedSponsoredIds(resultSet.query),
+        limit: 6,
+      });
+      const byId = new Map(live.map((listing) => [listing.id, listing]));
+      // Paused, sold or moderated listings are absent from the live search: comparing the
+      // stored snapshot instead would present stale facts as current.
+      if (ids.some((id) => !byId.has(id!)))
+        throw new ToolRejectedError(
+          "One of these listings is no longer available; nothing was compared from stale data.",
+          "TARGET_UNAVAILABLE",
+        );
+      const listings = (ids as string[]).map((id) => byId.get(id)!);
+      const { rows, highlights } = await compareRows(listings);
+      return {
+        kind: "SURFACE",
+        surface: "COMPARISON",
+        resultSetId: resultSet.id,
+        resourceIds: listings.map((listing) => listing.id),
+        query: {},
+        listings: [],
+        comparison: {
+          positions: input.positions,
+          resultSetId: resultSet.id,
+          listings: listings.map((listing) => ({
+            id: listing.id,
+            title: listing.title,
+            isSponsored: Boolean(listing.isSponsored),
+          })),
+          rows,
+          highlights,
+          unknownLabel: "لم يذكر البائع",
+          notApplicableLabel: "لا ينطبق",
+          sourceLabels: {
+            RECORD: "من سجل DINAR",
+            SELLER: "كما ذكره البائع",
+            DERIVED: "محسوب من القيم أعلاه",
+          },
+        },
+        prompt:
+          "قارنت البيانات الحالية من DINAR فقط. ما لم يذكره البائع يظهر «لم يذكر البائع» ولم أفترض قيمته، وما لا يخص فئة العرض يظهر «لا ينطبق».",
+      };
+    },
+  },
+
   recommendListings: {
     name: "recommendListings",
     version: 1,
@@ -583,13 +703,20 @@ export const aiToolRegistry: Record<string, ToolDefinition> = {
   },
 };
 
+/** The only tools the bounded model turn loop may execute; checked again at execution time. */
+export const MODEL_LOOP_TOOL_ALLOWLIST = [
+  "searchListings",
+  "getResource",
+  "compareListings",
+] as const;
+
 export function modelToolDefinitions(context?: ToolContext): ModelToolDefinition[] {
   if (context && (!context.actorId || !context.conversationId || !isMarketAvailable(context.market)))
     return [];
   return Object.values(aiToolRegistry)
     .filter((tool) =>
       tool.exposedToModel === true &&
-      (!context || ["searchListings", "getResource"].includes(tool.name)) &&
+      (!context || (MODEL_LOOP_TOOL_ALLOWLIST as readonly string[]).includes(tool.name)) &&
       tool.riskLevel === "LOW" &&
       tool.idempotency === "READ_ONLY" &&
       tool.permissions.every((permission) => permission === "marketplace.read"),
@@ -611,8 +738,18 @@ export async function executeModelTool(
     !context.currentMessageId ||
     !modelToolDefinitions(context).some((definition) => definition.name === name)
   )
-    throw new ToolRejectedError("This read-only tool is not available in the current conversation.");
+    throw new ToolRejectedError(
+      "This read-only tool is not available in the current conversation.",
+      "TOOL_NOT_ALLOWED",
+    );
   const execution = await executeRegisteredTool(name, rawArguments, context);
+  // A stored result whose listing is now paused, sold or moderated returns no live record.
+  // Passing "missing" back would let the model answer from the earlier snapshot as if current.
+  if (execution.result.kind === "RESOURCE" && execution.result.listings.length === 0)
+    throw new ToolRejectedError(
+      "The requested listing is no longer available; no stale listing data was returned.",
+      "TARGET_UNAVAILABLE",
+    );
   if (execution.result.kind === "SEARCH") {
     const resultSetId = randomUUID();
     const resourceIds = execution.result.listings.map((listing) => listing.id);

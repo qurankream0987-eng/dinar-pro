@@ -2099,7 +2099,7 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
         modelGateway: req.app.locals.conversationModelGateway as ConversationModelGateway | undefined,
         onToolSelected(name) {
           toolName = name;
-          send(res, { type: "status", stage: name === "searchListings" || name === "getResource" ? "searching" : "understanding" });
+          send(res, { type: "status", stage: ["searchListings", "getResource", "compareListings"].includes(name) ? "searching" : "understanding" });
         },
         async onModelToolProgress(state) {
           const resumeCount =
