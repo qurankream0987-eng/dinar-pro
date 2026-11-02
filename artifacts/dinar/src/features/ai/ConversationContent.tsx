@@ -1221,7 +1221,13 @@ function ResultBlock({
                         onAdd?.(listing, block.payload.resultSetId),
                       ).then((added) => {
                         // The flight is drawn only for a confirmed server mutation.
-                        if (added) animateListingToBasket(image);
+                        if (!added) return;
+                        try {
+                          animateListingToBasket(image);
+                        } catch {
+                          // The cart is already confirmed; a visual acknowledgement must never
+                          // surface as an error or change the result.
+                        }
                       });
                     }}
                     data-testid={`button-add-to-cart-${listing.id}`}

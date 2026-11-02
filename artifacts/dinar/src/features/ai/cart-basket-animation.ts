@@ -84,6 +84,11 @@ export function animateListingToBasket(
     0.12,
     Math.min(0.5, to.width / Math.max(from.width, 1)),
   );
+  if (typeof flight.animate !== "function") {
+    flight.remove();
+    announce("dinar:cart-flight-skipped", { reason: "unsupported" });
+    return "unsupported";
+  }
   announce("dinar:cart-flight-start", { left: from.left, top: from.top });
 
   const animation = flight.animate(
