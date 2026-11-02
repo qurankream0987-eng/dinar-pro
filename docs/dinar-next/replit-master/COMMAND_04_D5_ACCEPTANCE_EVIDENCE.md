@@ -1,9 +1,9 @@
-# Command 04 — D5 Acceptance Evidence
+# Command 04D — D5 Acceptance Evidence
 
 ## Tested implementation
 
-- Starting SHA: `d6889abb8801056268869683cac5fbc590adf0ef`
-- Tested source SHA: `17f77af24482f739cb99771208c35bea0e0652d4`
+- Starting SHA: `c8120d46469fd1cc0777db4ed8dc902690dc7dbf`
+- Tested source SHA: `61bd7e01e5c2eb765e38ac87f73030a87f5af95d`
 - Branch: `replit/dinar-next-complete-development`
 - Database: isolated loopback PostgreSQL databases created by `test/isolation/local-suite.sh`; each suite dropped its database afterward. No managed or production database was used.
 
@@ -18,13 +18,28 @@
 | `local-suite.sh ai-authority-boundary.test` | PASS, 4/4; outbound=0 |
 | `local-suite.sh next-g2-inquiry.test BDINAR_G2_ACCEPTANCE=development` | PASS, 17/17; outbound=0 |
 | `local-suite.sh g2-smart-conversation.test BDINAR_G2_ACCEPTANCE=development BDINAR_WAVE4_ACCEPTANCE=development` | PASS, 91/91; outbound=0; payment simulation stayed in the disposable test database |
+| `local-suite.sh block-f0-foundation.test BDINAR_BLOCKF_ACCEPTANCE=development` | PASS, 12/12; outbound=0 |
+| `local-suite.sh block-f3-commerce.test BDINAR_BLOCKF_ACCEPTANCE=development BDINAR_WAVE4_ACCEPTANCE=development` | PASS, 17/17; outbound=0; no model or external calls |
 | API specification codegen | NOT_RUN; no API contract or generated client changed |
 | Readiness, development TLS, and migration 0050 checks | NOT_RUN; no database schema or migration changed |
-| Target-checkout SAST / HoundDog and dependency audit | NOT_RUN |
+| Replit workspace SAST / HoundDog / dependency audit | SAST: 0 findings; HoundDog: 0 findings; dependency audit reports one high and one moderate finding in the workspace-root lockfile |
+| Target-checkout dependency reconciliation | PASS by lockfile inspection: `qs@6.16.1` and `zod@4.6.7`, both beyond the reported fixed versions; the workspace audit did not scan this nested checkout's lockfile |
 | Chromium/browser D5 acceptance | NOT_RUN |
 | Live model/provider acceptance | NOT_RUN |
 
-The new G2/D5 acceptance uses an injected test gateway, not a live model. Its 15 evidence items are:
+The workspace dependency audit reported `qs@6.16.0` (moderate; fix `6.16.1`) and `zod@3.25.76` (high; fix requires `4.6.6`). Those versions were found in the workspace-root lockfile, not this nested target checkout. No target dependency change was needed or made.
+
+The D5 acceptance uses an injected test gateway, not a live model. Its additional direct evidence covers:
+
+- A published listing's recorded category is returned from the current business catalog; an unrecorded battery specification is refused without inventing the requested value.
+- D5 inventory reads report 35 available, zero/unavailable, and `UNLIMITED` without a numeric count; ambiguous and out-of-scope product requests do not expose stock.
+- A reservation-only disposable order returns its stored `RESERVED` status and scoped item summary without buyer identifiers.
+- Open negotiation details are surfaced for owner review; a model-proposed acceptance is rejected and the negotiation stays `OPEN`.
+- A used-phone `SELL` draft contains its title, used condition, and price; a later turn corrects the same draft's price from 12 to 15.
+- A publication request is refused with no offer row added, and a drafted reply claiming payment receipt is rejected.
+- Revoking the D4 grant invalidates its pending action transactionally; the concurrent confirmation is blocked before a further model call or seller message.
+
+The existing G2 reply evidence remains:
 
 1. A buyer inquiry is created through G2's canonical service and delivered to the seller's DINAR inbox.
 2. The model receives the exact latest unanswered question and the assigned published listing's server inventory.
@@ -42,7 +57,7 @@ The new G2/D5 acceptance uses an injected test gateway, not a live model. Its 15
 14. Revoking the grant with a pending draft blocks the next approval before another model call and sends no second message.
 15. The buyer's authenticated conversation reload contains the approved, persisted reply.
 
-The separate D5 delegation suite continues to verify wrong-actor, wrong-market, expired-grant, ambiguous-grant, market-change, account-switch, logout, owner-stop, and session/capability-audit behavior. G2 suites ran with the test runner's provider keys removed and its outbound guard enabled. The G2 payment simulation was enabled only because that suite exercises the simulated payment review path; its loopback database was dropped afterward. No real payment, external message, live provider call, production check, browser UI change, or deployment was made.
+The separate D5 delegation suite continues to verify wrong-actor, wrong-market, expired-grant, ambiguous-grant, market-change, account-switch, logout, owner-stop, and session/capability-audit behavior. G2 and F3 suites used only their development payment simulation where required; each loopback database was dropped afterward. No real payment, external message, live provider call, production check, browser UI change, merge, or deployment was made.
 
 ## D5-01 through D5-25
 
@@ -50,4 +65,4 @@ The scenario-by-scenario source paths, direct test evidence, status, and databas
 
 ## Runtime and browser evidence
 
-The configured API workflow points to the workspace-root artifact rather than this nested target checkout, so it was not used as source validation. The target checkout passed its typecheck, build, and isolated database suites. No browser screenshot, authenticated UI journey, or production check is claimed.
+The configured API workflow points to the workspace-root artifact rather than this nested target checkout, so it was not used as source validation. This checkout passed its typecheck, build, and isolated database suites. No browser screenshot, authenticated UI journey, live-model check, or production check is claimed.

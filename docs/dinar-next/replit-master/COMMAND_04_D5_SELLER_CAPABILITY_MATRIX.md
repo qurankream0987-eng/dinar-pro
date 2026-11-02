@@ -1,45 +1,48 @@
-# Command 04 — D5 Seller Capability Matrix
+# Command 04D — D5 Seller Capability Matrix
 
-D5 remains **PARTIAL**. D6 is not started. **PASS** means the stated D5 behavior is implemented and directly evidenced; **PARTIAL** means a bounded slice exists or the D5 journey is not fully tested; **BLOCKED** means the behavior is unavailable; **NOT_RUN** means no browser/runtime test was run.
+D5 remains **PARTIAL**. D6 is not started. **PASS** means the bounded behavior listed is implemented and directly evidenced; **PARTIAL** means a broader seller journey remains unfinished or untested; **BLOCKED** means the behavior is unavailable; **NOT_RUN** means no browser test was run.
 
 ## Evidence references
 
 - **[session]** `artifacts/api-server/src/lib/business-delegations.ts`; `artifacts/api-server/src/lib/auth.ts`; `lib/db/src/schema/index.ts`; `lib/db/drizzle/0050_normal_nico_minoru.sql`.
 - **[runtime]** `artifacts/api-server/src/ai/smart-turn.ts`; `artifacts/api-server/src/ai/conversation-runtime.ts`; `artifacts/api-server/src/ai/model-turn.ts`.
 - **[actions]** `artifacts/api-server/src/ai/action-foundation.ts`; `artifacts/api-server/src/ai/business-turn.ts`; `artifacts/api-server/src/ai/inquiry-turn.ts`; `artifacts/api-server/src/ai/negotiation-turn.ts`.
-- **[D5 test]** `artifacts/api-server/test/business-delegations.test.ts` — 4/4 passed. A fake injected model proposed inventory reads; no live model/provider was used.
-- **[D5 G2 acceptance]** `artifacts/api-server/test/d5-seller-employee-acceptance.test.ts` — 1/1 passed. It exercises an injected model, an actual G2 inquiry, owner review/approval, stock changes, revocation, and persisted in-app delivery; no live model/provider was used.
+- **[D5 delegation]** `artifacts/api-server/test/business-delegations.test.ts` — 4/4 passed.
+- **[D5 acceptance]** `artifacts/api-server/test/d5-seller-employee-acceptance.test.ts` — 1/1 passed. Injected model only; no live model/provider was used.
 - **[G2 inquiry]** `artifacts/api-server/test/next-g2-inquiry.test.ts` — 17/17 passed.
-- **[G2 smart]** `artifacts/api-server/test/g2-smart-conversation.test.ts` — 91/91 passed with the suite's development payment simulation enabled.
+- **[G2 smart]** `artifacts/api-server/test/g2-smart-conversation.test.ts` — 91/91 passed with its development payment simulation enabled.
 - **[AI boundary]** `artifacts/api-server/test/ai-authority-boundary.test.ts` — 4/4 passed.
-- Every suite ran against a fresh loopback PostgreSQL test database with outbound access guarded; each database was dropped afterward. No managed or production database was used.
+- **[F0 actions]** `artifacts/api-server/test/block-f0-foundation.test.ts` — 12/12 passed.
+- **[F3 commerce]** `artifacts/api-server/test/block-f3-commerce.test.ts` — 17/17 passed with `BDINAR_WAVE4_ACCEPTANCE=development`.
+- All suites ran against fresh loopback PostgreSQL databases with outbound access guarded; each database was dropped afterward. No managed or production database was used.
+- Typecheck and API build passed. The three workspace security scanners reported zero SAST and HoundDog findings; dependency findings were in the workspace-root lockfile, while this checkout pins `qs@6.16.1` and `zod@4.6.7`.
 
 | ID | Seller capability | D5 status | Source paths | Test evidence and resulting database state |
 |---|---|---:|---|---|
-| D5-01 | Prepare a used-phone listing draft | PARTIAL | [runtime], [actions] | [D5 test] does not exercise listing drafting. The typed draft route is narrowly bounded; no D5 listing row is asserted. |
-| D5-02 | Correct price in the same draft | BLOCKED | [runtime], [actions], [session] | No existing-draft price-edit action or D5 test. Published-price changes remain unavailable; no D5 price write is asserted. |
-| D5-03 | Publish only through permitted approval | BLOCKED | [runtime], [actions] | No D5 publication action. No publication state changed in [D5 test]. |
-| D5-04 | Answer a known published-product fact | PARTIAL | [session], [runtime] | [D5 test] verifies scoped context, but the fixture has no published listing; no populated fact answer is asserted. |
-| D5-05 | Refuse to invent an unknown specification | PARTIAL | [runtime] | The model prompt requires grounding and labels listing content as untrusted; no model-generated D5 answer was evaluated. |
-| D5-06 | Report actual stock availability | PARTIAL | [session], [runtime] | [D5 G2 acceptance] checks 35, zero, and `UNLIMITED` separately; a stale 35→34 snapshot is rejected at send time. Broader stock-answer journeys remain untested. |
-| D5-07 | Handle a buyer's bulk quantity inquiry through G2 | PARTIAL | [actions] | [D5 G2 acceptance] sends a 50-piece buyer question through canonical G2, gives the model the recorded 35, rejects stale stock, and sends one owner-approved reply. Bulk fulfillment and negotiation remain unavailable. |
-| D5-08 | Draft a customer reply for owner approval | PARTIAL | [runtime], [actions] | [D5 G2 acceptance] verifies an `INQUIRY_DRAFT` with `DINAR_DRAFT_APPROVED` provenance, no pre-approval message/event, and contact-screened context. |
-| D5-09 | Approve a reply exactly once | PARTIAL | [session], [actions] | [D5 G2 acceptance] revalidates session, inquiry, question, listing, and inventory, writes one in-app reply/event, and verifies approval replay does not duplicate the send. |
-| D5-10 | Escalate a discount request | PARTIAL | [runtime], [actions] | The D5 proposal can route to negotiation status; [G2 smart] covers the canonical negotiation service, not the D5 route. No D5 negotiation write is asserted. |
-| D5-11 | Prevent unauthorized negotiated-price acceptance | PARTIAL | [runtime], [actions] | [AI boundary] and [G2 smart] pass; the D5 employee's prohibited acceptance proposal has no dedicated test. |
-| D5-12 | Read an authorized order status | PARTIAL | [session], [runtime], [actions] | `business.orders.read` is rechecked before the canonical business read; no D5 order-status journey or order-row assertion was run. |
-| D5-13 | Reject fabricated payment claims | PARTIAL | [runtime], [actions] | [AI boundary] verifies no model financial authority; no D5-generated payment claim was tested. No D5 payment/order record was created. |
-| D5-14 | Stop follow-ups after grant revocation | PASS | [session], [runtime] | [D5 test] verifies the invalidated session/audit state; [D5 G2 acceptance] revokes with a reply pending and verifies approval is denied before another fake-model call or message write. Pending-action cleanup is still a separate gap. |
-| D5-15 | Deny access to another business | PARTIAL | [session], [runtime] | [D5 test] rejects another actor and ambiguous grants; a same-owner, separate-business D5 journey was not run. |
-| D5-16 | Deny access after a market change | PASS | [session], [runtime], [auth] | [D5 test] receives no context for the other market and verifies a JO session becomes `INVALIDATED` with `MARKET_CHANGE` after switching markets. |
-| D5-17 | Create truthful marketing text without publishing | PARTIAL | [runtime] | Marketing context is scoped and publication is not an employee action; no generated text or publication attempt was tested. |
-| D5-18 | Handle a service listing | BLOCKED | [runtime], [actions] | No D5 service-listing journey is implemented or tested; no service listing was written. |
-| D5-19 | Handle a vehicle listing | BLOCKED | [runtime], [actions] | No D5 vehicle-listing journey is implemented or tested; no vehicle listing was written. |
+| D5-01 | Prepare a used-phone listing draft | PASS | [runtime], [actions] | [D5 acceptance] verifies the phone title, used condition, and price in a `SELL` draft; seller offer rows remain unchanged. |
+| D5-02 | Correct price in the same draft | PASS | [runtime], [actions], [session] | A later D5 turn changes the same unpublished draft from 12 to 15; no offer row is created. |
+| D5-03 | Publish only through permitted approval | PARTIAL | [runtime], [actions] | D5 publication requests are rejected and offer rows remain unchanged. The owner’s follow-on publication flow is not integrated or tested here. |
+| D5-04 | Answer a known published-product fact | PASS | [session], [runtime] | The owner-scoped published catalog returns the fixture listing’s recorded category; answers are server-grounded. |
+| D5-05 | Refuse to invent an unknown specification | PASS | [runtime] | A battery-capacity question returns “not recorded” and omits the requested unrecorded value. |
+| D5-06 | Report actual stock availability | PASS | [session], [runtime] | The D5 route returns 35, distinguishes zero from unavailable, and reports `UNLIMITED` without a numeric count. G2 independently rejects a stale 35→34 snapshot at send time. |
+| D5-07 | Handle a buyer's bulk quantity inquiry through G2 | PARTIAL | [actions] | [D5 acceptance] sends a 50-piece buyer question through canonical G2, gives the model the recorded 35, rejects stale stock, and sends one owner-approved reply. Bulk fulfillment and negotiation remain unavailable. |
+| D5-08 | Draft a customer reply for owner approval | PASS | [runtime], [actions] | [D5 acceptance] verifies an `INQUIRY_DRAFT` with `DINAR_DRAFT_APPROVED` provenance, no pre-approval message/event, and screened buyer context. |
+| D5-09 | Approve a reply exactly once | PASS | [session], [actions] | The canonical G2 action revalidates session, inquiry, question, listing, and stock; one in-app reply/event persists and approval replay does not duplicate it. |
+| D5-10 | Escalate a discount request | PARTIAL | [runtime], [actions] | D5 reads and audits open negotiations for owner review without accepting or countering. No owner notification or decision flow is connected. |
+| D5-11 | Prevent unauthorized negotiated-price acceptance | PASS | [runtime], [actions] | A model-proposed price-review action is rejected; the fixture negotiation remains `OPEN`. |
+| D5-12 | Read an authorized order status | PASS | [session], [runtime], [actions] | A disposable reservation fixture returns its stored `RESERVED` status and scoped item summary without buyer identifiers. No payment or settlement is created. |
+| D5-13 | Reject fabricated payment claims | PASS | [runtime], [actions] | A drafted buyer reply claiming receipt of payment is refused; no reply draft or payment record is created. |
+| D5-14 | Stop follow-ups after grant revocation | PASS | [session], [runtime] | Revocation invalidates a pending action in the same transaction; the race test confirms a blocked approval performs no later model call or message write. |
+| D5-15 | Deny access to another business | PASS | [session], [runtime] | A different owner’s listing and stock are not returned by the current business-scoped D5 session. |
+| D5-16 | Deny access after a market change | PASS | [session], [runtime], [auth] | [D5 delegation] receives no context for the other market and verifies a JO session becomes `INVALIDATED` with `MARKET_CHANGE` after switching markets. |
+| D5-17 | Create truthful marketing text without publishing | PARTIAL | [runtime] | No dedicated D5 marketing-copy action or generated-copy test exists. |
+| D5-18 | Handle a service listing | PARTIAL | [runtime], [actions] | Shared unpublished listing drafting is available; service-specific fields and a full service journey are not verified. |
+| D5-19 | Handle a vehicle listing | PARTIAL | [runtime], [actions] | Shared unpublished listing drafting is available; vehicle-specific fields and a full vehicle journey are not verified. |
 | D5-20 | Handle bulk industrial/business inquiries | BLOCKED | [runtime], [actions] | D5 can draft one reply for owner approval; bulk messaging is not an employee action. No message was sent by the D5 test. |
-| D5-21 | Correct and resume a multi-turn task | PARTIAL | [session], [runtime], [actions] | [D5 test] and [D5 G2 acceptance] prove persisted-session follow-ups without invocation wording; correction/resumption of a pending D5 draft is not tested. |
+| D5-21 | Correct and resume a multi-turn task | PASS | [session], [runtime], [actions] | The persisted D5 session corrects a pending listing draft on a later turn without repeating invocation wording. |
 | D5-22 | Retry safely after a tool failure | PARTIAL | [session], [runtime], [actions] | Capabilities are rechecked on each action; no D5 tool-failure/retry journey was run and no retry side effect is claimed. |
 | D5-23 | Reject malicious customer prompt injection | PARTIAL | [runtime] | The model prompt treats listing/provider content as untrusted; [G2 smart] injection counters are zero, but no D5 listing-content injection fixture was run. |
-| D5-24 | Match response, database state, and audit evidence | PASS | [session], [runtime] | [D5 test] matches inventory access to capability audit evidence and checks session audit events; [D5 G2 acceptance] matches the review, final message, and `INQUIRY_REPLIED` event. Test databases dropped. |
-| D5-25 | Preserve authorized state across browser reload | NOT_RUN | [session], [runtime] | Service-level session re-resolution is tested in [D5 test]; no browser journey was run and no UI was changed. |
+| D5-24 | Match response, database state, and audit evidence | PASS | [session], [runtime] | [D5 delegation] matches inventory access to capability audit evidence and checks session audit events; [D5 acceptance] matches the review, final message, and `INQUIRY_REPLIED` event. Test databases dropped. |
+| D5-25 | Preserve authorized state across browser reload | NOT_RUN | [session], [runtime] | Service-level session re-resolution is tested in [D5 delegation]; no browser journey was run and no UI was changed. |
 
 Publication, refunds, financial commitments, private-contact disclosure, and bulk messaging remain unavailable to the D5 employee. The tested model was an injected test double only; the G2 payment simulation ran solely on a disposable database and did not contact a payment provider.
