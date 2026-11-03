@@ -72,6 +72,10 @@ on:
           - block-f3-commerce.test
           - ai-foundation-acceptance.test
           - ai-authority-boundary.test
+          - d16-readiness.test
+          - wave06-d16-compliance-acceptance.test
+          - wave06-conversation-memory.test
+          - wave06-conversation-memory-performance.test
       chain:
         description: "Run a reviewed suite chain on one disposable migrated and seeded database"
         required: false
@@ -85,6 +89,8 @@ on:
           - d4-d5-authorization
           - d6-g2-negotiation
           - ai-foundation
+          - wave06-d16-d17
+          - wave06-d17-memory
       flags:
         description: "Allowlisted KEY=VALUE switches, space separated"
         required: false
@@ -143,7 +149,7 @@ jobs:
             key=${pair%%=*}
             value=${pair#*=}
             case "$key" in
-              BDINAR_W07_ACCEPTANCE|BDINAR_W08_ACCEPTANCE|BDINAR_W09_ACCEPTANCE|BDINAR_W10_ACCEPTANCE|BDINAR_W12C_ACCEPTANCE|BDINAR_D1D2_ACCEPTANCE|BDINAR_W02U3_TEST_DATABASE|BDINAR_W02U3_BROWSER|BDINAR_D3A_ACCEPTANCE|BDINAR_WAVE4_ACCEPTANCE|BDINAR_WAVE3_ACCEPTANCE|BDINAR_WAVE02_ACCEPTANCE|BDINAR_PHASE1_ACCEPTANCE|BDINAR_SECURITY_ACCEPTANCE|BDINAR_D4_ACCEPTANCE|BDINAR_D5_ACCEPTANCE|BDINAR_A02_ISOLATION|BDINAR_G2_ACCEPTANCE|BDINAR_BLOCKF_ACCEPTANCE|BDINAR_AI_FOUNDATION)
+              BDINAR_W07_ACCEPTANCE|BDINAR_W08_ACCEPTANCE|BDINAR_W09_ACCEPTANCE|BDINAR_W10_ACCEPTANCE|BDINAR_W12C_ACCEPTANCE|BDINAR_D1D2_ACCEPTANCE|BDINAR_W02U3_TEST_DATABASE|BDINAR_W02U3_BROWSER|BDINAR_D3A_ACCEPTANCE|BDINAR_WAVE4_ACCEPTANCE|BDINAR_WAVE3_ACCEPTANCE|BDINAR_WAVE02_ACCEPTANCE|BDINAR_PHASE1_ACCEPTANCE|BDINAR_SECURITY_ACCEPTANCE|BDINAR_D4_ACCEPTANCE|BDINAR_D5_ACCEPTANCE|BDINAR_A02_ISOLATION|BDINAR_G2_ACCEPTANCE|BDINAR_BLOCKF_ACCEPTANCE|BDINAR_AI_FOUNDATION|BDINAR_D16_ACCEPTANCE|BDINAR_W06_D16_ACCEPTANCE|BDINAR_W06_D17_ACCEPTANCE)
                 [ "$value" = development ] || { echo "$key must be development" >&2; exit 96; } ;;
               BDINAR_LOG_SCAN)
                 case "$value" in 0|1) ;; *) echo "$key must be 0 or 1" >&2; exit 96 ;; esac ;;
@@ -193,6 +199,12 @@ jobs:
             ai-foundation)
               SUITES="ai-foundation-acceptance.test ai-authority-boundary.test bounded-multistep.test"
               require_flags "BDINAR_AI_FOUNDATION BDINAR_TEST_DATABASE" ;;
+            wave06-d16-d17)
+              SUITES="d16-readiness.test wave06-d16-compliance-acceptance.test"
+              require_flags "BDINAR_D16_ACCEPTANCE BDINAR_W06_D16_ACCEPTANCE" ;;
+            wave06-d17-memory)
+              SUITES="wave06-conversation-memory.test wave06-conversation-memory-performance.test"
+              require_flags "BDINAR_W06_D17_ACCEPTANCE" ;;
             *) echo "chain not allowlisted: $CHAIN" >&2; exit 96 ;;
           esac
           if [ "$promotions" = 1 ]; then

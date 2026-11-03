@@ -1,6 +1,6 @@
 {
-  "id": "a51ad69f-8e2c-49d5-a955-7086749d2962",
-  "prevId": "cd04a497-3dd3-48d1-8048-980014d5c89a",
+  "id": "dcf56e63-9f40-44f4-ae5c-f78e7b434bcd",
+  "prevId": "7ca87d77-8176-4406-a79a-ef69ce2f99b5",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -9231,11 +9231,1023 @@
       "checkConstraints": {
         "market_legal_capability_events_type_valid": {
           "name": "market_legal_capability_events_type_valid",
-          "value": "\"market_legal_capability_events\".\"event_type\" IN ('REVIEW_REQUESTED', 'COUNSEL_REVIEWED', 'COUNSEL_BLOCKED', 'OWNER_ENABLED', 'OWNER_DISABLED')"
+          "value": "\"market_legal_capability_events\".\"event_type\" IN ('REVIEW_REQUESTED', 'COUNSEL_REVIEWED', 'COUNSEL_BLOCKED', 'OWNER_ENABLED', 'CAPABILITY_DISABLED')"
         },
         "market_legal_capability_events_status_valid": {
           "name": "market_legal_capability_events_status_valid",
           "value": "\"market_legal_capability_events\".\"to_status\" IN ('DISABLED', 'COUNSEL_REVIEW_REQUIRED', 'OWNER_APPROVAL_REQUIRED', 'ENABLED', 'BLOCKED') AND (\"market_legal_capability_events\".\"from_status\" IS NULL OR \"market_legal_capability_events\".\"from_status\" IN ('DISABLED', 'COUNSEL_REVIEW_REQUIRED', 'OWNER_APPROVAL_REQUIRED', 'ENABLED', 'BLOCKED'))"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.market_legal_evidence": {
+      "name": "market_legal_evidence",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "intake_id": {
+          "name": "intake_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "topic_key": {
+          "name": "topic_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "evidence_type": {
+          "name": "evidence_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "document_version": {
+          "name": "document_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "reference_code": {
+          "name": "reference_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "issued_at": {
+          "name": "issued_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'SUBMITTED_UNVERIFIED'"
+        },
+        "idempotency_key": {
+          "name": "idempotency_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "submitted_by": {
+          "name": "submitted_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "submitted_at": {
+          "name": "submitted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "reviewed_by": {
+          "name": "reviewed_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reviewed_at": {
+          "name": "reviewed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "market_legal_evidence_idempotency_unique": {
+          "name": "market_legal_evidence_idempotency_unique",
+          "columns": [
+            {
+              "expression": "intake_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "idempotency_key",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "market_legal_evidence_topic_idx": {
+          "name": "market_legal_evidence_topic_idx",
+          "columns": [
+            {
+              "expression": "intake_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "topic_key",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "evidence_type",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "market_legal_evidence_intake_id_market_legal_intakes_id_fk": {
+          "name": "market_legal_evidence_intake_id_market_legal_intakes_id_fk",
+          "tableFrom": "market_legal_evidence",
+          "tableTo": "market_legal_intakes",
+          "columnsFrom": [
+            "intake_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "market_legal_evidence_submitted_by_users_id_fk": {
+          "name": "market_legal_evidence_submitted_by_users_id_fk",
+          "tableFrom": "market_legal_evidence",
+          "tableTo": "users",
+          "columnsFrom": [
+            "submitted_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "market_legal_evidence_reviewed_by_users_id_fk": {
+          "name": "market_legal_evidence_reviewed_by_users_id_fk",
+          "tableFrom": "market_legal_evidence",
+          "tableTo": "users",
+          "columnsFrom": [
+            "reviewed_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "market_legal_evidence_topic_valid": {
+          "name": "market_legal_evidence_topic_valid",
+          "value": "\"market_legal_evidence\".\"topic_key\" IN ('OPERATING_ENTITY', 'MARKETPLACE_RULES', 'SELLER_ELIGIBILITY', 'BUSINESS_KYC', 'CONSUMER_PROTECTION', 'FEES_AND_TAX', 'PAYMENTS', 'DELIVERY_LOGISTICS', 'PERSONAL_DATA', 'EXTERNAL_AI', 'MINORS_RESTRICTED_GOODS_ADVERTISING', 'IP_COMPLAINTS_DISPUTES', 'INCIDENT_NOTIFICATION', 'POLICY_VERSIONS', 'OFFICIAL_REFERENCES', 'COUNSEL_FINDINGS')"
+        },
+        "market_legal_evidence_type_valid": {
+          "name": "market_legal_evidence_type_valid",
+          "value": "\"market_legal_evidence\".\"evidence_type\" ~ '^[A-Z][A-Z0-9_]{1,63}$'"
+        },
+        "market_legal_evidence_version_valid": {
+          "name": "market_legal_evidence_version_valid",
+          "value": "char_length(btrim(\"market_legal_evidence\".\"document_version\")) BETWEEN 1 AND 80"
+        },
+        "market_legal_evidence_reference_valid": {
+          "name": "market_legal_evidence_reference_valid",
+          "value": "\"market_legal_evidence\".\"reference_code\" ~ '^[A-Za-z][A-Za-z0-9._:/-]{2,199}$'"
+        },
+        "market_legal_evidence_status_valid": {
+          "name": "market_legal_evidence_status_valid",
+          "value": "\"market_legal_evidence\".\"status\" IN ('SUBMITTED_UNVERIFIED', 'COUNSEL_REVIEWED', 'REJECTED', 'SUPERSEDED')"
+        },
+        "market_legal_evidence_review_guard": {
+          "name": "market_legal_evidence_review_guard",
+          "value": "\"market_legal_evidence\".\"status\" NOT IN ('COUNSEL_REVIEWED', 'REJECTED', 'SUPERSEDED') OR (\"market_legal_evidence\".\"reviewed_by\" IS NOT NULL AND \"market_legal_evidence\".\"reviewed_at\" IS NOT NULL)"
+        },
+        "market_legal_evidence_expiry_valid": {
+          "name": "market_legal_evidence_expiry_valid",
+          "value": "\"market_legal_evidence\".\"expires_at\" IS NULL OR \"market_legal_evidence\".\"issued_at\" IS NULL OR \"market_legal_evidence\".\"expires_at\" >= \"market_legal_evidence\".\"issued_at\""
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.market_legal_intake_events": {
+      "name": "market_legal_intake_events",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "intake_id": {
+          "name": "intake_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "event_type": {
+          "name": "event_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "topic_key": {
+          "name": "topic_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "evidence_id": {
+          "name": "evidence_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "actor_id": {
+          "name": "actor_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "from_status": {
+          "name": "from_status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "to_status": {
+          "name": "to_status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "reference_code": {
+          "name": "reference_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "market_legal_intake_events_intake_idx": {
+          "name": "market_legal_intake_events_intake_idx",
+          "columns": [
+            {
+              "expression": "intake_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "market_legal_intake_events_intake_id_market_legal_intakes_id_fk": {
+          "name": "market_legal_intake_events_intake_id_market_legal_intakes_id_fk",
+          "tableFrom": "market_legal_intake_events",
+          "tableTo": "market_legal_intakes",
+          "columnsFrom": [
+            "intake_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "market_legal_intake_events_evidence_id_market_legal_evidence_id_fk": {
+          "name": "market_legal_intake_events_evidence_id_market_legal_evidence_id_fk",
+          "tableFrom": "market_legal_intake_events",
+          "tableTo": "market_legal_evidence",
+          "columnsFrom": [
+            "evidence_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "market_legal_intake_events_actor_id_users_id_fk": {
+          "name": "market_legal_intake_events_actor_id_users_id_fk",
+          "tableFrom": "market_legal_intake_events",
+          "tableTo": "users",
+          "columnsFrom": [
+            "actor_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "market_legal_intake_events_type_valid": {
+          "name": "market_legal_intake_events_type_valid",
+          "value": "\"market_legal_intake_events\".\"event_type\" IN ('PACKAGE_INITIALIZED', 'EVIDENCE_SUBMITTED', 'EVIDENCE_REVIEWED', 'EVIDENCE_REJECTED', 'COUNSEL_REVIEW_REQUESTED', 'TOPIC_REVIEWED', 'COUNSEL_REVIEW_RECORDED', 'COUNSEL_APPROVAL_BLOCKED', 'OWNER_APPROVAL_BLOCKED', 'TECHNICAL_VERIFICATION_BLOCKED', 'ACTIVATION_BLOCKED', 'MARKET_ACTIVATED', 'MARKET_SUSPENDED')"
+        },
+        "market_legal_intake_events_reference_valid": {
+          "name": "market_legal_intake_events_reference_valid",
+          "value": "\"market_legal_intake_events\".\"reference_code\" IS NULL OR \"market_legal_intake_events\".\"reference_code\" ~ '^[A-Za-z][A-Za-z0-9._:/-]{2,199}$'"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.market_legal_intake_topics": {
+      "name": "market_legal_intake_topics",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "intake_id": {
+          "name": "intake_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "topic_key": {
+          "name": "topic_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "disposition": {
+          "name": "disposition",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'UNRESOLVED'"
+        },
+        "review_status": {
+          "name": "review_status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'NOT_REVIEWED'"
+        },
+        "evidence_requirement_status": {
+          "name": "evidence_requirement_status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'NOT_REVIEWED'"
+        },
+        "policy_requirement_status": {
+          "name": "policy_requirement_status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'NOT_REVIEWED'"
+        },
+        "counsel_finding": {
+          "name": "counsel_finding",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "qualifications": {
+          "name": "qualifications",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "required_amendments": {
+          "name": "required_amendments",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "official_reference": {
+          "name": "official_reference",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "effective_from": {
+          "name": "effective_from",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "effective_until": {
+          "name": "effective_until",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "required_evidence_types": {
+          "name": "required_evidence_types",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'[]'::jsonb"
+        },
+        "required_policy_versions": {
+          "name": "required_policy_versions",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'[]'::jsonb"
+        },
+        "reviewed_by": {
+          "name": "reviewed_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reviewed_at": {
+          "name": "reviewed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "market_legal_intake_topics_unique": {
+          "name": "market_legal_intake_topics_unique",
+          "columns": [
+            {
+              "expression": "intake_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "topic_key",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "market_legal_intake_topics_status_idx": {
+          "name": "market_legal_intake_topics_status_idx",
+          "columns": [
+            {
+              "expression": "intake_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "review_status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "topic_key",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "market_legal_intake_topics_intake_id_market_legal_intakes_id_fk": {
+          "name": "market_legal_intake_topics_intake_id_market_legal_intakes_id_fk",
+          "tableFrom": "market_legal_intake_topics",
+          "tableTo": "market_legal_intakes",
+          "columnsFrom": [
+            "intake_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "market_legal_intake_topics_reviewed_by_users_id_fk": {
+          "name": "market_legal_intake_topics_reviewed_by_users_id_fk",
+          "tableFrom": "market_legal_intake_topics",
+          "tableTo": "users",
+          "columnsFrom": [
+            "reviewed_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "market_legal_intake_topics_key_valid": {
+          "name": "market_legal_intake_topics_key_valid",
+          "value": "\"market_legal_intake_topics\".\"topic_key\" IN ('OPERATING_ENTITY', 'MARKETPLACE_RULES', 'SELLER_ELIGIBILITY', 'BUSINESS_KYC', 'CONSUMER_PROTECTION', 'FEES_AND_TAX', 'PAYMENTS', 'DELIVERY_LOGISTICS', 'PERSONAL_DATA', 'EXTERNAL_AI', 'MINORS_RESTRICTED_GOODS_ADVERTISING', 'IP_COMPLAINTS_DISPUTES', 'INCIDENT_NOTIFICATION', 'POLICY_VERSIONS', 'OFFICIAL_REFERENCES', 'COUNSEL_FINDINGS')"
+        },
+        "market_legal_intake_topics_disposition_valid": {
+          "name": "market_legal_intake_topics_disposition_valid",
+          "value": "\"market_legal_intake_topics\".\"disposition\" IN ('UNRESOLVED', 'REQUIRED', 'NOT_REQUIRED', 'NOT_APPLICABLE', 'BLOCKED')"
+        },
+        "market_legal_intake_topics_review_status_valid": {
+          "name": "market_legal_intake_topics_review_status_valid",
+          "value": "\"market_legal_intake_topics\".\"review_status\" IN ('NOT_REVIEWED', 'COUNSEL_REVIEWED', 'BLOCKED')"
+        },
+        "market_legal_intake_topics_evidence_status_valid": {
+          "name": "market_legal_intake_topics_evidence_status_valid",
+          "value": "\"market_legal_intake_topics\".\"evidence_requirement_status\" IN ('NOT_REVIEWED', 'REQUIREMENTS_SET', 'NO_REQUIREMENTS')"
+        },
+        "market_legal_intake_topics_policy_status_valid": {
+          "name": "market_legal_intake_topics_policy_status_valid",
+          "value": "\"market_legal_intake_topics\".\"policy_requirement_status\" IN ('NOT_REVIEWED', 'VERSIONS_SET', 'NO_POLICY_REQUIREMENT')"
+        },
+        "market_legal_intake_topics_review_guard": {
+          "name": "market_legal_intake_topics_review_guard",
+          "value": "\"market_legal_intake_topics\".\"review_status\" <> 'COUNSEL_REVIEWED' OR (\"market_legal_intake_topics\".\"disposition\" <> 'UNRESOLVED' AND \"market_legal_intake_topics\".\"counsel_finding\" IS NOT NULL AND char_length(btrim(\"market_legal_intake_topics\".\"counsel_finding\")) >= 3 AND \"market_legal_intake_topics\".\"official_reference\" IS NOT NULL AND \"market_legal_intake_topics\".\"reviewed_by\" IS NOT NULL AND \"market_legal_intake_topics\".\"reviewed_at\" IS NOT NULL)"
+        },
+        "market_legal_intake_topics_evidence_requirement_guard": {
+          "name": "market_legal_intake_topics_evidence_requirement_guard",
+          "value": "(\"market_legal_intake_topics\".\"evidence_requirement_status\" = 'NOT_REVIEWED') OR (\"market_legal_intake_topics\".\"evidence_requirement_status\" = 'NO_REQUIREMENTS' AND jsonb_array_length(\"market_legal_intake_topics\".\"required_evidence_types\") = 0) OR (\"market_legal_intake_topics\".\"evidence_requirement_status\" = 'REQUIREMENTS_SET' AND jsonb_array_length(\"market_legal_intake_topics\".\"required_evidence_types\") > 0)"
+        },
+        "market_legal_intake_topics_policy_requirement_guard": {
+          "name": "market_legal_intake_topics_policy_requirement_guard",
+          "value": "(\"market_legal_intake_topics\".\"policy_requirement_status\" = 'NOT_REVIEWED') OR (\"market_legal_intake_topics\".\"policy_requirement_status\" = 'NO_POLICY_REQUIREMENT' AND jsonb_array_length(\"market_legal_intake_topics\".\"required_policy_versions\") = 0) OR (\"market_legal_intake_topics\".\"policy_requirement_status\" = 'VERSIONS_SET' AND jsonb_array_length(\"market_legal_intake_topics\".\"required_policy_versions\") > 0)"
+        },
+        "market_legal_intake_topics_effective_range_valid": {
+          "name": "market_legal_intake_topics_effective_range_valid",
+          "value": "\"market_legal_intake_topics\".\"effective_from\" IS NULL OR \"market_legal_intake_topics\".\"effective_until\" IS NULL OR \"market_legal_intake_topics\".\"effective_until\" >= \"market_legal_intake_topics\".\"effective_from\""
+        },
+        "market_legal_intake_topics_reference_valid": {
+          "name": "market_legal_intake_topics_reference_valid",
+          "value": "\"market_legal_intake_topics\".\"official_reference\" IS NULL OR \"market_legal_intake_topics\".\"official_reference\" ~ '^[A-Za-z][A-Za-z0-9._:/-]{2,199}$'"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.market_legal_intakes": {
+      "name": "market_legal_intakes",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "market_id": {
+          "name": "market_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "review_status": {
+          "name": "review_status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'NOT_REVIEWED'"
+        },
+        "counsel_approval_status": {
+          "name": "counsel_approval_status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'BLOCKED'"
+        },
+        "counsel_approval_blocker": {
+          "name": "counsel_approval_blocker",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'COUNSEL_SIGNATURE_VERIFICATION_UNAVAILABLE'"
+        },
+        "owner_approval_status": {
+          "name": "owner_approval_status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'BLOCKED'"
+        },
+        "technical_verification_status": {
+          "name": "technical_verification_status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'NOT_RUN'"
+        },
+        "activation_status": {
+          "name": "activation_status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'DISABLED'"
+        },
+        "review_requested_by": {
+          "name": "review_requested_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "review_requested_at": {
+          "name": "review_requested_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "counsel_reviewed_by": {
+          "name": "counsel_reviewed_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "counsel_reviewed_at": {
+          "name": "counsel_reviewed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "counsel_review_reference": {
+          "name": "counsel_review_reference",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "counsel_approved_by": {
+          "name": "counsel_approved_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "counsel_approved_at": {
+          "name": "counsel_approved_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "counsel_approval_reference": {
+          "name": "counsel_approval_reference",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "owner_approved_by": {
+          "name": "owner_approved_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "owner_approved_at": {
+          "name": "owner_approved_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "owner_approval_reference": {
+          "name": "owner_approval_reference",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "technical_verified_by": {
+          "name": "technical_verified_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "technical_verified_at": {
+          "name": "technical_verified_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "technical_verification_reference": {
+          "name": "technical_verification_reference",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "activated_by": {
+          "name": "activated_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "activated_at": {
+          "name": "activated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "suspended_by": {
+          "name": "suspended_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "suspended_at": {
+          "name": "suspended_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "suspension_reference": {
+          "name": "suspension_reference",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "market_legal_intakes_market_unique": {
+          "name": "market_legal_intakes_market_unique",
+          "columns": [
+            {
+              "expression": "market_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "market_legal_intakes_activation_idx": {
+          "name": "market_legal_intakes_activation_idx",
+          "columns": [
+            {
+              "expression": "activation_status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "market_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "market_legal_intakes_market_id_markets_id_fk": {
+          "name": "market_legal_intakes_market_id_markets_id_fk",
+          "tableFrom": "market_legal_intakes",
+          "tableTo": "markets",
+          "columnsFrom": [
+            "market_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "market_legal_intakes_review_requested_by_users_id_fk": {
+          "name": "market_legal_intakes_review_requested_by_users_id_fk",
+          "tableFrom": "market_legal_intakes",
+          "tableTo": "users",
+          "columnsFrom": [
+            "review_requested_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "market_legal_intakes_counsel_reviewed_by_users_id_fk": {
+          "name": "market_legal_intakes_counsel_reviewed_by_users_id_fk",
+          "tableFrom": "market_legal_intakes",
+          "tableTo": "users",
+          "columnsFrom": [
+            "counsel_reviewed_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "market_legal_intakes_counsel_approved_by_users_id_fk": {
+          "name": "market_legal_intakes_counsel_approved_by_users_id_fk",
+          "tableFrom": "market_legal_intakes",
+          "tableTo": "users",
+          "columnsFrom": [
+            "counsel_approved_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "market_legal_intakes_owner_approved_by_users_id_fk": {
+          "name": "market_legal_intakes_owner_approved_by_users_id_fk",
+          "tableFrom": "market_legal_intakes",
+          "tableTo": "users",
+          "columnsFrom": [
+            "owner_approved_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "market_legal_intakes_technical_verified_by_users_id_fk": {
+          "name": "market_legal_intakes_technical_verified_by_users_id_fk",
+          "tableFrom": "market_legal_intakes",
+          "tableTo": "users",
+          "columnsFrom": [
+            "technical_verified_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "market_legal_intakes_activated_by_users_id_fk": {
+          "name": "market_legal_intakes_activated_by_users_id_fk",
+          "tableFrom": "market_legal_intakes",
+          "tableTo": "users",
+          "columnsFrom": [
+            "activated_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "market_legal_intakes_suspended_by_users_id_fk": {
+          "name": "market_legal_intakes_suspended_by_users_id_fk",
+          "tableFrom": "market_legal_intakes",
+          "tableTo": "users",
+          "columnsFrom": [
+            "suspended_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "market_legal_intakes_review_status_valid": {
+          "name": "market_legal_intakes_review_status_valid",
+          "value": "\"market_legal_intakes\".\"review_status\" IN ('NOT_REVIEWED', 'COUNSEL_REVIEW_REQUIRED', 'COUNSEL_REVIEWED', 'BLOCKED')"
+        },
+        "market_legal_intakes_counsel_approval_status_valid": {
+          "name": "market_legal_intakes_counsel_approval_status_valid",
+          "value": "\"market_legal_intakes\".\"counsel_approval_status\" IN ('BLOCKED', 'APPROVED')"
+        },
+        "market_legal_intakes_owner_status_valid": {
+          "name": "market_legal_intakes_owner_status_valid",
+          "value": "\"market_legal_intakes\".\"owner_approval_status\" IN ('BLOCKED', 'APPROVED')"
+        },
+        "market_legal_intakes_technical_status_valid": {
+          "name": "market_legal_intakes_technical_status_valid",
+          "value": "\"market_legal_intakes\".\"technical_verification_status\" IN ('NOT_RUN', 'PASSED', 'FAILED')"
+        },
+        "market_legal_intakes_activation_status_valid": {
+          "name": "market_legal_intakes_activation_status_valid",
+          "value": "\"market_legal_intakes\".\"activation_status\" IN ('DISABLED', 'ACTIVE', 'SUSPENDED')"
+        },
+        "market_legal_intakes_counsel_approval_guard": {
+          "name": "market_legal_intakes_counsel_approval_guard",
+          "value": "\"market_legal_intakes\".\"counsel_approval_status\" <> 'APPROVED' OR (\"market_legal_intakes\".\"counsel_reviewed_by\" IS NOT NULL AND \"market_legal_intakes\".\"counsel_reviewed_at\" IS NOT NULL AND \"market_legal_intakes\".\"counsel_approval_reference\" IS NOT NULL AND \"market_legal_intakes\".\"counsel_approved_by\" IS NOT NULL AND \"market_legal_intakes\".\"counsel_approved_at\" IS NOT NULL)"
+        },
+        "market_legal_intakes_owner_approval_guard": {
+          "name": "market_legal_intakes_owner_approval_guard",
+          "value": "\"market_legal_intakes\".\"owner_approval_status\" <> 'APPROVED' OR (\"market_legal_intakes\".\"counsel_approval_status\" = 'APPROVED' AND \"market_legal_intakes\".\"technical_verification_status\" = 'PASSED' AND \"market_legal_intakes\".\"owner_approval_reference\" IS NOT NULL AND \"market_legal_intakes\".\"owner_approved_by\" IS NOT NULL AND \"market_legal_intakes\".\"owner_approved_at\" IS NOT NULL)"
+        },
+        "market_legal_intakes_activation_guard": {
+          "name": "market_legal_intakes_activation_guard",
+          "value": "\"market_legal_intakes\".\"activation_status\" <> 'ACTIVE' OR (\"market_legal_intakes\".\"counsel_approval_status\" = 'APPROVED' AND \"market_legal_intakes\".\"owner_approval_status\" = 'APPROVED' AND \"market_legal_intakes\".\"technical_verification_status\" = 'PASSED' AND \"market_legal_intakes\".\"activated_by\" IS NOT NULL AND \"market_legal_intakes\".\"activated_at\" IS NOT NULL)"
+        },
+        "market_legal_intakes_suspension_guard": {
+          "name": "market_legal_intakes_suspension_guard",
+          "value": "\"market_legal_intakes\".\"activation_status\" <> 'SUSPENDED' OR (\"market_legal_intakes\".\"suspended_by\" IS NOT NULL AND \"market_legal_intakes\".\"suspended_at\" IS NOT NULL AND \"market_legal_intakes\".\"suspension_reference\" IS NOT NULL)"
+        },
+        "market_legal_intakes_references_valid": {
+          "name": "market_legal_intakes_references_valid",
+          "value": "(\"market_legal_intakes\".\"counsel_review_reference\" IS NULL OR \"market_legal_intakes\".\"counsel_review_reference\" ~ '^[A-Za-z][A-Za-z0-9._:/-]{2,199}$') AND (\"market_legal_intakes\".\"counsel_approval_reference\" IS NULL OR \"market_legal_intakes\".\"counsel_approval_reference\" ~ '^[A-Za-z][A-Za-z0-9._:/-]{2,199}$') AND (\"market_legal_intakes\".\"owner_approval_reference\" IS NULL OR \"market_legal_intakes\".\"owner_approval_reference\" ~ '^[A-Za-z][A-Za-z0-9._:/-]{2,199}$') AND (\"market_legal_intakes\".\"technical_verification_reference\" IS NULL OR \"market_legal_intakes\".\"technical_verification_reference\" ~ '^[A-Za-z][A-Za-z0-9._:/-]{2,199}$') AND (\"market_legal_intakes\".\"suspension_reference\" IS NULL OR \"market_legal_intakes\".\"suspension_reference\" ~ '^[A-Za-z][A-Za-z0-9._:/-]{2,199}$')"
         }
       },
       "isRLSEnabled": false
@@ -16647,6 +17659,10 @@
         "security_incidents_assessment_valid": {
           "name": "security_incidents_assessment_valid",
           "value": "\"security_incidents\".\"counsel_assessment\" IN ('NOT_ASSESSED', 'REVIEW_REQUIRED', 'REVIEWED')"
+        },
+        "security_incidents_counsel_review_valid": {
+          "name": "security_incidents_counsel_review_valid",
+          "value": "\"security_incidents\".\"counsel_assessment\" <> 'REVIEWED' OR (\"security_incidents\".\"counsel_reference\" IS NOT NULL AND \"security_incidents\".\"counsel_reviewed_by\" IS NOT NULL AND \"security_incidents\".\"counsel_reviewed_at\" IS NOT NULL)"
         },
         "security_incidents_summary_valid": {
           "name": "security_incidents_summary_valid",
