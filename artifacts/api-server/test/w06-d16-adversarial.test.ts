@@ -75,23 +75,38 @@ async function register(name: string): Promise<Actor> {
   return { id: JSON.parse(text).user.id, cookie };
 }
 
+// A loopback listener inside the suite's network namespace can refuse a new connection for a few
+// milliseconds. Retrying a connect-level failure keeps a harness artefact from being reported as a
+// D16 finding; it never changes what a response is asserted to be.
 async function request(path: string, method = "GET", body?: unknown, actor?: Actor) {
-  const response = await fetch(`${origin}/api${path}`, {
-    method,
-    headers: {
-      ...(body !== undefined ? { "content-type": "application/json", origin } : {}),
-      ...(actor ? { cookie: actor.cookie } : {}),
-    },
-    body: body === undefined ? undefined : JSON.stringify(body),
-  });
-  const text = await response.text();
-  let data: any;
-  try {
-    data = JSON.parse(text);
-  } catch {
-    data = undefined;
+  const failures: string[] = [];
+  for (let attempt = 1; attempt <= 6; attempt++) {
+    try {
+      const response = await fetch(`${origin}/api${path}`, {
+        method,
+        headers: {
+          ...(body !== undefined ? { "content-type": "application/json", origin } : {}),
+          ...(actor ? { cookie: actor.cookie } : {}),
+        },
+        body: body === undefined ? undefined : JSON.stringify(body),
+      });
+      const text = await response.text();
+      let data: any;
+      try {
+        data = JSON.parse(text);
+      } catch {
+        data = undefined;
+      }
+      return { status: response.status, data, text };
+    } catch (error: any) {
+      failures.push(`${error.cause?.code ?? error.code ?? error.message}`);
+      await new Promise((resolve) => setTimeout(resolve, 25));
+    }
   }
-  return { status: response.status, data, text };
+  const port = (server.address() as { port: number } | null)?.port ?? "unknown";
+  throw new Error(
+    `${method} ${path} unreachable after ${failures.length} attempts (listening=${server.listening}, port=${port}): ${failures.join(", ")}`,
+  );
 }
 
 function errorCode(response: { status: number; data: any }): string | undefined {
@@ -150,11 +165,24 @@ const envNames = [
 const previousEnv = new Map<string, string | undefined>(
   envNames.map((name) => [name, process.env[name]] as const),
 );
-process.env.DINAR_COUNSEL_REVIEWER_IDS = counsel.id;
-process.env.DINAR_COUNSEL_APPROVER_IDS = counselApprover.id;
-process.env.DINAR_LEGAL_OWNER_IDS = owner.id;
-process.env.DINAR_LEGAL_TECHNICAL_VERIFIER_IDS = technical.id;
-process.env.DINAR_LEGAL_TECHNICAL_ACTIVATOR_IDS = activator.id;
+function configureRoles() {
+  process.env.DINAR_COUNSEL_REVIEWER_IDS = counsel.id;
+  process.env.DINAR_COUNSEL_APPROVER_IDS = counselApprover.id;
+  process.env.DINAR_LEGAL_OWNER_IDS = owner.id;
+  process.env.DINAR_LEGAL_TECHNICAL_VERIFIER_IDS = technical.id;
+  process.env.DINAR_LEGAL_TECHNICAL_ACTIVATOR_IDS = activator.id;
+}
+configureRoles();
+
+/** The role configuration a failing separation assertion needs to explain itself. */
+function rolesProbe() {
+  return JSON.stringify({
+    counselReviewerIds: process.env.DINAR_COUNSEL_REVIEWER_IDS ?? null,
+    legalOwnerIds: process.env.DINAR_LEGAL_OWNER_IDS ?? null,
+    counsel: counsel.id,
+    owner: owner.id,
+  });
+}
 
 after(async () => {
   for (const [name, value] of previousEnv) {
@@ -186,6 +214,62 @@ after(async () => {
 
 function deployed() {
   process.env.DINAR_DEPLOYMENT_ENV = "production";
+}
+
+/**
+ * The three things a fail-closed assertion depends on, read from the same places the route reads
+ * them: the deployment environment, the gate decision, and the stored country package. A browse
+ * that should have been refused is only worth reporting once these are known.
+ */
+async function gateProbe(marketId: string, capability = "BROWSING") {
+  const [intake] = await db
+    .select({
+      activationStatus: marketLegalIntakes.activationStatus,
+      counselApprovalStatus: marketLegalIntakes.counselApprovalStatus,
+      technicalVerificationStatus: marketLegalIntakes.technicalVerificationStatus,
+    })
+    .from(marketLegalIntakes)
+    .where(eq(marketLegalIntakes.marketId, marketId))
+    .limit(1);
+  const [capabilityRow] = await db
+    .select({ status: marketLegalCapabilityApprovals.status })
+    .from(marketLegalCapabilityApprovals)
+    .where(
+      and(
+        eq(marketLegalCapabilityApprovals.marketId, marketId),
+        eq(marketLegalCapabilityApprovals.capability, capability),
+      ),
+    )
+    .limit(1);
+  let direct: string;
+  try {
+    await assertMarketLegalCapability(marketId, capability as any);
+    direct = "allowed";
+  } catch (error: any) {
+    direct = `rejected:${error.code ?? error.message}`;
+  }
+  return JSON.stringify({
+    deployment: process.env.DINAR_DEPLOYMENT_ENV ?? null,
+    enforced: marketLegalGateEnforced(),
+    intake: intake?.activationStatus ?? "NO_ROW",
+    counselApproval: intake?.counselApprovalStatus ?? "NO_ROW",
+    technical: intake?.technicalVerificationStatus ?? "NO_ROW",
+    capability: capabilityRow?.status ?? "NO_ROW",
+    direct,
+  });
+}
+
+/** A counsel topic review that resolves the topic without adding evidence or policy demands. */
+function topicReviewBody(topicKey: string) {
+  return {
+    disposition: "NOT_REQUIRED",
+    counselFinding: `Wave-06 audit fixture finding for ${topicKey}.`,
+    officialReference: `W06-REF-${topicKey}`,
+    evidenceRequirementStatus: "NO_REQUIREMENTS",
+    requiredEvidenceTypes: [],
+    policyRequirementStatus: "NO_POLICY_REQUIREMENT",
+    requiredPolicyVersions: [],
+  };
 }
 
 /** Out-of-band state an activated package would hold once counsel signature verification exists. */
@@ -297,9 +381,10 @@ await test("D16-A01 an unapproved country fails closed on browse, listing detail
   await forceDisabledIntake(HOME);
   await resetCapability(HOME, "BROWSING");
 
+  const state = await gateProbe(HOME);
   const blocked = (status: number, code: string | undefined) => {
-    assert.equal(status, 409, `expected fail-closed 409, got ${status}`);
-    assert.equal(code, "COUNTRY_INTAKE_NOT_ACTIVE");
+    assert.equal(status, 409, `expected fail-closed 409, got ${status} with ${state}`);
+    assert.equal(code, "COUNTRY_INTAKE_NOT_ACTIVE", state);
   };
 
   const browse = await request("/listings");
@@ -325,9 +410,10 @@ await test("D16-A02 a capability row is never legal approval while the country p
   await forceDisabledIntake(HOME);
   await seedEnabledCapability(HOME, "BROWSING");
 
+  const before = await gateProbe(HOME);
   const browse = await request("/listings");
-  assert.equal(browse.status, 409, browse.text);
-  assert.equal(errorCode(browse), "COUNTRY_INTAKE_NOT_ACTIVE");
+  assert.equal(browse.status, 409, `gate state ${before}: ${browse.text.slice(0, 240)}`);
+  assert.equal(errorCode(browse), "COUNTRY_INTAKE_NOT_ACTIVE", `gate state ${before}`);
 
   const overview = await request(`/admin/compliance/markets/${HOME}/capabilities`, "GET", undefined, admin);
   assert.equal(overview.status, 200, overview.text);
@@ -509,23 +595,41 @@ await test("D16-A05 a fully resolved package still stops at the missing signatur
 
 await test("D16-B06 separation of duties cannot be collapsed onto one actor", async () => {
   deployed();
+  configureRoles();
+  await forceDisabledIntake(ABROAD);
+  const opened = await request(
+    `/admin/compliance/country-readiness/${ABROAD}/review-request`,
+    "POST",
+    {},
+    admin,
+  );
+  assert.equal(opened.status, 202, opened.text);
+
+  // Control first: with the owner list holding only the owner, the designated reviewer must be
+  // accepted. The separation rule below is only evidence once this premise is proven live.
+  const control = await request(
+    `/admin/compliance/country-readiness/${ABROAD}/topics/PERSONAL_DATA/review`,
+    "POST",
+    topicReviewBody("PERSONAL_DATA"),
+    counsel,
+  );
+  assert.equal(control.status, 200, `designation control failed: ${rolesProbe()} ${control.text}`);
+
+  // The same actor is now also a designated legal owner, which is how a configuration drift would
+  // let a counsel reviewer approve work reserved to a separate owner.
   process.env.DINAR_LEGAL_OWNER_IDS = `${owner.id},${counsel.id}`;
   const dualRoleCounsel = await request(
     `/admin/compliance/country-readiness/${ABROAD}/topics/PERSONAL_DATA/review`,
     "POST",
-    {
-      disposition: "NOT_REQUIRED",
-      counselFinding: "Wave-06 audit fixture finding for personal data.",
-      officialReference: "W06-REF-PERSONAL-DATA",
-      evidenceRequirementStatus: "NO_REQUIREMENTS",
-      requiredEvidenceTypes: [],
-      policyRequirementStatus: "NO_POLICY_REQUIREMENT",
-      requiredPolicyVersions: [],
-    },
+    topicReviewBody("PERSONAL_DATA"),
     counsel,
   );
-  assert.equal(dualRoleCounsel.status, 403, dualRoleCounsel.text);
-  assert.equal(errorCode(dualRoleCounsel), "SEPARATION_OF_DUTIES_REQUIRED");
+  assert.equal(dualRoleCounsel.status, 403, `roles ${rolesProbe()} body ${dualRoleCounsel.text}`);
+  assert.equal(
+    errorCode(dualRoleCounsel),
+    "SEPARATION_OF_DUTIES_REQUIRED",
+    `roles ${rolesProbe()} body ${dualRoleCounsel.text}`,
+  );
   process.env.DINAR_LEGAL_OWNER_IDS = owner.id;
 
   await request(`/admin/compliance/markets/${HOME}/capabilities/BROWSING/review-request`, "POST", {}, admin);
@@ -673,14 +777,29 @@ await test("D16-B08 an in-flight enable overwrites a concurrent emergency disabl
   assert.ok(row);
 
   const blocker = await pool.connect();
+  const outcomes = { stop: "not started", grant: "not started" };
+  const settle = <T>(label: "stop" | "grant", work: Promise<T>): Promise<T> =>
+    work.then(
+      (value) => {
+        outcomes[label] = "resolved";
+        return value;
+      },
+      (error: any) => {
+        outcomes[label] = `rejected:${error?.code ?? error?.message ?? String(error)}`;
+        throw error;
+      },
+    );
   try {
     await blocker.query("BEGIN");
     await blocker.query("SELECT id FROM market_legal_capability_approvals WHERE id = $1 FOR UPDATE", [row.id]);
 
-    const stop = disableMarketCapability({ actorId: admin.id, marketId: HOME, capability: "CASH_PAYMENT" });
-    await waitForLockWaiter(blocker, 1);
-    const grant = enableMarketCapability({ actorId: owner.id, marketId: HOME, capability: "CASH_PAYMENT", reference: "W06-RACE" });
-    await waitForLockWaiter(blocker, 2);
+    const stop = settle("stop", disableMarketCapability({ actorId: admin.id, marketId: HOME, capability: "CASH_PAYMENT" }));
+    await waitForLockWaiter(blocker, 1, () => `transitions ${JSON.stringify(outcomes)}; `);
+    const grant = settle(
+      "grant",
+      enableMarketCapability({ actorId: owner.id, marketId: HOME, capability: "CASH_PAYMENT", reference: "W06-RACE" }),
+    );
+    await waitForLockWaiter(blocker, 2, () => `transitions ${JSON.stringify(outcomes)}; `);
     await blocker.query("COMMIT");
 
     await Promise.allSettled([stop, grant]);
@@ -694,7 +813,7 @@ await test("D16-B08 an in-flight enable overwrites a concurrent emergency disabl
     // an administrator's stop can be silently undone by an approval that started earlier. The fix
     // is `.for("update")` in readCapability plus a status guard on both UPDATEs; when that lands,
     // this assertion must flip to "DISABLED".
-    assert.equal(final[0]?.status, "ENABLED", "expected the documented lost update");
+    assert.equal(final[0]?.status, "ENABLED", `expected the documented lost update; transitions ${JSON.stringify(outcomes)}`);
     const events = await db
       .select({ eventType: marketLegalCapabilityEvents.eventType })
       .from(marketLegalCapabilityEvents)
@@ -711,7 +830,11 @@ await test("D16-B08 an in-flight enable overwrites a concurrent emergency disabl
   }
 });
 
-async function waitForLockWaiter(client: any, wanted: number) {
+/**
+ * Waits for `wanted` backends to be parked on the capability row, and if they never appear, fails
+ * with what the server was actually doing instead of a bare count.
+ */
+async function waitForLockWaiter(client: any, wanted: number, context: () => string) {
   for (let attempt = 0; attempt < 120; attempt++) {
     const result = await client.query(
       `SELECT count(*)::int AS waiting FROM pg_stat_activity
@@ -721,7 +844,16 @@ async function waitForLockWaiter(client: any, wanted: number) {
     if (result.rows[0].waiting >= wanted) return;
     await new Promise((resolve) => setTimeout(resolve, 25));
   }
-  assert.fail(`D16-BL-04 reproduction needs ${wanted} transaction(s) blocked on the capability row`);
+  const backends = await client.query(
+    `SELECT pid, state, wait_event_type, wait_event, left(query, 90) AS statement
+       FROM pg_stat_activity
+      WHERE datname = current_database() AND pid <> pg_backend_pid()
+      ORDER BY backend_start`,
+  );
+  assert.fail(
+    `D16-BL-04 reproduction needs ${wanted} transaction(s) blocked on the capability row; ` +
+      `${context()} backends=${JSON.stringify(backends.rows)}`,
+  );
 }
 
 // ─── C. evidence lifecycle ───────────────────────────────────────────────────
