@@ -138,8 +138,10 @@ async function searchPass(page, label, listing) {
   await sendSearch(page, listing.title);
   const card = page.getByTestId(`card-ai-result-${listing.id}`);
   await card.waitFor({ state: "visible", timeout: 45_000 });
+  // The results container carries the canonical id; `ai-results-more` is a descendant that
+  // shares the testid prefix but not the attribute.
   const resultSetId = await page
-    .locator('[data-testid^="ai-results-"]:visible')
+    .locator("[data-result-set-id]:visible")
     .last()
     .getAttribute("data-result-set-id");
   assert.ok(resultSetId, `${label}: the result card carries its canonical result-set id`);
