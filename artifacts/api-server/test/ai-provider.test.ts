@@ -818,10 +818,11 @@ await test("R3C: the action ledger maps to one lifecycle; only a confirmed execu
 await test("R3C: completion claims are told apart from explanations, conditions, questions and negations", () => {
   const claims = (actionReceipts as any).claimsCompletedAction as (text: string) => boolean;
   assert.equal(typeof claims, "function");
-  for (const claim of ["تم قبول العرض وإنشاء الطلب.", "تمّ الشراء والدفع.", "تم نشر جميع إعلاناتك.", "خلاص، تم تأكيد التوصيل.", "تم استلام الدفعة.", "أكيد، اشتريت لك أول منتج.", "قبلت عرض المشتري.", "طلبك انعمل وتم الدفع ✅", "I bought it for you.", "Your order has been placed.", "Payment received."])
+  for (const claim of ["تم قبول العرض وإنشاء الطلب.", "تمّ الشراء والدفع.", "تم نشر جميع إعلاناتك.", "خلاص، تم تأكيد التوصيل.", "تم استلام الدفعة.", "أكيد، اشتريت لك أول منتج.", "قبلت عرض المشتري.", "طلبك انعمل وتم الدفع ✅", "سعره 5 دنانير فقط وتم إنشاء الطلب", "I bought it for you.", "Your order has been placed.", "Payment received."])
     assert.ok(claims(claim), `claim: ${claim}`);
-  for (const fine of ["يتم إنشاء الطلب بعد تأكيدك.", "إذا تم قبول العرض سيُنشأ الطلب.", "بعد ما يتم الدفع بيتأكد الطلب.", "عندما يتم نشر الإعلان ستصلك رسالة.", "هل تم قبول عرضي؟", "لم يتم الشراء بعد.", "ما تم نشر أي شيء.", "على أي عرض تريد تقديم 15؟", "تم اكتشاف الطاقة الشمسية قبل قرون.", "Once the order is placed you will get a receipt.", "No payment was received."])
+  for (const fine of ["يتم إنشاء الطلب بعد تأكيدك.", "إذا تم قبول العرض سيُنشأ الطلب.", "بعد ما يتم الدفع بيتأكد الطلب.", "عندما يتم نشر الإعلان ستصلك رسالة.", "هل تم قبول عرضي؟", "لم يتم الشراء بعد.", "ولم يتم الشراء بعد.", "ما تم نشر أي شيء.", "ما نشرت أي إعلان.", "ولا دفعت المبلغ.", "على أي عرض تريد تقديم 15؟", "تم اكتشاف الطاقة الشمسية قبل قرون.", "Once the order is placed you will get a receipt.", "No payment was received."])
     assert.ok(!claims(fine), `not a claim: ${fine}`);
+  for (const glued of ["وبتم الإلغاء الطلب.", "فتم الدفع.", "ودُفع المبلغ."]) assert.ok(claims(glued), `claim: ${glued}`);
 });
 
 await test("R3C: model-authored advice never carries execution authority; server-authored turns are untouched", () => {

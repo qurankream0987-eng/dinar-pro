@@ -35,6 +35,15 @@ import type {
   ListingPhotoSuggestionStatus,
   ListingPhotoUncertainty,
 } from "./listing-photo-intelligence";
+import {
+  ModelCapabilityRejected,
+  executeModelCapabilityTool,
+  isModelCapabilityTool,
+  modelCapabilityToolDefinitions,
+  modelCapabilityToolNamesForRoles,
+  modelRolesForActor,
+  type ModelCapabilityRole,
+} from "./model-capability-tools";
 
 export type ToolContext = {
   conversationId: string;
@@ -95,6 +104,22 @@ export type ToolResult = {
   advice?: Record<string, unknown>;
   /** G2 allowlisted negotiation view for one of its parties. */
   negotiation?: Record<string, unknown>;
+  /** AI-F02: seller inventory read (own offers only). */
+  inventory?: Array<Record<string, unknown>>;
+  /** AI-F02: inquiry threads the actor is a party to. */
+  inquiries?: Array<Record<string, unknown>>;
+  /** AI-F02: orders where the actor is the buyer or the seller. */
+  orders?: Array<Record<string, unknown>>;
+  /** AI-F02: the actor's own live cart. */
+  cart?: Array<Record<string, unknown>>;
+  /** AI-F02: read-only checkout review of that cart. */
+  checkout?: Record<string, unknown>;
+  /** AI-F02: fulfilment status for one party order. */
+  fulfillment?: Record<string, unknown>;
+  /** AI-F02: set only by a prepare tool; the action executes after the actor confirms. */
+  preparedAction?: { actionId: string; action: string; targetResource: string };
+  /** AI-F02: a listing draft was written; nothing is published. */
+  preparedDraft?: { draftId?: string };
   /** NEXT G2: buyer–seller inquiry view (lib/inquiries.ts). */
   inquiry?: Record<string, unknown>;
   /** Monetization V3 commercial view (balance, reviews, campaigns, Market Pulse, Business). */
@@ -710,10 +735,14 @@ export const MODEL_LOOP_TOOL_ALLOWLIST = [
   "compareListings",
 ] as const;
 
-export function modelToolDefinitions(context?: ToolContext): ModelToolDefinition[] {
+/** F01 read-only tools plus every F02 capability tool, filtered by server-derived roles. */
+export function modelToolDefinitions(
+  context?: ToolContext,
+  roles?: readonly ModelCapabilityRole[],
+): ModelToolDefinition[] {
   if (context && (!context.actorId || !context.conversationId || !isMarketAvailable(context.market)))
     return [];
-  return Object.values(aiToolRegistry)
+  const readOnly = Object.values(aiToolRegistry)
     .filter((tool) =>
       tool.exposedToModel === true &&
       (!context || (MODEL_LOOP_TOOL_ALLOWLIST as readonly string[]).includes(tool.name)) &&
@@ -722,27 +751,61 @@ export function modelToolDefinitions(context?: ToolContext): ModelToolDefinition
       tool.permissions.every((permission) => permission === "marketplace.read"),
     )
     .map((tool) => tool.modelDefinition);
+  return [
+    ...readOnly,
+    ...modelCapabilityToolDefinitions(roles ?? (context ? ["BUYER"] : ["BUYER", "SELLER"])),
+  ];
 }
 
 /**
- * The model's read-only allowlist is checked again at execution time. This wrapper is the
- * only model entry point to the registry; ordinary typed UI actions keep their existing path.
+ * The model's allowlist is checked again at execution time, against roles read from server
+ * rows in this call. This wrapper is the only model entry point to the registry; ordinary
+ * typed UI actions keep their existing path.
  */
 export async function executeModelTool(
   name: string,
   rawArguments: string,
   context: ToolContext,
 ): Promise<{ tool: string; version: number; result: ToolResult }> {
-  if (
-    !context.actorId ||
-    !context.currentMessageId ||
-    !modelToolDefinitions(context).some((definition) => definition.name === name)
-  )
+  if (!context.actorId || !context.currentMessageId)
     throw new ToolRejectedError(
       "This read-only tool is not available in the current conversation.",
       "TOOL_NOT_ALLOWED",
     );
-  const execution = await executeRegisteredTool(name, rawArguments, context);
+  let capabilityTool = false;
+  if (isModelCapabilityTool(name)) {
+    const roles = await modelRolesForActor(context.actorId, context.market.id);
+    if (!modelCapabilityToolNamesForRoles(roles).includes(name))
+      throw new ToolRejectedError(
+        "This tool is not available to this actor's role in this market.",
+        "TOOL_NOT_ALLOWED",
+      );
+    capabilityTool = true;
+  } else if (!modelToolDefinitions(context).some((definition) => definition.name === name)) {
+    throw new ToolRejectedError(
+      "This read-only tool is not available in the current conversation.",
+      "TOOL_NOT_ALLOWED",
+    );
+  }
+  let execution: { tool: string; version: number; result: ToolResult };
+  try {
+    execution = capabilityTool
+      ? { tool: name, version: 1, result: await executeModelCapabilityTool(name, rawArguments, context) }
+      : await executeRegisteredTool(name, rawArguments, context);
+  } catch (error) {
+    if (error instanceof ModelCapabilityRejected) {
+      const code =
+        error.code === "TOOL_NOT_ALLOWED"
+          ? "TOOL_NOT_ALLOWED"
+          : error.code === "TARGET_UNAVAILABLE"
+            ? "TARGET_UNAVAILABLE"
+            : "CANONICAL_TOOL_REJECTED";
+      throw new ToolRejectedError(error.message, code);
+    }
+    if (error instanceof z.ZodError)
+      throw new ToolRejectedError("The model proposed invalid tool arguments.", "CANONICAL_TOOL_REJECTED");
+    throw error;
+  }
   // A stored result whose listing is now paused, sold or moderated returns no live record.
   // Passing "missing" back would let the model answer from the earlier snapshot as if current.
   if (execution.result.kind === "RESOURCE" && execution.result.listings.length === 0)

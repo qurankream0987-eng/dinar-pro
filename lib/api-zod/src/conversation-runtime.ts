@@ -220,6 +220,7 @@ const CORE_SURFACE_TOKENS = [
   "COMPARISON",
   "PURCHASE_REVIEW",
   "PAYMENT_REVIEW",
+  "SELLER_INVENTORY",
   "TUTORIAL_VIDEO_CARD",
 ] as const;
 
@@ -283,6 +284,7 @@ export const CONVERSATION_SURFACE_REGISTRY = {
   LISTING_DRAFT_CARD: surface(["SELL"], "seller-draft"),
   PUBLISHED_LISTING_CARD: surface(["SELL"], "published-listing"),
   MY_LISTINGS_RAIL: surface(["MY_LISTINGS"], "seller-listings"),
+  SELLER_INVENTORY_CARD: surface(["SELLER_INVENTORY"], "seller-listings"),
   COMPARISON_SURFACE: surface(["COMPARISON"], "comparison"),
   CART_SURFACE: surface(["CART"], "cart"),
   CHECKOUT_CONFIRMATION: surface(["CHECKOUT", "PURCHASE_REVIEW"], "checkout"),

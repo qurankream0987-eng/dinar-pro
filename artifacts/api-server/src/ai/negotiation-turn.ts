@@ -193,7 +193,7 @@ function amountIn(text: string, pattern: RegExp): number | undefined {
   return Number.isFinite(value) && value > 0 ? value : undefined;
 }
 
-function reviewTurn(review: ActionReview, view: Record<string, unknown>, prompt: string, action: NegotiationAction): Turn {
+export function reviewTurn(review: ActionReview, view: Record<string, unknown>, prompt: string, action: NegotiationAction): Turn {
   return {
     tool: "negotiation",
     version: 1,

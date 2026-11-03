@@ -303,8 +303,13 @@ const CLAIM_FORMS = [
 const NOT_A_CLAIM_BEFORE = "(?:يتم|سيتم|ستتم|يتمّ|إذا|اذا|لو|عندما|عند|حين|حينما|متى|بعد|بعدما|بعد\\s+ما|قبل|قبل\\s+ما|هل|لم|لا|ما|لن|ليس|مش|مو|ريثما|حتى|كي|لكي)";
 /** «ما بقدر أقول تم الدفع», «لا أستطيع أن أؤكد تم التسليم»: a claim denied as reported speech. */
 const DENIED_SPEECH = "(?:ما|لا|لن|مش|مو|ليس)\\s+(?:\\S+\\s+){0,2}(?:أقول|اقول|أكتب|اكتب|أدعي|ادعي|أؤكد|اؤكد|أأكد|أثبت|اثبت|أحكي|احكي)(?:\\s+(?:لك|إن|ان|أنه|انه))?\\s+";
+// A conjunction glued to the claim («وتم إنشاء», «فتم الدفع», «وبتم الإلغاء») is still the
+// speaker's own statement; without the optional proclitic the word boundary hides the whole claim.
+// The alternatives must stay inside one group: joined bare, the `|` splits the whole expression and
+// the lookbehinds guard only the first form, so a verb inside another word («استقبلت») reads as a
+// claim, and so do the negations and questions («ما نشرت أي إعلان», «هل دفعت المبلغ»).
 const ARABIC_CLAIM = new RegExp(
-  `(?<!${NOT_A_CLAIM_BEFORE}\\s+(?:\\S+\\s+)?)(?<!${DENIED_SPEECH})(?<![\\p{L}\\p{M}])(?:${CLAIM_FORMS.join("|")})`,
+  `(?<!${NOT_A_CLAIM_BEFORE}\\s+(?:\\S+\\s+)?)(?<!${DENIED_SPEECH})(?<![\\p{L}\\p{M}])[وبف]*(?:${CLAIM_FORMS.join("|")})`,
   "u",
 );
 const ENGLISH_CLAIM =
@@ -328,6 +333,17 @@ const ADDRESSES_USER = /(?:طلب|طلبيت|إعلان|اعلان|عرض|دفع
 /** A completion claim about the user's own order, listing, offer or payment. */
 export function claimsUsersCompletedAction(text: string): boolean {
   return claimSentences(text).some((sentence) => ADDRESSES_USER.test(sentence));
+}
+/**
+ * DINAR's own commercial objects. A passive claim that names one — «تم إنشاء الطلب», «تم الدفع» —
+ * reports a marketplace action whether or not the model added «your», and the assistant has no
+ * marketplace history to speak from. General text («تم نشر نظرية النسبية») names none of them.
+ */
+const MARKETPLACE_OBJECT =
+  /(?:ال(?:طلب|طلبيه|الطلبیه|سل[هة]ه?|دف[عع]|دفعة|فاتورة|توصيل|شراء|بيع|إعلان|اعلان|عرض|حجز|مبلغ)|\b(?:order|cart|payment|invoice|delivery|purchase|listing|offer)\b)/iu;
+/** A completion claim that reads as one of DINAR's own actions, addressed to the user or not. */
+export function claimsMarketplaceAction(text: string): boolean {
+  return claimSentences(text).some((sentence) => ADDRESSES_USER.test(sentence) || MARKETPLACE_OBJECT.test(sentence));
 }
 
 export const MODEL_CLAIM_WITHHELD =
@@ -374,7 +390,12 @@ export function ledgerStatement(ledger: readonly LedgerEntry[]): string | undefi
   ].filter(Boolean).join(" ");
 }
 
-type AuthoredResult = { kind?: unknown; prompt?: string; advice?: Record<string, unknown> };
+type AuthoredResult = {
+  kind?: unknown;
+  prompt?: string;
+  advice?: Record<string, unknown>;
+  query?: Record<string, unknown>;
+};
 
 /**
  * The integrity boundary for model-authored turns. The model cannot execute (strict schema,
@@ -386,12 +407,26 @@ type AuthoredResult = { kind?: unknown; prompt?: string; advice?: Record<string,
  */
 export function enforceModelAuthority<T extends AuthoredResult>(result: T, ledger: readonly LedgerEntry[]): T {
   const advice = result.advice;
+  // A verified read may carry the model's answer inside its own query envelope, and the route
+  // renders the turn from that field; without the same guard here it would reach the user filtered
+  // by nothing but the model's own confidence.
+  const readBuyer = result.kind === "SEARCH" || result.kind === "RESOURCE"
+    ? (result.query?.buyer as { message?: unknown; authority?: unknown } | undefined)
+    : undefined;
+  if (readBuyer?.authority === "MODEL" && typeof readBuyer.message === "string") {
+    // The turn only ever read, so any completion claim is withheld; a plain statement about how
+    // the market works («يتم إنشاء الطلب بعد تأكيدك») is teaching text and stays.
+    if (!claimsCompletedAction(readBuyer.message)) return result;
+    const statement = ledgerStatement(ledger) ?? MODEL_CLAIM_WITHHELD;
+    return { ...result, query: { ...result.query, buyer: { message: statement, authority: "SERVER_LEDGER" } } };
+  }
   if (result.kind !== "SURFACE" || advice?.authority !== "MODEL") return result;
   // In a commercial turn any completion claim is withheld; in any other turn (the model's own
-  // classification is not trusted for this) a claim about the user's own order, listing, offer
-  // or payment still is. Teaching text about the world is left alone.
+  // classification is not trusted for this) a claim about the user's own order, listing, offer or
+  // payment still is, and so is a passive claim naming one of DINAR's own actions. Text about the
+  // world is left alone.
   const withhold = typeof result.prompt === "string" &&
-    (advice.commercial === true ? claimsCompletedAction(result.prompt) : claimsUsersCompletedAction(result.prompt));
+    (advice.commercial === true ? claimsCompletedAction(result.prompt) : claimsMarketplaceAction(result.prompt));
   if (!withhold)
     return advice.actionLifecycle === undefined || advice.actionLifecycle === "PROPOSED"
       ? result
