@@ -56,7 +56,7 @@ export const INTEGRATION_READINESS_MATRIX = [
     live: "NOT_CONNECTED",
     credentialNames: [],
     connectableWithCredentialsOnly: false,
-    note: "Only the development/test code-delivery adapter exists; no SMS vendor is selected. Staging/production take a vendor adapter through registerPhoneVerificationProvider (DINAR_PHONE_VERIFICATION_PROVIDER); until then challenges answer 503 and /readyz is not_ready.",
+    note: "Only the development/test code-delivery adapter exists; no SMS vendor is selected. Staging/production take a vendor adapter through registerPhoneVerificationProvider (DINAR_PHONE_VERIFICATION_PROVIDER); until then phone challenges answer 503 and the phoneVerification readiness check reports not_configured, while core web readiness is independent.",
   },
   {
     family: "GOOGLE_OAUTH",

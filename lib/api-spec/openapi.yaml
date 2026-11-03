@@ -236,7 +236,7 @@ paths:
       operationId: readinessCheck
       tags: [health]
       summary: Readiness check
-      description: Reports whether the API can serve traffic — database reachable, schema current, essential configuration valid and phone verification deliverable. Check values name the failing area only, never a setting's value.
+      description: Reports whether the web API can serve traffic — database reachable, schema current and essential configuration valid. Phone verification is reported separately; phone-dependent actions remain unavailable until a permitted provider is configured. Check values name the failing area only, never a setting's value.
       responses:
         "200":
           description: API and required database schema are ready
@@ -245,7 +245,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ReadinessStatus"
         "503":
-          description: API is alive but the database, schema, essential configuration or phone verification is not ready
+          description: API is alive but the database, schema or essential configuration is not ready
           content:
             application/json:
               schema:
