@@ -294,17 +294,24 @@ await test("PF-10 EXPLAIN (ANALYZE, BUFFERS) for every hot predicate", async () 
   const plans: Record<string, unknown> = {};
   for (const predicate of PREDICATES) {
     const explained = await probe.query(`EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) ${predicate.text}`, predicate.values ?? []);
-    const root = (explained.rows[0] as any)["QUERY PLAN"][0] as PlanNode & {
+    // FORMAT JSON wraps the tree: the row is { Plan: {...}, Query, "Planning Time", "Execution Time" }.
+    const outer = (explained.rows[0] as any)["QUERY PLAN"][0] as {
+      Plan: PlanNode;
       "Planning Time"?: number;
       "Execution Time"?: number;
-      "Shared Blks Hit"?: number;
-      "Shared Blks Read"?: number;
     };
-    const scans = walk(root).filter((node) => /Scan$/.test(node["Node Type"] ?? ""));
-    const sorts = walk(root).filter((node) => node["Node Type"] === "Sort").length;
+    const root = outer.Plan;
+    const nodes = walk(root);
+    const scans = nodes.filter((node) => /Scan$/.test(node["Node Type"] ?? ""));
+    const sorts = nodes.filter((node) => node["Node Type"] === "Sort").length;
     const heapScans = scans
       .filter((node) => node["Node Type"] === "Seq Scan" && node["Relation Name"])
       .map((node) => String(node["Relation Name"]));
+    // BUFFERS are reported per node, exclusive of the node's children, so the query's total is their sum.
+    const buffers = nodes.reduce(
+      (total, node) => ({ hit: total.hit + (node["Shared Blks Hit"] ?? 0), read: total.read + (node["Shared Blks Read"] ?? 0) }),
+      { hit: 0, read: 0 },
+    );
     plans[predicate.name] = {
       scans: scans.map((node) => ({
         type: node["Node Type"],
@@ -314,9 +321,9 @@ await test("PF-10 EXPLAIN (ANALYZE, BUFFERS) for every hot predicate", async () 
       })),
       sortNodes: sorts,
       heapScannedRelations: heapScans,
-      planningMs: root["Planning Time"],
-      executionMs: root["Execution Time"],
-      buffers: { hit: root["Shared Blks Hit"], read: root["Shared Blks Read"] },
+      planningMs: outer["Planning Time"],
+      executionMs: outer["Execution Time"],
+      buffers,
       note: predicate.note,
     };
     if (predicate.mustUseIndex) {
@@ -355,6 +362,22 @@ await test("PF-20 the latency distribution of the same predicates, and the slow-
 // ─── PF-30 / PF-31 / PF-60: conversation history ─────────────────────────────
 
 /**
+ * The listings a fixture receipt may name. A ledger target is resolved only when its id is a UUID,
+ * because that is how every listing the application creates is keyed; `pf-%` bulk rows are ids of
+ * convenience for the plan and index measurements and would hide the resolution the read must prove.
+ */
+const receiptListings = Array.from({ length: 12 }, () => randomUUID());
+await db.execute(sql`
+  INSERT INTO offers (id, seller_id, market_id, status, unit_price_minor, pricing_mode, inventory_mode, available_quantity, reserved_quantity, data, created_at, updated_at)
+  SELECT id, 'pf-seller-1', 'JO', 'PUBLISHED', 25000, 'FIXED', 'LIMITED', 10, 0,
+         jsonb_build_object('title', 'معطف ملفات للفواتير ' || (n + 1), 'description', 'إعلان صناعي يقيس قراءة سجل الإجراءات في تاريخ المحادثة',
+                            'category', 'أزياء', 'categoryId', 'fashion', 'city', 'عمان', 'area', 'الاباء',
+                            'attributes', jsonb_build_object('condition', 'جديد'), 'fulfilmentType', 'PICKUP',
+                            'paymentMethods', jsonb_build_array('CASH_DIRECT')),
+         timestamptz '2026-02-02', timestamptz '2026-02-02'
+  FROM unnest(${sql.param(receiptListings)}::text[]) WITH ORDINALITY AS t(id, n)`);
+
+/**
  * A history of `messages` assistant turns, each carrying `actions` ledger actions that name a real
  * listing and a real order. This is what the app stores after a conversational turn, written here
  * directly so the measurement is of the read path, not of a model call.
@@ -366,9 +389,7 @@ async function buildHistory(label: string, messages: number, actionsPerMessage: 
     body: JSON.stringify({}),
   })).json();
   const conversationId = conversation.id as string;
-  const listingIds = (
-    (await db.execute(sql`SELECT id FROM offers WHERE id LIKE 'pf-%' AND status = 'PUBLISHED' ORDER BY id LIMIT 12`)).rows as Array<{ id: string }>
-  ).map((row) => row.id);
+  const listingIds = receiptListings;
   const baseTime = 1_770_000_000_000;
   const at = (message: number) => new Date(baseTime + message * 1_000).toISOString();
   // The fixture is written in two statements, not one per row: the measurement below is of the read
