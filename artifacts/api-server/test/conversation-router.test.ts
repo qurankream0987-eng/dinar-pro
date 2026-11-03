@@ -13,7 +13,12 @@ import { resolveConversationRoute } from "../src/ai/conversation-router";
 import { conversationHistory, interpretWithModel, MAX_SERVER_CONTEXT, redactForModel } from "../src/ai/model-turn";
 import type { ConversationModelGateway, ModelMessage } from "../src/ai/model-gateway";
 import { conversationGuidance } from "../src/ai/conversation-guidance";
-import { promotionIntent, searchTerms } from "../src/ai/intent";
+import {
+  addToCartIntent,
+  promotionIntent,
+  searchTerms,
+  surfaceIntent,
+} from "../src/ai/intent";
 import { hasExplicitMarketplaceSearchIntent } from "../src/ai/marketplace-intent";
 import { isGeneralRequest } from "../src/ai/listing-draft";
 import { normalizeNumberWords } from "../src/ai/arabic-normalization";
@@ -258,6 +263,30 @@ test("shared parsers: address, sell-for-me, activity wants, topic return, clitic
     assert.ok(redactForModel(`قيمة ${kept} هنا`).includes(kept), kept);
   for (const phone of ["0791234567", "079-123-4567", "+962 79 123 4567", "5555 1234 99"])
     assert.ok(!redactForModel(`رقمي ${phone}`).includes(phone), phone);
+});
+
+test("basket product wording stays in marketplace intent; cart navigation needs a cart request", () => {
+  const searches = [
+    "ابحث عن سلة غسيل",
+    "أريد شراء حقيبة سلة",
+    "قارن سلال التخزين الموجودة عند البائعين",
+  ];
+  for (const message of searches) {
+    assert.notEqual(surfaceIntent(message), "CART", message);
+    assert.equal(hasExplicitMarketplaceSearchIntent(message), true, message);
+  }
+
+  const add = "أضف سلة الغسيل إلى السلة";
+  assert.equal(addToCartIntent(add), true);
+  assert.notEqual(surfaceIntent(add), "CART");
+  assert.equal(addToCartIntent("ابحث عن سلة غسيل"), false);
+
+  assert.equal(surfaceIntent("افتح سلة مشترياتي"), "CART");
+  assert.equal(surfaceIntent("اعرض السلة"), "CART");
+  assert.equal(resolveConversationActionId("أريد شراء حقيبة سلة"), undefined);
+  assert.equal(resolveConversationActionId("أريد شراء الأول"), "BUY_LISTING");
+  assert.equal(resolveConversationActionId("أريد شراءها"), "BUY_LISTING");
+  assert.equal(resolveConversationActionId("اشتريها"), "BUY_LISTING");
 });
 
 test("every wire surface is registered and action buttons use the shared action text", () => {

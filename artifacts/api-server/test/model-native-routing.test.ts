@@ -134,6 +134,9 @@ async function publish(key: string, title: string, price: string) {
 }
 await publish("pixel", `جوال بكسل 7 ${run}`, "180");
 await publish("redmi", `جوال ريدمي نوت ${run}`, "120");
+await publish("laundry-basket", `سلة غسيل ${run}`, "9");
+await publish("woven-bag", `حقيبة سلة ${run}`, "10");
+await publish("storage-baskets", `سلال التخزين ${run}`, "11");
 
 type Reply = { status: number; tool?: string; body: string; payload: any; listingIds: string[]; routed?: string };
 async function say(cookie: string, conv: string, message: string, clientMessageId = randomUUID()): Promise<Reply> {
@@ -176,6 +179,18 @@ script.push({ key: `جوال بكسل ${run}`, canonical: `ابحث عن جوا�
 script.push({ key: `جوالل بكسيل ${run}`, canonical: `ابحث عن جوال بكسل ${run}` });
 // Free phrasing DINAR handles anyway: MODEL_FIRST should give the same listings.
 script.push({ key: `وريني ايش عندك من الجوالات ${run}`, canonical: `ابحث عن جوال ${run}` });
+// Product titles containing «سلة» remain marketplace data; the model's canonical search
+// re-enters DINAR's existing marketplace path rather than opening the cart surface.
+script.push({ key: "ابحث عن سلة غسيل", canonical: "ابحث عن سلة غسيل" });
+script.push({ key: "أريد شراء حقيبة سلة", canonical: "ابحث عن حقيبة سلة" });
+script.push({
+  key: "قارن سلال التخزين الموجودة عند البائعين",
+  canonical: "ابحث عن سلال التخزين",
+});
+script.push({
+  key: `ابحث عن جوال ${run}`,
+  canonical: `ابحث عن جوال ${run}`,
+});
 
 await test("MN-01 LEGACY (the default) is unchanged: no canonical instruction, no re-entry", async () => {
   await withMode(undefined, async () => {
@@ -230,6 +245,53 @@ await test("MN-03 MODEL_FIRST: understood via the model, decisions stay determin
     } finally {
       unavailable = false;
     }
+  });
+});
+
+await test("MN-09 Arabic basket-bearing product requests reach marketplace search, not CART", async () => {
+  await withMode("MODEL_FIRST", async () => {
+    for (const [message, listingKey] of [
+      ["ابحث عن سلة غسيل", "laundry-basket"],
+      ["أريد شراء حقيبة سلة", "woven-bag"],
+      ["قارن سلال التخزين الموجودة عند البائعين", "storage-baskets"],
+    ] as const) {
+      const user = await fresh();
+      calls = 0;
+      const reply = await say(user.cookie, user.conv, message);
+      assert.equal(calls, 1, `${message} uses the configured model-routing turn`);
+      assert.ok(
+        reply.listingIds.includes(ids[listingKey]!),
+        `${message} reaches the canonical listing search: ${reply.body}`,
+      );
+      assert.notEqual(reply.payload.surface, "CART", message);
+      assert.equal(await cartLines(user.id), 0, `${message} performs no cart write`);
+    }
+  });
+});
+
+await test("MN-10 adding a basket-named result uses the server-confirmed cart receipt", async () => {
+  await withMode(undefined, async () => {
+    const user = await fresh();
+    const found = await say(user.cookie, user.conv, "ابحث عن سلة غسيل");
+    assert.ok(found.listingIds.includes(ids["laundry-basket"]!), found.body);
+
+    const added = await say(user.cookie, user.conv, "أضف سلة الغسيل إلى السلة");
+    assert.equal(added.payload.surface, "CART", added.body);
+    assert.match(added.body, /بعد التحقق من التوفر/u);
+    assert.ok(added.payload.resourceIds.includes(ids["laundry-basket"]));
+    assert.equal(await cartLines(user.id), 1);
+  });
+});
+
+await test("MN-11 a numbered purchase remains result selection when search intent is present", async () => {
+  await withMode("MODEL_FIRST", async () => {
+    const user = await fresh();
+    const found = await say(user.cookie, user.conv, `ابحث عن جوال ${run}`);
+    assert.ok(found.listingIds.includes(ids.pixel!), found.body);
+
+    const review = await say(user.cookie, user.conv, "أريد شراء الأول");
+    assert.equal(review.payload.surface, "PURCHASE_REVIEW", review.body);
+    assert.equal(await cartLines(user.id), 0);
   });
 });
 

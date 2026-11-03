@@ -434,13 +434,15 @@ function isBareProductPhrase(message: string): boolean {
 
 /** The runtime's own classification of a message, before any handler runs. */
 function actionHint(message: string): ConversationActionId | undefined {
+  const routedAction = resolveConversationActionId(message);
+  const explicitMarketplaceSearch = hasExplicitMarketplaceSearchIntent(message);
   return (
-    resolveConversationActionId(message) ??
+    routedAction ??
     (addToCartIntent(message)
       ? "ADD_TO_CART"
       : surfaceIntent(message) === "SELL" && !OPEN_SELLER_QUESTION.test(message)
         ? "CREATE_PRODUCT_DRAFT"
-        : hasExplicitMarketplaceSearchIntent(message)
+        : explicitMarketplaceSearch
           ? "SEARCH_LISTINGS"
           : undefined)
   );

@@ -162,8 +162,8 @@ function conversationCartReceipts(view: any) {
 
 const seller = await register(`بائع السلة ${runId}`);
 const buyer = await register(`مشتري السلة ${runId}`);
-// Titles avoid the word «سلة», which the deterministic intent router reads as a cart command
-// before it ever reaches marketplace search.
+// Keep the catalog wording neutral so this browser journey isolates the cart-card action;
+// basket-bearing marketplace search is covered by the model-native routing suite.
 const titles = {
   normal: `لوحة الوصول ${runId}`,
   reduced: `حقيبة الوصول ${runId}`,

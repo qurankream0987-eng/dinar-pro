@@ -2532,6 +2532,7 @@ await test("AI workflow turns persist typed cards without model calls or side ef
   try {
     for (const [message, surface] of [
       ["اعرض السلة", "CART"],
+      ["افتح سلة مشترياتي", "CART"],
       ["كمل الطلب", "CHECKOUT"],
       ["سجلني دخول", "AUTH"],
       ["افتح إعداداتي", "SETTINGS"],

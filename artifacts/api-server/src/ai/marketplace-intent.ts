@@ -72,6 +72,8 @@ export function isVagueRequest(message: string): boolean {
 
 const EXPLICIT_SEARCH_ACTION =
   /(?:^|\s)(?:ابحث(?:\s+لي)?|ابحثلي|ادور|دور(?:\s+لي)?|دورلي|فتش|شوف\s+الموجود|فرجني|وريني|ورني|ورينا|راويني|ارني|اعرض|search|find|look\s+for|show\s+me)(?=\s|$)/u;
+const MARKETPLACE_COMPARISON_SEARCH =
+  /^(?:قارن(?:\s+(?:لي|لنا))?|قارنلي|اعمل\s+مقارن[هة](?:\s+(?:لي|لنا))?)\s+(?:بين\s+)?\S.+\s+(?:الموجود[هة]?|المتوفر[هة]?|المتاح[هة]?)(?:\s+(?:عند\s+البائعين|في\s+(?:السوق|المتاجر|دينار)))?$/u;
 const MARKETPLACE_REQUEST_ACTION =
   /(?:^|\s)(?:اريد|ابي|ابغي|احتاج|بدي|ودي|حاب|نفسي|ابغى|عايز|عاوز|محتاج|محتاجه|نبي|نبغى|بدنا)\s/u;
 /**
@@ -98,6 +100,8 @@ export function hasExplicitMarketplaceSearchIntent(message: string): boolean {
   const correction = normalizeMarketplaceText(stripCorrectionPrefix(message));
   if (correction !== normalized)
     return correction.length > 0 && !isVagueRequest(correction);
+  if (MARKETPLACE_COMPARISON_SEARCH.test(normalized) && !isVagueRequest(normalized))
+    return true;
   if (MARKETPLACE_QUESTION.test(normalized) && !isVagueRequest(normalized)) return true;
   return (
     MARKETPLACE_REQUEST_ACTION.test(normalized) &&
