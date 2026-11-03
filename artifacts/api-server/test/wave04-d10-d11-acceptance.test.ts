@@ -55,7 +55,7 @@ import {
   TURN_DEADLINE_MS,
 } from "../src/ai/capability-registry";
 import { CANONICAL_REQUEST_INSTRUCTION, canonicalRequestProblem, isDecisionUtterance } from "../src/ai/routing-mode";
-import { MODEL_CLAIM_WITHHELD, claimsCompletedAction, verifyActionReceipt } from "../src/ai/action-receipts";
+import { MODEL_CLAIM_WITHHELD, claimsCompletedAction, enforceModelAuthority, verifyActionReceipt } from "../src/ai/action-receipts";
 import { ACTION_REGISTRY } from "../src/ai/action-foundation";
 import { DEFAULT_AI_USAGE_POLICY, usagePeriod } from "../src/lib/ai-usage-policy";
 import { marketFor } from "../src/lib/markets";
@@ -378,6 +378,11 @@ test("W04-10-03 follow-ups and corrections read the live record; the model's inv
     assert.doesNotMatch(followUp.body, /5 دنانير/u, "the model's invented price is not served");
     assert.doesNotMatch(followUp.body, /تم إنشاء الطلب/u, "a completion claim never survives a read-only turn");
     assert.equal(await cartLines(user.id), 0, "the claim added nothing to the cart");
+    const stored = await db.select({ body: messages.body }).from(messages).where(eq(messages.conversationId, user.conv));
+    assert.ok(
+      stored.every((row) => !claimsCompletedAction(row.body)),
+      `the withheld claim is not durable either: ${JSON.stringify(stored.map((row) => row.body.slice(0, 60)))}`,
+    );
 
     plan({
       key: `والأول`,
@@ -647,8 +652,52 @@ test("W04-11-07 model text is never evidence: a forged completion and an injecte
     assert.equal((await resultSetsFor(messageId)).length, 1, "only the real search is persisted");
     assert.equal(claimsCompletedAction("تم إنشاء الطلب ودُفع المبلغ"), true);
     assert.equal(claimsCompletedAction("سعره 5 دنانير فقط وتم إنشاء الطلب"), true, "a conjunction does not hide the claim");
+    const claimedRead = enforceModelAuthority(
+      { kind: "RESOURCE", query: { buyer: { message: "سعره 5 دنانير فقط وتم إنشاء الطلب", authority: "MODEL" } } } as any,
+      [],
+    );
+    assert.equal((claimedRead.query as any).buyer.message, MODEL_CLAIM_WITHHELD, "a claim riding a read result is withheld too");
+    const taughtRead = enforceModelAuthority(
+      { kind: "SEARCH", query: { buyer: { message: "يتم إنشاء الطلب بعد تأكيدك.", authority: "MODEL" } } } as any,
+      [],
+    );
+    assert.equal((taughtRead.query as any).buyer.message, "يتم إنشاء الطلب بعد تأكيدك.", "teaching text on a read result stays");
+    const serverRead = enforceModelAuthority(
+      { kind: "RESOURCE", query: { buyer: { message: "تم إنشاء الطلب", authority: "DINAR" } } } as any,
+      [{ action: "PLACE_ORDER", lifecycle: "SUCCEEDED" }],
+    );
+    assert.equal((serverRead.query as any).buyer.message, "تم إنشاء الطلب", "the server's own receipt is not second-guessed");
+    const passiveAdvice = enforceModelAuthority(
+      {
+        kind: "SURFACE",
+        surface: "ADVICE",
+        prompt: "سعره 5 دنانير فقط وتم إنشاء الطلب",
+        advice: { authority: "MODEL", commercial: false },
+      } as any,
+      [],
+    );
+    assert.equal(passiveAdvice.prompt, MODEL_CLAIM_WITHHELD, "a claim naming a DINAR action is withheld whatever the turn's class");
+    const historyLesson = enforceModelAuthority(
+      {
+        kind: "SURFACE",
+        surface: "ADVICE",
+        prompt: "تم نشر نظرية النسبية عام 1905.",
+        advice: { authority: "MODEL", commercial: false },
+      } as any,
+      [],
+    );
+    assert.equal(historyLesson.prompt, "تم نشر نظرية النسبية عام 1905.", "text about the world names no DINAR action");
     assert.ok(MODEL_CLAIM_WITHHELD.length > 0);
     assert.equal(sawUntrustedDataRule, true);
+
+    // A passive claim that omits «your» is still a claim about a DINAR action («تم إنشاء الطلب»).
+    plan({ key: "وشلون حال جوالات", reply: "الحالة ممتازة وتم إنشاء الطلب." });
+    const passive = await say(user.cookie, user.conv, `وشلون حال جوالات ${run}؟`, randomUUID());
+    assert.equal(passive.status, 200, passive.body);
+    assert.doesNotMatch(passive.body, /تم إنشاء الطلب/u, "a claim naming a DINAR action is withheld in a general turn");
+    assert.match(passive.body, /لم أنفّذ/u, passive.body);
+    assert.equal(await orderLines(user.id), 0, "the passive claim created nothing");
+    assert.equal((await actionRows(user.conv)).length, 0, "and the ledger records no action for it");
   });
 });
 
