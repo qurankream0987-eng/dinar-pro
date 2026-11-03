@@ -121,7 +121,7 @@ import {
 import { findCardAddReceipt } from "../lib/marketplace-cart";
 import { taskPlanNotice } from "../ai/task-plan";
 import { executeAiConversationTurn } from "../ai/conversation-runtime";
-import { claimsCompletedAction, claimsUsersCompletedAction, enforceModelAuthority, MODEL_CLAIM_WITHHELD, receiptsForTurn, receiptViews } from "../ai/action-receipts";
+import { claimsCompletedAction, claimsUsersCompletedAction, enforceModelAuthority, MODEL_CLAIM_WITHHELD, receiptIdsOf, receiptsForTurn, receiptViews, receiptViewsByIds } from "../ai/action-receipts";
 import { runInTurn } from "../ai/turn-context";
 import {
   LISTING_PHOTO_UNCERTAINTIES,
@@ -1663,16 +1663,26 @@ router.get("/ai/conversations/:id", requireAuth, async (req, res) => {
     blockRows,
     req.actor!.id,
   );
+  // Stored receipts are only ledger ids: each read re-derives the current status, and shows only
+  // this viewer's actions in this conversation. One batched ledger read serves the whole history,
+  // so opening a long conversation costs a constant number of queries instead of one per action.
+  const receiptIdsByMessage = messageRows.map((row) => {
+    const stored = (row.metadata as { actionReceipts?: { actionId?: unknown }[] } | null)?.actionReceipts;
+    return row.actor === "ASSISTANT" && Array.isArray(stored)
+      ? receiptIdsOf(stored.map((item) => String(item?.actionId)))
+      : [];
+  });
+  const receiptsById = await receiptViewsByIds(
+    { actorId: req.actor!.id, conversationId: conversation.id },
+    receiptIdsByMessage.flat(),
+  );
   res.json(
     GetAiConversationResponse.parse({
       conversation: conversationView(conversation),
-      messages: await Promise.all(messageRows.map(async (row) => {
-        // Stored receipts are only ledger ids: each read re-derives the current status, and
-        // shows only this viewer's actions in this conversation.
-        const stored = (row.metadata as { actionReceipts?: { actionId?: unknown }[] } | null)?.actionReceipts;
-        const actionReceipts = row.actor === "ASSISTANT" && Array.isArray(stored)
-          ? await receiptViews({ actorId: req.actor!.id, conversationId: conversation.id }, stored.map((item) => String(item?.actionId)))
-          : [];
+      messages: messageRows.map((row, index) => {
+        const actionReceipts = receiptIdsByMessage[index]!
+          .map((actionId) => receiptsById.get(actionId))
+          .filter((receipt): receipt is NonNullable<typeof receipt> => receipt !== undefined);
         return {
           id: row.id,
           actor: row.actor,
@@ -1681,7 +1691,7 @@ router.get("/ai/conversations/:id", requireAuth, async (req, res) => {
           blocks: blocksByMessage.get(row.id) ?? [],
           ...(actionReceipts.length ? { actionReceipts } : {}),
         };
-      })),
+      }),
     }),
   );
 });
