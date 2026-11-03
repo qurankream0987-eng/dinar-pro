@@ -326,7 +326,8 @@ export async function rebuildSummary(actorId: string, conversationId: string): P
     .limit(1);
   // AI conversations are constrained to a market by conversations_shape_check; anything else
   // has no summary and no memory path.
-  if (!conversation?.marketId) return null;
+  const marketId = conversation?.marketId ?? null;
+  if (!marketId) return null;
   const rows = await db
     .select({ id: messages.id, actor: messages.actor, body: messages.body, createdAt: messages.createdAt })
     .from(messages)
@@ -342,7 +343,7 @@ export async function rebuildSummary(actorId: string, conversationId: string): P
       .values({
         conversationId,
         ownerUserId: actorId,
-        marketId: conversation.marketId,
+        marketId,
         summary: built.summary,
         topics: built.topics,
         sourceMessageIds: built.sourceMessageIds,
