@@ -320,7 +320,10 @@ test("D17.9 C7 stale memory is labelled stale and is refreshed before it is trus
 // ─── Input abuse ────────────────────────────────────────────────────────────
 
 test("D17.9 D1 SQL injection text is matched literally", async () => {
-  const literal = `سامسونج ' OR 1=1 -- ${runId}`;
+  // A digit suffix would merge with «1 -- » into a phone-shaped run and the privacy redaction
+  // would (correctly) rewrite the returned snippet; letters keep the literal intact.
+  const suffix = runId.replace(/\d/g, (digit) => "abcdefghij"[Number(digit)]!);
+  const literal = `سامسونج ' OR 1=1 -- ${suffix}`;
   const id = await message(aliceOther, literal, 40);
   const injection = await searchConversationMemory({ actorId: alice, query: "' OR 1=1 --", limit: 20 });
   assert.ok(injection.some((hit) => hit.messageId === id));
