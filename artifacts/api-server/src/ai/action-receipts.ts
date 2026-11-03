@@ -235,7 +235,7 @@ const NEGOTIATION_TARGETS = new Set(["COUNTER_NEGOTIATION", "ACCEPT_NEGOTIATION"
 const LISTING_TARGETS = new Set(["SEND_NEGOTIATION_OFFER", "REQUEST_BEST_PRICE", "PLACE_ORDER", "ADD_TO_CART", "UPDATE_LISTING_PRICE"]);
 /** Ledger ids per statement: the read is batched, so a long history costs a few queries, not thousands. */
 const RECEIPT_CHUNK = 200;
-const actionOf = (query: { action?: unknown }) => String(query.action);
+const actionOf = (query: ReceiptQuery) => String(query.action);
 const isUuid = (id: unknown): id is string => typeof id === "string" && UUID.test(id);
 
 /** The records a set of receipts names, read in one pass per table instead of one pass per receipt. */
@@ -270,26 +270,22 @@ async function loadReceiptRecords(rows: ReceiptRow[], actorId: string): Promise<
     ...rows.filter((row) => action(row) === "ACCEPT_NEGOTIATION").map((row) => queryOf(row).result?.negotiationId),
   ].filter(isUuid);
   const directListingIds = rows.filter((row) => LISTING_TARGETS.has(action(row))).map(targetOf).filter(isUuid);
+  // An empty id list is skipped rather than sent: `inArray(col, [])` is not valid SQL.
+  const rowsIf = async <T>(ids: readonly string[], read: () => Promise<T[]>): Promise<T[]> => (ids.length ? read() : []);
   const [marketsFound, negotiationRows, directListings, orderRows, intentRows] = await Promise.all([
     db
       .select({ id: markets.id, currencyCode: markets.currencyCode, minorUnitScale: markets.minorUnitScale })
       .from(markets)
       .where(inArray(markets.id, [...new Set(rows.map((row) => row.marketId))])),
-    negotiationIds.length
-      ? db.select().from(negotiations).where(inArray(negotiations.id, negotiationIds))
-      : Promise.resolve([] satisfies typeof negotiations.$inferSelect[]),
-    directListingIds.length
-      ? db.select({ id: offers.id, data: offers.data }).from(offers).where(inArray(offers.id, directListingIds))
-      : Promise.resolve([] satisfies { id: string; data: Record<string, unknown> }[]),
-    orderIdsOf.length
-      ? db.select({ id: orders.id, buyerId: orders.buyerId, sellerId: orders.sellerId }).from(orders).where(inArray(orders.id, orderIdsOf))
-      : Promise.resolve([] satisfies { id: string; buyerId: string; sellerId: string }[]),
-    intentIdsOf.length
-      ? db
-          .select({ id: paymentIntents.id, status: paymentIntents.status, amountMinor: paymentIntents.amountMinor, orderId: paymentIntents.orderId })
-          .from(paymentIntents)
-          .where(inArray(paymentIntents.id, intentIdsOf))
-      : Promise.resolve([] satisfies { id: string; status: string; amountMinor: number; orderId: string }[]),
+    rowsIf(negotiationIds, () => db.select().from(negotiations).where(inArray(negotiations.id, negotiationIds))),
+    rowsIf(directListingIds, () => db.select({ id: offers.id, data: offers.data }).from(offers).where(inArray(offers.id, directListingIds))),
+    rowsIf(orderIdsOf, () => db.select({ id: orders.id, buyerId: orders.buyerId, sellerId: orders.sellerId }).from(orders).where(inArray(orders.id, orderIdsOf))),
+    rowsIf(intentIdsOf, () =>
+      db
+        .select({ id: paymentIntents.id, status: paymentIntents.status, amountMinor: paymentIntents.amountMinor, orderId: paymentIntents.orderId })
+        .from(paymentIntents)
+        .where(inArray(paymentIntents.id, intentIdsOf)),
+    ),
   ]);
   // Only a party's negotiation contributes a listing, exactly as the per-receipt read required it.
   const ownedNegotiations = negotiationRows.filter((row) => row.buyerId === actorId || row.sellerId === actorId);

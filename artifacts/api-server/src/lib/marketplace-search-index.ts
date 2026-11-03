@@ -95,9 +95,12 @@ export async function refreshSearchDocuments(
   });
 }
 
+/** Either the pool-backed database or a transaction: the only thing this builder needs is `execute`. */
+type DocumentExecutor = Pick<typeof db, "execute">;
+
 async function writeDocuments(
   rows: Offer[],
-  executor: typeof db = db,
+  executor: DocumentExecutor = db,
 ): Promise<{ refreshed: number; considered: number }> {
   if (!rows.length) return { refreshed: 0, considered: 0 };
   const context = searchTextContext(await listMarketplaceCategories(true));
