@@ -63,6 +63,8 @@ type Cell = {
 };
 
 const cells: Record<string, Record<string, Cell>> = {};
+/** A stage marker on stdout: if the suite is ever killed by the job timeout, the last line names the step. */
+const stage = (name: string, detail: Record<string, unknown> = {}) => console.log("LOAD_STAGE", name, JSON.stringify(detail));
 const report: Record<string, unknown> = {
   configuration: {
     listings: LISTINGS,
@@ -81,6 +83,13 @@ const cellOf = (workload: string, concurrency: number): Cell => cells[workload]!
 const server = app.listen(0);
 await new Promise<void>((resolve) => server.once("listening", resolve));
 const base = `http://127.0.0.1:${(server.address() as any).port as number}/api`;
+
+// Hard stop well below the job timeout: if a workload ever blocks past its own request bounds, the
+// run ends as a failure that names the last completed cell instead of an opaque 120-minute timeout.
+const watchdog = setTimeout(() => {
+  console.error("LOAD_WATCHDOG", JSON.stringify({ cells }));
+  process.exit(1);
+}, 45 * 60_000);
 
 // The sampler holds its own connection so activity queries never queue behind the workload they
 // are measuring; pg_stat_activity excludes it with pg_backend_pid(), so the counts below are the
@@ -104,6 +113,7 @@ const quantile = (values: number[], q: number) =>
   values.length ? [...values].sort((a, b) => a - b)[Math.min(values.length - 1, Math.floor(values.length * q))]! : 0;
 
 async function drive(workload: string, concurrency: number, requests: number, make: (index: number) => Promise<number>): Promise<Cell> {
+  stage("drive:start", { workload, concurrency, requests });
   const latencies: number[] = [];
   const statuses: number[] = [];
   const errors: string[] = [];
@@ -170,9 +180,12 @@ async function drive(workload: string, concurrency: number, requests: number, ma
   return cell;
 }
 
+// Every measurement request is bounded: a request the API never answers becomes a recorded timeout
+// and a named failing workload instead of a silently hanging suite.
 const http = (path: string, cookie = "", init?: RequestInit) =>
   fetch(base + path, {
     ...init,
+    signal: init?.signal ?? AbortSignal.timeout(15_000),
     headers: { ...(init?.body ? { "Content-Type": "application/json" } : {}), ...(cookie ? { Cookie: cookie } : {}), ...(init?.headers ?? {}) },
   }).then((response) => response.status);
 
@@ -213,9 +226,10 @@ await test("LD-02 background search-index worker throughput and duplicate work",
   let documents = 0;
   let rounds = 0;
   for (;;) {
-    const { refreshed } = await refreshSearchDocuments({ limit: 2_000 });
+    const { refreshed, considered } = await refreshSearchDocuments({ limit: 2_000 });
     documents += refreshed;
     rounds++;
+    stage("ld02:round", { rounds, refreshed, considered, documents });
     if (!refreshed) break;
   }
   const wallMs = performance.now() - started;
@@ -279,8 +293,10 @@ async function register(label: string): Promise<Actor> {
 
 const buyers: Actor[] = [];
 const sellerActors: Actor[] = [];
+stage("fixtures:start");
 for (let index = 0; index < 6; index++) buyers.push(await register(`buyer-${index}`));
 for (let index = 0; index < 3; index++) sellerActors.push(await register(`seller-${index}`));
+stage("fixtures:actors", { buyers: buyers.length, sellers: sellerActors.length });
 
 const listingIds: string[] = (
   await db.execute(sql`SELECT id FROM offers WHERE id LIKE 'load-%' AND status = 'PUBLISHED' AND reserved_quantity < available_quantity ORDER BY id LIMIT 240`)
@@ -471,9 +487,13 @@ await test("LD-14 recovery after the database drops every connection", async () 
 });
 
 after(async () => {
+  clearTimeout(watchdog);
   report.workloads = cells;
   console.log("WAVE05_LOAD_BASELINE", JSON.stringify(report));
   sampler.release();
+  // Idle keep-alive sockets from the driver would otherwise keep close() waiting; the callback
+  // still fires only after every in-flight request has been answered.
+  server.closeAllConnections();
   await new Promise<void>((resolve) => server.close(() => resolve()));
   await pool.end();
 });
