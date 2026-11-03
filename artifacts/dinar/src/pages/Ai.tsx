@@ -37,6 +37,7 @@ import {
   type UIEvent,
 } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { Link } from "wouter";
 import {
   ArrowDown,
   ChevronLeft,
@@ -48,6 +49,7 @@ import {
   PanelRightClose,
   Search,
   ShoppingBag,
+  ShoppingCart,
   Settings,
   SquarePen,
   SlidersHorizontal,
@@ -58,6 +60,7 @@ import {
 } from "lucide-react";
 import type { Listing } from "@workspace/api-client-react";
 import { api, useAccount } from "@/account/Account";
+import { useCart } from "@/cart/CartContext";
 import { cn } from "@/lib/utils";
 import { friendlyError } from "@/lib/errors";
 import { iconButtonClass, buttonClass } from "@/ui/Button";
@@ -152,6 +155,9 @@ export default function AiPage() {
   const [visibleMessageCount, setVisibleMessageCount] = useState(40);
   const [showJumpToBottom, setShowJumpToBottom] = useState(false);
   const [addingListingId, setAddingListingId] = useState<string>();
+  // A stored cart receipt is returned again on every retry. It is shown and acknowledged once.
+  const confirmedReceipts = useRef<Set<string>>(new Set());
+  const { refreshFromServer: refreshCartFromServer, unitCount } = useCart();
   const [conversationToDelete, setConversationToDelete] = useState<{
     id: string;
     title: string;
@@ -1253,14 +1259,14 @@ export default function AiPage() {
 
   const addListing = useCallback(
     async (listing: Listing, resultSetId: string) => {
-      if (sending.current || streaming) return;
+      if (sending.current || streaming) return false;
       if (!user) {
         setError("سجّل الدخول لإضافة العرض إلى سلتك.");
-        return;
+        return false;
       }
       if (!activeId) {
         setError("ابدأ محادثة محفوظة ثم أعد البحث لإضافة العرض إلى السلة.");
-        return;
+        return false;
       }
       sending.current = true;
       const epoch = requestEpoch.current;
@@ -1271,16 +1277,25 @@ export default function AiPage() {
           resultSetId,
           resourceId: listing.id,
         });
-        if (epoch !== requestEpoch.current) return;
-        setLocalMessages((current) => [
-          ...(current ?? messages),
-          assistantMessage,
-        ]);
+        if (epoch !== requestEpoch.current) return false;
+        const alreadyConfirmed =
+          confirmedReceipts.current.has(assistantMessage.id) ||
+          (messages ?? []).some((message) => message.id === assistantMessage.id);
+        if (!alreadyConfirmed) {
+          confirmedReceipts.current.add(assistantMessage.id);
+          setLocalMessages((current) => [
+            ...(current ?? messages),
+            assistantMessage,
+          ]);
+        }
+        await refreshCartFromServer();
         refreshConversationData(activeId);
         if (user && market) publishCardSync(user.id, market.id, activeId);
+        return !alreadyConfirmed;
       } catch (cause) {
-        if (epoch !== requestEpoch.current) return;
+        if (epoch !== requestEpoch.current) return false;
         setError(friendlyError(cause));
+        return false;
       } finally {
         if (epoch === requestEpoch.current) {
           sending.current = false;
@@ -1288,7 +1303,7 @@ export default function AiPage() {
         }
       }
     },
-    [activeId, user, streaming, messages, queryClient],
+    [activeId, user, streaming, messages, queryClient, refreshCartFromServer],
   );
 
   const submit = async () => {
@@ -1918,6 +1933,23 @@ export default function AiPage() {
       >
         <DinarMark size={27} aria-hidden />
       </button>
+      <Link
+        href="/cart"
+        aria-label={unitCount ? `السلة، ${unitCount} وحدة` : "السلة"}
+        data-testid="link-cart"
+        className="ai-mobile-cart-trigger pressable"
+      >
+        <ShoppingCart size={22} aria-hidden />
+        {unitCount > 0 && (
+          <span
+            key={unitCount}
+            data-testid="badge-cart-units"
+            className="num absolute end-0.5 top-0.5 flex h-[18px] min-w-[18px] animate-pop items-center justify-center rounded-full bg-accent px-1 text-[10px] font-bold text-accent-foreground ring-2 ring-background"
+          >
+            {unitCount > 99 ? "99+" : unitCount}
+          </span>
+        )}
+      </Link>
       <div className="ai-home-content flex h-full min-h-0 flex-col" inert={identityVerifying || undefined}>
         <div
           className="ai-layout"
@@ -1978,6 +2010,28 @@ export default function AiPage() {
                     </button>
                   </TooltipTrigger>
                   {tip("البحث في المحادثات")}
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Link
+                      href="/cart"
+                      className="ai-rail-action pressable relative"
+                      aria-label={unitCount ? `السلة، ${unitCount} وحدة` : "السلة"}
+                      data-testid="sidebar-cart"
+                    >
+                      <ShoppingCart size={19} aria-hidden />
+                      {unitCount > 0 && (
+                        <span
+                          key={unitCount}
+                          data-testid="badge-cart-units"
+                          className="num absolute end-0.5 top-0.5 flex h-[18px] min-w-[18px] animate-pop items-center justify-center rounded-full bg-accent px-1 text-[10px] font-bold text-accent-foreground ring-2 ring-background"
+                        >
+                          {unitCount > 99 ? "99+" : unitCount}
+                        </span>
+                      )}
+                    </Link>
+                  </TooltipTrigger>
+                  {tip("السلة")}
                 </Tooltip>
               </div>
               <Tooltip>
@@ -2155,6 +2209,23 @@ export default function AiPage() {
                   ))}
                 </nav>
               )}
+              <Link
+                href="/cart"
+                className="ai-sidebar-cart pressable"
+                data-testid="footer-cart"
+                aria-label={unitCount ? `السلة، ${unitCount} وحدة` : "السلة"}
+              >
+                <ShoppingCart size={16} aria-hidden />
+                <span>السلة</span>
+                {unitCount > 0 && (
+                  <span
+                    className="ai-sidebar-cart-count num"
+                    data-testid="badge-cart-units"
+                  >
+                    {unitCount > 99 ? "99+" : unitCount}
+                  </span>
+                )}
+              </Link>
               <MarketChip className="ai-sidebar-market w-full justify-between" />
               <div className="ai-sidebar-account-row">
                 <button
