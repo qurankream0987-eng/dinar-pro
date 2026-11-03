@@ -304,13 +304,14 @@ test("A15-03 ASSISTANT — grounded advice, no invented price, and listing text 
   assert.equal(inventory.status, 200);
   // The seller-employee inventory read is deterministic: it states the DINAR record, not a price.
   const [owned] = await db.select({
-    title: offers.title,
+    data: offers.data,
     status: offers.status,
     availableQuantity: offers.availableQuantity,
     reservedQuantity: offers.reservedQuantity,
   }).from(offers).where(eq(offers.id, listing.id));
+  const ownedTitle = String((owned!.data as Record<string, unknown>).title ?? "");
   const availableNow = Math.max(0, (owned!.availableQuantity ?? 0) - owned!.reservedQuantity);
-  assert.ok(inventory.body.includes(`«${owned!.title}»`), `the read names the owned listing: ${inventory.body}`);
+  assert.ok(inventory.body.includes(`«${ownedTitle}»`), `the read names the owned listing: ${inventory.body}`);
   assert.ok(inventory.body.includes(`${availableNow} متاح`), `the read states the DB availability (${availableNow}): ${inventory.body}`);
   assert.ok(inventory.body.includes("منشور"), `the read states the DB status: ${inventory.body}`);
   assert.equal(typeof inventory.payload, "object", "the turn returned a surface payload");
