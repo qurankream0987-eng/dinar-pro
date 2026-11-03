@@ -162,10 +162,12 @@ function conversationCartReceipts(view: any) {
 
 const seller = await register(`بائع السلة ${runId}`);
 const buyer = await register(`مشتري السلة ${runId}`);
+// Titles avoid the word «سلة», which the deterministic intent router reads as a cart command
+// before it ever reaches marketplace search.
 const titles = {
-  normal: `لوحة سلة الوصول ${runId}`,
-  reduced: `حقيبة سلة الوصول ${runId}`,
-  desktop: `ساعة سلة الوصول ${runId}`,
+  normal: `لوحة الوصول ${runId}`,
+  reduced: `حقيبة الوصول ${runId}`,
+  desktop: `ساعة الوصول ${runId}`,
 };
 const listings = [
   { id: await publish(seller.cookie, titles.normal, "9"), title: titles.normal },
