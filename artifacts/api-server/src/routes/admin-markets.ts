@@ -6,6 +6,7 @@ import { GetAdminMarketCategoryPolicyAuditResponse } from "@workspace/api-zod";
 import {
   db,
   marketAudit,
+  marketLegalIntakes,
   marketPriceVersions,
   markets,
   sellerMarketEligibility,
@@ -20,6 +21,7 @@ import {
   resolveMarket,
 } from "../lib/markets";
 import { listMarketplaceCategories } from "../lib/marketplace-categories";
+import { assertCountryActivationReady } from "../lib/country-legal-readiness";
 
 const router = Router();
 
@@ -114,6 +116,15 @@ router.patch("/admin/markets/:id", async (req, res) => {
     const current = await resolveMarket(row, tx);
     const isActive = ["ACTIVE", "LIMITED"].includes(body.status);
     if (isActive) {
+      // Lock the country-intake row with the market row so a concurrent approval or suspension
+      // cannot race the activation decision.
+      await tx
+        .select({ id: marketLegalIntakes.id })
+        .from(marketLegalIntakes)
+        .where(eq(marketLegalIntakes.marketId, row.id))
+        .for("update")
+        .limit(1);
+      await assertCountryActivationReady(row.id, tx);
       assertMarketActive({ ...current, status: body.status, isActive });
     }
 

@@ -45,3 +45,13 @@ No Google-specific implementation branch or verified live-provider artifact is p
 ## Preservation rule
 
 Until candidate integration is complete, every row marked not verified remains recoverable by checking out its exact SHA listed here or in `01_ALL_BRANCHES_AND_SHAS.md`. No code or branch was deleted. Update this manifest after each accepted subsystem with the candidate commit, test evidence, and final classification; never convert a historical source report into candidate evidence.
+
+## Final candidate closure snapshot — 2026-11-04
+
+The candidate worktree was based on `f2f19f5cfa18ff305aed5aee32b9459f7011eb77` on `replit/dinar-next-six-wave-unification`. The final closure changes are limited to that branch and Draft PR #5; the PR base remains `replit/dinar-next-complete-development`. Source branches remain untouched.
+
+Candidate-level changes include the fail-closed country legal-intake check on administrator market activation, the new-order line-integrity guard for migration 0056, safe PostgreSQL idle-client error logging, and graceful shutdown cleanup for background maintenance. The selected lifecycle work from the preserved Railway-readiness contribution is local to this candidate; Draft PR #4 and its source branch remain unchanged. The Dockerfile is preserved in the candidate but was not built.
+
+Validation evidence and limits are recorded in `04_FINAL_CANDIDATE_ACCEPTANCE.md`. In brief: the fresh PG18 release smoke applied all 57 migrations and passed 9/9 checks; D16 readiness passed 4/4 on PG16 and PG18; readiness and shutdown checks passed on both versions; and the built API survived a disposable PG18 database outage and recovered cleanly. W02U3 performance passed on both versions. Market-dependent W02U3 journeys and the D15 money-model route flow remain blocked by the explicit no-test-market rule; they were not forced through with synthetic approvals. No production or Railway resources were touched.
+
+This snapshot supersedes earlier candidate-pending wording only for the evidence named above. Historical source reports and branch classifications remain historical; no missing reports 05–12 were recreated.

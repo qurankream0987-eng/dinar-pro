@@ -46,4 +46,24 @@ Before acceptance:
 5. Assert the new invariant rejects missing lines, wrong quantities, wrong subtotals, line edits that desynchronize the order, and order inserts without items; assert valid multi-price carts create correct separate orders.
 6. Do not use `drizzle-kit push`, Railway, production, or any non-loopback database.
 
-Until these checks run on one exact candidate SHA, this document is a design and source audit, not migration acceptance evidence.
+The final candidate validation snapshot below supplements this design and source audit. It does not turn unrun migration or financial scenarios into acceptance evidence.
+
+## Final candidate validation snapshot — 2026-11-04
+
+### Verified
+
+- On a fresh disposable loopback PostgreSQL 18 database, the release runner applied all 57 reviewed migrations, including `0056_order_line_integrity`; the release-migration smoke passed 9/9 checks.
+- Migration 0056 preserves pre-existing headers as version 0, defaults ordinary new inserts to version 1, and rejects new version-0 orders. The release manifest hash matched the SQL applied by the runner.
+- The fresh-environment smoke passed 9/9 after the administrator activation endpoint gained the same country-intake approval gate as the commerce boundary. The test confirmed activation and listing publication are refused before approvals and inactive-market inventory is not exposed.
+- Readiness passed 15/15 and shutdown/pool handling passed 1/1 on PostgreSQL 16 and 18. The D16 readiness suite passed 4/4 on both versions.
+- A separately built API process, started from the API package working directory against disposable PG18, returned 503 readiness while the database was unavailable, kept liveness at 200 and the process alive, recovered to 200 readiness after the database reopened, logged idle-pool disconnects without exposing connection details, and exited cleanly on SIGTERM. Outbound attempts: 0.
+- W02U3 performance passed on PostgreSQL 16 and 18.
+
+### Not verified or intentionally blocked
+
+- The D15 money-model route suite stopped at account registration with 409 on both database versions because the empty test database had no active market. It did not reach its financial assertions. No market or synthetic approval was added to force the suite through.
+- W02U3 accessibility, session, and reliability journeys stopped at the inactive-market gate on PG16. They remain unverified rather than being run against a fabricated approved market.
+- A populated legacy-data upgrade/interruption-and-retry rehearsal was not completed on the final candidate. The fresh PG18 release chain is verified; this is not a claim that every upgrade history is safe.
+- The candidate Docker image was not built. No Railway, production database, deployment, or live provider was used.
+
+An earlier pre-gate smoke attempt activated JO only inside a disposable loopback database; that database was dropped. The final fresh-environment smoke, after the legal gate was added, confirmed all markets remained inactive. D16 acceptance fixtures exercise legal approval and suspension behavior only inside disposable databases, which are removed by the isolated-suite runner.

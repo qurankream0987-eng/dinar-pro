@@ -68,6 +68,7 @@ sweepExpiredReservations();
 const reservationSweep = setInterval(sweepExpiredReservations, 60_000);
 reservationSweep.unref();
 
+let stopSearchIndexMaintenance: (() => void) | undefined;
 const server = app.listen(port, (err) => {
   if (err) {
     logger.error({ err }, "Error listening on port");
@@ -76,6 +77,11 @@ const server = app.listen(port, (err) => {
 
   logger.info({ port }, "Server listening");
   // C1: build and refresh search documents in the background (search stays correct without them).
-  startSearchIndexMaintenance();
+  stopSearchIndexMaintenance = startSearchIndexMaintenance();
 });
-installGracefulShutdown(server);
+installGracefulShutdown(server, {
+  beforeShutdown: () => {
+    clearInterval(reservationSweep);
+    stopSearchIndexMaintenance?.();
+  },
+});

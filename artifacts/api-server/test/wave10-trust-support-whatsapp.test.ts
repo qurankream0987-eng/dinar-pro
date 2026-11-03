@@ -16,6 +16,8 @@ import {
   markets,
   messages,
   moderationAudit,
+  offers,
+  orderItems,
   orders,
   pool,
   supportCases,
@@ -94,22 +96,46 @@ assert.ok(market, "the acceptance market exists");
 
 // A real order between buyer and offender, with one message from each side.
 const orderId = randomUUID();
-await db.insert(orders).values({
-  id: orderId,
-  buyerId: buyer.id,
+const offerId = `w10-${runId}`;
+await db.insert(offers).values({
+  id: offerId,
   sellerId: offender.id,
   marketId,
-  countryCode: market!.countryCode,
-  currencyCode: market!.currencyCode,
-  minorUnitScale: market!.minorUnitScale,
+  status: "PUBLISHED",
   unitPriceMinor: 1_000,
-  quantity: 1,
-  subtotalMinor: 1_000,
-  platformFeeMinor: 100,
-  sellerAmountMinor: 900,
-  orderLineIntegrityVersion: 0,
-  status: "CREATED",
-  data: {},
+  pricingMode: "FIXED",
+  inventoryMode: "LIMITED",
+  availableQuantity: 1,
+  reservedQuantity: 0,
+  data: { title: `W10 offer ${runId}`, description: "", category: "أخرى", categoryId: "other", city: "عمان", area: "", attributes: {} },
+});
+await db.transaction(async (tx) => {
+  await tx.insert(orders).values({
+    id: orderId,
+    buyerId: buyer.id,
+    sellerId: offender.id,
+    marketId,
+    countryCode: market!.countryCode,
+    currencyCode: market!.currencyCode,
+    minorUnitScale: market!.minorUnitScale,
+    unitPriceMinor: 1_000,
+    quantity: 1,
+    subtotalMinor: 1_000,
+    platformFeeMinor: 100,
+    sellerAmountMinor: 900,
+    orderLineIntegrityVersion: 1,
+    status: "CREATED",
+    data: { listingId: offerId, items: [{ listingId: offerId, quantity: 1, unitPriceMinor: 1_000, subtotalMinor: 1_000 }] },
+  });
+  await tx.insert(orderItems).values({
+    id: randomUUID(),
+    orderId,
+    offerId,
+    quantity: 1,
+    unitPriceMinor: 1_000,
+    subtotalMinor: 1_000,
+    data: { listingId: offerId, quantity: 1, unitPriceMinor: 1_000, subtotalMinor: 1_000 },
+  });
 });
 const conversationId = randomUUID();
 await db.insert(conversations).values({ id: conversationId, orderId, marketId, kind: "ORDER" });

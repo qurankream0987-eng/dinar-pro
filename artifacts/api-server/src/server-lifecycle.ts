@@ -6,6 +6,7 @@ type ShutdownOptions = {
   /** Replaceable so a test can observe the exit instead of ending its own process. */
   exit?: (code: number) => void;
   timeoutMs?: number;
+  beforeShutdown?: () => void;
 };
 
 /**
@@ -15,13 +16,24 @@ type ShutdownOptions = {
  */
 export function installGracefulShutdown(
   server: Server,
-  { exit = (code) => process.exit(code), timeoutMs = 10_000 }: ShutdownOptions = {},
+  {
+    exit = (code) => process.exit(code),
+    timeoutMs = 10_000,
+    beforeShutdown,
+  }: ShutdownOptions = {},
 ) {
   let draining: Promise<void> | undefined;
 
   const shutdown = (signal: string): Promise<void> => {
     if (draining) return draining;
     logger.info({ signal }, "Draining HTTP server and closing the database pool");
+    let cleanupFailed = false;
+    try {
+      beforeShutdown?.();
+    } catch (error) {
+      cleanupFailed = true;
+      logger.error({ signal, err: error }, "Pre-shutdown cleanup failed");
+    }
     draining = new Promise<void>((resolve) => {
       const deadline = setTimeout(() => {
         logger.error({ signal, timeoutMs }, "Graceful shutdown timed out; forcing exit");
@@ -32,13 +44,23 @@ export function installGracefulShutdown(
       deadline.unref();
       // Stop accepting new connections and let keep-alive sockets go, then close the pool.
       server.closeIdleConnections();
-      server.close(() => {
-        void pool.end().finally(() => {
+      server.close((serverError) => {
+        if (serverError)
+          logger.error({ signal, err: serverError }, "HTTP server failed to close cleanly");
+        void pool.end().then(
+          () => {
           clearTimeout(deadline);
           logger.info({ signal }, "Graceful shutdown complete");
-          exit(0);
+          exit(cleanupFailed || Boolean(serverError) ? 1 : 0);
           resolve();
-        });
+          },
+          (error) => {
+            clearTimeout(deadline);
+            logger.error({ signal, err: error }, "Database pool failed to close cleanly");
+            exit(1);
+            resolve();
+          },
+        );
       });
     });
     return draining;

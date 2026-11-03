@@ -5,9 +5,28 @@ ALTER TABLE orders
 ALTER TABLE orders
   ALTER COLUMN order_line_integrity_version SET DEFAULT 1;
 --> statement-breakpoint
+COMMENT ON COLUMN orders.order_line_integrity_version IS
+  'Version 0 is reserved for rows present before migration 0056; all new inserts require version 1.';
+--> statement-breakpoint
 ALTER TABLE orders
   ADD CONSTRAINT orders_line_integrity_version_valid
   CHECK (order_line_integrity_version IN (0, 1));
+--> statement-breakpoint
+CREATE FUNCTION dinar_require_line_integrity_for_new_order() RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  IF NEW.order_line_integrity_version IS DISTINCT FROM 1 THEN
+    RAISE EXCEPTION 'New orders require line integrity version 1'
+      USING ERRCODE = '23514';
+  END IF;
+  RETURN NEW;
+END;
+$$;
+--> statement-breakpoint
+CREATE TRIGGER orders_require_line_integrity_version_on_insert
+BEFORE INSERT ON orders
+FOR EACH ROW EXECUTE FUNCTION dinar_require_line_integrity_for_new_order();
 --> statement-breakpoint
 CREATE FUNCTION dinar_validate_order_line_integrity(target_order_id text) RETURNS void
 LANGUAGE plpgsql

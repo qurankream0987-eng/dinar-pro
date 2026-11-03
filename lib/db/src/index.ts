@@ -27,6 +27,13 @@ export const pool = new Pool({
   // D13 load harness measures what the library default costs under concurrency before it is raised.
   max: readPositiveInt(process.env.DINAR_DB_POOL_MAX) ?? 10,
 });
+// pg.Pool emits errors for idle clients; an unhandled error event would terminate the process.
+// Log only the driver code so connection details cannot leak into platform logs.
+pool.on("error", (error) => {
+  const code = "code" in error && typeof error.code === "string" ? error.code : "UNKNOWN";
+  console.error(JSON.stringify({ event: "postgres_idle_connection_error", code }));
+});
+
 export const db = drizzle(pool, { schema });
 
 export * from "./schema";

@@ -1,9 +1,9 @@
 /**
- * Wave 1: a freshly migrated database brought to a usable state, in production mode, exactly as
- * a staging deployment would be: readiness, first administrator, phone-verified login and
- * registration through a registered SMS adapter (an offline capture adapter here: the delivery
- * provider is the owner's open decision), one market activated by the administrator, a listing
- * published, and the built web app served from the API's origin.
+ * Wave 1 release smoke on an empty, release-migrated database in staging-like mode: readiness,
+ * first administrator, phone-verified login/registration through an offline SMS capture adapter,
+ * and the country legal gate refusing activation and listing publication until its approvals
+ * exist. The built web app and SSE chat are also checked on the API origin without exposing
+ * inventory from an inactive market.
  *
  * The caller creates an empty dinar_test_fresh_* database and migrates it with the release runner
  * (migrate-release.mjs, target "disposable") before running this file.
@@ -42,7 +42,7 @@ delete process.env.DINAR_DEV_DATABASE_URL;
 assert.ok((process.env.SESSION_SECRET ?? "").length >= 32, "SESSION_SECRET (≥32) is provided by the isolation session");
 
 const { default: app } = await import("../src/app");
-const { db, pool, markets, users, marketAudit, moderationAudit } = await import("@workspace/db");
+const { db, pool, markets, users, moderationAudit } = await import("@workspace/db");
 const { eq, and } = await import("drizzle-orm");
 const { registerPhoneVerificationProvider, unregisterPhoneVerificationProvider } = await import("../src/lib/phone-verification");
 const { bootstrapFirstAdmin } = await import("../src/lib/admin-bootstrap");
@@ -192,7 +192,7 @@ await test("registration in production: challenge → verify → register, and e
   buyer = sessionFrom(buyerRegistered.headers);
 });
 
-await test("market activation: only the administrator, only the chosen market, audited", async () => {
+await test("market activation remains blocked until country intake is approved", async () => {
   const configuration = { status: "ACTIVE", fulfilmentMethods: ["PICKUP", "DELIVERY", "SERVICE"], paymentMethods: ["CASH_DIRECT"], restrictedCategories: [], sellerEligibilityMode: "OPEN" };
   assert.equal((await call("/admin/markets/JO", { method: "PATCH", body: configuration, session: seller })).status, 403);
   assert.equal((await call("/admin/markets/JO", { method: "PATCH", body: configuration })).status, 401);
@@ -201,24 +201,16 @@ await test("market activation: only the administrator, only the chosen market, a
   assert.equal(listed.status, 200);
   assert.equal(listed.json.length, 249);
 
-  // Owner decision 2026-10-30 #3 (W07): a legacy unit price no longer gates activation; the
-  // administrator's explicit configuration does. A price can still be recorded and is audited.
-  const unpriced = await call("/admin/markets/JO", { method: "PATCH", body: configuration, session: admin });
-  assert.equal(unpriced.status, 200, unpriced.text);
-  const price = await call("/admin/markets/JO/prices", { method: "POST", body: { currencyCode: "JOD", unitPriceMinor: 1000 }, session: admin });
-  assert.ok([200, 201].includes(price.status), price.text);
   const activated = await call("/admin/markets/JO", { method: "PATCH", body: configuration, session: admin });
-  assert.equal(activated.status, 200, activated.text);
+  assert.equal(activated.status, 409, activated.text);
+  assert.equal(activated.json.code, "COUNTRY_INTAKE_NOT_ACTIVE");
 
   const active = await db.select({ id: markets.id }).from(markets).where(eq(markets.isActive, true));
-  assert.deepEqual(active.map((market) => market.id), ["JO"]);
-  const audit = await db.select().from(marketAudit).where(eq(marketAudit.marketId, "JO"));
-  assert.ok(audit.some((row) => row.action === "CONFIGURATION"));
+  assert.deepEqual(active, [], "no market is activated before legal, technical, owner and independent approval");
 });
 
-await test("a seller publishes in the activated market and a buyer finds it", async () => {
-  // Accounts created while JO was inactive were attached to it; re-login refreshes nothing needed.
-  const published = await call("/listings", {
+await test("a seller cannot publish while country intake keeps the market inactive", async () => {
+  const blocked = await call("/listings", {
     method: "POST",
     session: seller,
     body: {
@@ -226,10 +218,8 @@ await test("a seller publishes in the activated market and a buyer finds it", as
       attributes: {}, unitPrice: "45", pricingMode: "NEGOTIABLE", inventoryMode: "LIMITED", availableQuantity: 1, fulfilmentType: "PICKUP", imageUrl: "", imageUrls: [],
     },
   });
-  assert.equal(published.status, 201, published.text);
-  const found = await call("/listings?search=مكتب", { session: buyer });
-  assert.equal(found.status, 200);
-  assert.ok(found.json.some((listing: { id: string }) => listing.id === published.json.id), found.text.slice(0, 300));
+  assert.equal(blocked.status, 409, blocked.text);
+  assert.ok(blocked.json.error, blocked.text);
 });
 
 await test("same origin: the built web app, SPA routes, API JSON and the write guard on one origin", async () => {
@@ -257,7 +247,7 @@ await test("same origin: the built web app, SPA routes, API JSON and the write g
   assert.equal(crossSite.status, 403);
 });
 
-await test("SSE: a conversation turn streams through the shared origin with the session cookie", async () => {
+await test("SSE: the shared-origin chat never surfaces inventory from an inactive market", async () => {
   // Production chat stays off unless the operator opts in; the search turn below is deterministic.
   assert.equal((await call("/ai/conversations", { method: "POST", body: {}, session: buyer })).status, 404);
   process.env.DINAR_AI_CHAT = "true";
@@ -272,7 +262,7 @@ await test("SSE: a conversation turn streams through the shared origin with the 
   assert.match(response.headers.get("content-type") ?? "", /text\/event-stream/);
   const events = await response.text();
   assert.match(events, /^data: \{/m);
-  assert.match(events, /مكتب خشبي للبيع/, events.slice(0, 600));
+  assert.equal(events.includes("مكتب خشبي للبيع"), false);
 });
 
 await test("unregistering the SMS adapter makes the service not ready again", async () => {

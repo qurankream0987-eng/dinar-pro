@@ -350,7 +350,7 @@ await test("MM-18 two businesses under one owner settle to that owner", async ()
   assert.equal(rows.reduce((sum, row) => sum + row.subtotalMinor, 0), 80_000, "the two businesses' lines total exactly 80.000");
 });
 
-await test("MM-20 replay wave 02's relaxed constraint and prove it accepts a contradictory header", async () => {
+await test("MM-20 relaxed money constraint cannot create new version-0 orders", async () => {
   // Exactly the DDL of qoder/wave02-d4-d6-closure lib/db/drizzle/0051_order_multi_item_money.sql,
   // applied to this disposable loopback database only, to measure that strategy's consequence
   // rather than argue about it.
@@ -374,12 +374,12 @@ await test("MM-20 replay wave 02's relaxed constraint and prove it accepts a con
       "each order's lines match its subtotal",
     );
   }
-  // The relaxed schema accepts a contradictory header if a writer inserts one. Keep the production
-  // order-snapshot immutability trigger intact: copy a valid row into a new disposable probe row
-  // with a mismatched unit price instead of trying to UPDATE an immutable order.
+  // Even with the historical relaxed money CHECK installed, a normal writer cannot mark a new
+  // order as legacy to bypass line reconciliation.
   const target = rows[0]!;
   const probeId = `wave05-relaxed-probe-${randomUUID()}`;
-  await pool.query(
+  const rejectedProbeId = `wave05-rejected-probe-${randomUUID()}`;
+  await assert.rejects(pool.query(
     `INSERT INTO orders
       (id, buyer_id, seller_id, market_id, country_code, price_version_id, currency_code,
        minor_unit_scale, unit_price_minor, quantity, subtotal_minor, platform_fee_minor,
@@ -388,8 +388,34 @@ await test("MM-20 replay wave 02's relaxed constraint and prove it accepts a con
        minor_unit_scale, unit_price_minor + 1, quantity, subtotal_minor, platform_fee_minor,
        seller_amount_minor, 0, status, reservation_expires_at, data, now(), now()
      FROM orders WHERE id = $2`,
-    [probeId, target.id],
-  );
+    [rejectedProbeId, target.id],
+  ), /new orders require line integrity version 1/i);
+  // Rehearsal-only setup can model pre-existing history by disabling this user trigger transactionally.
+  // This requires table ownership and runs solely inside the disposable loopback acceptance database.
+  const legacyFixture = await pool.connect();
+  try {
+    await legacyFixture.query("BEGIN");
+    await legacyFixture.query(`ALTER TABLE "orders" DISABLE TRIGGER "orders_require_line_integrity_version_on_insert"`);
+    await legacyFixture.query(
+      `INSERT INTO orders
+        (id, buyer_id, seller_id, market_id, country_code, price_version_id, currency_code,
+         minor_unit_scale, unit_price_minor, quantity, subtotal_minor, platform_fee_minor,
+         seller_amount_minor, order_line_integrity_version, status, reservation_expires_at, data, created_at, updated_at)
+       SELECT $1, buyer_id, seller_id, market_id, country_code, price_version_id, currency_code,
+         minor_unit_scale, unit_price_minor + 1, quantity, subtotal_minor, platform_fee_minor,
+         seller_amount_minor, 0, status, reservation_expires_at, data, now(), now()
+       FROM orders WHERE id = $2`,
+      [probeId, target.id],
+    );
+    await legacyFixture.query("SET CONSTRAINTS ALL IMMEDIATE");
+    await legacyFixture.query(`ALTER TABLE "orders" ENABLE TRIGGER "orders_require_line_integrity_version_on_insert"`);
+    await legacyFixture.query("COMMIT");
+  } catch (error) {
+    await legacyFixture.query("ROLLBACK").catch(() => undefined);
+    throw error;
+  } finally {
+    legacyFixture.release();
+  }
   const [row] = await db.select().from(orders).where(eq(orders.id, probeId));
   const headerImpliesSubtotal = row!.unitPriceMinor * row!.quantity === row!.subtotalMinor;
   report.mm20 = {
@@ -403,6 +429,8 @@ await test("MM-20 replay wave 02's relaxed constraint and prove it accepts a con
       subtotalMinor: row!.subtotalMinor,
     },
     headerPriceTimesQuantityEqualsSubtotal: headerImpliesSubtotal,
+    newVersionZeroInsertRejected: true,
+    legacyFixtureRequiresPrivilegedTriggerBypass: true,
   };
   assert.ok(!headerImpliesSubtotal, "the relaxed CHECK admits an internally contradictory header");
   // Re-impose the original strict invariant in a transaction that is always rolled back.

@@ -24,14 +24,38 @@ after(() => {
   console.log("WAVE05_D13_SHUTDOWN", JSON.stringify(report));
 });
 
-test("SD-01 the server serves, drains on SIGTERM, ends its pool and exits 0 once", async () => {
+test("SD-01 the server logs idle pool errors safely and drains on SIGTERM once", async () => {
   const health = await fetch(`${origin}/healthz`);
   assert.equal(health.status, 200, "the replica serves before the signal");
 
+  const poolErrorLogs: string[] = [];
+  const originalConsoleError = console.error;
+  console.error = (...args) =>
+    poolErrorLogs.push(args.map((value) => String(value)).join(" "));
+  try {
+    const idleError = Object.assign(
+      new Error("private connection details must not be logged"),
+      { code: "ECONNRESET" },
+    );
+    assert.doesNotThrow(() =>
+      pool.emit("error", idleError, undefined as never),
+      "an idle-client error must not become an uncaught process error",
+    );
+  } finally {
+    console.error = originalConsoleError;
+  }
+  assert.deepEqual(poolErrorLogs, [
+    JSON.stringify({ event: "postgres_idle_connection_error", code: "ECONNRESET" }),
+  ]);
+
   const exits: number[] = [];
+  let beforeShutdownCalls = 0;
   const shutdown = installGracefulShutdown(server, {
     exit: (code) => exits.push(code),
     timeoutMs: 5_000,
+    beforeShutdown: () => {
+      beforeShutdownCalls++;
+    },
   });
 
   const startedAt = Date.now();
@@ -41,6 +65,7 @@ test("SD-01 the server serves, drains on SIGTERM, ends its pool and exits 0 once
   const drainMs = Date.now() - startedAt;
 
   assert.deepEqual(exits, [0], "the drain completes with a clean exit code");
+  assert.equal(beforeShutdownCalls, 1, "background maintenance is stopped before the drain");
   assert.equal(server.listening, false, "the listener stops accepting connections");
 
   let refused = false;
@@ -71,6 +96,7 @@ test("SD-01 the server serves, drains on SIGTERM, ends its pool and exits 0 once
     listenerClosed: !server.listening,
     newConnectionRefused: refused,
     poolEnded: poolClosed,
+    beforeShutdownCalls,
     repeatedSignalRanDrainAgain: false,
   };
 });

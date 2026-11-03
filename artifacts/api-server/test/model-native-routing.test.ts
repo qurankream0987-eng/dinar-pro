@@ -134,6 +134,7 @@ async function publish(key: string, title: string, price: string) {
 }
 await publish("pixel", `جوال بكسل 7 ${run}`, "180");
 await publish("redmi", `جوال ريدمي نوت ${run}`, "120");
+await publish("basket", `سلة غسيل ${run}`, "9");
 
 type Reply = { status: number; tool?: string; body: string; payload: any; listingIds: string[]; routed?: string };
 async function say(cookie: string, conv: string, message: string, clientMessageId = randomUUID()): Promise<Reply> {
@@ -169,6 +170,34 @@ const cartLines = async (userId: string) => {
   const [cart] = await db.select().from(carts).where(eq(carts.userId, userId));
   return cart ? (await db.select().from(cartItems).where(eq(cartItems.cartId, cart.id))).length : 0;
 };
+
+await test("G25 intent: basket wording searches products, cart wording opens cart, ordinal correction uses current results", async () => {
+  const basketBuyer = await fresh();
+  const basketSearch = await withMode("LEGACY", () => say(basketBuyer.cookie, basketBuyer.conv, "ابحث عن سلة غسيل"));
+  assert.equal(basketSearch.status, 200);
+  assert.ok(basketSearch.listingIds.includes(ids.basket), `basket listing was not found: ${basketSearch.body}`);
+  assert.notEqual(basketSearch.payload.surface, "CART");
+  const openedCart = await withMode("LEGACY", () => say(basketBuyer.cookie, basketBuyer.conv, "افتح سلة مشترياتي"));
+  assert.equal(openedCart.status, 200);
+  assert.equal(openedCart.payload.surface, "CART", openedCart.body);
+
+  const correctionBuyer = await fresh();
+  const results = await withMode("LEGACY", () => say(correctionBuyer.cookie, correctionBuyer.conv, `ابحث عن جوال ${run}`));
+  assert.equal(results.status, 200);
+  assert.equal(results.listingIds.length, 2, `expected the two isolated phone offers: ${results.body}`);
+  assert.ok(results.listingIds.includes(ids.pixel));
+  assert.ok(results.listingIds.includes(ids.redmi));
+  const corrected = await withMode("LEGACY", () => say(correctionBuyer.cookie, correctionBuyer.conv, "لا، أقصد العرض الثاني"));
+  assert.equal(corrected.status, 200);
+  assert.match(corrected.body, /هذا هو العرض الذي أشرت إليه/u, JSON.stringify(corrected.payload));
+  const correctedListingId =
+    corrected.payload.purchaseReview?.listingId ??
+    corrected.payload.resourceId ??
+    corrected.payload.resourceIds?.[0] ??
+    corrected.listingIds[0];
+  assert.equal(correctedListingId, results.listingIds[1], JSON.stringify(corrected.payload));
+  assert.equal((await db.select().from(orders).where(eq(orders.buyerId, correctionBuyer.id))).length, 0, "correction opens a review and never places an order");
+});
 
 // A bare product phrase is not a search for DINAR alone (a product rule); the «model» reads it as one.
 script.push({ key: `جوال بكسل ${run}`, canonical: `ابحث عن جوال بكسل ${run}` });

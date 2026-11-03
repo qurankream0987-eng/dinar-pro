@@ -1,6 +1,6 @@
 import { after, test } from "node:test";
 import assert from "node:assert/strict";
-import { randomUUID } from "node:crypto";
+import { randomBytes, randomUUID } from "node:crypto";
 import { execFile } from "node:child_process";
 import { eq } from "drizzle-orm";
 import { readFile, unlink } from "node:fs/promises";
@@ -723,12 +723,16 @@ await test("country suspension blocks new commerce but preserves existing order 
   process.env.DINAR_DEPLOYMENT_ENV = "development";
   const seller = await register(`D16 seller ${runId}`);
   const buyer = await register(`D16 buyer ${runId}`);
+  const listingFixtureTag = Array.from(
+    randomBytes(8),
+    (byte) => String.fromCharCode(97 + (byte % 26)),
+  ).join("");
   const listing = await request(
     "/listings",
     "POST",
     {
-      title: `D16 suspension fixture ${runId}`,
-      description: `Disposable order-history fixture ${runId}`,
+      title: `D16 suspension fixture ${listingFixtureTag}`,
+      description: `Disposable order-history fixture ${listingFixtureTag}`,
       category: "أخرى",
       categoryId: "other",
       area: "الصويفية",

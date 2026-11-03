@@ -407,6 +407,14 @@ await focused("F3-06", "repeated and concurrent confirmation creates one canonic
   const lines = await db.select().from(orderItems).where(eq(orderItems.orderId, orderId));
   assert.equal(lines.length, 1);
   await assert.rejects(db.insert(orders).values({ ...order!, id: randomUUID() }));
+  await assert.rejects(
+    db.insert(orders).values({
+      ...order!,
+      id: randomUUID(),
+      orderLineIntegrityVersion: 0,
+    }),
+    "new orders cannot opt out of line integrity",
+  );
   await assert.rejects(db.insert(orderItems).values({ ...lines[0]!, id: randomUUID() }));
   await assert.rejects(
     db.update(orderItems)

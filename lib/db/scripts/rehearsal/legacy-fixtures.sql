@@ -21,6 +21,9 @@ FROM markets m, (VALUES
 ) v(id, status, inv, qty, data, price, mode)
 WHERE m.country_code = 'JO';
 -- Orders and money snapshots.
+-- This synthetic legacy-row import is test-only and requires a disposable rehearsal database.
+-- It models rows that predate migration 0056; ordinary application writers cannot use version 0.
+ALTER TABLE orders DISABLE TRIGGER orders_require_line_integrity_version_on_insert;
 INSERT INTO orders (id, buyer_id, seller_id, market_id, currency_code, minor_unit_scale, unit_price_minor, quantity, subtotal_minor, platform_fee_minor, seller_amount_minor, status, data, country_code, price_version_id, order_line_integrity_version)
 SELECT v.id, v.buyer, 'rh-seller', m.id, m.currency_code, m.minor_unit_scale, v.price, v.qty, v.price * v.qty, v.fee, v.price * v.qty - v.fee, v.status, '{}'::jsonb, 'JO', 'rh-mpv-1', 0
 FROM markets m, (VALUES
@@ -28,6 +31,8 @@ FROM markets m, (VALUES
   ('rh-ord-2', 'rh-buyer-2', 6000, 1, 600,  'CREATED'),
   ('rh-ord-3', 'rh-buyer-1', 3000, 1, 300,  'CREATED')
 ) v(id, buyer, price, qty, fee, status) WHERE m.country_code = 'JO';
+SET CONSTRAINTS ALL IMMEDIATE;
+ALTER TABLE orders ENABLE TRIGGER orders_require_line_integrity_version_on_insert;
 INSERT INTO order_items (id, order_id, offer_id, quantity, unit_price_minor, subtotal_minor, data) VALUES
   ('rh-oi-1', 'rh-ord-1', 'rh-o-fixed', 2, 5000, 10000, '{}'),
   ('rh-oi-2', 'rh-ord-2', 'rh-o-fixed-neg', 1, 6000, 6000, '{}'),
