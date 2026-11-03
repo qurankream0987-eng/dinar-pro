@@ -266,7 +266,17 @@ await test("D7 conversation cart: confirmed flight, truthful failure, reduced mo
   assert.ok(report, "the cart journey wrote its report");
   assert.equal(report.failure, undefined, report.failure);
   assert.deepEqual(report.pageErrors, []);
-  assert.deepEqual(report.consoleErrors, []);
+  // The desktop pass forces a 500 through route interception; Chromium logs that failed resource
+  // itself. It must be the only console message, and it must belong to that pass.
+  assert.equal(
+    report.consoleErrors.length,
+    1,
+    `only the deliberate failure logs a console error: ${JSON.stringify(report.consoleErrors)}`,
+  );
+  assert.match(
+    report.consoleErrors[0],
+    /^cart-desktop: Failed to load resource: the server responded with a status of 500/,
+  );
   assert.deepEqual(report.externalRequests, []);
   assert.ok(report.checks.length >= 4, `expected the four cart passes, got ${report.checks.length}`);
   assert.equal(report.observations.normal.sponsoredDisclosure, "إعلان ممول");
