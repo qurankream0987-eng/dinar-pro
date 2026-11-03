@@ -1459,9 +1459,12 @@ function foldCurrencyDigits(text: string): string {
     .replace(/[۰-۹]/gu, (digit) => String(digit.charCodeAt(0) - 0x06f0));
 }
 
-/** Fields a verified read records as an amount; a model figure must match one of them. */
-const RECORDED_AMOUNT_KEY =
-  /^(?:unitPrice|price|amount|total|subtotal|offerAmount|counterAmount|quantity|availableQuantity|value)$/i;
+/**
+ * Fields a verified read records as money; a currency figure in the model's prose must match one
+ * of them. Quantities are deliberately absent: a recorded stock of 5 does not make «5 دنانير»
+ * a verified price, and a count is never written next to a currency word.
+ */
+const RECORDED_AMOUNT_KEY = /^(?:unitPrice|price|amount|total|subtotal|offerAmount|counterAmount|value)$/i;
 
 function collectRecordedAmounts(node: unknown, values: Set<number>, depth = 0): void {
   if (depth > 4) return;
@@ -1480,7 +1483,7 @@ function collectRecordedAmounts(node: unknown, values: Set<number>, depth = 0): 
   }
 }
 
-/** Every amount a verified read showed the model this turn: prices, totals and quantities. */
+/** Every money amount a verified read showed the model this turn. */
 function recordedAmounts(feedback: NonNullable<ModelContext["toolFeedback"]>): Set<number> {
   const values = new Set<number>();
   for (const item of feedback) {

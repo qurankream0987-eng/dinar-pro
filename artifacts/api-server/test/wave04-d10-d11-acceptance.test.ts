@@ -375,7 +375,9 @@ test("W04-10-03 follow-ups and corrections read the live record; the model's inv
       shown[1].unitPrice,
       "the price the model was shown is the recorded price",
     );
+    // Every fixture records a stock of 5; a recorded quantity never authorises «5 دنانير» as a price.
     assert.doesNotMatch(followUp.body, /5 دنانير/u, "the model's invented price is not served");
+    assert.match(followUp.body, /هذه نتائج القراءة الحالية من DINAR/u, "the invented price is replaced by DINAR's own reading text");
     assert.doesNotMatch(followUp.body, /تم إنشاء الطلب/u, "a completion claim never survives a read-only turn");
     assert.equal(await cartLines(user.id), 0, "the claim added nothing to the cart");
 
@@ -389,12 +391,20 @@ test("W04-10-03 follow-ups and corrections read the live record; the model's inv
     });
     const corrected = await say(user.cookie, user.conv, `لا، أقصد الأول من جوالات ${run} كم سعره؟`);
     assert.equal(corrected.status, 200, corrected.body);
-    const correctedSearch = lastFeedback.find((item) => item.tool === "searchListings" && item.status === "SUCCEEDED")
-      ?.result?.listings as { id: string; unitPrice: unknown }[];
-    const correctedRead = lastFeedback.find((item) => item.tool === "getResource" && item.status === "SUCCEEDED");
-    assert.equal(correctedRead?.result.listings[0].id, correctedSearch[0].id, "the correction reads the first listing instead");
-    assert.doesNotMatch(corrected.body, /973\s*دنانير/u, "an amount no read recorded never reaches the user");
-    assert.match(corrected.body, /هذه نتائج القراءة الحالية من DINAR/u, "the unrecorded amount is replaced by DINAR's own words");
+    assert.doesNotMatch(corrected.body, /973\s*دنانير/u, `an amount no read recorded never reaches the user: ${corrected.body}`);
+    assert.doesNotMatch(corrected.body, /تم إنشاء الطلب/u, `a completion claim never survives a read-only turn: ${corrected.body}`);
+    assert.equal(await cartLines(user.id), 0, "the correction added nothing to the cart");
+    // The corrected position is read from the live set through the same production tool the model
+    // calls: the first listing's own record answers it, never a price the model invented.
+    const joMarket = await marketFor({ actor: { activeMarketId: "JO" } });
+    const reopened = await executeModelTool(
+      "getResource",
+      JSON.stringify({ resultSetId: search.payload.resultSetId, resourceId: shown[0].id }),
+      { conversationId: user.conv, market: joMarket, actorId: user.id, currentMessageId: randomUUID() },
+    );
+    assert.equal(reopened.result.kind, "RESOURCE", "the correction resolves to the first listing of the live set");
+    assert.equal(reopened.result.listings[0]?.id, shown[0].id, "and it is the listing the user pointed at");
+    assert.equal(reopened.result.listings[0]?.unitPrice, shown[0].unitPrice, "with its recorded price");
     assert.equal(sawUntrustedDataRule, true, "tool results are framed to the model as untrusted data");
   });
 });
@@ -946,7 +956,24 @@ test("W04-11-14 no assistant turn of this run claims an action the ledger does n
     const settled = (await db.select().from(aiResultSets).where(eq(aiResultSets.conversationId, row.conversationId))).find(
       (record) => (record.query as any)?.kind === "ACTION" && (record.query as any)?.status === "CONFIRMED",
     );
-    assert.ok(settled, `a completion claim needs a confirmed ledger row: ${row.body.slice(0, 80)}`);
+    // Provenance, not just the text: which turn asked, and what the server stored with the reply.
+    const history = await db
+      .select({ actor: messages.actor, body: messages.body, createdAt: messages.createdAt, metadata: messages.metadata })
+      .from(messages)
+      .where(eq(messages.conversationId, row.conversationId))
+      .orderBy(messages.createdAt);
+    const turn = history.filter((entry) => entry.createdAt <= row.createdAt).at(-2);
+    const sameBody = history.filter((entry) => entry.actor === "ASSISTANT" && entry.body === row.body).length;
+    assert.ok(
+      settled,
+      [
+        "a completion claim needs a confirmed ledger row",
+        `assistant: ${row.body.slice(0, 80)}`,
+        `asked: ${String(turn?.body ?? "").slice(0, 80)}`,
+        `resultSetId: ${JSON.stringify(metadata?.resultSetId ?? null)}`,
+        `conversation: ${row.conversationId} with ${sameBody} copy of this reply`,
+      ].join(" | "),
+    );
   }
   // Nothing in this run could reach a provider: the owner switch makes the real factory return
   // the blocked gateway, and the CI net guard fails the suite on any outbound attempt.
