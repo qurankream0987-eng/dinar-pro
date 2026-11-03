@@ -409,14 +409,13 @@ function contextMessage(message: string, context: ModelContext, earlierUserTopic
     context.marketAvailable === false ? "UNAVAILABLE" : "AVAILABLE";
   const serverContext = JSON.stringify(context.serverContext ?? null).slice(0, MAX_SERVER_CONTEXT);
   const receipts = JSON.stringify((context.actionReceipts ?? []).slice(-MAX_ACTION_RECEIPTS).map(({ action, lifecycle }) => ({ action, lifecycle }))).slice(0, MAX_ACTION_RECEIPTS_CHARS);
-  const memory = (context.conversationMemory ?? "").slice(0, MAX_CONVERSATION_MEMORY_CHARS);
   const toolFeedback = [...(context.toolFeedback ?? [])].slice(-6);
   let serializedToolFeedback = JSON.stringify(toolFeedback);
   while (serializedToolFeedback.length > MAX_TOOL_FEEDBACK_CHARS && toolFeedback.length) {
     toolFeedback.shift();
     serializedToolFeedback = JSON.stringify(toolFeedback);
   }
-  return `<dinar_data>${data}</dinar_data>\nSERVER_MARKET_AVAILABILITY: ${marketAvailability}\nSERVER_CONVERSATION_CONTEXT: ${serverContext}\nSERVER_ACTION_RECEIPTS: ${receipts}${memory}\n<dinar_tool_results>${serializedToolFeedback}</dinar_tool_results>\nUSER: ${redactForModel(message).slice(0, MAX_MESSAGE)}`;
+  return `<dinar_data>${data}</dinar_data>\nSERVER_MARKET_AVAILABILITY: ${marketAvailability}\nSERVER_CONVERSATION_CONTEXT: ${serverContext}\nSERVER_ACTION_RECEIPTS: ${receipts}\n<dinar_tool_results>${serializedToolFeedback}</dinar_tool_results>\nUSER: ${redactForModel(message).slice(0, MAX_MESSAGE)}`;
 }
 
 /**
@@ -575,9 +574,13 @@ export async function interpretWithModel(
       ? "You may call one of the listed DINAR read-only tools to obtain current, server-authorized facts. After each result, either make another allowed read or return the normal structured response. Never claim a tool succeeded before its result is returned. Never use tools to change data, send messages, publish, approve, pay, or purchase."
       : "",
   ].filter(Boolean).join("\n");
+  const memory = context.conversationMemory?.slice(0, MAX_CONVERSATION_MEMORY_CHARS).trim();
   const messages: ModelMessage[] = [
     { role: "system", content: systemInstructions },
     ...history.recent,
+    // Retrieved history is its own untrusted system block: quoted prior text must never sit in
+    // the current user message where a model could read it as today's request.
+    ...(memory ? [{ role: "system" as const, content: memory }] : []),
     { role: "user", content: contextMessage(message, context, history.earlierUserTopics) },
     ...(context.correction ? [{ role: "system" as const, content: context.correction.slice(0, 600) }] : []),
   ];
