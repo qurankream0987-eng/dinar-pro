@@ -375,7 +375,7 @@ test("D17.1 the memory module has no path to financial, cart or authorization au
   assert.match(smartTurn, /input\.actorId && !sellerEmployeeRequested\s*\n?\s*\?\s*renderMemoryContext/, "seller employees never receive the owner's memory");
 });
 
-test("D17.2 memory reuses the conversation store and creates no second runtime", () => {
+test("D17.2 memory reuses the conversation store and creates no second runtime", async () => {
   const source = readFileSync(path.join(aiDir, "conversation-memory.ts"), "utf8");
   assert.match(source, /from "@workspace\/db"/);
   assert.match(source, /conversationSummaries/);
