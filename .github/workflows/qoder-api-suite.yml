@@ -99,6 +99,7 @@ on:
           - wave06-conversation-memory-performance.test
           - w06-d16-adversarial.test
           - w06-d17-context-baseline.test
+          - w06-d17-retrieval-quality.test
       chain:
         description: "Run a reviewed suite chain on one disposable migrated and seeded database"
         required: false
@@ -243,7 +244,7 @@ jobs:
               SUITES="d16-readiness.test wave06-d16-compliance-acceptance.test w06-d16-adversarial.test"
               require_flags "BDINAR_TEST_DATABASE BDINAR_D16_ACCEPTANCE BDINAR_W06_D16_ACCEPTANCE BDINAR_W06_D16_AUDIT" ;;
             wave06-d17-memory)
-              SUITES="wave06-conversation-memory.test wave06-conversation-memory-adversarial.test wave06-conversation-memory-performance.test w06-d17-context-baseline.test"
+              SUITES="wave06-conversation-memory.test wave06-conversation-memory-adversarial.test wave06-conversation-memory-performance.test w06-d17-context-baseline.test w06-d17-retrieval-quality.test"
               require_flags "BDINAR_TEST_DATABASE BDINAR_W06_D17_ACCEPTANCE BDINAR_W06_D17_MEMORY" ;;
             *) echo "chain not allowlisted: $CHAIN" >&2; exit 96 ;;
           esac
