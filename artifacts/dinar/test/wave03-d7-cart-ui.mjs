@@ -336,7 +336,9 @@ try {
     checks.push("desktop: a failed canonical add shows an error and never animates or changes the cart");
 
     // Keyboard activation after the failure: the same control now succeeds and flies.
-    await page.unroute((url) => url.pathname === `/api/ai/conversations/${conversationId}/actions/add-to-cart`);
+    // unroute() compares URLs by value, so a predicate route is not removable by identity;
+    // removing every route on this page is exact here because the failure pass added the only one.
+    await page.unrouteAll({ behavior: "wait" });
     await page.evaluate(() => (window.__wave03 = { states: [], flights: [] }));
     await add.focus();
     assert.equal(
