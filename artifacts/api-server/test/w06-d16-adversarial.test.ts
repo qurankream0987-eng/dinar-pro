@@ -37,6 +37,7 @@ import {
   marketLegalGateEnforced,
 } from "../src/lib/d16-readiness";
 import { assertMarketPolicy, resolveMarket } from "../src/lib/markets";
+import { currentPolicy } from "../src/lib/policies";
 import { paymentSimulationEnabled } from "../src/routes/payments";
 import { requireSafeReplitDevelopmentDatabase } from "./safe-development-database";
 
@@ -252,6 +253,74 @@ async function forceDisabledIntake(marketId: string) {
     .where(eq(marketLegalIntakes.marketId, marketId));
 }
 
+/**
+ * The country package exactly as the audit's premises need it: no topic reviewed, no evidence
+ * standing, no active legal entity and the intake itself disabled.
+ *
+ * This reset, and not `forceDisabledIntake` alone, is what the package-writing tests open with.
+ * The suite shares one disposable database with `d16-readiness.test` in the same CI chain, and that
+ * suite leaves a partially reviewed package behind (a REQUIRED OPERATING_ENTITY with expired
+ * evidence). Under run 41665768280 that leftover made "this topic is unresolved" and "counsel can
+ * record the review" false at the same time, which is a fixture defect, not a D16 finding.
+ */
+async function resetCountryPackage(marketId: string) {
+  const intakeId = `d16-intake-${marketId}`;
+  await db
+    .update(marketLegalIntakeTopics)
+    .set({
+      disposition: "UNRESOLVED",
+      reviewStatus: "NOT_REVIEWED",
+      evidenceRequirementStatus: "NOT_REVIEWED",
+      policyRequirementStatus: "NOT_REVIEWED",
+      counselFinding: null,
+      qualifications: null,
+      requiredAmendments: null,
+      officialReference: null,
+      effectiveFrom: null,
+      effectiveUntil: null,
+      requiredEvidenceTypes: [],
+      requiredPolicyVersions: [],
+      reviewedBy: null,
+      reviewedAt: null,
+      updatedAt: new Date(),
+    })
+    .where(eq(marketLegalIntakeTopics.intakeId, intakeId));
+  // Evidence is referenced by the append-only event trail and a legal entity cannot be deleted at
+  // all (legal_entities_guard refuses DELETE and TRUNCATE), so both are neutralised in place.
+  await db
+    .update(marketLegalEvidence)
+    .set({
+      status: "REJECTED",
+      reviewedBy: counsel.id,
+      reviewedAt: new Date(),
+      expiresAt: null,
+      updatedAt: new Date(),
+    })
+    .where(eq(marketLegalEvidence.intakeId, intakeId));
+  await db
+    .update(legalEntities)
+    .set({ status: "DISABLED", deactivatedAt: new Date(), deactivatedBy: admin.id, updatedAt: new Date() })
+    .where(and(eq(legalEntities.marketId, marketId), eq(legalEntities.status, "ACTIVE")));
+  await forceDisabledIntake(marketId);
+}
+
+/**
+ * A capability row open for counsel review, proven rather than assumed. `resetCapability` first,
+ * because a row the shared database inherited in ENABLED makes review-request answer 409
+ * CAPABILITY_ALREADY_ENABLED and leaves the row ENABLED — every later assertion in the test would
+ * then be measuring a reviewed capability instead of the review flow under audit.
+ */
+async function openCapabilityReview(marketId: string, capability: string) {
+  await resetCapability(marketId, capability);
+  const opened = await request(
+    `/admin/compliance/markets/${marketId}/capabilities/${capability}/review-request`,
+    "POST",
+    {},
+    admin,
+  );
+  assert.equal(opened.status, 202, `${capability} review request: ${opened.text}`);
+}
+
 async function seedEnabledCapability(marketId: string, capability: string) {
   const now = new Date();
   await db
@@ -332,8 +401,19 @@ await test("D16-A02 a capability row is never legal approval while the country p
   const overview = await request(`/admin/compliance/markets/${HOME}/capabilities`, "GET", undefined, admin);
   assert.equal(overview.status, 200, overview.text);
   const browsing = overview.data.capabilities.find((item: any) => item.capability === "BROWSING");
-  assert.equal(browsing.status, "ENABLED");
+  // Observed, not what an operator would wish: publicCapabilityRow masks the stored status for
+  // every reader, including the admin overview. The dashboard therefore shows BLOCKED for a row
+  // that is ENABLED in the database, so the one screen built to be looked at during an incident
+  // cannot distinguish "never approved" from "approved and now parked by the country gate" — the
+  // operator has to open psql to know that an emergency stop is even available to press.
+  assert.equal(browsing.status, "BLOCKED", "the overview hides the stored ENABLED status behind the country gate");
   assert.equal(browsing.enabled, false, "an ENABLED row on an unactivated country must not read as enabled");
+  const [storedRow] = await db
+    .select({ status: marketLegalCapabilityApprovals.status })
+    .from(marketLegalCapabilityApprovals)
+    .where(and(eq(marketLegalCapabilityApprovals.marketId, HOME), eq(marketLegalCapabilityApprovals.capability, "BROWSING")))
+    .limit(1);
+  assert.equal(storedRow?.status, "ENABLED", "the authority is the row, and it is the row the overview must disclose");
 
   await resetCapability(HOME, "BROWSING");
 });
@@ -371,7 +451,7 @@ await test("D16-A03 the database refuses a forged or self-approved capability ro
     (error: unknown) => nestedSqlState(error) === "23514",
   );
 
-  await request(`/admin/compliance/markets/${HOME}/capabilities/TRANSACTIONS/review-request`, "POST", {}, admin);
+  await openCapabilityReview(HOME, "TRANSACTIONS");
   const reviewUrl = "https://counsel.example/contract?token=abc";
   const apiRefusesQueryUrl = await request(
     `/admin/compliance/markets/${HOME}/capabilities/TRANSACTIONS/counsel-review`,
@@ -396,7 +476,7 @@ await test("D16-A03 the database refuses a forged or self-approved capability ro
 
 await test("D16-A04 no API path can activate a country: counsel signature and technical attestation are unavailable", async () => {
   deployed();
-  await forceDisabledIntake(ABROAD);
+  await resetCountryPackage(ABROAD);
 
   const requested = await request(
     `/admin/compliance/country-readiness/${ABROAD}/review-request`,
@@ -443,8 +523,14 @@ await test("D16-A04 no API path can activate a country: counsel signature and te
 
 await test("D16-A05 a fully resolved package still stops at the missing signature and attestation mechanisms", async () => {
   deployed();
-  await forceDisabledIntake(ABROAD);
-  await request(`/admin/compliance/country-readiness/${ABROAD}/review-request`, "POST", {}, admin);
+  await resetCountryPackage(ABROAD);
+  const openedForReview = await request(
+    `/admin/compliance/country-readiness/${ABROAD}/review-request`,
+    "POST",
+    {},
+    admin,
+  );
+  assert.equal(openedForReview.status, 202, openedForReview.text);
   const review = await request(
     `/admin/compliance/country-readiness/${ABROAD}`,
     "GET",
@@ -509,6 +595,28 @@ await test("D16-A05 a fully resolved package still stops at the missing signatur
 
 await test("D16-B06 separation of duties cannot be collapsed onto one actor", async () => {
   deployed();
+  configureRoles();
+  await resetCountryPackage(ABROAD);
+  const opened = await request(
+    `/admin/compliance/country-readiness/${ABROAD}/review-request`,
+    "POST",
+    {},
+    admin,
+  );
+  assert.equal(opened.status, 202, opened.text);
+
+  // Control first: with the owner list holding only the owner, the designated reviewer must be
+  // accepted. The separation rule below is only evidence once this premise is proven live.
+  const control = await request(
+    `/admin/compliance/country-readiness/${ABROAD}/topics/PERSONAL_DATA/review`,
+    "POST",
+    topicReviewBody("PERSONAL_DATA"),
+    counsel,
+  );
+  assert.equal(control.status, 200, `designation control failed: ${rolesProbe()} ${control.text}`);
+
+  // The same actor is now also a designated legal owner, which is how a configuration drift would
+  // let a counsel reviewer approve work reserved to a separate owner.
   process.env.DINAR_LEGAL_OWNER_IDS = `${owner.id},${counsel.id}`;
   const dualRoleCounsel = await request(
     `/admin/compliance/country-readiness/${ABROAD}/topics/PERSONAL_DATA/review`,
@@ -528,7 +636,7 @@ await test("D16-B06 separation of duties cannot be collapsed onto one actor", as
   assert.equal(errorCode(dualRoleCounsel), "SEPARATION_OF_DUTIES_REQUIRED");
   process.env.DINAR_LEGAL_OWNER_IDS = owner.id;
 
-  await request(`/admin/compliance/markets/${HOME}/capabilities/BROWSING/review-request`, "POST", {}, admin);
+  await openCapabilityReview(HOME, "BROWSING");
   // Both actors are designated reviewers here; the guard under test is the separation rule that
   // fires after the designation check, not the designation check itself.
   process.env.DINAR_COUNSEL_REVIEWER_IDS = `${counsel.id},${owner.id}`;
@@ -651,6 +759,7 @@ await test("D16-B07 an unauthorised or cross-market caller reaches nothing", asy
 await test("D16-B08 an in-flight enable overwrites a concurrent emergency disable (D16-BL-04)", async () => {
   deployed();
   await forceActivatedIntake(HOME);
+  await resetCapability(HOME, "CASH_PAYMENT");
   await db
     .insert(marketLegalCapabilityApprovals)
     .values({
@@ -671,18 +780,36 @@ await test("D16-B08 an in-flight enable overwrites a concurrent emergency disabl
     .where(and(eq(marketLegalCapabilityApprovals.marketId, HOME), eq(marketLegalCapabilityApprovals.capability, "CASH_PAYMENT")))
     .limit(1);
   assert.ok(row);
-
+  const priorEvents = await db
+    .select({ id: marketLegalCapabilityEvents.id })
+    .from(marketLegalCapabilityEvents)
+    .where(and(eq(marketLegalCapabilityEvents.marketId, HOME), eq(marketLegalCapabilityEvents.capability, "CASH_PAYMENT")));
+  const priorIds = new Set(priorEvents.map((event) => event.id));
   const blocker = await pool.connect();
+  const watcher = await pool.connect();
+  const outcomes = { stop: "not started", grant: "not started" };
+  const settle = <T>(label: "stop" | "grant", work: Promise<T>): Promise<T> =>
+    work.then(
+      (value) => {
+        outcomes[label] = "resolved";
+        return value;
+      },
+      (error: any) => {
+        outcomes[label] = `rejected:${error?.code ?? error?.message ?? String(error)}`;
+        throw error;
+      },
+    );
   try {
     await blocker.query("BEGIN");
     await blocker.query("SELECT id FROM market_legal_capability_approvals WHERE id = $1 FOR UPDATE", [row.id]);
-
-    const stop = disableMarketCapability({ actorId: admin.id, marketId: HOME, capability: "CASH_PAYMENT" });
-    await waitForLockWaiter(blocker, 1);
-    const grant = enableMarketCapability({ actorId: owner.id, marketId: HOME, capability: "CASH_PAYMENT", reference: "W06-RACE" });
-    await waitForLockWaiter(blocker, 2);
+    const stop = settle("stop", disableMarketCapability({ actorId: admin.id, marketId: HOME, capability: "CASH_PAYMENT" }));
+    await waitForBlockedTransaction(watcher, 1, () => `transitions ${JSON.stringify(outcomes)}; `);
+    const grant = settle(
+      "grant",
+      enableMarketCapability({ actorId: owner.id, marketId: HOME, capability: "CASH_PAYMENT", reference: "W06-RACE" }),
+    );
+    await waitForBlockedTransaction(watcher, 2, () => `transitions ${JSON.stringify(outcomes)}; `);
     await blocker.query("COMMIT");
-
     await Promise.allSettled([stop, grant]);
     const final = await db
       .select({ status: marketLegalCapabilityApprovals.status })
@@ -690,46 +817,79 @@ await test("D16-B08 an in-flight enable overwrites a concurrent emergency disabl
       .where(eq(marketLegalCapabilityApprovals.id, row.id))
       .limit(1);
 
-    // D16-BL-04: neither transition re-checks the row under a lock, so the last writer wins and
-    // an administrator's stop can be silently undone by an approval that started earlier. The fix
-    // is `.for("update")` in readCapability plus a status guard on both UPDATEs; when that lands,
-    // this assertion must flip to "DISABLED".
-    assert.equal(final[0]?.status, "ENABLED", "expected the documented lost update");
+    // D16-BL-04: the stop is issued first and the enable reads while the stop is blocked; this
+    // records whether stale approval can overwrite an emergency disable.
+    assert.equal(final[0]?.status, "ENABLED", `expected the documented lost update; transitions ${JSON.stringify(outcomes)}`);
     const events = await db
-      .select({ eventType: marketLegalCapabilityEvents.eventType })
+      .select({
+        id: marketLegalCapabilityEvents.id,
+        eventType: marketLegalCapabilityEvents.eventType,
+        fromStatus: marketLegalCapabilityEvents.fromStatus,
+        toStatus: marketLegalCapabilityEvents.toStatus,
+      })
       .from(marketLegalCapabilityEvents)
       .where(and(eq(marketLegalCapabilityEvents.marketId, HOME), eq(marketLegalCapabilityEvents.capability, "CASH_PAYMENT")));
-    // Compared as a set: both transitions were recorded, and the enable is the one that survived.
+    const raced = events.filter((event) => !priorIds.has(event.id));
     assert.deepEqual(
-      [...events.map((event) => event.eventType)].sort(),
+      [...raced.map((event) => event.eventType)].sort(),
       ["CAPABILITY_DISABLED", "OWNER_ENABLED"],
+      JSON.stringify(raced),
     );
+    const enabled = raced.find((event) => event.eventType === "OWNER_ENABLED");
+    assert.equal(enabled?.fromStatus, "OWNER_APPROVAL_REQUIRED", JSON.stringify(enabled));
+    assert.equal(enabled?.toStatus, "ENABLED", JSON.stringify(enabled));
   } finally {
     await blocker.query("ROLLBACK").catch(() => undefined);
     blocker.release();
+    watcher.release();
     await resetCapability(HOME, "CASH_PAYMENT");
   }
 });
 
-async function waitForLockWaiter(client: any, wanted: number) {
+/**
+ * Waits for `wanted` backends to be blocked on the capability row — the tuple lock the blocker
+ * holds — and if they never appear, fails with what every backend on this database was actually
+ * doing instead of a bare count.
+ *
+ * Both lock types count, because that is what the blocked writers show: run 41665768280 caught the
+ * emergency stop waiting on the held transaction's XID lock (locktype transactionid) while the
+ * enable, which arrives after the row lock is released but before the tuple becomes visible, was
+ * waiting on locktype tuple. Either way the transition is queued behind the blocker, so the race
+ * being reproduced is real; counting only transactionid made the harness time out on a race it had
+ * actually won.
+ */
+async function waitForBlockedTransaction(client: any, wanted: number, context: () => string) {
+  const blocked = `SELECT count(DISTINCT pid)::int AS waiting FROM pg_locks
+                    WHERE locktype IN ('transactionid', 'tuple') AND granted = false AND pid <> pg_backend_pid()`;
   for (let attempt = 0; attempt < 120; attempt++) {
-    const result = await client.query(
-      `SELECT count(*)::int AS waiting FROM pg_stat_activity
-       WHERE datname = current_database() AND wait_event_type = 'Lock' AND pid <> pg_backend_pid()
-         AND query ILIKE '%market_legal_capability_approvals%'`,
-    );
+    const result = await client.query(blocked);
     if (result.rows[0].waiting >= wanted) return;
     await new Promise((resolve) => setTimeout(resolve, 25));
   }
-  assert.fail(`D16-BL-04 reproduction needs ${wanted} transaction(s) blocked on the capability row`);
+  const backends = await client.query(
+    `SELECT pid, state, wait_event_type, wait_event, left(query, 90) AS statement
+       FROM pg_stat_activity
+      WHERE datname = current_database() AND pid <> pg_backend_pid()
+      ORDER BY backend_start`,
+  );
+  assert.fail(
+    `D16-BL-04 reproduction needs ${wanted} transaction(s) blocked on the capability row; ` +
+      `${context()} backends=${JSON.stringify(backends.rows)}`,
+  );
 }
 
 // ─── C. evidence lifecycle ───────────────────────────────────────────────────
 
 await test("D16-C09 missing, expired and revoked evidence each block the package", async () => {
   deployed();
-  await forceDisabledIntake(ABROAD);
-  await request(`/admin/compliance/country-readiness/${ABROAD}/review-request`, "POST", {}, admin);
+  await resetCountryPackage(ABROAD);
+  const opened = await request(
+    `/admin/compliance/country-readiness/${ABROAD}/review-request`,
+    "POST",
+    {},
+    admin,
+  );
+  assert.equal(opened.status, 202, opened.text);
   const reviewTopic = await request(
     `/admin/compliance/country-readiness/${ABROAD}/topics/OPERATING_ENTITY/review`,
     "POST",
@@ -751,8 +911,9 @@ await test("D16-C09 missing, expired and revoked evidence each block the package
   assert.ok(missing.data.blockers.includes("REQUIRED_LEGAL_ENTITY_NOT_ACTIVE"), JSON.stringify(missing.data.blockers));
 
   // The legal-entity blocker must be liftable only through the registry, and a created-but-disabled
-  // entity must not count as active.
-  await db.delete(legalEntities).where(eq(legalEntities.marketId, ABROAD));
+  // entity must not count as active. The fixture cannot delete the row to get a clean slate —
+  // legal_entities_guard refuses DELETE and TRUNCATE outright — so the registry's own one-entity-
+  // per-market rule is asserted instead, and the audit works with whatever is on file.
   const created = await request(
     "/admin/compliance/legal-entities",
     "POST",
@@ -764,8 +925,16 @@ await test("D16-C09 missing, expired and revoked evidence each block the package
     },
     admin,
   );
-  assert.equal(created.status, 201, created.text);
-  assert.equal(created.data.status, "DISABLED", "a registry entry starts inactive and cannot self-approve");
+  if (created.status === 201) assert.equal(created.data.status, "DISABLED", "a registry entry starts inactive and cannot self-approve");
+  else {
+    assert.equal(errorCode(created), "LEGAL_ENTITY_EXISTS", created.text);
+    const [onFile] = await db
+      .select({ status: legalEntities.status })
+      .from(legalEntities)
+      .where(eq(legalEntities.marketId, ABROAD))
+      .limit(1);
+    assert.equal(onFile?.status, "DISABLED", "the entity left on file must be inactive for the blocker below to be the audit's premise");
+  }
   const disabledEntity = await request(`/admin/compliance/country-readiness/${ABROAD}`, "GET", undefined, admin);
   assert.ok(
     disabledEntity.data.blockers.includes("REQUIRED_LEGAL_ENTITY_NOT_ACTIVE"),
@@ -877,7 +1046,15 @@ await test("D16-C09 missing, expired and revoked evidence each block the package
     .update(marketLegalEvidence)
     .set({ status: "REJECTED", reviewedBy: counsel.id, reviewedAt: new Date(), expiresAt: null, updatedAt: new Date() })
     .where(eq(marketLegalEvidence.intakeId, `d16-intake-${ABROAD}`));
-  await db.delete(legalEntities).where(eq(legalEntities.marketId, ABROAD));
+  // The entity stays on file forever; only its status can move back, so the fixture deactivates it
+  // through the registry's own route rather than deleting it the way an ordinary table would.
+  const deactivated = await request(
+    `/admin/compliance/legal-entities/${ABROAD}/deactivate`,
+    "POST",
+    {},
+    admin,
+  );
+  assert.equal(deactivated.status, 200, deactivated.text);
   await db
     .update(marketLegalIntakeTopics)
     .set({ disposition: "NOT_REQUIRED", reviewStatus: "NOT_REVIEWED", evidenceRequirementStatus: "NOT_REVIEWED", requiredEvidenceTypes: [] })
@@ -886,8 +1063,14 @@ await test("D16-C09 missing, expired and revoked evidence each block the package
 
 await test("D16-C10 two live versions of one document are a conflict, not a stronger case", async () => {
   deployed();
-  await forceDisabledIntake(ABROAD);
-  await request(`/admin/compliance/country-readiness/${ABROAD}/review-request`, "POST", {}, admin);
+  await resetCountryPackage(ABROAD);
+  const openedForConflict = await request(
+    `/admin/compliance/country-readiness/${ABROAD}/review-request`,
+    "POST",
+    {},
+    admin,
+  );
+  assert.equal(openedForConflict.status, 202, openedForConflict.text);
   await request(
     `/admin/compliance/country-readiness/${ABROAD}/topics/PAYMENTS/review`,
     "POST",
@@ -911,7 +1094,7 @@ await test("D16-C10 two live versions of one document are a conflict, not a stro
         evidenceType: "PAYMENT_LICENCE",
         documentVersion: version,
         referenceCode: `W06-LICENCE-${version}`,
-        idempotencyKey: `w06-licence-${version}`,
+        idempotencyKey: `w06-licence-${runId}-${version}`,
       },
       admin,
     );
@@ -950,11 +1133,32 @@ await test("D16-C10 two live versions of one document are a conflict, not a stro
     .where(eq(marketLegalIntakeTopics.intakeId, `d16-intake-${ABROAD}`));
 });
 
-await test("D16-C11 an unpublished policy version blocks activation", async () => {
+await test("D16-C11 an unpublished policy version blocks activation and the registry refuses to be forged", async () => {
   deployed();
-  await forceDisabledIntake(ABROAD);
-  await request(`/admin/compliance/country-readiness/${ABROAD}/review-request`, "POST", {}, admin);
-  await request(
+  await resetCountryPackage(ABROAD);
+  const openedForPolicy = await request(
+    `/admin/compliance/country-readiness/${ABROAD}/review-request`,
+    "POST",
+    {},
+    admin,
+  );
+  assert.equal(openedForPolicy.status, 202, openedForPolicy.text);
+
+  // The registry only accepts a version whose wording exists in code, so the audit demands the
+  // version the product actually ships rather than inventing one.
+  const terms = currentPolicy("terms");
+  assert.ok(terms, "the audit needs the built-in terms document");
+  const pending = `POLICY_VERSION_NOT_PUBLISHED:POLICY_VERSIONS:${terms.key}`;
+  // The ladder under test starts at DRAFT and a registry row can never be deleted or moved
+  // backwards, so the audit needs a scope it has not already consumed; naming that premise here
+  // beats a confusing 200 from the register call three lines below.
+  const [alreadyOnFile] = await db
+    .select({ id: policyRegistryVersions.id, lifecycle: policyRegistryVersions.lifecycle })
+    .from(policyRegistryVersions)
+    .where(and(eq(policyRegistryVersions.policyKey, terms.key), eq(policyRegistryVersions.version, terms.version), eq(policyRegistryVersions.marketScope, ABROAD)))
+    .limit(1);
+  assert.equal(alreadyOnFile?.lifecycle ?? null, null, `a ${terms.key}@${terms.version} registry row scoped to ${ABROAD} is already ${alreadyOnFile?.lifecycle}`);
+  const topic = await request(
     `/admin/compliance/country-readiness/${ABROAD}/topics/POLICY_VERSIONS/review`,
     "POST",
     {
@@ -964,36 +1168,92 @@ await test("D16-C11 an unpublished policy version blocks activation", async () =
       evidenceRequirementStatus: "NO_REQUIREMENTS",
       requiredEvidenceTypes: [],
       policyRequirementStatus: "VERSIONS_SET",
-      requiredPolicyVersions: [{ policyKey: "TERMS_OF_SERVICE", version: "w06-required" }],
+      requiredPolicyVersions: [{ policyKey: terms.key, version: terms.version }],
     },
     counsel,
   );
+  assert.equal(topic.status, 200, topic.text);
   const missing = await request(`/admin/compliance/country-readiness/${ABROAD}`, "GET", undefined, admin);
-  assert.ok(
-    missing.data.blockers.includes("POLICY_VERSION_NOT_PUBLISHED:POLICY_VERSIONS:TERMS_OF_SERVICE"),
-    JSON.stringify(missing.data.blockers),
+  assert.ok(missing.data.blockers.includes(pending), JSON.stringify(missing.data.blockers));
+
+  // The guards are the control under test, so the audit tries to defeat them with the write access
+  // an operator of this database has: a PUBLISHED row written directly, and the trail deleted
+  // again afterwards. Both are refused by policy_registry_versions_guard.
+  await assert.rejects(
+    db.insert(policyRegistryVersions).values({
+      id: randomUUID(),
+      policyKey: terms.key,
+      version: terms.version,
+      lifecycle: "PUBLISHED",
+      contentSha256: createHash("sha256").update(`w06-audit-terms-${ABROAD}`).digest("hex"),
+      effectiveDate: terms.effectiveDate,
+      marketScope: ABROAD,
+      requiresAcceptance: terms.requiresAcceptance,
+      materialChange: true,
+      legalReference: "W06-AUDIT-FORGED-REFERENCE",
+      approvedBy: counsel.id,
+      approvedAt: new Date(),
+      publishedBy: admin.id,
+      publishedAt: new Date(),
+    }),
+    (error: unknown) => nestedSqlState(error) === "23514",
   );
 
-  await db.insert(policyRegistryVersions).values({
-    id: randomUUID(),
-    policyKey: "TERMS_OF_SERVICE",
-    version: "w06-required",
-    lifecycle: "PUBLISHED",
-    contentSha256: createHash("sha256").update(`w06-audit-terms-${ABROAD}`).digest("hex"),
-    effectiveDate: "2026-01-01",
-    marketScope: ABROAD,
-    requiresAcceptance: true,
-    materialChange: true,
-    legalReference: "W06-AUDIT-LEGAL-REFERENCE",
-    approvedBy: counsel.id,
-    approvedAt: new Date(),
-    publishedBy: admin.id,
-    publishedAt: new Date(),
-  });
-  const satisfied = await request(`/admin/compliance/country-readiness/${ABROAD}`, "GET", undefined, admin);
-  assert.ok(!satisfied.data.blockers.includes("POLICY_VERSION_NOT_PUBLISHED:POLICY_VERSIONS:TERMS_OF_SERVICE"), JSON.stringify(satisfied.data.blockers));
+  const registered = await request(
+    "/admin/compliance/policies",
+    "POST",
+    { key: terms.key, version: terms.version, marketScope: ABROAD },
+    admin,
+  );
+  assert.equal(registered.status, 201, registered.text);
+  assert.equal(registered.data.lifecycle, "DRAFT", "registration is not approval");
+  const stillBlocked = await request(`/admin/compliance/country-readiness/${ABROAD}`, "GET", undefined, admin);
+  assert.ok(stillBlocked.data.blockers.includes(pending), JSON.stringify(stillBlocked.data.blockers));
 
-  await db.delete(policyRegistryVersions).where(eq(policyRegistryVersions.version, "w06-required"));
+  // Only the published lifecycle satisfies the package, and it is reachable one legal step at a
+  // time through an admin actor with an external reference at the approval step.
+  const skipped = await request(
+    `/admin/compliance/policies/${registered.data.id}/transition`,
+    "POST",
+    { action: "PUBLISH" },
+    admin,
+  );
+  assert.equal(skipped.status, 409, skipped.text);
+  assert.equal(errorCode(skipped), "POLICY_TRANSITION_INVALID");
+  for (const step of [
+    { action: "LEGAL_REVIEW" },
+    { action: "APPROVE", legalReference: "W06-AUDIT-LEGAL-REFERENCE" },
+    { action: "PUBLISH" },
+  ]) {
+    const moved = await request(
+      `/admin/compliance/policies/${registered.data.id}/transition`,
+      "POST",
+      step,
+      admin,
+    );
+    assert.equal(moved.status, 200, `${step.action}: ${moved.text}`);
+  }
+  const satisfied = await request(`/admin/compliance/country-readiness/${ABROAD}`, "GET", undefined, admin);
+  assert.ok(!satisfied.data.blockers.includes(pending), JSON.stringify(satisfied.data.blockers));
+
+  // The record cannot be removed even by the database owner: the compliance evidence trail
+  // survives, so a published-and-withdrawn version stays auditable.
+  await assert.rejects(
+    db.delete(policyRegistryVersions).where(eq(policyRegistryVersions.id, registered.data.id)),
+    (error: unknown) => nestedSqlState(error) === "23514",
+  );
+
+  await request(
+    `/admin/compliance/policies/${registered.data.id}/transition`,
+    "POST",
+    { action: "SUPERSEDE" },
+    admin,
+  );
+  const superseded = await request(`/admin/compliance/country-readiness/${ABROAD}`, "GET", undefined, admin);
+  assert.ok(
+    superseded.data.blockers.includes(pending),
+    JSON.stringify(superseded.data.blockers) + " — a superseded version must not satisfy the package",
+  );
   await db
     .update(marketLegalIntakeTopics)
     .set({ disposition: "NOT_REQUIRED", reviewStatus: "NOT_REVIEWED", policyRequirementStatus: "NOT_REVIEWED", requiredPolicyVersions: [] })
@@ -1277,8 +1537,14 @@ await test("D16-E17 an incident closed without counsel review still cannot claim
 
 await test("D16-F18 the reference field accepts a document URL although it promises a code only (D16-BL-06)", async () => {
   deployed();
-  await forceDisabledIntake(ABROAD);
-  await request(`/admin/compliance/country-readiness/${ABROAD}/review-request`, "POST", {}, admin);
+  await resetCountryPackage(ABROAD);
+  const openedForReference = await request(
+    `/admin/compliance/country-readiness/${ABROAD}/review-request`,
+    "POST",
+    {},
+    admin,
+  );
+  assert.equal(openedForReference.status, 202, openedForReference.text);
 
   const urlAsReference = "https://docs.example.gov.jo/register/2026";
   const evidence = await request(
@@ -1312,7 +1578,7 @@ await test("D16-F18 the reference field accepts a document URL although it promi
     .set({ status: "REJECTED", reviewedBy: counsel.id, reviewedAt: new Date(), expiresAt: null, updatedAt: new Date() })
     .where(eq(marketLegalEvidence.id, evidence.data.id));
 
-  await request(`/admin/compliance/markets/${HOME}/capabilities/DELIVERY_OPERATIONS/review-request`, "POST", {}, admin);
+  await openCapabilityReview(HOME, "DELIVERY_OPERATIONS");
   const capabilityReview = await request(
     `/admin/compliance/markets/${HOME}/capabilities/DELIVERY_OPERATIONS/counsel-review`,
     "POST",
@@ -1333,4 +1599,25 @@ await test("D16-F18 the reference field accepts a document URL although it promi
     .limit(1);
   assert.equal(capabilityRow?.counselReference, urlAsReference, "the approval trail stores a private locator as counsel's evidence");
   await resetCapability(HOME, "DELIVERY_OPERATIONS");
+});
+// ─── teardown ────────────────────────────────────────────────────────────────
+
+/**
+ * This file declares awaited top-level tests, so cleanup cannot be a root-level after() hook: in
+ * run 41661934742 a hook registered ahead of the tests fired after the first one, restoring the
+ * role environment and closing the listener while the rest of the audit was still running. An
+ * awaited final test is ordered by declaration, which is the only guarantee teardown needs.
+ */
+await test("D16-Z99 the audit leaves the disposable database as it found it", async () => {
+  for (const [name, value] of previousEnv) {
+    if (value === undefined) delete process.env[name];
+    else process.env[name] = value;
+  }
+  // Evidence and intake events are append-only or event-referenced, and a legal entity cannot be
+  // deleted at all, so the fixture state is rolled back by neutralising the rows rather than
+  // removing them: pristine topics, rejected evidence, a deactivated entity, a disabled intake.
+  await db.delete(marketLegalCapabilityApprovals);
+  await resetCountryPackage(HOME);
+  await resetCountryPackage(ABROAD);
+  await server.close();
 });
