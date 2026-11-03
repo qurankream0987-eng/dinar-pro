@@ -37,6 +37,9 @@ const READ_CONCURRENCY = [1, 10, 24];
 const READ_REQUESTS: Record<number, number> = { 1: 150, 10: 400, 24: 800 };
 const CEILING = { concurrency: 60, requests: 600 };
 const SLOW_MS = 250;
+// Anonymous requests resolve to DEFAULT_MARKET (KW). Every synthetic row lives in JO, so the
+// guest cookie is what makes the read cells measure the catalog this suite actually built.
+const GUEST_MARKET = "bdinar_guest_market=JO";
 
 type Cell = {
   concurrency: number;
@@ -389,12 +392,29 @@ report.environment = {
 // ---- the load matrix ------------------------------------------------------
 
 await test("LD-10 public browsing and marketplace search", async () => {
+  // A 200 on an empty market is not evidence: prove the anonymous read path reaches the synthetic
+  // JO catalog before timing it, otherwise both browse and detail would measure an empty KW list.
+  const probe = await fetch(`${base}/listings?search=${encodeURIComponent("هاتف")}`, {
+    signal: AbortSignal.timeout(15_000),
+    headers: { Cookie: GUEST_MARKET },
+  });
+  const probeBody = (await probe.json()) as unknown;
+  assert.equal(probe.status, 200, "anonymous JO browse answers 200");
+  assert.ok(
+    Array.isArray(probeBody) && probeBody.length > 0,
+    "anonymous JO browse returns the synthetic catalog, not the default empty market",
+  );
+  report.guestBrowseProbe = {
+    status: probe.status,
+    listings: Array.isArray(probeBody) ? probeBody.length : null,
+  };
   for (const concurrency of READ_CONCURRENCY) {
     const requests = READ_REQUESTS[concurrency]!;
-    await drive("public_browse", concurrency, requests, () => http("/listings"));
+    await drive("public_browse", concurrency, requests, () => http("/listings", GUEST_MARKET));
     await drive("marketplace_search", concurrency, requests, (index) =>
-      http(`/listings?search=${encodeURIComponent(index % 2 ? "هاتف" : "لابتوب")}`));
-    await drive("listing_detail", concurrency, requests, (index) => http(`/listings/${listingIds[index % listingIds.length]}`));
+      http(`/listings?search=${encodeURIComponent(index % 2 ? "هاتف" : "لابتوب")}`, GUEST_MARKET));
+    await drive("listing_detail", concurrency, requests, (index) =>
+      http(`/listings/${listingIds[index % listingIds.length]}`, GUEST_MARKET));
     for (const workload of ["public_browse", "marketplace_search", "listing_detail"]) {
       const cell = cellOf(workload, concurrency);
       assert.equal(cell.completed, requests, `${workload} c=${concurrency}: every request completed`);
@@ -496,7 +516,7 @@ await test("LD-12 write workloads: seller catalog, cart write, checkout, inquiry
 
 await test("LD-13 the connection pool ceiling under a burst", async () => {
   const cell = await drive("ceiling_browse", CEILING.concurrency, CEILING.requests, (index) =>
-    http(`/listings?search=${encodeURIComponent(index % 3 ? "هاتف" : "سيارة")}`));
+    http(`/listings?search=${encodeURIComponent(index % 3 ? "هاتف" : "سيارة")}`, GUEST_MARKET));
   const effectiveMax = (pool.options.max ?? 10) - 1; // the sampler holds one slot of the pool
   report.ld13_poolCeiling = {
     poolMax: pool.options.max,
@@ -527,7 +547,10 @@ await test("LD-14 recovery after the database drops every connection", async () 
   const trace: number[] = [];
   for (let attempt = 0; attempt < 60; attempt++) {
     try {
-      const response = await fetch(`${base}/listings?limit=1`, { signal: AbortSignal.timeout(5_000) });
+      const response = await fetch(`${base}/listings?search=${encodeURIComponent("هاتف")}`, {
+        signal: AbortSignal.timeout(5_000),
+        headers: { Cookie: GUEST_MARKET },
+      });
       trace.push(response.status);
       if (trace.length >= 6 && trace.slice(-5).every((status) => status === 200)) break;
     } catch {
@@ -540,7 +563,8 @@ await test("LD-14 recovery after the database drops every connection", async () 
   report.ld14_recovery = { attempts: trace.length, firstSuccessAt, recovered: tail.every((status) => status === 200), statusTrace: trace };
   assert.ok(firstSuccessAt >= 0, "a request succeeds after every backend was terminated");
   assert.ok(tail.every((status) => status === 200), `the API recovers to a clean read path: ${JSON.stringify(trace)}`);
-  const post = await drive("post_outage_browse", 10, 200, (index) => http(`/listings?search=${encodeURIComponent(index % 2 ? "كنب" : "غسالة")}`));
+  const post = await drive("post_outage_browse", 10, 200, (index) =>
+    http(`/listings?search=${encodeURIComponent(index % 2 ? "كنب" : "غسالة")}`, GUEST_MARKET));
   const baseline = cellOf("marketplace_search", 10);
   report.ld14_afterRecovery = { p50Ms: post.p50, baselineP50Ms: baseline.p50, ratio: +(post.p50 / Math.max(1, baseline.p50)).toFixed(2) };
   assert.equal(post.serverErrors, 0, "the recovered path returns no 5xx");
