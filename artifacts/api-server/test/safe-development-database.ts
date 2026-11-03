@@ -39,6 +39,12 @@ const approvalMessages: Record<string, string> = {
   BDINAR_DEEPSEEK_CHAT_ACCEPTANCE: "BDINAR_DEEPSEEK_CHAT_ACCEPTANCE=development",
   BDINAR_AI_FOUNDATION: "BDINAR_AI_FOUNDATION=development",
   BDINAR_WAVE4_D10D12: "BDINAR_WAVE4_D10D12=development",
+  BDINAR_WAVE05_MONEY_GATE: "BDINAR_WAVE05_MONEY_GATE=development",
+  BDINAR_WAVE05_LOAD: "BDINAR_WAVE05_LOAD=development",
+  BDINAR_WAVE05_PROFILE: "BDINAR_WAVE05_PROFILE=development",
+  BDINAR_WAVE05_EVALUATION: "BDINAR_WAVE05_EVALUATION=development",
+  BDINAR_WAVE05_ACCEPTANCE: "BDINAR_WAVE05_ACCEPTANCE=development",
+  BDINAR_WAVE05_SHUTDOWN: "BDINAR_WAVE05_SHUTDOWN=development",
 };
 
 export function requireSafeReplitDevelopmentDatabase(
@@ -119,4 +125,10 @@ const operationMessages: Record<keyof typeof approvalMessages, string> = {
     "Wave 03 conversation cart, security and campaign acceptance run",
   BDINAR_WAVE4_D10D12:
     "Wave 04 D10/D11/D12 universal intelligence, tool orchestration and durable task acceptance run",
+  BDINAR_WAVE05_MONEY_GATE: "Wave 05 order money model gate run",
+  BDINAR_WAVE05_LOAD: "Wave 05 synthetic load and capacity baseline run",
+  BDINAR_WAVE05_PROFILE: "Wave 05 query plan, round trip and background work profile run",
+  BDINAR_WAVE05_EVALUATION: "Wave 05 Arabic intelligence evaluation run",
+  BDINAR_WAVE05_ACCEPTANCE: "Wave 05 full end-to-end engineering acceptance run",
+  BDINAR_WAVE05_SHUTDOWN: "Wave 05 graceful server shutdown acceptance run",
 };

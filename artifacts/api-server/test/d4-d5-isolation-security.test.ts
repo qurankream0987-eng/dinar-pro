@@ -117,7 +117,7 @@ async function d2IdOf(businessId: string): Promise<string> {
   return row!.d2BusinessId;
 }
 
-/** A hex UUID tag can hide a valid JO phone number, and the listing contact guard then refuses the publish. */
+/** Alphabetic fixture suffixes avoid false positives from the Jordanian phone-number guard. */
 const safeTag = () => randomUUID().replace(/[0-9]/g, "x").slice(0, 8);
 
 function listingBody(title: string, quantity: number, extra: Record<string, unknown> = {}) {
