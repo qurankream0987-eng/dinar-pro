@@ -7,7 +7,7 @@
  * Every database write that stands in for an out-of-band state (an activated country package, an
  * ENABLED capability row) is labelled as such, because no API path can produce it today.
  */
-import { after, test } from "node:test";
+import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createHash, randomUUID } from "node:crypto";
 import { and, eq, inArray, sql } from "drizzle-orm";
@@ -183,34 +183,6 @@ function rolesProbe() {
     owner: owner.id,
   });
 }
-
-after(async () => {
-  for (const [name, value] of previousEnv) {
-    if (value === undefined) delete process.env[name];
-    else process.env[name] = value;
-  }
-  // Evidence and intake events are append-only or event-referenced, so the fixture state is
-  // rolled back by neutralising the rows rather than deleting them.
-  await db.delete(marketLegalCapabilityApprovals);
-  await forceDisabledIntake(HOME);
-  await forceDisabledIntake(ABROAD);
-  await db
-    .update(marketLegalIntakeTopics)
-    .set({
-      disposition: "NOT_REQUIRED",
-      reviewStatus: "NOT_REVIEWED",
-      evidenceRequirementStatus: "NOT_REVIEWED",
-      policyRequirementStatus: "NOT_REVIEWED",
-      requiredEvidenceTypes: [],
-      requiredPolicyVersions: [],
-    })
-    .where(sql`true`);
-  await db
-    .update(marketLegalEvidence)
-    .set({ status: "REJECTED", reviewedBy: counsel.id, reviewedAt: new Date(), expiresAt: null })
-    .where(eq(marketLegalEvidence.intakeId, `d16-intake-${ABROAD}`));
-  await server.close();
-});
 
 function deployed() {
   process.env.DINAR_DEPLOYMENT_ENV = "production";
@@ -755,6 +727,7 @@ await test("D16-B07 an unauthorised or cross-market caller reaches nothing", asy
 await test("D16-B08 an in-flight enable overwrites a concurrent emergency disable (D16-BL-04)", async () => {
   deployed();
   await forceActivatedIntake(HOME);
+  await resetCapability(HOME, "CASH_PAYMENT");
   await db
     .insert(marketLegalCapabilityApprovals)
     .values({
@@ -775,8 +748,18 @@ await test("D16-B08 an in-flight enable overwrites a concurrent emergency disabl
     .where(and(eq(marketLegalCapabilityApprovals.marketId, HOME), eq(marketLegalCapabilityApprovals.capability, "CASH_PAYMENT")))
     .limit(1);
   assert.ok(row);
+  // The trail is append-only and this disposable database is shared with the sibling suite, so
+  // the evidence below is the delta this race added, not the whole history of the capability.
+  const priorEvents = await db
+    .select({ id: marketLegalCapabilityEvents.id })
+    .from(marketLegalCapabilityEvents)
+    .where(and(eq(marketLegalCapabilityEvents.marketId, HOME), eq(marketLegalCapabilityEvents.capability, "CASH_PAYMENT")));
+  const priorIds = new Set(priorEvents.map((event) => event.id));
 
+  // The blocker owns the tuple lock; the watcher is a separate connection because polling the
+  // blocked transaction's own client would queue behind it.
   const blocker = await pool.connect();
+  const watcher = await pool.connect();
   const outcomes = { stop: "not started", grant: "not started" };
   const settle = <T>(label: "stop" | "grant", work: Promise<T>): Promise<T> =>
     work.then(
@@ -793,13 +776,18 @@ await test("D16-B08 an in-flight enable overwrites a concurrent emergency disabl
     await blocker.query("BEGIN");
     await blocker.query("SELECT id FROM market_legal_capability_approvals WHERE id = $1 FOR UPDATE", [row.id]);
 
+    // The stop is issued first. Its admin check, market read and capability read are all plain
+    // SELECTs, so it reaches its UPDATE and parks on the tuple lock the blocker holds.
     const stop = settle("stop", disableMarketCapability({ actorId: admin.id, marketId: HOME, capability: "CASH_PAYMENT" }));
-    await waitForLockWaiter(blocker, 1, () => `transitions ${JSON.stringify(outcomes)}; `);
+    await waitForBlockedTransaction(watcher, 1, () => `transitions ${JSON.stringify(outcomes)}; `);
+
+    // The approval starts second. Its reads are not blocked by a row lock, so it observes the
+    // pre-stop status and queues its own UPDATE behind the stop.
     const grant = settle(
       "grant",
       enableMarketCapability({ actorId: owner.id, marketId: HOME, capability: "CASH_PAYMENT", reference: "W06-RACE" }),
     );
-    await waitForLockWaiter(blocker, 2, () => `transitions ${JSON.stringify(outcomes)}; `);
+    await waitForBlockedTransaction(watcher, 2, () => `transitions ${JSON.stringify(outcomes)}; `);
     await blocker.query("COMMIT");
 
     await Promise.allSettled([stop, grant]);
@@ -809,38 +797,52 @@ await test("D16-B08 an in-flight enable overwrites a concurrent emergency disabl
       .where(eq(marketLegalCapabilityApprovals.id, row.id))
       .limit(1);
 
-    // D16-BL-04: neither transition re-checks the row under a lock, so the last writer wins and
-    // an administrator's stop can be silently undone by an approval that started earlier. The fix
-    // is `.for("update")` in readCapability plus a status guard on both UPDATEs; when that lands,
-    // this assertion must flip to "DISABLED".
+    // D16-BL-04: both transitions were queued in the safe order — stop first, approval second —
+    // and neither re-reads the row once it owns the lock. Both UPDATEs are unconditional
+    // `SET status = … WHERE id = …`, so Postgres lets the second writer overwrite the first and
+    // the emergency stop is silently undone. The fix is `.for("update")` in readCapability plus a
+    // status guard on both UPDATEs; when that lands, this assertion must flip to "DISABLED" and
+    // the enable must be refused.
     assert.equal(final[0]?.status, "ENABLED", `expected the documented lost update; transitions ${JSON.stringify(outcomes)}`);
     const events = await db
-      .select({ eventType: marketLegalCapabilityEvents.eventType })
+      .select({
+        id: marketLegalCapabilityEvents.id,
+        eventType: marketLegalCapabilityEvents.eventType,
+        fromStatus: marketLegalCapabilityEvents.fromStatus,
+        toStatus: marketLegalCapabilityEvents.toStatus,
+      })
       .from(marketLegalCapabilityEvents)
       .where(and(eq(marketLegalCapabilityEvents.marketId, HOME), eq(marketLegalCapabilityEvents.capability, "CASH_PAYMENT")));
+    const raced = events.filter((event) => !priorIds.has(event.id));
     // Compared as a set: both transitions were recorded, and the enable is the one that survived.
     assert.deepEqual(
-      [...events.map((event) => event.eventType)].sort(),
+      [...raced.map((event) => event.eventType)].sort(),
       ["CAPABILITY_DISABLED", "OWNER_ENABLED"],
+      JSON.stringify(raced),
     );
+    // The enable's own audit row is the proof that it wrote from a stale read: it records leaving
+    // OWNER_APPROVAL_REQUIRED although the row it overwrote had already been set to DISABLED.
+    const enabled = raced.find((event) => event.eventType === "OWNER_ENABLED");
+    assert.equal(enabled?.fromStatus, "OWNER_APPROVAL_REQUIRED", JSON.stringify(enabled));
+    assert.equal(enabled?.toStatus, "ENABLED", JSON.stringify(enabled));
   } finally {
     await blocker.query("ROLLBACK").catch(() => undefined);
     blocker.release();
+    watcher.release();
     await resetCapability(HOME, "CASH_PAYMENT");
   }
 });
 
 /**
- * Waits for `wanted` backends to be parked on the capability row, and if they never appear, fails
- * with what the server was actually doing instead of a bare count.
+ * Waits for `wanted` backends to be blocked waiting for another transaction to end — the tuple
+ * lock the blocker holds — and if they never appear, fails with what every backend on this
+ * database was actually doing instead of a bare count.
  */
-async function waitForLockWaiter(client: any, wanted: number, context: () => string) {
+async function waitForBlockedTransaction(client: any, wanted: number, context: () => string) {
+  const blocked = `SELECT count(*)::int AS waiting FROM pg_locks
+                    WHERE locktype = 'transactionid' AND granted = false AND pid <> pg_backend_pid()`;
   for (let attempt = 0; attempt < 120; attempt++) {
-    const result = await client.query(
-      `SELECT count(*)::int AS waiting FROM pg_stat_activity
-       WHERE datname = current_database() AND wait_event_type = 'Lock' AND pid <> pg_backend_pid()
-         AND query ILIKE '%market_legal_capability_approvals%'`,
-    );
+    const result = await client.query(blocked);
     if (result.rows[0].waiting >= wanted) return;
     await new Promise((resolve) => setTimeout(resolve, 25));
   }
@@ -1465,4 +1467,40 @@ await test("D16-F18 the reference field accepts a document URL although it promi
     .limit(1);
   assert.equal(capabilityRow?.counselReference, urlAsReference, "the approval trail stores a private locator as counsel's evidence");
   await resetCapability(HOME, "DELIVERY_OPERATIONS");
+});
+
+// ─── teardown ────────────────────────────────────────────────────────────────
+
+/**
+ * This file declares awaited top-level tests, so cleanup cannot be a root-level after() hook: in
+ * run 41661934742 a hook registered ahead of the tests fired after the first one, restoring the
+ * role environment and closing the listener while the rest of the audit was still running. An
+ * awaited final test is ordered by declaration, which is the only guarantee teardown needs.
+ */
+await test("D16-Z99 the audit leaves the disposable database as it found it", async () => {
+  for (const [name, value] of previousEnv) {
+    if (value === undefined) delete process.env[name];
+    else process.env[name] = value;
+  }
+  // Evidence and intake events are append-only or event-referenced, so the fixture state is
+  // rolled back by neutralising the rows rather than deleting them.
+  await db.delete(marketLegalCapabilityApprovals);
+  await forceDisabledIntake(HOME);
+  await forceDisabledIntake(ABROAD);
+  await db
+    .update(marketLegalIntakeTopics)
+    .set({
+      disposition: "NOT_REQUIRED",
+      reviewStatus: "NOT_REVIEWED",
+      evidenceRequirementStatus: "NOT_REVIEWED",
+      policyRequirementStatus: "NOT_REVIEWED",
+      requiredEvidenceTypes: [],
+      requiredPolicyVersions: [],
+    })
+    .where(sql`true`);
+  await db
+    .update(marketLegalEvidence)
+    .set({ status: "REJECTED", reviewedBy: counsel.id, reviewedAt: new Date(), expiresAt: null })
+    .where(eq(marketLegalEvidence.intakeId, `d16-intake-${ABROAD}`));
+  await server.close();
 });
