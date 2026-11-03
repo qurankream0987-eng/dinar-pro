@@ -101,6 +101,13 @@ async function say(actor: Actor, conversationId: string, message: string) {
   };
 }
 
+/** Listing titles must not look like contact text; eight hex digits can parse as an Amman landline. */
+function listingTag() {
+  return randomUUID()
+    .replace(/[0-9]/g, (digit) => "abcdefghij"[Number(digit)]!)
+    .slice(0, 8);
+}
+
 async function createBusiness(actor: Actor, label = randomUUID().slice(0, 8)): Promise<string> {
   const id = await conversation(actor);
   const turn = await say(actor, id, `عندي متجر اسمه متجر أمان ${label}`);
@@ -208,8 +215,8 @@ await test("D4 authority and catalog data never cross owner, business, employee,
   const businessA = await createBusiness(ownerA, "A");
   const businessB = await createBusiness(ownerB, "B");
   const [d2A, d2B] = await Promise.all([d2IdOf(businessA), d2IdOf(businessB)]);
-  const titleA = `منتج النشاط أ ${randomUUID().slice(0, 8)}`;
-  const titleB = `منتج النشاط ب ${randomUUID().slice(0, 8)}`;
+  const titleA = `منتج النشاط أ ${listingTag()}`;
+  const titleB = `منتج النشاط ب ${listingTag()}`;
   const listingA = await publish(ownerA, titleA, 7);
   const listingB = await publish(ownerB, titleB, 9);
   await assignListingToBusiness({ actorId: ownerA.id, marketId: "JO", listingId: listingA, businessId: d2A });
@@ -294,14 +301,14 @@ await test("D4 authority and catalog data never cross owner, business, employee,
     event.detail.reason === "PRINCIPAL_MISMATCH",
   ));
 
-  const spoofedOwnerListing = await request("/listings", "POST", listingBody(`إعلان مموّه ${randomUUID().slice(0, 8)}`, 4, {
+  const spoofedOwnerListing = await request("/listings", "POST", listingBody(`إعلان مموّه ${listingTag()}`, 4, {
     businessId: d2B,
   }), ownerA.cookie);
   assert.equal(spoofedOwnerListing.status, 201, spoofedOwnerListing.raw);
   const [spoofedOwnerRow] = await db.select().from(offers).where(eq(offers.id, spoofedOwnerListing.data.id));
   assert.equal(spoofedOwnerRow?.businessProfileId, null, "a request-selected business id must never associate a listing");
 
-  const employeeListing = await request("/listings", "POST", listingBody(`إعلان الموظف ${randomUUID().slice(0, 8)}`, 3, {
+  const employeeListing = await request("/listings", "POST", listingBody(`إعلان الموظف ${listingTag()}`, 3, {
     businessId: d2A,
   }), employeeA.cookie);
   assert.equal(employeeListing.status, 201, employeeListing.raw);
@@ -356,7 +363,7 @@ await test("post-activation employee restriction, staff revocation, D2 suspensio
   const owner = await register("BlockOwner");
   const employee = await register("BlockEmployee");
   const businessId = await createBusiness(owner, "Block");
-  const listingId = await publish(owner, `منتج الحجب ${randomUUID().slice(0, 8)}`, 5);
+  const listingId = await publish(owner, `منتج الحجب ${listingTag()}`, 5);
   const d2 = await d2IdOf(businessId);
   await assignListingToBusiness({ actorId: owner.id, marketId: "JO", listingId, businessId: d2 });
   const delegationId = await grantAndActivate(owner, employee, businessId, ["business.catalog.read"], { kind: "BUSINESS" });
@@ -517,7 +524,7 @@ await test("a pending D5 approval cannot execute after grant expiry, and replayi
   const buyer = await register("ExpiryApprovalBuyer");
   const businessId = await createBusiness(owner, "Expiry");
   const d2 = await d2IdOf(businessId);
-  const listingTitle = `منتج الانتهاء ${randomUUID().slice(0, 8)}`;
+  const listingTitle = `منتج الانتهاء ${listingTag()}`;
   const listingId = await publish(owner, listingTitle, 35);
   await assignListingToBusiness({ actorId: owner.id, marketId: "JO", listingId, businessId: d2 });
   const delegationId = await grantAndActivate(owner, { type: "INTELLIGENT" }, businessId, [
@@ -638,7 +645,7 @@ await test("buyer text that instructs the model to act cannot turn a D5 proposal
   const buyer = await register("InjectionBuyer");
   const businessId = await createBusiness(owner, "Injection");
   const d2 = await d2IdOf(businessId);
-  const listingId = await publish(owner, `منتج الحقن ${randomUUID().slice(0, 8)}`, 5);
+  const listingId = await publish(owner, `منتج الحقن ${listingTag()}`, 5);
   await assignListingToBusiness({ actorId: owner.id, marketId: "JO", listingId, businessId: d2 });
   await grantAndActivate(owner, { type: "INTELLIGENT" }, businessId, [
     "business.catalog.read",
