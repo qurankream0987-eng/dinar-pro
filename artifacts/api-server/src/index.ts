@@ -1,5 +1,6 @@
 import app from "./app";
 import { logger } from "./lib/logger";
+import { pool } from "@workspace/db";
 import { startSearchIndexMaintenance } from "./lib/marketplace-search-index";
 import { onProviderBreakerTransition } from "./ai/model-gateway";
 import { releaseExpiredReservations } from "./routes/marketplace";
@@ -67,7 +68,7 @@ sweepExpiredReservations();
 const reservationSweep = setInterval(sweepExpiredReservations, 60_000);
 reservationSweep.unref();
 
-app.listen(port, (err) => {
+const server = app.listen(port, (err) => {
   if (err) {
     logger.error({ err }, "Error listening on port");
     process.exit(1);
@@ -75,5 +76,39 @@ app.listen(port, (err) => {
 
   logger.info({ port }, "Server listening");
   // C1: build and refresh search documents in the background (search stays correct without them).
-  startSearchIndexMaintenance();
+  stopSearchIndexMaintenance = startSearchIndexMaintenance();
 });
+
+let stopSearchIndexMaintenance: (() => void) | undefined;
+let shutdownStarted = false;
+
+function shutdown(signal: NodeJS.Signals) {
+  if (shutdownStarted) return;
+  shutdownStarted = true;
+  logger.info({ signal }, "Graceful shutdown started");
+  clearInterval(reservationSweep);
+  stopSearchIndexMaintenance?.();
+
+  const forceExit = setTimeout(() => {
+    logger.error({ signal }, "Graceful shutdown timed out");
+    process.exit(1);
+  }, 10_000);
+  forceExit.unref();
+
+  server.close((error) => {
+    if (error) logger.error({ err: error }, "HTTP server failed to close cleanly");
+    void pool.end().then(() => {
+      clearTimeout(forceExit);
+      if (error) process.exit(1);
+      logger.info({ signal }, "Graceful shutdown complete");
+      process.exit(0);
+    }).catch((poolError) => {
+      clearTimeout(forceExit);
+      logger.error({ err: poolError }, "Database pool failed to close cleanly");
+      process.exit(1);
+    });
+  });
+}
+
+process.once("SIGTERM", () => shutdown("SIGTERM"));
+process.once("SIGINT", () => shutdown("SIGINT"));
