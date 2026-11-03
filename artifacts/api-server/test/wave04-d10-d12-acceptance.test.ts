@@ -308,7 +308,7 @@ test("W04-01 search → server-built comparison → confirmed selection", async 
     JSON.stringify({ resultSetId: sets[0]!.id, resourceId: ids.pixel }),
     contextFor(actor, actor.conv),
   );
-  assert.equal(opened.result.kind, "RESOURCE");
+  assert.equal(opened.result.kind, "RESOURCE", "the read opens the listing the user pointed at");
   assert.match(String(opened.result.listings[0]?.title ?? ""), new RegExp(run, "u"));
 });
 
