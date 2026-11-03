@@ -305,11 +305,11 @@ const NOT_A_CLAIM_BEFORE = "(?:يتم|سيتم|ستتم|يتمّ|إذا|اذا|�
 const DENIED_SPEECH = "(?:ما|لا|لن|مش|مو|ليس)\\s+(?:\\S+\\s+){0,2}(?:أقول|اقول|أكتب|اكتب|أدعي|ادعي|أؤكد|اؤكد|أأكد|أثبت|اثبت|أحكي|احكي)(?:\\s+(?:لك|إن|ان|أنه|انه))?\\s+";
 // A conjunction glued to the claim («وتم إنشاء», «فتم الدفع», «وبتم الإلغاء») is still the
 // speaker's own statement; without the optional proclitic the word boundary hides the whole claim.
-// The proclitic stays inside one group with every claim form: written as `[وبف]*A|B|C`, the
-// alternation would leave B and C outside the lookbehinds and turn questions and negations
-// («هل دفعت المبلغ؟», «ما نشرت أي إعلان») into claims.
+// The alternatives must stay inside one group: joined bare, the `|` splits the whole expression and
+// the lookbehinds guard only the first form, so a verb inside another word («استقبلت») reads as a
+// claim, and so do the negations and questions («ما نشرت أي إعلان», «هل دفعت المبلغ»).
 const ARABIC_CLAIM = new RegExp(
-  `(?<!${NOT_A_CLAIM_BEFORE}\\s+(?:\\S+\\s+)?)(?<!${DENIED_SPEECH})(?<![\\p{L}\\p{M}])(?:[وبف]*(?:${CLAIM_FORMS.join("|")}))`,
+  `(?<!${NOT_A_CLAIM_BEFORE}\\s+(?:\\S+\\s+)?)(?<!${DENIED_SPEECH})(?<![\\p{L}\\p{M}])[وبف]*(?:${CLAIM_FORMS.join("|")})`,
   "u",
 );
 const ENGLISH_CLAIM =
