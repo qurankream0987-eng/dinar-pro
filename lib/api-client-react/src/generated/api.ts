@@ -1080,7 +1080,7 @@ export const getReadinessCheckUrl = () => {
 }
 
 /**
- * Reports whether the API can serve traffic — database reachable, schema current, essential configuration valid and phone verification deliverable. Check values name the failing area only, never a setting's value.
+ * Reports whether the web API can serve traffic — database reachable, schema current and essential configuration valid. Phone verification is reported separately; phone-dependent actions remain unavailable until a permitted provider is configured. Check values name the failing area only, never a setting's value.
  * @summary Readiness check
  */
 export const readinessCheck = async ( options?: Parameters<typeof customFetch>[1]): Promise<ReadinessStatus> => {

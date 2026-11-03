@@ -21,16 +21,15 @@ router.get("/healthz", (_req, res) => {
 
 router.get("/readyz", async (_req, res): Promise<void> => {
   res.setHeader("Cache-Control", "no-store");
-  // Configuration and phone verification are checked even when the database is down, so one
-  // probe names every area that blocks traffic.
+  // Phone verification is reported as a capability, but does not gate this web service's
+  // readiness. Routes and actions that require phone proof still fail closed without an adapter.
   const configuration = deploymentConfigurationProblems().length ? "invalid" : "ready";
   const phoneVerification = phoneVerificationStatus();
   const respond = (checks: { database: "ready" | "unavailable"; migrations: "current" | "pending" | "unavailable" | "unchecked" }) => {
     const ready =
       checks.database === "ready" &&
       checks.migrations === "current" &&
-      configuration === "ready" &&
-      phoneVerification === "ready";
+      configuration === "ready";
     res.status(ready ? 200 : 503).json(
       ReadinessCheckResponse.parse({
         status: ready ? "ready" : "not_ready",

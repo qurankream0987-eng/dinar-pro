@@ -107,17 +107,17 @@ let admin: Session;
 let seller: Session;
 let buyer: Session;
 
-await test("readiness: a migrated database without an SMS adapter is not ready, and names why", async () => {
+await test("readiness: a migrated web service is ready without SMS, while phone challenges fail closed", async () => {
   const response = await call("/readyz");
-  assert.equal(response.status, 503, response.text);
-  assert.equal(response.json.status, "not_ready");
+  assert.equal(response.status, 200, response.text);
+  assert.equal(response.json.status, "ready");
   assert.equal(response.json.checks.database, "ready");
   assert.equal(response.json.checks.migrations, "current");
   assert.equal(response.json.checks.configuration, "ready");
   assert.equal(response.json.checks.phoneVerification, "not_configured");
 
   const challenge = await call("/auth/phone-verification/challenges", { method: "POST", body: { phoneCountryCode: "+962", phoneNumber: nextPhone() } });
-  assert.equal(challenge.status, 503, "without an adapter registration fails closed");
+  assert.equal(challenge.status, 503, "phone verification remains unavailable without an adapter");
 
   registerPhoneVerificationProvider(smsRegistration);
   const ready = await call("/readyz");
@@ -275,11 +275,13 @@ await test("SSE: a conversation turn streams through the shared origin with the 
   assert.match(events, /مكتب خشبي للبيع/, events.slice(0, 600));
 });
 
-await test("unregistering the SMS adapter makes the service not ready again", async () => {
+await test("unregistering SMS keeps web readiness but blocks phone verification", async () => {
   unregisterPhoneVerificationProvider("wave1-offline-capture");
   const response = await call("/readyz");
-  assert.equal(response.status, 503);
+  assert.equal(response.status, 200);
   assert.equal(response.json.checks.phoneVerification, "not_configured");
+  const challenge = await call("/auth/phone-verification/challenges", { method: "POST", body: { phoneCountryCode: "+962", phoneNumber: nextPhone() } });
+  assert.equal(challenge.status, 503);
   assert.equal(s3.requests.filter((request) => request.status === 403).length, 0);
 });
 

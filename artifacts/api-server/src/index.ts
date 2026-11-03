@@ -17,7 +17,7 @@ onProviderBreakerTransition((event) =>
 );
 
 validateObjectStorageConfiguration();
-// /readyz stays not_ready while any of these remain; the names (never values) help the operator.
+// Missing required deployment settings keep /readyz not_ready; names (never values) help the operator.
 const configurationProblems = deploymentConfigurationProblems();
 if (configurationProblems.length)
   logger.warn({ settings: configurationProblems }, "Deployment configuration is incomplete; readiness will report not_ready");

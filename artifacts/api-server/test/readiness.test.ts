@@ -146,8 +146,8 @@ await test("readiness fails closed when migration metadata is inconsistent", asy
   });
 });
 
-// G (wave 1): a deployed service with a current schema is still not ready while essential
-// configuration or phone-verification delivery is missing. Values never appear in the body.
+// G (wave 1): core service readiness is independent of optional phone delivery. Values never
+// appear in the body, and phone-dependent actions remain separately gated.
 const deployed = {
   NODE_ENV: "production",
   DINAR_DEPLOYMENT_ENV: "staging",
@@ -175,12 +175,14 @@ async function deployedReadiness(overrides: Record<string, string | undefined>) 
   }
 }
 
-await test("deployed readiness: current schema without an SMS adapter is not ready", async () => {
+await test("deployed readiness: optional SMS is reported but does not block the web service", async () => {
   scenario = "current";
-  const { response, body } = await deployedReadiness({});
-  assert.equal(response.status, 503);
+  const { response, body } = await deployedReadiness({
+    DINAR_PHONE_VERIFICATION_PROVIDER: undefined,
+  });
+  assert.equal(response.status, 200);
   assert.deepEqual(body, {
-    status: "not_ready",
+    status: "ready",
     checks: { database: "ready", migrations: "current", configuration: "ready", phoneVerification: "not_configured" },
   });
 });
@@ -206,7 +208,7 @@ await test("deployed readiness: each missing essential setting makes configurati
   }
 });
 
-await test("deployed readiness: ready only with valid configuration and a matching SMS adapter", async () => {
+await test("deployed readiness: valid configuration is ready with or without an SMS adapter", async () => {
   scenario = "current";
   const { registerPhoneVerificationProvider, unregisterPhoneVerificationProvider } = await import("../src/lib/phone-verification");
   const adapter = { sendCode: async () => ({}) };
@@ -227,6 +229,7 @@ await test("deployed readiness: ready only with valid configuration and a matchi
     registerPhoneVerificationProvider({ ...base, mode: "LIVE", environments: ["production"] });
     assert.equal((await deployedReadiness({ DINAR_DEPLOYMENT_ENV: "production", DINAR_PHONE_VERIFICATION_PROVIDER: "readiness-sms" })).body.checks?.phoneVerification, "not_configured");
     assert.equal((await deployedReadiness({ DINAR_DEPLOYMENT_ENV: "production", DINAR_PHONE_VERIFICATION_PROVIDER: "readiness-sms", DINAR_LIVE_PROVIDERS_ENABLED: "true" })).response.status, 200);
+    assert.equal((await deployedReadiness({ DINAR_DEPLOYMENT_ENV: "production", DINAR_PHONE_VERIFICATION_PROVIDER: undefined })).response.status, 200);
   } finally {
     unregisterPhoneVerificationProvider("readiness-sms");
   }
