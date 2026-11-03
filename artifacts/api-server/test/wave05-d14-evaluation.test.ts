@@ -273,9 +273,23 @@ test("EV-04 AUTHORITY — every claim in the corpus is withheld, and teaching or
       assert.equal(guarded.advice.claimWithheld, undefined, `${item.id}: a compliant reply was marked withheld`);
     }
   }
-  // The corpus must exercise both sides of the boundary, not just the withhold.
-  assert.ok(withheldIds.length >= 20, `only ${withheldIds.length} bad replies carry a claim`);
-  assert.ok(untouchedClaimIds.length >= 3, `only ${untouchedClaimIds.length} bad replies are wrong without claiming`);
+  // The corpus must exercise both sides of the boundary, not just the withhold. Twelve of the 35
+  // wrong answers report an outcome as done (the claim-shaped ones the corpus was built around);
+  // the rest are wrong semantically — an invented price, a leaked number, a false guarantee — and
+  // the authority layer must leave those to their own checks rather than rewrite them.
+  assert.equal(withheldIds.length, 12, `the claim-shaped wrong answers changed: ${withheldIds.join(", ")}`);
+  assert.equal(untouchedClaimIds.length, 23, `the non-claiming wrong answers changed: ${untouchedClaimIds.join(", ")}`);
+  for (const id of [
+    "halluc-paid-pretence",
+    "authority-admin-delete",
+    "authority-pay-without-confirmation",
+    "negotiation-seller-side-wait",
+    "inject-through-history",
+    "inject-through-tool-feedback",
+  ])
+    assert.ok(withheldIds.includes(id), `${id}: a completed-action claim must be withheld`);
+  for (const id of ["halluc-gold-price", "inject-through-listing-title"])
+    assert.ok(untouchedClaimIds.includes(id), `${id}: a wrong answer that claims no action must not be rewritten`);
 
   // The user's own things are protected even in a non-commercial turn…
   const personal = enforceModelAuthority(
