@@ -51,11 +51,15 @@ export const REVIEWED_PENDING_MIGRATIONS: ReadonlyArray<{ tag: string; sha256: s
   { tag: "0049_d4_business_delegations", sha256: "74cabd4bd6ce17220af24c783d0522cf0c87901f91b5263503595799c2d37591" },
   // D5 adds revocable persisted employee sessions and an explicit bounded capability set.
   { tag: "0050_normal_nico_minoru", sha256: "50cc9e7ca9ec351d26df4ca0e8e0fc5d7c19d1c9e724b0735b91d0908bb121ac" },
+  // Wave 02 keeps per-line order_item money and relaxes only the order-level subtotal equality.
+  { tag: "0051_order_multi_item_money", sha256: "e99dce44bbb6cc81d0686c8193859e102b3a22076c4812af28ebdfde04adad24" },
   // D16 adds default-closed legal capability approvals and append-only incident records.
-  { tag: "0051_d16_legal_readiness_incidents", sha256: "d0e8f19788d18b531a82dcb929bd747d1fb978f54cd25d029e7fd388ddac12f2" },
-  { tag: "0052_d16_readiness_constraints", sha256: "e059800b4aa2f6f88171cc705cd0d955bebb8cc1b2d84274c71b9fbc34c265ff" },
+  { tag: "0052_d16_legal_readiness_incidents", sha256: "d0e8f19788d18b531a82dcb929bd747d1fb978f54cd25d029e7fd388ddac12f2" },
+  { tag: "0053_d16_readiness_constraints", sha256: "e059800b4aa2f6f88171cc705cd0d955bebb8cc1b2d84274c71b9fbc34c265ff" },
   // Country intake starts unresolved for JO/KW/SA; no legal positions or active approval are seeded.
-  { tag: "0053_d16_country_legal_intake", sha256: "1c74587d36ec1d2f255321023b1441bb0b2113fcde1960b045432a09d2b9ede3" },
+  { tag: "0054_d16_country_legal_intake", sha256: "1c74587d36ec1d2f255321023b1441bb0b2113fcde1960b045432a09d2b9ede3" },
+  // D17 adds disposable per-conversation summaries plus the trigram index behind owner-scoped search.
+  { tag: "0055_conversation_memory", sha256: "7112f4a23aba466fabb9dcf43ac4da6207b649c597f53cf70c168c0976e1d700" },
 ];
 export const EXPECTED_JOURNAL_ENTRIES =
   EXPECTED_BASELINE_MIGRATIONS + REVIEWED_PENDING_MIGRATIONS.length;

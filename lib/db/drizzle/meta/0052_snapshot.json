@@ -1,6 +1,6 @@
 {
-  "id": "7ca87d77-8176-4406-a79a-ef69ce2f99b5",
-  "prevId": "a51ad69f-8e2c-49d5-a955-7086749d2962",
+  "id": "a51ad69f-8e2c-49d5-a955-7086749d2962",
+  "prevId": "cd04a497-3dd3-48d1-8048-980014d5c89a",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -9231,7 +9231,7 @@
       "checkConstraints": {
         "market_legal_capability_events_type_valid": {
           "name": "market_legal_capability_events_type_valid",
-          "value": "\"market_legal_capability_events\".\"event_type\" IN ('REVIEW_REQUESTED', 'COUNSEL_REVIEWED', 'COUNSEL_BLOCKED', 'OWNER_ENABLED', 'CAPABILITY_DISABLED')"
+          "value": "\"market_legal_capability_events\".\"event_type\" IN ('REVIEW_REQUESTED', 'COUNSEL_REVIEWED', 'COUNSEL_BLOCKED', 'OWNER_ENABLED', 'OWNER_DISABLED')"
         },
         "market_legal_capability_events_status_valid": {
           "name": "market_legal_capability_events_status_valid",
@@ -16647,10 +16647,6 @@
         "security_incidents_assessment_valid": {
           "name": "security_incidents_assessment_valid",
           "value": "\"security_incidents\".\"counsel_assessment\" IN ('NOT_ASSESSED', 'REVIEW_REQUIRED', 'REVIEWED')"
-        },
-        "security_incidents_counsel_review_valid": {
-          "name": "security_incidents_counsel_review_valid",
-          "value": "\"security_incidents\".\"counsel_assessment\" <> 'REVIEWED' OR (\"security_incidents\".\"counsel_reference\" IS NOT NULL AND \"security_incidents\".\"counsel_reviewed_by\" IS NOT NULL AND \"security_incidents\".\"counsel_reviewed_at\" IS NOT NULL)"
         },
         "security_incidents_summary_valid": {
           "name": "security_incidents_summary_valid",
