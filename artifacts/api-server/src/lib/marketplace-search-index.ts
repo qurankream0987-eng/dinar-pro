@@ -12,7 +12,7 @@
  *    but never hide a listing.
  * The read path never writes; maintenance runs from the server's background loop or a backfill.
  */
-import { sql } from "drizzle-orm";
+import { inArray, sql } from "drizzle-orm";
 import { db, offerSearchDocuments, offers, type users } from "@workspace/db";
 import { normalizeSearch } from "../ai/search-context";
 import { categorySchema as categorySchemaFromRow, listMarketplaceCategories, type MarketplaceCategoryRow } from "./marketplace-categories";
@@ -59,19 +59,46 @@ export function searchableTextOf(offer: Pick<Offer, "data">, context: SearchText
 }
 
 /**
- * Writes documents for the given rows (or the next `limit` stale rows), each only if its revision is
- * still the current one. Returns how many were written.
+ * Writes documents for the given rows (or claims the next `limit` stale rows), each only if its
+ * revision is still the current one. Returns how many were written.
+ *
+ * The automatic path claims its rows with row locks inside one short transaction: a second replica
+ * that ticks at the same moment skips the locked rows and rebuilds a different slice, so N replicas
+ * do N times less duplicate work instead of N times the same work. The claim costs one extra round
+ * trip (the slice is read again, once every row in it is locked) and holds those locks only while
+ * the documents are built — a cost bounded by `limit` and measured in wave05-d13-db-profile. The
+ * revision guard in writeDocuments still decides what lands: a concurrent edit makes this claim's
+ * own write match nothing.
  */
 export async function refreshSearchDocuments(
   input: { limit?: number; marketId?: string; rows?: Array<{ offer: Offer; seller?: typeof users.$inferSelect }> } = {},
 ): Promise<{ refreshed: number; considered: number }> {
-  const rows: Offer[] = input.rows
-    ? input.rows.map((row) => row.offer)
-    : await db
-        .select()
+  if (input.rows) return writeDocuments(input.rows.map((row) => row.offer));
+  const limit = Math.min(Math.max(input.limit ?? 200, 1), 2_000);
+  const staleWhere = input.marketId
+    ? sql`${offers.searchDocumentStale} AND ${offers.marketId} = ${input.marketId}`
+    : sql`${offers.searchDocumentStale}`;
+  return db.transaction(async (tx) => {
+    const ids = (
+      await tx
+        .select({ id: offers.id })
         .from(offers)
-        .where(input.marketId ? sql`${offers.searchDocumentStale} AND ${offers.marketId} = ${input.marketId}` : sql`${offers.searchDocumentStale}`)
-        .limit(Math.min(Math.max(input.limit ?? 200, 1), 2_000));
+        .where(staleWhere)
+        .limit(limit)
+        .for("update", { skipLocked: true })
+    ).map((row) => row.id);
+    if (!ids.length) return { refreshed: 0, considered: 0 };
+    // Every row of the slice is locked by this transaction now, so this read sees it whole and
+    // nobody else can claim it while its documents are built.
+    const rows = await tx.select().from(offers).where(inArray(offers.id, ids));
+    return writeDocuments(rows, tx);
+  });
+}
+
+async function writeDocuments(
+  rows: Offer[],
+  executor: typeof db = db,
+): Promise<{ refreshed: number; considered: number }> {
   if (!rows.length) return { refreshed: 0, considered: 0 };
   const context = searchTextContext(await listMarketplaceCategories(true));
   let refreshed = 0;
@@ -79,7 +106,7 @@ export async function refreshSearchDocuments(
     const chunk = rows.slice(offset, offset + 1_000);
     // One statement per chunk: for each row, clear the flag only for the revision its text was built
     // from, and write the document in the same step. A concurrent edit (a new revision) matches nothing.
-    const result = await db.execute(sql`
+    const result = await executor.execute(sql`
       WITH input AS (
         SELECT * FROM unnest(${sql.param(chunk.map((offer) => offer.id))}::text[], ${sql.param(chunk.map((offer) => String(offer.searchRevision)))}::bigint[], ${sql.param(chunk.map((offer) => searchableTextOf(offer, context)))}::text[]) AS i(id, revision, search_text)
       ), current AS (
