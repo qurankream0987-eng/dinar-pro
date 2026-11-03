@@ -74,6 +74,7 @@ on:
           - ai-authority-boundary.test
           - d16-readiness.test
           - w06-d16-adversarial.test
+          - w06-d17-context-baseline.test
       chain:
         description: "Run a reviewed suite chain on one disposable migrated and seeded database"
         required: false

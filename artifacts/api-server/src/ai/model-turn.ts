@@ -555,12 +555,13 @@ export async function modelGatewayFor(
   });
 }
 
-export async function interpretWithModel(
-  gateway: ConversationModelGateway,
-  message: string,
-  context: ModelContext,
-  timeoutMs = Number(process.env.DINAR_MODEL_TIMEOUT_MS ?? 25000),
-): Promise<ModelResult> {
+/**
+ * The exact text one model call carries: the system instructions, the bounded recent turns, the
+ * bounded user message and, when present, the bounded server correction. Both the provider request
+ * and the Wave-06 D17 measurements read their numbers here, so a measurement can never drift from
+ * what is actually sent.
+ */
+export function modelMessagesFor(message: string, context: ModelContext): ModelMessage[] {
   const history = conversationHistory(context);
   const systemInstructions = [
     SYSTEM_PROMPT,
@@ -569,12 +570,21 @@ export async function interpretWithModel(
       ? "You may call one of the listed DINAR read-only tools to obtain current, server-authorized facts. After each result, either make another allowed read or return the normal structured response. Never claim a tool succeeded before its result is returned. Never use tools to change data, send messages, publish, approve, pay, or purchase."
       : "",
   ].filter(Boolean).join("\n");
-  const messages: ModelMessage[] = [
+  return [
     { role: "system", content: systemInstructions },
     ...history.recent,
     { role: "user", content: contextMessage(message, context, history.earlierUserTopics) },
     ...(context.correction ? [{ role: "system" as const, content: context.correction.slice(0, 600) }] : []),
   ];
+}
+
+export async function interpretWithModel(
+  gateway: ConversationModelGateway,
+  message: string,
+  context: ModelContext,
+  timeoutMs = Number(process.env.DINAR_MODEL_TIMEOUT_MS ?? 25000),
+): Promise<ModelResult> {
+  const messages: ModelMessage[] = modelMessagesFor(message, context);
   const startedAt = Date.now();
   const safeModel = (value: string | undefined) =>
     value && /^[A-Za-z0-9._:/-]{1,120}$/.test(value) ? value : undefined;
