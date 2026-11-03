@@ -75,6 +75,7 @@ on:
           - d16-readiness.test
           - w06-d16-adversarial.test
           - w06-d17-context-baseline.test
+          - w06-d17-retrieval-quality.test
           - wave06-d16-compliance-acceptance.test
           - wave06-conversation-memory.test
           - wave06-conversation-memory-adversarial.test
