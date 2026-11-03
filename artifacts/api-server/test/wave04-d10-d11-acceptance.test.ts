@@ -630,6 +630,7 @@ test("W04-11-07 model text is never evidence: a forged completion and an injecte
     assert.equal((await actionRows(user.conv)).length, 0, "the conversation opened no action of its own");
     assert.equal((await resultSetsFor(messageId)).length, 1, "only the real search is persisted");
     assert.equal(claimsCompletedAction("تم إنشاء الطلب ودُفع المبلغ"), true);
+    assert.equal(claimsCompletedAction("سعره 5 دنانير فقط وتم إنشاء الطلب"), true, "a conjunction does not hide the claim");
     assert.ok(MODEL_CLAIM_WITHHELD.length > 0);
     assert.equal(sawUntrustedDataRule, true);
   });
@@ -766,7 +767,8 @@ test("W04-10-09 the adapters agree: one Arabic turn yields one identical DINAR c
     assert.equal(chatRequest.body.tool_choice, "required");
     assert.equal(responsesRequest.path, "/v1/responses");
     assert.equal(responsesRequest.body.store, false, "the Responses adapter keeps no provider-side state");
-    assert.match(String(geminiRequest.path), /generativelanguage\.googleapis\.com.*:generateContent/u, "the Gemini adapter is unchanged");
+    // `seen` records path + query only: the Gemini adapter's route is what identifies it.
+    assert.match(String(geminiRequest.path), /\/models\/gemini-[\w.-]+:generateContent/u, "the Gemini adapter is unchanged");
     assert.equal(geminiRequest.body.tools[0].functionDeclarations[0].name, "dinarConversationTurn");
 
     scripted = chatBody;
@@ -884,7 +886,8 @@ test("W04-10-12 the loop stops at the usage limit, settles every reservation and
       assert.ok(current.length >= 1, "the actor has counters for the current period");
       for (const row of current) {
         assert.ok(row.consumedRequests <= 2, `${row.resource}: the capped allowance was never overspent`);
-        assert.ok(row.reservedRequests >= row.consumedRequests, `${row.resource}: held to spent moves forward, not back`);
+        // Settling releases the hold and books the charge: what was held cannot stay reserved.
+        assert.equal(row.reservedRequests, 0, `${row.resource}: every hold is released at settlement`);
       }
       assert.ok(
         current.some((row) => row.consumedRequests === 2),
