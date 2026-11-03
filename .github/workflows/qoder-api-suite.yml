@@ -150,7 +150,7 @@ jobs:
             key=${pair%%=*}
             value=${pair#*=}
             case "$key" in
-              BDINAR_W07_ACCEPTANCE|BDINAR_W08_ACCEPTANCE|BDINAR_W09_ACCEPTANCE|BDINAR_W10_ACCEPTANCE|BDINAR_W12C_ACCEPTANCE|BDINAR_D1D2_ACCEPTANCE|BDINAR_W02U3_TEST_DATABASE|BDINAR_W02U3_BROWSER|BDINAR_D3A_ACCEPTANCE|BDINAR_WAVE4_ACCEPTANCE|BDINAR_WAVE3_ACCEPTANCE|BDINAR_WAVE02_ACCEPTANCE|BDINAR_PHASE1_ACCEPTANCE|BDINAR_SECURITY_ACCEPTANCE|BDINAR_D4_ACCEPTANCE|BDINAR_D5_ACCEPTANCE|BDINAR_A02_ISOLATION|BDINAR_G2_ACCEPTANCE|BDINAR_BLOCKF_ACCEPTANCE|BDINAR_AI_FOUNDATION|BDINAR_D16_ACCEPTANCE|BDINAR_W06_D16_ACCEPTANCE|BDINAR_W06_D17_ACCEPTANCE)
+              BDINAR_W07_ACCEPTANCE|BDINAR_W08_ACCEPTANCE|BDINAR_W09_ACCEPTANCE|BDINAR_W10_ACCEPTANCE|BDINAR_W12C_ACCEPTANCE|BDINAR_D1D2_ACCEPTANCE|BDINAR_W02U3_TEST_DATABASE|BDINAR_W02U3_BROWSER|BDINAR_D3A_ACCEPTANCE|BDINAR_WAVE4_ACCEPTANCE|BDINAR_WAVE3_ACCEPTANCE|BDINAR_WAVE02_ACCEPTANCE|BDINAR_PHASE1_ACCEPTANCE|BDINAR_SECURITY_ACCEPTANCE|BDINAR_D4_ACCEPTANCE|BDINAR_D5_ACCEPTANCE|BDINAR_A02_ISOLATION|BDINAR_G2_ACCEPTANCE|BDINAR_BLOCKD_ACCEPTANCE|BDINAR_BLOCKF_ACCEPTANCE|BDINAR_AI_FOUNDATION|BDINAR_D16_ACCEPTANCE|BDINAR_W06_D16_ACCEPTANCE|BDINAR_W06_D17_ACCEPTANCE)
                 [ "$value" = development ] || { echo "$key must be development" >&2; exit 96; } ;;
               BDINAR_LOG_SCAN)
                 case "$value" in 0|1) ;; *) echo "$key must be 0 or 1" >&2; exit 96 ;; esac ;;
@@ -200,6 +200,9 @@ jobs:
             ai-foundation)
               SUITES="ai-foundation-acceptance.test ai-authority-boundary.test bounded-multistep.test"
               require_flags "BDINAR_AI_FOUNDATION BDINAR_TEST_DATABASE" ;;
+            wave04-d10-d12)
+              SUITES="block-d-acceptance.test d12-execution-recovery.test"
+              require_flags "BDINAR_BLOCKD_ACCEPTANCE BDINAR_TEST_DATABASE" ;;
             wave06-d16-d17)
               SUITES="d16-readiness.test wave06-d16-compliance-acceptance.test"
               require_flags "BDINAR_D16_ACCEPTANCE BDINAR_W06_D16_ACCEPTANCE" ;;
@@ -216,7 +219,7 @@ jobs:
           # Resolve browser installation from the actual suite list, not the ignored suite input.
           needs_chromium() {
             case "$1" in
-              *browser-journey*|*browser.test|security-acceptance.test|wave3-acceptance.test|w02-ultra-browser.test|d16-readiness.test) return 0 ;;
+              *browser-journey*|*browser.test|security-acceptance.test|wave3-acceptance.test|w02-ultra-browser.test|d16-readiness.test|block-d-acceptance.test) return 0 ;;
               phase1-acceptance.test)
                 case " $FLAGS " in *" BDINAR_PHASE1_SKIP_BROWSER=1 "*) return 1 ;; *) return 0 ;; esac ;;
               *) return 1 ;;
