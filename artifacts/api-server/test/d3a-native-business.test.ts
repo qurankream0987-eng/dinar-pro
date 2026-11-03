@@ -9,7 +9,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import app from "../src/app";
 import {
   aiResultSets,
@@ -41,7 +41,7 @@ import {
   BUSINESS_CAPABILITIES,
   type BusinessCapability,
 } from "../src/lib/business-capabilities";
-import { publishBusinessDraft, updateBusinessListing } from "../src/lib/business-catalog";
+import { businessOrders, publishBusinessDraft, updateBusinessListing } from "../src/lib/business-catalog";
 
 requireSafeReplitDevelopmentDatabase("BDINAR_D3A_ACCEPTANCE");
 process.env.BDINAR_BLOCK_MODEL_CALLS = "1";
@@ -926,6 +926,114 @@ await focused("D3A-41", "an owner with multiple businesses must choose before a 
     selection.business.businesses.map((business: { businessId: string }) => business.businessId).sort(),
     [secondBusinessId, verifiedBusinessId].sort(),
   );
+});
+
+await focused("D3A-42", "orders and money stay scoped to one business when one seller owns two", async () => {
+  const name = `مطعم المحفظة ${randomUUID().slice(0, 6)}`;
+  const identity = await createBusinessDraft(verified.id, { id: JO.id }, {
+    displayName: name,
+    categoryKey: "RESTAURANT",
+    description: "",
+    idempotencyKey: randomUUID(),
+  });
+  const secondBusinessId = randomUUID();
+  await db.insert(businessOperatingProfiles).values({
+    id: secondBusinessId,
+    d2BusinessId: identity.business.id,
+    ownerUserId: verified.id,
+    marketId: JO.id,
+    operatingMode: "INTERNAL_DINAR",
+    businessType: "RESTAURANT",
+    displayName: name,
+    description: "",
+    status: "ACTIVE",
+    profile: {},
+  });
+  await registerVerifiedD2Identity(secondBusinessId, verified);
+  const [verifiedRow] = await db.select().from(users).where(eq(users.id, verified.id));
+  const burger = await offerOf(burgerId);
+  const samePrice = (burger.unitPriceMinor / 10 ** JO.minorUnitScale).toFixed(JO.minorUnitScale);
+  const second = await publishBusinessDraft({
+    businessId: secondBusinessId,
+    actor: verifiedRow!,
+    market: JO,
+    body: listingBody("عصير المحفظة", samePrice),
+    idempotencyKey: randomUUID(),
+  });
+  const secondListingId = second.listing.id;
+
+  // One seller, two businesses, one checkout: the canonical order still groups the seller.
+  const added = await request("/cart", "PUT", { marketId: "JO", items: [
+    { listingId: burgerId, quantity: 1 },
+    { listingId: secondListingId, quantity: 1 },
+  ] }, buyer.cookie);
+  assert.equal(added.status, 200, added.raw);
+  const checkedOut = await request("/checkout", "POST", {
+    items: [
+      { listingId: burgerId, quantity: 1, fulfilmentType: "PICKUP" },
+      { listingId: secondListingId, quantity: 1, fulfilmentType: "PICKUP" },
+    ],
+    idempotencyKey: `d3a-42-${randomUUID()}`,
+  }, buyer.cookie);
+  assert.equal(checkedOut.status, 201, checkedOut.raw);
+  assert.equal(checkedOut.data.orders.length, 1, "equal prices keep one canonical order for the seller");
+  const orderId = checkedOut.data.orders[0].id as string;
+  const [orderRow] = await db.select().from(orders).where(eq(orders.id, orderId));
+  assert.equal(orderRow!.subtotalMinor, burger.unitPriceMinor * 2);
+
+  const firstRow = (await businessOrders(await businessOf(verifiedBusinessId), JO.id)).find((row) => row.orderId === orderId);
+  const secondRow = (await businessOrders(await businessOf(secondBusinessId), JO.id)).find((row) => row.orderId === orderId);
+  assert.ok(firstRow && secondRow, "both businesses see the shared order, each with its own line");
+  assert.equal(firstRow.itemCount, 1, "only this business's item is counted");
+  assert.equal(secondRow.itemCount, 1);
+  assert.equal(firstRow.subtotalMinor, burger.unitPriceMinor, "the card never reports the other business's item");
+  assert.equal(secondRow.subtotalMinor, burger.unitPriceMinor);
+  assert.equal(firstRow.subtotalMinor + secondRow.subtotalMinor, orderRow!.subtotalMinor);
+  assert.ok(firstRow.sellerAmountMinor < orderRow!.sellerAmountMinor);
+  assert.ok(secondRow.sellerAmountMinor < orderRow!.sellerAmountMinor);
+  assert.ok(
+    Math.abs(firstRow.sellerAmountMinor + secondRow.sellerAmountMinor - orderRow!.sellerAmountMinor) <= 1,
+    "the display allocation preserves the stored order total up to one minor unit",
+  );
+});
+
+await focused("D3A-43", "one seller's differently priced lines become orders that keep the money invariant", async () => {
+  const burger = await offerOf(burgerId);
+  const juice = await offerOf(juiceId);
+  assert.equal(burger.sellerId, juice.sellerId);
+  assert.notEqual(burger.unitPriceMinor, juice.unitPriceMinor);
+  const lines = [
+    { listingId: burgerId, quantity: 2, fulfilmentType: "PICKUP" },
+    { listingId: juiceId, quantity: 1, fulfilmentType: "PICKUP" },
+  ];
+  const key = `d3a-43-${randomUUID()}`;
+  const checkedOut = await request("/checkout", "POST", { items: lines, idempotencyKey: key }, buyer.cookie);
+  assert.equal(checkedOut.status, 201, checkedOut.raw);
+  assert.equal(checkedOut.data.orders.length, 2, "one price per order: the seller's two prices are two orders");
+  const orderIds = checkedOut.data.orders.map((order: any) => order.id as string).sort();
+  const rows = await db.select().from(orders).where(inArray(orders.id, orderIds));
+  assert.equal(rows.length, 2);
+  for (const row of rows) {
+    assert.equal(row.subtotalMinor, row.quantity * row.unitPriceMinor, "each order satisfies the database money invariant");
+    assert.equal(row.sellerAmountMinor, row.subtotalMinor - row.platformFeeMinor);
+    assert.equal(row.sellerId, burger.sellerId);
+  }
+  assert.deepEqual(
+    rows.map((row) => row.subtotalMinor).sort((a, b) => a - b),
+    [juice.unitPriceMinor, burger.unitPriceMinor * 2].sort((a, b) => a - b),
+  );
+  assert.equal(
+    checkedOut.data.total,
+    ((burger.unitPriceMinor * 2 + juice.unitPriceMinor) / 10 ** JO.minorUnitScale).toFixed(JO.minorUnitScale),
+  );
+  const replay = await request("/checkout", "POST", { items: lines, idempotencyKey: key }, buyer.cookie);
+  assert.equal(replay.status, 201, replay.raw);
+  assert.deepEqual(
+    replay.data.orders.map((order: any) => order.id).sort(),
+    orderIds,
+    "a repeated request returns the same orders and never charges again",
+  );
+  assert.equal((await db.select().from(orders).where(inArray(orders.id, orderIds))).length, 2);
 });
 
 await test("summary", async () => {

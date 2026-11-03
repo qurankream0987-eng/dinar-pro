@@ -44,7 +44,7 @@ import {
   getOrderTrackingView,
   type OrderTrackingProvider,
 } from "../lib/order-tracking";
-import { checkoutIssueMessage, planCheckout } from "../lib/commerce";
+import { checkoutIssueMessage, planCheckout, type PlannedCheckoutLine } from "../lib/commerce";
 import { acceptedNegotiationForCheckout, consumeNegotiation, resolveCommercialUnitPrice, type Negotiation } from "../lib/negotiations";
 import { marketFor, assertMarketActive, assertMarketPolicy } from "../lib/markets";
 import { assertMinorProtection, requireCommercialCapability } from "../lib/compliance";
@@ -788,7 +788,20 @@ async function checkout(
     });
     const created: (typeof orders.$inferSelect)[] = [];
     let grandTotal = 0;
+    // orders.unit_price_minor is a single per-order price and the database enforces
+    // subtotal = quantity × unit price, so one seller's differently priced lines become
+    // separate orders. Same-priced lines still share one order.
+    const orderGroups: Array<[string, PlannedCheckoutLine[]]> = [];
     for (const [sellerId, group] of plan.plan.groups) {
+      const byPrice = new Map<number, PlannedCheckoutLine[]>();
+      for (const line of group) {
+        const lines = byPrice.get(line.unitPriceMinor) ?? [];
+        lines.push(line);
+        byPrice.set(line.unitPriceMinor, lines);
+      }
+      for (const lines of byPrice.values()) orderGroups.push([sellerId, lines]);
+    }
+    for (const [sellerId, group] of orderGroups) {
       const quantity = group.reduce((sum, l) => sum + l.quantity, 0);
       const subtotal = group.reduce(
         (sum, line) => sum + line.unitPriceMinor * line.quantity,

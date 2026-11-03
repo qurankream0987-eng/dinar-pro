@@ -352,12 +352,25 @@ export type BusinessOrderView = {
   itemCount: number;
 };
 
-/** Orders that contain at least one of this business's listings; never another business's. */
+/**
+ * Orders that contain at least one of this business's listings; never another business's.
+ *
+ * One owner may hold several businesses in one market, and checkout groups a seller's lines into
+ * one order. Totals are therefore scoped to the items linked to this business, and the order's
+ * stored platform fee is allocated pro rata to those items. This is a display allocation only:
+ * the order row, its fee snapshot and the financial ledger are never changed here.
+ */
 export async function businessOrders(business: BusinessProfile, marketId: string, limit = 20): Promise<BusinessOrderView[]> {
   const rows = await db
     .select({
-      order: orders,
+      orderId: orders.id,
+      status: orders.status,
+      currencyCode: orders.currencyCode,
+      orderSubtotalMinor: orders.subtotalMinor,
+      platformFeeMinor: orders.platformFeeMinor,
+      subtotalMinor: sql<number>`coalesce(sum(${orderItems.subtotalMinor}), 0)::int`,
       itemCount: sql<number>`count(${orderItems.id})::int`,
+      createdAt: orders.createdAt,
     })
     .from(orders)
     .innerJoin(orderItems, eq(orderItems.orderId, orders.id))
@@ -367,18 +380,24 @@ export async function businessOrders(business: BusinessProfile, marketId: string
       eq(orders.marketId, marketId),
       eq(offers.businessProfileId, business.d2BusinessId),
     ))
-    .groupBy(orders.id)
+    .groupBy(orders.id, orders.status, orders.currencyCode, orders.subtotalMinor, orders.platformFeeMinor, orders.createdAt)
     .orderBy(desc(orders.createdAt))
     .limit(limit);
-  return rows.map((row) => ({
-    orderId: row.order.id,
-    status: row.order.status,
-    currencyCode: row.order.currencyCode,
-    subtotalMinor: row.order.subtotalMinor,
-    sellerAmountMinor: row.order.sellerAmountMinor,
-    createdAt: row.order.createdAt.toISOString(),
-    itemCount: row.itemCount,
-  }));
+  return rows.map((row) => {
+    const scopedFeeMinor =
+      row.orderSubtotalMinor > 0
+        ? Math.round((row.platformFeeMinor * row.subtotalMinor) / row.orderSubtotalMinor)
+        : 0;
+    return {
+      orderId: row.orderId,
+      status: row.status,
+      currencyCode: row.currencyCode,
+      subtotalMinor: row.subtotalMinor,
+      sellerAmountMinor: row.subtotalMinor - scopedFeeMinor,
+      createdAt: row.createdAt.toISOString(),
+      itemCount: row.itemCount,
+    };
+  });
 }
 
 export async function businessAnalytics(business: BusinessProfile, marketId: string) {
