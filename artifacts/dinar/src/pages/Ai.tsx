@@ -2209,6 +2209,23 @@ export default function AiPage() {
                   ))}
                 </nav>
               )}
+              <Link
+                href="/cart"
+                className="ai-sidebar-cart pressable"
+                data-testid="footer-cart"
+                aria-label={unitCount ? `السلة، ${unitCount} وحدة` : "السلة"}
+              >
+                <ShoppingCart size={16} aria-hidden />
+                <span>السلة</span>
+                {unitCount > 0 && (
+                  <span
+                    className="ai-sidebar-cart-count num"
+                    data-testid="badge-cart-units"
+                  >
+                    {unitCount > 99 ? "99+" : unitCount}
+                  </span>
+                )}
+              </Link>
               <MarketChip className="ai-sidebar-market w-full justify-between" />
               <div className="ai-sidebar-account-row">
                 <button

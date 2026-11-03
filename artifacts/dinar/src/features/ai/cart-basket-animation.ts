@@ -13,6 +13,7 @@ export type BasketFlightResult =
 const CART_SELECTORS = [
   '[data-testid="link-cart"]',
   '[data-testid="sidebar-cart"]',
+  '[data-testid="footer-cart"]',
 ];
 
 function visibleCartTarget(): HTMLElement | undefined {

@@ -1804,6 +1804,31 @@ body:has(.dinar-chatgpt) {
 .ai-sidebar-management-link:hover:not(:disabled) { background: var(--xp-hover); color: var(--chat-ink); }
 .ai-sidebar-management-link:disabled { opacity: .5; }
 .ai-sidebar-footer .ai-sidebar-market { min-height: 38px; font-size: 12.5px; }
+.ai-sidebar-cart {
+  display: flex;
+  min-height: 38px;
+  align-items: center;
+  gap: 10px;
+  padding: 0 10px;
+  border-radius: 10px;
+  color: var(--chat-ink-2);
+  font-size: 13.5px;
+  transition: background-color var(--dur-fast), color var(--dur-fast);
+}
+.ai-sidebar-cart:hover { background: var(--xp-hover); color: var(--chat-ink); }
+.ai-sidebar-cart-count {
+  display: inline-grid;
+  min-width: 20px;
+  height: 20px;
+  margin-inline-start: auto;
+  padding-inline: 6px;
+  place-items: center;
+  border-radius: 999px;
+  background: rgb(var(--chat-gold) / .16);
+  color: var(--chat-ink);
+  font-size: 11px;
+  font-weight: 700;
+}
 .ai-sidebar-account-row { display: flex; min-width: 0; align-items: center; gap: 4px; }
 .ai-sidebar-account {
   display: flex;
