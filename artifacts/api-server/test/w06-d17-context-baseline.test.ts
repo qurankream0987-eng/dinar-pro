@@ -59,6 +59,22 @@ async function countQueries<T>(work: () => Promise<T>): Promise<{ value: T; quer
 const quantile = (values: number[], q: number) =>
   [...values].sort((a, b) => a - b)[Math.min(values.length - 1, Math.floor(values.length * q))]!;
 
+/**
+ * `EXPLAIN (FORMAT JSON)` returns one row whose single column carries the plan array — a JSON
+ * string in some drivers, already parsed in others. Unwrap whichever shape this driver used.
+ */
+function explainPlan(rows: unknown[]): Record<string, unknown> {
+  let value: unknown = rows[0];
+  for (let step = 0; step < 4; step++) {
+    if (typeof value === "string") { value = JSON.parse(value); continue; }
+    if (Array.isArray(value)) { value = value[0]; continue; }
+    const row = value as Record<string, unknown>;
+    if ("Plan" in row) return row.Plan as Record<string, unknown>;
+    value = Object.values(row)[0];
+  }
+  throw new Error(`unexpected EXPLAIN JSON shape: ${JSON.stringify(rows[0]).slice(0, 300)}`);
+}
+
 const report: Record<string, unknown> = {
   postgres: ((await db.execute(sql`SELECT version()`)).rows as Array<{ version: string }>)[0].version,
   scanRows: HISTORY_SCAN_ROWS + 1,
@@ -164,7 +180,7 @@ for (const scale of SCALES) {
     let scanBuffers = 0;
     for (let run = 0; run < 3; run++) {
       const explained = await pool.query(`EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) ${needleSql}`, [conversationId, HIDDEN_TOKEN]);
-      const plan = (explained.rows as Array<Record<string, any>>)[0]!.Plan;
+      const plan = explainPlan(explained.rows);
       scanSamples.push(Number(plan["Actual Total Time"]));
       scanBuffers += Number(plan["Shared Hit Blocks"] ?? 0) + Number(plan["Shared Read Blocks"] ?? 0);
     }
