@@ -218,5 +218,9 @@
   {
     "tag": "0054_d16_country_legal_intake",
     "sha256": "1c74587d36ec1d2f255321023b1441bb0b2113fcde1960b045432a09d2b9ede3"
+  },
+  {
+    "tag": "0055_conversation_memory",
+    "sha256": "7112f4a23aba466fabb9dcf43ac4da6207b649c597f53cf70c168c0976e1d700"
   }
 ]

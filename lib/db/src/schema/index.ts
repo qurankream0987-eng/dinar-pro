@@ -1000,7 +1000,11 @@ export const messages = pgTable(
     metadata: jsonb("metadata").$type<Record<string, unknown>>().default({}).notNull(),
     ...dates(),
   },
-  (t) => [index("messages_conversation_idx").on(t.conversationId, t.createdAt)],
+  (t) => [
+    index("messages_conversation_idx").on(t.conversationId, t.createdAt),
+    // D17 owner-scoped history search stays bounded through the same trigram index the migration adds.
+    index("messages_body_trgm_idx").using("gin", sql`${t.body} gin_trgm_ops`),
+  ],
 );
 export const aiResultSets = pgTable("ai_result_sets", {
   id: text("id").primaryKey(),
@@ -1022,6 +1026,27 @@ export const aiUiBlocks = pgTable("ai_ui_blocks", {
   ordinal: integer("ordinal").notNull(),
   ...dates(),
 }, (t) => [index("ai_ui_blocks_message_idx").on(t.messageId, t.ordinal)]);
+/**
+ * A derived, disposable restatement of part of one AI conversation. It is never a financial or
+ * authorization record: `derivation` says how it was produced and `watermarkAt` says which
+ * message ends the range, so a reader can tell a summary from the messages themselves.
+ */
+export const conversationSummaries = pgTable("conversation_summaries", {
+  conversationId: text("conversation_id").primaryKey().references(() => conversations.id, { onDelete: "cascade" }),
+  ownerUserId: text("owner_user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  marketId: text("market_id").notNull().references(() => markets.id),
+  summary: text("summary").notNull(),
+  topics: jsonb("topics").$type<string[]>().notNull(),
+  sourceMessageIds: jsonb("source_message_ids").$type<string[]>().notNull(),
+  watermarkAt: timestamp("watermark_at", { withTimezone: true }).notNull(),
+  messageCount: integer("message_count").notNull(),
+  derivation: text("derivation").notNull().default("DETERMINISTIC_EXTRACTIVE"),
+  ...dates(),
+}, (t) => [
+  index("conversation_summaries_owner_idx").on(t.ownerUserId, t.updatedAt),
+  check("conversation_summaries_length_check", sql`${t.summary} <> '' AND char_length(${t.summary}) <= 4000 AND ${t.messageCount} >= 0`),
+  check("conversation_summaries_derivation_check", sql`${t.derivation} IN ('DETERMINISTIC_EXTRACTIVE')`),
+]);
 export const tutorialLearningEvents = pgTable(
   "tutorial_learning_events",
   {
