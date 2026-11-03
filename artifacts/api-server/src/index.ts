@@ -8,6 +8,7 @@ import { settleAbandonedExecutions } from "./ai/action-recovery";
 import { expireStalePromotions } from "./lib/promotions";
 import { validateObjectStorageConfiguration } from "./lib/objectStorage";
 import { deploymentConfigurationProblems } from "./lib/deployment-configuration";
+import { installGracefulShutdown } from "./server-lifecycle";
 
 // Alerting: a provider/model circuit opening is a warning; closing is info. No prompt, user or key.
 onProviderBreakerTransition((event) =>
@@ -67,7 +68,7 @@ sweepExpiredReservations();
 const reservationSweep = setInterval(sweepExpiredReservations, 60_000);
 reservationSweep.unref();
 
-app.listen(port, (err) => {
+const server = app.listen(port, (err) => {
   if (err) {
     logger.error({ err }, "Error listening on port");
     process.exit(1);
@@ -77,3 +78,4 @@ app.listen(port, (err) => {
   // C1: build and refresh search documents in the background (search stays correct without them).
   startSearchIndexMaintenance();
 });
+installGracefulShutdown(server);
