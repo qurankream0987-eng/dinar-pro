@@ -31,6 +31,9 @@ RUN pnpm --filter @workspace/dinar run build \
 ENV NODE_ENV=production
 ENV DINAR_WEB_DIST=/app/artifacts/dinar/dist/public
 
+# /api/readyz resolves the checked-in migration journal relative to process.cwd().
+WORKDIR /app/artifacts/api-server
+
 USER node
 
 CMD ["node", "--enable-source-maps", "/app/artifacts/api-server/dist/index.mjs"]
