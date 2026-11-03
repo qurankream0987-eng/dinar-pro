@@ -1461,7 +1461,7 @@ function foldCurrencyDigits(text: string): string {
 
 /** Fields a verified read records as an amount; a model figure must match one of them. */
 const RECORDED_AMOUNT_KEY =
-  /^(?:unitPrice|price|amount|total|subtotal|offerAmount|counterAmount|quantity|availableQuantity|value)$/i;
+  /^(?:unitPrice|price|amount|total|subtotal|offerAmount|counterAmount|minorUnits)$/i;
 
 function collectRecordedAmounts(node: unknown, values: Set<number>, depth = 0): void {
   if (depth > 4) return;

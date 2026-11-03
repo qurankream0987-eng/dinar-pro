@@ -396,6 +396,20 @@ test("W04-10-03 follow-ups and corrections read the live record; the model's inv
     assert.doesNotMatch(corrected.body, /973\s*دنانير/u, "an amount no read recorded never reaches the user");
     assert.match(corrected.body, /هذه نتائج القراءة الحالية من DINAR/u, "the unrecorded amount is replaced by DINAR's own words");
     assert.equal(sawUntrustedDataRule, true, "tool results are framed to the model as untrusted data");
+
+    const quoted = Number(String(correctedRead!.result.listings[0].unitPrice));
+    assert.ok(Number.isFinite(quoted) && quoted > 0, `the read recorded a price: ${correctedRead!.result.listings[0].unitPrice}`);
+    plan({
+      key: "كم سعره مرة ثانية",
+      reply: `سعره ${quoted} دينار حسب البطاقة، والمستخدم يسأل عن حالته`,
+      toolSequence: [
+        { name: "searchListings", arguments: { query: `جوال ${run}` } },
+        { name: "getResource", arguments: { fromLatestSearch: true, position: 1 } },
+      ],
+    });
+    const restated = await say(user.cookie, user.conv, `كم سعره مرة ثانية من جوالات ${run}؟`);
+    assert.equal(restated.status, 200, restated.body);
+    assert.match(restated.body, new RegExp(`${quoted} دينار`, "u"), "a recorded amount still reaches the user in the model's words");
   });
 });
 
