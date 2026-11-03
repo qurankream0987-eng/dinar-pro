@@ -73,6 +73,7 @@ on:
           - ai-foundation-acceptance.test
           - ai-foundation-02-acceptance.test
           - ai-authority-boundary.test
+          - wave04-d10-d11-acceptance.test
           - wave04-d10-d12-acceptance.test
       chain:
         description: "Run a reviewed suite chain on one disposable migrated and seeded database"
@@ -198,7 +199,7 @@ jobs:
               require_flags "BDINAR_AI_FOUNDATION BDINAR_TEST_DATABASE" ;;
             wave04-d10-d12)
               # Wave 04 retires every claim it plants, so the D12 suite still sees a clean ledger.
-              SUITES="ai-foundation-02-acceptance.test ai-authority-boundary.test bounded-multistep.test wave04-d10-d12-acceptance.test d12-execution-recovery.test"
+              SUITES="wave04-d10-d11-acceptance.test wave04-d10-d12-acceptance.test ai-foundation-02-acceptance.test ai-authority-boundary.test bounded-multistep.test d12-execution-recovery.test"
               require_flags "BDINAR_TEST_DATABASE BDINAR_AI_FOUNDATION BDINAR_WAVE4_D10D12" ;;
             *) echo "chain not allowlisted: $CHAIN" >&2; exit 96 ;;
           esac
