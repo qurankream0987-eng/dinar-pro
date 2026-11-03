@@ -166,7 +166,7 @@ test("clone migration accepts only the reviewed journal (every entry hashed and 
     sha256: createHash("sha256").update(readFileSync(new URL(`${tag}.sql`, migrations))).digest("hex"),
   }));
   assert.equal(entries.length, EXPECTED_JOURNAL_ENTRIES);
-  assert.equal(REVIEWED_PENDING_MIGRATIONS.at(-1)?.tag, "0050_normal_nico_minoru");
+  assert.equal(REVIEWED_PENDING_MIGRATIONS.at(-1)?.tag, "0054_conversation_memory");
   assert.doesNotThrow(() => assertCloneMigrationJournal(entries));
   assert.throws(() => assertCloneMigrationJournal(entries.slice(0, entries.length - 1)), new RegExp(`expects ${EXPECTED_JOURNAL_ENTRIES}`));
   assert.throws(() => assertCloneMigrationJournal([...entries, { tag: "9999_unreviewed", sha256: "0".repeat(64) }]), new RegExp(`expects ${EXPECTED_JOURNAL_ENTRIES}`));

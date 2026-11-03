@@ -56,6 +56,8 @@ export const REVIEWED_PENDING_MIGRATIONS: ReadonlyArray<{ tag: string; sha256: s
   { tag: "0052_d16_readiness_constraints", sha256: "e059800b4aa2f6f88171cc705cd0d955bebb8cc1b2d84274c71b9fbc34c265ff" },
   // Country intake starts unresolved for JO/KW/SA; no legal positions or active approval are seeded.
   { tag: "0053_d16_country_legal_intake", sha256: "1c74587d36ec1d2f255321023b1441bb0b2113fcde1960b045432a09d2b9ede3" },
+  // D17 adds disposable per-conversation summaries plus the trigram index behind owner-scoped search.
+  { tag: "0054_conversation_memory", sha256: "7112f4a23aba466fabb9dcf43ac4da6207b649c597f53cf70c168c0976e1d700" },
 ];
 export const EXPECTED_JOURNAL_ENTRIES =
   EXPECTED_BASELINE_MIGRATIONS + REVIEWED_PENDING_MIGRATIONS.length;

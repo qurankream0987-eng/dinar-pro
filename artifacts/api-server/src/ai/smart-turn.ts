@@ -850,6 +850,7 @@ export function isGroundedSellerDraftRequest(
 }
 
 import { personalContext } from "./personal-context-service";
+import { conversationMemoryContext, renderMemoryContext } from "./conversation-memory";
 export async function modelContext(input: Input): Promise<ModelContext> {
   const marketAvailable = isMarketAvailable(input.market);
   const [set, history] = await Promise.all([
@@ -958,6 +959,17 @@ export async function modelContext(input: Input): Promise<ModelContext> {
         } : {}),
       })
     : null;
+  // Bounded, owner-scoped history and derived summaries. A seller employee session never reads
+  // the owner's private conversations, and nothing here is authorization or a financial record.
+  const conversationMemory = input.actorId && !sellerEmployeeRequested
+    ? renderMemoryContext(await conversationMemoryContext({
+        actorId: input.actorId,
+        conversationId: input.conversationId,
+        marketId: input.market.id,
+        query: input.message,
+        ...(input.currentMessageId ? { excludeMessageId: input.currentMessageId } : {}),
+      }))
+    : "";
   return {
     marketAvailable,
     serverContext: contextualServerFacts,
@@ -978,6 +990,7 @@ export async function modelContext(input: Input): Promise<ModelContext> {
     ...(input.actorId && !sellerEmployeeRequested ? { actionReceipts: await recentActionReceipts(input.conversationId, input.actorId) } : {}),
     // Another party's words delivered by an inquiry are never model instructions or history.
     history: history.slice(1).reverse().filter((row) => row.metadata?.inquiryDelivery !== true && row.metadata?.inquiryContent !== true).map((row) => ({ actor: row.actor, body: row.body })),
+    ...(conversationMemory ? { conversationMemory } : {}),
     ...(marketingFacts ? { sellerListing: marketingFacts } : {}),
   };
 }
