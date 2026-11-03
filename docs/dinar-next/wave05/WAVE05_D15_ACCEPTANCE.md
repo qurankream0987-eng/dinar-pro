@@ -1,6 +1,6 @@
 # WAVE 05 — D15 Complete System Acceptance
 
-**Integrated acceptance:** suite `wave05-d15-acceptance.test` at `b77be8e`, CI run `41664520596` (SUCCESS, PostgreSQL 16.15).
+**Integrated acceptance:** suite `wave05-d15-acceptance.test` at `b77be8e`, CI run `41664520596` (SUCCESS, PostgreSQL 16.15); re-run unchanged at branch tip `93a11ac`, CI run `41686862181` (SUCCESS, PostgreSQL 16.15).
 **Supporting evidence on the same branch:** isolation `a2a2db7` / run `41666288262`, shutdown `89688df` / run `41664280013`, seller-employee `b77be8e` / run `41664683083`, accessibility `b77be8e` / run `41664702077`, browser journeys `c73f7f9` / runs `41658929645` (`command-e-ui.test`) and `41658937281` (`command-f-journeys.test`).
 **Not used:** a live payment provider, an SMS gateway, a paid model provider, a non-loopback database, a deployment.
 
