@@ -19,9 +19,9 @@ Every verdict below is one of `VERIFIED_PASS`, `FAIL`, `PARTIAL`, `BLOCKED`, `NO
 | Money precision | `VERIFIED_PASS` | JOD 3 decimals: 91.500 / 9.150 / 82.350 (minor 91,500 / 9,150 / 82,350); DB rows agree; header price × quantity equals subtotal on this single-price order |
 | Mixed-price cart | `BLOCKED` | `WAVE05_MONEY_GATE mm11/mm20`: the strict CHECK rejects a seller-grouped order, the Wave 02 relaxed CHECK accepts a header price × quantity that is not the subtotal, and the strict CHECK cannot be re-imposed (`mm20StrictReimposition`). Wave 01 + Wave 02 are not a valid combined money model — see `WAVE05_SECURITY_AND_FINANCIAL_CONSISTENCY.md` |
 | Refunds and disputes | `BLOCKED` | refund/dispute accounting sits on the same unresolved order money model; no refund policy is invented |
-| Browser — desktop | `VERIFIED_PASS` (separate suites) | `command-e-ui.test` at `c73f7f9`, run `41658929645`: 320/390/768/1024/1280/1440/1600 px, light/dark, `reducedMotion=reduce`, captured and asserted |
-| Browser — mobile | `VERIFIED_PASS` (separate suites) | `command-f-journeys.test` at `c73f7f9`, run `41658937281`: authenticated journeys at 320/390/768 with no overflow and a reachable composer; `w02u3-card-accessibility-browser-journey.test` at `b77be8e`, run `41664702077`: keyboard, RTL, live regions at 320 px |
-| Browser — tablet | `VERIFIED_PASS` (separate suite) | `command-f-journeys.test` asserts the 768 px pass |
+| Browser — desktop | `VERIFIED_PASS` (separate suites) | `command-e-ui.test` at `c73f7f9`, run `41658929645`: 320/375/390/430/768/1024/1440/1600 px, light/dark, `reducedMotion=reduce`, captured and asserted |
+| Browser — mobile | `VERIFIED_PASS` (separate suites) | `command-f-journeys.test` at `c73f7f9`, run `41658937281`: the authenticated journeys at 390 px plus a 320/390/768 layout pass with no overflow and a reachable composer; `w02u3-card-accessibility-browser-journey.test` at `b77be8e`, run `41664702077`: keyboard, RTL, live regions at 320 px |
+| Browser — tablet | `VERIFIED_PASS` (separate suite) | `command-f-journeys.test`'s 768 px layout pass (full journeys themselves ran at 390 px) |
 | WebKit / Firefox | `BLOCKED` | CI installs Chromium only; WebKit and Firefox are unavailable in this runner and no result is claimed for them |
 | Screen reader | `BLOCKED` | no NVDA/JAWS/VoiceOver/TalkBack in CI; the w02u3 report carries `AT_MANUAL_BLOCKED` with a manual checklist |
 
@@ -42,8 +42,8 @@ The suite never calls a model provider: the conversation gateway is a scripted `
 
 | Suite | Viewport coverage | What is asserted | Run |
 | --- | --- | --- | --- |
-| `command-e-ui.test` | 320, 390, 768, 1024, 1280, 1440, 1600 px; light + dark; `reducedMotion=reduce` | layout, navigation, composer reachability, no horizontal overflow, captured screenshots | `41658929645` |
-| `command-f-journeys.test` | 320, 390, 768 px | authenticated buyer/seller journeys, no overflow, reachable composer | `41658937281` |
+| `command-e-ui.test` | 320, 375, 390, 430, 768, 1024, 1440, 1600 px; light + dark; `reducedMotion=reduce` | layout, navigation, composer reachability, no horizontal overflow, captured screenshots | `41658929645` |
+| `command-f-journeys.test` | journeys at 390 px; a 320/390/768 px layout pass | authenticated buyer/seller journeys, no overflow, reachable composer | `41658937281` |
 | `w02u3-card-accessibility-browser-journey.test` | 320 px | keyboard order, RTL direction, live regions; `AT_MANUAL_BLOCKED` for screen readers | `41664702077` |
 
 Limitations, stated plainly:
