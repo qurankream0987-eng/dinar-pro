@@ -6,6 +6,51 @@
 import { Router, type RequestHandler } from "express";
 import { z } from "zod";
 import { DEFAULT_MARKET } from "@workspace/global";
+import {
+  DisableAdminMarketCapabilityBody,
+  DisableAdminMarketCapabilityParams,
+  DisableAdminMarketCapabilityResponse,
+  ActivateAdminCountryReadinessBody,
+  ActivateAdminCountryReadinessParams,
+  AttemptAdminCountryCounselApprovalBody,
+  AttemptAdminCountryCounselApprovalParams,
+  AttemptAdminCountryOwnerApprovalBody,
+  AttemptAdminCountryOwnerApprovalParams,
+  EnableAdminMarketCapabilityBody,
+  EnableAdminMarketCapabilityParams,
+  EnableAdminMarketCapabilityResponse,
+  GetAdminCountryLegalReadinessParams,
+  GetAdminCountryLegalReadinessResponse,
+  GetAdminMarketLegalCapabilitiesParams,
+  GetAdminMarketLegalCapabilitiesResponse,
+  ListAdminCountryLegalReadinessResponse,
+  RecordAdminCountryCounselReviewBody,
+  RecordAdminCountryCounselReviewParams,
+  RecordAdminCountryCounselReviewResponse,
+  RecordAdminCountryTechnicalVerificationBody,
+  RecordAdminCountryTechnicalVerificationParams,
+  RequestAdminCountryCounselReviewBody,
+  RequestAdminCountryCounselReviewParams,
+  RequestAdminCountryCounselReviewResponse,
+  ReviewAdminCountryLegalEvidenceBody,
+  ReviewAdminCountryLegalEvidenceParams,
+  ReviewAdminCountryLegalEvidenceResponse,
+  ReviewAdminCountryLegalTopicBody,
+  ReviewAdminCountryLegalTopicParams,
+  ReviewAdminCountryLegalTopicResponse,
+  RecordAdminMarketCapabilityCounselReviewBody,
+  RecordAdminMarketCapabilityCounselReviewParams,
+  RecordAdminMarketCapabilityCounselReviewResponse,
+  RequestAdminMarketCapabilityReviewBody,
+  RequestAdminMarketCapabilityReviewParams,
+  RequestAdminMarketCapabilityReviewResponse,
+  SubmitAdminCountryLegalEvidenceBody,
+  SubmitAdminCountryLegalEvidenceParams,
+  SubmitAdminCountryLegalEvidenceResponse,
+  SuspendAdminCountryReadinessBody,
+  SuspendAdminCountryReadinessParams,
+  SuspendAdminCountryReadinessResponse,
+} from "@workspace/api-zod";
 import { requireAuth } from "../lib/auth";
 import {
   LEGAL_ENTITY_CAPABILITIES,
@@ -27,6 +72,29 @@ import {
   legalEntityView,
 } from "../lib/compliance";
 import {
+  MARKET_LEGAL_CAPABILITIES,
+  adminMarketLegalCapabilityOverview,
+  disableMarketCapability,
+  enableMarketCapability,
+  marketLegalCapabilityOverview,
+  recordMarketCounselReview,
+  requestMarketCapabilityReview,
+} from "../lib/d16-readiness";
+import {
+  activateCountryReadiness,
+  attemptCountryCounselApproval,
+  attemptCountryOwnerApproval,
+  getCountryLegalReadiness,
+  listCountryLegalReadiness,
+  recordCountryCounselReview,
+  recordCountryTechnicalVerification,
+  requestCountryCounselReview,
+  reviewCountryLegalEvidence,
+  reviewCountryLegalTopic,
+  submitCountryLegalEvidence,
+  suspendCountryReadiness,
+} from "../lib/country-legal-readiness";
+import {
   listPolicyConsentEvents,
   listPolicyRegistry,
   policyConsentStatus,
@@ -40,6 +108,11 @@ const fail = (status: number, message: string) =>
   Object.assign(new Error(message), { status });
 
 const IdempotencyKey = z.string().regex(/^[A-Za-z0-9._:-]{8,128}$/);
+const originalDateTime = (source: unknown, key: string) => {
+  if (!source || typeof source !== "object") return undefined;
+  const value = (source as Record<string, unknown>)[key];
+  return typeof value === "string" || value === null ? value : undefined;
+};
 
 const requireAdmin: RequestHandler = (req, res, next) => {
   if (req.actor?.role !== "ADMIN") {
@@ -65,6 +138,7 @@ router.get("/markets/:marketId/compliance", async (req, res) => {
     minimumAge: settings.minimumAge,
     guardianConsentRequired: settings.guardianConsentRequired,
     legalEntityRequired: settings.legalEntityRequired,
+    legalCapabilities: await marketLegalCapabilityOverview(settings.marketId),
     commercialActivation: "REQUIRES_OWNER_AUTHORIZATION",
   });
 });
@@ -282,8 +356,264 @@ router.get("/admin/compliance/markets/:marketId", async (req, res) => {
   res.json({
     settings: await complianceSettings(marketId),
     legalEntity: entity ? legalEntityView(entity) : null,
+    legalCapabilities: await adminMarketLegalCapabilityOverview(marketId),
   });
 });
+
+router.get("/admin/compliance/markets/:marketId/capabilities", async (req, res) => {
+  const params = GetAdminMarketLegalCapabilitiesParams.parse(req.params);
+  res.json(
+    GetAdminMarketLegalCapabilitiesResponse.parse(
+      await adminMarketLegalCapabilityOverview(params.marketId),
+    ),
+  );
+});
+
+router.post(
+  "/admin/compliance/markets/:marketId/capabilities/:capability/review-request",
+  async (req, res) => {
+    const params = RequestAdminMarketCapabilityReviewParams.parse(req.params);
+    RequestAdminMarketCapabilityReviewBody.parse(req.body ?? {});
+    res.status(202).json(
+      RequestAdminMarketCapabilityReviewResponse.parse(
+        await requestMarketCapabilityReview({
+        actorId: req.actor!.id,
+        marketId: params.marketId,
+        capability: params.capability,
+        }),
+      ),
+    );
+  },
+);
+
+router.post(
+  "/admin/compliance/markets/:marketId/capabilities/:capability/counsel-review",
+  async (req, res) => {
+    const params = RecordAdminMarketCapabilityCounselReviewParams.parse(req.params);
+    const body = RecordAdminMarketCapabilityCounselReviewBody.parse(req.body);
+    res.json(
+      RecordAdminMarketCapabilityCounselReviewResponse.parse(
+        await recordMarketCounselReview({
+        actorId: req.actor!.id,
+        marketId: params.marketId,
+        capability: params.capability,
+        outcome: body.outcome,
+        reference: body.reference,
+        }),
+      ),
+    );
+  },
+);
+
+router.post(
+  "/admin/compliance/markets/:marketId/capabilities/:capability/enable",
+  async (req, res) => {
+    const params = EnableAdminMarketCapabilityParams.parse(req.params);
+    const body = EnableAdminMarketCapabilityBody.parse(req.body);
+    res.json(
+      EnableAdminMarketCapabilityResponse.parse(
+        await enableMarketCapability({
+        actorId: req.actor!.id,
+        marketId: params.marketId,
+        capability: params.capability,
+        reference: body.reference,
+        }),
+      ),
+    );
+  },
+);
+
+router.post(
+  "/admin/compliance/markets/:marketId/capabilities/:capability/disable",
+  async (req, res) => {
+    const params = DisableAdminMarketCapabilityParams.parse(req.params);
+    DisableAdminMarketCapabilityBody.parse(req.body ?? {});
+    res.json(
+      DisableAdminMarketCapabilityResponse.parse(
+        await disableMarketCapability({
+        actorId: req.actor!.id,
+        marketId: params.marketId,
+        capability: params.capability,
+        }),
+      ),
+    );
+  },
+);
+
+router.get("/admin/compliance/country-readiness", async (_req, res) => {
+  res.json(ListAdminCountryLegalReadinessResponse.parse(await listCountryLegalReadiness()));
+});
+
+router.get("/admin/compliance/country-readiness/:marketId", async (req, res) => {
+  const params = GetAdminCountryLegalReadinessParams.parse(req.params);
+  res.json(
+    GetAdminCountryLegalReadinessResponse.parse(
+      await getCountryLegalReadiness(params.marketId),
+    ),
+  );
+});
+
+router.post(
+  "/admin/compliance/country-readiness/:marketId/evidence",
+  async (req, res) => {
+    const params = SubmitAdminCountryLegalEvidenceParams.parse(req.params);
+    const body = SubmitAdminCountryLegalEvidenceBody.strict().parse(req.body);
+    res.status(201).json(
+      SubmitAdminCountryLegalEvidenceResponse.parse(
+        await submitCountryLegalEvidence({
+          actorId: req.actor!.id,
+          marketId: params.marketId,
+          ...body,
+          issuedAt: originalDateTime(req.body, "issuedAt"),
+          expiresAt: originalDateTime(req.body, "expiresAt"),
+        }),
+      ),
+    );
+  },
+);
+
+router.post(
+  "/admin/compliance/country-readiness/evidence/:evidenceId/review",
+  async (req, res) => {
+    const params = ReviewAdminCountryLegalEvidenceParams.parse(req.params);
+    const body = ReviewAdminCountryLegalEvidenceBody.strict().parse(req.body);
+    res.json(
+      ReviewAdminCountryLegalEvidenceResponse.parse(
+        await reviewCountryLegalEvidence({
+          actorId: req.actor!.id,
+          evidenceId: params.evidenceId,
+          outcome: body.outcome,
+        }),
+      ),
+    );
+  },
+);
+
+router.post(
+  "/admin/compliance/country-readiness/:marketId/review-request",
+  async (req, res) => {
+    const params = RequestAdminCountryCounselReviewParams.parse(req.params);
+    RequestAdminCountryCounselReviewBody.strict().parse(req.body ?? {});
+    res.status(202).json(
+      RequestAdminCountryCounselReviewResponse.parse(
+        await requestCountryCounselReview({
+          actorId: req.actor!.id,
+          marketId: params.marketId,
+        }),
+      ),
+    );
+  },
+);
+
+router.post(
+  "/admin/compliance/country-readiness/:marketId/topics/:topicKey/review",
+  async (req, res) => {
+    const params = ReviewAdminCountryLegalTopicParams.parse(req.params);
+    const body = ReviewAdminCountryLegalTopicBody.strict().parse(req.body);
+    res.json(
+      ReviewAdminCountryLegalTopicResponse.parse(
+        await reviewCountryLegalTopic({
+          actorId: req.actor!.id,
+          marketId: params.marketId,
+          topicKey: params.topicKey,
+          ...body,
+          effectiveFrom: originalDateTime(req.body, "effectiveFrom"),
+          effectiveUntil: originalDateTime(req.body, "effectiveUntil"),
+        }),
+      ),
+    );
+  },
+);
+
+router.post(
+  "/admin/compliance/country-readiness/:marketId/counsel-review",
+  async (req, res) => {
+    const params = RecordAdminCountryCounselReviewParams.parse(req.params);
+    const body = RecordAdminCountryCounselReviewBody.strict().parse(req.body);
+    res.json(
+      RecordAdminCountryCounselReviewResponse.parse(
+        await recordCountryCounselReview({
+          actorId: req.actor!.id,
+          marketId: params.marketId,
+          referenceCode: body.referenceCode,
+        }),
+      ),
+    );
+  },
+);
+
+router.post(
+  "/admin/compliance/country-readiness/:marketId/counsel-approval",
+  async (req, res) => {
+    const params = AttemptAdminCountryCounselApprovalParams.parse(req.params);
+    const body = AttemptAdminCountryCounselApprovalBody.strict().parse(req.body);
+    await attemptCountryCounselApproval({
+      actorId: req.actor!.id,
+      marketId: params.marketId,
+      referenceCode: body.referenceCode,
+    });
+    res.status(204).end();
+  },
+);
+
+router.post(
+  "/admin/compliance/country-readiness/:marketId/owner-approval",
+  async (req, res) => {
+    const params = AttemptAdminCountryOwnerApprovalParams.parse(req.params);
+    const body = AttemptAdminCountryOwnerApprovalBody.strict().parse(req.body);
+    await attemptCountryOwnerApproval({
+      actorId: req.actor!.id,
+      marketId: params.marketId,
+      referenceCode: body.referenceCode,
+    });
+    res.status(204).end();
+  },
+);
+
+router.post(
+  "/admin/compliance/country-readiness/:marketId/technical-verification",
+  async (req, res) => {
+    const params = RecordAdminCountryTechnicalVerificationParams.parse(req.params);
+    const body = RecordAdminCountryTechnicalVerificationBody.strict().parse(req.body);
+    await recordCountryTechnicalVerification({
+      actorId: req.actor!.id,
+      marketId: params.marketId,
+      referenceCode: body.referenceCode,
+    });
+    res.status(204).end();
+  },
+);
+
+router.post(
+  "/admin/compliance/country-readiness/:marketId/activate",
+  async (req, res) => {
+    const params = ActivateAdminCountryReadinessParams.parse(req.params);
+    const body = ActivateAdminCountryReadinessBody.strict().parse(req.body);
+    await activateCountryReadiness({
+      actorId: req.actor!.id,
+      marketId: params.marketId,
+      referenceCode: body.referenceCode,
+    });
+    res.status(204).end();
+  },
+);
+
+router.post(
+  "/admin/compliance/country-readiness/:marketId/suspend",
+  async (req, res) => {
+    const params = SuspendAdminCountryReadinessParams.parse(req.params);
+    const body = SuspendAdminCountryReadinessBody.strict().parse(req.body);
+    res.json(
+      SuspendAdminCountryReadinessResponse.parse(
+        await suspendCountryReadiness({
+          actorId: req.actor!.id,
+          marketId: params.marketId,
+          referenceCode: body.referenceCode,
+        }),
+      ),
+    );
+  },
+);
 
 const SettingsBody = z
   .object({

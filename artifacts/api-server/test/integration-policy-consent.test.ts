@@ -15,12 +15,37 @@ import { test, after } from "node:test";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { and, eq } from "drizzle-orm";
-import { db, policyAcceptances, policyConsentEvents, pool } from "@workspace/db";
+import {
+  db,
+  marketPriceVersions,
+  markets,
+  policyAcceptances,
+  policyConsentEvents,
+  pool,
+} from "@workspace/db";
 import app from "../src/app";
 import { requiredAcceptanceVersions } from "../src/lib/policy-lifecycle";
 import { requireSafeReplitDevelopmentDatabase } from "./safe-development-database";
 
 requireSafeReplitDevelopmentDatabase("BDINAR_INTEGRATION_ACCEPTANCE");
+const [marketFixture] = await db
+  .select()
+  .from(markets)
+  .where(eq(markets.id, "JO"))
+  .limit(1);
+assert.ok(marketFixture, "the migration must include the Jordan market");
+await db
+  .update(markets)
+  .set({ isActive: true, status: "ACTIVE", unitPriceMinor: 100 })
+  .where(eq(markets.id, "JO"));
+await db.insert(marketPriceVersions).values({
+  id: randomUUID(),
+  marketId: "JO",
+  currencyCode: marketFixture.currencyCode,
+  unitPriceMinor: 100,
+  minorUnitScale: marketFixture.minorUnitScale,
+  effectiveFrom: new Date(Date.now() - 60_000),
+});
 const server = app.listen(0, "127.0.0.1");
 await new Promise<void>((resolve) => server.once("listening", resolve));
 const origin = `http://127.0.0.1:${(server.address() as { port: number }).port}`;

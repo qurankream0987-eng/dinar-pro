@@ -6027,6 +6027,19 @@ export const PostCashRefundsIdWithdrawResponse = zod.record(zod.string(), zod.un
 
 
 /**
+ * @summary List available market metadata. Access: PUBLIC.
+ */
+export const GetMarketsResponseItem = zod.object({
+  "id": zod.string(),
+  "status": zod.enum(['ACTIVE', 'LIMITED', 'COMING_SOON', 'DISABLED']),
+  "isActive": zod.boolean(),
+  "countryNameAr": zod.string(),
+  "countryNameEn": zod.string()
+})
+export const GetMarketsResponse = zod.array(GetMarketsResponseItem)
+
+
+/**
  * @summary W07–W10 (compliance.ts). Access: PUBLIC. Strangers get 404; bodies are validated strictly on the server.
  */
 export const getMarketsMarketidCompliancePathMarketIdMax = 120;
@@ -6176,6 +6189,939 @@ export const PutAdminComplianceMarketsMarketidParams = zod.object({
 export const PutAdminComplianceMarketsMarketidBody = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
 
 export const PutAdminComplianceMarketsMarketidResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * @summary List per-market legal capability states and audit events. Access: ADMIN.
+ */
+export const getAdminMarketLegalCapabilitiesPathMarketIdMax = 32;
+
+
+
+export const GetAdminMarketLegalCapabilitiesParams = zod.object({
+  "marketId": zod.coerce.string().max(getAdminMarketLegalCapabilitiesPathMarketIdMax)
+})
+
+export const GetAdminMarketLegalCapabilitiesResponse = zod.object({
+  "marketId": zod.string(),
+  "capabilities": zod.array(zod.object({
+  "marketId": zod.string(),
+  "capability": zod.enum(['INFORMATION_ONLY', 'BROWSING', 'LISTING_PUBLICATION', 'TRANSACTIONS', 'CASH_PAYMENT', 'ELECTRONIC_PAYMENT', 'BUSINESS_ONBOARDING', 'DELIVERY_OPERATIONS', 'RESTRICTED_CATEGORIES']),
+  "status": zod.enum(['DISABLED', 'COUNSEL_REVIEW_REQUIRED', 'OWNER_APPROVAL_REQUIRED', 'ENABLED', 'BLOCKED']),
+  "enabled": zod.boolean(),
+  "counselReviewRecorded": zod.boolean(),
+  "ownerApprovalRecorded": zod.boolean(),
+  "updatedAt": zod.coerce.date().nullable()
+}).and(zod.object({
+  "counselReference": zod.string().nullable(),
+  "counselReviewedBy": zod.string().nullable(),
+  "counselReviewedAt": zod.coerce.date().nullable(),
+  "ownerApprovalReference": zod.string().nullable(),
+  "ownerApprovedBy": zod.string().nullable(),
+  "ownerApprovedAt": zod.coerce.date().nullable()
+}))),
+  "events": zod.array(zod.object({
+  "id": zod.string(),
+  "marketId": zod.string(),
+  "capability": zod.enum(['INFORMATION_ONLY', 'BROWSING', 'LISTING_PUBLICATION', 'TRANSACTIONS', 'CASH_PAYMENT', 'ELECTRONIC_PAYMENT', 'BUSINESS_ONBOARDING', 'DELIVERY_OPERATIONS', 'RESTRICTED_CATEGORIES']),
+  "eventType": zod.string(),
+  "fromStatus": zod.string().nullable(),
+  "toStatus": zod.enum(['DISABLED', 'COUNSEL_REVIEW_REQUIRED', 'OWNER_APPROVAL_REQUIRED', 'ENABLED', 'BLOCKED']),
+  "actorId": zod.string(),
+  "reference": zod.string().nullable(),
+  "createdAt": zod.coerce.date()
+}))
+})
+
+
+/**
+ * @summary Request an independent counsel review. Does not enable the capability.
+ */
+export const requestAdminMarketCapabilityReviewPathMarketIdMax = 32;
+
+
+
+export const RequestAdminMarketCapabilityReviewParams = zod.object({
+  "marketId": zod.coerce.string().max(requestAdminMarketCapabilityReviewPathMarketIdMax),
+  "capability": zod.enum(['INFORMATION_ONLY', 'BROWSING', 'LISTING_PUBLICATION', 'TRANSACTIONS', 'CASH_PAYMENT', 'ELECTRONIC_PAYMENT', 'BUSINESS_ONBOARDING', 'DELIVERY_OPERATIONS', 'RESTRICTED_CATEGORIES'])
+})
+
+export const RequestAdminMarketCapabilityReviewBody = zod.object({
+
+})
+
+export const RequestAdminMarketCapabilityReviewResponse = zod.object({
+  "marketId": zod.string(),
+  "capability": zod.enum(['INFORMATION_ONLY', 'BROWSING', 'LISTING_PUBLICATION', 'TRANSACTIONS', 'CASH_PAYMENT', 'ELECTRONIC_PAYMENT', 'BUSINESS_ONBOARDING', 'DELIVERY_OPERATIONS', 'RESTRICTED_CATEGORIES']),
+  "status": zod.enum(['DISABLED', 'COUNSEL_REVIEW_REQUIRED', 'OWNER_APPROVAL_REQUIRED', 'ENABLED', 'BLOCKED']),
+  "enabled": zod.boolean(),
+  "counselReviewRecorded": zod.boolean(),
+  "ownerApprovalRecorded": zod.boolean(),
+  "updatedAt": zod.coerce.date().nullable()
+})
+
+
+/**
+ * @summary Record a designated counsel review. This does not activate the capability.
+ */
+export const recordAdminMarketCapabilityCounselReviewPathMarketIdMax = 32;
+
+
+
+export const RecordAdminMarketCapabilityCounselReviewParams = zod.object({
+  "marketId": zod.coerce.string().max(recordAdminMarketCapabilityCounselReviewPathMarketIdMax),
+  "capability": zod.enum(['INFORMATION_ONLY', 'BROWSING', 'LISTING_PUBLICATION', 'TRANSACTIONS', 'CASH_PAYMENT', 'ELECTRONIC_PAYMENT', 'BUSINESS_ONBOARDING', 'DELIVERY_OPERATIONS', 'RESTRICTED_CATEGORIES'])
+})
+
+export const recordAdminMarketCapabilityCounselReviewBodyReferenceMin = 3;
+export const recordAdminMarketCapabilityCounselReviewBodyReferenceMax = 200;
+
+
+export const recordAdminMarketCapabilityCounselReviewBodyReferenceRegExp = new RegExp('^[A-Za-z][A-Za-z0-9._:/-]{2,199}$');
+
+
+export const RecordAdminMarketCapabilityCounselReviewBody = zod.object({
+  "outcome": zod.enum(['READY_FOR_OWNER_REVIEW', 'BLOCK']),
+  "reference": zod.string().min(recordAdminMarketCapabilityCounselReviewBodyReferenceMin).max(recordAdminMarketCapabilityCounselReviewBodyReferenceMax).regex(recordAdminMarketCapabilityCounselReviewBodyReferenceRegExp)
+})
+
+export const RecordAdminMarketCapabilityCounselReviewResponse = zod.object({
+  "marketId": zod.string(),
+  "capability": zod.enum(['INFORMATION_ONLY', 'BROWSING', 'LISTING_PUBLICATION', 'TRANSACTIONS', 'CASH_PAYMENT', 'ELECTRONIC_PAYMENT', 'BUSINESS_ONBOARDING', 'DELIVERY_OPERATIONS', 'RESTRICTED_CATEGORIES']),
+  "status": zod.enum(['DISABLED', 'COUNSEL_REVIEW_REQUIRED', 'OWNER_APPROVAL_REQUIRED', 'ENABLED', 'BLOCKED']),
+  "enabled": zod.boolean(),
+  "counselReviewRecorded": zod.boolean(),
+  "ownerApprovalRecorded": zod.boolean(),
+  "updatedAt": zod.coerce.date().nullable()
+})
+
+
+/**
+ * @summary Enable a capability after separate counsel review and owner approval.
+ */
+export const enableAdminMarketCapabilityPathMarketIdMax = 32;
+
+
+
+export const EnableAdminMarketCapabilityParams = zod.object({
+  "marketId": zod.coerce.string().max(enableAdminMarketCapabilityPathMarketIdMax),
+  "capability": zod.enum(['INFORMATION_ONLY', 'BROWSING', 'LISTING_PUBLICATION', 'TRANSACTIONS', 'CASH_PAYMENT', 'ELECTRONIC_PAYMENT', 'BUSINESS_ONBOARDING', 'DELIVERY_OPERATIONS', 'RESTRICTED_CATEGORIES'])
+})
+
+export const enableAdminMarketCapabilityBodyReferenceMin = 3;
+export const enableAdminMarketCapabilityBodyReferenceMax = 200;
+
+
+export const enableAdminMarketCapabilityBodyReferenceRegExp = new RegExp('^[A-Za-z][A-Za-z0-9._:/-]{2,199}$');
+
+
+export const EnableAdminMarketCapabilityBody = zod.object({
+  "reference": zod.string().min(enableAdminMarketCapabilityBodyReferenceMin).max(enableAdminMarketCapabilityBodyReferenceMax).regex(enableAdminMarketCapabilityBodyReferenceRegExp)
+})
+
+export const EnableAdminMarketCapabilityResponse = zod.object({
+  "marketId": zod.string(),
+  "capability": zod.enum(['INFORMATION_ONLY', 'BROWSING', 'LISTING_PUBLICATION', 'TRANSACTIONS', 'CASH_PAYMENT', 'ELECTRONIC_PAYMENT', 'BUSINESS_ONBOARDING', 'DELIVERY_OPERATIONS', 'RESTRICTED_CATEGORIES']),
+  "status": zod.enum(['DISABLED', 'COUNSEL_REVIEW_REQUIRED', 'OWNER_APPROVAL_REQUIRED', 'ENABLED', 'BLOCKED']),
+  "enabled": zod.boolean(),
+  "counselReviewRecorded": zod.boolean(),
+  "ownerApprovalRecorded": zod.boolean(),
+  "updatedAt": zod.coerce.date().nullable()
+})
+
+
+/**
+ * @summary Disable a market capability immediately.
+ */
+export const disableAdminMarketCapabilityPathMarketIdMax = 32;
+
+
+
+export const DisableAdminMarketCapabilityParams = zod.object({
+  "marketId": zod.coerce.string().max(disableAdminMarketCapabilityPathMarketIdMax),
+  "capability": zod.enum(['INFORMATION_ONLY', 'BROWSING', 'LISTING_PUBLICATION', 'TRANSACTIONS', 'CASH_PAYMENT', 'ELECTRONIC_PAYMENT', 'BUSINESS_ONBOARDING', 'DELIVERY_OPERATIONS', 'RESTRICTED_CATEGORIES'])
+})
+
+export const DisableAdminMarketCapabilityBody = zod.object({
+
+})
+
+export const DisableAdminMarketCapabilityResponse = zod.object({
+  "marketId": zod.string(),
+  "capability": zod.enum(['INFORMATION_ONLY', 'BROWSING', 'LISTING_PUBLICATION', 'TRANSACTIONS', 'CASH_PAYMENT', 'ELECTRONIC_PAYMENT', 'BUSINESS_ONBOARDING', 'DELIVERY_OPERATIONS', 'RESTRICTED_CATEGORIES']),
+  "status": zod.enum(['DISABLED', 'COUNSEL_REVIEW_REQUIRED', 'OWNER_APPROVAL_REQUIRED', 'ENABLED', 'BLOCKED']),
+  "enabled": zod.boolean(),
+  "counselReviewRecorded": zod.boolean(),
+  "ownerApprovalRecorded": zod.boolean(),
+  "updatedAt": zod.coerce.date().nullable()
+})
+
+
+/**
+ * @summary List the Jordan, Kuwait, and Saudi legal intake packages. Access: ADMIN.
+ */
+export const ListAdminCountryLegalReadinessResponseItem = zod.object({
+  "marketId": zod.string(),
+  "countryCode": zod.string(),
+  "countryNameAr": zod.string(),
+  "countryNameEn": zod.string(),
+  "marketActive": zod.boolean(),
+  "reviewStatus": zod.string(),
+  "counselApprovalStatus": zod.string(),
+  "ownerApprovalStatus": zod.string(),
+  "technicalVerificationStatus": zod.string(),
+  "activationStatus": zod.string(),
+  "blockers": zod.array(zod.string()),
+  "topicCount": zod.int(),
+  "reviewedTopicCount": zod.int()
+})
+export const ListAdminCountryLegalReadinessResponse = zod.array(ListAdminCountryLegalReadinessResponseItem)
+
+
+/**
+ * @summary Read a private country intake, evidence register, policy versions, and audit trail. Access: ADMIN.
+ */
+export const getAdminCountryLegalReadinessPathMarketIdMax = 32;
+
+
+
+export const GetAdminCountryLegalReadinessParams = zod.object({
+  "marketId": zod.coerce.string().max(getAdminCountryLegalReadinessPathMarketIdMax)
+})
+
+export const getAdminCountryLegalReadinessResponseTopicsItemRequiredPolicyVersionsItemPolicyKeyMax = 120;
+
+export const getAdminCountryLegalReadinessResponseTopicsItemRequiredPolicyVersionsItemVersionMax = 80;
+
+
+
+export const GetAdminCountryLegalReadinessResponse = zod.object({
+  "market": zod.object({
+  "id": zod.string(),
+  "countryCode": zod.string(),
+  "countryNameAr": zod.string(),
+  "countryNameEn": zod.string(),
+  "isActive": zod.boolean(),
+  "status": zod.string()
+}),
+  "intake": zod.object({
+  "id": zod.string(),
+  "marketId": zod.string(),
+  "reviewStatus": zod.enum(['NOT_REVIEWED', 'COUNSEL_REVIEW_REQUIRED', 'COUNSEL_REVIEWED', 'BLOCKED']),
+  "counselApprovalStatus": zod.enum(['BLOCKED', 'APPROVED']),
+  "counselApprovalBlocker": zod.string(),
+  "ownerApprovalStatus": zod.enum(['BLOCKED', 'APPROVED']),
+  "technicalVerificationStatus": zod.enum(['NOT_RUN', 'PASSED', 'FAILED']),
+  "activationStatus": zod.enum(['DISABLED', 'ACTIVE', 'SUSPENDED']),
+  "reviewRequestedBy": zod.string().nullable(),
+  "reviewRequestedAt": zod.coerce.date().nullable(),
+  "counselReviewedBy": zod.string().nullable(),
+  "counselReviewedAt": zod.coerce.date().nullable(),
+  "counselReviewReference": zod.string().nullable(),
+  "counselApprovedBy": zod.string().nullable(),
+  "counselApprovedAt": zod.coerce.date().nullable(),
+  "counselApprovalReference": zod.string().nullable(),
+  "ownerApprovedBy": zod.string().nullable(),
+  "ownerApprovedAt": zod.coerce.date().nullable(),
+  "ownerApprovalReference": zod.string().nullable(),
+  "technicalVerifiedBy": zod.string().nullable(),
+  "technicalVerifiedAt": zod.coerce.date().nullable(),
+  "technicalVerificationReference": zod.string().nullable(),
+  "activatedBy": zod.string().nullable(),
+  "activatedAt": zod.coerce.date().nullable(),
+  "suspendedBy": zod.string().nullable(),
+  "suspendedAt": zod.coerce.date().nullable(),
+  "suspensionReference": zod.string().nullable(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+}),
+  "topics": zod.array(zod.object({
+  "id": zod.string(),
+  "intakeId": zod.string(),
+  "topicKey": zod.enum(['OPERATING_ENTITY', 'MARKETPLACE_RULES', 'SELLER_ELIGIBILITY', 'BUSINESS_KYC', 'CONSUMER_PROTECTION', 'FEES_AND_TAX', 'PAYMENTS', 'DELIVERY_LOGISTICS', 'PERSONAL_DATA', 'EXTERNAL_AI', 'MINORS_RESTRICTED_GOODS_ADVERTISING', 'IP_COMPLAINTS_DISPUTES', 'INCIDENT_NOTIFICATION', 'POLICY_VERSIONS', 'OFFICIAL_REFERENCES', 'COUNSEL_FINDINGS']),
+  "labelAr": zod.string(),
+  "disposition": zod.enum(['UNRESOLVED', 'REQUIRED', 'NOT_REQUIRED', 'NOT_APPLICABLE', 'BLOCKED']),
+  "reviewStatus": zod.enum(['NOT_REVIEWED', 'COUNSEL_REVIEWED', 'BLOCKED']),
+  "evidenceRequirementStatus": zod.enum(['NOT_REVIEWED', 'REQUIREMENTS_SET', 'NO_REQUIREMENTS']),
+  "policyRequirementStatus": zod.enum(['NOT_REVIEWED', 'VERSIONS_SET', 'NO_POLICY_REQUIREMENT']),
+  "counselFinding": zod.string().nullable(),
+  "qualifications": zod.string().nullable(),
+  "requiredAmendments": zod.string().nullable(),
+  "officialReference": zod.string().nullable(),
+  "effectiveFrom": zod.coerce.date().nullable(),
+  "effectiveUntil": zod.coerce.date().nullable(),
+  "requiredEvidenceTypes": zod.array(zod.string()),
+  "requiredPolicyVersions": zod.array(zod.object({
+  "policyKey": zod.string().min(1).max(getAdminCountryLegalReadinessResponseTopicsItemRequiredPolicyVersionsItemPolicyKeyMax),
+  "version": zod.string().min(1).max(getAdminCountryLegalReadinessResponseTopicsItemRequiredPolicyVersionsItemVersionMax)
+})),
+  "reviewedBy": zod.string().nullable(),
+  "reviewedAt": zod.coerce.date().nullable(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})),
+  "evidence": zod.array(zod.object({
+  "id": zod.string(),
+  "intakeId": zod.string(),
+  "topicKey": zod.enum(['OPERATING_ENTITY', 'MARKETPLACE_RULES', 'SELLER_ELIGIBILITY', 'BUSINESS_KYC', 'CONSUMER_PROTECTION', 'FEES_AND_TAX', 'PAYMENTS', 'DELIVERY_LOGISTICS', 'PERSONAL_DATA', 'EXTERNAL_AI', 'MINORS_RESTRICTED_GOODS_ADVERTISING', 'IP_COMPLAINTS_DISPUTES', 'INCIDENT_NOTIFICATION', 'POLICY_VERSIONS', 'OFFICIAL_REFERENCES', 'COUNSEL_FINDINGS']),
+  "evidenceType": zod.string(),
+  "documentVersion": zod.string(),
+  "referenceCode": zod.string(),
+  "issuedAt": zod.coerce.date().nullable(),
+  "expiresAt": zod.coerce.date().nullable(),
+  "status": zod.enum(['SUBMITTED_UNVERIFIED', 'COUNSEL_REVIEWED', 'REJECTED', 'SUPERSEDED']),
+  "idempotencyKey": zod.string(),
+  "submittedBy": zod.string(),
+  "submittedAt": zod.coerce.date(),
+  "reviewedBy": zod.string().nullable(),
+  "reviewedAt": zod.coerce.date().nullable(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date(),
+  "expired": zod.boolean()
+})),
+  "publishedPolicyVersions": zod.array(zod.object({
+  "policyKey": zod.string(),
+  "version": zod.string(),
+  "marketScope": zod.string(),
+  "effectiveDate": zod.coerce.date(),
+  "contentSha256": zod.string()
+})),
+  "capabilities": zod.array(zod.object({
+  "capability": zod.enum(['INFORMATION_ONLY', 'BROWSING', 'LISTING_PUBLICATION', 'TRANSACTIONS', 'CASH_PAYMENT', 'ELECTRONIC_PAYMENT', 'BUSINESS_ONBOARDING', 'DELIVERY_OPERATIONS', 'RESTRICTED_CATEGORIES']),
+  "status": zod.string(),
+  "enabled": zod.boolean()
+})),
+  "blockers": zod.array(zod.string()),
+  "events": zod.array(zod.object({
+  "id": zod.string(),
+  "intakeId": zod.string(),
+  "eventType": zod.string(),
+  "topicKey": zod.string().nullable(),
+  "evidenceId": zod.string().nullable(),
+  "actorId": zod.string(),
+  "fromStatus": zod.string().nullable(),
+  "toStatus": zod.string(),
+  "referenceCode": zod.string().nullable(),
+  "createdAt": zod.coerce.date()
+}))
+})
+
+
+/**
+ * @summary Register a private-vault evidence reference; document bytes are not accepted.
+ */
+export const submitAdminCountryLegalEvidencePathMarketIdMax = 32;
+
+
+
+export const SubmitAdminCountryLegalEvidenceParams = zod.object({
+  "marketId": zod.coerce.string().max(submitAdminCountryLegalEvidencePathMarketIdMax)
+})
+
+export const submitAdminCountryLegalEvidenceBodyEvidenceTypeMin = 2;
+export const submitAdminCountryLegalEvidenceBodyEvidenceTypeMax = 64;
+
+
+export const submitAdminCountryLegalEvidenceBodyEvidenceTypeRegExp = new RegExp('^[A-Za-z][A-Za-z0-9_]{1,63}$');
+export const submitAdminCountryLegalEvidenceBodyDocumentVersionMax = 80;
+
+export const submitAdminCountryLegalEvidenceBodyReferenceCodeMin = 3;
+export const submitAdminCountryLegalEvidenceBodyReferenceCodeMax = 200;
+
+
+export const submitAdminCountryLegalEvidenceBodyReferenceCodeRegExp = new RegExp('^[A-Za-z][A-Za-z0-9._:/-]{2,199}$');
+export const submitAdminCountryLegalEvidenceBodyIdempotencyKeyMin = 8;
+export const submitAdminCountryLegalEvidenceBodyIdempotencyKeyMax = 128;
+
+
+export const submitAdminCountryLegalEvidenceBodyIdempotencyKeyRegExp = new RegExp('^[A-Za-z0-9._:-]{8,128}$');
+
+
+export const SubmitAdminCountryLegalEvidenceBody = zod.object({
+  "topicKey": zod.enum(['OPERATING_ENTITY', 'MARKETPLACE_RULES', 'SELLER_ELIGIBILITY', 'BUSINESS_KYC', 'CONSUMER_PROTECTION', 'FEES_AND_TAX', 'PAYMENTS', 'DELIVERY_LOGISTICS', 'PERSONAL_DATA', 'EXTERNAL_AI', 'MINORS_RESTRICTED_GOODS_ADVERTISING', 'IP_COMPLAINTS_DISPUTES', 'INCIDENT_NOTIFICATION', 'POLICY_VERSIONS', 'OFFICIAL_REFERENCES', 'COUNSEL_FINDINGS']),
+  "evidenceType": zod.string().min(submitAdminCountryLegalEvidenceBodyEvidenceTypeMin).max(submitAdminCountryLegalEvidenceBodyEvidenceTypeMax).regex(submitAdminCountryLegalEvidenceBodyEvidenceTypeRegExp),
+  "documentVersion": zod.string().min(1).max(submitAdminCountryLegalEvidenceBodyDocumentVersionMax),
+  "referenceCode": zod.string().min(submitAdminCountryLegalEvidenceBodyReferenceCodeMin).max(submitAdminCountryLegalEvidenceBodyReferenceCodeMax).regex(submitAdminCountryLegalEvidenceBodyReferenceCodeRegExp),
+  "idempotencyKey": zod.string().min(submitAdminCountryLegalEvidenceBodyIdempotencyKeyMin).max(submitAdminCountryLegalEvidenceBodyIdempotencyKeyMax).regex(submitAdminCountryLegalEvidenceBodyIdempotencyKeyRegExp),
+  "issuedAt": zod.coerce.date().nullish(),
+  "expiresAt": zod.coerce.date().nullish()
+})
+
+export const SubmitAdminCountryLegalEvidenceResponse = zod.object({
+  "id": zod.string(),
+  "intakeId": zod.string(),
+  "topicKey": zod.enum(['OPERATING_ENTITY', 'MARKETPLACE_RULES', 'SELLER_ELIGIBILITY', 'BUSINESS_KYC', 'CONSUMER_PROTECTION', 'FEES_AND_TAX', 'PAYMENTS', 'DELIVERY_LOGISTICS', 'PERSONAL_DATA', 'EXTERNAL_AI', 'MINORS_RESTRICTED_GOODS_ADVERTISING', 'IP_COMPLAINTS_DISPUTES', 'INCIDENT_NOTIFICATION', 'POLICY_VERSIONS', 'OFFICIAL_REFERENCES', 'COUNSEL_FINDINGS']),
+  "evidenceType": zod.string(),
+  "documentVersion": zod.string(),
+  "referenceCode": zod.string(),
+  "issuedAt": zod.coerce.date().nullable(),
+  "expiresAt": zod.coerce.date().nullable(),
+  "status": zod.enum(['SUBMITTED_UNVERIFIED', 'COUNSEL_REVIEWED', 'REJECTED', 'SUPERSEDED']),
+  "idempotencyKey": zod.string(),
+  "submittedBy": zod.string(),
+  "submittedAt": zod.coerce.date(),
+  "reviewedBy": zod.string().nullable(),
+  "reviewedAt": zod.coerce.date().nullable(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date(),
+  "expired": zod.boolean()
+})
+
+
+/**
+ * @summary Record a designated counsel review of an evidence pointer, not a signature.
+ */
+export const reviewAdminCountryLegalEvidencePathEvidenceIdMax = 120;
+
+
+
+export const ReviewAdminCountryLegalEvidenceParams = zod.object({
+  "evidenceId": zod.coerce.string().max(reviewAdminCountryLegalEvidencePathEvidenceIdMax)
+})
+
+export const ReviewAdminCountryLegalEvidenceBody = zod.object({
+  "outcome": zod.enum(['COUNSEL_REVIEWED', 'REJECTED'])
+})
+
+export const ReviewAdminCountryLegalEvidenceResponse = zod.object({
+  "id": zod.string(),
+  "intakeId": zod.string(),
+  "topicKey": zod.enum(['OPERATING_ENTITY', 'MARKETPLACE_RULES', 'SELLER_ELIGIBILITY', 'BUSINESS_KYC', 'CONSUMER_PROTECTION', 'FEES_AND_TAX', 'PAYMENTS', 'DELIVERY_LOGISTICS', 'PERSONAL_DATA', 'EXTERNAL_AI', 'MINORS_RESTRICTED_GOODS_ADVERTISING', 'IP_COMPLAINTS_DISPUTES', 'INCIDENT_NOTIFICATION', 'POLICY_VERSIONS', 'OFFICIAL_REFERENCES', 'COUNSEL_FINDINGS']),
+  "evidenceType": zod.string(),
+  "documentVersion": zod.string(),
+  "referenceCode": zod.string(),
+  "issuedAt": zod.coerce.date().nullable(),
+  "expiresAt": zod.coerce.date().nullable(),
+  "status": zod.enum(['SUBMITTED_UNVERIFIED', 'COUNSEL_REVIEWED', 'REJECTED', 'SUPERSEDED']),
+  "idempotencyKey": zod.string(),
+  "submittedBy": zod.string(),
+  "submittedAt": zod.coerce.date(),
+  "reviewedBy": zod.string().nullable(),
+  "reviewedAt": zod.coerce.date().nullable(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date(),
+  "expired": zod.boolean()
+})
+
+
+/**
+ * @summary Open a country-level counsel review request.
+ */
+export const requestAdminCountryCounselReviewPathMarketIdMax = 32;
+
+
+
+export const RequestAdminCountryCounselReviewParams = zod.object({
+  "marketId": zod.coerce.string().max(requestAdminCountryCounselReviewPathMarketIdMax)
+})
+
+export const RequestAdminCountryCounselReviewBody = zod.object({
+
+})
+
+export const RequestAdminCountryCounselReviewResponse = zod.object({
+  "id": zod.string(),
+  "marketId": zod.string(),
+  "reviewStatus": zod.enum(['NOT_REVIEWED', 'COUNSEL_REVIEW_REQUIRED', 'COUNSEL_REVIEWED', 'BLOCKED']),
+  "counselApprovalStatus": zod.enum(['BLOCKED', 'APPROVED']),
+  "counselApprovalBlocker": zod.string(),
+  "ownerApprovalStatus": zod.enum(['BLOCKED', 'APPROVED']),
+  "technicalVerificationStatus": zod.enum(['NOT_RUN', 'PASSED', 'FAILED']),
+  "activationStatus": zod.enum(['DISABLED', 'ACTIVE', 'SUSPENDED']),
+  "reviewRequestedBy": zod.string().nullable(),
+  "reviewRequestedAt": zod.coerce.date().nullable(),
+  "counselReviewedBy": zod.string().nullable(),
+  "counselReviewedAt": zod.coerce.date().nullable(),
+  "counselReviewReference": zod.string().nullable(),
+  "counselApprovedBy": zod.string().nullable(),
+  "counselApprovedAt": zod.coerce.date().nullable(),
+  "counselApprovalReference": zod.string().nullable(),
+  "ownerApprovedBy": zod.string().nullable(),
+  "ownerApprovedAt": zod.coerce.date().nullable(),
+  "ownerApprovalReference": zod.string().nullable(),
+  "technicalVerifiedBy": zod.string().nullable(),
+  "technicalVerifiedAt": zod.coerce.date().nullable(),
+  "technicalVerificationReference": zod.string().nullable(),
+  "activatedBy": zod.string().nullable(),
+  "activatedAt": zod.coerce.date().nullable(),
+  "suspendedBy": zod.string().nullable(),
+  "suspendedAt": zod.coerce.date().nullable(),
+  "suspensionReference": zod.string().nullable(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Record a counsel finding and explicit evidence and policy requirements for one topic.
+ */
+export const reviewAdminCountryLegalTopicPathMarketIdMax = 32;
+
+
+
+export const ReviewAdminCountryLegalTopicParams = zod.object({
+  "marketId": zod.coerce.string().max(reviewAdminCountryLegalTopicPathMarketIdMax),
+  "topicKey": zod.enum(['OPERATING_ENTITY', 'MARKETPLACE_RULES', 'SELLER_ELIGIBILITY', 'BUSINESS_KYC', 'CONSUMER_PROTECTION', 'FEES_AND_TAX', 'PAYMENTS', 'DELIVERY_LOGISTICS', 'PERSONAL_DATA', 'EXTERNAL_AI', 'MINORS_RESTRICTED_GOODS_ADVERTISING', 'IP_COMPLAINTS_DISPUTES', 'INCIDENT_NOTIFICATION', 'POLICY_VERSIONS', 'OFFICIAL_REFERENCES', 'COUNSEL_FINDINGS'])
+})
+
+export const reviewAdminCountryLegalTopicBodyCounselFindingMin = 3;
+export const reviewAdminCountryLegalTopicBodyCounselFindingMax = 4000;
+
+export const reviewAdminCountryLegalTopicBodyQualificationsMax = 2000;
+
+export const reviewAdminCountryLegalTopicBodyRequiredAmendmentsMax = 2000;
+
+export const reviewAdminCountryLegalTopicBodyOfficialReferenceMin = 3;
+export const reviewAdminCountryLegalTopicBodyOfficialReferenceMax = 200;
+
+
+export const reviewAdminCountryLegalTopicBodyOfficialReferenceRegExp = new RegExp('^[A-Za-z][A-Za-z0-9._:/-]{2,199}$');
+export const reviewAdminCountryLegalTopicBodyRequiredEvidenceTypesItemMin = 2;
+export const reviewAdminCountryLegalTopicBodyRequiredEvidenceTypesItemMax = 64;
+
+
+export const reviewAdminCountryLegalTopicBodyRequiredEvidenceTypesItemRegExp = new RegExp('^[A-Za-z][A-Za-z0-9_]{1,63}$');
+export const reviewAdminCountryLegalTopicBodyRequiredEvidenceTypesMax = 32;
+
+export const reviewAdminCountryLegalTopicBodyRequiredPolicyVersionsItemPolicyKeyMax = 120;
+
+export const reviewAdminCountryLegalTopicBodyRequiredPolicyVersionsItemVersionMax = 80;
+
+export const reviewAdminCountryLegalTopicBodyRequiredPolicyVersionsMax = 32;
+
+
+
+export const ReviewAdminCountryLegalTopicBody = zod.object({
+  "disposition": zod.enum(['REQUIRED', 'NOT_REQUIRED', 'NOT_APPLICABLE', 'BLOCKED']),
+  "counselFinding": zod.string().min(reviewAdminCountryLegalTopicBodyCounselFindingMin).max(reviewAdminCountryLegalTopicBodyCounselFindingMax),
+  "qualifications": zod.string().max(reviewAdminCountryLegalTopicBodyQualificationsMax).nullish(),
+  "requiredAmendments": zod.string().max(reviewAdminCountryLegalTopicBodyRequiredAmendmentsMax).nullish(),
+  "officialReference": zod.string().min(reviewAdminCountryLegalTopicBodyOfficialReferenceMin).max(reviewAdminCountryLegalTopicBodyOfficialReferenceMax).regex(reviewAdminCountryLegalTopicBodyOfficialReferenceRegExp),
+  "effectiveFrom": zod.coerce.date().nullish(),
+  "effectiveUntil": zod.coerce.date().nullish(),
+  "evidenceRequirementStatus": zod.enum(['REQUIREMENTS_SET', 'NO_REQUIREMENTS']),
+  "requiredEvidenceTypes": zod.array(zod.string().min(reviewAdminCountryLegalTopicBodyRequiredEvidenceTypesItemMin).max(reviewAdminCountryLegalTopicBodyRequiredEvidenceTypesItemMax).regex(reviewAdminCountryLegalTopicBodyRequiredEvidenceTypesItemRegExp)).max(reviewAdminCountryLegalTopicBodyRequiredEvidenceTypesMax),
+  "policyRequirementStatus": zod.enum(['VERSIONS_SET', 'NO_POLICY_REQUIREMENT']),
+  "requiredPolicyVersions": zod.array(zod.object({
+  "policyKey": zod.string().min(1).max(reviewAdminCountryLegalTopicBodyRequiredPolicyVersionsItemPolicyKeyMax),
+  "version": zod.string().min(1).max(reviewAdminCountryLegalTopicBodyRequiredPolicyVersionsItemVersionMax)
+})).max(reviewAdminCountryLegalTopicBodyRequiredPolicyVersionsMax)
+})
+
+export const reviewAdminCountryLegalTopicResponseRequiredPolicyVersionsItemPolicyKeyMax = 120;
+
+export const reviewAdminCountryLegalTopicResponseRequiredPolicyVersionsItemVersionMax = 80;
+
+
+
+export const ReviewAdminCountryLegalTopicResponse = zod.object({
+  "id": zod.string(),
+  "intakeId": zod.string(),
+  "topicKey": zod.enum(['OPERATING_ENTITY', 'MARKETPLACE_RULES', 'SELLER_ELIGIBILITY', 'BUSINESS_KYC', 'CONSUMER_PROTECTION', 'FEES_AND_TAX', 'PAYMENTS', 'DELIVERY_LOGISTICS', 'PERSONAL_DATA', 'EXTERNAL_AI', 'MINORS_RESTRICTED_GOODS_ADVERTISING', 'IP_COMPLAINTS_DISPUTES', 'INCIDENT_NOTIFICATION', 'POLICY_VERSIONS', 'OFFICIAL_REFERENCES', 'COUNSEL_FINDINGS']),
+  "labelAr": zod.string(),
+  "disposition": zod.enum(['UNRESOLVED', 'REQUIRED', 'NOT_REQUIRED', 'NOT_APPLICABLE', 'BLOCKED']),
+  "reviewStatus": zod.enum(['NOT_REVIEWED', 'COUNSEL_REVIEWED', 'BLOCKED']),
+  "evidenceRequirementStatus": zod.enum(['NOT_REVIEWED', 'REQUIREMENTS_SET', 'NO_REQUIREMENTS']),
+  "policyRequirementStatus": zod.enum(['NOT_REVIEWED', 'VERSIONS_SET', 'NO_POLICY_REQUIREMENT']),
+  "counselFinding": zod.string().nullable(),
+  "qualifications": zod.string().nullable(),
+  "requiredAmendments": zod.string().nullable(),
+  "officialReference": zod.string().nullable(),
+  "effectiveFrom": zod.coerce.date().nullable(),
+  "effectiveUntil": zod.coerce.date().nullable(),
+  "requiredEvidenceTypes": zod.array(zod.string()),
+  "requiredPolicyVersions": zod.array(zod.object({
+  "policyKey": zod.string().min(1).max(reviewAdminCountryLegalTopicResponseRequiredPolicyVersionsItemPolicyKeyMax),
+  "version": zod.string().min(1).max(reviewAdminCountryLegalTopicResponseRequiredPolicyVersionsItemVersionMax)
+})),
+  "reviewedBy": zod.string().nullable(),
+  "reviewedAt": zod.coerce.date().nullable(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Record completion of the topic review, without approving or activating the country.
+ */
+export const recordAdminCountryCounselReviewPathMarketIdMax = 32;
+
+
+
+export const RecordAdminCountryCounselReviewParams = zod.object({
+  "marketId": zod.coerce.string().max(recordAdminCountryCounselReviewPathMarketIdMax)
+})
+
+export const recordAdminCountryCounselReviewBodyReferenceCodeMin = 3;
+export const recordAdminCountryCounselReviewBodyReferenceCodeMax = 200;
+
+
+export const recordAdminCountryCounselReviewBodyReferenceCodeRegExp = new RegExp('^[A-Za-z][A-Za-z0-9._:/-]{2,199}$');
+
+
+export const RecordAdminCountryCounselReviewBody = zod.object({
+  "referenceCode": zod.string().min(recordAdminCountryCounselReviewBodyReferenceCodeMin).max(recordAdminCountryCounselReviewBodyReferenceCodeMax).regex(recordAdminCountryCounselReviewBodyReferenceCodeRegExp)
+})
+
+export const RecordAdminCountryCounselReviewResponse = zod.object({
+  "id": zod.string(),
+  "marketId": zod.string(),
+  "reviewStatus": zod.enum(['NOT_REVIEWED', 'COUNSEL_REVIEW_REQUIRED', 'COUNSEL_REVIEWED', 'BLOCKED']),
+  "counselApprovalStatus": zod.enum(['BLOCKED', 'APPROVED']),
+  "counselApprovalBlocker": zod.string(),
+  "ownerApprovalStatus": zod.enum(['BLOCKED', 'APPROVED']),
+  "technicalVerificationStatus": zod.enum(['NOT_RUN', 'PASSED', 'FAILED']),
+  "activationStatus": zod.enum(['DISABLED', 'ACTIVE', 'SUSPENDED']),
+  "reviewRequestedBy": zod.string().nullable(),
+  "reviewRequestedAt": zod.coerce.date().nullable(),
+  "counselReviewedBy": zod.string().nullable(),
+  "counselReviewedAt": zod.coerce.date().nullable(),
+  "counselReviewReference": zod.string().nullable(),
+  "counselApprovedBy": zod.string().nullable(),
+  "counselApprovedAt": zod.coerce.date().nullable(),
+  "counselApprovalReference": zod.string().nullable(),
+  "ownerApprovedBy": zod.string().nullable(),
+  "ownerApprovedAt": zod.coerce.date().nullable(),
+  "ownerApprovalReference": zod.string().nullable(),
+  "technicalVerifiedBy": zod.string().nullable(),
+  "technicalVerifiedAt": zod.coerce.date().nullable(),
+  "technicalVerificationReference": zod.string().nullable(),
+  "activatedBy": zod.string().nullable(),
+  "activatedAt": zod.coerce.date().nullable(),
+  "suspendedBy": zod.string().nullable(),
+  "suspendedAt": zod.coerce.date().nullable(),
+  "suspensionReference": zod.string().nullable(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Keep approval blocked unless independently verified counsel identity and signature are available.
+ */
+export const attemptAdminCountryCounselApprovalPathMarketIdMax = 32;
+
+
+
+export const AttemptAdminCountryCounselApprovalParams = zod.object({
+  "marketId": zod.coerce.string().max(attemptAdminCountryCounselApprovalPathMarketIdMax)
+})
+
+export const attemptAdminCountryCounselApprovalBodyReferenceCodeMin = 3;
+export const attemptAdminCountryCounselApprovalBodyReferenceCodeMax = 200;
+
+
+export const attemptAdminCountryCounselApprovalBodyReferenceCodeRegExp = new RegExp('^[A-Za-z][A-Za-z0-9._:/-]{2,199}$');
+
+
+export const AttemptAdminCountryCounselApprovalBody = zod.object({
+  "referenceCode": zod.string().min(attemptAdminCountryCounselApprovalBodyReferenceCodeMin).max(attemptAdminCountryCounselApprovalBodyReferenceCodeMax).regex(attemptAdminCountryCounselApprovalBodyReferenceCodeRegExp)
+})
+
+export const AttemptAdminCountryCounselApprovalResponse = zod.void()
+
+
+/**
+ * @summary Require completed legal and technical prerequisites before owner approval.
+ */
+export const attemptAdminCountryOwnerApprovalPathMarketIdMax = 32;
+
+
+
+export const AttemptAdminCountryOwnerApprovalParams = zod.object({
+  "marketId": zod.coerce.string().max(attemptAdminCountryOwnerApprovalPathMarketIdMax)
+})
+
+export const attemptAdminCountryOwnerApprovalBodyReferenceCodeMin = 3;
+export const attemptAdminCountryOwnerApprovalBodyReferenceCodeMax = 200;
+
+
+export const attemptAdminCountryOwnerApprovalBodyReferenceCodeRegExp = new RegExp('^[A-Za-z][A-Za-z0-9._:/-]{2,199}$');
+
+
+export const AttemptAdminCountryOwnerApprovalBody = zod.object({
+  "referenceCode": zod.string().min(attemptAdminCountryOwnerApprovalBodyReferenceCodeMin).max(attemptAdminCountryOwnerApprovalBodyReferenceCodeMax).regex(attemptAdminCountryOwnerApprovalBodyReferenceCodeRegExp)
+})
+
+export const AttemptAdminCountryOwnerApprovalResponse = zod.void()
+
+
+/**
+ * @summary Require a machine-verifiable test attestation before technical readiness can pass.
+ */
+export const recordAdminCountryTechnicalVerificationPathMarketIdMax = 32;
+
+
+
+export const RecordAdminCountryTechnicalVerificationParams = zod.object({
+  "marketId": zod.coerce.string().max(recordAdminCountryTechnicalVerificationPathMarketIdMax)
+})
+
+export const recordAdminCountryTechnicalVerificationBodyReferenceCodeMin = 3;
+export const recordAdminCountryTechnicalVerificationBodyReferenceCodeMax = 200;
+
+
+export const recordAdminCountryTechnicalVerificationBodyReferenceCodeRegExp = new RegExp('^[A-Za-z][A-Za-z0-9._:/-]{2,199}$');
+
+
+export const RecordAdminCountryTechnicalVerificationBody = zod.object({
+  "referenceCode": zod.string().min(recordAdminCountryTechnicalVerificationBodyReferenceCodeMin).max(recordAdminCountryTechnicalVerificationBodyReferenceCodeMax).regex(recordAdminCountryTechnicalVerificationBodyReferenceCodeRegExp)
+})
+
+export const RecordAdminCountryTechnicalVerificationResponse = zod.void()
+
+
+/**
+ * @summary Activate a country package only after counsel, owner, and technical gates pass.
+ */
+export const activateAdminCountryReadinessPathMarketIdMax = 32;
+
+
+
+export const ActivateAdminCountryReadinessParams = zod.object({
+  "marketId": zod.coerce.string().max(activateAdminCountryReadinessPathMarketIdMax)
+})
+
+export const activateAdminCountryReadinessBodyReferenceCodeMin = 3;
+export const activateAdminCountryReadinessBodyReferenceCodeMax = 200;
+
+
+export const activateAdminCountryReadinessBodyReferenceCodeRegExp = new RegExp('^[A-Za-z][A-Za-z0-9._:/-]{2,199}$');
+
+
+export const ActivateAdminCountryReadinessBody = zod.object({
+  "referenceCode": zod.string().min(activateAdminCountryReadinessBodyReferenceCodeMin).max(activateAdminCountryReadinessBodyReferenceCodeMax).regex(activateAdminCountryReadinessBodyReferenceCodeRegExp)
+})
+
+export const ActivateAdminCountryReadinessResponse = zod.void()
+
+
+/**
+ * @summary Suspend new market capabilities without removing access to existing orders.
+ */
+export const suspendAdminCountryReadinessPathMarketIdMax = 32;
+
+
+
+export const SuspendAdminCountryReadinessParams = zod.object({
+  "marketId": zod.coerce.string().max(suspendAdminCountryReadinessPathMarketIdMax)
+})
+
+export const suspendAdminCountryReadinessBodyReferenceCodeMin = 3;
+export const suspendAdminCountryReadinessBodyReferenceCodeMax = 200;
+
+
+export const suspendAdminCountryReadinessBodyReferenceCodeRegExp = new RegExp('^[A-Za-z][A-Za-z0-9._:/-]{2,199}$');
+
+
+export const SuspendAdminCountryReadinessBody = zod.object({
+  "referenceCode": zod.string().min(suspendAdminCountryReadinessBodyReferenceCodeMin).max(suspendAdminCountryReadinessBodyReferenceCodeMax).regex(suspendAdminCountryReadinessBodyReferenceCodeRegExp)
+})
+
+export const SuspendAdminCountryReadinessResponse = zod.object({
+  "id": zod.string(),
+  "marketId": zod.string(),
+  "reviewStatus": zod.enum(['NOT_REVIEWED', 'COUNSEL_REVIEW_REQUIRED', 'COUNSEL_REVIEWED', 'BLOCKED']),
+  "counselApprovalStatus": zod.enum(['BLOCKED', 'APPROVED']),
+  "counselApprovalBlocker": zod.string(),
+  "ownerApprovalStatus": zod.enum(['BLOCKED', 'APPROVED']),
+  "technicalVerificationStatus": zod.enum(['NOT_RUN', 'PASSED', 'FAILED']),
+  "activationStatus": zod.enum(['DISABLED', 'ACTIVE', 'SUSPENDED']),
+  "reviewRequestedBy": zod.string().nullable(),
+  "reviewRequestedAt": zod.coerce.date().nullable(),
+  "counselReviewedBy": zod.string().nullable(),
+  "counselReviewedAt": zod.coerce.date().nullable(),
+  "counselReviewReference": zod.string().nullable(),
+  "counselApprovedBy": zod.string().nullable(),
+  "counselApprovedAt": zod.coerce.date().nullable(),
+  "counselApprovalReference": zod.string().nullable(),
+  "ownerApprovedBy": zod.string().nullable(),
+  "ownerApprovedAt": zod.coerce.date().nullable(),
+  "ownerApprovalReference": zod.string().nullable(),
+  "technicalVerifiedBy": zod.string().nullable(),
+  "technicalVerifiedAt": zod.coerce.date().nullable(),
+  "technicalVerificationReference": zod.string().nullable(),
+  "activatedBy": zod.string().nullable(),
+  "activatedAt": zod.coerce.date().nullable(),
+  "suspendedBy": zod.string().nullable(),
+  "suspendedAt": zod.coerce.date().nullable(),
+  "suspensionReference": zod.string().nullable(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary List internal security and privacy incident records. Access: ADMIN.
+ */
+export const ListAdminSecurityIncidentsQueryParams = zod.object({
+  "status": zod.enum(['OPEN', 'CONTAINED', 'RECOVERED', 'CLOSED']).optional()
+})
+
+export const ListAdminSecurityIncidentsResponseItem = zod.object({
+  "id": zod.string(),
+  "category": zod.enum(['SECURITY', 'PRIVACY', 'AVAILABILITY', 'DATA_INTEGRITY', 'THIRD_PARTY', 'OTHER']),
+  "severity": zod.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']),
+  "status": zod.enum(['OPEN', 'CONTAINED', 'RECOVERED', 'CLOSED']),
+  "summary": zod.string(),
+  "affectedSystems": zod.array(zod.string()),
+  "detectedAt": zod.coerce.date(),
+  "openedBy": zod.string(),
+  "evidenceReference": zod.string().nullable(),
+  "containmentSummary": zod.string().nullable(),
+  "recoverySummary": zod.string().nullable(),
+  "postIncidentSummary": zod.string().nullable(),
+  "counselAssessment": zod.enum(['NOT_ASSESSED', 'REVIEW_REQUIRED', 'REVIEWED']),
+  "counselReference": zod.string().nullable(),
+  "counselReviewedBy": zod.string().nullable(),
+  "counselReviewedAt": zod.coerce.date().nullable(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})
+export const ListAdminSecurityIncidentsResponse = zod.array(ListAdminSecurityIncidentsResponseItem)
+
+
+/**
+ * @summary Open an internal incident record without sending notifications.
+ */
+export const createAdminSecurityIncidentBodySummaryMin = 3;
+export const createAdminSecurityIncidentBodySummaryMax = 1200;
+
+export const createAdminSecurityIncidentBodyAffectedSystemsItemMax = 80;
+
+export const createAdminSecurityIncidentBodyAffectedSystemsMax = 12;
+
+export const createAdminSecurityIncidentBodyEvidenceReferenceMin = 3;
+export const createAdminSecurityIncidentBodyEvidenceReferenceMax = 200;
+
+
+export const createAdminSecurityIncidentBodyEvidenceReferenceRegExp = new RegExp('^[A-Za-z][A-Za-z0-9._:/-]{2,199}$');
+
+
+export const CreateAdminSecurityIncidentBody = zod.object({
+  "category": zod.enum(['SECURITY', 'PRIVACY', 'AVAILABILITY', 'DATA_INTEGRITY', 'THIRD_PARTY', 'OTHER']),
+  "severity": zod.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']),
+  "summary": zod.string().min(createAdminSecurityIncidentBodySummaryMin).max(createAdminSecurityIncidentBodySummaryMax),
+  "affectedSystems": zod.array(zod.string().min(1).max(createAdminSecurityIncidentBodyAffectedSystemsItemMax)).max(createAdminSecurityIncidentBodyAffectedSystemsMax).optional(),
+  "detectedAt": zod.coerce.date().optional(),
+  "evidenceReference": zod.string().min(createAdminSecurityIncidentBodyEvidenceReferenceMin).max(createAdminSecurityIncidentBodyEvidenceReferenceMax).regex(createAdminSecurityIncidentBodyEvidenceReferenceRegExp).optional()
+})
+
+export const CreateAdminSecurityIncidentResponse = zod.object({
+  "id": zod.string(),
+  "category": zod.enum(['SECURITY', 'PRIVACY', 'AVAILABILITY', 'DATA_INTEGRITY', 'THIRD_PARTY', 'OTHER']),
+  "severity": zod.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']),
+  "status": zod.enum(['OPEN', 'CONTAINED', 'RECOVERED', 'CLOSED']),
+  "summary": zod.string(),
+  "affectedSystems": zod.array(zod.string()),
+  "detectedAt": zod.coerce.date(),
+  "openedBy": zod.string(),
+  "evidenceReference": zod.string().nullable(),
+  "containmentSummary": zod.string().nullable(),
+  "recoverySummary": zod.string().nullable(),
+  "postIncidentSummary": zod.string().nullable(),
+  "counselAssessment": zod.enum(['NOT_ASSESSED', 'REVIEW_REQUIRED', 'REVIEWED']),
+  "counselReference": zod.string().nullable(),
+  "counselReviewedBy": zod.string().nullable(),
+  "counselReviewedAt": zod.coerce.date().nullable(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Read an incident and its append-only event history. Access: ADMIN.
+ */
+export const getAdminSecurityIncidentPathIdMax = 80;
+
+
+
+export const GetAdminSecurityIncidentParams = zod.object({
+  "id": zod.coerce.string().max(getAdminSecurityIncidentPathIdMax)
+})
+
+export const GetAdminSecurityIncidentResponse = zod.object({
+  "incident": zod.object({
+  "id": zod.string(),
+  "category": zod.enum(['SECURITY', 'PRIVACY', 'AVAILABILITY', 'DATA_INTEGRITY', 'THIRD_PARTY', 'OTHER']),
+  "severity": zod.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']),
+  "status": zod.enum(['OPEN', 'CONTAINED', 'RECOVERED', 'CLOSED']),
+  "summary": zod.string(),
+  "affectedSystems": zod.array(zod.string()),
+  "detectedAt": zod.coerce.date(),
+  "openedBy": zod.string(),
+  "evidenceReference": zod.string().nullable(),
+  "containmentSummary": zod.string().nullable(),
+  "recoverySummary": zod.string().nullable(),
+  "postIncidentSummary": zod.string().nullable(),
+  "counselAssessment": zod.enum(['NOT_ASSESSED', 'REVIEW_REQUIRED', 'REVIEWED']),
+  "counselReference": zod.string().nullable(),
+  "counselReviewedBy": zod.string().nullable(),
+  "counselReviewedAt": zod.coerce.date().nullable(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+}),
+  "events": zod.array(zod.object({
+  "id": zod.string(),
+  "incidentId": zod.string(),
+  "eventType": zod.string(),
+  "fromStatus": zod.string().nullable(),
+  "toStatus": zod.enum(['OPEN', 'CONTAINED', 'RECOVERED', 'CLOSED']),
+  "actorId": zod.string(),
+  "reference": zod.string().nullable(),
+  "createdAt": zod.coerce.date()
+}))
+})
+
+
+/**
+ * @summary Record a guarded incident lifecycle or counsel-review event.
+ */
+export const transitionAdminSecurityIncidentPathIdMax = 80;
+
+
+
+export const TransitionAdminSecurityIncidentParams = zod.object({
+  "id": zod.coerce.string().max(transitionAdminSecurityIncidentPathIdMax)
+})
+
+export const transitionAdminSecurityIncidentBodySummaryMin = 3;
+export const transitionAdminSecurityIncidentBodySummaryMax = 1200;
+
+export const transitionAdminSecurityIncidentBodyReferenceMin = 3;
+export const transitionAdminSecurityIncidentBodyReferenceMax = 200;
+
+
+export const transitionAdminSecurityIncidentBodyReferenceRegExp = new RegExp('^[A-Za-z][A-Za-z0-9._:/-]{2,199}$');
+
+
+export const TransitionAdminSecurityIncidentBody = zod.object({
+  "action": zod.enum(['RECORD_CONTAINMENT', 'RECORD_RECOVERY', 'CLOSE_WITH_POSTMORTEM', 'REQUEST_COUNSEL_REVIEW', 'RECORD_COUNSEL_REVIEW', 'CHANGE_SEVERITY', 'ADD_EVIDENCE_REFERENCE']),
+  "summary": zod.string().min(transitionAdminSecurityIncidentBodySummaryMin).max(transitionAdminSecurityIncidentBodySummaryMax).optional(),
+  "reference": zod.string().min(transitionAdminSecurityIncidentBodyReferenceMin).max(transitionAdminSecurityIncidentBodyReferenceMax).regex(transitionAdminSecurityIncidentBodyReferenceRegExp).optional(),
+  "severity": zod.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']).optional()
+})
+
+export const TransitionAdminSecurityIncidentResponse = zod.object({
+  "id": zod.string(),
+  "category": zod.enum(['SECURITY', 'PRIVACY', 'AVAILABILITY', 'DATA_INTEGRITY', 'THIRD_PARTY', 'OTHER']),
+  "severity": zod.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']),
+  "status": zod.enum(['OPEN', 'CONTAINED', 'RECOVERED', 'CLOSED']),
+  "summary": zod.string(),
+  "affectedSystems": zod.array(zod.string()),
+  "detectedAt": zod.coerce.date(),
+  "openedBy": zod.string(),
+  "evidenceReference": zod.string().nullable(),
+  "containmentSummary": zod.string().nullable(),
+  "recoverySummary": zod.string().nullable(),
+  "postIncidentSummary": zod.string().nullable(),
+  "counselAssessment": zod.enum(['NOT_ASSESSED', 'REVIEW_REQUIRED', 'REVIEWED']),
+  "counselReference": zod.string().nullable(),
+  "counselReviewedBy": zod.string().nullable(),
+  "counselReviewedAt": zod.coerce.date().nullable(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})
 
 
 /**

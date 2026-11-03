@@ -1,0 +1,3 @@
+ALTER TABLE "market_legal_capability_events" DROP CONSTRAINT "market_legal_capability_events_type_valid";--> statement-breakpoint
+ALTER TABLE "market_legal_capability_events" ADD CONSTRAINT "market_legal_capability_events_type_valid" CHECK ("market_legal_capability_events"."event_type" IN ('REVIEW_REQUESTED', 'COUNSEL_REVIEWED', 'COUNSEL_BLOCKED', 'OWNER_ENABLED', 'CAPABILITY_DISABLED'));--> statement-breakpoint
+ALTER TABLE "security_incidents" ADD CONSTRAINT "security_incidents_counsel_review_valid" CHECK ("security_incidents"."counsel_assessment" <> 'REVIEWED' OR ("security_incidents"."counsel_reference" IS NOT NULL AND "security_incidents"."counsel_reviewed_by" IS NOT NULL AND "security_incidents"."counsel_reviewed_at" IS NOT NULL));

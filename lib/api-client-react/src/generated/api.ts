@@ -27,6 +27,7 @@ import type {
 import type {
   AdminDispute,
   AdminDisputeResolutionResult,
+  AdminMarketLegalCapabilityOverview,
   AdminPromotion,
   AiControlActionAcknowledgement,
   AiControlActionAcknowledgementResult,
@@ -72,6 +73,16 @@ import type {
   CheckoutResponse,
   CommercialJsonObject,
   ConfirmationInput,
+  CountryLegalEvidence,
+  CountryLegalEvidenceInput,
+  CountryLegalEvidenceReviewInput,
+  CountryLegalIntake,
+  CountryLegalReadinessDetail,
+  CountryLegalReadinessSummary,
+  CountryLegalReferenceInput,
+  CountryLegalTopic,
+  CountryLegalTopicKey,
+  CountryLegalTopicReviewInput,
   CourierCommissionAccount,
   CourierCommissionSettlementInput,
   CourierCommissionSettlementResult,
@@ -83,11 +94,14 @@ import type {
   Dashboard,
   DelegatedBusinessCatalog,
   DeliveryInput,
+  EmptyInput,
   EmptyObject,
   GetListingsParams,
   GetOrdersParams,
   GetSubscriptionPlanEconomicsParams,
   HealthStatus,
+  LegalReadinessMarket,
+  ListAdminSecurityIncidentsParams,
   ListBusinessVerificationQueueParams,
   Listing,
   ListingInput,
@@ -97,7 +111,11 @@ import type {
   ListingPhotoUploadResponse,
   ListingStatusAction,
   ListingUpdate,
+  MarketCapabilityCounselReviewInput,
+  MarketCapabilityOwnerApprovalInput,
   MarketCategoryPolicyAuditRecord,
+  MarketLegalCapabilityName,
+  MarketLegalCapabilityState,
   MarketplaceCategory,
   MarketplaceCategoryAuditRecord,
   MarketplaceCategoryInput,
@@ -126,6 +144,10 @@ import type {
   PromotionProductUpdate,
   ReadinessStatus,
   ResolveAdminDisputeInput,
+  SecurityIncident,
+  SecurityIncidentDetails,
+  SecurityIncidentInput,
+  SecurityIncidentTransitionInput,
   SellerDue,
   SellerPromotion,
   SellerPromotionAction,
@@ -12899,6 +12921,107 @@ export const usePostCashRefundsIdWithdraw = <TError = ErrorType<void>,
       return useMutation(getPostCashRefundsIdWithdrawMutationOptions(options), queryClient);
     }
 
+export const getGetMarketsUrl = () => {
+
+
+
+
+  return `/api/markets`
+}
+
+/**
+ * @summary List available market metadata. Access: PUBLIC.
+ */
+export const getMarkets = async ( options?: Parameters<typeof customFetch>[1]): Promise<LegalReadinessMarket[]> => {
+
+  return customFetch<LegalReadinessMarket[]>(getGetMarketsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetMarketsQueryKey = () => {
+    return [
+    `/api/markets`
+    ] as const;
+    }
+
+
+export const getGetMarketsQueryOptions = <TData = Awaited<ReturnType<typeof getMarkets>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMarkets>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetMarketsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMarkets>>> = ({ signal }) => getMarkets({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMarkets>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetMarketsQueryResult = NonNullable<Awaited<ReturnType<typeof getMarkets>>>
+export type GetMarketsQueryError = ErrorType<unknown>
+
+
+export function useGetMarkets<TData = Awaited<ReturnType<typeof getMarkets>>, TError = ErrorType<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMarkets>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMarkets>>,
+          TError,
+          Awaited<ReturnType<typeof getMarkets>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMarkets<TData = Awaited<ReturnType<typeof getMarkets>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMarkets>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMarkets>>,
+          TError,
+          Awaited<ReturnType<typeof getMarkets>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMarkets<TData = Awaited<ReturnType<typeof getMarkets>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMarkets>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List available market metadata. Access: PUBLIC.
+ */
+
+export function useGetMarkets<TData = Awaited<ReturnType<typeof getMarkets>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMarkets>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetMarketsQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
 export const getGetMarketsMarketidComplianceUrl = (marketId: string,) => {
 
 
@@ -14412,6 +14535,1951 @@ export const usePutAdminComplianceMarketsMarketid = <TError = ErrorType<void>,
         TContext
       > => {
       return useMutation(getPutAdminComplianceMarketsMarketidMutationOptions(options), queryClient);
+    }
+
+export const getGetAdminMarketLegalCapabilitiesUrl = (marketId: string,) => {
+
+
+
+
+  return `/api/admin/compliance/markets/${marketId}/capabilities`
+}
+
+/**
+ * @summary List per-market legal capability states and audit events. Access: ADMIN.
+ */
+export const getAdminMarketLegalCapabilities = async (marketId: string, options?: Parameters<typeof customFetch>[1]): Promise<AdminMarketLegalCapabilityOverview> => {
+
+  return customFetch<AdminMarketLegalCapabilityOverview>(getGetAdminMarketLegalCapabilitiesUrl(marketId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAdminMarketLegalCapabilitiesQueryKey = (marketId: string,) => {
+    return [
+    `/api/admin/compliance/markets/${marketId}/capabilities`
+    ] as const;
+    }
+
+
+export const getGetAdminMarketLegalCapabilitiesQueryOptions = <TData = Awaited<ReturnType<typeof getAdminMarketLegalCapabilities>>, TError = ErrorType<void>>(marketId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminMarketLegalCapabilities>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAdminMarketLegalCapabilitiesQueryKey(marketId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminMarketLegalCapabilities>>> = ({ signal }) => getAdminMarketLegalCapabilities(marketId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: marketId !== null && marketId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdminMarketLegalCapabilities>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetAdminMarketLegalCapabilitiesQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminMarketLegalCapabilities>>>
+export type GetAdminMarketLegalCapabilitiesQueryError = ErrorType<void>
+
+
+export function useGetAdminMarketLegalCapabilities<TData = Awaited<ReturnType<typeof getAdminMarketLegalCapabilities>>, TError = ErrorType<void>>(
+ marketId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminMarketLegalCapabilities>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAdminMarketLegalCapabilities>>,
+          TError,
+          Awaited<ReturnType<typeof getAdminMarketLegalCapabilities>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAdminMarketLegalCapabilities<TData = Awaited<ReturnType<typeof getAdminMarketLegalCapabilities>>, TError = ErrorType<void>>(
+ marketId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminMarketLegalCapabilities>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAdminMarketLegalCapabilities>>,
+          TError,
+          Awaited<ReturnType<typeof getAdminMarketLegalCapabilities>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAdminMarketLegalCapabilities<TData = Awaited<ReturnType<typeof getAdminMarketLegalCapabilities>>, TError = ErrorType<void>>(
+ marketId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminMarketLegalCapabilities>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List per-market legal capability states and audit events. Access: ADMIN.
+ */
+
+export function useGetAdminMarketLegalCapabilities<TData = Awaited<ReturnType<typeof getAdminMarketLegalCapabilities>>, TError = ErrorType<void>>(
+ marketId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminMarketLegalCapabilities>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetAdminMarketLegalCapabilitiesQueryOptions(marketId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getRequestAdminMarketCapabilityReviewUrl = (marketId: string,
+    capability: MarketLegalCapabilityName,) => {
+
+
+
+
+  return `/api/admin/compliance/markets/${marketId}/capabilities/${capability}/review-request`
+}
+
+/**
+ * @summary Request an independent counsel review. Does not enable the capability.
+ */
+export const requestAdminMarketCapabilityReview = async (marketId: string,
+    capability: MarketLegalCapabilityName,
+    emptyInput?: EmptyInput, options?: Parameters<typeof customFetch>[1]): Promise<MarketLegalCapabilityState> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<MarketLegalCapabilityState>(getRequestAdminMarketCapabilityReviewUrl(marketId,capability),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(emptyInput)
+  }
+);}
+
+
+
+
+
+export const getRequestAdminMarketCapabilityReviewMutationKey = () => ['requestAdminMarketCapabilityReview'] as const;
+
+export const getRequestAdminMarketCapabilityReviewMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestAdminMarketCapabilityReview>>, TError,RequestAdminMarketCapabilityReviewMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof requestAdminMarketCapabilityReview>>, TError,RequestAdminMarketCapabilityReviewMutationVariables, TContext> => {
+
+const mutationKey = getRequestAdminMarketCapabilityReviewMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof requestAdminMarketCapabilityReview>>, RequestAdminMarketCapabilityReviewMutationVariables> = (props) => {
+          const {marketId,capability,data} = props ?? {};
+
+          return  requestAdminMarketCapabilityReview(marketId,capability,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RequestAdminMarketCapabilityReviewMutationResult = NonNullable<Awaited<ReturnType<typeof requestAdminMarketCapabilityReview>>>
+    export type RequestAdminMarketCapabilityReviewMutationBody = BodyType<EmptyInput> | undefined
+    export type RequestAdminMarketCapabilityReviewMutationError = ErrorType<void>
+    export type RequestAdminMarketCapabilityReviewMutationVariables = {marketId: string;capability: MarketLegalCapabilityName;data?: BodyType<EmptyInput>}
+
+    /**
+ * @summary Request an independent counsel review. Does not enable the capability.
+ */
+export const useRequestAdminMarketCapabilityReview = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestAdminMarketCapabilityReview>>, TError,RequestAdminMarketCapabilityReviewMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof requestAdminMarketCapabilityReview>>,
+        TError,
+        RequestAdminMarketCapabilityReviewMutationVariables,
+        TContext
+      > => {
+      return useMutation(getRequestAdminMarketCapabilityReviewMutationOptions(options), queryClient);
+    }
+
+export const getRecordAdminMarketCapabilityCounselReviewUrl = (marketId: string,
+    capability: MarketLegalCapabilityName,) => {
+
+
+
+
+  return `/api/admin/compliance/markets/${marketId}/capabilities/${capability}/counsel-review`
+}
+
+/**
+ * @summary Record a designated counsel review. This does not activate the capability.
+ */
+export const recordAdminMarketCapabilityCounselReview = async (marketId: string,
+    capability: MarketLegalCapabilityName,
+    marketCapabilityCounselReviewInput: MarketCapabilityCounselReviewInput, options?: Parameters<typeof customFetch>[1]): Promise<MarketLegalCapabilityState> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<MarketLegalCapabilityState>(getRecordAdminMarketCapabilityCounselReviewUrl(marketId,capability),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(marketCapabilityCounselReviewInput)
+  }
+);}
+
+
+
+
+
+export const getRecordAdminMarketCapabilityCounselReviewMutationKey = () => ['recordAdminMarketCapabilityCounselReview'] as const;
+
+export const getRecordAdminMarketCapabilityCounselReviewMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof recordAdminMarketCapabilityCounselReview>>, TError,RecordAdminMarketCapabilityCounselReviewMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof recordAdminMarketCapabilityCounselReview>>, TError,RecordAdminMarketCapabilityCounselReviewMutationVariables, TContext> => {
+
+const mutationKey = getRecordAdminMarketCapabilityCounselReviewMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof recordAdminMarketCapabilityCounselReview>>, RecordAdminMarketCapabilityCounselReviewMutationVariables> = (props) => {
+          const {marketId,capability,data} = props ?? {};
+
+          return  recordAdminMarketCapabilityCounselReview(marketId,capability,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RecordAdminMarketCapabilityCounselReviewMutationResult = NonNullable<Awaited<ReturnType<typeof recordAdminMarketCapabilityCounselReview>>>
+    export type RecordAdminMarketCapabilityCounselReviewMutationBody = BodyType<MarketCapabilityCounselReviewInput>
+    export type RecordAdminMarketCapabilityCounselReviewMutationError = ErrorType<void>
+    export type RecordAdminMarketCapabilityCounselReviewMutationVariables = {marketId: string;capability: MarketLegalCapabilityName;data: BodyType<MarketCapabilityCounselReviewInput>}
+
+    /**
+ * @summary Record a designated counsel review. This does not activate the capability.
+ */
+export const useRecordAdminMarketCapabilityCounselReview = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof recordAdminMarketCapabilityCounselReview>>, TError,RecordAdminMarketCapabilityCounselReviewMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof recordAdminMarketCapabilityCounselReview>>,
+        TError,
+        RecordAdminMarketCapabilityCounselReviewMutationVariables,
+        TContext
+      > => {
+      return useMutation(getRecordAdminMarketCapabilityCounselReviewMutationOptions(options), queryClient);
+    }
+
+export const getEnableAdminMarketCapabilityUrl = (marketId: string,
+    capability: MarketLegalCapabilityName,) => {
+
+
+
+
+  return `/api/admin/compliance/markets/${marketId}/capabilities/${capability}/enable`
+}
+
+/**
+ * @summary Enable a capability after separate counsel review and owner approval.
+ */
+export const enableAdminMarketCapability = async (marketId: string,
+    capability: MarketLegalCapabilityName,
+    marketCapabilityOwnerApprovalInput: MarketCapabilityOwnerApprovalInput, options?: Parameters<typeof customFetch>[1]): Promise<MarketLegalCapabilityState> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<MarketLegalCapabilityState>(getEnableAdminMarketCapabilityUrl(marketId,capability),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(marketCapabilityOwnerApprovalInput)
+  }
+);}
+
+
+
+
+
+export const getEnableAdminMarketCapabilityMutationKey = () => ['enableAdminMarketCapability'] as const;
+
+export const getEnableAdminMarketCapabilityMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof enableAdminMarketCapability>>, TError,EnableAdminMarketCapabilityMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof enableAdminMarketCapability>>, TError,EnableAdminMarketCapabilityMutationVariables, TContext> => {
+
+const mutationKey = getEnableAdminMarketCapabilityMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof enableAdminMarketCapability>>, EnableAdminMarketCapabilityMutationVariables> = (props) => {
+          const {marketId,capability,data} = props ?? {};
+
+          return  enableAdminMarketCapability(marketId,capability,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type EnableAdminMarketCapabilityMutationResult = NonNullable<Awaited<ReturnType<typeof enableAdminMarketCapability>>>
+    export type EnableAdminMarketCapabilityMutationBody = BodyType<MarketCapabilityOwnerApprovalInput>
+    export type EnableAdminMarketCapabilityMutationError = ErrorType<void>
+    export type EnableAdminMarketCapabilityMutationVariables = {marketId: string;capability: MarketLegalCapabilityName;data: BodyType<MarketCapabilityOwnerApprovalInput>}
+
+    /**
+ * @summary Enable a capability after separate counsel review and owner approval.
+ */
+export const useEnableAdminMarketCapability = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof enableAdminMarketCapability>>, TError,EnableAdminMarketCapabilityMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof enableAdminMarketCapability>>,
+        TError,
+        EnableAdminMarketCapabilityMutationVariables,
+        TContext
+      > => {
+      return useMutation(getEnableAdminMarketCapabilityMutationOptions(options), queryClient);
+    }
+
+export const getDisableAdminMarketCapabilityUrl = (marketId: string,
+    capability: MarketLegalCapabilityName,) => {
+
+
+
+
+  return `/api/admin/compliance/markets/${marketId}/capabilities/${capability}/disable`
+}
+
+/**
+ * @summary Disable a market capability immediately.
+ */
+export const disableAdminMarketCapability = async (marketId: string,
+    capability: MarketLegalCapabilityName,
+    emptyInput?: EmptyInput, options?: Parameters<typeof customFetch>[1]): Promise<MarketLegalCapabilityState> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<MarketLegalCapabilityState>(getDisableAdminMarketCapabilityUrl(marketId,capability),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(emptyInput)
+  }
+);}
+
+
+
+
+
+export const getDisableAdminMarketCapabilityMutationKey = () => ['disableAdminMarketCapability'] as const;
+
+export const getDisableAdminMarketCapabilityMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof disableAdminMarketCapability>>, TError,DisableAdminMarketCapabilityMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof disableAdminMarketCapability>>, TError,DisableAdminMarketCapabilityMutationVariables, TContext> => {
+
+const mutationKey = getDisableAdminMarketCapabilityMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof disableAdminMarketCapability>>, DisableAdminMarketCapabilityMutationVariables> = (props) => {
+          const {marketId,capability,data} = props ?? {};
+
+          return  disableAdminMarketCapability(marketId,capability,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DisableAdminMarketCapabilityMutationResult = NonNullable<Awaited<ReturnType<typeof disableAdminMarketCapability>>>
+    export type DisableAdminMarketCapabilityMutationBody = BodyType<EmptyInput> | undefined
+    export type DisableAdminMarketCapabilityMutationError = ErrorType<void>
+    export type DisableAdminMarketCapabilityMutationVariables = {marketId: string;capability: MarketLegalCapabilityName;data?: BodyType<EmptyInput>}
+
+    /**
+ * @summary Disable a market capability immediately.
+ */
+export const useDisableAdminMarketCapability = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof disableAdminMarketCapability>>, TError,DisableAdminMarketCapabilityMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof disableAdminMarketCapability>>,
+        TError,
+        DisableAdminMarketCapabilityMutationVariables,
+        TContext
+      > => {
+      return useMutation(getDisableAdminMarketCapabilityMutationOptions(options), queryClient);
+    }
+
+export const getListAdminCountryLegalReadinessUrl = () => {
+
+
+
+
+  return `/api/admin/compliance/country-readiness`
+}
+
+/**
+ * @summary List the Jordan, Kuwait, and Saudi legal intake packages. Access: ADMIN.
+ */
+export const listAdminCountryLegalReadiness = async ( options?: Parameters<typeof customFetch>[1]): Promise<CountryLegalReadinessSummary[]> => {
+
+  return customFetch<CountryLegalReadinessSummary[]>(getListAdminCountryLegalReadinessUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListAdminCountryLegalReadinessQueryKey = () => {
+    return [
+    `/api/admin/compliance/country-readiness`
+    ] as const;
+    }
+
+
+export const getListAdminCountryLegalReadinessQueryOptions = <TData = Awaited<ReturnType<typeof listAdminCountryLegalReadiness>>, TError = ErrorType<void>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAdminCountryLegalReadiness>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListAdminCountryLegalReadinessQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listAdminCountryLegalReadiness>>> = ({ signal }) => listAdminCountryLegalReadiness({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listAdminCountryLegalReadiness>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListAdminCountryLegalReadinessQueryResult = NonNullable<Awaited<ReturnType<typeof listAdminCountryLegalReadiness>>>
+export type ListAdminCountryLegalReadinessQueryError = ErrorType<void>
+
+
+export function useListAdminCountryLegalReadiness<TData = Awaited<ReturnType<typeof listAdminCountryLegalReadiness>>, TError = ErrorType<void>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAdminCountryLegalReadiness>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listAdminCountryLegalReadiness>>,
+          TError,
+          Awaited<ReturnType<typeof listAdminCountryLegalReadiness>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListAdminCountryLegalReadiness<TData = Awaited<ReturnType<typeof listAdminCountryLegalReadiness>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAdminCountryLegalReadiness>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listAdminCountryLegalReadiness>>,
+          TError,
+          Awaited<ReturnType<typeof listAdminCountryLegalReadiness>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListAdminCountryLegalReadiness<TData = Awaited<ReturnType<typeof listAdminCountryLegalReadiness>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAdminCountryLegalReadiness>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List the Jordan, Kuwait, and Saudi legal intake packages. Access: ADMIN.
+ */
+
+export function useListAdminCountryLegalReadiness<TData = Awaited<ReturnType<typeof listAdminCountryLegalReadiness>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAdminCountryLegalReadiness>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListAdminCountryLegalReadinessQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetAdminCountryLegalReadinessUrl = (marketId: string,) => {
+
+
+
+
+  return `/api/admin/compliance/country-readiness/${marketId}`
+}
+
+/**
+ * @summary Read a private country intake, evidence register, policy versions, and audit trail. Access: ADMIN.
+ */
+export const getAdminCountryLegalReadiness = async (marketId: string, options?: Parameters<typeof customFetch>[1]): Promise<CountryLegalReadinessDetail> => {
+
+  return customFetch<CountryLegalReadinessDetail>(getGetAdminCountryLegalReadinessUrl(marketId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAdminCountryLegalReadinessQueryKey = (marketId: string,) => {
+    return [
+    `/api/admin/compliance/country-readiness/${marketId}`
+    ] as const;
+    }
+
+
+export const getGetAdminCountryLegalReadinessQueryOptions = <TData = Awaited<ReturnType<typeof getAdminCountryLegalReadiness>>, TError = ErrorType<void>>(marketId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminCountryLegalReadiness>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAdminCountryLegalReadinessQueryKey(marketId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminCountryLegalReadiness>>> = ({ signal }) => getAdminCountryLegalReadiness(marketId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: marketId !== null && marketId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdminCountryLegalReadiness>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetAdminCountryLegalReadinessQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminCountryLegalReadiness>>>
+export type GetAdminCountryLegalReadinessQueryError = ErrorType<void>
+
+
+export function useGetAdminCountryLegalReadiness<TData = Awaited<ReturnType<typeof getAdminCountryLegalReadiness>>, TError = ErrorType<void>>(
+ marketId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminCountryLegalReadiness>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAdminCountryLegalReadiness>>,
+          TError,
+          Awaited<ReturnType<typeof getAdminCountryLegalReadiness>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAdminCountryLegalReadiness<TData = Awaited<ReturnType<typeof getAdminCountryLegalReadiness>>, TError = ErrorType<void>>(
+ marketId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminCountryLegalReadiness>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAdminCountryLegalReadiness>>,
+          TError,
+          Awaited<ReturnType<typeof getAdminCountryLegalReadiness>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAdminCountryLegalReadiness<TData = Awaited<ReturnType<typeof getAdminCountryLegalReadiness>>, TError = ErrorType<void>>(
+ marketId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminCountryLegalReadiness>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Read a private country intake, evidence register, policy versions, and audit trail. Access: ADMIN.
+ */
+
+export function useGetAdminCountryLegalReadiness<TData = Awaited<ReturnType<typeof getAdminCountryLegalReadiness>>, TError = ErrorType<void>>(
+ marketId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminCountryLegalReadiness>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetAdminCountryLegalReadinessQueryOptions(marketId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getSubmitAdminCountryLegalEvidenceUrl = (marketId: string,) => {
+
+
+
+
+  return `/api/admin/compliance/country-readiness/${marketId}/evidence`
+}
+
+/**
+ * @summary Register a private-vault evidence reference; document bytes are not accepted.
+ */
+export const submitAdminCountryLegalEvidence = async (marketId: string,
+    countryLegalEvidenceInput: CountryLegalEvidenceInput, options?: Parameters<typeof customFetch>[1]): Promise<CountryLegalEvidence> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<CountryLegalEvidence>(getSubmitAdminCountryLegalEvidenceUrl(marketId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(countryLegalEvidenceInput)
+  }
+);}
+
+
+
+
+
+export const getSubmitAdminCountryLegalEvidenceMutationKey = () => ['submitAdminCountryLegalEvidence'] as const;
+
+export const getSubmitAdminCountryLegalEvidenceMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitAdminCountryLegalEvidence>>, TError,SubmitAdminCountryLegalEvidenceMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof submitAdminCountryLegalEvidence>>, TError,SubmitAdminCountryLegalEvidenceMutationVariables, TContext> => {
+
+const mutationKey = getSubmitAdminCountryLegalEvidenceMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof submitAdminCountryLegalEvidence>>, SubmitAdminCountryLegalEvidenceMutationVariables> = (props) => {
+          const {marketId,data} = props ?? {};
+
+          return  submitAdminCountryLegalEvidence(marketId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SubmitAdminCountryLegalEvidenceMutationResult = NonNullable<Awaited<ReturnType<typeof submitAdminCountryLegalEvidence>>>
+    export type SubmitAdminCountryLegalEvidenceMutationBody = BodyType<CountryLegalEvidenceInput>
+    export type SubmitAdminCountryLegalEvidenceMutationError = ErrorType<void>
+    export type SubmitAdminCountryLegalEvidenceMutationVariables = {marketId: string;data: BodyType<CountryLegalEvidenceInput>}
+
+    /**
+ * @summary Register a private-vault evidence reference; document bytes are not accepted.
+ */
+export const useSubmitAdminCountryLegalEvidence = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitAdminCountryLegalEvidence>>, TError,SubmitAdminCountryLegalEvidenceMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof submitAdminCountryLegalEvidence>>,
+        TError,
+        SubmitAdminCountryLegalEvidenceMutationVariables,
+        TContext
+      > => {
+      return useMutation(getSubmitAdminCountryLegalEvidenceMutationOptions(options), queryClient);
+    }
+
+export const getReviewAdminCountryLegalEvidenceUrl = (evidenceId: string,) => {
+
+
+
+
+  return `/api/admin/compliance/country-readiness/evidence/${evidenceId}/review`
+}
+
+/**
+ * @summary Record a designated counsel review of an evidence pointer, not a signature.
+ */
+export const reviewAdminCountryLegalEvidence = async (evidenceId: string,
+    countryLegalEvidenceReviewInput: CountryLegalEvidenceReviewInput, options?: Parameters<typeof customFetch>[1]): Promise<CountryLegalEvidence> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<CountryLegalEvidence>(getReviewAdminCountryLegalEvidenceUrl(evidenceId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(countryLegalEvidenceReviewInput)
+  }
+);}
+
+
+
+
+
+export const getReviewAdminCountryLegalEvidenceMutationKey = () => ['reviewAdminCountryLegalEvidence'] as const;
+
+export const getReviewAdminCountryLegalEvidenceMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reviewAdminCountryLegalEvidence>>, TError,ReviewAdminCountryLegalEvidenceMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof reviewAdminCountryLegalEvidence>>, TError,ReviewAdminCountryLegalEvidenceMutationVariables, TContext> => {
+
+const mutationKey = getReviewAdminCountryLegalEvidenceMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof reviewAdminCountryLegalEvidence>>, ReviewAdminCountryLegalEvidenceMutationVariables> = (props) => {
+          const {evidenceId,data} = props ?? {};
+
+          return  reviewAdminCountryLegalEvidence(evidenceId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ReviewAdminCountryLegalEvidenceMutationResult = NonNullable<Awaited<ReturnType<typeof reviewAdminCountryLegalEvidence>>>
+    export type ReviewAdminCountryLegalEvidenceMutationBody = BodyType<CountryLegalEvidenceReviewInput>
+    export type ReviewAdminCountryLegalEvidenceMutationError = ErrorType<void>
+    export type ReviewAdminCountryLegalEvidenceMutationVariables = {evidenceId: string;data: BodyType<CountryLegalEvidenceReviewInput>}
+
+    /**
+ * @summary Record a designated counsel review of an evidence pointer, not a signature.
+ */
+export const useReviewAdminCountryLegalEvidence = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reviewAdminCountryLegalEvidence>>, TError,ReviewAdminCountryLegalEvidenceMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof reviewAdminCountryLegalEvidence>>,
+        TError,
+        ReviewAdminCountryLegalEvidenceMutationVariables,
+        TContext
+      > => {
+      return useMutation(getReviewAdminCountryLegalEvidenceMutationOptions(options), queryClient);
+    }
+
+export const getRequestAdminCountryCounselReviewUrl = (marketId: string,) => {
+
+
+
+
+  return `/api/admin/compliance/country-readiness/${marketId}/review-request`
+}
+
+/**
+ * @summary Open a country-level counsel review request.
+ */
+export const requestAdminCountryCounselReview = async (marketId: string,
+    emptyInput?: EmptyInput, options?: Parameters<typeof customFetch>[1]): Promise<CountryLegalIntake> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<CountryLegalIntake>(getRequestAdminCountryCounselReviewUrl(marketId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(emptyInput)
+  }
+);}
+
+
+
+
+
+export const getRequestAdminCountryCounselReviewMutationKey = () => ['requestAdminCountryCounselReview'] as const;
+
+export const getRequestAdminCountryCounselReviewMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestAdminCountryCounselReview>>, TError,RequestAdminCountryCounselReviewMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof requestAdminCountryCounselReview>>, TError,RequestAdminCountryCounselReviewMutationVariables, TContext> => {
+
+const mutationKey = getRequestAdminCountryCounselReviewMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof requestAdminCountryCounselReview>>, RequestAdminCountryCounselReviewMutationVariables> = (props) => {
+          const {marketId,data} = props ?? {};
+
+          return  requestAdminCountryCounselReview(marketId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RequestAdminCountryCounselReviewMutationResult = NonNullable<Awaited<ReturnType<typeof requestAdminCountryCounselReview>>>
+    export type RequestAdminCountryCounselReviewMutationBody = BodyType<EmptyInput> | undefined
+    export type RequestAdminCountryCounselReviewMutationError = ErrorType<void>
+    export type RequestAdminCountryCounselReviewMutationVariables = {marketId: string;data?: BodyType<EmptyInput>}
+
+    /**
+ * @summary Open a country-level counsel review request.
+ */
+export const useRequestAdminCountryCounselReview = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestAdminCountryCounselReview>>, TError,RequestAdminCountryCounselReviewMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof requestAdminCountryCounselReview>>,
+        TError,
+        RequestAdminCountryCounselReviewMutationVariables,
+        TContext
+      > => {
+      return useMutation(getRequestAdminCountryCounselReviewMutationOptions(options), queryClient);
+    }
+
+export const getReviewAdminCountryLegalTopicUrl = (marketId: string,
+    topicKey: CountryLegalTopicKey,) => {
+
+
+
+
+  return `/api/admin/compliance/country-readiness/${marketId}/topics/${topicKey}/review`
+}
+
+/**
+ * @summary Record a counsel finding and explicit evidence and policy requirements for one topic.
+ */
+export const reviewAdminCountryLegalTopic = async (marketId: string,
+    topicKey: CountryLegalTopicKey,
+    countryLegalTopicReviewInput: CountryLegalTopicReviewInput, options?: Parameters<typeof customFetch>[1]): Promise<CountryLegalTopic> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<CountryLegalTopic>(getReviewAdminCountryLegalTopicUrl(marketId,topicKey),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(countryLegalTopicReviewInput)
+  }
+);}
+
+
+
+
+
+export const getReviewAdminCountryLegalTopicMutationKey = () => ['reviewAdminCountryLegalTopic'] as const;
+
+export const getReviewAdminCountryLegalTopicMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reviewAdminCountryLegalTopic>>, TError,ReviewAdminCountryLegalTopicMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof reviewAdminCountryLegalTopic>>, TError,ReviewAdminCountryLegalTopicMutationVariables, TContext> => {
+
+const mutationKey = getReviewAdminCountryLegalTopicMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof reviewAdminCountryLegalTopic>>, ReviewAdminCountryLegalTopicMutationVariables> = (props) => {
+          const {marketId,topicKey,data} = props ?? {};
+
+          return  reviewAdminCountryLegalTopic(marketId,topicKey,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ReviewAdminCountryLegalTopicMutationResult = NonNullable<Awaited<ReturnType<typeof reviewAdminCountryLegalTopic>>>
+    export type ReviewAdminCountryLegalTopicMutationBody = BodyType<CountryLegalTopicReviewInput>
+    export type ReviewAdminCountryLegalTopicMutationError = ErrorType<void>
+    export type ReviewAdminCountryLegalTopicMutationVariables = {marketId: string;topicKey: CountryLegalTopicKey;data: BodyType<CountryLegalTopicReviewInput>}
+
+    /**
+ * @summary Record a counsel finding and explicit evidence and policy requirements for one topic.
+ */
+export const useReviewAdminCountryLegalTopic = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reviewAdminCountryLegalTopic>>, TError,ReviewAdminCountryLegalTopicMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof reviewAdminCountryLegalTopic>>,
+        TError,
+        ReviewAdminCountryLegalTopicMutationVariables,
+        TContext
+      > => {
+      return useMutation(getReviewAdminCountryLegalTopicMutationOptions(options), queryClient);
+    }
+
+export const getRecordAdminCountryCounselReviewUrl = (marketId: string,) => {
+
+
+
+
+  return `/api/admin/compliance/country-readiness/${marketId}/counsel-review`
+}
+
+/**
+ * @summary Record completion of the topic review, without approving or activating the country.
+ */
+export const recordAdminCountryCounselReview = async (marketId: string,
+    countryLegalReferenceInput: CountryLegalReferenceInput, options?: Parameters<typeof customFetch>[1]): Promise<CountryLegalIntake> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<CountryLegalIntake>(getRecordAdminCountryCounselReviewUrl(marketId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(countryLegalReferenceInput)
+  }
+);}
+
+
+
+
+
+export const getRecordAdminCountryCounselReviewMutationKey = () => ['recordAdminCountryCounselReview'] as const;
+
+export const getRecordAdminCountryCounselReviewMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof recordAdminCountryCounselReview>>, TError,RecordAdminCountryCounselReviewMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof recordAdminCountryCounselReview>>, TError,RecordAdminCountryCounselReviewMutationVariables, TContext> => {
+
+const mutationKey = getRecordAdminCountryCounselReviewMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof recordAdminCountryCounselReview>>, RecordAdminCountryCounselReviewMutationVariables> = (props) => {
+          const {marketId,data} = props ?? {};
+
+          return  recordAdminCountryCounselReview(marketId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RecordAdminCountryCounselReviewMutationResult = NonNullable<Awaited<ReturnType<typeof recordAdminCountryCounselReview>>>
+    export type RecordAdminCountryCounselReviewMutationBody = BodyType<CountryLegalReferenceInput>
+    export type RecordAdminCountryCounselReviewMutationError = ErrorType<void>
+    export type RecordAdminCountryCounselReviewMutationVariables = {marketId: string;data: BodyType<CountryLegalReferenceInput>}
+
+    /**
+ * @summary Record completion of the topic review, without approving or activating the country.
+ */
+export const useRecordAdminCountryCounselReview = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof recordAdminCountryCounselReview>>, TError,RecordAdminCountryCounselReviewMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof recordAdminCountryCounselReview>>,
+        TError,
+        RecordAdminCountryCounselReviewMutationVariables,
+        TContext
+      > => {
+      return useMutation(getRecordAdminCountryCounselReviewMutationOptions(options), queryClient);
+    }
+
+export const getAttemptAdminCountryCounselApprovalUrl = (marketId: string,) => {
+
+
+
+
+  return `/api/admin/compliance/country-readiness/${marketId}/counsel-approval`
+}
+
+/**
+ * @summary Keep approval blocked unless independently verified counsel identity and signature are available.
+ */
+export const attemptAdminCountryCounselApproval = async (marketId: string,
+    countryLegalReferenceInput: CountryLegalReferenceInput, options?: Parameters<typeof customFetch>[1]): Promise<unknown> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<unknown>(getAttemptAdminCountryCounselApprovalUrl(marketId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(countryLegalReferenceInput)
+  }
+);}
+
+
+
+
+
+export const getAttemptAdminCountryCounselApprovalMutationKey = () => ['attemptAdminCountryCounselApproval'] as const;
+
+export const getAttemptAdminCountryCounselApprovalMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof attemptAdminCountryCounselApproval>>, TError,AttemptAdminCountryCounselApprovalMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof attemptAdminCountryCounselApproval>>, TError,AttemptAdminCountryCounselApprovalMutationVariables, TContext> => {
+
+const mutationKey = getAttemptAdminCountryCounselApprovalMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof attemptAdminCountryCounselApproval>>, AttemptAdminCountryCounselApprovalMutationVariables> = (props) => {
+          const {marketId,data} = props ?? {};
+
+          return  attemptAdminCountryCounselApproval(marketId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AttemptAdminCountryCounselApprovalMutationResult = NonNullable<Awaited<ReturnType<typeof attemptAdminCountryCounselApproval>>>
+    export type AttemptAdminCountryCounselApprovalMutationBody = BodyType<CountryLegalReferenceInput>
+    export type AttemptAdminCountryCounselApprovalMutationError = ErrorType<void>
+    export type AttemptAdminCountryCounselApprovalMutationVariables = {marketId: string;data: BodyType<CountryLegalReferenceInput>}
+
+    /**
+ * @summary Keep approval blocked unless independently verified counsel identity and signature are available.
+ */
+export const useAttemptAdminCountryCounselApproval = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof attemptAdminCountryCounselApproval>>, TError,AttemptAdminCountryCounselApprovalMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof attemptAdminCountryCounselApproval>>,
+        TError,
+        AttemptAdminCountryCounselApprovalMutationVariables,
+        TContext
+      > => {
+      return useMutation(getAttemptAdminCountryCounselApprovalMutationOptions(options), queryClient);
+    }
+
+export const getAttemptAdminCountryOwnerApprovalUrl = (marketId: string,) => {
+
+
+
+
+  return `/api/admin/compliance/country-readiness/${marketId}/owner-approval`
+}
+
+/**
+ * @summary Require completed legal and technical prerequisites before owner approval.
+ */
+export const attemptAdminCountryOwnerApproval = async (marketId: string,
+    countryLegalReferenceInput: CountryLegalReferenceInput, options?: Parameters<typeof customFetch>[1]): Promise<unknown> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<unknown>(getAttemptAdminCountryOwnerApprovalUrl(marketId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(countryLegalReferenceInput)
+  }
+);}
+
+
+
+
+
+export const getAttemptAdminCountryOwnerApprovalMutationKey = () => ['attemptAdminCountryOwnerApproval'] as const;
+
+export const getAttemptAdminCountryOwnerApprovalMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof attemptAdminCountryOwnerApproval>>, TError,AttemptAdminCountryOwnerApprovalMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof attemptAdminCountryOwnerApproval>>, TError,AttemptAdminCountryOwnerApprovalMutationVariables, TContext> => {
+
+const mutationKey = getAttemptAdminCountryOwnerApprovalMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof attemptAdminCountryOwnerApproval>>, AttemptAdminCountryOwnerApprovalMutationVariables> = (props) => {
+          const {marketId,data} = props ?? {};
+
+          return  attemptAdminCountryOwnerApproval(marketId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AttemptAdminCountryOwnerApprovalMutationResult = NonNullable<Awaited<ReturnType<typeof attemptAdminCountryOwnerApproval>>>
+    export type AttemptAdminCountryOwnerApprovalMutationBody = BodyType<CountryLegalReferenceInput>
+    export type AttemptAdminCountryOwnerApprovalMutationError = ErrorType<void>
+    export type AttemptAdminCountryOwnerApprovalMutationVariables = {marketId: string;data: BodyType<CountryLegalReferenceInput>}
+
+    /**
+ * @summary Require completed legal and technical prerequisites before owner approval.
+ */
+export const useAttemptAdminCountryOwnerApproval = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof attemptAdminCountryOwnerApproval>>, TError,AttemptAdminCountryOwnerApprovalMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof attemptAdminCountryOwnerApproval>>,
+        TError,
+        AttemptAdminCountryOwnerApprovalMutationVariables,
+        TContext
+      > => {
+      return useMutation(getAttemptAdminCountryOwnerApprovalMutationOptions(options), queryClient);
+    }
+
+export const getRecordAdminCountryTechnicalVerificationUrl = (marketId: string,) => {
+
+
+
+
+  return `/api/admin/compliance/country-readiness/${marketId}/technical-verification`
+}
+
+/**
+ * @summary Require a machine-verifiable test attestation before technical readiness can pass.
+ */
+export const recordAdminCountryTechnicalVerification = async (marketId: string,
+    countryLegalReferenceInput: CountryLegalReferenceInput, options?: Parameters<typeof customFetch>[1]): Promise<unknown> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<unknown>(getRecordAdminCountryTechnicalVerificationUrl(marketId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(countryLegalReferenceInput)
+  }
+);}
+
+
+
+
+
+export const getRecordAdminCountryTechnicalVerificationMutationKey = () => ['recordAdminCountryTechnicalVerification'] as const;
+
+export const getRecordAdminCountryTechnicalVerificationMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof recordAdminCountryTechnicalVerification>>, TError,RecordAdminCountryTechnicalVerificationMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof recordAdminCountryTechnicalVerification>>, TError,RecordAdminCountryTechnicalVerificationMutationVariables, TContext> => {
+
+const mutationKey = getRecordAdminCountryTechnicalVerificationMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof recordAdminCountryTechnicalVerification>>, RecordAdminCountryTechnicalVerificationMutationVariables> = (props) => {
+          const {marketId,data} = props ?? {};
+
+          return  recordAdminCountryTechnicalVerification(marketId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RecordAdminCountryTechnicalVerificationMutationResult = NonNullable<Awaited<ReturnType<typeof recordAdminCountryTechnicalVerification>>>
+    export type RecordAdminCountryTechnicalVerificationMutationBody = BodyType<CountryLegalReferenceInput>
+    export type RecordAdminCountryTechnicalVerificationMutationError = ErrorType<void>
+    export type RecordAdminCountryTechnicalVerificationMutationVariables = {marketId: string;data: BodyType<CountryLegalReferenceInput>}
+
+    /**
+ * @summary Require a machine-verifiable test attestation before technical readiness can pass.
+ */
+export const useRecordAdminCountryTechnicalVerification = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof recordAdminCountryTechnicalVerification>>, TError,RecordAdminCountryTechnicalVerificationMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof recordAdminCountryTechnicalVerification>>,
+        TError,
+        RecordAdminCountryTechnicalVerificationMutationVariables,
+        TContext
+      > => {
+      return useMutation(getRecordAdminCountryTechnicalVerificationMutationOptions(options), queryClient);
+    }
+
+export const getActivateAdminCountryReadinessUrl = (marketId: string,) => {
+
+
+
+
+  return `/api/admin/compliance/country-readiness/${marketId}/activate`
+}
+
+/**
+ * @summary Activate a country package only after counsel, owner, and technical gates pass.
+ */
+export const activateAdminCountryReadiness = async (marketId: string,
+    countryLegalReferenceInput: CountryLegalReferenceInput, options?: Parameters<typeof customFetch>[1]): Promise<unknown> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<unknown>(getActivateAdminCountryReadinessUrl(marketId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(countryLegalReferenceInput)
+  }
+);}
+
+
+
+
+
+export const getActivateAdminCountryReadinessMutationKey = () => ['activateAdminCountryReadiness'] as const;
+
+export const getActivateAdminCountryReadinessMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof activateAdminCountryReadiness>>, TError,ActivateAdminCountryReadinessMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof activateAdminCountryReadiness>>, TError,ActivateAdminCountryReadinessMutationVariables, TContext> => {
+
+const mutationKey = getActivateAdminCountryReadinessMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof activateAdminCountryReadiness>>, ActivateAdminCountryReadinessMutationVariables> = (props) => {
+          const {marketId,data} = props ?? {};
+
+          return  activateAdminCountryReadiness(marketId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ActivateAdminCountryReadinessMutationResult = NonNullable<Awaited<ReturnType<typeof activateAdminCountryReadiness>>>
+    export type ActivateAdminCountryReadinessMutationBody = BodyType<CountryLegalReferenceInput>
+    export type ActivateAdminCountryReadinessMutationError = ErrorType<void>
+    export type ActivateAdminCountryReadinessMutationVariables = {marketId: string;data: BodyType<CountryLegalReferenceInput>}
+
+    /**
+ * @summary Activate a country package only after counsel, owner, and technical gates pass.
+ */
+export const useActivateAdminCountryReadiness = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof activateAdminCountryReadiness>>, TError,ActivateAdminCountryReadinessMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof activateAdminCountryReadiness>>,
+        TError,
+        ActivateAdminCountryReadinessMutationVariables,
+        TContext
+      > => {
+      return useMutation(getActivateAdminCountryReadinessMutationOptions(options), queryClient);
+    }
+
+export const getSuspendAdminCountryReadinessUrl = (marketId: string,) => {
+
+
+
+
+  return `/api/admin/compliance/country-readiness/${marketId}/suspend`
+}
+
+/**
+ * @summary Suspend new market capabilities without removing access to existing orders.
+ */
+export const suspendAdminCountryReadiness = async (marketId: string,
+    countryLegalReferenceInput: CountryLegalReferenceInput, options?: Parameters<typeof customFetch>[1]): Promise<CountryLegalIntake> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<CountryLegalIntake>(getSuspendAdminCountryReadinessUrl(marketId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(countryLegalReferenceInput)
+  }
+);}
+
+
+
+
+
+export const getSuspendAdminCountryReadinessMutationKey = () => ['suspendAdminCountryReadiness'] as const;
+
+export const getSuspendAdminCountryReadinessMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof suspendAdminCountryReadiness>>, TError,SuspendAdminCountryReadinessMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof suspendAdminCountryReadiness>>, TError,SuspendAdminCountryReadinessMutationVariables, TContext> => {
+
+const mutationKey = getSuspendAdminCountryReadinessMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof suspendAdminCountryReadiness>>, SuspendAdminCountryReadinessMutationVariables> = (props) => {
+          const {marketId,data} = props ?? {};
+
+          return  suspendAdminCountryReadiness(marketId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SuspendAdminCountryReadinessMutationResult = NonNullable<Awaited<ReturnType<typeof suspendAdminCountryReadiness>>>
+    export type SuspendAdminCountryReadinessMutationBody = BodyType<CountryLegalReferenceInput>
+    export type SuspendAdminCountryReadinessMutationError = ErrorType<void>
+    export type SuspendAdminCountryReadinessMutationVariables = {marketId: string;data: BodyType<CountryLegalReferenceInput>}
+
+    /**
+ * @summary Suspend new market capabilities without removing access to existing orders.
+ */
+export const useSuspendAdminCountryReadiness = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof suspendAdminCountryReadiness>>, TError,SuspendAdminCountryReadinessMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof suspendAdminCountryReadiness>>,
+        TError,
+        SuspendAdminCountryReadinessMutationVariables,
+        TContext
+      > => {
+      return useMutation(getSuspendAdminCountryReadinessMutationOptions(options), queryClient);
+    }
+
+export const getListAdminSecurityIncidentsUrl = (params?: ListAdminSecurityIncidentsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/admin/security/incidents?${stringifiedParams}` : `/api/admin/security/incidents`
+}
+
+/**
+ * @summary List internal security and privacy incident records. Access: ADMIN.
+ */
+export const listAdminSecurityIncidents = async (params?: ListAdminSecurityIncidentsParams, options?: Parameters<typeof customFetch>[1]): Promise<SecurityIncident[]> => {
+
+  return customFetch<SecurityIncident[]>(getListAdminSecurityIncidentsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListAdminSecurityIncidentsQueryKey = (params?: ListAdminSecurityIncidentsParams,) => {
+    return [
+    `/api/admin/security/incidents`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListAdminSecurityIncidentsQueryOptions = <TData = Awaited<ReturnType<typeof listAdminSecurityIncidents>>, TError = ErrorType<void>>(params?: ListAdminSecurityIncidentsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAdminSecurityIncidents>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListAdminSecurityIncidentsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listAdminSecurityIncidents>>> = ({ signal }) => listAdminSecurityIncidents(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listAdminSecurityIncidents>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListAdminSecurityIncidentsQueryResult = NonNullable<Awaited<ReturnType<typeof listAdminSecurityIncidents>>>
+export type ListAdminSecurityIncidentsQueryError = ErrorType<void>
+
+
+export function useListAdminSecurityIncidents<TData = Awaited<ReturnType<typeof listAdminSecurityIncidents>>, TError = ErrorType<void>>(
+ params: undefined |  ListAdminSecurityIncidentsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAdminSecurityIncidents>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listAdminSecurityIncidents>>,
+          TError,
+          Awaited<ReturnType<typeof listAdminSecurityIncidents>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListAdminSecurityIncidents<TData = Awaited<ReturnType<typeof listAdminSecurityIncidents>>, TError = ErrorType<void>>(
+ params?: ListAdminSecurityIncidentsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAdminSecurityIncidents>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listAdminSecurityIncidents>>,
+          TError,
+          Awaited<ReturnType<typeof listAdminSecurityIncidents>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListAdminSecurityIncidents<TData = Awaited<ReturnType<typeof listAdminSecurityIncidents>>, TError = ErrorType<void>>(
+ params?: ListAdminSecurityIncidentsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAdminSecurityIncidents>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List internal security and privacy incident records. Access: ADMIN.
+ */
+
+export function useListAdminSecurityIncidents<TData = Awaited<ReturnType<typeof listAdminSecurityIncidents>>, TError = ErrorType<void>>(
+ params?: ListAdminSecurityIncidentsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAdminSecurityIncidents>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListAdminSecurityIncidentsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getCreateAdminSecurityIncidentUrl = () => {
+
+
+
+
+  return `/api/admin/security/incidents`
+}
+
+/**
+ * @summary Open an internal incident record without sending notifications.
+ */
+export const createAdminSecurityIncident = async (securityIncidentInput: SecurityIncidentInput, options?: Parameters<typeof customFetch>[1]): Promise<SecurityIncident> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<SecurityIncident>(getCreateAdminSecurityIncidentUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(securityIncidentInput)
+  }
+);}
+
+
+
+
+
+export const getCreateAdminSecurityIncidentMutationKey = () => ['createAdminSecurityIncident'] as const;
+
+export const getCreateAdminSecurityIncidentMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createAdminSecurityIncident>>, TError,CreateAdminSecurityIncidentMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createAdminSecurityIncident>>, TError,CreateAdminSecurityIncidentMutationVariables, TContext> => {
+
+const mutationKey = getCreateAdminSecurityIncidentMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createAdminSecurityIncident>>, CreateAdminSecurityIncidentMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  createAdminSecurityIncident(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateAdminSecurityIncidentMutationResult = NonNullable<Awaited<ReturnType<typeof createAdminSecurityIncident>>>
+    export type CreateAdminSecurityIncidentMutationBody = BodyType<SecurityIncidentInput>
+    export type CreateAdminSecurityIncidentMutationError = ErrorType<void>
+    export type CreateAdminSecurityIncidentMutationVariables = {data: BodyType<SecurityIncidentInput>}
+
+    /**
+ * @summary Open an internal incident record without sending notifications.
+ */
+export const useCreateAdminSecurityIncident = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createAdminSecurityIncident>>, TError,CreateAdminSecurityIncidentMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createAdminSecurityIncident>>,
+        TError,
+        CreateAdminSecurityIncidentMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCreateAdminSecurityIncidentMutationOptions(options), queryClient);
+    }
+
+export const getGetAdminSecurityIncidentUrl = (id: string,) => {
+
+
+
+
+  return `/api/admin/security/incidents/${id}`
+}
+
+/**
+ * @summary Read an incident and its append-only event history. Access: ADMIN.
+ */
+export const getAdminSecurityIncident = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<SecurityIncidentDetails> => {
+
+  return customFetch<SecurityIncidentDetails>(getGetAdminSecurityIncidentUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAdminSecurityIncidentQueryKey = (id: string,) => {
+    return [
+    `/api/admin/security/incidents/${id}`
+    ] as const;
+    }
+
+
+export const getGetAdminSecurityIncidentQueryOptions = <TData = Awaited<ReturnType<typeof getAdminSecurityIncident>>, TError = ErrorType<void>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminSecurityIncident>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAdminSecurityIncidentQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminSecurityIncident>>> = ({ signal }) => getAdminSecurityIncident(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdminSecurityIncident>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetAdminSecurityIncidentQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminSecurityIncident>>>
+export type GetAdminSecurityIncidentQueryError = ErrorType<void>
+
+
+export function useGetAdminSecurityIncident<TData = Awaited<ReturnType<typeof getAdminSecurityIncident>>, TError = ErrorType<void>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminSecurityIncident>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAdminSecurityIncident>>,
+          TError,
+          Awaited<ReturnType<typeof getAdminSecurityIncident>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAdminSecurityIncident<TData = Awaited<ReturnType<typeof getAdminSecurityIncident>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminSecurityIncident>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAdminSecurityIncident>>,
+          TError,
+          Awaited<ReturnType<typeof getAdminSecurityIncident>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAdminSecurityIncident<TData = Awaited<ReturnType<typeof getAdminSecurityIncident>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminSecurityIncident>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Read an incident and its append-only event history. Access: ADMIN.
+ */
+
+export function useGetAdminSecurityIncident<TData = Awaited<ReturnType<typeof getAdminSecurityIncident>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminSecurityIncident>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetAdminSecurityIncidentQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getTransitionAdminSecurityIncidentUrl = (id: string,) => {
+
+
+
+
+  return `/api/admin/security/incidents/${id}/transition`
+}
+
+/**
+ * @summary Record a guarded incident lifecycle or counsel-review event.
+ */
+export const transitionAdminSecurityIncident = async (id: string,
+    securityIncidentTransitionInput: SecurityIncidentTransitionInput, options?: Parameters<typeof customFetch>[1]): Promise<SecurityIncident> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<SecurityIncident>(getTransitionAdminSecurityIncidentUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(securityIncidentTransitionInput)
+  }
+);}
+
+
+
+
+
+export const getTransitionAdminSecurityIncidentMutationKey = () => ['transitionAdminSecurityIncident'] as const;
+
+export const getTransitionAdminSecurityIncidentMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof transitionAdminSecurityIncident>>, TError,TransitionAdminSecurityIncidentMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof transitionAdminSecurityIncident>>, TError,TransitionAdminSecurityIncidentMutationVariables, TContext> => {
+
+const mutationKey = getTransitionAdminSecurityIncidentMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof transitionAdminSecurityIncident>>, TransitionAdminSecurityIncidentMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  transitionAdminSecurityIncident(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type TransitionAdminSecurityIncidentMutationResult = NonNullable<Awaited<ReturnType<typeof transitionAdminSecurityIncident>>>
+    export type TransitionAdminSecurityIncidentMutationBody = BodyType<SecurityIncidentTransitionInput>
+    export type TransitionAdminSecurityIncidentMutationError = ErrorType<void>
+    export type TransitionAdminSecurityIncidentMutationVariables = {id: string;data: BodyType<SecurityIncidentTransitionInput>}
+
+    /**
+ * @summary Record a guarded incident lifecycle or counsel-review event.
+ */
+export const useTransitionAdminSecurityIncident = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof transitionAdminSecurityIncident>>, TError,TransitionAdminSecurityIncidentMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof transitionAdminSecurityIncident>>,
+        TError,
+        TransitionAdminSecurityIncidentMutationVariables,
+        TContext
+      > => {
+      return useMutation(getTransitionAdminSecurityIncidentMutationOptions(options), queryClient);
     }
 
 export const getGetAdminComplianceLegalEntitiesUrl = () => {

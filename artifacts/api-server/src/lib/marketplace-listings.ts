@@ -36,6 +36,7 @@ import { searchTextContext, searchableTextOf, searchTextVersionReady, SEARCH_TEX
 import { offerSearchDocuments, listingPromotions } from "@workspace/db";
 import { SEARCH_PLACEMENTS, SERVING_PAYMENT_STATUSES } from "./promotions";
 import { redactListingContactText } from "./listing-contact";
+import { assertMarketLegalCapability } from "./d16-readiness";
 
 export type OfferRow = {
   offer: typeof offers.$inferSelect;
@@ -233,6 +234,7 @@ export async function searchMarketplaceListings(
     limit?: number;
   },
 ): Promise<ListingRecord[]> {
+  await assertMarketLegalCapability(market.id, "BROWSING");
   const engine = searchEngine();
   const [allCategories, policyRules, inactiveBusinessListings] = await Promise.all([
     listMarketplaceCategories(true),
