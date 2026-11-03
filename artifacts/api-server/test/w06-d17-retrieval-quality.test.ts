@@ -212,7 +212,10 @@ await test("D17.8-R6 the trigram index behind retrieval is measured against the 
 });
 
 after(async () => {
-  await db.execute(sql`DELETE FROM conversations WHERE id = ${CONV}`); // cascades messages and summary
+  // Messages reference the conversation and are not cascaded; the derived summary is.
+  await db.execute(sql`DELETE FROM messages WHERE conversation_id = ${CONV}`);
+  await db.execute(sql`DELETE FROM conversation_summaries WHERE conversation_id = ${CONV}`);
+  await db.execute(sql`DELETE FROM conversations WHERE id = ${CONV}`);
   await db.execute(sql`DELETE FROM users WHERE id IN (${OWNER}, ${OTHER})`);
   console.log("W06_D17_RETRIEVAL_QUALITY_SUMMARY", JSON.stringify(quality));
   await pool.end();
