@@ -381,7 +381,7 @@ test("W04-10-03 follow-ups and corrections read the live record; the model's inv
 
     plan({
       key: `أقصد`,
-      reply: "MODEL_CORRECTION_PROSE",
+      reply: "سعره 973 دنانير فقط",
       toolSequence: [
         { name: "searchListings", arguments: { query: `جوال ${run}` } },
         { name: "getResource", arguments: { fromLatestSearch: true, position: 1 } },
@@ -390,10 +390,11 @@ test("W04-10-03 follow-ups and corrections read the live record; the model's inv
     const corrected = await say(user.cookie, user.conv, `لا، أقصد الأول من جوالات ${run} كم سعره؟`);
     assert.equal(corrected.status, 200, corrected.body);
     const correctedSearch = lastFeedback.find((item) => item.tool === "searchListings" && item.status === "SUCCEEDED")
-      ?.result?.listings as { id: string }[];
+      ?.result?.listings as { id: string; unitPrice: unknown }[];
     const correctedRead = lastFeedback.find((item) => item.tool === "getResource" && item.status === "SUCCEEDED");
     assert.equal(correctedRead?.result.listings[0].id, correctedSearch[0].id, "the correction reads the first listing instead");
-    assert.doesNotMatch(corrected.body, /MODEL_CORRECTION_PROSE/u, "verified reads answer with DINAR's own words");
+    assert.doesNotMatch(corrected.body, /973\s*دنانير/u, "an amount no read recorded never reaches the user");
+    assert.match(corrected.body, /هذه نتائج القراءة الحالية من DINAR/u, "the unrecorded amount is replaced by DINAR's own words");
     assert.equal(sawUntrustedDataRule, true, "tool results are framed to the model as untrusted data");
   });
 });
@@ -705,13 +706,13 @@ test("W04-10-09 the adapters agree: one Arabic turn yields one identical DINAR c
     usageMetadata: { promptTokenCount: 1200, candidatesTokenCount: 60, cachedContentTokenCount: 300 },
   };
 
-  const seen: { path: string; body: any }[] = [];
+  const seen: { path: string; url: string; body: any }[] = [];
   let scripted: unknown = chatBody;
   const originalFetch = globalThis.fetch;
   globalThis.fetch = (async (input: any, init: any) => {
     const url = new URL(input instanceof Request ? input.url : String(input));
     const body = typeof init?.body === "string" ? JSON.parse(init.body) : undefined;
-    seen.push({ path: `${url.pathname}${url.search}`, body });
+    seen.push({ path: `${url.pathname}${url.search}`, url: `${url.host}${url.pathname}${url.search}`, body });
     return new Response(JSON.stringify(scripted), { status: 200, headers: { "content-type": "application/json" } });
   }) as typeof fetch;
   try {
@@ -766,7 +767,7 @@ test("W04-10-09 the adapters agree: one Arabic turn yields one identical DINAR c
     assert.equal(chatRequest.body.tool_choice, "required");
     assert.equal(responsesRequest.path, "/v1/responses");
     assert.equal(responsesRequest.body.store, false, "the Responses adapter keeps no provider-side state");
-    assert.match(String(geminiRequest.path), /generativelanguage\.googleapis\.com.*:generateContent/u, "the Gemini adapter is unchanged");
+    assert.match(geminiRequest.url, /generativelanguage\.googleapis\.com\/v1beta\/models\/[^/]+:generateContent/u, "the Gemini adapter is unchanged");
     assert.equal(geminiRequest.body.tools[0].functionDeclarations[0].name, "dinarConversationTurn");
 
     scripted = chatBody;
@@ -884,7 +885,7 @@ test("W04-10-12 the loop stops at the usage limit, settles every reservation and
       assert.ok(current.length >= 1, "the actor has counters for the current period");
       for (const row of current) {
         assert.ok(row.consumedRequests <= 2, `${row.resource}: the capped allowance was never overspent`);
-        assert.ok(row.reservedRequests >= row.consumedRequests, `${row.resource}: held to spent moves forward, not back`);
+        assert.equal(row.reservedRequests, 0, `${row.resource}: the turn settles its hold; nothing stays reserved`);
       }
       assert.ok(
         current.some((row) => row.consumedRequests === 2),

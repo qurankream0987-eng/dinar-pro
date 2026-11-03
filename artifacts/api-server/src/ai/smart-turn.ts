@@ -1443,6 +1443,49 @@ function compactModelToolResult(result: ToolResult) {
   };
 }
 
+/**
+ * Money words turn a digit in the model's prose into a claim about a recorded amount. Only an
+ * amount written beside one of these words is checked; counts and dates are not money claims.
+ */
+const CURRENCY_WORD = "(?:د(?:ين|ین)ار(?:ات)?|دنانير|دينا|درهم|دولار|ريال|ليرة|جنيه|يورو|قرش|قروش|فلوس)";
+const MONEY_AMOUNT = new RegExp(
+  `(\\d+(?:[.,]\\d+)?)\\s*${CURRENCY_WORD}|${CURRENCY_WORD}\\s*(\\d+(?:[.,]\\d+)?)`,
+  "giu",
+);
+
+function foldCurrencyDigits(text: string): string {
+  return text
+    .replace(/[٠-٩]/gu, (digit) => String(digit.charCodeAt(0) - 0x0660))
+    .replace(/[۰-۹]/gu, (digit) => String(digit.charCodeAt(0) - 0x06f0));
+}
+
+/** Every amount a verified read showed the model this turn: recorded prices and quantities. */
+function recordedAmounts(feedback: NonNullable<ModelContext["toolFeedback"]>): Set<number> {
+  const values = new Set<number>();
+  for (const item of feedback) {
+    if (item.status !== "SUCCEEDED") continue;
+    const listings = (item.result as { listings?: { unitPrice?: unknown; availableQuantity?: unknown }[] } | undefined)?.listings ?? [];
+    for (const listing of listings) {
+      for (const raw of [listing.unitPrice, listing.availableQuantity]) {
+        const value = typeof raw === "string" || typeof raw === "number" ? Number(raw) : Number.NaN;
+        if (Number.isFinite(value)) values.add(value);
+      }
+    }
+  }
+  return values;
+}
+
+/** Amounts the model states as money that no verified read of this turn recorded. */
+function unrecordedAmounts(text: string, recorded: Set<number>): number[] {
+  const digits = foldCurrencyDigits(text).replace(/(\d),(\d{3})(?!\d)/gu, "$1$2");
+  const offenders: number[] = [];
+  for (const match of digits.matchAll(MONEY_AMOUNT)) {
+    const value = Number((match[1] ?? match[2]).replace(",", "."));
+    if (Number.isFinite(value) && !recorded.has(value)) offenders.push(value);
+  }
+  return offenders;
+}
+
 function withModelToolAnswer(result: ToolResult, answer: string, preserveResultSetId = false): ToolResult {
   return {
     ...result,
@@ -1912,12 +1955,15 @@ export async function executeModelFallback(
       { ownerId: input.actorId },
     );
   if (lastSearchResult || lastResourceResult) {
-    const text = outcome.replyFiltered
-      ? "هذه نتائج القراءة الحالية من DINAR. راجع تفاصيل العروض وبطاقاتها؛ لم أنفّذ أي إجراء."
-      : outcome.turn.conversationalReply;
-    const groundedAnswer = claimsCompletedAction(text)
-      ? "هذه نتائج القراءة الحالية من DINAR. راجع تفاصيل العروض وبطاقاتها؛ لم أنفّذ أي إجراء."
-      : text;
+    const groundedAnswerText = "هذه نتائج القراءة الحالية من DINAR. راجع تفاصيل العروض وبطاقاتها؛ لم أنفّذ أي إجراء.";
+    const text = outcome.replyFiltered ? groundedAnswerText : outcome.turn.conversationalReply;
+    const invented = text === groundedAnswerText ? [] : unrecordedAmounts(text, recordedAmounts(toolFeedback));
+    if (invented.length)
+      logger.info(
+        { event: "dinar_model_unrecorded_amount_withheld", amounts: invented.slice(0, 4), conversationId: input.conversationId },
+        "model amount withheld after a verified read",
+      );
+    const groundedAnswer = invented.length || claimsCompletedAction(text) ? groundedAnswerText : text;
     const result = lastSearchResult ?? lastResourceResult!;
     return {
       tool: result.kind === "SEARCH" ? "searchListings" : "getResource",
