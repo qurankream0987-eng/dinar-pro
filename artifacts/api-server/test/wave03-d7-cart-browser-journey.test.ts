@@ -11,7 +11,7 @@
  * canonical request: a retry must return the one stored receipt, never a second cart unit, and a
  * failed request must change neither. No model call is reachable.
  */
-import "./local-object-storage";
+import { localObjectStorage } from "./local-object-storage";
 import { test, after } from "node:test";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
@@ -381,5 +381,6 @@ after(async () => {
   // A killed browser can leave its stream open; never let the suite wait on it forever.
   server.closeAllConnections();
   await new Promise<void>((resolve) => server.close(() => resolve()));
+  await localObjectStorage?.close();
   await pool.end();
 });
