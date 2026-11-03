@@ -36,6 +36,7 @@ import { OfferCard } from "@/features/OfferCard";
 import { DinarMark } from "@/ui/DinarMark";
 import { Flag, SmartImage } from "@/ui/Media";
 import type { AiMessage, AiUiBlock } from "./ai-api";
+import { animateListingToBasket } from "./cart-basket-animation";
 import { ListingManagementPreviewCard } from "./ListingManagementPreviewCard";
 import { DraftReviewPanel, draftPhotos, isDraftReview, isSellerInsight, SellerInsightPanel } from "./SellerDraftInsight";
 import { BusinessSummaryPanel, isBusinessInsight } from "./BusinessSummaryPanel";
@@ -857,12 +858,16 @@ function ResultBlock({
   block,
   onSend,
   onSelectMarket,
+  onAdd,
+  addingListingId,
   activeWorkflow,
   activeResults,
 }: {
   activeWorkflow?: boolean;
   activeResults?: boolean;
+  addingListingId?: string;
   block: AiUiBlock;
+  onAdd?: (listing: Listing, resultSetId: string) => Promise<boolean> | boolean;
   onSend?: (text: string, location?: LocationSubmission) => void;
   onSelectMarket?: (marketId: string, resumeMessageId: string) => Promise<void>;
 }) {
@@ -1204,19 +1209,40 @@ function ResultBlock({
                   <Button
                     className="ai-result-cart"
                     variant="gold"
-                    disabled={stock.tone === "out" || !onSend}
-                    onClick={() =>
-                      onSend?.(
-                        conversationActionMessage("ADD_TO_CART", {
-                          position: resultIndex + 1,
-                        }),
-                      )
-                    }
+                    loading={addingListingId === listing.id}
+                    disabled={stock.tone === "out" || !onAdd || Boolean(addingListingId)}
+                    aria-busy={addingListingId === listing.id || undefined}
+                    onClick={(event) => {
+                      const card = event.currentTarget.closest(
+                        '[data-testid^="card-ai-result-"]',
+                      );
+                      const image = card?.querySelector("img") ?? null;
+                      void Promise.resolve(
+                        onAdd?.(listing, block.payload.resultSetId),
+                      ).then((added) => {
+                        // The flight is drawn only for a confirmed server mutation.
+                        if (!added) return;
+                        try {
+                          animateListingToBasket(image);
+                        } catch {
+                          // The cart is already confirmed; a visual acknowledgement must never
+                          // surface as an error or change the result.
+                        }
+                      });
+                    }}
                     data-testid={`button-add-to-cart-${listing.id}`}
-                    aria-label={stock.tone === "out" ? "غير متوفر" : addLabel}
+                    aria-label={
+                      stock.tone === "out"
+                        ? "غير متوفر"
+                        : addingListingId === listing.id
+                          ? "جارٍ الإضافة إلى السلة"
+                          : addLabel
+                    }
                     title={stock.tone === "out" ? "غير متوفر" : addLabel}
                   >
-                    <ShoppingCart size={18} aria-hidden />
+                    {addingListingId === listing.id ? null : (
+                      <ShoppingCart size={18} aria-hidden />
+                    )}
                   </Button>
                 )}
               </div>
@@ -1270,6 +1296,8 @@ function MessageTurn({
   onSend,
   onSelectMarket,
   onEdit,
+  onAdd,
+  addingListingId,
   activeWorkflow,
   activeResults,
   busy,
@@ -1280,7 +1308,7 @@ function MessageTurn({
   addingListingId?: string;
   message: AiMessage;
   onEdit?: (messageId: string, body: string) => Promise<void>;
-  onAdd: (listing: Listing, resultSetId: string) => void;
+  onAdd?: (listing: Listing, resultSetId: string) => Promise<boolean> | boolean;
   onSend?: (text: string, location?: LocationSubmission) => void;
   onSelectMarket?: (marketId: string, resumeMessageId: string) => Promise<void>;
 }) {
@@ -1365,6 +1393,8 @@ function MessageTurn({
                     block={block}
                     activeWorkflow={activeWorkflow}
                     activeResults={activeResults}
+                    onAdd={onAdd}
+                    addingListingId={addingListingId}
                     onSend={onSend}
                     onSelectMarket={onSelectMarket}
                     key={`${block.type}-${block.payload?.resultSetId}`}

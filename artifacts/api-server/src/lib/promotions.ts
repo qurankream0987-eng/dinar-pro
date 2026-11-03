@@ -21,6 +21,7 @@ import {
   commercialLedger,
   db,
   listingPromotions,
+  marketAudit,
   markets,
   offers,
   promotionAttributions,
@@ -792,6 +793,13 @@ export async function changePromotion(input: {
       if (row.status === "PAUSED") return { changed: false, row };
       if (row.status !== "ACTIVE") throw fail(409, "يمكن إيقاف الحملة النشطة فقط");
       const [next] = await set({ status: "PAUSED", pausedAt: now });
+      await tx.insert(marketAudit).values({
+        id: randomUUID(),
+        marketId: input.market.id,
+        actorId: input.actorId,
+        action: "PROMOTION_PAUSE",
+        data: { promotionId: row.id, listingId: row.listingId, from: row.status, to: "PAUSED" },
+      });
       return { changed: true, row: next };
     }
     if (input.action === "RESUME") {
@@ -803,6 +811,13 @@ export async function changePromotion(input: {
       const eligible = await listingPromotionEligibility(offer, sellerStatus, input.market, tx);
       if (!eligible.ok) throw fail(409, `لا يمكن الاستئناف: ${eligible.reason}`);
       const [next] = await set({ status: "ACTIVE", pausedAt: null });
+      await tx.insert(marketAudit).values({
+        id: randomUUID(),
+        marketId: input.market.id,
+        actorId: input.actorId,
+        action: "PROMOTION_RESUME",
+        data: { promotionId: row.id, listingId: row.listingId, from: row.status, to: "ACTIVE" },
+      });
       return { changed: true, row: next };
     }
     if (row.status === "CANCELLED") return { changed: false, row };
@@ -811,12 +826,20 @@ export async function changePromotion(input: {
     // No real refund: Wave 4 is simulation only and refund policy belongs to Integration.
     // A budget campaign's unused reserve follows its snapshotted refund policy.
     const [next] = await set({ status: "CANCELLED", endedAt: now });
+    let cancelled = next;
     if (row.budgetMinor != null) {
       await releaseCampaignBudget(tx, row.id);
       const [released] = await tx.select().from(listingPromotions).where(eq(listingPromotions.id, row.id));
-      return { changed: true, row: released };
+      if (released) cancelled = released;
     }
-    return { changed: true, row: next };
+    await tx.insert(marketAudit).values({
+      id: randomUUID(),
+      marketId: input.market.id,
+      actorId: input.actorId,
+      action: "PROMOTION_CANCEL",
+      data: { promotionId: row.id, listingId: row.listingId, from: row.status, to: "CANCELLED", releasedMinor: cancelled.releasedMinor },
+    });
+    return { changed: true, row: cancelled };
   });
   return { changed: outcome.changed, promotion: (await promotionViews([outcome.row as PromotionRow], input.market))[0]! };
 }

@@ -1530,6 +1530,7 @@ body:has(.dinar-chatgpt) {
 }
 
 .ai-mobile-sidebar-trigger { display: none; }
+.ai-mobile-cart-trigger { display: none; }
 @media (max-width: 1023px) {
   .dinar-chatgpt { grid-template-rows: minmax(0, 1fr); }
   .dinar-chatgpt .ai-layout {
@@ -1570,6 +1571,31 @@ body:has(.dinar-chatgpt) {
     outline: none;
     box-shadow: none;
     transform: scale(1.12);
+  }
+  /* The basket stays reachable on the conversation itself: it is the destination of the
+     confirmed-add acknowledgement and the canonical link into /cart. */
+  .dinar-chatgpt .ai-mobile-cart-trigger {
+    position: absolute;
+    z-index: 5;
+    inset-block-start: max(8px, env(safe-area-inset-top, 0px));
+    inset-inline-end: 10px;
+    display: grid;
+    width: 44px;
+    height: 44px;
+    place-items: center;
+    border-radius: 12px;
+    background: transparent;
+    color: var(--chat-ink);
+    transition: opacity var(--dur-fast), transform var(--dur-fast);
+  }
+  .dinar-chatgpt .ai-mobile-cart-trigger:hover {
+    background: transparent;
+    opacity: .8;
+  }
+  .dinar-chatgpt .ai-mobile-cart-trigger:focus-visible {
+    outline: none;
+    box-shadow: none;
+    transform: scale(1.08);
   }
 }
 
@@ -1778,6 +1804,31 @@ body:has(.dinar-chatgpt) {
 .ai-sidebar-management-link:hover:not(:disabled) { background: var(--xp-hover); color: var(--chat-ink); }
 .ai-sidebar-management-link:disabled { opacity: .5; }
 .ai-sidebar-footer .ai-sidebar-market { min-height: 38px; font-size: 12.5px; }
+.ai-sidebar-cart {
+  display: flex;
+  min-height: 38px;
+  align-items: center;
+  gap: 10px;
+  padding: 0 10px;
+  border-radius: 10px;
+  color: var(--chat-ink-2);
+  font-size: 13.5px;
+  transition: background-color var(--dur-fast), color var(--dur-fast);
+}
+.ai-sidebar-cart:hover { background: var(--xp-hover); color: var(--chat-ink); }
+.ai-sidebar-cart-count {
+  display: inline-grid;
+  min-width: 20px;
+  height: 20px;
+  margin-inline-start: auto;
+  padding-inline: 6px;
+  place-items: center;
+  border-radius: 999px;
+  background: rgb(var(--chat-gold) / .16);
+  color: var(--chat-ink);
+  font-size: 11px;
+  font-weight: 700;
+}
 .ai-sidebar-account-row { display: flex; min-width: 0; align-items: center; gap: 4px; }
 .ai-sidebar-account {
   display: flex;

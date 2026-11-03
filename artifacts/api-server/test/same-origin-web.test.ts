@@ -54,6 +54,92 @@ await test("missing files are 404, never the SPA shell", async () => {
   }
 });
 
+await test("the shell and API carry the browser security policy", async () => {
+  const shell = await fetch(`${origin}/`, { headers: { Accept: "text/html" } });
+  const csp = shell.headers.get("content-security-policy") ?? "";
+  assert.match(csp, /default-src 'self'/);
+  assert.match(csp, /script-src 'self'(;|$)/, "no remote or inline script is allowed");
+  assert.match(csp, /object-src 'none'/);
+  assert.match(
+    csp,
+    /frame-ancestors 'self' https:\/\/replit\.com https:\/\/\*\.replit\.com https:\/\/\*\.replit\.dev/,
+    "the Replit Preview frame is allowed without opening embedding to arbitrary sites",
+  );
+  assert.match(csp, /base-uri 'self'/);
+  assert.match(csp, /form-action 'self'/);
+  assert.match(csp, /connect-src 'self'/);
+  assert.equal(shell.headers.get("x-frame-options"), null, "X-Frame-Options cannot represent the narrow preview allowlist");
+  assert.equal(shell.headers.get("x-content-type-options"), "nosniff");
+  assert.equal(shell.headers.get("referrer-policy"), "strict-origin-when-cross-origin");
+  const permissions = shell.headers.get("permissions-policy") ?? "";
+  assert.match(permissions, /camera=\(self\)/);
+  assert.match(permissions, /microphone=\(self\)/);
+  assert.match(permissions, /payment=\(\)/);
+  assert.equal(shell.headers.get("strict-transport-security"), null, "HSTS is production-only");
+
+  const api = await fetch(`${origin}/api/healthz`);
+  assert.equal(api.status, 200);
+  assert.equal(api.headers.get("content-security-policy"), csp);
+  assert.equal(api.headers.get("x-frame-options"), null);
+});
+
+await test("HSTS is sent in production, subdomains only when explicitly enabled", async () => {
+  const previous = process.env.NODE_ENV;
+  process.env.NODE_ENV = "production";
+  try {
+    const response = await fetch(`${origin}/api/healthz`);
+    assert.equal(response.status, 200);
+    assert.equal(
+      response.headers.get("strict-transport-security"),
+      "max-age=31536000",
+      "host-only HSTS until every approved subdomain is HTTPS-only",
+    );
+    process.env.HSTS_INCLUDE_SUBDOMAINS = "true";
+    const subdomains = await fetch(`${origin}/api/healthz`);
+    assert.equal(
+      subdomains.headers.get("strict-transport-security"),
+      "max-age=31536000; includeSubDomains",
+    );
+  } finally {
+    delete process.env.HSTS_INCLUDE_SUBDOMAINS;
+    process.env.NODE_ENV = previous;
+  }
+});
+
+await test("the connect sources grow only through an explicit origin allowlist", async () => {
+  const baseline = (await fetch(`${origin}/api/healthz`)).headers.get("content-security-policy") ?? "";
+  assert.match(baseline, /connect-src 'self'(;|$)/, "no external connection by default");
+  process.env.CSP_CONNECT_EXTRA_ORIGINS = "https://cdn.example.test, not-a-url, javascript:alert(1)";
+  try {
+    const csp = (await fetch(`${origin}/api/healthz`)).headers.get("content-security-policy") ?? "";
+    assert.match(csp, /connect-src 'self' https:\/\/cdn\.example\.test(;|$)/);
+    assert.doesNotMatch(csp, /not-a-url|javascript:/, "invalid allowlist entries are dropped");
+    assert.equal(csp.match(/connect-src/g)?.length, 1, "the directive is not duplicated");
+  } finally {
+    delete process.env.CSP_CONNECT_EXTRA_ORIGINS;
+  }
+});
+
+await test("a configured S3 upload endpoint is the only storage origin allowed", async () => {
+  const previousProvider = process.env.OBJECT_STORAGE_PROVIDER;
+  const previousEndpoint = process.env.OBJECT_STORAGE_S3_ENDPOINT;
+  process.env.OBJECT_STORAGE_PROVIDER = "s3";
+  process.env.OBJECT_STORAGE_S3_ENDPOINT = "https://objects.example.test";
+  try {
+    const csp = (await fetch(`${origin}/api/healthz`)).headers.get("content-security-policy") ?? "";
+    assert.match(
+      csp,
+      /connect-src 'self' https:\/\/objects\.example\.test(;|$)/,
+      "the presigned PUT origin is reachable without widening anything else",
+    );
+  } finally {
+    if (previousProvider === undefined) delete process.env.OBJECT_STORAGE_PROVIDER;
+    else process.env.OBJECT_STORAGE_PROVIDER = previousProvider;
+    if (previousEndpoint === undefined) delete process.env.OBJECT_STORAGE_S3_ENDPOINT;
+    else process.env.OBJECT_STORAGE_S3_ENDPOINT = previousEndpoint;
+  }
+});
+
 await test("unknown /api routes stay JSON 404 and are never answered with the SPA", async () => {
   const response = await fetch(`${origin}/api/does-not-exist`, { headers: { Accept: "text/html" } });
   assert.equal(response.status, 404);
