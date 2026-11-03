@@ -37,6 +37,7 @@ import {
   type UIEvent,
 } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { Link } from "wouter";
 import {
   ArrowDown,
   ChevronLeft,
@@ -48,6 +49,7 @@ import {
   PanelRightClose,
   Search,
   ShoppingBag,
+  ShoppingCart,
   Settings,
   SquarePen,
   SlidersHorizontal,
@@ -155,7 +157,7 @@ export default function AiPage() {
   const [addingListingId, setAddingListingId] = useState<string>();
   // A stored cart receipt is returned again on every retry. It is shown and acknowledged once.
   const confirmedReceipts = useRef<Set<string>>(new Set());
-  const { refreshFromServer: refreshCartFromServer } = useCart();
+  const { refreshFromServer: refreshCartFromServer, unitCount } = useCart();
   const [conversationToDelete, setConversationToDelete] = useState<{
     id: string;
     title: string;
@@ -1931,6 +1933,23 @@ export default function AiPage() {
       >
         <DinarMark size={27} aria-hidden />
       </button>
+      <Link
+        href="/cart"
+        aria-label={unitCount ? `السلة، ${unitCount} وحدة` : "السلة"}
+        data-testid="link-cart"
+        className="ai-mobile-cart-trigger pressable"
+      >
+        <ShoppingCart size={22} aria-hidden />
+        {unitCount > 0 && (
+          <span
+            key={unitCount}
+            data-testid="badge-cart-units"
+            className="num absolute end-0.5 top-0.5 flex h-[18px] min-w-[18px] animate-pop items-center justify-center rounded-full bg-accent px-1 text-[10px] font-bold text-accent-foreground ring-2 ring-background"
+          >
+            {unitCount > 99 ? "99+" : unitCount}
+          </span>
+        )}
+      </Link>
       <div className="ai-home-content flex h-full min-h-0 flex-col" inert={identityVerifying || undefined}>
         <div
           className="ai-layout"
@@ -1991,6 +2010,28 @@ export default function AiPage() {
                     </button>
                   </TooltipTrigger>
                   {tip("البحث في المحادثات")}
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Link
+                      href="/cart"
+                      className="ai-rail-action pressable relative"
+                      aria-label={unitCount ? `السلة، ${unitCount} وحدة` : "السلة"}
+                      data-testid="sidebar-cart"
+                    >
+                      <ShoppingCart size={19} aria-hidden />
+                      {unitCount > 0 && (
+                        <span
+                          key={unitCount}
+                          data-testid="badge-cart-units"
+                          className="num absolute end-0.5 top-0.5 flex h-[18px] min-w-[18px] animate-pop items-center justify-center rounded-full bg-accent px-1 text-[10px] font-bold text-accent-foreground ring-2 ring-background"
+                        >
+                          {unitCount > 99 ? "99+" : unitCount}
+                        </span>
+                      )}
+                    </Link>
+                  </TooltipTrigger>
+                  {tip("السلة")}
                 </Tooltip>
               </div>
               <Tooltip>
