@@ -72,6 +72,7 @@ on:
           - block-f3-commerce.test
           - ai-foundation-acceptance.test
           - ai-authority-boundary.test
+          - wave04-d10-d11-acceptance.test
       chain:
         description: "Run a reviewed suite chain on one disposable migrated and seeded database"
         required: false
