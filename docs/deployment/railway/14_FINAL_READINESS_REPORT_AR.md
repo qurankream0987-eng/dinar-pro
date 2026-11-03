@@ -48,4 +48,4 @@
 
 لم يتم النشر أو الدمج، ولم تُنشأ بيئة أو خدمة أو bucket، ولم تتغير الشبكة أو الأسرار، ولم تُعدّل قاعدة Railway أو تُنسخ بيانات خاصة، ولم يُفعّل PITR، ولم يُنفذ ترحيل أو استعادة. جميع هذه العمليات تحتاج موافقة صريحة محددة للبيئة والموارد.
 
-**التسليم البرمجي:** الفرع `replit/railway-complete-infrastructure-readiness`، والهدف `replit/dinar-next-complete-development`. بعد الدفع سيُفتح Draft PR للمراجعة فقط؛ لا تدمجه قبل مراجعة بوابات الموافقة. يُسجّل رابط PR وSHA الدقيق في سجل التسليم بعد الدفع.
+**التسليم البرمجي:** الفرع `replit/railway-complete-infrastructure-readiness`، والهدف `replit/dinar-next-complete-development`. [Draft PR #4](https://github.com/qurankream0987-eng/dinar-pro/pull/4) فُتح للمراجعة فقط؛ لا تدمجه قبل مراجعة بوابات الموافقة. SHA النسخة التي فُتح بها PR: `12fb41ae40ed4460e1d289364c389fde380e6f95`. أُضيف هذا السطر في تحديث لاحق للتقرير؛ رأس الفرع النهائي موضح في رسالة التسليم.
