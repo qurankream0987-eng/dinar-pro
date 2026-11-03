@@ -939,6 +939,10 @@ export const orders = pgTable(
     subtotalMinor: integer("subtotal_minor").notNull(),
     platformFeeMinor: integer("platform_fee_minor").notNull(),
     sellerAmountMinor: integer("seller_amount_minor").notNull(),
+    // Existing rows remain version 0; new orders must be reconciled against immutable item rows.
+    orderLineIntegrityVersion: integer("order_line_integrity_version")
+      .default(1)
+      .notNull(),
     status: text("status").notNull(),
     reservationExpiresAt: timestamp("reservation_expires_at", {
       withTimezone: true,

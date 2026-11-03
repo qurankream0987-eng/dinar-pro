@@ -107,6 +107,7 @@ await db.insert(orders).values({
   subtotalMinor: 1_000,
   platformFeeMinor: 100,
   sellerAmountMinor: 900,
+  orderLineIntegrityVersion: 0,
   status: "CREATED",
   data: {},
 });

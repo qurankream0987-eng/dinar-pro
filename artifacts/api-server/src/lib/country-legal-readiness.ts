@@ -4,6 +4,7 @@ import {
   db,
   legalEntities,
   marketLegalCapabilityApprovals,
+  marketLegalCapabilityEvents,
   marketLegalEvidence,
   marketLegalIntakeEvents,
   marketLegalIntakeTopics,
@@ -61,7 +62,7 @@ function reject(status: number, code: string, message: string): never {
 
 function cleanReference(value: string, label: string) {
   const reference = value.trim();
-  if (!/^[A-Za-z][A-Za-z0-9._:/-]{2,199}$/.test(reference))
+  if (!/^[A-Za-z][A-Za-z0-9._/-]{2,199}$/.test(reference))
     reject(400, "REFERENCE_INVALID", `${label} يجب أن يكون رمز مرجع فقط، لا رابطاً أو مستنداً`);
   return reference;
 }
@@ -952,10 +953,75 @@ export async function suspendCountryReadiness(input: {
       .for("update")
       .limit(1);
     const now = new Date();
+
+    // Suspension is a new review boundary, not just a temporary access flag. Retire every
+    // capability approval in the same transaction so a later country reactivation cannot revive
+    // stale counsel or owner approvals.
+    const capabilities = await tx
+      .select()
+      .from(marketLegalCapabilityApprovals)
+      .where(eq(marketLegalCapabilityApprovals.marketId, input.marketId))
+      .for("update");
+    for (const capability of capabilities) {
+      const hasApproval =
+        capability.status !== "DISABLED" ||
+        capability.counselReference !== null ||
+        capability.counselReviewedBy !== null ||
+        capability.ownerApprovalReference !== null ||
+        capability.ownerApprovedBy !== null;
+      if (!hasApproval) continue;
+      await tx
+        .update(marketLegalCapabilityApprovals)
+        .set({
+          status: "DISABLED",
+          counselReference: null,
+          counselReviewedBy: null,
+          counselReviewedAt: null,
+          ownerApprovalReference: null,
+          ownerApprovedBy: null,
+          ownerApprovedAt: null,
+          updatedAt: now,
+        })
+        .where(
+          and(
+            eq(marketLegalCapabilityApprovals.id, capability.id),
+            eq(marketLegalCapabilityApprovals.status, capability.status),
+          ),
+        );
+      await tx.insert(marketLegalCapabilityEvents).values({
+        id: randomUUID(),
+        marketId: input.marketId,
+        capability: capability.capability,
+        eventType: "CAPABILITY_DISABLED",
+        fromStatus: capability.status,
+        toStatus: "DISABLED",
+        actorId: input.actorId,
+        reference: referenceCode,
+        createdAt: now,
+      });
+    }
+
     const [updated] = await tx
       .update(marketLegalIntakes)
       .set({
         activationStatus: "SUSPENDED",
+        reviewStatus: "NOT_REVIEWED",
+        counselReviewedBy: null,
+        counselReviewedAt: null,
+        counselReviewReference: null,
+        counselApprovalStatus: "BLOCKED",
+        counselApprovalBlocker: "COUNSEL_SIGNATURE_VERIFICATION_UNAVAILABLE",
+        counselApprovedBy: null,
+        counselApprovedAt: null,
+        counselApprovalReference: null,
+        ownerApprovalStatus: "BLOCKED",
+        ownerApprovedBy: null,
+        ownerApprovedAt: null,
+        ownerApprovalReference: null,
+        technicalVerificationStatus: "NOT_RUN",
+        technicalVerifiedBy: null,
+        technicalVerifiedAt: null,
+        technicalVerificationReference: null,
         suspendedBy: input.actorId,
         suspendedAt: now,
         suspensionReference: referenceCode,
@@ -963,6 +1029,36 @@ export async function suspendCountryReadiness(input: {
       })
       .where(eq(marketLegalIntakes.id, locked.id))
       .returning();
+    if (locked.counselApprovalStatus !== "BLOCKED") {
+      await writeEvent(tx, {
+        intakeId: locked.id,
+        eventType: "COUNSEL_APPROVAL_BLOCKED",
+        actorId: input.actorId,
+        fromStatus: locked.counselApprovalStatus,
+        toStatus: "BLOCKED",
+        referenceCode,
+      });
+    }
+    if (locked.ownerApprovalStatus !== "BLOCKED") {
+      await writeEvent(tx, {
+        intakeId: locked.id,
+        eventType: "OWNER_APPROVAL_BLOCKED",
+        actorId: input.actorId,
+        fromStatus: locked.ownerApprovalStatus,
+        toStatus: "BLOCKED",
+        referenceCode,
+      });
+    }
+    if (locked.technicalVerificationStatus !== "NOT_RUN") {
+      await writeEvent(tx, {
+        intakeId: locked.id,
+        eventType: "TECHNICAL_VERIFICATION_BLOCKED",
+        actorId: input.actorId,
+        fromStatus: locked.technicalVerificationStatus,
+        toStatus: "NOT_RUN",
+        referenceCode,
+      });
+    }
     await writeEvent(tx, {
       intakeId: locked.id,
       eventType: "MARKET_SUSPENDED",

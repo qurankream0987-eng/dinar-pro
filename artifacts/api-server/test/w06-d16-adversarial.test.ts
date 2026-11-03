@@ -157,6 +157,7 @@ await db
 
 const envNames = [
   "DINAR_DEPLOYMENT_ENV",
+  "REPLIT_DEPLOYMENT",
   "DINAR_COUNSEL_REVIEWER_IDS",
   "DINAR_COUNSEL_APPROVER_IDS",
   "DINAR_LEGAL_OWNER_IDS",
@@ -810,7 +811,7 @@ await test("D16-B07 an unauthorised or cross-market caller reaches nothing", asy
   await forceDisabledIntake(HOME);
 });
 
-await test("D16-B08 an in-flight enable overwrites a concurrent emergency disable (D16-BL-04)", async () => {
+await test("D16-B08 an in-flight enable cannot overwrite a concurrent emergency disable", async () => {
   deployed();
   await forceActivatedIntake(HOME);
   await resetCapability(HOME, "CASH_PAYMENT");
@@ -862,13 +863,12 @@ await test("D16-B08 an in-flight enable overwrites a concurrent emergency disabl
     await blocker.query("BEGIN");
     await blocker.query("SELECT id FROM market_legal_capability_approvals WHERE id = $1 FOR UPDATE", [row.id]);
 
-    // The stop is issued first. Its admin check, market read and capability read are all plain
-    // SELECTs, so it reaches its UPDATE and parks on the tuple lock the blocker holds.
+    // The stop is issued first. Its locking capability read parks on the tuple lock the blocker
+    // holds, preserving the operation order before either transition can write.
     const stop = settle("stop", disableMarketCapability({ actorId: admin.id, marketId: HOME, capability: "CASH_PAYMENT" }));
     await waitForBlockedTransaction(watcher, 1, () => `transitions ${JSON.stringify(outcomes)}; `);
 
-    // The approval starts second. Its reads are not blocked by a row lock, so it observes the
-    // pre-stop status and queues its own UPDATE behind the stop.
+    // The approval starts second and queues its locking read behind the stop.
     const grant = settle(
       "grant",
       enableMarketCapability({ actorId: owner.id, marketId: HOME, capability: "CASH_PAYMENT", reference: "W06-RACE" }),
@@ -876,19 +876,15 @@ await test("D16-B08 an in-flight enable overwrites a concurrent emergency disabl
     await waitForBlockedTransaction(watcher, 2, () => `transitions ${JSON.stringify(outcomes)}; `);
     await blocker.query("COMMIT");
     await Promise.allSettled([stop, grant]);
+    assert.equal(outcomes.stop, "resolved", JSON.stringify(outcomes));
+    assert.match(outcomes.grant, /^rejected:COUNSEL_REVIEW_REQUIRED/, JSON.stringify(outcomes));
     const final = await db
       .select({ status: marketLegalCapabilityApprovals.status })
       .from(marketLegalCapabilityApprovals)
       .where(eq(marketLegalCapabilityApprovals.id, row.id))
       .limit(1);
 
-    // D16-BL-04: both transitions were queued in the safe order — stop first, approval second —
-    // and neither re-reads the row once it owns the lock. Both UPDATEs are unconditional
-    // `SET status = … WHERE id = …`, so Postgres lets the second writer overwrite the first and
-    // the emergency stop is silently undone. The fix is `.for("update")` in readCapability plus a
-    // status guard on both UPDATEs; when that lands, this assertion must flip to "DISABLED" and
-    // the enable must be refused.
-    assert.equal(final[0]?.status, "ENABLED", `expected the documented lost update; transitions ${JSON.stringify(outcomes)}`);
+    assert.equal(final[0]?.status, "DISABLED", `the emergency stop must win; transitions ${JSON.stringify(outcomes)}`);
     const events = await db
       .select({
         id: marketLegalCapabilityEvents.id,
@@ -899,17 +895,15 @@ await test("D16-B08 an in-flight enable overwrites a concurrent emergency disabl
       .from(marketLegalCapabilityEvents)
       .where(and(eq(marketLegalCapabilityEvents.marketId, HOME), eq(marketLegalCapabilityEvents.capability, "CASH_PAYMENT")));
     const raced = events.filter((event) => !priorIds.has(event.id));
-    // Compared as a set: both transitions were recorded, and the enable is the one that survived.
+    // Only the stop is recorded; the stale enable is rejected after it re-reads the locked row.
     assert.deepEqual(
       [...raced.map((event) => event.eventType)].sort(),
-      ["CAPABILITY_DISABLED", "OWNER_ENABLED"],
+      ["CAPABILITY_DISABLED"],
       JSON.stringify(raced),
     );
-    // The enable's own audit row is the proof that it wrote from a stale read: it records leaving
-    // OWNER_APPROVAL_REQUIRED although the row it overwrote had already been set to DISABLED.
-    const enabled = raced.find((event) => event.eventType === "OWNER_ENABLED");
-    assert.equal(enabled?.fromStatus, "OWNER_APPROVAL_REQUIRED", JSON.stringify(enabled));
-    assert.equal(enabled?.toStatus, "ENABLED", JSON.stringify(enabled));
+    const disabled = raced.find((event) => event.eventType === "CAPABILITY_DISABLED");
+    assert.equal(disabled?.fromStatus, "OWNER_APPROVAL_REQUIRED", JSON.stringify(disabled));
+    assert.equal(disabled?.toStatus, "DISABLED", JSON.stringify(disabled));
   } finally {
     await blocker.query("ROLLBACK").catch(() => undefined);
     blocker.release();
@@ -1356,8 +1350,25 @@ await test("D16-D12 suspension stops new access immediately and the record survi
 
   const overview = await request(`/admin/compliance/markets/${HOME}/capabilities`, "GET", undefined, admin);
   const browsing = overview.data.capabilities.find((item: any) => item.capability === "BROWSING");
-  assert.equal(browsing.status, "BLOCKED", "a suspended country must not display an enabled capability");
+  assert.equal(browsing.status, "DISABLED", "suspension retires the stored approval instead of only masking it");
   assert.equal(browsing.enabled, false);
+  const [storedCapability] = await db
+    .select({
+      status: marketLegalCapabilityApprovals.status,
+      counselReference: marketLegalCapabilityApprovals.counselReference,
+      ownerApprovalReference: marketLegalCapabilityApprovals.ownerApprovalReference,
+    })
+    .from(marketLegalCapabilityApprovals)
+    .where(
+      and(
+        eq(marketLegalCapabilityApprovals.marketId, HOME),
+        eq(marketLegalCapabilityApprovals.capability, "BROWSING"),
+      ),
+    )
+    .limit(1);
+  assert.equal(storedCapability?.status, "DISABLED");
+  assert.equal(storedCapability?.counselReference, null);
+  assert.equal(storedCapability?.ownerApprovalReference, null);
 
   const unsuspended = await request(
     `/admin/compliance/country-readiness/${HOME}/activate`,
@@ -1369,15 +1380,15 @@ await test("D16-D12 suspension stops new access immediately and the record survi
   assert.equal(errorCode(unsuspended), "COUNTRY_ACTIVATION_PREREQUISITES_MISSING");
   assert.equal((await request("/listings")).status, 409);
 
-  // D16-BL-07: suspension does not invalidate the approval ladder. The counsel, owner and
-  // technical approvals all survive the emergency stop, so the only thing standing between a
-  // suspension and a re-activation is the technical activator's reference code plus a resolved
-  // topic package — no fresh counsel review is required. The fix is to expire the ladder on
-  // suspension (or require a new counsel review before re-activation).
+  // Suspension expires the country-level approval ladder; reactivation requires a fresh review.
   const afterSuspension = await request(`/admin/compliance/country-readiness/${HOME}`, "GET", undefined, admin);
-  assert.equal(afterSuspension.data.intake.counselApprovalStatus, "APPROVED", "the approval ladder outlives the suspension");
-  assert.equal(afterSuspension.data.intake.ownerApprovalStatus, "APPROVED");
-  assert.equal(afterSuspension.data.intake.technicalVerificationStatus, "PASSED");
+  assert.equal(afterSuspension.data.intake.reviewStatus, "NOT_REVIEWED");
+  assert.equal(afterSuspension.data.intake.counselApprovalStatus, "BLOCKED");
+  assert.equal(afterSuspension.data.intake.ownerApprovalStatus, "BLOCKED");
+  assert.equal(afterSuspension.data.intake.technicalVerificationStatus, "NOT_RUN");
+  assert.equal(afterSuspension.data.intake.counselApprovedBy, null);
+  assert.equal(afterSuspension.data.intake.ownerApprovedBy, null);
+  assert.equal(afterSuspension.data.intake.technicalVerifiedBy, null);
 
   await resetCapability(HOME, "BROWSING");
   await forceDisabledIntake(HOME);
@@ -1426,19 +1437,25 @@ await test("D16-D15 the gate is only exempt when the environment declares develo
   assert.equal(marketLegalGateEnforced({ NODE_ENV: "production" }), true);
   assert.equal(marketLegalGateEnforced({ NODE_ENV: "development", DINAR_DEPLOYMENT_ENV: "staging" }), true);
   assert.equal(marketLegalGateEnforced({ NODE_ENV: "development", DINAR_DEPLOYMENT_ENV: "review-app" }), true);
+  assert.equal(marketLegalGateEnforced({ NODE_ENV: "development", REPLIT_DEPLOYMENT: "1" }), true);
   assert.equal(marketLegalGateEnforced({}), true);
 
-  // D16-BL-01: the exemption keys on NODE_ENV alone, so a deployment that inherits
-  // NODE_ENV=development and never sets DINAR_DEPLOYMENT_ENV serves the market with every
-  // legal gate off. Recorded here, not asserted as correct behaviour.
+  // A deployment marker must keep the legal gate on even if NODE_ENV says development.
   delete process.env.DINAR_DEPLOYMENT_ENV;
+  const priorReplitDeployment = process.env.REPLIT_DEPLOYMENT;
+  process.env.REPLIT_DEPLOYMENT = "1";
   assert.equal(process.env.NODE_ENV, "development");
   await forceDisabledIntake(HOME);
   await resetCapability(HOME, "BROWSING");
-  const unguarded = await request("/listings");
-  assert.equal(unguarded.status, 200, "with the deployment environment undeclared the browse gate is off");
-  const unguardedCapability = await assertMarketLegalCapability(HOME, "TRANSACTIONS");
-  assert.deepEqual(unguardedCapability, { enforced: false, enabled: true });
+  const guarded = await request("/listings");
+  assert.equal(guarded.status, 409, guarded.text);
+  assert.equal(errorCode(guarded), "COUNTRY_INTAKE_NOT_ACTIVE");
+  await assert.rejects(
+    assertMarketLegalCapability(HOME, "TRANSACTIONS"),
+    (error: any) => error?.code === "COUNTRY_INTAKE_NOT_ACTIVE",
+  );
+  if (priorReplitDeployment === undefined) delete process.env.REPLIT_DEPLOYMENT;
+  else process.env.REPLIT_DEPLOYMENT = priorReplitDeployment;
   process.env.DINAR_DEPLOYMENT_ENV = "production";
 });
 
@@ -1499,12 +1516,17 @@ await test("D16-E16 the incident ladder cannot be skipped and its trail cannot b
   const reopen = await transition("RECORD_CONTAINMENT", { summary: "Wave-06 fixture: attempted reopen." });
   assert.equal(reopen.status, 409, reopen.text);
 
-  // D16-BL-05: a closed incident can still be downgraded, so the record of what happened at the
-  // time is rewritten without any counsel or owner step. The fix is a status guard on
-  // CHANGE_SEVERITY once the incident is CLOSED (or a required reference plus a designated actor).
+  // Closed incident records are immutable through both the transition service and direct SQL.
   const downgrade = await transition("CHANGE_SEVERITY", { severity: "LOW" });
-  assert.equal(downgrade.status, 200, downgrade.text);
-  assert.equal(downgrade.data.severity, "LOW");
+  assert.equal(downgrade.status, 409, downgrade.text);
+  assert.equal(errorCode(downgrade), "INCIDENT_CLOSED_IMMUTABLE");
+  const directDowngrade = db
+    .update(securityIncidents)
+    .set({ severity: "LOW", updatedAt: new Date() })
+    .where(eq(securityIncidents.id, id));
+  await assert.rejects(directDowngrade, (error: unknown) => nestedSqlState(error) === "55000");
+  const unchanged = await request(`/admin/security/incidents/${id}`, "GET", undefined, admin);
+  assert.equal(unchanged.data.incident.severity, "HIGH");
 
   await assert.rejects(
     db.update(securityIncidentEvents).set({ reference: "W06-REWRITE" }).where(eq(securityIncidentEvents.incidentId, id)),
@@ -1521,19 +1543,23 @@ await test("D16-E16 the incident ladder cannot be skipped and its trail cannot b
 
   const trail = await request(`/admin/security/incidents/${id}`, "GET", undefined, admin);
   assert.equal(trail.status, 200, trail.text);
-  assert.ok(trail.data.events.length >= 7, JSON.stringify(trail.data.events.length));
+  assert.equal(trail.data.events.length, 6, JSON.stringify(trail.data.events.length));
 
-  // A fabricated incident can still be written straight to the register: security_incidents itself
-  // has no append-only trigger, only its event trail does. The row is therefore readable through
-  // the admin API with no OPENED event behind it, which is how a fabricated record would appear.
-  const fabricatedId = await createIncidentDirectly();
-  const register = await request(`/admin/security/incidents/${fabricatedId}`, "GET", undefined, admin);
-  assert.equal(register.status, 200, register.text);
-  assert.equal(register.data.incident.status, "OPEN");
-  assert.deepEqual(register.data.events, [], "a hand-written incident has no audit trail to validate");
+  // Direct row insertion without its matching OPENED event must roll back at commit.
+  const fabricatedSummary = `Wave-06 direct incident fixture ${runId}`;
+  await assert.rejects(
+    createIncidentDirectly(fabricatedSummary),
+    (error: unknown) => nestedSqlState(error) === "23514",
+  );
+  const fabricated = await db
+    .select({ id: securityIncidents.id })
+    .from(securityIncidents)
+    .where(eq(securityIncidents.summary, fabricatedSummary))
+    .limit(1);
+  assert.deepEqual(fabricated, []);
 });
 
-async function createIncidentDirectly(): Promise<string> {
+async function createIncidentDirectly(summary: string): Promise<string> {
   const now = new Date();
   const id = randomUUID();
   await db.insert(securityIncidents).values({
@@ -1541,7 +1567,7 @@ async function createIncidentDirectly(): Promise<string> {
     category: "SECURITY",
     severity: "CRITICAL",
     status: "OPEN",
-    summary: "Wave-06 audit fixture written straight to the table.",
+    summary,
     affectedSystems: ["api"],
     detectedAt: now,
     openedBy: admin.id,
@@ -1607,7 +1633,7 @@ await test("D16-E17 an incident closed without counsel review still cannot claim
 
 // ─── F. reference hygiene ────────────────────────────────────────────────────
 
-await test("D16-F18 the reference field accepts a document URL although it promises a code only (D16-BL-06)", async () => {
+await test("D16-F18 evidence and capability review reject document URLs", async () => {
   deployed();
   await resetCountryPackage(ABROAD);
   const openedForReference = await request(
@@ -1631,25 +1657,17 @@ await test("D16-F18 the reference field accepts a document URL although it promi
     },
     admin,
   );
-  // The reject message in cleanReference promises "a reference code, not a link or a document",
-  // yet the pattern ^[A-Za-z][A-Za-z0-9._:/-]{2,199}$ is satisfied by any HTTPS URL, so a locator
-  // that can move, be access-controlled, or be revoked privately is recorded as the evidence
-  // reference. When the guard is tightened this assertion must flip to 400 REFERENCE_INVALID.
-  assert.equal(evidence.status, 201, evidence.text);
-  assert.equal(evidence.data.referenceCode, urlAsReference);
+  assert.equal(evidence.status, 400, evidence.text);
+  assert.equal(errorCode(evidence), "REFERENCE_INVALID");
 
-  const stored = await db
-    .select({ referenceCode: marketLegalEvidence.referenceCode })
+  const storedEvidence = await db
+    .select({ id: marketLegalEvidence.id })
     .from(marketLegalEvidence)
-    .where(eq(marketLegalEvidence.id, evidence.data.id))
+    .where(eq(marketLegalEvidence.referenceCode, urlAsReference))
     .limit(1);
-  assert.equal(stored[0]?.referenceCode, urlAsReference, "the URL is persisted verbatim in the compliance record");
+  assert.deepEqual(storedEvidence, []);
 
-  await db
-    .update(marketLegalEvidence)
-    .set({ status: "REJECTED", reviewedBy: counsel.id, reviewedAt: new Date(), expiresAt: null, updatedAt: new Date() })
-    .where(eq(marketLegalEvidence.id, evidence.data.id));
-
+  await resetCapability(HOME, "DELIVERY_OPERATIONS");
   await openCapabilityReview(HOME, "DELIVERY_OPERATIONS");
   const capabilityReview = await request(
     `/admin/compliance/markets/${HOME}/capabilities/DELIVERY_OPERATIONS/counsel-review`,
@@ -1657,10 +1675,13 @@ await test("D16-F18 the reference field accepts a document URL although it promi
     { outcome: "READY_FOR_OWNER_REVIEW", reference: urlAsReference },
     counsel,
   );
-  assert.equal(capabilityReview.status, 200, capabilityReview.text);
-  assert.equal(capabilityReview.data.counselReviewRecorded, true);
+  assert.equal(capabilityReview.status, 400, capabilityReview.text);
+  assert.equal(errorCode(capabilityReview), "REFERENCE_INVALID");
   const [capabilityRow] = await db
-    .select({ counselReference: marketLegalCapabilityApprovals.counselReference })
+    .select({
+      status: marketLegalCapabilityApprovals.status,
+      counselReference: marketLegalCapabilityApprovals.counselReference,
+    })
     .from(marketLegalCapabilityApprovals)
     .where(
       and(
@@ -1669,7 +1690,8 @@ await test("D16-F18 the reference field accepts a document URL although it promi
       ),
     )
     .limit(1);
-  assert.equal(capabilityRow?.counselReference, urlAsReference, "the approval trail stores a private locator as counsel's evidence");
+  assert.equal(capabilityRow?.status, "COUNSEL_REVIEW_REQUIRED");
+  assert.equal(capabilityRow?.counselReference, null);
   await resetCapability(HOME, "DELIVERY_OPERATIONS");
 });
 

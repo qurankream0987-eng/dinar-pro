@@ -383,10 +383,10 @@ await test("MM-20 replay wave 02's relaxed constraint and prove it accepts a con
     `INSERT INTO orders
       (id, buyer_id, seller_id, market_id, country_code, price_version_id, currency_code,
        minor_unit_scale, unit_price_minor, quantity, subtotal_minor, platform_fee_minor,
-       seller_amount_minor, status, reservation_expires_at, data, created_at, updated_at)
+       seller_amount_minor, order_line_integrity_version, status, reservation_expires_at, data, created_at, updated_at)
      SELECT $1, buyer_id, seller_id, market_id, country_code, price_version_id, currency_code,
        minor_unit_scale, unit_price_minor + 1, quantity, subtotal_minor, platform_fee_minor,
-       seller_amount_minor, status, reservation_expires_at, data, now(), now()
+       seller_amount_minor, 0, status, reservation_expires_at, data, now(), now()
      FROM orders WHERE id = $2`,
     [probeId, target.id],
   );

@@ -21,8 +21,8 @@ FROM markets m, (VALUES
 ) v(id, status, inv, qty, data, price, mode)
 WHERE m.country_code = 'JO';
 -- Orders and money snapshots.
-INSERT INTO orders (id, buyer_id, seller_id, market_id, currency_code, minor_unit_scale, unit_price_minor, quantity, subtotal_minor, platform_fee_minor, seller_amount_minor, status, data, country_code, price_version_id)
-SELECT v.id, v.buyer, 'rh-seller', m.id, m.currency_code, m.minor_unit_scale, v.price, v.qty, v.price * v.qty, v.fee, v.price * v.qty - v.fee, v.status, '{}'::jsonb, 'JO', 'rh-mpv-1'
+INSERT INTO orders (id, buyer_id, seller_id, market_id, currency_code, minor_unit_scale, unit_price_minor, quantity, subtotal_minor, platform_fee_minor, seller_amount_minor, status, data, country_code, price_version_id, order_line_integrity_version)
+SELECT v.id, v.buyer, 'rh-seller', m.id, m.currency_code, m.minor_unit_scale, v.price, v.qty, v.price * v.qty, v.fee, v.price * v.qty - v.fee, v.status, '{}'::jsonb, 'JO', 'rh-mpv-1', 0
 FROM markets m, (VALUES
   ('rh-ord-1', 'rh-buyer-1', 5000, 2, 1000, 'COMPLETED'),
   ('rh-ord-2', 'rh-buyer-2', 6000, 1, 600,  'CREATED'),

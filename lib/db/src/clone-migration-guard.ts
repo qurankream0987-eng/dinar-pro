@@ -58,6 +58,10 @@ export const REVIEWED_PENDING_MIGRATIONS: ReadonlyArray<{ tag: string; sha256: s
   { tag: "0053_d16_country_legal_intake", sha256: "1c74587d36ec1d2f255321023b1441bb0b2113fcde1960b045432a09d2b9ede3" },
   // D17 adds disposable per-conversation summaries plus the trigram index behind owner-scoped search.
   { tag: "0054_conversation_memory", sha256: "7112f4a23aba466fabb9dcf43ac4da6207b649c597f53cf70c168c0976e1d700" },
+  // D16 makes incident records append-only after closure and requires a matching OPENED event.
+  { tag: "0055_d16_incident_integrity", sha256: "88cc4b7da6a788bb27478b1fc07f0160cc536dd36d7b9d3e39e684d8e277d4bd" },
+  // New orders reconcile immutable line items with the financial header; legacy rows remain untouched.
+  { tag: "0056_order_line_integrity", sha256: "3ea1007b7b8252967cee44d6d698df6909a148573d136c7cf5fa07571472d29e" },
 ];
 export const EXPECTED_JOURNAL_ENTRIES =
   EXPECTED_BASELINE_MIGRATIONS + REVIEWED_PENDING_MIGRATIONS.length;

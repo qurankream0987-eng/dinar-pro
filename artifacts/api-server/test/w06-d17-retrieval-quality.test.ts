@@ -202,7 +202,7 @@ await test("D17.8-R6 the trigram index behind retrieval is measured against the 
     trigramIndexBytes: trigramBytes,
     trigramBytesPerMessage: Math.round(trigramBytes / storedMessages),
   };
-  assert.equal(quality.index.present, true, "migration 0055 must have created the trigram index");
+  assert.equal(quality.index.present, true, "the D17 conversation-memory migration must create the trigram index");
   // Calibrated against the D17.1 measurement: the trigram index cost ~2.3KB per ~150-character
   // message. An order of magnitude more per message would mean the index is not fit for this table.
   assert.ok(

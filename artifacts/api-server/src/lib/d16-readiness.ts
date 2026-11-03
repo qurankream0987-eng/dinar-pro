@@ -52,11 +52,12 @@ function reject(status: number, code: string, message: string): never {
 
 /** Unknown or deployed environments enforce the gate; only explicit test/dev is exempt. */
 export function marketLegalGateEnforced(env: Environment = process.env) {
+  // The deploy marker wins over NODE_ENV: a deployment can inherit "development" while serving
+  // real traffic, so only an editor/test process with no deployment marker may use the exemption.
+  if (env.REPLIT_DEPLOYMENT !== undefined) return true;
   const deployment = env.DINAR_DEPLOYMENT_ENV?.trim().toLowerCase();
   if (deployment) {
-    if (deployment === "staging" || deployment === "production") return true;
-    if (deployment === "development" || deployment === "test") return false;
-    return true;
+    return deployment !== "development" && deployment !== "test";
   }
   return env.NODE_ENV !== "development" && env.NODE_ENV !== "test";
 }
@@ -72,7 +73,7 @@ function configuredActorIds(envValue: string | undefined) {
 
 function requireReference(reference: string, label: string) {
   const value = reference.trim();
-  if (!/^[A-Za-z][A-Za-z0-9._:/-]{2,199}$/.test(value))
+  if (!/^[A-Za-z][A-Za-z0-9._/-]{2,199}$/.test(value))
     reject(400, "REFERENCE_INVALID", `${label} يجب أن يكون مرجعاً فقط، لا مستنداً أو بيانات شخصية`);
   return value;
 }
@@ -90,8 +91,9 @@ async function readCapability(
   marketId: string,
   capability: MarketLegalCapability,
   tx: any = db,
+  lock = false,
 ) {
-  const [row] = await tx
+  const query = tx
     .select()
     .from(marketLegalCapabilityApprovals)
     .where(
@@ -99,9 +101,11 @@ async function readCapability(
         eq(marketLegalCapabilityApprovals.marketId, marketId),
         eq(marketLegalCapabilityApprovals.capability, capability),
       ),
-    )
-    .limit(1);
-  return row;
+    );
+  const rows = lock
+    ? await query.for("update").limit(1)
+    : await query.limit(1);
+  return rows[0];
 }
 
 async function countryActivationIsActive(tx: any, marketId: string) {
@@ -242,12 +246,12 @@ export async function requestMarketCapabilityReview(input: {
   return db.transaction(async (tx) => {
     await assertAdminActor(input.actorId, tx);
     await requireMarket(input.marketId, tx);
-    const existing = await readCapability(input.marketId, input.capability, tx);
+    const existing = await readCapability(input.marketId, input.capability, tx, true);
     if (existing?.status === "ENABLED")
       reject(409, "CAPABILITY_ALREADY_ENABLED", "أوقف الصلاحية قبل طلب مراجعة جديدة");
     const now = new Date();
     if (existing) {
-      await tx
+      const [updated] = await tx
         .update(marketLegalCapabilityApprovals)
         .set({
           status: "COUNSEL_REVIEW_REQUIRED",
@@ -259,7 +263,14 @@ export async function requestMarketCapabilityReview(input: {
           ownerApprovedAt: null,
           updatedAt: now,
         })
-        .where(eq(marketLegalCapabilityApprovals.id, existing.id));
+        .where(
+          and(
+            eq(marketLegalCapabilityApprovals.id, existing.id),
+            eq(marketLegalCapabilityApprovals.status, existing.status),
+          ),
+        )
+        .returning({ id: marketLegalCapabilityApprovals.id });
+      if (!updated) reject(409, "CAPABILITY_STATE_CHANGED", "تغيرت حالة المراجعة؛ أعد المحاولة");
     } else {
       await tx.insert(marketLegalCapabilityApprovals).values({
         id: randomUUID(),
@@ -302,7 +313,7 @@ export async function recordMarketCounselReview(input: {
   const reference = requireReference(input.reference, "مرجع مراجعة المستشار");
   return db.transaction(async (tx) => {
     await assertAdminActor(input.actorId, tx);
-    const row = await readCapability(input.marketId, input.capability, tx);
+    const row = await readCapability(input.marketId, input.capability, tx, true);
     if (!row || row.status !== "COUNSEL_REVIEW_REQUIRED")
       reject(409, "COUNSEL_REVIEW_NOT_REQUESTED", "لا يوجد طلب مراجعة مستشار مفتوح");
     const status =
@@ -310,7 +321,7 @@ export async function recordMarketCounselReview(input: {
         ? "OWNER_APPROVAL_REQUIRED"
         : "BLOCKED";
     const now = new Date();
-    await tx
+    const [updated] = await tx
       .update(marketLegalCapabilityApprovals)
       .set({
         status,
@@ -322,7 +333,14 @@ export async function recordMarketCounselReview(input: {
         ownerApprovedAt: null,
         updatedAt: now,
       })
-      .where(eq(marketLegalCapabilityApprovals.id, row.id));
+      .where(
+        and(
+          eq(marketLegalCapabilityApprovals.id, row.id),
+          eq(marketLegalCapabilityApprovals.status, row.status),
+        ),
+      )
+      .returning({ id: marketLegalCapabilityApprovals.id });
+    if (!updated) reject(409, "CAPABILITY_STATE_CHANGED", "تغيرت حالة المراجعة؛ أعد المحاولة");
     await writeCapabilityEvent(tx, {
       marketId: input.marketId,
       capability: input.capability,
@@ -357,13 +375,13 @@ export async function enableMarketCapability(input: {
   return db.transaction(async (tx) => {
     await assertAdminActor(input.actorId, tx);
     await assertCountryActivationReady(input.marketId, tx);
-    const row = await readCapability(input.marketId, input.capability, tx);
+    const row = await readCapability(input.marketId, input.capability, tx, true);
     if (!row || row.status !== "OWNER_APPROVAL_REQUIRED")
       reject(409, "COUNSEL_REVIEW_REQUIRED", "يلزم توثيق مراجعة مستشار منفصلة أولاً");
     if (row.counselReviewedBy === input.actorId)
       reject(403, "SEPARATION_OF_DUTIES_REQUIRED", "لا يجوز للمراجع نفسه اعتماد تفعيل الصلاحية");
     const now = new Date();
-    await tx
+    const [updated] = await tx
       .update(marketLegalCapabilityApprovals)
       .set({
         status: "ENABLED",
@@ -372,7 +390,14 @@ export async function enableMarketCapability(input: {
         ownerApprovedAt: now,
         updatedAt: now,
       })
-      .where(eq(marketLegalCapabilityApprovals.id, row.id));
+      .where(
+        and(
+          eq(marketLegalCapabilityApprovals.id, row.id),
+          eq(marketLegalCapabilityApprovals.status, row.status),
+        ),
+      )
+      .returning({ id: marketLegalCapabilityApprovals.id });
+    if (!updated) reject(409, "CAPABILITY_STATE_CHANGED", "تغيرت حالة الصلاحية؛ أعد المحاولة");
     await writeCapabilityEvent(tx, {
       marketId: input.marketId,
       capability: input.capability,
@@ -399,14 +424,21 @@ export async function disableMarketCapability(input: {
   return db.transaction(async (tx) => {
     await assertAdminActor(input.actorId, tx);
     await requireMarket(input.marketId, tx);
-    const row = await readCapability(input.marketId, input.capability, tx);
+    const row = await readCapability(input.marketId, input.capability, tx, true);
     if (!row) return publicCapabilityRow(input.marketId, input.capability, undefined);
     if (row.status === "DISABLED")
       return publicCapabilityRow(input.marketId, input.capability, row);
-    await tx
+    const [updated] = await tx
       .update(marketLegalCapabilityApprovals)
       .set({ status: "DISABLED", updatedAt: new Date() })
-      .where(eq(marketLegalCapabilityApprovals.id, row.id));
+      .where(
+        and(
+          eq(marketLegalCapabilityApprovals.id, row.id),
+          eq(marketLegalCapabilityApprovals.status, row.status),
+        ),
+      )
+      .returning({ id: marketLegalCapabilityApprovals.id });
+    if (!updated) reject(409, "CAPABILITY_STATE_CHANGED", "تغيرت حالة الصلاحية؛ أعد المحاولة");
     await writeCapabilityEvent(tx, {
       marketId: input.marketId,
       capability: input.capability,
@@ -597,6 +629,8 @@ export async function transitionSecurityIncident(input: {
       .where(eq(securityIncidents.id, input.id))
       .for("update");
     if (!row) reject(404, "INCIDENT_NOT_FOUND", "سجل الحادث غير موجود");
+    if (row.status === "CLOSED")
+      reject(409, "INCIDENT_CLOSED_IMMUTABLE", "لا يمكن تعديل سجل حادث مغلق");
     const now = new Date();
     let status = row.status as SecurityIncidentStatus;
     let eventType:

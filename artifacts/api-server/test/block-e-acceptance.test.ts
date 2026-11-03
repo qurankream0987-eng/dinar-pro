@@ -14,6 +14,7 @@ import {
   db,
   listingPromotions,
   offers,
+  orderItems,
   orders,
   paymentIntents,
   pool,
@@ -379,14 +380,25 @@ await test("setup: providers off, disposable markets, fresh actors, admin plans,
   const historical = await buy(buyer, L.charger!);
   const [historicalOrder] = await db.select().from(orders).where(eq(orders.id, historical.id));
   assert.ok(historicalOrder);
+  const historicalItems = await db.select().from(orderItems).where(eq(orderItems.orderId, historical.id));
+  const historicalCopyId = randomUUID();
   const historicalRate = 1_500;
   const historicalFee = calculatePlatformFeeMinor(historicalOrder.subtotalMinor, historicalRate);
-  await db.insert(orders).values({
-    ...historicalOrder,
-    id: randomUUID(),
-    platformFeeMinor: historicalFee,
-    sellerAmountMinor: historicalOrder.subtotalMinor - historicalFee,
-    data: { ...historicalOrder.data, commissionRateBps: historicalRate },
+  await db.transaction(async (tx) => {
+    await tx.insert(orders).values({
+      ...historicalOrder,
+      id: historicalCopyId,
+      platformFeeMinor: historicalFee,
+      sellerAmountMinor: historicalOrder.subtotalMinor - historicalFee,
+      data: { ...historicalOrder.data, commissionRateBps: historicalRate },
+    });
+    await tx.insert(orderItems).values(
+      historicalItems.map((item) => ({
+        ...item,
+        id: randomUUID(),
+        orderId: historicalCopyId,
+      })),
+    );
   });
 
   legacyOrders = (

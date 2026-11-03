@@ -218,5 +218,13 @@
   {
     "tag": "0054_conversation_memory",
     "sha256": "7112f4a23aba466fabb9dcf43ac4da6207b649c597f53cf70c168c0976e1d700"
+  },
+  {
+    "tag": "0055_d16_incident_integrity",
+    "sha256": "88cc4b7da6a788bb27478b1fc07f0160cc536dd36d7b9d3e39e684d8e277d4bd"
+  },
+  {
+    "tag": "0056_order_line_integrity",
+    "sha256": "3ea1007b7b8252967cee44d6d698df6909a148573d136c7cf5fa07571472d29e"
   }
 ]

@@ -251,7 +251,7 @@ await test("C7-03 dispute evidence: both parties may add statements to an open d
   const orderId = randomUUID();
   const [market] = await db.select().from(markets).where(eq(markets.id, "JO"));
   try {
-    await db.insert(orders).values({ id: orderId, buyerId: other.id, sellerId: user.id, marketId: "JO", countryCode: market!.countryCode, currencyCode: market!.currencyCode, minorUnitScale: market!.minorUnitScale, unitPriceMinor: 10_000, quantity: 1, subtotalMinor: 10_000, platformFeeMinor: 1_000, sellerAmountMinor: 9_000, status: "DISPUTED", data: { listingId } } as never);
+    await db.insert(orders).values({ id: orderId, buyerId: other.id, sellerId: user.id, marketId: "JO", countryCode: market!.countryCode, currencyCode: market!.currencyCode, minorUnitScale: market!.minorUnitScale, unitPriceMinor: 10_000, quantity: 1, subtotalMinor: 10_000, platformFeeMinor: 1_000, sellerAmountMinor: 9_000, orderLineIntegrityVersion: 0, status: "DISPUTED", data: { listingId } } as never);
   } catch (error) {
     // Database invariants may forbid a hand-made order; the evidence authority is then covered by its 404 path only.
     assert.equal((await request(`/orders/${orderId}/dispute/evidence`, "POST", { statement: "وصل المنتج مكسورًا" }, other.cookie)).status, 404);
