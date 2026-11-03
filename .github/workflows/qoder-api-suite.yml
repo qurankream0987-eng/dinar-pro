@@ -90,6 +90,7 @@ on:
           - d4-d5-authorization
           - d6-g2-negotiation
           - ai-foundation
+          - wave04-d10-d12
           - wave06-d16-d17
           - wave06-d17-memory
       flags:
