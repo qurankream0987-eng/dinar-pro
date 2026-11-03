@@ -380,19 +380,20 @@ test("W04-10-03 follow-ups and corrections read the live record; the model's inv
     assert.equal(await cartLines(user.id), 0, "the claim added nothing to the cart");
 
     plan({
-      key: `أقصد`,
+      key: `والأول`,
       reply: "سعره 973 دنانير فقط",
       toolSequence: [
         { name: "searchListings", arguments: { query: `جوال ${run}` } },
         { name: "getResource", arguments: { fromLatestSearch: true, position: 1 } },
       ],
     });
-    const corrected = await say(user.cookie, user.conv, `لا، أقصد الأول من جوالات ${run} كم سعره؟`);
+    const corrected = await say(user.cookie, user.conv, `والأول من جوالات ${run} كم سعره؟`);
     assert.equal(corrected.status, 200, corrected.body);
     const correctedSearch = lastFeedback.find((item) => item.tool === "searchListings" && item.status === "SUCCEEDED")
       ?.result?.listings as { id: string; unitPrice: unknown }[];
     const correctedRead = lastFeedback.find((item) => item.tool === "getResource" && item.status === "SUCCEEDED");
-    assert.equal(correctedRead?.result.listings[0].id, correctedSearch[0].id, "the correction reads the first listing instead");
+    assert.ok(correctedSearch && correctedRead, `the follow-up ran the production loop too: ${corrected.body}`);
+    assert.equal(correctedRead!.result.listings[0].id, correctedSearch[0].id, "and it read the first listing");
     assert.doesNotMatch(corrected.body, /973\s*دنانير/u, "an amount no read recorded never reaches the user");
     assert.match(corrected.body, /هذه نتائج القراءة الحالية من DINAR/u, "the unrecorded amount is replaced by DINAR's own words");
     assert.equal(sawUntrustedDataRule, true, "tool results are framed to the model as untrusted data");
@@ -960,7 +961,15 @@ test("W04-11-14 no assistant turn of this run claims an action the ledger does n
     const settled = (await db.select().from(aiResultSets).where(eq(aiResultSets.conversationId, row.conversationId))).find(
       (record) => (record.query as any)?.kind === "ACTION" && (record.query as any)?.status === "CONFIRMED",
     );
-    assert.ok(settled, `a completion claim needs a confirmed ledger row: ${row.body.slice(0, 80)}`);
+    assert.ok(
+      settled,
+      `a completion claim needs a confirmed ledger row: ${JSON.stringify({
+        messageId: row.id,
+        conversationId: row.conversationId,
+        body: row.body.slice(0, 80),
+        metadata: Object.keys((row.metadata as object | null) ?? {}),
+      })}`,
+    );
   }
   // Nothing in this run could reach a provider: the owner switch makes the real factory return
   // the blocked gateway, and the CI net guard fails the suite on any outbound attempt.
