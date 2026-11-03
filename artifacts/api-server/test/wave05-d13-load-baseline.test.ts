@@ -95,6 +95,12 @@ const watchdog = setTimeout(() => {
 // are measuring; pg_stat_activity excludes it with pg_backend_pid(), so the counts below are the
 // application's alone.
 const sampler = await pool.connect();
+// LD-14 terminates every backend on purpose. pg reports those terminations on the pool as 'error'
+// events; without a listener Node raises them as uncaught exceptions and the runner fails a suite
+// whose assertions all passed.
+pool.on("error", (error) => {
+  console.warn("LOAD_POOL_ERROR", error instanceof Error ? error.message : String(error));
+});
 type Sample = { total: number; active: number; idleInTransaction: number; lockWaits: number };
 const sampleActivity = async (): Promise<Sample> => {
   const row = (
@@ -212,7 +218,7 @@ await test("LD-01 grow the synthetic market the load runs against", async () => 
   try {
     await db.execute(sql`
     INSERT INTO offers (id, seller_id, market_id, status, unit_price_minor, pricing_mode, inventory_mode, available_quantity, reserved_quantity, data, created_at, updated_at)
-    SELECT 'load-' || lpad(g::text, 7, '0'),
+    SELECT '10000000-0000-4000-8000-' || lpad(g::text, 12, '0'),
            'bench-seller-' || (1 + g % ${BENCH_SELLERS}),
            'JO',
            CASE WHEN g % 19 = 0 THEN 'PAUSED' ELSE 'PUBLISHED' END,
@@ -232,7 +238,9 @@ await test("LD-01 grow the synthetic market the load runs against", async () => 
     throw error;
   }
   stage("ld01:offers");
-  const [count] = (await db.execute(sql`SELECT count(*)::int AS n FROM offers WHERE id LIKE 'load-%'`)).rows as Array<{ n: number }>;
+  // The synthetic rows are identified by their seller prefix: listing ids must stay UUID-shaped or
+  // GET /listings/:id rejects them before the listing is ever read.
+  const [count] = (await db.execute(sql`SELECT count(*)::int AS n FROM offers WHERE seller_id LIKE 'bench-seller-%'`)).rows as Array<{ n: number }>;
   report.ld01 = { offers: count.n, target: LISTINGS };
   stage("ld01:count", { offers: count.n, target: LISTINGS });
   assert.ok(count.n >= LISTINGS, "the synthetic catalog reached its target size");
@@ -338,7 +346,7 @@ try {
   stage("fixtures:actors", { buyers: buyers.length, sellers: sellerActors.length });
 
   listingIds.push(
-    ...(await db.execute(sql`SELECT id FROM offers WHERE id LIKE 'load-%' AND status = 'PUBLISHED' AND reserved_quantity < available_quantity ORDER BY id LIMIT 240`))
+    ...(await db.execute(sql`SELECT id FROM offers WHERE seller_id LIKE 'bench-seller-%' AND status = 'PUBLISHED' AND reserved_quantity < available_quantity ORDER BY id LIMIT 240`))
       .rows.map((row: any) => row.id as string),
   );
   stage("fixtures:listingIds", { listings: listingIds.length });
@@ -391,6 +399,7 @@ await test("LD-10 public browsing and marketplace search", async () => {
       const cell = cellOf(workload, concurrency);
       assert.equal(cell.completed, requests, `${workload} c=${concurrency}: every request completed`);
       assert.equal(cell.serverErrors, 0, `${workload} c=${concurrency}: read path returned no 5xx: ${JSON.stringify(cell.errors ?? {})}`);
+      assert.equal(cell.clientErrors, 0, `${workload} c=${concurrency}: the read path answered 2xx, not 4xx: ${JSON.stringify(cell.errors ?? {})}`);
       assert.ok(cell.p50 <= cell.p95 && cell.p95 <= cell.p99, `${workload} c=${concurrency}: percentiles are ordered`);
     }
   }
