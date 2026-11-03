@@ -7,7 +7,7 @@
  * Every database write that stands in for an out-of-band state (an activated country package, an
  * ENABLED capability row) is labelled as such, because no API path can produce it today.
  */
-import { after, test } from "node:test";
+import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createHash, randomUUID } from "node:crypto";
 import { and, eq, inArray, sql } from "drizzle-orm";
@@ -184,34 +184,6 @@ function rolesProbe() {
     owner: owner.id,
   });
 }
-
-after(async () => {
-  for (const [name, value] of previousEnv) {
-    if (value === undefined) delete process.env[name];
-    else process.env[name] = value;
-  }
-  // Evidence and intake events are append-only or event-referenced, so the fixture state is
-  // rolled back by neutralising the rows rather than deleting them.
-  await db.delete(marketLegalCapabilityApprovals);
-  await forceDisabledIntake(HOME);
-  await forceDisabledIntake(ABROAD);
-  await db
-    .update(marketLegalIntakeTopics)
-    .set({
-      disposition: "NOT_REQUIRED",
-      reviewStatus: "NOT_REVIEWED",
-      evidenceRequirementStatus: "NOT_REVIEWED",
-      policyRequirementStatus: "NOT_REVIEWED",
-      requiredEvidenceTypes: [],
-      requiredPolicyVersions: [],
-    })
-    .where(sql`true`);
-  await db
-    .update(marketLegalEvidence)
-    .set({ status: "REJECTED", reviewedBy: counsel.id, reviewedAt: new Date(), expiresAt: null })
-    .where(eq(marketLegalEvidence.intakeId, `d16-intake-${ABROAD}`));
-  await server.close();
-});
 
 function deployed() {
   process.env.DINAR_DEPLOYMENT_ENV = "production";
@@ -862,11 +834,16 @@ await test("D16-B08 an in-flight enable overwrites a concurrent emergency disabl
     .where(and(eq(marketLegalCapabilityApprovals.marketId, HOME), eq(marketLegalCapabilityApprovals.capability, "CASH_PAYMENT")))
     .limit(1);
   assert.ok(row);
+  // The trail is append-only and this disposable database is shared with the sibling suite, so
+  // the evidence below is the delta this race added, not the whole history of the capability.
   const priorEvents = await db
     .select({ id: marketLegalCapabilityEvents.id })
     .from(marketLegalCapabilityEvents)
     .where(and(eq(marketLegalCapabilityEvents.marketId, HOME), eq(marketLegalCapabilityEvents.capability, "CASH_PAYMENT")));
   const priorIds = new Set(priorEvents.map((event) => event.id));
+
+  // The blocker owns the tuple lock; the watcher is a separate connection because polling the
+  // blocked transaction's own client would queue behind it.
   const blocker = await pool.connect();
   const watcher = await pool.connect();
   const outcomes = { stop: "not started", grant: "not started" };
@@ -884,8 +861,14 @@ await test("D16-B08 an in-flight enable overwrites a concurrent emergency disabl
   try {
     await blocker.query("BEGIN");
     await blocker.query("SELECT id FROM market_legal_capability_approvals WHERE id = $1 FOR UPDATE", [row.id]);
+
+    // The stop is issued first. Its admin check, market read and capability read are all plain
+    // SELECTs, so it reaches its UPDATE and parks on the tuple lock the blocker holds.
     const stop = settle("stop", disableMarketCapability({ actorId: admin.id, marketId: HOME, capability: "CASH_PAYMENT" }));
     await waitForBlockedTransaction(watcher, 1, () => `transitions ${JSON.stringify(outcomes)}; `);
+
+    // The approval starts second. Its reads are not blocked by a row lock, so it observes the
+    // pre-stop status and queues its own UPDATE behind the stop.
     const grant = settle(
       "grant",
       enableMarketCapability({ actorId: owner.id, marketId: HOME, capability: "CASH_PAYMENT", reference: "W06-RACE" }),
@@ -899,8 +882,12 @@ await test("D16-B08 an in-flight enable overwrites a concurrent emergency disabl
       .where(eq(marketLegalCapabilityApprovals.id, row.id))
       .limit(1);
 
-    // D16-BL-04: the stop is issued first and the enable reads while the stop is blocked; this
-    // records whether stale approval can overwrite an emergency disable.
+    // D16-BL-04: both transitions were queued in the safe order — stop first, approval second —
+    // and neither re-reads the row once it owns the lock. Both UPDATEs are unconditional
+    // `SET status = … WHERE id = …`, so Postgres lets the second writer overwrite the first and
+    // the emergency stop is silently undone. The fix is `.for("update")` in readCapability plus a
+    // status guard on both UPDATEs; when that lands, this assertion must flip to "DISABLED" and
+    // the enable must be refused.
     assert.equal(final[0]?.status, "ENABLED", `expected the documented lost update; transitions ${JSON.stringify(outcomes)}`);
     const events = await db
       .select({
@@ -912,11 +899,14 @@ await test("D16-B08 an in-flight enable overwrites a concurrent emergency disabl
       .from(marketLegalCapabilityEvents)
       .where(and(eq(marketLegalCapabilityEvents.marketId, HOME), eq(marketLegalCapabilityEvents.capability, "CASH_PAYMENT")));
     const raced = events.filter((event) => !priorIds.has(event.id));
+    // Compared as a set: both transitions were recorded, and the enable is the one that survived.
     assert.deepEqual(
       [...raced.map((event) => event.eventType)].sort(),
       ["CAPABILITY_DISABLED", "OWNER_ENABLED"],
       JSON.stringify(raced),
     );
+    // The enable's own audit row is the proof that it wrote from a stale read: it records leaving
+    // OWNER_APPROVAL_REQUIRED although the row it overwrote had already been set to DISABLED.
     const enabled = raced.find((event) => event.eventType === "OWNER_ENABLED");
     assert.equal(enabled?.fromStatus, "OWNER_APPROVAL_REQUIRED", JSON.stringify(enabled));
     assert.equal(enabled?.toStatus, "ENABLED", JSON.stringify(enabled));
@@ -1682,6 +1672,7 @@ await test("D16-F18 the reference field accepts a document URL although it promi
   assert.equal(capabilityRow?.counselReference, urlAsReference, "the approval trail stores a private locator as counsel's evidence");
   await resetCapability(HOME, "DELIVERY_OPERATIONS");
 });
+
 // ─── teardown ────────────────────────────────────────────────────────────────
 
 /**
