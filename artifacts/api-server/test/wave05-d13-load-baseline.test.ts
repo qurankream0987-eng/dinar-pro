@@ -18,9 +18,9 @@ import { test, after } from "node:test";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { cpus, loadavg, totalmem } from "node:os";
-import { sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import app from "../src/app";
-import { db, pool } from "@workspace/db";
+import { db, markets, pool } from "@workspace/db";
 import { refreshSearchDocuments } from "../src/lib/marketplace-search-index";
 import { resolveMarket } from "../src/lib/markets";
 import { submitInquiryMessage } from "../src/lib/inquiries";
@@ -192,14 +192,25 @@ const http = (path: string, cookie = "", init?: RequestInit) =>
 // ---- fixtures -------------------------------------------------------------
 
 await test("LD-01 grow the synthetic market the load runs against", async () => {
-  const market = await resolveMarket("JO");
+  // resolveMarket takes the market ROW, not its id: passing "JO" queried with marketId = undefined.
+  const [marketRow] = await db.select().from(markets).where(eq(markets.id, "JO"));
+  assert.ok(marketRow, "the JO market row exists");
+  const market = await resolveMarket(marketRow);
   assert.equal(market.id, "JO");
-  await db.execute(sql`
-    INSERT INTO users (id, display_name, phone_country_code, phone_number, normalized_phone, account_country, active_market_id, password_hash, status)
-    SELECT 'bench-seller-' || g, 'بائع قياس ' || g, '+962', '79' || lpad(g::text, 7, '0'), '+96279' || lpad(g::text, 7, '0'), 'JO', 'JO', 'x', 'ACTIVE'
-    FROM generate_series(1, ${BENCH_SELLERS}) g
-    ON CONFLICT (id) DO NOTHING`);
-  await db.execute(sql`
+  stage("ld01:market", { id: market.id });
+  try {
+    await db.execute(sql`
+      INSERT INTO users (id, display_name, phone_country_code, phone_number, normalized_phone, account_country, active_market_id, password_hash, status)
+      SELECT 'bench-seller-' || g, 'بائع قياس ' || g, '+962', '79' || lpad(g::text, 7, '0'), '+96279' || lpad(g::text, 7, '0'), 'JO', 'JO', 'x', 'ACTIVE'
+      FROM generate_series(1, ${BENCH_SELLERS}) g
+      ON CONFLICT (id) DO NOTHING`);
+  } catch (error) {
+    console.error("LD01_USERS_FAILED", error instanceof Error ? `${error.name}: ${error.message}` : String(error));
+    throw error;
+  }
+  stage("ld01:users");
+  try {
+    await db.execute(sql`
     INSERT INTO offers (id, seller_id, market_id, status, unit_price_minor, pricing_mode, inventory_mode, available_quantity, reserved_quantity, data, created_at, updated_at)
     SELECT 'load-' || lpad(g::text, 7, '0'),
            'bench-seller-' || (1 + g % ${BENCH_SELLERS}),
@@ -216,8 +227,14 @@ await test("LD-01 grow the synthetic market the load runs against", async () => 
            timestamptz '2026-01-01' + g * interval '1 second', timestamptz '2026-01-01' + g * interval '1 second'
     FROM generate_series(1, ${LISTINGS}) g
     ON CONFLICT (id) DO NOTHING`);
+  } catch (error) {
+    console.error("LD01_OFFERS_FAILED", error instanceof Error ? `${error.name}: ${error.message}` : String(error));
+    throw error;
+  }
+  stage("ld01:offers");
   const [count] = (await db.execute(sql`SELECT count(*)::int AS n FROM offers WHERE id LIKE 'load-%'`)).rows as Array<{ n: number }>;
   report.ld01 = { offers: count.n, target: LISTINGS };
+  stage("ld01:count", { offers: count.n, target: LISTINGS });
   assert.ok(count.n >= LISTINGS, "the synthetic catalog reached its target size");
 });
 
@@ -261,17 +278,20 @@ async function register(label: string): Promise<Actor> {
   const headers = { "Content-Type": "application/json", "X-Forwarded-For": forwarded() };
   const challenge = (await (await fetch(`${base}/auth/phone-verification/challenges`, {
     method: "POST",
+    signal: AbortSignal.timeout(15_000),
     headers,
     body: JSON.stringify({ phoneCountryCode: "+962", phoneNumber }),
   })).json()) as any;
   const verified = (await (await fetch(`${base}/auth/phone-verification/challenges/verify`, {
     method: "POST",
+    signal: AbortSignal.timeout(15_000),
     headers: { ...headers, "X-Forwarded-For": forwarded() },
     body: JSON.stringify({ challengeId: challenge.challengeId, code: challenge.developmentCode }),
   })).json()) as any;
   const password = `Wave05Load-${randomUUID().slice(0, 12)}!`;
   const response = await fetch(`${base}/auth/register`, {
     method: "POST",
+    signal: AbortSignal.timeout(15_000),
     headers: { ...headers, "X-Forwarded-For": forwarded() },
     body: JSON.stringify({
       displayName: `DINAR LD ${label}`,
@@ -293,22 +313,51 @@ async function register(label: string): Promise<Actor> {
 
 const buyers: Actor[] = [];
 const sellerActors: Actor[] = [];
-stage("fixtures:start");
-for (let index = 0; index < 6; index++) buyers.push(await register(`buyer-${index}`));
-for (let index = 0; index < 3; index++) sellerActors.push(await register(`seller-${index}`));
-stage("fixtures:actors", { buyers: buyers.length, sellers: sellerActors.length });
-
-const listingIds: string[] = (
-  await db.execute(sql`SELECT id FROM offers WHERE id LIKE 'load-%' AND status = 'PUBLISHED' AND reserved_quantity < available_quantity ORDER BY id LIMIT 240`)
-).rows.map((row: any) => row.id as string);
-assert.ok(listingIds.length >= 100, "enough published listings to rotate the write workloads");
-
+const listingIds: string[] = [];
 const conversationIds: string[] = [];
-for (const buyer of buyers) {
-  const response = await fetch(`${base}/ai/conversations`, { method: "POST", headers: { "Content-Type": "application/json", Cookie: buyer.cookie }, body: "{}" });
-  const text = await response.text();
-  assert.equal(response.status, 201, text);
-  conversationIds.push((JSON.parse(text) as any).id as string);
+/**
+ * A fixture failure used to leave the listening server and the sampler open, so the suite idled
+ * until the job timeout with the real error unprinted. This exits with the error text instead.
+ */
+const fatal = async (error: unknown): Promise<never> => {
+  console.error("LOAD_FIXTURE_FAILED", error instanceof Error ? `${error.name}: ${error.message}` : String(error));
+  try {
+    sampler.release();
+    server.closeAllConnections();
+    await new Promise<void>((resolve) => server.close(() => resolve()));
+    await pool.end();
+  } catch {
+    // the original error is the one worth reporting
+  }
+  process.exit(1);
+};
+try {
+  stage("fixtures:start");
+  for (let index = 0; index < 6; index++) buyers.push(await register(`buyer-${index}`));
+  for (let index = 0; index < 3; index++) sellerActors.push(await register(`seller-${index}`));
+  stage("fixtures:actors", { buyers: buyers.length, sellers: sellerActors.length });
+
+  listingIds.push(
+    ...(await db.execute(sql`SELECT id FROM offers WHERE id LIKE 'load-%' AND status = 'PUBLISHED' AND reserved_quantity < available_quantity ORDER BY id LIMIT 240`))
+      .rows.map((row: any) => row.id as string),
+  );
+  stage("fixtures:listingIds", { listings: listingIds.length });
+  assert.ok(listingIds.length >= 100, "enough published listings to rotate the write workloads");
+
+  for (const buyer of buyers) {
+    const response = await fetch(`${base}/ai/conversations`, {
+      method: "POST",
+      signal: AbortSignal.timeout(15_000),
+      headers: { "Content-Type": "application/json", Cookie: buyer.cookie },
+      body: "{}",
+    });
+    const text = await response.text();
+    assert.equal(response.status, 201, text);
+    conversationIds.push((JSON.parse(text) as any).id as string);
+  }
+  stage("fixtures:conversations", { conversations: conversationIds.length });
+} catch (error) {
+  await fatal(error);
 }
 
 report.environment = {
@@ -401,7 +450,9 @@ await test("LD-12 write workloads: seller catalog, cart write, checkout, inquiry
         idempotencyKey: `ld12-${index}-${randomUUID()}`.slice(0, 128),
       }),
     }));
-  const market = await resolveMarket("JO");
+  const [marketRow] = await db.select().from(markets).where(eq(markets.id, "JO"));
+  assert.ok(marketRow, "the JO market row exists");
+  const market = await resolveMarket(marketRow);
   await drive("inquiry_processing", 4, 24, (index) => {
     const buyer = buyers[index % buyers.length]!;
     return submitInquiryMessage({
@@ -467,7 +518,7 @@ await test("LD-14 recovery after the database drops every connection", async () 
   const trace: number[] = [];
   for (let attempt = 0; attempt < 60; attempt++) {
     try {
-      const response = await fetch(`${base}/listings?limit=1`);
+      const response = await fetch(`${base}/listings?limit=1`, { signal: AbortSignal.timeout(5_000) });
       trace.push(response.status);
       if (trace.length >= 6 && trace.slice(-5).every((status) => status === 200)) break;
     } catch {
