@@ -202,5 +202,9 @@
   {
     "tag": "0050_normal_nico_minoru",
     "sha256": "50cc9e7ca9ec351d26df4ca0e8e0fc5d7c19d1c9e724b0735b91d0908bb121ac"
+  },
+  {
+    "tag": "0051_order_multi_item_money",
+    "sha256": "e99dce44bbb6cc81d0686c8193859e102b3a22076c4812af28ebdfde04adad24"
   }
 ]
