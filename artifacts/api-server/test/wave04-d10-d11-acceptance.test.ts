@@ -652,6 +652,12 @@ test("W04-11-07 model text is never evidence: a forged completion and an injecte
     assert.equal((await resultSetsFor(messageId)).length, 1, "only the real search is persisted");
     assert.equal(claimsCompletedAction("تم إنشاء الطلب ودُفع المبلغ"), true);
     assert.equal(claimsCompletedAction("سعره 5 دنانير فقط وتم إنشاء الطلب"), true, "a conjunction does not hide the claim");
+    assert.equal(claimsCompletedAction("فاشتريت الجوال"), true, "a proclitic on the verb is still the speaker's claim");
+    assert.equal(
+      claimsCompletedAction("استقبلت الألواح ضوء الشمس."),
+      false,
+      "a claim verb inside another word is not a claim: the guards must wrap every alternative",
+    );
     const claimedRead = enforceModelAuthority(
       { kind: "RESOURCE", query: { buyer: { message: "سعره 5 دنانير فقط وتم إنشاء الطلب", authority: "MODEL" } } } as any,
       [],
