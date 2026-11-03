@@ -1459,18 +1459,33 @@ function foldCurrencyDigits(text: string): string {
     .replace(/[۰-۹]/gu, (digit) => String(digit.charCodeAt(0) - 0x06f0));
 }
 
-/** Every amount a verified read showed the model this turn: recorded prices and quantities. */
+/** Fields a verified read records as an amount; a model figure must match one of them. */
+const RECORDED_AMOUNT_KEY =
+  /^(?:unitPrice|price|amount|total|subtotal|offerAmount|counterAmount|quantity|availableQuantity|value)$/i;
+
+function collectRecordedAmounts(node: unknown, values: Set<number>, depth = 0): void {
+  if (depth > 4) return;
+  if (Array.isArray(node)) {
+    for (const entry of node) collectRecordedAmounts(entry, values, depth + 1);
+    return;
+  }
+  if (!node || typeof node !== "object") return;
+  for (const [key, entry] of Object.entries(node as Record<string, unknown>)) {
+    if (RECORDED_AMOUNT_KEY.test(key)) {
+      const value = typeof entry === "string" || typeof entry === "number" ? Number(entry) : Number.NaN;
+      if (Number.isFinite(value)) values.add(value);
+    } else if (entry && typeof entry === "object") {
+      collectRecordedAmounts(entry, values, depth + 1);
+    }
+  }
+}
+
+/** Every amount a verified read showed the model this turn: prices, totals and quantities. */
 function recordedAmounts(feedback: NonNullable<ModelContext["toolFeedback"]>): Set<number> {
   const values = new Set<number>();
   for (const item of feedback) {
     if (item.status !== "SUCCEEDED") continue;
-    const listings = (item.result as { listings?: { unitPrice?: unknown; availableQuantity?: unknown }[] } | undefined)?.listings ?? [];
-    for (const listing of listings) {
-      for (const raw of [listing.unitPrice, listing.availableQuantity]) {
-        const value = typeof raw === "string" || typeof raw === "number" ? Number(raw) : Number.NaN;
-        if (Number.isFinite(value)) values.add(value);
-      }
-    }
+    collectRecordedAmounts(item.result, values);
   }
   return values;
 }
@@ -1480,10 +1495,35 @@ function unrecordedAmounts(text: string, recorded: Set<number>): number[] {
   const digits = foldCurrencyDigits(text).replace(/(\d),(\d{3})(?!\d)/gu, "$1$2");
   const offenders: number[] = [];
   for (const match of digits.matchAll(MONEY_AMOUNT)) {
-    const value = Number((match[1] ?? match[2]).replace(",", "."));
+    const raw = match[1] ?? match[2] ?? "";
+    if (!raw) continue;
+    const value = Number(raw.replace(",", "."));
     if (Number.isFinite(value) && !recorded.has(value)) offenders.push(value);
   }
   return offenders;
+}
+
+/**
+ * The model's own words, kept only while this turn's verified reads back the amounts in them and
+ * the text claims no completed action. Otherwise DINAR's grounded fallback describes the read.
+ */
+const GROUNDED_READ_ANSWER = "هذه نتائج القراءة الحالية من DINAR. راجع تفاصيل العروض وبطاقاتها؛ لم أنفّذ أي إجراء.";
+const GROUNDED_CAPABILITY_ANSWER = "هذه بيانات DINAR الحالية. لم أنفّذ أي إجراء.";
+
+function groundedModelProse(
+  text: string,
+  feedback: NonNullable<ModelContext["toolFeedback"]>,
+  fallback: string,
+  conversationId: string,
+): string {
+  if (text === fallback || claimsCompletedAction(text)) return fallback;
+  const invented = unrecordedAmounts(text, recordedAmounts(feedback));
+  if (!invented.length) return text;
+  logger.info(
+    { event: "dinar_model_unrecorded_amount_withheld", amounts: invented.slice(0, 4), conversationId },
+    "model amount withheld after a verified read",
+  );
+  return fallback;
 }
 
 function withModelToolAnswer(result: ToolResult, answer: string, preserveResultSetId = false): ToolResult {
@@ -1955,33 +1995,31 @@ export async function executeModelFallback(
       { ownerId: input.actorId },
     );
   if (lastSearchResult || lastResourceResult) {
-    const groundedAnswerText = "هذه نتائج القراءة الحالية من DINAR. راجع تفاصيل العروض وبطاقاتها؛ لم أنفّذ أي إجراء.";
-    const text = outcome.replyFiltered ? groundedAnswerText : outcome.turn.conversationalReply;
-    const invented = text === groundedAnswerText ? [] : unrecordedAmounts(text, recordedAmounts(toolFeedback));
-    if (invented.length)
-      logger.info(
-        { event: "dinar_model_unrecorded_amount_withheld", amounts: invented.slice(0, 4), conversationId: input.conversationId },
-        "model amount withheld after a verified read",
-      );
-    const groundedAnswer = invented.length || claimsCompletedAction(text) ? groundedAnswerText : text;
+    const answer = groundedModelProse(
+      outcome.replyFiltered ? GROUNDED_READ_ANSWER : outcome.turn.conversationalReply,
+      toolFeedback,
+      GROUNDED_READ_ANSWER,
+      input.conversationId,
+    );
     const result = lastSearchResult ?? lastResourceResult!;
     return {
       tool: result.kind === "SEARCH" ? "searchListings" : "getResource",
       version: 1,
-      result: withModelToolAnswer(result, `${groundedAnswer}${usageNote ? `\n\n${usageNote}` : ""}`, result.kind === "RESOURCE"),
+      result: withModelToolAnswer(result, `${answer}${usageNote ? `\n\n${usageNote}` : ""}`, result.kind === "RESOURCE"),
     };
   }
   if (lastCapabilityRead) {
     // The card is DINAR's own rows; the model's prose is attached as an answer note only.
-    const text = outcome.replyFiltered
-      ? "هذه بيانات DINAR الحالية. لم أنفّذ أي إجراء."
-      : claimsCompletedAction(outcome.turn.conversationalReply)
-        ? "هذه بيانات DINAR الحالية. لم أنفّذ أي إجراء."
-        : outcome.turn.conversationalReply;
+    const answer = groundedModelProse(
+      outcome.replyFiltered ? GROUNDED_CAPABILITY_ANSWER : outcome.turn.conversationalReply,
+      toolFeedback,
+      GROUNDED_CAPABILITY_ANSWER,
+      input.conversationId,
+    );
     return {
       tool: lastCapabilityReadTool ?? "dinarConversationTurn",
       version: 1,
-      result: withModelToolNote(lastCapabilityRead, `${text}${usageNote ? `\n\n${usageNote}` : ""}`),
+      result: withModelToolNote(lastCapabilityRead, `${answer}${usageNote ? `\n\n${usageNote}` : ""}`),
     };
   }
   const turn = outcome.turn;
