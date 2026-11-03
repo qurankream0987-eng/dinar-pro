@@ -70,9 +70,10 @@ PostgreSQL 18.6 container, with synthetic storage settings and no provider crede
 The browser was restricted to loopback, and the S3 wire test used only its local mock server. No
 Railway database, live storage provider, or AI/SMS/payment provider was contacted.
 
-The full `security-acceptance.test` suite was also attempted only on a disposable local database.
-After the required test-only session key was supplied, it reported 3/12 passing and 9/12 failing
-because the pristine database lacked active-market price fixtures; downstream listing/order cases
-could not initialize. Several registration/session checks returned 201 and `/api/auth/me` returned
-200 before the suite reached those missing fixtures. Do not treat the full security suite as passed.
-Use the project's approved disposable market-fixture harness before relying on that suite.
+The full `security-acceptance.test` suite initially reported 3/12 passing and 9/12 failing on a
+pristine local database because no active market or current market-price fixtures existed. The
+approved fixture harness then seeded synthetic active markets and baseline prices in a fresh,
+loopback-only PostgreSQL 18.6 database; the full suite passed 12/12, with zero failures and zero
+skips. Exact prerequisite details, all nine unseeded dependent failures, the tested SHA, and the
+source-change review map are recorded in
+[15 — Security acceptance evidence](./15_SECURITY_ACCEPTANCE_EVIDENCE.md).
