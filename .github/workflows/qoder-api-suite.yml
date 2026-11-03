@@ -42,6 +42,10 @@ on:
           - wave4-payment-acceptance.test
           - wave3-acceptance.test
           - wave02-card-reliability.test
+          - wave02-d4-d5-seller-journey.test
+          - wave02-d6-buyer-journey.test
+          - wave02-d5-browser-journey.test
+          - wave02-d6-browser-journey.test
           - r5-delivery-economics.test
           - security-acceptance.test
           - readiness.test
