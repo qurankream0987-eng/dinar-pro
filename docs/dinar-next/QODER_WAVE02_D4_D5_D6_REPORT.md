@@ -5,10 +5,11 @@ tested SHA, against the canonical authorities, with the explicit exceptions and 
 §8. This is not a merge, a deployment, or a launch-readiness claim.
 
 - Repository: `qurankream0987-eng/dinar-pro` (the old `dinar` URL redirects here)
-- Canonical branch: `replit/dinar-next-complete-development` at `ae8399b4436c9905a63e9e92ec9b1e1368690d98`
+- Canonical branch: `replit/dinar-next-complete-development` at `ae8399b4436c9905a63e9e92ec9b1e1368690d98`,
+  synced during the mission to canonical `11d7fbe3326897924468ee4c6d5467972a92b973`
 - Task branch: `qoder/wave02-d4-d6-closure`
 - Worktree: `D:/DINAR/dinar-d4d6`
-- **Tested head: `f7e9045e07b28408f69e688c6a0c8908d7b5f24c`**
+- **Tested head: `e1df415204ebb8f486206e7b8e5ec269b6d6a493`** (mission commits + canonical sync merge)
 - Execution mode: every build and test ran in GitHub Actions on this branch against a disposable
   loopback PostgreSQL. The Windows host was not used to build or test.
 
@@ -28,7 +29,10 @@ an automated assertion in
 ## 2. Constraints observed
 
 - The canonical Replit branch was fetched and read before any change; the work happened in an
-  isolated worktree and branch. No other Qoder/Replit working tree was shared.
+  isolated worktree and branch. No other Qoder/Replit working tree was shared. While the mission was
+  running, canonical advanced from `ae8399b` to `11d7fbe` with AI-foundation fixes; that head was
+  merged into the mission branch (a normal merge on the mission branch, not a rewrite of canonical)
+  and the full evidence set was re-run on the merged head.
 - No merge into `replit/dinar-next-complete-development` or `main`; no force push; no deployment.
 - No production database, no Railway, no real payment, no paid AI provider, no real money.
 - No new conversation runtime, card registry, database, payment path, cart engine or business
@@ -41,7 +45,7 @@ an automated assertion in
 
 ## 3. Exact change set
 
-`git diff --name-only ae8399b..f7e9045`:
+Mission-authored change set (`git diff --name-only 11d7fbe..e1df415`):
 
 | File | Kind | Purpose |
 | --- | --- | --- |
@@ -57,9 +61,16 @@ an automated assertion in
 | `artifacts/dinar/test/wave02-d6-ui.mjs` | test harness | D6 browser steps and responsive assertions |
 | this report, the acceptance matrix and the handoff | docs | Evidence and integration instructions |
 
-No source file under `artifacts/api-server/src` or `artifacts/dinar/src` was modified. The D4/D5/D6
-implementation was already present on the canonical branch; this mission proves it, finds the one
-real defect that blocked D6 completion, fixes only that defect, and records the evidence.
+No source file under `artifacts/api-server/src` or `artifacts/dinar/src` was modified by this
+mission. The D4/D5/D6 implementation was already present on the canonical branch; this mission
+proves it, finds the one real defect that blocked D6 completion, fixes only that defect, and records
+the evidence.
+
+The sync merge also brings in canonical commits `4124607`, `c36e6f1`, `2a67135` and `11d7fbe`, which
+change `src/ai/conversation-runtime.ts`, `src/ai/smart-turn.ts`, `ai-foundation-acceptance.test.ts`
+and add `docs/ai/DINAR_AI_FOUNDATION_01_REPORT.md`. Those are canonical authors' changes, not this
+mission's; they were reviewed at the file-name level for overlap (none with this mission's files)
+and the full evidence set was re-run on the merged head.
 
 ### The one product defect
 
@@ -149,20 +160,21 @@ result set without a new search; a reload keeps the stored card.
 ## 6. GREEN evidence on the tested head
 
 All rows are `qoder-api-suite.yml` on `qoder/wave02-d4-d6-closure` at
-`f7e9045e07b28408f69e688c6a0c8908d7b5f24c`. Each run also executed typecheck, both builds and the
+`e1df415204ebb8f486206e7b8e5ec269b6d6a493`. Each run also executed typecheck, both builds and the
 web surface protocol tests (32/32).
 
 | Run | Suite / chain | Result | Closing line |
 | --- | --- | --- | --- |
-| `41548159965` | `wave02-d4-d5-seller-journey.test` | 5/5 | `LOCAL_SUITE suite=wave02-d4-d5-seller-journey.test db=dinar_test_local_a94cd2037556 exit=0 outbound=0` |
-| `41548166120` | `wave02-d6-buyer-journey.test` | 6/6 | `LOCAL_SUITE suite=wave02-d6-buyer-journey.test db=dinar_test_local_7dd4ab957b80 exit=0 outbound=0` |
-| `41548537282` | `wave02-d6-browser-journey.test` | 1/1, 10 checks | `LOCAL_SUITE suite=wave02-d6-browser-journey.test db=dinar_test_local_a3089748c3c2 exit=0 outbound=0` |
-| `41546897609` | `wave02-d5-browser-journey.test` | 3/3, 14 checks | `LOCAL_SUITE suite=wave02-d5-browser-journey.test db=dinar_test_local_3d759846b498 exit=0 outbound=0` |
-| `41546904430` | `wave02-card-reliability.test` | 9/9 | `LOCAL_SUITE suite=wave02-card-reliability.test db=dinar_test_local_481af27d432b exit=0 outbound=0` |
-| `41549229217` | chain `d4-d5-authorization` | 4/4, 3/3, 8/8 | `LOCAL_SUITE_CHAIN suites=3 db=dinar_test_local_db6d89f8b090 exit=0 first_failed=none` |
-| `41549314061` | chain `d6-g2-negotiation` | 8 suites | `LOCAL_SUITE_CHAIN suites=8 db=dinar_test_local_6c52dfa8bb5a exit=0 first_failed=none` |
-| `41549320279` | `security-acceptance.test` | 12/12 | `LOCAL_SUITE suite=security-acceptance.test db=dinar_test_local_f597122cf381 exit=0 outbound=0` |
-| `41549326754` | `commerce-journey.test` | 8/8 | `LOCAL_SUITE suite=commerce-journey.test db=dinar_test_local_28a3eb28052d exit=0 outbound=0` |
+| `41550226803` | `wave02-d4-d5-seller-journey.test` | 5/5 | `LOCAL_SUITE suite=wave02-d4-d5-seller-journey.test db=dinar_test_local_7eb5dea60c77 exit=0 outbound=0` |
+| `41550234059` | `wave02-d6-buyer-journey.test` | 6/6 | `LOCAL_SUITE suite=wave02-d6-buyer-journey.test db=dinar_test_local_0c6cae183754 exit=0 outbound=0` |
+| `41550249631` | `wave02-d6-browser-journey.test` | 1/1, 10 checks | `LOCAL_SUITE suite=wave02-d6-browser-journey.test db=dinar_test_local_712eae043b77 exit=0 outbound=0` |
+| `41550242626` | `wave02-d5-browser-journey.test` | 3/3, 14 checks | `LOCAL_SUITE suite=wave02-d5-browser-journey.test db=dinar_test_local_bd9c790a6479 exit=0 outbound=0` |
+| `41550256971` | `wave02-card-reliability.test` | 9/9 | `LOCAL_SUITE suite=wave02-card-reliability.test db=dinar_test_local_3de3219704dc exit=0 outbound=0` |
+| `41550283195` | chain `d4-d5-authorization` | 4/4, 3/3, 8/8 | `LOCAL_SUITE_CHAIN suites=3 db=dinar_test_local_c5e556c27bd9 exit=0 first_failed=none` |
+| `41550290381` | chain `d6-g2-negotiation` | 8 suites | `LOCAL_SUITE_CHAIN suites=8 db=dinar_test_local_d0e73b896865 exit=0 first_failed=none` |
+| `41550297039` | `security-acceptance.test` | 12/12 | `LOCAL_SUITE suite=security-acceptance.test db=dinar_test_local_209c58421a10 exit=0 outbound=0` |
+| `41550303484` | `commerce-journey.test` | 8/8 | `LOCAL_SUITE suite=commerce-journey.test db=dinar_test_local_8f3a2c3733ce exit=0 outbound=0` |
+| `41550309349` | chain `ai-foundation` | 13/13, 4/4, 3/3 | `LOCAL_SUITE_CHAIN suites=3 db=dinar_test_local_3b995c7bca7b exit=0 first_failed=none` |
 
 Browser signals:
 
@@ -185,8 +197,8 @@ Browser signals:
 | `41543426446` | `29b1d99` | Seller replay expected a different refusal phrase | Test expectation error | Assertion aligned to `inquiry-turn.ts:426`; the no-success-receipt and no-second-send assertions were kept |
 | `41545189196` | `5c6501a` | D5 browser had no send button because a newer surface message became the active workflow | Test orchestration error | Second inquiry creation moved into the revocation phase, so the reviewed draft stays the newest surface |
 | `41545956905` | `5ce0d32` | D5 browser expected `REJECTED`/`أُرسلت` text that the real page renders differently | Test expectation error | UI assertion reads the canonical rebuilt card and settled thread text |
-| `41546036846` | `5ce0d32` | Card-reliability suite refused to start without `BDINAR_W02U3_TEST_DATABASE` + `BDINAR_WAVE02_ACCEPTANCE` | Missing flag | Re-run `41546904430` green |
-| `41545999533`, `41546911097`, `41547309738` | canonical `ae8399b` and `f7e9045` | `ai-foundation` fails AI-F04/F05/F07/F11/F12 identically on the canonical baseline and on this head | **Pre-existing canonical red** | Reported as a blocker; not caused by this mission and not counted as green |
+| `41546036846` | `5ce0d32` | Card-reliability suite refused to start without `BDINAR_W02U3_TEST_DATABASE` + `BDINAR_WAVE02_ACCEPTANCE` | Missing flag | Re-run `41550256971` green on the tested head |
+| `41545999533`, `41546911097`, `41547309738` | canonical `ae8399b` and mission head `f7e9045` | `ai-foundation` fails AI-F04/F05/F07/F11/F12 identically on the canonical baseline and on the pre-sync mission head | **Pre-existing canonical red, now fixed upstream** | Canonical `11d7fbe` (`4124607`, `c36e6f1`, `2a67135`) fixes it; the merged tested head `e1df415` runs `41550309349` green (13/13 + 4/4 + 3/3) |
 
 The three flag-rejected dispatches during the final regression pass (`41548933931`, `41548940518`,
 `41548947595`, `41548953378`) are also classified as missing-flag orchestration, not product
@@ -195,7 +207,7 @@ failures; their corrected runs are the green rows in §6.
 ## 8. Verdict, limitations and integration instructions
 
 **Verdict.** The fifteen scenarios, the D4 delegation requirements and the D5/D6 completion
-requirements are covered by executable evidence on `f7e9045`, using DINAR's existing authorities.
+requirements are covered by executable evidence on `e1df415`, using DINAR's existing authorities.
 The only product change required was the order-level money invariant correction for the canonical
 multi-line order shape. Nothing was merged, deployed or released.
 
@@ -203,8 +215,9 @@ multi-line order shape. Nothing was merged, deployed or released.
 
 1. **Live Arabic model quality** — the suites use scripted model output to prove the authorization
    boundary. This is not a live-provider benchmark. Live-model comprehension remains a separate gate.
-2. **`ai-foundation` chain** — red on the canonical baseline (five tests) and unchanged by this
-   branch. It must be addressed by its owners before those five capabilities can be called verified.
+2. **`ai-foundation` history** — it was red on the original base (`ae8399b`) and on the pre-sync
+   mission head; canonical `11d7fbe` fixes it, and the merged tested head is green (run
+   `41550309349`). This mission did not author that fix.
 3. **No merge or deployment** — by design. The branch is for review and Replit integration.
 4. **No production data or real payments** — checkout used `TEST_NO_TRANSFER`; zero payment intents.
 5. **Screen-reader spoken output** — not part of this mission; no visual/AT claim is made for the new
@@ -226,15 +239,17 @@ multi-line order shape. Nothing was merged, deployed or released.
    - chain `d6-g2-negotiation` with `BDINAR_G2_ACCEPTANCE=development BDINAR_WAVE4_ACCEPTANCE=development BDINAR_TEST_DATABASE=development BDINAR_BLOCKF_ACCEPTANCE=development BDINAR_PROMOTIONS_ENABLED=true`
    - `security-acceptance.test` with `BDINAR_SECURITY_ACCEPTANCE=development`
    - `commerce-journey.test` with `BDINAR_TEST_DATABASE=development BDINAR_WAVE4_ACCEPTANCE=development BDINAR_PROMOTIONS_ENABLED=true`
-4. Treat `ai-foundation` as a known pre-existing red until its five tests are fixed; do not attribute
-   it to this branch.
+4. Run the acceptance and regression commands with the flags listed above. `ai-foundation` is now
+   green on the merged head; keep the pre-sync red as history, not as a current blocker.
 5. Do not deploy on the strength of these runs alone; release gates remain the owner's.
 
 ## 9. Commits and push
 
-Mission commits (`ae8399b` → `f7e9045`):
+Mission commits (`ae8399b` → tested head `e1df415`):
 
 ```
+e1df415 merge: sync canonical AI foundation fixes into wave02 D4-D6 closure
+219ee69 docs(w02): record D4/D5/D6 acceptance matrix, evidence and Replit handoff
 f7e9045 test(w02): read the settled inquiry thread status after the send
 5ce0d32 test(w02): keep the reviewed draft newest and assert the rejected status text
 5c6501a test(w02): assert canonical restore and no-op replay messages
@@ -244,6 +259,7 @@ f7e9045 test(w02): read the settled inquiry thread status after the send
 ae8399b (canonical baseline)
 ```
 
-The branch is pushed to `origin/qoder/wave02-d4-d6-closure`. The documentation commit that adds this
-report, the acceptance matrix and the handoff changes no code and is not part of the tested
-`f7e9045` product/test state.
+The merge commit brings canonical `11d7fbe` (AI-foundation fixes) into the mission branch without
+rewriting canonical history. The branch is pushed to `origin/qoder/wave02-d4-d6-closure`. The tested
+product/test state is `e1df415`; the documentation update that records these results is committed
+after it and changes only documentation.

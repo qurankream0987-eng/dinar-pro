@@ -1,9 +1,10 @@
 # QODER WAVE 02 — D4 + D5 + D6 Acceptance Matrix
 
-- Canonical baseline: `replit/dinar-next-complete-development` at `ae8399b4436c9905a63e9e92ec9b1e1368690d98`
+- Canonical baseline: `replit/dinar-next-complete-development` at `ae8399b4436c9905a63e9e92ec9b1e1368690d98`,
+  synced during the mission to canonical `11d7fbe3326897924468ee4c6d5467972a92b973`
 - Task branch: `qoder/wave02-d4-d6-closure`
 - Worktree: `D:/DINAR/dinar-d4d6`
-- Tested head: `f7e9045e07b28408f69e688c6a0c8908d7b5f24c`
+- **Tested head: `e1df415204ebb8f486206e7b8e5ec269b6d6a493`** (mission commits + canonical sync merge)
 - Evidence mode: every build and test ran in GitHub Actions (`qoder-api-suite.yml`) against a
   disposable loopback PostgreSQL created by `test/isolation/local-suite.sh`; every run reports
   `outbound=0`. The Windows host was not used to build or test.
@@ -14,31 +15,31 @@ baseline for reasons outside this mission's changes.
 
 Evidence sources:
 
-- `S` — `artifacts/api-server/test/wave02-d4-d5-seller-journey.test.ts`, run `41548159965`
+- `S` — `artifacts/api-server/test/wave02-d4-d5-seller-journey.test.ts`, run `41550226803`
   (5/5, real HTTP + disposable PostgreSQL; surface protocol tests 32/32).
-- `B` — `artifacts/api-server/test/wave02-d6-buyer-journey.test.ts`, run `41548166120`
+- `B` — `artifacts/api-server/test/wave02-d6-buyer-journey.test.ts`, run `41550234059`
   (6/6, real HTTP + disposable PostgreSQL; surface protocol tests 32/32).
 - `SB` — `wave02-d5-browser-journey.test` → `artifacts/dinar/test/wave02-d5-ui.mjs`,
-  run `41546897609` (3/3; real Chromium; 14 checks total; `pageErrors=[]`, `consoleErrors=[]`,
+  run `41550242626` (3/3; real Chromium; 14 checks total; `pageErrors=[]`, `consoleErrors=[]`,
   `externalRequests=[]`, `horizontalOverflow=0`, `modelFallbacks=[]`).
 - `BB` — `wave02-d6-browser-journey.test` → `artifacts/dinar/test/wave02-d6-ui.mjs`,
-  run `41548537282` (1/1; 10 checks; same clean arrays; `order.quantity=1`).
-- `CR` — `wave02-card-reliability.test`, run `41546904430` (9/9) — the Waves 02 reliability
+  run `41550249631` (1/1; 10 checks; same clean arrays; `order.quantity=1`).
+- `CR` — `wave02-card-reliability.test`, run `41550256971` (9/9) — the Waves 02 reliability
   regression stays green after migration `0051`.
 - `R1` — chain `d4-d5-authorization` (`business-delegations.test` 4/4,
-  `d5-seller-employee-acceptance.test` 3/3, `d4-d5-isolation-security.test` 8/8), run `41549229217`,
+  `d5-seller-employee-acceptance.test` 3/3, `d4-d5-isolation-security.test` 8/8), run `41550283195`,
   `LOCAL_SUITE_CHAIN suites=3 exit=0 first_failed=none outbound=0`.
 - `R2` — chain `d6-g2-negotiation` (`next-g2-inquiry.test`, `universal-negotiation-acceptance.test`,
   `g2-smart-conversation.test`, `model-native-routing.test`, `bounded-multistep.test`,
-  `promotion-intent.test`, `block-f2-buyer.test`, `block-f3-commerce.test`), run `41549314061`,
+  `promotion-intent.test`, `block-f2-buyer.test`, `block-f3-commerce.test`), run `41550290381`,
   `LOCAL_SUITE_CHAIN suites=8 exit=0 first_failed=none outbound=0`.
-- `R3` — `security-acceptance.test` 12/12, run `41549320279`,
+- `R3` — `security-acceptance.test` 12/12, run `41550297039`,
   `LOCAL_SUITE … exit=0 outbound=0`.
-- `R4` — `commerce-journey.test` 8/8, run `41549326754`,
+- `R4` — `commerce-journey.test` 8/8, run `41550303484`,
   `LOCAL_SUITE … exit=0 outbound=0`.
-- `AF` — chain `ai-foundation` (`ai-foundation-acceptance.test`, `ai-authority-boundary.test`,
-  `bounded-multistep.test`), run `41547309738` on `f7e9045` and run `41546911097` on canonical
-  `ae8399b`; both fail the same five pre-existing tests (see §Honest coverage notes).
+- `AF` — chain `ai-foundation` (`ai-foundation-acceptance.test` 13/13, `ai-authority-boundary.test`
+  4/4, `bounded-multistep.test` 3/3), run `41550309349`,
+  `LOCAL_SUITE_CHAIN suites=3 exit=0 first_failed=none outbound=0`.
 
 Implementation anchors (source of truth, not restated logic):
 
@@ -156,11 +157,15 @@ Implementation anchors (source of truth, not restated logic):
 
 ## Honest coverage notes
 
-- `ai-foundation` is red before this mission: run `41546911097` on canonical `ae8399b` and run
-  `41547309738` on `f7e9045` both fail the same five tests — AI-F04 foreign-data leak regex,
-  AI-F05 expired result set, AI-F07 call limit, AI-F11 oversized results, AI-F12 replay signature
-  (13 tests, 8 pass, 5 fail). This mission did not change those paths; the chain is reported as a
-  pre-existing canonical blocker, not as green.
+- `ai-foundation` was red at the start of this mission: run `41546911097` on canonical `ae8399b`
+  and run `41547309738` at mission head `f7e9045` both failed the same five tests — AI-F04
+  foreign-data leak regex, AI-F05 expired result set, AI-F07 call limit, AI-F11 oversized results,
+  AI-F12 replay signature (13 tests, 8 pass, 5 fail). The canonical branch then advanced to
+  `11d7fbe` with AI-foundation fixes (`4124607`, `c36e6f1`, `2a67135`) and evidence of its own. The
+  mission branch merged that canonical head; on the merged tested head `e1df415`, run `41550309349`
+  is green: `ai-foundation-acceptance.test` 13/13, `ai-authority-boundary.test` 4/4,
+  `bounded-multistep.test` 3/3, `LOCAL_SUITE_CHAIN suites=3 exit=0 first_failed=none outbound=0`.
+  The earlier red is recorded as history, not as a current blocker.
 - `commerce-journey`, `security-acceptance`, `d4-d5-authorization` and `d6-g2-negotiation` were first
   re-dispatched without their required development flags and were rejected by the workflow's input
   gate (`exit 96`) or the suite's own guard. They were re-dispatched with the documented allowlisted
