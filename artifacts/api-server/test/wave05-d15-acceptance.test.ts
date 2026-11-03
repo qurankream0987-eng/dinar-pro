@@ -320,7 +320,7 @@ test("A15-03 ASSISTANT — grounded advice, no invented price, and listing text 
   script(
     "أرشّح لك من سجل دينار فقط، وأراجع الإعلان معك قبل أي شراء.",
     { suggestedAction: "NONE", goal: "BUY" },
-    "هل يناسب",
+    "هدية للاستخدام اليومي",
   );
   const cartsBefore = await cartCount(buyer);
   const ordersBefore = await orderCount(buyer);
@@ -362,18 +362,18 @@ test("A15-04 AUTHORITY — a claim is replaced by the server's words and creates
   const buyerConversation = await conversation(buyer);
   // A question with no order noun reaches the runtime's model loop; the deterministic order
   // adapter must not be what withholds the claim.
-  const claimMessage = `هل يناسب معطف ${runId} هدية للاستخدام اليومي؟`;
+  const claimMessage = `هل يناسب معطف ${runId} كهدية؟`;
   script(
     "تم الدفع وتم التسليم، طلبك صار مكتمل.",
     { suggestedAction: "NONE", goal: "BUY" },
-    "هل يناسب",
+    "كهدية",
   );
   const paymentIntentsBefore = (await db.select().from(paymentIntents).where(eq(paymentIntents.orderId, orderId))).length;
   const callsBefore = modelCalls;
   const claimed = await say(buyer, buyerConversation, claimMessage);
   assert.equal(claimed.status, 200);
   assert.ok(modelCalls > callsBefore, "the claim was authored by the scripted model, not by a deterministic route");
-  assert.ok(lastModelText.includes("هدية"), "the model saw the buyer's question");
+  assert.ok(lastModelText.includes("كهدية"), "the model saw the buyer's question");
   assert.equal(claimed.body, MODEL_CLAIM_WITHHELD, "the model's completed-action claim was withheld");
   assert.equal(claimed.payload.advice?.claimWithheld, true);
   assert.equal(claimed.payload.advice?.actionLifecycle, "PROPOSED");
