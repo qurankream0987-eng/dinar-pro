@@ -143,7 +143,7 @@ for (const scale of SCALES) {
       SELECT count(*)::int AS n FROM (
         SELECT id FROM messages WHERE conversation_id = ${conversationId}
         ORDER BY created_at DESC LIMIT ${HISTORY_SCAN_ROWS + 1}
-      ) window`);
+      ) scanned`);
     const windowRows = (historyRows.rows as Array<{ n: number }>)[0]!.n;
 
     const messages = modelMessagesFor(currentMessage, context!);
