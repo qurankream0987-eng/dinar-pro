@@ -97,6 +97,8 @@ on:
           - wave06-conversation-memory.test
           - wave06-conversation-memory-adversarial.test
           - wave06-conversation-memory-performance.test
+          - w06-d16-adversarial.test
+          - w06-d17-context-baseline.test
       chain:
         description: "Run a reviewed suite chain on one disposable migrated and seeded database"
         required: false
