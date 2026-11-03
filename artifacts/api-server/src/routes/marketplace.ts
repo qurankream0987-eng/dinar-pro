@@ -47,6 +47,7 @@ import {
 import { checkoutIssueMessage, planCheckout, type PlannedCheckoutLine } from "../lib/commerce";
 import { acceptedNegotiationForCheckout, consumeNegotiation, resolveCommercialUnitPrice, type Negotiation } from "../lib/negotiations";
 import { marketFor, assertMarketActive, assertMarketPolicy } from "../lib/markets";
+import { assertMarketLegalCapability } from "../lib/d16-readiness";
 import { assertMinorProtection, requireCommercialCapability } from "../lib/compliance";
 import {
   calculateCommissionMinor,
@@ -243,6 +244,7 @@ export async function releaseExpiredReservations(now = new Date()) {
 }
 router.get("/listings", async (req, res) => {
   const market = await marketFor(req);
+  await assertMarketLegalCapability(market.id, "BROWSING");
   if (!market.isActive || !["ACTIVE", "LIMITED"].includes(market.status)) {
     res.json([]);
     return;
@@ -302,6 +304,7 @@ router.delete("/listings/:id", requireAuth, async (req, res) => {
 });
 router.get("/listings/:id", async (req, res) => {
   const market = await marketFor(req);
+  await assertMarketLegalCapability(market.id, "BROWSING");
   assertMarketActive(market);
   const rows = await offerRowsByIds(market.id, [req.params.id]);
   const row = rows.find(
@@ -693,6 +696,10 @@ async function checkout(
       );
     const market = await marketFor({ actor }, tx, true);
     assertMarketActive(market);
+    await assertMarketLegalCapability(market.id, "TRANSACTIONS", tx);
+    await assertMarketLegalCapability(market.id, "CASH_PAYMENT", tx);
+    if (lines.some((line) => line.fulfilmentType !== "PICKUP"))
+      await assertMarketLegalCapability(market.id, "DELIVERY_OPERATIONS", tx);
     await assertMinorProtection(actor.id, market.id, tx);
     await requireCommercialCapability(market.id, "PAYMENTS", tx);
     if (!marketAllowsCashDirect(market)) throw fail(409, "لا توجد طريقة دفع متاحة في هذا السوق");

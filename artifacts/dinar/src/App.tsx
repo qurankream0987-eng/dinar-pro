@@ -29,6 +29,9 @@ const AdminCategoriesPage = lazy(() => import("./pages/admin/AdminCategories"));
 const AdminPromotionsPage = lazy(() => import("./pages/admin/AdminPromotions"));
 const AdminDisputesPage = lazy(() => import("./pages/admin/AdminDisputes"));
 const AdminTrustSafetyPage = lazy(() => import("./pages/admin/AdminTrustSafety"));
+const AdminLegalReadinessPage = lazy(
+  () => import("./pages/admin/AdminLegalReadiness"),
+);
 const PoliciesIndexPage = lazy(() =>
   import("./pages/Policies").then((m) => ({ default: m.PoliciesIndexPage })),
 );
@@ -69,6 +72,7 @@ const CHAT_ONLY_ADMIN_ROUTES = new Set([
   "/admin/promotions",
   "/admin/disputes",
   "/admin/trust-safety",
+  "/admin/legal-readiness",
 ]);
 const CHAT_ONLY_ACCOUNT_ROUTES = new Set([
   "/login",
@@ -130,6 +134,7 @@ function Routes() {
       <Route path="/admin/promotions">{guard(<AdminPromotionsPage />)}</Route>
       <Route path="/admin/disputes">{guard(<AdminDisputesPage />)}</Route>
       <Route path="/admin/trust-safety">{guard(<AdminTrustSafetyPage />)}</Route>
+      <Route path="/admin/legal-readiness">{guard(<AdminLegalReadinessPage />)}</Route>
       <Route path="/terms" component={PoliciesIndexPage} />
       <Route path="/policies" component={PoliciesIndexPage} />
       <Route path="/policies/:key" component={PolicyPage} />
@@ -174,6 +179,7 @@ function Routes() {
       <Route path="/admin/promotions">{guard(<AdminPromotionsPage />)}</Route>
       <Route path="/admin/disputes">{guard(<AdminDisputesPage />)}</Route>
       <Route path="/admin/trust-safety">{guard(<AdminTrustSafetyPage />)}</Route>
+      <Route path="/admin/legal-readiness">{guard(<AdminLegalReadinessPage />)}</Route>
       <Route component={NotFoundPage} />
     </Switch>
   );

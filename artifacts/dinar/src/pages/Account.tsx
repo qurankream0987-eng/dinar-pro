@@ -352,6 +352,14 @@ export function SettingsPage() {
             testId="link-settings-admin-markets"
           />
           <ListRow
+            onClick={() => window.location.assign("/admin/legal-readiness")}
+            icon={<Shield size={19} />}
+            title="الجاهزية القانونية والأمنية"
+            description="بوابات صلاحيات الأسواق وسجل حوادث الأمن والخصوصية"
+            trailing={<span className="text-sm font-semibold text-primary">فتح</span>}
+            testId="link-settings-admin-legal-readiness"
+          />
+          <ListRow
             onClick={() => window.location.assign("/admin/categories")}
             icon={<Shield size={19} />}
             title="إدارة التصنيفات"

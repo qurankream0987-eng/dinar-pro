@@ -65,7 +65,7 @@ STUB_LAUNCH_PID=""
 STUB_AS_ROOT=0
 needs_chromium() {
   case "$1" in
-    *browser-journey*|*browser.test|security-acceptance.test|wave3-acceptance.test|w02-ultra-browser.test|command-e-ui.test|command-f-journeys.test) return 0 ;;
+    *browser-journey*|*browser.test|security-acceptance.test|wave3-acceptance.test|w02-ultra-browser.test|command-e-ui.test|command-f-journeys.test|d16-readiness.test|wave06-d16-compliance-acceptance.test) return 0 ;;
     phase1-acceptance.test)
       case " $EXTRA " in *" BDINAR_PHASE1_SKIP_BROWSER=1 "*) return 1 ;; *) return 0 ;; esac ;;
     *) return 1 ;;
