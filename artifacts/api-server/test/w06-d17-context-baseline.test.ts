@@ -59,6 +59,15 @@ async function countQueries<T>(work: () => Promise<T>): Promise<{ value: T; quer
 const quantile = (values: number[], q: number) =>
   [...values].sort((a, b) => a - b)[Math.min(values.length - 1, Math.floor(values.length * q))]!;
 
+const report: Record<string, unknown> = {
+  postgres: ((await db.execute(sql`SELECT version()`)).rows as Array<{ version: string }>)[0].version,
+  scanRows: HISTORY_SCAN_ROWS + 1,
+  inputCeilingChars: MAX_MODEL_INPUT_CHARS,
+  hiddenToken: { position: 1 },
+  visibleToken: { position: "last-2" },
+  scales: {} as Record<string, unknown>,
+};
+
 await db.execute(sql`
   INSERT INTO users (id, display_name, phone_country_code, phone_number, normalized_phone, account_country, active_market_id, password_hash, status)
   VALUES (${OWNER}, 'صاحب محادثة القياس', '+962', '796000001', '+962796000001', 'JO', ${DEFAULT_MARKET}, 'x', 'ACTIVE')
@@ -102,14 +111,6 @@ async function seedConversation(conversationId: string, count: number) {
 }
 
 const currentMessage = "كم يبقى من محادثتي صالحًا للاستخدام؟";
-const report: Record<string, unknown> = {
-  postgres: ((await db.execute(sql`SELECT version()`)).rows as Array<{ version: string }>)[0].version,
-  scanRows: HISTORY_SCAN_ROWS + 1,
-  inputCeilingChars: MAX_MODEL_INPUT_CHARS,
-  hiddenToken: { position: 1 },
-  visibleToken: { position: "last-2" },
-  scales: {} as Record<string, unknown>,
-};
 
 for (const scale of SCALES) {
   await test(`D17.1-${scale} one turn reads a bounded window and sends a bounded request`, async () => {
