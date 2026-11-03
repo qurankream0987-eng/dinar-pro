@@ -461,12 +461,10 @@ function TopBar({ location, minimal }: { location: string; minimal: boolean }) {
           {!minimal && location !== "/" && location !== "/ai" && (
             <DesktopSearch />
           )}
-          {!minimal && !chat && (
-            <div className="flex items-center gap-0.5">
-              <BellButton />
-              <CartButton />
-            </div>
-          )}
+          {!minimal && !chat && <BellButton />}
+          {/* The conversation is a first-class buying surface: the canonical cart link stays
+              reachable there, and the confirmed-add flight needs a visible destination. */}
+          {!minimal && <CartButton />}
       <div className={cn("hidden md:ms-2 lg:hidden", !minimal && !chat && "md:block")}>
             {user ? (
               <Link
