@@ -73,6 +73,7 @@ on:
           - ai-foundation-acceptance.test
           - ai-foundation-02-acceptance.test
           - ai-authority-boundary.test
+          - wave04-d10-d12-acceptance.test
       chain:
         description: "Run a reviewed suite chain on one disposable migrated and seeded database"
         required: false
@@ -86,6 +87,7 @@ on:
           - d4-d5-authorization
           - d6-g2-negotiation
           - ai-foundation
+          - wave04-d10-d12
       flags:
         description: "Allowlisted KEY=VALUE switches, space separated"
         required: false
@@ -144,7 +146,7 @@ jobs:
             key=${pair%%=*}
             value=${pair#*=}
             case "$key" in
-              BDINAR_W07_ACCEPTANCE|BDINAR_W08_ACCEPTANCE|BDINAR_W09_ACCEPTANCE|BDINAR_W10_ACCEPTANCE|BDINAR_W12C_ACCEPTANCE|BDINAR_D1D2_ACCEPTANCE|BDINAR_W02U3_TEST_DATABASE|BDINAR_W02U3_BROWSER|BDINAR_D3A_ACCEPTANCE|BDINAR_WAVE4_ACCEPTANCE|BDINAR_WAVE3_ACCEPTANCE|BDINAR_WAVE02_ACCEPTANCE|BDINAR_PHASE1_ACCEPTANCE|BDINAR_SECURITY_ACCEPTANCE|BDINAR_D4_ACCEPTANCE|BDINAR_D5_ACCEPTANCE|BDINAR_A02_ISOLATION|BDINAR_G2_ACCEPTANCE|BDINAR_BLOCKF_ACCEPTANCE|BDINAR_AI_FOUNDATION)
+              BDINAR_W07_ACCEPTANCE|BDINAR_W08_ACCEPTANCE|BDINAR_W09_ACCEPTANCE|BDINAR_W10_ACCEPTANCE|BDINAR_W12C_ACCEPTANCE|BDINAR_D1D2_ACCEPTANCE|BDINAR_W02U3_TEST_DATABASE|BDINAR_W02U3_BROWSER|BDINAR_D3A_ACCEPTANCE|BDINAR_WAVE4_ACCEPTANCE|BDINAR_WAVE3_ACCEPTANCE|BDINAR_WAVE02_ACCEPTANCE|BDINAR_PHASE1_ACCEPTANCE|BDINAR_SECURITY_ACCEPTANCE|BDINAR_D4_ACCEPTANCE|BDINAR_D5_ACCEPTANCE|BDINAR_A02_ISOLATION|BDINAR_G2_ACCEPTANCE|BDINAR_BLOCKF_ACCEPTANCE|BDINAR_AI_FOUNDATION|BDINAR_WAVE4_D10D12)
                 [ "$value" = development ] || { echo "$key must be development" >&2; exit 96; } ;;
               BDINAR_LOG_SCAN)
                 case "$value" in 0|1) ;; *) echo "$key must be 0 or 1" >&2; exit 96 ;; esac ;;
@@ -194,6 +196,10 @@ jobs:
             ai-foundation)
               SUITES="ai-foundation-acceptance.test ai-foundation-02-acceptance.test ai-authority-boundary.test bounded-multistep.test"
               require_flags "BDINAR_AI_FOUNDATION BDINAR_TEST_DATABASE" ;;
+            wave04-d10-d12)
+              # Wave 04 retires every claim it plants, so the D12 suite still sees a clean ledger.
+              SUITES="ai-foundation-02-acceptance.test ai-authority-boundary.test bounded-multistep.test wave04-d10-d12-acceptance.test d12-execution-recovery.test"
+              require_flags "BDINAR_TEST_DATABASE BDINAR_AI_FOUNDATION BDINAR_WAVE4_D10D12" ;;
             *) echo "chain not allowlisted: $CHAIN" >&2; exit 96 ;;
           esac
           if [ "$promotions" = 1 ]; then

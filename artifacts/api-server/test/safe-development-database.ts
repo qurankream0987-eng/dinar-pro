@@ -37,6 +37,7 @@ const approvalMessages: Record<string, string> = {
   BDINAR_ACCEPTANCE_FIXTURES: "BDINAR_ACCEPTANCE_FIXTURES=development",
   BDINAR_DEEPSEEK_CHAT_ACCEPTANCE: "BDINAR_DEEPSEEK_CHAT_ACCEPTANCE=development",
   BDINAR_AI_FOUNDATION: "BDINAR_AI_FOUNDATION=development",
+  BDINAR_WAVE4_D10D12: "BDINAR_WAVE4_D10D12=development",
 };
 
 export function requireSafeReplitDevelopmentDatabase(
@@ -113,4 +114,6 @@ const operationMessages: Record<keyof typeof approvalMessages, string> = {
   BDINAR_DEEPSEEK_CHAT_ACCEPTANCE: "DeepSeek canonical chat compatibility run",
   BDINAR_AI_FOUNDATION:
     "AI foundation capability registry and bounded tool-loop acceptance run",
+  BDINAR_WAVE4_D10D12:
+    "Wave 04 D10/D11/D12 universal intelligence, tool orchestration and durable task acceptance run",
 };

@@ -243,7 +243,15 @@ export const CAPABILITY_REGISTRY: Record<CapabilityName, CapabilityDefinition> =
     name: "prepareListingDraft",
     toolName: "prepareListingDraft",
     purpose: "Collect listing fields into the existing draft flow; the model never publishes.",
-    inputSchema: z.object({ title: z.string().trim().min(1).max(120) }).passthrough(),
+    inputSchema: z
+      .object({
+        title: z.string().trim().min(1).max(120),
+        description: z.string().trim().max(2_000).optional(),
+        category: z.string().trim().max(80).optional(),
+        price: z.number().nonnegative().optional(),
+        quantity: z.number().int().min(1).max(999_999).optional(),
+      })
+      .strict(),
     outputSchema: z.object({
       draft: z.record(z.string(), z.unknown()).optional(),
       draftStep: z.string().optional(),
