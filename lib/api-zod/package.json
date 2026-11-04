@@ -9,7 +9,8 @@
     "./marketplace-schemas": "./src/marketplace-schemas.ts",
     "./listing-pricing": "./src/listing-pricing.ts",
     "./conversation-runtime": "./src/conversation-runtime.ts",
-    "./surface-composition": "./src/surface-composition.ts"
+    "./surface-composition": "./src/surface-composition.ts",
+    "./connect": "./src/connect.ts"
   },
   "dependencies": {
     "zod": "catalog:"
