@@ -372,8 +372,10 @@ await test("CR-12 another account and another market cannot read or drive the ca
   assert.equal(await cartQuantity(secondListing), 1, "the cross-market confirmation changed nothing in JO either");
   const stored = cardOf(reviewIn(await readConversation(conversationId)).block);
   assert.equal(stored.surfaceId, openedCard.surfaceId);
-  assert.equal(stored.status.lifecycle, openedCard.status.lifecycle);
-  assert.notEqual(stored.status.lifecycle, "CONFIRMED", "a cross-market confirmation never executes");
+  // The refused confirmation settles the review as REJECTED, which surfaces as CANCELLED. It never
+  // executes, and no actionable button survives for either market to press again.
+  assert.equal(stored.status.lifecycle, "CANCELLED");
+  assert.deepEqual(stored.allowedActions, []);
 });
 
 after(async () => {
