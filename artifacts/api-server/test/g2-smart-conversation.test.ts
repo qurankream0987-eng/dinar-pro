@@ -1699,33 +1699,54 @@ await acceptance("G2-36B", "an unpriced open-to-offers listing can receive a bes
     assert.equal(paymentReview.surface, "PAYMENT_REVIEW", paymentReview.body);
     assert.deepEqual(paymentReview.payload.purchaseReview.paymentMethods, ["CASH_DIRECT", "CARD"]);
     assert.equal(paymentReview.payload.purchaseReview.selectedPaymentMethod, null);
-    const paymentOrderId = paymentReview.payload.purchaseReview.orderId;
-    const [paymentOrderFixture] = await db.select().from(orders).where(eq(orders.id, paymentOrderId));
-    const originalItems = paymentOrderFixture!.data.items as { paymentMethods?: string[]; [key: string]: unknown }[];
-    await db.update(orders).set({
-      data: { ...paymentOrderFixture!.data, items: originalItems.map((item) => ({ ...item, paymentMethods: ["CASH_DIRECT"] })) },
-    }).where(eq(orders.id, paymentOrderId));
-    const unsupportedCard = await deterministicTurn(orderBuyer, "أدفع بالبطاقة", orderConversation);
+    // Migration 0056 makes a confirmed order's line-item snapshot immutable: dinar_reject_order_snapshot_mutation()
+    // rejects any UPDATE that changes orders.data->'items' on a version-1 order, and every order placed after that
+    // migration is version 1. The product never mutates items — persistPaymentMethod spreads order.data and sets only
+    // selectedPaymentMethod, which the guard allows — so the guard is correct and must stay. This cash-only refusal
+    // phase used to rewrite the negotiated order's items[].paymentMethods in place to fake a CASH_DIRECT-only order;
+    // that is exactly the mutation the guard now forbids, so it failed with «Order financial snapshot is immutable».
+    // Run it instead on an order born cash-only through the real checkout path (marketplace.ts copies
+    // listing.paymentMethods into order.data.items): same assertions, no protected-order mutation. The negotiated
+    // order is itself born CASH_DIRECT+CARD, so the card-acceptance phase below still runs on it directly.
+    const cashOnlySeller = await register("Cash-only seller");
+    const cashOnlyBuyer = await register("Cash-only buyer");
+    const cashOnlyListingId = await publish(
+      cashOnlySeller,
+      `دفع كاش فقط ${TOKEN}`,
+      "20",
+      { category: "أخرى", categoryId: "other", paymentMethods: ["CASH_DIRECT"], availableQuantity: 5 },
+    );
+    const cashOnlyListing = await offerOf(cashOnlyListingId);
+    const cashOnlyConversation = await conversation(cashOnlyBuyer);
+    await openListing(cashOnlyBuyer, String(cashOnlyListing.data.title), cashOnlyListingId, cashOnlyConversation);
+    assert.equal((await deterministicTurn(cashOnlyBuyer, "اشتريه", cashOnlyConversation)).surface, "PURCHASE_REVIEW");
+    // A plain fixed-price buy first reviews an ADD_TO_CART (buyer-turn.ts:558/669 — a single «نعم» there only fills
+    // the cart). A second CONTINUE phrase restages the same pending to PLACE_ORDER (buyer-turn.ts:1296), and «نعم»
+    // then creates the order and its ORDER surface block (placedOrderTurn → orderTurn), the one thing orderInContext
+    // reads when «ادفع» resolves the payment target. This is the real checkout path, so the order is born carrying
+    // the listing's CASH_DIRECT on its line items — no post-hoc order mutation.
+    assert.equal((await deterministicTurn(cashOnlyBuyer, "اطلبه", cashOnlyConversation)).surface, "PURCHASE_REVIEW");
+    assert.match((await deterministicTurn(cashOnlyBuyer, "نعم", cashOnlyConversation)).body, /تم إنشاء الطلب/);
+    const cashOnlyReview = await deterministicTurn(cashOnlyBuyer, "ادفع", cashOnlyConversation);
+    assert.equal(cashOnlyReview.surface, "PAYMENT_REVIEW", cashOnlyReview.body);
+    assert.deepEqual(cashOnlyReview.payload.purchaseReview.paymentMethods, ["CASH_DIRECT"]);
+    const cashOnlyOrderId = cashOnlyReview.payload.purchaseReview.orderId;
+    const unsupportedCard = await deterministicTurn(cashOnlyBuyer, "أدفع بالبطاقة", cashOnlyConversation);
     assert.match(unsupportedCard.body, /لا يدعم/);
     assert.equal(unsupportedCard.payload.purchaseReview.selectedPaymentMethod, null, "unsupported card selection must not mutate payment state");
-    const cashChoice = await deterministicTurn(orderBuyer, "خله كاش", orderConversation);
+    const cashChoice = await deterministicTurn(cashOnlyBuyer, "خله كاش", cashOnlyConversation);
     assert.equal(cashChoice.payload.purchaseReview.selectedPaymentMethod, "CASH_DIRECT");
     const intentsBeforeCashConfirm = (await db.select().from(paymentIntents)).length;
-    const cashConfirm = await deterministicTurn(orderBuyer, "نعم", orderConversation);
+    const cashConfirm = await deterministicTurn(cashOnlyBuyer, "نعم", cashOnlyConversation);
     assert.match(cashConfirm.body, /تم حفظ اختيار كاش/);
     assert.equal((await db.select().from(paymentIntents)).length, intentsBeforeCashConfirm, "cash never creates a payment intent");
-    const [cashOrder] = await db.select().from(orders).where(eq(orders.id, paymentOrderId));
+    const [cashOrder] = await db.select().from(orders).where(eq(orders.id, cashOnlyOrderId));
     assert.equal(cashOrder?.data.selectedPaymentMethod, "CASH_DIRECT");
-    await db.update(orders).set({
-      data: {
-        ...cashOrder!.data,
-        selectedPaymentMethod: null,
-        items: originalItems.map((item) => ({ ...item, paymentMethods: ["CASH_DIRECT", "CARD"] })),
-      },
-    }).where(eq(orders.id, paymentOrderId));
-    const cardReview = await deterministicTurn(orderBuyer, "ادفع", orderConversation);
-    assert.equal(cardReview.surface, "PAYMENT_REVIEW", cardReview.body);
+    // The negotiated order's PAYMENT_REVIEW (pending created by the «ادفع» above) is still open: the cash-only
+    // refusal ran in its own conversation and never confirmed or cancelled it. Select the card directly instead of
+    // re-opening the review — a second «ادفع» on a live CREATE_PAYMENT_INTENT pending would not re-render it.
     const cardChoice = await deterministicTurn(orderBuyer, "أدفع بالبطاقة", orderConversation);
+    assert.equal(cardChoice.surface, "PAYMENT_REVIEW", cardChoice.body);
     assert.equal(cardChoice.payload.purchaseReview.selectedPaymentMethod, "CARD");
     assert.deepEqual(
       [cardChoice.payload.purchaseReview.unitPrice, cardChoice.payload.purchaseReview.subtotal],
