@@ -190,23 +190,33 @@ await test("D17.8-R6 the trigram index behind retrieval is measured against the 
     SELECT pg_relation_size('messages')::bigint AS messages_heap_bytes,
            pg_indexes_size('messages')::bigint AS messages_index_bytes,
            pg_relation_size('messages_body_trgm_idx')::bigint AS trigram_index_bytes,
-           (SELECT count(*) FROM pg_class WHERE relname = 'messages_body_trgm_idx')::int AS trigram_present`);
+           (SELECT count(*) FROM pg_class WHERE relname = 'messages_body_trgm_idx')::int AS trigram_present,
+           (SELECT count(*) FROM messages)::bigint AS indexed_messages`);
   const row = (sizes.rows as Array<Record<string, string>>)[0]!;
   const storedMessages = DISTRACTORS + TOPICS.reduce((sum, topic) => sum + topic.count, 0);
+  const indexedMessages = Number(row.indexed_messages);
   const trigramBytes = Number(row.trigram_index_bytes);
   quality.index = {
     present: Number(row.trigram_present) === 1,
     storedMessages,
+    indexedMessages,
     messagesHeapBytes: Number(row.messages_heap_bytes),
     messagesIndexBytes: Number(row.messages_index_bytes),
     trigramIndexBytes: trigramBytes,
-    trigramBytesPerMessage: Math.round(trigramBytes / storedMessages),
+    trigramBytesPerMessage: Math.round(trigramBytes / indexedMessages),
   };
   assert.equal(quality.index.present, true, "the D17 conversation-memory migration must create the trigram index");
+  // The index covers every row in messages, and on a shared-database chain other suites' messages
+  // are in there too. Dividing the whole index by this suite's own rows would charge their cost to
+  // it, so the denominator is the row count the index actually covers.
+  assert.ok(
+    indexedMessages >= storedMessages,
+    `the index must cover at least this suite's own messages: ${JSON.stringify(quality.index)}`,
+  );
   // Calibrated against the D17.1 measurement: the trigram index cost ~2.3KB per ~150-character
   // message. An order of magnitude more per message would mean the index is not fit for this table.
   assert.ok(
-    trigramBytes > 0 && Math.round(trigramBytes / storedMessages) < 8192,
+    trigramBytes > 0 && Math.round(trigramBytes / indexedMessages) < 8192,
     `trigram index cost per message: ${JSON.stringify(quality.index)}`,
   );
 });
