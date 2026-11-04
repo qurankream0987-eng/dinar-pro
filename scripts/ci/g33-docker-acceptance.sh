@@ -77,11 +77,20 @@ mkdir -p "$TEST_SNAPSHOT"
 cp -a "$TEST_DIR/." "$TEST_SNAPSHOT/"
 rm -rf "$TEST_SNAPSHOT/.test-build"
 chmod -R a+rwX "$TEST_SNAPSHOT"
+# Startup-only storage configuration for the external Docker host: synthetic values and an
+# unserved loopback endpoint. The runtime network is internal; this is not provider/I/O coverage.
 cat >"$PROD_ENV" <<EOF
 NODE_ENV=production
 PORT=3000
 SESSION_SECRET=$SESSION_SECRET
 DATABASE_URL=$PG_URL/$DB
+DINAR_DEPLOYMENT_ENV=production
+OBJECT_STORAGE_PROVIDER=s3
+OBJECT_STORAGE_S3_ENDPOINT=http://127.0.0.1:9
+OBJECT_STORAGE_S3_REGION=us-east-1
+OBJECT_STORAGE_S3_BUCKET=g33-offline
+OBJECT_STORAGE_S3_ACCESS_KEY_ID=G33_OFFLINE_ONLY
+OBJECT_STORAGE_S3_SECRET_ACCESS_KEY=G33_OFFLINE_ONLY_NOT_A_CREDENTIAL
 EOF
 cat >"$DEV_ENV" <<EOF
 NODE_ENV=development
@@ -91,6 +100,12 @@ DATABASE_URL=$PG_URL/$DB
 DINAR_DEV_DATABASE_URL=$PG_URL/$DB
 BDINAR_W08_ACCEPTANCE=development
 BDINAR_WAVE4_ACCEPTANCE=development
+OBJECT_STORAGE_PROVIDER=s3
+OBJECT_STORAGE_S3_ENDPOINT=http://127.0.0.1:9
+OBJECT_STORAGE_S3_REGION=us-east-1
+OBJECT_STORAGE_S3_BUCKET=g33-offline
+OBJECT_STORAGE_S3_ACCESS_KEY_ID=G33_OFFLINE_ONLY
+OBJECT_STORAGE_S3_SECRET_ACCESS_KEY=G33_OFFLINE_ONLY_NOT_A_CREDENTIAL
 EOF
 chmod 600 "$PROD_ENV" "$DEV_ENV"
 
@@ -201,12 +216,17 @@ docker run --detach \
 CREATED_APP=1
 
 probe_health() {
-  docker run --rm \
+  if docker run --rm \
     --network "container:$POSTGRES" \
     --entrypoint node \
     "$G33_APP_IMAGE" \
     --input-type=module \
-    -e 'const deadline=Date.now()+120000; while(Date.now()<deadline){try{const r=await fetch("http://127.0.0.1:3000/healthz");if(r.status===200){console.log("G33_HEALTHZ status=200");process.exit(0)}}catch{} await new Promise(r=>setTimeout(r,1000))} console.error("G33_HEALTHZ timeout");process.exit(1)'
+    -e 'const deadline=Date.now()+120000; while(Date.now()<deadline){try{const r=await fetch("http://127.0.0.1:3000/healthz");if(r.status===200){console.log("G33_HEALTHZ status=200");process.exit(0)}}catch{} await new Promise(r=>setTimeout(r,1000))} console.error("G33_HEALTHZ timeout");process.exit(1)'; then
+    return 0
+  fi
+  docker inspect --format 'G33_APP_STATE={{.State.Status}} exit={{.State.ExitCode}} error={{.State.Error}}' "$APP" >&2 || true
+  docker logs "$APP" >&2 || true
+  return 1
 }
 probe_readiness() {
   docker run --rm \
@@ -214,7 +234,7 @@ probe_readiness() {
     --entrypoint node \
     "$G33_APP_IMAGE" \
     --input-type=module \
-    -e 'const r=await fetch("http://127.0.0.1:3000/readyz");const text=await r.text();let body;try{body=JSON.parse(text)}catch{body={text:text.slice(0,1000)}};console.log("G33_PRODUCTION_READINESS status="+r.status+" body="+JSON.stringify(body));if(r.status!==503)process.exit(1)'
+    -e 'const r=await fetch("http://127.0.0.1:3000/api/readyz");const text=await r.text();let body;try{body=JSON.parse(text)}catch{body={text:text.slice(0,1000)}};console.log("G33_PRODUCTION_READINESS status="+r.status+" body="+JSON.stringify(body));if(r.status!==503)process.exit(1)'
 }
 
 probe_health
