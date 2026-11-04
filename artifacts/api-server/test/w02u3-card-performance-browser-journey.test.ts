@@ -143,6 +143,13 @@ await test("W02U3 CR-15 real browser: 40/100/500-message transcripts stay within
     assert.ok(large <= small * 1.6, `${view}: thread DOM grew ${small} → ${large} nodes`);
   }
   assert.equal(report.windowing.length, 2, "one window extension per viewport");
+  assert.equal(report.typing.length, 2, "typing is checked on both viewport widths");
+  for (const entry of report.typing) {
+    assert.equal(entry.edits, 12);
+    assert.equal(entry.assistantBodyRenders, 0, "completed history stays memoized while drafting");
+  }
+  assert.equal(report.edits.length, 2, "current-state edit actions are checked on both widths");
+  for (const entry of report.edits) assert.notEqual(entry.branch, entry.original);
   for (const entry of report.windowing) {
     assert.ok(entry.after === entry.before * 2, `the older batch doubles the window: ${entry.before} → ${entry.after}`);
     assert.ok(entry.nodes <= 8_000);

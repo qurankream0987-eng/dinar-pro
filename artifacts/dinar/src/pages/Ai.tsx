@@ -1,4 +1,5 @@
 import "./AiChat.css";
+import { useStableCallback } from "@/hooks/use-stable-callback";
 import * as Dialog from "@radix-ui/react-dialog";
 import { ConversationSidebar } from "@/features/ai/ConversationSidebar";
 import {
@@ -883,7 +884,7 @@ export default function AiPage() {
     }
   };
 
-  const resumeGuestMarket = async (
+  const resumeGuestMarket = useStableCallback(async (
     marketId: string,
     resumeMessageId: string,
   ) => {
@@ -923,7 +924,7 @@ export default function AiPage() {
     } finally {
       guestMarketResumeInProgress.current = false;
     }
-  };
+  });
 
   const startConversation = async (
     firstMessage?: string,
@@ -1257,7 +1258,7 @@ export default function AiPage() {
     }
   };
 
-  const addListing = useCallback(
+  const addListing = useStableCallback(
     async (listing: Listing, resultSetId: string) => {
       if (sending.current || streaming) return false;
       if (!user) {
@@ -1303,7 +1304,6 @@ export default function AiPage() {
         }
       }
     },
-    [activeId, user, streaming, messages, queryClient, refreshCartFromServer],
   );
 
   const submit = async () => {
@@ -1404,7 +1404,7 @@ export default function AiPage() {
     }
   };
 
-  const editOwnMessage = async (messageId: string, body: string) => {
+  const editOwnMessage = useStableCallback(async (messageId: string, body: string) => {
     if (!user || !activeId || streaming || sending.current) return;
     const edited = messages.find((message) => message.id === messageId);
     if (!edited || edited.role !== "USER") throw new Error("هذه ليست رسالتك.");
@@ -1416,7 +1416,7 @@ export default function AiPage() {
     setVisibleMessageCount(40);
     setSidebarOpen(false);
     await sendMessage(branch.id, body, branch.messages, undefined, []);
-  };
+  });
 
   const loadOlderMessages = () => {
     const viewport = conversationViewportRef.current;

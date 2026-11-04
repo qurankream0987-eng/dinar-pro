@@ -44,6 +44,8 @@ const recorder = createRecorder(webBase, apiOrigin);
 const checks = [];
 const samples = [];
 const windowing = [];
+const typing = [];
+const edits = [];
 let failure;
 let browser;
 
@@ -121,6 +123,23 @@ try {
     await context.route("https://fonts.gstatic.com/**", (route) =>
       route.fulfill({ status: 200, contentType: "font/woff2", body: "" }),
     );
+    // Count real AssistantBody executions in Vite's test-only response. Nothing is
+    // instrumented in the application source or production bundle.
+    await context.route("**/src/features/ai/ConversationContent.tsx*", async (route) => {
+      try {
+        const response = await route.fetch({ maxRetries: 2 });
+        const body = await response.text();
+        const instrumented = body.replace(
+          /function AssistantBody\([\s\S]*?\)\s*\{/,
+          "$& globalThis.__dinarAssistantBodyRenders = (globalThis.__dinarAssistantBodyRenders ?? 0) + 1;",
+        );
+        await route.fulfill({ response, body: instrumented });
+      } catch {
+        // Cold navigation can cancel an in-flight module. A failed active load
+        // still fails the page-error, loaded-marker, or instrumentation checks.
+        await route.abort("failed").catch(() => undefined);
+      }
+    });
     const page = await context.newPage();
     watch(page, viewport.label);
     await signIn(page, buyer);
@@ -153,6 +172,35 @@ try {
     assert.ok(after > before && after <= budgets.bubbleCap * 2, `the older batch is bounded: ${before} → ${after}`);
     assert.ok(shape.nodes <= budgets.domCap, `${shape.nodes} nodes after loading older messages`);
     windowing.push({ viewport: viewport.label, size: largest.size, before, after, nodes: shape.nodes });
+    const composer = page.getByTestId("input-ai-composer");
+    await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+    const beforeTyping = await page.evaluate(() => globalThis.__dinarAssistantBodyRenders);
+    assert.ok(beforeTyping > 0, "the real assistant renderer was instrumented and executed");
+    for (let index = 1; index <= 12; index++) await composer.fill("مسودة جديدة ".repeat(index));
+    await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+    const afterTyping = await page.evaluate(() => globalThis.__dinarAssistantBodyRenders);
+    typing.push({ viewport: viewport.label, edits: 12, assistantBodyRenders: afterTyping - beforeTyping });
+    assert.equal(afterTyping, beforeTyping, "typing a draft must not reparse completed assistant history");
+    // The stable edit callback must read the currently selected transcript, not
+    // the first conversation captured when the page mounted.
+    const editButton = page.locator('[data-testid^="button-edit-message-"]').last();
+    const editId = (await editButton.getAttribute("data-testid")).replace("button-edit-message-", "");
+    await editButton.click();
+    const editedBody = "ابحث عن ثلاجة";
+    await page.getByTestId(`textarea-edit-message-${editId}`).fill(editedBody);
+    const [copied, turn] = await Promise.all([
+      page.waitForResponse((response) => new URL(response.url()).pathname === `/api/ai/conversations/${largest.conversationId}/copy` && response.request().method() === "POST"),
+      page.waitForResponse((response) => /\/api\/ai\/conversations\/[^/]+\/turns$/.test(new URL(response.url()).pathname) && response.request().method() === "POST"),
+      page.getByTestId(`button-save-message-edit-${editId}`).click(),
+    ]);
+    assert.ok(copied.ok(), "editing creates an owned conversation branch");
+    const branch = await copied.json();
+    assert.notEqual(branch.id, largest.conversationId, "the original history is preserved");
+    assert.equal(new URL(turn.url()).pathname, `/api/ai/conversations/${branch.id}/turns`, "the reply is sent on the current edit branch");
+    assert.ok(turn.ok());
+    await turn.finished();
+    await page.locator('[data-testid="conversation-thread"]').getByText(editedBody, { exact: true }).waitFor();
+    edits.push({ viewport: viewport.label, original: largest.conversationId, branch: branch.id });
     await context.close();
   }
 
@@ -180,17 +228,19 @@ try {
   checks.push("CR-15: thread DOM nodes do not grow with transcript size");
   checks.push("CR-15: 320px has no horizontal overflow in the long thread");
   checks.push("CR-15: cold loads repeat three times per size and viewport on a fresh client");
+  checks.push("CR-15: draft edits do not re-render completed assistant bodies");
+  checks.push("CR-15: stable actions edit the current conversation and preserve its original history");
 
   writeFileSync(
     resultPath,
-    JSON.stringify({ checks, failure: undefined, budgets, views: viewports.map(({ label }) => label), reps, samples, summary, windowing, pageErrors: recorder.pageErrors, consoleErrors: recorder.consoleErrors, externalRequests: recorder.externalRequests, modelFallbacks: recorder.modelFallbacks }, null, 2),
+    JSON.stringify({ checks, failure: undefined, budgets, views: viewports.map(({ label }) => label), reps, samples, summary, windowing, typing, edits, pageErrors: recorder.pageErrors, consoleErrors: recorder.consoleErrors, externalRequests: recorder.externalRequests, modelFallbacks: recorder.modelFallbacks }, null, 2),
   );
   await browser.close();
 } catch (error) {
   failure = error instanceof Error ? `${error.message}\n${error.stack ?? ""}` : String(error);
   writeFileSync(
     resultPath,
-    JSON.stringify({ checks, failure, budgets, views: viewports.map(({ label }) => label), reps, samples, windowing, pageErrors: recorder.pageErrors, consoleErrors: recorder.consoleErrors, externalRequests: recorder.externalRequests, modelFallbacks: recorder.modelFallbacks }, null, 2),
+    JSON.stringify({ checks, failure, budgets, views: viewports.map(({ label }) => label), reps, samples, windowing, typing, edits, pageErrors: recorder.pageErrors, consoleErrors: recorder.consoleErrors, externalRequests: recorder.externalRequests, modelFallbacks: recorder.modelFallbacks }, null, 2),
   );
   await browser?.close().catch(() => undefined);
 }
