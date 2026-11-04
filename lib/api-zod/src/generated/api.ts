@@ -3200,6 +3200,8 @@ export const CreateAiGuestHandoffResponse = zod.object({
   "actor": zod.enum(['USER', 'ASSISTANT', 'SYSTEM', 'TOOL']),
   "body": zod.string(),
   "createdAt": zod.string(),
+  "turnStatus": zod.enum(['pending', 'completed', 'failed', 'uncertain']).optional().describe('Owner-visible server execution state of a user turn; never supplied by the client.'),
+  "replyToMessageId": zod.string().optional().describe('The user message answered by this server-persisted assistant message.'),
   "blocks": zod.array(zod.object({
   "type": zod.enum(['LISTING_RESULTS', 'SURFACE']),
   "version": zod.literal(1),
@@ -3439,6 +3441,8 @@ export const GetAiConversationResponse = zod.object({
   "actor": zod.enum(['USER', 'ASSISTANT', 'SYSTEM', 'TOOL']),
   "body": zod.string(),
   "createdAt": zod.string(),
+  "turnStatus": zod.enum(['pending', 'completed', 'failed', 'uncertain']).optional().describe('Owner-visible server execution state of a user turn; never supplied by the client.'),
+  "replyToMessageId": zod.string().optional().describe('The user message answered by this server-persisted assistant message.'),
   "blocks": zod.array(zod.object({
   "type": zod.enum(['LISTING_RESULTS', 'SURFACE']),
   "version": zod.literal(1),
@@ -3716,6 +3720,8 @@ export const CopyAiConversationResponse = zod.object({
   "actor": zod.enum(['USER', 'ASSISTANT', 'SYSTEM', 'TOOL']),
   "body": zod.string(),
   "createdAt": zod.string(),
+  "turnStatus": zod.enum(['pending', 'completed', 'failed', 'uncertain']).optional().describe('Owner-visible server execution state of a user turn; never supplied by the client.'),
+  "replyToMessageId": zod.string().optional().describe('The user message answered by this server-persisted assistant message.'),
   "blocks": zod.array(zod.object({
   "type": zod.enum(['LISTING_RESULTS', 'SURFACE']),
   "version": zod.literal(1),
@@ -4007,6 +4013,8 @@ export const AddAiListingToCartResponse = zod.object({
   "actor": zod.enum(['USER', 'ASSISTANT', 'SYSTEM', 'TOOL']),
   "body": zod.string(),
   "createdAt": zod.string(),
+  "turnStatus": zod.enum(['pending', 'completed', 'failed', 'uncertain']).optional().describe('Owner-visible server execution state of a user turn; never supplied by the client.'),
+  "replyToMessageId": zod.string().optional().describe('The user message answered by this server-persisted assistant message.'),
   "blocks": zod.array(zod.object({
   "type": zod.enum(['LISTING_RESULTS', 'SURFACE']),
   "version": zod.literal(1),

@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { iconButtonClass } from "@/ui/Button";
-import { ArrowUp, LoaderCircle, Mic, MicOff, Plus, X } from "lucide-react";
+import { ArrowUp, LoaderCircle, Mic, MicOff, Plus, Square, X } from "lucide-react";
 import { textDirection } from "./rich-text";
 import { transcribeAiVoiceRecording } from "./ai-api";
 
@@ -11,6 +11,7 @@ export function ChatComposer({
   draft,
   onDraftChange,
   onSubmit,
+  onStop,
   photos,
   onPhotosChange,
   canUploadPhotos,
@@ -22,6 +23,7 @@ export function ChatComposer({
   draft: string;
   onDraftChange: (value: string) => void;
   onSubmit: () => void;
+  onStop?: () => void;
   photos: File[];
   onPhotosChange: (files: File[]) => void;
   canUploadPhotos: boolean;
@@ -333,6 +335,13 @@ export function ChatComposer({
           >
             {transcribing ? <LoaderCircle size={19} className="animate-spin" aria-hidden /> : recording ? <MicOff size={19} aria-hidden /> : <Mic size={19} aria-hidden />}
           </button>
+          {onStop && busy && (
+            <button type="button" onClick={onStop} aria-label="إيقاف عرض الرد"
+              title="يوقف عرض الرد فقط؛ يتحقق DINAR من نتيجة الطلب على الخادم."
+              data-testid="button-stop-ai-response" className={iconButtonClass("outline")}>
+              <Square size={18} aria-hidden />
+            </button>
+          )}
           <button
             type="submit"
             disabled={(!draft.trim() && photos.length === 0) || busy || offline}

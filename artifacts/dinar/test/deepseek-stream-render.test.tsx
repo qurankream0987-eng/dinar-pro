@@ -129,6 +129,49 @@ await test("a stream cut before its terminal event is reported, never shown as a
   await assert.rejects(replay(cut, 8), /انتهت المحادثة قبل وصول نتيجة مكتملة/u);
 });
 
+await test("a response stopped before dispatch makes no request", async () => {
+  const originalFetch = globalThis.fetch;
+  const controller = new AbortController();
+  controller.abort();
+  let calls = 0;
+  globalThis.fetch = async () => {
+    calls++;
+    return new Response(byCase("general-arabic").sse);
+  };
+  try {
+    await assert.rejects(sendAiConversationTurn("stopped", "نص", () => {}, controller.signal), { name: "AbortError" });
+    assert.equal(calls, 0);
+  } finally { globalThis.fetch = originalFetch; }
+});
+
+await test("stopping a received response suppresses buffered events and requires server verification", async () => {
+  const originalFetch = globalThis.fetch;
+  const controller = new AbortController();
+  const events: AiStreamEvent[] = [];
+  globalThis.fetch = async () => new Response('data: {"type":"delta","content":"جزء"}\n\n' + byCase("general-arabic").sse);
+  try {
+    await assert.rejects(sendAiConversationTurn("stopped", "نص", (event) => {
+      events.push(event);
+      if (event.type === "delta") controller.abort();
+    }, controller.signal), (error: any) => error.name === "AbortError" && error.deliveryUnknown === true);
+    assert.equal(events.filter((event) => event.type === "delta").length, 1);
+    assert.equal(events.some((event) => event.type === "complete"), false, "a buffered completion cannot replace a stopped stream");
+  } finally { globalThis.fetch = originalFetch; }
+});
+
+await test("an aborted dispatched request has an unknown outcome rather than a failed transaction", async () => {
+  const originalFetch = globalThis.fetch;
+  const controller = new AbortController();
+  globalThis.fetch = async () => {
+    controller.abort();
+    throw new DOMException("Stopped", "AbortError");
+  };
+  try {
+    await assert.rejects(sendAiConversationTurn("stopped", "نص", () => {}, controller.signal),
+      (error: any) => error.name === "AbortError" && error.deliveryUnknown === true);
+  } finally { globalThis.fetch = originalFetch; }
+});
+
 /** Real R2 deepseek-flash replies replayed through the canonical route (not a new live inference). */
 const r2 = JSON.parse(readFileSync(new URL("./fixtures/deepseek-r2-replay-sse.json", import.meta.url), "utf8")) as {
   cases: { case: string; message: string; sse: string }[];
@@ -162,6 +205,25 @@ await test("real R2 DeepSeek replies stream and render: capabilities list, groun
 // ─── R3D: terminal-event finality and trusted action receipts ────────────────
 import * as receiptCards from "../src/features/ai/ActionReceipts";
 import { normalizeMessage } from "../src/features/ai/ai-api";
+import { replyForTurn, unfinishedTurn } from "../src/features/ai/turn-recovery";
+
+await test("recovery never borrows another user's turn reply or crosses a newer user message", () => {
+  const message = (id: string, role: "USER" | "ASSISTANT", patch: Record<string, unknown> = {}) =>
+    normalizeMessage({ id, actor: role, body: id, createdAt: "2026-11-04T00:00:00Z", blocks: [], ...patch });
+  const pending = message("pending", "USER", { turnStatus: "pending" });
+  const later = message("later", "USER", { turnStatus: "completed" });
+  const laterReply = message("later-reply", "ASSISTANT", { replyToMessageId: "later" });
+  assert.equal(replyForTurn([pending, later, laterReply], "pending"), undefined);
+  assert.equal(unfinishedTurn([pending, later, laterReply])?.id, "pending");
+  const answer = message("answer", "ASSISTANT", { replyToMessageId: "pending" });
+  assert.equal(replyForTurn([pending, later, laterReply, answer], "pending"), answer);
+  assert.equal(unfinishedTurn([pending, later, laterReply, answer]), undefined);
+  const legacy = message("old", "USER");
+  const legacyReply = message("old-answer", "ASSISTANT");
+  assert.equal(replyForTurn([legacy, legacyReply], "old"), legacyReply);
+  assert.equal(replyForTurn([legacy, later, legacyReply], "old"), undefined);
+  assert.equal(replyForTurn([pending, legacyReply], "pending"), undefined);
+});
 
 await test("R3D: the first terminal event is final; duplicates and late events are never applied", async () => {
   // A real captured turn, its complete event sent twice, then a late delta and a late error.

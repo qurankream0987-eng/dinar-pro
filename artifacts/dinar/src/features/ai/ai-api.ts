@@ -163,6 +163,8 @@ export type AiMessage = {
   body: string;
   createdAt: string;
   blocks: AiUiBlock[];
+  turnStatus?: "pending" | "completed" | "failed" | "uncertain";
+  replyToMessageId?: string;
   /** Present only when the server attached receipts. */
   receipts?: AiActionReceipt[];
 };
@@ -462,6 +464,10 @@ export function normalizeMessage(value: unknown): AiMessage {
     blocks: (item.blocks ?? [])
       .map(normalizeBlock)
       .filter((block): block is AiUiBlock => Boolean(block)),
+    ...(role === "USER" && ["pending", "completed", "failed", "uncertain"].includes(String(item.turnStatus))
+      ? { turnStatus: item.turnStatus } : {}),
+    ...(role === "ASSISTANT" && typeof item.replyToMessageId === "string"
+      ? { replyToMessageId: item.replyToMessageId } : {}),
     ...(Array.isArray(item.actionReceipts)
       ? {
           receipts: item.actionReceipts
@@ -527,13 +533,14 @@ export function useGetAiConversations(options?: { enabled?: boolean }) {
 
 export function useGetAiConversation(
   id: string | undefined,
-  options?: { enabled?: boolean },
+  options?: { enabled?: boolean; refetchInterval?: number | false },
 ) {
   const query = useGeneratedGetAiConversation(id ?? "", {
     query: {
       enabled: Boolean(id) && (options?.enabled ?? true),
       queryKey: getGetAiConversationQueryKey(id ?? ""),
       staleTime: 20_000,
+      refetchInterval: options?.refetchInterval ?? false,
     },
   });
   const data = useMemo(
@@ -638,6 +645,8 @@ export async function sendAiConversationTurn(
   location?: LocationSubmission,
   reasoningEffort?: "low" | "medium" | "high",
 ) {
+  // No transport was attempted in this case, so it is not an unknown delivery.
+  signal?.throwIfAborted();
   let response: Response;
   try {
     response = await fetch(
@@ -655,7 +664,6 @@ export async function sendAiConversationTurn(
       },
     );
   } catch (cause) {
-    if (signal?.aborted) throw cause;
     // The request may have reached the server before the connection failed: the outcome is
     // unknown until the conversation is read again, never a failure to report.
     throw Object.assign(
@@ -682,6 +690,7 @@ export async function sendAiConversationTurn(
 
   const dispatch = () => {
     if (!eventData) return;
+    if (signal?.aborted) { eventData = ""; return; }
     // The first complete or error is final: a duplicate or a late event is never applied.
     if (terminalEventReceived) {
       eventData = "";
@@ -712,33 +721,40 @@ export async function sendAiConversationTurn(
     }
   };
 
-  while (true) {
-    let chunk: ReadableStreamReadResult<Uint8Array>;
-    try {
-      chunk = await reader.read();
-    } catch (cause) {
-      if (signal?.aborted) throw cause;
+  try {
+    while (true) {
+      if (signal?.aborted && !terminalEventReceived)
+        throw Object.assign(signal.reason instanceof Error ? signal.reason : new DOMException("Response stopped", "AbortError"), { deliveryUnknown: true });
+      let chunk: ReadableStreamReadResult<Uint8Array>;
+      try {
+        chunk = await reader.read();
+      } catch (cause) {
+        throw Object.assign(
+          cause instanceof Error ? cause : new Error("انتهت المحادثة قبل وصول نتيجة مكتملة. حاول مرة أخرى."),
+          { deliveryUnknown: true },
+        );
+      }
+      if (chunk.done) break;
+      consume(decoder.decode(chunk.value, { stream: true }));
+      if (terminalEventReceived) break;
+    }
+    consume(decoder.decode());
+    if (buffer.startsWith("data:")) {
+      if (eventData) eventData += "\n";
+      eventData += buffer.slice(5).replace(/^ /, "");
+    }
+    if (eventData) {
+      dispatch();
+    }
+    if (!terminalEventReceived)
       throw Object.assign(
-        cause instanceof Error ? cause : new Error("انتهت المحادثة قبل وصول نتيجة مكتملة. حاول مرة أخرى."),
+        new Error("انتهت المحادثة قبل وصول نتيجة مكتملة. حاول مرة أخرى."),
         { deliveryUnknown: true },
       );
-    }
-    if (chunk.done) break;
-    consume(decoder.decode(chunk.value, { stream: true }));
+  } finally {
+    if (signal?.aborted || terminalEventReceived) await reader.cancel().catch(() => undefined);
+    reader.releaseLock();
   }
-  consume(decoder.decode());
-  if (buffer.startsWith("data:")) {
-    if (eventData) eventData += "\n";
-    eventData += buffer.slice(5).replace(/^ /, "");
-  }
-  if (eventData) {
-    dispatch();
-  }
-  if (!terminalEventReceived)
-    throw Object.assign(
-      new Error("انتهت المحادثة قبل وصول نتيجة مكتملة. حاول مرة أخرى."),
-      { deliveryUnknown: true },
-    );
 }
 
 function normalizeStreamEvent(value: unknown): AiStreamEvent | null {

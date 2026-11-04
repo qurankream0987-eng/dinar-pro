@@ -1704,6 +1704,10 @@ router.get("/ai/conversations/:id", requireAuth, async (req, res) => {
           body: row.body,
           createdAt: row.createdAt.toISOString(),
           blocks: blocksByMessage.get(row.id) ?? [],
+          ...(row.actor === "USER" && ["pending", "completed", "failed", "uncertain"].includes(String(row.metadata.turnStatus))
+            ? { turnStatus: row.metadata.turnStatus } : {}),
+          ...(row.actor === "ASSISTANT" && typeof row.metadata.replyToMessageId === "string"
+            ? { replyToMessageId: row.metadata.replyToMessageId } : {}),
           ...(actionReceipts.length ? { actionReceipts } : {}),
         };
       }),
@@ -2241,9 +2245,7 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
             body,
             contentType: "TEXT",
             // NEXT G2: inquiry answers quote the other party's words; they never become model history.
-            ...(toolResult.inquiry || actionReceipts.length
-              ? { metadata: { ...(toolResult.inquiry ? { inquiryContent: true } : {}), ...(actionReceipts.length ? { actionReceipts } : {}) } }
-              : {}),
+            metadata: { replyToMessageId: userMessageId, ...(toolResult.inquiry ? { inquiryContent: true } : {}), ...(actionReceipts.length ? { actionReceipts } : {}) },
           })
           .returning();
         await tx
@@ -2334,6 +2336,7 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
         userMessage: {
           id: userMessageId,
           actor: "USER",
+          turnStatus: "completed",
           body: message,
           createdAt: createdAt.toISOString(),
           blocks: [],
@@ -2341,6 +2344,7 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
         assistantMessage: {
           id: assistant.id,
           actor: "ASSISTANT",
+          replyToMessageId: userMessageId,
           body,
           createdAt: assistant.createdAt.toISOString(),
           // The pending-action binding is server bookkeeping, as in history reads.
@@ -2493,7 +2497,7 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
           body: finalAssistantText,
           actor: "ASSISTANT",
           contentType: "TEXT",
-          metadata: { resultSetId: resourceIds.length ? resultSetId : null },
+          metadata: { resultSetId: resourceIds.length ? resultSetId : null, replyToMessageId: userMessageId },
         })
         .returning();
       if (toolResult.kind === "SEARCH") {
@@ -2532,6 +2536,7 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
     const userMessageView = {
       id: userMessageId,
       actor: "USER",
+      turnStatus: "completed",
       body: message,
       createdAt: createdAt.toISOString(),
       blocks: [],
@@ -2539,6 +2544,7 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
     const assistantMessageView = {
       id: assistantMessageId,
       actor: "ASSISTANT",
+      replyToMessageId: userMessageId,
       body: finalAssistantText,
       createdAt: messageCreatedAt.toISOString(),
       blocks,

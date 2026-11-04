@@ -2650,6 +2650,19 @@ export const AiMessageActor = {
   TOOL: 'TOOL',
 } as const;
 
+/**
+ * Owner-visible server execution state of a user turn; never supplied by the client.
+ */
+export type AiMessageTurnStatus = typeof AiMessageTurnStatus[keyof typeof AiMessageTurnStatus];
+
+
+export const AiMessageTurnStatus = {
+  pending: 'pending',
+  completed: 'completed',
+  failed: 'failed',
+  uncertain: 'uncertain',
+} as const;
+
 export type AiActionReceiptLifecycle = typeof AiActionReceiptLifecycle[keyof typeof AiActionReceiptLifecycle];
 
 
@@ -2728,6 +2741,10 @@ export interface AiMessage {
   actor: AiMessageActor;
   body: string;
   createdAt: string;
+  /** Owner-visible server execution state of a user turn; never supplied by the client. */
+  turnStatus?: AiMessageTurnStatus;
+  /** The user message answered by this server-persisted assistant message. */
+  replyToMessageId?: string;
   blocks: AiUiBlock[];
   /**
      * The commercial actions this turn opened or moved, as recorded by DINAR's action ledger and re-read on every response: the status is the ledger's current one, never the assistant's text. Only the viewer's own actions in this conversation appear.

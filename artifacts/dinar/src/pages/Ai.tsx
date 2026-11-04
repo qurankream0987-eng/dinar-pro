@@ -1,5 +1,6 @@
 import "./AiChat.css";
 import { useStableCallback } from "@/hooks/use-stable-callback";
+import { replyForTurn, unfinishedTurn } from "@/features/ai/turn-recovery";
 import * as Dialog from "@radix-ui/react-dialog";
 import { ConversationSidebar } from "@/features/ai/ConversationSidebar";
 import {
@@ -200,10 +201,17 @@ export default function AiPage() {
   const lastScrollGeometry = useRef<{ top: number; height: number; client: number } | null>(null);
   const touchOrigin = useRef<{ x: number; y: number } | null>(null);
   const requestEpoch = useRef(0);
+  const activeStream = useRef<{ controller: AbortController; dispatched: boolean; stoppable: boolean } | null>(null);
+  useEffect(() => () => {
+    requestEpoch.current++;
+    activeStream.current?.controller.abort();
+  }, []);
   const initializedId = useRef<string | undefined>(undefined);
+  const verifyingActiveTurn = Boolean(verifyingTurn && verifyingTurn.conversationId === activeId);
   const conversations = useGetAiConversations({ enabled: Boolean(user) });
   const detail = useGetAiConversation(activeId, {
     enabled: Boolean(user && activeId),
+    refetchInterval: verifyingActiveTurn ? 1000 : false,
   });
   const createConversation = useCreateAiConversation();
   const copyConversation = useCopyAiConversation();
@@ -523,6 +531,8 @@ export default function AiPage() {
       setVerifyingTurn(null);
       setExternalCardSync(0);
       requestEpoch.current += 1;
+      activeStream.current?.controller.abort();
+      activeStream.current = null;
       sending.current = false;
       creating.current = false;
       setStreaming(false);
@@ -598,6 +608,22 @@ export default function AiPage() {
     userScrollUntil.current = 0;
     setShowJumpToBottom(false);
   }, [activeId]);
+
+  useEffect(() => {
+    if (!activeConversation || !activeId || streaming || sending.current) return;
+    if (verifyingTurn?.conversationId === activeId && replyForTurn(activeConversation.messages, verifyingTurn.messageId)) {
+      setLocalMessages(activeConversation.messages);
+      setVerifyingTurn(null);
+      setFailedTurn(null);
+      setError("");
+      return;
+    }
+    const pending = unfinishedTurn(activeConversation.messages);
+    if (pending && pending.id !== verifyingTurn?.messageId) {
+      setVerifyingTurn({ text: pending.body, messageId: pending.id, conversationId: activeId });
+      setError("طلبك محفوظ في DINAR ونتحقق من نتيجته. لا حاجة لإعادة الإرسال.");
+    }
+  }, [activeConversation, activeId, streaming, verifyingTurn?.messageId]);
 
   useLayoutEffect(() => {
     const viewport = conversationViewportRef.current;
@@ -1028,11 +1054,7 @@ export default function AiPage() {
       const index = restored.messages.findIndex(
         (message) => message.id === messageId,
       );
-      const answered =
-        index >= 0 &&
-        restored.messages
-          .slice(index + 1)
-          .some((message) => message.role === "ASSISTANT");
+      const answered = Boolean(replyForTurn(restored.messages, messageId));
       setLocalMessages(restored.messages);
       if (answered) {
         setError("");
@@ -1064,7 +1086,6 @@ export default function AiPage() {
   const verifyTurn = async () => {
     if (!verifyingTurn || sending.current || streaming) return;
     const pending = verifyingTurn;
-    setVerifyingTurn(null);
     const handled = await reconcileDeliveredTurn(
       pending.conversationId,
       pending.text,
@@ -1072,13 +1093,7 @@ export default function AiPage() {
       requestEpoch.current,
     );
     if (handled) return;
-    setDraft((current) => current || pending.text);
-    setFailedTurn({
-      text: pending.text,
-      messageId: pending.messageId,
-      conversationId: pending.conversationId,
-    });
-    setError("تعذر التحقق من السجل الآن. أعد المحاولة بأمان بنفس الرسالة.");
+    setError("تعذر التحقق من السجل الآن. تحقق من النتيجة مجددًا قبل إرسال طلب آخر.");
   };
 
   const sendMessage = async (
@@ -1091,8 +1106,11 @@ export default function AiPage() {
     location?: LocationSubmission,
   ) => {
     const text = value.trim();
-    if (!text || streaming || createConversation.isPending || sending.current)
+    if (!text || streaming || createConversation.isPending || sending.current || verifyingTurn?.conversationId === conversationId)
       return;
+    const controller = new AbortController();
+    const transport = { controller, dispatched: false, stoppable: !location };
+    activeStream.current = transport;
     sending.current = true;
     const epoch = requestEpoch.current;
     setError("");
@@ -1142,6 +1160,8 @@ export default function AiPage() {
         photoPathsReady = true;
         setStage("understanding");
       }
+      if (epoch !== requestEpoch.current || controller.signal.aborted) return;
+      transport.dispatched = true;
       await sendAiConversationTurn(
         conversationId,
         text,
@@ -1208,7 +1228,7 @@ export default function AiPage() {
             );
           }
         },
-        undefined,
+        controller.signal,
         userMessage.id,
         imageObjectPaths,
         location,
@@ -1250,6 +1270,7 @@ export default function AiPage() {
         (current ?? []).filter((message) => message.id !== assistantId),
       );
     } finally {
+      if (activeStream.current?.controller === controller) activeStream.current = null;
       if (epoch === requestEpoch.current) {
         sending.current = false;
         setStreaming(false);
@@ -1260,7 +1281,7 @@ export default function AiPage() {
 
   const addListing = useStableCallback(
     async (listing: Listing, resultSetId: string) => {
-      if (sending.current || streaming) return false;
+      if (sending.current || streaming || verifyingActiveTurn) return false;
       if (!user) {
         setError("سجّل الدخول لإضافة العرض إلى سلتك.");
         return false;
@@ -1816,6 +1837,8 @@ export default function AiPage() {
       draft={draft}
       onDraftChange={setDraft}
       onSubmit={() => void submit()}
+      onStop={streaming && activeStream.current?.dispatched && activeStream.current.stoppable
+        ? () => activeStream.current?.controller.abort() : undefined}
       photos={selectedPhotos}
       onPhotosChange={(files) => {
         setSelectedPhotos(files);
@@ -1823,7 +1846,7 @@ export default function AiPage() {
       }}
       canUploadPhotos={Boolean(user)}
       busy={
-        streaming || createConversation.isPending || Boolean(addingListingId)
+        streaming || createConversation.isPending || Boolean(addingListingId) || verifyingActiveTurn
       }
       offline={!online}
       reasoningEffort={reasoningEffort}
@@ -2407,7 +2430,7 @@ export default function AiPage() {
                           onAdd={addListing}
                           onSend={sendQuickReply}
                           onSelectMarket={resumeGuestMarket}
-                          busy={streaming || createConversation.isPending}
+                          busy={streaming || createConversation.isPending || verifyingActiveTurn}
                         />
                       ))}
                     {stage && (

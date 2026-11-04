@@ -5215,6 +5215,13 @@ components:
         actor: { type: string, enum: [USER, ASSISTANT, SYSTEM, TOOL] }
         body: { type: string }
         createdAt: { type: string }
+        turnStatus:
+          type: string
+          enum: [pending, completed, failed, uncertain]
+          description: Owner-visible server execution state of a user turn; never supplied by the client.
+        replyToMessageId:
+          type: string
+          description: The user message answered by this server-persisted assistant message.
         blocks:
           type: array
           items: { $ref: "#/components/schemas/AiUiBlock" }

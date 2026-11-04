@@ -48,6 +48,7 @@ export * from './aiListingManagementPreviewResult';
 export * from './aiListingManagementPreviewResultStatus';
 export * from './aiMessage';
 export * from './aiMessageActor';
+export * from './aiMessageTurnStatus';
 export * from './aiPhotoSuggestion';
 export * from './aiPreviewHistoryMessage';
 export * from './aiPreviewHistoryMessageActor';
