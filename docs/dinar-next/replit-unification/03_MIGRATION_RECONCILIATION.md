@@ -3,7 +3,7 @@
 **Canonical baseline:** `11d7fbe3326897924468ee4c6d5467972a92b973`  
 **Initial candidate:** same SHA  
 **Review date:** 2026-11-04
-**Status:** source identities reconciled; fresh and populated PostgreSQL 18 migration tests passed; Docker database-connected acceptance remains incomplete.
+**Status:** source identities reconciled; fresh and populated PostgreSQL 18 migration tests passed; G33 database-connected CI acceptance passed at frozen implementation SHA `f4981d8ddaf11284641ef6b43edb3603e1cf9110`; local Docker replay remains blocked.
 
 ## Source facts
 
@@ -71,3 +71,7 @@ The final candidate validation snapshot below supplements this design and source
 - No external launch, jurisdictional counsel, payment provider, or production readiness was assessed. No Railway, production database, deployment, or live provider was used.
 
 An earlier pre-gate smoke attempt activated JO only inside a disposable loopback database; that database was dropped. The final fresh-environment smoke, after the legal gate was added, confirmed all markets remained inactive. D16 acceptance fixtures exercise legal approval and suspension behavior only inside disposable databases, which are removed by the isolated-suite runner.
+
+## G33 CI reconciliation — 2026-11-04
+
+The local Docker limitation above is specific to reproducing a client/PostgreSQL container connection in this workspace. GitHub Actions G33 run `41821045947` passed database-connected Docker acceptance on PostgreSQL 16 and 18 at frozen implementation SHA `f4981d8ddaf11284641ef6b43edb3603e1cf9110`; the earlier baseline run `41814480105` is historical. Current feature completeness and final candidate evidence are tracked only in `13_CAPABILITY_COMPLETENESS_MATRIX.md`. No application-code changes followed the frozen SHA.
