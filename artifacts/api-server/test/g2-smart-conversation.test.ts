@@ -1719,8 +1719,10 @@ await acceptance("G2-36B", "an unpriced open-to-offers listing can receive a bes
     const cashOnlyListing = await offerOf(cashOnlyListingId);
     const cashOnlyConversation = await conversation(cashOnlyBuyer);
     await openListing(cashOnlyBuyer, String(cashOnlyListing.data.title), cashOnlyListingId, cashOnlyConversation);
-    assert.equal((await deterministicTurn(cashOnlyBuyer, "اشتريه", cashOnlyConversation)).surface, "PURCHASE_REVIEW");
-    // A plain fixed-price buy first reviews an ADD_TO_CART (buyer-turn.ts:558/669 — a single «نعم» there only fills
+    const cashOnlyPurchase = await deterministicTurn(cashOnlyBuyer, "أبي الأول", cashOnlyConversation);
+    assert.equal(cashOnlyPurchase.surface, "PURCHASE_REVIEW", cashOnlyPurchase.body);
+    assert.equal(cashOnlyPurchase.calls, 0, "the selected fixed-price purchase never needs a model");
+    // An explicit fixed-price selection first reviews an ADD_TO_CART (a single «نعم» there only fills
     // the cart). A second CONTINUE phrase restages the same pending to PLACE_ORDER (buyer-turn.ts:1296), and «نعم»
     // then creates the order and its ORDER surface block (placedOrderTurn → orderTurn), the one thing orderInContext
     // reads when «ادفع» resolves the payment target. This is the real checkout path, so the order is born carrying
@@ -1731,6 +1733,8 @@ await acceptance("G2-36B", "an unpriced open-to-offers listing can receive a bes
     assert.equal(cashOnlyReview.surface, "PAYMENT_REVIEW", cashOnlyReview.body);
     assert.deepEqual(cashOnlyReview.payload.purchaseReview.paymentMethods, ["CASH_DIRECT"]);
     const cashOnlyOrderId = cashOnlyReview.payload.purchaseReview.orderId;
+    const [cashOnlyOrderBefore] = await db.select().from(orders).where(eq(orders.id, cashOnlyOrderId));
+    const cashOnlyItems = structuredClone(cashOnlyOrderBefore!.data.items);
     const unsupportedCard = await deterministicTurn(cashOnlyBuyer, "أدفع بالبطاقة", cashOnlyConversation);
     assert.match(unsupportedCard.body, /لا يدعم/);
     assert.equal(unsupportedCard.payload.purchaseReview.selectedPaymentMethod, null, "unsupported card selection must not mutate payment state");
@@ -1742,6 +1746,7 @@ await acceptance("G2-36B", "an unpriced open-to-offers listing can receive a bes
     assert.equal((await db.select().from(paymentIntents)).length, intentsBeforeCashConfirm, "cash never creates a payment intent");
     const [cashOrder] = await db.select().from(orders).where(eq(orders.id, cashOnlyOrderId));
     assert.equal(cashOrder?.data.selectedPaymentMethod, "CASH_DIRECT");
+    assert.deepEqual(cashOrder?.data.items, cashOnlyItems, "choosing cash preserves the original line-item snapshot");
     // The negotiated order's PAYMENT_REVIEW (pending created by the «ادفع» above) is still open: the cash-only
     // refusal ran in its own conversation and never confirmed or cancelled it. Select the card directly instead of
     // re-opening the review — a second «ادفع» on a live CREATE_PAYMENT_INTENT pending would not re-render it.
