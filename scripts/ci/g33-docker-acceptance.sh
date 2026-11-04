@@ -261,6 +261,14 @@ probe_readiness
 }
 echo "G33_PRODUCTION_RESTART_MIGRATIONS=unchanged"
 
+docker stop --time 30 "$APP" >/dev/null
+shutdown_code="$(docker inspect --format '{{.State.ExitCode}}' "$APP")"
+echo "G33_PRODUCTION_RESTART_CONTAINER_SHUTDOWN_EXIT=$shutdown_code"
+[[ "$shutdown_code" == "0" ]] || {
+  docker logs "$APP" >&2
+  echo "G33: restarted production container did not shut down cleanly" >&2
+  exit 1
+}
 docker rm "$APP" >/dev/null
 CREATED_APP=0
 docker run --detach \
