@@ -24,7 +24,7 @@
 4ea39a1 docs(g0/g1)   cf084ac perf(dinar)   86fa92a fix(db)   a297557 fix(db)
 8ebb6ed test(w02u3)   7f14f3f test(w02u3)   e91e665 test(d17)  9a57d62 test(d17)
 31f52c7 test(wave08)  e76e6b0 docs(evidence)  ff06650 test(g2)   5446ccb docs(baseline)
-16da2f1 docs(g3/g6/g7)  ad39469 docs(g7) — رأس الفرع عند هذا التسليم
+16da2f1 docs(g3/g6/g7)   ثم التزامات لاحقة تنقّح هذا التقرير نفسه؛ رأس الفرع النهائي = `git log -1`
 ```
 
 **حجم اللمس:** 15 ملفًا، ‏1339 إضافة / 40 حذف (`git diff --stat ebdd2d7..5446ccb`). منها **صفر** تغييرات في `artifacts/api-server/src/` و`artifacts/dinar/src/` و`lib/db/drizzle/`: كل التغييرات التشغيلية في طبقة الاختبار والقياس (`artifacts/dinar/test/history-render-performance.test.tsx` جديد + سطران في `package.json`: ضمّ الحزمة إلى `test:surfaces` وإضافة سكربت `test:history-perf` — وسطر في `test/tsconfig.surfaces.json` يدرج الملف) + بصمة واحدة في `lib/db/src/clone-migration-guard.ts` (تصحيح تثبيت، لا مخطط).
