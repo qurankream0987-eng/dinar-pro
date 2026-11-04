@@ -404,7 +404,28 @@ await focused("F3-06", "repeated and concurrent confirmation creates one canonic
   assert.equal(order!.data.commissionRateBps, 1000);
   assert.equal(order!.platformFeeMinor, Math.round(order!.subtotalMinor * 0.1));
   assert.equal(order!.data.paymentMode, "TEST_NO_TRANSFER");
-  assert.equal((await db.select().from(orderItems).where(eq(orderItems.orderId, orderId))).length, 1);
+  const lines = await db.select().from(orderItems).where(eq(orderItems.orderId, orderId));
+  assert.equal(lines.length, 1);
+  await assert.rejects(db.insert(orders).values({ ...order!, id: randomUUID() }));
+  await assert.rejects(
+    db.insert(orders).values({
+      ...order!,
+      id: randomUUID(),
+      orderLineIntegrityVersion: 0,
+    }),
+    "new orders cannot opt out of line integrity",
+  );
+  await assert.rejects(db.insert(orderItems).values({ ...lines[0]!, id: randomUUID() }));
+  await assert.rejects(
+    db.update(orderItems)
+      .set({ data: { ...lines[0]!.data, listingTitle: "تغيير غير مسموح" } })
+      .where(eq(orderItems.id, lines[0]!.id)),
+  );
+  await assert.rejects(
+    db.update(orders)
+      .set({ data: { ...order!.data, items: [] } })
+      .where(eq(orders.id, orderId)),
+  );
   assert.equal((await db.select().from(checkoutRequests).where(and(eq(checkoutRequests.userId, buyer.id), eq(checkoutRequests.idempotencyKey, `dinar-f3-order-${actionId}`)))).length, 1);
 });
 

@@ -292,30 +292,32 @@ await test("D5 owner approves one model-drafted G2 reply grounded in the assigne
   const unitPriceMinor = 3 * 10 ** market!.minorUnitScale;
   // This reservation-only row exists solely inside the local-suite disposable database; no
   // payment, settlement, or persistent financial history is created.
-  await db.insert(orders).values({
-    id: orderId,
-    buyerId: buyer.id,
-    sellerId: owner.id,
-    marketId: market!.id,
-    countryCode: market!.countryCode,
-    currencyCode: market!.currencyCode,
-    minorUnitScale: market!.minorUnitScale,
-    unitPriceMinor,
-    quantity: 2,
-    subtotalMinor: unitPriceMinor * 2,
-    platformFeeMinor: 0,
-    sellerAmountMinor: unitPriceMinor * 2,
-    status: "RESERVED",
-    data: {},
-  });
-  await db.insert(orderItems).values({
-    id: randomUUID(),
-    orderId,
-    offerId: listingId,
-    quantity: 2,
-    unitPriceMinor,
-    subtotalMinor: unitPriceMinor * 2,
-    data: { title: listingTitle },
+  await db.transaction(async (tx) => {
+    await tx.insert(orders).values({
+      id: orderId,
+      buyerId: buyer.id,
+      sellerId: owner.id,
+      marketId: market!.id,
+      countryCode: market!.countryCode,
+      currencyCode: market!.currencyCode,
+      minorUnitScale: market!.minorUnitScale,
+      unitPriceMinor,
+      quantity: 2,
+      subtotalMinor: unitPriceMinor * 2,
+      platformFeeMinor: 0,
+      sellerAmountMinor: unitPriceMinor * 2,
+      status: "RESERVED",
+      data: {},
+    });
+    await tx.insert(orderItems).values({
+      id: randomUUID(),
+      orderId,
+      offerId: listingId,
+      quantity: 2,
+      unitPriceMinor,
+      subtotalMinor: unitPriceMinor * 2,
+      data: { title: listingTitle },
+    });
   });
   const orderTurn = await say(owner, sellerConversationId, "اعرض طلبات النشاط");
   assert.ok(orderTurn.body.includes(orderId.slice(-8)), orderTurn.body);

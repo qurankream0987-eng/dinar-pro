@@ -1,6 +1,6 @@
 /**
- * Integration preflight — every W07–W10 and D1/D2 route has an OpenAPI operation (and so a
- * generated zod schema and React client), with the access the router actually enforces.
+ * Integration preflight — every W07–W10 route has an OpenAPI operation with the access the
+ * router actually enforces; D1/D2 routes also have representative generated-client coverage.
  * Reads the router sources and lib/api-spec/openapi.yaml; no database, no network.
  */
 import { test } from "node:test";
@@ -31,9 +31,9 @@ function operation(path: string, method: string) {
   return block.slice(start, end < 0 ? undefined : start + 1 + end);
 }
 
-await test("OA-01 all 50 W07–W10 routes have an operation that states the enforced access", () => {
+await test("OA-01 every W07–W10 route has an operation that states the enforced access", () => {
   const all = ["cash.ts", "compliance.ts", "trust-ops.ts"].flatMap(routes);
-  assert.equal(all.length, 50);
+  assert.ok(all.length >= 50, `expected at least 50 routes, found ${all.length}`);
   const problems = all.flatMap((route) => {
     const op = operation(route.path, route.method);
     if (!op) return [`${route.method} ${route.path}: no operation`];

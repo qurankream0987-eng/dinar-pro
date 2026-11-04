@@ -23,6 +23,12 @@ const approvalMessages: Record<string, string> = {
   BDINAR_D3A_ACCEPTANCE: "BDINAR_D3A_ACCEPTANCE=development",
   BDINAR_D4_ACCEPTANCE: "BDINAR_D4_ACCEPTANCE=development",
   BDINAR_D5_ACCEPTANCE: "BDINAR_D5_ACCEPTANCE=development",
+  BDINAR_D16_ACCEPTANCE: "BDINAR_D16_ACCEPTANCE=development",
+  BDINAR_MARKET_LEGAL_ACCEPTANCE: "BDINAR_MARKET_LEGAL_ACCEPTANCE=development",
+  BDINAR_W06_D16_ACCEPTANCE: "BDINAR_W06_D16_ACCEPTANCE=development",
+  BDINAR_W06_D17_ACCEPTANCE: "BDINAR_W06_D17_ACCEPTANCE=development",
+  BDINAR_W06_D16_AUDIT: "BDINAR_W06_D16_AUDIT=development",
+  BDINAR_W06_D17_MEMORY: "BDINAR_W06_D17_MEMORY=development",
   BDINAR_A02_ISOLATION: "BDINAR_A02_ISOLATION=development",
   BDINAR_G1_ACCEPTANCE: "BDINAR_G1_ACCEPTANCE=development",
   BDINAR_G2_ACCEPTANCE: "BDINAR_G2_ACCEPTANCE=development",
@@ -30,6 +36,7 @@ const approvalMessages: Record<string, string> = {
   BDINAR_WAVE02_ACCEPTANCE: "BDINAR_WAVE02_ACCEPTANCE=development",
   BDINAR_W02U3_TEST_DATABASE: "BDINAR_W02U3_TEST_DATABASE=development",
   BDINAR_W02U3_BROWSER: "BDINAR_W02U3_BROWSER=development",
+  BDINAR_WAVE03_ACCEPTANCE: "BDINAR_WAVE03_ACCEPTANCE=development",
   BDINAR_GFINAL_ACCEPTANCE: "BDINAR_GFINAL_ACCEPTANCE=development",
   BDINAR_XP_ACCEPTANCE: "BDINAR_XP_ACCEPTANCE=development",
   BDINAR_UCC_ACCEPTANCE: "BDINAR_UCC_ACCEPTANCE=development",
@@ -37,6 +44,13 @@ const approvalMessages: Record<string, string> = {
   BDINAR_ACCEPTANCE_FIXTURES: "BDINAR_ACCEPTANCE_FIXTURES=development",
   BDINAR_DEEPSEEK_CHAT_ACCEPTANCE: "BDINAR_DEEPSEEK_CHAT_ACCEPTANCE=development",
   BDINAR_AI_FOUNDATION: "BDINAR_AI_FOUNDATION=development",
+  BDINAR_WAVE4_D10D12: "BDINAR_WAVE4_D10D12=development",
+  BDINAR_WAVE05_MONEY_GATE: "BDINAR_WAVE05_MONEY_GATE=development",
+  BDINAR_WAVE05_LOAD: "BDINAR_WAVE05_LOAD=development",
+  BDINAR_WAVE05_PROFILE: "BDINAR_WAVE05_PROFILE=development",
+  BDINAR_WAVE05_EVALUATION: "BDINAR_WAVE05_EVALUATION=development",
+  BDINAR_WAVE05_ACCEPTANCE: "BDINAR_WAVE05_ACCEPTANCE=development",
+  BDINAR_WAVE05_SHUTDOWN: "BDINAR_WAVE05_SHUTDOWN=development",
 };
 
 export function requireSafeReplitDevelopmentDatabase(
@@ -101,6 +115,10 @@ const operationMessages: Record<keyof typeof approvalMessages, string> = {
   BDINAR_D3A_ACCEPTANCE: "D3-A zero-website native business acceptance run",
   BDINAR_D4_ACCEPTANCE: "D4 business delegation acceptance run",
   BDINAR_D5_ACCEPTANCE: "D5 seller-employee acceptance run",
+  BDINAR_D16_ACCEPTANCE: "D16 legal readiness and incident lifecycle acceptance run",
+  BDINAR_MARKET_LEGAL_ACCEPTANCE: "Isolated synthetic-market legal acceptance run",
+  BDINAR_W06_D16_AUDIT: "Wave-06 independent D16 privacy and legal-readiness adversarial audit",
+  BDINAR_W06_D17_MEMORY: "Wave-06 D17 long-conversation memory acceptance run",
   BDINAR_A02_ISOLATION: "A02 D4/D5 authorization, delegation and isolation run",
   BDINAR_G1_ACCEPTANCE: "G1 provider source layer acceptance run",
   BDINAR_G2_ACCEPTANCE: "G2 smart conversation and negotiation acceptance run",
@@ -113,4 +131,14 @@ const operationMessages: Record<keyof typeof approvalMessages, string> = {
   BDINAR_DEEPSEEK_CHAT_ACCEPTANCE: "DeepSeek canonical chat compatibility run",
   BDINAR_AI_FOUNDATION:
     "AI foundation capability registry and bounded tool-loop acceptance run",
+  BDINAR_WAVE03_ACCEPTANCE:
+    "Wave 03 conversation cart, security and campaign acceptance run",
+  BDINAR_WAVE4_D10D12:
+    "Wave 04 D10/D11/D12 universal intelligence, tool orchestration and durable task acceptance run",
+  BDINAR_WAVE05_MONEY_GATE: "Wave 05 order money model gate run",
+  BDINAR_WAVE05_LOAD: "Wave 05 synthetic load and capacity baseline run",
+  BDINAR_WAVE05_PROFILE: "Wave 05 query plan, round trip and background work profile run",
+  BDINAR_WAVE05_EVALUATION: "Wave 05 Arabic intelligence evaluation run",
+  BDINAR_WAVE05_ACCEPTANCE: "Wave 05 full end-to-end engineering acceptance run",
+  BDINAR_WAVE05_SHUTDOWN: "Wave 05 graceful server shutdown acceptance run",
 };

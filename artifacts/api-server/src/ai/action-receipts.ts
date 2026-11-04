@@ -233,6 +233,144 @@ export function describeReceipt(facts: ReceiptFacts): ActionReceiptView {
 
 const NEGOTIATION_TARGETS = new Set(["COUNTER_NEGOTIATION", "ACCEPT_NEGOTIATION", "REJECT_NEGOTIATION", "WITHDRAW_NEGOTIATION"]);
 const LISTING_TARGETS = new Set(["SEND_NEGOTIATION_OFFER", "REQUEST_BEST_PRICE", "PLACE_ORDER", "ADD_TO_CART", "UPDATE_LISTING_PRICE"]);
+/** Ledger ids per statement: the read is batched, so a long history costs a few queries, not thousands. */
+const RECEIPT_CHUNK = 200;
+const actionOf = (query: ReceiptQuery) => String(query.action);
+const isUuid = (id: unknown): id is string => typeof id === "string" && UUID.test(id);
+
+/** The records a set of receipts names, read in one pass per table instead of one pass per receipt. */
+type ReceiptRecords = {
+  markets: Map<string, { id: string; currencyCode: string; minorUnitScale: number }>;
+  negotiations: Map<string, typeof negotiations.$inferSelect>;
+  listings: Map<string, Record<string, any>>;
+  orders: Map<string, { id: string; buyerId: string; sellerId: string }>;
+  intents: Map<string, { id: string; status: string; amountMinor: number; orderId: string }>;
+};
+
+type ReceiptRow = typeof aiResultSets.$inferSelect;
+type ReceiptQuery = Record<string, any> & { result?: Record<string, any>; structuredInput?: Record<string, { value?: unknown }> };
+const queryOf = (row: ReceiptRow): ReceiptQuery => row.query as ReceiptQuery;
+const targetOf = (row: ReceiptRow) => {
+  const target = queryOf(row).targetResource;
+  return typeof target === "string" ? target : undefined;
+};
+
+async function loadReceiptRecords(rows: ReceiptRow[], actorId: string): Promise<ReceiptRecords> {
+  const action = (row: ReceiptRow) => actionOf(queryOf(row));
+  const orderIdsOf = rows
+    .map((row) => (action(row) === "PLACE_ORDER" ? queryOf(row).result?.orderId : action(row) === "CREATE_PAYMENT_INTENT" ? targetOf(row) : undefined))
+    .filter(isUuid);
+  const intentIdsOf = rows
+    .map((row) => (action(row) === "CREATE_PAYMENT_INTENT" ? queryOf(row).result?.paymentIntentId : undefined))
+    .filter(isUuid);
+  // A negotiation action names the negotiation; its listing is only known once that row is read and
+  // its party checked, so the listing ids come from two rounds: the ledger's own, then the negotiation's.
+  const negotiationIds = [
+    ...rows.filter((row) => NEGOTIATION_TARGETS.has(action(row))).map(targetOf),
+    ...rows.filter((row) => action(row) === "ACCEPT_NEGOTIATION").map((row) => queryOf(row).result?.negotiationId),
+  ].filter(isUuid);
+  const directListingIds = rows.filter((row) => LISTING_TARGETS.has(action(row))).map(targetOf).filter(isUuid);
+  // An empty id list is skipped rather than sent: `inArray(col, [])` is not valid SQL.
+  const rowsIf = async <T>(ids: readonly string[], read: () => Promise<T[]>): Promise<T[]> => (ids.length ? read() : []);
+  const [marketsFound, negotiationRows, directListings, orderRows, intentRows] = await Promise.all([
+    db
+      .select({ id: markets.id, currencyCode: markets.currencyCode, minorUnitScale: markets.minorUnitScale })
+      .from(markets)
+      .where(inArray(markets.id, [...new Set(rows.map((row) => row.marketId))])),
+    rowsIf(negotiationIds, () => db.select().from(negotiations).where(inArray(negotiations.id, negotiationIds))),
+    rowsIf(directListingIds, () => db.select({ id: offers.id, data: offers.data }).from(offers).where(inArray(offers.id, directListingIds))),
+    rowsIf(orderIdsOf, () => db.select({ id: orders.id, buyerId: orders.buyerId, sellerId: orders.sellerId }).from(orders).where(inArray(orders.id, orderIdsOf))),
+    rowsIf(intentIdsOf, () =>
+      db
+        .select({ id: paymentIntents.id, status: paymentIntents.status, amountMinor: paymentIntents.amountMinor, orderId: paymentIntents.orderId })
+        .from(paymentIntents)
+        .where(inArray(paymentIntents.id, intentIdsOf)),
+    ),
+  ]);
+  // Only a party's negotiation contributes a listing, exactly as the per-receipt read required it.
+  const ownedNegotiations = negotiationRows.filter((row) => row.buyerId === actorId || row.sellerId === actorId);
+  const negotiatedListingIds = ownedNegotiations.map((row) => row.listingId).filter(isUuid);
+  const negotiatedListings = negotiatedListingIds.length
+    ? await db.select({ id: offers.id, data: offers.data }).from(offers).where(inArray(offers.id, negotiatedListingIds))
+    : [];
+  return {
+    markets: new Map(marketsFound.map((row) => [row.id, row])),
+    negotiations: new Map(ownedNegotiations.map((row) => [row.id, row])),
+    listings: new Map([...directListings, ...negotiatedListings].map((row) => [row.id, row.data as Record<string, any>])),
+    orders: new Map(orderRows.filter((row) => row.buyerId === actorId || row.sellerId === actorId).map((row) => [row.id, row])),
+    intents: new Map(intentRows.map((row) => [row.id, row])),
+  };
+}
+
+/** One ledger row and the records it names, in the user's terms. The batched loader supplies the records. */
+function receiptViewOf(row: ReceiptRow, records: ReceiptRecords, lapsed?: boolean): ActionReceiptView {
+  const query = queryOf(row);
+  const action = actionOf(query);
+  const target = targetOf(row);
+  const result = query.result ?? {};
+  const market = records.markets.get(row.marketId);
+  const negotiation = NEGOTIATION_TARGETS.has(action) && isUuid(target) ? records.negotiations.get(target) : undefined;
+  const listingId = LISTING_TARGETS.has(action) ? target : negotiation?.listingId;
+  const listing = isUuid(listingId) ? records.listings.get(listingId) : undefined;
+  const orderId = action === "PLACE_ORDER" ? result.orderId : action === "CREATE_PAYMENT_INTENT" ? target : undefined;
+  const ownOrder = isUuid(orderId) ? records.orders.get(orderId) : undefined;
+  const intent = action === "CREATE_PAYMENT_INTENT" && isUuid(result.paymentIntentId) && ownOrder ? records.intents.get(result.paymentIntentId) : undefined;
+  const amountMinor = Number(query.structuredInput?.amountMinor?.value);
+  // The accepted negotiation is the target when this actor is a party to it, otherwise the one the
+  // result names — the same fallback the per-receipt read had.
+  const acceptedId =
+    action !== "ACCEPT_NEGOTIATION" ? undefined : isUuid(target) && records.negotiations.has(target) ? target : result.negotiationId;
+  const accepted = isUuid(acceptedId) ? records.negotiations.get(acceptedId) : undefined;
+  return describeReceipt({
+    action,
+    status: query.status,
+    expiresAt: row.expiresAt,
+    ...(query.status === "PENDING" ? { lapsed: lapsed === true } : {}),
+    notice: query.notice,
+    ...(Number.isInteger(amountMinor) ? { amountMinor } : {}),
+    ...(accepted ? { agreedAmountMinor: accepted.agreedAmountMinor } : {}),
+    ...(intent && intent.orderId === ownOrder?.id ? { paymentStatus: intent.status, paymentAmountMinor: intent.amountMinor } : {}),
+    ...(ownOrder ? { orderId: ownOrder.id } : {}),
+    ...(typeof listing?.title === "string" ? { resource: listing.title } : {}),
+    ...(market ? { currency: { code: market.currencyCode, scale: market.minorUnitScale } } : {}),
+    now: new Date(),
+  });
+}
+
+/**
+ * The receipts for these ledger ids, keyed by id, re-read now. Every record the ledger names
+ * (negotiation, order, payment) is read only where the actor is a party. Anything else is left out,
+ * never guessed. Reads are batched per table: a conversation's whole history costs a constant number
+ * of statements, so opening a long conversation no longer multiplies round trips by messages × actions.
+ */
+export async function receiptViewsByIds(
+  scope: { actorId: string; conversationId: string },
+  actionIds: readonly string[],
+): Promise<Map<string, ActionReceiptView>> {
+  const ids = [...new Set(actionIds.filter(isUuid))];
+  const views = new Map<string, ActionReceiptView>();
+  for (let offset = 0; offset < ids.length; offset += RECEIPT_CHUNK) {
+    const chunk = ids.slice(offset, offset + RECEIPT_CHUNK);
+    const rows = await db.select().from(aiResultSets).where(and(inArray(aiResultSets.id, chunk), eq(aiResultSets.conversationId, scope.conversationId)));
+    const owned = rows.filter((row) => {
+      const query = row.query as LedgerQuery;
+      return query?.kind === "ACTION" && query.ownerId === scope.actorId && typeof query.action === "string";
+    });
+    if (!owned.length) continue;
+    const records = await loadReceiptRecords(owned, scope.actorId);
+    // A pending review is compared against the rest of the conversation, per row: usually one row.
+    const lapsed = await Promise.all(
+      owned.map((row) => (queryOf(row).status === "PENDING" ? pendingActionLapsed(row) : Promise.resolve(false))),
+    );
+    owned.forEach((row, index) => views.set(row.id, receiptViewOf(row, records, lapsed[index])));
+  }
+  return views;
+}
+
+/** The ledger ids one message may show: valid ids, deduped, in order, at most twelve per message. */
+export function receiptIdsOf(actionIds: readonly string[]): string[] {
+  return [...new Set(actionIds.filter(isUuid))].slice(0, 12);
+}
 
 /**
  * The receipts for these ledger ids, in this order, re-read now. A row shows only when it is an
@@ -240,54 +378,10 @@ const LISTING_TARGETS = new Set(["SEND_NEGOTIATION_OFFER", "REQUEST_BEST_PRICE",
  * is read only where the actor is a party. Anything else is left out, never guessed.
  */
 export async function receiptViews(scope: { actorId: string; conversationId: string }, actionIds: readonly string[]): Promise<ActionReceiptView[]> {
-  const ids = [...new Set(actionIds.filter((id) => typeof id === "string" && UUID.test(id)))].slice(0, 12);
+  const ids = receiptIdsOf(actionIds);
   if (!ids.length) return [];
-  const rows = await db.select().from(aiResultSets).where(and(inArray(aiResultSets.id, ids), eq(aiResultSets.conversationId, scope.conversationId)));
-  const owned = new Map(rows.filter((row) => {
-    const query = row.query as LedgerQuery;
-    return query?.kind === "ACTION" && query.ownerId === scope.actorId && typeof query.action === "string";
-  }).map((row) => [row.id, row]));
-  const views: ActionReceiptView[] = [];
-  for (const id of ids) {
-    const row = owned.get(id);
-    if (!row) continue;
-    const query = row.query as LedgerQuery & { targetResource?: unknown; notice?: unknown; result?: Record<string, unknown>; structuredInput?: Record<string, { value?: unknown }> };
-    const action = String(query.action);
-    const target = typeof query.targetResource === "string" ? query.targetResource : undefined;
-    const result = query.result ?? {};
-    const [market] = await db.select({ currencyCode: markets.currencyCode, minorUnitScale: markets.minorUnitScale }).from(markets).where(eq(markets.id, row.marketId));
-    const party = async (negotiationId: unknown) => {
-      if (typeof negotiationId !== "string") return undefined;
-      const [found] = await db.select().from(negotiations).where(eq(negotiations.id, negotiationId));
-      return found && (found.buyerId === scope.actorId || found.sellerId === scope.actorId) ? found : undefined;
-    };
-    const negotiation = NEGOTIATION_TARGETS.has(action) ? await party(target) : undefined;
-    const listingId = LISTING_TARGETS.has(action) ? target : negotiation?.listingId;
-    const [listing] = listingId ? await db.select({ data: offers.data }).from(offers).where(eq(offers.id, listingId)) : [];
-    const orderId = action === "PLACE_ORDER" ? result.orderId : action === "CREATE_PAYMENT_INTENT" ? target : undefined;
-    const [order] = typeof orderId === "string" ? await db.select({ id: orders.id, buyerId: orders.buyerId, sellerId: orders.sellerId }).from(orders).where(eq(orders.id, orderId)) : [];
-    const ownOrder = order && (order.buyerId === scope.actorId || order.sellerId === scope.actorId) ? order : undefined;
-    const [intent] = action === "CREATE_PAYMENT_INTENT" && typeof result.paymentIntentId === "string" && ownOrder
-      ? await db.select({ status: paymentIntents.status, amountMinor: paymentIntents.amountMinor, orderId: paymentIntents.orderId }).from(paymentIntents).where(eq(paymentIntents.id, result.paymentIntentId))
-      : [];
-    const amountMinor = Number(query.structuredInput?.amountMinor?.value);
-    const accepted = action === "ACCEPT_NEGOTIATION" ? negotiation ?? (await party(result.negotiationId)) : undefined;
-    views.push(describeReceipt({
-      action,
-      status: query.status,
-      expiresAt: row.expiresAt,
-      ...(query.status === "PENDING" ? { lapsed: await pendingActionLapsed(row) } : {}),
-      notice: query.notice,
-      ...(Number.isInteger(amountMinor) ? { amountMinor } : {}),
-      ...(accepted ? { agreedAmountMinor: accepted.agreedAmountMinor } : {}),
-      ...(intent && intent.orderId === ownOrder?.id ? { paymentStatus: intent.status, paymentAmountMinor: intent.amountMinor } : {}),
-      ...(ownOrder ? { orderId: ownOrder.id } : {}),
-      ...(typeof (listing?.data as { title?: unknown } | undefined)?.title === "string" ? { resource: (listing!.data as { title: string }).title } : {}),
-      ...(market ? { currency: { code: market.currencyCode, scale: market.minorUnitScale } } : {}),
-      now: new Date(),
-    }));
-  }
-  return views;
+  const views = await receiptViewsByIds(scope, ids);
+  return ids.map((id) => views.get(id)).filter((view): view is ActionReceiptView => view !== undefined);
 }
 
 // ─── Model-authored text ─────────────────────────────────────────────────────
@@ -303,8 +397,13 @@ const CLAIM_FORMS = [
 const NOT_A_CLAIM_BEFORE = "(?:يتم|سيتم|ستتم|يتمّ|إذا|اذا|لو|عندما|عند|حين|حينما|متى|بعد|بعدما|بعد\\s+ما|قبل|قبل\\s+ما|هل|لم|لا|ما|لن|ليس|مش|مو|ريثما|حتى|كي|لكي)";
 /** «ما بقدر أقول تم الدفع», «لا أستطيع أن أؤكد تم التسليم»: a claim denied as reported speech. */
 const DENIED_SPEECH = "(?:ما|لا|لن|مش|مو|ليس)\\s+(?:\\S+\\s+){0,2}(?:أقول|اقول|أكتب|اكتب|أدعي|ادعي|أؤكد|اؤكد|أأكد|أثبت|اثبت|أحكي|احكي)(?:\\s+(?:لك|إن|ان|أنه|انه))?\\s+";
+// A conjunction glued to the claim («وتم إنشاء», «فتم الدفع», «وبتم الإلغاء») is still the
+// speaker's own statement; without the optional proclitic the word boundary hides the whole claim.
+// The alternatives must stay inside one group: joined bare, the `|` splits the whole expression and
+// the lookbehinds guard only the first form, so a verb inside another word («استقبلت») reads as a
+// claim, and so do the negations and questions («ما نشرت أي إعلان», «هل دفعت المبلغ»).
 const ARABIC_CLAIM = new RegExp(
-  `(?<!${NOT_A_CLAIM_BEFORE}\\s+(?:\\S+\\s+)?)(?<!${DENIED_SPEECH})(?<![\\p{L}\\p{M}])(?:${CLAIM_FORMS.join("|")})`,
+  `(?<!${NOT_A_CLAIM_BEFORE}\\s+(?:\\S+\\s+)?)(?<!${DENIED_SPEECH})(?<![\\p{L}\\p{M}])[وبف]*(?:${CLAIM_FORMS.join("|")})`,
   "u",
 );
 const ENGLISH_CLAIM =
@@ -328,6 +427,17 @@ const ADDRESSES_USER = /(?:طلب|طلبيت|إعلان|اعلان|عرض|دفع
 /** A completion claim about the user's own order, listing, offer or payment. */
 export function claimsUsersCompletedAction(text: string): boolean {
   return claimSentences(text).some((sentence) => ADDRESSES_USER.test(sentence));
+}
+/**
+ * DINAR's own commercial objects. A passive claim that names one — «تم إنشاء الطلب», «تم الدفع» —
+ * reports a marketplace action whether or not the model added «your», and the assistant has no
+ * marketplace history to speak from. General text («تم نشر نظرية النسبية») names none of them.
+ */
+const MARKETPLACE_OBJECT =
+  /(?:ال(?:طلب|طلبيه|الطلبیه|سل[هة]ه?|دف[عع]|دفعة|فاتورة|توصيل|شراء|بيع|إعلان|اعلان|عرض|حجز|مبلغ)|\b(?:order|cart|payment|invoice|delivery|purchase|listing|offer)\b)/iu;
+/** A completion claim that reads as one of DINAR's own actions, addressed to the user or not. */
+export function claimsMarketplaceAction(text: string): boolean {
+  return claimSentences(text).some((sentence) => ADDRESSES_USER.test(sentence) || MARKETPLACE_OBJECT.test(sentence));
 }
 
 export const MODEL_CLAIM_WITHHELD =
@@ -374,7 +484,12 @@ export function ledgerStatement(ledger: readonly LedgerEntry[]): string | undefi
   ].filter(Boolean).join(" ");
 }
 
-type AuthoredResult = { kind?: unknown; prompt?: string; advice?: Record<string, unknown> };
+type AuthoredResult = {
+  kind?: unknown;
+  prompt?: string;
+  advice?: Record<string, unknown>;
+  query?: Record<string, unknown>;
+};
 
 /**
  * The integrity boundary for model-authored turns. The model cannot execute (strict schema,
@@ -386,12 +501,26 @@ type AuthoredResult = { kind?: unknown; prompt?: string; advice?: Record<string,
  */
 export function enforceModelAuthority<T extends AuthoredResult>(result: T, ledger: readonly LedgerEntry[]): T {
   const advice = result.advice;
+  // A verified read may carry the model's answer inside its own query envelope, and the route
+  // renders the turn from that field; without the same guard here it would reach the user filtered
+  // by nothing but the model's own confidence.
+  const readBuyer = result.kind === "SEARCH" || result.kind === "RESOURCE"
+    ? (result.query?.buyer as { message?: unknown; authority?: unknown } | undefined)
+    : undefined;
+  if (readBuyer?.authority === "MODEL" && typeof readBuyer.message === "string") {
+    // The turn only ever read, so any completion claim is withheld; a plain statement about how
+    // the market works («يتم إنشاء الطلب بعد تأكيدك») is teaching text and stays.
+    if (!claimsCompletedAction(readBuyer.message)) return result;
+    const statement = ledgerStatement(ledger) ?? MODEL_CLAIM_WITHHELD;
+    return { ...result, query: { ...result.query, buyer: { message: statement, authority: "SERVER_LEDGER" } } };
+  }
   if (result.kind !== "SURFACE" || advice?.authority !== "MODEL") return result;
   // In a commercial turn any completion claim is withheld; in any other turn (the model's own
-  // classification is not trusted for this) a claim about the user's own order, listing, offer
-  // or payment still is. Teaching text about the world is left alone.
+  // classification is not trusted for this) a claim about the user's own order, listing, offer or
+  // payment still is, and so is a passive claim naming one of DINAR's own actions. Text about the
+  // world is left alone.
   const withhold = typeof result.prompt === "string" &&
-    (advice.commercial === true ? claimsCompletedAction(result.prompt) : claimsUsersCompletedAction(result.prompt));
+    (advice.commercial === true ? claimsCompletedAction(result.prompt) : claimsMarketplaceAction(result.prompt));
   if (!withhold)
     return advice.actionLifecycle === undefined || advice.actionLifecycle === "PROPOSED"
       ? result

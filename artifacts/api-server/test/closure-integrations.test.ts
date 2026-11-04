@@ -8,7 +8,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createHmac, randomUUID } from "node:crypto";
 import { and, eq } from "drizzle-orm";
-import { billingWebhookEvents, businessSubscriptions, db, disputes, markets, moderationReasonCodes, marketplaceReports, offers, orders, pool, trustAppeals, users } from "@workspace/db";
+import { billingWebhookEvents, businessSubscriptions, db, disputes, markets, moderationReasonCodes, marketplaceReports, offers, orderItems, orders, pool, trustAppeals, users } from "@workspace/db";
 import app from "../src/app";
 import { aiPlanFor } from "../src/lib/business";
 import {
@@ -250,14 +250,10 @@ await test("C7-03 dispute evidence: both parties may add statements to an open d
   const listingId = await listingOf(user);
   const orderId = randomUUID();
   const [market] = await db.select().from(markets).where(eq(markets.id, "JO"));
-  try {
-    await db.insert(orders).values({ id: orderId, buyerId: other.id, sellerId: user.id, marketId: "JO", countryCode: market!.countryCode, currencyCode: market!.currencyCode, minorUnitScale: market!.minorUnitScale, unitPriceMinor: 10_000, quantity: 1, subtotalMinor: 10_000, platformFeeMinor: 1_000, sellerAmountMinor: 9_000, status: "DISPUTED", data: { listingId } } as never);
-  } catch (error) {
-    // Database invariants may forbid a hand-made order; the evidence authority is then covered by its 404 path only.
-    assert.equal((await request(`/orders/${orderId}/dispute/evidence`, "POST", { statement: "وصل المنتج مكسورًا" }, other.cookie)).status, 404);
-    console.log("C7-03 note: hand-made order refused by invariants:", (error as { code?: string }).code ?? "unknown");
-    return;
-  }
+  await db.transaction(async (tx) => {
+    await tx.insert(orders).values({ id: orderId, buyerId: other.id, sellerId: user.id, marketId: "JO", countryCode: market!.countryCode, currencyCode: market!.currencyCode, minorUnitScale: market!.minorUnitScale, unitPriceMinor: 10_000, quantity: 1, subtotalMinor: 10_000, platformFeeMinor: 1_000, sellerAmountMinor: 9_000, orderLineIntegrityVersion: 1, status: "DISPUTED", data: { listingId, items: [{ listingId, quantity: 1, unitPriceMinor: 10_000, subtotalMinor: 10_000 }] } } as never);
+    await tx.insert(orderItems).values({ id: randomUUID(), orderId, offerId: listingId, quantity: 1, unitPriceMinor: 10_000, subtotalMinor: 10_000, data: { listingId, quantity: 1, unitPriceMinor: 10_000, subtotalMinor: 10_000 } });
+  });
   await db.insert(disputes).values({ id: randomUUID(), orderId, openedBy: other.id, reason: "منتج تالف", description: "وصل مكسورًا", evidence: [] } as never);
   const buyer = await request(`/orders/${orderId}/dispute/evidence`, "POST", { statement: "وصل المنتج مكسورًا من الجانب", reference: "صورة في المحادثة" }, other.cookie);
   assert.equal(buyer.status, 201, buyer.raw);

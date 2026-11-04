@@ -35,6 +35,9 @@ on:
           - w02u3-card-expiry-browser-journey.test
           - w02u3-card-accessibility-browser-journey.test
           - w02u3-card-performance-browser-journey.test
+          - wave03-d7-cart-browser-journey.test
+          - wave03-d9-campaign-audit.test
+          - same-origin-web.test
           - search-sql-foundation.test
           - search-sql-performance.test
           - financial-state-machine.test
@@ -42,6 +45,10 @@ on:
           - wave4-payment-acceptance.test
           - wave3-acceptance.test
           - wave02-card-reliability.test
+          - wave02-d4-d5-seller-journey.test
+          - wave02-d6-buyer-journey.test
+          - wave02-d5-browser-journey.test
+          - wave02-d6-browser-journey.test
           - r5-delivery-economics.test
           - security-acceptance.test
           - readiness.test
@@ -49,6 +56,7 @@ on:
           - development-tls.test
           - phase1-acceptance.test
           - commerce-journey.test
+          - api.test
           - sc01-browser-journey.test
           - sc02-browser-journey.test
           - sc03-browser-journey.test
@@ -71,7 +79,27 @@ on:
           - block-f2-buyer.test
           - block-f3-commerce.test
           - ai-foundation-acceptance.test
+          - ai-foundation-02-acceptance.test
           - ai-authority-boundary.test
+          - block-d-acceptance.test
+          - wave04-d10-d11-acceptance.test
+          - wave04-d10-d12-acceptance.test
+          - wave05-d15-money-model.test
+          - wave05-d13-load-baseline.test
+          - wave05-d13-db-profile.test
+          - wave05-d13-shutdown.test
+          - wave05-d14-evaluation.test
+          - wave05-d15-acceptance.test
+          - command-e-ui.test
+          - command-f-journeys.test
+          - d16-readiness.test
+          - wave06-d16-compliance-acceptance.test
+          - wave06-conversation-memory.test
+          - wave06-conversation-memory-adversarial.test
+          - wave06-conversation-memory-performance.test
+          - w06-d16-adversarial.test
+          - w06-d17-context-baseline.test
+          - w06-d17-retrieval-quality.test
       chain:
         description: "Run a reviewed suite chain on one disposable migrated and seeded database"
         required: false
@@ -85,6 +113,9 @@ on:
           - d4-d5-authorization
           - d6-g2-negotiation
           - ai-foundation
+          - wave04-d10-d12
+          - wave06-d16-d17
+          - wave06-d17-memory
       flags:
         description: "Allowlisted KEY=VALUE switches, space separated"
         required: false
@@ -143,7 +174,7 @@ jobs:
             key=${pair%%=*}
             value=${pair#*=}
             case "$key" in
-              BDINAR_W07_ACCEPTANCE|BDINAR_W08_ACCEPTANCE|BDINAR_W09_ACCEPTANCE|BDINAR_W10_ACCEPTANCE|BDINAR_W12C_ACCEPTANCE|BDINAR_D1D2_ACCEPTANCE|BDINAR_W02U3_TEST_DATABASE|BDINAR_W02U3_BROWSER|BDINAR_D3A_ACCEPTANCE|BDINAR_WAVE4_ACCEPTANCE|BDINAR_WAVE3_ACCEPTANCE|BDINAR_WAVE02_ACCEPTANCE|BDINAR_PHASE1_ACCEPTANCE|BDINAR_SECURITY_ACCEPTANCE|BDINAR_D4_ACCEPTANCE|BDINAR_D5_ACCEPTANCE|BDINAR_A02_ISOLATION|BDINAR_G2_ACCEPTANCE|BDINAR_BLOCKF_ACCEPTANCE|BDINAR_AI_FOUNDATION)
+              BDINAR_W07_ACCEPTANCE|BDINAR_W08_ACCEPTANCE|BDINAR_W09_ACCEPTANCE|BDINAR_W10_ACCEPTANCE|BDINAR_W12C_ACCEPTANCE|BDINAR_D1D2_ACCEPTANCE|BDINAR_W02U3_TEST_DATABASE|BDINAR_W02U3_BROWSER|BDINAR_D3A_ACCEPTANCE|BDINAR_D3A_D2_FIXTURES|BDINAR_WAVE03_ACCEPTANCE|BDINAR_WAVE4_ACCEPTANCE|BDINAR_WAVE3_ACCEPTANCE|BDINAR_WAVE02_ACCEPTANCE|BDINAR_PHASE1_ACCEPTANCE|BDINAR_SECURITY_ACCEPTANCE|BDINAR_D4_ACCEPTANCE|BDINAR_D5_ACCEPTANCE|BDINAR_A02_ISOLATION|BDINAR_G2_ACCEPTANCE|BDINAR_BLOCKD_ACCEPTANCE|BDINAR_BLOCKF_ACCEPTANCE|BDINAR_AI_FOUNDATION|BDINAR_WAVE4_D10D12|BDINAR_WAVE05_MONEY_GATE|BDINAR_WAVE05_LOAD|BDINAR_WAVE05_PROFILE|BDINAR_WAVE05_SHUTDOWN|BDINAR_WAVE05_EVALUATION|BDINAR_WAVE05_ACCEPTANCE|BDINAR_D16_ACCEPTANCE|BDINAR_W06_D16_ACCEPTANCE|BDINAR_W06_D17_ACCEPTANCE|BDINAR_W06_D16_AUDIT|BDINAR_W06_D17_MEMORY)
                 [ "$value" = development ] || { echo "$key must be development" >&2; exit 96; } ;;
               BDINAR_LOG_SCAN)
                 case "$value" in 0|1) ;; *) echo "$key must be 0 or 1" >&2; exit 96 ;; esac ;;
@@ -155,6 +186,18 @@ jobs:
                 [ "$value" = true ] || { echo "$key must be true" >&2; exit 96; } ;;
               DINAR_TLS_ACCEPTANCE)
                 [ "$value" = development ] || { echo "$key must be development" >&2; exit 96; } ;;
+              DINAR_DB_POOL_MAX|DINAR_DB_CONNECTION_TIMEOUT_MS|DINAR_WAVE05_LISTINGS)
+                # D13 measures a knob by dispatching the same SHA twice: default, then raised. Bounded
+                # so a typo cannot ask a loopback runner for an absurd number of backends or fixtures.
+                case "$value" in ''|*[!0-9]*) echo "$key must be a positive integer" >&2; exit 96 ;; esac
+                min=1
+                max=64
+                if [ "$key" = DINAR_DB_CONNECTION_TIMEOUT_MS ]; then min=100; max=60000; fi
+                if [ "$key" = DINAR_WAVE05_LISTINGS ]; then min=100; max=50000; fi
+                if [ "$value" -lt "$min" ] || [ "$value" -gt "$max" ]; then
+                  echo "$key=$value must be between $min and $max" >&2
+                  exit 96
+                fi ;;
               *)
                 echo "switch not allowlisted: $key" >&2
                 exit 96 ;;
@@ -191,8 +234,18 @@ jobs:
               require_flags "BDINAR_G2_ACCEPTANCE BDINAR_WAVE4_ACCEPTANCE BDINAR_TEST_DATABASE BDINAR_BLOCKF_ACCEPTANCE"
               promotions=1 ;;
             ai-foundation)
-              SUITES="ai-foundation-acceptance.test ai-authority-boundary.test bounded-multistep.test"
+              SUITES="ai-foundation-acceptance.test ai-foundation-02-acceptance.test ai-authority-boundary.test bounded-multistep.test"
               require_flags "BDINAR_AI_FOUNDATION BDINAR_TEST_DATABASE" ;;
+            wave04-d10-d12)
+              # Wave 04 retires every claim it plants, so the D12 suite still sees a clean ledger.
+              SUITES="wave04-d10-d11-acceptance.test wave04-d10-d12-acceptance.test ai-foundation-02-acceptance.test ai-authority-boundary.test bounded-multistep.test d12-execution-recovery.test"
+              require_flags "BDINAR_TEST_DATABASE BDINAR_AI_FOUNDATION BDINAR_WAVE4_D10D12" ;;
+            wave06-d16-d17)
+              SUITES="d16-readiness.test wave06-d16-compliance-acceptance.test w06-d16-adversarial.test"
+              require_flags "BDINAR_TEST_DATABASE BDINAR_D16_ACCEPTANCE BDINAR_W06_D16_ACCEPTANCE BDINAR_W06_D16_AUDIT" ;;
+            wave06-d17-memory)
+              SUITES="wave06-conversation-memory.test wave06-conversation-memory-adversarial.test wave06-conversation-memory-performance.test w06-d17-context-baseline.test w06-d17-retrieval-quality.test"
+              require_flags "BDINAR_TEST_DATABASE BDINAR_W06_D17_ACCEPTANCE BDINAR_W06_D17_MEMORY" ;;
             *) echo "chain not allowlisted: $CHAIN" >&2; exit 96 ;;
           esac
           if [ "$promotions" = 1 ]; then
@@ -203,7 +256,7 @@ jobs:
           # Resolve browser installation from the actual suite list, not the ignored suite input.
           needs_chromium() {
             case "$1" in
-              *browser-journey*|*browser.test|security-acceptance.test|wave3-acceptance.test|w02-ultra-browser.test) return 0 ;;
+              *browser-journey*|*browser.test|security-acceptance.test|wave3-acceptance.test|w02-ultra-browser.test|command-e-ui.test|command-f-journeys.test|d16-readiness.test|wave06-d16-compliance-acceptance.test|block-d-acceptance.test) return 0 ;;
               phase1-acceptance.test)
                 case " $FLAGS " in *" BDINAR_PHASE1_SKIP_BROWSER=1 "*) return 1 ;; *) return 0 ;; esac ;;
               *) return 1 ;;

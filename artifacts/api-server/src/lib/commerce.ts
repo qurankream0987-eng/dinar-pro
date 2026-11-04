@@ -199,57 +199,67 @@ export function createOrdersFromPlan(
   const newOrders: OrderRecord[] = [];
   const newMessages: MessageRecord[] = [];
 
-  for (const [sellerId, lines] of plan.groups) {
-    const first = lines[0];
-    const items: OrderItemRecord[] = lines.map(({ listing, quantity, fulfilmentType, unitPriceMinor, currencyCode }) => ({
-      listingId: listing.id,
-      listingTitle: listing.title,
-      listingImageUrl: listing.imageUrl,
-      quantity,
-      unitPrice: formatMinorUnits(unitPriceMinor, currencyCode),
-      total: formatMinorUnits(unitPriceMinor * quantity, currencyCode),
-      currency: currencyCode,
-      fulfilmentType,
-      inventoryMode: listing.inventoryMode,
-    }));
-    const orderTotalMinor = items.reduce((sum, item) => sum + parseMinorUnits(item.total, item.currency), 0);
-    const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
-    const fulfilmentTypes = new Set(items.map((item) => item.fulfilmentType));
-    const order: OrderRecord = {
-      id: `ord_${now}_${++idSequence}`,
-      sellerId,
-      items,
-      inventoryReservationOpen: lines.some(({ listing }) => listing.inventoryMode === "LIMITED"),
-      listingId: first.listing.id,
-      listingTitle: items.length === 1
-        ? first.listing.title
-        : items.map((item) => `${item.listingTitle} ×${item.quantity}`).join(" · "),
-      listingImageUrl: first.listing.imageUrl,
-      buyerName: state.currentUser.name,
-      sellerName: first.listing.sellerName,
-      quantity: totalQuantity,
-      unitPrice: formatMinorUnits(first.unitPriceMinor, first.currencyCode),
-      total: formatMinorUnits(orderTotalMinor, first.currencyCode),
-      commissionRateBps: PLATFORM_FEE_BASIS_POINTS,
-      currency: first.currencyCode,
-      fulfilmentType: fulfilmentTypes.size === 1 ? first.fulfilmentType : "MIXED",
-      status: "CREATED",
-      createdAt,
-      updatedAt: createdAt,
-      expiresAt: new Date(now + 30 * 60 * 1000).toISOString(),
-      deliveryProof: null,
-      issue: null,
-    };
-    newOrders.push(order);
-    newMessages.push({
-      id: `msg_${now}_${idSequence}`,
-      orderId: order.id,
-      senderName: "النظام",
-      senderRole: "SYSTEM",
-      body: "تم إنشاء الطلب وحجز الكمية المحدودة. يمكنك الآن التواصل داخل الطلب فقط.",
-      createdAt,
-      isMine: false,
-    });
+  for (const [sellerId, sellerLines] of plan.groups) {
+    const linesByPrice = new Map<string, typeof sellerLines>();
+    for (const line of sellerLines) {
+      const key = `${line.currencyCode}:${line.unitPriceMinor}`;
+      const group = linesByPrice.get(key);
+      if (group) group.push(line);
+      else linesByPrice.set(key, [line]);
+    }
+
+    for (const lines of linesByPrice.values()) {
+      const first = lines[0];
+      const items: OrderItemRecord[] = lines.map(({ listing, quantity, fulfilmentType, unitPriceMinor, currencyCode }) => ({
+        listingId: listing.id,
+        listingTitle: listing.title,
+        listingImageUrl: listing.imageUrl,
+        quantity,
+        unitPrice: formatMinorUnits(unitPriceMinor, currencyCode),
+        total: formatMinorUnits(unitPriceMinor * quantity, currencyCode),
+        currency: currencyCode,
+        fulfilmentType,
+        inventoryMode: listing.inventoryMode,
+      }));
+      const orderTotalMinor = items.reduce((sum, item) => sum + parseMinorUnits(item.total, item.currency), 0);
+      const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
+      const fulfilmentTypes = new Set(items.map((item) => item.fulfilmentType));
+      const order: OrderRecord = {
+        id: `ord_${now}_${++idSequence}`,
+        sellerId,
+        items,
+        inventoryReservationOpen: lines.some(({ listing }) => listing.inventoryMode === "LIMITED"),
+        listingId: first.listing.id,
+        listingTitle: items.length === 1
+          ? first.listing.title
+          : items.map((item) => `${item.listingTitle} ×${item.quantity}`).join(" · "),
+        listingImageUrl: first.listing.imageUrl,
+        buyerName: state.currentUser.name,
+        sellerName: first.listing.sellerName,
+        quantity: totalQuantity,
+        unitPrice: formatMinorUnits(first.unitPriceMinor, first.currencyCode),
+        total: formatMinorUnits(orderTotalMinor, first.currencyCode),
+        commissionRateBps: PLATFORM_FEE_BASIS_POINTS,
+        currency: first.currencyCode,
+        fulfilmentType: fulfilmentTypes.size === 1 ? first.fulfilmentType : "MIXED",
+        status: "CREATED",
+        createdAt,
+        updatedAt: createdAt,
+        expiresAt: new Date(now + 30 * 60 * 1000).toISOString(),
+        deliveryProof: null,
+        issue: null,
+      };
+      newOrders.push(order);
+      newMessages.push({
+        id: `msg_${now}_${idSequence}`,
+        orderId: order.id,
+        senderName: "النظام",
+        senderRole: "SYSTEM",
+        body: "تم إنشاء الطلب وحجز الكمية المحدودة. يمكنك الآن التواصل داخل الطلب فقط.",
+        createdAt,
+        isMine: false,
+      });
+    }
   }
 
   // Express executes this in-memory handler synchronously; validate every line before changing any stock.

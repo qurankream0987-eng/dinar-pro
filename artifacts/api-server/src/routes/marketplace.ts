@@ -44,9 +44,10 @@ import {
   getOrderTrackingView,
   type OrderTrackingProvider,
 } from "../lib/order-tracking";
-import { checkoutIssueMessage, planCheckout } from "../lib/commerce";
+import { checkoutIssueMessage, planCheckout, type PlannedCheckoutLine } from "../lib/commerce";
 import { acceptedNegotiationForCheckout, consumeNegotiation, resolveCommercialUnitPrice, type Negotiation } from "../lib/negotiations";
 import { marketFor, assertMarketActive, assertMarketPolicy } from "../lib/markets";
+import { assertMarketLegalCapability } from "../lib/d16-readiness";
 import { assertMinorProtection, requireCommercialCapability } from "../lib/compliance";
 import {
   calculateCommissionMinor,
@@ -243,6 +244,7 @@ export async function releaseExpiredReservations(now = new Date()) {
 }
 router.get("/listings", async (req, res) => {
   const market = await marketFor(req);
+  await assertMarketLegalCapability(market.id, "BROWSING");
   if (!market.isActive || !["ACTIVE", "LIMITED"].includes(market.status)) {
     res.json([]);
     return;
@@ -302,6 +304,7 @@ router.delete("/listings/:id", requireAuth, async (req, res) => {
 });
 router.get("/listings/:id", async (req, res) => {
   const market = await marketFor(req);
+  await assertMarketLegalCapability(market.id, "BROWSING");
   assertMarketActive(market);
   const rows = await offerRowsByIds(market.id, [req.params.id]);
   const row = rows.find(
@@ -693,6 +696,10 @@ async function checkout(
       );
     const market = await marketFor({ actor }, tx, true);
     assertMarketActive(market);
+    await assertMarketLegalCapability(market.id, "TRANSACTIONS", tx);
+    await assertMarketLegalCapability(market.id, "CASH_PAYMENT", tx);
+    if (lines.some((line) => line.fulfilmentType !== "PICKUP"))
+      await assertMarketLegalCapability(market.id, "DELIVERY_OPERATIONS", tx);
     await assertMinorProtection(actor.id, market.id, tx);
     await requireCommercialCapability(market.id, "PAYMENTS", tx);
     if (!marketAllowsCashDirect(market)) throw fail(409, "لا توجد طريقة دفع متاحة في هذا السوق");
@@ -788,7 +795,20 @@ async function checkout(
     });
     const created: (typeof orders.$inferSelect)[] = [];
     let grandTotal = 0;
+    // orders.unit_price_minor is a single per-order price and the database enforces
+    // subtotal = quantity × unit price, so one seller's differently priced lines become
+    // separate orders. Same-priced lines still share one order.
+    const orderGroups: Array<[string, PlannedCheckoutLine[]]> = [];
     for (const [sellerId, group] of plan.plan.groups) {
+      const byPrice = new Map<number, PlannedCheckoutLine[]>();
+      for (const line of group) {
+        const lines = byPrice.get(line.unitPriceMinor) ?? [];
+        lines.push(line);
+        byPrice.set(line.unitPriceMinor, lines);
+      }
+      for (const lines of byPrice.values()) orderGroups.push([sellerId, lines]);
+    }
+    for (const [sellerId, group] of orderGroups) {
       const quantity = group.reduce((sum, l) => sum + l.quantity, 0);
       const subtotal = group.reduce(
         (sum, line) => sum + line.unitPriceMinor * line.quantity,

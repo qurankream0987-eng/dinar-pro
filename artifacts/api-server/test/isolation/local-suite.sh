@@ -10,7 +10,8 @@
 # This proves subsystem coexistence; the exit code is the first failed suite's (98 for outbound).
 #
 # Optional: DINAR_SUITE_DB (default dinar_test_local_<random>), DINAR_SUITE_SEED
-# (fixtures|development|none, default fixtures), DINAR_SUITE_KEEP_DB=1, DINAR_CHROMIUM.
+# (fixtures|development|none, default fixtures), DINAR_SUITE_KEEP_DB=1, DINAR_SUITE_REUSE_DB=1,
+# DINAR_SUITE_RELEASE_MIGRATIONS=1, DINAR_CHROMIUM.
 # Extra VAR=value arguments must be BDINAR_*/DINAR_* switches; credentials are refused.
 set -eu
 HERE=$(cd "$(dirname "$0")" && pwd)
@@ -26,6 +27,13 @@ case "${DINAR_LOCAL_PG#*://*@*:}" in */*) echo "LOCAL_SUITE: DINAR_LOCAL_PG must
 DB=${DINAR_SUITE_DB:-dinar_test_local_$(od -An -N6 -tx1 /dev/urandom | tr -d ' \n')}
 case "$DB" in *development*|*production*|*staging*|*canonical*|*legacy*)
   echo "LOCAL_SUITE: database name $DB is reserved" >&2; exit 96 ;; esac
+case "$DB" in ""|*[!a-zA-Z0-9_]*)
+  echo "LOCAL_SUITE: database name must contain only letters, numbers and underscores" >&2; exit 96 ;; esac
+[ "${#DB}" -le 63 ] || { echo "LOCAL_SUITE: database name exceeds PostgreSQL's limit" >&2; exit 96; }
+REUSE_DB=${DINAR_SUITE_REUSE_DB:-0}
+RELEASE_MIGRATIONS=${DINAR_SUITE_RELEASE_MIGRATIONS:-0}
+case "$REUSE_DB" in 0|1) ;; *) echo "LOCAL_SUITE: DINAR_SUITE_REUSE_DB must be 0 or 1" >&2; exit 96 ;; esac
+case "$RELEASE_MIGRATIONS" in 0|1) ;; *) echo "LOCAL_SUITE: DINAR_SUITE_RELEASE_MIGRATIONS must be 0 or 1" >&2; exit 96 ;; esac
 URL="$DINAR_LOCAL_PG/$DB"
 
 SUITES=""
@@ -48,11 +56,43 @@ for arg in "$@"; do
 done
 [ -n "$SUITES" ] || { echo "usage: local-suite.sh <suite.test> [more.test ...] [VAR=value ...]" >&2; exit 96; }
 
-node -e "
+if [ "$REUSE_DB" = 1 ]; then
+  [ "${DINAR_SUITE_KEEP_DB:-0}" = 1 ] || {
+    echo "LOCAL_SUITE: reuse requires DINAR_SUITE_KEEP_DB=1" >&2; exit 96;
+  }
+  [ "${DINAR_SUITE_SEED:-none}" = none ] || {
+    echo "LOCAL_SUITE: reuse requires DINAR_SUITE_SEED=none" >&2; exit 96;
+  }
+  [ "$RELEASE_MIGRATIONS" = 0 ] || {
+    echo "LOCAL_SUITE: reuse cannot apply migrations" >&2; exit 96;
+  }
+  case "$DB" in dinar_test_legal_*) ;; *)
+    echo "LOCAL_SUITE: reuse is restricted to dinar_test_legal_* databases" >&2; exit 96 ;; esac
+  node -e "
+const pg = require('$REPO/lib/db/node_modules/pg');
+(async () => {
+  const root = new pg.Client({ connectionString: process.argv[1] + '/postgres' });
+  await root.connect();
+  const exists = await root.query('SELECT 1 FROM pg_database WHERE datname = \$1', [process.argv[2]]);
+  await root.end();
+  if (exists.rowCount !== 1) throw new Error('reusable database does not exist');
+  const client = new pg.Client({ connectionString: process.argv[1] + '/' + process.argv[2] });
+  await client.connect();
+  const ledger = await client.query(\"SELECT to_regclass('drizzle.__drizzle_migrations') IS NOT NULL AS present\");
+  if (!ledger.rows[0]?.present) throw new Error('release migration ledger is absent');
+  const count = await client.query('SELECT count(*)::int AS count FROM drizzle.__drizzle_migrations');
+  await client.end();
+  if (count.rows[0].count < 1) throw new Error('release migration ledger is empty');
+  console.log('LOCAL_SUITE_REUSE_DB database=' + process.argv[2] + ' migrations=' + count.rows[0].count);
+})().catch((error) => { console.error(error.message); process.exit(90); });
+" "$DINAR_LOCAL_PG" "$DB"
+else
+  node -e "
 const pg = require('$REPO/lib/db/node_modules/pg');
 const c = new pg.Client({ connectionString: process.argv[1] + '/postgres' });
 c.connect().then(() => c.query('DROP DATABASE IF EXISTS \"' + process.argv[2] + '\"')).then(() => c.query('CREATE DATABASE \"' + process.argv[2] + '\"')).then(() => c.end()).catch((e) => { console.error(e.message); process.exit(90); });
 " "$DINAR_LOCAL_PG" "$DB"
+fi
 
 WORK=$(mktemp -d)
 NETLOG="$WORK/net-attempts.log"
@@ -65,7 +105,7 @@ STUB_LAUNCH_PID=""
 STUB_AS_ROOT=0
 needs_chromium() {
   case "$1" in
-    *browser-journey*|*browser.test|security-acceptance.test|wave3-acceptance.test|w02-ultra-browser.test) return 0 ;;
+    *browser-journey*|*browser.test|security-acceptance.test|wave3-acceptance.test|w02-ultra-browser.test|command-e-ui.test|command-f-journeys.test|d16-readiness.test|wave06-d16-compliance-acceptance.test|block-d-acceptance.test|block-e-acceptance.test) return 0 ;;
     phase1-acceptance.test)
       case " $EXTRA " in *" BDINAR_PHASE1_SKIP_BROWSER=1 "*) return 1 ;; *) return 0 ;; esac ;;
     *) return 1 ;;
@@ -184,7 +224,17 @@ WRAPPER
   echo "LOCAL_SUITE_BROWSER_STUB hosts=fonts.googleapis.com,fonts.gstatic.com target=127.0.0.1:443"
 fi
 
-(cd "$REPO/lib/db" && base node_modules/.bin/drizzle-kit migrate --config ./drizzle.config.ts >/dev/null)
+if [ "$REUSE_DB" = 1 ]; then
+  echo "LOCAL_SUITE_MIGRATIONS reused=1 database=$DB"
+elif [ "$RELEASE_MIGRATIONS" = 1 ]; then
+  env -i PATH="$PATH" HOME="$WORK" LANG=C.UTF-8 TZ=UTC NODE_ENV=development \
+    DATABASE_URL="$URL" DINAR_MIGRATION_TARGET=disposable \
+    DINAR_MIGRATION_EXPECTED_DATABASE="$DB" \
+    DINAR_ISOLATION_NET_LOG="$NETLOG" NODE_OPTIONS="--import=file://$HERE/net-guard.mjs" \
+    node --experimental-strip-types "$REPO/lib/db/scripts/migrate-release.mjs"
+else
+  (cd "$REPO/lib/db" && base node_modules/.bin/drizzle-kit migrate --config ./drizzle.config.ts >/dev/null)
+fi
 cd "$API"
 case "${DINAR_SUITE_SEED:-fixtures}" in
   fixtures) base BDINAR_ACCEPTANCE_FIXTURES=development \

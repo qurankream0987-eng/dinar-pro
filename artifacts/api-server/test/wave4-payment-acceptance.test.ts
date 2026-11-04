@@ -29,14 +29,24 @@ if (process.env.BDINAR_DISPOSABLE_TEST_DATABASE !== "1") {
 requireSafeReplitDevelopmentDatabase("BDINAR_WAVE4_ACCEPTANCE");
 
 const runId = randomUUID().replaceAll("-", "").slice(0, 12);
-const phoneBase = 55_000_000 + ((Date.now() + process.pid * 7) % 990_000);
+const phoneBase = (Date.now() + process.pid * 7) % 10_000_000;
+const listingTag = randomUUID().replaceAll("-", "").replace(/[0-9a-f]/gi, (hex) =>
+  String.fromCharCode(97 + Number.parseInt(hex, 16)),
+);
 const password = "Wave4-Acceptance-2026!";
 const ipBase = parseInt(runId.slice(0, 2), 16);
-const server = app.listen(0);
-await new Promise<void>((resolve) => server.once("listening", resolve));
-const address = server.address();
-if (!address || typeof address === "string") throw new Error("No test port");
-const base = `http://127.0.0.1:${address.port}/api`;
+const externalApiBase = process.env.BDINAR_TEST_API_BASE?.replace(/\/+$/, "");
+let server: ReturnType<typeof app.listen> | undefined;
+let base: string;
+if (externalApiBase) {
+  base = `${externalApiBase}/api`;
+} else {
+  server = app.listen(0);
+  await new Promise<void>((resolve) => server!.once("listening", resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") throw new Error("No test port");
+  base = `http://127.0.0.1:${address.port}/api`;
+}
 
 let ipSequence = 0;
 
@@ -80,7 +90,7 @@ async function registrationProof(phoneNumber: string) {
   const started = await request(
     "/auth/phone-verification/challenges",
     "POST",
-    { phoneCountryCode: "+965", phoneNumber },
+    { phoneCountryCode: "+962", phoneNumber },
   );
   assert.equal(started.status, 202, started.text);
   const verified = await request(
@@ -235,19 +245,20 @@ async function probePaymentEventAppendOnly(
 test("Wave 4 payment core remains simulation-only and enforces payment boundaries", async () => {
   let offerId: string | undefined;
   try {
-    const [saMarket] = await db
+    const [joMarket] = await db
       .select()
       .from(markets)
-      .where(eq(markets.id, "SA"));
-    assert.ok(saMarket, "development seed must configure the SAR market");
-    assert.equal(saMarket.currencyCode, "SAR");
+      .where(eq(markets.id, "JO"));
+    assert.ok(joMarket, "the isolated legal fixture must configure the JO test market");
+    assert.equal(joMarket.currencyCode, "JOD");
+    assert.equal(joMarket.minorUnitScale, 3);
 
     async function register(role: string, offset: number) {
-      const phoneNumber = String(phoneBase + offset);
+      const phoneNumber = `79${((phoneBase + offset) % 10_000_000).toString().padStart(7, "0")}`;
       const result = await request("/auth/register", "POST", {
         displayName: `DINAR Wave 4 ${role} ${runId}`,
-        accountCountry: "KW",
-        phoneCountryCode: "+965",
+        accountCountry: "JO",
+        phoneCountryCode: "+962",
         phoneNumber,
         password,
         confirmPassword: password,
@@ -272,7 +283,7 @@ test("Wave 4 payment core remains simulation-only and enforces payment boundarie
       const marketResult = await request(
         "/account/market",
         "PATCH",
-        { marketId: "SA" },
+        { marketId: "JO" },
         actor.cookie,
       );
       assert.equal(marketResult.status, 200, marketResult.text);
@@ -282,14 +293,14 @@ test("Wave 4 payment core remains simulation-only and enforces payment boundarie
       "/listings",
       "POST",
       {
-        title: `Wave 4 simulation offer ${runId}`,
+        title: `Wave simulation offer ${listingTag}`,
         description: "Development-only offer for payment simulation acceptance.",
         category: "أخرى",
         categoryId: "other",
         area: "منطقة الاختبار",
-        city: "الرياض",
+        city: "عمّان",
         attributes: {},
-        unitPrice: "100.00",
+        unitPrice: "100.000",
         inventoryMode: "LIMITED",
         availableQuantity: 5,
         fulfilmentType: "PICKUP",
@@ -418,7 +429,7 @@ test("Wave 4 payment core remains simulation-only and enforces payment boundarie
     );
     assert.equal(created.status, 201, created.text);
     assert.equal(created.data.amountMinor, firstOrder.subtotalMinor);
-    assert.equal(created.data.currencyCode, "SAR");
+    assert.equal(created.data.currencyCode, "JOD");
     assert.equal(created.data.mode, "SIMULATION_ONLY");
     const repeatedIntent = await request(
       paymentPath,
@@ -498,7 +509,7 @@ test("Wave 4 payment core remains simulation-only and enforces payment boundarie
     const partialRefund = await request(
       refundPath,
       "POST",
-      { amountMinor: 4000, reason: "simulation acceptance" },
+      { amountMinor: 40_000, reason: "simulation acceptance" },
       admin.cookie,
       { "Idempotency-Key": firstRefundKey },
     );
@@ -508,7 +519,7 @@ test("Wave 4 payment core remains simulation-only and enforces payment boundarie
     const repeatedRefund = await request(
       refundPath,
       "POST",
-      { amountMinor: 4000, reason: "simulation acceptance" },
+      { amountMinor: 40_000, reason: "simulation acceptance" },
       admin.cookie,
       { "Idempotency-Key": firstRefundKey },
     );
@@ -518,7 +529,7 @@ test("Wave 4 payment core remains simulation-only and enforces payment boundarie
     const conflictingRefund = await request(
       refundPath,
       "POST",
-      { amountMinor: 3500, reason: "simulation acceptance" },
+      { amountMinor: 35_000, reason: "simulation acceptance" },
       admin.cookie,
       { "Idempotency-Key": firstRefundKey },
     );
@@ -526,7 +537,7 @@ test("Wave 4 payment core remains simulation-only and enforces payment boundarie
     const excessiveRefund = await request(
       refundPath,
       "POST",
-      { amountMinor: 7000 },
+      { amountMinor: 70_000 },
       admin.cookie,
       { "Idempotency-Key": `wave4-refund-too-much-${runId}` },
     );
@@ -535,7 +546,7 @@ test("Wave 4 payment core remains simulation-only and enforces payment boundarie
     const finalRefund = await request(
       refundPath,
       "POST",
-      { amountMinor: 6000, reason: "simulation close" },
+      { amountMinor: 60_000, reason: "simulation close" },
       admin.cookie,
       { "Idempotency-Key": `wave4-refund-two-${runId}` },
     );
@@ -546,7 +557,7 @@ test("Wave 4 payment core remains simulation-only and enforces payment boundarie
       .from(paymentIntents)
       .where(eq(paymentIntents.id, firstIntent.id));
     assert.equal(fullyRefunded.status, "SIMULATION_REFUNDED");
-    assert.equal(fullyRefunded.refundedAmountMinor, 10_000);
+    assert.equal(fullyRefunded.refundedAmountMinor, 100_000);
     count("refund idempotency, role checks, and captured-balance limits pass");
 
     const secondOrder = await checkout("reconciliation");
@@ -984,9 +995,11 @@ test("Wave 4 payment core remains simulation-only and enforces payment boundarie
 });
 
 after(async () => {
-  server.closeAllConnections?.();
-  await new Promise<void>((resolve, reject) =>
-    server.close((error) => (error ? reject(error) : resolve())),
-  );
+  if (server) {
+    server.closeAllConnections?.();
+    await new Promise<void>((resolve, reject) =>
+      server!.close((error) => (error ? reject(error) : resolve())),
+    );
+  }
   await pool.end();
 });

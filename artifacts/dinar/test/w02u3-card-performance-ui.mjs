@@ -113,6 +113,14 @@ try {
       ...(viewport.mobile ? { isMobile: true, hasTouch: true } : {}),
       locale: "ar",
     });
+    // The isolated harness returns an empty stylesheet for Google Fonts. Fulfill the same stub
+    // in-process so repeated cold navigations do not depend on TLS-stub connection reuse.
+    await context.route("https://fonts.googleapis.com/**", (route) =>
+      route.fulfill({ status: 200, contentType: "text/css", body: "/* sandbox font stub */" }),
+    );
+    await context.route("https://fonts.gstatic.com/**", (route) =>
+      route.fulfill({ status: 200, contentType: "font/woff2", body: "" }),
+    );
     const page = await context.newPage();
     watch(page, viewport.label);
     await signIn(page, buyer);

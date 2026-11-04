@@ -20,6 +20,7 @@ import { and, count, desc, eq, inArray, isNull, or } from "drizzle-orm";
 import { z } from "zod";
 import {
   aiUsageCounters,
+  conversationSummaries,
   conversations,
   db,
   marketplaceReports,
@@ -375,6 +376,7 @@ const CATEGORY_LABELS = {
   messagesSent: "رسائل أرسلتها",
   aiConversations: "محادثاتك مع المساعد",
   personalMemories: "ما يتذكره المساعد عنك",
+  conversationSummaries: "ملخصات مشتقة من محادثاتك",
   reportsFiled: "بلاغات قدمتها",
   policyAcceptances: "موافقاتك على السياسات",
   policyConsents: "سجل قراراتك على السياسات",
@@ -387,20 +389,21 @@ export async function personalDataSummary(userId: string) {
   const [user] = await db.select().from(users).where(eq(users.id, userId));
   if (!user) throw fail(404, "الحساب غير موجود");
   const n = async (query: Promise<Array<{ n: number }>>) => Number((await query)[0]?.n ?? 0);
-  const [listings, ordersAsBuyer, ordersAsSeller, messagesSent, aiConversations, memories, reports, acceptances, consents, locations, requests] = await Promise.all([
+  const [listings, ordersAsBuyer, ordersAsSeller, messagesSent, aiConversations, memories, derivedSummaries, reports, acceptances, consents, locations, requests] = await Promise.all([
     n(db.select({ n: count() }).from(offers).where(eq(offers.sellerId, userId))),
     n(db.select({ n: count() }).from(orders).where(eq(orders.buyerId, userId))),
     n(db.select({ n: count() }).from(orders).where(eq(orders.sellerId, userId))),
     n(db.select({ n: count() }).from(messages).where(eq(messages.senderId, userId))),
     n(db.select({ n: count() }).from(conversations).where(and(eq(conversations.ownerUserId, userId), eq(conversations.kind, "AI")))),
     n(db.select({ n: count() }).from(personalMemories).where(and(eq(personalMemories.userId, userId), eq(personalMemories.status, "ACTIVE")))),
+    n(db.select({ n: count() }).from(conversationSummaries).where(eq(conversationSummaries.ownerUserId, userId))),
     n(db.select({ n: count() }).from(marketplaceReports).where(eq(marketplaceReports.reporterId, userId))),
     n(db.select({ n: count() }).from(policyAcceptances).where(eq(policyAcceptances.userId, userId))),
     n(db.select({ n: count() }).from(policyConsentEvents).where(eq(policyConsentEvents.userId, userId))),
     n(db.select({ n: count() }).from(transactionLocations).where(and(eq(transactionLocations.sharedBy, userId), isNull(transactionLocations.redactedAt)))),
     n(db.select({ n: count() }).from(privacyRequests).where(eq(privacyRequests.userId, userId))),
   ]);
-  const counts = { listings, ordersAsBuyer, ordersAsSeller, messagesSent, aiConversations, personalMemories: memories, reportsFiled: reports, policyAcceptances: acceptances, policyConsents: consents, sharedLocations: locations, privacyRequests: requests };
+  const counts = { listings, ordersAsBuyer, ordersAsSeller, messagesSent, aiConversations, personalMemories: memories, conversationSummaries: derivedSummaries, reportsFiled: reports, policyAcceptances: acceptances, policyConsents: consents, sharedLocations: locations, privacyRequests: requests };
   return {
     profile: {
       displayName: user.displayName,
@@ -435,12 +438,14 @@ const bounded = <T>(rows: T[]) => ({ items: rows.slice(0, EXPORT_LIMIT), truncat
 export async function buildPersonalDataExport(userId: string) {
   const summary = await personalDataSummary(userId);
   const take = EXPORT_LIMIT + 1;
-  const [listingRows, orderRows, messageRows, conversationRows, memoryRows, reportRows, acceptanceRows, locationRows, usageRows, memoryControlRows] = await Promise.all([
+  const [listingRows, orderRows, messageRows, conversationRows, memoryRows, summaryRows, reportRows, acceptanceRows, locationRows, usageRows, memoryControlRows] = await Promise.all([
     db.select({ id: offers.id, status: offers.status, marketId: offers.marketId, unitPriceMinor: offers.unitPriceMinor, data: offers.data, createdAt: offers.createdAt }).from(offers).where(eq(offers.sellerId, userId)).orderBy(desc(offers.createdAt)).limit(take),
     db.select().from(orders).where(or(eq(orders.buyerId, userId), eq(orders.sellerId, userId))).orderBy(desc(orders.createdAt)).limit(take),
     db.select({ id: messages.id, conversationId: messages.conversationId, body: messages.body, createdAt: messages.createdAt }).from(messages).where(eq(messages.senderId, userId)).orderBy(desc(messages.createdAt)).limit(take),
     db.select({ id: conversations.id, title: conversations.title, kind: conversations.kind, createdAt: conversations.createdAt }).from(conversations).where(eq(conversations.ownerUserId, userId)).orderBy(desc(conversations.createdAt)).limit(take),
     db.select({ topic: personalMemories.topic, kind: personalMemories.kind, label: personalMemories.label, value: personalMemories.value, status: personalMemories.status, lastSeenAt: personalMemories.lastSeenAt }).from(personalMemories).where(eq(personalMemories.userId, userId)).limit(take),
+    // Derived, disposable memory: disclosed so the user sees what DINAR keeps beyond their own words.
+    db.select({ conversationId: conversationSummaries.conversationId, marketId: conversationSummaries.marketId, summary: conversationSummaries.summary, topics: conversationSummaries.topics, sourceMessageIds: conversationSummaries.sourceMessageIds, messageCount: conversationSummaries.messageCount, derivation: conversationSummaries.derivation, watermarkAt: conversationSummaries.watermarkAt, updatedAt: conversationSummaries.updatedAt }).from(conversationSummaries).where(eq(conversationSummaries.ownerUserId, userId)).orderBy(desc(conversationSummaries.updatedAt)).limit(take),
     db.select({ id: marketplaceReports.id, targetType: marketplaceReports.targetType, reasonCode: marketplaceReports.reasonCode, note: marketplaceReports.note, status: marketplaceReports.status, createdAt: marketplaceReports.createdAt }).from(marketplaceReports).where(eq(marketplaceReports.reporterId, userId)).limit(take),
     db.select({ policyKey: policyAcceptances.policyKey, policyVersion: policyAcceptances.policyVersion, acceptedAt: policyAcceptances.acceptedAt }).from(policyAcceptances).where(eq(policyAcceptances.userId, userId)).limit(take),
     db.select({ orderId: transactionLocations.orderId, purpose: transactionLocations.purpose, source: transactionLocations.source, city: transactionLocations.city, area: transactionLocations.area, addressText: transactionLocations.addressText, createdAt: transactionLocations.createdAt }).from(transactionLocations).where(and(eq(transactionLocations.sharedBy, userId), isNull(transactionLocations.redactedAt))).limit(take),
@@ -485,6 +490,9 @@ export async function buildPersonalDataExport(userId: string) {
     conversations: bounded(conversationRows.map((row) => ({ ...row, createdAt: row.createdAt.toISOString() }))),
     assistantReplies: bounded(assistantRows.map((row) => ({ ...row, createdAt: row.createdAt.toISOString() }))),
     personalMemories: bounded(memoryRows.map((row) => ({ ...row, lastSeenAt: row.lastSeenAt.toISOString() }))),
+    conversationSummaries: bounded(
+      summaryRows.map((row) => ({ ...row, watermarkAt: row.watermarkAt.toISOString(), updatedAt: row.updatedAt.toISOString() })),
+    ),
     reportsFiled: bounded(reportRows.map((row) => ({ ...row, createdAt: row.createdAt.toISOString() }))),
     policyAcceptances: bounded(acceptanceRows.map((row) => ({ ...row, acceptedAt: row.acceptedAt.toISOString() }))),
     sharedLocations: bounded(locationRows.map((row) => ({ ...row, createdAt: row.createdAt.toISOString() }))),

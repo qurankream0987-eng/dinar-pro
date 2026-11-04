@@ -75,6 +75,7 @@ import type { AiCallRecord } from "../lib/ai-spend";
 import { normalizeSearch } from "./search-context";
 import { isMarketingRequest, sellerListingFacts, unsupportedCopyClaims } from "./seller-management";
 import { executeModelTool, modelToolDefinitions, ToolRejectedError, type ToolResult } from "./tool-registry";
+import { MODEL_CAPABILITY_TOOL_NAMES, modelRolesForActor } from "./model-capability-tools";
 
 type Market = Awaited<ReturnType<typeof marketFor>>;
 type DelegatedSellerSnapshot = NonNullable<Awaited<ReturnType<typeof delegatedSellerModelContext>>>;
@@ -849,6 +850,7 @@ export function isGroundedSellerDraftRequest(
 }
 
 import { personalContext } from "./personal-context-service";
+import { conversationMemoryContext, renderMemoryContext } from "./conversation-memory";
 export async function modelContext(input: Input): Promise<ModelContext> {
   const marketAvailable = isMarketAvailable(input.market);
   const [set, history] = await Promise.all([
@@ -957,6 +959,17 @@ export async function modelContext(input: Input): Promise<ModelContext> {
         } : {}),
       })
     : null;
+  // Bounded, owner-scoped history and derived summaries. A seller employee session never reads
+  // the owner's private conversations, and nothing here is authorization or a financial record.
+  const conversationMemory = input.actorId && !sellerEmployeeRequested
+    ? renderMemoryContext(await conversationMemoryContext({
+        actorId: input.actorId,
+        conversationId: input.conversationId,
+        marketId: input.market.id,
+        query: input.message,
+        ...(input.currentMessageId ? { excludeMessageId: input.currentMessageId } : {}),
+      }))
+    : "";
   return {
     marketAvailable,
     serverContext: contextualServerFacts,
@@ -977,6 +990,7 @@ export async function modelContext(input: Input): Promise<ModelContext> {
     ...(input.actorId && !sellerEmployeeRequested ? { actionReceipts: await recentActionReceipts(input.conversationId, input.actorId) } : {}),
     // Another party's words delivered by an inquiry are never model instructions or history.
     history: history.slice(1).reverse().filter((row) => row.metadata?.inquiryDelivery !== true && row.metadata?.inquiryContent !== true).map((row) => ({ actor: row.actor, body: row.body })),
+    ...(conversationMemory ? { conversationMemory } : {}),
     ...(marketingFacts ? { sellerListing: marketingFacts } : {}),
   };
 }
@@ -1237,6 +1251,18 @@ function modelToolLoopLimits() {
   };
 }
 
+/** F01 reads plus every F02 capability tool; a continuation may only replay the same set. */
+const MODEL_TOOL_LOOP_NAMES = [
+  "searchListings",
+  "getResource",
+  "compareListings",
+  ...MODEL_CAPABILITY_TOOL_NAMES,
+] as const;
+const MODEL_TOOL_SIGNATURE = new RegExp(
+  `^(?:${MODEL_TOOL_LOOP_NAMES.join("|")}):[a-f0-9]{64}$`,
+);
+const MODEL_TOOL_FEEDBACK_NAMES = new Set<string>(MODEL_TOOL_LOOP_NAMES);
+
 function validModelToolContinuation(value: unknown, input: Input): ModelToolContinuation | undefined {
   if (!input.actorId || !input.currentMessageId || !value || typeof value !== "object") return undefined;
   const raw = value as Partial<ModelToolContinuation>;
@@ -1251,7 +1277,7 @@ function validModelToolContinuation(value: unknown, input: Input): ModelToolCont
     raw.resumeCount! > 5 ||
     !Array.isArray(raw.signatures) ||
     raw.signatures.length > 3 ||
-    !raw.signatures.every((item) => typeof item === "string" && /^(?:searchListings|getResource|compareListings):[a-f0-9]{64}$/.test(item)) ||
+    !raw.signatures.every((item) => typeof item === "string" && MODEL_TOOL_SIGNATURE.test(item)) ||
     !Array.isArray(raw.feedback) ||
     raw.feedback.length > 6
   )
@@ -1259,7 +1285,7 @@ function validModelToolContinuation(value: unknown, input: Input): ModelToolCont
   const feedback = raw.feedback.filter((item) =>
     item &&
     typeof item === "object" &&
-    ["searchListings", "getResource", "compareListings"].includes(item.tool) &&
+    MODEL_TOOL_FEEDBACK_NAMES.has(item.tool) &&
     ["SUCCEEDED", "REJECTED", "FAILED"].includes(item.status),
   );
   while (JSON.stringify(feedback).length > MAX_TOOL_FEEDBACK_CHARS && feedback.length) feedback.shift();
@@ -1285,7 +1311,89 @@ function stableJson(value: unknown): string {
   return JSON.stringify(value);
 }
 
+/** F02 reads: only the verified fields the model needs to answer, never a full row. */
+function compactCapabilityRead(result: ToolResult) {
+  if (result.kind !== "SURFACE") return undefined;
+  if (result.inventory)
+    return {
+      kind: "INVENTORY",
+      inventory: result.inventory.slice(0, 12).map((row) => ({
+        listingId: String(row.listingId ?? ""),
+        title: String(row.title ?? "").slice(0, 120),
+        status: row.status,
+        unitPrice: row.unitPrice,
+        currency: row.currency,
+        availableQuantity: row.availableQuantity,
+      })),
+    };
+  if (result.inquiries)
+    return {
+      kind: "INQUIRIES",
+      inquiries: result.inquiries.slice(0, 10).map((row) => ({
+        inquiryId: String(row.inquiryId ?? ""),
+        listingId: String(row.listingId ?? ""),
+        role: row.role,
+        status: row.status,
+        lastMessageAt: row.lastMessageAt,
+      })),
+    };
+  if (result.orders)
+    return {
+      kind: "ORDERS",
+      orders: result.orders.slice(0, 10).map((row) => ({
+        orderId: String(row.orderId ?? ""),
+        role: row.role,
+        status: row.status,
+        quantity: row.quantity,
+        subtotal: row.subtotal,
+        currency: row.currency,
+      })),
+    };
+  if (result.cart)
+    return {
+      kind: "CART",
+      cart: result.cart.slice(0, 12).map((row) => ({
+        listingId: String(row.listingId ?? ""),
+        title: String(row.title ?? "").slice(0, 120),
+        quantity: row.quantity,
+        unitPrice: row.unitPrice,
+        currency: row.currency,
+        availableQuantity: row.availableQuantity,
+      })),
+      ...(result.checkout ? { checkout: result.checkout } : {}),
+    };
+  if (result.fulfillment)
+    return {
+      kind: "FULFILLMENT",
+      fulfillment: {
+        method: result.fulfillment.method,
+        status: result.fulfillment.status,
+        statusLabel: result.fulfillment.statusLabel,
+        failureLabel: result.fulfillment.failureLabel,
+        updatedAt: result.fulfillment.updatedAt,
+      },
+    };
+  if (result.surface === "NEGOTIATION_STATUS" && result.negotiation)
+    return {
+      kind: "NEGOTIATION",
+      negotiation: {
+        negotiationId: result.negotiation.negotiationId,
+        listingId: result.negotiation.listingId,
+        title: result.negotiation.title,
+        role: result.negotiation.role,
+        status: result.negotiation.status,
+        quantity: result.negotiation.quantity,
+        offerAmount: result.negotiation.offerAmount,
+        counterAmount: result.negotiation.counterAmount,
+        currency: result.negotiation.currency,
+      },
+    };
+  return undefined;
+}
+
 function compactModelToolResult(result: ToolResult) {
+  const capabilityRead = compactCapabilityRead(result);
+  if (capabilityRead) return capabilityRead;
   if (result.kind === "SURFACE" && result.surface === "COMPARISON") {
     const comparison = (result.comparison ?? {}) as {
       resultSetId?: string;
@@ -1346,6 +1454,89 @@ function compactModelToolResult(result: ToolResult) {
     ...(result.resourceId ? { resourceId: result.resourceId } : {}),
     listings,
   };
+}
+
+/**
+ * Money words turn a digit in the model's prose into a claim about a recorded amount. Only an
+ * amount written beside one of these words is checked; counts and dates are not money claims.
+ */
+const CURRENCY_WORD = "(?:د(?:ين|ین)ار(?:ات)?|دنانير|دينا|درهم|دولار|ريال|ليرة|جنيه|يورو|قرش|قروش|فلوس)";
+const MONEY_AMOUNT = new RegExp(
+  `(\\d+(?:[.,]\\d+)?)\\s*${CURRENCY_WORD}|${CURRENCY_WORD}\\s*(\\d+(?:[.,]\\d+)?)`,
+  "giu",
+);
+
+function foldCurrencyDigits(text: string): string {
+  return text
+    .replace(/[٠-٩]/gu, (digit) => String(digit.charCodeAt(0) - 0x0660))
+    .replace(/[۰-۹]/gu, (digit) => String(digit.charCodeAt(0) - 0x06f0));
+}
+
+/** Fields a verified read records as an amount; a model figure must match one of them. */
+const RECORDED_AMOUNT_KEY =
+  /^(?:unitPrice|price|amount|total|subtotal|offerAmount|counterAmount|minorUnits)$/i;
+
+function collectRecordedAmounts(node: unknown, values: Set<number>, depth = 0): void {
+  if (depth > 4) return;
+  if (Array.isArray(node)) {
+    for (const entry of node) collectRecordedAmounts(entry, values, depth + 1);
+    return;
+  }
+  if (!node || typeof node !== "object") return;
+  for (const [key, entry] of Object.entries(node as Record<string, unknown>)) {
+    if (RECORDED_AMOUNT_KEY.test(key)) {
+      const value = typeof entry === "string" || typeof entry === "number" ? Number(entry) : Number.NaN;
+      if (Number.isFinite(value)) values.add(value);
+    } else if (entry && typeof entry === "object") {
+      collectRecordedAmounts(entry, values, depth + 1);
+    }
+  }
+}
+
+/** Every amount a verified read showed the model this turn: prices, totals and quantities. */
+function recordedAmounts(feedback: NonNullable<ModelContext["toolFeedback"]>): Set<number> {
+  const values = new Set<number>();
+  for (const item of feedback) {
+    if (item.status !== "SUCCEEDED") continue;
+    collectRecordedAmounts(item.result, values);
+  }
+  return values;
+}
+
+/** Amounts the model states as money that no verified read of this turn recorded. */
+function unrecordedAmounts(text: string, recorded: Set<number>): number[] {
+  const digits = foldCurrencyDigits(text).replace(/(\d),(\d{3})(?!\d)/gu, "$1$2");
+  const offenders: number[] = [];
+  for (const match of digits.matchAll(MONEY_AMOUNT)) {
+    const raw = match[1] ?? match[2] ?? "";
+    if (!raw) continue;
+    const value = Number(raw.replace(",", "."));
+    if (Number.isFinite(value) && !recorded.has(value)) offenders.push(value);
+  }
+  return offenders;
+}
+
+/**
+ * The model's own words, kept only while this turn's verified reads back the amounts in them and
+ * the text claims no completed action. Otherwise DINAR's grounded fallback describes the read.
+ */
+const GROUNDED_READ_ANSWER = "هذه نتائج القراءة الحالية من DINAR. راجع تفاصيل العروض وبطاقاتها؛ لم أنفّذ أي إجراء.";
+const GROUNDED_CAPABILITY_ANSWER = "هذه بيانات DINAR الحالية. لم أنفّذ أي إجراء.";
+
+function groundedModelProse(
+  text: string,
+  feedback: NonNullable<ModelContext["toolFeedback"]>,
+  fallback: string,
+  conversationId: string,
+): string {
+  if (text === fallback || claimsCompletedAction(text)) return fallback;
+  const invented = unrecordedAmounts(text, recordedAmounts(feedback));
+  if (!invented.length) return text;
+  logger.info(
+    { event: "dinar_model_unrecorded_amount_withheld", amounts: invented.slice(0, 4), conversationId },
+    "model amount withheld after a verified read",
+  );
+  return fallback;
 }
 
 function withModelToolAnswer(result: ToolResult, answer: string, preserveResultSetId = false): ToolResult {
@@ -1480,8 +1671,12 @@ export async function executeModelFallback(
   let lastSearchResult: ToolResult | undefined;
   let lastResourceResult: ToolResult | undefined;
   let lastComparisonResult: ToolResult | undefined;
+  let lastCapabilityRead: ToolResult | undefined;
+  let lastCapabilityReadTool: string | undefined;
+  let lastPreparedResult: ToolResult | undefined;
+  let lastPreparedTool: string | undefined;
   let lastRejectedReadCode: string | undefined;
-  let toolLoopStopReason: "CALL_LIMIT" | "DUPLICATE" | "TIME_LIMIT" | "USAGE_LIMIT" | undefined;
+  let toolLoopStopReason: "CALL_LIMIT" | "DUPLICATE" | "TIME_LIMIT" | "USAGE_LIMIT" | "PREPARED" | undefined;
   const toolFeedback: NonNullable<ModelContext["toolFeedback"]> = [...(resumedContinuation?.feedback ?? [])];
   const seenToolCalls = new Set<string>(resumedContinuation?.signatures ?? []);
   let toolCallCount = seenToolCalls.size;
@@ -1511,9 +1706,13 @@ export async function executeModelFallback(
       actorId: input.actorId,
       ...(input.currentMessageId ? { currentMessageId: input.currentMessageId } : {}),
     };
+    const toolRoles =
+      !input.sellerEmployeeMode && input.currentMessageId
+        ? await modelRolesForActor(input.actorId, input.market.id)
+        : [];
     const availableTools =
       !input.sellerEmployeeMode && input.currentMessageId
-        ? modelToolDefinitions(toolContext)
+        ? modelToolDefinitions(toolContext, toolRoles)
         : [];
     const loopContext: ModelContext = {
       ...context,
@@ -1621,6 +1820,18 @@ export async function executeModelFallback(
             };
           }
         }
+        // F02: a prepared action is returned as the server-built review; the model never
+        // confirms it, and no later model text may replace the review card.
+        if (result.preparedAction || result.preparedDraft) {
+          lastPreparedResult = result;
+          lastPreparedTool = execution.tool;
+          toolLoopStopReason = "PREPARED";
+          break;
+        }
+        if (result.kind === "SURFACE" && (result.inventory || result.inquiries || result.orders || result.cart || result.fulfillment)) {
+          lastCapabilityRead = result;
+          lastCapabilityReadTool = execution.tool;
+        }
       }
       const persistedFeedback = [...toolFeedback].slice(-6);
       while (JSON.stringify(persistedFeedback).length > MAX_TOOL_FEEDBACK_CHARS && persistedFeedback.length)
@@ -1696,6 +1907,17 @@ export async function executeModelFallback(
     );
   const outcome = drafted.outcome;
   if (!outcome.ok) {
+    // A provider outage after a prepared review must not discard the server-built action card.
+    if (lastPreparedResult) {
+      const note = outcome.reason === "TIMEOUT"
+        ? "انتهى وقت الرد قبل اكتماله؛ هذه مراجعة الإجراء التي أنشأها DINAR، ولم يُنفّذ شيء بعد."
+        : `${modelFailureMessage(outcome.reason)} هذه مراجعة الإجراء التي أنشأها DINAR، ولم يُنفّذ شيء بعد.`;
+      return {
+        tool: lastPreparedTool ?? "dinarConversationTurn",
+        version: 1,
+        result: withModelToolNote(lastPreparedResult, note),
+      };
+    }
     // A provider outage after a verified read must not discard what DINAR already established.
     const partialRead = lastComparisonResult ?? lastSearchResult ?? lastResourceResult;
     if (partialRead) {
@@ -1715,13 +1937,24 @@ export async function executeModelFallback(
     );
   }
   if (outcome.toolRequest) {
+    if (lastPreparedResult) {
+      const note = toolLoopStopReason === "PREPARED"
+        ? "هذه مراجعة الإجراء التي أنشأها DINAR؛ لم يُنفّذ شيء بعد."
+        : "توقفت بعد إنشاء مراجعة الإجراء، ولم أنفّذ أي تغيير.";
+      return {
+        tool: lastPreparedTool ?? "dinarConversationTurn",
+        version: 1,
+        result: withModelToolNote(lastPreparedResult, note),
+      };
+    }
     const partialResult = lastComparisonResult ?? lastSearchResult ?? lastResourceResult;
     if (partialResult) {
-      const stopMessages = {
+      const stopMessages: Record<NonNullable<typeof toolLoopStopReason>, string> = {
         CALL_LIMIT: "توقفت بعد الحد الآمن لخطوات القراءة؛ هذه هي النتائج التي تحققت منها.",
         DUPLICATE: "توقفت لأن طلب القراءة تكرر؛ لم أكرر البحث، وهذه النتائج التي تحققت منها.",
         TIME_LIMIT: "انتهى الوقت المحدد للقراءة؛ هذه هي النتائج التي تحققت منها.",
         USAGE_LIMIT: "وصلت إلى حد استخدام المساعد لهذا الطلب؛ هذه هي النتائج التي تحققت منها.",
+        PREPARED: "هذه النتائج التي تحققت منها قبل إيقاف الخطوات.",
       };
       const answer = stopMessages[toolLoopStopReason ?? "CALL_LIMIT"];
       return {
@@ -1736,6 +1969,12 @@ export async function executeModelFallback(
       { ownerId: input.actorId },
     );
   }
+  if (lastPreparedResult)
+    return {
+      tool: lastPreparedTool ?? "dinarConversationTurn",
+      version: 1,
+      result: usageNote ? withModelToolNote(lastPreparedResult, usageNote) : lastPreparedResult,
+    };
   if (lastComparisonResult)
     return {
       tool: "compareListings",
@@ -1769,17 +2008,31 @@ export async function executeModelFallback(
       { ownerId: input.actorId },
     );
   if (lastSearchResult || lastResourceResult) {
-    const text = outcome.replyFiltered
-      ? "هذه نتائج القراءة الحالية من DINAR. راجع تفاصيل العروض وبطاقاتها؛ لم أنفّذ أي إجراء."
-      : outcome.turn.conversationalReply;
-    const groundedAnswer = claimsCompletedAction(text)
-      ? "هذه نتائج القراءة الحالية من DINAR. راجع تفاصيل العروض وبطاقاتها؛ لم أنفّذ أي إجراء."
-      : text;
+    const answer = groundedModelProse(
+      outcome.replyFiltered ? GROUNDED_READ_ANSWER : outcome.turn.conversationalReply,
+      toolFeedback,
+      GROUNDED_READ_ANSWER,
+      input.conversationId,
+    );
     const result = lastSearchResult ?? lastResourceResult!;
     return {
       tool: result.kind === "SEARCH" ? "searchListings" : "getResource",
       version: 1,
-      result: withModelToolAnswer(result, `${groundedAnswer}${usageNote ? `\n\n${usageNote}` : ""}`, result.kind === "RESOURCE"),
+      result: withModelToolAnswer(result, `${answer}${usageNote ? `\n\n${usageNote}` : ""}`, result.kind === "RESOURCE"),
+    };
+  }
+  if (lastCapabilityRead) {
+    // The card is DINAR's own rows; the model's prose is attached as an answer note only.
+    const answer = groundedModelProse(
+      outcome.replyFiltered ? GROUNDED_CAPABILITY_ANSWER : outcome.turn.conversationalReply,
+      toolFeedback,
+      GROUNDED_CAPABILITY_ANSWER,
+      input.conversationId,
+    );
+    return {
+      tool: lastCapabilityReadTool ?? "dinarConversationTurn",
+      version: 1,
+      result: withModelToolNote(lastCapabilityRead, `${answer}${usageNote ? `\n\n${usageNote}` : ""}`),
     };
   }
   const turn = outcome.turn;

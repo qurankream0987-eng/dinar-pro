@@ -202,5 +202,29 @@
   {
     "tag": "0050_normal_nico_minoru",
     "sha256": "50cc9e7ca9ec351d26df4ca0e8e0fc5d7c19d1c9e724b0735b91d0908bb121ac"
+  },
+  {
+    "tag": "0051_d16_legal_readiness_incidents",
+    "sha256": "d0e8f19788d18b531a82dcb929bd747d1fb978f54cd25d029e7fd388ddac12f2"
+  },
+  {
+    "tag": "0052_d16_readiness_constraints",
+    "sha256": "e059800b4aa2f6f88171cc705cd0d955bebb8cc1b2d84274c71b9fbc34c265ff"
+  },
+  {
+    "tag": "0053_d16_country_legal_intake",
+    "sha256": "1c74587d36ec1d2f255321023b1441bb0b2113fcde1960b045432a09d2b9ede3"
+  },
+  {
+    "tag": "0054_conversation_memory",
+    "sha256": "7112f4a23aba466fabb9dcf43ac4da6207b649c597f53cf70c168c0976e1d700"
+  },
+  {
+    "tag": "0055_d16_incident_integrity",
+    "sha256": "88cc4b7da6a788bb27478b1fc07f0160cc536dd36d7b9d3e39e684d8e277d4bd"
+  },
+  {
+    "tag": "0056_order_line_integrity",
+    "sha256": "cf43a95bfe0d9418aa9f0d9b3fe862b8e131116299dca92be3ac5815028c234c"
   }
 ]

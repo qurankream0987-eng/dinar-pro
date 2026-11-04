@@ -7,6 +7,7 @@ import { Router, type RequestHandler } from "express";
 import { z } from "zod";
 import { requireAuth } from "../lib/auth";
 import { marketFor } from "../lib/markets";
+import { assertMarketLegalCapability } from "../lib/d16-readiness";
 import { assignListingToBusiness, businessListingAssociation } from "../lib/business-catalog-contract";
 import {
   businessForReviewer,
@@ -41,7 +42,9 @@ router.get("/business/profiles", requireAuth, async (req, res) => {
   res.json(await listOwnBusinesses(req.actor!.id, await marketFor(req)));
 });
 router.post("/business/profiles", requireAuth, async (req, res) => {
-  const result = await createBusinessDraft(req.actor!.id, await marketFor(req), req.body);
+  const market = await marketFor(req);
+  await assertMarketLegalCapability(market.id, "BUSINESS_ONBOARDING");
+  const result = await createBusinessDraft(req.actor!.id, market, req.body);
   res.status(result.created ? 201 : 200).json(result);
 });
 router.get("/business/profiles/:id", requireAuth, async (req, res) => {
@@ -67,7 +70,10 @@ router.post("/business/profiles/:id/submit", requireAuth, async (req, res) => {
 });
 router.post("/business/profiles/:id/publication", requireAuth, async (req, res) => {
   const body = z.object({ publish: z.boolean() }).strict().parse(req.body);
-  res.json(await setBusinessPublication(req.actor!.id, await marketFor(req), id(req.params.id), body.publish));
+  const market = await marketFor(req);
+  if (body.publish)
+    await assertMarketLegalCapability(market.id, "BUSINESS_ONBOARDING");
+  res.json(await setBusinessPublication(req.actor!.id, market, id(req.params.id), body.publish));
 });
 router.post("/business/profiles/:id/integration-requests", requireAuth, async (req, res) => {
   res.status(201).json(await requestBusinessIntegration(req.actor!.id, await marketFor(req), id(req.params.id), req.body));

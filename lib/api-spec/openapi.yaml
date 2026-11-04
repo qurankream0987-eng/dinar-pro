@@ -2617,6 +2617,20 @@ paths:
               schema: { $ref: "#/components/schemas/ServerValidatedObject" }
         "401": { description: Not signed in }
         "404": { description: Not found (also for records of other accounts) }
+  /markets:
+    get:
+      operationId: getMarkets
+      tags: [markets]
+      summary: "List available market metadata. Access: PUBLIC."
+      security: []
+      responses:
+        "200":
+          description: Market metadata
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/LegalReadinessMarket" }
   /markets/{marketId}/compliance:
     get:
       operationId: getMarketsMarketidCompliance
@@ -2873,6 +2887,396 @@ paths:
               schema: { $ref: "#/components/schemas/ServerValidatedObject" }
         "401": { description: Not signed in }
         "404": { description: Not found (also for records of other accounts) }
+  /admin/compliance/markets/{marketId}/capabilities:
+    get:
+      operationId: getAdminMarketLegalCapabilities
+      tags: [compliance]
+      summary: "List per-market legal capability states and audit events. Access: ADMIN."
+      parameters:
+        - { name: marketId, in: path, required: true, schema: { type: string, maxLength: 32 } }
+      responses:
+        "200":
+          description: Capability states and audit events
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminMarketLegalCapabilityOverview" }
+        "401": { description: Not signed in }
+        "403": { description: Administrator access required }
+  /admin/compliance/markets/{marketId}/capabilities/{capability}/review-request:
+    post:
+      operationId: requestAdminMarketCapabilityReview
+      tags: [compliance]
+      summary: "Request an independent counsel review. Does not enable the capability. Access: ADMIN."
+      parameters:
+        - { name: marketId, in: path, required: true, schema: { type: string, maxLength: 32 } }
+        - { name: capability, in: path, required: true, schema: { $ref: "#/components/schemas/MarketLegalCapabilityName" } }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/EmptyInput" }
+      responses:
+        "202":
+          description: Review requested
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MarketLegalCapabilityState" }
+        "401": { description: Not signed in }
+        "403": { description: Administrator access required }
+        "409": { description: Capability must be disabled before a new review }
+  /admin/compliance/markets/{marketId}/capabilities/{capability}/counsel-review:
+    post:
+      operationId: recordAdminMarketCapabilityCounselReview
+      tags: [compliance]
+      summary: "Record a designated counsel review. This does not activate the capability. Access: ADMIN."
+      parameters:
+        - { name: marketId, in: path, required: true, schema: { type: string, maxLength: 32 } }
+        - { name: capability, in: path, required: true, schema: { $ref: "#/components/schemas/MarketLegalCapabilityName" } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MarketCapabilityCounselReviewInput" }
+      responses:
+        "200":
+          description: Counsel review recorded
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MarketLegalCapabilityState" }
+        "401": { description: Not signed in }
+        "403": { description: Designated counsel reviewer required }
+        "409": { description: No review request is open }
+  /admin/compliance/markets/{marketId}/capabilities/{capability}/enable:
+    post:
+      operationId: enableAdminMarketCapability
+      tags: [compliance]
+      summary: "Enable a capability after separate counsel review and owner approval. Access: ADMIN."
+      parameters:
+        - { name: marketId, in: path, required: true, schema: { type: string, maxLength: 32 } }
+        - { name: capability, in: path, required: true, schema: { $ref: "#/components/schemas/MarketLegalCapabilityName" } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MarketCapabilityOwnerApprovalInput" }
+      responses:
+        "200":
+          description: Internal owner activation recorded
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MarketLegalCapabilityState" }
+        "401": { description: Not signed in }
+        "403": { description: Designated legal owner required }
+        "409": { description: Separate counsel review required }
+  /admin/compliance/markets/{marketId}/capabilities/{capability}/disable:
+    post:
+      operationId: disableAdminMarketCapability
+      tags: [compliance]
+      summary: "Disable a market capability immediately. Access: ADMIN."
+      parameters:
+        - { name: marketId, in: path, required: true, schema: { type: string, maxLength: 32 } }
+        - { name: capability, in: path, required: true, schema: { $ref: "#/components/schemas/MarketLegalCapabilityName" } }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/EmptyInput" }
+      responses:
+        "200":
+          description: Capability disabled or already disabled
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MarketLegalCapabilityState" }
+        "401": { description: Not signed in }
+        "403": { description: Administrator access required }
+  /admin/compliance/country-readiness:
+    get:
+      operationId: listAdminCountryLegalReadiness
+      tags: [compliance]
+      summary: "List the Jordan, Kuwait, and Saudi legal intake packages. Access: ADMIN."
+      responses:
+        "200":
+          description: Country readiness matrix
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/CountryLegalReadinessSummary" }
+        "401": { description: Not signed in }
+        "403": { description: Administrator access required }
+  /admin/compliance/country-readiness/{marketId}:
+    get:
+      operationId: getAdminCountryLegalReadiness
+      tags: [compliance]
+      summary: "Read a private country intake, evidence register, policy versions, and audit trail. Access: ADMIN."
+      parameters:
+        - { name: marketId, in: path, required: true, schema: { type: string, maxLength: 32 } }
+      responses:
+        "200":
+          description: Private country legal readiness record
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CountryLegalReadinessDetail" }
+        "401": { description: Not signed in }
+        "403": { description: Administrator access required }
+        "404": { description: Market or intake package not found }
+  /admin/compliance/country-readiness/{marketId}/evidence:
+    post:
+      operationId: submitAdminCountryLegalEvidence
+      tags: [compliance]
+      summary: "Register a private-vault evidence reference; document bytes are not accepted. Access: ADMIN."
+      parameters:
+        - { name: marketId, in: path, required: true, schema: { type: string, maxLength: 32 } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CountryLegalEvidenceInput" }
+      responses:
+        "201":
+          description: Evidence reference registered as unverified
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CountryLegalEvidence" }
+        "401": { description: Not signed in }
+        "403": { description: Administrator access required }
+        "409": { description: Idempotency key was reused with different data }
+  /admin/compliance/country-readiness/evidence/{evidenceId}/review:
+    post:
+      operationId: reviewAdminCountryLegalEvidence
+      tags: [compliance]
+      summary: "Record a designated counsel review of an evidence pointer, not a signature. Access: ADMIN."
+      parameters:
+        - { name: evidenceId, in: path, required: true, schema: { type: string, maxLength: 120 } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CountryLegalEvidenceReviewInput" }
+      responses:
+        "200":
+          description: Evidence reference review recorded
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CountryLegalEvidence" }
+        "401": { description: Not signed in }
+        "403": { description: Designated counsel reviewer required }
+        "409": { description: Evidence reference was already reviewed }
+  /admin/compliance/country-readiness/{marketId}/review-request:
+    post:
+      operationId: requestAdminCountryCounselReview
+      tags: [compliance]
+      summary: "Open a country-level counsel review request. Access: ADMIN."
+      parameters:
+        - { name: marketId, in: path, required: true, schema: { type: string, maxLength: 32 } }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/EmptyInput" }
+      responses:
+        "202":
+          description: Counsel review request opened
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CountryLegalIntake" }
+        "401": { description: Not signed in }
+        "403": { description: Administrator access required }
+  /admin/compliance/country-readiness/{marketId}/topics/{topicKey}/review:
+    post:
+      operationId: reviewAdminCountryLegalTopic
+      tags: [compliance]
+      summary: "Record a counsel finding and explicit evidence and policy requirements for one topic. Access: ADMIN."
+      parameters:
+        - { name: marketId, in: path, required: true, schema: { type: string, maxLength: 32 } }
+        - { name: topicKey, in: path, required: true, schema: { $ref: "#/components/schemas/CountryLegalTopicKey" } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CountryLegalTopicReviewInput" }
+      responses:
+        "200":
+          description: Topic review recorded; this is not legal approval
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CountryLegalTopic" }
+        "401": { description: Not signed in }
+        "403": { description: Designated counsel reviewer required }
+        "409": { description: Counsel review request is not open }
+  /admin/compliance/country-readiness/{marketId}/counsel-review:
+    post:
+      operationId: recordAdminCountryCounselReview
+      tags: [compliance]
+      summary: "Record completion of the topic review, without approving or activating the country. Access: ADMIN."
+      parameters:
+        - { name: marketId, in: path, required: true, schema: { type: string, maxLength: 32 } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CountryLegalReferenceInput" }
+      responses:
+        "200":
+          description: Counsel review completion recorded
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CountryLegalIntake" }
+        "401": { description: Not signed in }
+        "403": { description: Designated counsel reviewer required }
+        "409": { description: Intake content remains incomplete or unresolved }
+  /admin/compliance/country-readiness/{marketId}/counsel-approval:
+    post:
+      operationId: attemptAdminCountryCounselApproval
+      tags: [compliance]
+      summary: "Keep approval blocked unless independently verified counsel identity and signature are available. Access: ADMIN."
+      parameters:
+        - { name: marketId, in: path, required: true, schema: { type: string, maxLength: 32 } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CountryLegalReferenceInput" }
+      responses:
+        "403": { description: Designated counsel approver required }
+        "409": { description: Counsel identity or signature verification is unavailable }
+  /admin/compliance/country-readiness/{marketId}/owner-approval:
+    post:
+      operationId: attemptAdminCountryOwnerApproval
+      tags: [compliance]
+      summary: "Require completed legal and technical prerequisites before owner approval. Access: ADMIN."
+      parameters:
+        - { name: marketId, in: path, required: true, schema: { type: string, maxLength: 32 } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CountryLegalReferenceInput" }
+      responses:
+        "403": { description: Designated legal owner required }
+        "409": { description: "Legal, evidence, policy, or technical prerequisites are missing" }
+  /admin/compliance/country-readiness/{marketId}/technical-verification:
+    post:
+      operationId: recordAdminCountryTechnicalVerification
+      tags: [compliance]
+      summary: "Require a machine-verifiable test attestation before technical readiness can pass. Access: ADMIN."
+      parameters:
+        - { name: marketId, in: path, required: true, schema: { type: string, maxLength: 32 } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CountryLegalReferenceInput" }
+      responses:
+        "403": { description: Designated technical verifier required }
+        "409": { description: A verifiable test attestation is not configured }
+  /admin/compliance/country-readiness/{marketId}/activate:
+    post:
+      operationId: activateAdminCountryReadiness
+      tags: [compliance]
+      summary: "Activate a country package only after counsel, owner, and technical gates pass. Access: ADMIN."
+      parameters:
+        - { name: marketId, in: path, required: true, schema: { type: string, maxLength: 32 } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CountryLegalReferenceInput" }
+      responses:
+        "403": { description: Designated technical activator required }
+        "409": { description: Country activation prerequisites are missing }
+  /admin/compliance/country-readiness/{marketId}/suspend:
+    post:
+      operationId: suspendAdminCountryReadiness
+      tags: [compliance]
+      summary: "Suspend new market capabilities without removing access to existing orders. Access: ADMIN."
+      parameters:
+        - { name: marketId, in: path, required: true, schema: { type: string, maxLength: 32 } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CountryLegalReferenceInput" }
+      responses:
+        "200":
+          description: New capabilities suspended
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CountryLegalIntake" }
+        "401": { description: Not signed in }
+        "403": { description: Administrator access required }
+  /admin/security/incidents:
+    get:
+      operationId: listAdminSecurityIncidents
+      tags: [security]
+      summary: "List internal security and privacy incident records. Access: ADMIN."
+      parameters:
+        - { name: status, in: query, required: false, schema: { $ref: "#/components/schemas/SecurityIncidentStatus" } }
+      responses:
+        "200":
+          description: Incident list
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/SecurityIncident" }
+        "401": { description: Not signed in }
+        "403": { description: Administrator access required }
+    post:
+      operationId: createAdminSecurityIncident
+      tags: [security]
+      summary: "Open an internal incident record without sending notifications."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SecurityIncidentInput" }
+      responses:
+        "201":
+          description: Incident opened
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SecurityIncident" }
+        "401": { description: Not signed in }
+        "403": { description: Administrator access required }
+  /admin/security/incidents/{id}:
+    get:
+      operationId: getAdminSecurityIncident
+      tags: [security]
+      summary: "Read an incident and its append-only event history. Access: ADMIN."
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, maxLength: 80 } }
+      responses:
+        "200":
+          description: Incident detail and events
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SecurityIncidentDetails" }
+        "401": { description: Not signed in }
+        "403": { description: Administrator access required }
+        "404": { description: Incident not found }
+  /admin/security/incidents/{id}/transition:
+    post:
+      operationId: transitionAdminSecurityIncident
+      tags: [security]
+      summary: "Record a guarded incident lifecycle or counsel-review event."
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, maxLength: 80 } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SecurityIncidentTransitionInput" }
+      responses:
+        "200":
+          description: Updated incident state
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SecurityIncident" }
+        "401": { description: Not signed in }
+        "403": { description: Administrator or designated counsel access required }
+        "404": { description: Incident not found }
+        "409": { description: Invalid incident transition }
   /admin/compliance/legal-entities:
     get:
       operationId: getAdminComplianceLegalEntities
@@ -5375,4 +5779,362 @@ components:
           required: [sellerId]
           properties:
             sellerId: { type: string }
+    CountryLegalTopicKey:
+      type: string
+      enum: [OPERATING_ENTITY, MARKETPLACE_RULES, SELLER_ELIGIBILITY, BUSINESS_KYC, CONSUMER_PROTECTION, FEES_AND_TAX, PAYMENTS, DELIVERY_LOGISTICS, PERSONAL_DATA, EXTERNAL_AI, MINORS_RESTRICTED_GOODS_ADVERTISING, IP_COMPLAINTS_DISPUTES, INCIDENT_NOTIFICATION, POLICY_VERSIONS, OFFICIAL_REFERENCES, COUNSEL_FINDINGS]
+    CountryLegalReadinessSummary:
+      type: object
+      required: [marketId, countryCode, countryNameAr, countryNameEn, marketActive, reviewStatus, counselApprovalStatus, ownerApprovalStatus, technicalVerificationStatus, activationStatus, blockers, topicCount, reviewedTopicCount]
+      properties:
+        marketId: { type: string }
+        countryCode: { type: string }
+        countryNameAr: { type: string }
+        countryNameEn: { type: string }
+        marketActive: { type: boolean }
+        reviewStatus: { type: string }
+        counselApprovalStatus: { type: string }
+        ownerApprovalStatus: { type: string }
+        technicalVerificationStatus: { type: string }
+        activationStatus: { type: string }
+        blockers: { type: array, items: { type: string } }
+        topicCount: { type: integer }
+        reviewedTopicCount: { type: integer }
+    CountryLegalIntake:
+      type: object
+      required: [id, marketId, reviewStatus, counselApprovalStatus, counselApprovalBlocker, ownerApprovalStatus, technicalVerificationStatus, activationStatus, reviewRequestedBy, reviewRequestedAt, counselReviewedBy, counselReviewedAt, counselReviewReference, counselApprovedBy, counselApprovedAt, counselApprovalReference, ownerApprovedBy, ownerApprovedAt, ownerApprovalReference, technicalVerifiedBy, technicalVerifiedAt, technicalVerificationReference, activatedBy, activatedAt, suspendedBy, suspendedAt, suspensionReference, createdAt, updatedAt]
+      properties:
+        id: { type: string }
+        marketId: { type: string }
+        reviewStatus: { type: string, enum: [NOT_REVIEWED, COUNSEL_REVIEW_REQUIRED, COUNSEL_REVIEWED, BLOCKED] }
+        counselApprovalStatus: { type: string, enum: [BLOCKED, APPROVED] }
+        counselApprovalBlocker: { type: string }
+        ownerApprovalStatus: { type: string, enum: [BLOCKED, APPROVED] }
+        technicalVerificationStatus: { type: string, enum: [NOT_RUN, PASSED, FAILED] }
+        activationStatus: { type: string, enum: [DISABLED, ACTIVE, SUSPENDED] }
+        reviewRequestedBy: { type: ["string", "null"] }
+        reviewRequestedAt: { type: ["string", "null"], format: date-time }
+        counselReviewedBy: { type: ["string", "null"] }
+        counselReviewedAt: { type: ["string", "null"], format: date-time }
+        counselReviewReference: { type: ["string", "null"] }
+        counselApprovedBy: { type: ["string", "null"] }
+        counselApprovedAt: { type: ["string", "null"], format: date-time }
+        counselApprovalReference: { type: ["string", "null"] }
+        ownerApprovedBy: { type: ["string", "null"] }
+        ownerApprovedAt: { type: ["string", "null"], format: date-time }
+        ownerApprovalReference: { type: ["string", "null"] }
+        technicalVerifiedBy: { type: ["string", "null"] }
+        technicalVerifiedAt: { type: ["string", "null"], format: date-time }
+        technicalVerificationReference: { type: ["string", "null"] }
+        activatedBy: { type: ["string", "null"] }
+        activatedAt: { type: ["string", "null"], format: date-time }
+        suspendedBy: { type: ["string", "null"] }
+        suspendedAt: { type: ["string", "null"], format: date-time }
+        suspensionReference: { type: ["string", "null"] }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    CountryLegalPolicyVersionRequirement:
+      type: object
+      required: [policyKey, version]
+      properties:
+        policyKey: { type: string, minLength: 1, maxLength: 120 }
+        version: { type: string, minLength: 1, maxLength: 80 }
+    CountryLegalTopic:
+      type: object
+      required: [id, intakeId, topicKey, labelAr, disposition, reviewStatus, evidenceRequirementStatus, policyRequirementStatus, counselFinding, qualifications, requiredAmendments, officialReference, effectiveFrom, effectiveUntil, requiredEvidenceTypes, requiredPolicyVersions, reviewedBy, reviewedAt, createdAt, updatedAt]
+      properties:
+        id: { type: string }
+        intakeId: { type: string }
+        topicKey: { $ref: "#/components/schemas/CountryLegalTopicKey" }
+        labelAr: { type: string }
+        disposition: { type: string, enum: [UNRESOLVED, REQUIRED, NOT_REQUIRED, NOT_APPLICABLE, BLOCKED] }
+        reviewStatus: { type: string, enum: [NOT_REVIEWED, COUNSEL_REVIEWED, BLOCKED] }
+        evidenceRequirementStatus: { type: string, enum: [NOT_REVIEWED, REQUIREMENTS_SET, NO_REQUIREMENTS] }
+        policyRequirementStatus: { type: string, enum: [NOT_REVIEWED, VERSIONS_SET, NO_POLICY_REQUIREMENT] }
+        counselFinding: { type: ["string", "null"] }
+        qualifications: { type: ["string", "null"] }
+        requiredAmendments: { type: ["string", "null"] }
+        officialReference: { type: ["string", "null"] }
+        effectiveFrom: { type: ["string", "null"], format: date-time }
+        effectiveUntil: { type: ["string", "null"], format: date-time }
+        requiredEvidenceTypes: { type: array, items: { type: string } }
+        requiredPolicyVersions:
+          type: array
+          items: { $ref: "#/components/schemas/CountryLegalPolicyVersionRequirement" }
+        reviewedBy: { type: ["string", "null"] }
+        reviewedAt: { type: ["string", "null"], format: date-time }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    CountryLegalEvidence:
+      type: object
+      required: [id, intakeId, topicKey, evidenceType, documentVersion, referenceCode, issuedAt, expiresAt, status, idempotencyKey, submittedBy, submittedAt, reviewedBy, reviewedAt, createdAt, updatedAt, expired]
+      properties:
+        id: { type: string }
+        intakeId: { type: string }
+        topicKey: { $ref: "#/components/schemas/CountryLegalTopicKey" }
+        evidenceType: { type: string }
+        documentVersion: { type: string }
+        referenceCode: { type: string }
+        issuedAt: { type: ["string", "null"], format: date-time }
+        expiresAt: { type: ["string", "null"], format: date-time }
+        status: { type: string, enum: [SUBMITTED_UNVERIFIED, COUNSEL_REVIEWED, REJECTED, SUPERSEDED] }
+        idempotencyKey: { type: string }
+        submittedBy: { type: string }
+        submittedAt: { type: string, format: date-time }
+        reviewedBy: { type: ["string", "null"] }
+        reviewedAt: { type: ["string", "null"], format: date-time }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        expired: { type: boolean }
+    CountryLegalIntakeEvent:
+      type: object
+      required: [id, intakeId, eventType, topicKey, evidenceId, actorId, fromStatus, toStatus, referenceCode, createdAt]
+      properties:
+        id: { type: string }
+        intakeId: { type: string }
+        eventType: { type: string }
+        topicKey: { type: ["string", "null"] }
+        evidenceId: { type: ["string", "null"] }
+        actorId: { type: string }
+        fromStatus: { type: ["string", "null"] }
+        toStatus: { type: string }
+        referenceCode: { type: ["string", "null"] }
+        createdAt: { type: string, format: date-time }
+    CountryLegalReadinessSummaryPolicy:
+      type: object
+      required: [policyKey, version, marketScope, effectiveDate, contentSha256]
+      properties:
+        policyKey: { type: string }
+        version: { type: string }
+        marketScope: { type: string }
+        effectiveDate: { type: string, format: date }
+        contentSha256: { type: string }
+    CountryLegalCapabilitySummary:
+      type: object
+      required: [capability, status, enabled]
+      properties:
+        capability: { $ref: "#/components/schemas/MarketLegalCapabilityName" }
+        status: { type: string }
+        enabled: { type: boolean }
+    CountryLegalReadinessDetail:
+      type: object
+      required: [market, intake, topics, evidence, publishedPolicyVersions, capabilities, blockers, events]
+      properties:
+        market:
+          type: object
+          required: [id, countryCode, countryNameAr, countryNameEn, isActive, status]
+          properties:
+            id: { type: string }
+            countryCode: { type: string }
+            countryNameAr: { type: string }
+            countryNameEn: { type: string }
+            isActive: { type: boolean }
+            status: { type: string }
+        intake: { $ref: "#/components/schemas/CountryLegalIntake" }
+        topics:
+          type: array
+          items: { $ref: "#/components/schemas/CountryLegalTopic" }
+        evidence:
+          type: array
+          items: { $ref: "#/components/schemas/CountryLegalEvidence" }
+        publishedPolicyVersions:
+          type: array
+          items: { $ref: "#/components/schemas/CountryLegalReadinessSummaryPolicy" }
+        capabilities:
+          type: array
+          items: { $ref: "#/components/schemas/CountryLegalCapabilitySummary" }
+        blockers: { type: array, items: { type: string } }
+        events:
+          type: array
+          items: { $ref: "#/components/schemas/CountryLegalIntakeEvent" }
+    CountryLegalEvidenceInput:
+      type: object
+      required: [topicKey, evidenceType, documentVersion, referenceCode, idempotencyKey]
+      properties:
+        topicKey: { $ref: "#/components/schemas/CountryLegalTopicKey" }
+        evidenceType: { type: string, minLength: 2, maxLength: 64, pattern: '^[A-Za-z][A-Za-z0-9_]{1,63}$' }
+        documentVersion: { type: string, minLength: 1, maxLength: 80 }
+        referenceCode: { type: string, minLength: 3, maxLength: 200, pattern: '^[A-Za-z][A-Za-z0-9._:/-]{2,199}$' }
+        idempotencyKey: { type: string, minLength: 8, maxLength: 128, pattern: '^[A-Za-z0-9._:-]{8,128}$' }
+        issuedAt: { type: ["string", "null"], format: date-time }
+        expiresAt: { type: ["string", "null"], format: date-time }
+    CountryLegalEvidenceReviewInput:
+      type: object
+      required: [outcome]
+      properties:
+        outcome: { type: string, enum: [COUNSEL_REVIEWED, REJECTED] }
+    CountryLegalTopicReviewInput:
+      type: object
+      required: [disposition, counselFinding, officialReference, evidenceRequirementStatus, requiredEvidenceTypes, policyRequirementStatus, requiredPolicyVersions]
+      properties:
+        disposition: { type: string, enum: [REQUIRED, NOT_REQUIRED, NOT_APPLICABLE, BLOCKED] }
+        counselFinding: { type: string, minLength: 3, maxLength: 4000 }
+        qualifications: { type: ["string", "null"], maxLength: 2000 }
+        requiredAmendments: { type: ["string", "null"], maxLength: 2000 }
+        officialReference: { type: string, minLength: 3, maxLength: 200, pattern: '^[A-Za-z][A-Za-z0-9._:/-]{2,199}$' }
+        effectiveFrom: { type: ["string", "null"], format: date-time }
+        effectiveUntil: { type: ["string", "null"], format: date-time }
+        evidenceRequirementStatus: { type: string, enum: [REQUIREMENTS_SET, NO_REQUIREMENTS] }
+        requiredEvidenceTypes:
+          type: array
+          maxItems: 32
+          uniqueItems: true
+          items: { type: string, minLength: 2, maxLength: 64, pattern: '^[A-Za-z][A-Za-z0-9_]{1,63}$' }
+        policyRequirementStatus: { type: string, enum: [VERSIONS_SET, NO_POLICY_REQUIREMENT] }
+        requiredPolicyVersions:
+          type: array
+          maxItems: 32
+          items: { $ref: "#/components/schemas/CountryLegalPolicyVersionRequirement" }
+    CountryLegalReferenceInput:
+      type: object
+      required: [referenceCode]
+      properties:
+        referenceCode: { type: string, minLength: 3, maxLength: 200, pattern: '^[A-Za-z][A-Za-z0-9._:/-]{2,199}$' }
+    MarketLegalCapabilityName:
+      type: string
+      enum: [INFORMATION_ONLY, BROWSING, LISTING_PUBLICATION, TRANSACTIONS, CASH_PAYMENT, ELECTRONIC_PAYMENT, BUSINESS_ONBOARDING, DELIVERY_OPERATIONS, RESTRICTED_CATEGORIES]
+    LegalReadinessMarket:
+      type: object
+      required: [id, status, isActive, countryNameAr, countryNameEn]
+      properties:
+        id: { type: string }
+        status: { type: string, enum: [ACTIVE, LIMITED, COMING_SOON, DISABLED] }
+        isActive: { type: boolean }
+        countryNameAr: { type: string }
+        countryNameEn: { type: string }
+    EmptyInput:
+      type: object
+      additionalProperties: false
+    MarketLegalCapabilityStatus:
+      type: string
+      enum: [DISABLED, COUNSEL_REVIEW_REQUIRED, OWNER_APPROVAL_REQUIRED, ENABLED, BLOCKED]
+    MarketLegalCapabilityState:
+      type: object
+      required: [marketId, capability, status, enabled, counselReviewRecorded, ownerApprovalRecorded, updatedAt]
+      properties:
+        marketId: { type: string }
+        capability: { $ref: "#/components/schemas/MarketLegalCapabilityName" }
+        status: { $ref: "#/components/schemas/MarketLegalCapabilityStatus" }
+        enabled: { type: boolean }
+        counselReviewRecorded: { type: boolean }
+        ownerApprovalRecorded: { type: boolean }
+        updatedAt: { type: ["string", "null"], format: date-time }
+    AdminMarketLegalCapabilityState:
+      allOf:
+        - { $ref: "#/components/schemas/MarketLegalCapabilityState" }
+        - type: object
+          required: [counselReference, counselReviewedBy, counselReviewedAt, ownerApprovalReference, ownerApprovedBy, ownerApprovedAt]
+          properties:
+            counselReference: { type: ["string", "null"] }
+            counselReviewedBy: { type: ["string", "null"] }
+            counselReviewedAt: { type: ["string", "null"], format: date-time }
+            ownerApprovalReference: { type: ["string", "null"] }
+            ownerApprovedBy: { type: ["string", "null"] }
+            ownerApprovedAt: { type: ["string", "null"], format: date-time }
+    MarketLegalCapabilityEvent:
+      type: object
+      required: [id, marketId, capability, eventType, fromStatus, toStatus, actorId, reference, createdAt]
+      properties:
+        id: { type: string }
+        marketId: { type: string }
+        capability: { $ref: "#/components/schemas/MarketLegalCapabilityName" }
+        eventType: { type: string }
+        fromStatus: { type: ["string", "null"] }
+        toStatus: { $ref: "#/components/schemas/MarketLegalCapabilityStatus" }
+        actorId: { type: string }
+        reference: { type: ["string", "null"] }
+        createdAt: { type: string, format: date-time }
+    AdminMarketLegalCapabilityOverview:
+      type: object
+      required: [marketId, capabilities, events]
+      properties:
+        marketId: { type: string }
+        capabilities:
+          type: array
+          items: { $ref: "#/components/schemas/AdminMarketLegalCapabilityState" }
+        events:
+          type: array
+          items: { $ref: "#/components/schemas/MarketLegalCapabilityEvent" }
+    MarketCapabilityCounselReviewInput:
+      type: object
+      required: [outcome, reference]
+      additionalProperties: false
+      properties:
+        outcome: { type: string, enum: [READY_FOR_OWNER_REVIEW, BLOCK] }
+        reference: { type: string, minLength: 3, maxLength: 200, pattern: '^[A-Za-z][A-Za-z0-9._:/-]{2,199}$' }
+    MarketCapabilityOwnerApprovalInput:
+      type: object
+      required: [reference]
+      additionalProperties: false
+      properties:
+        reference: { type: string, minLength: 3, maxLength: 200, pattern: '^[A-Za-z][A-Za-z0-9._:/-]{2,199}$' }
+    SecurityIncidentStatus:
+      type: string
+      enum: [OPEN, CONTAINED, RECOVERED, CLOSED]
+    SecurityIncident:
+      type: object
+      required: [id, category, severity, status, summary, affectedSystems, detectedAt, openedBy, evidenceReference, containmentSummary, recoverySummary, postIncidentSummary, counselAssessment, counselReference, counselReviewedBy, counselReviewedAt, createdAt, updatedAt]
+      properties:
+        id: { type: string }
+        category: { type: string, enum: [SECURITY, PRIVACY, AVAILABILITY, DATA_INTEGRITY, THIRD_PARTY, OTHER] }
+        severity: { type: string, enum: [LOW, MEDIUM, HIGH, CRITICAL] }
+        status: { $ref: "#/components/schemas/SecurityIncidentStatus" }
+        summary: { type: string }
+        affectedSystems:
+          type: array
+          items: { type: string }
+        detectedAt: { type: string, format: date-time }
+        openedBy: { type: string }
+        evidenceReference: { type: ["string", "null"] }
+        containmentSummary: { type: ["string", "null"] }
+        recoverySummary: { type: ["string", "null"] }
+        postIncidentSummary: { type: ["string", "null"] }
+        counselAssessment: { type: string, enum: [NOT_ASSESSED, REVIEW_REQUIRED, REVIEWED] }
+        counselReference: { type: ["string", "null"] }
+        counselReviewedBy: { type: ["string", "null"] }
+        counselReviewedAt: { type: ["string", "null"], format: date-time }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    SecurityIncidentEvent:
+      type: object
+      required: [id, incidentId, eventType, fromStatus, toStatus, actorId, reference, createdAt]
+      properties:
+        id: { type: string }
+        incidentId: { type: string }
+        eventType: { type: string }
+        fromStatus: { type: ["string", "null"] }
+        toStatus: { $ref: "#/components/schemas/SecurityIncidentStatus" }
+        actorId: { type: string }
+        reference: { type: ["string", "null"] }
+        createdAt: { type: string, format: date-time }
+    SecurityIncidentDetails:
+      type: object
+      required: [incident, events]
+      properties:
+        incident: { $ref: "#/components/schemas/SecurityIncident" }
+        events:
+          type: array
+          items: { $ref: "#/components/schemas/SecurityIncidentEvent" }
+    SecurityIncidentInput:
+      type: object
+      required: [category, severity, summary]
+      additionalProperties: false
+      properties:
+        category: { type: string, enum: [SECURITY, PRIVACY, AVAILABILITY, DATA_INTEGRITY, THIRD_PARTY, OTHER] }
+        severity: { type: string, enum: [LOW, MEDIUM, HIGH, CRITICAL] }
+        summary: { type: string, minLength: 3, maxLength: 1200 }
+        affectedSystems:
+          type: array
+          maxItems: 12
+          items: { type: string, minLength: 1, maxLength: 80 }
+        detectedAt: { type: string, format: date-time }
+        evidenceReference: { type: string, minLength: 3, maxLength: 200, pattern: '^[A-Za-z][A-Za-z0-9._:/-]{2,199}$' }
+    SecurityIncidentTransitionInput:
+      type: object
+      required: [action]
+      additionalProperties: false
+      properties:
+        action: { type: string, enum: [RECORD_CONTAINMENT, RECORD_RECOVERY, CLOSE_WITH_POSTMORTEM, REQUEST_COUNSEL_REVIEW, RECORD_COUNSEL_REVIEW, CHANGE_SEVERITY, ADD_EVIDENCE_REFERENCE] }
+        summary: { type: string, minLength: 3, maxLength: 1200 }
+        reference: { type: string, minLength: 3, maxLength: 200, pattern: '^[A-Za-z][A-Za-z0-9._:/-]{2,199}$' }
+        severity: { type: string, enum: [LOW, MEDIUM, HIGH, CRITICAL] }
 

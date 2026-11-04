@@ -1,0 +1,72 @@
+name: g33-docker-acceptance
+
+# This acceptance runs only on the isolated candidate branch. Dependency downloads happen in the
+# build/preflight phase. Runtime app, test runner and disposable PostgreSQL share an internal-only
+# Docker network, with no provider credentials or published ports.
+
+on:
+  push:
+    branches:
+      - replit/dinar-next-six-wave-unification
+
+permissions:
+  contents: read
+
+concurrency:
+  group: g33-docker-acceptance-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: 10
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Install build dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Typecheck and build both artifacts
+        run: |
+          pnpm run typecheck
+          pnpm --filter @workspace/api-server run build
+          pnpm --filter @workspace/dinar run build
+      - name: Surface protocol tests
+        run: pnpm --filter @workspace/dinar run test:surfaces
+
+  docker-acceptance:
+    needs: preflight
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        postgres:
+          - "16"
+          - "18"
+    env:
+      G33_APP_IMAGE: dinar-next-g33:${{ github.sha }}
+      G33_POSTGRES_IMAGE: postgres:${{ matrix.postgres }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Confirm isolated Docker runner
+        run: |
+          docker version
+          docker info --format 'G33_DOCKER_SERVER={{.ServerVersion}} OS={{.OperatingSystem}}'
+          echo "G33_SOURCE_SHA=${GITHUB_SHA}"
+      - name: Build the candidate Docker image
+        run: |
+          echo "Build-time base-image and package downloads are allowed; runtime egress is blocked later."
+          docker build --pull --tag "$G33_APP_IMAGE" .
+          docker image inspect --format 'G33_APP_IMAGE_ID={{.Id}}' "$G33_APP_IMAGE"
+      - name: Run isolated G33 acceptance
+        run: bash scripts/ci/g33-docker-acceptance.sh

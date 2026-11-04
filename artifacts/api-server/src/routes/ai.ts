@@ -121,7 +121,7 @@ import {
 import { findCardAddReceipt } from "../lib/marketplace-cart";
 import { taskPlanNotice } from "../ai/task-plan";
 import { executeAiConversationTurn } from "../ai/conversation-runtime";
-import { claimsCompletedAction, claimsUsersCompletedAction, enforceModelAuthority, MODEL_CLAIM_WITHHELD, receiptsForTurn, receiptViews } from "../ai/action-receipts";
+import { claimsCompletedAction, claimsUsersCompletedAction, enforceModelAuthority, MODEL_CLAIM_WITHHELD, receiptIdsOf, receiptsForTurn, receiptViews, receiptViewsByIds } from "../ai/action-receipts";
 import { runInTurn } from "../ai/turn-context";
 import {
   LISTING_PHOTO_UNCERTAINTIES,
@@ -277,6 +277,21 @@ const SurfaceBlock = z.object({
     sellerInsight: z.record(z.string(), z.unknown()).optional(),
     comparison: z.record(z.string(), z.unknown()).optional(),
     purchaseReview: z.record(z.string(), z.unknown()).optional(),
+    // AI-F02: capability reads and prepare reviews; every list is server-built and party-scoped.
+    inventory: z.array(z.record(z.string(), z.unknown())).max(12).optional(),
+    inquiries: z.array(z.record(z.string(), z.unknown())).max(20).optional(),
+    orders: z.array(z.record(z.string(), z.unknown())).max(20).optional(),
+    cart: z.array(z.record(z.string(), z.unknown())).max(24).optional(),
+    checkout: z.record(z.string(), z.unknown()).optional(),
+    fulfillment: z.record(z.string(), z.unknown()).optional(),
+    preparedAction: z
+      .object({
+        actionId: z.string(),
+        action: z.string(),
+        targetResource: z.string(),
+      })
+      .optional(),
+    preparedDraft: z.object({ draftId: z.string().optional() }).optional(),
     commerce: z.record(z.string(), z.unknown()).optional(),
     tutorial: TutorialPayloadSchema.optional(),
     photoSuggestionStatus: z.enum([
@@ -1663,16 +1678,26 @@ router.get("/ai/conversations/:id", requireAuth, async (req, res) => {
     blockRows,
     req.actor!.id,
   );
+  // Stored receipts are only ledger ids: each read re-derives the current status, and shows only
+  // this viewer's actions in this conversation. One batched ledger read serves the whole history,
+  // so opening a long conversation costs a constant number of queries instead of one per action.
+  const receiptIdsByMessage = messageRows.map((row) => {
+    const stored = (row.metadata as { actionReceipts?: { actionId?: unknown }[] } | null)?.actionReceipts;
+    return row.actor === "ASSISTANT" && Array.isArray(stored)
+      ? receiptIdsOf(stored.map((item) => String(item?.actionId)))
+      : [];
+  });
+  const receiptsById = await receiptViewsByIds(
+    { actorId: req.actor!.id, conversationId: conversation.id },
+    receiptIdsByMessage.flat(),
+  );
   res.json(
     GetAiConversationResponse.parse({
       conversation: conversationView(conversation),
-      messages: await Promise.all(messageRows.map(async (row) => {
-        // Stored receipts are only ledger ids: each read re-derives the current status, and
-        // shows only this viewer's actions in this conversation.
-        const stored = (row.metadata as { actionReceipts?: { actionId?: unknown }[] } | null)?.actionReceipts;
-        const actionReceipts = row.actor === "ASSISTANT" && Array.isArray(stored)
-          ? await receiptViews({ actorId: req.actor!.id, conversationId: conversation.id }, stored.map((item) => String(item?.actionId)))
-          : [];
+      messages: messageRows.map((row, index) => {
+        const actionReceipts = receiptIdsByMessage[index]!
+          .map((actionId) => receiptsById.get(actionId))
+          .filter((receipt): receipt is NonNullable<typeof receipt> => receipt !== undefined);
         return {
           id: row.id,
           actor: row.actor,
@@ -1681,7 +1706,7 @@ router.get("/ai/conversations/:id", requireAuth, async (req, res) => {
           blocks: blocksByMessage.get(row.id) ?? [],
           ...(actionReceipts.length ? { actionReceipts } : {}),
         };
-      })),
+      }),
     }),
   );
 });
@@ -2154,6 +2179,14 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
         sellerInsight: toolResult.sellerInsight,
         comparison: toolResult.comparison,
         purchaseReview: toolResult.purchaseReview,
+        inventory: toolResult.inventory,
+        inquiries: toolResult.inquiries,
+        orders: toolResult.orders,
+        cart: toolResult.cart,
+        checkout: toolResult.checkout,
+        fulfillment: toolResult.fulfillment,
+        preparedAction: toolResult.preparedAction,
+        preparedDraft: toolResult.preparedDraft,
         photoSuggestionStatus: toolResult.photoSuggestionStatus,
         photoSuggestions: toolResult.photoSuggestions,
         photoSuggestionUncertainties:

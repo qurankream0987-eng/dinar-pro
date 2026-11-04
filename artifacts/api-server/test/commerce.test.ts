@@ -177,7 +177,7 @@ test("06 repeated cart lines for a listing merge before stock validation", () =>
   assert.equal(listing.reservedQuantity, 5);
 });
 
-test("07 several offers from one seller create one order with exact integer total", () => {
+test("07 different prices from one seller split into arithmetically consistent orders", () => {
   const first = makeListing({
     id: "first",
     title: "الخدمة الأولى",
@@ -191,18 +191,33 @@ test("07 several offers from one seller create one order with exact integer tota
   const result = checkout([line(first.id, 2), line(second.id, 3)], [first, second]);
   assert.equal(result.ok, true);
   if (result.ok) {
-    assert.equal(result.result.orders.length, 1);
-    assert.equal(result.result.orders[0].total, "10.000");
-    assert.equal(result.result.orders[0].items?.length, 2);
+    assert.equal(result.result.orders.length, 2);
     assert.deepEqual(
-      result.result.orders[0].items?.map((item) => [item.unitPrice, item.total]),
+      result.result.orders.map((order) => [order.unitPrice, order.quantity, order.total]),
       [
-        ["1.250", "2.500"],
-        ["2.500", "7.500"],
+        ["1.250", 2, "2.500"],
+        ["2.500", 3, "7.500"],
       ],
     );
-    assert.match(result.result.orders[0].listingTitle, /الخدمة الأولى ×2/);
-    assert.match(result.result.orders[0].listingTitle, /الخدمة الثانية ×3/);
+    for (const order of result.result.orders) {
+      assert.equal(
+        parseMinorUnits(order.unitPrice, order.currency) * order.quantity,
+        parseMinorUnits(order.total, order.currency),
+      );
+    }
+  }
+});
+
+test("07b same-price offers from one seller remain in one order", () => {
+  const first = makeListing({ id: "first", unitPrice: "1.250" });
+  const second = makeListing({ id: "second", unitPrice: "1.250" });
+  const result = checkout([line(first.id, 2), line(second.id, 3)], [first, second]);
+  assert.equal(result.ok, true);
+  if (result.ok) {
+    assert.equal(result.result.orders.length, 1);
+    assert.equal(result.result.orders[0].quantity, 5);
+    assert.equal(result.result.orders[0].total, "6.250");
+    assert.equal(result.result.orders[0].items?.length, 2);
   }
 });
 

@@ -1,6 +1,11 @@
 import { isBareShowNumber, priceProposal } from "./price-proposal";
 import { statusQuestion } from "./context-intent";
 
+const CART_NAVIGATION_ACTION =
+  /(?:^|\s)(?:افتح(?:لي)?|اعرض(?:لي)?|ارني|ورني|وريني|اظهر|اذهب|روح|انتقل|خذني|وديني|حولني)(?:\s|$)/u;
+const CART_SURFACE_REFERENCE =
+  /(?:^|\s)(?:السله|للسله|سله\s+(?:مشترياتي|المشتريات|التسوق|الشراء)|عربه\s+(?:التسوق|المشتريات|الشراء))(?:\s|$)/u;
+
 /** Explicit navigation intents do not require a model or imply successful writes. */
 export function surfaceIntent(message: string): string | undefined {
   const text = message.replace(/[أإآ]/g, "ا");
@@ -14,7 +19,17 @@ export function surfaceIntent(message: string): string | undefined {
   )
     return "POLICIES";
   if (/اعدادات|الوضع.*داكن|موقعي/.test(text)) return "SETTINGS";
-  if (/سلة|للسله|السله/.test(text)) return "CART";
+  const cartText = text
+    .replace(/ى/g, "ي")
+    .replace(/ة/g, "ه")
+    .replace(/[؟?!،,.]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (
+    CART_NAVIGATION_ACTION.test(cartText) &&
+    CART_SURFACE_REFERENCE.test(cartText)
+  )
+    return "CART";
   if (/طلباتي|اين طلبي|وين طلبي|تتبع.*طلب/.test(text) || statusQuestion(message)?.subject === "ORDER") return "ORDERS";
   if (/عروضي|ادارة.*عروض|اعلاناتي|قوائمي|عروضي المنشورة/.test(text))
     return "MY_LISTINGS";
