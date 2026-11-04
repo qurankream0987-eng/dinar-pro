@@ -296,6 +296,7 @@ export function ChatComposer({
               event.key === "Enter" &&
               !event.shiftKey &&
               !event.nativeEvent.isComposing &&
+              event.nativeEvent.keyCode !== 229 &&
               window.matchMedia("(pointer: fine)").matches
             ) {
               event.preventDefault();
