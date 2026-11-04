@@ -93,7 +93,7 @@ await test("a stopped connection preserves one owned server turn and exposes its
       (result) => result.rows[0]?.status === "completed");
   }
 });
-await test("the real browser can stop reception, reload a pending turn and adopt its single server result", async () => {
+for (const outcome of ["completed", "failed"] as const) await test(`the real browser stops reception and recovers the authoritative ${outcome} outcome`, async () => {
   let releaseBrowser!: () => void;
   const pending = new Promise<void>(resolve => { releaseBrowser = resolve; });
   let calls = 0;
@@ -106,11 +106,19 @@ await test("the real browser can stop reception, reload a pending turn and adopt
     }) };
   } };
   const cookie = await register();
+  if (outcome === "failed") await pool.query(`
+    CREATE FUNCTION stop_recovery_reply_fault() RETURNS trigger LANGUAGE plpgsql AS $$
+    BEGIN
+      IF NEW.actor = 'ASSISTANT' THEN RAISE EXCEPTION 'controlled assistant persistence interruption'; END IF;
+      RETURN NEW;
+    END $$;
+    CREATE TRIGGER stop_recovery_reply_fault BEFORE INSERT ON messages FOR EACH ROW EXECUTE FUNCTION stop_recovery_reply_fault();
+  `);
   const web = await startDinarBrowserTestWeb(base.replace(/\/api$/, ""));
   const resultPath = `/tmp/dinar-stop-${randomUUID()}.json`;
   const child = fork(`${process.cwd()}/../dinar/test/conversation-stop-recovery-ui.mjs`, [], {
     cwd: `${process.cwd()}/../dinar`,
-    env: { ...process.env, STOP_WEB_BASE: web.baseUrl, STOP_COOKIE: cookie, STOP_RESULT_PATH: resultPath },
+    env: { ...process.env, STOP_WEB_BASE: web.baseUrl, STOP_COOKIE: cookie, STOP_RESULT_PATH: resultPath, STOP_OUTCOME: outcome },
     stdio: ["ignore", "pipe", "pipe", "ipc"],
   });
   let stderr = "";
@@ -129,11 +137,14 @@ await test("the real browser can stop reception, reload a pending turn and adopt
     assert.deepEqual(report.consoleErrors, []);
     assert.deepEqual(report.externalRequests, []);
     assert.equal(calls, 1);
+    const stored = await pool.query("select metadata->>'turnStatus' as status from messages where id=$1", [report.turns[0]]);
+    assert.equal(stored.rows[0]?.status, outcome);
   } finally {
     clearTimeout(deadline);
     releaseBrowser();
     child.kill("SIGTERM");
     await web.stop();
+    if (outcome === "failed") await pool.query("DROP TRIGGER IF EXISTS stop_recovery_reply_fault ON messages; DROP FUNCTION IF EXISTS stop_recovery_reply_fault()");
     await unlink(resultPath).catch(() => undefined);
   }
 });

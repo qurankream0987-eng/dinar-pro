@@ -1,6 +1,6 @@
 import "./AiChat.css";
 import { useStableCallback } from "@/hooks/use-stable-callback";
-import { replyForTurn, unfinishedTurn } from "@/features/ai/turn-recovery";
+import { replyForTurn, unfinishedTurn, verificationPollInterval } from "@/features/ai/turn-recovery";
 import * as Dialog from "@radix-ui/react-dialog";
 import { ConversationSidebar } from "@/features/ai/ConversationSidebar";
 import {
@@ -184,6 +184,7 @@ export default function AiPage() {
     text: string;
     messageId: string;
     conversationId: string;
+    startedAt: number;
   } | null>(null);
   /** Counts signals that say "re-read the server": another tab, focus, or a card expiry. */
   const [externalCardSync, setExternalCardSync] = useState(0);
@@ -211,7 +212,8 @@ export default function AiPage() {
   const conversations = useGetAiConversations({ enabled: Boolean(user) });
   const detail = useGetAiConversation(activeId, {
     enabled: Boolean(user && activeId),
-    refetchInterval: verifyingActiveTurn ? 1000 : false,
+    refetchInterval: verifyingActiveTurn && verifyingTurn
+      ? () => verificationPollInterval(verifyingTurn.startedAt) : false,
   });
   const createConversation = useCreateAiConversation();
   const copyConversation = useCopyAiConversation();
@@ -611,6 +613,17 @@ export default function AiPage() {
 
   useEffect(() => {
     if (!activeConversation || !activeId || streaming || sending.current) return;
+    const pending = unfinishedTurn(activeConversation.messages);
+    const checkedTurn = verifyingTurn?.conversationId === activeId
+      ? activeConversation.messages.find((message) => message.id === verifyingTurn.messageId)
+      : activeConversation.messages.at(-1);
+    if (!pending && checkedTurn?.role === "USER" && checkedTurn.turnStatus === "failed" && !replyForTurn(activeConversation.messages, checkedTurn.id)) {
+      setLocalMessages(activeConversation.messages);
+      setVerifyingTurn(null);
+      setFailedTurn(null);
+      setError("لم يكتمل الرد المحفوظ في DINAR. لم نُعِد إرسال طلبك. راجع سجل الإجراءات قبل إرسال طلب جديد.");
+      return;
+    }
     if (verifyingTurn?.conversationId === activeId && replyForTurn(activeConversation.messages, verifyingTurn.messageId)) {
       setLocalMessages(activeConversation.messages);
       setVerifyingTurn(null);
@@ -618,10 +631,12 @@ export default function AiPage() {
       setError("");
       return;
     }
-    const pending = unfinishedTurn(activeConversation.messages);
     if (pending && pending.id !== verifyingTurn?.messageId) {
-      setVerifyingTurn({ text: pending.body, messageId: pending.id, conversationId: activeId });
+      setVerifyingTurn({ text: pending.body, messageId: pending.id, conversationId: activeId, startedAt: Date.now() });
       setError("طلبك محفوظ في DINAR ونتحقق من نتيجته. لا حاجة لإعادة الإرسال.");
+    }
+    if (pending?.turnStatus === "uncertain") {
+      setError("نتيجة التنفيذ غير مؤكدة في سجل DINAR. لم نُعِد إرسال طلبك؛ راجع سجل الإجراءات والطلبات قبل أي محاولة جديدة.");
     }
   }, [activeConversation, activeId, streaming, verifyingTurn?.messageId]);
 
@@ -1067,9 +1082,16 @@ export default function AiPage() {
       }
       if (index >= 0) {
         setFailedTurn(null);
-        setVerifyingTurn({ text, messageId, conversationId });
+        if (restored.messages[index]?.turnStatus === "failed") {
+          setVerifyingTurn(null);
+          setError("لم يكتمل الرد المحفوظ في DINAR. لم نُعِد إرسال طلبك. راجع سجل الإجراءات قبل إرسال طلب جديد.");
+          return true;
+        }
+        setVerifyingTurn({ text, messageId, conversationId, startedAt: Date.now() });
         setError(
-          "وصل طلبك إلى DINAR، لكن تأكيد الرد لم يكتمل بعد. نتحقق من السجل — لا حاجة لإعادة الإرسال.",
+          restored.messages[index]?.turnStatus === "uncertain"
+            ? "نتيجة التنفيذ غير مؤكدة في سجل DINAR. لم نُعِد إرسال طلبك؛ راجع سجل الإجراءات والطلبات قبل أي محاولة جديدة."
+            : "وصل طلبك إلى DINAR، لكن تأكيد الرد لم يكتمل بعد. نتحقق من السجل — لا حاجة لإعادة الإرسال.",
         );
         return true;
       }

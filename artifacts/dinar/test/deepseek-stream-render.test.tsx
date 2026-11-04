@@ -205,7 +205,7 @@ await test("real R2 DeepSeek replies stream and render: capabilities list, groun
 // ─── R3D: terminal-event finality and trusted action receipts ────────────────
 import * as receiptCards from "../src/features/ai/ActionReceipts";
 import { normalizeMessage } from "../src/features/ai/ai-api";
-import { replyForTurn, unfinishedTurn } from "../src/features/ai/turn-recovery";
+import { replyForTurn, unfinishedTurn, verificationPollInterval } from "../src/features/ai/turn-recovery";
 
 await test("recovery never borrows another user's turn reply or crosses a newer user message", () => {
   const message = (id: string, role: "USER" | "ASSISTANT", patch: Record<string, unknown> = {}) =>
@@ -293,4 +293,13 @@ await test("R3E: commercial model text is marked non-authoritative; the ledger s
   assert.match(String(text), /سجل دينار/u);
   assert.match(String(adviceChipLabel({ kind: "CONVERSATIONAL_RESPONSE", scope: "DINAR_LEDGER" })), /من سجل دينار/u);
   assert.equal(adviceChipLabel({ kind: "CONVERSATIONAL_RESPONSE", scope: "GENERAL_KNOWLEDGE" }), "معلومة عامة وليست من بيانات DINAR");
+});
+
+await test("verification has a bounded read budget without converting an unknown turn into a retry", () => {
+  const started = 1_000;
+  assert.equal(verificationPollInterval(started, started), 1_000);
+  assert.equal(verificationPollInterval(started, started + 15_000), 5_000);
+  assert.equal(verificationPollInterval(started, started + 120_000), 30_000);
+  assert.equal(verificationPollInterval(started, started + 300_000), false);
+  assert.equal(verificationPollInterval(started, started + 86_400_000), false);
 });

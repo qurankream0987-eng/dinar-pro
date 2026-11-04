@@ -1,5 +1,14 @@
 import type { AiMessage } from "./ai-api";
 
+/** Bound automatic verification reads; reaching the budget never authorizes replay. */
+export function verificationPollInterval(startedAt: number, now = Date.now()): number | false {
+  const elapsed = Math.max(0, now - startedAt);
+  if (elapsed >= 300_000) return false;
+  if (elapsed >= 120_000) return 30_000;
+  if (elapsed >= 15_000) return 5_000;
+  return 1_000;
+}
+
 /** A different tab's answer must never settle this tab's unfinished turn. */
 export function replyForTurn(messages: AiMessage[], messageId: string): AiMessage | undefined {
   const linked = messages.find((message) => message.role === "ASSISTANT" && message.replyToMessageId === messageId);

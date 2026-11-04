@@ -533,7 +533,7 @@ export function useGetAiConversations(options?: { enabled?: boolean }) {
 
 export function useGetAiConversation(
   id: string | undefined,
-  options?: { enabled?: boolean; refetchInterval?: number | false },
+  options?: { enabled?: boolean; refetchInterval?: number | false | (() => number | false) },
 ) {
   const query = useGeneratedGetAiConversation(id ?? "", {
     query: {

@@ -47,6 +47,18 @@ try {
   assert.equal(await page.getByTestId("button-send-ai-message").isDisabled(), true);
   report.checks.push("reload restores pending verification from the owned server record without browser-stored prompt text");
   process.send?.({ type: "release-turn" });
+  if (process.env.STOP_OUTCOME === "failed") {
+    await page.getByTestId("button-verify-ai-turn").waitFor({ state: "hidden", timeout: 15_000 });
+    assert.equal(await page.getByTestId("button-send-ai-message").isDisabled(), false, "a server-recorded failed turn must end pending verification");
+    assert.equal(await input.inputValue(), "مسودة جديدة");
+    assert.equal(report.turns.length, 1, "a failed reply is never automatically resubmitted");
+    assert.equal(await page.getByText("هذه إجابة عامة محفوظة بعد توقف استقبال الرد.", { exact: true }).count(), 0);
+    await page.reload();
+    await input.waitFor();
+    assert.equal(await page.getByTestId("button-verify-ai-turn").count(), 0);
+    assert.equal(report.turns.length, 1);
+    report.checks.push("an actual assistant persistence failure settles verification, preserves the draft and never invents a reply or automatically replays the request");
+  } else {
   await page.getByText("هذه إجابة عامة محفوظة بعد توقف استقبال الرد.", { exact: true }).waitFor({ timeout: 30_000 });
   await page.getByTestId("button-verify-ai-turn").waitFor({ state: "hidden" });
   assert.equal(await input.inputValue(), "مسودة جديدة");
@@ -56,11 +68,12 @@ try {
   await page.getByText("هذه إجابة عامة محفوظة بعد توقف استقبال الرد.", { exact: true }).waitFor();
   assert.equal(report.turns.length, 1);
   report.checks.push("the correlated completed answer is adopted and survives a second reload without duplicate effects");
+  }
   assert.deepEqual(report.pageErrors, []);
   assert.deepEqual(report.consoleErrors, []);
   assert.deepEqual(report.externalRequests, []);
 } catch (error) {
-  report.failure = error.message;
+  report.failure = error.stack ?? error.message;
 } finally {
   await browser?.close();
   writeFileSync(process.env.STOP_RESULT_PATH, JSON.stringify(report));
