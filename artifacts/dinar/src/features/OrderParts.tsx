@@ -330,6 +330,7 @@ export function OrderChat({
               e.key === "Enter" &&
               !e.shiftKey &&
               !e.nativeEvent.isComposing &&
+              e.nativeEvent.keyCode !== 229 &&
               window.matchMedia("(min-width: 768px)").matches
             ) {
               e.preventDefault();

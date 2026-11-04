@@ -1197,6 +1197,9 @@ await test("market restricted-category changes have before-after history and rej
       )
     : [...market.restrictedCategories, "electronics"];
   await db.update(users).set({ role: "ADMIN" }).where(eq(users.id, buyer.id));
+  // This tests category-policy auditing, not country activation. Keep the disposable
+  // market inactive rather than bypassing the independent D16 legal intake gate.
+  await db.update(markets).set({ status: "DISABLED", isActive: false }).where(eq(markets.id, market.id));
   try {
     const initialHistory = await request(`/admin/markets/${market.id}/audit`);
     assert.equal(initialHistory.status, 200);
@@ -1204,7 +1207,7 @@ await test("market restricted-category changes have before-after history and rej
       `/admin/markets/${market.id}`,
       "PATCH",
       {
-        status: market.status,
+        status: "DISABLED",
         fulfilmentMethods: market.fulfilmentMethods,
         paymentMethods: market.paymentMethods,
         restrictedCategories: newRestrictions,
@@ -1217,7 +1220,7 @@ await test("market restricted-category changes have before-after history and rej
     assert.equal(history.status, 200);
     assert.equal(history.data.length, initialHistory.data.length + 1);
     const policyChange = history.data.find(
-      (entry: any) => !oldAuditIds.has(entry.id),
+      (entry: any) => !oldAuditIds.has(entry.id) && entry.action === "CATEGORY_POLICY",
     );
     assert.ok(policyChange);
     assert.equal(policyChange.action, "CATEGORY_POLICY");
@@ -1230,7 +1233,7 @@ await test("market restricted-category changes have before-after history and rej
       `/admin/markets/${market.id}`,
       "PATCH",
       {
-        status: market.status,
+        status: "DISABLED",
         fulfilmentMethods: market.fulfilmentMethods,
         paymentMethods: market.paymentMethods,
         restrictedCategories: ["unknown-policy-category"],
@@ -1256,7 +1259,7 @@ await test("market restricted-category changes have before-after history and rej
   } finally {
     await db
       .update(markets)
-      .set({ restrictedCategories: market.restrictedCategories })
+      .set({ restrictedCategories: market.restrictedCategories, status: market.status, isActive: market.isActive })
       .where(eq(markets.id, market.id));
     const auditRows = await db
       .select({ id: marketAudit.id })

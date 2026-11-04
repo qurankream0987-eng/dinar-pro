@@ -411,7 +411,10 @@ test("input ceiling: a provable upper bound before sending, reported usage after
 });
 
 test("timeouts are charged their reservation and not retried; outages are retried and each attempt is charged", async () => {
-  const config = approved({ limits: { ...example.limits, maxRetries: 1, maxRequestsPerCandidate: 96 } });
+  // The full runtime prompt has grown beyond the example's input ceiling. This
+  // offline timeout fixture must admit that prompt before it can exercise aborts;
+  // the separate input-ceiling tests retain the example's strict limits.
+  const config = approved({ limits: { ...example.limits, maxInputTokensPerRequest: 60_000, maxRetries: 1, maxRequestsPerCandidate: 96 } });
   const luna = config.candidates[0]!;
   const previous = process.env.DINAR_AI_MAX_RETRIES;
   process.env.DINAR_AI_MAX_RETRIES = "1";
@@ -419,6 +422,7 @@ test("timeouts are charged their reservation and not retried; outages are retrie
     const hanging = fake((signal) => new Promise((_resolve, reject) => signal?.addEventListener("abort", () => reject(new Error("aborted")))));
     const timedOut = new GuardedBenchmarkGateway(hanging, luna, config.limits, new BenchmarkLedger(1));
     const result = await interpretWithModel(timedOut, "مرحبا", {}, 100);
+    assert.equal(timedOut.candidateStopped, undefined, "the timeout probe must reach the synthetic gateway rather than stop at the input ceiling");
     assert.deepEqual([result.ok, result.ok ? "" : result.reason], [false, "TIMEOUT"]);
     assert.equal(hanging.calls, 1, "a timeout is not retried");
     await new Promise((resolve) => setTimeout(resolve, 20));
