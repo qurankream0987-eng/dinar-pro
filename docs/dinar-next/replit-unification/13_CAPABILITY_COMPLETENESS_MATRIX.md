@@ -72,7 +72,7 @@ This ledger will be completed before the PR update. It must name one frozen cand
 | Disposable PG16 critical suites | Suite names, counts, outbound-attempt totals, and exit status | On the frozen SHA: SC01/03/07/10 1/1 each, D3-A 1/1 (20 checks), security 12/12, OpenAPI 2/2; all report zero outbound attempts. D16/D17 suites passed on the same application/test tree before it was committed. |
 | Critical browser journeys | Three consecutive isolated runs per accepted scenario; Chromium path and feature flags recorded | SC01/03/07/10 passed 3/3 each, plus 1/1 each on the frozen SHA; D3-A passed 1/1 on the frozen SHA. |
 | G33 GitHub Actions | Run URL and conclusion for the frozen candidate SHA | [Run 41821045947](https://github.com/qurankream0987-eng/dinar-pro/actions/runs/41821045947) passed on PG16 and PG18 at the frozen SHA. |
-| Draft PR #5 | Updated summary/evidence, still open and draft | PR remains open/draft with unchanged base; body will be updated in place after the matrix commit. |
+| Draft PR #5 | Updated summary/evidence, still open and draft | Description links this matrix and summarizes the evidence; PR remains open/draft with unchanged base. |
 
 ## Safety and release boundary
 
