@@ -28,7 +28,13 @@ requireSafeReplitDevelopmentDatabase("BDINAR_W08_ACCEPTANCE");
 const server = app.listen(0, "127.0.0.1");
 await new Promise<void>((resolve) => server.once("listening", resolve));
 const origin = `http://127.0.0.1:${(server.address() as { port: number }).port}`;
-const runId = randomUUID().slice(0, 8);
+// Digit-free on purpose: this token is interpolated into the listing title and description (publish
+// below), and findListingContactText scans those fields for phone numbers against the market's
+// default country. A raw hex slice can be all digits (~2% of runs) and then reads as a Jordanian
+// number, failing every publish with LISTING_CONTACT_TEXT. Sibling suites that put a run token into
+// contact-scanned text strip digits the same way; ASCII is kept because runId also builds idempotency
+// keys and a delivery proof CODE.
+const runId = randomUUID().replaceAll("-", "").replace(/\d/g, "").slice(0, 8);
 const key = (label: string) => `w08-${label}-${runId}-${randomUUID().slice(0, 6)}`;
 
 type Actor = { id: string; cookie: string };
