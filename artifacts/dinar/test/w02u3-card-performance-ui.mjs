@@ -194,7 +194,8 @@ try {
       page.getByTestId(`button-save-message-edit-${editId}`).click(),
     ]);
     assert.ok(copied.ok(), "editing creates an owned conversation branch");
-    const branch = await copied.json();
+    const { conversation: branch } = await copied.json();
+    assert.equal(typeof branch.id, "string", "the copy response contains its conversation identity");
     assert.notEqual(branch.id, largest.conversationId, "the original history is preserved");
     assert.equal(new URL(turn.url()).pathname, `/api/ai/conversations/${branch.id}/turns`, "the reply is sent on the current edit branch");
     assert.ok(turn.ok());
