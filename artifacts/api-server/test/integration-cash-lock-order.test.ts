@@ -25,7 +25,9 @@ requireSafeReplitDevelopmentDatabase("BDINAR_INTEGRATION_ACCEPTANCE");
 const server = app.listen(0, "127.0.0.1");
 await new Promise<void>((resolve) => server.once("listening", resolve));
 const origin = `http://127.0.0.1:${(server.address() as { port: number }).port}`;
-const runId = randomUUID().slice(0, 8);
+const runId = randomUUID().replaceAll("-", "").replace(/[0-9a-f]/gi, (hex) =>
+  String.fromCharCode(97 + Number.parseInt(hex, 16)),
+);
 const key = (label: string) => `lo-${label}-${runId}-${randomUUID().slice(0, 6)}`;
 type Actor = { id: string; cookie: string };
 async function request(path: string, method = "GET", body?: unknown, actor?: Actor, headers: Record<string, string> = {}) {

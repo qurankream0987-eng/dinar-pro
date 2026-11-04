@@ -41,7 +41,11 @@ process.env.BDINAR_BLOCK_MODEL_CALLS = "1";
 const server = app.listen(0, "127.0.0.1");
 await new Promise<void>((resolve) => server.once("listening", resolve));
 const origin = `http://127.0.0.1:${(server.address() as { port: number }).port}/api`;
-const runId = randomUUID().slice(0, 8);
+// Keep listing text alphabetic so the contact-text scanner cannot mistake a numeric UUID
+// fragment for a phone number. Mapping each hex nibble to a-p preserves unique fixture labels.
+const runId = randomUUID().replaceAll("-", "").replace(/[0-9a-f]/gi, (hex) =>
+  String.fromCharCode(97 + Number.parseInt(hex, 16)),
+);
 
 type Actor = { id: string; cookie: string; phone: string };
 let phoneCounter = 0;

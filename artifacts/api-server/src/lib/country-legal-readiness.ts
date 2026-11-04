@@ -290,7 +290,7 @@ function contentBlockers(
   return [...blockers].sort();
 }
 
-function activationBlockers(
+function ownerApprovalBlockers(
   intake: typeof marketLegalIntakes.$inferSelect,
   content: string[],
 ) {
@@ -301,6 +301,14 @@ function activationBlockers(
     blockers.push(intake.counselApprovalBlocker || "COUNSEL_APPROVAL_BLOCKED");
   if (intake.technicalVerificationStatus !== "PASSED")
     blockers.push("TECHNICAL_VERIFICATION_NOT_PASSED");
+  return [...new Set(blockers)].sort();
+}
+
+function activationBlockers(
+  intake: typeof marketLegalIntakes.$inferSelect,
+  content: string[],
+) {
+  const blockers = ownerApprovalBlockers(intake, content);
   if (intake.ownerApprovalStatus !== "APPROVED")
     blockers.push("OWNER_APPROVAL_NOT_RECORDED");
   return [...new Set(blockers)].sort();
@@ -800,7 +808,7 @@ export async function attemptCountryOwnerApproval(input: {
       input.actorId === locked.counselApprovedBy
     )
       reject(403, "SEPARATION_OF_DUTIES_REQUIRED", "يجب فصل مراجعة المستشار عن موافقة المالك");
-    const blockers = activationBlockers(
+    const blockers = ownerApprovalBlockers(
       locked,
       contentBlockers(locked, data.topics, data.evidence, data.policies, data.legalEntity),
     );
