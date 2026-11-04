@@ -61,7 +61,7 @@ export const REVIEWED_PENDING_MIGRATIONS: ReadonlyArray<{ tag: string; sha256: s
   // D16 makes incident records append-only after closure and requires a matching OPENED event.
   { tag: "0055_d16_incident_integrity", sha256: "88cc4b7da6a788bb27478b1fc07f0160cc536dd36d7b9d3e39e684d8e277d4bd" },
   // New orders reconcile immutable line items with the financial header; legacy rows remain untouched.
-  { tag: "0056_order_line_integrity", sha256: "3ea1007b7b8252967cee44d6d698df6909a148573d136c7cf5fa07571472d29e" },
+  { tag: "0056_order_line_integrity", sha256: "cf43a95bfe0d9418aa9f0d9b3fe862b8e131116299dca92be3ac5815028c234c" },
 ];
 export const EXPECTED_JOURNAL_ENTRIES =
   EXPECTED_BASELINE_MIGRATIONS + REVIEWED_PENDING_MIGRATIONS.length;
