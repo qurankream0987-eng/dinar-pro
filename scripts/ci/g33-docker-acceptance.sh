@@ -76,7 +76,6 @@ chmod 0777 "$HANDSHAKE"
 mkdir -p "$TEST_SNAPSHOT"
 cp -a "$TEST_DIR/." "$TEST_SNAPSHOT/"
 rm -rf "$TEST_SNAPSHOT/.test-build"
-mkdir -p "$TEST_SNAPSHOT/.test-build"
 chmod -R a+rwX "$TEST_SNAPSHOT"
 cat >"$PROD_ENV" <<EOF
 NODE_ENV=production
@@ -143,7 +142,7 @@ run_local_suite() {
   docker run --rm \
     --network "container:$POSTGRES" \
     --volume "$TEST_SNAPSHOT:/app/artifacts/api-server/test" \
-    --tmpfs /app/artifacts/api-server/test/.test-build:rw,uid=1000,gid=1000,mode=0777,size=128m \
+    --tmpfs /app/artifacts/api-server/.test-build:rw,uid=1000,gid=1000,mode=0777,size=128m \
     --memory 1g \
     --cpus 2 \
     --pids-limit 256 \
