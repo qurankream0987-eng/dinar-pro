@@ -4993,6 +4993,193 @@ export interface ConnectOutboundPrepared {
   internalOrderCreated: false;
 }
 
+export interface ConnectPartnerRegistrationInput {
+  /** @pattern ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$ */
+  businessId: string;
+}
+
+export interface ConnectSiteRegistrationInput {
+  /**
+     * @minLength 3
+     * @maxLength 253
+     */
+  hostname: string;
+}
+
+export type ConnectIntegrationRegistrationInputKind = typeof ConnectIntegrationRegistrationInputKind[keyof typeof ConnectIntegrationRegistrationInputKind];
+
+
+export const ConnectIntegrationRegistrationInputKind = {
+  WEBSITE: 'WEBSITE',
+  FEED: 'FEED',
+  API: 'API',
+  OAUTH: 'OAUTH',
+  MCP: 'MCP',
+} as const;
+
+export type ConnectIntegrationRegistrationInputCapabilitiesItem = typeof ConnectIntegrationRegistrationInputCapabilitiesItem[keyof typeof ConnectIntegrationRegistrationInputCapabilitiesItem];
+
+
+export const ConnectIntegrationRegistrationInputCapabilitiesItem = {
+  CATALOG_READ: 'CATALOG_READ',
+  CATALOG_IMPORT: 'CATALOG_IMPORT',
+  EXTERNAL_REFERRAL: 'EXTERNAL_REFERRAL',
+  TRANSACTION_REPORT: 'TRANSACTION_REPORT',
+} as const;
+
+export type ConnectIntegrationRegistrationInputMode = typeof ConnectIntegrationRegistrationInputMode[keyof typeof ConnectIntegrationRegistrationInputMode];
+
+
+export const ConnectIntegrationRegistrationInputMode = {
+  SIMULATION_ONLY: 'SIMULATION_ONLY',
+  LIVE: 'LIVE',
+} as const;
+
+export type ConnectIntegrationRegistrationInputReviewedToolsItem = {
+  /** @pattern ^[A-Za-z][A-Za-z0-9_.-]{0,79}$ */
+  name: string;
+  /** @pattern ^[a-f0-9]{64}$ */
+  inputSchemaSha256: string;
+  readOnly: true;
+};
+
+export interface ConnectIntegrationRegistrationInput {
+  /** @pattern ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$ */
+  siteId: string;
+  kind: ConnectIntegrationRegistrationInputKind;
+  /**
+     * @minLength 2
+     * @maxLength 100
+     */
+  name: string;
+  /** @maxLength 500 */
+  endpointUrl?: string;
+  /**
+     * @minItems 1
+     * @maxItems 4
+     */
+  capabilities: ConnectIntegrationRegistrationInputCapabilitiesItem[];
+  mode: ConnectIntegrationRegistrationInputMode;
+  /**
+     * @minItems 1
+     * @maxItems 8
+     * @items.minLength 1
+     * @items.maxLength 120
+     */
+  allowedPathPrefixes: string[];
+  /** @pattern ^[a-z][a-z0-9_]{0,39}$ */
+  referralParameter?: string;
+  /** @maxItems 10 */
+  reviewedTools?: ConnectIntegrationRegistrationInputReviewedToolsItem[];
+}
+
+export type ConnectReviewDecisionInputDecision = typeof ConnectReviewDecisionInputDecision[keyof typeof ConnectReviewDecisionInputDecision];
+
+
+export const ConnectReviewDecisionInputDecision = {
+  APPROVE: 'APPROVE',
+  REJECT: 'REJECT',
+  SUSPEND: 'SUSPEND',
+} as const;
+
+export interface ConnectReviewDecisionInput {
+  decision: ConnectReviewDecisionInputDecision;
+  /**
+     * @maximum 9007199254740991
+     * @exclusiveMinimum 0
+     */
+  expectedRevision: number;
+  /**
+     * @minLength 3
+     * @maxLength 500
+     */
+  reason: string;
+}
+
+export type ConnectCatalogImportInputItemsItemKind = typeof ConnectCatalogImportInputItemsItemKind[keyof typeof ConnectCatalogImportInputItemsItemKind];
+
+
+export const ConnectCatalogImportInputItemsItemKind = {
+  PRODUCT: 'PRODUCT',
+  SERVICE: 'SERVICE',
+} as const;
+
+export type ConnectCatalogImportInputItemsItemPrice = {
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  amountMinor: number;
+  /** @pattern ^[A-Z]{3}$ */
+  currency: string;
+  /**
+     * @minimum 0
+     * @maximum 4
+     */
+  minorUnitScale: number;
+} | null;
+
+export type ConnectCatalogImportInputItemsItemAvailability = typeof ConnectCatalogImportInputItemsItemAvailability[keyof typeof ConnectCatalogImportInputItemsItemAvailability];
+
+
+export const ConnectCatalogImportInputItemsItemAvailability = {
+  AVAILABLE: 'AVAILABLE',
+  UNAVAILABLE: 'UNAVAILABLE',
+  UNKNOWN: 'UNKNOWN',
+} as const;
+
+export type ConnectCatalogImportInputItemsItemAttributesItem = {
+  /**
+     * @minLength 1
+     * @maxLength 80
+     */
+  label: string;
+  value: string | null;
+};
+
+export type ConnectCatalogImportInputItemsItem = {
+  /** @pattern ^[A-Za-z0-9][A-Za-z0-9._:-]{0,99}$ */
+  externalId: string;
+  kind: ConnectCatalogImportInputItemsItemKind;
+  /**
+     * @minLength 2
+     * @maxLength 180
+     */
+  title: string;
+  /** @maxLength 700 */
+  description: string;
+  /**
+     * @minLength 1
+     * @maxLength 80
+     */
+  categoryId: string;
+  price: ConnectCatalogImportInputItemsItemPrice;
+  availability: ConnectCatalogImportInputItemsItemAvailability;
+  /**
+     * @minLength 1
+     * @maxLength 400
+     */
+  targetPath: string;
+  /**
+     * @maximum 9007199254740991
+     * @exclusiveMinimum 0
+     */
+  sourceVersion: number;
+  sourceCheckedAt: string;
+  /** @maxItems 10 */
+  attributes: ConnectCatalogImportInputItemsItemAttributesItem[];
+};
+
+export interface ConnectCatalogImportInput {
+  /** @pattern ^[A-Za-z0-9][A-Za-z0-9._:-]{0,99}$ */
+  batchId: string;
+  /**
+     * @minItems 1
+     * @maxItems 100
+     */
+  items: ConnectCatalogImportInputItemsItem[];
+}
+
 export type GetListingsParams = {
 search?: string;
 category?: string;
@@ -5071,5 +5258,12 @@ export const ListBusinessVerificationQueueStatus = {
 
 export type ListAdminSecurityIncidentsParams = {
 status?: SecurityIncidentStatus;
+};
+
+export type SearchConnectCatalogParams = {
+/**
+ * @maxLength 120
+ */
+search?: string;
 };
 

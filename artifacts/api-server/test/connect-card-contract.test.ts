@@ -95,3 +95,8 @@ await test("an unconfigured registrar cannot publish availability, pricing or a 
       false,
     );
 });
+await test("card kind cannot mislabel external commerce as internal or omit its canonical identity",()=>{
+ assert.equal(UniversalCardSchema.safeParse({...base,commerceMode:"INTERNAL_DINAR",externalActions:[]}).success,false);
+ assert.equal(UniversalCardSchema.safeParse({...base,kind:"INTERNAL_SERVICE",commerceMode:"INTERNAL_DINAR",externalActions:[]}).success,false);
+ assert.equal(UniversalCardSchema.safeParse({...base,kind:"DOMAIN_REGISTRATION"}).success,false);
+});

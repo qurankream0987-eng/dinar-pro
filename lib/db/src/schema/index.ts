@@ -2149,6 +2149,7 @@ export const providerConnections = pgTable(
       .notNull()
       .references(() => markets.id),
     name: text("name").notNull(),
+    namespace: text("namespace").default("MARKETPLACE").notNull(),
     status: text("status").default("ACTIVE").notNull(),
     scopes: jsonb("scopes").$type<string[]>().notNull(),
     revokedAt: timestamp("revoked_at", { withTimezone: true }),
@@ -2156,6 +2157,9 @@ export const providerConnections = pgTable(
     ...dates(),
   },
   (t) => [
+    check("provider_connections_namespace_valid", sql`${t.namespace} IN ('MARKETPLACE','CONNECT')`),
+    check("provider_connections_namespace_scopes",sql`(${t.namespace} = 'CONNECT' AND jsonb_typeof(${t.scopes}) = 'array' AND jsonb_array_length(${t.scopes}) > 0 AND ${t.scopes} <@ '["connect:catalog:write","connect:events:write"]'::jsonb) OR (${t.namespace} = 'MARKETPLACE' AND NOT (${t.scopes} ?| ARRAY['connect:catalog:write','connect:events:write']))`),
+    index("provider_connections_owner_namespace_idx").on(t.ownerUserId,t.namespace,t.status),
     index("provider_connections_owner_idx").on(t.ownerUserId, t.createdAt),
     check("provider_connections_status_valid", sql`${t.status} IN ('ACTIVE', 'REVOKED')`),
     check("provider_connections_revoked_consistent", sql`(${t.status} = 'REVOKED') = (${t.revokedAt} IS NOT NULL)`),
@@ -3978,3 +3982,5 @@ export const securityIncidentEvents = pgTable(
     ),
   ],
 );
+
+export * from "./connect";

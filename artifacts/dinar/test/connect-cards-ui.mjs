@@ -23,12 +23,17 @@ try {
   assert.equal(await page.getByTestId("connect-card-cloudflare").count(),1);assert.equal(await page.getByTestId("connect-card-spaceship").count(),1);
   assert.ok((await results.innerText()).match(/غير معروف/g).length>=4);
   assert.ok((await results.innerText()).includes("لا توجد علاقة عمولة"));
-  for(const width of [320,390,1280]) {await page.setViewportSize({width,height:900});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth),0);report.widths.push(width);}
+  for(const width of [320,390,1280]) {await page.setViewportSize({width,height:900});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth),0);report.widths.push(width);await page.screenshot({path:process.env.CONNECT_RESULT+`.domain-${width}.png`,fullPage:true});}
   const originalUrl=page.url();await input.fill("مسودة باقية في DINAR");
   const external=page.getByTestId("connect-external-cloudflare-0");await external.focus();assert.equal(await external.evaluate(e=>e===document.activeElement),true);
   const popupPromise=context.waitForEvent("page");await page.keyboard.press("Enter");const popup=await popupPromise;
   await popup.waitForURL("https://dash.cloudflare.com/");report.destination=popup.url();assert.equal(await popup.title(),"Isolated provider navigation fixture");report.destinationFixture=true;report.opener=await popup.evaluate(()=>window.opener);
   assert.equal(page.url(),originalUrl);assert.equal(await input.inputValue(),"مسودة باقية في DINAR");report.cartFlights=await page.evaluate(()=>globalThis.__connectFlights);
   await popup.close();await page.reload();await page.getByTestId("connect-results").waitFor();assert.equal(report.turns,1);
+  const businessResponse=await context.request.post("/api/business/profiles",{data:{displayName:"شركة بوابة Connect",categoryKey:"OTHER",idempotencyKey:crypto.randomUUID()}});assert.equal(businessResponse.status(),201);
+  await page.goto("/connect");await page.getByTestId("connect-portal").waitFor();await page.getByTestId("connect-register").click();await page.getByTestId("connect-partner-status").waitFor();assert.ok((await page.getByTestId("connect-partner-status").innerText()).includes("DRAFT"));
+  assert.ok((await page.getByTestId("connect-portal").innerText()).includes("مجانية"));
+  for(const width of [320,390,1280]){await page.setViewportSize({width,height:900});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth),0);await page.screenshot({path:process.env.CONNECT_RESULT+`.portal-${width}.png`,fullPage:true});}
+  report.partnerPortal="REAL_BROWSER_FREE_REGISTRATION";report.screenshotPrefix=process.env.CONNECT_RESULT;
   assert.deepEqual(report.pageErrors,[]);assert.deepEqual(report.consoleErrors,[]);assert.deepEqual(report.unexpectedExternalRequests,[]);
 } catch(error) {report.failure=error.stack??error.message;}finally{await browser?.close();writeFileSync(process.env.CONNECT_RESULT,JSON.stringify(report));}

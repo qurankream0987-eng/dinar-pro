@@ -27,12 +27,15 @@ import {
 import { changeOwnedListingStatus } from "./listing-management";
 import { assertMarketActive, resolveMarket } from "./markets";
 
-export const PROVIDER_SCOPES = ["listings:read", "listings:write", "drivers:link"] as const;
+export const CONNECT_PROVIDER_SCOPES = ["connect:catalog:write", "connect:events:write"] as const;
+export const PROVIDER_SCOPES = ["listings:read", "listings:write", "drivers:link", ...CONNECT_PROVIDER_SCOPES] as const;
 export type ProviderScope = (typeof PROVIDER_SCOPES)[number];
 export const DEFAULT_PROVIDER_SCOPES: ProviderScope[] = ["listings:read", "listings:write"];
 /** Conservative admission cap: existing connections are not revoked by this policy. */
 export const MAX_ACTIVE_PROVIDER_CONNECTIONS = 2;
 export const PROVIDER_SCOPE_LABELS: Record<ProviderScope, string> = {
+  "connect:catalog:write": "تحديث كتالوج خارجي معتمد فقط؛ لا يضيف عروضًا لسلة DINAR",
+  "connect:events:write": "تقديم أحداث شريك موثقة؛ لا ينشئ دفعًا أو تسوية حقيقية",
   "listings:read": "قراءة العروض المتزامنة",
   "listings:write": "إنشاء وتحديث العروض والأسعار والمخزون",
   "drivers:link": "ربط سائقين لديهم حساب DINAR ووافقوا على الربط",
@@ -74,6 +77,7 @@ const fail = (status: number, message: string, code?: string) =>
   Object.assign(new Error(message), { status, ...(code ? { code } : {}) });
 
 type Connection = typeof providerConnections.$inferSelect;
+export type ProviderTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 type Owner = typeof users.$inferSelect;
 
 export async function providerAudit(tx: any, marketId: string, actorId: string, action: string, data: Record<string, unknown>) {
@@ -203,10 +207,15 @@ export async function createProviderConnection(input: {
   name?: string;
   scopes?: readonly string[];
   requestedMarketId?: string;
-}): Promise<Connection> {
+  namespace?: "MARKETPLACE" | "CONNECT";
+}, transaction?: ProviderTransaction): Promise<Connection> {
   const name = normalizeConnectionName(input.name);
   const scopes = normalizeProviderScopes(input.scopes);
-  return db.transaction(async (tx) => {
+  const namespace = input.namespace ?? "MARKETPLACE";
+  const permitted = namespace === "CONNECT" ? CONNECT_PROVIDER_SCOPES as readonly string[] : ["listings:read", "listings:write", "drivers:link"];
+  if (!scopes.length || scopes.some(scope => !permitted.includes(scope))) throw providerError(400, "INVALID_PAYLOAD", "صلاحيات المفتاح لا تنتمي إلى نوع الربط");
+  const connectionLimit = namespace === "CONNECT" ? 20 : MAX_ACTIVE_PROVIDER_CONNECTIONS;
+  const create = async (tx: ProviderTransaction) => {
     const [owner] = await tx.select().from(users).where(eq(users.id, input.ownerId)).for("update");
     if (!owner || owner.status !== "ACTIVE" || !owner.phoneVerified) throw fail(403, "حسابك غير نشط حاليًا");
     if (input.requestedMarketId !== undefined && input.requestedMarketId !== owner.activeMarketId)
@@ -215,23 +224,24 @@ export async function createProviderConnection(input: {
     const [{ active }] = await tx
       .select({ active: count() })
       .from(providerConnections)
-      .where(and(eq(providerConnections.ownerUserId, owner.id), eq(providerConnections.status, "ACTIVE")));
-    if (Number(active) >= MAX_ACTIVE_PROVIDER_CONNECTIONS)
-      throw fail(409, `لديك ${MAX_ACTIVE_PROVIDER_CONNECTIONS} روابط نشطة؛ أوقف ربطًا قبل إنشاء آخر.`);
+      .where(and(eq(providerConnections.ownerUserId, owner.id), eq(providerConnections.status, "ACTIVE"), eq(providerConnections.namespace, namespace)));
+    if (Number(active) >= connectionLimit)
+      throw fail(409, `لديك ${connectionLimit} روابط نشطة؛ أوقف ربطًا قبل إنشاء آخر.`);
     const [connection] = await tx
       .insert(providerConnections)
-      .values({ id: randomUUID(), ownerUserId: owner.id, marketId: market.id, name, scopes, status: "ACTIVE" })
+      .values({ id: randomUUID(), ownerUserId: owner.id, marketId: market.id, name, scopes, namespace, status: "ACTIVE" })
       .returning();
     await providerAudit(tx, market.id, owner.id, "PROVIDER_CONNECTION_CREATED", { connectionId: connection!.id, scopes });
     return connection!;
-  });
+  };
+  return transaction ? create(transaction) : db.transaction(create);
 }
 
-async function ownedConnection(tx: any, ownerId: string, connectionId: string, lock = false) {
+async function ownedConnection(tx: any, ownerId: string, connectionId: string, lock = false, namespace: "MARKETPLACE" | "CONNECT" = "MARKETPLACE") {
   let query = tx
     .select()
     .from(providerConnections)
-    .where(and(eq(providerConnections.id, connectionId), eq(providerConnections.ownerUserId, ownerId)));
+    .where(and(eq(providerConnections.id, connectionId), eq(providerConnections.ownerUserId, ownerId), eq(providerConnections.namespace, namespace)));
   if (lock) query = query.for("update");
   const [row] = await query;
   if (!row) throw fail(404, "الربط غير موجود");
@@ -257,9 +267,9 @@ async function revokeActiveCredentials(tx: any, connection: Connection, ownerId:
  * Issues the connection's key, revoking any active one first (rotation). The returned
  * key is the only copy; callers hand it to the owner directly and never persist it.
  */
-export async function issueProviderCredential(input: { ownerId: string; connectionId: string }) {
-  return db.transaction(async (tx) => {
-    const connection = await ownedConnection(tx, input.ownerId, input.connectionId, true);
+export async function issueProviderCredential(input: { ownerId: string; connectionId: string; namespace?: "MARKETPLACE" | "CONNECT" }, transaction?: ProviderTransaction) {
+  const issue = async (tx: ProviderTransaction) => {
+    const connection = await ownedConnection(tx, input.ownerId, input.connectionId, true, input.namespace);
     if (connection.status !== "ACTIVE") throw fail(409, "هذا الربط موقوف؛ أنشئ ربطًا جديدًا");
     const rotated = (await revokeActiveCredentials(tx, connection, input.ownerId, "ROTATION")) > 0;
     const material = newCredentialMaterial();
@@ -274,7 +284,8 @@ export async function issueProviderCredential(input: { ownerId: string; connecti
       keyPrefix: keyPrefix(material.keyId),
     });
     return { connection, key: material.key, keyPrefix: keyPrefix(material.keyId), rotated };
-  });
+  };
+  return transaction ? issue(transaction) : db.transaction(issue);
 }
 
 /** «بدل المفتاح» after review: the old key stops now; the new one is issued separately. */
@@ -352,13 +363,14 @@ export type ProviderConnectionView = {
 };
 
 /** The owner's connections; an allowlisted view that never contains a key or hash. */
-export async function listProviderConnections(ownerId: string, connectionIds?: string[]): Promise<ProviderConnectionView[]> {
+export async function listProviderConnections(ownerId: string, connectionIds?: string[], namespace: "MARKETPLACE" | "CONNECT" = "MARKETPLACE"): Promise<ProviderConnectionView[]> {
   const rows = await db
     .select()
     .from(providerConnections)
     .where(
       and(
         eq(providerConnections.ownerUserId, ownerId),
+        eq(providerConnections.namespace, namespace),
         ...(connectionIds ? [inArray(providerConnections.id, connectionIds.length ? connectionIds : [""])] : []),
       ),
     )

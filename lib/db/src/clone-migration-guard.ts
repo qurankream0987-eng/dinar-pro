@@ -62,6 +62,8 @@ export const REVIEWED_PENDING_MIGRATIONS: ReadonlyArray<{ tag: string; sha256: s
   { tag: "0055_d16_incident_integrity", sha256: "88cc4b7da6a788bb27478b1fc07f0160cc536dd36d7b9d3e39e684d8e277d4bd" },
   // New orders reconcile immutable line items with the financial header; legacy rows remain untouched.
   { tag: "0056_order_line_integrity", sha256: "cf43a95bfe0d9418aa9f0d9b3fe862b8e131116299dca92be3ac5815028c234c" },
+  // Connect is separate from marketplace cart, orders, dues and financial journal.
+  { tag: "0057_dinar_connect", sha256: "4376a15434f865f4faf4a751df90f8a2de8dd5d1fe0d0e9b98c0ccbc637dcebd" },
 ];
 export const EXPECTED_JOURNAL_ENTRIES =
   EXPECTED_BASELINE_MIGRATIONS + REVIEWED_PENDING_MIGRATIONS.length;

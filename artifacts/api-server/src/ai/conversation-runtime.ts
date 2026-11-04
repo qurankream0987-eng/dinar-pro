@@ -565,7 +565,7 @@ export async function executeAiConversationTurn(
   } = {},
 ): Promise<{ tool: string; version: number; result: ToolResult; taskPlan?: TaskPlan }> {
   if (!context.imageObjectPaths?.length && context.location === undefined) {
-    const connected = await executeConnectReadTurn({ message: context.message, actorId: context.actorId, providers: options.domainSearchProviders });
+    const connected = await executeConnectReadTurn({ message: context.message, actorId: context.actorId, market: context.market, providers: options.domainSearchProviders });
     if (connected) { options.onToolSelected?.(connected.tool); return connected; }
   }
   if ((!options.noModel && !options.planStep) &&

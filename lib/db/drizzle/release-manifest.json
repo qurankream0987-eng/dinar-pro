@@ -226,5 +226,9 @@
   {
     "tag": "0056_order_line_integrity",
     "sha256": "cf43a95bfe0d9418aa9f0d9b3fe862b8e131116299dca92be3ac5815028c234c"
+  },
+  {
+    "tag": "0057_dinar_connect",
+    "sha256": "4376a15434f865f4faf4a751df90f8a2de8dd5d1fe0d0e9b98c0ccbc637dcebd"
   }
 ]

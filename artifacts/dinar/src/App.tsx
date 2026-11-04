@@ -48,6 +48,8 @@ const NotificationsPage = lazy(() =>
   import("./pages/Account").then((m) => ({ default: m.NotificationsPage })),
 );
 const PublicBusinessPage = lazy(() => import("./pages/PublicBusiness"));
+const ConnectPage = lazy(() => import("./pages/Connect"));
+const AdminConnectPage = lazy(() => import("./pages/admin/AdminConnect"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -67,6 +69,7 @@ const queryClient = new QueryClient({
 const CHAT_ONLY_MODE = true;
 
 const CHAT_ONLY_ADMIN_ROUTES = new Set([
+  "/admin/connect",
   "/admin/markets",
   "/admin/categories",
   "/admin/promotions",
@@ -75,6 +78,7 @@ const CHAT_ONLY_ADMIN_ROUTES = new Set([
   "/admin/legal-readiness",
 ]);
 const CHAT_ONLY_ACCOUNT_ROUTES = new Set([
+  "/connect",
   "/login",
   "/register",
   "/profile",
@@ -129,7 +133,9 @@ function Routes() {
       <Route path="/register"><AuthPage register /></Route>
       <Route path="/profile">{guard(<ProfilePage />)}</Route>
       <Route path="/settings">{guard(<SettingsPage />)}</Route>
+      <Route path="/connect">{guard(<ConnectPage />)}</Route>
       <Route path="/admin/markets">{guard(<AdminMarketsPage />)}</Route>
+      <Route path="/admin/connect">{guard(<AdminConnectPage />)}</Route>
       <Route path="/admin/categories">{guard(<AdminCategoriesPage />)}</Route>
       <Route path="/admin/promotions">{guard(<AdminPromotionsPage />)}</Route>
       <Route path="/admin/disputes">{guard(<AdminDisputesPage />)}</Route>

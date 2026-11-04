@@ -73,8 +73,14 @@ import type {
   CheckoutResponse,
   CommercialJsonObject,
   ConfirmationInput,
+  ConnectCatalogImportInput,
+  ConnectIntegrationRegistrationInput,
   ConnectOutboundInput,
   ConnectOutboundPrepared,
+  ConnectPartnerRegistrationInput,
+  ConnectReviewDecisionInput,
+  ConnectSiteRegistrationInput,
+  ConnectUniversalCardsPayload,
   CountryLegalEvidence,
   CountryLegalEvidenceInput,
   CountryLegalEvidenceReviewInput,
@@ -146,6 +152,7 @@ import type {
   PromotionProductUpdate,
   ReadinessStatus,
   ResolveAdminDisputeInput,
+  SearchConnectCatalogParams,
   SecurityIncident,
   SecurityIncidentDetails,
   SecurityIncidentInput,
@@ -18911,6 +18918,1431 @@ export function useOpenConnectOutbound<TData = Awaited<ReturnType<typeof openCon
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getOpenConnectOutboundQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getListConnectPartnersUrl = () => {
+
+
+
+
+  return `/api/connect/partners`
+}
+
+/**
+ * Access: AUTHENTICATED. Server checks current ownership, market legal gates and approval. External catalog only; no internal order, payment or automatic registration. Credentials returned only at issue time. Live financial activation is unsupported.
+ */
+export const listConnectPartners = async ( options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject[]> => {
+
+  return customFetch<ServerValidatedObject[]>(getListConnectPartnersUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListConnectPartnersQueryKey = () => {
+    return [
+    `/api/connect/partners`
+    ] as const;
+    }
+
+
+export const getListConnectPartnersQueryOptions = <TData = Awaited<ReturnType<typeof listConnectPartners>>, TError = ErrorType<void>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listConnectPartners>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListConnectPartnersQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listConnectPartners>>> = ({ signal }) => listConnectPartners({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listConnectPartners>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListConnectPartnersQueryResult = NonNullable<Awaited<ReturnType<typeof listConnectPartners>>>
+export type ListConnectPartnersQueryError = ErrorType<void>
+
+
+export function useListConnectPartners<TData = Awaited<ReturnType<typeof listConnectPartners>>, TError = ErrorType<void>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listConnectPartners>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listConnectPartners>>,
+          TError,
+          Awaited<ReturnType<typeof listConnectPartners>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListConnectPartners<TData = Awaited<ReturnType<typeof listConnectPartners>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listConnectPartners>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listConnectPartners>>,
+          TError,
+          Awaited<ReturnType<typeof listConnectPartners>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListConnectPartners<TData = Awaited<ReturnType<typeof listConnectPartners>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listConnectPartners>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useListConnectPartners<TData = Awaited<ReturnType<typeof listConnectPartners>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listConnectPartners>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListConnectPartnersQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getRegisterConnectPartnerUrl = () => {
+
+
+
+
+  return `/api/connect/partners`
+}
+
+/**
+ * Access: AUTHENTICATED. Server checks current ownership, market legal gates and approval. External catalog only; no internal order, payment or automatic registration. Credentials returned only at issue time. Live financial activation is unsupported.
+ */
+export const registerConnectPartner = async (connectPartnerRegistrationInput: ConnectPartnerRegistrationInput, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getRegisterConnectPartnerUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(connectPartnerRegistrationInput)
+  }
+);}
+
+
+
+
+
+export const getRegisterConnectPartnerMutationKey = () => ['registerConnectPartner'] as const;
+
+export const getRegisterConnectPartnerMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof registerConnectPartner>>, TError,RegisterConnectPartnerMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof registerConnectPartner>>, TError,RegisterConnectPartnerMutationVariables, TContext> => {
+
+const mutationKey = getRegisterConnectPartnerMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof registerConnectPartner>>, RegisterConnectPartnerMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  registerConnectPartner(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RegisterConnectPartnerMutationResult = NonNullable<Awaited<ReturnType<typeof registerConnectPartner>>>
+    export type RegisterConnectPartnerMutationBody = BodyType<ConnectPartnerRegistrationInput>
+    export type RegisterConnectPartnerMutationError = ErrorType<void>
+    export type RegisterConnectPartnerMutationVariables = {data: BodyType<ConnectPartnerRegistrationInput>}
+
+    export const useRegisterConnectPartner = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof registerConnectPartner>>, TError,RegisterConnectPartnerMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof registerConnectPartner>>,
+        TError,
+        RegisterConnectPartnerMutationVariables,
+        TContext
+      > => {
+      return useMutation(getRegisterConnectPartnerMutationOptions(options), queryClient);
+    }
+
+export const getGetConnectPartnerUrl = (id: string,) => {
+
+
+
+
+  return `/api/connect/partners/${id}`
+}
+
+/**
+ * Access: AUTHENTICATED. Server checks current ownership, market legal gates and approval. External catalog only; no internal order, payment or automatic registration. Credentials returned only at issue time. Live financial activation is unsupported.
+ */
+export const getConnectPartner = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+  return customFetch<ServerValidatedObject>(getGetConnectPartnerUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetConnectPartnerQueryKey = (id: string,) => {
+    return [
+    `/api/connect/partners/${id}`
+    ] as const;
+    }
+
+
+export const getGetConnectPartnerQueryOptions = <TData = Awaited<ReturnType<typeof getConnectPartner>>, TError = ErrorType<void>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConnectPartner>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetConnectPartnerQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getConnectPartner>>> = ({ signal }) => getConnectPartner(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getConnectPartner>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetConnectPartnerQueryResult = NonNullable<Awaited<ReturnType<typeof getConnectPartner>>>
+export type GetConnectPartnerQueryError = ErrorType<void>
+
+
+export function useGetConnectPartner<TData = Awaited<ReturnType<typeof getConnectPartner>>, TError = ErrorType<void>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConnectPartner>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getConnectPartner>>,
+          TError,
+          Awaited<ReturnType<typeof getConnectPartner>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetConnectPartner<TData = Awaited<ReturnType<typeof getConnectPartner>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConnectPartner>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getConnectPartner>>,
+          TError,
+          Awaited<ReturnType<typeof getConnectPartner>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetConnectPartner<TData = Awaited<ReturnType<typeof getConnectPartner>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConnectPartner>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useGetConnectPartner<TData = Awaited<ReturnType<typeof getConnectPartner>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConnectPartner>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetConnectPartnerQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getCreateConnectSiteUrl = (id: string,) => {
+
+
+
+
+  return `/api/connect/partners/${id}/sites`
+}
+
+/**
+ * Access: AUTHENTICATED. Server checks current ownership, market legal gates and approval. External catalog only; no internal order, payment or automatic registration. Credentials returned only at issue time. Live financial activation is unsupported.
+ */
+export const createConnectSite = async (id: string,
+    connectSiteRegistrationInput: ConnectSiteRegistrationInput, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getCreateConnectSiteUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(connectSiteRegistrationInput)
+  }
+);}
+
+
+
+
+
+export const getCreateConnectSiteMutationKey = () => ['createConnectSite'] as const;
+
+export const getCreateConnectSiteMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createConnectSite>>, TError,CreateConnectSiteMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createConnectSite>>, TError,CreateConnectSiteMutationVariables, TContext> => {
+
+const mutationKey = getCreateConnectSiteMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createConnectSite>>, CreateConnectSiteMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  createConnectSite(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateConnectSiteMutationResult = NonNullable<Awaited<ReturnType<typeof createConnectSite>>>
+    export type CreateConnectSiteMutationBody = BodyType<ConnectSiteRegistrationInput>
+    export type CreateConnectSiteMutationError = ErrorType<void>
+    export type CreateConnectSiteMutationVariables = {id: string;data: BodyType<ConnectSiteRegistrationInput>}
+
+    export const useCreateConnectSite = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createConnectSite>>, TError,CreateConnectSiteMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createConnectSite>>,
+        TError,
+        CreateConnectSiteMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCreateConnectSiteMutationOptions(options), queryClient);
+    }
+
+export const getVerifyConnectSiteUrl = (id: string,) => {
+
+
+
+
+  return `/api/connect/sites/${id}/verify`
+}
+
+/**
+ * Access: AUTHENTICATED. Server checks current ownership, market legal gates and approval. External catalog only; no internal order, payment or automatic registration. Credentials returned only at issue time. Live financial activation is unsupported.
+ */
+export const verifyConnectSite = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+  return customFetch<ServerValidatedObject>(getVerifyConnectSiteUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getVerifyConnectSiteMutationKey = () => ['verifyConnectSite'] as const;
+
+export const getVerifyConnectSiteMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof verifyConnectSite>>, TError,VerifyConnectSiteMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof verifyConnectSite>>, TError,VerifyConnectSiteMutationVariables, TContext> => {
+
+const mutationKey = getVerifyConnectSiteMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof verifyConnectSite>>, VerifyConnectSiteMutationVariables> = (props) => {
+          const {id} = props ?? {};
+
+          return  verifyConnectSite(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type VerifyConnectSiteMutationResult = NonNullable<Awaited<ReturnType<typeof verifyConnectSite>>>
+
+    export type VerifyConnectSiteMutationError = ErrorType<void>
+    export type VerifyConnectSiteMutationVariables = {id: string}
+
+    export const useVerifyConnectSite = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof verifyConnectSite>>, TError,VerifyConnectSiteMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof verifyConnectSite>>,
+        TError,
+        VerifyConnectSiteMutationVariables,
+        TContext
+      > => {
+      return useMutation(getVerifyConnectSiteMutationOptions(options), queryClient);
+    }
+
+export const getSubmitConnectPartnerUrl = (id: string,) => {
+
+
+
+
+  return `/api/connect/partners/${id}/submit`
+}
+
+/**
+ * Access: AUTHENTICATED. Server checks current ownership, market legal gates and approval. External catalog only; no internal order, payment or automatic registration. Credentials returned only at issue time. Live financial activation is unsupported.
+ */
+export const submitConnectPartner = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+  return customFetch<ServerValidatedObject>(getSubmitConnectPartnerUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getSubmitConnectPartnerMutationKey = () => ['submitConnectPartner'] as const;
+
+export const getSubmitConnectPartnerMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitConnectPartner>>, TError,SubmitConnectPartnerMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof submitConnectPartner>>, TError,SubmitConnectPartnerMutationVariables, TContext> => {
+
+const mutationKey = getSubmitConnectPartnerMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof submitConnectPartner>>, SubmitConnectPartnerMutationVariables> = (props) => {
+          const {id} = props ?? {};
+
+          return  submitConnectPartner(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SubmitConnectPartnerMutationResult = NonNullable<Awaited<ReturnType<typeof submitConnectPartner>>>
+
+    export type SubmitConnectPartnerMutationError = ErrorType<void>
+    export type SubmitConnectPartnerMutationVariables = {id: string}
+
+    export const useSubmitConnectPartner = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitConnectPartner>>, TError,SubmitConnectPartnerMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof submitConnectPartner>>,
+        TError,
+        SubmitConnectPartnerMutationVariables,
+        TContext
+      > => {
+      return useMutation(getSubmitConnectPartnerMutationOptions(options), queryClient);
+    }
+
+export const getGetConnectReviewQueueUrl = () => {
+
+
+
+
+  return `/api/admin/connect/review`
+}
+
+/**
+ * Access: ADMIN. Server checks current ownership, market legal gates and approval. External catalog only; no internal order, payment or automatic registration. Credentials returned only at issue time. Live financial activation is unsupported.
+ */
+export const getConnectReviewQueue = async ( options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+  return customFetch<ServerValidatedObject>(getGetConnectReviewQueueUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetConnectReviewQueueQueryKey = () => {
+    return [
+    `/api/admin/connect/review`
+    ] as const;
+    }
+
+
+export const getGetConnectReviewQueueQueryOptions = <TData = Awaited<ReturnType<typeof getConnectReviewQueue>>, TError = ErrorType<void>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConnectReviewQueue>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetConnectReviewQueueQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getConnectReviewQueue>>> = ({ signal }) => getConnectReviewQueue({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getConnectReviewQueue>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetConnectReviewQueueQueryResult = NonNullable<Awaited<ReturnType<typeof getConnectReviewQueue>>>
+export type GetConnectReviewQueueQueryError = ErrorType<void>
+
+
+export function useGetConnectReviewQueue<TData = Awaited<ReturnType<typeof getConnectReviewQueue>>, TError = ErrorType<void>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConnectReviewQueue>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getConnectReviewQueue>>,
+          TError,
+          Awaited<ReturnType<typeof getConnectReviewQueue>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetConnectReviewQueue<TData = Awaited<ReturnType<typeof getConnectReviewQueue>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConnectReviewQueue>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getConnectReviewQueue>>,
+          TError,
+          Awaited<ReturnType<typeof getConnectReviewQueue>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetConnectReviewQueue<TData = Awaited<ReturnType<typeof getConnectReviewQueue>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConnectReviewQueue>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useGetConnectReviewQueue<TData = Awaited<ReturnType<typeof getConnectReviewQueue>>, TError = ErrorType<void>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConnectReviewQueue>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetConnectReviewQueueQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getReviewConnectPartnerUrl = (id: string,) => {
+
+
+
+
+  return `/api/admin/connect/partners/${id}/review`
+}
+
+/**
+ * Access: ADMIN. Server checks current ownership, market legal gates and approval. External catalog only; no internal order, payment or automatic registration. Credentials returned only at issue time. Live financial activation is unsupported.
+ */
+export const reviewConnectPartner = async (id: string,
+    connectReviewDecisionInput: ConnectReviewDecisionInput, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getReviewConnectPartnerUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(connectReviewDecisionInput)
+  }
+);}
+
+
+
+
+
+export const getReviewConnectPartnerMutationKey = () => ['reviewConnectPartner'] as const;
+
+export const getReviewConnectPartnerMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reviewConnectPartner>>, TError,ReviewConnectPartnerMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof reviewConnectPartner>>, TError,ReviewConnectPartnerMutationVariables, TContext> => {
+
+const mutationKey = getReviewConnectPartnerMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof reviewConnectPartner>>, ReviewConnectPartnerMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  reviewConnectPartner(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ReviewConnectPartnerMutationResult = NonNullable<Awaited<ReturnType<typeof reviewConnectPartner>>>
+    export type ReviewConnectPartnerMutationBody = BodyType<ConnectReviewDecisionInput>
+    export type ReviewConnectPartnerMutationError = ErrorType<void>
+    export type ReviewConnectPartnerMutationVariables = {id: string;data: BodyType<ConnectReviewDecisionInput>}
+
+    export const useReviewConnectPartner = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reviewConnectPartner>>, TError,ReviewConnectPartnerMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof reviewConnectPartner>>,
+        TError,
+        ReviewConnectPartnerMutationVariables,
+        TContext
+      > => {
+      return useMutation(getReviewConnectPartnerMutationOptions(options), queryClient);
+    }
+
+export const getCreateConnectIntegrationUrl = (id: string,) => {
+
+
+
+
+  return `/api/connect/partners/${id}/integrations`
+}
+
+/**
+ * Access: AUTHENTICATED. Server checks current ownership, market legal gates and approval. External catalog only; no internal order, payment or automatic registration. Credentials returned only at issue time. Live financial activation is unsupported.
+ */
+export const createConnectIntegration = async (id: string,
+    connectIntegrationRegistrationInput: ConnectIntegrationRegistrationInput, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getCreateConnectIntegrationUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(connectIntegrationRegistrationInput)
+  }
+);}
+
+
+
+
+
+export const getCreateConnectIntegrationMutationKey = () => ['createConnectIntegration'] as const;
+
+export const getCreateConnectIntegrationMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createConnectIntegration>>, TError,CreateConnectIntegrationMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createConnectIntegration>>, TError,CreateConnectIntegrationMutationVariables, TContext> => {
+
+const mutationKey = getCreateConnectIntegrationMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createConnectIntegration>>, CreateConnectIntegrationMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  createConnectIntegration(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateConnectIntegrationMutationResult = NonNullable<Awaited<ReturnType<typeof createConnectIntegration>>>
+    export type CreateConnectIntegrationMutationBody = BodyType<ConnectIntegrationRegistrationInput>
+    export type CreateConnectIntegrationMutationError = ErrorType<void>
+    export type CreateConnectIntegrationMutationVariables = {id: string;data: BodyType<ConnectIntegrationRegistrationInput>}
+
+    export const useCreateConnectIntegration = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createConnectIntegration>>, TError,CreateConnectIntegrationMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createConnectIntegration>>,
+        TError,
+        CreateConnectIntegrationMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCreateConnectIntegrationMutationOptions(options), queryClient);
+    }
+
+export const getReviewConnectIntegrationUrl = (id: string,) => {
+
+
+
+
+  return `/api/admin/connect/integrations/${id}/review`
+}
+
+/**
+ * Access: ADMIN. Server checks current ownership, market legal gates and approval. External catalog only; no internal order, payment or automatic registration. Credentials returned only at issue time. Live financial activation is unsupported.
+ */
+export const reviewConnectIntegration = async (id: string,
+    connectReviewDecisionInput: ConnectReviewDecisionInput, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getReviewConnectIntegrationUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(connectReviewDecisionInput)
+  }
+);}
+
+
+
+
+
+export const getReviewConnectIntegrationMutationKey = () => ['reviewConnectIntegration'] as const;
+
+export const getReviewConnectIntegrationMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reviewConnectIntegration>>, TError,ReviewConnectIntegrationMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof reviewConnectIntegration>>, TError,ReviewConnectIntegrationMutationVariables, TContext> => {
+
+const mutationKey = getReviewConnectIntegrationMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof reviewConnectIntegration>>, ReviewConnectIntegrationMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  reviewConnectIntegration(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ReviewConnectIntegrationMutationResult = NonNullable<Awaited<ReturnType<typeof reviewConnectIntegration>>>
+    export type ReviewConnectIntegrationMutationBody = BodyType<ConnectReviewDecisionInput>
+    export type ReviewConnectIntegrationMutationError = ErrorType<void>
+    export type ReviewConnectIntegrationMutationVariables = {id: string;data: BodyType<ConnectReviewDecisionInput>}
+
+    export const useReviewConnectIntegration = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reviewConnectIntegration>>, TError,ReviewConnectIntegrationMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof reviewConnectIntegration>>,
+        TError,
+        ReviewConnectIntegrationMutationVariables,
+        TContext
+      > => {
+      return useMutation(getReviewConnectIntegrationMutationOptions(options), queryClient);
+    }
+
+export const getIssueConnectCredentialUrl = (id: string,) => {
+
+
+
+
+  return `/api/connect/integrations/${id}/credentials`
+}
+
+/**
+ * Access: AUTHENTICATED. Server checks current ownership, market legal gates and approval. External catalog only; no internal order, payment or automatic registration. Credentials returned only at issue time. Live financial activation is unsupported.
+ */
+export const issueConnectCredential = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+  return customFetch<ServerValidatedObject>(getIssueConnectCredentialUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getIssueConnectCredentialMutationKey = () => ['issueConnectCredential'] as const;
+
+export const getIssueConnectCredentialMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof issueConnectCredential>>, TError,IssueConnectCredentialMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof issueConnectCredential>>, TError,IssueConnectCredentialMutationVariables, TContext> => {
+
+const mutationKey = getIssueConnectCredentialMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof issueConnectCredential>>, IssueConnectCredentialMutationVariables> = (props) => {
+          const {id} = props ?? {};
+
+          return  issueConnectCredential(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type IssueConnectCredentialMutationResult = NonNullable<Awaited<ReturnType<typeof issueConnectCredential>>>
+
+    export type IssueConnectCredentialMutationError = ErrorType<void>
+    export type IssueConnectCredentialMutationVariables = {id: string}
+
+    export const useIssueConnectCredential = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof issueConnectCredential>>, TError,IssueConnectCredentialMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof issueConnectCredential>>,
+        TError,
+        IssueConnectCredentialMutationVariables,
+        TContext
+      > => {
+      return useMutation(getIssueConnectCredentialMutationOptions(options), queryClient);
+    }
+
+export const getSuspendConnectIntegrationUrl = (id: string,) => {
+
+
+
+
+  return `/api/connect/integrations/${id}/suspend`
+}
+
+/**
+ * Access: AUTHENTICATED. Server checks current ownership, market legal gates and approval. External catalog only; no internal order, payment or automatic registration. Credentials returned only at issue time. Live financial activation is unsupported.
+ */
+export const suspendConnectIntegration = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+  return customFetch<ServerValidatedObject>(getSuspendConnectIntegrationUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getSuspendConnectIntegrationMutationKey = () => ['suspendConnectIntegration'] as const;
+
+export const getSuspendConnectIntegrationMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof suspendConnectIntegration>>, TError,SuspendConnectIntegrationMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof suspendConnectIntegration>>, TError,SuspendConnectIntegrationMutationVariables, TContext> => {
+
+const mutationKey = getSuspendConnectIntegrationMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof suspendConnectIntegration>>, SuspendConnectIntegrationMutationVariables> = (props) => {
+          const {id} = props ?? {};
+
+          return  suspendConnectIntegration(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SuspendConnectIntegrationMutationResult = NonNullable<Awaited<ReturnType<typeof suspendConnectIntegration>>>
+
+    export type SuspendConnectIntegrationMutationError = ErrorType<void>
+    export type SuspendConnectIntegrationMutationVariables = {id: string}
+
+    export const useSuspendConnectIntegration = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof suspendConnectIntegration>>, TError,SuspendConnectIntegrationMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof suspendConnectIntegration>>,
+        TError,
+        SuspendConnectIntegrationMutationVariables,
+        TContext
+      > => {
+      return useMutation(getSuspendConnectIntegrationMutationOptions(options), queryClient);
+    }
+
+export const getRevokeConnectIntegrationUrl = (id: string,) => {
+
+
+
+
+  return `/api/connect/integrations/${id}/revoke`
+}
+
+/**
+ * Access: AUTHENTICATED. Server checks current ownership, market legal gates and approval. External catalog only; no internal order, payment or automatic registration. Credentials returned only at issue time. Live financial activation is unsupported.
+ */
+export const revokeConnectIntegration = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+  return customFetch<ServerValidatedObject>(getRevokeConnectIntegrationUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getRevokeConnectIntegrationMutationKey = () => ['revokeConnectIntegration'] as const;
+
+export const getRevokeConnectIntegrationMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revokeConnectIntegration>>, TError,RevokeConnectIntegrationMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof revokeConnectIntegration>>, TError,RevokeConnectIntegrationMutationVariables, TContext> => {
+
+const mutationKey = getRevokeConnectIntegrationMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof revokeConnectIntegration>>, RevokeConnectIntegrationMutationVariables> = (props) => {
+          const {id} = props ?? {};
+
+          return  revokeConnectIntegration(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RevokeConnectIntegrationMutationResult = NonNullable<Awaited<ReturnType<typeof revokeConnectIntegration>>>
+
+    export type RevokeConnectIntegrationMutationError = ErrorType<void>
+    export type RevokeConnectIntegrationMutationVariables = {id: string}
+
+    export const useRevokeConnectIntegration = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revokeConnectIntegration>>, TError,RevokeConnectIntegrationMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof revokeConnectIntegration>>,
+        TError,
+        RevokeConnectIntegrationMutationVariables,
+        TContext
+      > => {
+      return useMutation(getRevokeConnectIntegrationMutationOptions(options), queryClient);
+    }
+
+export const getResumeConnectIntegrationUrl = (id: string,) => {
+
+
+
+
+  return `/api/connect/integrations/${id}/resume`
+}
+
+/**
+ * Access: AUTHENTICATED. Server checks current ownership, market legal gates and approval. External catalog only; no internal order, payment or automatic registration. Credentials returned only at issue time. Live financial activation is unsupported.
+ */
+export const resumeConnectIntegration = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+  return customFetch<ServerValidatedObject>(getResumeConnectIntegrationUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getResumeConnectIntegrationMutationKey = () => ['resumeConnectIntegration'] as const;
+
+export const getResumeConnectIntegrationMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof resumeConnectIntegration>>, TError,ResumeConnectIntegrationMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof resumeConnectIntegration>>, TError,ResumeConnectIntegrationMutationVariables, TContext> => {
+
+const mutationKey = getResumeConnectIntegrationMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof resumeConnectIntegration>>, ResumeConnectIntegrationMutationVariables> = (props) => {
+          const {id} = props ?? {};
+
+          return  resumeConnectIntegration(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ResumeConnectIntegrationMutationResult = NonNullable<Awaited<ReturnType<typeof resumeConnectIntegration>>>
+
+    export type ResumeConnectIntegrationMutationError = ErrorType<void>
+    export type ResumeConnectIntegrationMutationVariables = {id: string}
+
+    export const useResumeConnectIntegration = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof resumeConnectIntegration>>, TError,ResumeConnectIntegrationMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof resumeConnectIntegration>>,
+        TError,
+        ResumeConnectIntegrationMutationVariables,
+        TContext
+      > => {
+      return useMutation(getResumeConnectIntegrationMutationOptions(options), queryClient);
+    }
+
+export const getImportConnectOwnerCatalogUrl = (id: string,) => {
+
+
+
+
+  return `/api/connect/integrations/${id}/catalog`
+}
+
+/**
+ * Access: AUTHENTICATED. Server checks current ownership, market legal gates and approval. External catalog only; no internal order, payment or automatic registration. Credentials returned only at issue time. Live financial activation is unsupported.
+ */
+export const importConnectOwnerCatalog = async (id: string,
+    connectCatalogImportInput: ConnectCatalogImportInput, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getImportConnectOwnerCatalogUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(connectCatalogImportInput)
+  }
+);}
+
+
+
+
+
+export const getImportConnectOwnerCatalogMutationKey = () => ['importConnectOwnerCatalog'] as const;
+
+export const getImportConnectOwnerCatalogMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof importConnectOwnerCatalog>>, TError,ImportConnectOwnerCatalogMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof importConnectOwnerCatalog>>, TError,ImportConnectOwnerCatalogMutationVariables, TContext> => {
+
+const mutationKey = getImportConnectOwnerCatalogMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof importConnectOwnerCatalog>>, ImportConnectOwnerCatalogMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  importConnectOwnerCatalog(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ImportConnectOwnerCatalogMutationResult = NonNullable<Awaited<ReturnType<typeof importConnectOwnerCatalog>>>
+    export type ImportConnectOwnerCatalogMutationBody = BodyType<ConnectCatalogImportInput>
+    export type ImportConnectOwnerCatalogMutationError = ErrorType<void>
+    export type ImportConnectOwnerCatalogMutationVariables = {id: string;data: BodyType<ConnectCatalogImportInput>}
+
+    export const useImportConnectOwnerCatalog = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof importConnectOwnerCatalog>>, TError,ImportConnectOwnerCatalogMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof importConnectOwnerCatalog>>,
+        TError,
+        ImportConnectOwnerCatalogMutationVariables,
+        TContext
+      > => {
+      return useMutation(getImportConnectOwnerCatalogMutationOptions(options), queryClient);
+    }
+
+export const getImportConnectProviderCatalogUrl = () => {
+
+
+
+
+  return `/api/connect/provider/catalog`
+}
+
+/**
+ * Access: PROVIDER_BEARER. Server checks current ownership, market legal gates and approval. External catalog only; no internal order, payment or automatic registration. Credentials returned only at issue time. Live financial activation is unsupported.
+ */
+export const importConnectProviderCatalog = async (connectCatalogImportInput: ConnectCatalogImportInput, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getImportConnectProviderCatalogUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(connectCatalogImportInput)
+  }
+);}
+
+
+
+
+
+export const getImportConnectProviderCatalogMutationKey = () => ['importConnectProviderCatalog'] as const;
+
+export const getImportConnectProviderCatalogMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof importConnectProviderCatalog>>, TError,ImportConnectProviderCatalogMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof importConnectProviderCatalog>>, TError,ImportConnectProviderCatalogMutationVariables, TContext> => {
+
+const mutationKey = getImportConnectProviderCatalogMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof importConnectProviderCatalog>>, ImportConnectProviderCatalogMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  importConnectProviderCatalog(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ImportConnectProviderCatalogMutationResult = NonNullable<Awaited<ReturnType<typeof importConnectProviderCatalog>>>
+    export type ImportConnectProviderCatalogMutationBody = BodyType<ConnectCatalogImportInput>
+    export type ImportConnectProviderCatalogMutationError = ErrorType<void>
+    export type ImportConnectProviderCatalogMutationVariables = {data: BodyType<ConnectCatalogImportInput>}
+
+    export const useImportConnectProviderCatalog = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof importConnectProviderCatalog>>, TError,ImportConnectProviderCatalogMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof importConnectProviderCatalog>>,
+        TError,
+        ImportConnectProviderCatalogMutationVariables,
+        TContext
+      > => {
+      return useMutation(getImportConnectProviderCatalogMutationOptions(options), queryClient);
+    }
+
+export const getSearchConnectCatalogUrl = (params?: SearchConnectCatalogParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/connect/catalog?${stringifiedParams}` : `/api/connect/catalog`
+}
+
+/**
+ * Access: AUTHENTICATED. Server checks current ownership, market legal gates and approval. External catalog only; no internal order, payment or automatic registration. Credentials returned only at issue time. Live financial activation is unsupported.
+ */
+export const searchConnectCatalog = async (params?: SearchConnectCatalogParams, options?: Parameters<typeof customFetch>[1]): Promise<ConnectUniversalCardsPayload> => {
+
+  return customFetch<ConnectUniversalCardsPayload>(getSearchConnectCatalogUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getSearchConnectCatalogQueryKey = (params?: SearchConnectCatalogParams,) => {
+    return [
+    `/api/connect/catalog`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getSearchConnectCatalogQueryOptions = <TData = Awaited<ReturnType<typeof searchConnectCatalog>>, TError = ErrorType<void>>(params?: SearchConnectCatalogParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof searchConnectCatalog>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getSearchConnectCatalogQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof searchConnectCatalog>>> = ({ signal }) => searchConnectCatalog(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof searchConnectCatalog>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type SearchConnectCatalogQueryResult = NonNullable<Awaited<ReturnType<typeof searchConnectCatalog>>>
+export type SearchConnectCatalogQueryError = ErrorType<void>
+
+
+export function useSearchConnectCatalog<TData = Awaited<ReturnType<typeof searchConnectCatalog>>, TError = ErrorType<void>>(
+ params: undefined |  SearchConnectCatalogParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof searchConnectCatalog>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof searchConnectCatalog>>,
+          TError,
+          Awaited<ReturnType<typeof searchConnectCatalog>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useSearchConnectCatalog<TData = Awaited<ReturnType<typeof searchConnectCatalog>>, TError = ErrorType<void>>(
+ params?: SearchConnectCatalogParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof searchConnectCatalog>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof searchConnectCatalog>>,
+          TError,
+          Awaited<ReturnType<typeof searchConnectCatalog>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useSearchConnectCatalog<TData = Awaited<ReturnType<typeof searchConnectCatalog>>, TError = ErrorType<void>>(
+ params?: SearchConnectCatalogParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof searchConnectCatalog>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useSearchConnectCatalog<TData = Awaited<ReturnType<typeof searchConnectCatalog>>, TError = ErrorType<void>>(
+ params?: SearchConnectCatalogParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof searchConnectCatalog>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getSearchConnectCatalogQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

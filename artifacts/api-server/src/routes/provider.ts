@@ -70,6 +70,7 @@ const providerAuth: RequestHandler = async (req, res, next) => {
     }
     throw error;
   }
+  if(context.connection.namespace !== "MARKETPLACE") throw providerError(403,"SCOPE_DENIED","هذا المفتاح لا يملك صلاحيات مزامنة السوق الداخلي");
   const decision = await consumeRateLimit(
     [{ scope: AUTH_RATE_LIMIT_SCOPE.providerCredential, value: context.credentialId }],
     PROVIDER_RATE_WINDOW_SECONDS,

@@ -475,6 +475,7 @@ export function SettingsPage() {
       </ListGroup>
 
       <ListGroup title="الشروط">
+        <ListRow href="/connect" icon={<FileText size={19} />} title="DINAR Connect — الشركاء" description="تسجيل مجاني وربط كتالوج خارجي بصلاحيات مراجعة" testId="link-settings-connect" />
         <ListRow
           href="/policies"
           icon={<FileText size={19} />}

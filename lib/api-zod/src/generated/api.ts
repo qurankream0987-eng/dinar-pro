@@ -8138,3 +8138,496 @@ export const OpenConnectOutboundParams = zod.object({
 export const OpenConnectOutboundResponse = zod.void()
 
 
+/**
+ * Access: AUTHENTICATED. Server checks current ownership, market legal gates and approval. External catalog only; no internal order, payment or automatic registration. Credentials returned only at issue time. Live financial activation is unsupported.
+ */
+export const ListConnectPartnersResponseItem = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+export const ListConnectPartnersResponse = zod.array(ListConnectPartnersResponseItem)
+
+
+/**
+ * Access: AUTHENTICATED. Server checks current ownership, market legal gates and approval. External catalog only; no internal order, payment or automatic registration. Credentials returned only at issue time. Live financial activation is unsupported.
+ */
+export const registerConnectPartnerBodyBusinessIdRegExp = new RegExp('^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$');
+
+
+export const RegisterConnectPartnerBody = zod.object({
+  "businessId": zod.uuid().regex(registerConnectPartnerBodyBusinessIdRegExp)
+})
+
+export const RegisterConnectPartnerResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * Access: AUTHENTICATED. Server checks current ownership, market legal gates and approval. External catalog only; no internal order, payment or automatic registration. Credentials returned only at issue time. Live financial activation is unsupported.
+ */
+export const GetConnectPartnerParams = zod.object({
+  "id": zod.uuid()
+})
+
+export const GetConnectPartnerResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * Access: AUTHENTICATED. Server checks current ownership, market legal gates and approval. External catalog only; no internal order, payment or automatic registration. Credentials returned only at issue time. Live financial activation is unsupported.
+ */
+export const CreateConnectSiteParams = zod.object({
+  "id": zod.uuid()
+})
+
+export const createConnectSiteBodyHostnameMin = 3;
+export const createConnectSiteBodyHostnameMax = 253;
+
+
+
+export const CreateConnectSiteBody = zod.object({
+  "hostname": zod.string().min(createConnectSiteBodyHostnameMin).max(createConnectSiteBodyHostnameMax)
+})
+
+export const CreateConnectSiteResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * Access: AUTHENTICATED. Server checks current ownership, market legal gates and approval. External catalog only; no internal order, payment or automatic registration. Credentials returned only at issue time. Live financial activation is unsupported.
+ */
+export const VerifyConnectSiteParams = zod.object({
+  "id": zod.uuid()
+})
+
+export const VerifyConnectSiteResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * Access: AUTHENTICATED. Server checks current ownership, market legal gates and approval. External catalog only; no internal order, payment or automatic registration. Credentials returned only at issue time. Live financial activation is unsupported.
+ */
+export const SubmitConnectPartnerParams = zod.object({
+  "id": zod.uuid()
+})
+
+export const SubmitConnectPartnerResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * Access: ADMIN. Server checks current ownership, market legal gates and approval. External catalog only; no internal order, payment or automatic registration. Credentials returned only at issue time. Live financial activation is unsupported.
+ */
+export const GetConnectReviewQueueResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * Access: ADMIN. Server checks current ownership, market legal gates and approval. External catalog only; no internal order, payment or automatic registration. Credentials returned only at issue time. Live financial activation is unsupported.
+ */
+export const ReviewConnectPartnerParams = zod.object({
+  "id": zod.uuid()
+})
+
+export const reviewConnectPartnerBodyExpectedRevisionExclusiveMin = 0;
+export const reviewConnectPartnerBodyExpectedRevisionMax = 9007199254740991;
+
+export const reviewConnectPartnerBodyReasonMin = 3;
+export const reviewConnectPartnerBodyReasonMax = 500;
+
+
+
+export const ReviewConnectPartnerBody = zod.object({
+  "decision": zod.enum(['APPROVE', 'REJECT', 'SUSPEND']),
+  "expectedRevision": zod.int().gt(reviewConnectPartnerBodyExpectedRevisionExclusiveMin).max(reviewConnectPartnerBodyExpectedRevisionMax),
+  "reason": zod.string().min(reviewConnectPartnerBodyReasonMin).max(reviewConnectPartnerBodyReasonMax)
+})
+
+export const ReviewConnectPartnerResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * Access: AUTHENTICATED. Server checks current ownership, market legal gates and approval. External catalog only; no internal order, payment or automatic registration. Credentials returned only at issue time. Live financial activation is unsupported.
+ */
+export const CreateConnectIntegrationParams = zod.object({
+  "id": zod.uuid()
+})
+
+export const createConnectIntegrationBodySiteIdRegExp = new RegExp('^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$');
+export const createConnectIntegrationBodyNameMin = 2;
+export const createConnectIntegrationBodyNameMax = 100;
+
+export const createConnectIntegrationBodyEndpointUrlMax = 500;
+
+export const createConnectIntegrationBodyCapabilitiesMax = 4;
+
+export const createConnectIntegrationBodyAllowedPathPrefixesItemMax = 120;
+
+export const createConnectIntegrationBodyAllowedPathPrefixesMax = 8;
+
+export const createConnectIntegrationBodyReferralParameterRegExp = new RegExp('^[a-z][a-z0-9_]{0,39}$');
+export const createConnectIntegrationBodyReviewedToolsItemNameRegExp = new RegExp('^[A-Za-z][A-Za-z0-9_.-]{0,79}$');
+export const createConnectIntegrationBodyReviewedToolsItemInputSchemaSha256RegExp = new RegExp('^[a-f0-9]{64}$');
+export const createConnectIntegrationBodyReviewedToolsMax = 10;
+
+
+
+export const CreateConnectIntegrationBody = zod.object({
+  "siteId": zod.uuid().regex(createConnectIntegrationBodySiteIdRegExp),
+  "kind": zod.enum(['WEBSITE', 'FEED', 'API', 'OAUTH', 'MCP']),
+  "name": zod.string().min(createConnectIntegrationBodyNameMin).max(createConnectIntegrationBodyNameMax),
+  "endpointUrl": zod.string().max(createConnectIntegrationBodyEndpointUrlMax).optional(),
+  "capabilities": zod.array(zod.enum(['CATALOG_READ', 'CATALOG_IMPORT', 'EXTERNAL_REFERRAL', 'TRANSACTION_REPORT'])).min(1).max(createConnectIntegrationBodyCapabilitiesMax),
+  "mode": zod.enum(['SIMULATION_ONLY', 'LIVE']),
+  "allowedPathPrefixes": zod.array(zod.string().min(1).max(createConnectIntegrationBodyAllowedPathPrefixesItemMax)).min(1).max(createConnectIntegrationBodyAllowedPathPrefixesMax),
+  "referralParameter": zod.string().regex(createConnectIntegrationBodyReferralParameterRegExp).optional(),
+  "reviewedTools": zod.array(zod.object({
+  "name": zod.string().regex(createConnectIntegrationBodyReviewedToolsItemNameRegExp),
+  "inputSchemaSha256": zod.string().regex(createConnectIntegrationBodyReviewedToolsItemInputSchemaSha256RegExp),
+  "readOnly": zod.literal(true)
+})).max(createConnectIntegrationBodyReviewedToolsMax).optional()
+})
+
+export const CreateConnectIntegrationResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * Access: ADMIN. Server checks current ownership, market legal gates and approval. External catalog only; no internal order, payment or automatic registration. Credentials returned only at issue time. Live financial activation is unsupported.
+ */
+export const ReviewConnectIntegrationParams = zod.object({
+  "id": zod.uuid()
+})
+
+export const reviewConnectIntegrationBodyExpectedRevisionExclusiveMin = 0;
+export const reviewConnectIntegrationBodyExpectedRevisionMax = 9007199254740991;
+
+export const reviewConnectIntegrationBodyReasonMin = 3;
+export const reviewConnectIntegrationBodyReasonMax = 500;
+
+
+
+export const ReviewConnectIntegrationBody = zod.object({
+  "decision": zod.enum(['APPROVE', 'REJECT', 'SUSPEND']),
+  "expectedRevision": zod.int().gt(reviewConnectIntegrationBodyExpectedRevisionExclusiveMin).max(reviewConnectIntegrationBodyExpectedRevisionMax),
+  "reason": zod.string().min(reviewConnectIntegrationBodyReasonMin).max(reviewConnectIntegrationBodyReasonMax)
+})
+
+export const ReviewConnectIntegrationResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * Access: AUTHENTICATED. Server checks current ownership, market legal gates and approval. External catalog only; no internal order, payment or automatic registration. Credentials returned only at issue time. Live financial activation is unsupported.
+ */
+export const IssueConnectCredentialParams = zod.object({
+  "id": zod.uuid()
+})
+
+export const IssueConnectCredentialResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * Access: AUTHENTICATED. Server checks current ownership, market legal gates and approval. External catalog only; no internal order, payment or automatic registration. Credentials returned only at issue time. Live financial activation is unsupported.
+ */
+export const SuspendConnectIntegrationParams = zod.object({
+  "id": zod.uuid()
+})
+
+export const SuspendConnectIntegrationResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * Access: AUTHENTICATED. Server checks current ownership, market legal gates and approval. External catalog only; no internal order, payment or automatic registration. Credentials returned only at issue time. Live financial activation is unsupported.
+ */
+export const RevokeConnectIntegrationParams = zod.object({
+  "id": zod.uuid()
+})
+
+export const RevokeConnectIntegrationResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * Access: AUTHENTICATED. Server checks current ownership, market legal gates and approval. External catalog only; no internal order, payment or automatic registration. Credentials returned only at issue time. Live financial activation is unsupported.
+ */
+export const ResumeConnectIntegrationParams = zod.object({
+  "id": zod.uuid()
+})
+
+export const ResumeConnectIntegrationResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * Access: AUTHENTICATED. Server checks current ownership, market legal gates and approval. External catalog only; no internal order, payment or automatic registration. Credentials returned only at issue time. Live financial activation is unsupported.
+ */
+export const ImportConnectOwnerCatalogParams = zod.object({
+  "id": zod.uuid()
+})
+
+export const importConnectOwnerCatalogBodyBatchIdRegExp = new RegExp('^[A-Za-z0-9][A-Za-z0-9._:-]{0,99}$');
+export const importConnectOwnerCatalogBodyItemsItemExternalIdRegExp = new RegExp('^[A-Za-z0-9][A-Za-z0-9._:-]{0,99}$');
+export const importConnectOwnerCatalogBodyItemsItemTitleMin = 2;
+export const importConnectOwnerCatalogBodyItemsItemTitleMax = 180;
+
+export const importConnectOwnerCatalogBodyItemsItemDescriptionMax = 700;
+
+export const importConnectOwnerCatalogBodyItemsItemCategoryIdMax = 80;
+
+export const importConnectOwnerCatalogBodyItemsItemPriceOneAmountMinorMin = 0;
+export const importConnectOwnerCatalogBodyItemsItemPriceOneAmountMinorMax = 9007199254740991;
+
+export const importConnectOwnerCatalogBodyItemsItemPriceOneCurrencyRegExp = new RegExp('^[A-Z]{3}$');
+export const importConnectOwnerCatalogBodyItemsItemPriceOneMinorUnitScaleMin = 0;
+export const importConnectOwnerCatalogBodyItemsItemPriceOneMinorUnitScaleMax = 4;
+
+export const importConnectOwnerCatalogBodyItemsItemTargetPathMax = 400;
+
+export const importConnectOwnerCatalogBodyItemsItemSourceVersionExclusiveMin = 0;
+export const importConnectOwnerCatalogBodyItemsItemSourceVersionMax = 9007199254740991;
+
+export const importConnectOwnerCatalogBodyItemsItemAttributesItemLabelMax = 80;
+
+export const importConnectOwnerCatalogBodyItemsItemAttributesItemValueOneMax = 300;
+
+export const importConnectOwnerCatalogBodyItemsItemAttributesMax = 10;
+
+export const importConnectOwnerCatalogBodyItemsMax = 100;
+
+
+
+export const ImportConnectOwnerCatalogBody = zod.object({
+  "batchId": zod.string().regex(importConnectOwnerCatalogBodyBatchIdRegExp),
+  "items": zod.array(zod.object({
+  "externalId": zod.string().regex(importConnectOwnerCatalogBodyItemsItemExternalIdRegExp),
+  "kind": zod.enum(['PRODUCT', 'SERVICE']),
+  "title": zod.string().min(importConnectOwnerCatalogBodyItemsItemTitleMin).max(importConnectOwnerCatalogBodyItemsItemTitleMax),
+  "description": zod.string().max(importConnectOwnerCatalogBodyItemsItemDescriptionMax),
+  "categoryId": zod.string().min(1).max(importConnectOwnerCatalogBodyItemsItemCategoryIdMax),
+  "price": zod.union([zod.object({
+  "amountMinor": zod.int().min(importConnectOwnerCatalogBodyItemsItemPriceOneAmountMinorMin).max(importConnectOwnerCatalogBodyItemsItemPriceOneAmountMinorMax),
+  "currency": zod.string().regex(importConnectOwnerCatalogBodyItemsItemPriceOneCurrencyRegExp),
+  "minorUnitScale": zod.int().min(importConnectOwnerCatalogBodyItemsItemPriceOneMinorUnitScaleMin).max(importConnectOwnerCatalogBodyItemsItemPriceOneMinorUnitScaleMax)
+}),zod.null()]),
+  "availability": zod.enum(['AVAILABLE', 'UNAVAILABLE', 'UNKNOWN']),
+  "targetPath": zod.string().min(1).max(importConnectOwnerCatalogBodyItemsItemTargetPathMax),
+  "sourceVersion": zod.int().gt(importConnectOwnerCatalogBodyItemsItemSourceVersionExclusiveMin).max(importConnectOwnerCatalogBodyItemsItemSourceVersionMax),
+  "sourceCheckedAt": zod.coerce.date(),
+  "attributes": zod.array(zod.object({
+  "label": zod.string().min(1).max(importConnectOwnerCatalogBodyItemsItemAttributesItemLabelMax),
+  "value": zod.union([zod.string().max(importConnectOwnerCatalogBodyItemsItemAttributesItemValueOneMax),zod.null()])
+})).max(importConnectOwnerCatalogBodyItemsItemAttributesMax)
+})).min(1).max(importConnectOwnerCatalogBodyItemsMax)
+})
+
+export const ImportConnectOwnerCatalogResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * Access: PROVIDER_BEARER. Server checks current ownership, market legal gates and approval. External catalog only; no internal order, payment or automatic registration. Credentials returned only at issue time. Live financial activation is unsupported.
+ */
+export const importConnectProviderCatalogBodyBatchIdRegExp = new RegExp('^[A-Za-z0-9][A-Za-z0-9._:-]{0,99}$');
+export const importConnectProviderCatalogBodyItemsItemExternalIdRegExp = new RegExp('^[A-Za-z0-9][A-Za-z0-9._:-]{0,99}$');
+export const importConnectProviderCatalogBodyItemsItemTitleMin = 2;
+export const importConnectProviderCatalogBodyItemsItemTitleMax = 180;
+
+export const importConnectProviderCatalogBodyItemsItemDescriptionMax = 700;
+
+export const importConnectProviderCatalogBodyItemsItemCategoryIdMax = 80;
+
+export const importConnectProviderCatalogBodyItemsItemPriceOneAmountMinorMin = 0;
+export const importConnectProviderCatalogBodyItemsItemPriceOneAmountMinorMax = 9007199254740991;
+
+export const importConnectProviderCatalogBodyItemsItemPriceOneCurrencyRegExp = new RegExp('^[A-Z]{3}$');
+export const importConnectProviderCatalogBodyItemsItemPriceOneMinorUnitScaleMin = 0;
+export const importConnectProviderCatalogBodyItemsItemPriceOneMinorUnitScaleMax = 4;
+
+export const importConnectProviderCatalogBodyItemsItemTargetPathMax = 400;
+
+export const importConnectProviderCatalogBodyItemsItemSourceVersionExclusiveMin = 0;
+export const importConnectProviderCatalogBodyItemsItemSourceVersionMax = 9007199254740991;
+
+export const importConnectProviderCatalogBodyItemsItemAttributesItemLabelMax = 80;
+
+export const importConnectProviderCatalogBodyItemsItemAttributesItemValueOneMax = 300;
+
+export const importConnectProviderCatalogBodyItemsItemAttributesMax = 10;
+
+export const importConnectProviderCatalogBodyItemsMax = 100;
+
+
+
+export const ImportConnectProviderCatalogBody = zod.object({
+  "batchId": zod.string().regex(importConnectProviderCatalogBodyBatchIdRegExp),
+  "items": zod.array(zod.object({
+  "externalId": zod.string().regex(importConnectProviderCatalogBodyItemsItemExternalIdRegExp),
+  "kind": zod.enum(['PRODUCT', 'SERVICE']),
+  "title": zod.string().min(importConnectProviderCatalogBodyItemsItemTitleMin).max(importConnectProviderCatalogBodyItemsItemTitleMax),
+  "description": zod.string().max(importConnectProviderCatalogBodyItemsItemDescriptionMax),
+  "categoryId": zod.string().min(1).max(importConnectProviderCatalogBodyItemsItemCategoryIdMax),
+  "price": zod.union([zod.object({
+  "amountMinor": zod.int().min(importConnectProviderCatalogBodyItemsItemPriceOneAmountMinorMin).max(importConnectProviderCatalogBodyItemsItemPriceOneAmountMinorMax),
+  "currency": zod.string().regex(importConnectProviderCatalogBodyItemsItemPriceOneCurrencyRegExp),
+  "minorUnitScale": zod.int().min(importConnectProviderCatalogBodyItemsItemPriceOneMinorUnitScaleMin).max(importConnectProviderCatalogBodyItemsItemPriceOneMinorUnitScaleMax)
+}),zod.null()]),
+  "availability": zod.enum(['AVAILABLE', 'UNAVAILABLE', 'UNKNOWN']),
+  "targetPath": zod.string().min(1).max(importConnectProviderCatalogBodyItemsItemTargetPathMax),
+  "sourceVersion": zod.int().gt(importConnectProviderCatalogBodyItemsItemSourceVersionExclusiveMin).max(importConnectProviderCatalogBodyItemsItemSourceVersionMax),
+  "sourceCheckedAt": zod.coerce.date(),
+  "attributes": zod.array(zod.object({
+  "label": zod.string().min(1).max(importConnectProviderCatalogBodyItemsItemAttributesItemLabelMax),
+  "value": zod.union([zod.string().max(importConnectProviderCatalogBodyItemsItemAttributesItemValueOneMax),zod.null()])
+})).max(importConnectProviderCatalogBodyItemsItemAttributesMax)
+})).min(1).max(importConnectProviderCatalogBodyItemsMax)
+})
+
+export const ImportConnectProviderCatalogResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * Access: AUTHENTICATED. Server checks current ownership, market legal gates and approval. External catalog only; no internal order, payment or automatic registration. Credentials returned only at issue time. Live financial activation is unsupported.
+ */
+export const searchConnectCatalogQuerySearchMax = 120;
+
+
+
+export const SearchConnectCatalogQueryParams = zod.object({
+  "search": zod.coerce.string().max(searchConnectCatalogQuerySearchMax).optional()
+})
+
+export const searchConnectCatalogResponseCardsItemIdMax = 400;
+
+export const searchConnectCatalogResponseCardsItemTitleMax = 180;
+
+export const searchConnectCatalogResponseCardsItemDescriptionMax = 700;
+
+export const searchConnectCatalogResponseCardsItemInternalResourceIdMax = 200;
+
+export const searchConnectCatalogResponseCardsItemProviderIdMax = 80;
+
+export const searchConnectCatalogResponseCardsItemFactsItemLabelMax = 80;
+
+export const searchConnectCatalogResponseCardsItemFactsItemValueOneMax = 300;
+
+export const searchConnectCatalogResponseCardsItemFactsMax = 20;
+
+export const searchConnectCatalogResponseCardsItemPriceOneAmountMinorMin = 0;
+export const searchConnectCatalogResponseCardsItemPriceOneAmountMinorMax = 9007199254740991;
+
+export const searchConnectCatalogResponseCardsItemPriceOneCurrencyRegExp = new RegExp('^[A-Z]{3}$');
+export const searchConnectCatalogResponseCardsItemPriceOneMinorUnitScaleMin = 0;
+export const searchConnectCatalogResponseCardsItemPriceOneMinorUnitScaleMax = 4;
+
+export const searchConnectCatalogResponseCardsItemSourceLabelMax = 200;
+
+export const searchConnectCatalogResponseCardsItemDomainProviderIdMax = 80;
+
+export const searchConnectCatalogResponseCardsItemDomainProviderNameMax = 120;
+
+export const searchConnectCatalogResponseCardsItemDomainDomainMin = 3;
+export const searchConnectCatalogResponseCardsItemDomainDomainMax = 253;
+
+export const searchConnectCatalogResponseCardsItemDomainRegistrationPriceOneAmountMinorMin = 0;
+export const searchConnectCatalogResponseCardsItemDomainRegistrationPriceOneAmountMinorMax = 9007199254740991;
+
+export const searchConnectCatalogResponseCardsItemDomainRegistrationPriceOneCurrencyRegExp = new RegExp('^[A-Z]{3}$');
+export const searchConnectCatalogResponseCardsItemDomainRegistrationPriceOneMinorUnitScaleMin = 0;
+export const searchConnectCatalogResponseCardsItemDomainRegistrationPriceOneMinorUnitScaleMax = 4;
+
+export const searchConnectCatalogResponseCardsItemDomainRenewalPriceOneAmountMinorMin = 0;
+export const searchConnectCatalogResponseCardsItemDomainRenewalPriceOneAmountMinorMax = 9007199254740991;
+
+export const searchConnectCatalogResponseCardsItemDomainRenewalPriceOneCurrencyRegExp = new RegExp('^[A-Z]{3}$');
+export const searchConnectCatalogResponseCardsItemDomainRenewalPriceOneMinorUnitScaleMin = 0;
+export const searchConnectCatalogResponseCardsItemDomainRenewalPriceOneMinorUnitScaleMax = 4;
+
+export const searchConnectCatalogResponseCardsItemDomainSourceMax = 200;
+
+export const searchConnectCatalogResponseCardsItemDomainRetryAfterSecondsMax = 3600;
+
+export const searchConnectCatalogResponseCardsItemDomainReasonMax = 100;
+
+export const searchConnectCatalogResponseCardsItemDomainActionProviderIdMax = 80;
+
+export const searchConnectCatalogResponseCardsItemDomainActionTargetIdMax = 400;
+
+export const searchConnectCatalogResponseCardsItemDomainActionLabelMax = 100;
+
+export const searchConnectCatalogResponseCardsItemExternalActionsItemProviderIdMax = 80;
+
+export const searchConnectCatalogResponseCardsItemExternalActionsItemTargetIdMax = 400;
+
+export const searchConnectCatalogResponseCardsItemExternalActionsItemLabelMax = 100;
+
+export const searchConnectCatalogResponseCardsItemExternalActionsMax = 3;
+
+export const searchConnectCatalogResponseCardsItemDisclosureMax = 500;
+
+export const searchConnectCatalogResponseCardsItemAuthorizedCapabilityIdMax = 128;
+
+export const searchConnectCatalogResponseCardsMax = 12;
+
+export const searchConnectCatalogResponseNoteMax = 700;
+
+export const searchConnectCatalogResponseComparisonNoteMax = 700;
+
+
+
+export const SearchConnectCatalogResponse = zod.object({
+  "version": zod.literal(1),
+  "cards": zod.array(zod.object({
+  "version": zod.literal(1),
+  "id": zod.string().min(1).max(searchConnectCatalogResponseCardsItemIdMax),
+  "kind": zod.enum(['INTERNAL_PRODUCT', 'INTERNAL_SERVICE', 'EXTERNAL_PRODUCT', 'EXTERNAL_SERVICE', 'DOMAIN_REGISTRATION', 'COMPARISON', 'ORDER_STATUS', 'TRANSACTION_STATUS', 'CAPABILITY']),
+  "commerceMode": zod.enum(['INTERNAL_DINAR', 'EXTERNAL_REFERRAL', 'EXTERNAL_AUTHORIZED_ACTION']),
+  "title": zod.string().min(1).max(searchConnectCatalogResponseCardsItemTitleMax),
+  "description": zod.string().max(searchConnectCatalogResponseCardsItemDescriptionMax).optional(),
+  "internalResourceId": zod.string().min(1).max(searchConnectCatalogResponseCardsItemInternalResourceIdMax).optional(),
+  "providerId": zod.string().min(1).max(searchConnectCatalogResponseCardsItemProviderIdMax).optional(),
+  "facts": zod.array(zod.object({
+  "label": zod.string().min(1).max(searchConnectCatalogResponseCardsItemFactsItemLabelMax),
+  "value": zod.union([zod.string().max(searchConnectCatalogResponseCardsItemFactsItemValueOneMax),zod.null()]),
+  "source": zod.enum(['INTERNAL_RECORD', 'PROVIDER_RECORD', 'UNKNOWN'])
+})).max(searchConnectCatalogResponseCardsItemFactsMax),
+  "price": zod.union([zod.object({
+  "amountMinor": zod.int().min(searchConnectCatalogResponseCardsItemPriceOneAmountMinorMin).max(searchConnectCatalogResponseCardsItemPriceOneAmountMinorMax),
+  "currency": zod.string().regex(searchConnectCatalogResponseCardsItemPriceOneCurrencyRegExp),
+  "minorUnitScale": zod.int().min(searchConnectCatalogResponseCardsItemPriceOneMinorUnitScaleMin).max(searchConnectCatalogResponseCardsItemPriceOneMinorUnitScaleMax)
+}),zod.null()]),
+  "availability": zod.enum(['AVAILABLE', 'UNAVAILABLE', 'UNKNOWN']),
+  "checkedAt": zod.union([zod.null(),zod.coerce.date()]),
+  "sourceLabel": zod.string().min(1).max(searchConnectCatalogResponseCardsItemSourceLabelMax),
+  "domain": zod.object({
+  "providerId": zod.string().min(1).max(searchConnectCatalogResponseCardsItemDomainProviderIdMax),
+  "providerName": zod.string().min(1).max(searchConnectCatalogResponseCardsItemDomainProviderNameMax),
+  "domain": zod.string().min(searchConnectCatalogResponseCardsItemDomainDomainMin).max(searchConnectCatalogResponseCardsItemDomainDomainMax),
+  "availability": zod.enum(['AVAILABLE', 'UNAVAILABLE', 'UNKNOWN']),
+  "premium": zod.boolean().nullable(),
+  "registrationPrice": zod.union([zod.object({
+  "amountMinor": zod.int().min(searchConnectCatalogResponseCardsItemDomainRegistrationPriceOneAmountMinorMin).max(searchConnectCatalogResponseCardsItemDomainRegistrationPriceOneAmountMinorMax),
+  "currency": zod.string().regex(searchConnectCatalogResponseCardsItemDomainRegistrationPriceOneCurrencyRegExp),
+  "minorUnitScale": zod.int().min(searchConnectCatalogResponseCardsItemDomainRegistrationPriceOneMinorUnitScaleMin).max(searchConnectCatalogResponseCardsItemDomainRegistrationPriceOneMinorUnitScaleMax)
+}),zod.null()]),
+  "renewalPrice": zod.union([zod.object({
+  "amountMinor": zod.int().min(searchConnectCatalogResponseCardsItemDomainRenewalPriceOneAmountMinorMin).max(searchConnectCatalogResponseCardsItemDomainRenewalPriceOneAmountMinorMax),
+  "currency": zod.string().regex(searchConnectCatalogResponseCardsItemDomainRenewalPriceOneCurrencyRegExp),
+  "minorUnitScale": zod.int().min(searchConnectCatalogResponseCardsItemDomainRenewalPriceOneMinorUnitScaleMin).max(searchConnectCatalogResponseCardsItemDomainRenewalPriceOneMinorUnitScaleMax)
+}),zod.null()]),
+  "source": zod.string().min(1).max(searchConnectCatalogResponseCardsItemDomainSourceMax),
+  "lastCheckedAt": zod.union([zod.null(),zod.coerce.date()]),
+  "status": zod.enum(['CHECKED', 'NOT_CONFIGURED', 'RATE_LIMITED', 'TIMEOUT', 'UNAVAILABLE', 'UNAUTHORIZED', 'INVALID_RESPONSE']),
+  "providerMode": zod.enum(['SANDBOX', 'LIVE', 'NOT_CONNECTED']),
+  "retryAfterSeconds": zod.int().min(1).max(searchConnectCatalogResponseCardsItemDomainRetryAfterSecondsMax).optional(),
+  "reason": zod.string().max(searchConnectCatalogResponseCardsItemDomainReasonMax).optional(),
+  "action": zod.object({
+  "kind": zod.literal("EXTERNAL_LINK"),
+  "providerId": zod.string().min(1).max(searchConnectCatalogResponseCardsItemDomainActionProviderIdMax),
+  "targetId": zod.string().min(1).max(searchConnectCatalogResponseCardsItemDomainActionTargetIdMax),
+  "intent": zod.enum(['SEARCH_ON_PROVIDER', 'VIEW_ON_PROVIDER']),
+  "label": zod.string().min(1).max(searchConnectCatalogResponseCardsItemDomainActionLabelMax)
+}),
+  "affiliateRelationship": zod.literal(false)
+}).optional(),
+  "externalActions": zod.array(zod.object({
+  "kind": zod.literal("EXTERNAL_LINK"),
+  "providerId": zod.string().min(1).max(searchConnectCatalogResponseCardsItemExternalActionsItemProviderIdMax),
+  "targetId": zod.string().min(1).max(searchConnectCatalogResponseCardsItemExternalActionsItemTargetIdMax),
+  "intent": zod.enum(['SEARCH_ON_PROVIDER', 'VIEW_ON_PROVIDER']),
+  "label": zod.string().min(1).max(searchConnectCatalogResponseCardsItemExternalActionsItemLabelMax)
+})).max(searchConnectCatalogResponseCardsItemExternalActionsMax),
+  "disclosure": zod.string().min(1).max(searchConnectCatalogResponseCardsItemDisclosureMax).optional(),
+  "authorizedCapabilityId": zod.string().min(1).max(searchConnectCatalogResponseCardsItemAuthorizedCapabilityIdMax).optional()
+})).max(searchConnectCatalogResponseCardsMax),
+  "note": zod.string().max(searchConnectCatalogResponseNoteMax),
+  "comparisonNote": zod.string().max(searchConnectCatalogResponseComparisonNoteMax).optional()
+})
+
+
