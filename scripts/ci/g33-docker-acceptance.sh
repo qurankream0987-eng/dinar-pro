@@ -287,6 +287,7 @@ docker run --detach \
   --network "container:$POSTGRES" \
   --volume "$TEST_SNAPSHOT:/app/artifacts/api-server/test" \
   --volume "$HANDSHAKE:/g33" \
+  --tmpfs /app/artifacts/api-server/.test-build:rw,uid=1000,gid=1000,mode=0777,size=128m \
   --memory 1g \
   --cpus 2 \
   --pids-limit 256 \
