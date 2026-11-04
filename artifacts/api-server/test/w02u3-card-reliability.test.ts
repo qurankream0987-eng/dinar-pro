@@ -16,7 +16,7 @@ import { test, after } from "node:test";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
-import { aiResultSets, db, markets, orders, pool, users } from "@workspace/db";
+import { aiResultSets, db, orders, pool } from "@workspace/db";
 import * as Surfaces from "@workspace/api-zod/surface-composition";
 import app from "../src/app";
 import type { ConversationModelGateway } from "../src/ai/model-gateway";
@@ -345,7 +345,7 @@ await test("CR-11 an expired review is terminal in the envelope and cannot execu
   assert.deepEqual(again.allowedActions, []);
 });
 
-await test("CR-12 another account is isolated and an unapproved market cannot cross the card boundary", async () => {
+await test("CR-12 another account and another market cannot read or drive the cards", async () => {
   const conversationId = await conversation();
   await say(conversationId, `ابحث عن ساعة ${run}`);
   const openedCard = cardOf(reviewInTurn(await say(conversationId, "ابي الأول")));
@@ -355,20 +355,25 @@ await test("CR-12 another account is isolated and an unapproved market cannot cr
   assert.equal(forged.status, 404);
   assert.equal(await cartQuantity(secondListing, stranger.cookie), 0);
 
-  // SA remains legally unapproved in this disposable single-market harness. Do not activate a real
-  // market just to test cross-market behavior: prove the rejected switch leaves server state intact.
+  // The harness seeds SA as an active market, so the switch itself is allowed. What must never
+  // happen is the pending JO review reaching SA: the conversation keeps its own market as its
+  // tool context, so SA can neither see the JO listing nor receive an effect from the JO review.
   const switched = await request("/account/market", "PATCH", { marketId: "SA" }, buyer.cookie);
-  assert.equal(switched.status, 409, switched.text);
-  const activeMarket = await db.select({ countryCode: markets.countryCode })
-    .from(users)
-    .innerJoin(markets, eq(users.activeMarketId, markets.id))
-    .where(eq(users.id, buyer.id));
-  assert.equal(activeMarket[0]?.countryCode, "JO", "the refused SA switch did not change persisted market");
+  assert.equal(switched.status, 200, switched.text);
+  try {
+    assert.equal((await request(`/listings/${secondListing}`, "GET", undefined, buyer.cookie)).status, 404, "a JO listing is invisible in SA");
+    assert.equal(await cartQuantity(secondListing), 0, "the SA cart holds nothing from the JO review");
+    const refused = await say(conversationId, "نعم");
+    assert.match(refused.body, /ليس في سوقك الحالي/u, refused.body);
+    assert.equal(await cartQuantity(secondListing), 0, "the SA market receives no effect");
+  } finally {
+    assert.equal((await request("/account/market", "PATCH", { marketId: "JO" }, buyer.cookie)).status, 200);
+  }
+  assert.equal(await cartQuantity(secondListing), 1, "the cross-market confirmation changed nothing in JO either");
   const stored = cardOf(reviewIn(await readConversation(conversationId)).block);
   assert.equal(stored.surfaceId, openedCard.surfaceId);
   assert.equal(stored.status.lifecycle, openedCard.status.lifecycle);
-  assert.notEqual(stored.status.lifecycle, "CONFIRMED");
-  assert.equal(await cartQuantity(secondListing), 1, "the refused cross-market switch caused no cart effect");
+  assert.notEqual(stored.status.lifecycle, "CONFIRMED", "a cross-market confirmation never executes");
 });
 
 after(async () => {
