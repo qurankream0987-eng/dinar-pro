@@ -14,9 +14,10 @@ preserved.
 | Isolated development worktree | `/workspace/dinar-next-unified` |
 | Local-only development branch | `codex/dinar-next-unified-development` |
 | Tested application / browser-regression revision | `068fcf6d5d0af3104beaf4b2d4d6789d54c86fdb` |
+| Final G2 regression-test revision (application source unchanged) | `64336948e961e3ccd702fefe74639808db0259ef` |
 | Original checkout, preserved | `/workspace/dinar-pro`, actual local branch `work`, HEAD `b1b20e513ed25952bc086778fb71af88adcc54ba` |
 | Remote `main`, unchanged | `b1b20e513ed25952bc086778fb71af88adcc54ba` |
-| Newly discovered Qoder follow-up, preserved | `qoder/temp-principal-sixwave-closure`, `e76e6b03d5103df0f8f04e67fd9513c8075e44dc` |
+| Newly discovered Qoder follow-up, preserved | `qoder/temp-principal-sixwave-closure`, initially `e76e6b03d5103df0f8f04e67fd9513c8075e44dc`; subsequently inspected through `5446ccb8e4b0164c339a78350dd155c985b54c74` |
 
 The original checkout is clean. It has no local `main` branch; it was not renamed,
 reset, rebased, or overwritten. No historical Qoder migration sequence was imported.
@@ -33,7 +34,7 @@ Release-manifest SHA-256:
 
 ## Reviewed follow-up work incorporated locally
 
-Eight selected Qoder commits were applied with `cherry-pick -x`; their original
+Nine selected Qoder commits were applied with `cherry-pick -x`; their original
 author and source commit IDs are recorded in the resulting local commit messages.
 This was not a wholesale branch merge. Original refs remain unchanged.
 
@@ -47,12 +48,24 @@ This was not a wholesale branch merge. Original refs remain unchanged.
 | `e91e6659d497a527a3b00d479972b3a8b1d7211e` | Measure trigram-index cost against the rows it actually indexes |
 | `9a57d629f24f7e5c9ae7e16397f1fd48dcac4610` | Reindex the disposable measurement fixture after preceding test churn |
 | `31f52c724f5b754c46eeb6d982568dff782e9ab4` | Prevent random fixture tokens from resembling phone numbers in contact-screened listing text |
+| `ff06650b7be97c21d4aa5915d66b040cede69de2` | Replace a G2 fixture's forbidden order-snapshot rewrite with a cash-only order created through checkout |
 
 The stale guard, cross-market expectation, and retrieval-measurement failures were
 reproduced locally before their corrections. The financial state-machine and
 financial-journal suites were already passing. Reindexing is test-only; production
 index maintenance and SQL were not altered. Imported Qoder evidence documents
 remain historical reports, not substitutes for this Cloud validation.
+
+The Qoder branch advanced during this session. Its new G2 fixture change was also
+reviewed and reproduced: the original test tried to rewrite a confirmed order's
+items, which the unchanged 0056 trigger correctly refused with SQLSTATE `55000`.
+The attributed correction required a further local adjustment: fixed-price
+checkout starts with an explicit selected listing, whereas the bare purchase
+phrase in the imported patch applies to the preceding negotiated-price context.
+The final test uses the deterministic selection path, checks zero model calls for
+that selection, and verifies that choosing cash leaves the born line-item snapshot
+unchanged. Its full 91-test G2 suite passes. The concurrent branch advance is
+preserved, not represented as evidence that the old agent/task has stopped.
 
 No accessible unpublished Qoder workspace or artifact was discovered. The remote
 follow-up is preserved as a local remote-tracking ref and in the safety bundles;
@@ -101,9 +114,10 @@ failure.
 | Real browser SC01, SC03, SC06, SC07, SC10 | Each passed; 5 total |
 | Real browser history, draft stability, current-state edit, preservation | 1 passed; both viewports |
 | Security, D3-A business browser, card recovery | 12 security tests and 2 browser journeys passed |
+| G2 smart conversation, negotiated payment and immutable cash-only snapshot fixture | 91 passed |
 
-The selected final evidence contains **388 passed tests and 1 deliberately skipped
-live-TLS test across 34 suite entries**, with no failures in those selected final
+The selected final evidence contains **479 passed tests and 1 deliberately skipped
+live-TLS test across 35 suite entries**, with no failures in those selected final
 entries. This is a targeted acceptance set, not the full repository inventory.
 
 These are new unified-candidate/local-follow-up results. The old baseline's 53
@@ -117,7 +131,9 @@ the raw logs. They are not reported as passing runs. In particular,
 `browser-final.log` has a failed earlier version of the new performance check;
 its five commerce journeys passed. The corrected focused performance run is
 `render-verified.log`, which passed. There is no claim that every log or the entire
-repository test inventory is green.
+repository test inventory is green. `g2-before.log` and `g2-verified.log` retain the
+protected-snapshot and imported-fixture failures; the accepted final G2 run is
+`g2-final.log`.
 
 Evidence is retained under `/workspace/dinar-preparation`, including
 `acceptance-summary.json`, migration verification, per-cohort logs, remote-head
@@ -198,6 +214,14 @@ Next engineering gates remain:
    automated layout evidence does not replace manual assistive-technology review.
 6. Obtain independent Claude review of the attributed corrections, new stable-event
    hook, current-state action behavior, evidence exclusions, and preservation record.
+
+The inspected Qoder baseline report also flags unfinished stream stop/resume
+behavior and policy questions about country approvals versus business membership,
+the `INFORMATION_ONLY` / `ELECTRONIC_PAYMENT` capabilities, and production startup
+configuration. These are review inputs, not all independently confirmed defects
+in this pass. In particular, stopping client-side display and cancelling a
+server-owned turn have different resource/financial consequences; no cancellation
+policy was silently selected or implemented.
 
 Jurisdictional approvals, real market activation, provider choice/credentials,
 live payment settlement, production migration, Railway changes, deployment, and
