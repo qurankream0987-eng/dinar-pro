@@ -186,6 +186,13 @@ await test("D17.8-R5 derived memory is disclosed in the user's own export and di
 });
 
 await test("D17.8-R6 the trigram index behind retrieval is measured against the rows it indexes", async () => {
+  // On the shared wave06-d17-memory chain the performance suite grows `messages` to 10,000 rows,
+  // maintains this GIN index as they arrive, then DELETEs them in its teardown. A GIN index does not
+  // shrink on DELETE — its pages stay allocated until maintenance — so the raw relation size still
+  // reflects that benchmark's high-water mark, not the rows this suite indexes. Dividing that bloated
+  // size by the live row count would charge another suite's deleted data to this index. REINDEX
+  // rebuilds it over exactly the live rows, so bytes-per-row measures the index itself.
+  await db.execute(sql`REINDEX INDEX messages_body_trgm_idx`);
   const sizes = await db.execute(sql`
     SELECT pg_relation_size('messages')::bigint AS messages_heap_bytes,
            pg_indexes_size('messages')::bigint AS messages_index_bytes,
