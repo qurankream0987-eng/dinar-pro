@@ -2906,7 +2906,7 @@ paths:
     post:
       operationId: requestAdminMarketCapabilityReview
       tags: [compliance]
-      summary: "Request an independent counsel review. Does not enable the capability."
+      summary: "Request an independent counsel review. Does not enable the capability. Access: ADMIN."
       parameters:
         - { name: marketId, in: path, required: true, schema: { type: string, maxLength: 32 } }
         - { name: capability, in: path, required: true, schema: { $ref: "#/components/schemas/MarketLegalCapabilityName" } }
@@ -2928,7 +2928,7 @@ paths:
     post:
       operationId: recordAdminMarketCapabilityCounselReview
       tags: [compliance]
-      summary: "Record a designated counsel review. This does not activate the capability."
+      summary: "Record a designated counsel review. This does not activate the capability. Access: ADMIN."
       parameters:
         - { name: marketId, in: path, required: true, schema: { type: string, maxLength: 32 } }
         - { name: capability, in: path, required: true, schema: { $ref: "#/components/schemas/MarketLegalCapabilityName" } }
@@ -2950,7 +2950,7 @@ paths:
     post:
       operationId: enableAdminMarketCapability
       tags: [compliance]
-      summary: "Enable a capability after separate counsel review and owner approval."
+      summary: "Enable a capability after separate counsel review and owner approval. Access: ADMIN."
       parameters:
         - { name: marketId, in: path, required: true, schema: { type: string, maxLength: 32 } }
         - { name: capability, in: path, required: true, schema: { $ref: "#/components/schemas/MarketLegalCapabilityName" } }
@@ -2972,7 +2972,7 @@ paths:
     post:
       operationId: disableAdminMarketCapability
       tags: [compliance]
-      summary: "Disable a market capability immediately."
+      summary: "Disable a market capability immediately. Access: ADMIN."
       parameters:
         - { name: marketId, in: path, required: true, schema: { type: string, maxLength: 32 } }
         - { name: capability, in: path, required: true, schema: { $ref: "#/components/schemas/MarketLegalCapabilityName" } }
@@ -3024,7 +3024,7 @@ paths:
     post:
       operationId: submitAdminCountryLegalEvidence
       tags: [compliance]
-      summary: "Register a private-vault evidence reference; document bytes are not accepted."
+      summary: "Register a private-vault evidence reference; document bytes are not accepted. Access: ADMIN."
       parameters:
         - { name: marketId, in: path, required: true, schema: { type: string, maxLength: 32 } }
       requestBody:
@@ -3045,7 +3045,7 @@ paths:
     post:
       operationId: reviewAdminCountryLegalEvidence
       tags: [compliance]
-      summary: "Record a designated counsel review of an evidence pointer, not a signature."
+      summary: "Record a designated counsel review of an evidence pointer, not a signature. Access: ADMIN."
       parameters:
         - { name: evidenceId, in: path, required: true, schema: { type: string, maxLength: 120 } }
       requestBody:
@@ -3066,7 +3066,7 @@ paths:
     post:
       operationId: requestAdminCountryCounselReview
       tags: [compliance]
-      summary: "Open a country-level counsel review request."
+      summary: "Open a country-level counsel review request. Access: ADMIN."
       parameters:
         - { name: marketId, in: path, required: true, schema: { type: string, maxLength: 32 } }
       requestBody:
@@ -3086,7 +3086,7 @@ paths:
     post:
       operationId: reviewAdminCountryLegalTopic
       tags: [compliance]
-      summary: "Record a counsel finding and explicit evidence and policy requirements for one topic."
+      summary: "Record a counsel finding and explicit evidence and policy requirements for one topic. Access: ADMIN."
       parameters:
         - { name: marketId, in: path, required: true, schema: { type: string, maxLength: 32 } }
         - { name: topicKey, in: path, required: true, schema: { $ref: "#/components/schemas/CountryLegalTopicKey" } }
@@ -3108,7 +3108,7 @@ paths:
     post:
       operationId: recordAdminCountryCounselReview
       tags: [compliance]
-      summary: "Record completion of the topic review, without approving or activating the country."
+      summary: "Record completion of the topic review, without approving or activating the country. Access: ADMIN."
       parameters:
         - { name: marketId, in: path, required: true, schema: { type: string, maxLength: 32 } }
       requestBody:
@@ -3129,7 +3129,7 @@ paths:
     post:
       operationId: attemptAdminCountryCounselApproval
       tags: [compliance]
-      summary: "Keep approval blocked unless independently verified counsel identity and signature are available."
+      summary: "Keep approval blocked unless independently verified counsel identity and signature are available. Access: ADMIN."
       parameters:
         - { name: marketId, in: path, required: true, schema: { type: string, maxLength: 32 } }
       requestBody:
@@ -3144,7 +3144,7 @@ paths:
     post:
       operationId: attemptAdminCountryOwnerApproval
       tags: [compliance]
-      summary: "Require completed legal and technical prerequisites before owner approval."
+      summary: "Require completed legal and technical prerequisites before owner approval. Access: ADMIN."
       parameters:
         - { name: marketId, in: path, required: true, schema: { type: string, maxLength: 32 } }
       requestBody:
@@ -3159,7 +3159,7 @@ paths:
     post:
       operationId: recordAdminCountryTechnicalVerification
       tags: [compliance]
-      summary: "Require a machine-verifiable test attestation before technical readiness can pass."
+      summary: "Require a machine-verifiable test attestation before technical readiness can pass. Access: ADMIN."
       parameters:
         - { name: marketId, in: path, required: true, schema: { type: string, maxLength: 32 } }
       requestBody:
@@ -3174,7 +3174,7 @@ paths:
     post:
       operationId: activateAdminCountryReadiness
       tags: [compliance]
-      summary: "Activate a country package only after counsel, owner, and technical gates pass."
+      summary: "Activate a country package only after counsel, owner, and technical gates pass. Access: ADMIN."
       parameters:
         - { name: marketId, in: path, required: true, schema: { type: string, maxLength: 32 } }
       requestBody:
@@ -3189,7 +3189,7 @@ paths:
     post:
       operationId: suspendAdminCountryReadiness
       tags: [compliance]
-      summary: "Suspend new market capabilities without removing access to existing orders."
+      summary: "Suspend new market capabilities without removing access to existing orders. Access: ADMIN."
       parameters:
         - { name: marketId, in: path, required: true, schema: { type: string, maxLength: 32 } }
       requestBody:

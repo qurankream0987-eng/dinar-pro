@@ -6235,7 +6235,7 @@ export const GetAdminMarketLegalCapabilitiesResponse = zod.object({
 
 
 /**
- * @summary Request an independent counsel review. Does not enable the capability.
+ * @summary Request an independent counsel review. Does not enable the capability. Access: ADMIN.
  */
 export const requestAdminMarketCapabilityReviewPathMarketIdMax = 32;
 
@@ -6262,7 +6262,7 @@ export const RequestAdminMarketCapabilityReviewResponse = zod.object({
 
 
 /**
- * @summary Record a designated counsel review. This does not activate the capability.
+ * @summary Record a designated counsel review. This does not activate the capability. Access: ADMIN.
  */
 export const recordAdminMarketCapabilityCounselReviewPathMarketIdMax = 32;
 
@@ -6297,7 +6297,7 @@ export const RecordAdminMarketCapabilityCounselReviewResponse = zod.object({
 
 
 /**
- * @summary Enable a capability after separate counsel review and owner approval.
+ * @summary Enable a capability after separate counsel review and owner approval. Access: ADMIN.
  */
 export const enableAdminMarketCapabilityPathMarketIdMax = 32;
 
@@ -6331,7 +6331,7 @@ export const EnableAdminMarketCapabilityResponse = zod.object({
 
 
 /**
- * @summary Disable a market capability immediately.
+ * @summary Disable a market capability immediately. Access: ADMIN.
  */
 export const disableAdminMarketCapabilityPathMarketIdMax = 32;
 
@@ -6508,7 +6508,7 @@ export const GetAdminCountryLegalReadinessResponse = zod.object({
 
 
 /**
- * @summary Register a private-vault evidence reference; document bytes are not accepted.
+ * @summary Register a private-vault evidence reference; document bytes are not accepted. Access: ADMIN.
  */
 export const submitAdminCountryLegalEvidencePathMarketIdMax = 32;
 
@@ -6569,7 +6569,7 @@ export const SubmitAdminCountryLegalEvidenceResponse = zod.object({
 
 
 /**
- * @summary Record a designated counsel review of an evidence pointer, not a signature.
+ * @summary Record a designated counsel review of an evidence pointer, not a signature. Access: ADMIN.
  */
 export const reviewAdminCountryLegalEvidencePathEvidenceIdMax = 120;
 
@@ -6605,7 +6605,7 @@ export const ReviewAdminCountryLegalEvidenceResponse = zod.object({
 
 
 /**
- * @summary Open a country-level counsel review request.
+ * @summary Open a country-level counsel review request. Access: ADMIN.
  */
 export const requestAdminCountryCounselReviewPathMarketIdMax = 32;
 
@@ -6653,7 +6653,7 @@ export const RequestAdminCountryCounselReviewResponse = zod.object({
 
 
 /**
- * @summary Record a counsel finding and explicit evidence and policy requirements for one topic.
+ * @summary Record a counsel finding and explicit evidence and policy requirements for one topic. Access: ADMIN.
  */
 export const reviewAdminCountryLegalTopicPathMarketIdMax = 32;
 
@@ -6742,7 +6742,7 @@ export const ReviewAdminCountryLegalTopicResponse = zod.object({
 
 
 /**
- * @summary Record completion of the topic review, without approving or activating the country.
+ * @summary Record completion of the topic review, without approving or activating the country. Access: ADMIN.
  */
 export const recordAdminCountryCounselReviewPathMarketIdMax = 32;
 
@@ -6797,7 +6797,7 @@ export const RecordAdminCountryCounselReviewResponse = zod.object({
 
 
 /**
- * @summary Keep approval blocked unless independently verified counsel identity and signature are available.
+ * @summary Keep approval blocked unless independently verified counsel identity and signature are available. Access: ADMIN.
  */
 export const attemptAdminCountryCounselApprovalPathMarketIdMax = 32;
 
@@ -6822,7 +6822,7 @@ export const AttemptAdminCountryCounselApprovalResponse = zod.void()
 
 
 /**
- * @summary Require completed legal and technical prerequisites before owner approval.
+ * @summary Require completed legal and technical prerequisites before owner approval. Access: ADMIN.
  */
 export const attemptAdminCountryOwnerApprovalPathMarketIdMax = 32;
 
@@ -6847,7 +6847,7 @@ export const AttemptAdminCountryOwnerApprovalResponse = zod.void()
 
 
 /**
- * @summary Require a machine-verifiable test attestation before technical readiness can pass.
+ * @summary Require a machine-verifiable test attestation before technical readiness can pass. Access: ADMIN.
  */
 export const recordAdminCountryTechnicalVerificationPathMarketIdMax = 32;
 
@@ -6872,7 +6872,7 @@ export const RecordAdminCountryTechnicalVerificationResponse = zod.void()
 
 
 /**
- * @summary Activate a country package only after counsel, owner, and technical gates pass.
+ * @summary Activate a country package only after counsel, owner, and technical gates pass. Access: ADMIN.
  */
 export const activateAdminCountryReadinessPathMarketIdMax = 32;
 
@@ -6897,7 +6897,7 @@ export const ActivateAdminCountryReadinessResponse = zod.void()
 
 
 /**
- * @summary Suspend new market capabilities without removing access to existing orders.
+ * @summary Suspend new market capabilities without removing access to existing orders. Access: ADMIN.
  */
 export const suspendAdminCountryReadinessPathMarketIdMax = 32;
 

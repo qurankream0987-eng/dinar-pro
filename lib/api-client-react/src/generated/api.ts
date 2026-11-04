@@ -14648,7 +14648,7 @@ export const getRequestAdminMarketCapabilityReviewUrl = (marketId: string,
 }
 
 /**
- * @summary Request an independent counsel review. Does not enable the capability.
+ * @summary Request an independent counsel review. Does not enable the capability. Access: ADMIN.
  */
 export const requestAdminMarketCapabilityReview = async (marketId: string,
     capability: MarketLegalCapabilityName,
@@ -14716,7 +14716,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type RequestAdminMarketCapabilityReviewMutationVariables = {marketId: string;capability: MarketLegalCapabilityName;data?: BodyType<EmptyInput>}
 
     /**
- * @summary Request an independent counsel review. Does not enable the capability.
+ * @summary Request an independent counsel review. Does not enable the capability. Access: ADMIN.
  */
 export const useRequestAdminMarketCapabilityReview = <TError = ErrorType<void>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestAdminMarketCapabilityReview>>, TError,RequestAdminMarketCapabilityReviewMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
@@ -14739,7 +14739,7 @@ export const getRecordAdminMarketCapabilityCounselReviewUrl = (marketId: string,
 }
 
 /**
- * @summary Record a designated counsel review. This does not activate the capability.
+ * @summary Record a designated counsel review. This does not activate the capability. Access: ADMIN.
  */
 export const recordAdminMarketCapabilityCounselReview = async (marketId: string,
     capability: MarketLegalCapabilityName,
@@ -14807,7 +14807,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type RecordAdminMarketCapabilityCounselReviewMutationVariables = {marketId: string;capability: MarketLegalCapabilityName;data: BodyType<MarketCapabilityCounselReviewInput>}
 
     /**
- * @summary Record a designated counsel review. This does not activate the capability.
+ * @summary Record a designated counsel review. This does not activate the capability. Access: ADMIN.
  */
 export const useRecordAdminMarketCapabilityCounselReview = <TError = ErrorType<void>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof recordAdminMarketCapabilityCounselReview>>, TError,RecordAdminMarketCapabilityCounselReviewMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
@@ -14830,7 +14830,7 @@ export const getEnableAdminMarketCapabilityUrl = (marketId: string,
 }
 
 /**
- * @summary Enable a capability after separate counsel review and owner approval.
+ * @summary Enable a capability after separate counsel review and owner approval. Access: ADMIN.
  */
 export const enableAdminMarketCapability = async (marketId: string,
     capability: MarketLegalCapabilityName,
@@ -14898,7 +14898,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type EnableAdminMarketCapabilityMutationVariables = {marketId: string;capability: MarketLegalCapabilityName;data: BodyType<MarketCapabilityOwnerApprovalInput>}
 
     /**
- * @summary Enable a capability after separate counsel review and owner approval.
+ * @summary Enable a capability after separate counsel review and owner approval. Access: ADMIN.
  */
 export const useEnableAdminMarketCapability = <TError = ErrorType<void>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof enableAdminMarketCapability>>, TError,EnableAdminMarketCapabilityMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
@@ -14921,7 +14921,7 @@ export const getDisableAdminMarketCapabilityUrl = (marketId: string,
 }
 
 /**
- * @summary Disable a market capability immediately.
+ * @summary Disable a market capability immediately. Access: ADMIN.
  */
 export const disableAdminMarketCapability = async (marketId: string,
     capability: MarketLegalCapabilityName,
@@ -14989,7 +14989,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type DisableAdminMarketCapabilityMutationVariables = {marketId: string;capability: MarketLegalCapabilityName;data?: BodyType<EmptyInput>}
 
     /**
- * @summary Disable a market capability immediately.
+ * @summary Disable a market capability immediately. Access: ADMIN.
  */
 export const useDisableAdminMarketCapability = <TError = ErrorType<void>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof disableAdminMarketCapability>>, TError,DisableAdminMarketCapabilityMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
@@ -15213,7 +15213,7 @@ export const getSubmitAdminCountryLegalEvidenceUrl = (marketId: string,) => {
 }
 
 /**
- * @summary Register a private-vault evidence reference; document bytes are not accepted.
+ * @summary Register a private-vault evidence reference; document bytes are not accepted. Access: ADMIN.
  */
 export const submitAdminCountryLegalEvidence = async (marketId: string,
     countryLegalEvidenceInput: CountryLegalEvidenceInput, options?: Parameters<typeof customFetch>[1]): Promise<CountryLegalEvidence> => {
@@ -15280,7 +15280,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type SubmitAdminCountryLegalEvidenceMutationVariables = {marketId: string;data: BodyType<CountryLegalEvidenceInput>}
 
     /**
- * @summary Register a private-vault evidence reference; document bytes are not accepted.
+ * @summary Register a private-vault evidence reference; document bytes are not accepted. Access: ADMIN.
  */
 export const useSubmitAdminCountryLegalEvidence = <TError = ErrorType<void>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitAdminCountryLegalEvidence>>, TError,SubmitAdminCountryLegalEvidenceMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
@@ -15302,7 +15302,7 @@ export const getReviewAdminCountryLegalEvidenceUrl = (evidenceId: string,) => {
 }
 
 /**
- * @summary Record a designated counsel review of an evidence pointer, not a signature.
+ * @summary Record a designated counsel review of an evidence pointer, not a signature. Access: ADMIN.
  */
 export const reviewAdminCountryLegalEvidence = async (evidenceId: string,
     countryLegalEvidenceReviewInput: CountryLegalEvidenceReviewInput, options?: Parameters<typeof customFetch>[1]): Promise<CountryLegalEvidence> => {
@@ -15369,7 +15369,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type ReviewAdminCountryLegalEvidenceMutationVariables = {evidenceId: string;data: BodyType<CountryLegalEvidenceReviewInput>}
 
     /**
- * @summary Record a designated counsel review of an evidence pointer, not a signature.
+ * @summary Record a designated counsel review of an evidence pointer, not a signature. Access: ADMIN.
  */
 export const useReviewAdminCountryLegalEvidence = <TError = ErrorType<void>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reviewAdminCountryLegalEvidence>>, TError,ReviewAdminCountryLegalEvidenceMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
@@ -15391,7 +15391,7 @@ export const getRequestAdminCountryCounselReviewUrl = (marketId: string,) => {
 }
 
 /**
- * @summary Open a country-level counsel review request.
+ * @summary Open a country-level counsel review request. Access: ADMIN.
  */
 export const requestAdminCountryCounselReview = async (marketId: string,
     emptyInput?: EmptyInput, options?: Parameters<typeof customFetch>[1]): Promise<CountryLegalIntake> => {
@@ -15458,7 +15458,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type RequestAdminCountryCounselReviewMutationVariables = {marketId: string;data?: BodyType<EmptyInput>}
 
     /**
- * @summary Open a country-level counsel review request.
+ * @summary Open a country-level counsel review request. Access: ADMIN.
  */
 export const useRequestAdminCountryCounselReview = <TError = ErrorType<void>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestAdminCountryCounselReview>>, TError,RequestAdminCountryCounselReviewMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
@@ -15481,7 +15481,7 @@ export const getReviewAdminCountryLegalTopicUrl = (marketId: string,
 }
 
 /**
- * @summary Record a counsel finding and explicit evidence and policy requirements for one topic.
+ * @summary Record a counsel finding and explicit evidence and policy requirements for one topic. Access: ADMIN.
  */
 export const reviewAdminCountryLegalTopic = async (marketId: string,
     topicKey: CountryLegalTopicKey,
@@ -15549,7 +15549,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type ReviewAdminCountryLegalTopicMutationVariables = {marketId: string;topicKey: CountryLegalTopicKey;data: BodyType<CountryLegalTopicReviewInput>}
 
     /**
- * @summary Record a counsel finding and explicit evidence and policy requirements for one topic.
+ * @summary Record a counsel finding and explicit evidence and policy requirements for one topic. Access: ADMIN.
  */
 export const useReviewAdminCountryLegalTopic = <TError = ErrorType<void>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reviewAdminCountryLegalTopic>>, TError,ReviewAdminCountryLegalTopicMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
@@ -15571,7 +15571,7 @@ export const getRecordAdminCountryCounselReviewUrl = (marketId: string,) => {
 }
 
 /**
- * @summary Record completion of the topic review, without approving or activating the country.
+ * @summary Record completion of the topic review, without approving or activating the country. Access: ADMIN.
  */
 export const recordAdminCountryCounselReview = async (marketId: string,
     countryLegalReferenceInput: CountryLegalReferenceInput, options?: Parameters<typeof customFetch>[1]): Promise<CountryLegalIntake> => {
@@ -15638,7 +15638,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type RecordAdminCountryCounselReviewMutationVariables = {marketId: string;data: BodyType<CountryLegalReferenceInput>}
 
     /**
- * @summary Record completion of the topic review, without approving or activating the country.
+ * @summary Record completion of the topic review, without approving or activating the country. Access: ADMIN.
  */
 export const useRecordAdminCountryCounselReview = <TError = ErrorType<void>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof recordAdminCountryCounselReview>>, TError,RecordAdminCountryCounselReviewMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
@@ -15660,7 +15660,7 @@ export const getAttemptAdminCountryCounselApprovalUrl = (marketId: string,) => {
 }
 
 /**
- * @summary Keep approval blocked unless independently verified counsel identity and signature are available.
+ * @summary Keep approval blocked unless independently verified counsel identity and signature are available. Access: ADMIN.
  */
 export const attemptAdminCountryCounselApproval = async (marketId: string,
     countryLegalReferenceInput: CountryLegalReferenceInput, options?: Parameters<typeof customFetch>[1]): Promise<unknown> => {
@@ -15727,7 +15727,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type AttemptAdminCountryCounselApprovalMutationVariables = {marketId: string;data: BodyType<CountryLegalReferenceInput>}
 
     /**
- * @summary Keep approval blocked unless independently verified counsel identity and signature are available.
+ * @summary Keep approval blocked unless independently verified counsel identity and signature are available. Access: ADMIN.
  */
 export const useAttemptAdminCountryCounselApproval = <TError = ErrorType<void>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof attemptAdminCountryCounselApproval>>, TError,AttemptAdminCountryCounselApprovalMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
@@ -15749,7 +15749,7 @@ export const getAttemptAdminCountryOwnerApprovalUrl = (marketId: string,) => {
 }
 
 /**
- * @summary Require completed legal and technical prerequisites before owner approval.
+ * @summary Require completed legal and technical prerequisites before owner approval. Access: ADMIN.
  */
 export const attemptAdminCountryOwnerApproval = async (marketId: string,
     countryLegalReferenceInput: CountryLegalReferenceInput, options?: Parameters<typeof customFetch>[1]): Promise<unknown> => {
@@ -15816,7 +15816,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type AttemptAdminCountryOwnerApprovalMutationVariables = {marketId: string;data: BodyType<CountryLegalReferenceInput>}
 
     /**
- * @summary Require completed legal and technical prerequisites before owner approval.
+ * @summary Require completed legal and technical prerequisites before owner approval. Access: ADMIN.
  */
 export const useAttemptAdminCountryOwnerApproval = <TError = ErrorType<void>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof attemptAdminCountryOwnerApproval>>, TError,AttemptAdminCountryOwnerApprovalMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
@@ -15838,7 +15838,7 @@ export const getRecordAdminCountryTechnicalVerificationUrl = (marketId: string,)
 }
 
 /**
- * @summary Require a machine-verifiable test attestation before technical readiness can pass.
+ * @summary Require a machine-verifiable test attestation before technical readiness can pass. Access: ADMIN.
  */
 export const recordAdminCountryTechnicalVerification = async (marketId: string,
     countryLegalReferenceInput: CountryLegalReferenceInput, options?: Parameters<typeof customFetch>[1]): Promise<unknown> => {
@@ -15905,7 +15905,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type RecordAdminCountryTechnicalVerificationMutationVariables = {marketId: string;data: BodyType<CountryLegalReferenceInput>}
 
     /**
- * @summary Require a machine-verifiable test attestation before technical readiness can pass.
+ * @summary Require a machine-verifiable test attestation before technical readiness can pass. Access: ADMIN.
  */
 export const useRecordAdminCountryTechnicalVerification = <TError = ErrorType<void>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof recordAdminCountryTechnicalVerification>>, TError,RecordAdminCountryTechnicalVerificationMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
@@ -15927,7 +15927,7 @@ export const getActivateAdminCountryReadinessUrl = (marketId: string,) => {
 }
 
 /**
- * @summary Activate a country package only after counsel, owner, and technical gates pass.
+ * @summary Activate a country package only after counsel, owner, and technical gates pass. Access: ADMIN.
  */
 export const activateAdminCountryReadiness = async (marketId: string,
     countryLegalReferenceInput: CountryLegalReferenceInput, options?: Parameters<typeof customFetch>[1]): Promise<unknown> => {
@@ -15994,7 +15994,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type ActivateAdminCountryReadinessMutationVariables = {marketId: string;data: BodyType<CountryLegalReferenceInput>}
 
     /**
- * @summary Activate a country package only after counsel, owner, and technical gates pass.
+ * @summary Activate a country package only after counsel, owner, and technical gates pass. Access: ADMIN.
  */
 export const useActivateAdminCountryReadiness = <TError = ErrorType<void>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof activateAdminCountryReadiness>>, TError,ActivateAdminCountryReadinessMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
@@ -16016,7 +16016,7 @@ export const getSuspendAdminCountryReadinessUrl = (marketId: string,) => {
 }
 
 /**
- * @summary Suspend new market capabilities without removing access to existing orders.
+ * @summary Suspend new market capabilities without removing access to existing orders. Access: ADMIN.
  */
 export const suspendAdminCountryReadiness = async (marketId: string,
     countryLegalReferenceInput: CountryLegalReferenceInput, options?: Parameters<typeof customFetch>[1]): Promise<CountryLegalIntake> => {
@@ -16083,7 +16083,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type SuspendAdminCountryReadinessMutationVariables = {marketId: string;data: BodyType<CountryLegalReferenceInput>}
 
     /**
- * @summary Suspend new market capabilities without removing access to existing orders.
+ * @summary Suspend new market capabilities without removing access to existing orders. Access: ADMIN.
  */
 export const useSuspendAdminCountryReadiness = <TError = ErrorType<void>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof suspendAdminCountryReadiness>>, TError,SuspendAdminCountryReadinessMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
