@@ -32,6 +32,7 @@ import type { AiUiBlockPayloadProvider } from './aiUiBlockPayloadProvider';
 import type { AiUiBlockPayloadPurchaseReview } from './aiUiBlockPayloadPurchaseReview';
 import type { AiUiBlockPayloadSellerInsight } from './aiUiBlockPayloadSellerInsight';
 import type { AiUiBlockPayloadSurface } from './aiUiBlockPayloadSurface';
+import type { ConnectUniversalCardsPayload } from './connectUniversalCardsPayload';
 import type { Listing } from './listing';
 
 export type AiUiBlockPayload = {
@@ -72,6 +73,7 @@ export type AiUiBlockPayload = {
   promotion?: AiUiBlockPayloadPromotion;
   /** Allowlisted driver view (profile, review, coarse work cards, assignments), rebuilt from server state on every read. Never contains contacts or coordinates. */
   driver?: AiUiBlockPayloadDriver;
+  universalCards?: ConnectUniversalCardsPayload;
   /** Allowlisted provider connection view (review, status, safe key prefix). Never contains a key, secret or credential hash. */
   provider?: AiUiBlockPayloadProvider;
   /** Allowlisted D3-A business view (setup, profile, catalog, orders, insights), refreshed from the owner's live D2 identity and D3 operating rows on every read. */

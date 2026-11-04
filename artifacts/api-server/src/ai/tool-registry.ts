@@ -1,3 +1,4 @@
+import type { UniversalCardsPayload } from "@workspace/api-zod/connect";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { randomUUID } from "node:crypto";
@@ -54,6 +55,7 @@ export type ToolContext = {
 };
 
 export type ToolResult = {
+  universalCards?: UniversalCardsPayload;
   memory?: import("./personal-memory-turn").MemorySummary;
   /** RESULTS restores an existing result set exactly; it never creates a new one. */
   kind: "SEARCH" | "RESOURCE" | "RESULTS" | "SURFACE";

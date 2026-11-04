@@ -10,6 +10,7 @@ export type AiUiBlockPayloadSurface = typeof AiUiBlockPayloadSurface[keyof typeo
 
 
 export const AiUiBlockPayloadSurface = {
+  CONNECT_RESULTS: 'CONNECT_RESULTS',
   CART: 'CART',
   CHECKOUT: 'CHECKOUT',
   AUTH: 'AUTH',

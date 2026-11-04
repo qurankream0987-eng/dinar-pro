@@ -1,3 +1,5 @@
+import { UniversalCardsPayloadSchema } from "@workspace/api-zod/connect";
+import type { DomainSearchProvider } from "../connect/domains";
 import {
   SMART_STATE_KINDS,
   executeGuestModelTurn,
@@ -275,6 +277,7 @@ const SurfaceBlock = z.object({
     draftStep: z.string().optional(),
     draftReview: z.record(z.string(), z.unknown()).optional(),
     sellerInsight: z.record(z.string(), z.unknown()).optional(),
+    universalCards: UniversalCardsPayloadSchema.optional(),
     comparison: z.record(z.string(), z.unknown()).optional(),
     purchaseReview: z.record(z.string(), z.unknown()).optional(),
     // AI-F02: capability reads and prepare reviews; every list is server-built and party-scoped.
@@ -2126,6 +2129,7 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
       {
         photoSuggestionProvider: req.app.locals.listingPhotoSuggestionProvider as ListingPhotoSuggestionProvider | undefined,
         modelGateway: req.app.locals.conversationModelGateway as ConversationModelGateway | undefined,
+        domainSearchProviders: req.app.locals.connectDomainProviders as DomainSearchProvider[] | undefined,
         onToolSelected(name) {
           toolName = name;
           send(res, { type: "status", stage: ["searchListings", "getResource", "compareListings"].includes(name) ? "searching" : "understanding" });
@@ -2181,6 +2185,7 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
         draftStep: toolResult.draftStep,
         draftReview: toolResult.draftReview,
         sellerInsight: toolResult.sellerInsight,
+        universalCards: toolResult.universalCards,
         comparison: toolResult.comparison,
         purchaseReview: toolResult.purchaseReview,
         inventory: toolResult.inventory,
@@ -2288,6 +2293,7 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
             toolResult.query?.kind === "COMMERCE" ||
             toolResult.query?.kind === "DRIVER" ||
             toolResult.query?.kind === "ORDERS" ||
+            toolResult.query?.kind === "CONNECT" ||
             toolResult.query?.kind === "INQUIRY" ||
             toolResult.query?.kind === "CONTROL" ||
             SMART_STATE_KINDS.includes(String(toolResult.query?.kind))) &&

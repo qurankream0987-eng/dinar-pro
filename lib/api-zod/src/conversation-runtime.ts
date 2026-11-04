@@ -197,6 +197,7 @@ export type TutorialLearningEventInput = z.infer<
 export type TutorialLearningEvent = z.infer<typeof TutorialLearningEventSchema>;
 
 const CORE_SURFACE_TOKENS = [
+  "CONNECT_RESULTS",
   "CART",
   "CHECKOUT",
   "AUTH",
@@ -276,6 +277,7 @@ const surface = (
 
 /** Semantic views reconciled with the wire tokens rendered by existing components. */
 export const CONVERSATION_SURFACE_REGISTRY = {
+  EXTERNAL_COMMERCE_CARD: surface(["CONNECT_RESULTS"], "universal-cards"),
   PRODUCT_RESULT_CARD: resultSurface,
   SERVICE_RESULT_CARD: resultSurface,
   SEARCH_RESULTS_RAIL: resultSurface,

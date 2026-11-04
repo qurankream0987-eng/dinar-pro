@@ -1,3 +1,5 @@
+import { executeConnectReadTurn } from "../connect/conversation";
+import type { DomainSearchProvider } from "../connect/domains";
 import {
   hasActiveListingDraft,
   hasPendingListingPhotoSuggestions,
@@ -548,6 +550,7 @@ export async function executeAiConversationTurn(
   },
   options: {
     modelGateway?: ConversationModelGateway;
+    domainSearchProviders?: DomainSearchProvider[];
     onToolSelected?: (name: string) => void;
     onModelToolProgress?: (state: import("./smart-turn").ModelToolContinuation) => Promise<void>;
     onRouteDecision?: (decision: ConversationRouteDecision) => void;
@@ -561,6 +564,10 @@ export async function executeAiConversationTurn(
     modelStage?: "ONLY";
   } = {},
 ): Promise<{ tool: string; version: number; result: ToolResult; taskPlan?: TaskPlan }> {
+  if (!context.imageObjectPaths?.length && context.location === undefined) {
+    const connected = await executeConnectReadTurn({ message: context.message, actorId: context.actorId, providers: options.domainSearchProviders });
+    if (connected) { options.onToolSelected?.(connected.tool); return connected; }
+  }
   if ((!options.noModel && !options.planStep) &&
       (Boolean(context.actorId) || isExplicitSellerEmployeeInvocation(context.message))) {
     const employee = await executeSellerEmployeeTurn(

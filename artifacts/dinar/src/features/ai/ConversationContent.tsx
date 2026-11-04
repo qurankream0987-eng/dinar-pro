@@ -1,3 +1,4 @@
+import { UniversalCards } from "./UniversalCards";
 import { PolicyReviewPanel, isPolicyReview } from "./PolicyReviewPanel";
 import { normalizeMemory } from "./memory-types";
 import { normalizeInquiry } from "./inquiry-types";
@@ -973,6 +974,8 @@ function ResultBlock({
         </p>
       </>
     );
+  if (block.type === "SURFACE" && block.payload.universalCards)
+    return <UniversalCards payload={block.payload.universalCards} resultSetId={block.payload.resultSetId} />;
   if (block.type === "SURFACE" && block.payload.delivery)
     return (
       <Suspense fallback={<SurfaceLoading />}>

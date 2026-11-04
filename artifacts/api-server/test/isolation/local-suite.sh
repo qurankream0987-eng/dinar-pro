@@ -112,6 +112,13 @@ needs_chromium() {
   esac
 }
 if [ -n "$CHROMIUM" ]; then
+  PROVIDER_NAV_SAN=""
+  PROVIDER_NAV_MAP=""
+  case " $SUITES " in
+    *" connect-cards-browser-journey.test "*)
+      PROVIDER_NAV_SAN=",DNS:dash.cloudflare.com"
+      PROVIDER_NAV_MAP=", MAP dash.cloudflare.com 127.0.0.1" ;;
+  esac
   browser_required=0
   # shellcheck disable=SC2086
   for suite in $SUITES; do
@@ -172,7 +179,7 @@ if [ -n "$CHROMIUM" ]; then
   # Keep browser traffic local too: the web app's Google Fonts origin is served by this
   # HTTPS stub, and the wrapper trusts only this one-day certificate's public key.
   openssl req -x509 -newkey rsa:2048 -nodes -days 1 -subj "/CN=local-suite-third-party" \
-    -addext "subjectAltName=DNS:fonts.googleapis.com,DNS:fonts.gstatic.com" \
+    -addext "subjectAltName=DNS:fonts.googleapis.com,DNS:fonts.gstatic.com$PROVIDER_NAV_SAN" \
     -keyout "$WORK/stub.key" -out "$WORK/stub.crt" >/dev/null 2>&1
   SPKI=$(openssl x509 -in "$WORK/stub.crt" -pubkey -noout | openssl pkey -pubin -outform der | openssl dgst -sha256 -binary | base64)
   DINAR_ISOLATION_STUB_LOG="$WORK/third-party-stub.log"
@@ -217,7 +224,7 @@ if [ -n "$CHROMIUM" ]; then
   REAL_CHROMIUM=$CHROMIUM
   cat > "$WORK/chromium" <<WRAPPER
 #!/bin/sh
-exec "$REAL_CHROMIUM" --host-resolver-rules="MAP fonts.googleapis.com 127.0.0.1, MAP fonts.gstatic.com 127.0.0.1" --ignore-certificate-errors-spki-list="$SPKI" "\$@"
+exec "$REAL_CHROMIUM" --host-resolver-rules="MAP fonts.googleapis.com 127.0.0.1, MAP fonts.gstatic.com 127.0.0.1$PROVIDER_NAV_MAP" --ignore-certificate-errors-spki-list="$SPKI" "\$@"
 WRAPPER
   chmod +x "$WORK/chromium"
   CHROMIUM="$WORK/chromium"

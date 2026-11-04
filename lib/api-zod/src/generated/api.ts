@@ -2819,6 +2819,82 @@ export const previewAiConversationResponseBlocksItemPayloadTutorialStepsItemDesc
 export const previewAiConversationResponseBlocksItemPayloadTutorialStepsMin = 5;
 export const previewAiConversationResponseBlocksItemPayloadTutorialStepsMax = 5;
 
+export const previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemIdMax = 400;
+
+export const previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemTitleMax = 180;
+
+export const previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemDescriptionMax = 700;
+
+export const previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemInternalResourceIdMax = 200;
+
+export const previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemProviderIdMax = 80;
+
+export const previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemFactsItemLabelMax = 80;
+
+export const previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemFactsItemValueOneMax = 300;
+
+export const previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemFactsMax = 20;
+
+export const previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemPriceOneAmountMinorMin = 0;
+export const previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemPriceOneAmountMinorMax = 9007199254740991;
+
+export const previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemPriceOneCurrencyRegExp = new RegExp('^[A-Z]{3}$');
+export const previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemPriceOneMinorUnitScaleMin = 0;
+export const previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemPriceOneMinorUnitScaleMax = 4;
+
+export const previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemSourceLabelMax = 200;
+
+export const previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemDomainProviderIdMax = 80;
+
+export const previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemDomainProviderNameMax = 120;
+
+export const previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemDomainDomainMin = 3;
+export const previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemDomainDomainMax = 253;
+
+export const previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemDomainRegistrationPriceOneAmountMinorMin = 0;
+export const previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemDomainRegistrationPriceOneAmountMinorMax = 9007199254740991;
+
+export const previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemDomainRegistrationPriceOneCurrencyRegExp = new RegExp('^[A-Z]{3}$');
+export const previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemDomainRegistrationPriceOneMinorUnitScaleMin = 0;
+export const previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemDomainRegistrationPriceOneMinorUnitScaleMax = 4;
+
+export const previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemDomainRenewalPriceOneAmountMinorMin = 0;
+export const previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemDomainRenewalPriceOneAmountMinorMax = 9007199254740991;
+
+export const previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemDomainRenewalPriceOneCurrencyRegExp = new RegExp('^[A-Z]{3}$');
+export const previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemDomainRenewalPriceOneMinorUnitScaleMin = 0;
+export const previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemDomainRenewalPriceOneMinorUnitScaleMax = 4;
+
+export const previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemDomainSourceMax = 200;
+
+export const previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemDomainRetryAfterSecondsMax = 3600;
+
+export const previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemDomainReasonMax = 100;
+
+export const previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemDomainActionProviderIdMax = 80;
+
+export const previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemDomainActionTargetIdMax = 400;
+
+export const previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemDomainActionLabelMax = 100;
+
+export const previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemExternalActionsItemProviderIdMax = 80;
+
+export const previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemExternalActionsItemTargetIdMax = 400;
+
+export const previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemExternalActionsItemLabelMax = 100;
+
+export const previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemExternalActionsMax = 3;
+
+export const previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemDisclosureMax = 500;
+
+export const previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemAuthorizedCapabilityIdMax = 128;
+
+export const previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsMax = 12;
+
+export const previewAiConversationResponseBlocksItemPayloadUniversalCardsNoteMax = 700;
+
+export const previewAiConversationResponseBlocksItemPayloadUniversalCardsComparisonNoteMax = 700;
+
 export const previewAiConversationResponseBlocksItemPayloadMemoryGroupsItemLabelMax = 80;
 
 export const previewAiConversationResponseBlocksItemPayloadMemoryGroupsItemItemsItemTopicMax = 80;
@@ -2909,7 +2985,7 @@ export const PreviewAiConversationResponse = zod.object({
   "afterValue": zod.string(),
   "status": zod.enum(['PENDING', 'CONFIRMED', 'CANCELLED', 'EXPIRED'])
 }).optional(),
-  "surface": zod.enum(['CART', 'CHECKOUT', 'AUTH', 'SETTINGS', 'ORDERS', 'ORDER', 'ORDERS_LIST', 'ORDER_SELECTOR', 'ORDER_STATUS', 'ORDER_TRACKING', 'SELL', 'MY_LISTINGS', 'DUES', 'MARKET', 'MARKET_SELECTOR', 'ACCOUNT', 'LOGOUT', 'CLARIFY', 'UNSUPPORTED', 'JOB_DRAFT', 'JOB_REVIEW', 'JOB_SEARCH_RESULTS', 'JOB_DETAILS', 'MY_JOBS', 'CV_PROFILE', 'CANDIDATE_SEARCH_RESULTS', 'CANDIDATE_DETAILS', 'APPLICATION_REVIEW', 'MY_APPLICATIONS', 'APPLICATION_LIST', 'EMPLOYMENT_ACTION', 'EMPLOYMENT_NOTICE', 'LOCATION_PERMISSION_REQUEST', 'LOCATION_PREVIEW', 'LOCATION_CONFIRMED', 'MANUAL_ADDRESS', 'DELIVERY_OPTIONS', 'DELIVERY_SUMMARY', 'DELIVERY_ACTION', 'DELIVERY_STATUS', 'PICKUP_DETAILS', 'DELIVERY_NOTICE', 'PROMOTION_OPTIONS', 'PROMOTION_REVIEW', 'PROMOTION_STATUS', 'MY_PROMOTIONS', 'PROMOTION_DETAILS', 'COMPARISON', 'PURCHASE_REVIEW', 'PAYMENT_REVIEW', 'DRIVER_ONBOARDING', 'DRIVER_ONBOARDING_REVIEW', 'DRIVER_STATUS', 'DRIVER_AVAILABILITY', 'DELIVERY_WORK_RESULTS', 'DRIVER_ASSIGNMENT_REVIEW', 'DRIVER_ASSIGNMENT_STATUS', 'DRIVER_EARNINGS_HISTORY', 'PROVIDER_CONNECTION_REVIEW', 'PROVIDER_SECRET_ONCE', 'PROVIDER_STATUS', 'ADVICE', 'NEGOTIATION_REVIEW', 'NEGOTIATION_STATUS', 'NEGOTIATION_LIST', 'MY_INTERESTS', 'MEMORY_SUMMARY', 'MEMORY_CONFIRMATION', 'MEMORY_UPDATED', 'COMMERCIAL_BALANCE', 'COMMERCIAL_LEDGER_SUMMARY', 'COMMERCIAL_TOPUP_REVIEW', 'COMMERCIAL_PRODUCTS', 'COMMERCIAL_PRODUCT_REVIEW', 'FEATURED_REVIEW', 'VIP_REVIEW', 'REFRESH_REVIEW', 'BUNDLE_REVIEW', 'BUNDLE_STATUS', 'PROMOTION_TYPE_OPTIONS', 'DEMAND_CAPTURE_REVIEW', 'CAMPAIGN_STATUS', 'CAMPAIGN_ANALYTICS', 'MARKET_PULSE', 'MARKET_OPPORTUNITY', 'BUSINESS_PLAN_REVIEW', 'BUSINESS_STATUS', 'BUSINESS_SETUP', 'BUSINESS_PROFILE_REVIEW', 'BUSINESS_PROFILE', 'BUSINESS_CATALOG', 'BUSINESS_CATALOG_DRAFT', 'BUSINESS_LISTING_REVIEW', 'BUSINESS_ORDERS', 'BUSINESS_INSIGHTS', 'COMMERCE_NOTICE', 'AI_USAGE', 'AI_PLANS', 'INQUIRY_DRAFT', 'INQUIRY_STATUS', 'INQUIRY_INCOMING', 'INQUIRY_LIST', 'INQUIRY_NOTICE', 'APP_THEME', 'MARKET_SWITCH_REVIEW', 'MARKET_SWITCH_STATUS', 'PROFILE_REVIEW', 'PROFILE_STATUS', 'CONTROL_NOTICE', 'PRIVACY_EXPORT', 'TUTORIAL_VIDEO_CARD']).optional(),
+  "surface": zod.enum(['CONNECT_RESULTS', 'CART', 'CHECKOUT', 'AUTH', 'SETTINGS', 'ORDERS', 'ORDER', 'ORDERS_LIST', 'ORDER_SELECTOR', 'ORDER_STATUS', 'ORDER_TRACKING', 'SELL', 'MY_LISTINGS', 'DUES', 'MARKET', 'MARKET_SELECTOR', 'ACCOUNT', 'LOGOUT', 'CLARIFY', 'UNSUPPORTED', 'JOB_DRAFT', 'JOB_REVIEW', 'JOB_SEARCH_RESULTS', 'JOB_DETAILS', 'MY_JOBS', 'CV_PROFILE', 'CANDIDATE_SEARCH_RESULTS', 'CANDIDATE_DETAILS', 'APPLICATION_REVIEW', 'MY_APPLICATIONS', 'APPLICATION_LIST', 'EMPLOYMENT_ACTION', 'EMPLOYMENT_NOTICE', 'LOCATION_PERMISSION_REQUEST', 'LOCATION_PREVIEW', 'LOCATION_CONFIRMED', 'MANUAL_ADDRESS', 'DELIVERY_OPTIONS', 'DELIVERY_SUMMARY', 'DELIVERY_ACTION', 'DELIVERY_STATUS', 'PICKUP_DETAILS', 'DELIVERY_NOTICE', 'PROMOTION_OPTIONS', 'PROMOTION_REVIEW', 'PROMOTION_STATUS', 'MY_PROMOTIONS', 'PROMOTION_DETAILS', 'COMPARISON', 'PURCHASE_REVIEW', 'PAYMENT_REVIEW', 'DRIVER_ONBOARDING', 'DRIVER_ONBOARDING_REVIEW', 'DRIVER_STATUS', 'DRIVER_AVAILABILITY', 'DELIVERY_WORK_RESULTS', 'DRIVER_ASSIGNMENT_REVIEW', 'DRIVER_ASSIGNMENT_STATUS', 'DRIVER_EARNINGS_HISTORY', 'PROVIDER_CONNECTION_REVIEW', 'PROVIDER_SECRET_ONCE', 'PROVIDER_STATUS', 'ADVICE', 'NEGOTIATION_REVIEW', 'NEGOTIATION_STATUS', 'NEGOTIATION_LIST', 'MY_INTERESTS', 'MEMORY_SUMMARY', 'MEMORY_CONFIRMATION', 'MEMORY_UPDATED', 'COMMERCIAL_BALANCE', 'COMMERCIAL_LEDGER_SUMMARY', 'COMMERCIAL_TOPUP_REVIEW', 'COMMERCIAL_PRODUCTS', 'COMMERCIAL_PRODUCT_REVIEW', 'FEATURED_REVIEW', 'VIP_REVIEW', 'REFRESH_REVIEW', 'BUNDLE_REVIEW', 'BUNDLE_STATUS', 'PROMOTION_TYPE_OPTIONS', 'DEMAND_CAPTURE_REVIEW', 'CAMPAIGN_STATUS', 'CAMPAIGN_ANALYTICS', 'MARKET_PULSE', 'MARKET_OPPORTUNITY', 'BUSINESS_PLAN_REVIEW', 'BUSINESS_STATUS', 'BUSINESS_SETUP', 'BUSINESS_PROFILE_REVIEW', 'BUSINESS_PROFILE', 'BUSINESS_CATALOG', 'BUSINESS_CATALOG_DRAFT', 'BUSINESS_LISTING_REVIEW', 'BUSINESS_ORDERS', 'BUSINESS_INSIGHTS', 'COMMERCE_NOTICE', 'AI_USAGE', 'AI_PLANS', 'INQUIRY_DRAFT', 'INQUIRY_STATUS', 'INQUIRY_INCOMING', 'INQUIRY_LIST', 'INQUIRY_NOTICE', 'APP_THEME', 'MARKET_SWITCH_REVIEW', 'MARKET_SWITCH_STATUS', 'PROFILE_REVIEW', 'PROFILE_STATUS', 'CONTROL_NOTICE', 'PRIVACY_EXPORT', 'TUTORIAL_VIDEO_CARD']).optional(),
   "tutorial": zod.object({
   "id": zod.enum(['SELL_FIRST_LISTING', 'PHOTO_FIRST_SELLING', 'PROMOTION_OVERVIEW', 'FEATURED_EXPLAINER', 'VIP_EXPLAINER', 'DEMAND_CAPTURE_EXPLAINER']),
   "title": zod.string().min(1).max(previewAiConversationResponseBlocksItemPayloadTutorialTitleMax),
@@ -2925,6 +3001,74 @@ export const PreviewAiConversationResponse = zod.object({
   "delivery": zod.record(zod.string(), zod.unknown()).optional().describe('Allowlisted delivery/location view for the order\'s own participant, rebuilt server-side on every read. Stored copies never contain coordinates or address text.\n'),
   "promotion": zod.record(zod.string(), zod.unknown()).optional().describe('Allowlisted seller promotion view (plans, review, campaigns), rebuilt from server state on every read. Prices come only from admin plans.\n'),
   "driver": zod.record(zod.string(), zod.unknown()).optional().describe('Allowlisted driver view (profile, review, coarse work cards, assignments), rebuilt from server state on every read. Never contains contacts or coordinates.\n'),
+  "universalCards": zod.object({
+  "version": zod.literal(1),
+  "cards": zod.array(zod.object({
+  "version": zod.literal(1),
+  "id": zod.string().min(1).max(previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemIdMax),
+  "kind": zod.enum(['INTERNAL_PRODUCT', 'INTERNAL_SERVICE', 'EXTERNAL_PRODUCT', 'EXTERNAL_SERVICE', 'DOMAIN_REGISTRATION', 'COMPARISON', 'ORDER_STATUS', 'TRANSACTION_STATUS', 'CAPABILITY']),
+  "commerceMode": zod.enum(['INTERNAL_DINAR', 'EXTERNAL_REFERRAL', 'EXTERNAL_AUTHORIZED_ACTION']),
+  "title": zod.string().min(1).max(previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemTitleMax),
+  "description": zod.string().max(previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemDescriptionMax).optional(),
+  "internalResourceId": zod.string().min(1).max(previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemInternalResourceIdMax).optional(),
+  "providerId": zod.string().min(1).max(previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemProviderIdMax).optional(),
+  "facts": zod.array(zod.object({
+  "label": zod.string().min(1).max(previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemFactsItemLabelMax),
+  "value": zod.union([zod.string().max(previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemFactsItemValueOneMax),zod.null()]),
+  "source": zod.enum(['INTERNAL_RECORD', 'PROVIDER_RECORD', 'UNKNOWN'])
+})).max(previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemFactsMax),
+  "price": zod.union([zod.object({
+  "amountMinor": zod.int().min(previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemPriceOneAmountMinorMin).max(previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemPriceOneAmountMinorMax),
+  "currency": zod.string().regex(previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemPriceOneCurrencyRegExp),
+  "minorUnitScale": zod.int().min(previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemPriceOneMinorUnitScaleMin).max(previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemPriceOneMinorUnitScaleMax)
+}),zod.null()]),
+  "availability": zod.enum(['AVAILABLE', 'UNAVAILABLE', 'UNKNOWN']),
+  "checkedAt": zod.union([zod.null(),zod.coerce.date()]),
+  "sourceLabel": zod.string().min(1).max(previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemSourceLabelMax),
+  "domain": zod.object({
+  "providerId": zod.string().min(1).max(previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemDomainProviderIdMax),
+  "providerName": zod.string().min(1).max(previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemDomainProviderNameMax),
+  "domain": zod.string().min(previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemDomainDomainMin).max(previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemDomainDomainMax),
+  "availability": zod.enum(['AVAILABLE', 'UNAVAILABLE', 'UNKNOWN']),
+  "premium": zod.boolean().nullable(),
+  "registrationPrice": zod.union([zod.object({
+  "amountMinor": zod.int().min(previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemDomainRegistrationPriceOneAmountMinorMin).max(previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemDomainRegistrationPriceOneAmountMinorMax),
+  "currency": zod.string().regex(previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemDomainRegistrationPriceOneCurrencyRegExp),
+  "minorUnitScale": zod.int().min(previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemDomainRegistrationPriceOneMinorUnitScaleMin).max(previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemDomainRegistrationPriceOneMinorUnitScaleMax)
+}),zod.null()]),
+  "renewalPrice": zod.union([zod.object({
+  "amountMinor": zod.int().min(previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemDomainRenewalPriceOneAmountMinorMin).max(previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemDomainRenewalPriceOneAmountMinorMax),
+  "currency": zod.string().regex(previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemDomainRenewalPriceOneCurrencyRegExp),
+  "minorUnitScale": zod.int().min(previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemDomainRenewalPriceOneMinorUnitScaleMin).max(previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemDomainRenewalPriceOneMinorUnitScaleMax)
+}),zod.null()]),
+  "source": zod.string().min(1).max(previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemDomainSourceMax),
+  "lastCheckedAt": zod.union([zod.null(),zod.coerce.date()]),
+  "status": zod.enum(['CHECKED', 'NOT_CONFIGURED', 'RATE_LIMITED', 'TIMEOUT', 'UNAVAILABLE', 'UNAUTHORIZED', 'INVALID_RESPONSE']),
+  "providerMode": zod.enum(['SANDBOX', 'LIVE', 'NOT_CONNECTED']),
+  "retryAfterSeconds": zod.int().min(1).max(previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemDomainRetryAfterSecondsMax).optional(),
+  "reason": zod.string().max(previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemDomainReasonMax).optional(),
+  "action": zod.object({
+  "kind": zod.literal("EXTERNAL_LINK"),
+  "providerId": zod.string().min(1).max(previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemDomainActionProviderIdMax),
+  "targetId": zod.string().min(1).max(previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemDomainActionTargetIdMax),
+  "intent": zod.enum(['SEARCH_ON_PROVIDER', 'VIEW_ON_PROVIDER']),
+  "label": zod.string().min(1).max(previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemDomainActionLabelMax)
+}),
+  "affiliateRelationship": zod.literal(false)
+}).optional(),
+  "externalActions": zod.array(zod.object({
+  "kind": zod.literal("EXTERNAL_LINK"),
+  "providerId": zod.string().min(1).max(previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemExternalActionsItemProviderIdMax),
+  "targetId": zod.string().min(1).max(previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemExternalActionsItemTargetIdMax),
+  "intent": zod.enum(['SEARCH_ON_PROVIDER', 'VIEW_ON_PROVIDER']),
+  "label": zod.string().min(1).max(previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemExternalActionsItemLabelMax)
+})).max(previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemExternalActionsMax),
+  "disclosure": zod.string().min(1).max(previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemDisclosureMax).optional(),
+  "authorizedCapabilityId": zod.string().min(1).max(previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsItemAuthorizedCapabilityIdMax).optional()
+})).max(previewAiConversationResponseBlocksItemPayloadUniversalCardsCardsMax),
+  "note": zod.string().max(previewAiConversationResponseBlocksItemPayloadUniversalCardsNoteMax),
+  "comparisonNote": zod.string().max(previewAiConversationResponseBlocksItemPayloadUniversalCardsComparisonNoteMax).optional()
+}).optional(),
   "provider": zod.record(zod.string(), zod.unknown()).optional().describe('Allowlisted provider connection view (review, status, safe key prefix). Never contains a key, secret or credential hash.\n'),
   "business": zod.record(zod.string(), zod.unknown()).optional().describe('Allowlisted D3-A business view (setup, profile, catalog, orders, insights), refreshed from the owner\'s live D2 identity and D3 operating rows on every read.\n'),
   "policyReview": zod.record(zod.string(), zod.unknown()).optional().describe('Policy review card (W02-ULTRA B10): the current version, effective date, legal-review status and reading path of each policy that requires acceptance, whether this user accepted it, and the review id whose exact versions an acceptance records. Contract acceptance only; optional privacy consents are unaffected.\n'),
@@ -3138,6 +3282,82 @@ export const createAiGuestHandoffResponseMessagesItemBlocksItemPayloadTutorialSt
 export const createAiGuestHandoffResponseMessagesItemBlocksItemPayloadTutorialStepsMin = 5;
 export const createAiGuestHandoffResponseMessagesItemBlocksItemPayloadTutorialStepsMax = 5;
 
+export const createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemIdMax = 400;
+
+export const createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemTitleMax = 180;
+
+export const createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDescriptionMax = 700;
+
+export const createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemInternalResourceIdMax = 200;
+
+export const createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemProviderIdMax = 80;
+
+export const createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemFactsItemLabelMax = 80;
+
+export const createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemFactsItemValueOneMax = 300;
+
+export const createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemFactsMax = 20;
+
+export const createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemPriceOneAmountMinorMin = 0;
+export const createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemPriceOneAmountMinorMax = 9007199254740991;
+
+export const createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemPriceOneCurrencyRegExp = new RegExp('^[A-Z]{3}$');
+export const createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemPriceOneMinorUnitScaleMin = 0;
+export const createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemPriceOneMinorUnitScaleMax = 4;
+
+export const createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemSourceLabelMax = 200;
+
+export const createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainProviderIdMax = 80;
+
+export const createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainProviderNameMax = 120;
+
+export const createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainDomainMin = 3;
+export const createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainDomainMax = 253;
+
+export const createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainRegistrationPriceOneAmountMinorMin = 0;
+export const createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainRegistrationPriceOneAmountMinorMax = 9007199254740991;
+
+export const createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainRegistrationPriceOneCurrencyRegExp = new RegExp('^[A-Z]{3}$');
+export const createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainRegistrationPriceOneMinorUnitScaleMin = 0;
+export const createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainRegistrationPriceOneMinorUnitScaleMax = 4;
+
+export const createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainRenewalPriceOneAmountMinorMin = 0;
+export const createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainRenewalPriceOneAmountMinorMax = 9007199254740991;
+
+export const createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainRenewalPriceOneCurrencyRegExp = new RegExp('^[A-Z]{3}$');
+export const createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainRenewalPriceOneMinorUnitScaleMin = 0;
+export const createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainRenewalPriceOneMinorUnitScaleMax = 4;
+
+export const createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainSourceMax = 200;
+
+export const createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainRetryAfterSecondsMax = 3600;
+
+export const createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainReasonMax = 100;
+
+export const createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainActionProviderIdMax = 80;
+
+export const createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainActionTargetIdMax = 400;
+
+export const createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainActionLabelMax = 100;
+
+export const createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemExternalActionsItemProviderIdMax = 80;
+
+export const createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemExternalActionsItemTargetIdMax = 400;
+
+export const createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemExternalActionsItemLabelMax = 100;
+
+export const createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemExternalActionsMax = 3;
+
+export const createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDisclosureMax = 500;
+
+export const createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemAuthorizedCapabilityIdMax = 128;
+
+export const createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsMax = 12;
+
+export const createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsNoteMax = 700;
+
+export const createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsComparisonNoteMax = 700;
+
 export const createAiGuestHandoffResponseMessagesItemBlocksItemPayloadMemoryGroupsItemLabelMax = 80;
 
 export const createAiGuestHandoffResponseMessagesItemBlocksItemPayloadMemoryGroupsItemItemsItemTopicMax = 80;
@@ -3246,7 +3466,7 @@ export const CreateAiGuestHandoffResponse = zod.object({
   "afterValue": zod.string(),
   "status": zod.enum(['PENDING', 'CONFIRMED', 'CANCELLED', 'EXPIRED'])
 }).optional(),
-  "surface": zod.enum(['CART', 'CHECKOUT', 'AUTH', 'SETTINGS', 'ORDERS', 'ORDER', 'ORDERS_LIST', 'ORDER_SELECTOR', 'ORDER_STATUS', 'ORDER_TRACKING', 'SELL', 'MY_LISTINGS', 'DUES', 'MARKET', 'MARKET_SELECTOR', 'ACCOUNT', 'LOGOUT', 'CLARIFY', 'UNSUPPORTED', 'JOB_DRAFT', 'JOB_REVIEW', 'JOB_SEARCH_RESULTS', 'JOB_DETAILS', 'MY_JOBS', 'CV_PROFILE', 'CANDIDATE_SEARCH_RESULTS', 'CANDIDATE_DETAILS', 'APPLICATION_REVIEW', 'MY_APPLICATIONS', 'APPLICATION_LIST', 'EMPLOYMENT_ACTION', 'EMPLOYMENT_NOTICE', 'LOCATION_PERMISSION_REQUEST', 'LOCATION_PREVIEW', 'LOCATION_CONFIRMED', 'MANUAL_ADDRESS', 'DELIVERY_OPTIONS', 'DELIVERY_SUMMARY', 'DELIVERY_ACTION', 'DELIVERY_STATUS', 'PICKUP_DETAILS', 'DELIVERY_NOTICE', 'PROMOTION_OPTIONS', 'PROMOTION_REVIEW', 'PROMOTION_STATUS', 'MY_PROMOTIONS', 'PROMOTION_DETAILS', 'COMPARISON', 'PURCHASE_REVIEW', 'PAYMENT_REVIEW', 'DRIVER_ONBOARDING', 'DRIVER_ONBOARDING_REVIEW', 'DRIVER_STATUS', 'DRIVER_AVAILABILITY', 'DELIVERY_WORK_RESULTS', 'DRIVER_ASSIGNMENT_REVIEW', 'DRIVER_ASSIGNMENT_STATUS', 'DRIVER_EARNINGS_HISTORY', 'PROVIDER_CONNECTION_REVIEW', 'PROVIDER_SECRET_ONCE', 'PROVIDER_STATUS', 'ADVICE', 'NEGOTIATION_REVIEW', 'NEGOTIATION_STATUS', 'NEGOTIATION_LIST', 'MY_INTERESTS', 'MEMORY_SUMMARY', 'MEMORY_CONFIRMATION', 'MEMORY_UPDATED', 'COMMERCIAL_BALANCE', 'COMMERCIAL_LEDGER_SUMMARY', 'COMMERCIAL_TOPUP_REVIEW', 'COMMERCIAL_PRODUCTS', 'COMMERCIAL_PRODUCT_REVIEW', 'FEATURED_REVIEW', 'VIP_REVIEW', 'REFRESH_REVIEW', 'BUNDLE_REVIEW', 'BUNDLE_STATUS', 'PROMOTION_TYPE_OPTIONS', 'DEMAND_CAPTURE_REVIEW', 'CAMPAIGN_STATUS', 'CAMPAIGN_ANALYTICS', 'MARKET_PULSE', 'MARKET_OPPORTUNITY', 'BUSINESS_PLAN_REVIEW', 'BUSINESS_STATUS', 'BUSINESS_SETUP', 'BUSINESS_PROFILE_REVIEW', 'BUSINESS_PROFILE', 'BUSINESS_CATALOG', 'BUSINESS_CATALOG_DRAFT', 'BUSINESS_LISTING_REVIEW', 'BUSINESS_ORDERS', 'BUSINESS_INSIGHTS', 'COMMERCE_NOTICE', 'AI_USAGE', 'AI_PLANS', 'INQUIRY_DRAFT', 'INQUIRY_STATUS', 'INQUIRY_INCOMING', 'INQUIRY_LIST', 'INQUIRY_NOTICE', 'APP_THEME', 'MARKET_SWITCH_REVIEW', 'MARKET_SWITCH_STATUS', 'PROFILE_REVIEW', 'PROFILE_STATUS', 'CONTROL_NOTICE', 'PRIVACY_EXPORT', 'TUTORIAL_VIDEO_CARD']).optional(),
+  "surface": zod.enum(['CONNECT_RESULTS', 'CART', 'CHECKOUT', 'AUTH', 'SETTINGS', 'ORDERS', 'ORDER', 'ORDERS_LIST', 'ORDER_SELECTOR', 'ORDER_STATUS', 'ORDER_TRACKING', 'SELL', 'MY_LISTINGS', 'DUES', 'MARKET', 'MARKET_SELECTOR', 'ACCOUNT', 'LOGOUT', 'CLARIFY', 'UNSUPPORTED', 'JOB_DRAFT', 'JOB_REVIEW', 'JOB_SEARCH_RESULTS', 'JOB_DETAILS', 'MY_JOBS', 'CV_PROFILE', 'CANDIDATE_SEARCH_RESULTS', 'CANDIDATE_DETAILS', 'APPLICATION_REVIEW', 'MY_APPLICATIONS', 'APPLICATION_LIST', 'EMPLOYMENT_ACTION', 'EMPLOYMENT_NOTICE', 'LOCATION_PERMISSION_REQUEST', 'LOCATION_PREVIEW', 'LOCATION_CONFIRMED', 'MANUAL_ADDRESS', 'DELIVERY_OPTIONS', 'DELIVERY_SUMMARY', 'DELIVERY_ACTION', 'DELIVERY_STATUS', 'PICKUP_DETAILS', 'DELIVERY_NOTICE', 'PROMOTION_OPTIONS', 'PROMOTION_REVIEW', 'PROMOTION_STATUS', 'MY_PROMOTIONS', 'PROMOTION_DETAILS', 'COMPARISON', 'PURCHASE_REVIEW', 'PAYMENT_REVIEW', 'DRIVER_ONBOARDING', 'DRIVER_ONBOARDING_REVIEW', 'DRIVER_STATUS', 'DRIVER_AVAILABILITY', 'DELIVERY_WORK_RESULTS', 'DRIVER_ASSIGNMENT_REVIEW', 'DRIVER_ASSIGNMENT_STATUS', 'DRIVER_EARNINGS_HISTORY', 'PROVIDER_CONNECTION_REVIEW', 'PROVIDER_SECRET_ONCE', 'PROVIDER_STATUS', 'ADVICE', 'NEGOTIATION_REVIEW', 'NEGOTIATION_STATUS', 'NEGOTIATION_LIST', 'MY_INTERESTS', 'MEMORY_SUMMARY', 'MEMORY_CONFIRMATION', 'MEMORY_UPDATED', 'COMMERCIAL_BALANCE', 'COMMERCIAL_LEDGER_SUMMARY', 'COMMERCIAL_TOPUP_REVIEW', 'COMMERCIAL_PRODUCTS', 'COMMERCIAL_PRODUCT_REVIEW', 'FEATURED_REVIEW', 'VIP_REVIEW', 'REFRESH_REVIEW', 'BUNDLE_REVIEW', 'BUNDLE_STATUS', 'PROMOTION_TYPE_OPTIONS', 'DEMAND_CAPTURE_REVIEW', 'CAMPAIGN_STATUS', 'CAMPAIGN_ANALYTICS', 'MARKET_PULSE', 'MARKET_OPPORTUNITY', 'BUSINESS_PLAN_REVIEW', 'BUSINESS_STATUS', 'BUSINESS_SETUP', 'BUSINESS_PROFILE_REVIEW', 'BUSINESS_PROFILE', 'BUSINESS_CATALOG', 'BUSINESS_CATALOG_DRAFT', 'BUSINESS_LISTING_REVIEW', 'BUSINESS_ORDERS', 'BUSINESS_INSIGHTS', 'COMMERCE_NOTICE', 'AI_USAGE', 'AI_PLANS', 'INQUIRY_DRAFT', 'INQUIRY_STATUS', 'INQUIRY_INCOMING', 'INQUIRY_LIST', 'INQUIRY_NOTICE', 'APP_THEME', 'MARKET_SWITCH_REVIEW', 'MARKET_SWITCH_STATUS', 'PROFILE_REVIEW', 'PROFILE_STATUS', 'CONTROL_NOTICE', 'PRIVACY_EXPORT', 'TUTORIAL_VIDEO_CARD']).optional(),
   "tutorial": zod.object({
   "id": zod.enum(['SELL_FIRST_LISTING', 'PHOTO_FIRST_SELLING', 'PROMOTION_OVERVIEW', 'FEATURED_EXPLAINER', 'VIP_EXPLAINER', 'DEMAND_CAPTURE_EXPLAINER']),
   "title": zod.string().min(1).max(createAiGuestHandoffResponseMessagesItemBlocksItemPayloadTutorialTitleMax),
@@ -3262,6 +3482,74 @@ export const CreateAiGuestHandoffResponse = zod.object({
   "delivery": zod.record(zod.string(), zod.unknown()).optional().describe('Allowlisted delivery/location view for the order\'s own participant, rebuilt server-side on every read. Stored copies never contain coordinates or address text.\n'),
   "promotion": zod.record(zod.string(), zod.unknown()).optional().describe('Allowlisted seller promotion view (plans, review, campaigns), rebuilt from server state on every read. Prices come only from admin plans.\n'),
   "driver": zod.record(zod.string(), zod.unknown()).optional().describe('Allowlisted driver view (profile, review, coarse work cards, assignments), rebuilt from server state on every read. Never contains contacts or coordinates.\n'),
+  "universalCards": zod.object({
+  "version": zod.literal(1),
+  "cards": zod.array(zod.object({
+  "version": zod.literal(1),
+  "id": zod.string().min(1).max(createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemIdMax),
+  "kind": zod.enum(['INTERNAL_PRODUCT', 'INTERNAL_SERVICE', 'EXTERNAL_PRODUCT', 'EXTERNAL_SERVICE', 'DOMAIN_REGISTRATION', 'COMPARISON', 'ORDER_STATUS', 'TRANSACTION_STATUS', 'CAPABILITY']),
+  "commerceMode": zod.enum(['INTERNAL_DINAR', 'EXTERNAL_REFERRAL', 'EXTERNAL_AUTHORIZED_ACTION']),
+  "title": zod.string().min(1).max(createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemTitleMax),
+  "description": zod.string().max(createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDescriptionMax).optional(),
+  "internalResourceId": zod.string().min(1).max(createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemInternalResourceIdMax).optional(),
+  "providerId": zod.string().min(1).max(createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemProviderIdMax).optional(),
+  "facts": zod.array(zod.object({
+  "label": zod.string().min(1).max(createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemFactsItemLabelMax),
+  "value": zod.union([zod.string().max(createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemFactsItemValueOneMax),zod.null()]),
+  "source": zod.enum(['INTERNAL_RECORD', 'PROVIDER_RECORD', 'UNKNOWN'])
+})).max(createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemFactsMax),
+  "price": zod.union([zod.object({
+  "amountMinor": zod.int().min(createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemPriceOneAmountMinorMin).max(createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemPriceOneAmountMinorMax),
+  "currency": zod.string().regex(createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemPriceOneCurrencyRegExp),
+  "minorUnitScale": zod.int().min(createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemPriceOneMinorUnitScaleMin).max(createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemPriceOneMinorUnitScaleMax)
+}),zod.null()]),
+  "availability": zod.enum(['AVAILABLE', 'UNAVAILABLE', 'UNKNOWN']),
+  "checkedAt": zod.union([zod.null(),zod.coerce.date()]),
+  "sourceLabel": zod.string().min(1).max(createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemSourceLabelMax),
+  "domain": zod.object({
+  "providerId": zod.string().min(1).max(createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainProviderIdMax),
+  "providerName": zod.string().min(1).max(createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainProviderNameMax),
+  "domain": zod.string().min(createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainDomainMin).max(createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainDomainMax),
+  "availability": zod.enum(['AVAILABLE', 'UNAVAILABLE', 'UNKNOWN']),
+  "premium": zod.boolean().nullable(),
+  "registrationPrice": zod.union([zod.object({
+  "amountMinor": zod.int().min(createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainRegistrationPriceOneAmountMinorMin).max(createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainRegistrationPriceOneAmountMinorMax),
+  "currency": zod.string().regex(createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainRegistrationPriceOneCurrencyRegExp),
+  "minorUnitScale": zod.int().min(createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainRegistrationPriceOneMinorUnitScaleMin).max(createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainRegistrationPriceOneMinorUnitScaleMax)
+}),zod.null()]),
+  "renewalPrice": zod.union([zod.object({
+  "amountMinor": zod.int().min(createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainRenewalPriceOneAmountMinorMin).max(createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainRenewalPriceOneAmountMinorMax),
+  "currency": zod.string().regex(createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainRenewalPriceOneCurrencyRegExp),
+  "minorUnitScale": zod.int().min(createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainRenewalPriceOneMinorUnitScaleMin).max(createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainRenewalPriceOneMinorUnitScaleMax)
+}),zod.null()]),
+  "source": zod.string().min(1).max(createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainSourceMax),
+  "lastCheckedAt": zod.union([zod.null(),zod.coerce.date()]),
+  "status": zod.enum(['CHECKED', 'NOT_CONFIGURED', 'RATE_LIMITED', 'TIMEOUT', 'UNAVAILABLE', 'UNAUTHORIZED', 'INVALID_RESPONSE']),
+  "providerMode": zod.enum(['SANDBOX', 'LIVE', 'NOT_CONNECTED']),
+  "retryAfterSeconds": zod.int().min(1).max(createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainRetryAfterSecondsMax).optional(),
+  "reason": zod.string().max(createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainReasonMax).optional(),
+  "action": zod.object({
+  "kind": zod.literal("EXTERNAL_LINK"),
+  "providerId": zod.string().min(1).max(createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainActionProviderIdMax),
+  "targetId": zod.string().min(1).max(createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainActionTargetIdMax),
+  "intent": zod.enum(['SEARCH_ON_PROVIDER', 'VIEW_ON_PROVIDER']),
+  "label": zod.string().min(1).max(createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainActionLabelMax)
+}),
+  "affiliateRelationship": zod.literal(false)
+}).optional(),
+  "externalActions": zod.array(zod.object({
+  "kind": zod.literal("EXTERNAL_LINK"),
+  "providerId": zod.string().min(1).max(createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemExternalActionsItemProviderIdMax),
+  "targetId": zod.string().min(1).max(createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemExternalActionsItemTargetIdMax),
+  "intent": zod.enum(['SEARCH_ON_PROVIDER', 'VIEW_ON_PROVIDER']),
+  "label": zod.string().min(1).max(createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemExternalActionsItemLabelMax)
+})).max(createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemExternalActionsMax),
+  "disclosure": zod.string().min(1).max(createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDisclosureMax).optional(),
+  "authorizedCapabilityId": zod.string().min(1).max(createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemAuthorizedCapabilityIdMax).optional()
+})).max(createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsCardsMax),
+  "note": zod.string().max(createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsNoteMax),
+  "comparisonNote": zod.string().max(createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsComparisonNoteMax).optional()
+}).optional(),
   "provider": zod.record(zod.string(), zod.unknown()).optional().describe('Allowlisted provider connection view (review, status, safe key prefix). Never contains a key, secret or credential hash.\n'),
   "business": zod.record(zod.string(), zod.unknown()).optional().describe('Allowlisted D3-A business view (setup, profile, catalog, orders, insights), refreshed from the owner\'s live D2 identity and D3 operating rows on every read.\n'),
   "policyReview": zod.record(zod.string(), zod.unknown()).optional().describe('Policy review card (W02-ULTRA B10): the current version, effective date, legal-review status and reading path of each policy that requires acceptance, whether this user accepted it, and the review id whose exact versions an acceptance records. Contract acceptance only; optional privacy consents are unaffected.\n'),
@@ -3379,6 +3667,82 @@ export const getAiConversationResponseMessagesItemBlocksItemPayloadTutorialSteps
 export const getAiConversationResponseMessagesItemBlocksItemPayloadTutorialStepsMin = 5;
 export const getAiConversationResponseMessagesItemBlocksItemPayloadTutorialStepsMax = 5;
 
+export const getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemIdMax = 400;
+
+export const getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemTitleMax = 180;
+
+export const getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDescriptionMax = 700;
+
+export const getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemInternalResourceIdMax = 200;
+
+export const getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemProviderIdMax = 80;
+
+export const getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemFactsItemLabelMax = 80;
+
+export const getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemFactsItemValueOneMax = 300;
+
+export const getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemFactsMax = 20;
+
+export const getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemPriceOneAmountMinorMin = 0;
+export const getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemPriceOneAmountMinorMax = 9007199254740991;
+
+export const getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemPriceOneCurrencyRegExp = new RegExp('^[A-Z]{3}$');
+export const getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemPriceOneMinorUnitScaleMin = 0;
+export const getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemPriceOneMinorUnitScaleMax = 4;
+
+export const getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemSourceLabelMax = 200;
+
+export const getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainProviderIdMax = 80;
+
+export const getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainProviderNameMax = 120;
+
+export const getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainDomainMin = 3;
+export const getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainDomainMax = 253;
+
+export const getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainRegistrationPriceOneAmountMinorMin = 0;
+export const getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainRegistrationPriceOneAmountMinorMax = 9007199254740991;
+
+export const getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainRegistrationPriceOneCurrencyRegExp = new RegExp('^[A-Z]{3}$');
+export const getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainRegistrationPriceOneMinorUnitScaleMin = 0;
+export const getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainRegistrationPriceOneMinorUnitScaleMax = 4;
+
+export const getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainRenewalPriceOneAmountMinorMin = 0;
+export const getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainRenewalPriceOneAmountMinorMax = 9007199254740991;
+
+export const getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainRenewalPriceOneCurrencyRegExp = new RegExp('^[A-Z]{3}$');
+export const getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainRenewalPriceOneMinorUnitScaleMin = 0;
+export const getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainRenewalPriceOneMinorUnitScaleMax = 4;
+
+export const getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainSourceMax = 200;
+
+export const getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainRetryAfterSecondsMax = 3600;
+
+export const getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainReasonMax = 100;
+
+export const getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainActionProviderIdMax = 80;
+
+export const getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainActionTargetIdMax = 400;
+
+export const getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainActionLabelMax = 100;
+
+export const getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemExternalActionsItemProviderIdMax = 80;
+
+export const getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemExternalActionsItemTargetIdMax = 400;
+
+export const getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemExternalActionsItemLabelMax = 100;
+
+export const getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemExternalActionsMax = 3;
+
+export const getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDisclosureMax = 500;
+
+export const getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemAuthorizedCapabilityIdMax = 128;
+
+export const getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsMax = 12;
+
+export const getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsNoteMax = 700;
+
+export const getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsComparisonNoteMax = 700;
+
 export const getAiConversationResponseMessagesItemBlocksItemPayloadMemoryGroupsItemLabelMax = 80;
 
 export const getAiConversationResponseMessagesItemBlocksItemPayloadMemoryGroupsItemItemsItemTopicMax = 80;
@@ -3487,7 +3851,7 @@ export const GetAiConversationResponse = zod.object({
   "afterValue": zod.string(),
   "status": zod.enum(['PENDING', 'CONFIRMED', 'CANCELLED', 'EXPIRED'])
 }).optional(),
-  "surface": zod.enum(['CART', 'CHECKOUT', 'AUTH', 'SETTINGS', 'ORDERS', 'ORDER', 'ORDERS_LIST', 'ORDER_SELECTOR', 'ORDER_STATUS', 'ORDER_TRACKING', 'SELL', 'MY_LISTINGS', 'DUES', 'MARKET', 'MARKET_SELECTOR', 'ACCOUNT', 'LOGOUT', 'CLARIFY', 'UNSUPPORTED', 'JOB_DRAFT', 'JOB_REVIEW', 'JOB_SEARCH_RESULTS', 'JOB_DETAILS', 'MY_JOBS', 'CV_PROFILE', 'CANDIDATE_SEARCH_RESULTS', 'CANDIDATE_DETAILS', 'APPLICATION_REVIEW', 'MY_APPLICATIONS', 'APPLICATION_LIST', 'EMPLOYMENT_ACTION', 'EMPLOYMENT_NOTICE', 'LOCATION_PERMISSION_REQUEST', 'LOCATION_PREVIEW', 'LOCATION_CONFIRMED', 'MANUAL_ADDRESS', 'DELIVERY_OPTIONS', 'DELIVERY_SUMMARY', 'DELIVERY_ACTION', 'DELIVERY_STATUS', 'PICKUP_DETAILS', 'DELIVERY_NOTICE', 'PROMOTION_OPTIONS', 'PROMOTION_REVIEW', 'PROMOTION_STATUS', 'MY_PROMOTIONS', 'PROMOTION_DETAILS', 'COMPARISON', 'PURCHASE_REVIEW', 'PAYMENT_REVIEW', 'DRIVER_ONBOARDING', 'DRIVER_ONBOARDING_REVIEW', 'DRIVER_STATUS', 'DRIVER_AVAILABILITY', 'DELIVERY_WORK_RESULTS', 'DRIVER_ASSIGNMENT_REVIEW', 'DRIVER_ASSIGNMENT_STATUS', 'DRIVER_EARNINGS_HISTORY', 'PROVIDER_CONNECTION_REVIEW', 'PROVIDER_SECRET_ONCE', 'PROVIDER_STATUS', 'ADVICE', 'NEGOTIATION_REVIEW', 'NEGOTIATION_STATUS', 'NEGOTIATION_LIST', 'MY_INTERESTS', 'MEMORY_SUMMARY', 'MEMORY_CONFIRMATION', 'MEMORY_UPDATED', 'COMMERCIAL_BALANCE', 'COMMERCIAL_LEDGER_SUMMARY', 'COMMERCIAL_TOPUP_REVIEW', 'COMMERCIAL_PRODUCTS', 'COMMERCIAL_PRODUCT_REVIEW', 'FEATURED_REVIEW', 'VIP_REVIEW', 'REFRESH_REVIEW', 'BUNDLE_REVIEW', 'BUNDLE_STATUS', 'PROMOTION_TYPE_OPTIONS', 'DEMAND_CAPTURE_REVIEW', 'CAMPAIGN_STATUS', 'CAMPAIGN_ANALYTICS', 'MARKET_PULSE', 'MARKET_OPPORTUNITY', 'BUSINESS_PLAN_REVIEW', 'BUSINESS_STATUS', 'BUSINESS_SETUP', 'BUSINESS_PROFILE_REVIEW', 'BUSINESS_PROFILE', 'BUSINESS_CATALOG', 'BUSINESS_CATALOG_DRAFT', 'BUSINESS_LISTING_REVIEW', 'BUSINESS_ORDERS', 'BUSINESS_INSIGHTS', 'COMMERCE_NOTICE', 'AI_USAGE', 'AI_PLANS', 'INQUIRY_DRAFT', 'INQUIRY_STATUS', 'INQUIRY_INCOMING', 'INQUIRY_LIST', 'INQUIRY_NOTICE', 'APP_THEME', 'MARKET_SWITCH_REVIEW', 'MARKET_SWITCH_STATUS', 'PROFILE_REVIEW', 'PROFILE_STATUS', 'CONTROL_NOTICE', 'PRIVACY_EXPORT', 'TUTORIAL_VIDEO_CARD']).optional(),
+  "surface": zod.enum(['CONNECT_RESULTS', 'CART', 'CHECKOUT', 'AUTH', 'SETTINGS', 'ORDERS', 'ORDER', 'ORDERS_LIST', 'ORDER_SELECTOR', 'ORDER_STATUS', 'ORDER_TRACKING', 'SELL', 'MY_LISTINGS', 'DUES', 'MARKET', 'MARKET_SELECTOR', 'ACCOUNT', 'LOGOUT', 'CLARIFY', 'UNSUPPORTED', 'JOB_DRAFT', 'JOB_REVIEW', 'JOB_SEARCH_RESULTS', 'JOB_DETAILS', 'MY_JOBS', 'CV_PROFILE', 'CANDIDATE_SEARCH_RESULTS', 'CANDIDATE_DETAILS', 'APPLICATION_REVIEW', 'MY_APPLICATIONS', 'APPLICATION_LIST', 'EMPLOYMENT_ACTION', 'EMPLOYMENT_NOTICE', 'LOCATION_PERMISSION_REQUEST', 'LOCATION_PREVIEW', 'LOCATION_CONFIRMED', 'MANUAL_ADDRESS', 'DELIVERY_OPTIONS', 'DELIVERY_SUMMARY', 'DELIVERY_ACTION', 'DELIVERY_STATUS', 'PICKUP_DETAILS', 'DELIVERY_NOTICE', 'PROMOTION_OPTIONS', 'PROMOTION_REVIEW', 'PROMOTION_STATUS', 'MY_PROMOTIONS', 'PROMOTION_DETAILS', 'COMPARISON', 'PURCHASE_REVIEW', 'PAYMENT_REVIEW', 'DRIVER_ONBOARDING', 'DRIVER_ONBOARDING_REVIEW', 'DRIVER_STATUS', 'DRIVER_AVAILABILITY', 'DELIVERY_WORK_RESULTS', 'DRIVER_ASSIGNMENT_REVIEW', 'DRIVER_ASSIGNMENT_STATUS', 'DRIVER_EARNINGS_HISTORY', 'PROVIDER_CONNECTION_REVIEW', 'PROVIDER_SECRET_ONCE', 'PROVIDER_STATUS', 'ADVICE', 'NEGOTIATION_REVIEW', 'NEGOTIATION_STATUS', 'NEGOTIATION_LIST', 'MY_INTERESTS', 'MEMORY_SUMMARY', 'MEMORY_CONFIRMATION', 'MEMORY_UPDATED', 'COMMERCIAL_BALANCE', 'COMMERCIAL_LEDGER_SUMMARY', 'COMMERCIAL_TOPUP_REVIEW', 'COMMERCIAL_PRODUCTS', 'COMMERCIAL_PRODUCT_REVIEW', 'FEATURED_REVIEW', 'VIP_REVIEW', 'REFRESH_REVIEW', 'BUNDLE_REVIEW', 'BUNDLE_STATUS', 'PROMOTION_TYPE_OPTIONS', 'DEMAND_CAPTURE_REVIEW', 'CAMPAIGN_STATUS', 'CAMPAIGN_ANALYTICS', 'MARKET_PULSE', 'MARKET_OPPORTUNITY', 'BUSINESS_PLAN_REVIEW', 'BUSINESS_STATUS', 'BUSINESS_SETUP', 'BUSINESS_PROFILE_REVIEW', 'BUSINESS_PROFILE', 'BUSINESS_CATALOG', 'BUSINESS_CATALOG_DRAFT', 'BUSINESS_LISTING_REVIEW', 'BUSINESS_ORDERS', 'BUSINESS_INSIGHTS', 'COMMERCE_NOTICE', 'AI_USAGE', 'AI_PLANS', 'INQUIRY_DRAFT', 'INQUIRY_STATUS', 'INQUIRY_INCOMING', 'INQUIRY_LIST', 'INQUIRY_NOTICE', 'APP_THEME', 'MARKET_SWITCH_REVIEW', 'MARKET_SWITCH_STATUS', 'PROFILE_REVIEW', 'PROFILE_STATUS', 'CONTROL_NOTICE', 'PRIVACY_EXPORT', 'TUTORIAL_VIDEO_CARD']).optional(),
   "tutorial": zod.object({
   "id": zod.enum(['SELL_FIRST_LISTING', 'PHOTO_FIRST_SELLING', 'PROMOTION_OVERVIEW', 'FEATURED_EXPLAINER', 'VIP_EXPLAINER', 'DEMAND_CAPTURE_EXPLAINER']),
   "title": zod.string().min(1).max(getAiConversationResponseMessagesItemBlocksItemPayloadTutorialTitleMax),
@@ -3503,6 +3867,74 @@ export const GetAiConversationResponse = zod.object({
   "delivery": zod.record(zod.string(), zod.unknown()).optional().describe('Allowlisted delivery/location view for the order\'s own participant, rebuilt server-side on every read. Stored copies never contain coordinates or address text.\n'),
   "promotion": zod.record(zod.string(), zod.unknown()).optional().describe('Allowlisted seller promotion view (plans, review, campaigns), rebuilt from server state on every read. Prices come only from admin plans.\n'),
   "driver": zod.record(zod.string(), zod.unknown()).optional().describe('Allowlisted driver view (profile, review, coarse work cards, assignments), rebuilt from server state on every read. Never contains contacts or coordinates.\n'),
+  "universalCards": zod.object({
+  "version": zod.literal(1),
+  "cards": zod.array(zod.object({
+  "version": zod.literal(1),
+  "id": zod.string().min(1).max(getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemIdMax),
+  "kind": zod.enum(['INTERNAL_PRODUCT', 'INTERNAL_SERVICE', 'EXTERNAL_PRODUCT', 'EXTERNAL_SERVICE', 'DOMAIN_REGISTRATION', 'COMPARISON', 'ORDER_STATUS', 'TRANSACTION_STATUS', 'CAPABILITY']),
+  "commerceMode": zod.enum(['INTERNAL_DINAR', 'EXTERNAL_REFERRAL', 'EXTERNAL_AUTHORIZED_ACTION']),
+  "title": zod.string().min(1).max(getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemTitleMax),
+  "description": zod.string().max(getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDescriptionMax).optional(),
+  "internalResourceId": zod.string().min(1).max(getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemInternalResourceIdMax).optional(),
+  "providerId": zod.string().min(1).max(getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemProviderIdMax).optional(),
+  "facts": zod.array(zod.object({
+  "label": zod.string().min(1).max(getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemFactsItemLabelMax),
+  "value": zod.union([zod.string().max(getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemFactsItemValueOneMax),zod.null()]),
+  "source": zod.enum(['INTERNAL_RECORD', 'PROVIDER_RECORD', 'UNKNOWN'])
+})).max(getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemFactsMax),
+  "price": zod.union([zod.object({
+  "amountMinor": zod.int().min(getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemPriceOneAmountMinorMin).max(getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemPriceOneAmountMinorMax),
+  "currency": zod.string().regex(getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemPriceOneCurrencyRegExp),
+  "minorUnitScale": zod.int().min(getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemPriceOneMinorUnitScaleMin).max(getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemPriceOneMinorUnitScaleMax)
+}),zod.null()]),
+  "availability": zod.enum(['AVAILABLE', 'UNAVAILABLE', 'UNKNOWN']),
+  "checkedAt": zod.union([zod.null(),zod.coerce.date()]),
+  "sourceLabel": zod.string().min(1).max(getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemSourceLabelMax),
+  "domain": zod.object({
+  "providerId": zod.string().min(1).max(getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainProviderIdMax),
+  "providerName": zod.string().min(1).max(getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainProviderNameMax),
+  "domain": zod.string().min(getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainDomainMin).max(getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainDomainMax),
+  "availability": zod.enum(['AVAILABLE', 'UNAVAILABLE', 'UNKNOWN']),
+  "premium": zod.boolean().nullable(),
+  "registrationPrice": zod.union([zod.object({
+  "amountMinor": zod.int().min(getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainRegistrationPriceOneAmountMinorMin).max(getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainRegistrationPriceOneAmountMinorMax),
+  "currency": zod.string().regex(getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainRegistrationPriceOneCurrencyRegExp),
+  "minorUnitScale": zod.int().min(getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainRegistrationPriceOneMinorUnitScaleMin).max(getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainRegistrationPriceOneMinorUnitScaleMax)
+}),zod.null()]),
+  "renewalPrice": zod.union([zod.object({
+  "amountMinor": zod.int().min(getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainRenewalPriceOneAmountMinorMin).max(getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainRenewalPriceOneAmountMinorMax),
+  "currency": zod.string().regex(getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainRenewalPriceOneCurrencyRegExp),
+  "minorUnitScale": zod.int().min(getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainRenewalPriceOneMinorUnitScaleMin).max(getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainRenewalPriceOneMinorUnitScaleMax)
+}),zod.null()]),
+  "source": zod.string().min(1).max(getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainSourceMax),
+  "lastCheckedAt": zod.union([zod.null(),zod.coerce.date()]),
+  "status": zod.enum(['CHECKED', 'NOT_CONFIGURED', 'RATE_LIMITED', 'TIMEOUT', 'UNAVAILABLE', 'UNAUTHORIZED', 'INVALID_RESPONSE']),
+  "providerMode": zod.enum(['SANDBOX', 'LIVE', 'NOT_CONNECTED']),
+  "retryAfterSeconds": zod.int().min(1).max(getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainRetryAfterSecondsMax).optional(),
+  "reason": zod.string().max(getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainReasonMax).optional(),
+  "action": zod.object({
+  "kind": zod.literal("EXTERNAL_LINK"),
+  "providerId": zod.string().min(1).max(getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainActionProviderIdMax),
+  "targetId": zod.string().min(1).max(getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainActionTargetIdMax),
+  "intent": zod.enum(['SEARCH_ON_PROVIDER', 'VIEW_ON_PROVIDER']),
+  "label": zod.string().min(1).max(getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainActionLabelMax)
+}),
+  "affiliateRelationship": zod.literal(false)
+}).optional(),
+  "externalActions": zod.array(zod.object({
+  "kind": zod.literal("EXTERNAL_LINK"),
+  "providerId": zod.string().min(1).max(getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemExternalActionsItemProviderIdMax),
+  "targetId": zod.string().min(1).max(getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemExternalActionsItemTargetIdMax),
+  "intent": zod.enum(['SEARCH_ON_PROVIDER', 'VIEW_ON_PROVIDER']),
+  "label": zod.string().min(1).max(getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemExternalActionsItemLabelMax)
+})).max(getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemExternalActionsMax),
+  "disclosure": zod.string().min(1).max(getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDisclosureMax).optional(),
+  "authorizedCapabilityId": zod.string().min(1).max(getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemAuthorizedCapabilityIdMax).optional()
+})).max(getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsMax),
+  "note": zod.string().max(getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsNoteMax),
+  "comparisonNote": zod.string().max(getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsComparisonNoteMax).optional()
+}).optional(),
   "provider": zod.record(zod.string(), zod.unknown()).optional().describe('Allowlisted provider connection view (review, status, safe key prefix). Never contains a key, secret or credential hash.\n'),
   "business": zod.record(zod.string(), zod.unknown()).optional().describe('Allowlisted D3-A business view (setup, profile, catalog, orders, insights), refreshed from the owner\'s live D2 identity and D3 operating rows on every read.\n'),
   "policyReview": zod.record(zod.string(), zod.unknown()).optional().describe('Policy review card (W02-ULTRA B10): the current version, effective date, legal-review status and reading path of each policy that requires acceptance, whether this user accepted it, and the review id whose exact versions an acceptance records. Contract acceptance only; optional privacy consents are unaffected.\n'),
@@ -3658,6 +4090,82 @@ export const copyAiConversationResponseMessagesItemBlocksItemPayloadTutorialStep
 export const copyAiConversationResponseMessagesItemBlocksItemPayloadTutorialStepsMin = 5;
 export const copyAiConversationResponseMessagesItemBlocksItemPayloadTutorialStepsMax = 5;
 
+export const copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemIdMax = 400;
+
+export const copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemTitleMax = 180;
+
+export const copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDescriptionMax = 700;
+
+export const copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemInternalResourceIdMax = 200;
+
+export const copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemProviderIdMax = 80;
+
+export const copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemFactsItemLabelMax = 80;
+
+export const copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemFactsItemValueOneMax = 300;
+
+export const copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemFactsMax = 20;
+
+export const copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemPriceOneAmountMinorMin = 0;
+export const copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemPriceOneAmountMinorMax = 9007199254740991;
+
+export const copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemPriceOneCurrencyRegExp = new RegExp('^[A-Z]{3}$');
+export const copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemPriceOneMinorUnitScaleMin = 0;
+export const copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemPriceOneMinorUnitScaleMax = 4;
+
+export const copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemSourceLabelMax = 200;
+
+export const copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainProviderIdMax = 80;
+
+export const copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainProviderNameMax = 120;
+
+export const copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainDomainMin = 3;
+export const copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainDomainMax = 253;
+
+export const copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainRegistrationPriceOneAmountMinorMin = 0;
+export const copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainRegistrationPriceOneAmountMinorMax = 9007199254740991;
+
+export const copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainRegistrationPriceOneCurrencyRegExp = new RegExp('^[A-Z]{3}$');
+export const copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainRegistrationPriceOneMinorUnitScaleMin = 0;
+export const copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainRegistrationPriceOneMinorUnitScaleMax = 4;
+
+export const copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainRenewalPriceOneAmountMinorMin = 0;
+export const copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainRenewalPriceOneAmountMinorMax = 9007199254740991;
+
+export const copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainRenewalPriceOneCurrencyRegExp = new RegExp('^[A-Z]{3}$');
+export const copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainRenewalPriceOneMinorUnitScaleMin = 0;
+export const copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainRenewalPriceOneMinorUnitScaleMax = 4;
+
+export const copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainSourceMax = 200;
+
+export const copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainRetryAfterSecondsMax = 3600;
+
+export const copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainReasonMax = 100;
+
+export const copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainActionProviderIdMax = 80;
+
+export const copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainActionTargetIdMax = 400;
+
+export const copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainActionLabelMax = 100;
+
+export const copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemExternalActionsItemProviderIdMax = 80;
+
+export const copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemExternalActionsItemTargetIdMax = 400;
+
+export const copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemExternalActionsItemLabelMax = 100;
+
+export const copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemExternalActionsMax = 3;
+
+export const copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDisclosureMax = 500;
+
+export const copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemAuthorizedCapabilityIdMax = 128;
+
+export const copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsMax = 12;
+
+export const copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsNoteMax = 700;
+
+export const copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsComparisonNoteMax = 700;
+
 export const copyAiConversationResponseMessagesItemBlocksItemPayloadMemoryGroupsItemLabelMax = 80;
 
 export const copyAiConversationResponseMessagesItemBlocksItemPayloadMemoryGroupsItemItemsItemTopicMax = 80;
@@ -3766,7 +4274,7 @@ export const CopyAiConversationResponse = zod.object({
   "afterValue": zod.string(),
   "status": zod.enum(['PENDING', 'CONFIRMED', 'CANCELLED', 'EXPIRED'])
 }).optional(),
-  "surface": zod.enum(['CART', 'CHECKOUT', 'AUTH', 'SETTINGS', 'ORDERS', 'ORDER', 'ORDERS_LIST', 'ORDER_SELECTOR', 'ORDER_STATUS', 'ORDER_TRACKING', 'SELL', 'MY_LISTINGS', 'DUES', 'MARKET', 'MARKET_SELECTOR', 'ACCOUNT', 'LOGOUT', 'CLARIFY', 'UNSUPPORTED', 'JOB_DRAFT', 'JOB_REVIEW', 'JOB_SEARCH_RESULTS', 'JOB_DETAILS', 'MY_JOBS', 'CV_PROFILE', 'CANDIDATE_SEARCH_RESULTS', 'CANDIDATE_DETAILS', 'APPLICATION_REVIEW', 'MY_APPLICATIONS', 'APPLICATION_LIST', 'EMPLOYMENT_ACTION', 'EMPLOYMENT_NOTICE', 'LOCATION_PERMISSION_REQUEST', 'LOCATION_PREVIEW', 'LOCATION_CONFIRMED', 'MANUAL_ADDRESS', 'DELIVERY_OPTIONS', 'DELIVERY_SUMMARY', 'DELIVERY_ACTION', 'DELIVERY_STATUS', 'PICKUP_DETAILS', 'DELIVERY_NOTICE', 'PROMOTION_OPTIONS', 'PROMOTION_REVIEW', 'PROMOTION_STATUS', 'MY_PROMOTIONS', 'PROMOTION_DETAILS', 'COMPARISON', 'PURCHASE_REVIEW', 'PAYMENT_REVIEW', 'DRIVER_ONBOARDING', 'DRIVER_ONBOARDING_REVIEW', 'DRIVER_STATUS', 'DRIVER_AVAILABILITY', 'DELIVERY_WORK_RESULTS', 'DRIVER_ASSIGNMENT_REVIEW', 'DRIVER_ASSIGNMENT_STATUS', 'DRIVER_EARNINGS_HISTORY', 'PROVIDER_CONNECTION_REVIEW', 'PROVIDER_SECRET_ONCE', 'PROVIDER_STATUS', 'ADVICE', 'NEGOTIATION_REVIEW', 'NEGOTIATION_STATUS', 'NEGOTIATION_LIST', 'MY_INTERESTS', 'MEMORY_SUMMARY', 'MEMORY_CONFIRMATION', 'MEMORY_UPDATED', 'COMMERCIAL_BALANCE', 'COMMERCIAL_LEDGER_SUMMARY', 'COMMERCIAL_TOPUP_REVIEW', 'COMMERCIAL_PRODUCTS', 'COMMERCIAL_PRODUCT_REVIEW', 'FEATURED_REVIEW', 'VIP_REVIEW', 'REFRESH_REVIEW', 'BUNDLE_REVIEW', 'BUNDLE_STATUS', 'PROMOTION_TYPE_OPTIONS', 'DEMAND_CAPTURE_REVIEW', 'CAMPAIGN_STATUS', 'CAMPAIGN_ANALYTICS', 'MARKET_PULSE', 'MARKET_OPPORTUNITY', 'BUSINESS_PLAN_REVIEW', 'BUSINESS_STATUS', 'BUSINESS_SETUP', 'BUSINESS_PROFILE_REVIEW', 'BUSINESS_PROFILE', 'BUSINESS_CATALOG', 'BUSINESS_CATALOG_DRAFT', 'BUSINESS_LISTING_REVIEW', 'BUSINESS_ORDERS', 'BUSINESS_INSIGHTS', 'COMMERCE_NOTICE', 'AI_USAGE', 'AI_PLANS', 'INQUIRY_DRAFT', 'INQUIRY_STATUS', 'INQUIRY_INCOMING', 'INQUIRY_LIST', 'INQUIRY_NOTICE', 'APP_THEME', 'MARKET_SWITCH_REVIEW', 'MARKET_SWITCH_STATUS', 'PROFILE_REVIEW', 'PROFILE_STATUS', 'CONTROL_NOTICE', 'PRIVACY_EXPORT', 'TUTORIAL_VIDEO_CARD']).optional(),
+  "surface": zod.enum(['CONNECT_RESULTS', 'CART', 'CHECKOUT', 'AUTH', 'SETTINGS', 'ORDERS', 'ORDER', 'ORDERS_LIST', 'ORDER_SELECTOR', 'ORDER_STATUS', 'ORDER_TRACKING', 'SELL', 'MY_LISTINGS', 'DUES', 'MARKET', 'MARKET_SELECTOR', 'ACCOUNT', 'LOGOUT', 'CLARIFY', 'UNSUPPORTED', 'JOB_DRAFT', 'JOB_REVIEW', 'JOB_SEARCH_RESULTS', 'JOB_DETAILS', 'MY_JOBS', 'CV_PROFILE', 'CANDIDATE_SEARCH_RESULTS', 'CANDIDATE_DETAILS', 'APPLICATION_REVIEW', 'MY_APPLICATIONS', 'APPLICATION_LIST', 'EMPLOYMENT_ACTION', 'EMPLOYMENT_NOTICE', 'LOCATION_PERMISSION_REQUEST', 'LOCATION_PREVIEW', 'LOCATION_CONFIRMED', 'MANUAL_ADDRESS', 'DELIVERY_OPTIONS', 'DELIVERY_SUMMARY', 'DELIVERY_ACTION', 'DELIVERY_STATUS', 'PICKUP_DETAILS', 'DELIVERY_NOTICE', 'PROMOTION_OPTIONS', 'PROMOTION_REVIEW', 'PROMOTION_STATUS', 'MY_PROMOTIONS', 'PROMOTION_DETAILS', 'COMPARISON', 'PURCHASE_REVIEW', 'PAYMENT_REVIEW', 'DRIVER_ONBOARDING', 'DRIVER_ONBOARDING_REVIEW', 'DRIVER_STATUS', 'DRIVER_AVAILABILITY', 'DELIVERY_WORK_RESULTS', 'DRIVER_ASSIGNMENT_REVIEW', 'DRIVER_ASSIGNMENT_STATUS', 'DRIVER_EARNINGS_HISTORY', 'PROVIDER_CONNECTION_REVIEW', 'PROVIDER_SECRET_ONCE', 'PROVIDER_STATUS', 'ADVICE', 'NEGOTIATION_REVIEW', 'NEGOTIATION_STATUS', 'NEGOTIATION_LIST', 'MY_INTERESTS', 'MEMORY_SUMMARY', 'MEMORY_CONFIRMATION', 'MEMORY_UPDATED', 'COMMERCIAL_BALANCE', 'COMMERCIAL_LEDGER_SUMMARY', 'COMMERCIAL_TOPUP_REVIEW', 'COMMERCIAL_PRODUCTS', 'COMMERCIAL_PRODUCT_REVIEW', 'FEATURED_REVIEW', 'VIP_REVIEW', 'REFRESH_REVIEW', 'BUNDLE_REVIEW', 'BUNDLE_STATUS', 'PROMOTION_TYPE_OPTIONS', 'DEMAND_CAPTURE_REVIEW', 'CAMPAIGN_STATUS', 'CAMPAIGN_ANALYTICS', 'MARKET_PULSE', 'MARKET_OPPORTUNITY', 'BUSINESS_PLAN_REVIEW', 'BUSINESS_STATUS', 'BUSINESS_SETUP', 'BUSINESS_PROFILE_REVIEW', 'BUSINESS_PROFILE', 'BUSINESS_CATALOG', 'BUSINESS_CATALOG_DRAFT', 'BUSINESS_LISTING_REVIEW', 'BUSINESS_ORDERS', 'BUSINESS_INSIGHTS', 'COMMERCE_NOTICE', 'AI_USAGE', 'AI_PLANS', 'INQUIRY_DRAFT', 'INQUIRY_STATUS', 'INQUIRY_INCOMING', 'INQUIRY_LIST', 'INQUIRY_NOTICE', 'APP_THEME', 'MARKET_SWITCH_REVIEW', 'MARKET_SWITCH_STATUS', 'PROFILE_REVIEW', 'PROFILE_STATUS', 'CONTROL_NOTICE', 'PRIVACY_EXPORT', 'TUTORIAL_VIDEO_CARD']).optional(),
   "tutorial": zod.object({
   "id": zod.enum(['SELL_FIRST_LISTING', 'PHOTO_FIRST_SELLING', 'PROMOTION_OVERVIEW', 'FEATURED_EXPLAINER', 'VIP_EXPLAINER', 'DEMAND_CAPTURE_EXPLAINER']),
   "title": zod.string().min(1).max(copyAiConversationResponseMessagesItemBlocksItemPayloadTutorialTitleMax),
@@ -3782,6 +4290,74 @@ export const CopyAiConversationResponse = zod.object({
   "delivery": zod.record(zod.string(), zod.unknown()).optional().describe('Allowlisted delivery/location view for the order\'s own participant, rebuilt server-side on every read. Stored copies never contain coordinates or address text.\n'),
   "promotion": zod.record(zod.string(), zod.unknown()).optional().describe('Allowlisted seller promotion view (plans, review, campaigns), rebuilt from server state on every read. Prices come only from admin plans.\n'),
   "driver": zod.record(zod.string(), zod.unknown()).optional().describe('Allowlisted driver view (profile, review, coarse work cards, assignments), rebuilt from server state on every read. Never contains contacts or coordinates.\n'),
+  "universalCards": zod.object({
+  "version": zod.literal(1),
+  "cards": zod.array(zod.object({
+  "version": zod.literal(1),
+  "id": zod.string().min(1).max(copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemIdMax),
+  "kind": zod.enum(['INTERNAL_PRODUCT', 'INTERNAL_SERVICE', 'EXTERNAL_PRODUCT', 'EXTERNAL_SERVICE', 'DOMAIN_REGISTRATION', 'COMPARISON', 'ORDER_STATUS', 'TRANSACTION_STATUS', 'CAPABILITY']),
+  "commerceMode": zod.enum(['INTERNAL_DINAR', 'EXTERNAL_REFERRAL', 'EXTERNAL_AUTHORIZED_ACTION']),
+  "title": zod.string().min(1).max(copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemTitleMax),
+  "description": zod.string().max(copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDescriptionMax).optional(),
+  "internalResourceId": zod.string().min(1).max(copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemInternalResourceIdMax).optional(),
+  "providerId": zod.string().min(1).max(copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemProviderIdMax).optional(),
+  "facts": zod.array(zod.object({
+  "label": zod.string().min(1).max(copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemFactsItemLabelMax),
+  "value": zod.union([zod.string().max(copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemFactsItemValueOneMax),zod.null()]),
+  "source": zod.enum(['INTERNAL_RECORD', 'PROVIDER_RECORD', 'UNKNOWN'])
+})).max(copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemFactsMax),
+  "price": zod.union([zod.object({
+  "amountMinor": zod.int().min(copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemPriceOneAmountMinorMin).max(copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemPriceOneAmountMinorMax),
+  "currency": zod.string().regex(copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemPriceOneCurrencyRegExp),
+  "minorUnitScale": zod.int().min(copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemPriceOneMinorUnitScaleMin).max(copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemPriceOneMinorUnitScaleMax)
+}),zod.null()]),
+  "availability": zod.enum(['AVAILABLE', 'UNAVAILABLE', 'UNKNOWN']),
+  "checkedAt": zod.union([zod.null(),zod.coerce.date()]),
+  "sourceLabel": zod.string().min(1).max(copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemSourceLabelMax),
+  "domain": zod.object({
+  "providerId": zod.string().min(1).max(copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainProviderIdMax),
+  "providerName": zod.string().min(1).max(copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainProviderNameMax),
+  "domain": zod.string().min(copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainDomainMin).max(copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainDomainMax),
+  "availability": zod.enum(['AVAILABLE', 'UNAVAILABLE', 'UNKNOWN']),
+  "premium": zod.boolean().nullable(),
+  "registrationPrice": zod.union([zod.object({
+  "amountMinor": zod.int().min(copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainRegistrationPriceOneAmountMinorMin).max(copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainRegistrationPriceOneAmountMinorMax),
+  "currency": zod.string().regex(copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainRegistrationPriceOneCurrencyRegExp),
+  "minorUnitScale": zod.int().min(copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainRegistrationPriceOneMinorUnitScaleMin).max(copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainRegistrationPriceOneMinorUnitScaleMax)
+}),zod.null()]),
+  "renewalPrice": zod.union([zod.object({
+  "amountMinor": zod.int().min(copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainRenewalPriceOneAmountMinorMin).max(copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainRenewalPriceOneAmountMinorMax),
+  "currency": zod.string().regex(copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainRenewalPriceOneCurrencyRegExp),
+  "minorUnitScale": zod.int().min(copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainRenewalPriceOneMinorUnitScaleMin).max(copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainRenewalPriceOneMinorUnitScaleMax)
+}),zod.null()]),
+  "source": zod.string().min(1).max(copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainSourceMax),
+  "lastCheckedAt": zod.union([zod.null(),zod.coerce.date()]),
+  "status": zod.enum(['CHECKED', 'NOT_CONFIGURED', 'RATE_LIMITED', 'TIMEOUT', 'UNAVAILABLE', 'UNAUTHORIZED', 'INVALID_RESPONSE']),
+  "providerMode": zod.enum(['SANDBOX', 'LIVE', 'NOT_CONNECTED']),
+  "retryAfterSeconds": zod.int().min(1).max(copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainRetryAfterSecondsMax).optional(),
+  "reason": zod.string().max(copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainReasonMax).optional(),
+  "action": zod.object({
+  "kind": zod.literal("EXTERNAL_LINK"),
+  "providerId": zod.string().min(1).max(copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainActionProviderIdMax),
+  "targetId": zod.string().min(1).max(copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainActionTargetIdMax),
+  "intent": zod.enum(['SEARCH_ON_PROVIDER', 'VIEW_ON_PROVIDER']),
+  "label": zod.string().min(1).max(copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDomainActionLabelMax)
+}),
+  "affiliateRelationship": zod.literal(false)
+}).optional(),
+  "externalActions": zod.array(zod.object({
+  "kind": zod.literal("EXTERNAL_LINK"),
+  "providerId": zod.string().min(1).max(copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemExternalActionsItemProviderIdMax),
+  "targetId": zod.string().min(1).max(copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemExternalActionsItemTargetIdMax),
+  "intent": zod.enum(['SEARCH_ON_PROVIDER', 'VIEW_ON_PROVIDER']),
+  "label": zod.string().min(1).max(copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemExternalActionsItemLabelMax)
+})).max(copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemExternalActionsMax),
+  "disclosure": zod.string().min(1).max(copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemDisclosureMax).optional(),
+  "authorizedCapabilityId": zod.string().min(1).max(copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsItemAuthorizedCapabilityIdMax).optional()
+})).max(copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsCardsMax),
+  "note": zod.string().max(copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsNoteMax),
+  "comparisonNote": zod.string().max(copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsComparisonNoteMax).optional()
+}).optional(),
   "provider": zod.record(zod.string(), zod.unknown()).optional().describe('Allowlisted provider connection view (review, status, safe key prefix). Never contains a key, secret or credential hash.\n'),
   "business": zod.record(zod.string(), zod.unknown()).optional().describe('Allowlisted D3-A business view (setup, profile, catalog, orders, insights), refreshed from the owner\'s live D2 identity and D3 operating rows on every read.\n'),
   "policyReview": zod.record(zod.string(), zod.unknown()).optional().describe('Policy review card (W02-ULTRA B10): the current version, effective date, legal-review status and reading path of each policy that requires acceptance, whether this user accepted it, and the review id whose exact versions an acceptance records. Contract acceptance only; optional privacy consents are unaffected.\n'),
@@ -3959,6 +4535,82 @@ export const addAiListingToCartResponseAssistantMessageBlocksItemPayloadTutorial
 export const addAiListingToCartResponseAssistantMessageBlocksItemPayloadTutorialStepsMin = 5;
 export const addAiListingToCartResponseAssistantMessageBlocksItemPayloadTutorialStepsMax = 5;
 
+export const addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemIdMax = 400;
+
+export const addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemTitleMax = 180;
+
+export const addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemDescriptionMax = 700;
+
+export const addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemInternalResourceIdMax = 200;
+
+export const addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemProviderIdMax = 80;
+
+export const addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemFactsItemLabelMax = 80;
+
+export const addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemFactsItemValueOneMax = 300;
+
+export const addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemFactsMax = 20;
+
+export const addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemPriceOneAmountMinorMin = 0;
+export const addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemPriceOneAmountMinorMax = 9007199254740991;
+
+export const addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemPriceOneCurrencyRegExp = new RegExp('^[A-Z]{3}$');
+export const addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemPriceOneMinorUnitScaleMin = 0;
+export const addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemPriceOneMinorUnitScaleMax = 4;
+
+export const addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemSourceLabelMax = 200;
+
+export const addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemDomainProviderIdMax = 80;
+
+export const addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemDomainProviderNameMax = 120;
+
+export const addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemDomainDomainMin = 3;
+export const addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemDomainDomainMax = 253;
+
+export const addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemDomainRegistrationPriceOneAmountMinorMin = 0;
+export const addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemDomainRegistrationPriceOneAmountMinorMax = 9007199254740991;
+
+export const addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemDomainRegistrationPriceOneCurrencyRegExp = new RegExp('^[A-Z]{3}$');
+export const addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemDomainRegistrationPriceOneMinorUnitScaleMin = 0;
+export const addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemDomainRegistrationPriceOneMinorUnitScaleMax = 4;
+
+export const addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemDomainRenewalPriceOneAmountMinorMin = 0;
+export const addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemDomainRenewalPriceOneAmountMinorMax = 9007199254740991;
+
+export const addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemDomainRenewalPriceOneCurrencyRegExp = new RegExp('^[A-Z]{3}$');
+export const addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemDomainRenewalPriceOneMinorUnitScaleMin = 0;
+export const addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemDomainRenewalPriceOneMinorUnitScaleMax = 4;
+
+export const addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemDomainSourceMax = 200;
+
+export const addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemDomainRetryAfterSecondsMax = 3600;
+
+export const addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemDomainReasonMax = 100;
+
+export const addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemDomainActionProviderIdMax = 80;
+
+export const addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemDomainActionTargetIdMax = 400;
+
+export const addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemDomainActionLabelMax = 100;
+
+export const addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemExternalActionsItemProviderIdMax = 80;
+
+export const addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemExternalActionsItemTargetIdMax = 400;
+
+export const addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemExternalActionsItemLabelMax = 100;
+
+export const addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemExternalActionsMax = 3;
+
+export const addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemDisclosureMax = 500;
+
+export const addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemAuthorizedCapabilityIdMax = 128;
+
+export const addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsMax = 12;
+
+export const addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsNoteMax = 700;
+
+export const addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsComparisonNoteMax = 700;
+
 export const addAiListingToCartResponseAssistantMessageBlocksItemPayloadMemoryGroupsItemLabelMax = 80;
 
 export const addAiListingToCartResponseAssistantMessageBlocksItemPayloadMemoryGroupsItemItemsItemTopicMax = 80;
@@ -4059,7 +4711,7 @@ export const AddAiListingToCartResponse = zod.object({
   "afterValue": zod.string(),
   "status": zod.enum(['PENDING', 'CONFIRMED', 'CANCELLED', 'EXPIRED'])
 }).optional(),
-  "surface": zod.enum(['CART', 'CHECKOUT', 'AUTH', 'SETTINGS', 'ORDERS', 'ORDER', 'ORDERS_LIST', 'ORDER_SELECTOR', 'ORDER_STATUS', 'ORDER_TRACKING', 'SELL', 'MY_LISTINGS', 'DUES', 'MARKET', 'MARKET_SELECTOR', 'ACCOUNT', 'LOGOUT', 'CLARIFY', 'UNSUPPORTED', 'JOB_DRAFT', 'JOB_REVIEW', 'JOB_SEARCH_RESULTS', 'JOB_DETAILS', 'MY_JOBS', 'CV_PROFILE', 'CANDIDATE_SEARCH_RESULTS', 'CANDIDATE_DETAILS', 'APPLICATION_REVIEW', 'MY_APPLICATIONS', 'APPLICATION_LIST', 'EMPLOYMENT_ACTION', 'EMPLOYMENT_NOTICE', 'LOCATION_PERMISSION_REQUEST', 'LOCATION_PREVIEW', 'LOCATION_CONFIRMED', 'MANUAL_ADDRESS', 'DELIVERY_OPTIONS', 'DELIVERY_SUMMARY', 'DELIVERY_ACTION', 'DELIVERY_STATUS', 'PICKUP_DETAILS', 'DELIVERY_NOTICE', 'PROMOTION_OPTIONS', 'PROMOTION_REVIEW', 'PROMOTION_STATUS', 'MY_PROMOTIONS', 'PROMOTION_DETAILS', 'COMPARISON', 'PURCHASE_REVIEW', 'PAYMENT_REVIEW', 'DRIVER_ONBOARDING', 'DRIVER_ONBOARDING_REVIEW', 'DRIVER_STATUS', 'DRIVER_AVAILABILITY', 'DELIVERY_WORK_RESULTS', 'DRIVER_ASSIGNMENT_REVIEW', 'DRIVER_ASSIGNMENT_STATUS', 'DRIVER_EARNINGS_HISTORY', 'PROVIDER_CONNECTION_REVIEW', 'PROVIDER_SECRET_ONCE', 'PROVIDER_STATUS', 'ADVICE', 'NEGOTIATION_REVIEW', 'NEGOTIATION_STATUS', 'NEGOTIATION_LIST', 'MY_INTERESTS', 'MEMORY_SUMMARY', 'MEMORY_CONFIRMATION', 'MEMORY_UPDATED', 'COMMERCIAL_BALANCE', 'COMMERCIAL_LEDGER_SUMMARY', 'COMMERCIAL_TOPUP_REVIEW', 'COMMERCIAL_PRODUCTS', 'COMMERCIAL_PRODUCT_REVIEW', 'FEATURED_REVIEW', 'VIP_REVIEW', 'REFRESH_REVIEW', 'BUNDLE_REVIEW', 'BUNDLE_STATUS', 'PROMOTION_TYPE_OPTIONS', 'DEMAND_CAPTURE_REVIEW', 'CAMPAIGN_STATUS', 'CAMPAIGN_ANALYTICS', 'MARKET_PULSE', 'MARKET_OPPORTUNITY', 'BUSINESS_PLAN_REVIEW', 'BUSINESS_STATUS', 'BUSINESS_SETUP', 'BUSINESS_PROFILE_REVIEW', 'BUSINESS_PROFILE', 'BUSINESS_CATALOG', 'BUSINESS_CATALOG_DRAFT', 'BUSINESS_LISTING_REVIEW', 'BUSINESS_ORDERS', 'BUSINESS_INSIGHTS', 'COMMERCE_NOTICE', 'AI_USAGE', 'AI_PLANS', 'INQUIRY_DRAFT', 'INQUIRY_STATUS', 'INQUIRY_INCOMING', 'INQUIRY_LIST', 'INQUIRY_NOTICE', 'APP_THEME', 'MARKET_SWITCH_REVIEW', 'MARKET_SWITCH_STATUS', 'PROFILE_REVIEW', 'PROFILE_STATUS', 'CONTROL_NOTICE', 'PRIVACY_EXPORT', 'TUTORIAL_VIDEO_CARD']).optional(),
+  "surface": zod.enum(['CONNECT_RESULTS', 'CART', 'CHECKOUT', 'AUTH', 'SETTINGS', 'ORDERS', 'ORDER', 'ORDERS_LIST', 'ORDER_SELECTOR', 'ORDER_STATUS', 'ORDER_TRACKING', 'SELL', 'MY_LISTINGS', 'DUES', 'MARKET', 'MARKET_SELECTOR', 'ACCOUNT', 'LOGOUT', 'CLARIFY', 'UNSUPPORTED', 'JOB_DRAFT', 'JOB_REVIEW', 'JOB_SEARCH_RESULTS', 'JOB_DETAILS', 'MY_JOBS', 'CV_PROFILE', 'CANDIDATE_SEARCH_RESULTS', 'CANDIDATE_DETAILS', 'APPLICATION_REVIEW', 'MY_APPLICATIONS', 'APPLICATION_LIST', 'EMPLOYMENT_ACTION', 'EMPLOYMENT_NOTICE', 'LOCATION_PERMISSION_REQUEST', 'LOCATION_PREVIEW', 'LOCATION_CONFIRMED', 'MANUAL_ADDRESS', 'DELIVERY_OPTIONS', 'DELIVERY_SUMMARY', 'DELIVERY_ACTION', 'DELIVERY_STATUS', 'PICKUP_DETAILS', 'DELIVERY_NOTICE', 'PROMOTION_OPTIONS', 'PROMOTION_REVIEW', 'PROMOTION_STATUS', 'MY_PROMOTIONS', 'PROMOTION_DETAILS', 'COMPARISON', 'PURCHASE_REVIEW', 'PAYMENT_REVIEW', 'DRIVER_ONBOARDING', 'DRIVER_ONBOARDING_REVIEW', 'DRIVER_STATUS', 'DRIVER_AVAILABILITY', 'DELIVERY_WORK_RESULTS', 'DRIVER_ASSIGNMENT_REVIEW', 'DRIVER_ASSIGNMENT_STATUS', 'DRIVER_EARNINGS_HISTORY', 'PROVIDER_CONNECTION_REVIEW', 'PROVIDER_SECRET_ONCE', 'PROVIDER_STATUS', 'ADVICE', 'NEGOTIATION_REVIEW', 'NEGOTIATION_STATUS', 'NEGOTIATION_LIST', 'MY_INTERESTS', 'MEMORY_SUMMARY', 'MEMORY_CONFIRMATION', 'MEMORY_UPDATED', 'COMMERCIAL_BALANCE', 'COMMERCIAL_LEDGER_SUMMARY', 'COMMERCIAL_TOPUP_REVIEW', 'COMMERCIAL_PRODUCTS', 'COMMERCIAL_PRODUCT_REVIEW', 'FEATURED_REVIEW', 'VIP_REVIEW', 'REFRESH_REVIEW', 'BUNDLE_REVIEW', 'BUNDLE_STATUS', 'PROMOTION_TYPE_OPTIONS', 'DEMAND_CAPTURE_REVIEW', 'CAMPAIGN_STATUS', 'CAMPAIGN_ANALYTICS', 'MARKET_PULSE', 'MARKET_OPPORTUNITY', 'BUSINESS_PLAN_REVIEW', 'BUSINESS_STATUS', 'BUSINESS_SETUP', 'BUSINESS_PROFILE_REVIEW', 'BUSINESS_PROFILE', 'BUSINESS_CATALOG', 'BUSINESS_CATALOG_DRAFT', 'BUSINESS_LISTING_REVIEW', 'BUSINESS_ORDERS', 'BUSINESS_INSIGHTS', 'COMMERCE_NOTICE', 'AI_USAGE', 'AI_PLANS', 'INQUIRY_DRAFT', 'INQUIRY_STATUS', 'INQUIRY_INCOMING', 'INQUIRY_LIST', 'INQUIRY_NOTICE', 'APP_THEME', 'MARKET_SWITCH_REVIEW', 'MARKET_SWITCH_STATUS', 'PROFILE_REVIEW', 'PROFILE_STATUS', 'CONTROL_NOTICE', 'PRIVACY_EXPORT', 'TUTORIAL_VIDEO_CARD']).optional(),
   "tutorial": zod.object({
   "id": zod.enum(['SELL_FIRST_LISTING', 'PHOTO_FIRST_SELLING', 'PROMOTION_OVERVIEW', 'FEATURED_EXPLAINER', 'VIP_EXPLAINER', 'DEMAND_CAPTURE_EXPLAINER']),
   "title": zod.string().min(1).max(addAiListingToCartResponseAssistantMessageBlocksItemPayloadTutorialTitleMax),
@@ -4075,6 +4727,74 @@ export const AddAiListingToCartResponse = zod.object({
   "delivery": zod.record(zod.string(), zod.unknown()).optional().describe('Allowlisted delivery/location view for the order\'s own participant, rebuilt server-side on every read. Stored copies never contain coordinates or address text.\n'),
   "promotion": zod.record(zod.string(), zod.unknown()).optional().describe('Allowlisted seller promotion view (plans, review, campaigns), rebuilt from server state on every read. Prices come only from admin plans.\n'),
   "driver": zod.record(zod.string(), zod.unknown()).optional().describe('Allowlisted driver view (profile, review, coarse work cards, assignments), rebuilt from server state on every read. Never contains contacts or coordinates.\n'),
+  "universalCards": zod.object({
+  "version": zod.literal(1),
+  "cards": zod.array(zod.object({
+  "version": zod.literal(1),
+  "id": zod.string().min(1).max(addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemIdMax),
+  "kind": zod.enum(['INTERNAL_PRODUCT', 'INTERNAL_SERVICE', 'EXTERNAL_PRODUCT', 'EXTERNAL_SERVICE', 'DOMAIN_REGISTRATION', 'COMPARISON', 'ORDER_STATUS', 'TRANSACTION_STATUS', 'CAPABILITY']),
+  "commerceMode": zod.enum(['INTERNAL_DINAR', 'EXTERNAL_REFERRAL', 'EXTERNAL_AUTHORIZED_ACTION']),
+  "title": zod.string().min(1).max(addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemTitleMax),
+  "description": zod.string().max(addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemDescriptionMax).optional(),
+  "internalResourceId": zod.string().min(1).max(addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemInternalResourceIdMax).optional(),
+  "providerId": zod.string().min(1).max(addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemProviderIdMax).optional(),
+  "facts": zod.array(zod.object({
+  "label": zod.string().min(1).max(addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemFactsItemLabelMax),
+  "value": zod.union([zod.string().max(addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemFactsItemValueOneMax),zod.null()]),
+  "source": zod.enum(['INTERNAL_RECORD', 'PROVIDER_RECORD', 'UNKNOWN'])
+})).max(addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemFactsMax),
+  "price": zod.union([zod.object({
+  "amountMinor": zod.int().min(addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemPriceOneAmountMinorMin).max(addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemPriceOneAmountMinorMax),
+  "currency": zod.string().regex(addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemPriceOneCurrencyRegExp),
+  "minorUnitScale": zod.int().min(addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemPriceOneMinorUnitScaleMin).max(addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemPriceOneMinorUnitScaleMax)
+}),zod.null()]),
+  "availability": zod.enum(['AVAILABLE', 'UNAVAILABLE', 'UNKNOWN']),
+  "checkedAt": zod.union([zod.null(),zod.coerce.date()]),
+  "sourceLabel": zod.string().min(1).max(addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemSourceLabelMax),
+  "domain": zod.object({
+  "providerId": zod.string().min(1).max(addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemDomainProviderIdMax),
+  "providerName": zod.string().min(1).max(addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemDomainProviderNameMax),
+  "domain": zod.string().min(addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemDomainDomainMin).max(addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemDomainDomainMax),
+  "availability": zod.enum(['AVAILABLE', 'UNAVAILABLE', 'UNKNOWN']),
+  "premium": zod.boolean().nullable(),
+  "registrationPrice": zod.union([zod.object({
+  "amountMinor": zod.int().min(addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemDomainRegistrationPriceOneAmountMinorMin).max(addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemDomainRegistrationPriceOneAmountMinorMax),
+  "currency": zod.string().regex(addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemDomainRegistrationPriceOneCurrencyRegExp),
+  "minorUnitScale": zod.int().min(addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemDomainRegistrationPriceOneMinorUnitScaleMin).max(addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemDomainRegistrationPriceOneMinorUnitScaleMax)
+}),zod.null()]),
+  "renewalPrice": zod.union([zod.object({
+  "amountMinor": zod.int().min(addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemDomainRenewalPriceOneAmountMinorMin).max(addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemDomainRenewalPriceOneAmountMinorMax),
+  "currency": zod.string().regex(addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemDomainRenewalPriceOneCurrencyRegExp),
+  "minorUnitScale": zod.int().min(addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemDomainRenewalPriceOneMinorUnitScaleMin).max(addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemDomainRenewalPriceOneMinorUnitScaleMax)
+}),zod.null()]),
+  "source": zod.string().min(1).max(addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemDomainSourceMax),
+  "lastCheckedAt": zod.union([zod.null(),zod.coerce.date()]),
+  "status": zod.enum(['CHECKED', 'NOT_CONFIGURED', 'RATE_LIMITED', 'TIMEOUT', 'UNAVAILABLE', 'UNAUTHORIZED', 'INVALID_RESPONSE']),
+  "providerMode": zod.enum(['SANDBOX', 'LIVE', 'NOT_CONNECTED']),
+  "retryAfterSeconds": zod.int().min(1).max(addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemDomainRetryAfterSecondsMax).optional(),
+  "reason": zod.string().max(addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemDomainReasonMax).optional(),
+  "action": zod.object({
+  "kind": zod.literal("EXTERNAL_LINK"),
+  "providerId": zod.string().min(1).max(addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemDomainActionProviderIdMax),
+  "targetId": zod.string().min(1).max(addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemDomainActionTargetIdMax),
+  "intent": zod.enum(['SEARCH_ON_PROVIDER', 'VIEW_ON_PROVIDER']),
+  "label": zod.string().min(1).max(addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemDomainActionLabelMax)
+}),
+  "affiliateRelationship": zod.literal(false)
+}).optional(),
+  "externalActions": zod.array(zod.object({
+  "kind": zod.literal("EXTERNAL_LINK"),
+  "providerId": zod.string().min(1).max(addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemExternalActionsItemProviderIdMax),
+  "targetId": zod.string().min(1).max(addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemExternalActionsItemTargetIdMax),
+  "intent": zod.enum(['SEARCH_ON_PROVIDER', 'VIEW_ON_PROVIDER']),
+  "label": zod.string().min(1).max(addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemExternalActionsItemLabelMax)
+})).max(addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemExternalActionsMax),
+  "disclosure": zod.string().min(1).max(addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemDisclosureMax).optional(),
+  "authorizedCapabilityId": zod.string().min(1).max(addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsItemAuthorizedCapabilityIdMax).optional()
+})).max(addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsCardsMax),
+  "note": zod.string().max(addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsNoteMax),
+  "comparisonNote": zod.string().max(addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsComparisonNoteMax).optional()
+}).optional(),
   "provider": zod.record(zod.string(), zod.unknown()).optional().describe('Allowlisted provider connection view (review, status, safe key prefix). Never contains a key, secret or credential hash.\n'),
   "business": zod.record(zod.string(), zod.unknown()).optional().describe('Allowlisted D3-A business view (setup, profile, catalog, orders, insights), refreshed from the owner\'s live D2 identity and D3 operating rows on every read.\n'),
   "policyReview": zod.record(zod.string(), zod.unknown()).optional().describe('Policy review card (W02-ULTRA B10): the current version, effective date, legal-review status and reading path of each policy that requires acceptance, whether this user accepted it, and the review id whose exact versions an acceptance records. Contract acceptance only; optional privacy consents are unaffected.\n'),
@@ -7382,5 +8102,39 @@ export const PostAdminWhatsappIntentsResponse = zod.record(zod.string(), zod.unk
  * @summary W07–W10 (trust-ops.ts). Access: ADMIN. Strangers get 404; bodies are validated strictly on the server.
  */
 export const GetAdminWhatsappOverviewResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * @summary Prepare an owned external referral without creating an internal purchase
+ */
+export const prepareConnectOutboundBodyCardIdMax = 400;
+
+export const prepareConnectOutboundBodyTrackingConsentDefault = false;
+
+export const PrepareConnectOutboundBody = zod.object({
+  "resultSetId": zod.uuid(),
+  "cardId": zod.string().min(1).max(prepareConnectOutboundBodyCardIdMax),
+  "trackingConsent": zod.literal(false).default(prepareConnectOutboundBodyTrackingConsentDefault)
+})
+
+export const prepareConnectOutboundResponseOpenPathRegExp = new RegExp('^/api/connect/outbound/[0-9a-f-]{36}$');
+
+
+export const PrepareConnectOutboundResponse = zod.object({
+  "openPath": zod.string().regex(prepareConnectOutboundResponseOpenPathRegExp),
+  "tracking": zod.enum(['NOT_TRACKED']),
+  "checkoutLocation": zod.enum(['EXTERNAL']),
+  "internalOrderCreated": zod.literal(false)
+})
+
+
+/**
+ * @summary Revalidate an owned navigation capability and redirect to its trusted provider
+ */
+export const OpenConnectOutboundParams = zod.object({
+  "id": zod.uuid()
+})
+
+export const OpenConnectOutboundResponse = zod.void()
 
 

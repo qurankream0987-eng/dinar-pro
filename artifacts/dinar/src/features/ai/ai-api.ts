@@ -1,3 +1,4 @@
+import { UniversalCardsPayloadSchema, type UniversalCardsPayload } from "@workspace/api-zod/connect";
 import { DRIVER_SURFACES } from "./driver-types";
 import { MEMORY_SURFACES, normalizeMemory } from "./memory-types";
 import { COMMERCIAL_SURFACES, normalizeCommercial, type CommercialPayload } from "./commercial-types";
@@ -110,6 +111,7 @@ export type AiUiBlock = {
     provider?: unknown;
     /** D3-A server-built business view (setup, profile, catalog, orders, insights). */
     business?: BusinessPayload;
+    universalCards?: UniversalCardsPayload;
     draft?: Record<string, unknown>;
     draftStep?: string;
     /** Block F1 server-built draft review and seller insight. */
@@ -262,6 +264,11 @@ function normalizeBlock(value: unknown): AiUiBlock | null {
   const payload = block.payload as Partial<AiUiBlock["payload"]>;
   if (block.type === "SURFACE" && !isRegisteredConversationSurface(payload.surface))
     return null;
+  if (payload.universalCards !== undefined) {
+    const connected = UniversalCardsPayloadSchema.safeParse(payload.universalCards);
+    if (!connected.success || payload.surface !== "CONNECT_RESULTS") return null;
+    payload.universalCards = connected.data;
+  }
   if (payload.card !== undefined) {
     const card = parseCardEnvelope(payload.card);
     // An unknown version or a mismatched surface is never partially applied: the block is dropped.

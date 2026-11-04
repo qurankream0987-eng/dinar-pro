@@ -34,6 +34,7 @@ const instant = (value: unknown): Date | undefined => {
 };
 
 const LABELS: Record<string, string> = {
+  EXTERNAL_COMMERCE_CARD: "عروض وروابط مزوّدين خارجيين",
   PRODUCT_RESULT_CARD: "نتائج العروض",
   LISTING_DETAIL_CARD: "تفاصيل العرض",
   SERVICE_RESULT_CARD: "نتائج الخدمات",
@@ -183,6 +184,7 @@ function resourceOf(source: CardEnvelopeSource): { kind: CardEnvelopeInput["reso
   const resourceId = text(payload.resourceId);
   const business = record(payload.business);
   if (business && text(business.businessId)) return { kind: "BUSINESS", id: text(business.businessId) };
+  if (payload.universalCards) return { kind: "PROVIDER" };
   if (payload.control) return { kind: "CONTROL" };
   if (payload.delivery) return { kind: "DELIVERY" };
   if (payload.employment) return { kind: "EMPLOYMENT" };
@@ -244,7 +246,9 @@ export function buildCardEnvelope(source: CardEnvelopeSource): CardEnvelope | nu
 
   const policyReview = record(payload.policyReview);
   let allowedActions: string[] | undefined;
-  if (business) {
+  if (payload.universalCards) {
+    allowedActions = ["EXTERNAL_LINK"];
+  } else if (business) {
     const listed = Array.isArray(business.allowedActions) ? business.allowedActions : [];
     allowedActions = listed.filter((action): action is string => typeof action === "string" && /^[A-Z][A-Z0-9_]{0,39}$/.test(action)).slice(0, 12);
   }

@@ -3674,6 +3674,46 @@ paths:
               schema: { $ref: "#/components/schemas/ServerValidatedObject" }
         "401": { description: Not signed in }
         "404": { description: Not found (also for records of other accounts) }
+  /connect/outbound:
+    post:
+      operationId: prepareConnectOutbound
+      tags: [ai]
+      summary: Prepare an owned external referral without creating an internal purchase
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ConnectOutboundInput" }
+      responses:
+        "201":
+          description: An expiring same-origin navigation capability; no order or payment
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ConnectOutboundPrepared" }
+        "400": { description: Invalid input or unsupported attribution consent }
+        "401": { description: Sign-in required }
+        "404": { description: 'Card absent, foreign, or expired' }
+        "429": { description: Navigation preparation rate limit }
+  /connect/outbound/{id}:
+    get:
+      operationId: openConnectOutbound
+      tags: [ai]
+      summary: Revalidate an owned navigation capability and redirect to its trusted provider
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "303":
+          description: Verified HTTPS destination; outside DINAR checkout
+          headers:
+            Location:
+              schema: { type: string }
+              description: Server-registry destination only; never a caller-supplied URL
+        "400": { description: Arbitrary redirect parameters are refused }
+        "401": { description: Sign-in required }
+        "404": { description: 'Capability absent, foreign, revoked, or expired' }
 components:
   schemas:
     BusinessDelegationConfirmation:
@@ -5337,7 +5377,7 @@ components:
                 beforeValue: { type: string }
                 afterValue: { type: string }
                 status: { type: string, enum: [PENDING, CONFIRMED, CANCELLED, EXPIRED] }
-            surface: { type: string, enum: [CART, CHECKOUT, AUTH, SETTINGS, ORDERS, ORDER, ORDERS_LIST, ORDER_SELECTOR, ORDER_STATUS, ORDER_TRACKING, SELL, MY_LISTINGS, DUES, MARKET, MARKET_SELECTOR, ACCOUNT, LOGOUT, CLARIFY, UNSUPPORTED, JOB_DRAFT, JOB_REVIEW, JOB_SEARCH_RESULTS, JOB_DETAILS, MY_JOBS, CV_PROFILE, CANDIDATE_SEARCH_RESULTS, CANDIDATE_DETAILS, APPLICATION_REVIEW, MY_APPLICATIONS, APPLICATION_LIST, EMPLOYMENT_ACTION, EMPLOYMENT_NOTICE, LOCATION_PERMISSION_REQUEST, LOCATION_PREVIEW, LOCATION_CONFIRMED, MANUAL_ADDRESS, DELIVERY_OPTIONS, DELIVERY_SUMMARY, DELIVERY_ACTION, DELIVERY_STATUS, PICKUP_DETAILS, DELIVERY_NOTICE, PROMOTION_OPTIONS, PROMOTION_REVIEW, PROMOTION_STATUS, MY_PROMOTIONS, PROMOTION_DETAILS, COMPARISON, PURCHASE_REVIEW, PAYMENT_REVIEW, DRIVER_ONBOARDING, DRIVER_ONBOARDING_REVIEW, DRIVER_STATUS, DRIVER_AVAILABILITY, DELIVERY_WORK_RESULTS, DRIVER_ASSIGNMENT_REVIEW, DRIVER_ASSIGNMENT_STATUS, DRIVER_EARNINGS_HISTORY, PROVIDER_CONNECTION_REVIEW, PROVIDER_SECRET_ONCE, PROVIDER_STATUS, ADVICE, NEGOTIATION_REVIEW, NEGOTIATION_STATUS, NEGOTIATION_LIST, MY_INTERESTS, MEMORY_SUMMARY, MEMORY_CONFIRMATION, MEMORY_UPDATED, COMMERCIAL_BALANCE, COMMERCIAL_LEDGER_SUMMARY, COMMERCIAL_TOPUP_REVIEW, COMMERCIAL_PRODUCTS, COMMERCIAL_PRODUCT_REVIEW, FEATURED_REVIEW, VIP_REVIEW, REFRESH_REVIEW, BUNDLE_REVIEW, BUNDLE_STATUS, PROMOTION_TYPE_OPTIONS, DEMAND_CAPTURE_REVIEW, CAMPAIGN_STATUS, CAMPAIGN_ANALYTICS, MARKET_PULSE, MARKET_OPPORTUNITY, BUSINESS_PLAN_REVIEW, BUSINESS_STATUS, BUSINESS_SETUP, BUSINESS_PROFILE_REVIEW, BUSINESS_PROFILE, BUSINESS_CATALOG, BUSINESS_CATALOG_DRAFT, BUSINESS_LISTING_REVIEW, BUSINESS_ORDERS, BUSINESS_INSIGHTS, COMMERCE_NOTICE, AI_USAGE, AI_PLANS, INQUIRY_DRAFT, INQUIRY_STATUS, INQUIRY_INCOMING, INQUIRY_LIST, INQUIRY_NOTICE, APP_THEME, MARKET_SWITCH_REVIEW, MARKET_SWITCH_STATUS, PROFILE_REVIEW, PROFILE_STATUS, CONTROL_NOTICE, PRIVACY_EXPORT, TUTORIAL_VIDEO_CARD] }
+            surface: { type: string, enum: [CONNECT_RESULTS, CART, CHECKOUT, AUTH, SETTINGS, ORDERS, ORDER, ORDERS_LIST, ORDER_SELECTOR, ORDER_STATUS, ORDER_TRACKING, SELL, MY_LISTINGS, DUES, MARKET, MARKET_SELECTOR, ACCOUNT, LOGOUT, CLARIFY, UNSUPPORTED, JOB_DRAFT, JOB_REVIEW, JOB_SEARCH_RESULTS, JOB_DETAILS, MY_JOBS, CV_PROFILE, CANDIDATE_SEARCH_RESULTS, CANDIDATE_DETAILS, APPLICATION_REVIEW, MY_APPLICATIONS, APPLICATION_LIST, EMPLOYMENT_ACTION, EMPLOYMENT_NOTICE, LOCATION_PERMISSION_REQUEST, LOCATION_PREVIEW, LOCATION_CONFIRMED, MANUAL_ADDRESS, DELIVERY_OPTIONS, DELIVERY_SUMMARY, DELIVERY_ACTION, DELIVERY_STATUS, PICKUP_DETAILS, DELIVERY_NOTICE, PROMOTION_OPTIONS, PROMOTION_REVIEW, PROMOTION_STATUS, MY_PROMOTIONS, PROMOTION_DETAILS, COMPARISON, PURCHASE_REVIEW, PAYMENT_REVIEW, DRIVER_ONBOARDING, DRIVER_ONBOARDING_REVIEW, DRIVER_STATUS, DRIVER_AVAILABILITY, DELIVERY_WORK_RESULTS, DRIVER_ASSIGNMENT_REVIEW, DRIVER_ASSIGNMENT_STATUS, DRIVER_EARNINGS_HISTORY, PROVIDER_CONNECTION_REVIEW, PROVIDER_SECRET_ONCE, PROVIDER_STATUS, ADVICE, NEGOTIATION_REVIEW, NEGOTIATION_STATUS, NEGOTIATION_LIST, MY_INTERESTS, MEMORY_SUMMARY, MEMORY_CONFIRMATION, MEMORY_UPDATED, COMMERCIAL_BALANCE, COMMERCIAL_LEDGER_SUMMARY, COMMERCIAL_TOPUP_REVIEW, COMMERCIAL_PRODUCTS, COMMERCIAL_PRODUCT_REVIEW, FEATURED_REVIEW, VIP_REVIEW, REFRESH_REVIEW, BUNDLE_REVIEW, BUNDLE_STATUS, PROMOTION_TYPE_OPTIONS, DEMAND_CAPTURE_REVIEW, CAMPAIGN_STATUS, CAMPAIGN_ANALYTICS, MARKET_PULSE, MARKET_OPPORTUNITY, BUSINESS_PLAN_REVIEW, BUSINESS_STATUS, BUSINESS_SETUP, BUSINESS_PROFILE_REVIEW, BUSINESS_PROFILE, BUSINESS_CATALOG, BUSINESS_CATALOG_DRAFT, BUSINESS_LISTING_REVIEW, BUSINESS_ORDERS, BUSINESS_INSIGHTS, COMMERCE_NOTICE, AI_USAGE, AI_PLANS, INQUIRY_DRAFT, INQUIRY_STATUS, INQUIRY_INCOMING, INQUIRY_LIST, INQUIRY_NOTICE, APP_THEME, MARKET_SWITCH_REVIEW, MARKET_SWITCH_STATUS, PROFILE_REVIEW, PROFILE_STATUS, CONTROL_NOTICE, PRIVACY_EXPORT, TUTORIAL_VIDEO_CARD] }
             tutorial: { $ref: "#/components/schemas/AiTutorialPayload" }
             guestSellerIntent:
               type: boolean
@@ -5364,6 +5404,7 @@ components:
               description: >
                 Allowlisted driver view (profile, review, coarse work cards, assignments),
                 rebuilt from server state on every read. Never contains contacts or coordinates.
+            universalCards: { $ref: "#/components/schemas/ConnectUniversalCardsPayload" }
             provider:
               type: object
               additionalProperties: true
@@ -6145,3 +6186,21 @@ components:
         reference: { type: string, minLength: 3, maxLength: 200, pattern: '^[A-Za-z][A-Za-z0-9._:/-]{2,199}$' }
         severity: { type: string, enum: [LOW, MEDIUM, HIGH, CRITICAL] }
 
+    ConnectUniversalCardsPayload: {"type":"object","properties":{"version":{"type":"number","const":1},"cards":{"maxItems":12,"type":"array","items":{"type":"object","properties":{"version":{"type":"number","const":1},"id":{"type":"string","minLength":1,"maxLength":400},"kind":{"type":"string","enum":["INTERNAL_PRODUCT","INTERNAL_SERVICE","EXTERNAL_PRODUCT","EXTERNAL_SERVICE","DOMAIN_REGISTRATION","COMPARISON","ORDER_STATUS","TRANSACTION_STATUS","CAPABILITY"]},"commerceMode":{"type":"string","enum":["INTERNAL_DINAR","EXTERNAL_REFERRAL","EXTERNAL_AUTHORIZED_ACTION"]},"title":{"type":"string","minLength":1,"maxLength":180},"description":{"type":"string","maxLength":700},"internalResourceId":{"type":"string","minLength":1,"maxLength":200},"providerId":{"type":"string","minLength":1,"maxLength":80},"facts":{"maxItems":20,"type":"array","items":{"type":"object","properties":{"label":{"type":"string","minLength":1,"maxLength":80},"value":{"anyOf":[{"type":"string","maxLength":300},{"type":"null"}]},"source":{"type":"string","enum":["INTERNAL_RECORD","PROVIDER_RECORD","UNKNOWN"]}},"required":["label","value","source"],"additionalProperties":false}},"price":{"anyOf":[{"type":"object","properties":{"amountMinor":{"type":"integer","minimum":0,"maximum":9007199254740991},"currency":{"type":"string","pattern":"^[A-Z]{3}$"},"minorUnitScale":{"type":"integer","minimum":0,"maximum":4}},"required":["amountMinor","currency","minorUnitScale"],"additionalProperties":false},{"type":"null"}]},"availability":{"type":"string","enum":["AVAILABLE","UNAVAILABLE","UNKNOWN"]},"checkedAt":{"anyOf":[{"type":"null"},{"type":"string","format":"date-time"}]},"sourceLabel":{"type":"string","minLength":1,"maxLength":200},"domain":{"type":"object","properties":{"providerId":{"type":"string","minLength":1,"maxLength":80},"providerName":{"type":"string","minLength":1,"maxLength":120},"domain":{"type":"string","minLength":3,"maxLength":253},"availability":{"type":"string","enum":["AVAILABLE","UNAVAILABLE","UNKNOWN"]},"premium":{"type":["boolean","null"]},"registrationPrice":{"anyOf":[{"type":"object","properties":{"amountMinor":{"type":"integer","minimum":0,"maximum":9007199254740991},"currency":{"type":"string","pattern":"^[A-Z]{3}$"},"minorUnitScale":{"type":"integer","minimum":0,"maximum":4}},"required":["amountMinor","currency","minorUnitScale"],"additionalProperties":false},{"type":"null"}]},"renewalPrice":{"anyOf":[{"type":"object","properties":{"amountMinor":{"type":"integer","minimum":0,"maximum":9007199254740991},"currency":{"type":"string","pattern":"^[A-Z]{3}$"},"minorUnitScale":{"type":"integer","minimum":0,"maximum":4}},"required":["amountMinor","currency","minorUnitScale"],"additionalProperties":false},{"type":"null"}]},"source":{"type":"string","minLength":1,"maxLength":200},"lastCheckedAt":{"anyOf":[{"type":"null"},{"type":"string","format":"date-time"}]},"status":{"type":"string","enum":["CHECKED","NOT_CONFIGURED","RATE_LIMITED","TIMEOUT","UNAVAILABLE","UNAUTHORIZED","INVALID_RESPONSE"]},"providerMode":{"type":"string","enum":["SANDBOX","LIVE","NOT_CONNECTED"]},"retryAfterSeconds":{"type":"integer","minimum":1,"maximum":3600},"reason":{"type":"string","maxLength":100},"action":{"type":"object","properties":{"kind":{"type":"string","const":"EXTERNAL_LINK"},"providerId":{"type":"string","minLength":1,"maxLength":80},"targetId":{"type":"string","minLength":1,"maxLength":400},"intent":{"type":"string","enum":["SEARCH_ON_PROVIDER","VIEW_ON_PROVIDER"]},"label":{"type":"string","minLength":1,"maxLength":100}},"required":["kind","providerId","targetId","intent","label"],"additionalProperties":false},"affiliateRelationship":{"type":"boolean","const":false}},"required":["providerId","providerName","domain","availability","premium","registrationPrice","renewalPrice","source","lastCheckedAt","status","providerMode","action","affiliateRelationship"],"additionalProperties":false},"externalActions":{"maxItems":3,"type":"array","items":{"type":"object","properties":{"kind":{"type":"string","const":"EXTERNAL_LINK"},"providerId":{"type":"string","minLength":1,"maxLength":80},"targetId":{"type":"string","minLength":1,"maxLength":400},"intent":{"type":"string","enum":["SEARCH_ON_PROVIDER","VIEW_ON_PROVIDER"]},"label":{"type":"string","minLength":1,"maxLength":100}},"required":["kind","providerId","targetId","intent","label"],"additionalProperties":false}},"disclosure":{"type":"string","minLength":1,"maxLength":500},"authorizedCapabilityId":{"type":"string","minLength":1,"maxLength":128}},"required":["version","id","kind","commerceMode","title","facts","price","availability","checkedAt","sourceLabel","externalActions"],"additionalProperties":false}},"note":{"type":"string","maxLength":700},"comparisonNote":{"type":"string","maxLength":700}},"required":["version","cards","note"],"additionalProperties":false}
+    ConnectOutboundInput:
+      type: object
+      additionalProperties: false
+      required: [resultSetId, cardId]
+      properties:
+        resultSetId: { type: string, format: uuid }
+        cardId: { type: string, minLength: 1, maxLength: 400 }
+        trackingConsent: { type: boolean, enum: [false], default: false }
+    ConnectOutboundPrepared:
+      type: object
+      additionalProperties: false
+      required: [openPath, tracking, checkoutLocation, internalOrderCreated]
+      properties:
+        openPath: { type: string, pattern: '^/api/connect/outbound/[0-9a-f-]{36}$' }
+        tracking: { type: string, enum: [NOT_TRACKED] }
+        checkoutLocation: { type: string, enum: [EXTERNAL] }
+        internalOrderCreated: { type: boolean, enum: [false] }

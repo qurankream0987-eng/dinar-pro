@@ -1,3 +1,4 @@
+import { ExternalLinkAction } from "./ExternalLinkAction";
 import type { ReactNode } from "react";
 import { Link } from "wouter";
 import {
@@ -270,6 +271,7 @@ const EMPHASIS: Record<SurfaceAction["emphasis"], ButtonVariant> = { PRIMARY: "p
  * an older card (or while DINAR is busy) the action is not offered at all.
  */
 export function SurfaceActionButton({ action, onSend }: { action: SurfaceAction; onSend?: (text: string) => void }) {
+  if (action.kind === "EXTERNAL_LINK") return <ExternalLinkAction action={action} />;
   if (action.kind === "NAVIGATE")
     return (
       <Link href={action.path} className={buttonClass(EMPHASIS[action.emphasis], "sm")} data-testid={action.testId}>
@@ -295,7 +297,7 @@ export function SurfaceActionButton({ action, onSend }: { action: SurfaceAction;
 }
 
 export function ActionRow({ items, onSend }: { items: SurfaceAction[]; onSend?: (text: string) => void }) {
-  const offered = items.filter((action) => action.kind === "NAVIGATE" || onSend);
+  const offered = items.filter((action) => action.kind !== "SEND" || onSend);
   if (!offered.length) return null;
   return (
     <div className="ds-actions">
@@ -317,7 +319,7 @@ export function OptionList({ label, layout, items, onSend }: Omit<Section<"optio
           </div>
           {item.subtitle && <p className="ds-option-subtitle" data-muted={item.subtitleMuted || undefined}><bdi>{item.subtitle}</bdi></p>}
           {item.facts?.length ? <FactList className="ds-facts-compact" rows={item.facts} /> : null}
-          {item.actions?.some((action) => action.kind === "NAVIGATE" || onSend) ? (
+          {item.actions?.some((action) => action.kind !== "SEND" || onSend) ? (
             <div className="ds-option-action">
               {item.actions.map((action, index) => (
                 <SurfaceActionButton key={index} action={action} onSend={onSend} />

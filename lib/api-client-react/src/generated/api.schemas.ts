@@ -2201,6 +2201,7 @@ export type AiUiBlockPayloadSurface = typeof AiUiBlockPayloadSurface[keyof typeo
 
 
 export const AiUiBlockPayloadSurface = {
+  CONNECT_RESULTS: 'CONNECT_RESULTS',
   CART: 'CART',
   CHECKOUT: 'CHECKOUT',
   AUTH: 'AUTH',
@@ -2364,6 +2365,291 @@ export interface AiTutorialPayload {
      * @maxItems 5
      */
   steps: AiTutorialPayloadStepsItem[];
+}
+
+export type ConnectUniversalCardsPayloadCardsItemKind = typeof ConnectUniversalCardsPayloadCardsItemKind[keyof typeof ConnectUniversalCardsPayloadCardsItemKind];
+
+
+export const ConnectUniversalCardsPayloadCardsItemKind = {
+  INTERNAL_PRODUCT: 'INTERNAL_PRODUCT',
+  INTERNAL_SERVICE: 'INTERNAL_SERVICE',
+  EXTERNAL_PRODUCT: 'EXTERNAL_PRODUCT',
+  EXTERNAL_SERVICE: 'EXTERNAL_SERVICE',
+  DOMAIN_REGISTRATION: 'DOMAIN_REGISTRATION',
+  COMPARISON: 'COMPARISON',
+  ORDER_STATUS: 'ORDER_STATUS',
+  TRANSACTION_STATUS: 'TRANSACTION_STATUS',
+  CAPABILITY: 'CAPABILITY',
+} as const;
+
+export type ConnectUniversalCardsPayloadCardsItemCommerceMode = typeof ConnectUniversalCardsPayloadCardsItemCommerceMode[keyof typeof ConnectUniversalCardsPayloadCardsItemCommerceMode];
+
+
+export const ConnectUniversalCardsPayloadCardsItemCommerceMode = {
+  INTERNAL_DINAR: 'INTERNAL_DINAR',
+  EXTERNAL_REFERRAL: 'EXTERNAL_REFERRAL',
+  EXTERNAL_AUTHORIZED_ACTION: 'EXTERNAL_AUTHORIZED_ACTION',
+} as const;
+
+export type ConnectUniversalCardsPayloadCardsItemFactsItemSource = typeof ConnectUniversalCardsPayloadCardsItemFactsItemSource[keyof typeof ConnectUniversalCardsPayloadCardsItemFactsItemSource];
+
+
+export const ConnectUniversalCardsPayloadCardsItemFactsItemSource = {
+  INTERNAL_RECORD: 'INTERNAL_RECORD',
+  PROVIDER_RECORD: 'PROVIDER_RECORD',
+  UNKNOWN: 'UNKNOWN',
+} as const;
+
+export type ConnectUniversalCardsPayloadCardsItemAvailability = typeof ConnectUniversalCardsPayloadCardsItemAvailability[keyof typeof ConnectUniversalCardsPayloadCardsItemAvailability];
+
+
+export const ConnectUniversalCardsPayloadCardsItemAvailability = {
+  AVAILABLE: 'AVAILABLE',
+  UNAVAILABLE: 'UNAVAILABLE',
+  UNKNOWN: 'UNKNOWN',
+} as const;
+
+export type ConnectUniversalCardsPayloadCardsItemDomainAvailability = typeof ConnectUniversalCardsPayloadCardsItemDomainAvailability[keyof typeof ConnectUniversalCardsPayloadCardsItemDomainAvailability];
+
+
+export const ConnectUniversalCardsPayloadCardsItemDomainAvailability = {
+  AVAILABLE: 'AVAILABLE',
+  UNAVAILABLE: 'UNAVAILABLE',
+  UNKNOWN: 'UNKNOWN',
+} as const;
+
+export type ConnectUniversalCardsPayloadCardsItemDomainStatus = typeof ConnectUniversalCardsPayloadCardsItemDomainStatus[keyof typeof ConnectUniversalCardsPayloadCardsItemDomainStatus];
+
+
+export const ConnectUniversalCardsPayloadCardsItemDomainStatus = {
+  CHECKED: 'CHECKED',
+  NOT_CONFIGURED: 'NOT_CONFIGURED',
+  RATE_LIMITED: 'RATE_LIMITED',
+  TIMEOUT: 'TIMEOUT',
+  UNAVAILABLE: 'UNAVAILABLE',
+  UNAUTHORIZED: 'UNAUTHORIZED',
+  INVALID_RESPONSE: 'INVALID_RESPONSE',
+} as const;
+
+export type ConnectUniversalCardsPayloadCardsItemDomainProviderMode = typeof ConnectUniversalCardsPayloadCardsItemDomainProviderMode[keyof typeof ConnectUniversalCardsPayloadCardsItemDomainProviderMode];
+
+
+export const ConnectUniversalCardsPayloadCardsItemDomainProviderMode = {
+  SANDBOX: 'SANDBOX',
+  LIVE: 'LIVE',
+  NOT_CONNECTED: 'NOT_CONNECTED',
+} as const;
+
+export type ConnectUniversalCardsPayloadCardsItemDomainActionIntent = typeof ConnectUniversalCardsPayloadCardsItemDomainActionIntent[keyof typeof ConnectUniversalCardsPayloadCardsItemDomainActionIntent];
+
+
+export const ConnectUniversalCardsPayloadCardsItemDomainActionIntent = {
+  SEARCH_ON_PROVIDER: 'SEARCH_ON_PROVIDER',
+  VIEW_ON_PROVIDER: 'VIEW_ON_PROVIDER',
+} as const;
+
+export type ConnectUniversalCardsPayloadCardsItemExternalActionsItemIntent = typeof ConnectUniversalCardsPayloadCardsItemExternalActionsItemIntent[keyof typeof ConnectUniversalCardsPayloadCardsItemExternalActionsItemIntent];
+
+
+export const ConnectUniversalCardsPayloadCardsItemExternalActionsItemIntent = {
+  SEARCH_ON_PROVIDER: 'SEARCH_ON_PROVIDER',
+  VIEW_ON_PROVIDER: 'VIEW_ON_PROVIDER',
+} as const;
+
+export type ConnectUniversalCardsPayloadCardsItemFactsItem = {
+  /**
+     * @minLength 1
+     * @maxLength 80
+     */
+  label: string;
+  value: string | null;
+  source: ConnectUniversalCardsPayloadCardsItemFactsItemSource;
+};
+
+export type ConnectUniversalCardsPayloadCardsItemPrice = {
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  amountMinor: number;
+  /** @pattern ^[A-Z]{3}$ */
+  currency: string;
+  /**
+     * @minimum 0
+     * @maximum 4
+     */
+  minorUnitScale: number;
+} | null;
+
+export type ConnectUniversalCardsPayloadCardsItemDomainRegistrationPrice = {
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  amountMinor: number;
+  /** @pattern ^[A-Z]{3}$ */
+  currency: string;
+  /**
+     * @minimum 0
+     * @maximum 4
+     */
+  minorUnitScale: number;
+} | null;
+
+export type ConnectUniversalCardsPayloadCardsItemDomainRenewalPrice = {
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  amountMinor: number;
+  /** @pattern ^[A-Z]{3}$ */
+  currency: string;
+  /**
+     * @minimum 0
+     * @maximum 4
+     */
+  minorUnitScale: number;
+} | null;
+
+export type ConnectUniversalCardsPayloadCardsItemDomainAction = {
+  kind: 'EXTERNAL_LINK';
+  /**
+     * @minLength 1
+     * @maxLength 80
+     */
+  providerId: string;
+  /**
+     * @minLength 1
+     * @maxLength 400
+     */
+  targetId: string;
+  intent: ConnectUniversalCardsPayloadCardsItemDomainActionIntent;
+  /**
+     * @minLength 1
+     * @maxLength 100
+     */
+  label: string;
+};
+
+export type ConnectUniversalCardsPayloadCardsItemDomain = {
+  /**
+     * @minLength 1
+     * @maxLength 80
+     */
+  providerId: string;
+  /**
+     * @minLength 1
+     * @maxLength 120
+     */
+  providerName: string;
+  /**
+     * @minLength 3
+     * @maxLength 253
+     */
+  domain: string;
+  availability: ConnectUniversalCardsPayloadCardsItemDomainAvailability;
+  /** @nullable */
+  premium: boolean | null;
+  registrationPrice: ConnectUniversalCardsPayloadCardsItemDomainRegistrationPrice;
+  renewalPrice: ConnectUniversalCardsPayloadCardsItemDomainRenewalPrice;
+  /**
+     * @minLength 1
+     * @maxLength 200
+     */
+  source: string;
+  lastCheckedAt: null | string;
+  status: ConnectUniversalCardsPayloadCardsItemDomainStatus;
+  providerMode: ConnectUniversalCardsPayloadCardsItemDomainProviderMode;
+  /**
+     * @minimum 1
+     * @maximum 3600
+     */
+  retryAfterSeconds?: number;
+  /** @maxLength 100 */
+  reason?: string;
+  action: ConnectUniversalCardsPayloadCardsItemDomainAction;
+  affiliateRelationship: false;
+};
+
+export type ConnectUniversalCardsPayloadCardsItemExternalActionsItem = {
+  kind: 'EXTERNAL_LINK';
+  /**
+     * @minLength 1
+     * @maxLength 80
+     */
+  providerId: string;
+  /**
+     * @minLength 1
+     * @maxLength 400
+     */
+  targetId: string;
+  intent: ConnectUniversalCardsPayloadCardsItemExternalActionsItemIntent;
+  /**
+     * @minLength 1
+     * @maxLength 100
+     */
+  label: string;
+};
+
+export type ConnectUniversalCardsPayloadCardsItem = {
+  version: 1;
+  /**
+     * @minLength 1
+     * @maxLength 400
+     */
+  id: string;
+  kind: ConnectUniversalCardsPayloadCardsItemKind;
+  commerceMode: ConnectUniversalCardsPayloadCardsItemCommerceMode;
+  /**
+     * @minLength 1
+     * @maxLength 180
+     */
+  title: string;
+  /** @maxLength 700 */
+  description?: string;
+  /**
+     * @minLength 1
+     * @maxLength 200
+     */
+  internalResourceId?: string;
+  /**
+     * @minLength 1
+     * @maxLength 80
+     */
+  providerId?: string;
+  /** @maxItems 20 */
+  facts: ConnectUniversalCardsPayloadCardsItemFactsItem[];
+  price: ConnectUniversalCardsPayloadCardsItemPrice;
+  availability: ConnectUniversalCardsPayloadCardsItemAvailability;
+  checkedAt: null | string;
+  /**
+     * @minLength 1
+     * @maxLength 200
+     */
+  sourceLabel: string;
+  domain?: ConnectUniversalCardsPayloadCardsItemDomain;
+  /** @maxItems 3 */
+  externalActions: ConnectUniversalCardsPayloadCardsItemExternalActionsItem[];
+  /**
+     * @minLength 1
+     * @maxLength 500
+     */
+  disclosure?: string;
+  /**
+     * @minLength 1
+     * @maxLength 128
+     */
+  authorizedCapabilityId?: string;
+};
+
+export interface ConnectUniversalCardsPayload {
+  version: 1;
+  /** @maxItems 12 */
+  cards: ConnectUniversalCardsPayloadCardsItem[];
+  /** @maxLength 700 */
+  note: string;
+  /** @maxLength 700 */
+  comparisonNote?: string;
 }
 
 export type AiUiBlockPayloadMemoryView = typeof AiUiBlockPayloadMemoryView[keyof typeof AiUiBlockPayloadMemoryView];
@@ -2539,6 +2825,7 @@ export type AiUiBlockPayload = {
   promotion?: AiUiBlockPayloadPromotion;
   /** Allowlisted driver view (profile, review, coarse work cards, assignments), rebuilt from server state on every read. Never contains contacts or coordinates. */
   driver?: AiUiBlockPayloadDriver;
+  universalCards?: ConnectUniversalCardsPayload;
   /** Allowlisted provider connection view (review, status, safe key prefix). Never contains a key, secret or credential hash. */
   provider?: AiUiBlockPayloadProvider;
   /** Allowlisted D3-A business view (setup, profile, catalog, orders, insights), refreshed from the owner's live D2 identity and D3 operating rows on every read. */
@@ -4672,6 +4959,38 @@ export interface SecurityIncidentTransitionInput {
      */
   reference?: string;
   severity?: SecurityIncidentTransitionInputSeverity;
+}
+
+export interface ConnectOutboundInput {
+  resultSetId: string;
+  /**
+     * @minLength 1
+     * @maxLength 400
+     */
+  cardId: string;
+  trackingConsent?: false;
+}
+
+export type ConnectOutboundPreparedTracking = typeof ConnectOutboundPreparedTracking[keyof typeof ConnectOutboundPreparedTracking];
+
+
+export const ConnectOutboundPreparedTracking = {
+  NOT_TRACKED: 'NOT_TRACKED',
+} as const;
+
+export type ConnectOutboundPreparedCheckoutLocation = typeof ConnectOutboundPreparedCheckoutLocation[keyof typeof ConnectOutboundPreparedCheckoutLocation];
+
+
+export const ConnectOutboundPreparedCheckoutLocation = {
+  EXTERNAL: 'EXTERNAL',
+} as const;
+
+export interface ConnectOutboundPrepared {
+  /** @pattern ^/api/connect/outbound/[0-9a-f-]{36}$ */
+  openPath: string;
+  tracking: ConnectOutboundPreparedTracking;
+  checkoutLocation: ConnectOutboundPreparedCheckoutLocation;
+  internalOrderCreated: false;
 }
 
 export type GetListingsParams = {

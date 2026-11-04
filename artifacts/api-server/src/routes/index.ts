@@ -1,3 +1,4 @@
+import connect from "./connect";
 import { Router, type IRouter } from "express";
 import auth from "../lib/auth";
 import marketplace from "./marketplace";
@@ -46,6 +47,7 @@ router.use(businessProfiles);
 router.use(businessDelegations);
 router.use(businesses);
 // Before payments: its router-wide simulation gate would hide every later route.
+router.use(connect);
 router.use(provider);
 router.use(trustSafety);
 router.use(trustOps);

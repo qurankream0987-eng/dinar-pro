@@ -93,6 +93,17 @@ const emphasis = z.enum(VALUE_EMPHASES);
  */
 export const SurfaceActionSchema = z.discriminatedUnion("kind", [
   z.object({
+    kind: z.literal("EXTERNAL_LINK"),
+    label: short,
+    resultSetId: z.string().uuid(),
+    cardId: z.string().min(1).max(400),
+    providerId: z.string().min(1).max(80),
+    emphasis: z.enum(["PRIMARY", "SECONDARY", "QUIET"]).default("SECONDARY"),
+    actionId: z.literal("EXTERNAL_LINK"),
+    testId: testId.optional(),
+    icon: icon.optional(),
+  }).strict(),
+  z.object({
     kind: z.literal("SEND"),
     label: short,
     message: z.string().trim().min(1).max(160),
@@ -236,7 +247,7 @@ export const ComposedSurfaceSchema = z.object({
   );
   if (actions.filter((action) => action.emphasis === "PRIMARY").length > 1)
     context.addIssue({ code: z.ZodIssueCode.custom, message: "one primary action per surface" });
-  if (!surfaceAllowsActions(surface.state) && actions.some((action) => action.kind === "SEND"))
+  if (!surfaceAllowsActions(surface.state) && actions.some((action) => action.kind !== "NAVIGATE"))
     context.addIssue({ code: z.ZodIssueCode.custom, message: "a terminal surface must not offer a send action" });
 });
 export type ComposedSurface = z.infer<typeof ComposedSurfaceSchema>;
@@ -330,7 +341,7 @@ export function applyCardEnvelope(surface: ComposedSurface, envelope: CardEnvelo
   const base = envelope.surface ?? surface;
   const allowed = envelope.allowedActions;
   const keep = (action: SurfaceAction): boolean => {
-    if (action.kind !== "SEND") return true;
+    if (action.kind === "NAVIGATE") return true;
     if (!surfaceAllowsActions(envelope.status.lifecycle)) return false;
     if (allowed === undefined) return true;
     return action.actionId !== undefined && allowed.includes(action.actionId);
