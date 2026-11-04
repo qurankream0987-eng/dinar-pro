@@ -8,7 +8,8 @@
     "build": "PORT=${PORT:-5173} BASE_PATH=${BASE_PATH:-/} vite build --config vite.config.ts",
     "serve": "vite preview --config vite.config.ts --host 0.0.0.0",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test:surfaces": "../../scripts/node_modules/.bin/tsx --tsconfig test/tsconfig.surfaces.json --test test/composed-surface.test.tsx test/wave02-card-lifecycle.test.tsx test/wave03-card-envelope.test.tsx test/w02u3-card-sync.test.ts test/checkout-request.test.ts",
+    "test:surfaces": "../../scripts/node_modules/.bin/tsx --tsconfig test/tsconfig.surfaces.json --test test/composed-surface.test.tsx test/wave02-card-lifecycle.test.tsx test/wave03-card-envelope.test.tsx test/w02u3-card-sync.test.ts test/checkout-request.test.ts test/history-render-performance.test.tsx",
+    "test:history-perf": "../../scripts/node_modules/.bin/tsx --tsconfig test/tsconfig.surfaces.json --test test/history-render-performance.test.tsx",
     "test:deepseek-stream": "../../scripts/node_modules/.bin/tsx --tsconfig test/tsconfig.surfaces.json --test test/deepseek-stream-render.test.tsx",
     "test:handoff": "../../scripts/node_modules/.bin/tsx --tsconfig test/tsconfig.surfaces.json --test test/guest-handoff-decision.test.ts"
   },
