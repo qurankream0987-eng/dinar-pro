@@ -189,7 +189,7 @@ try {
     const editedBody = "ابحث عن ثلاجة";
     await page.getByTestId(`textarea-edit-message-${editId}`).fill(editedBody);
     const [copied, turn] = await Promise.all([
-      page.waitForResponse((response) => new URL(response.url()).pathname === `/api/ai/conversations/${largest.conversationId}/copy` && response.request().method() === "POST"),
+      page.waitForResponse((response) => new URL(response.url()).pathname === `/api/ai/conversations/${largest.conversationId}/copies` && response.request().method() === "POST"),
       page.waitForResponse((response) => /\/api\/ai\/conversations\/[^/]+\/turns$/.test(new URL(response.url()).pathname) && response.request().method() === "POST"),
       page.getByTestId(`button-save-message-edit-${editId}`).click(),
     ]);
