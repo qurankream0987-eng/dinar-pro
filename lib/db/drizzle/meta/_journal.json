@@ -407,6 +407,13 @@
       "when": 1793828511196,
       "tag": "0057_dinar_connect",
       "breakpoints": true
+    },
+    {
+      "idx": 58,
+      "version": "7",
+      "when": 1793914911196,
+      "tag": "0058_connect_projection_hardening",
+      "breakpoints": true
     }
   ]
 }

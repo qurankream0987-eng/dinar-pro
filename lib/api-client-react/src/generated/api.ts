@@ -73,11 +73,19 @@ import type {
   CheckoutResponse,
   CommercialJsonObject,
   ConfirmationInput,
+  ConnectAgreementAcceptanceInput,
+  ConnectAgreementProposalInput,
+  ConnectAttributionWithdrawalInput,
   ConnectCatalogImportInput,
+  ConnectFinanceCommandInput,
+  ConnectFinancialReceipt,
   ConnectIntegrationRegistrationInput,
   ConnectOutboundInput,
   ConnectOutboundPrepared,
+  ConnectPartnerEventInput,
   ConnectPartnerRegistrationInput,
+  ConnectPartnerReport,
+  ConnectReferralDisclosure,
   ConnectReviewDecisionInput,
   ConnectSiteRegistrationInput,
   ConnectUniversalCardsPayload,
@@ -104,6 +112,8 @@ import type {
   DeliveryInput,
   EmptyInput,
   EmptyObject,
+  GetAdminConnectPartnerReportParams,
+  GetConnectPartnerReportParams,
   GetListingsParams,
   GetOrdersParams,
   GetSubscriptionPlanEconomicsParams,
@@ -20343,6 +20353,856 @@ export function useSearchConnectCatalog<TData = Awaited<ReturnType<typeof search
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getSearchConnectCatalogQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getProposeConnectAgreementUrl = (id: string,) => {
+
+
+
+
+  return `/api/admin/connect/partners/${id}/agreements`
+}
+
+/**
+ * Access: ADMIN. External commerce only. Approved dedicated bearer credentials authenticate provider evidence; browser cookies never authenticate conversions. Agreements require independent proposal and exact owner acceptance. Consent is explicit and per referral. Financial execution is SIMULATION_ONLY; provider settlement claims never prove real funds. Refund item amounts are cumulative; REFUND amountMinor is their increase since the previous refund. No implicit FX, internal order, payment or marketplace commission.
+ */
+export const proposeConnectAgreement = async (id: string,
+    connectAgreementProposalInput: ConnectAgreementProposalInput, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getProposeConnectAgreementUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(connectAgreementProposalInput)
+  }
+);}
+
+
+
+
+
+export const getProposeConnectAgreementMutationKey = () => ['proposeConnectAgreement'] as const;
+
+export const getProposeConnectAgreementMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof proposeConnectAgreement>>, TError,ProposeConnectAgreementMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof proposeConnectAgreement>>, TError,ProposeConnectAgreementMutationVariables, TContext> => {
+
+const mutationKey = getProposeConnectAgreementMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof proposeConnectAgreement>>, ProposeConnectAgreementMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  proposeConnectAgreement(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ProposeConnectAgreementMutationResult = NonNullable<Awaited<ReturnType<typeof proposeConnectAgreement>>>
+    export type ProposeConnectAgreementMutationBody = BodyType<ConnectAgreementProposalInput>
+    export type ProposeConnectAgreementMutationError = ErrorType<void>
+    export type ProposeConnectAgreementMutationVariables = {id: string;data: BodyType<ConnectAgreementProposalInput>}
+
+    export const useProposeConnectAgreement = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof proposeConnectAgreement>>, TError,ProposeConnectAgreementMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof proposeConnectAgreement>>,
+        TError,
+        ProposeConnectAgreementMutationVariables,
+        TContext
+      > => {
+      return useMutation(getProposeConnectAgreementMutationOptions(options), queryClient);
+    }
+
+export const getListConnectAgreementsUrl = (id: string,) => {
+
+
+
+
+  return `/api/connect/partners/${id}/agreements`
+}
+
+/**
+ * Access: AUTHENTICATED. External commerce only. Approved dedicated bearer credentials authenticate provider evidence; browser cookies never authenticate conversions. Agreements require independent proposal and exact owner acceptance. Consent is explicit and per referral. Financial execution is SIMULATION_ONLY; provider settlement claims never prove real funds. Refund item amounts are cumulative; REFUND amountMinor is their increase since the previous refund. No implicit FX, internal order, payment or marketplace commission.
+ */
+export const listConnectAgreements = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject[]> => {
+
+  return customFetch<ServerValidatedObject[]>(getListConnectAgreementsUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListConnectAgreementsQueryKey = (id: string,) => {
+    return [
+    `/api/connect/partners/${id}/agreements`
+    ] as const;
+    }
+
+
+export const getListConnectAgreementsQueryOptions = <TData = Awaited<ReturnType<typeof listConnectAgreements>>, TError = ErrorType<void>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listConnectAgreements>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListConnectAgreementsQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listConnectAgreements>>> = ({ signal }) => listConnectAgreements(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listConnectAgreements>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListConnectAgreementsQueryResult = NonNullable<Awaited<ReturnType<typeof listConnectAgreements>>>
+export type ListConnectAgreementsQueryError = ErrorType<void>
+
+
+export function useListConnectAgreements<TData = Awaited<ReturnType<typeof listConnectAgreements>>, TError = ErrorType<void>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listConnectAgreements>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listConnectAgreements>>,
+          TError,
+          Awaited<ReturnType<typeof listConnectAgreements>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListConnectAgreements<TData = Awaited<ReturnType<typeof listConnectAgreements>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listConnectAgreements>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listConnectAgreements>>,
+          TError,
+          Awaited<ReturnType<typeof listConnectAgreements>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListConnectAgreements<TData = Awaited<ReturnType<typeof listConnectAgreements>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listConnectAgreements>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useListConnectAgreements<TData = Awaited<ReturnType<typeof listConnectAgreements>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listConnectAgreements>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListConnectAgreementsQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getAcceptConnectAgreementUrl = (id: string,) => {
+
+
+
+
+  return `/api/connect/agreements/${id}/accept`
+}
+
+/**
+ * Access: AUTHENTICATED. External commerce only. Approved dedicated bearer credentials authenticate provider evidence; browser cookies never authenticate conversions. Agreements require independent proposal and exact owner acceptance. Consent is explicit and per referral. Financial execution is SIMULATION_ONLY; provider settlement claims never prove real funds. Refund item amounts are cumulative; REFUND amountMinor is their increase since the previous refund. No implicit FX, internal order, payment or marketplace commission.
+ */
+export const acceptConnectAgreement = async (id: string,
+    connectAgreementAcceptanceInput: ConnectAgreementAcceptanceInput, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getAcceptConnectAgreementUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(connectAgreementAcceptanceInput)
+  }
+);}
+
+
+
+
+
+export const getAcceptConnectAgreementMutationKey = () => ['acceptConnectAgreement'] as const;
+
+export const getAcceptConnectAgreementMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof acceptConnectAgreement>>, TError,AcceptConnectAgreementMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof acceptConnectAgreement>>, TError,AcceptConnectAgreementMutationVariables, TContext> => {
+
+const mutationKey = getAcceptConnectAgreementMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof acceptConnectAgreement>>, AcceptConnectAgreementMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  acceptConnectAgreement(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AcceptConnectAgreementMutationResult = NonNullable<Awaited<ReturnType<typeof acceptConnectAgreement>>>
+    export type AcceptConnectAgreementMutationBody = BodyType<ConnectAgreementAcceptanceInput>
+    export type AcceptConnectAgreementMutationError = ErrorType<void>
+    export type AcceptConnectAgreementMutationVariables = {id: string;data: BodyType<ConnectAgreementAcceptanceInput>}
+
+    export const useAcceptConnectAgreement = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof acceptConnectAgreement>>, TError,AcceptConnectAgreementMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof acceptConnectAgreement>>,
+        TError,
+        AcceptConnectAgreementMutationVariables,
+        TContext
+      > => {
+      return useMutation(getAcceptConnectAgreementMutationOptions(options), queryClient);
+    }
+
+export const getGetConnectReferralTermsUrl = (id: string,) => {
+
+
+
+
+  return `/api/connect/offers/${id}/referral-terms`
+}
+
+/**
+ * Access: AUTHENTICATED. External commerce only. Approved dedicated bearer credentials authenticate provider evidence; browser cookies never authenticate conversions. Agreements require independent proposal and exact owner acceptance. Consent is explicit and per referral. Financial execution is SIMULATION_ONLY; provider settlement claims never prove real funds. Refund item amounts are cumulative; REFUND amountMinor is their increase since the previous refund. No implicit FX, internal order, payment or marketplace commission.
+ */
+export const getConnectReferralTerms = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<ConnectReferralDisclosure> => {
+
+  return customFetch<ConnectReferralDisclosure>(getGetConnectReferralTermsUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetConnectReferralTermsQueryKey = (id: string,) => {
+    return [
+    `/api/connect/offers/${id}/referral-terms`
+    ] as const;
+    }
+
+
+export const getGetConnectReferralTermsQueryOptions = <TData = Awaited<ReturnType<typeof getConnectReferralTerms>>, TError = ErrorType<void>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConnectReferralTerms>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetConnectReferralTermsQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getConnectReferralTerms>>> = ({ signal }) => getConnectReferralTerms(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getConnectReferralTerms>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetConnectReferralTermsQueryResult = NonNullable<Awaited<ReturnType<typeof getConnectReferralTerms>>>
+export type GetConnectReferralTermsQueryError = ErrorType<void>
+
+
+export function useGetConnectReferralTerms<TData = Awaited<ReturnType<typeof getConnectReferralTerms>>, TError = ErrorType<void>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConnectReferralTerms>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getConnectReferralTerms>>,
+          TError,
+          Awaited<ReturnType<typeof getConnectReferralTerms>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetConnectReferralTerms<TData = Awaited<ReturnType<typeof getConnectReferralTerms>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConnectReferralTerms>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getConnectReferralTerms>>,
+          TError,
+          Awaited<ReturnType<typeof getConnectReferralTerms>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetConnectReferralTerms<TData = Awaited<ReturnType<typeof getConnectReferralTerms>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConnectReferralTerms>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useGetConnectReferralTerms<TData = Awaited<ReturnType<typeof getConnectReferralTerms>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConnectReferralTerms>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetConnectReferralTermsQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getWithdrawConnectAttributionUrl = () => {
+
+
+
+
+  return `/api/connect/privacy/attribution`
+}
+
+/**
+ * Access: AUTHENTICATED. External commerce only. Approved dedicated bearer credentials authenticate provider evidence; browser cookies never authenticate conversions. Agreements require independent proposal and exact owner acceptance. Consent is explicit and per referral. Financial execution is SIMULATION_ONLY; provider settlement claims never prove real funds. Refund item amounts are cumulative; REFUND amountMinor is their increase since the previous refund. No implicit FX, internal order, payment or marketplace commission.
+ */
+export const withdrawConnectAttribution = async (connectAttributionWithdrawalInput: ConnectAttributionWithdrawalInput, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getWithdrawConnectAttributionUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(connectAttributionWithdrawalInput)
+  }
+);}
+
+
+
+
+
+export const getWithdrawConnectAttributionMutationKey = () => ['withdrawConnectAttribution'] as const;
+
+export const getWithdrawConnectAttributionMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof withdrawConnectAttribution>>, TError,WithdrawConnectAttributionMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof withdrawConnectAttribution>>, TError,WithdrawConnectAttributionMutationVariables, TContext> => {
+
+const mutationKey = getWithdrawConnectAttributionMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof withdrawConnectAttribution>>, WithdrawConnectAttributionMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  withdrawConnectAttribution(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type WithdrawConnectAttributionMutationResult = NonNullable<Awaited<ReturnType<typeof withdrawConnectAttribution>>>
+    export type WithdrawConnectAttributionMutationBody = BodyType<ConnectAttributionWithdrawalInput>
+    export type WithdrawConnectAttributionMutationError = ErrorType<void>
+    export type WithdrawConnectAttributionMutationVariables = {data: BodyType<ConnectAttributionWithdrawalInput>}
+
+    export const useWithdrawConnectAttribution = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof withdrawConnectAttribution>>, TError,WithdrawConnectAttributionMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof withdrawConnectAttribution>>,
+        TError,
+        WithdrawConnectAttributionMutationVariables,
+        TContext
+      > => {
+      return useMutation(getWithdrawConnectAttributionMutationOptions(options), queryClient);
+    }
+
+export const getReceiveConnectPartnerEventUrl = () => {
+
+
+
+
+  return `/api/connect/provider/events`
+}
+
+/**
+ * Access: PROVIDER_BEARER. External commerce only. Approved dedicated bearer credentials authenticate provider evidence; browser cookies never authenticate conversions. Agreements require independent proposal and exact owner acceptance. Consent is explicit and per referral. Financial execution is SIMULATION_ONLY; provider settlement claims never prove real funds. Refund item amounts are cumulative; REFUND amountMinor is their increase since the previous refund. No implicit FX, internal order, payment or marketplace commission.
+ */
+export const receiveConnectPartnerEvent = async (connectPartnerEventInput: ConnectPartnerEventInput, options?: Parameters<typeof customFetch>[1]): Promise<ConnectFinancialReceipt> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ConnectFinancialReceipt>(getReceiveConnectPartnerEventUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(connectPartnerEventInput)
+  }
+);}
+
+
+
+
+
+export const getReceiveConnectPartnerEventMutationKey = () => ['receiveConnectPartnerEvent'] as const;
+
+export const getReceiveConnectPartnerEventMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof receiveConnectPartnerEvent>>, TError,ReceiveConnectPartnerEventMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof receiveConnectPartnerEvent>>, TError,ReceiveConnectPartnerEventMutationVariables, TContext> => {
+
+const mutationKey = getReceiveConnectPartnerEventMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof receiveConnectPartnerEvent>>, ReceiveConnectPartnerEventMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  receiveConnectPartnerEvent(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ReceiveConnectPartnerEventMutationResult = NonNullable<Awaited<ReturnType<typeof receiveConnectPartnerEvent>>>
+    export type ReceiveConnectPartnerEventMutationBody = BodyType<ConnectPartnerEventInput>
+    export type ReceiveConnectPartnerEventMutationError = ErrorType<void>
+    export type ReceiveConnectPartnerEventMutationVariables = {data: BodyType<ConnectPartnerEventInput>}
+
+    export const useReceiveConnectPartnerEvent = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof receiveConnectPartnerEvent>>, TError,ReceiveConnectPartnerEventMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof receiveConnectPartnerEvent>>,
+        TError,
+        ReceiveConnectPartnerEventMutationVariables,
+        TContext
+      > => {
+      return useMutation(getReceiveConnectPartnerEventMutationOptions(options), queryClient);
+    }
+
+export const getFinanceConnectTransactionUrl = (id: string,) => {
+
+
+
+
+  return `/api/admin/connect/transactions/${id}/finance`
+}
+
+/**
+ * Access: ADMIN. External commerce only. Approved dedicated bearer credentials authenticate provider evidence; browser cookies never authenticate conversions. Agreements require independent proposal and exact owner acceptance. Consent is explicit and per referral. Financial execution is SIMULATION_ONLY; provider settlement claims never prove real funds. Refund item amounts are cumulative; REFUND amountMinor is their increase since the previous refund. No implicit FX, internal order, payment or marketplace commission.
+ */
+export const financeConnectTransaction = async (id: string,
+    connectFinanceCommandInput: ConnectFinanceCommandInput, options?: Parameters<typeof customFetch>[1]): Promise<ConnectFinancialReceipt> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ConnectFinancialReceipt>(getFinanceConnectTransactionUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(connectFinanceCommandInput)
+  }
+);}
+
+
+
+
+
+export const getFinanceConnectTransactionMutationKey = () => ['financeConnectTransaction'] as const;
+
+export const getFinanceConnectTransactionMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof financeConnectTransaction>>, TError,FinanceConnectTransactionMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof financeConnectTransaction>>, TError,FinanceConnectTransactionMutationVariables, TContext> => {
+
+const mutationKey = getFinanceConnectTransactionMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof financeConnectTransaction>>, FinanceConnectTransactionMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  financeConnectTransaction(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type FinanceConnectTransactionMutationResult = NonNullable<Awaited<ReturnType<typeof financeConnectTransaction>>>
+    export type FinanceConnectTransactionMutationBody = BodyType<ConnectFinanceCommandInput>
+    export type FinanceConnectTransactionMutationError = ErrorType<void>
+    export type FinanceConnectTransactionMutationVariables = {id: string;data: BodyType<ConnectFinanceCommandInput>}
+
+    export const useFinanceConnectTransaction = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof financeConnectTransaction>>, TError,FinanceConnectTransactionMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof financeConnectTransaction>>,
+        TError,
+        FinanceConnectTransactionMutationVariables,
+        TContext
+      > => {
+      return useMutation(getFinanceConnectTransactionMutationOptions(options), queryClient);
+    }
+
+export const getGetConnectPartnerReportUrl = (id: string,
+    params?: GetConnectPartnerReportParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/connect/partners/${id}/report?${stringifiedParams}` : `/api/connect/partners/${id}/report`
+}
+
+/**
+ * Access: AUTHENTICATED. Bounded owned external-commerce report. Currency balances remain separate integer strings. Prepared consented referrals are not purchases. No provider secret or buyer account/conversation identity is returned. Historical simulation settlements remain visible after reversals; actual received funds remain unverified outside simulation.
+ */
+export const getConnectPartnerReport = async (id: string,
+    params?: GetConnectPartnerReportParams, options?: Parameters<typeof customFetch>[1]): Promise<ConnectPartnerReport> => {
+
+  return customFetch<ConnectPartnerReport>(getGetConnectPartnerReportUrl(id,params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetConnectPartnerReportQueryKey = (id: string,
+    params?: GetConnectPartnerReportParams,) => {
+    return [
+    `/api/connect/partners/${id}/report`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetConnectPartnerReportQueryOptions = <TData = Awaited<ReturnType<typeof getConnectPartnerReport>>, TError = ErrorType<void>>(id: string,
+    params?: GetConnectPartnerReportParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConnectPartnerReport>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetConnectPartnerReportQueryKey(id,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getConnectPartnerReport>>> = ({ signal }) => getConnectPartnerReport(id,params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getConnectPartnerReport>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetConnectPartnerReportQueryResult = NonNullable<Awaited<ReturnType<typeof getConnectPartnerReport>>>
+export type GetConnectPartnerReportQueryError = ErrorType<void>
+
+
+export function useGetConnectPartnerReport<TData = Awaited<ReturnType<typeof getConnectPartnerReport>>, TError = ErrorType<void>>(
+ id: string,
+    params: undefined |  GetConnectPartnerReportParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConnectPartnerReport>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getConnectPartnerReport>>,
+          TError,
+          Awaited<ReturnType<typeof getConnectPartnerReport>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetConnectPartnerReport<TData = Awaited<ReturnType<typeof getConnectPartnerReport>>, TError = ErrorType<void>>(
+ id: string,
+    params?: GetConnectPartnerReportParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConnectPartnerReport>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getConnectPartnerReport>>,
+          TError,
+          Awaited<ReturnType<typeof getConnectPartnerReport>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetConnectPartnerReport<TData = Awaited<ReturnType<typeof getConnectPartnerReport>>, TError = ErrorType<void>>(
+ id: string,
+    params?: GetConnectPartnerReportParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConnectPartnerReport>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useGetConnectPartnerReport<TData = Awaited<ReturnType<typeof getConnectPartnerReport>>, TError = ErrorType<void>>(
+ id: string,
+    params?: GetConnectPartnerReportParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConnectPartnerReport>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetConnectPartnerReportQueryOptions(id,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetAdminConnectPartnerReportUrl = (id: string,
+    params?: GetAdminConnectPartnerReportParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/admin/connect/partners/${id}/report?${stringifiedParams}` : `/api/admin/connect/partners/${id}/report`
+}
+
+/**
+ * Access: ADMIN. Bounded owned external-commerce report. Currency balances remain separate integer strings. Prepared consented referrals are not purchases. No provider secret or buyer account/conversation identity is returned. Historical simulation settlements remain visible after reversals; actual received funds remain unverified outside simulation.
+ */
+export const getAdminConnectPartnerReport = async (id: string,
+    params?: GetAdminConnectPartnerReportParams, options?: Parameters<typeof customFetch>[1]): Promise<ConnectPartnerReport> => {
+
+  return customFetch<ConnectPartnerReport>(getGetAdminConnectPartnerReportUrl(id,params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAdminConnectPartnerReportQueryKey = (id: string,
+    params?: GetAdminConnectPartnerReportParams,) => {
+    return [
+    `/api/admin/connect/partners/${id}/report`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetAdminConnectPartnerReportQueryOptions = <TData = Awaited<ReturnType<typeof getAdminConnectPartnerReport>>, TError = ErrorType<void>>(id: string,
+    params?: GetAdminConnectPartnerReportParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminConnectPartnerReport>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAdminConnectPartnerReportQueryKey(id,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminConnectPartnerReport>>> = ({ signal }) => getAdminConnectPartnerReport(id,params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdminConnectPartnerReport>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetAdminConnectPartnerReportQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminConnectPartnerReport>>>
+export type GetAdminConnectPartnerReportQueryError = ErrorType<void>
+
+
+export function useGetAdminConnectPartnerReport<TData = Awaited<ReturnType<typeof getAdminConnectPartnerReport>>, TError = ErrorType<void>>(
+ id: string,
+    params: undefined |  GetAdminConnectPartnerReportParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminConnectPartnerReport>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAdminConnectPartnerReport>>,
+          TError,
+          Awaited<ReturnType<typeof getAdminConnectPartnerReport>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAdminConnectPartnerReport<TData = Awaited<ReturnType<typeof getAdminConnectPartnerReport>>, TError = ErrorType<void>>(
+ id: string,
+    params?: GetAdminConnectPartnerReportParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminConnectPartnerReport>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAdminConnectPartnerReport>>,
+          TError,
+          Awaited<ReturnType<typeof getAdminConnectPartnerReport>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAdminConnectPartnerReport<TData = Awaited<ReturnType<typeof getAdminConnectPartnerReport>>, TError = ErrorType<void>>(
+ id: string,
+    params?: GetAdminConnectPartnerReportParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminConnectPartnerReport>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useGetAdminConnectPartnerReport<TData = Awaited<ReturnType<typeof getAdminConnectPartnerReport>>, TError = ErrorType<void>>(
+ id: string,
+    params?: GetAdminConnectPartnerReportParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminConnectPartnerReport>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetAdminConnectPartnerReportQueryOptions(id,params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

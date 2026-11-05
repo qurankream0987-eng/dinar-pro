@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { useGetDashboard } from "@workspace/api-client-react";
 import { api, useAccount } from "@/account/Account";
+import {ConnectAttributionPrivacy} from "@/features/ConnectAttributionPrivacy";
 import { friendlyError } from "@/lib/errors";
 import { longDate } from "@/lib/format";
 import { useTheme, type ThemePreference } from "@/lib/theme";
@@ -448,6 +449,7 @@ export function SettingsPage() {
       </section>
 
       <ListGroup title="الخصوصية والأمان">
+        <ConnectAttributionPrivacy />
         <ListRow
           icon={<ShieldCheck size={19} />}
           title="كلمة المرور مشفّرة"

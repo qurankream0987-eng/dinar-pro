@@ -12,6 +12,9 @@ export interface ConnectOutboundPrepared {
   /** @pattern ^/api/connect/outbound/[0-9a-f-]{36}$ */
   openPath: string;
   tracking: ConnectOutboundPreparedTracking;
+  referralId?: string;
+  agreementId?: string;
+  expiresAt?: Date;
   checkoutLocation: ConnectOutboundPreparedCheckoutLocation;
   internalOrderCreated: false;
 }

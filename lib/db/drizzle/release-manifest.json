@@ -230,5 +230,9 @@
   {
     "tag": "0057_dinar_connect",
     "sha256": "4376a15434f865f4faf4a751df90f8a2de8dd5d1fe0d0e9b98c0ccbc637dcebd"
+  },
+  {
+    "tag": "0058_connect_projection_hardening",
+    "sha256": "3ee1e9ec70af16c93fc2da80f2acac5cde30da5d6abc9e337b932716097aa864"
   }
 ]

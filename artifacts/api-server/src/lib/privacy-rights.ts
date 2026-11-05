@@ -39,6 +39,7 @@ import {
   users,
 } from "@workspace/db";
 import { DATA_RETENTION_POLICY } from "./policies";
+import {connectPersonalDataExport} from "../connect/privacy";
 import { listPolicyConsentEvents } from "./policy-lifecycle";
 import { logger } from "./logger";
 import { notifyUserAfterDecision } from "./notifications";
@@ -470,6 +471,7 @@ export async function buildPersonalDataExport(userId: string) {
     profile: summary.profile,
     preferences: summary.preferences,
     consentHistory: await consentHistory(userId),
+    connect:await connectPersonalDataExport(userId,EXPORT_LIMIT),
     policyConsentEvents: await listPolicyConsentEvents(userId),
     personalMemoryControls: memoryControlRows,
     listings: bounded(listingRows.map((row) => ({ ...row, createdAt: row.createdAt.toISOString() }))),

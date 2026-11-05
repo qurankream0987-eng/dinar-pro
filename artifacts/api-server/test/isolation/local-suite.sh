@@ -119,6 +119,11 @@ if [ -n "$CHROMIUM" ]; then
       PROVIDER_NAV_SAN=",DNS:dash.cloudflare.com"
       PROVIDER_NAV_MAP=", MAP dash.cloudflare.com 127.0.0.1" ;;
   esac
+  case " $SUITES " in
+    *" connect-finance-browser-journey.test "*)
+      PROVIDER_NAV_SAN="$PROVIDER_NAV_SAN,DNS:browser.catalog.partner.example"
+      PROVIDER_NAV_MAP="$PROVIDER_NAV_MAP, MAP browser.catalog.partner.example 127.0.0.1" ;;
+  esac
   browser_required=0
   # shellcheck disable=SC2086
   for suite in $SUITES; do

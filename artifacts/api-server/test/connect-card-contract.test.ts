@@ -84,6 +84,8 @@ await test("an unconfigured registrar cannot publish availability, pricing or a 
   const [unknown] = await searchDomains("myshop.com", []);
   for (const patch of [
     { availability: "AVAILABLE" },
+    { premium:true },
+    { premium:false },
     {
       registrationPrice: { amountMinor: 1, currency: "USD", minorUnitScale: 2 },
     },

@@ -10,7 +10,8 @@
     "./listing-pricing": "./src/listing-pricing.ts",
     "./conversation-runtime": "./src/conversation-runtime.ts",
     "./surface-composition": "./src/surface-composition.ts",
-    "./connect": "./src/connect.ts"
+    "./connect": "./src/connect.ts",
+    "./connect-platform": "./src/connect-platform.ts"
   },
   "dependencies": {
     "zod": "catalog:"

@@ -81,7 +81,8 @@ export async function executeConnectReadTurn(input: {
     };
   }
   if (!isDomainSearchIntent(input.message)) return null;
-  if(input.market) await assertMarketLegalCapability(input.market.id,"BROWSING");
+  if (input.market)
+    await assertMarketLegalCapability(input.market.id, "BROWSING");
   const raw = input.message
     .split(/\s+/u)
     .map((part) => part.replace(/^[«»"“”`]+|[«»"“”،,؟?!؛;`]+$/gu, ""))

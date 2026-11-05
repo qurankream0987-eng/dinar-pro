@@ -4,12 +4,23 @@ import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import {
   UniversalCardsPayloadSchema,
+  ConnectReferralDisclosureSchema,
+  ConnectOutboundInputSchema,
+} from "../../api-zod/src/connect";
+import {
+  ConnectFinancialReceiptSchema,
+  ConnectPartnerReportSchema,
+  ConnectExternalTransactionSchema,
+  ConnectAgreementTerms,
+  ConnectAgreementAcceptInput,
+  ConnectPartnerEvent,
+  ConnectFinanceCommand,
   ConnectPartnerInput,
   ConnectSiteInput,
   ConnectIntegrationInput,
   ConnectReviewInput,
   ConnectCatalogBatch,
-} from "../../api-zod/src/connect";
+} from "../../api-zod/src/connect-platform";
 const require = createRequire(
   new URL("../../api-zod/package.json", import.meta.url),
 );
@@ -48,7 +59,16 @@ const next = marker.test(current)
   : current + replacement;
 let result = next;
 for (const [name, source] of Object.entries({
+  ConnectFinancialReceipt: ConnectFinancialReceiptSchema,
+  ConnectPartnerReport: ConnectPartnerReportSchema,
+  ConnectExternalTransaction: ConnectExternalTransactionSchema,
   ConnectPartnerRegistrationInput: ConnectPartnerInput,
+  ConnectAgreementProposalInput: ConnectAgreementTerms,
+  ConnectAgreementAcceptanceInput: ConnectAgreementAcceptInput,
+  ConnectPartnerEventInput: ConnectPartnerEvent,
+  ConnectFinanceCommandInput: ConnectFinanceCommand,
+  ConnectReferralDisclosure: ConnectReferralDisclosureSchema,
+  ConnectOutboundInput: ConnectOutboundInputSchema,
   ConnectSiteRegistrationInput: ConnectSiteInput,
   ConnectIntegrationRegistrationInput: ConnectIntegrationInput,
   ConnectReviewDecisionInput: ConnectReviewInput,

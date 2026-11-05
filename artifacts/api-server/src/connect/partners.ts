@@ -6,15 +6,17 @@ import {
   timingSafeEqual,
 } from "node:crypto";
 import {
+  UniversalCardsPayloadSchema,
+  type UniversalCard,
+} from "@workspace/api-zod/connect";
+import {
   ConnectPartnerInput,
   ConnectSiteInput,
   ConnectIntegrationInput,
   ConnectReviewInput,
   ConnectCatalogBatch,
-  UniversalCardsPayloadSchema,
-  type UniversalCard,
   ConnectTeamInput,
-} from "@workspace/api-zod/connect";
+} from "@workspace/api-zod/connect-platform";
 import { currencyScale } from "@workspace/global";
 import {
   db,
@@ -401,12 +403,13 @@ export async function verifyConnectSite(
       "انتهى تحدي الموقع؛ أنشئ تحديًا جديدًا",
     );
   await publicConnectAddresses(site.hostname, dns);
-  const records = await connectOwnershipTxt(site.hostname, dns).catch(
-    (error: unknown) => {
-      if ((error as { code?: string }).code === "PROVIDER_TIMEOUT") throw error;
-      return [];
-    },
-  );
+  const records: string[][] = await connectOwnershipTxt(
+    site.hostname,
+    dns,
+  ).catch((error: unknown): string[][] => {
+    if ((error as { code?: string }).code === "PROVIDER_TIMEOUT") throw error;
+    return [];
+  });
   const found = records.some((record) =>
     timingSafeEqual(
       createHash("sha256").update(record.join("")).digest(),
@@ -419,51 +422,70 @@ export async function verifyConnectSite(
       "OWNERSHIP_NOT_PROVEN",
       "لم نجد سجل TXT المطابق؛ لم يُوثّق الموقع",
     );
-  return db.transaction(async (tx) => {
-    await connectAccess(
-      actorId,
-      market.id,
-      site.partnerId,
-      "INTEGRATIONS_MANAGE",
-      tx,
-      true,
-    );
-    const [current] = await tx
-      .select()
-      .from(connectSites)
-      .where(eq(connectSites.id, siteId))
-      .for("update");
-    if (
-      !current ||
-      current.challengeDigest !== site.challengeDigest ||
-      current.challengeExpiresAt.getTime() <= Date.now() ||
-      current.status === "REVOKED"
-    )
-      throw connectError(
-        409,
-        "CHALLENGE_EXPIRED",
-        "تغيّر تحدي الموقع؛ أعد التحقق",
+  return db
+    .transaction(async (tx) => {
+      await connectAccess(
+        actorId,
+        market.id,
+        site.partnerId,
+        "INTEGRATIONS_MANAGE",
+        tx,
+        true,
       );
-    const [updated] = await tx
-      .update(connectSites)
-      .set({
-        status: "VERIFIED",
-        verifiedAt: new Date(),
-        validUntil: new Date(Date.now() + 30 * 86400_000),
-        updatedAt: new Date(),
-      })
-      .where(eq(connectSites.id, siteId))
-      .returning();
-    await connectAudit(
-      tx,
-      site.partnerId,
-      actorId,
-      "OWNER",
-      "SITE_OWNERSHIP_VERIFIED",
-      { siteId, hostname: site.hostname, method: "DNS_TXT" },
-    );
-    return siteView(updated!);
-  });
+      const [current] = await tx
+        .select()
+        .from(connectSites)
+        .where(eq(connectSites.id, siteId))
+        .for("update");
+      if (
+        !current ||
+        current.challengeDigest !== site.challengeDigest ||
+        current.challengeExpiresAt.getTime() <= Date.now() ||
+        current.status === "REVOKED"
+      )
+        throw connectError(
+          409,
+          "CHALLENGE_EXPIRED",
+          "تغيّر تحدي الموقع؛ أعد التحقق",
+        );
+      const [updated] = await tx
+        .update(connectSites)
+        .set({
+          status: "VERIFIED",
+          verifiedAt: new Date(),
+          validUntil: new Date(Date.now() + 30 * 86400_000),
+          updatedAt: new Date(),
+        })
+        .where(eq(connectSites.id, siteId))
+        .returning();
+      await connectAudit(
+        tx,
+        site.partnerId,
+        actorId,
+        "OWNER",
+        "SITE_OWNERSHIP_VERIFIED",
+        { siteId, hostname: site.hostname, method: "DNS_TXT" },
+      );
+      return siteView(updated!);
+    })
+    .catch((error: unknown) => {
+      const failure = error as {
+        code?: string;
+        constraint?: string;
+        cause?: { code?: string; constraint?: string };
+      };
+      const cause = failure?.cause ?? failure;
+      if (
+        cause?.code === "23505" &&
+        cause.constraint === "connect_sites_verified_host_unique"
+      )
+        throw connectError(
+          409,
+          "SITE_ALREADY_CLAIMED",
+          "الموقع موثّق لحساب شريك آخر؛ لم تتغير ملكية أي حساب",
+        );
+      throw error;
+    });
 }
 async function readyPartner(tx: any, partnerId: string) {
   const [row] = await tx
@@ -715,7 +737,9 @@ export async function createConnectIntegration(
   const endpoint = input.endpointUrl
     ? validateExternalUrl(input.endpointUrl, [site.hostname])
     : null;
-  if (input.kind !== "WEBSITE" && !endpoint)
+  const pushOnlyApi =
+    input.kind === "API" && input.capabilities.includes("CATALOG_IMPORT");
+  if (input.kind !== "WEBSITE" && !pushOnlyApi && !endpoint)
     throw connectError(
       400,
       "ENDPOINT_REQUIRED",
@@ -1378,7 +1402,7 @@ export async function discoverConnectCatalog(
           providerId: row.partner.id,
           targetId: row.offer.id,
           intent: "VIEW_ON_PROVIDER",
-          label: "افتح العرض لدى المزوّد",
+          label: `افتح ${row.offer.title.slice(0,40)} لدى ${row.business.displayName.slice(0,30)}`,
         },
       ],
       disclosure: `الشراء والدفع خارج DINAR. ${row.integration.mode === "SIMULATION_ONLY" ? "هذا تكامل اختبار وليس عملية شراء أو عمولة حقيقية. " : ""}لا تُستحق عمولة من مجرد فتح الرابط؛ يلزم اتفاق مقبول وتحويل موثّق.`,

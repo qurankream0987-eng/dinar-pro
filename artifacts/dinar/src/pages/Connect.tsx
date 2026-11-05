@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from "react";
 import { Link } from "wouter";
 import { api } from "@/account/Account";
 import { Button } from "@/ui/Button";
+import { ConnectAgreements } from "@/features/ConnectAgreements";
+import { ConnectDashboard } from "@/features/ConnectDashboard";
 type Site = { id: string; hostname: string; status: string };
 type Integration = {
   id: string;
@@ -154,6 +156,11 @@ export default function ConnectPage() {
       )}
       {partner && (
         <>
+          <ConnectAgreements key={partner.id} partnerId={partner.id} />
+          <ConnectDashboard
+            key={`report-${partner.id}`}
+            partnerId={partner.id}
+          />
           <section className="space-y-3 rounded-xl border p-4">
             <h2 className="font-bold">حالة الحساب</h2>
             <p data-testid="connect-partner-status">

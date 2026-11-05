@@ -64,6 +64,7 @@ export const REVIEWED_PENDING_MIGRATIONS: ReadonlyArray<{ tag: string; sha256: s
   { tag: "0056_order_line_integrity", sha256: "cf43a95bfe0d9418aa9f0d9b3fe862b8e131116299dca92be3ac5815028c234c" },
   // Connect is separate from marketplace cart, orders, dues and financial journal.
   { tag: "0057_dinar_connect", sha256: "4376a15434f865f4faf4a751df90f8a2de8dd5d1fe0d0e9b98c0ccbc637dcebd" },
+  { tag: "0058_connect_projection_hardening", sha256: "3ee1e9ec70af16c93fc2da80f2acac5cde30da5d6abc9e337b932716097aa864" },
 ];
 export const EXPECTED_JOURNAL_ENTRIES =
   EXPECTED_BASELINE_MIGRATIONS + REVIEWED_PENDING_MIGRATIONS.length;

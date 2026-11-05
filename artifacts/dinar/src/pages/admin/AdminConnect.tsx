@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { api } from "@/account/Account";
 import { Button } from "@/ui/Button";
+import { ConnectDashboard } from "@/features/ConnectDashboard";
 type ReviewItem = {
   id: string;
   revision: number;
@@ -14,6 +15,9 @@ type ReviewItem = {
   capabilities?: string[];
 };
 export default function AdminConnect() {
+  const [selectedPartnerId, setSelectedPartnerId] = useState<string | null>(
+    null,
+  );
   const [queue, setQueue] = useState<{
       partners: ReviewItem[];
       integrations: ReviewItem[];
@@ -95,6 +99,14 @@ export default function AdminConnect() {
                 </p>
               )}
               <div className="flex flex-wrap gap-2">
+                {kind === "partners" && (
+                  <Button
+                    variant="secondary"
+                    onClick={() => setSelectedPartnerId(item.id)}
+                  >
+                    تقرير الحساب والمراجعة المالية
+                  </Button>
+                )}
                 {[
                   ["APPROVE", "اعتماد الإصدار المعروض"],
                   ["REJECT", "رفض"],
@@ -114,6 +126,13 @@ export default function AdminConnect() {
           ))}
         </section>
       ))}
+      {selectedPartnerId && (
+        <ConnectDashboard
+          key={selectedPartnerId}
+          partnerId={selectedPartnerId}
+          admin
+        />
+      )}
     </main>
   );
 }

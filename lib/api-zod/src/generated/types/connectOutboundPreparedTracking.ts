@@ -11,4 +11,5 @@ export type ConnectOutboundPreparedTracking = typeof ConnectOutboundPreparedTrac
 
 export const ConnectOutboundPreparedTracking = {
   NOT_TRACKED: 'NOT_TRACKED',
+  CONSENTED: 'CONSENTED',
 } as const;

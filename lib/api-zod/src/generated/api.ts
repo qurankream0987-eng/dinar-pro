@@ -8107,14 +8107,23 @@ export const GetAdminWhatsappOverviewResponse = zod.record(zod.string(), zod.unk
 /**
  * @summary Prepare an owned external referral without creating an internal purchase
  */
+export const prepareConnectOutboundBodyResultSetIdRegExp = new RegExp('^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$');
 export const prepareConnectOutboundBodyCardIdMax = 400;
 
 export const prepareConnectOutboundBodyTrackingConsentDefault = false;
+export const prepareConnectOutboundBodyExpectedAgreementIdRegExp = new RegExp('^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$');
+export const prepareConnectOutboundBodyExpectedTermsDigestRegExp = new RegExp('^[a-f0-9]{64}$');
+export const prepareConnectOutboundBodyExpectedPrivacyPolicyVersionMax = 80;
+
+
 
 export const PrepareConnectOutboundBody = zod.object({
-  "resultSetId": zod.uuid(),
+  "resultSetId": zod.uuid().regex(prepareConnectOutboundBodyResultSetIdRegExp),
   "cardId": zod.string().min(1).max(prepareConnectOutboundBodyCardIdMax),
-  "trackingConsent": zod.literal(false).default(prepareConnectOutboundBodyTrackingConsentDefault)
+  "trackingConsent": zod.boolean().default(prepareConnectOutboundBodyTrackingConsentDefault),
+  "expectedAgreementId": zod.uuid().regex(prepareConnectOutboundBodyExpectedAgreementIdRegExp).optional(),
+  "expectedTermsDigest": zod.string().regex(prepareConnectOutboundBodyExpectedTermsDigestRegExp).optional(),
+  "expectedPrivacyPolicyVersion": zod.string().min(1).max(prepareConnectOutboundBodyExpectedPrivacyPolicyVersionMax).optional()
 })
 
 export const prepareConnectOutboundResponseOpenPathRegExp = new RegExp('^/api/connect/outbound/[0-9a-f-]{36}$');
@@ -8122,7 +8131,10 @@ export const prepareConnectOutboundResponseOpenPathRegExp = new RegExp('^/api/co
 
 export const PrepareConnectOutboundResponse = zod.object({
   "openPath": zod.string().regex(prepareConnectOutboundResponseOpenPathRegExp),
-  "tracking": zod.enum(['NOT_TRACKED']),
+  "tracking": zod.enum(['NOT_TRACKED', 'CONSENTED']),
+  "referralId": zod.uuid().optional(),
+  "agreementId": zod.uuid().optional(),
+  "expiresAt": zod.coerce.date().optional(),
   "checkoutLocation": zod.enum(['EXTERNAL']),
   "internalOrderCreated": zod.literal(false)
 })
@@ -8628,6 +8640,630 @@ export const SearchConnectCatalogResponse = zod.object({
 })).max(searchConnectCatalogResponseCardsMax),
   "note": zod.string().max(searchConnectCatalogResponseNoteMax),
   "comparisonNote": zod.string().max(searchConnectCatalogResponseComparisonNoteMax).optional()
+})
+
+
+/**
+ * Access: ADMIN. External commerce only. Approved dedicated bearer credentials authenticate provider evidence; browser cookies never authenticate conversions. Agreements require independent proposal and exact owner acceptance. Consent is explicit and per referral. Financial execution is SIMULATION_ONLY; provider settlement claims never prove real funds. Refund item amounts are cumulative; REFUND amountMinor is their increase since the previous refund. No implicit FX, internal order, payment or marketplace commission.
+ */
+export const ProposeConnectAgreementParams = zod.object({
+  "id": zod.uuid()
+})
+
+export const proposeConnectAgreementBodyCurrencyRegExp = new RegExp('^[A-Z]{3}$');
+export const proposeConnectAgreementBodyCommissionOneBasisPointsMin = 0;
+export const proposeConnectAgreementBodyCommissionOneBasisPointsMax = 10000;
+
+export const proposeConnectAgreementBodyCommissionTwoAmountMinorMin = 0;
+export const proposeConnectAgreementBodyCommissionTwoAmountMinorMax = 9007199254740991;
+
+export const proposeConnectAgreementBodyCategoryRatesItemCategoryIdMax = 80;
+
+export const proposeConnectAgreementBodyCategoryRatesItemBasisPointsMin = 0;
+export const proposeConnectAgreementBodyCategoryRatesItemBasisPointsMax = 10000;
+
+export const proposeConnectAgreementBodyCategoryRatesMax = 30;
+
+export const proposeConnectAgreementBodyExcludedProductIdsItemRegExp = new RegExp('^[A-Za-z0-9][A-Za-z0-9._:-]{0,99}$');
+export const proposeConnectAgreementBodyExcludedProductIdsMax = 100;
+
+export const proposeConnectAgreementBodyExcludedCategoryIdsItemMax = 80;
+
+export const proposeConnectAgreementBodyExcludedCategoryIdsMax = 30;
+
+export const proposeConnectAgreementBodyAttributionWindowSecondsMin = 60;
+export const proposeConnectAgreementBodyAttributionWindowSecondsMax = 31536000;
+
+export const proposeConnectAgreementBodyReportingGraceSecondsMin = 0;
+export const proposeConnectAgreementBodyReportingGraceSecondsMax = 31536000;
+
+export const proposeConnectAgreementBodyEligibleEventsMax = 3;
+
+export const proposeConnectAgreementBodySettlementDueDaysMin = 0;
+export const proposeConnectAgreementBodySettlementDueDaysMax = 3650;
+
+export const proposeConnectAgreementBodyPaymentTermsMin = 3;
+export const proposeConnectAgreementBodyPaymentTermsMax = 1000;
+
+export const proposeConnectAgreementBodyCancellationPolicyMin = 3;
+export const proposeConnectAgreementBodyCancellationPolicyMax = 1000;
+
+export const proposeConnectAgreementBodyTermsTextMin = 10;
+export const proposeConnectAgreementBodyTermsTextMax = 12000;
+
+export const proposeConnectAgreementBodyAttributionNoticeMin = 10;
+export const proposeConnectAgreementBodyAttributionNoticeMax = 700;
+
+export const proposeConnectAgreementBodyPrivacyPolicyVersionMax = 80;
+
+
+
+export const ProposeConnectAgreementBody = zod.object({
+  "mode": zod.enum(['SIMULATION_ONLY', 'LIVE']),
+  "currency": zod.string().regex(proposeConnectAgreementBodyCurrencyRegExp),
+  "commission": zod.union([zod.object({
+  "kind": zod.literal("PERCENTAGE"),
+  "basisPoints": zod.int().min(proposeConnectAgreementBodyCommissionOneBasisPointsMin).max(proposeConnectAgreementBodyCommissionOneBasisPointsMax)
+}),zod.object({
+  "kind": zod.literal("FIXED"),
+  "amountMinor": zod.int().min(proposeConnectAgreementBodyCommissionTwoAmountMinorMin).max(proposeConnectAgreementBodyCommissionTwoAmountMinorMax)
+})]),
+  "categoryRates": zod.array(zod.object({
+  "categoryId": zod.string().min(1).max(proposeConnectAgreementBodyCategoryRatesItemCategoryIdMax),
+  "basisPoints": zod.int().min(proposeConnectAgreementBodyCategoryRatesItemBasisPointsMin).max(proposeConnectAgreementBodyCategoryRatesItemBasisPointsMax)
+})).max(proposeConnectAgreementBodyCategoryRatesMax),
+  "excludedProductIds": zod.array(zod.string().regex(proposeConnectAgreementBodyExcludedProductIdsItemRegExp)).max(proposeConnectAgreementBodyExcludedProductIdsMax),
+  "excludedCategoryIds": zod.array(zod.string().min(1).max(proposeConnectAgreementBodyExcludedCategoryIdsItemMax)).max(proposeConnectAgreementBodyExcludedCategoryIdsMax),
+  "attributionPolicy": zod.literal("CLICK_SNAPSHOT"),
+  "attributionWindowSeconds": zod.int().min(proposeConnectAgreementBodyAttributionWindowSecondsMin).max(proposeConnectAgreementBodyAttributionWindowSecondsMax),
+  "reportingGraceSeconds": zod.int().min(proposeConnectAgreementBodyReportingGraceSecondsMin).max(proposeConnectAgreementBodyReportingGraceSecondsMax),
+  "effectiveFrom": zod.coerce.date(),
+  "effectiveUntil": zod.union([zod.null(),zod.coerce.date()]),
+  "refundPolicy": zod.enum(['PRO_RATA_ELIGIBLE_BASE', 'FULL_REVERSAL_ON_ANY_REFUND']),
+  "rounding": zod.enum(['HALF_UP', 'FLOOR']),
+  "eligibleEvents": zod.array(zod.enum(['PURCHASE_COMPLETED', 'BOOKING_CONFIRMED', 'SERVICE_COMPLETED'])).min(1).max(proposeConnectAgreementBodyEligibleEventsMax),
+  "settlementDueDays": zod.int().min(proposeConnectAgreementBodySettlementDueDaysMin).max(proposeConnectAgreementBodySettlementDueDaysMax),
+  "paymentTerms": zod.string().min(proposeConnectAgreementBodyPaymentTermsMin).max(proposeConnectAgreementBodyPaymentTermsMax),
+  "cancellationPolicy": zod.string().min(proposeConnectAgreementBodyCancellationPolicyMin).max(proposeConnectAgreementBodyCancellationPolicyMax),
+  "termsText": zod.string().min(proposeConnectAgreementBodyTermsTextMin).max(proposeConnectAgreementBodyTermsTextMax),
+  "attributionNotice": zod.string().min(proposeConnectAgreementBodyAttributionNoticeMin).max(proposeConnectAgreementBodyAttributionNoticeMax),
+  "privacyPolicyVersion": zod.string().min(1).max(proposeConnectAgreementBodyPrivacyPolicyVersionMax)
+})
+
+export const ProposeConnectAgreementResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * Access: AUTHENTICATED. External commerce only. Approved dedicated bearer credentials authenticate provider evidence; browser cookies never authenticate conversions. Agreements require independent proposal and exact owner acceptance. Consent is explicit and per referral. Financial execution is SIMULATION_ONLY; provider settlement claims never prove real funds. Refund item amounts are cumulative; REFUND amountMinor is their increase since the previous refund. No implicit FX, internal order, payment or marketplace commission.
+ */
+export const ListConnectAgreementsParams = zod.object({
+  "id": zod.uuid()
+})
+
+export const ListConnectAgreementsResponseItem = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+export const ListConnectAgreementsResponse = zod.array(ListConnectAgreementsResponseItem)
+
+
+/**
+ * Access: AUTHENTICATED. External commerce only. Approved dedicated bearer credentials authenticate provider evidence; browser cookies never authenticate conversions. Agreements require independent proposal and exact owner acceptance. Consent is explicit and per referral. Financial execution is SIMULATION_ONLY; provider settlement claims never prove real funds. Refund item amounts are cumulative; REFUND amountMinor is their increase since the previous refund. No implicit FX, internal order, payment or marketplace commission.
+ */
+export const AcceptConnectAgreementParams = zod.object({
+  "id": zod.uuid()
+})
+
+export const acceptConnectAgreementBodyExpectedDigestRegExp = new RegExp('^[a-f0-9]{64}$');
+export const acceptConnectAgreementBodyIdempotencyKeyRegExp = new RegExp('^[A-Za-z0-9][A-Za-z0-9._:-]{0,99}$');
+
+
+export const AcceptConnectAgreementBody = zod.object({
+  "expectedDigest": zod.string().regex(acceptConnectAgreementBodyExpectedDigestRegExp),
+  "accept": zod.literal(true),
+  "idempotencyKey": zod.string().regex(acceptConnectAgreementBodyIdempotencyKeyRegExp)
+})
+
+export const AcceptConnectAgreementResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * Access: AUTHENTICATED. External commerce only. Approved dedicated bearer credentials authenticate provider evidence; browser cookies never authenticate conversions. Agreements require independent proposal and exact owner acceptance. Consent is explicit and per referral. Financial execution is SIMULATION_ONLY; provider settlement claims never prove real funds. Refund item amounts are cumulative; REFUND amountMinor is their increase since the previous refund. No implicit FX, internal order, payment or marketplace commission.
+ */
+export const GetConnectReferralTermsParams = zod.object({
+  "id": zod.uuid()
+})
+
+export const getConnectReferralTermsResponseAgreementIdRegExp = new RegExp('^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$');
+export const getConnectReferralTermsResponseTermsDigestRegExp = new RegExp('^[a-f0-9]{64}$');
+export const getConnectReferralTermsResponsePrivacyPolicyVersionMax = 80;
+
+export const getConnectReferralTermsResponseAttributionNoticeMin = 10;
+export const getConnectReferralTermsResponseAttributionNoticeMax = 700;
+
+export const getConnectReferralTermsResponseAttributionWindowSecondsMin = 60;
+export const getConnectReferralTermsResponseAttributionWindowSecondsMax = 31536000;
+
+export const getConnectReferralTermsResponseDisclosureMax = 700;
+
+
+
+export const GetConnectReferralTermsResponse = zod.object({
+  "agreementId": zod.uuid().regex(getConnectReferralTermsResponseAgreementIdRegExp),
+  "termsDigest": zod.string().regex(getConnectReferralTermsResponseTermsDigestRegExp),
+  "privacyPolicyVersion": zod.string().min(1).max(getConnectReferralTermsResponsePrivacyPolicyVersionMax),
+  "attributionNotice": zod.string().min(getConnectReferralTermsResponseAttributionNoticeMin).max(getConnectReferralTermsResponseAttributionNoticeMax),
+  "attributionWindowSeconds": zod.int().min(getConnectReferralTermsResponseAttributionWindowSecondsMin).max(getConnectReferralTermsResponseAttributionWindowSecondsMax),
+  "mode": zod.literal("SIMULATION_ONLY"),
+  "trackingDefault": zod.literal(false),
+  "disclosure": zod.string().min(1).max(getConnectReferralTermsResponseDisclosureMax)
+})
+
+
+/**
+ * Access: AUTHENTICATED. External commerce only. Approved dedicated bearer credentials authenticate provider evidence; browser cookies never authenticate conversions. Agreements require independent proposal and exact owner acceptance. Consent is explicit and per referral. Financial execution is SIMULATION_ONLY; provider settlement claims never prove real funds. Refund item amounts are cumulative; REFUND amountMinor is their increase since the previous refund. No implicit FX, internal order, payment or marketplace commission.
+ */
+export const WithdrawConnectAttributionBody = zod.object({
+  "granted": zod.literal(false)
+})
+
+export const WithdrawConnectAttributionResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * Access: PROVIDER_BEARER. External commerce only. Approved dedicated bearer credentials authenticate provider evidence; browser cookies never authenticate conversions. Agreements require independent proposal and exact owner acceptance. Consent is explicit and per referral. Financial execution is SIMULATION_ONLY; provider settlement claims never prove real funds. Refund item amounts are cumulative; REFUND amountMinor is their increase since the previous refund. No implicit FX, internal order, payment or marketplace commission.
+ */
+export const receiveConnectPartnerEventBodyEventIdRegExp = new RegExp('^[A-Za-z0-9][A-Za-z0-9._:-]{0,99}$');
+export const receiveConnectPartnerEventBodyTransactionIdRegExp = new RegExp('^[A-Za-z0-9][A-Za-z0-9._:-]{0,99}$');
+export const receiveConnectPartnerEventBodySequenceExclusiveMin = 0;
+export const receiveConnectPartnerEventBodySequenceMax = 9007199254740991;
+
+export const receiveConnectPartnerEventBodyCurrencyRegExp = new RegExp('^[A-Z]{3}$');
+export const receiveConnectPartnerEventBodyAmountMinorMin = 0;
+export const receiveConnectPartnerEventBodyAmountMinorMax = 9007199254740991;
+
+export const receiveConnectPartnerEventBodyReferralIdRegExp = new RegExp('^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$');
+export const receiveConnectPartnerEventBodyItemsItemExternalIdRegExp = new RegExp('^[A-Za-z0-9][A-Za-z0-9._:-]{0,99}$');
+export const receiveConnectPartnerEventBodyItemsItemAmountMinorMin = 0;
+export const receiveConnectPartnerEventBodyItemsItemAmountMinorMax = 9007199254740991;
+
+export const receiveConnectPartnerEventBodyItemsMax = 100;
+
+export const receiveConnectPartnerEventBodyRefundedTotalMinorMin = 0;
+export const receiveConnectPartnerEventBodyRefundedTotalMinorMax = 9007199254740991;
+
+export const receiveConnectPartnerEventBodyRefundItemsItemExternalIdRegExp = new RegExp('^[A-Za-z0-9][A-Za-z0-9._:-]{0,99}$');
+export const receiveConnectPartnerEventBodyRefundItemsItemAmountMinorMin = 0;
+export const receiveConnectPartnerEventBodyRefundItemsItemAmountMinorMax = 9007199254740991;
+
+export const receiveConnectPartnerEventBodyRefundItemsMax = 100;
+
+export const receiveConnectPartnerEventBodyEvidenceReferenceRegExp = new RegExp('^[A-Za-z0-9][A-Za-z0-9_.:-]{2,199}$');
+
+
+export const ReceiveConnectPartnerEventBody = zod.object({
+  "eventId": zod.string().regex(receiveConnectPartnerEventBodyEventIdRegExp),
+  "transactionId": zod.string().regex(receiveConnectPartnerEventBodyTransactionIdRegExp),
+  "sequence": zod.int().gt(receiveConnectPartnerEventBodySequenceExclusiveMin).max(receiveConnectPartnerEventBodySequenceMax),
+  "occurredAt": zod.coerce.date(),
+  "type": zod.enum(['PURCHASE_COMPLETED', 'BOOKING_CONFIRMED', 'SERVICE_COMPLETED', 'CANCELLATION', 'REFUND', 'CHARGEBACK', 'COMMISSION_APPROVED', 'COMMISSION_REJECTED', 'COMMISSION_SETTLED', 'DISPUTE_OPENED']),
+  "currency": zod.string().regex(receiveConnectPartnerEventBodyCurrencyRegExp),
+  "amountMinor": zod.int().min(receiveConnectPartnerEventBodyAmountMinorMin).max(receiveConnectPartnerEventBodyAmountMinorMax),
+  "referralId": zod.uuid().regex(receiveConnectPartnerEventBodyReferralIdRegExp).optional(),
+  "items": zod.array(zod.object({
+  "externalId": zod.string().regex(receiveConnectPartnerEventBodyItemsItemExternalIdRegExp),
+  "amountMinor": zod.int().min(receiveConnectPartnerEventBodyItemsItemAmountMinorMin).max(receiveConnectPartnerEventBodyItemsItemAmountMinorMax)
+})).max(receiveConnectPartnerEventBodyItemsMax).optional(),
+  "refundedTotalMinor": zod.int().min(receiveConnectPartnerEventBodyRefundedTotalMinorMin).max(receiveConnectPartnerEventBodyRefundedTotalMinorMax).optional(),
+  "refundItems": zod.array(zod.object({
+  "externalId": zod.string().regex(receiveConnectPartnerEventBodyRefundItemsItemExternalIdRegExp),
+  "amountMinor": zod.int().min(receiveConnectPartnerEventBodyRefundItemsItemAmountMinorMin).max(receiveConnectPartnerEventBodyRefundItemsItemAmountMinorMax)
+})).max(receiveConnectPartnerEventBodyRefundItemsMax).optional(),
+  "evidenceReference": zod.string().regex(receiveConnectPartnerEventBodyEvidenceReferenceRegExp)
+})
+
+export const receiveConnectPartnerEventResponseEventIdRegExp = new RegExp('^[A-Za-z0-9][A-Za-z0-9._:-]{0,99}$');
+export const receiveConnectPartnerEventResponseTransactionIdRegExp = new RegExp('^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$');
+export const receiveConnectPartnerEventResponseTransactionExternalIdRegExp = new RegExp('^[A-Za-z0-9][A-Za-z0-9._:-]{0,99}$');
+export const receiveConnectPartnerEventResponseTransactionPartnerIdRegExp = new RegExp('^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$');
+export const receiveConnectPartnerEventResponseTransactionIntegrationIdRegExp = new RegExp('^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$');
+export const receiveConnectPartnerEventResponseTransactionCurrencyRegExp = new RegExp('^[A-Z]{3}$');
+export const receiveConnectPartnerEventResponseTransactionGrossMinorMin = 0;
+export const receiveConnectPartnerEventResponseTransactionGrossMinorMax = 9007199254740991;
+
+export const receiveConnectPartnerEventResponseTransactionRefundedMinorMin = 0;
+export const receiveConnectPartnerEventResponseTransactionRefundedMinorMax = 9007199254740991;
+
+export const receiveConnectPartnerEventResponseTransactionCommissionCeilingMinorMin = 0;
+export const receiveConnectPartnerEventResponseTransactionCommissionCeilingMinorMax = 9007199254740991;
+
+export const receiveConnectPartnerEventResponseTransactionLastSequenceExclusiveMin = 0;
+export const receiveConnectPartnerEventResponseTransactionLastSequenceMax = 9007199254740991;
+
+export const receiveConnectPartnerEventResponseTransactionBalancesEarnedMinorMin = 0;
+export const receiveConnectPartnerEventResponseTransactionBalancesEarnedMinorMax = 9007199254740991;
+
+export const receiveConnectPartnerEventResponseTransactionBalancesApprovedMinorMin = 0;
+export const receiveConnectPartnerEventResponseTransactionBalancesApprovedMinorMax = 9007199254740991;
+
+export const receiveConnectPartnerEventResponseTransactionBalancesPayableMinorMin = 0;
+export const receiveConnectPartnerEventResponseTransactionBalancesPayableMinorMax = 9007199254740991;
+
+export const receiveConnectPartnerEventResponseTransactionBalancesSimulatedSettledMinorMin = 0;
+export const receiveConnectPartnerEventResponseTransactionBalancesSimulatedSettledMinorMax = 9007199254740991;
+
+export const receiveConnectPartnerEventResponseTransactionBalancesRecoveryDueMinorMin = 0;
+export const receiveConnectPartnerEventResponseTransactionBalancesRecoveryDueMinorMax = 9007199254740991;
+
+export const receiveConnectPartnerEventResponseTransactionActuallyReceivedMinorOneMin = 0;
+export const receiveConnectPartnerEventResponseTransactionActuallyReceivedMinorOneMax = 9007199254740991;
+
+export const receiveConnectPartnerEventResponseTransactionDisclosureMax = 700;
+
+
+
+export const ReceiveConnectPartnerEventResponse = zod.object({
+  "duplicate": zod.boolean(),
+  "eventId": zod.string().regex(receiveConnectPartnerEventResponseEventIdRegExp).optional(),
+  "transaction": zod.object({
+  "id": zod.uuid().regex(receiveConnectPartnerEventResponseTransactionIdRegExp),
+  "externalId": zod.string().regex(receiveConnectPartnerEventResponseTransactionExternalIdRegExp),
+  "partnerId": zod.uuid().regex(receiveConnectPartnerEventResponseTransactionPartnerIdRegExp),
+  "integrationId": zod.uuid().regex(receiveConnectPartnerEventResponseTransactionIntegrationIdRegExp),
+  "state": zod.enum(['PENDING_VERIFICATION', 'VERIFIED', 'APPROVED', 'PAYABLE', 'SETTLED', 'REVERSED', 'DISPUTED', 'REJECTED']),
+  "currency": zod.string().regex(receiveConnectPartnerEventResponseTransactionCurrencyRegExp),
+  "grossMinor": zod.int().min(receiveConnectPartnerEventResponseTransactionGrossMinorMin).max(receiveConnectPartnerEventResponseTransactionGrossMinorMax),
+  "refundedMinor": zod.int().min(receiveConnectPartnerEventResponseTransactionRefundedMinorMin).max(receiveConnectPartnerEventResponseTransactionRefundedMinorMax),
+  "commissionCeilingMinor": zod.int().min(receiveConnectPartnerEventResponseTransactionCommissionCeilingMinorMin).max(receiveConnectPartnerEventResponseTransactionCommissionCeilingMinorMax),
+  "lastSequence": zod.int().gt(receiveConnectPartnerEventResponseTransactionLastSequenceExclusiveMin).max(receiveConnectPartnerEventResponseTransactionLastSequenceMax),
+  "mode": zod.enum(['SIMULATION_ONLY', 'LIVE']),
+  "balances": zod.object({
+  "earnedMinor": zod.int().min(receiveConnectPartnerEventResponseTransactionBalancesEarnedMinorMin).max(receiveConnectPartnerEventResponseTransactionBalancesEarnedMinorMax),
+  "approvedMinor": zod.int().min(receiveConnectPartnerEventResponseTransactionBalancesApprovedMinorMin).max(receiveConnectPartnerEventResponseTransactionBalancesApprovedMinorMax),
+  "payableMinor": zod.int().min(receiveConnectPartnerEventResponseTransactionBalancesPayableMinorMin).max(receiveConnectPartnerEventResponseTransactionBalancesPayableMinorMax),
+  "simulatedSettledMinor": zod.int().min(receiveConnectPartnerEventResponseTransactionBalancesSimulatedSettledMinorMin).max(receiveConnectPartnerEventResponseTransactionBalancesSimulatedSettledMinorMax),
+  "recoveryDueMinor": zod.int().min(receiveConnectPartnerEventResponseTransactionBalancesRecoveryDueMinorMin).max(receiveConnectPartnerEventResponseTransactionBalancesRecoveryDueMinorMax)
+}),
+  "actuallyReceivedMinor": zod.union([zod.int().min(receiveConnectPartnerEventResponseTransactionActuallyReceivedMinorOneMin).max(receiveConnectPartnerEventResponseTransactionActuallyReceivedMinorOneMax),zod.null()]),
+  "internalOrderCreated": zod.literal(false),
+  "disclosure": zod.string().max(receiveConnectPartnerEventResponseTransactionDisclosureMax)
+})
+})
+
+
+/**
+ * Access: ADMIN. External commerce only. Approved dedicated bearer credentials authenticate provider evidence; browser cookies never authenticate conversions. Agreements require independent proposal and exact owner acceptance. Consent is explicit and per referral. Financial execution is SIMULATION_ONLY; provider settlement claims never prove real funds. Refund item amounts are cumulative; REFUND amountMinor is their increase since the previous refund. No implicit FX, internal order, payment or marketplace commission.
+ */
+export const FinanceConnectTransactionParams = zod.object({
+  "id": zod.uuid()
+})
+
+export const financeConnectTransactionBodyIdempotencyKeyRegExp = new RegExp('^[A-Za-z0-9][A-Za-z0-9._:-]{0,99}$');
+export const financeConnectTransactionBodyEvidenceReferenceRegExp = new RegExp('^[A-Za-z0-9][A-Za-z0-9_.:-]{2,199}$');
+export const financeConnectTransactionBodyProviderEventIdRegExp = new RegExp('^[A-Za-z0-9][A-Za-z0-9._:-]{0,99}$');
+
+
+export const FinanceConnectTransactionBody = zod.object({
+  "action": zod.enum(['MARK_PAYABLE', 'RECONCILE_SIMULATED_SETTLEMENT', 'OPEN_DISPUTE', 'RESOLVE_DISPUTE']),
+  "idempotencyKey": zod.string().regex(financeConnectTransactionBodyIdempotencyKeyRegExp),
+  "evidenceReference": zod.string().regex(financeConnectTransactionBodyEvidenceReferenceRegExp),
+  "providerEventId": zod.string().regex(financeConnectTransactionBodyProviderEventIdRegExp).optional(),
+  "resolution": zod.enum(['RESTORE_SUPPORTED_STATE', 'REVERSE']).optional()
+})
+
+export const financeConnectTransactionResponseEventIdRegExp = new RegExp('^[A-Za-z0-9][A-Za-z0-9._:-]{0,99}$');
+export const financeConnectTransactionResponseTransactionIdRegExp = new RegExp('^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$');
+export const financeConnectTransactionResponseTransactionExternalIdRegExp = new RegExp('^[A-Za-z0-9][A-Za-z0-9._:-]{0,99}$');
+export const financeConnectTransactionResponseTransactionPartnerIdRegExp = new RegExp('^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$');
+export const financeConnectTransactionResponseTransactionIntegrationIdRegExp = new RegExp('^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$');
+export const financeConnectTransactionResponseTransactionCurrencyRegExp = new RegExp('^[A-Z]{3}$');
+export const financeConnectTransactionResponseTransactionGrossMinorMin = 0;
+export const financeConnectTransactionResponseTransactionGrossMinorMax = 9007199254740991;
+
+export const financeConnectTransactionResponseTransactionRefundedMinorMin = 0;
+export const financeConnectTransactionResponseTransactionRefundedMinorMax = 9007199254740991;
+
+export const financeConnectTransactionResponseTransactionCommissionCeilingMinorMin = 0;
+export const financeConnectTransactionResponseTransactionCommissionCeilingMinorMax = 9007199254740991;
+
+export const financeConnectTransactionResponseTransactionLastSequenceExclusiveMin = 0;
+export const financeConnectTransactionResponseTransactionLastSequenceMax = 9007199254740991;
+
+export const financeConnectTransactionResponseTransactionBalancesEarnedMinorMin = 0;
+export const financeConnectTransactionResponseTransactionBalancesEarnedMinorMax = 9007199254740991;
+
+export const financeConnectTransactionResponseTransactionBalancesApprovedMinorMin = 0;
+export const financeConnectTransactionResponseTransactionBalancesApprovedMinorMax = 9007199254740991;
+
+export const financeConnectTransactionResponseTransactionBalancesPayableMinorMin = 0;
+export const financeConnectTransactionResponseTransactionBalancesPayableMinorMax = 9007199254740991;
+
+export const financeConnectTransactionResponseTransactionBalancesSimulatedSettledMinorMin = 0;
+export const financeConnectTransactionResponseTransactionBalancesSimulatedSettledMinorMax = 9007199254740991;
+
+export const financeConnectTransactionResponseTransactionBalancesRecoveryDueMinorMin = 0;
+export const financeConnectTransactionResponseTransactionBalancesRecoveryDueMinorMax = 9007199254740991;
+
+export const financeConnectTransactionResponseTransactionActuallyReceivedMinorOneMin = 0;
+export const financeConnectTransactionResponseTransactionActuallyReceivedMinorOneMax = 9007199254740991;
+
+export const financeConnectTransactionResponseTransactionDisclosureMax = 700;
+
+
+
+export const FinanceConnectTransactionResponse = zod.object({
+  "duplicate": zod.boolean(),
+  "eventId": zod.string().regex(financeConnectTransactionResponseEventIdRegExp).optional(),
+  "transaction": zod.object({
+  "id": zod.uuid().regex(financeConnectTransactionResponseTransactionIdRegExp),
+  "externalId": zod.string().regex(financeConnectTransactionResponseTransactionExternalIdRegExp),
+  "partnerId": zod.uuid().regex(financeConnectTransactionResponseTransactionPartnerIdRegExp),
+  "integrationId": zod.uuid().regex(financeConnectTransactionResponseTransactionIntegrationIdRegExp),
+  "state": zod.enum(['PENDING_VERIFICATION', 'VERIFIED', 'APPROVED', 'PAYABLE', 'SETTLED', 'REVERSED', 'DISPUTED', 'REJECTED']),
+  "currency": zod.string().regex(financeConnectTransactionResponseTransactionCurrencyRegExp),
+  "grossMinor": zod.int().min(financeConnectTransactionResponseTransactionGrossMinorMin).max(financeConnectTransactionResponseTransactionGrossMinorMax),
+  "refundedMinor": zod.int().min(financeConnectTransactionResponseTransactionRefundedMinorMin).max(financeConnectTransactionResponseTransactionRefundedMinorMax),
+  "commissionCeilingMinor": zod.int().min(financeConnectTransactionResponseTransactionCommissionCeilingMinorMin).max(financeConnectTransactionResponseTransactionCommissionCeilingMinorMax),
+  "lastSequence": zod.int().gt(financeConnectTransactionResponseTransactionLastSequenceExclusiveMin).max(financeConnectTransactionResponseTransactionLastSequenceMax),
+  "mode": zod.enum(['SIMULATION_ONLY', 'LIVE']),
+  "balances": zod.object({
+  "earnedMinor": zod.int().min(financeConnectTransactionResponseTransactionBalancesEarnedMinorMin).max(financeConnectTransactionResponseTransactionBalancesEarnedMinorMax),
+  "approvedMinor": zod.int().min(financeConnectTransactionResponseTransactionBalancesApprovedMinorMin).max(financeConnectTransactionResponseTransactionBalancesApprovedMinorMax),
+  "payableMinor": zod.int().min(financeConnectTransactionResponseTransactionBalancesPayableMinorMin).max(financeConnectTransactionResponseTransactionBalancesPayableMinorMax),
+  "simulatedSettledMinor": zod.int().min(financeConnectTransactionResponseTransactionBalancesSimulatedSettledMinorMin).max(financeConnectTransactionResponseTransactionBalancesSimulatedSettledMinorMax),
+  "recoveryDueMinor": zod.int().min(financeConnectTransactionResponseTransactionBalancesRecoveryDueMinorMin).max(financeConnectTransactionResponseTransactionBalancesRecoveryDueMinorMax)
+}),
+  "actuallyReceivedMinor": zod.union([zod.int().min(financeConnectTransactionResponseTransactionActuallyReceivedMinorOneMin).max(financeConnectTransactionResponseTransactionActuallyReceivedMinorOneMax),zod.null()]),
+  "internalOrderCreated": zod.literal(false),
+  "disclosure": zod.string().max(financeConnectTransactionResponseTransactionDisclosureMax)
+})
+})
+
+
+/**
+ * Access: AUTHENTICATED. Bounded owned external-commerce report. Currency balances remain separate integer strings. Prepared consented referrals are not purchases. No provider secret or buyer account/conversation identity is returned. Historical simulation settlements remain visible after reversals; actual received funds remain unverified outside simulation.
+ */
+export const GetConnectPartnerReportParams = zod.object({
+  "id": zod.uuid()
+})
+
+export const getConnectPartnerReportQueryLimitDefault = 25;
+export const getConnectPartnerReportQueryLimitMax = 50;
+
+
+
+export const GetConnectPartnerReportQueryParams = zod.object({
+  "limit": zod.coerce.number().int().min(1).max(getConnectPartnerReportQueryLimitMax).default(getConnectPartnerReportQueryLimitDefault),
+  "cursor": zod.uuid().optional()
+})
+
+export const getConnectPartnerReportResponsePartnerIdRegExp = new RegExp('^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$');
+export const getConnectPartnerReportResponseCountsOffersRegExp = new RegExp('^\\d+$');
+export const getConnectPartnerReportResponseCountsPreparedConsentedReferralsRegExp = new RegExp('^\\d+$');
+export const getConnectPartnerReportResponseCountsIntegrationsRegExp = new RegExp('^\\d+$');
+export const getConnectPartnerReportResponseCountsSitesRegExp = new RegExp('^\\d+$');
+export const getConnectPartnerReportResponseTotalsItemCurrencyRegExp = new RegExp('^[A-Z]{3}$');
+export const getConnectPartnerReportResponseTotalsItemMinorUnitScaleMin = 0;
+export const getConnectPartnerReportResponseTotalsItemMinorUnitScaleMax = 4;
+
+export const getConnectPartnerReportResponseTotalsItemEarnedMinorRegExp = new RegExp('^\\d+$');
+export const getConnectPartnerReportResponseTotalsItemApprovedMinorRegExp = new RegExp('^\\d+$');
+export const getConnectPartnerReportResponseTotalsItemPayableMinorRegExp = new RegExp('^\\d+$');
+export const getConnectPartnerReportResponseTotalsItemSimulatedSettledMinorRegExp = new RegExp('^\\d+$');
+export const getConnectPartnerReportResponseTotalsItemRecoveryDueMinorRegExp = new RegExp('^\\d+$');
+export const getConnectPartnerReportResponseTotalsItemActuallyReceivedMinorOneRegExp = new RegExp('^\\d+$');
+export const getConnectPartnerReportResponseTransactionsItemIdRegExp = new RegExp('^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$');
+export const getConnectPartnerReportResponseTransactionsItemExternalIdRegExp = new RegExp('^[A-Za-z0-9][A-Za-z0-9._:-]{0,99}$');
+export const getConnectPartnerReportResponseTransactionsItemPartnerIdRegExp = new RegExp('^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$');
+export const getConnectPartnerReportResponseTransactionsItemIntegrationIdRegExp = new RegExp('^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$');
+export const getConnectPartnerReportResponseTransactionsItemCurrencyRegExp = new RegExp('^[A-Z]{3}$');
+export const getConnectPartnerReportResponseTransactionsItemGrossMinorMin = 0;
+export const getConnectPartnerReportResponseTransactionsItemGrossMinorMax = 9007199254740991;
+
+export const getConnectPartnerReportResponseTransactionsItemRefundedMinorMin = 0;
+export const getConnectPartnerReportResponseTransactionsItemRefundedMinorMax = 9007199254740991;
+
+export const getConnectPartnerReportResponseTransactionsItemCommissionCeilingMinorMin = 0;
+export const getConnectPartnerReportResponseTransactionsItemCommissionCeilingMinorMax = 9007199254740991;
+
+export const getConnectPartnerReportResponseTransactionsItemLastSequenceExclusiveMin = 0;
+export const getConnectPartnerReportResponseTransactionsItemLastSequenceMax = 9007199254740991;
+
+export const getConnectPartnerReportResponseTransactionsItemBalancesEarnedMinorMin = 0;
+export const getConnectPartnerReportResponseTransactionsItemBalancesEarnedMinorMax = 9007199254740991;
+
+export const getConnectPartnerReportResponseTransactionsItemBalancesApprovedMinorMin = 0;
+export const getConnectPartnerReportResponseTransactionsItemBalancesApprovedMinorMax = 9007199254740991;
+
+export const getConnectPartnerReportResponseTransactionsItemBalancesPayableMinorMin = 0;
+export const getConnectPartnerReportResponseTransactionsItemBalancesPayableMinorMax = 9007199254740991;
+
+export const getConnectPartnerReportResponseTransactionsItemBalancesSimulatedSettledMinorMin = 0;
+export const getConnectPartnerReportResponseTransactionsItemBalancesSimulatedSettledMinorMax = 9007199254740991;
+
+export const getConnectPartnerReportResponseTransactionsItemBalancesRecoveryDueMinorMin = 0;
+export const getConnectPartnerReportResponseTransactionsItemBalancesRecoveryDueMinorMax = 9007199254740991;
+
+export const getConnectPartnerReportResponseTransactionsItemActuallyReceivedMinorOneMin = 0;
+export const getConnectPartnerReportResponseTransactionsItemActuallyReceivedMinorOneMax = 9007199254740991;
+
+export const getConnectPartnerReportResponseTransactionsItemDisclosureMax = 700;
+
+export const getConnectPartnerReportResponseTransactionsMax = 50;
+
+export const getConnectPartnerReportResponseNextCursorOneRegExp = new RegExp('^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$');
+export const getConnectPartnerReportResponseDisclosureMax = 700;
+
+
+
+export const GetConnectPartnerReportResponse = zod.object({
+  "partnerId": zod.uuid().regex(getConnectPartnerReportResponsePartnerIdRegExp),
+  "generatedAt": zod.coerce.date(),
+  "counts": zod.object({
+  "offers": zod.string().regex(getConnectPartnerReportResponseCountsOffersRegExp),
+  "preparedConsentedReferrals": zod.string().regex(getConnectPartnerReportResponseCountsPreparedConsentedReferralsRegExp),
+  "integrations": zod.string().regex(getConnectPartnerReportResponseCountsIntegrationsRegExp),
+  "sites": zod.string().regex(getConnectPartnerReportResponseCountsSitesRegExp)
+}),
+  "totals": zod.array(zod.object({
+  "currency": zod.string().regex(getConnectPartnerReportResponseTotalsItemCurrencyRegExp),
+  "mode": zod.enum(['SIMULATION_ONLY', 'LIVE']),
+  "minorUnitScale": zod.int().min(getConnectPartnerReportResponseTotalsItemMinorUnitScaleMin).max(getConnectPartnerReportResponseTotalsItemMinorUnitScaleMax),
+  "earnedMinor": zod.string().regex(getConnectPartnerReportResponseTotalsItemEarnedMinorRegExp),
+  "approvedMinor": zod.string().regex(getConnectPartnerReportResponseTotalsItemApprovedMinorRegExp),
+  "payableMinor": zod.string().regex(getConnectPartnerReportResponseTotalsItemPayableMinorRegExp),
+  "simulatedSettledMinor": zod.string().regex(getConnectPartnerReportResponseTotalsItemSimulatedSettledMinorRegExp),
+  "recoveryDueMinor": zod.string().regex(getConnectPartnerReportResponseTotalsItemRecoveryDueMinorRegExp),
+  "actuallyReceivedMinor": zod.union([zod.string().regex(getConnectPartnerReportResponseTotalsItemActuallyReceivedMinorOneRegExp),zod.null()])
+})),
+  "transactions": zod.array(zod.object({
+  "id": zod.uuid().regex(getConnectPartnerReportResponseTransactionsItemIdRegExp),
+  "externalId": zod.string().regex(getConnectPartnerReportResponseTransactionsItemExternalIdRegExp),
+  "partnerId": zod.uuid().regex(getConnectPartnerReportResponseTransactionsItemPartnerIdRegExp),
+  "integrationId": zod.uuid().regex(getConnectPartnerReportResponseTransactionsItemIntegrationIdRegExp),
+  "state": zod.enum(['PENDING_VERIFICATION', 'VERIFIED', 'APPROVED', 'PAYABLE', 'SETTLED', 'REVERSED', 'DISPUTED', 'REJECTED']),
+  "currency": zod.string().regex(getConnectPartnerReportResponseTransactionsItemCurrencyRegExp),
+  "grossMinor": zod.int().min(getConnectPartnerReportResponseTransactionsItemGrossMinorMin).max(getConnectPartnerReportResponseTransactionsItemGrossMinorMax),
+  "refundedMinor": zod.int().min(getConnectPartnerReportResponseTransactionsItemRefundedMinorMin).max(getConnectPartnerReportResponseTransactionsItemRefundedMinorMax),
+  "commissionCeilingMinor": zod.int().min(getConnectPartnerReportResponseTransactionsItemCommissionCeilingMinorMin).max(getConnectPartnerReportResponseTransactionsItemCommissionCeilingMinorMax),
+  "lastSequence": zod.int().gt(getConnectPartnerReportResponseTransactionsItemLastSequenceExclusiveMin).max(getConnectPartnerReportResponseTransactionsItemLastSequenceMax),
+  "mode": zod.enum(['SIMULATION_ONLY', 'LIVE']),
+  "balances": zod.object({
+  "earnedMinor": zod.int().min(getConnectPartnerReportResponseTransactionsItemBalancesEarnedMinorMin).max(getConnectPartnerReportResponseTransactionsItemBalancesEarnedMinorMax),
+  "approvedMinor": zod.int().min(getConnectPartnerReportResponseTransactionsItemBalancesApprovedMinorMin).max(getConnectPartnerReportResponseTransactionsItemBalancesApprovedMinorMax),
+  "payableMinor": zod.int().min(getConnectPartnerReportResponseTransactionsItemBalancesPayableMinorMin).max(getConnectPartnerReportResponseTransactionsItemBalancesPayableMinorMax),
+  "simulatedSettledMinor": zod.int().min(getConnectPartnerReportResponseTransactionsItemBalancesSimulatedSettledMinorMin).max(getConnectPartnerReportResponseTransactionsItemBalancesSimulatedSettledMinorMax),
+  "recoveryDueMinor": zod.int().min(getConnectPartnerReportResponseTransactionsItemBalancesRecoveryDueMinorMin).max(getConnectPartnerReportResponseTransactionsItemBalancesRecoveryDueMinorMax)
+}),
+  "actuallyReceivedMinor": zod.union([zod.int().min(getConnectPartnerReportResponseTransactionsItemActuallyReceivedMinorOneMin).max(getConnectPartnerReportResponseTransactionsItemActuallyReceivedMinorOneMax),zod.null()]),
+  "internalOrderCreated": zod.literal(false),
+  "disclosure": zod.string().max(getConnectPartnerReportResponseTransactionsItemDisclosureMax)
+})).max(getConnectPartnerReportResponseTransactionsMax),
+  "nextCursor": zod.union([zod.uuid().regex(getConnectPartnerReportResponseNextCursorOneRegExp),zod.null()]),
+  "internalOrdersCreated": zod.literal(0),
+  "disclosure": zod.string().max(getConnectPartnerReportResponseDisclosureMax)
+})
+
+
+/**
+ * Access: ADMIN. Bounded owned external-commerce report. Currency balances remain separate integer strings. Prepared consented referrals are not purchases. No provider secret or buyer account/conversation identity is returned. Historical simulation settlements remain visible after reversals; actual received funds remain unverified outside simulation.
+ */
+export const GetAdminConnectPartnerReportParams = zod.object({
+  "id": zod.uuid()
+})
+
+export const getAdminConnectPartnerReportQueryLimitDefault = 25;
+export const getAdminConnectPartnerReportQueryLimitMax = 50;
+
+
+
+export const GetAdminConnectPartnerReportQueryParams = zod.object({
+  "limit": zod.coerce.number().int().min(1).max(getAdminConnectPartnerReportQueryLimitMax).default(getAdminConnectPartnerReportQueryLimitDefault),
+  "cursor": zod.uuid().optional()
+})
+
+export const getAdminConnectPartnerReportResponsePartnerIdRegExp = new RegExp('^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$');
+export const getAdminConnectPartnerReportResponseCountsOffersRegExp = new RegExp('^\\d+$');
+export const getAdminConnectPartnerReportResponseCountsPreparedConsentedReferralsRegExp = new RegExp('^\\d+$');
+export const getAdminConnectPartnerReportResponseCountsIntegrationsRegExp = new RegExp('^\\d+$');
+export const getAdminConnectPartnerReportResponseCountsSitesRegExp = new RegExp('^\\d+$');
+export const getAdminConnectPartnerReportResponseTotalsItemCurrencyRegExp = new RegExp('^[A-Z]{3}$');
+export const getAdminConnectPartnerReportResponseTotalsItemMinorUnitScaleMin = 0;
+export const getAdminConnectPartnerReportResponseTotalsItemMinorUnitScaleMax = 4;
+
+export const getAdminConnectPartnerReportResponseTotalsItemEarnedMinorRegExp = new RegExp('^\\d+$');
+export const getAdminConnectPartnerReportResponseTotalsItemApprovedMinorRegExp = new RegExp('^\\d+$');
+export const getAdminConnectPartnerReportResponseTotalsItemPayableMinorRegExp = new RegExp('^\\d+$');
+export const getAdminConnectPartnerReportResponseTotalsItemSimulatedSettledMinorRegExp = new RegExp('^\\d+$');
+export const getAdminConnectPartnerReportResponseTotalsItemRecoveryDueMinorRegExp = new RegExp('^\\d+$');
+export const getAdminConnectPartnerReportResponseTotalsItemActuallyReceivedMinorOneRegExp = new RegExp('^\\d+$');
+export const getAdminConnectPartnerReportResponseTransactionsItemIdRegExp = new RegExp('^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$');
+export const getAdminConnectPartnerReportResponseTransactionsItemExternalIdRegExp = new RegExp('^[A-Za-z0-9][A-Za-z0-9._:-]{0,99}$');
+export const getAdminConnectPartnerReportResponseTransactionsItemPartnerIdRegExp = new RegExp('^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$');
+export const getAdminConnectPartnerReportResponseTransactionsItemIntegrationIdRegExp = new RegExp('^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$');
+export const getAdminConnectPartnerReportResponseTransactionsItemCurrencyRegExp = new RegExp('^[A-Z]{3}$');
+export const getAdminConnectPartnerReportResponseTransactionsItemGrossMinorMin = 0;
+export const getAdminConnectPartnerReportResponseTransactionsItemGrossMinorMax = 9007199254740991;
+
+export const getAdminConnectPartnerReportResponseTransactionsItemRefundedMinorMin = 0;
+export const getAdminConnectPartnerReportResponseTransactionsItemRefundedMinorMax = 9007199254740991;
+
+export const getAdminConnectPartnerReportResponseTransactionsItemCommissionCeilingMinorMin = 0;
+export const getAdminConnectPartnerReportResponseTransactionsItemCommissionCeilingMinorMax = 9007199254740991;
+
+export const getAdminConnectPartnerReportResponseTransactionsItemLastSequenceExclusiveMin = 0;
+export const getAdminConnectPartnerReportResponseTransactionsItemLastSequenceMax = 9007199254740991;
+
+export const getAdminConnectPartnerReportResponseTransactionsItemBalancesEarnedMinorMin = 0;
+export const getAdminConnectPartnerReportResponseTransactionsItemBalancesEarnedMinorMax = 9007199254740991;
+
+export const getAdminConnectPartnerReportResponseTransactionsItemBalancesApprovedMinorMin = 0;
+export const getAdminConnectPartnerReportResponseTransactionsItemBalancesApprovedMinorMax = 9007199254740991;
+
+export const getAdminConnectPartnerReportResponseTransactionsItemBalancesPayableMinorMin = 0;
+export const getAdminConnectPartnerReportResponseTransactionsItemBalancesPayableMinorMax = 9007199254740991;
+
+export const getAdminConnectPartnerReportResponseTransactionsItemBalancesSimulatedSettledMinorMin = 0;
+export const getAdminConnectPartnerReportResponseTransactionsItemBalancesSimulatedSettledMinorMax = 9007199254740991;
+
+export const getAdminConnectPartnerReportResponseTransactionsItemBalancesRecoveryDueMinorMin = 0;
+export const getAdminConnectPartnerReportResponseTransactionsItemBalancesRecoveryDueMinorMax = 9007199254740991;
+
+export const getAdminConnectPartnerReportResponseTransactionsItemActuallyReceivedMinorOneMin = 0;
+export const getAdminConnectPartnerReportResponseTransactionsItemActuallyReceivedMinorOneMax = 9007199254740991;
+
+export const getAdminConnectPartnerReportResponseTransactionsItemDisclosureMax = 700;
+
+export const getAdminConnectPartnerReportResponseTransactionsMax = 50;
+
+export const getAdminConnectPartnerReportResponseNextCursorOneRegExp = new RegExp('^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$');
+export const getAdminConnectPartnerReportResponseDisclosureMax = 700;
+
+
+
+export const GetAdminConnectPartnerReportResponse = zod.object({
+  "partnerId": zod.uuid().regex(getAdminConnectPartnerReportResponsePartnerIdRegExp),
+  "generatedAt": zod.coerce.date(),
+  "counts": zod.object({
+  "offers": zod.string().regex(getAdminConnectPartnerReportResponseCountsOffersRegExp),
+  "preparedConsentedReferrals": zod.string().regex(getAdminConnectPartnerReportResponseCountsPreparedConsentedReferralsRegExp),
+  "integrations": zod.string().regex(getAdminConnectPartnerReportResponseCountsIntegrationsRegExp),
+  "sites": zod.string().regex(getAdminConnectPartnerReportResponseCountsSitesRegExp)
+}),
+  "totals": zod.array(zod.object({
+  "currency": zod.string().regex(getAdminConnectPartnerReportResponseTotalsItemCurrencyRegExp),
+  "mode": zod.enum(['SIMULATION_ONLY', 'LIVE']),
+  "minorUnitScale": zod.int().min(getAdminConnectPartnerReportResponseTotalsItemMinorUnitScaleMin).max(getAdminConnectPartnerReportResponseTotalsItemMinorUnitScaleMax),
+  "earnedMinor": zod.string().regex(getAdminConnectPartnerReportResponseTotalsItemEarnedMinorRegExp),
+  "approvedMinor": zod.string().regex(getAdminConnectPartnerReportResponseTotalsItemApprovedMinorRegExp),
+  "payableMinor": zod.string().regex(getAdminConnectPartnerReportResponseTotalsItemPayableMinorRegExp),
+  "simulatedSettledMinor": zod.string().regex(getAdminConnectPartnerReportResponseTotalsItemSimulatedSettledMinorRegExp),
+  "recoveryDueMinor": zod.string().regex(getAdminConnectPartnerReportResponseTotalsItemRecoveryDueMinorRegExp),
+  "actuallyReceivedMinor": zod.union([zod.string().regex(getAdminConnectPartnerReportResponseTotalsItemActuallyReceivedMinorOneRegExp),zod.null()])
+})),
+  "transactions": zod.array(zod.object({
+  "id": zod.uuid().regex(getAdminConnectPartnerReportResponseTransactionsItemIdRegExp),
+  "externalId": zod.string().regex(getAdminConnectPartnerReportResponseTransactionsItemExternalIdRegExp),
+  "partnerId": zod.uuid().regex(getAdminConnectPartnerReportResponseTransactionsItemPartnerIdRegExp),
+  "integrationId": zod.uuid().regex(getAdminConnectPartnerReportResponseTransactionsItemIntegrationIdRegExp),
+  "state": zod.enum(['PENDING_VERIFICATION', 'VERIFIED', 'APPROVED', 'PAYABLE', 'SETTLED', 'REVERSED', 'DISPUTED', 'REJECTED']),
+  "currency": zod.string().regex(getAdminConnectPartnerReportResponseTransactionsItemCurrencyRegExp),
+  "grossMinor": zod.int().min(getAdminConnectPartnerReportResponseTransactionsItemGrossMinorMin).max(getAdminConnectPartnerReportResponseTransactionsItemGrossMinorMax),
+  "refundedMinor": zod.int().min(getAdminConnectPartnerReportResponseTransactionsItemRefundedMinorMin).max(getAdminConnectPartnerReportResponseTransactionsItemRefundedMinorMax),
+  "commissionCeilingMinor": zod.int().min(getAdminConnectPartnerReportResponseTransactionsItemCommissionCeilingMinorMin).max(getAdminConnectPartnerReportResponseTransactionsItemCommissionCeilingMinorMax),
+  "lastSequence": zod.int().gt(getAdminConnectPartnerReportResponseTransactionsItemLastSequenceExclusiveMin).max(getAdminConnectPartnerReportResponseTransactionsItemLastSequenceMax),
+  "mode": zod.enum(['SIMULATION_ONLY', 'LIVE']),
+  "balances": zod.object({
+  "earnedMinor": zod.int().min(getAdminConnectPartnerReportResponseTransactionsItemBalancesEarnedMinorMin).max(getAdminConnectPartnerReportResponseTransactionsItemBalancesEarnedMinorMax),
+  "approvedMinor": zod.int().min(getAdminConnectPartnerReportResponseTransactionsItemBalancesApprovedMinorMin).max(getAdminConnectPartnerReportResponseTransactionsItemBalancesApprovedMinorMax),
+  "payableMinor": zod.int().min(getAdminConnectPartnerReportResponseTransactionsItemBalancesPayableMinorMin).max(getAdminConnectPartnerReportResponseTransactionsItemBalancesPayableMinorMax),
+  "simulatedSettledMinor": zod.int().min(getAdminConnectPartnerReportResponseTransactionsItemBalancesSimulatedSettledMinorMin).max(getAdminConnectPartnerReportResponseTransactionsItemBalancesSimulatedSettledMinorMax),
+  "recoveryDueMinor": zod.int().min(getAdminConnectPartnerReportResponseTransactionsItemBalancesRecoveryDueMinorMin).max(getAdminConnectPartnerReportResponseTransactionsItemBalancesRecoveryDueMinorMax)
+}),
+  "actuallyReceivedMinor": zod.union([zod.int().min(getAdminConnectPartnerReportResponseTransactionsItemActuallyReceivedMinorOneMin).max(getAdminConnectPartnerReportResponseTransactionsItemActuallyReceivedMinorOneMax),zod.null()]),
+  "internalOrderCreated": zod.literal(false),
+  "disclosure": zod.string().max(getAdminConnectPartnerReportResponseTransactionsItemDisclosureMax)
+})).max(getAdminConnectPartnerReportResponseTransactionsMax),
+  "nextCursor": zod.union([zod.uuid().regex(getAdminConnectPartnerReportResponseNextCursorOneRegExp),zod.null()]),
+  "internalOrdersCreated": zod.literal(0),
+  "disclosure": zod.string().max(getAdminConnectPartnerReportResponseDisclosureMax)
 })
 
 

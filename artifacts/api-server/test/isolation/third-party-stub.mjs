@@ -12,7 +12,7 @@ const [certFile, keyFile, port, log] = process.argv.slice(2);
 https
   .createServer({ cert: readFileSync(certFile), key: readFileSync(keyFile) }, (req, res) => {
     appendFileSync(log, `${JSON.stringify({ host: req.headers.host, path: req.url?.split("?")[0] })}\n`);
-    if (req.headers.host === "dash.cloudflare.com") {
+    if (["dash.cloudflare.com","browser.catalog.partner.example"].includes(req.headers.host)) {
       res.writeHead(200, { "Content-Type": "text/html", "X-Dinar-Test-Fixture": "provider-navigation-only" });
       res.end("<!doctype html><title>Isolated provider navigation fixture</title><p>Public destination fixture only; no provider availability, pricing or checkout evidence.</p>");
       return;

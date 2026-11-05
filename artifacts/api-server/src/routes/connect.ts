@@ -3,7 +3,10 @@ import { z } from "zod";
 import { and, eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { aiResultSets, conversations, db } from "@workspace/db";
-import { UniversalCardsPayloadSchema } from "@workspace/api-zod/connect";
+import {
+  UniversalCardsPayloadSchema,
+  ConnectOutboundInputSchema,
+} from "@workspace/api-zod/connect";
 import { requireAuth } from "../lib/auth";
 import { consumeRateLimit } from "../lib/auth-rate-limiter";
 import { marketFor, isMarketAvailable } from "../lib/markets";
@@ -13,6 +16,13 @@ import {
   externalDestination,
 } from "../connect/provider-registry";
 import * as partners from "../connect/partners";
+import * as agreements from "../connect/agreements";
+import { ConnectFinancialReceiptSchema } from "@workspace/api-zod/connect-platform";
+import { connectPartnerReport } from "../connect/reports";
+import {
+  receiveConnectEvent,
+  financeConnectTransaction,
+} from "../connect/finance";
 import {
   assertConnectTestDependencyInjection,
   publicConnectAddresses,
@@ -22,6 +32,87 @@ import { markets } from "@workspace/db";
 import { resolveMarket } from "../lib/markets";
 import { assertMarketLegalCapability } from "../lib/d16-readiness";
 const router = Router();
+router.get("/connect/partners/:id/report", requireAuth, async (req, res) =>
+  res
+    .set("Cache-Control", "no-store")
+    .json(
+      await connectPartnerReport(
+        req.actor!,
+        await marketFor(req),
+        idParam(req.params.id),
+        req.query,
+      ),
+    ),
+);
+router.get(
+  "/admin/connect/partners/:id/report",
+  requireAuth,
+  async (req, res) =>
+    res
+      .set("Cache-Control", "no-store")
+      .json(
+        await connectPartnerReport(
+          req.actor!,
+          await marketFor(req),
+          idParam(req.params.id),
+          req.query,
+          true,
+        ),
+      ),
+);
+router.post(
+  "/admin/connect/partners/:id/agreements",
+  requireAuth,
+  async (req, res) =>
+    res
+      .status(201)
+      .json(
+        await agreements.proposeConnectAgreement(
+          req.actor!,
+          await marketFor(req),
+          idParam(req.params.id),
+          req.body,
+        ),
+      ),
+);
+router.get("/connect/partners/:id/agreements", requireAuth, async (req, res) =>
+  res.json(
+    await agreements.listConnectAgreements(
+      req.actor!.id,
+      await marketFor(req),
+      idParam(req.params.id),
+    ),
+  ),
+);
+router.post("/connect/agreements/:id/accept", requireAuth, async (req, res) =>
+  res.json(
+    await agreements.acceptConnectAgreement(
+      req.actor!.id,
+      await marketFor(req),
+      idParam(req.params.id),
+      req.body,
+    ),
+  ),
+);
+router.get(
+  "/connect/offers/:id/referral-terms",
+  requireAuth,
+  async (req, res) =>
+    res
+      .set("Cache-Control", "no-store")
+      .json(
+        await agreements.connectReferralTerms(
+          await marketFor(req),
+          idParam(req.params.id),
+        ),
+      ),
+);
+router.post("/connect/privacy/attribution", requireAuth, async (req, res) => {
+  z.object({ granted: z.literal(false) })
+    .strict()
+    .parse(req.body);
+  res.json(await agreements.withdrawConnectAttribution(req.actor!.id));
+});
 router.get("/admin/connect/review", requireAuth, async (req, res) =>
   res.json(await partners.connectReviewQueue(req.actor!, await marketFor(req))),
 );
@@ -187,7 +278,7 @@ router.get("/connect/catalog", requireAuth, async (req, res) =>
     ),
   ),
 );
-router.post("/connect/provider/catalog", async (req, res) => {
+async function connectProviderRequest(req: import("express").Request) {
   const context = await authenticateProviderKey(
     /^Bearer\s+(\S+)$/i.exec(req.get("authorization") ?? "")?.[1],
   );
@@ -203,21 +294,38 @@ router.post("/connect/provider/catalog", async (req, res) => {
     .from(markets)
     .where(eq(markets.id, context.connection.marketId));
   if (!row) throw connectError(404, "NOT_FOUND", "السوق غير موجود");
+  return { context, market: await resolveMarket(row) };
+}
+router.post("/connect/provider/events", async (req, res) => {
+  const { context, market } = await connectProviderRequest(req);
   res.json(
-    await partners.importConnectProviderCatalog(
-      context,
-      req.body,
-      await resolveMarket(row),
+    ConnectFinancialReceiptSchema.parse(
+      await receiveConnectEvent(context, market, req.body),
     ),
   );
 });
-const outboundInput = z
-  .object({
-    resultSetId: z.string().uuid(),
-    cardId: z.string().min(1).max(400),
-    trackingConsent: z.literal(false).default(false),
-  })
-  .strict();
+router.post(
+  "/admin/connect/transactions/:id/finance",
+  requireAuth,
+  async (req, res) =>
+    res.json(
+      ConnectFinancialReceiptSchema.parse(
+        await financeConnectTransaction(
+          req.actor!,
+          await marketFor(req),
+          idParam(req.params.id),
+          req.body,
+        ),
+      ),
+    ),
+);
+router.post("/connect/provider/catalog", async (req, res) => {
+  const { context, market } = await connectProviderRequest(req);
+  res.json(
+    await partners.importConnectProviderCatalog(context, req.body, market),
+  );
+});
+const outboundInput = ConnectOutboundInputSchema;
 
 async function ownedResult(id: string, actorId: string, marketId: string) {
   const [row] = await db
@@ -245,7 +353,7 @@ async function ownedResult(id: string, actorId: string, marketId: string) {
 router.post("/connect/outbound", requireAuth, async (req, res) => {
   const body = outboundInput.parse(req.body);
   const market = await marketFor(req);
-  await assertMarketLegalCapability(market.id,"BROWSING");
+  await assertMarketLegalCapability(market.id, "BROWSING");
   if (req.actor!.status !== "ACTIVE" || !isMarketAvailable(market))
     throw connectError(
       403,
@@ -278,7 +386,15 @@ router.post("/connect/outbound", requireAuth, async (req, res) => {
       "هذه البطاقة لا تمنح إجراء إحالة خارجيًا.",
     );
   let destinationRecord: Record<string, string>;
+  let attribution:
+    { referralId: string; agreementId: string; expiresAt: string } | undefined;
   if (card.domain) {
+    if (body.trackingConsent)
+      throw connectError(
+        409,
+        "ATTRIBUTION_NOT_SUPPORTED",
+        "لا يوجد اتفاق إحالة مع هذا المزوّد؛ تابع دون تتبع",
+      );
     const domain = normalizeDomain(card.domain.domain);
     externalDestination(card.domain.providerId, domain);
     destinationRecord = { providerId: card.domain.providerId, domain };
@@ -298,32 +414,45 @@ router.post("/connect/outbound", requireAuth, async (req, res) => {
       );
     });
     destinationRecord = { providerId: card.providerId!, offerId: card.id };
+    if (body.trackingConsent) {
+      attribution = await agreements.createConnectReferral({
+        actorId: req.actor!.id,
+        market,
+        offerId: card.id,
+        conversationId: source.conversationId,
+        resultSetId: source.id,
+        cardId: card.id,
+        expectedAgreementId: body.expectedAgreementId,
+        expectedTermsDigest: body.expectedTermsDigest,
+        expectedPrivacyPolicyVersion: body.expectedPrivacyPolicyVersion,
+      });
+      destinationRecord.referralId = attribution.referralId;
+    }
   }
   const id = randomUUID();
   // Reuse the existing owner-scoped, expiring conversation record infrastructure.
   // This is a navigation capability, not an order, pending purchase or commission event.
-  await db
-    .insert(aiResultSets)
-    .values({
-      id,
-      conversationId: source.conversationId,
-      marketId: source.marketId,
-      messageId: source.messageId,
-      query: {
-        kind: "CONNECT_OUTBOUND",
-        ...destinationRecord,
-        sourceResultSetId: source.id,
-        sourceCardId: card.id,
-      },
-      resourceIds: [],
-      expiresAt: new Date(Date.now() + 5 * 60_000),
-    });
+  await db.insert(aiResultSets).values({
+    id,
+    conversationId: source.conversationId,
+    marketId: source.marketId,
+    messageId: source.messageId,
+    query: {
+      kind: "CONNECT_OUTBOUND",
+      ...destinationRecord,
+      sourceResultSetId: source.id,
+      sourceCardId: card.id,
+    },
+    resourceIds: [],
+    expiresAt: new Date(Date.now() + 5 * 60_000),
+  });
   res
     .status(201)
     .set("Cache-Control", "no-store")
     .json({
       openPath: `/api/connect/outbound/${id}`,
-      tracking: "NOT_TRACKED",
+      tracking: attribution ? "CONSENTED" : "NOT_TRACKED",
+      ...(attribution ?? {}),
       checkoutLocation: "EXTERNAL",
       internalOrderCreated: false,
     });
@@ -336,7 +465,7 @@ router.get("/connect/outbound/:id", requireAuth, async (req, res) => {
       "لا تُقبل معاملات إعادة توجيه في رابط الإحالة.",
     );
   const market = await marketFor(req);
-  await assertMarketLegalCapability(market.id,"BROWSING");
+  await assertMarketLegalCapability(market.id, "BROWSING");
   const id = z.string().uuid().parse(req.params.id);
   if (req.actor!.status !== "ACTIVE" || !isMarketAvailable(market))
     throw connectError(
@@ -370,11 +499,21 @@ router.get("/connect/outbound/:id", requireAuth, async (req, res) => {
       );
       if (ready.partner.id !== link.query.providerId)
         throw connectError(404, "CARD_UNAVAILABLE", "مصدر البطاقة غير متاح");
+      const referral =
+        typeof link.query.referralId === "string"
+          ? await agreements.connectReferralForNavigation(
+              tx,
+              idParam(link.query.referralId),
+              req.actor!.id,
+              ready.offer.id,
+            )
+          : null;
       return {
         url: partners.connectOfferDestination(
           ready.integration,
           ready.site,
           ready.offer.targetPath,
+          referral?.id,
         ),
         host: ready.site.hostname,
       };

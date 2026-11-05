@@ -4962,13 +4962,23 @@ export interface SecurityIncidentTransitionInput {
 }
 
 export interface ConnectOutboundInput {
+  /** @pattern ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$ */
   resultSetId: string;
   /**
      * @minLength 1
      * @maxLength 400
      */
   cardId: string;
-  trackingConsent?: false;
+  trackingConsent: boolean;
+  /** @pattern ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$ */
+  expectedAgreementId?: string;
+  /** @pattern ^[a-f0-9]{64}$ */
+  expectedTermsDigest?: string;
+  /**
+     * @minLength 1
+     * @maxLength 80
+     */
+  expectedPrivacyPolicyVersion?: string;
 }
 
 export type ConnectOutboundPreparedTracking = typeof ConnectOutboundPreparedTracking[keyof typeof ConnectOutboundPreparedTracking];
@@ -4976,6 +4986,7 @@ export type ConnectOutboundPreparedTracking = typeof ConnectOutboundPreparedTrac
 
 export const ConnectOutboundPreparedTracking = {
   NOT_TRACKED: 'NOT_TRACKED',
+  CONSENTED: 'CONSENTED',
 } as const;
 
 export type ConnectOutboundPreparedCheckoutLocation = typeof ConnectOutboundPreparedCheckoutLocation[keyof typeof ConnectOutboundPreparedCheckoutLocation];
@@ -4989,6 +5000,9 @@ export interface ConnectOutboundPrepared {
   /** @pattern ^/api/connect/outbound/[0-9a-f-]{36}$ */
   openPath: string;
   tracking: ConnectOutboundPreparedTracking;
+  referralId?: string;
+  agreementId?: string;
+  expiresAt?: string;
   checkoutLocation: ConnectOutboundPreparedCheckoutLocation;
   internalOrderCreated: false;
 }
@@ -5180,6 +5194,611 @@ export interface ConnectCatalogImportInput {
   items: ConnectCatalogImportInputItemsItem[];
 }
 
+export const ConnectAttributionWithdrawalInputValue = {
+  granted: false,
+} as const;
+export type ConnectAttributionWithdrawalInput = typeof ConnectAttributionWithdrawalInputValue;
+
+export type ConnectAgreementProposalInputMode = typeof ConnectAgreementProposalInputMode[keyof typeof ConnectAgreementProposalInputMode];
+
+
+export const ConnectAgreementProposalInputMode = {
+  SIMULATION_ONLY: 'SIMULATION_ONLY',
+  LIVE: 'LIVE',
+} as const;
+
+export type ConnectAgreementProposalInputCommission = {
+  kind: 'PERCENTAGE';
+  /**
+     * @minimum 0
+     * @maximum 10000
+     */
+  basisPoints: number;
+} | {
+  kind: 'FIXED';
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  amountMinor: number;
+};
+
+export type ConnectAgreementProposalInputCategoryRatesItem = {
+  /**
+     * @minLength 1
+     * @maxLength 80
+     */
+  categoryId: string;
+  /**
+     * @minimum 0
+     * @maximum 10000
+     */
+  basisPoints: number;
+};
+
+export type ConnectAgreementProposalInputRefundPolicy = typeof ConnectAgreementProposalInputRefundPolicy[keyof typeof ConnectAgreementProposalInputRefundPolicy];
+
+
+export const ConnectAgreementProposalInputRefundPolicy = {
+  PRO_RATA_ELIGIBLE_BASE: 'PRO_RATA_ELIGIBLE_BASE',
+  FULL_REVERSAL_ON_ANY_REFUND: 'FULL_REVERSAL_ON_ANY_REFUND',
+} as const;
+
+export type ConnectAgreementProposalInputRounding = typeof ConnectAgreementProposalInputRounding[keyof typeof ConnectAgreementProposalInputRounding];
+
+
+export const ConnectAgreementProposalInputRounding = {
+  HALF_UP: 'HALF_UP',
+  FLOOR: 'FLOOR',
+} as const;
+
+export type ConnectAgreementProposalInputEligibleEventsItem = typeof ConnectAgreementProposalInputEligibleEventsItem[keyof typeof ConnectAgreementProposalInputEligibleEventsItem];
+
+
+export const ConnectAgreementProposalInputEligibleEventsItem = {
+  PURCHASE_COMPLETED: 'PURCHASE_COMPLETED',
+  BOOKING_CONFIRMED: 'BOOKING_CONFIRMED',
+  SERVICE_COMPLETED: 'SERVICE_COMPLETED',
+} as const;
+
+export interface ConnectAgreementProposalInput {
+  mode: ConnectAgreementProposalInputMode;
+  /** @pattern ^[A-Z]{3}$ */
+  currency: string;
+  commission: ConnectAgreementProposalInputCommission;
+  /** @maxItems 30 */
+  categoryRates: ConnectAgreementProposalInputCategoryRatesItem[];
+  /**
+     * @maxItems 100
+     * @items.pattern ^[A-Za-z0-9][A-Za-z0-9._:-]{0,99}$
+     */
+  excludedProductIds: string[];
+  /**
+     * @maxItems 30
+     * @items.minLength 1
+     * @items.maxLength 80
+     */
+  excludedCategoryIds: string[];
+  attributionPolicy: 'CLICK_SNAPSHOT';
+  /**
+     * @minimum 60
+     * @maximum 31536000
+     */
+  attributionWindowSeconds: number;
+  /**
+     * @minimum 0
+     * @maximum 31536000
+     */
+  reportingGraceSeconds: number;
+  effectiveFrom: string;
+  effectiveUntil: null | string;
+  refundPolicy: ConnectAgreementProposalInputRefundPolicy;
+  rounding: ConnectAgreementProposalInputRounding;
+  /**
+     * @minItems 1
+     * @maxItems 3
+     */
+  eligibleEvents: ConnectAgreementProposalInputEligibleEventsItem[];
+  /**
+     * @minimum 0
+     * @maximum 3650
+     */
+  settlementDueDays: number;
+  /**
+     * @minLength 3
+     * @maxLength 1000
+     */
+  paymentTerms: string;
+  /**
+     * @minLength 3
+     * @maxLength 1000
+     */
+  cancellationPolicy: string;
+  /**
+     * @minLength 10
+     * @maxLength 12000
+     */
+  termsText: string;
+  /**
+     * @minLength 10
+     * @maxLength 700
+     */
+  attributionNotice: string;
+  /**
+     * @minLength 1
+     * @maxLength 80
+     */
+  privacyPolicyVersion: string;
+}
+
+export interface ConnectAgreementAcceptanceInput {
+  /** @pattern ^[a-f0-9]{64}$ */
+  expectedDigest: string;
+  accept: true;
+  /** @pattern ^[A-Za-z0-9][A-Za-z0-9._:-]{0,99}$ */
+  idempotencyKey: string;
+}
+
+export type ConnectPartnerEventInputType = typeof ConnectPartnerEventInputType[keyof typeof ConnectPartnerEventInputType];
+
+
+export const ConnectPartnerEventInputType = {
+  PURCHASE_COMPLETED: 'PURCHASE_COMPLETED',
+  BOOKING_CONFIRMED: 'BOOKING_CONFIRMED',
+  SERVICE_COMPLETED: 'SERVICE_COMPLETED',
+  CANCELLATION: 'CANCELLATION',
+  REFUND: 'REFUND',
+  CHARGEBACK: 'CHARGEBACK',
+  COMMISSION_APPROVED: 'COMMISSION_APPROVED',
+  COMMISSION_REJECTED: 'COMMISSION_REJECTED',
+  COMMISSION_SETTLED: 'COMMISSION_SETTLED',
+  DISPUTE_OPENED: 'DISPUTE_OPENED',
+} as const;
+
+export type ConnectPartnerEventInputItemsItem = {
+  /** @pattern ^[A-Za-z0-9][A-Za-z0-9._:-]{0,99}$ */
+  externalId: string;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  amountMinor: number;
+};
+
+export type ConnectPartnerEventInputRefundItemsItem = {
+  /** @pattern ^[A-Za-z0-9][A-Za-z0-9._:-]{0,99}$ */
+  externalId: string;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  amountMinor: number;
+};
+
+export interface ConnectPartnerEventInput {
+  /** @pattern ^[A-Za-z0-9][A-Za-z0-9._:-]{0,99}$ */
+  eventId: string;
+  /** @pattern ^[A-Za-z0-9][A-Za-z0-9._:-]{0,99}$ */
+  transactionId: string;
+  /**
+     * @maximum 9007199254740991
+     * @exclusiveMinimum 0
+     */
+  sequence: number;
+  occurredAt: string;
+  type: ConnectPartnerEventInputType;
+  /** @pattern ^[A-Z]{3}$ */
+  currency: string;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  amountMinor: number;
+  /** @pattern ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$ */
+  referralId?: string;
+  /** @maxItems 100 */
+  items?: ConnectPartnerEventInputItemsItem[];
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  refundedTotalMinor?: number;
+  /** @maxItems 100 */
+  refundItems?: ConnectPartnerEventInputRefundItemsItem[];
+  /** @pattern ^[A-Za-z0-9][A-Za-z0-9_.:-]{2,199}$ */
+  evidenceReference: string;
+}
+
+export type ConnectFinanceCommandInputAction = typeof ConnectFinanceCommandInputAction[keyof typeof ConnectFinanceCommandInputAction];
+
+
+export const ConnectFinanceCommandInputAction = {
+  MARK_PAYABLE: 'MARK_PAYABLE',
+  RECONCILE_SIMULATED_SETTLEMENT: 'RECONCILE_SIMULATED_SETTLEMENT',
+  OPEN_DISPUTE: 'OPEN_DISPUTE',
+  RESOLVE_DISPUTE: 'RESOLVE_DISPUTE',
+} as const;
+
+export type ConnectFinanceCommandInputResolution = typeof ConnectFinanceCommandInputResolution[keyof typeof ConnectFinanceCommandInputResolution];
+
+
+export const ConnectFinanceCommandInputResolution = {
+  RESTORE_SUPPORTED_STATE: 'RESTORE_SUPPORTED_STATE',
+  REVERSE: 'REVERSE',
+} as const;
+
+export interface ConnectFinanceCommandInput {
+  action: ConnectFinanceCommandInputAction;
+  /** @pattern ^[A-Za-z0-9][A-Za-z0-9._:-]{0,99}$ */
+  idempotencyKey: string;
+  /** @pattern ^[A-Za-z0-9][A-Za-z0-9_.:-]{2,199}$ */
+  evidenceReference: string;
+  /** @pattern ^[A-Za-z0-9][A-Za-z0-9._:-]{0,99}$ */
+  providerEventId?: string;
+  resolution?: ConnectFinanceCommandInputResolution;
+}
+
+export interface ConnectReferralDisclosure {
+  /** @pattern ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$ */
+  agreementId: string;
+  /** @pattern ^[a-f0-9]{64}$ */
+  termsDigest: string;
+  /**
+     * @minLength 1
+     * @maxLength 80
+     */
+  privacyPolicyVersion: string;
+  /**
+     * @minLength 10
+     * @maxLength 700
+     */
+  attributionNotice: string;
+  /**
+     * @minimum 60
+     * @maximum 31536000
+     */
+  attributionWindowSeconds: number;
+  mode: 'SIMULATION_ONLY';
+  trackingDefault: false;
+  /**
+     * @minLength 1
+     * @maxLength 700
+     */
+  disclosure: string;
+}
+
+export type ConnectFinancialReceiptTransactionState = typeof ConnectFinancialReceiptTransactionState[keyof typeof ConnectFinancialReceiptTransactionState];
+
+
+export const ConnectFinancialReceiptTransactionState = {
+  PENDING_VERIFICATION: 'PENDING_VERIFICATION',
+  VERIFIED: 'VERIFIED',
+  APPROVED: 'APPROVED',
+  PAYABLE: 'PAYABLE',
+  SETTLED: 'SETTLED',
+  REVERSED: 'REVERSED',
+  DISPUTED: 'DISPUTED',
+  REJECTED: 'REJECTED',
+} as const;
+
+export type ConnectFinancialReceiptTransactionMode = typeof ConnectFinancialReceiptTransactionMode[keyof typeof ConnectFinancialReceiptTransactionMode];
+
+
+export const ConnectFinancialReceiptTransactionMode = {
+  SIMULATION_ONLY: 'SIMULATION_ONLY',
+  LIVE: 'LIVE',
+} as const;
+
+export type ConnectFinancialReceiptTransactionBalances = {
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  earnedMinor: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  approvedMinor: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  payableMinor: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  simulatedSettledMinor: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  recoveryDueMinor: number;
+};
+
+export type ConnectFinancialReceiptTransaction = {
+  /** @pattern ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$ */
+  id: string;
+  /** @pattern ^[A-Za-z0-9][A-Za-z0-9._:-]{0,99}$ */
+  externalId: string;
+  /** @pattern ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$ */
+  partnerId: string;
+  /** @pattern ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$ */
+  integrationId: string;
+  state: ConnectFinancialReceiptTransactionState;
+  /** @pattern ^[A-Z]{3}$ */
+  currency: string;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  grossMinor: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  refundedMinor: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  commissionCeilingMinor: number;
+  /**
+     * @maximum 9007199254740991
+     * @exclusiveMinimum 0
+     */
+  lastSequence: number;
+  mode: ConnectFinancialReceiptTransactionMode;
+  balances: ConnectFinancialReceiptTransactionBalances;
+  actuallyReceivedMinor: number | null;
+  internalOrderCreated: false;
+  /** @maxLength 700 */
+  disclosure: string;
+};
+
+export interface ConnectFinancialReceipt {
+  duplicate: boolean;
+  /** @pattern ^[A-Za-z0-9][A-Za-z0-9._:-]{0,99}$ */
+  eventId?: string;
+  transaction: ConnectFinancialReceiptTransaction;
+}
+
+export type ConnectPartnerReportCounts = {
+  /** @pattern ^\d+$ */
+  offers: string;
+  /** @pattern ^\d+$ */
+  preparedConsentedReferrals: string;
+  /** @pattern ^\d+$ */
+  integrations: string;
+  /** @pattern ^\d+$ */
+  sites: string;
+};
+
+export type ConnectPartnerReportTotalsItemMode = typeof ConnectPartnerReportTotalsItemMode[keyof typeof ConnectPartnerReportTotalsItemMode];
+
+
+export const ConnectPartnerReportTotalsItemMode = {
+  SIMULATION_ONLY: 'SIMULATION_ONLY',
+  LIVE: 'LIVE',
+} as const;
+
+export type ConnectPartnerReportTotalsItem = {
+  /** @pattern ^[A-Z]{3}$ */
+  currency: string;
+  mode: ConnectPartnerReportTotalsItemMode;
+  /**
+     * @minimum 0
+     * @maximum 4
+     */
+  minorUnitScale: number;
+  /** @pattern ^\d+$ */
+  earnedMinor: string;
+  /** @pattern ^\d+$ */
+  approvedMinor: string;
+  /** @pattern ^\d+$ */
+  payableMinor: string;
+  /** @pattern ^\d+$ */
+  simulatedSettledMinor: string;
+  /** @pattern ^\d+$ */
+  recoveryDueMinor: string;
+  actuallyReceivedMinor: string | null;
+};
+
+export type ConnectPartnerReportTransactionsItemState = typeof ConnectPartnerReportTransactionsItemState[keyof typeof ConnectPartnerReportTransactionsItemState];
+
+
+export const ConnectPartnerReportTransactionsItemState = {
+  PENDING_VERIFICATION: 'PENDING_VERIFICATION',
+  VERIFIED: 'VERIFIED',
+  APPROVED: 'APPROVED',
+  PAYABLE: 'PAYABLE',
+  SETTLED: 'SETTLED',
+  REVERSED: 'REVERSED',
+  DISPUTED: 'DISPUTED',
+  REJECTED: 'REJECTED',
+} as const;
+
+export type ConnectPartnerReportTransactionsItemMode = typeof ConnectPartnerReportTransactionsItemMode[keyof typeof ConnectPartnerReportTransactionsItemMode];
+
+
+export const ConnectPartnerReportTransactionsItemMode = {
+  SIMULATION_ONLY: 'SIMULATION_ONLY',
+  LIVE: 'LIVE',
+} as const;
+
+export type ConnectPartnerReportTransactionsItemBalances = {
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  earnedMinor: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  approvedMinor: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  payableMinor: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  simulatedSettledMinor: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  recoveryDueMinor: number;
+};
+
+export type ConnectPartnerReportTransactionsItem = {
+  /** @pattern ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$ */
+  id: string;
+  /** @pattern ^[A-Za-z0-9][A-Za-z0-9._:-]{0,99}$ */
+  externalId: string;
+  /** @pattern ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$ */
+  partnerId: string;
+  /** @pattern ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$ */
+  integrationId: string;
+  state: ConnectPartnerReportTransactionsItemState;
+  /** @pattern ^[A-Z]{3}$ */
+  currency: string;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  grossMinor: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  refundedMinor: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  commissionCeilingMinor: number;
+  /**
+     * @maximum 9007199254740991
+     * @exclusiveMinimum 0
+     */
+  lastSequence: number;
+  mode: ConnectPartnerReportTransactionsItemMode;
+  balances: ConnectPartnerReportTransactionsItemBalances;
+  actuallyReceivedMinor: number | null;
+  internalOrderCreated: false;
+  /** @maxLength 700 */
+  disclosure: string;
+};
+
+export interface ConnectPartnerReport {
+  /** @pattern ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$ */
+  partnerId: string;
+  generatedAt: string;
+  counts: ConnectPartnerReportCounts;
+  totals: ConnectPartnerReportTotalsItem[];
+  /** @maxItems 50 */
+  transactions: ConnectPartnerReportTransactionsItem[];
+  nextCursor: string | null;
+  internalOrdersCreated: 0;
+  /** @maxLength 700 */
+  disclosure: string;
+}
+
+export type ConnectExternalTransactionState = typeof ConnectExternalTransactionState[keyof typeof ConnectExternalTransactionState];
+
+
+export const ConnectExternalTransactionState = {
+  PENDING_VERIFICATION: 'PENDING_VERIFICATION',
+  VERIFIED: 'VERIFIED',
+  APPROVED: 'APPROVED',
+  PAYABLE: 'PAYABLE',
+  SETTLED: 'SETTLED',
+  REVERSED: 'REVERSED',
+  DISPUTED: 'DISPUTED',
+  REJECTED: 'REJECTED',
+} as const;
+
+export type ConnectExternalTransactionMode = typeof ConnectExternalTransactionMode[keyof typeof ConnectExternalTransactionMode];
+
+
+export const ConnectExternalTransactionMode = {
+  SIMULATION_ONLY: 'SIMULATION_ONLY',
+  LIVE: 'LIVE',
+} as const;
+
+export type ConnectExternalTransactionBalances = {
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  earnedMinor: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  approvedMinor: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  payableMinor: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  simulatedSettledMinor: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  recoveryDueMinor: number;
+};
+
+export interface ConnectExternalTransaction {
+  /** @pattern ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$ */
+  id: string;
+  /** @pattern ^[A-Za-z0-9][A-Za-z0-9._:-]{0,99}$ */
+  externalId: string;
+  /** @pattern ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$ */
+  partnerId: string;
+  /** @pattern ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$ */
+  integrationId: string;
+  state: ConnectExternalTransactionState;
+  /** @pattern ^[A-Z]{3}$ */
+  currency: string;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  grossMinor: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  refundedMinor: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  commissionCeilingMinor: number;
+  /**
+     * @maximum 9007199254740991
+     * @exclusiveMinimum 0
+     */
+  lastSequence: number;
+  mode: ConnectExternalTransactionMode;
+  balances: ConnectExternalTransactionBalances;
+  actuallyReceivedMinor: number | null;
+  internalOrderCreated: false;
+  /** @maxLength 700 */
+  disclosure: string;
+}
+
 export type GetListingsParams = {
 search?: string;
 category?: string;
@@ -5265,5 +5884,23 @@ export type SearchConnectCatalogParams = {
  * @maxLength 120
  */
 search?: string;
+};
+
+export type GetConnectPartnerReportParams = {
+/**
+ * @minimum 1
+ * @maximum 50
+ */
+limit?: number;
+cursor?: string;
+};
+
+export type GetAdminConnectPartnerReportParams = {
+/**
+ * @minimum 1
+ * @maximum 50
+ */
+limit?: number;
+cursor?: string;
 };
 
