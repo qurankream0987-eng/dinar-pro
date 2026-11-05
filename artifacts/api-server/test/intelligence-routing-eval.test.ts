@@ -251,7 +251,19 @@ const stableJson = (value: unknown): string => {
  * or the model (scripted here, so only routing is measured, not live language quality).
  * `expect` names what must hold; `prefer` is "MODEL" where understanding needs semantics.
  */
-type Case = { id: string; text: string; group: string; prefer?: "MODEL" | "DETERMINISTIC"; forbid?: ("CART_WRITE" | "CART_SURFACE" | "ORDER")[] };
+type Case = {
+  id: string;
+  text: string;
+  group: string;
+  prefer?: "MODEL" | "DETERMINISTIC";
+  forbid?: ("CART_WRITE" | "CART_SURFACE" | "ORDER")[];
+  /** Scripted model tool calls (what a capable model would choose); the outcome is DINAR's real execution. */
+  tools?: Step[];
+  /** When the model is consulted, the surface DINAR must finally render. */
+  expectSurface?: string;
+  /** A previous message in the same conversation (context references). */
+  before?: string;
+};
 const cases: Case[] = [
   // Explicit commands: a deterministic shortcut is correct.
   { id: "E1", group: "explicit", text: "افتح سلة مشترياتي", prefer: "DETERMINISTIC" },
@@ -283,7 +295,30 @@ const cases: Case[] = [
   { id: "D2", group: "dialect", text: "بدي لابتوب منيح للشغل", forbid: ["CART_WRITE", "ORDER"] },
   { id: "D3", group: "dialect", text: "عايز سماعات كويسة بسعر حلو", forbid: ["CART_WRITE", "ORDER"] },
   { id: "D4", group: "dialect", text: "شنو عندكم من عطور؟", forbid: ["CART_WRITE", "ORDER"] },
+  // Expanded negation.
+  { id: "N5", group: "negation", text: "لا تكمل الطلب، خلني أفكر", forbid: ["CART_WRITE", "ORDER"] },
+  { id: "N6", group: "negation", text: "مو الحين، بس احفظ لي الفكرة", forbid: ["CART_WRITE", "ORDER", "CART_SURFACE"] },
+  { id: "N7", group: "negation", text: "ما ابيه بالسلة، ابي اشوف ضمانه بس", forbid: ["CART_WRITE", "ORDER", "CART_SURFACE"] },
+  { id: "N8", group: "negation", text: "بدون ما تشتري، كم سعر سماعة جيدة؟", forbid: ["CART_WRITE", "ORDER", "CART_SURFACE"] },
+  { id: "N9", group: "negation", text: "don't add anything, just compare prices", forbid: ["CART_WRITE", "ORDER", "CART_SURFACE"] },
+  // Dialects across markets.
+  { id: "D5", group: "dialect", text: "ابي ساعة رياضية زينة ما تكلف واجد", forbid: ["CART_WRITE", "ORDER"] },
+  { id: "D6", group: "dialect", text: "شلون أبيع سيارتي بسرعة؟", forbid: ["CART_WRITE", "ORDER", "CART_SURFACE"] },
+  { id: "D7", group: "dialect", text: "بدي اعرف وين صار طلبي", forbid: ["CART_WRITE", "ORDER"] },
+  { id: "D8", group: "dialect", text: "عاوز اشتري تلاجة بس مش غالية", forbid: ["CART_WRITE", "ORDER"] },
+  { id: "D9", group: "dialect", text: "واش عندكم تيليفون رخيص؟", forbid: ["CART_WRITE", "ORDER"] },
+  { id: "D10", group: "dialect", text: "اريد جهاز لابتوب خوش وسعره مناسب", forbid: ["CART_WRITE", "ORDER"] },
+  // Model tool outcomes: what DINAR renders when the model chooses a capability.
+  { id: "M1", group: "tool", text: "بفتح مخبز وابي له اسم على النت", prefer: "MODEL", tools: [{ name: "searchDomains", arguments: { name: "bakeryhouse" } }], expectSurface: "CONNECT_RESULTS", forbid: ["CART_WRITE", "ORDER"] },
+  { id: "M2", group: "tool", text: "فيه شركة تسوي صيانة مكيفات؟", prefer: "MODEL", tools: [{ name: "searchPartnerOffers", arguments: { query: "صيانة مكيفات" } }], expectSurface: "CONNECT_RESULTS", forbid: ["CART_WRITE", "ORDER"] },
+  { id: "M3", group: "tool", text: `أبي شي عملي للتواصل ${run} وسعره معقول`, prefer: "MODEL", tools: [{ name: "searchListings", arguments: { query: `جوال ${run}` } }], forbid: ["CART_WRITE", "ORDER"] },
+  { id: "M4", group: "tool", text: "تقدر تحول لي فلوس لحساب ثاني؟", prefer: "MODEL", tools: [{ name: "describeDinarCapabilities", arguments: {} }], forbid: ["CART_WRITE", "ORDER"] },
+  { id: "M5", group: "tool", text: `قارن لي أول جوالين ${run} وقل لي أيهم أحسن`, tools: [{ name: "searchListings", arguments: { query: `جوال ${run}` } }, { name: "compareListings", arguments: { fromLatestSearch: true, positions: [1, 2] } }], forbid: ["CART_WRITE", "ORDER"] },
+  // Context references after a real search in the same conversation.
+  { id: "X1", group: "context", before: `ابحث عن جوال ${run}`, text: "الثاني أحسن، بس تأكد من ضمانه", forbid: ["CART_WRITE", "ORDER", "CART_SURFACE"] },
+  { id: "X2", group: "context", before: `ابحث عن جوال ${run}`, text: "لا، أقصد الأرخص", forbid: ["CART_WRITE", "ORDER", "CART_SURFACE"] },
 ];
+
 
 const rows: Record<string, unknown>[] = [];
 // Registration is rate limited per client; a few accounts with a new conversation per case.
@@ -297,13 +332,17 @@ const accountFor = async (index: number) => {
 for (const [index, item] of cases.entries()) {
   await test(`EVAL ${item.id} ${item.group}: ${item.text}`, async () => {
     const user = await accountFor(index);
-    script.unshift({ key: item.text, reply: "MODEL_INTERPRETED" });
+    if (item.before) await say(user.cookie, user.conv, item.before);
+    script.unshift({ key: item.text, reply: "MODEL_INTERPRETED", ...(item.tools ? { toolSequence: item.tools } : {}) });
+    toolSequenceCalls.delete(item.text);
     const result = await say(user.cookie, user.conv, item.text);
     const interpretedBy = calls > 0 ? "MODEL" : "DETERMINISTIC";
     const cart = await cartLines(user.id);
     const ordersCount = await orderLines(user.id);
     const surface = result.payload.surface ?? result.payload.kind ?? "TEXT";
-    rows.push({ id: item.id, group: item.group, interpretedBy, prefer: item.prefer ?? "-", surface, cart, orders: ordersCount });
+    const toolsRun = lastFeedback.filter((entry) => entry.status === "SUCCEEDED").map((entry) => entry.tool);
+    rows.push({ id: item.id, group: item.group, interpretedBy, prefer: item.prefer ?? "-", surface, cart, orders: ordersCount, toolsRun });
+    if (item.expectSurface && interpretedBy === "MODEL") assert.equal(surface, item.expectSurface, `${item.id} rendered ${surface}`);
     assert.equal(result.status, 200, result.body);
     for (const rule of item.forbid ?? []) {
       if (rule === "CART_WRITE") assert.equal(cart, 0, `${item.id} wrote the cart`);
