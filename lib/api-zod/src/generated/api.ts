@@ -8355,7 +8355,27 @@ export const SyncConnectCatalogBody = zod.object({
   "expectedRevision": zod.int().gt(syncConnectCatalogBodyExpectedRevisionExclusiveMin).max(syncConnectCatalogBodyExpectedRevisionMax)
 })
 
-export const SyncConnectCatalogResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+export const syncConnectCatalogResponseBatchIdRegExp = new RegExp('^[A-Za-z0-9][A-Za-z0-9._:-]{0,99}$');
+export const syncConnectCatalogResponseAcceptedMin = 0;
+export const syncConnectCatalogResponseAcceptedMax = 100;
+
+export const syncConnectCatalogResponseHiddenCountMin = 0;
+export const syncConnectCatalogResponseHiddenCountMax = 9007199254740991;
+
+export const syncConnectCatalogResponseObservationDigestRegExp = new RegExp('^[a-f0-9]{64}$');
+
+
+export const SyncConnectCatalogResponse = zod.object({
+  "batchId": zod.string().regex(syncConnectCatalogResponseBatchIdRegExp),
+  "accepted": zod.int().min(syncConnectCatalogResponseAcceptedMin).max(syncConnectCatalogResponseAcceptedMax),
+  "duplicate": zod.boolean(),
+  "internalListingsCreated": zod.literal(0),
+  "source": zod.literal("WEBSITE").optional(),
+  "websiteStatus": zod.enum(['OBSERVED', 'NO_VERIFIABLE_DATA']).optional(),
+  "hiddenCount": zod.int().min(syncConnectCatalogResponseHiddenCountMin).max(syncConnectCatalogResponseHiddenCountMax).optional(),
+  "observedAt": zod.coerce.date().optional(),
+  "observationDigest": zod.string().regex(syncConnectCatalogResponseObservationDigestRegExp).optional()
+})
 
 
 /**
@@ -8482,6 +8502,8 @@ export const createConnectIntegrationBodyOauthTokenEndpointMax = 500;
 export const createConnectIntegrationBodyOauthClientIdRegExp = new RegExp('^[A-Za-z0-9._~-]{1,200}$');
 export const createConnectIntegrationBodyOauthScopesMax = 1;
 
+export const createConnectIntegrationBodyWebsiteCategoryIdMax = 80;
+
 export const createConnectIntegrationBodyReviewedToolsItemNameRegExp = new RegExp('^[A-Za-z][A-Za-z0-9_.-]{0,79}$');
 export const createConnectIntegrationBodyReviewedToolsItemInputSchemaSha256RegExp = new RegExp('^[a-f0-9]{64}$');
 export const createConnectIntegrationBodyReviewedToolsMax = 10;
@@ -8503,6 +8525,7 @@ export const CreateConnectIntegrationBody = zod.object({
   "clientId": zod.string().regex(createConnectIntegrationBodyOauthClientIdRegExp),
   "scopes": zod.array(zod.literal("catalog.read")).min(1).max(createConnectIntegrationBodyOauthScopesMax)
 }).optional(),
+  "websiteCategoryId": zod.string().min(1).max(createConnectIntegrationBodyWebsiteCategoryIdMax).optional(),
   "reviewedTools": zod.array(zod.object({
   "name": zod.string().regex(createConnectIntegrationBodyReviewedToolsItemNameRegExp),
   "inputSchemaSha256": zod.string().regex(createConnectIntegrationBodyReviewedToolsItemInputSchemaSha256RegExp),
@@ -8640,7 +8663,27 @@ export const ImportConnectOwnerCatalogBody = zod.object({
 })).min(1).max(importConnectOwnerCatalogBodyItemsMax)
 })
 
-export const ImportConnectOwnerCatalogResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+export const importConnectOwnerCatalogResponseBatchIdRegExp = new RegExp('^[A-Za-z0-9][A-Za-z0-9._:-]{0,99}$');
+export const importConnectOwnerCatalogResponseAcceptedMin = 0;
+export const importConnectOwnerCatalogResponseAcceptedMax = 100;
+
+export const importConnectOwnerCatalogResponseHiddenCountMin = 0;
+export const importConnectOwnerCatalogResponseHiddenCountMax = 9007199254740991;
+
+export const importConnectOwnerCatalogResponseObservationDigestRegExp = new RegExp('^[a-f0-9]{64}$');
+
+
+export const ImportConnectOwnerCatalogResponse = zod.object({
+  "batchId": zod.string().regex(importConnectOwnerCatalogResponseBatchIdRegExp),
+  "accepted": zod.int().min(importConnectOwnerCatalogResponseAcceptedMin).max(importConnectOwnerCatalogResponseAcceptedMax),
+  "duplicate": zod.boolean(),
+  "internalListingsCreated": zod.literal(0),
+  "source": zod.literal("WEBSITE").optional(),
+  "websiteStatus": zod.enum(['OBSERVED', 'NO_VERIFIABLE_DATA']).optional(),
+  "hiddenCount": zod.int().min(importConnectOwnerCatalogResponseHiddenCountMin).max(importConnectOwnerCatalogResponseHiddenCountMax).optional(),
+  "observedAt": zod.coerce.date().optional(),
+  "observationDigest": zod.string().regex(importConnectOwnerCatalogResponseObservationDigestRegExp).optional()
+})
 
 
 /**
@@ -8701,7 +8744,27 @@ export const ImportConnectProviderCatalogBody = zod.object({
 })).min(1).max(importConnectProviderCatalogBodyItemsMax)
 })
 
-export const ImportConnectProviderCatalogResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+export const importConnectProviderCatalogResponseBatchIdRegExp = new RegExp('^[A-Za-z0-9][A-Za-z0-9._:-]{0,99}$');
+export const importConnectProviderCatalogResponseAcceptedMin = 0;
+export const importConnectProviderCatalogResponseAcceptedMax = 100;
+
+export const importConnectProviderCatalogResponseHiddenCountMin = 0;
+export const importConnectProviderCatalogResponseHiddenCountMax = 9007199254740991;
+
+export const importConnectProviderCatalogResponseObservationDigestRegExp = new RegExp('^[a-f0-9]{64}$');
+
+
+export const ImportConnectProviderCatalogResponse = zod.object({
+  "batchId": zod.string().regex(importConnectProviderCatalogResponseBatchIdRegExp),
+  "accepted": zod.int().min(importConnectProviderCatalogResponseAcceptedMin).max(importConnectProviderCatalogResponseAcceptedMax),
+  "duplicate": zod.boolean(),
+  "internalListingsCreated": zod.literal(0),
+  "source": zod.literal("WEBSITE").optional(),
+  "websiteStatus": zod.enum(['OBSERVED', 'NO_VERIFIABLE_DATA']).optional(),
+  "hiddenCount": zod.int().min(importConnectProviderCatalogResponseHiddenCountMin).max(importConnectProviderCatalogResponseHiddenCountMax).optional(),
+  "observedAt": zod.coerce.date().optional(),
+  "observationDigest": zod.string().regex(importConnectProviderCatalogResponseObservationDigestRegExp).optional()
+})
 
 
 /**

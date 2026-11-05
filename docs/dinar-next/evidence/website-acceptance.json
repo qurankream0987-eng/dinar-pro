@@ -1,0 +1,63 @@
+{
+  "date": "2026-11-05",
+  "branch": "codex/dinar-next-unified-development",
+  "parent": "35bd574f56438c89256211948c1465f4dfca83a0",
+  "base": "ebdd2d7a68f5a52af7ad973f21ef3b0cae914b4a",
+  "sourceFiles": 1747,
+  "applicationSourceDigest": "f40d71b9c662be393f89ce692cca3e7258f96d67f404f4cf766fe8c9d2f3d1ef",
+  "migrations": {
+    "current": 60,
+    "originalSqlByteIdentical": 57,
+    "originalManifestEntriesUnchanged": 57
+  },
+  "tests": {
+    "pg18": {
+      "uniqueCases": 56,
+      "failed": 0,
+      "outboundAttempts": 0,
+      "log": "website-final56-pg18.log"
+    },
+    "pg16": {
+      "sameCasesRepeated": 56,
+      "failed": 0,
+      "outboundAttempts": 0,
+      "log": "website-frozen-pg16.log"
+    },
+    "browser": {
+      "partnerWebsiteOAuthMcp": "PASS",
+      "domainCases": 2,
+      "sharedAccessibility": "PASS",
+      "screenReader": "AT_MANUAL_BLOCKED",
+      "widths": [
+        320,
+        390,
+        1280
+      ],
+      "titleReadable": true,
+      "cartFlights": 0,
+      "windowOpener": null
+    }
+  },
+  "checks": {
+    "typecheck": "PASS",
+    "apiBuild": "PASS",
+    "webBuild": "PASS_WITH_EXISTING_CHUNK_WARNING",
+    "frozenInstall": "PASS",
+    "productionDependencyKnownAdvisories": 0,
+    "codegenDrift": 0,
+    "codegenFiles": 522,
+    "stagedSecretScan": "PASS"
+  },
+  "blockers": [
+    "GITHUB_API_NETWORK_POLICY",
+    "ORIGINAL_V2_TASK_OR_BUNDLE",
+    "AUTHORIZED_PROVIDER_SANDBOX_CREDENTIALS",
+    "APPROVED_PINNED_EGRESS",
+    "EXTERNAL_LEGAL_LAUNCH_DECISIONS"
+  ],
+  "limits": [
+    "Synthetic providers and identities; no live acceptance",
+    "No merge, deploy, Railway, production database or payment activation",
+    "Comprehensive project acceptance and administrative finance browser completion remain separate work"
+  ]
+}

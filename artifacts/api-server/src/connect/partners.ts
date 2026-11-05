@@ -1,4 +1,4 @@
-import { and, eq, gt, inArray, or, sql } from "drizzle-orm";
+import { and, eq, gt, inArray, notInArray, or, sql } from "drizzle-orm";
 import {
   createHash,
   randomBytes,
@@ -15,6 +15,8 @@ import {
   ConnectIntegrationInput,
   ConnectReviewInput,
   ConnectCatalogBatch,
+  ConnectCatalogItem,
+  ConnectCatalogReceiptSchema,
   ConnectTeamInput,
 } from "@workspace/api-zod/connect-platform";
 import { currencyScale } from "@workspace/global";
@@ -36,6 +38,7 @@ import {
   providerConnections,
   providerCredentials,
 } from "@workspace/db";
+import { WebsiteObservationSchema, type WebsiteObservation } from "./website-observation";
 import { retireConnectSecrets } from "./secret-lifecycle";
 import { assertMarketLegalCapability } from "../lib/d16-readiness";
 import { resolveBusinessDelegationAuthorityTx } from "../lib/business-delegations";
@@ -696,8 +699,8 @@ function prefixes(values: string[]) {
   });
 }
 export function connectOfferDestination(
-  integration: typeof connectIntegrations.$inferSelect,
-  site: typeof connectSites.$inferSelect,
+  integration: Pick<typeof connectIntegrations.$inferSelect, "config">,
+  site: Pick<typeof connectSites.$inferSelect, "hostname">,
   path: string,
   referralId?: string,
 ) {
@@ -779,6 +782,7 @@ export async function createConnectIntegration(
   const config = {
     allowedPathPrefixes: prefixes(input.allowedPathPrefixes),
     ...(oauth ? { oauth } : {}),
+    ...(input.websiteCategoryId ? { websiteCategoryId: input.websiteCategoryId } : {}),
     ...(input.referralParameter
       ? { referralParameter: input.referralParameter }
       : {}),
@@ -801,6 +805,7 @@ export async function createConnectIntegration(
       .where(and(eq(connectSites.id, site.id), eq(connectSites.partnerId, partnerId))).for("share");
     if (!currentSite || currentSite.status === "REVOKED")
       throw connectError(409, "SITE_REVOKED", "لا يمكن إنشاء موصل لموقع ملغى");
+    if (input.websiteCategoryId) await assertConnectCatalogCategory(tx, market, input.websiteCategoryId);
     const [row] = await tx
       .insert(connectIntegrations)
       .values({
@@ -1180,14 +1185,31 @@ export async function providerConnectIntegration(
   await assertProviderStillAuthorized(tx, context);
   return ready;
 }
+export async function assertConnectCatalogCategory(tx: ConnectTx, market: ConnectMarket, categoryId: string) {
+    const category = await categoryById(categoryId, tx);
+    if (
+      !category ||
+      !category.isActive ||
+      categoryIsRestricted(market, category)
+    )
+      throw connectError(
+        400,
+        "CATEGORY_NOT_ALLOWED",
+        "تصنيف غير مسموح في هذا السوق",
+      );
+    return category;
+}
 async function importBatch(
   tx: any,
   ready: Awaited<ReturnType<typeof readyConnectIntegration>>,
   raw: unknown,
   market: ConnectMarket,
   actorId: string | null,
+  website?: { observationDigest: string; observedAt: string; hiddenCount: number },
 ) {
-  const body = ConnectCatalogBatch.parse(raw);
+  if (ready.integration.kind === "WEBSITE" && !website) throw connectError(409, "WEBSITE_OBSERVATION_REQUIRED", "يلزم فحص صفحة المصدر بواسطة الخادم؛ لا تقبل هذه الصفة دفعات يدوية");
+  if (website && ready.integration.kind !== "WEBSITE") throw connectError(409, "SOURCE_CONTEXT_CHANGED", "تغير نوع المصدر");
+  const body = (website ? ConnectCatalogBatch.extend({ items: ConnectCatalogItem.array().max(100) }) : ConnectCatalogBatch).parse(raw);
   const digest = connectDigest(body);
   const [prior] = await tx
     .select()
@@ -1205,7 +1227,7 @@ async function importBatch(
         "IDEMPOTENCY_CONFLICT",
         "رقم دفعة مستخدم لمحتوى مختلف",
       );
-    return { ...prior.receipt, duplicate: true };
+    return ConnectCatalogReceiptSchema.parse({ ...prior.receipt, duplicate: true });
   }
   if (
     new Set(body.items.map((item) => item.externalId)).size !==
@@ -1217,17 +1239,7 @@ async function importBatch(
       "تحتوي الدفعة على معرّف عرض مكرر",
     );
   for (const item of body.items) {
-    const category = await categoryById(item.categoryId, tx);
-    if (
-      !category ||
-      !category.isActive ||
-      categoryIsRestricted(market, category)
-    )
-      throw connectError(
-        400,
-        "CATEGORY_NOT_ALLOWED",
-        "تصنيف غير مسموح في هذا السوق",
-      );
+    await assertConnectCatalogCategory(tx, market, item.categoryId);
     connectOfferDestination(ready.integration, ready.site, item.targetPath);
     if (
       item.price &&
@@ -1298,12 +1310,13 @@ async function importBatch(
         .where(eq(connectOffers.id, current.id));
     else await tx.insert(connectOffers).values({ id: randomUUID(), ...values });
   }
-  const receipt = {
+  const receipt = ConnectCatalogReceiptSchema.parse({
+    ...(website ? { source: "WEBSITE", websiteStatus: body.items.length ? "OBSERVED" : "NO_VERIFIABLE_DATA", observedAt: website.observedAt, hiddenCount: website.hiddenCount, observationDigest: website.observationDigest } : {}),
     batchId: body.batchId,
     accepted: body.items.length,
     duplicate: false,
     internalListingsCreated: 0,
-  };
+  });
   await tx.insert(connectIngestionBatches).values({
     id: randomUUID(),
     integrationId: ready.integration.id,
@@ -1347,7 +1360,7 @@ export async function importConnectOwnerCatalog(
   market: ConnectMarket,
   integrationId: string,
   raw: unknown,
-  sourceSnapshot?: { revision: number; endpointUrl: string; siteId: string; oauthGrantId?: string; oauthGrantExpiresAt?: string },
+  sourceSnapshot?: { revision: number; endpointUrl: string; siteId: string; oauthGrantId?: string; oauthGrantExpiresAt?: string; websiteObservation?: WebsiteObservation },
 ) {
   return db.transaction(async (tx) => {
     const { partnerId } = await lockOwnedConnectIntegration(
@@ -1378,6 +1391,33 @@ export async function importConnectOwnerCatalog(
         throw connectError(409, "OAUTH_GRANT_UNAVAILABLE", "تغير تفويض الحساب أثناء القراءة؛ لم يُستورد المحتوى");
     }
     await assertMarketLegalCapability(market.id, "LISTING_PUBLICATION", tx);
+    if (sourceSnapshot?.websiteObservation) {
+      const observation = WebsiteObservationSchema.parse(sourceSnapshot.websiteObservation);
+      if (ready.integration.kind !== "WEBSITE" || ready.integration.config.websiteCategoryId !== observation.categoryId || observation.items.some(item => item.categoryId !== observation.categoryId))
+        throw connectError(409, "SOURCE_CONTEXT_CHANGED", "تغير ربط الصفحة أو التصنيف المراجع");
+      await assertConnectCatalogCategory(tx, market, observation.categoryId);
+      if (Date.parse(observation.observedAt) > Date.now() + 5 * 60_000 || Date.parse(observation.observedAt) < Date.now() - 7 * 86400_000)
+        throw connectError(409, "STALE_WEBSITE_OBSERVATION", "انتهت صلاحية فحص الصفحة");
+      const batchId = `web-${observation.id}`, digest = connectDigest(observation);
+      const [prior] = await tx.select().from(connectIngestionBatches).where(and(eq(connectIngestionBatches.integrationId, integrationId), eq(connectIngestionBatches.externalBatchId, batchId)));
+      if (prior) {
+        if (prior.receipt.observationDigest !== digest) throw connectError(409, "IDEMPOTENCY_CONFLICT", "معرّف فحص مستخدم لمحتوى مختلف");
+        return ConnectCatalogReceiptSchema.parse({ ...prior.receipt, duplicate: true });
+      }
+      const [newer] = await tx.select({ id: connectIngestionBatches.id }).from(connectIngestionBatches).where(and(
+        eq(connectIngestionBatches.integrationId, integrationId), sql`${connectIngestionBatches.receipt}->>'source' = 'WEBSITE'`,
+        sql`(${connectIngestionBatches.receipt}->>'observedAt')::timestamptz > ${observation.observedAt}::timestamptz`,
+      )).limit(1);
+      if (newer) throw connectError(409, "STALE_WEBSITE_OBSERVATION", "يوجد فحص أحدث؛ لم يُستبدل بسجل أقدم");
+      const current = await tx.select({ externalId: connectOffers.externalId, version: connectOffers.sourceVersion }).from(connectOffers).where(eq(connectOffers.integrationId, integrationId)).for("update");
+      const versions = new Map(current.map(row => [row.externalId, row.version]));
+      const hidden = await tx.update(connectOffers).set({ status: "HIDDEN", updatedAt: new Date() }).where(and(
+        eq(connectOffers.integrationId, integrationId), eq(connectOffers.status, "PUBLISHED"),
+        observation.items.length ? notInArray(connectOffers.externalId, observation.items.map(item => item.externalId)) : undefined,
+      )).returning({ id: connectOffers.id });
+      const items = observation.items.map(item => ({ ...item, sourceCheckedAt: observation.observedAt, sourceVersion: (versions.get(item.externalId) ?? 0) + 1 }));
+      return importBatch(tx, ready, { batchId, items }, market, actorId, { observationDigest: digest, observedAt: observation.observedAt, hiddenCount: hidden.length });
+    }
     return importBatch(tx, ready, raw, market, actorId);
   });
 }
@@ -1465,7 +1505,7 @@ export async function discoverConnectCatalog(
       title: row.offer.title,
       description: row.offer.description,
       providerId: row.partner.id,
-      sourceLabel: `${row.business.displayName} — بيانات المزوّد`,
+      sourceLabel: `${row.business.displayName} — ${row.integration.kind === "WEBSITE" ? "بيانات الصفحة" : "بيانات المزوّد"}`,
       facts: row.offer.attributes.map((fact) => ({
         ...fact,
         source:

@@ -5099,6 +5099,11 @@ export interface ConnectIntegrationRegistrationInput {
   /** @pattern ^[a-z][a-z0-9_]{0,39}$ */
   referralParameter?: string;
   oauth?: ConnectIntegrationRegistrationInputOauth;
+  /**
+     * @minLength 1
+     * @maxLength 80
+     */
+  websiteCategoryId?: string;
   /** @maxItems 10 */
   reviewedTools?: ConnectIntegrationRegistrationInputReviewedToolsItem[];
 }
@@ -5858,6 +5863,36 @@ export interface ConnectOAuthStatus {
   canRefresh: boolean;
   expiresAt: null | string;
   scope: 'catalog.read' | null;
+}
+
+export type ConnectCatalogReceiptWebsiteStatus = typeof ConnectCatalogReceiptWebsiteStatus[keyof typeof ConnectCatalogReceiptWebsiteStatus];
+
+
+export const ConnectCatalogReceiptWebsiteStatus = {
+  OBSERVED: 'OBSERVED',
+  NO_VERIFIABLE_DATA: 'NO_VERIFIABLE_DATA',
+} as const;
+
+export interface ConnectCatalogReceipt {
+  /** @pattern ^[A-Za-z0-9][A-Za-z0-9._:-]{0,99}$ */
+  batchId: string;
+  /**
+     * @minimum 0
+     * @maximum 100
+     */
+  accepted: number;
+  duplicate: boolean;
+  internalListingsCreated: 0;
+  source?: 'WEBSITE';
+  websiteStatus?: ConnectCatalogReceiptWebsiteStatus;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  hiddenCount?: number;
+  observedAt?: string;
+  /** @pattern ^[a-f0-9]{64}$ */
+  observationDigest?: string;
 }
 
 export type GetListingsParams = {

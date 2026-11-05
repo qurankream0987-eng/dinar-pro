@@ -38,6 +38,11 @@ export interface ConnectIntegrationRegistrationInput {
   /** @pattern ^[a-z][a-z0-9_]{0,39}$ */
   referralParameter?: string;
   oauth?: ConnectIntegrationRegistrationInputOauth;
+  /**
+     * @minLength 1
+     * @maxLength 80
+     */
+  websiteCategoryId?: string;
   /** @maxItems 10 */
   reviewedTools?: ConnectIntegrationRegistrationInputReviewedToolsItem[];
 }

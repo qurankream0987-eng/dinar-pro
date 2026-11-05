@@ -3,7 +3,7 @@ import { Link } from "wouter";
 import { api } from "@/account/Account";
 import { Button } from "@/ui/Button";
 import { ConnectAgreements } from "@/features/ConnectAgreements";
-import { CONNECT_MCP_CATALOG_TOOL, CONNECT_MCP_CATALOG_INPUT_SHA256 } from "@workspace/api-zod/connect-platform";
+import { CONNECT_MCP_CATALOG_TOOL, CONNECT_MCP_CATALOG_INPUT_SHA256, ConnectCatalogReceiptSchema } from "@workspace/api-zod/connect-platform";
 import { ConnectOAuthControls } from "@/features/ConnectOAuthControls";
 import { ConnectTeam, ConnectReadOnlyCatalog } from "@/features/ConnectTeam";
 import { ConnectDashboard } from "@/features/ConnectDashboard";
@@ -38,7 +38,8 @@ export default function ConnectPage() {
       { id: string; displayName: string }[]
     >([]),
     [selected, setSelected] = useState("");
-  const [integrationKind, setIntegrationKind] = useState<"API" | "FEED" | "OAUTH" | "MCP">("API"), [endpoint, setEndpoint] = useState("");
+  const [integrationKind, setIntegrationKind] = useState<"API" | "FEED" | "OAUTH" | "MCP" | "WEBSITE">("API"), [endpoint, setEndpoint] = useState("");
+  const [websiteCategoryId, setWebsiteCategoryId] = useState(""), [categories, setCategories] = useState<{ id: string; label: string }[]>([]);
   const [mcpOAuth, setMcpOAuth] = useState(false);
   const [oauthClientId, setOAuthClientId] = useState(""), [oauthAuthorize, setOAuthAuthorize] = useState(""), [oauthToken, setOAuthToken] = useState("");
   const [syncReview, setSyncReview] = useState<string | null>(null);
@@ -57,12 +58,14 @@ export default function ConnectPage() {
     [name, setName] = useState(""),
     [prefix, setPrefix] = useState("/products/");
   const reload = useCallback(async () => {
-    const [p, b] = await Promise.all([
+    const [p, b, c] = await Promise.all([
       api("/connect/partners"),
       api("/business/profiles"),
+      api("/categories"),
     ]);
     setPartners(p);
     setBusinesses(b);
+    setCategories(c);
     setSelected((old) => old || p[0]?.id || "");
   }, []);
   useEffect(() => {
@@ -78,15 +81,15 @@ export default function ConnectPage() {
       active = false;
     };
   }, [reload]);
-  const run = async (work: () => Promise<unknown>, success: string) => {
+  const run = async <T,>(work: () => Promise<T>, success: string | ((value: T) => string)) => {
     if (busy) return;
     setBusy(true);
     setError("");
     setMessage("");
     try {
-      await work();
+      const result = await work();
       await reload();
-      setMessage(success);
+      setMessage(typeof success === "function" ? success(result) : success);
     } catch (e) {
       setError(e instanceof Error ? e.message : "تعذر إتمام الطلب");
     } finally {
@@ -175,6 +178,7 @@ export default function ConnectPage() {
       </>}
       {partner?.role === "OWNER" && (
         <>
+          <ConnectReadOnlyCatalog key={`owner-catalog-${partner.id}-${message}`} partnerId={partner.id} />
           <ConnectTeam key={`team-${partner.id}`} partnerId={partner.id} />
           <ConnectAgreements key={partner.id} partnerId={partner.id} />
           <ConnectDashboard
@@ -297,6 +301,7 @@ export default function ConnectPage() {
                       {
                         siteId,
                         kind: integrationKind,
+                        ...(integrationKind === "WEBSITE" ? { websiteCategoryId } : {}),
                         ...(integrationKind === "MCP" ? { reviewedTools: [{ name: CONNECT_MCP_CATALOG_TOOL, inputSchemaSha256: CONNECT_MCP_CATALOG_INPUT_SHA256, readOnly: true, capability: "CATALOG_READ" }] } : {}),
                         ...(useOAuth ? { oauth: { clientId: oauthClientId, authorizationEndpoint: oauthAuthorize, tokenEndpoint: oauthToken, scopes: ["catalog.read"] } } : {}),
                         ...(endpoint.trim() ? { endpointUrl: endpoint.trim() } : {}),
@@ -332,8 +337,9 @@ export default function ConnectPage() {
                     ))}
                 </select>
               </label>
-              <label className="block">نوع المصدر<select className={field} value={integrationKind} onChange={e => setIntegrationKind(e.target.value as "API" | "FEED" | "OAUTH" | "MCP")}><option value="API">API — إرسال أو قراءة JSON</option><option value="FEED">تغذية JSON للقراءة</option><option value="OAUTH">حساب OAuth عام للقراءة — PKCE</option><option value="MCP">MCP — لقطة كتالوج مراجعة للقراءة</option></select></label>
-              <label className="block">عنوان JSON للقراءة (اختياري عند إرسال API)<input className={field} type="url" dir="ltr" value={endpoint} required={integrationKind !== "API"} maxLength={500} placeholder="https://shop.example.com/catalog.json" onChange={e => setEndpoint(e.target.value)} /></label>
+              <label className="block">نوع المصدر<select className={field} value={integrationKind} onChange={e => setIntegrationKind(e.target.value as "API" | "FEED" | "OAUTH" | "MCP" | "WEBSITE")}><option value="API">API — إرسال أو قراءة JSON</option><option value="FEED">تغذية JSON للقراءة</option><option value="OAUTH">حساب OAuth عام للقراءة — PKCE</option><option value="MCP">MCP — لقطة كتالوج مراجعة للقراءة</option><option value="WEBSITE">صفحة موقع — بيانات منتجات وخدمات منظمة</option></select></label>
+              <label className="block">{integrationKind === "WEBSITE" ? "عنوان صفحة HTML للفحص" : integrationKind === "MCP" ? "عنوان خادم MCP للقراءة" : "عنوان JSON للقراءة (اختياري عند إرسال API)"}<input className={field} type="url" dir="ltr" value={endpoint} required={integrationKind !== "API"} maxLength={500} placeholder="https://shop.example.com/catalog.json" onChange={e => setEndpoint(e.target.value)} /></label>
+              {integrationKind === "WEBSITE" && <fieldset className="space-y-3 rounded-lg border p-3"><legend>فهرسة صفحة مصرح بها</legend><p>يقرأ DINAR صفحة واحدة من موقعك وبيانات Product/Service المنظمة فقط؛ لا ينفذ JavaScript ولا يتبع الروابط. اختر التصنيف صراحةً. تخفى عناصر هذا المصدر التي لا يعود الفحص يثبتها، مع حفظ تاريخها.</p><label className="block">تصنيف عناصر الصفحة<select className={field} required value={websiteCategoryId} onChange={e => setWebsiteCategoryId(e.target.value)}><option value="">اختر تصنيفًا للمراجعة</option>{categories.map(category => <option key={category.id} value={category.id}>{category.label}</option>)}</select></label></fieldset>}
               {integrationKind === "MCP" && <fieldset className="space-y-2 rounded-lg border p-3"><legend>كتالوج MCP للقراءة فقط</legend><p>يلزم دعم العملية catalog.read_snapshot دون مدخلات، مع بيانات كتالوج منظمة ومراجعة مستقلة. لا يستورد DINAR تعليمات المزوّد أو أدوات الشراء والدفع.</p><label className="flex min-h-11 items-center gap-2"><input type="checkbox" checked={mcpOAuth} onChange={e => setMcpOAuth(e.target.checked)} />هذا المصدر يتطلب تفويض حساب قراءة عبر OAuth</label></fieldset>}
               {useOAuth && <fieldset className="space-y-3 rounded-lg border p-3"><legend>إعدادات عميل عام للقراءة فقط</legend><p>يلزم أن تدعم الشركة نطاق catalog.read وPKCE. هذه المرحلة لا تدعم أسرار العملاء أو صلاحيات الدفع. يجب تسجيل رابط عودة DINAR المعتمد لدى المزوّد.</p><label className="block">معرّف العميل العام<input className={field} required maxLength={200} dir="ltr" value={oauthClientId} onChange={e => setOAuthClientId(e.target.value)} /></label><label className="block">عنوان التفويض HTTPS<input className={field} type="url" required dir="ltr" value={oauthAuthorize} onChange={e => setOAuthAuthorize(e.target.value)} /></label><label className="block">عنوان تبادل رمز القراءة HTTPS<input className={field} type="url" required dir="ltr" value={oauthToken} onChange={e => setOAuthToken(e.target.value)} /></label></fieldset>}
               <label className="block">
@@ -405,11 +411,11 @@ export default function ConnectPage() {
                       </Button>
                     </>
                   )}
-                  {i.status === "APPROVED" && ["FEED", "API", "OAUTH", "MCP"].includes(i.kind) && i.endpointUrl && <>
-                    <Button variant="secondary" disabled={busy} aria-label={`مزامنة كتالوج ${i.name}`} onClick={() => setSyncReview(i.id)}>مراجعة مزامنة JSON</Button>
-                    {syncReview === i.id && <div className="w-full space-y-2 rounded-lg border p-3"><p>سيقرأ DINAR دفعة JSON واحدة من المصدر المعتمد ويحدّث الكتالوج بعد فحص الصلاحيات والبيانات. لا ينفذ شراءً ولا يتبع روابط أخرى.</p><Button disabled={busy} onClick={() => void run(async () => {
-                      await api(`/connect/integrations/${i.id}/sync`, "POST", { confirm: true, expectedRevision: i.revision }); setSyncReview(null);
-                    }, "اكتملت مزامنة الدفعة من المصدر المعتمد.")}>تأكيد قراءة الكتالوج ومزامنته</Button><Button variant="secondary" disabled={busy} onClick={() => setSyncReview(null)}>تراجع عن المزامنة</Button></div>}
+                  {i.status === "APPROVED" && ["FEED", "API", "OAUTH", "MCP", "WEBSITE"].includes(i.kind) && i.endpointUrl && <>
+                    <Button variant="secondary" disabled={busy} aria-label={`مزامنة كتالوج ${i.name}`} onClick={() => setSyncReview(i.id)}>مراجعة مزامنة الكتالوج</Button>
+                    {syncReview === i.id && <div className="w-full space-y-2 rounded-lg border p-3"><p>سيقرأ DINAR المصدر المعتمد ويحدّث الكتالوج بعد فحص الصلاحيات والبيانات. فهرسة الموقع تفحص صفحة واحدة وتخفي عناصر المصدر الغائبة دون محو تاريخها. لا ينفذ شراءً ولا يتبع روابط أخرى.</p><Button disabled={busy} onClick={() => void run(async () => {
+                      const receipt = ConnectCatalogReceiptSchema.parse(await api(`/connect/integrations/${i.id}/sync`, "POST", { confirm: true, expectedRevision: i.revision })); setSyncReview(null); return receipt;
+                    }, receipt => receipt.websiteStatus === "NO_VERIFIABLE_DATA" ? "لم يعثر هذا الفحص على بيانات قابلة للتحقق؛ أُخفي العرض السابق لهذا المصدر مع حفظ تاريخه." : "اكتملت مزامنة الدفعة من المصدر المعتمد.")}>تأكيد قراءة الكتالوج ومزامنته</Button><Button variant="secondary" disabled={busy} onClick={() => setSyncReview(null)}>تراجع عن المزامنة</Button></div>}
                   </>}
                   {i.status === "SUSPENDED" && (
                     <Button

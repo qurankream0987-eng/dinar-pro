@@ -199,6 +199,10 @@ await test("real partner agreement acceptance and opt-in/withdrawal work through
   await call(`/admin/connect/integrations/${mcpIntegration.id}/review`, admin, { decision: "APPROVE", expectedRevision: mcpIntegration.revision, reason: "Reviewed fixed MCP snapshot and schema digest" });
   const previousTransport = app.locals.connectNetwork;
   app.locals.connectNetwork = new ConnectNetwork({ dns: app.locals.connectDns, transport: async request => {
+    if(request.url.endsWith("/website-catalog")) {
+      assert.equal(request.method,"GET");assert.equal(request.headers.has("authorization"),false);
+      return new Response('<!doctype html><script type="application/ld+json">'+JSON.stringify({"@context":"https://schema.org","@type":"Product",name:"كرسي صفحة موثقة",url:"https://browser.catalog.partner.example/products/website-chair",offers:{"@type":"Offer",price:"29.99",priceCurrency:"USD",availability:"https://schema.org/InStock"}})+'</script><script>throw new Error("must never execute source scripts")</script>',{headers:{"content-type":"text/html; charset=utf-8"}});
+    }
     if (request.url.endsWith("/mcp")) {
       const rpc = JSON.parse(await request.text()); assert.equal(request.method, "POST");
       if (rpc.method === "initialize") return Response.json({ jsonrpc: "2.0", id: rpc.id, result: { protocolVersion: "2025-06-18", capabilities: { tools: {} }, serverInfo: { name: "synthetic-mcp", version: "1" } } });
@@ -210,6 +214,11 @@ await test("real partner agreement acceptance and opt-in/withdrawal work through
     const response = await previousTransport.request(request.url, ["browser.catalog.partner.example"], { method: request.method as "GET" | "POST", headers: Object.fromEntries(request.headers), ...(request.method === "POST" ? { body: await request.text() } : {}) });
     return new Response(response.text, { status: response.status, headers: response.headers });
   }});
+  const websiteIntegration=(await call(`/connect/partners/${partner.id}/integrations`,owner,{
+    siteId:site.id,kind:"WEBSITE",name:"فهرسة صفحة متصفح",endpointUrl:"https://browser.catalog.partner.example/website-catalog",websiteCategoryId:"other",mode:"SIMULATION_ONLY",
+    capabilities:["CATALOG_READ","CATALOG_IMPORT","EXTERNAL_REFERRAL"],allowedPathPrefixes:["/products/"],
+  })).data;
+  await call(`/admin/connect/integrations/${websiteIntegration.id}/review`,admin,{decision:"APPROVE",expectedRevision:websiteIntegration.revision,reason:"Reviewed one HTML page and explicit category binding"});
   const agreement = (
     await call(`/admin/connect/partners/${partner.id}/agreements`, admin, {
       mode: "SIMULATION_ONLY",
@@ -277,6 +286,9 @@ await test("real partner agreement acceptance and opt-in/withdrawal work through
     assert.equal(report.siteLifecycleThroughUi, true);
     assert.equal(report.catalogSyncedThroughUi, true);
     assert.equal(report.mcpSyncedThroughUi, true);
+    assert.equal(report.websiteSyncedThroughUi,true);
+    assert.equal(report.websiteExternalNavigation,true);
+    assert.equal((await pool.query("select count(*)::int n from connect_offers where integration_id=$1 and status='PUBLISHED'",[websiteIntegration.id])).rows[0].n,1);
     assert.equal(report.mcpReviewMetadataVisible, true);
     assert.equal((await pool.query("select count(*)::int n from connect_offers where integration_id=$1 and external_id='mcp-browser-only'", [mcpIntegration.id])).rows[0].n, 1);
     assert.equal(report.oauthAuthorizedThroughUi, true);

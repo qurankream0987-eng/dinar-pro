@@ -1,9 +1,9 @@
 import { ConnectCatalogBatch } from "@workspace/api-zod/connect-platform";
 import { connectError } from "./provider-registry";
 /** Shared untrusted provider document boundary; no text/tool interpretation. */
-export function parseBoundedConnectProviderJson(text: string) {
+export function parseBoundedConnectProviderJson(text: string, reviver?: (key: string, value: unknown, context?: { source?: string }) => unknown) {
   let parsed: unknown;
-  try { parsed = JSON.parse(text); }
+  try { parsed = JSON.parse(text, reviver); }
   catch { throw connectError(502, "PROVIDER_INVALID_CATALOG", "كتالوج المزوّد ليس JSON صالحًا"); }
   let entries = 0;
   const bounded = (value: unknown, depth = 0): void => {

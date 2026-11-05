@@ -2,9 +2,12 @@ import { localObjectStorage } from "./local-object-storage";
 import { test, after } from "node:test";
 import assert from "node:assert/strict";
 import { randomUUID, randomBytes, createHash } from "node:crypto";
-import { db, pool, users,businessOperatingProfiles,connectTeamPermissions } from "@workspace/db";
+import { db, pool, users,businessOperatingProfiles,connectTeamPermissions,businessProfiles,businessMemberships,markets } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import app from "../src/app";
+import { readWebsiteCatalog } from "../src/connect/website-catalog";
+import { importConnectOwnerCatalog } from "../src/connect/partners";
+import { resolveMarket } from "../src/lib/markets";
 import { ConnectNetwork } from "../src/connect/network";
 import { registerBusinessDocumentScanner } from "../src/lib/business-profiles";
 import { requireSafeReplitDevelopmentDatabase } from "./safe-development-database";
@@ -1814,6 +1817,64 @@ await test("catalog admission cannot multiply provider requests by alternating a
    if(result.response.status===429){limited++;assert.equal(providerCalls,before,"denied admission performs no provider request");}
   }
   assert.ok(limited>0,"alternating connectors must not bypass the shared admission budget");assert.ok(providerCalls<=10,`provider requests ${providerCalls} exceed shared budget`);
+ } finally {delete app.locals.connectNetwork;}
+});
+await test("approved website observations index exact structured facts, preserve unknown values and hide missing items without erasing history", async () => {
+ const websiteOwner=await register("مالك فهرسة موقع");await db.update(users).set({phoneVerified:true}).where(eq(users.id,websiteOwner.id));
+ // Synthetic verified D2 identity isolates indexing; the real document/review
+ // pipeline is exercised earlier in this same suite, not claimed by this fixture.
+ const websiteBusiness=randomUUID();await db.insert(businessProfiles).values({id:websiteBusiness,ownerUserId:websiteOwner.id,marketId:"JO",displayName:"شركة فهرسة اختبار",normalizedName:"website-"+websiteBusiness,categoryKey:"OTHER",legalName:"Synthetic Website Company",legalForm:"COMPANY",verificationStatus:"VERIFIED",verifiedAt:new Date(),verifiedBy:admin.id,idempotencyKey:randomUUID()});
+ await db.insert(businessMemberships).values({id:randomUUID(),businessId:websiteBusiness,userId:websiteOwner.id,role:"VERIFIED_OWNER",status:"ACTIVE",grantedBy:websiteOwner.id});
+ const p=await call("/connect/partners",websiteOwner,{businessId:websiteBusiness});assert.equal(p.response.status,201,p.text);
+ const proof=await call(`/connect/partners/${p.data.id}/sites`,websiteOwner,{hostname:"indexer.partner.example"});assert.equal(proof.response.status,201,proof.text);dnsRecords.set(proof.data.challenge.recordName,[[proof.data.challenge.value]]);assert.equal((await call(`/connect/sites/${proof.data.id}/verify`,websiteOwner,{})).response.status,200);
+ assert.equal((await call(`/connect/partners/${p.data.id}/submit`,websiteOwner,{})).response.status,200);const pending=(await call(`/connect/partners/${p.data.id}`,websiteOwner)).data;
+ assert.equal((await call(`/admin/connect/partners/${p.data.id}/review`,admin,{decision:"APPROVE",expectedRevision:pending.revision,reason:"Reviewed synthetic website identity and DNS ownership"})).response.status,200);
+ const created=await call(`/connect/partners/${p.data.id}/integrations`,websiteOwner,{siteId:proof.data.id,kind:"WEBSITE",name:"فهرسة صفحة مصرح بها",endpointUrl:"https://indexer.partner.example/catalog",websiteCategoryId:"other",capabilities:["CATALOG_READ","CATALOG_IMPORT","EXTERNAL_REFERRAL"],mode:"SIMULATION_ONLY",allowedPathPrefixes:["/products/"]});assert.equal(created.response.status,201,created.text);
+ const approved=await call(`/admin/connect/integrations/${created.data.id}/review`,admin,{decision:"APPROVE",expectedRevision:created.data.revision,reason:"Reviewed single-page structured indexing and explicit category mapping"});assert.equal(approved.response.status,200,approved.text);const command={confirm:true,expectedRevision:approved.data.revision};
+ const product={"@type":"Product",name:"كرسي فهرسة",url:"https://indexer.partner.example/products/chair",offers:{"@type":"Offer",price:"29.99",priceCurrency:"USD",availability:"https://schema.org/InStock"}};
+ const service={"@type":"Service",name:"خدمة فهرسة",url:"https://indexer.partner.example/products/service",offers:{"@type":"Offer",price:"20.00"}};
+ const html=(nodes:unknown[])=>`<!doctype html><script type="application/ld+json">${JSON.stringify({"@context":"https://schema.org","@graph":nodes})}</script><script>globalThis.__websitePwned=true</script><script src="https://evil.example/execute.js"></script>`;
+ let document=html([product,service]),requests=0;
+ app.locals.connectNetwork=new ConnectNetwork({dns:app.locals.connectDns,transport:async request=>{requests++;assert.equal(request.url,"https://indexer.partner.example/catalog");assert.equal(request.method,"GET");assert.equal(request.headers.has("authorization"),false);assert.ok(request.headers.get("accept")?.includes("text/html"));return new Response(document,{headers:{"content-type":"text/html; charset=utf-8"}});}});
+ const sync=()=>call(`/connect/integrations/${created.data.id}/sync`,websiteOwner,command);
+ const rows=async()=>(await pool.query("select * from connect_offers where integration_id=$1 order by title",[created.data.id])).rows;
+ const ledgerBefore=(await pool.query("select count(*)::int n from connect_commission_ledger")).rows[0].n;
+ try {
+  const first=await sync();assert.equal(first.response.status,200,first.text);assert.equal(first.data.accepted,2);assert.equal(first.data.source,"WEBSITE");assert.equal(requests,1);assert.equal((globalThis as any).__websitePwned,undefined);
+  const forged=await call(`/connect/integrations/${created.data.id}/catalog`,websiteOwner,{batchId:"forged-website-observation",items:[{externalId:"fake-page-data",kind:"PRODUCT",title:"عنصر لم تفحصه الصفحة",description:"",categoryId:"other",price:null,availability:"UNKNOWN",targetPath:"/products/forged",sourceVersion:1,sourceCheckedAt:new Date().toISOString(),attributes:[]}]});
+  assert.equal(forged.response.status,409,forged.text);assert.match(forged.data.error,/فحص صفحة المصدر/);
+  const initial=await rows();assert.equal(initial.length,2);assert.ok(initial.every(row=>/^web\.[a-f0-9]{64}$/.test(row.external_id)&&row.source_version===1&&row.status==="PUBLISHED"));
+  const chair=initial.find(row=>row.title===product.name),unknown=initial.find(row=>row.title===service.name);assert.equal(chair.price_minor,"2999");assert.equal(chair.currency_code,"USD");assert.equal(chair.availability,"AVAILABLE");assert.equal(unknown.price_minor,null);assert.equal(unknown.availability,"UNKNOWN");
+  assert.equal((await sync()).response.status,200);const repeated=await rows();assert.equal(repeated.length,2);assert.ok(repeated.every(row=>row.source_version===2));assert.deepEqual(repeated.map(row=>row.id),initial.map(row=>row.id),"repeated observations update existing external records, never duplicate them");
+  document=html([service]);const missing=await sync();assert.equal(missing.response.status,200,missing.text);assert.equal(missing.data.hiddenCount,1);assert.equal((await rows()).find(row=>row.title===product.name).status,"HIDDEN");
+  document="<!doctype html><p>No verified structured catalog is present.</p>";const empty=await sync();assert.equal(empty.response.status,200,empty.text);assert.equal(empty.data.accepted,0);assert.equal(empty.data.websiteStatus,"NO_VERIFIABLE_DATA");assert.ok((await rows()).every(row=>row.status==="HIDDEN"));assert.equal((await rows()).length,2,"source history is retained");
+  document=html([product,service]);assert.equal((await sync()).response.status,200);assert.ok((await rows()).every(row=>row.status==="PUBLISHED"));
+  const [marketRow] = await db.select().from(markets).where(eq(markets.id,"JO"));
+  const market = await resolveMarket(marketRow);
+  const observation = await readWebsiteCatalog(app.locals.connectNetwork, created.data.endpointUrl, {hostname:"indexer.partner.example",allowedPathPrefixes:["/products/"],categoryId:"other"});
+  const snapshot = {revision:approved.data.revision,endpointUrl:created.data.endpointUrl,siteId:proof.data.id,websiteObservation:observation};
+  const commitObservation = (value=observation) => importConnectOwnerCatalog(websiteOwner.id,market,created.data.id,{}, {...snapshot,websiteObservation:value});
+  const concurrent = await Promise.all([commitObservation(),commitObservation()]);
+  assert.deepEqual(concurrent.map(receipt=>receipt.duplicate).sort(),[false,true],"concurrent replay applies a single server observation exactly once");
+  const versionsAfter = (await rows()).map(row=>row.source_version);
+  assert.equal((await commitObservation()).duplicate,true);
+  assert.deepEqual((await rows()).map(row=>row.source_version),versionsAfter);
+  await assert.rejects(commitObservation({...observation,pageDigest:"0".repeat(64)}),error=>(error as any).code==="IDEMPOTENCY_CONFLICT");
+  await assert.rejects(commitObservation({...observation,id:randomUUID(),observedAt:new Date(Date.now()-60_000).toISOString()}),error=>(error as any).code==="STALE_WEBSITE_OBSERVATION");
+  let arrived!:()=>void, release!:()=>void;
+  const entered=new Promise<void>(resolve=>{arrived=resolve;}),held=new Promise<void>(resolve=>{release=resolve;});
+  app.locals.connectNetwork=new ConnectNetwork({dns:app.locals.connectDns,transport:async()=>{arrived();await held;return new Response(document,{headers:{"content-type":"text/html"}});}});
+  const late=sync();
+  try {
+   await entered;
+   const revoked=await call(`/connect/integrations/${created.data.id}/revoke`,websiteOwner,command);
+   assert.equal(revoked.response.status,200,revoked.text);
+  } finally {release();}
+  const lateResult=await late;
+  assert.equal(lateResult.response.status,409,lateResult.text);
+  assert.deepEqual((await rows()).map(row=>row.source_version),versionsAfter,"revocation during network I/O prevents late catalog writes");
+  assert.equal((await pool.query("select count(*)::int n from connect_commission_ledger")).rows[0].n,ledgerBefore);
+  assert.equal((await pool.query("select count(*)::int n from orders where buyer_id=$1",[websiteOwner.id])).rows[0].n,0);
  } finally {delete app.locals.connectNetwork;}
 });
 after(async () => {

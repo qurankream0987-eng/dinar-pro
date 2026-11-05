@@ -34,6 +34,7 @@ export const ConnectIntegrationInput = z
       .regex(/^[a-z][a-z0-9_]{0,39}$/)
       .optional(),
     oauth: ConnectOAuthConfiguration.optional(),
+    websiteCategoryId: z.string().min(1).max(80).optional(),
     reviewedTools: z
       .array(
         z
@@ -51,6 +52,10 @@ export const ConnectIntegrationInput = z
   .strict().superRefine((input, ctx) => {
     if (input.kind === "OAUTH" && (!input.oauth || !input.endpointUrl || input.mode !== "SIMULATION_ONLY"))
       ctx.addIssue({ code: "custom", message: "OAuth requires a sandbox public-client configuration and catalog endpoint" });
+    if (input.kind === "WEBSITE" && input.endpointUrl && !input.websiteCategoryId)
+      ctx.addIssue({ code: "custom", message: "Website indexing requires an explicitly reviewed category mapping" });
+    if (input.kind !== "WEBSITE" && input.websiteCategoryId !== undefined)
+      ctx.addIssue({ code: "custom", message: "Website category mapping belongs only to website indexing" });
     if (input.kind === "MCP" && (input.mode !== "SIMULATION_ONLY" || input.reviewedTools?.length !== 1 ||
         input.reviewedTools[0]?.name !== CONNECT_MCP_CATALOG_TOOL || input.reviewedTools[0]?.inputSchemaSha256 !== CONNECT_MCP_CATALOG_INPUT_SHA256))
       ctx.addIssue({ code: "custom", message: "MCP requires the fixed reviewed read-only catalog contract" });
@@ -95,6 +100,12 @@ export const ConnectCatalogBatch = z
     items: z.array(ConnectCatalogItem).min(1).max(100),
   })
   .strict();
+export const ConnectCatalogReceiptSchema = z.object({
+  batchId: connectRef, accepted: z.number().int().min(0).max(100), duplicate: z.boolean(), internalListingsCreated: z.literal(0),
+  source: z.literal("WEBSITE").optional(), websiteStatus: z.enum(["OBSERVED", "NO_VERIFIABLE_DATA"]).optional(),
+  hiddenCount: z.number().int().nonnegative().optional(), observedAt: z.string().datetime().optional(), observationDigest: z.string().regex(/^[a-f0-9]{64}$/).optional(),
+}).strict();
+export type ConnectCatalogReceipt = z.infer<typeof ConnectCatalogReceiptSchema>;
 export const ConnectAgreementTerms = z
   .object({
     mode: z.enum(["SIMULATION_ONLY", "LIVE"]),

@@ -78,6 +78,7 @@ import type {
   ConnectAgreementProposalInput,
   ConnectAttributionWithdrawalInput,
   ConnectCatalogImportInput,
+  ConnectCatalogReceipt,
   ConnectCatalogSyncRequest,
   ConnectFinanceCommandInput,
   ConnectFinancialReceipt,
@@ -20070,7 +20071,7 @@ export const getSyncConnectCatalogUrl = (id: string,) => {
  * OWNER only. Explicitly confirmed FEED/API/OAuth JSON batch or reviewed MCP catalog.read_snapshot from the persisted approved endpoint. MCP protocol/tool/input-schema are pinned; provider prompts and arbitrary tools are never adopted. No caller URL, credential or redirect. Existing ingestion rechecks revision, revocation and any OAuth grant after network completion. Native pulls require approved pinned egress.
  */
 export const syncConnectCatalog = async (id: string,
-    connectCatalogSyncRequest: ConnectCatalogSyncRequest, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+    connectCatalogSyncRequest: ConnectCatalogSyncRequest, options?: Parameters<typeof customFetch>[1]): Promise<ConnectCatalogReceipt> => {
 
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
@@ -20086,7 +20087,7 @@ export const syncConnectCatalog = async (id: string,
     }
     return headers;
   };
-return customFetch<ServerValidatedObject>(getSyncConnectCatalogUrl(id),
+return customFetch<ConnectCatalogReceipt>(getSyncConnectCatalogUrl(id),
   {
     ...options,
     method: 'POST',
@@ -21196,7 +21197,7 @@ export const getImportConnectOwnerCatalogUrl = (id: string,) => {
  * Access: AUTHENTICATED. Server checks current ownership, market legal gates and approval. External catalog only; no internal order, payment or automatic registration. Credentials returned only at issue time. Live financial activation is unsupported.
  */
 export const importConnectOwnerCatalog = async (id: string,
-    connectCatalogImportInput: ConnectCatalogImportInput, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+    connectCatalogImportInput: ConnectCatalogImportInput, options?: Parameters<typeof customFetch>[1]): Promise<ConnectCatalogReceipt> => {
 
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
@@ -21212,7 +21213,7 @@ export const importConnectOwnerCatalog = async (id: string,
     }
     return headers;
   };
-return customFetch<ServerValidatedObject>(getImportConnectOwnerCatalogUrl(id),
+return customFetch<ConnectCatalogReceipt>(getImportConnectOwnerCatalogUrl(id),
   {
     ...options,
     method: 'POST',
@@ -21281,7 +21282,7 @@ export const getImportConnectProviderCatalogUrl = () => {
 /**
  * Access: PROVIDER_BEARER. Server checks current ownership, market legal gates and approval. External catalog only; no internal order, payment or automatic registration. Credentials returned only at issue time. Live financial activation is unsupported.
  */
-export const importConnectProviderCatalog = async (connectCatalogImportInput: ConnectCatalogImportInput, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+export const importConnectProviderCatalog = async (connectCatalogImportInput: ConnectCatalogImportInput, options?: Parameters<typeof customFetch>[1]): Promise<ConnectCatalogReceipt> => {
 
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
@@ -21297,7 +21298,7 @@ export const importConnectProviderCatalog = async (connectCatalogImportInput: Co
     }
     return headers;
   };
-return customFetch<ServerValidatedObject>(getImportConnectProviderCatalogUrl(),
+return customFetch<ConnectCatalogReceipt>(getImportConnectProviderCatalogUrl(),
   {
     ...options,
     method: 'POST',
