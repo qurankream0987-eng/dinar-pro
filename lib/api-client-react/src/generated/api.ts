@@ -87,6 +87,7 @@ import type {
   ConnectPartnerReport,
   ConnectReferralDisclosure,
   ConnectReviewDecisionInput,
+  ConnectSiteLifecycleInput,
   ConnectSiteRegistrationInput,
   ConnectTeamPermissionInput,
   ConnectUniversalCardsPayload,
@@ -19592,6 +19593,178 @@ export function useGetConnectReadOnlyCatalog<TData = Awaited<ReturnType<typeof g
 
 
 
+
+export const getRenewConnectSiteChallengeUrl = (id: string,) => {
+
+
+
+
+  return `/api/connect/sites/${id}/challenge`
+}
+
+/**
+ * OWNER only. Explicit confirmation rotates the 15-minute DNS TXT challenge. Existing verification retains its original expiry; no extension until fresh DNS verification. Revoked sites cannot renew.
+ */
+export const renewConnectSiteChallenge = async (id: string,
+    connectSiteLifecycleInput: ConnectSiteLifecycleInput, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getRenewConnectSiteChallengeUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(connectSiteLifecycleInput)
+  }
+);}
+
+
+
+
+
+export const getRenewConnectSiteChallengeMutationKey = () => ['renewConnectSiteChallenge'] as const;
+
+export const getRenewConnectSiteChallengeMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof renewConnectSiteChallenge>>, TError,RenewConnectSiteChallengeMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof renewConnectSiteChallenge>>, TError,RenewConnectSiteChallengeMutationVariables, TContext> => {
+
+const mutationKey = getRenewConnectSiteChallengeMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof renewConnectSiteChallenge>>, RenewConnectSiteChallengeMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  renewConnectSiteChallenge(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RenewConnectSiteChallengeMutationResult = NonNullable<Awaited<ReturnType<typeof renewConnectSiteChallenge>>>
+    export type RenewConnectSiteChallengeMutationBody = BodyType<ConnectSiteLifecycleInput>
+    export type RenewConnectSiteChallengeMutationError = ErrorType<void>
+    export type RenewConnectSiteChallengeMutationVariables = {id: string;data: BodyType<ConnectSiteLifecycleInput>}
+
+    export const useRenewConnectSiteChallenge = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof renewConnectSiteChallenge>>, TError,RenewConnectSiteChallengeMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof renewConnectSiteChallenge>>,
+        TError,
+        RenewConnectSiteChallengeMutationVariables,
+        TContext
+      > => {
+      return useMutation(getRenewConnectSiteChallengeMutationOptions(options), queryClient);
+    }
+
+export const getRevokeConnectSiteUrl = (id: string,) => {
+
+
+
+
+  return `/api/connect/sites/${id}/revoke`
+}
+
+/**
+ * OWNER only. Explicit confirmation atomically retires the site and every attached connector and provider key. Terminal and idempotent; financial and agreement history is preserved.
+ */
+export const revokeConnectSite = async (id: string,
+    connectSiteLifecycleInput: ConnectSiteLifecycleInput, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getRevokeConnectSiteUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(connectSiteLifecycleInput)
+  }
+);}
+
+
+
+
+
+export const getRevokeConnectSiteMutationKey = () => ['revokeConnectSite'] as const;
+
+export const getRevokeConnectSiteMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revokeConnectSite>>, TError,RevokeConnectSiteMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof revokeConnectSite>>, TError,RevokeConnectSiteMutationVariables, TContext> => {
+
+const mutationKey = getRevokeConnectSiteMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof revokeConnectSite>>, RevokeConnectSiteMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  revokeConnectSite(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RevokeConnectSiteMutationResult = NonNullable<Awaited<ReturnType<typeof revokeConnectSite>>>
+    export type RevokeConnectSiteMutationBody = BodyType<ConnectSiteLifecycleInput>
+    export type RevokeConnectSiteMutationError = ErrorType<void>
+    export type RevokeConnectSiteMutationVariables = {id: string;data: BodyType<ConnectSiteLifecycleInput>}
+
+    export const useRevokeConnectSite = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revokeConnectSite>>, TError,RevokeConnectSiteMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof revokeConnectSite>>,
+        TError,
+        RevokeConnectSiteMutationVariables,
+        TContext
+      > => {
+      return useMutation(getRevokeConnectSiteMutationOptions(options), queryClient);
+    }
 
 export const getCreateConnectSiteUrl = (id: string,) => {
 

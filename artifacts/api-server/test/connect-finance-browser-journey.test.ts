@@ -218,6 +218,7 @@ await test("real partner agreement acceptance and opt-in/withdrawal work through
     assert.equal(report.withdrawn, true);
     assert.equal(report.staffReadOnly, true);
     assert.equal(report.teamConfirmedThroughUi, true);
+    assert.equal(report.siteLifecycleThroughUi, true);
     assert.equal(report.opener, null);
     assert.equal(report.cartFlights, 0);
     assert.deepEqual(report.pageErrors, []);

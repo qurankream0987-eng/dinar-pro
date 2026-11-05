@@ -787,6 +787,12 @@ export async function createConnectIntegration(
     );
     if (access.partner.status === "REVOKED")
       throw connectError(409, "PARTNER_REVOKED", "الشريك ملغى");
+    // Recheck under the parent lock: revocation may have committed after the
+    // endpoint/hostname validation above, before this transaction began.
+    const [currentSite] = await tx.select().from(connectSites)
+      .where(and(eq(connectSites.id, site.id), eq(connectSites.partnerId, partnerId))).for("share");
+    if (!currentSite || currentSite.status === "REVOKED")
+      throw connectError(409, "SITE_REVOKED", "لا يمكن إنشاء موصل لموقع ملغى");
     const [row] = await tx
       .insert(connectIntegrations)
       .values({

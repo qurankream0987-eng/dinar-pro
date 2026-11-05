@@ -15,6 +15,7 @@ import {
   connectError,
   externalDestination,
 } from "../connect/provider-registry";
+import * as sites from "../connect/sites";
 import * as team from "../connect/team";
 import * as partners from "../connect/partners";
 import * as agreements from "../connect/agreements";
@@ -170,6 +171,10 @@ router.post("/connect/partners/:id/sites", requireAuth, async (req, res) =>
       ),
     ),
 );
+router.post("/connect/sites/:id/challenge", requireAuth, async (req, res) =>
+  res.set("Cache-Control", "no-store").json(await sites.renewConnectSiteChallenge(req.actor!.id, await marketFor(req), idParam(req.params.id), req.body)));
+router.post("/connect/sites/:id/revoke", requireAuth, async (req, res) =>
+  res.set("Cache-Control", "no-store").json(await sites.revokeConnectSite(req.actor!.id, await marketFor(req), idParam(req.params.id), req.body)));
 router.post("/connect/sites/:id/verify", requireAuth, async (req, res) =>
   res.json(
     await partners.verifyConnectSite(

@@ -243,6 +243,7 @@ export const ConnectFinanceCommand = z
     resolution: z.enum(["RESTORE_SUPPORTED_STATE", "REVERSE"]).optional(),
   })
   .strict();
+export const ConnectSiteCommandInput = z.object({ confirm: z.literal(true) }).strict();
 export const CONNECT_TEAM_SCOPES = ["CATALOG_READ", "REPORTS_READ"] as const;
 export const ConnectTeamInput = z.object({
   delegationId: z.string().uuid(),

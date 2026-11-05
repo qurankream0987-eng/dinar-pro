@@ -8241,6 +8241,34 @@ export const GetConnectReadOnlyCatalogResponse = zod.record(zod.string(), zod.un
 
 
 /**
+ * OWNER only. Explicit confirmation rotates the 15-minute DNS TXT challenge. Existing verification retains its original expiry; no extension until fresh DNS verification. Revoked sites cannot renew.
+ */
+export const RenewConnectSiteChallengeParams = zod.object({
+  "id": zod.uuid()
+})
+
+export const RenewConnectSiteChallengeBody = zod.object({
+  "confirm": zod.literal(true)
+})
+
+export const RenewConnectSiteChallengeResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * OWNER only. Explicit confirmation atomically retires the site and every attached connector and provider key. Terminal and idempotent; financial and agreement history is preserved.
+ */
+export const RevokeConnectSiteParams = zod.object({
+  "id": zod.uuid()
+})
+
+export const RevokeConnectSiteBody = zod.object({
+  "confirm": zod.literal(true)
+})
+
+export const RevokeConnectSiteResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
  * Access: AUTHENTICATED. Server checks current ownership, market legal gates and approval. External catalog only; no internal order, payment or automatic registration. Credentials returned only at issue time. Live financial activation is unsupported.
  */
 export const CreateConnectSiteParams = zod.object({

@@ -5823,6 +5823,11 @@ export interface ConnectTeamPermissionInput {
   confirm: true;
 }
 
+export const ConnectSiteLifecycleInputValue = {
+  confirm: true,
+} as const;
+export type ConnectSiteLifecycleInput = typeof ConnectSiteLifecycleInputValue;
+
 export type GetListingsParams = {
 search?: string;
 category?: string;

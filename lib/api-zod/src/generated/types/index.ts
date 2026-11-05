@@ -226,6 +226,7 @@ export * from './connectPartnerReportTransactionsItemState';
 export * from './connectReferralDisclosure';
 export * from './connectReviewDecisionInput';
 export * from './connectReviewDecisionInputDecision';
+export * from './connectSiteLifecycleInput';
 export * from './connectSiteRegistrationInput';
 export * from './connectTeamPermissionInput';
 export * from './connectTeamPermissionInputScopesItem';

@@ -2,7 +2,7 @@ import { localObjectStorage } from "./local-object-storage";
 import { test, after } from "node:test";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
-import { db, pool, users,businessOperatingProfiles } from "@workspace/db";
+import { db, pool, users,businessOperatingProfiles,connectTeamPermissions } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import app from "../src/app";
 import { registerBusinessDocumentScanner } from "../src/lib/business-profiles";
@@ -1595,6 +1595,10 @@ await test("Connect staff inherit canonical D4 identity/version/revocation and r
  const activated=await call(`${path}/${delegationId}/activate`,owner,{confirm:true,expectedVersion:1});assert.equal(activated.response.status,200,activated.text);const activeVersion=activated.data.version;
  assert.equal((await call(`/connect/partners/${partner.id}`,employee)).response.status,404,"D4 membership alone does not imply Connect access");
  const teamPath=`/connect/partners/${partner.id}/team`;
+ // Preserve pre-version mappings as inert evidence, even if they contain older
+ // management scope strings. They never acquire authority from a migration.
+ await db.insert(connectTeamPermissions).values({ delegationId, partnerId: partner.id, grantedBy: owner.id, scopes: ["INTEGRATIONS_MANAGE", "CATALOG_READ"] });
+ assert.equal((await call(`/connect/partners/${partner.id}`,employee)).response.status,404,"legacy version-zero mappings are not owner confirmation");
  const granted=await call(teamPath,owner,{delegationId,expectedDelegationVersion:activeVersion,scopes:["CATALOG_READ"],confirm:true});assert.equal(granted.response.status,200,granted.text);
  const view=await call(`/connect/partners/${partner.id}`,employee);assert.equal(view.response.status,200,view.text);assert.equal(view.data.role,"STAFF");assert.deepEqual(view.data.allowedScopes,["CATALOG_READ"]);assert.deepEqual(view.data.integrations,[],"read-only staff do not receive connector configuration");
  const catalog=await call(`/connect/partners/${partner.id}/catalog`,employee);assert.equal(catalog.response.status,200,catalog.text);assert.ok(catalog.data.items.some((item:any)=>item.externalId==='sku-1'));assert.equal((await call(`/connect/partners/${partner.id}/report`,employee)).response.status,404);
@@ -1612,6 +1616,64 @@ await test("Connect staff inherit canonical D4 identity/version/revocation and r
  assert.equal((await call(teamPath,owner,{delegationId,expectedDelegationVersion:currentVersion,scopes:["CATALOG_READ","REPORTS_READ"],confirm:true})).response.status,200);
  const revoked=await call(`${path}/${delegationId}/revoke`,owner,{confirm:true,expectedVersion:currentVersion});assert.equal(revoked.response.status,200,revoked.text);assert.equal((await call(`/connect/partners/${partner.id}/catalog`,employee)).response.status,404);
  const exported=await call("/account/privacy/exports",employee,{currentPassword:"connect-partner-local-1",idempotencyKey:randomUUID()});assert.equal(exported.response.status,200,exported.text);assert.equal(exported.data.export.connect.teamAccess.items.length,1);assert.equal(exported.data.export.connect.teamAccess.items[0].grantStatus,"REVOKED");assert.ok(!JSON.stringify(exported.data.export.connect.teamAccess).includes(owner.id));
+});
+await test("site proof renewal rejects stale DNS and revocation atomically retires every attached connector without deleting history", async () => {
+  const created = await call(`/connect/partners/${partner.id}/sites`, owner, { hostname: "lifecycle.partner.example" });
+  assert.equal(created.response.status, 201, created.text);
+  const proof = created.data;
+  dnsRecords.set(proof.challenge.recordName, [[proof.challenge.value]]);
+  assert.equal((await call(`/connect/sites/${proof.id}/verify`, owner, {})).response.status, 200);
+  const connector = await call(`/connect/partners/${partner.id}/integrations`, owner, {
+    siteId: proof.id, kind: "API", name: "موصل دورة إثبات الملكية", mode: "SIMULATION_ONLY",
+    capabilities: ["CATALOG_READ", "CATALOG_IMPORT", "EXTERNAL_REFERRAL"], allowedPathPrefixes: ["/products/"],
+  });
+  assert.equal(connector.response.status, 201, connector.text);
+  const approved = await call(`/admin/connect/integrations/${connector.data.id}/review`, admin, {
+    decision: "APPROVE", expectedRevision: connector.data.revision, reason: "Isolated fresh site ownership lifecycle evidence",
+  });
+  assert.equal(approved.response.status, 200, approved.text);
+  const credential = await call(`/connect/integrations/${connector.data.id}/credentials`, owner, {});
+  assert.equal(credential.response.status, 201, credential.text);
+  assert.equal((await call(`/connect/sites/${proof.id}/challenge`, other, { confirm: true })).response.status, 404);
+  assert.equal((await call(`/connect/sites/${proof.id}/challenge`, owner, {})).response.status, 400);
+  const renewed = await call(`/connect/sites/${proof.id}/challenge`, owner, { confirm: true });
+  assert.equal(renewed.response.status, 200, renewed.text);
+  assert.notEqual(renewed.data.challenge.value, proof.challenge.value);
+  assert.equal(renewed.data.status, "VERIFIED", "issuing a new proof does not invent an outage before the current proof expires");
+  assert.equal((await call(`/connect/sites/${proof.id}/verify`, owner, {})).response.status, 409, "old TXT cannot validate the renewed challenge");
+  dnsRecords.set(proof.challenge.recordName, [[renewed.data.challenge.value]]);
+  assert.equal((await call(`/connect/sites/${proof.id}/verify`, owner, {})).response.status, 200);
+  // Pause verification after it has read the challenge; rotate the challenge while
+  // DNS is in flight, then supply the old valid record. The final lock recheck must fail.
+  let entered!: () => void, release!: () => void;
+  const dnsEntered = new Promise<void>(resolve => { entered = resolve; });
+  const dnsReleased = new Promise<void>(resolve => { release = resolve; });
+  const normalDns = app.locals.connectDns;
+  app.locals.connectDns = { ...normalDns, async resolveTxt(host: string) {
+    if (host === proof.challenge.recordName) { entered(); await dnsReleased; return [[renewed.data.challenge.value]]; }
+    return normalDns.resolveTxt(host);
+  }};
+  try {
+    const staleVerification = call(`/connect/sites/${proof.id}/verify`, owner, {});
+    await Promise.race([dnsEntered, new Promise((_, reject) => setTimeout(() => reject(new Error("DNS barrier not entered")), 2000))]);
+    const rotated = await call(`/connect/sites/${proof.id}/challenge`, owner, { confirm: true });
+    assert.equal(rotated.response.status, 200, rotated.text); release();
+    assert.equal((await staleVerification).response.status, 409, "stale in-flight DNS cannot overwrite newer proof");
+  } finally { release(); app.locals.connectDns = normalDns; }
+  const ledgerBefore = (await pool.query("select count(*)::int n from connect_commission_ledger")).rows[0].n;
+  assert.equal((await call(`/connect/sites/${proof.id}/revoke`, other, { confirm: true })).response.status, 404);
+  const revoked = await call(`/connect/sites/${proof.id}/revoke`, owner, { confirm: true });
+  assert.equal(revoked.response.status, 200, revoked.text); assert.equal(revoked.data.status, "REVOKED");
+  assert.equal((await call(`/connect/sites/${proof.id}/revoke`, owner, { confirm: true })).response.status, 200, "revocation retries are idempotent");
+  assert.equal((await call(`/connect/sites/${proof.id}/challenge`, owner, { confirm: true })).response.status, 409);
+  assert.equal((await call(`/connect/sites/${proof.id}/verify`, owner, {})).response.status, 409);
+  assert.equal((await call(`/connect/integrations/${connector.data.id}/credentials`, owner, {})).response.status, 409);
+  const retired = (await pool.query("select i.status, p.status provider_status, c.revoked_at from connect_integrations i join provider_connections p on p.id=i.provider_connection_id join provider_credentials c on c.connection_id=p.id where i.id=$1", [connector.data.id])).rows;
+  assert.ok(retired.length > 0); assert.ok(retired.every(row => row.status === "REVOKED" && row.provider_status === "REVOKED" && row.revoked_at));
+  assert.equal((await call("/connect/provider/catalog", undefined, { batchId: "revoked-site", items: [] }, "POST", credential.data.key)).response.status, 401);
+  assert.equal((await pool.query("select count(*)::int n from connect_commission_ledger")).rows[0].n, ledgerBefore);
+  const deniedNew = await call(`/connect/partners/${partner.id}/integrations`, owner, { siteId: proof.id, kind: "API", name: "ربط بعد الإلغاء", mode: "SIMULATION_ONLY", capabilities: ["CATALOG_READ", "CATALOG_IMPORT"], allowedPathPrefixes: ["/products/"] });
+  assert.equal(deniedNew.response.status, 409, deniedNew.text);
 });
 after(async () => {
   await new Promise<void>((resolve) => server.close(() => resolve()));

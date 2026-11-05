@@ -34,6 +34,7 @@ export default function ConnectPage() {
       { id: string; displayName: string }[]
     >([]),
     [selected, setSelected] = useState("");
+  const [siteCommand, setSiteCommand] = useState<{ id: string; action: "challenge" | "revoke" } | null>(null);
   const [hostname, setHostname] = useState(""),
     [challenge, setChallenge] = useState<{
       recordName: string;
@@ -146,6 +147,7 @@ export default function ConnectPage() {
             onChange={(e) => {
               setSelected(e.target.value);
               setChallenge(null);
+              setSiteCommand(null);
               setIssued("");
             }}
           >
@@ -234,13 +236,13 @@ export default function ConnectPage() {
               </div>
             )}
             {partner.sites.map((s) => (
-              <div key={s.id} className="flex flex-wrap items-center gap-3">
+              <div key={s.id} role="group" aria-label={`موقع ${s.hostname}`} className="flex flex-wrap items-center gap-3">
                 <span dir="ltr" className="break-all">
                   {s.hostname} — {s.status}
                 </span>
                 <Button
                   variant="secondary"
-                  disabled={busy}
+                  disabled={busy || s.status === "REVOKED"}
                   onClick={() =>
                     void run(
                       () => api(`/connect/sites/${s.id}/verify`, "POST", {}),
@@ -250,6 +252,21 @@ export default function ConnectPage() {
                 >
                   التحقق من TXT
                 </Button>
+                {s.status !== "REVOKED" && <>
+                  <Button variant="secondary" disabled={busy} onClick={() => setSiteCommand({ id: s.id, action: "challenge" })}>تجديد تحدي TXT</Button>
+                  <Button variant="danger-soft" disabled={busy} onClick={() => setSiteCommand({ id: s.id, action: "revoke" })}>إلغاء الموقع وروابطه</Button>
+                  {siteCommand?.id === s.id && <div className="w-full space-y-2 rounded-lg border p-3">
+                    <p>{siteCommand.action === "challenge" ? "سيصدر تحدي جديد ويلغى التحدي السابق. لا تمتد صلاحية إثبات الملكية حتى يتحقق الخادم من سجل TXT الجديد." : "سيُلغى الموقع وكل موصلاته ومفاتيحه. لا يمكن استئنافها؛ تُحفظ أدلة العقود والمحاسبة القائمة."}</p>
+                    <Button variant={siteCommand.action === "revoke" ? "danger" : "primary"} disabled={busy} onClick={() => {
+                      const action = siteCommand.action;
+                      void run(async () => {
+                        const result = await api(`/connect/sites/${s.id}/${action}`, "POST", { confirm: true });
+                        setChallenge(action === "challenge" ? result.challenge : null); setSiteCommand(null);
+                      }, action === "challenge" ? "صدر تحدي جديد؛ أضف TXT ثم تحقق منه." : "أُلغي الموقع وموصلاته ومفاتيحه مع حفظ الأدلة.");
+                    }}>{siteCommand.action === "challenge" ? "تأكيد تجديد التحدي" : "تأكيد إلغاء الموقع وكل مفاتيحه"}</Button>
+                    <Button variant="secondary" disabled={busy} onClick={() => setSiteCommand(null)}>تراجع</Button>
+                  </div>}
+                </>}
               </div>
             ))}
           </section>
