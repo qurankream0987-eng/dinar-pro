@@ -43,6 +43,7 @@ export const CAPABILITY_NAMES = [
   "readOwnBusinessOverview",
   "readOwnOrderIssues",
   "prepareBusinessListingChange",
+  "readOwnSellerDues",
 ] as const;
 export type CapabilityName = (typeof CAPABILITY_NAMES)[number];
 
@@ -572,6 +573,24 @@ export const CAPABILITY_REGISTRY: Record<CapabilityName, CapabilityDefinition> =
     timeoutMs: MODEL_TOOL_TIMEOUT_MS,
     audit: "PENDING_ACTION_METADATA",
     canonicalService: "ai/business-turn.executeBusinessTurn",
+    availability: "MODEL_TOOL",
+    modelActors: ["SELLER"],
+  }),
+
+  readOwnSellerDues: capability({
+    name: "readOwnSellerDues",
+    toolName: "readSellerDues",
+    purpose: "Read the seller's own commission dues from the order policy snapshot, net of recorded reversals (read only).",
+    inputSchema: empty,
+    outputSchema: z.object({ kind: z.literal("SURFACE"), surface: z.literal("DUES") }).passthrough(),
+    actors: ["SELLER"],
+    permissions: ["marketplace.read", "seller.dues.owner"],
+    mutation: "READ_ONLY",
+    confirmation: "NONE",
+    idempotency: "READ_ONLY",
+    timeoutMs: MODEL_TOOL_TIMEOUT_MS,
+    audit: "REDACTED_TURN_METADATA",
+    canonicalService: "lib/seller-dues.sellerDuesView",
     availability: "MODEL_TOOL",
     modelActors: ["SELLER"],
   }),

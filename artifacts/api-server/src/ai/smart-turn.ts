@@ -1317,6 +1317,7 @@ function compactCapabilityRead(result: ToolResult) {
   if (result.capabilities) return { kind: "DINAR_CAPABILITIES", ...result.capabilities };
   if (result.businessOverview) return { kind: "BUSINESS_OVERVIEW", ...result.businessOverview };
   if (result.orderIssues) return { kind: "ORDER_ISSUES", ...result.orderIssues };
+  if (result.sellerDues) return { kind: "SELLER_DUES", ...result.sellerDues };
   if (result.universalCards)
     return {
       kind: "EXTERNAL_OFFERS",

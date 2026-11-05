@@ -363,6 +363,19 @@ test("INT-07 DINAR's self-knowledge is derived from the authorized registry, not
   assert.ok(catalog.market.currency.length > 0);
 });
 
+test("INT-08 seller dues: the model read and GET /seller-dues come from one service; a model actor id is refused", async () => {
+  const route = await request("/seller-dues", "GET", undefined, seller.cookie);
+  assert.equal(route.status, 200, route.text);
+  const market = await marketFor({ actor: { activeMarketId: "JO" }, cookies: {} } as any);
+  const context = { actorId: seller.id, conversationId: "c", currentMessageId: "m", market };
+  const read = await executeModelTool("readSellerDues", "{}", context as any);
+  assert.equal(read.result.surface, "DUES");
+  assert.deepEqual(read.result.sellerDues?.dues.map((row: any) => row.orderId), route.data.filter((row: any) => row).map((row: any) => row.orderId));
+  assert.match(read.result.sellerDues?.note ?? "", /no electronic payment/u);
+  const forged = await executeModelTool("readSellerDues", JSON.stringify({ sellerId: "someone" }), context as any).then(() => "ran", (error) => error.code);
+  assert.equal(forged, "CANONICAL_TOOL_REJECTED");
+});
+
 after(async () => {
   server.close();
   await pool.end();

@@ -119,3 +119,20 @@ export async function readOrderIssues(context: ToolContext): Promise<ToolResult>
     prompt: view.length ? "هذه طلباتك التي عليها نزاع أو استرداد، من سجلات DINAR." : "لا توجد نزاعات أو استردادات مفتوحة على طلباتك في هذا السوق.",
   };
 }
+
+export async function readSellerDues(context: ToolContext): Promise<ToolResult> {
+  if (!context.actorId) throw Object.assign(new Error("Sign-in required."), { status: 401 });
+  const { sellerDuesView } = await import("../lib/seller-dues");
+  const dues = (await sellerDuesView(context.actorId, context.market.id)).slice(0, 30);
+  return {
+    kind: "SURFACE",
+    surface: "DUES",
+    query: {},
+    listings: [],
+    sellerDues: {
+      dues: dues.map((row) => ({ orderId: row.orderId, listingTitle: String(row.listingTitle ?? "").slice(0, 120), amount: row.amount, currency: row.currency, status: row.status, dueAt: row.dueAt })),
+      note: "Commission dues from the order's immutable policy snapshot, net of recorded reversals. There is no electronic payment of dues; never say a due was paid unless its status says so.",
+    },
+    prompt: dues.length ? "هذه مستحقات عمولة DINAR على طلباتك المكتملة." : "لا توجد مستحقات عمولة عليك في هذا السوق.",
+  };
+}

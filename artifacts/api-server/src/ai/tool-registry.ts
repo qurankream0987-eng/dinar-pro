@@ -63,6 +63,8 @@ export type ToolResult = {
   businessOverview?: import("./model-read-capabilities").BusinessOverview;
   /** Disputes and refunds on the actor's own orders (read only). */
   orderIssues?: import("./model-read-capabilities").OrderIssues;
+  /** The seller's own commission dues (read only). */
+  sellerDues?: { dues: Record<string, unknown>[]; note: string };
   memory?: import("./personal-memory-turn").MemorySummary;
   /** RESULTS restores an existing result set exactly; it never creates a new one. */
   kind: "SEARCH" | "RESOURCE" | "RESULTS" | "SURFACE";
@@ -868,6 +870,24 @@ export const aiToolRegistry: Record<string, ToolDefinition> = {
     },
     execute: async (_input, context) => (await import("./model-read-capabilities")).readOrderIssues(context),
   },
+
+  readSellerDues: {
+    name: "readSellerDues",
+    version: 1,
+    description: "Read the signed-in seller's own DINAR commission dues in this market (net of recorded reversals). Read only.",
+    permissions: ["marketplace.read"],
+    riskLevel: "LOW",
+    idempotency: "READ_ONLY",
+    auditPolicy: "REDACTED_TURN_METADATA",
+    exposedToModel: true,
+    inputSchema: z.object({}).strict(),
+    modelDefinition: {
+      name: "readSellerDues",
+      description: "Use when a seller asks what they owe DINAR, about commission, fees on completed orders or their dues. Returns only the user's own dues; amounts come from DINAR's records, never estimate them.",
+      parameters: { type: "object", properties: {}, required: [], additionalProperties: false },
+    },
+    execute: async (_input, context) => (await import("./model-read-capabilities")).readSellerDues(context),
+  },
 };
 
 /** The only tools the bounded model turn loop may execute; checked again at execution time. */
@@ -880,6 +900,7 @@ export const MODEL_LOOP_TOOL_ALLOWLIST = [
   "describeDinarCapabilities",
   "readBusinessOverview",
   "readOrderIssues",
+  "readSellerDues",
 ] as const;
 
 /** F01 read-only tools plus every F02 capability tool, filtered by server-derived roles. */
