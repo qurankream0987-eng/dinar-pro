@@ -140,7 +140,13 @@ function browserConnectOrigins() {
 }
 function contentSecurityPolicy() {
   return [
-    ...CONTENT_SECURITY_POLICY_DIRECTIVES,
+    ...CONTENT_SECURITY_POLICY_DIRECTIVES.map((directive) =>
+      directive.startsWith("frame-ancestors ") && (
+        process.env.NODE_ENV === "production" ||
+        process.env.DINAR_DEPLOYMENT_ENV === "staging" ||
+        process.env.DINAR_DEPLOYMENT_ENV === "production"
+      ) ? "frame-ancestors 'self'" : directive,
+    ),
     `connect-src ${browserConnectOrigins()}`,
   ].join("; ");
 }

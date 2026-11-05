@@ -54,6 +54,25 @@ await test("missing files are 404, never the SPA shell", async () => {
   }
 });
 
+await test("deployed and production-mode pages reject third-party preview framing", async () => {
+  const priorMode = process.env.NODE_ENV;
+  const priorDeployment = process.env.DINAR_DEPLOYMENT_ENV;
+  try {
+    for (const [mode, deployment] of [["development", "staging"], ["development", "production"], ["production", undefined]]) {
+      process.env.NODE_ENV = mode;
+      if (deployment === undefined) delete process.env.DINAR_DEPLOYMENT_ENV;
+      else process.env.DINAR_DEPLOYMENT_ENV = deployment;
+      const response = await fetch(`${origin}/`);
+      const csp = response.headers.get("content-security-policy") ?? "";
+      assert.equal(csp.split("; ").find((directive) => directive.startsWith("frame-ancestors ")), "frame-ancestors 'self'");
+      assert.doesNotMatch(csp, /replit\.com|replit\.dev/);
+    }
+  } finally {
+    if (priorMode === undefined) delete process.env.NODE_ENV; else process.env.NODE_ENV = priorMode;
+    if (priorDeployment === undefined) delete process.env.DINAR_DEPLOYMENT_ENV; else process.env.DINAR_DEPLOYMENT_ENV = priorDeployment;
+  }
+});
+
 await test("the shell and API carry the browser security policy", async () => {
   const shell = await fetch(`${origin}/`, { headers: { Accept: "text/html" } });
   const csp = shell.headers.get("content-security-policy") ?? "";

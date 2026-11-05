@@ -35,7 +35,9 @@ RUN --mount=type=secret,id=proxy_ca \
   fi; \
   pnpm install --frozen-lockfile
 
-COPY . .
+# Managed worktrees may have private 0700/0600 source modes. Preserve those modes
+# while making the runtime user their owner; do not rely on a world-readable clone.
+COPY --chown=node:node . .
 
 RUN pnpm --filter @workspace/dinar run build \
   && pnpm --filter @workspace/api-server run build

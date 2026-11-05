@@ -194,7 +194,8 @@ try {
       page.getByTestId(`button-save-message-edit-${editId}`).click(),
     ]);
     assert.ok(copied.ok(), "editing creates an owned conversation branch");
-    const { conversation: branch } = await copied.json();
+    const copiedView = await copied.json();
+    const { conversation: branch } = copiedView;
     assert.equal(typeof branch.id, "string", "the copy response contains its conversation identity");
     assert.notEqual(branch.id, largest.conversationId, "the original history is preserved");
     assert.equal(new URL(turn.url()).pathname, `/api/ai/conversations/${branch.id}/turns`, "the reply is sent on the current edit branch");
@@ -219,6 +220,12 @@ try {
     assert.ok(persisted, "the owned edit branch must complete with exactly one persisted answer within 30 seconds");
     assert.equal(persisted.user.body, editedBody);
     assert.equal(persisted.answers[0].actor, "ASSISTANT");
+    const latestCopiedAt = Math.max(...copiedView.messages.map((message) => Date.parse(message.createdAt)));
+    assert.ok(latestCopiedAt < Date.parse(persisted.user.createdAt), "copied history must precede the live edit, never sort after it");
+    await page.waitForFunction(
+      () => document.querySelector('[data-testid="button-send-ai-message"]')?.getAttribute("aria-label") === "إرسال الرسالة",
+      null, { timeout: 30_000 },
+    );
     await page.locator('[data-testid="conversation-thread"]').getByText(editedBody, { exact: true }).waitFor();
     edits.push({ viewport: viewport.label, original: largest.conversationId, branch: branch.id });
     await context.close();

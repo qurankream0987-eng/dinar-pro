@@ -1335,7 +1335,10 @@ router.post("/ai/conversations/:id/copies", requireAuth, async (req, res): Promi
         title,
       })
       .returning();
-    const baseTime = Date.now();
+    // Copies are historical context, not future turns. Future-dating a long copy
+    // can sort a newly submitted edit before its context and out of the visible
+    // tail after hydration. Keep strict order, ending before the next live turn.
+    const baseTime = Date.now() - rowsToCopy.length;
     const copiedMessages = rowsToCopy.length
       ? await tx
           .insert(messages)
