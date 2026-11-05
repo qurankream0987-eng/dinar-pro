@@ -74,12 +74,17 @@ const threadShape = (page) =>
     };
   });
 
+const progress = (step) => console.error(`W02U3_PERF_PROGRESS ${new Date().toISOString()} ${step}`);
+
 async function coldState(page) {
+  progress("cold:goto");
   await page.goto("/");
   await page.evaluate(() => localStorage.clear());
   await page.reload();
   await page.getByTestId("input-ai-composer").waitFor({ timeout: 45_000 });
+  progress("cold:composer");
   await settleToasts(page);
+  progress("cold:settled");
 }
 
 async function openTarget(page, target, mobile) {
@@ -90,6 +95,7 @@ async function openTarget(page, target, mobile) {
   }
   const item = page.getByTestId(`conversation-${target.conversationId}`);
   await item.waitFor({ state: "visible", timeout: 45_000 });
+  progress(`open:${target.messages ?? ""}:item-visible`);
   const startedAt = Date.now();
   await item.click();
   await page

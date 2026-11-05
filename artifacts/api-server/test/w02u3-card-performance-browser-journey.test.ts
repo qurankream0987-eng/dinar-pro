@@ -109,6 +109,9 @@ await test("W02U3 CR-15 real browser: 40/100/500-message transcripts stay within
     });
   } catch (error) {
     browserError = error;
+    // A timed-out child keeps its diagnostics in the captured stream; surface the tail.
+    const stderr = String((error as { stderr?: unknown }).stderr ?? "");
+    if (stderr) console.error(`W02U3_PERF_STDERR_TAIL\n${stderr.slice(-6000)}`);
   } finally {
     await web.stop();
   }

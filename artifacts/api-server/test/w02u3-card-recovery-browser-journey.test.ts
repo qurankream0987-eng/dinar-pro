@@ -165,7 +165,8 @@ const control = createServer(async (request_, response) => {
         actor: "ASSISTANT",
         body: String(body.body),
         contentType: "TEXT",
-        metadata: {},
+        // The real turn writer correlates every answer to its user turn (routes/ai.ts).
+        metadata: { replyToMessageId: String(body.clientMessageId) },
       });
       await db
         .update(messages)
