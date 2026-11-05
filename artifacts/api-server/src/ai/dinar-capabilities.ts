@@ -14,16 +14,8 @@ export type DinarCapabilityCatalog = {
   rules: string[];
 };
 
-const EXTERNAL = [
-  {
-    name: "searchDomains",
-    summary: "فحص توفر أسماء النطاقات وعروض التسجيل لدى مزوّدي DINAR Connect. التسجيل والدفع يتمان لدى المزوّد خارج DINAR.",
-  },
-  {
-    name: "searchPartnerOffers",
-    summary: "البحث في كتالوجات الشركاء المعتمدين في DINAR Connect (خدمات ومتاجر خارجية). الشراء أو الحجز لدى الشريك خارج DINAR، ولا يُنشأ طلب داخلي.",
-  },
-];
+/** External (DINAR Connect) capabilities are the registered ones served by connect/ services. */
+const isExternal = (canonicalService: string) => canonicalService.startsWith("connect/");
 
 const NOT_AVAILABLE = [
   { topic: "تحويل الأموال أو الدفع الفوري", reason: "الدفع داخل DINAR محاكاة حاليًا؛ لا يحوّل DINAR أموالًا ولا يؤكد دفعًا دون إيصال من الخادم." },
@@ -39,18 +31,24 @@ const RULES = [
 ];
 
 export function dinarCapabilityCatalog(market: { id: string; currency?: string | null }): DinarCapabilityCatalog {
-  const available = Object.values(CAPABILITY_REGISTRY)
-    .filter((capability) => capability.availability === "MODEL_TOOL")
+  // Derived from the authorized registry on every call: no capability can be described that
+  // the server does not register, and every registered model capability is described.
+  const modelCapabilities = Object.values(CAPABILITY_REGISTRY).filter((capability) => capability.availability === "MODEL_TOOL");
+  const available = modelCapabilities
+    .filter((capability) => !isExternal(capability.canonicalService))
     .map((capability) => ({
-      name: capability.name,
+      name: capability.toolName,
       summary: capability.purpose,
       requiresConfirmation: capability.confirmation === "USER_CONFIRMATION" || capability.mutation !== "READ_ONLY",
     }));
+  const external = modelCapabilities
+    .filter((capability) => isExternal(capability.canonicalService))
+    .map((capability) => ({ name: capability.toolName, summary: capability.purpose }));
   return {
     version: 1,
     market: { id: market.id, currency: (market as { currencyCode?: string }).currencyCode ?? market.currency ?? "" },
     available,
-    external: EXTERNAL,
+    external,
     notAvailable: NOT_AVAILABLE,
     rules: RULES,
   };

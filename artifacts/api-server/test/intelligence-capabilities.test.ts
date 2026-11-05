@@ -347,6 +347,22 @@ test("INT-06 business overview and order issues are the actor's own rows only", 
   assert.equal(direct, "CANONICAL_TOOL_REJECTED", "the model cannot pass an actor id");
 });
 
+test("INT-07 DINAR's self-knowledge is derived from the authorized registry, not a manual list", async () => {
+  const { dinarCapabilityCatalog } = await import("../src/ai/dinar-capabilities");
+  const market = await marketFor({ actor: { activeMarketId: "JO" }, cookies: {} } as any);
+  const catalog = dinarCapabilityCatalog(market);
+  const described = [...catalog.available, ...catalog.external].map((row) => row.name).sort();
+  const registered = Object.values(CAPABILITY_REGISTRY)
+    .filter((definition) => definition.availability === "MODEL_TOOL")
+    .map((definition) => definition.toolName)
+    .sort();
+  assert.deepEqual(described, registered);
+  assert.deepEqual(catalog.external.map((row) => row.name).sort(), ["searchDomains", "searchPartnerOffers"]);
+  for (const row of catalog.available.filter((item) => item.name.startsWith("prepare")))
+    assert.equal(row.requiresConfirmation, true, `${row.name} is described as needing confirmation`);
+  assert.ok(catalog.market.currency.length > 0);
+});
+
 after(async () => {
   server.close();
   await pool.end();
