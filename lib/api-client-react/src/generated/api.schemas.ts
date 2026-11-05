@@ -2202,6 +2202,7 @@ export type AiUiBlockPayloadSurface = typeof AiUiBlockPayloadSurface[keyof typeo
 
 export const AiUiBlockPayloadSurface = {
   CONNECT_RESULTS: 'CONNECT_RESULTS',
+  CAPABILITIES: 'CAPABILITIES',
   CART: 'CART',
   CHECKOUT: 'CHECKOUT',
   AUTH: 'AUTH',
