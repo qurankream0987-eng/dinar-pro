@@ -5069,6 +5069,7 @@ export type ConnectIntegrationRegistrationInputReviewedToolsItem = {
   /** @pattern ^[a-f0-9]{64}$ */
   inputSchemaSha256: string;
   readOnly: true;
+  capability: 'CATALOG_READ';
 };
 
 export interface ConnectIntegrationRegistrationInput {

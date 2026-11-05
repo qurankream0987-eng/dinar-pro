@@ -13,6 +13,9 @@ export const CONNECT_CAPABILITIES = [
   "EXTERNAL_REFERRAL",
   "TRANSACTION_REPORT",
 ] as const;
+export const CONNECT_MCP_CATALOG_TOOL = "catalog.read_snapshot" as const;
+export const CONNECT_MCP_CATALOG_INPUT_SCHEMA = Object.freeze({ additionalProperties: false, properties: Object.freeze({}), type: "object" });
+export const CONNECT_MCP_CATALOG_INPUT_SHA256 = "99334726611ccf58a148b0814696bfa6fe08c1b2d027e946beccf5a74331c9aa" as const;
 export const ConnectOAuthConfiguration = z.object({
   authorizationEndpoint: z.string().url().max(500), tokenEndpoint: z.string().url().max(500),
   clientId: z.string().regex(/^[A-Za-z0-9._~-]{1,200}$/), scopes: z.array(z.literal("catalog.read")).length(1),
@@ -38,6 +41,7 @@ export const ConnectIntegrationInput = z
             name: z.string().regex(/^[A-Za-z][A-Za-z0-9_.-]{0,79}$/),
             inputSchemaSha256: z.string().regex(/^[a-f0-9]{64}$/),
             readOnly: z.literal(true),
+            capability: z.literal("CATALOG_READ"),
           })
           .strict(),
       )
@@ -47,7 +51,10 @@ export const ConnectIntegrationInput = z
   .strict().superRefine((input, ctx) => {
     if (input.kind === "OAUTH" && (!input.oauth || !input.endpointUrl || input.mode !== "SIMULATION_ONLY"))
       ctx.addIssue({ code: "custom", message: "OAuth requires a sandbox public-client configuration and catalog endpoint" });
-    if (input.kind !== "OAUTH" && input.oauth)
+    if (input.kind === "MCP" && (input.mode !== "SIMULATION_ONLY" || input.reviewedTools?.length !== 1 ||
+        input.reviewedTools[0]?.name !== CONNECT_MCP_CATALOG_TOOL || input.reviewedTools[0]?.inputSchemaSha256 !== CONNECT_MCP_CATALOG_INPUT_SHA256))
+      ctx.addIssue({ code: "custom", message: "MCP requires the fixed reviewed read-only catalog contract" });
+    if (!["OAUTH", "MCP"].includes(input.kind) && input.oauth)
       ctx.addIssue({ code: "custom", message: "OAuth configuration belongs only to OAuth integrations" });
   });
 export const ConnectReviewInput = z

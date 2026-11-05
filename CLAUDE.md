@@ -13,7 +13,7 @@ negotiate in chat, orders reserve stock, payment is SIMULATION_ONLY. pnpm monore
   from model output.
 - `artifacts/api-server/src/lib/` — domain services: `negotiations.ts`, `commerce.ts`,
   `order-terminal-accounting.ts`, `payments/service.ts`, `auth.ts`, `auth-rate-limiter.ts` (DB-backed).
-- `lib/db/src/schema/` — schema; `lib/db/drizzle/` — the 49 checked-in migrations (release authority).
+- `lib/db/src/schema/` — schema; `lib/db/drizzle/` — checked-in SQL migrations; `release-manifest.json` is the release authority.
 - `lib/api-spec/openapi.yaml` → `lib/api-zod`, `lib/api-client-react` (generated; run codegen, never hand-edit).
 - `artifacts/dinar/` — web app. `threat_model.md` — trust boundaries.
 
@@ -38,7 +38,8 @@ negotiate in chat, orders reserve stock, payment is SIMULATION_ONLY. pnpm monore
   `BDINAR_DISPOSABLE_ACCEPTANCE_DB=1`, a loopback URL and a name matching `dinar_(test|acceptance|wave<n>|migration)_*`.
 - No live AI calls (`test/run.mjs` strips provider keys and sets `BDINAR_BLOCK_MODEL_CALLS=1`), no real payments.
 - Do not push or merge without the owner's explicit approval; use the owner-assigned isolated
-  branch (for this handoff: `replit/dinar-next-complete-development`).
+  branch (current owner assignment: `codex/dinar-next-unified-development`; see
+  `docs/dinar-next/OWNER_GITHUB_PUBLICATION_AUTHORIZATION.md`).
 
 ## Running tests
 

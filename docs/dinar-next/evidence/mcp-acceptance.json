@@ -1,0 +1,48 @@
+{
+  "parentPublishedSha": "ed4a6e56c4b0c56c8b157ca4eb635758b6d11472",
+  "implementationSource": "Commit containing CONNECT_MCP_CHECKPOINT.md; subsequent unchanged generated-output verification recorded separately",
+  "postgres18": {
+    "connectPartners": 21,
+    "mcpProtocol": 6,
+    "structuredCatalog": 4,
+    "network": 4,
+    "unchangedAiAuthority": 6,
+    "outboundAttempts": 0
+  },
+  "postgres16": {
+    "connectPartners": 21,
+    "mcpProtocol": 6,
+    "structuredCatalog": 4,
+    "network": 4,
+    "unchangedAiAuthority": 6,
+    "outboundAttempts": 0
+  },
+  "browser": {
+    "widths": [
+      320,
+      390,
+      1280
+    ],
+    "pageErrors": [],
+    "consoleErrors": [],
+    "externalRequests": [],
+    "teamConfirmedThroughUi": true,
+    "staffReadOnly": true,
+    "mcpReviewMetadataVisible": true,
+    "defaultTracking": false,
+    "consentedTracking": true,
+    "opener": null,
+    "cartFlights": 0,
+    "withdrawn": true,
+    "oauthPopupOpener": null,
+    "oauthConsentLabel": "الموافقة على قراءة الكتالوج فقط",
+    "oauthAuthorizedThroughUi": true,
+    "oauthDisconnectedThroughUi": true,
+    "catalogSyncedThroughUi": true,
+    "mcpSyncedThroughUi": true,
+    "siteLifecycleThroughUi": true
+  },
+  "mode": "ISOLATED_SYNTHETIC_PROVIDER",
+  "liveProviderAcceptance": "BLOCKED",
+  "githubApi": "BLOCKED_FORBIDDEN"
+}

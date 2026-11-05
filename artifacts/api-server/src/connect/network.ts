@@ -196,9 +196,11 @@ export class ConnectNetwork {
     raw: string,
     hosts: readonly string[],
     options: {
-      method?: "GET" | "POST";
+      method?: "GET" | "POST" | "DELETE";
       body?: string;
       headers?: Record<string, string>;
+      allowEmptyResponse?: boolean;
+      endMcpSession?: boolean;
     } = {},
   ) {
     const url = new URL(validateExternalUrl(raw, hosts, ["cursor", "limit"]));
@@ -206,7 +208,7 @@ export class ConnectNetwork {
     const controller = new AbortController();
     for (const [key, value] of Object.entries(options.headers ?? {}))
       if (
-        !["authorization", "accept", "content-type", "user-agent"].includes(
+        !["authorization", "accept", "content-type", "user-agent", "mcp-session-id", "mcp-protocol-version"].includes(
           key.toLowerCase(),
         ) ||
         /[\r\n]/.test(value)
@@ -244,6 +246,10 @@ export class ConnectNetwork {
           "PROVIDER_RATE_LIMITED",
           "وصل المزوّد إلى حد الطلبات؛ حاول لاحقًا",
         );
+      if (options.endMcpSession && options.method === "DELETE" && [200, 202, 204, 404, 405].includes(response.status)) {
+        void response.body?.cancel().catch(() => undefined);
+        return { status: response.status, text: "", contentType: response.headers.get("content-type") ?? "", headers: response.headers };
+      }
       if (!response.ok)
         throw connectError(
           502,
@@ -251,6 +257,8 @@ export class ConnectNetwork {
           "لم يؤكد المزوّد نتيجة صالحة",
         );
       const reader = response.body?.getReader();
+      if (!reader && options.allowEmptyResponse && response.status === 202)
+        return { status: response.status, text: "", contentType: response.headers.get("content-type") ?? "", headers: response.headers };
       if (!reader)
         throw connectError(502, "PROVIDER_INVALID_RESPONSE", "رد المزوّد فارغ");
       let bytes = 0;

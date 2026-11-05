@@ -13,6 +13,12 @@ type ReviewItem = {
   siteStatus?: string;
   mode?: string;
   capabilities?: string[];
+  endpointUrl?: string | null;
+  config?: {
+    allowedPathPrefixes?: string[];
+    reviewedTools?: { name: string; inputSchemaSha256: string; readOnly: boolean; capability: string }[];
+    oauth?: { authorizationEndpoint: string; tokenEndpoint: string; clientId: string; scopes: string[] };
+  };
 };
 export default function AdminConnect() {
   const [selectedPartnerId, setSelectedPartnerId] = useState<string | null>(
@@ -98,6 +104,9 @@ export default function AdminConnect() {
                   {item.capabilities.join("، ")} — {item.mode}
                 </p>
               )}
+              {item.endpointUrl && <dl className="space-y-1"><dt>المصدر الذي سيقرأه DINAR</dt><dd dir="ltr" className="break-all">{item.endpointUrl}</dd><dt>مسارات الإحالة المقترحة</dt><dd className="break-all">{item.config?.allowedPathPrefixes?.join("، ")}</dd></dl>}
+              {item.config?.reviewedTools?.map(tool => <div key={tool.name} className="space-y-1 rounded-lg border p-2"><p>عملية MCP المقترحة: <code className="break-all">{tool.name}</code></p><p>{tool.capability} — {tool.readOnly ? "قراءة فقط" : "غير معتمدة للقراءة"}</p><p>بصمة مخطط المدخلات: <code dir="ltr" className="block break-all">{tool.inputSchemaSha256}</code></p><p>يتطلب الاعتماد مراجعة المصدر والعقد؛ تلميحات المزوّد وحدها لا تمنح صلاحية.</p></div>)}
+              {item.config?.oauth && <dl className="space-y-1 rounded-lg border p-2"><dt>تفويض الحساب المقترح — نطاقات القراءة</dt><dd>{item.config.oauth.scopes.join("، ")}</dd><dt>العميل العام</dt><dd dir="ltr" className="break-all">{item.config.oauth.clientId}</dd><dt>عنوان التفويض</dt><dd dir="ltr" className="break-all">{item.config.oauth.authorizationEndpoint}</dd><dt>عنوان تبادل الرمز</dt><dd dir="ltr" className="break-all">{item.config.oauth.tokenEndpoint}</dd></dl>}
               <div className="flex flex-wrap gap-2">
                 {kind === "partners" && (
                   <Button

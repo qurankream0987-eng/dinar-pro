@@ -8339,7 +8339,7 @@ export const CompleteConnectOAuthResponse = zod.void()
 
 
 /**
- * OWNER only. Explicitly confirmed single-batch structured JSON FEED/API pull from the persisted approved endpoint. No caller URL, credential or redirect. Existing ingestion rechecks source revision and revocation after network completion. Native pulls require approved pinned egress.
+ * OWNER only. Explicitly confirmed FEED/API/OAuth JSON batch or reviewed MCP catalog.read_snapshot from the persisted approved endpoint. MCP protocol/tool/input-schema are pinned; provider prompts and arbitrary tools are never adopted. No caller URL, credential or redirect. Existing ingestion rechecks revision, revocation and any OAuth grant after network completion. Native pulls require approved pinned egress.
  */
 export const SyncConnectCatalogParams = zod.object({
   "id": zod.uuid()
@@ -8506,7 +8506,8 @@ export const CreateConnectIntegrationBody = zod.object({
   "reviewedTools": zod.array(zod.object({
   "name": zod.string().regex(createConnectIntegrationBodyReviewedToolsItemNameRegExp),
   "inputSchemaSha256": zod.string().regex(createConnectIntegrationBodyReviewedToolsItemInputSchemaSha256RegExp),
-  "readOnly": zod.literal(true)
+  "readOnly": zod.literal(true),
+  "capability": zod.literal("CATALOG_READ")
 })).max(createConnectIntegrationBodyReviewedToolsMax).optional()
 })
 

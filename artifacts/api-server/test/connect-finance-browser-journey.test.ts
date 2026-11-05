@@ -7,6 +7,7 @@ import { readFile, unlink } from "node:fs/promises";
 import { db, pool, users, businessProfiles, businessOperatingProfiles, businessMemberships } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import app from "../src/app";
+import { CONNECT_MCP_CATALOG_TOOL, CONNECT_MCP_CATALOG_INPUT_SHA256, CONNECT_MCP_CATALOG_INPUT_SCHEMA } from "@workspace/api-zod/connect-platform";
 import { ConnectNetwork } from "../src/connect/network";
 import { startDinarBrowserTestWeb } from "./browser-test-web-server";
 import { requireSafeReplitDevelopmentDatabase } from "./safe-development-database";
@@ -190,6 +191,25 @@ await test("real partner agreement acceptance and opt-in/withdrawal work through
     const response = await feedTransport.request(request.url, ["browser.catalog.partner.example"]);
     return new Response(response.text, { status: response.status, headers: response.headers });
   }});
+  const mcpIntegration = (await call(`/connect/partners/${partner.id}/integrations`, owner, {
+    siteId: site.id, kind: "MCP", name: "مصدر MCP متصفح", endpointUrl: "https://browser.catalog.partner.example/mcp", mode: "SIMULATION_ONLY",
+    capabilities: ["CATALOG_READ", "CATALOG_IMPORT"], allowedPathPrefixes: ["/products/"],
+    reviewedTools: [{ name: CONNECT_MCP_CATALOG_TOOL, inputSchemaSha256: CONNECT_MCP_CATALOG_INPUT_SHA256, readOnly: true, capability: "CATALOG_READ" }],
+  })).data;
+  await call(`/admin/connect/integrations/${mcpIntegration.id}/review`, admin, { decision: "APPROVE", expectedRevision: mcpIntegration.revision, reason: "Reviewed fixed MCP snapshot and schema digest" });
+  const previousTransport = app.locals.connectNetwork;
+  app.locals.connectNetwork = new ConnectNetwork({ dns: app.locals.connectDns, transport: async request => {
+    if (request.url.endsWith("/mcp")) {
+      const rpc = JSON.parse(await request.text()); assert.equal(request.method, "POST");
+      if (rpc.method === "initialize") return Response.json({ jsonrpc: "2.0", id: rpc.id, result: { protocolVersion: "2025-06-18", capabilities: { tools: {} }, serverInfo: { name: "synthetic-mcp", version: "1" } } });
+      if (rpc.method === "notifications/initialized") return new Response(null, { status: 202 });
+      if (rpc.method === "tools/list") return Response.json({ jsonrpc: "2.0", id: rpc.id, result: { tools: [{ name: CONNECT_MCP_CATALOG_TOOL, inputSchema: CONNECT_MCP_CATALOG_INPUT_SCHEMA, annotations: { readOnlyHint: true, destructiveHint: false } }] } });
+      assert.equal(rpc.method, "tools/call"); assert.deepEqual(rpc.params, { name: CONNECT_MCP_CATALOG_TOOL, arguments: {} });
+      return Response.json({ jsonrpc: "2.0", id: rpc.id, result: { content: [], structuredContent: { batchId: "mcp-browser-1", items: [{ externalId: "mcp-browser-only", kind: "SERVICE", title: "خدمة MCP متصفح", description: "", categoryId: "other", price: null, availability: "UNKNOWN", targetPath: "/products/mcp-browser-only", sourceVersion: 1, sourceCheckedAt: new Date().toISOString(), attributes: [] }] } } });
+    }
+    const response = await previousTransport.request(request.url, ["browser.catalog.partner.example"], { method: request.method as "GET" | "POST", headers: Object.fromEntries(request.headers), ...(request.method === "POST" ? { body: await request.text() } : {}) });
+    return new Response(response.text, { status: response.status, headers: response.headers });
+  }});
   const agreement = (
     await call(`/admin/connect/partners/${partner.id}/agreements`, admin, {
       mode: "SIMULATION_ONLY",
@@ -234,6 +254,7 @@ await test("real partner agreement acceptance and opt-in/withdrawal work through
           ...browserEnvironment,
           CONNECT_WEB_BASE: web.baseUrl,
           CONNECT_OWNER_COOKIE: owner.cookie,
+          CONNECT_ADMIN_COOKIE: admin.cookie,
           CONNECT_BUYER_COOKIE: buyer.cookie,
           CONNECT_STAFF_COOKIE: staff.cookie,
           CONNECT_DELEGATION_ID: delegation.id,
@@ -255,6 +276,9 @@ await test("real partner agreement acceptance and opt-in/withdrawal work through
     assert.equal(report.teamConfirmedThroughUi, true);
     assert.equal(report.siteLifecycleThroughUi, true);
     assert.equal(report.catalogSyncedThroughUi, true);
+    assert.equal(report.mcpSyncedThroughUi, true);
+    assert.equal(report.mcpReviewMetadataVisible, true);
+    assert.equal((await pool.query("select count(*)::int n from connect_offers where integration_id=$1 and external_id='mcp-browser-only'", [mcpIntegration.id])).rows[0].n, 1);
     assert.equal(report.oauthAuthorizedThroughUi, true);
     assert.equal(report.oauthDisconnectedThroughUi, true);
     assert.equal(report.oauthPopupOpener, null);

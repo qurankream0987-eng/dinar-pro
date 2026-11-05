@@ -28,7 +28,7 @@ function callbackUri() {
 }
 function sourceIdentity(ready: Awaited<ReturnType<typeof readyConnectIntegration>>) {
   const config = ConnectOAuthConfiguration.safeParse(ready.integration.config.oauth);
-  if (ready.integration.kind !== "OAUTH" || ready.integration.mode !== "SIMULATION_ONLY" || !ready.integration.endpointUrl || !config.success ||
+  if (!["OAUTH", "MCP"].includes(ready.integration.kind) || ready.integration.mode !== "SIMULATION_ONLY" || !ready.integration.endpointUrl || !config.success ||
       !ready.integration.capabilities.includes("CATALOG_READ") || !ready.integration.capabilities.includes("CATALOG_IMPORT"))
     throw connectError(409, "OAUTH_NOT_CONFIGURED", "يلزم ربط OAuth عام للقراءة فقط تمت مراجعته");
   const oauth = { ...config.data, authorizationEndpoint: validateExternalUrl(config.data.authorizationEndpoint, [ready.site.hostname]), tokenEndpoint: validateExternalUrl(config.data.tokenEndpoint, [ready.site.hostname]) };
@@ -138,7 +138,7 @@ export async function disconnectConnectOAuth(actorId: string, market: ConnectMar
   return db.transaction(async tx => {
     const { access } = await lockOwnedConnectIntegration(tx, actorId, market, integrationId);
     const [integration] = await tx.select().from(connectIntegrations).where(eq(connectIntegrations.id, integrationId)).for("update");
-    if (!integration || integration.kind !== "OAUTH" || integration.revision !== input.expectedRevision) throw connectError(409, "STALE_INTEGRATION", "تغيرت نسخة الربط");
+    if (!integration || !["OAUTH", "MCP"].includes(integration.kind) || integration.revision !== input.expectedRevision) throw connectError(409, "STALE_INTEGRATION", "تغيرت نسخة الربط");
     await retireConnectSecrets(tx, integrationId);
     await connectAudit(tx, access.partner.id, actorId, "OWNER", "OAUTH_LOCALLY_DISCONNECTED", { integrationId });
     return { disconnected: true, providerAuthorizationRevoked: false };

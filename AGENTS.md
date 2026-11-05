@@ -7,6 +7,16 @@ Before any change, read in this order, completely:
    commands to execute in order, and the evidence required.
 3. `docs/qoder/GUARDRAILS.md` — what must never be broken. Violations are reverted at review.
 
-Base branch: `claude/02-sc-acceptance` (not `main`). One branch per task: `qoder/<NN>-<topic>`.
-Never push to `main`, never merge, never force-push, never deploy, never call a paid model or a
-real payment provider, never connect to a non-loopback database.
+Current owner authority: `docs/dinar-next/OWNER_GITHUB_PUBLICATION_AUTHORIZATION.md`.
+It supersedes historical branch/push instructions in the Qoder pack for this mission.
+
+Reference: fetch and verify `replit/dinar-next-six-wave-unification`. Preserve its original
+57 reviewed migrations and contributor history; new schema changes are additive reviewed SQL.
+Development branch: `codex/dinar-next-unified-development` in the isolated worktree.
+
+The owner authorizes normal pushes only to that exact Codex branch and a Draft PR targeting the
+verified Replit integration. Never push to main, modify Replit's branch, force-push, rewrite
+contributor history, merge or deploy. No paid model calls, real payments, production/provider
+credentials from another service or non-loopback databases. Preserve uncommitted work and the
+original checkout. Original Conversation V2 recovery remains blocked until its task/bundle is
+available; never fabricate its commit identities.

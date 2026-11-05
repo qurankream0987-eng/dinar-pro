@@ -20067,7 +20067,7 @@ export const getSyncConnectCatalogUrl = (id: string,) => {
 }
 
 /**
- * OWNER only. Explicitly confirmed single-batch structured JSON FEED/API pull from the persisted approved endpoint. No caller URL, credential or redirect. Existing ingestion rechecks source revision and revocation after network completion. Native pulls require approved pinned egress.
+ * OWNER only. Explicitly confirmed FEED/API/OAuth JSON batch or reviewed MCP catalog.read_snapshot from the persisted approved endpoint. MCP protocol/tool/input-schema are pinned; provider prompts and arbitrary tools are never adopted. No caller URL, credential or redirect. Existing ingestion rechecks revision, revocation and any OAuth grant after network completion. Native pulls require approved pinned egress.
  */
 export const syncConnectCatalog = async (id: string,
     connectCatalogSyncRequest: ConnectCatalogSyncRequest, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
