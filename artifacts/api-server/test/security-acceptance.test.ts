@@ -592,7 +592,9 @@ function listingBody(title: string, price: string, quantity: number) {
     description: `اختبار أمني معزول ${runId}`,
     category: "أخرى",
     categoryId: "other",
-    area: `منطقة اختبار ${runId}`,
+    // A random hex identifier can look like a precise address to the real
+    // location-privacy guard. Keep this non-adversarial public area digit-free.
+    area: `منطقة اختبار ${xssMarker}`,
     city: "الرياض",
     attributes: {},
     unitPrice: price,
