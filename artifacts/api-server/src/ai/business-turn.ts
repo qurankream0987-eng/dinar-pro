@@ -83,6 +83,10 @@ const SETUP_INTENT = [
   /^(?:هذا|هذه)\s+نشاطي|^(?:نشاطي التجاري|حسابي التجاري|متجري|مطعمي)$/u,
 ];
 
+const OWNERSHIP_STATEMENT = 2;
+const ADVISORY_OR_COMPOUND =
+  /(?:كيف|ما\s*(?:ا|أ)?عرف|من\s*وين|من\s*اين|من\s*أين|وش|ايش|إيش|شو|اقترح|ساعدني|تاكد|تأكد|ابحث|دور\s*لي|نصيح|انصحني|اشرح|[؟?])/u;
+
 const RESUME_INTENT = /^(?:ارجع|رجعني|افتح|ورني|اعرض)\s+(?:لي\s+)?(?:نشاطي|نشاط|متجري|مطعمي|حسابي التجاري)|^(?:نشاطي|متجري|مطعمي|النشاط)$/u;
 
 const CATALOG_INTENT = /(?:منتجاتي|منتجات النشاط|منتجات المتجر|عروض النشاط|عروضي|قائمه المنتجات|قائمة المنتجات|ورني المنتجات|اعرض المنتجات|اعرض منتجاتي|وش عندي|ايش عندي|شنو عندي)/u;
@@ -1687,7 +1691,11 @@ export async function executeBusinessTurn(input: {
   if (!DECISION.test(text) && !CANCEL.test(text) && lastPrompt?.pendingActionId)
     await supersedeVisibleBusinessReview(input.conversationId, actorId, lastPrompt.pendingActionId);
 
-  const setupIntent = SETUP_INTENT.some((pattern) => has(text, pattern));
+  // «عندي مطعم …» is a registration statement; with a question or another goal
+  // («وما أعرف من وين أبدأ», «اقترح اسمًا وتأكد من العنوان») it is a request the model interprets.
+  const setupIntent = SETUP_INTENT.some((pattern, index) =>
+    has(text, pattern) && (index !== OWNERSHIP_STATEMENT || !ADVISORY_OR_COMPOUND.test(text)),
+  );
   if (setupIntent) {
     return startSetup({ conversationId: input.conversationId, actorId, market: input.market, text: input.message });
   }
