@@ -14,6 +14,7 @@ import {
 import { ConnectReferralDisclosureSchema } from "@workspace/api-zod/connect";
 import {
   ConnectAgreementTerms,
+  ConnectAgreementViewSchema,
   ConnectAgreementAcceptInput,
   type ConnectAgreement,
 } from "@workspace/api-zod/connect-platform";
@@ -42,7 +43,7 @@ function view(
   agreement: typeof connectAgreements.$inferSelect,
   acceptance?: typeof connectAgreementAcceptances.$inferSelect,
 ) {
-  return {
+  return ConnectAgreementViewSchema.parse({
     id: agreement.id,
     partnerId: agreement.partnerId,
     version: agreement.version,
@@ -58,7 +59,7 @@ function view(
           termsDigest: acceptance.termsDigest,
         }
       : null,
-  };
+  });
 }
 export async function proposeConnectAgreement(
   actor: ConnectActor,

@@ -189,6 +189,13 @@ export const ConnectAgreementTerms = z
       ctx.addIssue({ code: "custom", message: "Duplicate category rate" });
   });
 export type ConnectAgreement = z.infer<typeof ConnectAgreementTerms>;
+export const ConnectAgreementViewSchema = z.object({
+ id:z.string().uuid(),partnerId:z.string().uuid(),version:z.number().int().positive(),terms:ConnectAgreementTerms,
+ termsDigest:z.string().regex(/^[a-f0-9]{64}$/),proposedBy:z.string().uuid(),createdAt:z.string().datetime(),accepted:z.boolean(),
+ acceptance:z.object({acceptedBy:z.string().uuid(),acceptedAt:z.string().datetime(),termsDigest:z.string().regex(/^[a-f0-9]{64}$/)}).strict().nullable(),
+}).strict().superRefine((row,ctx)=>{if(row.accepted!==Boolean(row.acceptance)||row.acceptance&&row.acceptance.termsDigest!==row.termsDigest)ctx.addIssue({code:"custom",message:"Acceptance must match the exact proposed terms"});});
+export type ConnectAgreementRecord = z.infer<typeof ConnectAgreementViewSchema>;
+
 export const ConnectAgreementAcceptInput = z
   .object({
     expectedDigest: z.string().regex(/^[a-f0-9]{64}$/),

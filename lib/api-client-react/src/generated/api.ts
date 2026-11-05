@@ -76,6 +76,7 @@ import type {
   ConfirmationInput,
   ConnectAgreementAcceptanceInput,
   ConnectAgreementProposalInput,
+  ConnectAgreementView,
   ConnectAttributionWithdrawalInput,
   ConnectCatalogImportInput,
   ConnectCatalogReceipt,
@@ -21473,7 +21474,7 @@ export const getProposeConnectAgreementUrl = (id: string,) => {
  * Access: ADMIN. External commerce only. Approved dedicated bearer credentials authenticate provider evidence; browser cookies never authenticate conversions. Agreements require independent proposal and exact owner acceptance. Consent is explicit and per referral. Financial execution is SIMULATION_ONLY; provider settlement claims never prove real funds. Refund item amounts are cumulative; REFUND amountMinor is their increase since the previous refund. No implicit FX, internal order, payment or marketplace commission.
  */
 export const proposeConnectAgreement = async (id: string,
-    connectAgreementProposalInput: ConnectAgreementProposalInput, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+    connectAgreementProposalInput: ConnectAgreementProposalInput, options?: Parameters<typeof customFetch>[1]): Promise<ConnectAgreementView> => {
 
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
@@ -21489,7 +21490,7 @@ export const proposeConnectAgreement = async (id: string,
     }
     return headers;
   };
-return customFetch<ServerValidatedObject>(getProposeConnectAgreementUrl(id),
+return customFetch<ConnectAgreementView>(getProposeConnectAgreementUrl(id),
   {
     ...options,
     method: 'POST',
@@ -21558,9 +21559,9 @@ export const getListConnectAgreementsUrl = (id: string,) => {
 /**
  * Access: AUTHENTICATED. External commerce only. Approved dedicated bearer credentials authenticate provider evidence; browser cookies never authenticate conversions. Agreements require independent proposal and exact owner acceptance. Consent is explicit and per referral. Financial execution is SIMULATION_ONLY; provider settlement claims never prove real funds. Refund item amounts are cumulative; REFUND amountMinor is their increase since the previous refund. No implicit FX, internal order, payment or marketplace commission.
  */
-export const listConnectAgreements = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject[]> => {
+export const listConnectAgreements = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<ConnectAgreementView[][]> => {
 
-  return customFetch<ServerValidatedObject[]>(getListConnectAgreementsUrl(id),
+  return customFetch<ConnectAgreementView[][]>(getListConnectAgreementsUrl(id),
   {
     ...options,
     method: 'GET'

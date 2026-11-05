@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import {
-  ConnectAgreementTerms,
+  ConnectAgreementViewSchema,
   type ConnectAgreement,
 } from "@workspace/api-zod/connect-platform";
 import { api } from "@/account/Account";
 import { Button } from "@/ui/Button";
-import { minorToDecimal } from "@workspace/global";
+import { ConnectAgreementDetails } from "./ConnectAgreementDetails";
 type Agreement = {
   id: string;
   version: number;
@@ -23,12 +23,7 @@ export function ConnectAgreements({ partnerId }: { partnerId: string }) {
   const load = async () => {
     const rows = await api(`/connect/partners/${partnerId}/agreements`);
     if (!Array.isArray(rows)) throw new Error("تعذر قراءة الاتفاقيات");
-    setAgreements(
-      rows.map((row) => ({
-        ...row,
-        terms: ConnectAgreementTerms.parse(row.terms),
-      })),
-    );
+    setAgreements(rows.map(row => ConnectAgreementViewSchema.parse(row)));
   };
   useEffect(() => {
     setSelected(null);
@@ -81,102 +76,7 @@ export function ConnectAgreements({ partnerId }: { partnerId: string }) {
             النسخة {row.version} —{" "}
             {row.accepted ? "مقبولة" : "بانتظار اختيار المالك"}
           </h3>
-          <dl className="space-y-2 text-sm">
-            <div>
-              <dt>العمولة</dt>
-              <dd>
-                {row.terms.commission.kind === "PERCENTAGE"
-                  ? `${row.terms.commission.basisPoints / 100}%`
-                  : minorToDecimal(
-                      row.terms.commission.amountMinor,
-                      row.terms.currency,
-                    )}{" "}
-                — {row.terms.currency}
-              </dd>
-            </div>
-            <div>
-              <dt>مدة الإسناد</dt>
-              <dd>{row.terms.attributionWindowSeconds} ثانية</dd>
-            </div>
-            <div>
-              <dt>فترة سريان الاتفاقية</dt>
-              <dd>
-                {new Date(row.terms.effectiveFrom).toLocaleString("ar")} —{" "}
-                {row.terms.effectiveUntil
-                  ? new Date(row.terms.effectiveUntil).toLocaleString("ar")
-                  : "دون تاريخ انتهاء محدد"}
-              </dd>
-            </div>
-            <div>
-              <dt>مهلة تأكيد التحويل بعد انتهاء الإسناد</dt>
-              <dd>{row.terms.reportingGraceSeconds} ثانية</dd>
-            </div>
-            <div>
-              <dt>الأحداث المؤهلة</dt>
-              <dd>
-                {row.terms.eligibleEvents
-                  .map(
-                    (event) =>
-                      ({
-                        PURCHASE_COMPLETED: "شراء مكتمل",
-                        BOOKING_CONFIRMED: "حجز مؤكد",
-                        SERVICE_COMPLETED: "خدمة مكتملة",
-                      })[event],
-                  )
-                  .join("، ")}
-              </dd>
-            </div>
-            <div>
-              <dt>قاعدة الحساب</dt>
-              <dd>
-                تُثبّت نسخة الاتفاقية عند الإحالة؛{" "}
-                {row.terms.rounding === "FLOOR"
-                  ? "التقريب إلى وحدة العملة الصغرى الأدنى"
-                  : "التقريب إلى أقرب وحدة عملة صغرى، والنصف إلى الأعلى"}
-                . لا يوجد تحويل عملات تلقائي.
-              </dd>
-            </div>
-            <div>
-              <dt>موعد الاستحقاق</dt>
-              <dd>{row.terms.settlementDueDays} يومًا من الحدث المؤهل</dd>
-            </div>
-            <div>
-              <dt>شروط الدفع</dt>
-              <dd className="whitespace-pre-wrap">{row.terms.paymentTerms}</dd>
-            </div>
-            <div>
-              <dt>الإلغاء والاسترداد</dt>
-              <dd className="whitespace-pre-wrap">
-                {row.terms.cancellationPolicy} —{" "}
-                {row.terms.refundPolicy === "PRO_RATA_ELIGIBLE_BASE"
-                  ? "تخفيض العمولة بحسب الأساس المؤهل المسترد"
-                  : "عكس العمولة كاملة عند أي استرداد"}
-              </dd>
-            </div>
-            <div>
-              <dt>الاستثناءات</dt>
-              <dd className="break-all">
-                المنتجات: {row.terms.excludedProductIds.join("، ") || "لا توجد"}
-                ؛ التصنيفات:{" "}
-                {row.terms.excludedCategoryIds.join("، ") || "لا توجد"}
-              </dd>
-            </div>
-            <div>
-              <dt>النسب الخاصة</dt>
-              <dd>
-                {row.terms.categoryRates
-                  .map(
-                    (rate) => `${rate.categoryId}: ${rate.basisPoints / 100}%`,
-                  )
-                  .join("، ") || "لا توجد"}
-              </dd>
-            </div>
-          </dl>
-          <p className="whitespace-pre-wrap text-sm">{row.terms.termsText}</p>
-          <p className="text-sm">{row.terms.attributionNotice}</p>
-          <p className="text-sm">
-            نسخة إشعار الخصوصية: {row.terms.privacyPolicyVersion}
-          </p>
+          <ConnectAgreementDetails terms={row.terms} />
           {row.accepted ? (
             <p role="status">
               حُفظ دليل القبول في{" "}

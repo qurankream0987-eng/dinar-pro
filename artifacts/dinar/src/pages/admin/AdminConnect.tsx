@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { api } from "@/account/Account";
 import { Button } from "@/ui/Button";
+import { ConnectAgreementProposal } from "@/features/ConnectAgreementProposal";
 import { ConnectDashboard } from "@/features/ConnectDashboard";
 type ReviewItem = {
   id: string;
@@ -137,6 +138,7 @@ export default function AdminConnect() {
           ))}
         </section>
       ))}
+      {selectedPartnerId && <ConnectAgreementProposal key={"agreement-"+selectedPartnerId} partnerId={selectedPartnerId} />}
       {selectedPartnerId && (
         <ConnectDashboard
           key={selectedPartnerId}

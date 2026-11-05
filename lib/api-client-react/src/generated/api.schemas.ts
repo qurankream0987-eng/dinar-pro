@@ -5895,6 +5895,166 @@ export interface ConnectCatalogReceipt {
   observationDigest?: string;
 }
 
+export type ConnectAgreementViewTermsMode = typeof ConnectAgreementViewTermsMode[keyof typeof ConnectAgreementViewTermsMode];
+
+
+export const ConnectAgreementViewTermsMode = {
+  SIMULATION_ONLY: 'SIMULATION_ONLY',
+  LIVE: 'LIVE',
+} as const;
+
+export type ConnectAgreementViewTermsCommission = {
+  kind: 'PERCENTAGE';
+  /**
+     * @minimum 0
+     * @maximum 10000
+     */
+  basisPoints: number;
+} | {
+  kind: 'FIXED';
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  amountMinor: number;
+};
+
+export type ConnectAgreementViewTermsCategoryRatesItem = {
+  /**
+     * @minLength 1
+     * @maxLength 80
+     */
+  categoryId: string;
+  /**
+     * @minimum 0
+     * @maximum 10000
+     */
+  basisPoints: number;
+};
+
+export type ConnectAgreementViewTermsRefundPolicy = typeof ConnectAgreementViewTermsRefundPolicy[keyof typeof ConnectAgreementViewTermsRefundPolicy];
+
+
+export const ConnectAgreementViewTermsRefundPolicy = {
+  PRO_RATA_ELIGIBLE_BASE: 'PRO_RATA_ELIGIBLE_BASE',
+  FULL_REVERSAL_ON_ANY_REFUND: 'FULL_REVERSAL_ON_ANY_REFUND',
+} as const;
+
+export type ConnectAgreementViewTermsRounding = typeof ConnectAgreementViewTermsRounding[keyof typeof ConnectAgreementViewTermsRounding];
+
+
+export const ConnectAgreementViewTermsRounding = {
+  HALF_UP: 'HALF_UP',
+  FLOOR: 'FLOOR',
+} as const;
+
+export type ConnectAgreementViewTermsEligibleEventsItem = typeof ConnectAgreementViewTermsEligibleEventsItem[keyof typeof ConnectAgreementViewTermsEligibleEventsItem];
+
+
+export const ConnectAgreementViewTermsEligibleEventsItem = {
+  PURCHASE_COMPLETED: 'PURCHASE_COMPLETED',
+  BOOKING_CONFIRMED: 'BOOKING_CONFIRMED',
+  SERVICE_COMPLETED: 'SERVICE_COMPLETED',
+} as const;
+
+export type ConnectAgreementViewTerms = {
+  mode: ConnectAgreementViewTermsMode;
+  /** @pattern ^[A-Z]{3}$ */
+  currency: string;
+  commission: ConnectAgreementViewTermsCommission;
+  /** @maxItems 30 */
+  categoryRates: ConnectAgreementViewTermsCategoryRatesItem[];
+  /**
+     * @maxItems 100
+     * @items.pattern ^[A-Za-z0-9][A-Za-z0-9._:-]{0,99}$
+     */
+  excludedProductIds: string[];
+  /**
+     * @maxItems 30
+     * @items.minLength 1
+     * @items.maxLength 80
+     */
+  excludedCategoryIds: string[];
+  attributionPolicy: 'CLICK_SNAPSHOT';
+  /**
+     * @minimum 60
+     * @maximum 31536000
+     */
+  attributionWindowSeconds: number;
+  /**
+     * @minimum 0
+     * @maximum 31536000
+     */
+  reportingGraceSeconds: number;
+  effectiveFrom: string;
+  effectiveUntil: null | string;
+  refundPolicy: ConnectAgreementViewTermsRefundPolicy;
+  rounding: ConnectAgreementViewTermsRounding;
+  /**
+     * @minItems 1
+     * @maxItems 3
+     */
+  eligibleEvents: ConnectAgreementViewTermsEligibleEventsItem[];
+  /**
+     * @minimum 0
+     * @maximum 3650
+     */
+  settlementDueDays: number;
+  /**
+     * @minLength 3
+     * @maxLength 1000
+     */
+  paymentTerms: string;
+  /**
+     * @minLength 3
+     * @maxLength 1000
+     */
+  cancellationPolicy: string;
+  /**
+     * @minLength 10
+     * @maxLength 12000
+     */
+  termsText: string;
+  /**
+     * @minLength 10
+     * @maxLength 700
+     */
+  attributionNotice: string;
+  /**
+     * @minLength 1
+     * @maxLength 80
+     */
+  privacyPolicyVersion: string;
+};
+
+export type ConnectAgreementViewAcceptance = {
+  /** @pattern ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$ */
+  acceptedBy: string;
+  acceptedAt: string;
+  /** @pattern ^[a-f0-9]{64}$ */
+  termsDigest: string;
+} | null;
+
+export interface ConnectAgreementView {
+  /** @pattern ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$ */
+  id: string;
+  /** @pattern ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$ */
+  partnerId: string;
+  /**
+     * @maximum 9007199254740991
+     * @exclusiveMinimum 0
+     */
+  version: number;
+  terms: ConnectAgreementViewTerms;
+  /** @pattern ^[a-f0-9]{64}$ */
+  termsDigest: string;
+  /** @pattern ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$ */
+  proposedBy: string;
+  createdAt: string;
+  accepted: boolean;
+  acceptance: ConnectAgreementViewAcceptance;
+}
+
 export type GetListingsParams = {
 search?: string;
 category?: string;

@@ -1,0 +1,69 @@
+{
+  "date": "2026-11-05",
+  "parent": "6fe95050f99d362702bc74964f3820eecb0677de",
+  "branch": "codex/dinar-next-unified-development",
+  "applicationSourceDigest": "189668ab5870692e1fec9c09867e4fbede7d3730dbed88aef7756f00daf040ec",
+  "sourceFiles": 1760,
+  "migrations": 60,
+  "tests": {
+    "pg18": {
+      "cases": 60,
+      "failed": 0,
+      "outboundAttempts": 0
+    },
+    "pg16": {
+      "sameCasesRepeated": 60,
+      "failed": 0,
+      "outboundAttempts": 0
+    },
+    "browser": {
+      "adminProposal": true,
+      "identicalProposalReusesVersion": true,
+      "noCommissionBeforeVerifiedEvent": true,
+      "independentSimulationFinance": true,
+      "widths": [
+        320,
+        390,
+        1280
+      ],
+      "cartFlights": 0,
+      "pageErrors": [],
+      "consoleErrors": [],
+      "unapprovedExternalRequests": [],
+      "screenshotPrefix": "/tmp/dinar-connect-finance-browser-b3295d46-852b-4bca-8e00-38c8b45648aa.json"
+    }
+  },
+  "ledgerMinorUSD": {
+    "EARNED": "375",
+    "APPROVED": "375",
+    "PAYABLE": "0",
+    "SIMULATED_SETTLED": "750",
+    "RECOVERY_DUE": "375",
+    "actuallyReceived": "0"
+  },
+  "checks": {
+    "typecheck": "PASS",
+    "apiBuild": "PASS",
+    "webBuild": "PASS_WITH_EXISTING_CHUNK_WARNING",
+    "codegenDrift": 0,
+    "codegenFiles": 531,
+    "stagedSecretScan": "PASS"
+  },
+  "blockers": [
+    "GITHUB_API_NETWORK_POLICY",
+    "ORIGINAL_V2_TASK_OR_BUNDLE",
+    "AUTHORIZED_PROVIDER_SANDBOX_CREDENTIALS",
+    "APPROVED_PINNED_EGRESS",
+    "MANUAL_SCREEN_READER_VALIDATION",
+    "EXTERNAL_LEGAL_LAUNCH_DECISIONS"
+  ],
+  "remainingInternalScope": [
+    "diagnostics_and_audit_visibility",
+    "performance_measurements",
+    "comprehensive_project_acceptance"
+  ],
+  "limits": [
+    "Synthetic provider ingress events, not live settlement",
+    "No merge, deploy, production DB/Railway or paid/live service activation"
+  ]
+}

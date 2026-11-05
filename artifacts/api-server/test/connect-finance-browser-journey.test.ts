@@ -219,8 +219,7 @@ await test("real partner agreement acceptance and opt-in/withdrawal work through
     capabilities:["CATALOG_READ","CATALOG_IMPORT","EXTERNAL_REFERRAL"],allowedPathPrefixes:["/products/"],
   })).data;
   await call(`/admin/connect/integrations/${websiteIntegration.id}/review`,admin,{decision:"APPROVE",expectedRevision:websiteIntegration.revision,reason:"Reviewed one HTML page and explicit category binding"});
-  const agreement = (
-    await call(`/admin/connect/partners/${partner.id}/agreements`, admin, {
+  const agreementTerms = {
       mode: "SIMULATION_ONLY",
       currency: "USD",
       commission: { kind: "PERCENTAGE", basisPoints: 750 },
@@ -242,8 +241,7 @@ await test("real partner agreement acceptance and opt-in/withdrawal work through
       attributionNotice:
         "يُرسل معرّف إحالة مبهم فقط بعد اختيارك؛ لا تُرسل محادثتك أو هوية حسابك.",
       privacyPolicyVersion: "connect-browser-synthetic-1",
-    })
-  ).data;
+  };
   const ledgerBefore = (
     await pool.query("select count(*)::int n from connect_commission_ledger")
   ).rows[0].n;
@@ -268,6 +266,9 @@ await test("real partner agreement acceptance and opt-in/withdrawal work through
           CONNECT_STAFF_COOKIE: staff.cookie,
           CONNECT_DELEGATION_ID: delegation.id,
           CONNECT_PARTNER_ID: partner.id,
+          CONNECT_AGREEMENT_TERMS: JSON.stringify(agreementTerms),
+          // Synthetic scoped provider key is read by the Node test driver only, never page JavaScript.
+          CONNECT_FIXTURE_PROVIDER_KEY: credential.key,
           CONNECT_RESULT: resultPath,
         },
         timeout: 180000,
@@ -278,6 +279,9 @@ await test("real partner agreement acceptance and opt-in/withdrawal work through
     console.log("CONNECT_FINANCE_BROWSER", JSON.stringify(report));
     assert.equal(report.failure, undefined, report.failure);
     assert.deepEqual(report.widths, [320, 390, 1280]);
+    assert.equal(report.adminProposedAgreementThroughUi,true);
+    assert.equal(report.proposalIdempotent,true);
+    assert.deepEqual(report.proposedAgreementRequest,agreementTerms);
     assert.equal(report.defaultTracking, false);
     assert.equal(report.consentedTracking, true);
     assert.equal(report.withdrawn, true);
@@ -306,7 +310,7 @@ await test("real partner agreement acceptance and opt-in/withdrawal work through
       (
         await pool.query(
           "select count(*)::int n from connect_agreement_acceptances where agreement_id=$1",
-          [agreement.id],
+          [report.proposedAgreementId],
         )
       ).rows[0].n,
       1,
@@ -320,14 +324,13 @@ await test("real partner agreement acceptance and opt-in/withdrawal work through
       ).rows[0].n,
       1,
     );
-    assert.equal(
-      (
-        await pool.query(
-          "select count(*)::int n from connect_commission_ledger",
-        )
-      ).rows[0].n,
-      ledgerBefore,
-    );
+    assert.equal(report.noCommissionBeforeVerifiedEvent,true);
+    assert.equal(report.adminFinanceThroughUi,true);
+    assert.ok((await pool.query("select count(*)::int n from connect_commission_ledger")).rows[0].n>ledgerBefore);
+    const financial=(await pool.query("select id,state,mode from connect_transactions where partner_id=$1 and external_id='browser-external-order-1'",[partner.id])).rows[0];
+    assert.ok(financial);assert.equal(financial.state,"SETTLED");assert.equal(financial.mode,"SIMULATION_ONLY");
+    const balances=Object.fromEntries((await pool.query("select bucket,sum(delta_minor)::text total from connect_commission_ledger where transaction_id=$1 group by bucket",[financial.id])).rows.map(row=>[row.bucket,row.total]));
+    assert.equal(balances.EARNED,"375");assert.equal(balances.APPROVED,"375");assert.equal(balances.SIMULATED_SETTLED,"750");assert.equal(balances.RECOVERY_DUE,"375");assert.equal(balances.PAYABLE,"0");
     assert.equal(
       (
         await pool.query(

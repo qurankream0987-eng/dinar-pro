@@ -9013,7 +9013,108 @@ export const ProposeConnectAgreementBody = zod.object({
   "privacyPolicyVersion": zod.string().min(1).max(proposeConnectAgreementBodyPrivacyPolicyVersionMax)
 })
 
-export const ProposeConnectAgreementResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+export const proposeConnectAgreementResponseIdRegExp = new RegExp('^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$');
+export const proposeConnectAgreementResponsePartnerIdRegExp = new RegExp('^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$');
+export const proposeConnectAgreementResponseVersionExclusiveMin = 0;
+export const proposeConnectAgreementResponseVersionMax = 9007199254740991;
+
+export const proposeConnectAgreementResponseTermsCurrencyRegExp = new RegExp('^[A-Z]{3}$');
+export const proposeConnectAgreementResponseTermsCommissionOneBasisPointsMin = 0;
+export const proposeConnectAgreementResponseTermsCommissionOneBasisPointsMax = 10000;
+
+export const proposeConnectAgreementResponseTermsCommissionTwoAmountMinorMin = 0;
+export const proposeConnectAgreementResponseTermsCommissionTwoAmountMinorMax = 9007199254740991;
+
+export const proposeConnectAgreementResponseTermsCategoryRatesItemCategoryIdMax = 80;
+
+export const proposeConnectAgreementResponseTermsCategoryRatesItemBasisPointsMin = 0;
+export const proposeConnectAgreementResponseTermsCategoryRatesItemBasisPointsMax = 10000;
+
+export const proposeConnectAgreementResponseTermsCategoryRatesMax = 30;
+
+export const proposeConnectAgreementResponseTermsExcludedProductIdsItemRegExp = new RegExp('^[A-Za-z0-9][A-Za-z0-9._:-]{0,99}$');
+export const proposeConnectAgreementResponseTermsExcludedProductIdsMax = 100;
+
+export const proposeConnectAgreementResponseTermsExcludedCategoryIdsItemMax = 80;
+
+export const proposeConnectAgreementResponseTermsExcludedCategoryIdsMax = 30;
+
+export const proposeConnectAgreementResponseTermsAttributionWindowSecondsMin = 60;
+export const proposeConnectAgreementResponseTermsAttributionWindowSecondsMax = 31536000;
+
+export const proposeConnectAgreementResponseTermsReportingGraceSecondsMin = 0;
+export const proposeConnectAgreementResponseTermsReportingGraceSecondsMax = 31536000;
+
+export const proposeConnectAgreementResponseTermsEligibleEventsMax = 3;
+
+export const proposeConnectAgreementResponseTermsSettlementDueDaysMin = 0;
+export const proposeConnectAgreementResponseTermsSettlementDueDaysMax = 3650;
+
+export const proposeConnectAgreementResponseTermsPaymentTermsMin = 3;
+export const proposeConnectAgreementResponseTermsPaymentTermsMax = 1000;
+
+export const proposeConnectAgreementResponseTermsCancellationPolicyMin = 3;
+export const proposeConnectAgreementResponseTermsCancellationPolicyMax = 1000;
+
+export const proposeConnectAgreementResponseTermsTermsTextMin = 10;
+export const proposeConnectAgreementResponseTermsTermsTextMax = 12000;
+
+export const proposeConnectAgreementResponseTermsAttributionNoticeMin = 10;
+export const proposeConnectAgreementResponseTermsAttributionNoticeMax = 700;
+
+export const proposeConnectAgreementResponseTermsPrivacyPolicyVersionMax = 80;
+
+export const proposeConnectAgreementResponseTermsDigestRegExp = new RegExp('^[a-f0-9]{64}$');
+export const proposeConnectAgreementResponseProposedByRegExp = new RegExp('^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$');
+export const proposeConnectAgreementResponseAcceptanceOneAcceptedByRegExp = new RegExp('^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$');
+export const proposeConnectAgreementResponseAcceptanceOneTermsDigestRegExp = new RegExp('^[a-f0-9]{64}$');
+
+
+export const ProposeConnectAgreementResponse = zod.object({
+  "id": zod.uuid().regex(proposeConnectAgreementResponseIdRegExp),
+  "partnerId": zod.uuid().regex(proposeConnectAgreementResponsePartnerIdRegExp),
+  "version": zod.int().gt(proposeConnectAgreementResponseVersionExclusiveMin).max(proposeConnectAgreementResponseVersionMax),
+  "terms": zod.object({
+  "mode": zod.enum(['SIMULATION_ONLY', 'LIVE']),
+  "currency": zod.string().regex(proposeConnectAgreementResponseTermsCurrencyRegExp),
+  "commission": zod.union([zod.object({
+  "kind": zod.literal("PERCENTAGE"),
+  "basisPoints": zod.int().min(proposeConnectAgreementResponseTermsCommissionOneBasisPointsMin).max(proposeConnectAgreementResponseTermsCommissionOneBasisPointsMax)
+}),zod.object({
+  "kind": zod.literal("FIXED"),
+  "amountMinor": zod.int().min(proposeConnectAgreementResponseTermsCommissionTwoAmountMinorMin).max(proposeConnectAgreementResponseTermsCommissionTwoAmountMinorMax)
+})]),
+  "categoryRates": zod.array(zod.object({
+  "categoryId": zod.string().min(1).max(proposeConnectAgreementResponseTermsCategoryRatesItemCategoryIdMax),
+  "basisPoints": zod.int().min(proposeConnectAgreementResponseTermsCategoryRatesItemBasisPointsMin).max(proposeConnectAgreementResponseTermsCategoryRatesItemBasisPointsMax)
+})).max(proposeConnectAgreementResponseTermsCategoryRatesMax),
+  "excludedProductIds": zod.array(zod.string().regex(proposeConnectAgreementResponseTermsExcludedProductIdsItemRegExp)).max(proposeConnectAgreementResponseTermsExcludedProductIdsMax),
+  "excludedCategoryIds": zod.array(zod.string().min(1).max(proposeConnectAgreementResponseTermsExcludedCategoryIdsItemMax)).max(proposeConnectAgreementResponseTermsExcludedCategoryIdsMax),
+  "attributionPolicy": zod.literal("CLICK_SNAPSHOT"),
+  "attributionWindowSeconds": zod.int().min(proposeConnectAgreementResponseTermsAttributionWindowSecondsMin).max(proposeConnectAgreementResponseTermsAttributionWindowSecondsMax),
+  "reportingGraceSeconds": zod.int().min(proposeConnectAgreementResponseTermsReportingGraceSecondsMin).max(proposeConnectAgreementResponseTermsReportingGraceSecondsMax),
+  "effectiveFrom": zod.coerce.date(),
+  "effectiveUntil": zod.union([zod.null(),zod.coerce.date()]),
+  "refundPolicy": zod.enum(['PRO_RATA_ELIGIBLE_BASE', 'FULL_REVERSAL_ON_ANY_REFUND']),
+  "rounding": zod.enum(['HALF_UP', 'FLOOR']),
+  "eligibleEvents": zod.array(zod.enum(['PURCHASE_COMPLETED', 'BOOKING_CONFIRMED', 'SERVICE_COMPLETED'])).min(1).max(proposeConnectAgreementResponseTermsEligibleEventsMax),
+  "settlementDueDays": zod.int().min(proposeConnectAgreementResponseTermsSettlementDueDaysMin).max(proposeConnectAgreementResponseTermsSettlementDueDaysMax),
+  "paymentTerms": zod.string().min(proposeConnectAgreementResponseTermsPaymentTermsMin).max(proposeConnectAgreementResponseTermsPaymentTermsMax),
+  "cancellationPolicy": zod.string().min(proposeConnectAgreementResponseTermsCancellationPolicyMin).max(proposeConnectAgreementResponseTermsCancellationPolicyMax),
+  "termsText": zod.string().min(proposeConnectAgreementResponseTermsTermsTextMin).max(proposeConnectAgreementResponseTermsTermsTextMax),
+  "attributionNotice": zod.string().min(proposeConnectAgreementResponseTermsAttributionNoticeMin).max(proposeConnectAgreementResponseTermsAttributionNoticeMax),
+  "privacyPolicyVersion": zod.string().min(1).max(proposeConnectAgreementResponseTermsPrivacyPolicyVersionMax)
+}),
+  "termsDigest": zod.string().regex(proposeConnectAgreementResponseTermsDigestRegExp),
+  "proposedBy": zod.uuid().regex(proposeConnectAgreementResponseProposedByRegExp),
+  "createdAt": zod.coerce.date(),
+  "accepted": zod.boolean(),
+  "acceptance": zod.union([zod.object({
+  "acceptedBy": zod.uuid().regex(proposeConnectAgreementResponseAcceptanceOneAcceptedByRegExp),
+  "acceptedAt": zod.coerce.date(),
+  "termsDigest": zod.string().regex(proposeConnectAgreementResponseAcceptanceOneTermsDigestRegExp)
+}),zod.null()])
+})
 
 
 /**
@@ -9023,7 +9124,108 @@ export const ListConnectAgreementsParams = zod.object({
   "id": zod.uuid()
 })
 
-export const ListConnectAgreementsResponseItem = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+export const listConnectAgreementsResponseItemIdRegExp = new RegExp('^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$');
+export const listConnectAgreementsResponseItemPartnerIdRegExp = new RegExp('^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$');
+export const listConnectAgreementsResponseItemVersionExclusiveMin = 0;
+export const listConnectAgreementsResponseItemVersionMax = 9007199254740991;
+
+export const listConnectAgreementsResponseItemTermsCurrencyRegExp = new RegExp('^[A-Z]{3}$');
+export const listConnectAgreementsResponseItemTermsCommissionOneBasisPointsMin = 0;
+export const listConnectAgreementsResponseItemTermsCommissionOneBasisPointsMax = 10000;
+
+export const listConnectAgreementsResponseItemTermsCommissionTwoAmountMinorMin = 0;
+export const listConnectAgreementsResponseItemTermsCommissionTwoAmountMinorMax = 9007199254740991;
+
+export const listConnectAgreementsResponseItemTermsCategoryRatesItemCategoryIdMax = 80;
+
+export const listConnectAgreementsResponseItemTermsCategoryRatesItemBasisPointsMin = 0;
+export const listConnectAgreementsResponseItemTermsCategoryRatesItemBasisPointsMax = 10000;
+
+export const listConnectAgreementsResponseItemTermsCategoryRatesMax = 30;
+
+export const listConnectAgreementsResponseItemTermsExcludedProductIdsItemRegExp = new RegExp('^[A-Za-z0-9][A-Za-z0-9._:-]{0,99}$');
+export const listConnectAgreementsResponseItemTermsExcludedProductIdsMax = 100;
+
+export const listConnectAgreementsResponseItemTermsExcludedCategoryIdsItemMax = 80;
+
+export const listConnectAgreementsResponseItemTermsExcludedCategoryIdsMax = 30;
+
+export const listConnectAgreementsResponseItemTermsAttributionWindowSecondsMin = 60;
+export const listConnectAgreementsResponseItemTermsAttributionWindowSecondsMax = 31536000;
+
+export const listConnectAgreementsResponseItemTermsReportingGraceSecondsMin = 0;
+export const listConnectAgreementsResponseItemTermsReportingGraceSecondsMax = 31536000;
+
+export const listConnectAgreementsResponseItemTermsEligibleEventsMax = 3;
+
+export const listConnectAgreementsResponseItemTermsSettlementDueDaysMin = 0;
+export const listConnectAgreementsResponseItemTermsSettlementDueDaysMax = 3650;
+
+export const listConnectAgreementsResponseItemTermsPaymentTermsMin = 3;
+export const listConnectAgreementsResponseItemTermsPaymentTermsMax = 1000;
+
+export const listConnectAgreementsResponseItemTermsCancellationPolicyMin = 3;
+export const listConnectAgreementsResponseItemTermsCancellationPolicyMax = 1000;
+
+export const listConnectAgreementsResponseItemTermsTermsTextMin = 10;
+export const listConnectAgreementsResponseItemTermsTermsTextMax = 12000;
+
+export const listConnectAgreementsResponseItemTermsAttributionNoticeMin = 10;
+export const listConnectAgreementsResponseItemTermsAttributionNoticeMax = 700;
+
+export const listConnectAgreementsResponseItemTermsPrivacyPolicyVersionMax = 80;
+
+export const listConnectAgreementsResponseItemTermsDigestRegExp = new RegExp('^[a-f0-9]{64}$');
+export const listConnectAgreementsResponseItemProposedByRegExp = new RegExp('^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$');
+export const listConnectAgreementsResponseItemAcceptanceOneAcceptedByRegExp = new RegExp('^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$');
+export const listConnectAgreementsResponseItemAcceptanceOneTermsDigestRegExp = new RegExp('^[a-f0-9]{64}$');
+
+
+export const ListConnectAgreementsResponseItem = zod.array(zod.object({
+  "id": zod.uuid().regex(listConnectAgreementsResponseItemIdRegExp),
+  "partnerId": zod.uuid().regex(listConnectAgreementsResponseItemPartnerIdRegExp),
+  "version": zod.int().gt(listConnectAgreementsResponseItemVersionExclusiveMin).max(listConnectAgreementsResponseItemVersionMax),
+  "terms": zod.object({
+  "mode": zod.enum(['SIMULATION_ONLY', 'LIVE']),
+  "currency": zod.string().regex(listConnectAgreementsResponseItemTermsCurrencyRegExp),
+  "commission": zod.union([zod.object({
+  "kind": zod.literal("PERCENTAGE"),
+  "basisPoints": zod.int().min(listConnectAgreementsResponseItemTermsCommissionOneBasisPointsMin).max(listConnectAgreementsResponseItemTermsCommissionOneBasisPointsMax)
+}),zod.object({
+  "kind": zod.literal("FIXED"),
+  "amountMinor": zod.int().min(listConnectAgreementsResponseItemTermsCommissionTwoAmountMinorMin).max(listConnectAgreementsResponseItemTermsCommissionTwoAmountMinorMax)
+})]),
+  "categoryRates": zod.array(zod.object({
+  "categoryId": zod.string().min(1).max(listConnectAgreementsResponseItemTermsCategoryRatesItemCategoryIdMax),
+  "basisPoints": zod.int().min(listConnectAgreementsResponseItemTermsCategoryRatesItemBasisPointsMin).max(listConnectAgreementsResponseItemTermsCategoryRatesItemBasisPointsMax)
+})).max(listConnectAgreementsResponseItemTermsCategoryRatesMax),
+  "excludedProductIds": zod.array(zod.string().regex(listConnectAgreementsResponseItemTermsExcludedProductIdsItemRegExp)).max(listConnectAgreementsResponseItemTermsExcludedProductIdsMax),
+  "excludedCategoryIds": zod.array(zod.string().min(1).max(listConnectAgreementsResponseItemTermsExcludedCategoryIdsItemMax)).max(listConnectAgreementsResponseItemTermsExcludedCategoryIdsMax),
+  "attributionPolicy": zod.literal("CLICK_SNAPSHOT"),
+  "attributionWindowSeconds": zod.int().min(listConnectAgreementsResponseItemTermsAttributionWindowSecondsMin).max(listConnectAgreementsResponseItemTermsAttributionWindowSecondsMax),
+  "reportingGraceSeconds": zod.int().min(listConnectAgreementsResponseItemTermsReportingGraceSecondsMin).max(listConnectAgreementsResponseItemTermsReportingGraceSecondsMax),
+  "effectiveFrom": zod.coerce.date(),
+  "effectiveUntil": zod.union([zod.null(),zod.coerce.date()]),
+  "refundPolicy": zod.enum(['PRO_RATA_ELIGIBLE_BASE', 'FULL_REVERSAL_ON_ANY_REFUND']),
+  "rounding": zod.enum(['HALF_UP', 'FLOOR']),
+  "eligibleEvents": zod.array(zod.enum(['PURCHASE_COMPLETED', 'BOOKING_CONFIRMED', 'SERVICE_COMPLETED'])).min(1).max(listConnectAgreementsResponseItemTermsEligibleEventsMax),
+  "settlementDueDays": zod.int().min(listConnectAgreementsResponseItemTermsSettlementDueDaysMin).max(listConnectAgreementsResponseItemTermsSettlementDueDaysMax),
+  "paymentTerms": zod.string().min(listConnectAgreementsResponseItemTermsPaymentTermsMin).max(listConnectAgreementsResponseItemTermsPaymentTermsMax),
+  "cancellationPolicy": zod.string().min(listConnectAgreementsResponseItemTermsCancellationPolicyMin).max(listConnectAgreementsResponseItemTermsCancellationPolicyMax),
+  "termsText": zod.string().min(listConnectAgreementsResponseItemTermsTermsTextMin).max(listConnectAgreementsResponseItemTermsTermsTextMax),
+  "attributionNotice": zod.string().min(listConnectAgreementsResponseItemTermsAttributionNoticeMin).max(listConnectAgreementsResponseItemTermsAttributionNoticeMax),
+  "privacyPolicyVersion": zod.string().min(1).max(listConnectAgreementsResponseItemTermsPrivacyPolicyVersionMax)
+}),
+  "termsDigest": zod.string().regex(listConnectAgreementsResponseItemTermsDigestRegExp),
+  "proposedBy": zod.uuid().regex(listConnectAgreementsResponseItemProposedByRegExp),
+  "createdAt": zod.coerce.date(),
+  "accepted": zod.boolean(),
+  "acceptance": zod.union([zod.object({
+  "acceptedBy": zod.uuid().regex(listConnectAgreementsResponseItemAcceptanceOneAcceptedByRegExp),
+  "acceptedAt": zod.coerce.date(),
+  "termsDigest": zod.string().regex(listConnectAgreementsResponseItemAcceptanceOneTermsDigestRegExp)
+}),zod.null()])
+}))
 export const ListConnectAgreementsResponse = zod.array(ListConnectAgreementsResponseItem)
 
 
