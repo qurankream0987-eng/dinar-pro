@@ -8241,6 +8241,104 @@ export const GetConnectReadOnlyCatalogResponse = zod.record(zod.string(), zod.un
 
 
 /**
+ * OWNER only. Independently approved SIMULATION_ONLY public-client PKCE S256 catalog.read authorization. No confidential client, billing/transaction scopes or browser-visible tokens. Disconnect revokes only local use and never claims provider-side revocation.
+ */
+export const StartConnectOAuthParams = zod.object({
+  "id": zod.uuid()
+})
+
+export const startConnectOAuthBodyExpectedRevisionExclusiveMin = 0;
+export const startConnectOAuthBodyExpectedRevisionMax = 9007199254740991;
+
+
+
+export const StartConnectOAuthBody = zod.object({
+  "confirm": zod.literal(true),
+  "expectedRevision": zod.int().gt(startConnectOAuthBodyExpectedRevisionExclusiveMin).max(startConnectOAuthBodyExpectedRevisionMax)
+})
+
+export const StartConnectOAuthResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * OWNER only. Independently approved SIMULATION_ONLY public-client PKCE S256 catalog.read authorization. No confidential client, billing/transaction scopes or browser-visible tokens. Disconnect revokes only local use and never claims provider-side revocation.
+ */
+export const RefreshConnectOAuthParams = zod.object({
+  "id": zod.uuid()
+})
+
+export const refreshConnectOAuthBodyExpectedRevisionExclusiveMin = 0;
+export const refreshConnectOAuthBodyExpectedRevisionMax = 9007199254740991;
+
+
+
+export const RefreshConnectOAuthBody = zod.object({
+  "confirm": zod.literal(true),
+  "expectedRevision": zod.int().gt(refreshConnectOAuthBodyExpectedRevisionExclusiveMin).max(refreshConnectOAuthBodyExpectedRevisionMax)
+})
+
+export const RefreshConnectOAuthResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * OWNER only. Independently approved SIMULATION_ONLY public-client PKCE S256 catalog.read authorization. No confidential client, billing/transaction scopes or browser-visible tokens. Disconnect revokes only local use and never claims provider-side revocation.
+ */
+export const DisconnectConnectOAuthParams = zod.object({
+  "id": zod.uuid()
+})
+
+export const disconnectConnectOAuthBodyExpectedRevisionExclusiveMin = 0;
+export const disconnectConnectOAuthBodyExpectedRevisionMax = 9007199254740991;
+
+
+
+export const DisconnectConnectOAuthBody = zod.object({
+  "confirm": zod.literal(true),
+  "expectedRevision": zod.int().gt(disconnectConnectOAuthBodyExpectedRevisionExclusiveMin).max(disconnectConnectOAuthBodyExpectedRevisionMax)
+})
+
+export const DisconnectConnectOAuthResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * OWNER only. Returns server-verified scope, expiry and refresh availability; never tokens or ciphertext.
+ */
+export const GetConnectOAuthStatusParams = zod.object({
+  "id": zod.uuid()
+})
+
+export const GetConnectOAuthStatusResponse = zod.object({
+  "connected": zod.boolean(),
+  "canRefresh": zod.boolean(),
+  "expiresAt": zod.union([zod.null(),zod.coerce.date()]),
+  "scope": zod.union([zod.literal("catalog.read"),zod.null()])
+})
+
+
+/**
+ * Authenticated owner callback. Hashed expiring one-use state binds owner, integration, approved source revision, callback and PKCE verifier. Code/error query values never enter request logs. Redirects only to the configured DINAR origin; provider errors cannot establish authorization.
+ */
+export const completeConnectOAuthQueryStateMax = 43;
+
+export const completeConnectOAuthQueryCodeMax = 2048;
+
+export const completeConnectOAuthQueryErrorMax = 80;
+
+export const completeConnectOAuthQueryErrorDescriptionMax = 500;
+
+
+
+export const CompleteConnectOAuthQueryParams = zod.object({
+  "state": zod.coerce.string().max(completeConnectOAuthQueryStateMax),
+  "code": zod.coerce.string().max(completeConnectOAuthQueryCodeMax).optional(),
+  "error": zod.coerce.string().max(completeConnectOAuthQueryErrorMax).optional(),
+  "error_description": zod.coerce.string().max(completeConnectOAuthQueryErrorDescriptionMax).optional()
+})
+
+export const CompleteConnectOAuthResponse = zod.void()
+
+
+/**
  * OWNER only. Explicitly confirmed single-batch structured JSON FEED/API pull from the persisted approved endpoint. No caller URL, credential or redirect. Existing ingestion rechecks source revision and revocation after network completion. Native pulls require approved pinned egress.
  */
 export const SyncConnectCatalogParams = zod.object({
@@ -8377,6 +8475,13 @@ export const createConnectIntegrationBodyAllowedPathPrefixesItemMax = 120;
 export const createConnectIntegrationBodyAllowedPathPrefixesMax = 8;
 
 export const createConnectIntegrationBodyReferralParameterRegExp = new RegExp('^[a-z][a-z0-9_]{0,39}$');
+export const createConnectIntegrationBodyOauthAuthorizationEndpointMax = 500;
+
+export const createConnectIntegrationBodyOauthTokenEndpointMax = 500;
+
+export const createConnectIntegrationBodyOauthClientIdRegExp = new RegExp('^[A-Za-z0-9._~-]{1,200}$');
+export const createConnectIntegrationBodyOauthScopesMax = 1;
+
 export const createConnectIntegrationBodyReviewedToolsItemNameRegExp = new RegExp('^[A-Za-z][A-Za-z0-9_.-]{0,79}$');
 export const createConnectIntegrationBodyReviewedToolsItemInputSchemaSha256RegExp = new RegExp('^[a-f0-9]{64}$');
 export const createConnectIntegrationBodyReviewedToolsMax = 10;
@@ -8392,6 +8497,12 @@ export const CreateConnectIntegrationBody = zod.object({
   "mode": zod.enum(['SIMULATION_ONLY', 'LIVE']),
   "allowedPathPrefixes": zod.array(zod.string().min(1).max(createConnectIntegrationBodyAllowedPathPrefixesItemMax)).min(1).max(createConnectIntegrationBodyAllowedPathPrefixesMax),
   "referralParameter": zod.string().regex(createConnectIntegrationBodyReferralParameterRegExp).optional(),
+  "oauth": zod.object({
+  "authorizationEndpoint": zod.url().max(createConnectIntegrationBodyOauthAuthorizationEndpointMax),
+  "tokenEndpoint": zod.url().max(createConnectIntegrationBodyOauthTokenEndpointMax),
+  "clientId": zod.string().regex(createConnectIntegrationBodyOauthClientIdRegExp),
+  "scopes": zod.array(zod.literal("catalog.read")).min(1).max(createConnectIntegrationBodyOauthScopesMax)
+}).optional(),
   "reviewedTools": zod.array(zod.object({
   "name": zod.string().regex(createConnectIntegrationBodyReviewedToolsItemNameRegExp),
   "inputSchemaSha256": zod.string().regex(createConnectIntegrationBodyReviewedToolsItemInputSchemaSha256RegExp),

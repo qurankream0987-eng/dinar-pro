@@ -1,7 +1,7 @@
 import { localObjectStorage } from "./local-object-storage";
 import { test, after } from "node:test";
 import assert from "node:assert/strict";
-import { randomUUID } from "node:crypto";
+import { randomUUID, randomBytes, createHash } from "node:crypto";
 import { db, pool, users,businessOperatingProfiles,connectTeamPermissions } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import app from "../src/app";
@@ -25,9 +25,11 @@ async function call(
   body?: unknown,
   method = body === undefined ? "GET" : "POST",
   key?: string,
+  redirect: RequestRedirect = "follow",
 ) {
   const response = await fetch(base + path, {
     method,
+    redirect,
     headers: {
       "content-type": "application/json",
       ...(actor ? { cookie: actor.cookie } : {}),
@@ -1698,6 +1700,62 @@ await test("approved feed pulls reuse authoritative catalog ingestion and rechec
     finally {release();}
     assert.equal((await pool.query("select count(*)::int n from connect_offers where external_id='never-import-after-revoke'")).rows[0].n,0);
   } finally {delete app.locals.connectNetwork;}
+});
+await test("read-only OAuth PKCE grants are one-use, encrypted, revision-bound and locally disconnectable", async () => {
+ const previousVault=process.env.DINAR_CONNECT_VAULT_KEY,previousOrigin=process.env.APP_ORIGIN;
+ process.env.DINAR_CONNECT_VAULT_KEY=randomBytes(32).toString("base64");process.env.APP_ORIGIN="https://dinar.acceptance.example";
+ try {
+  const created=await call(`/connect/partners/${partner.id}/integrations`,owner,{siteId:site.id,kind:"OAUTH",name:"حساب كتالوج PKCE",endpointUrl:"https://catalog.partner.example/catalog.json",capabilities:["CATALOG_READ","CATALOG_IMPORT"],mode:"SIMULATION_ONLY",allowedPathPrefixes:["/products/"],oauth:{authorizationEndpoint:"https://catalog.partner.example/oauth/authorize",tokenEndpoint:"https://catalog.partner.example/oauth/token",clientId:"local-public-client",scopes:["catalog.read"]}});
+  assert.equal(created.response.status,201,created.text);
+  const approved=await call(`/admin/connect/integrations/${created.data.id}/review`,admin,{decision:"APPROVE",expectedRevision:created.data.revision,reason:"Reviewed public-client read-only PKCE endpoints and exact scope"});assert.equal(approved.response.status,200,approved.text);
+  const command={confirm:true,expectedRevision:approved.data.revision};const oauthPath=`/connect/integrations/${created.data.id}/oauth`;
+  assert.equal((await call(`${oauthPath}/start`,other,command)).response.status,404);
+  const configuredOrigin=process.env.APP_ORIGIN, deploymentMarker=process.env.DINAR_DEPLOYMENT_ENV;
+  process.env.APP_ORIGIN="http://127.0.0.1:55550";process.env.DINAR_DEPLOYMENT_ENV="production";
+  try {assert.equal((await call(`${oauthPath}/start`,owner,command)).response.status,503,"HTTP loopback callback exception is forbidden with any deployment marker");}
+  finally {process.env.APP_ORIGIN=configuredOrigin;if(deploymentMarker===undefined)delete process.env.DINAR_DEPLOYMENT_ENV;else process.env.DINAR_DEPLOYMENT_ENV=deploymentMarker;}
+  const start=await call(`${oauthPath}/start`,owner,command);assert.equal(start.response.status,200,start.text);
+  const authorization=new URL(start.data.authorizationUrl);assert.equal(authorization.origin,"https://catalog.partner.example");assert.equal(authorization.searchParams.get("code_challenge_method"),"S256");assert.equal(authorization.searchParams.get("scope"),"catalog.read");assert.equal(authorization.searchParams.get("redirect_uri"),"https://dinar.acceptance.example/api/connect/oauth/callback");const state=authorization.searchParams.get("state")!;
+  const category=(await pool.query("select category_id from connect_offers limit 1")).rows[0].category_id;let exchanges=0,refreshes=0,reads=0;
+  app.locals.connectNetwork=new ConnectNetwork({dns:app.locals.connectDns,transport:async request=>{
+   if(request.url.endsWith("/oauth/token")){
+    assert.equal(request.method,"POST");const form=new URLSearchParams(await request.text());assert.equal(form.get("client_id"),"local-public-client");
+    if(form.get("grant_type")==="authorization_code"){exchanges++;assert.equal(form.get("code"),"synthetic-code");assert.equal(createHash("sha256").update(form.get("code_verifier")!).digest("base64url"),authorization.searchParams.get("code_challenge"));}
+    else {refreshes++;assert.equal(form.get("grant_type"),"refresh_token");assert.equal(form.get("refresh_token"),"synthetic-refresh-1");}
+    return Response.json({access_token:refreshes?"synthetic-access-2":"synthetic-access-1",refresh_token:refreshes?"synthetic-refresh-2":"synthetic-refresh-1",token_type:"Bearer",expires_in:3600,scope:"catalog.read"});
+   }
+   reads++;assert.equal(request.method,"GET");assert.equal(request.headers.get("authorization"),"Bearer synthetic-access-1");return Response.json({batchId:"oauth-feed-1",items:[{externalId:"oauth-only",kind:"SERVICE",title:"خدمة حساب موثق",description:"",categoryId:category,price:null,availability:"UNKNOWN",targetPath:"/products/oauth-only",sourceVersion:1,sourceCheckedAt:new Date().toISOString(),attributes:[]}]});
+  }});
+  const callback=`/connect/oauth/callback?state=${encodeURIComponent(state)}&code=synthetic-code`;
+  assert.equal((await call(callback,other,undefined,"GET",undefined,"manual")).response.status,404);
+  const callbacks=await Promise.all([call(callback,owner,undefined,"GET",undefined,"manual"),call(callback,owner,undefined,"GET",undefined,"manual")]);assert.equal(callbacks.filter(r=>r.response.status===303).length,1);assert.equal(callbacks.filter(r=>r.response.status===409).length,1);assert.equal(exchanges,1);assert.ok(callbacks.filter(r=>r.response.status===303).every(r=>!r.text.includes("synthetic-access")));
+  const stored=(await pool.query("select ciphertext from connect_secrets where integration_id=$1 and kind='OAUTH_GRANT' and revoked_at is null",[created.data.id])).rows;assert.equal(stored.length,1);assert.ok(!stored[0].ciphertext.includes("synthetic-access"));
+  const sync=await call(`/connect/integrations/${created.data.id}/sync`,owner,command);assert.equal(sync.response.status,200,sync.text);assert.equal(reads,1);
+  const refreshed=await call(`${oauthPath}/refresh`,owner,command);assert.equal(refreshed.response.status,200,refreshed.text);assert.equal(refreshes,1);assert.ok(!refreshed.text.includes("synthetic-"));
+  const status=await call(`${oauthPath}/status`,owner);assert.equal(status.response.status,200,status.text);assert.equal(status.data.connected,true);assert.equal(status.data.canRefresh,true);assert.ok(!status.text.includes("synthetic-"));
+  const configuredVault=process.env.DINAR_CONNECT_VAULT_KEY;delete process.env.DINAR_CONNECT_VAULT_KEY;
+  assert.equal((await call(`${oauthPath}/start`,owner,command)).response.status,503,"missing dedicated vault must fail before changing the existing grant");process.env.DINAR_CONNECT_VAULT_KEY=configuredVault;
+  assert.equal((await call(`${oauthPath}/status`,owner)).data.connected,true);
+  let readEntered!:()=>void,releaseRead!:()=>void;const reading=new Promise<void>(resolve=>{readEntered=resolve;}),readReleased=new Promise<void>(resolve=>{releaseRead=resolve;});
+  app.locals.connectNetwork=new ConnectNetwork({dns:app.locals.connectDns,transport:async request=>{assert.equal(request.headers.get("authorization"),"Bearer synthetic-access-2");readEntered();await readReleased;return Response.json({batchId:"oauth-late-1",items:[{externalId:"oauth-late-disconnected",kind:"SERVICE",title:"لا يستورد بعد الفصل",description:"",categoryId:category,price:null,availability:"UNKNOWN",targetPath:"/products/oauth-late-disconnected",sourceVersion:1,sourceCheckedAt:new Date().toISOString(),attributes:[]}]});}});
+  const lateRead=call(`/connect/integrations/${created.data.id}/sync`,owner,command);
+  await Promise.race([reading,new Promise((_,reject)=>setTimeout(()=>reject(new Error("OAuth read barrier not entered")),2000))]);
+  const disconnected=await call(`${oauthPath}/disconnect`,owner,command);assert.equal(disconnected.response.status,200,disconnected.text);assert.equal(disconnected.data.providerAuthorizationRevoked,false);releaseRead();assert.equal((await lateRead).response.status,409,"disconnect during an authenticated fetch prevents late ingestion");
+  assert.equal((await pool.query("select count(*)::int n from connect_offers where external_id='oauth-late-disconnected'")).rows[0].n,0);
+  assert.equal((await call(`/connect/integrations/${created.data.id}/sync`,owner,command)).response.status,409);
+  assert.equal((await pool.query("select count(*)::int n from connect_secrets where integration_id=$1 and revoked_at is null",[created.data.id])).rows[0].n,0);
+  const excessive=await call(`${oauthPath}/start`,owner,command);assert.equal(excessive.response.status,200,excessive.text);const excessiveState=new URL(excessive.data.authorizationUrl).searchParams.get("state")!;
+  app.locals.connectNetwork=new ConnectNetwork({dns:app.locals.connectDns,transport:async()=>Response.json({access_token:"synthetic-privileged",token_type:"Bearer",expires_in:3600,scope:"catalog.read orders.write"})});
+  const rejectedScope=await call(`/connect/oauth/callback?state=${excessiveState}&code=synthetic-code`,owner,undefined,"GET",undefined,"manual");assert.equal(rejectedScope.response.status,502,rejectedScope.text);assert.ok(!rejectedScope.text.includes("synthetic-privileged"));
+  assert.equal((await call(`/connect/oauth/callback?state=${excessiveState}&code=synthetic-code`,owner,undefined,"GET",undefined,"manual")).response.status,409,"failed exchanges still consume state");
+  const expiring=await call(`${oauthPath}/start`,owner,command);assert.equal(expiring.response.status,200,expiring.text);const expiredState=new URL(expiring.data.authorizationUrl).searchParams.get("state")!;
+  await pool.query("update connect_oauth_states set expires_at=now()-interval '1 second' where state_digest=$1",[createHash("sha256").update(expiredState).digest("hex")]);
+  assert.equal((await call(`/connect/oauth/callback?state=${expiredState}&code=synthetic-code`,owner,undefined,"GET",undefined,"manual")).response.status,409);
+  const declined=await call(`${oauthPath}/start`,owner,command);assert.equal(declined.response.status,200,declined.text);const declinedState=new URL(declined.data.authorizationUrl).searchParams.get("state")!;
+  const deniedCallback=await call(`/connect/oauth/callback?state=${declinedState}&error=access_denied&error_description=synthetic-denial`,owner,undefined,"GET",undefined,"manual");assert.equal(deniedCallback.response.status,303,deniedCallback.text);assert.equal((await call(`${oauthPath}/status`,owner)).data.connected,false);
+  const audit=(await pool.query("select details::text from connect_audit_events where partner_id=$1",[partner.id])).rows.map(row=>row.details).join(" ");assert.ok(!audit.includes("synthetic-access"));assert.ok(!audit.includes(state));
+
+ } finally {delete app.locals.connectNetwork;if(previousVault===undefined)delete process.env.DINAR_CONNECT_VAULT_KEY;else process.env.DINAR_CONNECT_VAULT_KEY=previousVault;if(previousOrigin===undefined)delete process.env.APP_ORIGIN;else process.env.APP_ORIGIN=previousOrigin;}
 });
 after(async () => {
   await new Promise<void>((resolve) => server.close(() => resolve()));

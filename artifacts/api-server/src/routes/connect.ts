@@ -15,6 +15,7 @@ import {
   connectError,
   externalDestination,
 } from "../connect/provider-registry";
+import * as oauth from "../connect/oauth";
 import { syncConnectCatalog } from "../connect/catalog-pull";
 import { ConnectNetwork } from "../connect/network";
 import * as sites from "../connect/sites";
@@ -173,11 +174,25 @@ router.post("/connect/partners/:id/sites", requireAuth, async (req, res) =>
       ),
     ),
 );
-router.post("/connect/integrations/:id/sync", requireAuth, async (req, res) => {
+function connectNetworkFor(req: import("express").Request) {
   const injected = req.app.locals.connectNetwork;
   if (injected) assertConnectTestDependencyInjection();
-  res.set("Cache-Control", "no-store").json(await syncConnectCatalog(req.actor!.id, await marketFor(req), idParam(req.params.id), req.body,
-    injected instanceof ConnectNetwork ? injected : undefined));
+  return injected instanceof ConnectNetwork ? injected : undefined;
+}
+router.get("/connect/integrations/:id/oauth/status", requireAuth, async (req, res) =>
+  res.set("Cache-Control", "no-store").json(await oauth.connectOAuthStatus(req.actor!.id, await marketFor(req), idParam(req.params.id))));
+router.post("/connect/integrations/:id/oauth/start", requireAuth, async (req, res) =>
+  res.set("Cache-Control", "no-store").json(await oauth.startConnectOAuth(req.actor!.id, await marketFor(req), idParam(req.params.id), req.body)));
+router.post("/connect/integrations/:id/oauth/refresh", requireAuth, async (req, res) =>
+  res.set("Cache-Control", "no-store").json(await oauth.refreshConnectOAuth(req.actor!.id, await marketFor(req), idParam(req.params.id), req.body, connectNetworkFor(req))));
+router.post("/connect/integrations/:id/oauth/disconnect", requireAuth, async (req, res) =>
+  res.set("Cache-Control", "no-store").json(await oauth.disconnectConnectOAuth(req.actor!.id, await marketFor(req), idParam(req.params.id), req.body)));
+router.get("/connect/oauth/callback", requireAuth, async (req, res) => {
+  await oauth.completeConnectOAuth(req.actor!.id, await marketFor(req), req.query, connectNetworkFor(req));
+  res.set("Cache-Control", "no-store").set("Referrer-Policy", "no-referrer").redirect(303, new URL("/connect", process.env.APP_ORIGIN!).href);
+});
+router.post("/connect/integrations/:id/sync", requireAuth, async (req, res) => {
+  res.set("Cache-Control", "no-store").json(await syncConnectCatalog(req.actor!.id, await marketFor(req), idParam(req.params.id), req.body, connectNetworkFor(req)));
 });
 router.post("/connect/sites/:id/challenge", requireAuth, async (req, res) =>
   res.set("Cache-Control", "no-store").json(await sites.renewConnectSiteChallenge(req.actor!.id, await marketFor(req), idParam(req.params.id), req.body)));

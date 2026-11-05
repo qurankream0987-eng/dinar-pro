@@ -1,6 +1,6 @@
 import { test, after } from "node:test";
 import assert from "node:assert/strict";
-import { randomUUID } from "node:crypto";
+import { randomUUID, randomBytes } from "node:crypto";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { readFile, unlink } from "node:fs/promises";
@@ -169,6 +169,27 @@ await test("real partner agreement acceptance and opt-in/withdrawal work through
     assert.equal(request.url, "https://browser.catalog.partner.example/catalog.json"); assert.equal(request.method, "GET");
     return Response.json({ batchId: "browser-feed-1", items: [{ externalId: "browser-feed-only", kind: "SERVICE", title: "خدمة تغذية متصفح", description: "مصدر معزول", categoryId: "other", price: null, availability: "UNKNOWN", targetPath: "/products/browser-feed-only", sourceVersion: 1, sourceCheckedAt: new Date().toISOString(), attributes: [] }] });
   }});
+  const oauthIntegration = (await call(`/connect/partners/${partner.id}/integrations`, owner, {
+    siteId: site.id, kind: "OAUTH", name: "حساب قراءة متصفح", endpointUrl: "https://browser.catalog.partner.example/oauth/catalog.json", mode: "SIMULATION_ONLY",
+    capabilities: ["CATALOG_READ", "CATALOG_IMPORT"], allowedPathPrefixes: ["/products/"],
+    oauth: { authorizationEndpoint: "https://browser.catalog.partner.example/oauth/authorize", tokenEndpoint: "https://browser.catalog.partner.example/oauth/token", clientId: "browser-public-client", scopes: ["catalog.read"] },
+  })).data;
+  await call(`/admin/connect/integrations/${oauthIntegration.id}/review`, admin, { decision: "APPROVE", expectedRevision: oauthIntegration.revision, reason: "Reviewed isolated PKCE read-only public client" });
+  const feedTransport = app.locals.connectNetwork;
+  app.locals.connectNetwork = new ConnectNetwork({ dns: app.locals.connectDns, transport: async request => {
+    if (request.url.endsWith("/oauth/token")) {
+      const form = new URLSearchParams(await request.text()); assert.equal(form.get("client_id"), "browser-public-client");
+      assert.ok(["authorization_code", "refresh_token"].includes(form.get("grant_type")!));
+      if (form.get("grant_type") === "authorization_code") { assert.equal(form.get("code"), "browser-synthetic-code"); assert.match(form.get("code_verifier")!, /^[A-Za-z0-9_-]{43,128}$/); }
+      return Response.json({ access_token: "browser-synthetic-access", refresh_token: "browser-synthetic-refresh", token_type: "Bearer", scope: "catalog.read", expires_in: 3600 });
+    }
+    if (request.url.endsWith("/oauth/catalog.json")) {
+      assert.equal(request.headers.get("authorization"), "Bearer browser-synthetic-access");
+      return Response.json({ batchId: "oauth-browser-1", items: [{ externalId: "oauth-browser-only", kind: "SERVICE", title: "خدمة حساب متصفح", description: "", categoryId: "other", price: null, availability: "UNKNOWN", targetPath: "/products/oauth-browser-only", sourceVersion: 1, sourceCheckedAt: new Date().toISOString(), attributes: [] }] });
+    }
+    const response = await feedTransport.request(request.url, ["browser.catalog.partner.example"]);
+    return new Response(response.text, { status: response.status, headers: response.headers });
+  }});
   const agreement = (
     await call(`/admin/connect/partners/${partner.id}/agreements`, admin, {
       mode: "SIMULATION_ONLY",
@@ -199,6 +220,10 @@ await test("real partner agreement acceptance and opt-in/withdrawal work through
   ).rows[0].n;
   const web = await startDinarBrowserTestWeb(origin),
     resultPath = `/tmp/dinar-connect-finance-browser-${randomUUID()}.json`;
+  const oldVault = process.env.DINAR_CONNECT_VAULT_KEY, oldOrigin = process.env.APP_ORIGIN;
+  process.env.DINAR_CONNECT_VAULT_KEY = randomBytes(32).toString("base64");
+  process.env.APP_ORIGIN = web.baseUrl;
+  const browserEnvironment = { ...process.env }; delete browserEnvironment.DINAR_CONNECT_VAULT_KEY;
   try {
     await promisify(execFile)(
       process.execPath,
@@ -206,7 +231,7 @@ await test("real partner agreement acceptance and opt-in/withdrawal work through
       {
         cwd: process.cwd() + "/../dinar",
         env: {
-          ...process.env,
+          ...browserEnvironment,
           CONNECT_WEB_BASE: web.baseUrl,
           CONNECT_OWNER_COOKIE: owner.cookie,
           CONNECT_BUYER_COOKIE: buyer.cookie,
@@ -230,6 +255,11 @@ await test("real partner agreement acceptance and opt-in/withdrawal work through
     assert.equal(report.teamConfirmedThroughUi, true);
     assert.equal(report.siteLifecycleThroughUi, true);
     assert.equal(report.catalogSyncedThroughUi, true);
+    assert.equal(report.oauthAuthorizedThroughUi, true);
+    assert.equal(report.oauthDisconnectedThroughUi, true);
+    assert.equal(report.oauthPopupOpener, null);
+    assert.equal((await pool.query("select count(*)::int n from connect_offers where integration_id=$1 and external_id='oauth-browser-only'", [oauthIntegration.id])).rows[0].n, 1);
+    assert.equal((await pool.query("select count(*)::int n from connect_secrets where integration_id=$1 and revoked_at is null", [oauthIntegration.id])).rows[0].n, 0);
     assert.equal((await pool.query("select count(*)::int n from connect_offers where integration_id=$1 and external_id='browser-feed-only'", [feed.id])).rows[0].n, 1);
     assert.equal(report.opener, null);
     assert.equal(report.cartFlights, 0);
@@ -281,6 +311,8 @@ await test("real partner agreement acceptance and opt-in/withdrawal work through
       0,
     );
   } finally {
+    if (oldVault === undefined) delete process.env.DINAR_CONNECT_VAULT_KEY; else process.env.DINAR_CONNECT_VAULT_KEY = oldVault;
+    if (oldOrigin === undefined) delete process.env.APP_ORIGIN; else process.env.APP_ORIGIN = oldOrigin;
     await web.stop();
     await unlink(resultPath).catch(() => undefined);
   }

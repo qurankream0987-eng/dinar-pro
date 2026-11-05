@@ -5049,6 +5049,20 @@ export const ConnectIntegrationRegistrationInputMode = {
   LIVE: 'LIVE',
 } as const;
 
+export type ConnectIntegrationRegistrationInputOauth = {
+  /** @maxLength 500 */
+  authorizationEndpoint: string;
+  /** @maxLength 500 */
+  tokenEndpoint: string;
+  /** @pattern ^[A-Za-z0-9._~-]{1,200}$ */
+  clientId: string;
+  /**
+     * @minItems 1
+     * @maxItems 1
+     */
+  scopes: 'catalog.read'[];
+};
+
 export type ConnectIntegrationRegistrationInputReviewedToolsItem = {
   /** @pattern ^[A-Za-z][A-Za-z0-9_.-]{0,79}$ */
   name: string;
@@ -5083,6 +5097,7 @@ export interface ConnectIntegrationRegistrationInput {
   allowedPathPrefixes: string[];
   /** @pattern ^[a-z][a-z0-9_]{0,39}$ */
   referralParameter?: string;
+  oauth?: ConnectIntegrationRegistrationInputOauth;
   /** @maxItems 10 */
   reviewedTools?: ConnectIntegrationRegistrationInputReviewedToolsItem[];
 }
@@ -5837,6 +5852,13 @@ export interface ConnectCatalogSyncRequest {
   expectedRevision: number;
 }
 
+export interface ConnectOAuthStatus {
+  connected: boolean;
+  canRefresh: boolean;
+  expiresAt: null | string;
+  scope: 'catalog.read' | null;
+}
+
 export type GetListingsParams = {
 search?: string;
 category?: string;
@@ -5919,6 +5941,25 @@ status?: SecurityIncidentStatus;
 
 export type RemoveConnectReadOnlyTeamBody = {
   confirm: true;
+};
+
+export type CompleteConnectOAuthParams = {
+/**
+ * @maxLength 43
+ */
+state: string;
+/**
+ * @maxLength 2048
+ */
+code?: string;
+/**
+ * @maxLength 80
+ */
+error?: string;
+/**
+ * @maxLength 500
+ */
+error_description?: string;
 };
 
 export type SearchConnectCatalogParams = {

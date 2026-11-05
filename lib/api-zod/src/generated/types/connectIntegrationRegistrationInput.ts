@@ -8,6 +8,7 @@
 import type { ConnectIntegrationRegistrationInputCapabilitiesItem } from './connectIntegrationRegistrationInputCapabilitiesItem';
 import type { ConnectIntegrationRegistrationInputKind } from './connectIntegrationRegistrationInputKind';
 import type { ConnectIntegrationRegistrationInputMode } from './connectIntegrationRegistrationInputMode';
+import type { ConnectIntegrationRegistrationInputOauth } from './connectIntegrationRegistrationInputOauth';
 import type { ConnectIntegrationRegistrationInputReviewedToolsItem } from './connectIntegrationRegistrationInputReviewedToolsItem';
 
 export interface ConnectIntegrationRegistrationInput {
@@ -36,6 +37,7 @@ export interface ConnectIntegrationRegistrationInput {
   allowedPathPrefixes: string[];
   /** @pattern ^[a-z][a-z0-9_]{0,39}$ */
   referralParameter?: string;
+  oauth?: ConnectIntegrationRegistrationInputOauth;
   /** @maxItems 10 */
   reviewedTools?: ConnectIntegrationRegistrationInputReviewedToolsItem[];
 }

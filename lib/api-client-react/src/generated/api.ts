@@ -72,6 +72,7 @@ import type {
   CheckoutInput,
   CheckoutResponse,
   CommercialJsonObject,
+  CompleteConnectOAuthParams,
   ConfirmationInput,
   ConnectAgreementAcceptanceInput,
   ConnectAgreementProposalInput,
@@ -81,6 +82,7 @@ import type {
   ConnectFinanceCommandInput,
   ConnectFinancialReceipt,
   ConnectIntegrationRegistrationInput,
+  ConnectOAuthStatus,
   ConnectOutboundInput,
   ConnectOutboundPrepared,
   ConnectPartnerEventInput,
@@ -19583,6 +19585,467 @@ export function useGetConnectReadOnlyCatalog<TData = Awaited<ReturnType<typeof g
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetConnectReadOnlyCatalogQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getStartConnectOAuthUrl = (id: string,) => {
+
+
+
+
+  return `/api/connect/integrations/${id}/oauth/start`
+}
+
+/**
+ * OWNER only. Independently approved SIMULATION_ONLY public-client PKCE S256 catalog.read authorization. No confidential client, billing/transaction scopes or browser-visible tokens. Disconnect revokes only local use and never claims provider-side revocation.
+ */
+export const startConnectOAuth = async (id: string,
+    connectCatalogSyncRequest: ConnectCatalogSyncRequest, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getStartConnectOAuthUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(connectCatalogSyncRequest)
+  }
+);}
+
+
+
+
+
+export const getStartConnectOAuthMutationKey = () => ['startConnectOAuth'] as const;
+
+export const getStartConnectOAuthMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof startConnectOAuth>>, TError,StartConnectOAuthMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof startConnectOAuth>>, TError,StartConnectOAuthMutationVariables, TContext> => {
+
+const mutationKey = getStartConnectOAuthMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof startConnectOAuth>>, StartConnectOAuthMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  startConnectOAuth(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type StartConnectOAuthMutationResult = NonNullable<Awaited<ReturnType<typeof startConnectOAuth>>>
+    export type StartConnectOAuthMutationBody = BodyType<ConnectCatalogSyncRequest>
+    export type StartConnectOAuthMutationError = ErrorType<void>
+    export type StartConnectOAuthMutationVariables = {id: string;data: BodyType<ConnectCatalogSyncRequest>}
+
+    export const useStartConnectOAuth = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof startConnectOAuth>>, TError,StartConnectOAuthMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof startConnectOAuth>>,
+        TError,
+        StartConnectOAuthMutationVariables,
+        TContext
+      > => {
+      return useMutation(getStartConnectOAuthMutationOptions(options), queryClient);
+    }
+
+export const getRefreshConnectOAuthUrl = (id: string,) => {
+
+
+
+
+  return `/api/connect/integrations/${id}/oauth/refresh`
+}
+
+/**
+ * OWNER only. Independently approved SIMULATION_ONLY public-client PKCE S256 catalog.read authorization. No confidential client, billing/transaction scopes or browser-visible tokens. Disconnect revokes only local use and never claims provider-side revocation.
+ */
+export const refreshConnectOAuth = async (id: string,
+    connectCatalogSyncRequest: ConnectCatalogSyncRequest, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getRefreshConnectOAuthUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(connectCatalogSyncRequest)
+  }
+);}
+
+
+
+
+
+export const getRefreshConnectOAuthMutationKey = () => ['refreshConnectOAuth'] as const;
+
+export const getRefreshConnectOAuthMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof refreshConnectOAuth>>, TError,RefreshConnectOAuthMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof refreshConnectOAuth>>, TError,RefreshConnectOAuthMutationVariables, TContext> => {
+
+const mutationKey = getRefreshConnectOAuthMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof refreshConnectOAuth>>, RefreshConnectOAuthMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  refreshConnectOAuth(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RefreshConnectOAuthMutationResult = NonNullable<Awaited<ReturnType<typeof refreshConnectOAuth>>>
+    export type RefreshConnectOAuthMutationBody = BodyType<ConnectCatalogSyncRequest>
+    export type RefreshConnectOAuthMutationError = ErrorType<void>
+    export type RefreshConnectOAuthMutationVariables = {id: string;data: BodyType<ConnectCatalogSyncRequest>}
+
+    export const useRefreshConnectOAuth = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof refreshConnectOAuth>>, TError,RefreshConnectOAuthMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof refreshConnectOAuth>>,
+        TError,
+        RefreshConnectOAuthMutationVariables,
+        TContext
+      > => {
+      return useMutation(getRefreshConnectOAuthMutationOptions(options), queryClient);
+    }
+
+export const getDisconnectConnectOAuthUrl = (id: string,) => {
+
+
+
+
+  return `/api/connect/integrations/${id}/oauth/disconnect`
+}
+
+/**
+ * OWNER only. Independently approved SIMULATION_ONLY public-client PKCE S256 catalog.read authorization. No confidential client, billing/transaction scopes or browser-visible tokens. Disconnect revokes only local use and never claims provider-side revocation.
+ */
+export const disconnectConnectOAuth = async (id: string,
+    connectCatalogSyncRequest: ConnectCatalogSyncRequest, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getDisconnectConnectOAuthUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(connectCatalogSyncRequest)
+  }
+);}
+
+
+
+
+
+export const getDisconnectConnectOAuthMutationKey = () => ['disconnectConnectOAuth'] as const;
+
+export const getDisconnectConnectOAuthMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof disconnectConnectOAuth>>, TError,DisconnectConnectOAuthMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof disconnectConnectOAuth>>, TError,DisconnectConnectOAuthMutationVariables, TContext> => {
+
+const mutationKey = getDisconnectConnectOAuthMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof disconnectConnectOAuth>>, DisconnectConnectOAuthMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  disconnectConnectOAuth(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DisconnectConnectOAuthMutationResult = NonNullable<Awaited<ReturnType<typeof disconnectConnectOAuth>>>
+    export type DisconnectConnectOAuthMutationBody = BodyType<ConnectCatalogSyncRequest>
+    export type DisconnectConnectOAuthMutationError = ErrorType<void>
+    export type DisconnectConnectOAuthMutationVariables = {id: string;data: BodyType<ConnectCatalogSyncRequest>}
+
+    export const useDisconnectConnectOAuth = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof disconnectConnectOAuth>>, TError,DisconnectConnectOAuthMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof disconnectConnectOAuth>>,
+        TError,
+        DisconnectConnectOAuthMutationVariables,
+        TContext
+      > => {
+      return useMutation(getDisconnectConnectOAuthMutationOptions(options), queryClient);
+    }
+
+export const getGetConnectOAuthStatusUrl = (id: string,) => {
+
+
+
+
+  return `/api/connect/integrations/${id}/oauth/status`
+}
+
+/**
+ * OWNER only. Returns server-verified scope, expiry and refresh availability; never tokens or ciphertext.
+ */
+export const getConnectOAuthStatus = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<ConnectOAuthStatus> => {
+
+  return customFetch<ConnectOAuthStatus>(getGetConnectOAuthStatusUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetConnectOAuthStatusQueryKey = (id: string,) => {
+    return [
+    `/api/connect/integrations/${id}/oauth/status`
+    ] as const;
+    }
+
+
+export const getGetConnectOAuthStatusQueryOptions = <TData = Awaited<ReturnType<typeof getConnectOAuthStatus>>, TError = ErrorType<void>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConnectOAuthStatus>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetConnectOAuthStatusQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getConnectOAuthStatus>>> = ({ signal }) => getConnectOAuthStatus(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getConnectOAuthStatus>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetConnectOAuthStatusQueryResult = NonNullable<Awaited<ReturnType<typeof getConnectOAuthStatus>>>
+export type GetConnectOAuthStatusQueryError = ErrorType<void>
+
+
+export function useGetConnectOAuthStatus<TData = Awaited<ReturnType<typeof getConnectOAuthStatus>>, TError = ErrorType<void>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConnectOAuthStatus>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getConnectOAuthStatus>>,
+          TError,
+          Awaited<ReturnType<typeof getConnectOAuthStatus>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetConnectOAuthStatus<TData = Awaited<ReturnType<typeof getConnectOAuthStatus>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConnectOAuthStatus>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getConnectOAuthStatus>>,
+          TError,
+          Awaited<ReturnType<typeof getConnectOAuthStatus>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetConnectOAuthStatus<TData = Awaited<ReturnType<typeof getConnectOAuthStatus>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConnectOAuthStatus>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useGetConnectOAuthStatus<TData = Awaited<ReturnType<typeof getConnectOAuthStatus>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConnectOAuthStatus>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetConnectOAuthStatusQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getCompleteConnectOAuthUrl = (params: CompleteConnectOAuthParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/connect/oauth/callback?${stringifiedParams}` : `/api/connect/oauth/callback`
+}
+
+/**
+ * Authenticated owner callback. Hashed expiring one-use state binds owner, integration, approved source revision, callback and PKCE verifier. Code/error query values never enter request logs. Redirects only to the configured DINAR origin; provider errors cannot establish authorization.
+ */
+export const completeConnectOAuth = async (params: CompleteConnectOAuthParams, options?: Parameters<typeof customFetch>[1]): Promise<unknown> => {
+
+  return customFetch<unknown>(getCompleteConnectOAuthUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getCompleteConnectOAuthQueryKey = (params?: CompleteConnectOAuthParams,) => {
+    return [
+    `/api/connect/oauth/callback`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getCompleteConnectOAuthQueryOptions = <TData = Awaited<ReturnType<typeof completeConnectOAuth>>, TError = ErrorType<void>>(params: CompleteConnectOAuthParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof completeConnectOAuth>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getCompleteConnectOAuthQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof completeConnectOAuth>>> = ({ signal }) => completeConnectOAuth(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof completeConnectOAuth>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type CompleteConnectOAuthQueryResult = NonNullable<Awaited<ReturnType<typeof completeConnectOAuth>>>
+export type CompleteConnectOAuthQueryError = ErrorType<void>
+
+
+export function useCompleteConnectOAuth<TData = Awaited<ReturnType<typeof completeConnectOAuth>>, TError = ErrorType<void>>(
+ params: CompleteConnectOAuthParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof completeConnectOAuth>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof completeConnectOAuth>>,
+          TError,
+          Awaited<ReturnType<typeof completeConnectOAuth>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCompleteConnectOAuth<TData = Awaited<ReturnType<typeof completeConnectOAuth>>, TError = ErrorType<void>>(
+ params: CompleteConnectOAuthParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof completeConnectOAuth>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof completeConnectOAuth>>,
+          TError,
+          Awaited<ReturnType<typeof completeConnectOAuth>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCompleteConnectOAuth<TData = Awaited<ReturnType<typeof completeConnectOAuth>>, TError = ErrorType<void>>(
+ params: CompleteConnectOAuthParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof completeConnectOAuth>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useCompleteConnectOAuth<TData = Awaited<ReturnType<typeof completeConnectOAuth>>, TError = ErrorType<void>>(
+ params: CompleteConnectOAuthParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof completeConnectOAuth>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getCompleteConnectOAuthQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

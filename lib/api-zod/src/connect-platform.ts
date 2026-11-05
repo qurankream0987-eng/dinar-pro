@@ -13,6 +13,10 @@ export const CONNECT_CAPABILITIES = [
   "EXTERNAL_REFERRAL",
   "TRANSACTION_REPORT",
 ] as const;
+export const ConnectOAuthConfiguration = z.object({
+  authorizationEndpoint: z.string().url().max(500), tokenEndpoint: z.string().url().max(500),
+  clientId: z.string().regex(/^[A-Za-z0-9._~-]{1,200}$/), scopes: z.array(z.literal("catalog.read")).length(1),
+}).strict();
 export const ConnectIntegrationInput = z
   .object({
     siteId: z.string().uuid(),
@@ -26,6 +30,7 @@ export const ConnectIntegrationInput = z
       .string()
       .regex(/^[a-z][a-z0-9_]{0,39}$/)
       .optional(),
+    oauth: ConnectOAuthConfiguration.optional(),
     reviewedTools: z
       .array(
         z
@@ -39,7 +44,12 @@ export const ConnectIntegrationInput = z
       .max(10)
       .optional(),
   })
-  .strict();
+  .strict().superRefine((input, ctx) => {
+    if (input.kind === "OAUTH" && (!input.oauth || !input.endpointUrl || input.mode !== "SIMULATION_ONLY"))
+      ctx.addIssue({ code: "custom", message: "OAuth requires a sandbox public-client configuration and catalog endpoint" });
+    if (input.kind !== "OAUTH" && input.oauth)
+      ctx.addIssue({ code: "custom", message: "OAuth configuration belongs only to OAuth integrations" });
+  });
 export const ConnectReviewInput = z
   .object({
     decision: z.enum(["APPROVE", "REJECT", "SUSPEND"]),
@@ -243,6 +253,8 @@ export const ConnectFinanceCommand = z
     resolution: z.enum(["RESTORE_SUPPORTED_STATE", "REVERSE"]).optional(),
   })
   .strict();
+export const ConnectOAuthStatusSchema = z.object({ connected: z.boolean(), canRefresh: z.boolean(), expiresAt: z.string().datetime().nullable(), scope: z.literal("catalog.read").nullable() }).strict();
+export type ConnectOAuthStatus = z.infer<typeof ConnectOAuthStatusSchema>;
 export const ConnectCatalogSyncInput = z.object({ confirm: z.literal(true), expectedRevision: z.number().int().positive() }).strict();
 export const ConnectSiteCommandInput = z.object({ confirm: z.literal(true) }).strict();
 export const CONNECT_TEAM_SCOPES = ["CATALOG_READ", "REPORTS_READ"] as const;

@@ -3,6 +3,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { db, connectSites, connectIntegrations, providerConnections, providerCredentials } from "@workspace/db";
 import { ConnectSiteCommandInput } from "@workspace/api-zod/connect-platform";
 import { connectAccess, connectAudit, type ConnectTx, type ConnectMarket } from "./partners";
+import { retireConnectSecrets } from "./secret-lifecycle";
 import { connectError } from "./provider-registry";
 async function ownedSite(tx: ConnectTx, actorId: string, market: ConnectMarket, siteId: string) {
   const [initial] = await tx.select({ partnerId: connectSites.partnerId }).from(connectSites).where(eq(connectSites.id, siteId));
@@ -40,6 +41,7 @@ export async function revokeConnectSite(actorId: string, market: ConnectMarket, 
       .where(and(eq(connectIntegrations.partnerId, site.partnerId), eq(connectIntegrations.siteId, site.id))).for("update");
     const now = new Date();
     for (const integration of integrations) {
+      await retireConnectSecrets(tx, integration.id);
       await tx.update(connectIntegrations).set({ status: "REVOKED", updatedAt: now }).where(eq(connectIntegrations.id, integration.id));
       if (integration.providerConnectionId) {
         await tx.update(providerCredentials).set({ revokedAt: now }).where(eq(providerCredentials.connectionId, integration.providerConnectionId));

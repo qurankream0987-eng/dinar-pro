@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import { api } from "@/account/Account";
 import { Button } from "@/ui/Button";
 import { ConnectAgreements } from "@/features/ConnectAgreements";
+import { ConnectOAuthControls } from "@/features/ConnectOAuthControls";
 import { ConnectTeam, ConnectReadOnlyCatalog } from "@/features/ConnectTeam";
 import { ConnectDashboard } from "@/features/ConnectDashboard";
 type Site = { id: string; hostname: string; status: string };
@@ -35,7 +36,8 @@ export default function ConnectPage() {
       { id: string; displayName: string }[]
     >([]),
     [selected, setSelected] = useState("");
-  const [integrationKind, setIntegrationKind] = useState<"API" | "FEED">("API"), [endpoint, setEndpoint] = useState("");
+  const [integrationKind, setIntegrationKind] = useState<"API" | "FEED" | "OAUTH">("API"), [endpoint, setEndpoint] = useState("");
+  const [oauthClientId, setOAuthClientId] = useState(""), [oauthAuthorize, setOAuthAuthorize] = useState(""), [oauthToken, setOAuthToken] = useState("");
   const [syncReview, setSyncReview] = useState<string | null>(null);
   const [siteCommand, setSiteCommand] = useState<{ id: string; action: "challenge" | "revoke" } | null>(null);
   const [hostname, setHostname] = useState(""),
@@ -291,6 +293,7 @@ export default function ConnectPage() {
                       {
                         siteId,
                         kind: integrationKind,
+                        ...(integrationKind === "OAUTH" ? { oauth: { clientId: oauthClientId, authorizationEndpoint: oauthAuthorize, tokenEndpoint: oauthToken, scopes: ["catalog.read"] } } : {}),
                         ...(endpoint.trim() ? { endpointUrl: endpoint.trim() } : {}),
                         name,
                         capabilities: [
@@ -324,8 +327,9 @@ export default function ConnectPage() {
                     ))}
                 </select>
               </label>
-              <label className="block">نوع المصدر<select className={field} value={integrationKind} onChange={e => setIntegrationKind(e.target.value as "API" | "FEED")}><option value="API">API — إرسال أو قراءة JSON</option><option value="FEED">تغذية JSON للقراءة</option></select></label>
-              <label className="block">عنوان JSON للقراءة (اختياري عند إرسال API)<input className={field} type="url" dir="ltr" value={endpoint} required={integrationKind === "FEED"} maxLength={500} placeholder="https://shop.example.com/catalog.json" onChange={e => setEndpoint(e.target.value)} /></label>
+              <label className="block">نوع المصدر<select className={field} value={integrationKind} onChange={e => setIntegrationKind(e.target.value as "API" | "FEED" | "OAUTH")}><option value="API">API — إرسال أو قراءة JSON</option><option value="FEED">تغذية JSON للقراءة</option><option value="OAUTH">حساب OAuth عام للقراءة — PKCE</option></select></label>
+              <label className="block">عنوان JSON للقراءة (اختياري عند إرسال API)<input className={field} type="url" dir="ltr" value={endpoint} required={integrationKind !== "API"} maxLength={500} placeholder="https://shop.example.com/catalog.json" onChange={e => setEndpoint(e.target.value)} /></label>
+              {integrationKind === "OAUTH" && <fieldset className="space-y-3 rounded-lg border p-3"><legend>إعدادات عميل عام للقراءة فقط</legend><p>يلزم أن تدعم الشركة نطاق catalog.read وPKCE. هذه المرحلة لا تدعم أسرار العملاء أو صلاحيات الدفع. يجب تسجيل رابط عودة DINAR المعتمد لدى المزوّد.</p><label className="block">معرّف العميل العام<input className={field} required maxLength={200} dir="ltr" value={oauthClientId} onChange={e => setOAuthClientId(e.target.value)} /></label><label className="block">عنوان التفويض HTTPS<input className={field} type="url" required dir="ltr" value={oauthAuthorize} onChange={e => setOAuthAuthorize(e.target.value)} /></label><label className="block">عنوان تبادل رمز القراءة HTTPS<input className={field} type="url" required dir="ltr" value={oauthToken} onChange={e => setOAuthToken(e.target.value)} /></label></fieldset>}
               <label className="block">
                 اسم الربط
                 <input
@@ -357,6 +361,7 @@ export default function ConnectPage() {
                   {i.name} — {i.status}
                 </h3>
                 <p className="break-words">{i.capabilities.join("، ")}</p>
+                {i.kind === "OAUTH" && i.status === "APPROVED" && i.endpointUrl && <ConnectOAuthControls integrationId={i.id} revision={i.revision} endpoint={i.endpointUrl} />}
                 <div className="flex flex-wrap gap-2">
                   {i.status === "APPROVED" && (
                     <>
@@ -394,7 +399,7 @@ export default function ConnectPage() {
                       </Button>
                     </>
                   )}
-                  {i.status === "APPROVED" && ["FEED", "API"].includes(i.kind) && i.endpointUrl && <>
+                  {i.status === "APPROVED" && ["FEED", "API", "OAUTH"].includes(i.kind) && i.endpointUrl && <>
                     <Button variant="secondary" disabled={busy} aria-label={`مزامنة كتالوج ${i.name}`} onClick={() => setSyncReview(i.id)}>مراجعة مزامنة JSON</Button>
                     {syncReview === i.id && <div className="w-full space-y-2 rounded-lg border p-3"><p>سيقرأ DINAR دفعة JSON واحدة من المصدر المعتمد ويحدّث الكتالوج بعد فحص الصلاحيات والبيانات. لا ينفذ شراءً ولا يتبع روابط أخرى.</p><Button disabled={busy} onClick={() => void run(async () => {
                       await api(`/connect/integrations/${i.id}/sync`, "POST", { confirm: true, expectedRevision: i.revision }); setSyncReview(null);

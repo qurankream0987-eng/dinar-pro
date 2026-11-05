@@ -32,9 +32,11 @@ import {
   connectAuditEvents,
   connectIngestionBatches,
   connectTeamPermissions,
+  connectSecrets,
   providerConnections,
   providerCredentials,
 } from "@workspace/db";
+import { retireConnectSecrets } from "./secret-lifecycle";
 import { assertMarketLegalCapability } from "../lib/d16-readiness";
 import { resolveBusinessDelegationAuthorityTx } from "../lib/business-delegations";
 import { getOwnBusiness } from "../lib/business-profiles";
@@ -769,8 +771,14 @@ export async function createConnectIntegration(
     /url|redirect|return|callback|target/i.test(input.referralParameter)
   )
     throw connectError(400, "UNSAFE_TEMPLATE", "اسم معامل الإحالة غير مسموح");
+  const oauth = input.oauth ? {
+    ...input.oauth,
+    authorizationEndpoint: validateExternalUrl(input.oauth.authorizationEndpoint, [site.hostname]),
+    tokenEndpoint: validateExternalUrl(input.oauth.tokenEndpoint, [site.hostname]),
+  } : undefined;
   const config = {
     allowedPathPrefixes: prefixes(input.allowedPathPrefixes),
+    ...(oauth ? { oauth } : {}),
     ...(input.referralParameter
       ? { referralParameter: input.referralParameter }
       : {}),
@@ -1037,6 +1045,7 @@ export async function setConnectIntegrationStatus(
       .set({ status, updatedAt: new Date() })
       .where(eq(connectIntegrations.id, integrationId))
       .returning();
+    if (status === "REVOKED" || status === "SUSPENDED") await retireConnectSecrets(tx, integrationId);
     if (status === "REVOKED" && row.providerConnectionId) {
       await tx
         .update(providerCredentials)
@@ -1338,7 +1347,7 @@ export async function importConnectOwnerCatalog(
   market: ConnectMarket,
   integrationId: string,
   raw: unknown,
-  sourceSnapshot?: { revision: number; endpointUrl: string; siteId: string },
+  sourceSnapshot?: { revision: number; endpointUrl: string; siteId: string; oauthGrantId?: string; oauthGrantExpiresAt?: string },
 ) {
   return db.transaction(async (tx) => {
     const { partnerId } = await lockOwnedConnectIntegration(
@@ -1362,6 +1371,12 @@ export async function importConnectOwnerCatalog(
     if (sourceSnapshot && (ready.integration.revision !== sourceSnapshot.revision ||
         ready.integration.endpointUrl !== sourceSnapshot.endpointUrl || ready.site.id !== sourceSnapshot.siteId))
       throw connectError(409, "STALE_INTEGRATION", "تغير الموصل أثناء جلب المصدر؛ لم يُستورد المحتوى");
+    if (sourceSnapshot?.oauthGrantId) {
+      const [grant] = await tx.select().from(connectSecrets).where(and(eq(connectSecrets.id, sourceSnapshot.oauthGrantId), eq(connectSecrets.integrationId, integrationId))).for("share");
+      if (!grant || grant.kind !== "OAUTH_GRANT" || grant.revokedAt || grant.revision !== ready.integration.revision ||
+          !sourceSnapshot.oauthGrantExpiresAt || !(Date.parse(sourceSnapshot.oauthGrantExpiresAt) > Date.now()))
+        throw connectError(409, "OAUTH_GRANT_UNAVAILABLE", "تغير تفويض الحساب أثناء القراءة؛ لم يُستورد المحتوى");
+    }
     await assertMarketLegalCapability(market.id, "LISTING_PUBLICATION", tx);
     return importBatch(tx, ready, raw, market, actorId);
   });
