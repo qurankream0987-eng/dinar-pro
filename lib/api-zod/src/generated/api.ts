@@ -9503,6 +9503,226 @@ export const FinanceConnectTransactionResponse = zod.object({
 
 
 /**
+ * Access: OWNER. Read-only bounded immutable observations. No live provider probe, credentials, hashes, raw audit details or customer content. Staff report/catalog access does not grant diagnostics.
+ */
+export const GetConnectDiagnosticsParams = zod.object({
+  "id": zod.uuid()
+})
+
+export const getConnectDiagnosticsQueryLimitDefault = 25;
+export const getConnectDiagnosticsQueryLimitMax = 50;
+
+
+
+export const GetConnectDiagnosticsQueryParams = zod.object({
+  "integrationCursor": zod.uuid().optional(),
+  "auditCursor": zod.uuid().optional(),
+  "limit": zod.coerce.number().int().min(1).max(getConnectDiagnosticsQueryLimitMax).default(getConnectDiagnosticsQueryLimitDefault)
+})
+
+export const getConnectDiagnosticsResponsePartnerIdRegExp = new RegExp('^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$');
+export const getConnectDiagnosticsResponseIntegrationsItemIdRegExp = new RegExp('^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$');
+export const getConnectDiagnosticsResponseIntegrationsItemNameMax = 100;
+
+export const getConnectDiagnosticsResponseIntegrationsItemRevisionExclusiveMin = 0;
+export const getConnectDiagnosticsResponseIntegrationsItemRevisionMax = 9007199254740991;
+
+export const getConnectDiagnosticsResponseIntegrationsItemApprovedRevisionOneExclusiveMin = 0;
+export const getConnectDiagnosticsResponseIntegrationsItemApprovedRevisionOneMax = 9007199254740991;
+
+export const getConnectDiagnosticsResponseIntegrationsItemActiveIngressCredentialsRegExp = new RegExp('^\\d+$');
+export const getConnectDiagnosticsResponseIntegrationsItemCatalogPublishedRegExp = new RegExp('^\\d+$');
+export const getConnectDiagnosticsResponseIntegrationsItemCatalogHiddenRegExp = new RegExp('^\\d+$');
+export const getConnectDiagnosticsResponseIntegrationsItemCatalogStaleRegExp = new RegExp('^\\d+$');
+export const getConnectDiagnosticsResponseIntegrationsItemLastObservedSyncOneIntegrationIdRegExp = new RegExp('^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$');
+export const getConnectDiagnosticsResponseIntegrationsItemLastObservedSyncOneReviewedRevisionExclusiveMin = 0;
+export const getConnectDiagnosticsResponseIntegrationsItemLastObservedSyncOneReviewedRevisionMax = 9007199254740991;
+
+export const getConnectDiagnosticsResponseIntegrationsItemLastObservedSyncOneDurationMsMin = 0;
+export const getConnectDiagnosticsResponseIntegrationsItemLastObservedSyncOneDurationMsMax = 9007199254740991;
+
+export const getConnectDiagnosticsResponseIntegrationsMax = 50;
+
+export const getConnectDiagnosticsResponseAuditItemIdRegExp = new RegExp('^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$');
+export const getConnectDiagnosticsResponseAuditItemActionRegExp = new RegExp('^[A-Z][A-Z0-9_]{0,79}$');
+export const getConnectDiagnosticsResponseAuditMax = 50;
+
+export const getConnectDiagnosticsResponseReviewSignalsFailedAdmittedReads24hRegExp = new RegExp('^\\d+$');
+export const getConnectDiagnosticsResponseReviewSignalsProtectedResponseRefusals24hRegExp = new RegExp('^\\d+$');
+export const getConnectDiagnosticsResponseReviewSignalsSuspensions24hRegExp = new RegExp('^\\d+$');
+export const getConnectDiagnosticsResponseReviewSignalsCurrentDisputesRegExp = new RegExp('^\\d+$');
+export const getConnectDiagnosticsResponseReviewSignalsRecoveryObligationTransactionsRegExp = new RegExp('^\\d+$');
+export const getConnectDiagnosticsResponseNextIntegrationCursorOneRegExp = new RegExp('^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$');
+export const getConnectDiagnosticsResponseNextAuditCursorOneRegExp = new RegExp('^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$');
+export const getConnectDiagnosticsResponseDisclosureMax = 700;
+
+
+
+export const GetConnectDiagnosticsResponse = zod.object({
+  "partnerId": zod.uuid().regex(getConnectDiagnosticsResponsePartnerIdRegExp),
+  "generatedAt": zod.coerce.date(),
+  "observationWindowStart": zod.coerce.date(),
+  "providerHealth": zod.literal("NOT_PROBED"),
+  "integrations": zod.array(zod.object({
+  "id": zod.uuid().regex(getConnectDiagnosticsResponseIntegrationsItemIdRegExp),
+  "name": zod.string().min(1).max(getConnectDiagnosticsResponseIntegrationsItemNameMax),
+  "kind": zod.enum(['WEBSITE', 'FEED', 'API', 'OAUTH', 'MCP']),
+  "status": zod.enum(['PENDING_REVIEW', 'APPROVED', 'REJECTED', 'SUSPENDED', 'REVOKED']),
+  "revision": zod.int().gt(getConnectDiagnosticsResponseIntegrationsItemRevisionExclusiveMin).max(getConnectDiagnosticsResponseIntegrationsItemRevisionMax),
+  "approvedRevision": zod.union([zod.int().gt(getConnectDiagnosticsResponseIntegrationsItemApprovedRevisionOneExclusiveMin).max(getConnectDiagnosticsResponseIntegrationsItemApprovedRevisionOneMax),zod.null()]),
+  "endpointConfigured": zod.boolean(),
+  "siteStatus": zod.enum(['PENDING', 'VERIFIED', 'REVOKED']),
+  "proofValidUntil": zod.union([zod.null(),zod.coerce.date()]),
+  "proofCurrentlyValid": zod.boolean(),
+  "ingressStatus": zod.enum(['ACTIVE', 'REVOKED', 'NOT_CONFIGURED']),
+  "activeIngressCredentials": zod.string().regex(getConnectDiagnosticsResponseIntegrationsItemActiveIngressCredentialsRegExp),
+  "lastSuccessfulIngressAt": zod.union([zod.null(),zod.coerce.date()]),
+  "lastCatalogAcceptedAt": zod.union([zod.null(),zod.coerce.date()]),
+  "catalog": zod.object({
+  "published": zod.string().regex(getConnectDiagnosticsResponseIntegrationsItemCatalogPublishedRegExp),
+  "hidden": zod.string().regex(getConnectDiagnosticsResponseIntegrationsItemCatalogHiddenRegExp),
+  "stale": zod.string().regex(getConnectDiagnosticsResponseIntegrationsItemCatalogStaleRegExp)
+}),
+  "lastObservedSync": zod.union([zod.object({
+  "integrationId": zod.uuid().regex(getConnectDiagnosticsResponseIntegrationsItemLastObservedSyncOneIntegrationIdRegExp),
+  "outcome": zod.enum(['COMPLETED', 'FAILED']),
+  "reason": zod.union([zod.enum(['PROVIDER_TIMEOUT', 'PROVIDER_RATE_LIMITED', 'PROVIDER_UNAVAILABLE', 'PROVIDER_INVALID_RESPONSE', 'PROVIDER_INVALID_CONTENT_TYPE', 'PROVIDER_INVALID_CATALOG', 'PROVIDER_RESPONSE_TOO_LARGE', 'PROVIDER_HEADERS_REFUSED', 'PRIVATE_ENDPOINT', 'REDIRECT_REFUSED', 'UNSAFE_EXTERNAL_URL', 'MCP_INVALID_RESPONSE', 'MCP_REVIEW_REQUIRED', 'PINNED_EGRESS_REQUIRED', 'STALE_INTEGRATION', 'SITE_NOT_VERIFIED', 'OAUTH_GRANT_UNAVAILABLE', 'WEBSITE_TOO_LARGE', 'WEBSITE_TOO_COMPLEX', 'WEBSITE_TOO_MANY_ITEMS', 'WEBSITE_INVALID_CONTENT_TYPE', 'UNEXPECTED_FAILURE']),zod.null()]),
+  "reviewedRevision": zod.int().gt(getConnectDiagnosticsResponseIntegrationsItemLastObservedSyncOneReviewedRevisionExclusiveMin).max(getConnectDiagnosticsResponseIntegrationsItemLastObservedSyncOneReviewedRevisionMax),
+  "durationMs": zod.int().min(getConnectDiagnosticsResponseIntegrationsItemLastObservedSyncOneDurationMsMin).max(getConnectDiagnosticsResponseIntegrationsItemLastObservedSyncOneDurationMsMax),
+  "observedAt": zod.coerce.date()
+}),zod.null()])
+})).max(getConnectDiagnosticsResponseIntegrationsMax),
+  "audit": zod.array(zod.object({
+  "id": zod.uuid().regex(getConnectDiagnosticsResponseAuditItemIdRegExp),
+  "actorKind": zod.enum(['OWNER', 'ADMIN', 'PROVIDER', 'SYSTEM']),
+  "action": zod.string().regex(getConnectDiagnosticsResponseAuditItemActionRegExp),
+  "createdAt": zod.coerce.date()
+})).max(getConnectDiagnosticsResponseAuditMax),
+  "reviewSignals": zod.object({
+  "failedAdmittedReads24h": zod.string().regex(getConnectDiagnosticsResponseReviewSignalsFailedAdmittedReads24hRegExp),
+  "protectedResponseRefusals24h": zod.string().regex(getConnectDiagnosticsResponseReviewSignalsProtectedResponseRefusals24hRegExp),
+  "suspensions24h": zod.string().regex(getConnectDiagnosticsResponseReviewSignalsSuspensions24hRegExp),
+  "currentDisputes": zod.string().regex(getConnectDiagnosticsResponseReviewSignalsCurrentDisputesRegExp),
+  "recoveryObligationTransactions": zod.string().regex(getConnectDiagnosticsResponseReviewSignalsRecoveryObligationTransactionsRegExp)
+}),
+  "nextIntegrationCursor": zod.union([zod.uuid().regex(getConnectDiagnosticsResponseNextIntegrationCursorOneRegExp),zod.null()]),
+  "nextAuditCursor": zod.union([zod.uuid().regex(getConnectDiagnosticsResponseNextAuditCursorOneRegExp),zod.null()]),
+  "secretsIncluded": zod.literal(false),
+  "disclosure": zod.string().min(1).max(getConnectDiagnosticsResponseDisclosureMax)
+})
+
+
+/**
+ * Access: ADMIN. Read-only bounded immutable observations. No live provider probe, credentials, hashes, raw audit details or customer content. Staff report/catalog access does not grant diagnostics.
+ */
+export const GetAdminConnectDiagnosticsParams = zod.object({
+  "id": zod.uuid()
+})
+
+export const getAdminConnectDiagnosticsQueryLimitDefault = 25;
+export const getAdminConnectDiagnosticsQueryLimitMax = 50;
+
+
+
+export const GetAdminConnectDiagnosticsQueryParams = zod.object({
+  "integrationCursor": zod.uuid().optional(),
+  "auditCursor": zod.uuid().optional(),
+  "limit": zod.coerce.number().int().min(1).max(getAdminConnectDiagnosticsQueryLimitMax).default(getAdminConnectDiagnosticsQueryLimitDefault)
+})
+
+export const getAdminConnectDiagnosticsResponsePartnerIdRegExp = new RegExp('^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$');
+export const getAdminConnectDiagnosticsResponseIntegrationsItemIdRegExp = new RegExp('^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$');
+export const getAdminConnectDiagnosticsResponseIntegrationsItemNameMax = 100;
+
+export const getAdminConnectDiagnosticsResponseIntegrationsItemRevisionExclusiveMin = 0;
+export const getAdminConnectDiagnosticsResponseIntegrationsItemRevisionMax = 9007199254740991;
+
+export const getAdminConnectDiagnosticsResponseIntegrationsItemApprovedRevisionOneExclusiveMin = 0;
+export const getAdminConnectDiagnosticsResponseIntegrationsItemApprovedRevisionOneMax = 9007199254740991;
+
+export const getAdminConnectDiagnosticsResponseIntegrationsItemActiveIngressCredentialsRegExp = new RegExp('^\\d+$');
+export const getAdminConnectDiagnosticsResponseIntegrationsItemCatalogPublishedRegExp = new RegExp('^\\d+$');
+export const getAdminConnectDiagnosticsResponseIntegrationsItemCatalogHiddenRegExp = new RegExp('^\\d+$');
+export const getAdminConnectDiagnosticsResponseIntegrationsItemCatalogStaleRegExp = new RegExp('^\\d+$');
+export const getAdminConnectDiagnosticsResponseIntegrationsItemLastObservedSyncOneIntegrationIdRegExp = new RegExp('^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$');
+export const getAdminConnectDiagnosticsResponseIntegrationsItemLastObservedSyncOneReviewedRevisionExclusiveMin = 0;
+export const getAdminConnectDiagnosticsResponseIntegrationsItemLastObservedSyncOneReviewedRevisionMax = 9007199254740991;
+
+export const getAdminConnectDiagnosticsResponseIntegrationsItemLastObservedSyncOneDurationMsMin = 0;
+export const getAdminConnectDiagnosticsResponseIntegrationsItemLastObservedSyncOneDurationMsMax = 9007199254740991;
+
+export const getAdminConnectDiagnosticsResponseIntegrationsMax = 50;
+
+export const getAdminConnectDiagnosticsResponseAuditItemIdRegExp = new RegExp('^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$');
+export const getAdminConnectDiagnosticsResponseAuditItemActionRegExp = new RegExp('^[A-Z][A-Z0-9_]{0,79}$');
+export const getAdminConnectDiagnosticsResponseAuditMax = 50;
+
+export const getAdminConnectDiagnosticsResponseReviewSignalsFailedAdmittedReads24hRegExp = new RegExp('^\\d+$');
+export const getAdminConnectDiagnosticsResponseReviewSignalsProtectedResponseRefusals24hRegExp = new RegExp('^\\d+$');
+export const getAdminConnectDiagnosticsResponseReviewSignalsSuspensions24hRegExp = new RegExp('^\\d+$');
+export const getAdminConnectDiagnosticsResponseReviewSignalsCurrentDisputesRegExp = new RegExp('^\\d+$');
+export const getAdminConnectDiagnosticsResponseReviewSignalsRecoveryObligationTransactionsRegExp = new RegExp('^\\d+$');
+export const getAdminConnectDiagnosticsResponseNextIntegrationCursorOneRegExp = new RegExp('^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$');
+export const getAdminConnectDiagnosticsResponseNextAuditCursorOneRegExp = new RegExp('^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$');
+export const getAdminConnectDiagnosticsResponseDisclosureMax = 700;
+
+
+
+export const GetAdminConnectDiagnosticsResponse = zod.object({
+  "partnerId": zod.uuid().regex(getAdminConnectDiagnosticsResponsePartnerIdRegExp),
+  "generatedAt": zod.coerce.date(),
+  "observationWindowStart": zod.coerce.date(),
+  "providerHealth": zod.literal("NOT_PROBED"),
+  "integrations": zod.array(zod.object({
+  "id": zod.uuid().regex(getAdminConnectDiagnosticsResponseIntegrationsItemIdRegExp),
+  "name": zod.string().min(1).max(getAdminConnectDiagnosticsResponseIntegrationsItemNameMax),
+  "kind": zod.enum(['WEBSITE', 'FEED', 'API', 'OAUTH', 'MCP']),
+  "status": zod.enum(['PENDING_REVIEW', 'APPROVED', 'REJECTED', 'SUSPENDED', 'REVOKED']),
+  "revision": zod.int().gt(getAdminConnectDiagnosticsResponseIntegrationsItemRevisionExclusiveMin).max(getAdminConnectDiagnosticsResponseIntegrationsItemRevisionMax),
+  "approvedRevision": zod.union([zod.int().gt(getAdminConnectDiagnosticsResponseIntegrationsItemApprovedRevisionOneExclusiveMin).max(getAdminConnectDiagnosticsResponseIntegrationsItemApprovedRevisionOneMax),zod.null()]),
+  "endpointConfigured": zod.boolean(),
+  "siteStatus": zod.enum(['PENDING', 'VERIFIED', 'REVOKED']),
+  "proofValidUntil": zod.union([zod.null(),zod.coerce.date()]),
+  "proofCurrentlyValid": zod.boolean(),
+  "ingressStatus": zod.enum(['ACTIVE', 'REVOKED', 'NOT_CONFIGURED']),
+  "activeIngressCredentials": zod.string().regex(getAdminConnectDiagnosticsResponseIntegrationsItemActiveIngressCredentialsRegExp),
+  "lastSuccessfulIngressAt": zod.union([zod.null(),zod.coerce.date()]),
+  "lastCatalogAcceptedAt": zod.union([zod.null(),zod.coerce.date()]),
+  "catalog": zod.object({
+  "published": zod.string().regex(getAdminConnectDiagnosticsResponseIntegrationsItemCatalogPublishedRegExp),
+  "hidden": zod.string().regex(getAdminConnectDiagnosticsResponseIntegrationsItemCatalogHiddenRegExp),
+  "stale": zod.string().regex(getAdminConnectDiagnosticsResponseIntegrationsItemCatalogStaleRegExp)
+}),
+  "lastObservedSync": zod.union([zod.object({
+  "integrationId": zod.uuid().regex(getAdminConnectDiagnosticsResponseIntegrationsItemLastObservedSyncOneIntegrationIdRegExp),
+  "outcome": zod.enum(['COMPLETED', 'FAILED']),
+  "reason": zod.union([zod.enum(['PROVIDER_TIMEOUT', 'PROVIDER_RATE_LIMITED', 'PROVIDER_UNAVAILABLE', 'PROVIDER_INVALID_RESPONSE', 'PROVIDER_INVALID_CONTENT_TYPE', 'PROVIDER_INVALID_CATALOG', 'PROVIDER_RESPONSE_TOO_LARGE', 'PROVIDER_HEADERS_REFUSED', 'PRIVATE_ENDPOINT', 'REDIRECT_REFUSED', 'UNSAFE_EXTERNAL_URL', 'MCP_INVALID_RESPONSE', 'MCP_REVIEW_REQUIRED', 'PINNED_EGRESS_REQUIRED', 'STALE_INTEGRATION', 'SITE_NOT_VERIFIED', 'OAUTH_GRANT_UNAVAILABLE', 'WEBSITE_TOO_LARGE', 'WEBSITE_TOO_COMPLEX', 'WEBSITE_TOO_MANY_ITEMS', 'WEBSITE_INVALID_CONTENT_TYPE', 'UNEXPECTED_FAILURE']),zod.null()]),
+  "reviewedRevision": zod.int().gt(getAdminConnectDiagnosticsResponseIntegrationsItemLastObservedSyncOneReviewedRevisionExclusiveMin).max(getAdminConnectDiagnosticsResponseIntegrationsItemLastObservedSyncOneReviewedRevisionMax),
+  "durationMs": zod.int().min(getAdminConnectDiagnosticsResponseIntegrationsItemLastObservedSyncOneDurationMsMin).max(getAdminConnectDiagnosticsResponseIntegrationsItemLastObservedSyncOneDurationMsMax),
+  "observedAt": zod.coerce.date()
+}),zod.null()])
+})).max(getAdminConnectDiagnosticsResponseIntegrationsMax),
+  "audit": zod.array(zod.object({
+  "id": zod.uuid().regex(getAdminConnectDiagnosticsResponseAuditItemIdRegExp),
+  "actorKind": zod.enum(['OWNER', 'ADMIN', 'PROVIDER', 'SYSTEM']),
+  "action": zod.string().regex(getAdminConnectDiagnosticsResponseAuditItemActionRegExp),
+  "createdAt": zod.coerce.date()
+})).max(getAdminConnectDiagnosticsResponseAuditMax),
+  "reviewSignals": zod.object({
+  "failedAdmittedReads24h": zod.string().regex(getAdminConnectDiagnosticsResponseReviewSignalsFailedAdmittedReads24hRegExp),
+  "protectedResponseRefusals24h": zod.string().regex(getAdminConnectDiagnosticsResponseReviewSignalsProtectedResponseRefusals24hRegExp),
+  "suspensions24h": zod.string().regex(getAdminConnectDiagnosticsResponseReviewSignalsSuspensions24hRegExp),
+  "currentDisputes": zod.string().regex(getAdminConnectDiagnosticsResponseReviewSignalsCurrentDisputesRegExp),
+  "recoveryObligationTransactions": zod.string().regex(getAdminConnectDiagnosticsResponseReviewSignalsRecoveryObligationTransactionsRegExp)
+}),
+  "nextIntegrationCursor": zod.union([zod.uuid().regex(getAdminConnectDiagnosticsResponseNextIntegrationCursorOneRegExp),zod.null()]),
+  "nextAuditCursor": zod.union([zod.uuid().regex(getAdminConnectDiagnosticsResponseNextAuditCursorOneRegExp),zod.null()]),
+  "secretsIncluded": zod.literal(false),
+  "disclosure": zod.string().min(1).max(getAdminConnectDiagnosticsResponseDisclosureMax)
+})
+
+
+/**
  * Access: AUTHENTICATED. Bounded owned external-commerce report. Currency balances remain separate integer strings. Prepared consented referrals are not purchases. No provider secret or buyer account/conversation identity is returned. Historical simulation settlements remain visible after reversals; actual received funds remain unverified outside simulation.
  */
 export const GetConnectPartnerReportParams = zod.object({

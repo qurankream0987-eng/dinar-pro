@@ -402,3 +402,121 @@ export const ConnectFinancialReceiptSchema = z
     transaction: ConnectExternalTransactionSchema,
   })
   .strict();
+
+export const CONNECT_SYNC_FAILURE_REASONS = [
+  "PROVIDER_TIMEOUT",
+  "PROVIDER_RATE_LIMITED",
+  "PROVIDER_UNAVAILABLE",
+  "PROVIDER_INVALID_RESPONSE",
+  "PROVIDER_INVALID_CONTENT_TYPE",
+  "PROVIDER_INVALID_CATALOG",
+  "PROVIDER_RESPONSE_TOO_LARGE",
+  "PROVIDER_HEADERS_REFUSED",
+  "PRIVATE_ENDPOINT",
+  "REDIRECT_REFUSED",
+  "UNSAFE_EXTERNAL_URL",
+  "MCP_INVALID_RESPONSE",
+  "MCP_REVIEW_REQUIRED",
+  "PINNED_EGRESS_REQUIRED",
+  "STALE_INTEGRATION",
+  "SITE_NOT_VERIFIED",
+  "OAUTH_GRANT_UNAVAILABLE",
+  "WEBSITE_TOO_LARGE",
+  "WEBSITE_TOO_COMPLEX",
+  "WEBSITE_TOO_MANY_ITEMS",
+  "WEBSITE_INVALID_CONTENT_TYPE",
+  "UNEXPECTED_FAILURE",
+] as const;
+export const ConnectSyncObservationSchema = z
+  .object({
+    integrationId: z.string().uuid(),
+    outcome: z.enum(["COMPLETED", "FAILED"]),
+    reason: z.enum(CONNECT_SYNC_FAILURE_REASONS).nullable(),
+    reviewedRevision: z.number().int().positive(),
+    durationMs: z.number().int().nonnegative(),
+  })
+  .strict()
+  .superRefine((value, ctx) => {
+    if ((value.outcome === "COMPLETED") !== (value.reason === null))
+      ctx.addIssue({ code: "custom", message: "Outcome/reason mismatch" });
+  });
+const connectCount = z.string().regex(/^\d+$/);
+export const ConnectDiagnosticsQuerySchema = z
+  .object({
+    integrationCursor: z.string().uuid().optional(),
+    auditCursor: z.string().uuid().optional(),
+    limit: z.coerce.number().int().min(1).max(50).default(25),
+  })
+  .strict();
+export const ConnectDiagnosticsSchema = z
+  .object({
+    partnerId: z.string().uuid(),
+    generatedAt: z.string().datetime(),
+    observationWindowStart: z.string().datetime(),
+    providerHealth: z.literal("NOT_PROBED"),
+    integrations: z
+      .array(
+        z
+          .object({
+            id: z.string().uuid(),
+            name: z.string().min(1).max(100),
+            kind: z.enum(["WEBSITE", "FEED", "API", "OAUTH", "MCP"]),
+            status: z.enum([
+              "PENDING_REVIEW",
+              "APPROVED",
+              "REJECTED",
+              "SUSPENDED",
+              "REVOKED",
+            ]),
+            revision: z.number().int().positive(),
+            approvedRevision: z.number().int().positive().nullable(),
+            endpointConfigured: z.boolean(),
+            siteStatus: z.enum(["PENDING", "VERIFIED", "REVOKED"]),
+            proofValidUntil: z.string().datetime().nullable(),
+            proofCurrentlyValid: z.boolean(),
+            ingressStatus: z.enum(["ACTIVE", "REVOKED", "NOT_CONFIGURED"]),
+            activeIngressCredentials: connectCount,
+            lastSuccessfulIngressAt: z.string().datetime().nullable(),
+            lastCatalogAcceptedAt: z.string().datetime().nullable(),
+            catalog: z
+              .object({
+                published: connectCount,
+                hidden: connectCount,
+                stale: connectCount,
+              })
+              .strict(),
+            lastObservedSync: ConnectSyncObservationSchema.safeExtend({
+              observedAt: z.string().datetime(),
+            }).nullable(),
+          })
+          .strict(),
+      )
+      .max(50),
+    audit: z
+      .array(
+        z
+          .object({
+            id: z.string().uuid(),
+            actorKind: z.enum(["OWNER", "ADMIN", "PROVIDER", "SYSTEM"]),
+            action: z.string().regex(/^[A-Z][A-Z0-9_]{0,79}$/),
+            createdAt: z.string().datetime(),
+          })
+          .strict(),
+      )
+      .max(50),
+    reviewSignals: z
+      .object({
+        failedAdmittedReads24h: connectCount,
+        protectedResponseRefusals24h: connectCount,
+        suspensions24h: connectCount,
+        currentDisputes: connectCount,
+        recoveryObligationTransactions: connectCount,
+      })
+      .strict(),
+    nextIntegrationCursor: z.string().uuid().nullable(),
+    nextAuditCursor: z.string().uuid().nullable(),
+    secretsIncluded: z.literal(false),
+    disclosure: z.string().min(1).max(700),
+  })
+  .strict();
+export type ConnectDiagnostics = z.infer<typeof ConnectDiagnosticsSchema>;

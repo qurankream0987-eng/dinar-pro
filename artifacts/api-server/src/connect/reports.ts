@@ -19,7 +19,7 @@ import {
   type ConnectActor,
   type ConnectMarket,
 } from "./partners";
-import { connectBalances, transactionView } from "./finance";
+import { connectBalancesForReport, transactionView } from "./finance";
 const querySchema = z
   .object({
     cursor: z.string().uuid().optional(),
@@ -133,12 +133,14 @@ export async function connectPartnerReport(
         counts(connectIntegrations),
         counts(connectSites),
       ]);
-      const shown = rows.slice(0, query.limit),
-        transactions = [];
-      for (const row of shown)
-        transactions.push(
-          transactionView(row, await connectBalances(tx, row.id)),
-        );
+      const shown = rows.slice(0, query.limit);
+      const balances = await connectBalancesForReport(
+        tx,
+        shown.map((row) => row.id),
+      );
+      const transactions = shown.map((row) =>
+        transactionView(row, balances.get(row.id)!),
+      );
       return ConnectPartnerReportSchema.parse({
         partnerId,
         generatedAt: new Date().toISOString(),

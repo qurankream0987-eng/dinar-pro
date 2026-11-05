@@ -91,6 +91,9 @@ export async function connectBalances(
     .from(connectCommissionLedger)
     .where(eq(connectCommissionLedger.transactionId, id))
     .groupBy(connectCommissionLedger.bucket);
+  return ledgerBalances(rows);
+}
+function ledgerBalances(rows: { bucket: string; amount: string }[]): Balances {
   const result = zero();
   for (const [key, bucket] of Object.entries(BUCKETS)) {
     const amount = BigInt(
@@ -105,6 +108,38 @@ export async function connectBalances(
     result[key as keyof Balances] = Number(amount);
   }
   return result;
+}
+/** Bounded report-page read, using the same integer/reconciliation boundary as
+ * every single-transaction financial action. No financial write or FX behavior. */
+export async function connectBalancesForReport(
+  tx: ConnectTx,
+  ids: string[],
+): Promise<Map<string, Balances>> {
+  const unique = [...new Set(ids)];
+  if (unique.length > 50)
+    throw connectError(
+      500,
+      "REPORT_PAGE_TOO_LARGE",
+      "حجم صفحة التقرير يتجاوز الحد المعتمد",
+    );
+  if (!unique.length) return new Map();
+  const rows = await tx
+    .select({
+      transactionId: connectCommissionLedger.transactionId,
+      bucket: connectCommissionLedger.bucket,
+      amount: sql<string>`sum(${connectCommissionLedger.deltaMinor})::text`,
+    })
+    .from(connectCommissionLedger)
+    .where(inArray(connectCommissionLedger.transactionId, unique))
+    .groupBy(
+      connectCommissionLedger.transactionId,
+      connectCommissionLedger.bucket,
+    );
+  const grouped = new Map<string, { bucket: string; amount: string }[]>(
+    unique.map((id) => [id, []]),
+  );
+  for (const row of rows) grouped.get(row.transactionId)!.push(row);
+  return new Map(unique.map((id) => [id, ledgerBalances(grouped.get(id)!)]));
 }
 export function transactionView(row: Header, balances: Balances) {
   return ConnectExternalTransactionSchema.parse({

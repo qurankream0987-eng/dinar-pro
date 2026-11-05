@@ -23,6 +23,7 @@ import * as team from "../connect/team";
 import * as partners from "../connect/partners";
 import * as agreements from "../connect/agreements";
 import { ConnectFinancialReceiptSchema } from "@workspace/api-zod/connect-platform";
+import { connectDiagnostics } from "../connect/diagnostics";
 import { connectPartnerReport } from "../connect/reports";
 import {
   receiveConnectEvent,
@@ -37,6 +38,9 @@ import { markets } from "@workspace/db";
 import { resolveMarket } from "../lib/markets";
 import { assertMarketLegalCapability } from "../lib/d16-readiness";
 const router = Router();
+router.get("/connect/partners/:id/diagnostics",requireAuth,async(req,res)=>res.set("Cache-Control","no-store").json(await connectDiagnostics(req.actor!,await marketFor(req),idParam(req.params.id),req.query)));
+router.get("/admin/connect/partners/:id/diagnostics",requireAuth,async(req,res)=>res.set("Cache-Control","no-store").json(await connectDiagnostics(req.actor!,await marketFor(req),idParam(req.params.id),req.query,true)));
+
 router.get("/connect/partners/:id/team", requireAuth, async (req, res) =>
   res.set("Cache-Control", "no-store").json(await team.listConnectTeam(req.actor!.id, await marketFor(req), idParam(req.params.id))));
 router.post("/connect/partners/:id/team", requireAuth, async (req, res) =>

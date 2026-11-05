@@ -208,7 +208,7 @@ docker run --rm \
   --env DINAR_SUITE_SEED=fixtures \
   --env DINAR_SUITE_RELEASE_MIGRATIONS="$CONNECT_RELEASE" \
   --entrypoint /bin/sh "$G33_APP_IMAGE" \
-  -lc 'cd /app/artifacts/api-server && sh test/isolation/local-suite.sh connect-agreement-draft.test connect-card-presentation.test connect-website-catalog.test connect-partners.test connect-mcp-catalog.test connect-catalog-pull.test connect-network.test connect-card-contract.test ai-authority-boundary.test BDINAR_TEST_DATABASE=development'
+  -lc 'cd /app/artifacts/api-server && sh test/isolation/local-suite.sh connect-performance.test connect-commission-math.test connect-sync-observations.test connect-agreement-draft.test connect-card-presentation.test connect-website-catalog.test connect-partners.test connect-mcp-catalog.test connect-catalog-pull.test connect-network.test connect-card-contract.test ai-authority-boundary.test BDINAR_TEST_DATABASE=development'
 
 MIGRATION_FINGERPRINT() {
   docker exec "$POSTGRES" psql -v ON_ERROR_STOP=1 -U dinar_isolation -d "$DB" -Atqc \

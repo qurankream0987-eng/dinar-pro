@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { api } from "@/account/Account";
 import { Button } from "@/ui/Button";
 import { ConnectAgreementProposal } from "@/features/ConnectAgreementProposal";
+import { ConnectDiagnosticsPanel } from "@/features/ConnectDiagnostics";
 import { ConnectDashboard } from "@/features/ConnectDashboard";
 type ReviewItem = {
   id: string;
@@ -138,6 +139,7 @@ export default function AdminConnect() {
           ))}
         </section>
       ))}
+      {selectedPartnerId && <ConnectDiagnosticsPanel key={"diagnostics-"+selectedPartnerId} partnerId={selectedPartnerId} admin />}
       {selectedPartnerId && <ConnectAgreementProposal key={"agreement-"+selectedPartnerId} partnerId={selectedPartnerId} />}
       {selectedPartnerId && (
         <ConnectDashboard

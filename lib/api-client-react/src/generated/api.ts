@@ -81,6 +81,7 @@ import type {
   ConnectCatalogImportInput,
   ConnectCatalogReceipt,
   ConnectCatalogSyncRequest,
+  ConnectDiagnostics,
   ConnectFinanceCommandInput,
   ConnectFinancialReceipt,
   ConnectIntegrationRegistrationInput,
@@ -119,7 +120,9 @@ import type {
   DeliveryInput,
   EmptyInput,
   EmptyObject,
+  GetAdminConnectDiagnosticsParams,
   GetAdminConnectPartnerReportParams,
+  GetConnectDiagnosticsParams,
   GetConnectPartnerReportParams,
   GetListingsParams,
   GetOrdersParams,
@@ -22085,6 +22088,232 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       > => {
       return useMutation(getFinanceConnectTransactionMutationOptions(options), queryClient);
     }
+
+export const getGetConnectDiagnosticsUrl = (id: string,
+    params?: GetConnectDiagnosticsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/connect/partners/${id}/diagnostics?${stringifiedParams}` : `/api/connect/partners/${id}/diagnostics`
+}
+
+/**
+ * Access: OWNER. Read-only bounded immutable observations. No live provider probe, credentials, hashes, raw audit details or customer content. Staff report/catalog access does not grant diagnostics.
+ */
+export const getConnectDiagnostics = async (id: string,
+    params?: GetConnectDiagnosticsParams, options?: Parameters<typeof customFetch>[1]): Promise<ConnectDiagnostics> => {
+
+  return customFetch<ConnectDiagnostics>(getGetConnectDiagnosticsUrl(id,params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetConnectDiagnosticsQueryKey = (id: string,
+    params?: GetConnectDiagnosticsParams,) => {
+    return [
+    `/api/connect/partners/${id}/diagnostics`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetConnectDiagnosticsQueryOptions = <TData = Awaited<ReturnType<typeof getConnectDiagnostics>>, TError = ErrorType<void>>(id: string,
+    params?: GetConnectDiagnosticsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConnectDiagnostics>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetConnectDiagnosticsQueryKey(id,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getConnectDiagnostics>>> = ({ signal }) => getConnectDiagnostics(id,params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getConnectDiagnostics>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetConnectDiagnosticsQueryResult = NonNullable<Awaited<ReturnType<typeof getConnectDiagnostics>>>
+export type GetConnectDiagnosticsQueryError = ErrorType<void>
+
+
+export function useGetConnectDiagnostics<TData = Awaited<ReturnType<typeof getConnectDiagnostics>>, TError = ErrorType<void>>(
+ id: string,
+    params: undefined |  GetConnectDiagnosticsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConnectDiagnostics>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getConnectDiagnostics>>,
+          TError,
+          Awaited<ReturnType<typeof getConnectDiagnostics>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetConnectDiagnostics<TData = Awaited<ReturnType<typeof getConnectDiagnostics>>, TError = ErrorType<void>>(
+ id: string,
+    params?: GetConnectDiagnosticsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConnectDiagnostics>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getConnectDiagnostics>>,
+          TError,
+          Awaited<ReturnType<typeof getConnectDiagnostics>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetConnectDiagnostics<TData = Awaited<ReturnType<typeof getConnectDiagnostics>>, TError = ErrorType<void>>(
+ id: string,
+    params?: GetConnectDiagnosticsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConnectDiagnostics>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useGetConnectDiagnostics<TData = Awaited<ReturnType<typeof getConnectDiagnostics>>, TError = ErrorType<void>>(
+ id: string,
+    params?: GetConnectDiagnosticsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConnectDiagnostics>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetConnectDiagnosticsQueryOptions(id,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetAdminConnectDiagnosticsUrl = (id: string,
+    params?: GetAdminConnectDiagnosticsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/admin/connect/partners/${id}/diagnostics?${stringifiedParams}` : `/api/admin/connect/partners/${id}/diagnostics`
+}
+
+/**
+ * Access: ADMIN. Read-only bounded immutable observations. No live provider probe, credentials, hashes, raw audit details or customer content. Staff report/catalog access does not grant diagnostics.
+ */
+export const getAdminConnectDiagnostics = async (id: string,
+    params?: GetAdminConnectDiagnosticsParams, options?: Parameters<typeof customFetch>[1]): Promise<ConnectDiagnostics> => {
+
+  return customFetch<ConnectDiagnostics>(getGetAdminConnectDiagnosticsUrl(id,params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAdminConnectDiagnosticsQueryKey = (id: string,
+    params?: GetAdminConnectDiagnosticsParams,) => {
+    return [
+    `/api/admin/connect/partners/${id}/diagnostics`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetAdminConnectDiagnosticsQueryOptions = <TData = Awaited<ReturnType<typeof getAdminConnectDiagnostics>>, TError = ErrorType<void>>(id: string,
+    params?: GetAdminConnectDiagnosticsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminConnectDiagnostics>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAdminConnectDiagnosticsQueryKey(id,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminConnectDiagnostics>>> = ({ signal }) => getAdminConnectDiagnostics(id,params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdminConnectDiagnostics>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetAdminConnectDiagnosticsQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminConnectDiagnostics>>>
+export type GetAdminConnectDiagnosticsQueryError = ErrorType<void>
+
+
+export function useGetAdminConnectDiagnostics<TData = Awaited<ReturnType<typeof getAdminConnectDiagnostics>>, TError = ErrorType<void>>(
+ id: string,
+    params: undefined |  GetAdminConnectDiagnosticsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminConnectDiagnostics>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAdminConnectDiagnostics>>,
+          TError,
+          Awaited<ReturnType<typeof getAdminConnectDiagnostics>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAdminConnectDiagnostics<TData = Awaited<ReturnType<typeof getAdminConnectDiagnostics>>, TError = ErrorType<void>>(
+ id: string,
+    params?: GetAdminConnectDiagnosticsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminConnectDiagnostics>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAdminConnectDiagnostics>>,
+          TError,
+          Awaited<ReturnType<typeof getAdminConnectDiagnostics>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAdminConnectDiagnostics<TData = Awaited<ReturnType<typeof getAdminConnectDiagnostics>>, TError = ErrorType<void>>(
+ id: string,
+    params?: GetAdminConnectDiagnosticsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminConnectDiagnostics>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useGetAdminConnectDiagnostics<TData = Awaited<ReturnType<typeof getAdminConnectDiagnostics>>, TError = ErrorType<void>>(
+ id: string,
+    params?: GetAdminConnectDiagnosticsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdminConnectDiagnostics>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetAdminConnectDiagnosticsQueryOptions(id,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 
 export const getGetConnectPartnerReportUrl = (id: string,
     params?: GetConnectPartnerReportParams,) => {

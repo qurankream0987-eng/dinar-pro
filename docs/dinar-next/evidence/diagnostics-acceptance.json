@@ -1,0 +1,146 @@
+{
+  "date": "2026-11-05",
+  "parent": "34bb754d60617fbb49c26e6f1726f141234c8598",
+  "branch": "codex/dinar-next-unified-development",
+  "applicationSourceDigest": "878ccf96b90899f42b354a4df3651033d91a97a23bcf32529f3b341df9577ff7",
+  "sourceFiles": 1780,
+  "migrations": 60,
+  "newMigrations": 0,
+  "newDependencies": 0,
+  "connectCasesPerPgVersion": 68,
+  "coreCases": {
+    "passed": 205,
+    "skipped": 1,
+    "initialSetupFailures": 2,
+    "correctedRerunsPassed": true
+  },
+  "integratedBrowserCases": 7,
+  "selectedDistinctCasesPassed": 280,
+  "fullRepositoryBatteryClaim": false,
+  "performance": {
+    "18": [
+      {
+        "node": "v24.22.1",
+        "htmlBytes": 89251,
+        "fixtureSha256": "b07757fcb006420c50de68a47ecf8d775b47a2932cb83bc7ca7f010eee9585ba",
+        "items": 100,
+        "samples": 30,
+        "p50Ms": 6.03,
+        "p95Ms": 9.29,
+        "maxMs": 10.91,
+        "scope": "synthetic bounded local CPU measurement; no production latency/SLO claim"
+      },
+      {
+        "name": "partner-report",
+        "fixtureTransactions": 2,
+        "samples": 20,
+        "oneRowSqlQueries": 14,
+        "sqlQueriesPerRequest": [
+          14
+        ],
+        "p50Ms": 11.18,
+        "p95Ms": 27.94,
+        "maxMs": 35.4,
+        "responseBytes": 2074,
+        "scope": "loopback disposable fixture, not production SLO evidence"
+      },
+      {
+        "name": "partner-diagnostics",
+        "fixtureTransactions": 2,
+        "samples": 20,
+        "sqlQueriesPerRequest": [
+          17
+        ],
+        "p50Ms": 19.56,
+        "p95Ms": 26.36,
+        "maxMs": 96.11,
+        "responseBytes": 4536,
+        "scope": "loopback disposable fixture, not production SLO evidence"
+      }
+    ],
+    "16": [
+      {
+        "node": "v24.22.1",
+        "htmlBytes": 89251,
+        "fixtureSha256": "b07757fcb006420c50de68a47ecf8d775b47a2932cb83bc7ca7f010eee9585ba",
+        "items": 100,
+        "samples": 30,
+        "p50Ms": 4.41,
+        "p95Ms": 10,
+        "maxMs": 10.96,
+        "scope": "synthetic bounded local CPU measurement; no production latency/SLO claim"
+      },
+      {
+        "name": "partner-report",
+        "fixtureTransactions": 2,
+        "samples": 20,
+        "oneRowSqlQueries": 14,
+        "sqlQueriesPerRequest": [
+          14
+        ],
+        "p50Ms": 7.81,
+        "p95Ms": 10.63,
+        "maxMs": 12.36,
+        "responseBytes": 2074,
+        "scope": "loopback disposable fixture, not production SLO evidence"
+      },
+      {
+        "name": "partner-diagnostics",
+        "fixtureTransactions": 2,
+        "samples": 20,
+        "sqlQueriesPerRequest": [
+          17
+        ],
+        "p50Ms": 10.34,
+        "p95Ms": 11.67,
+        "maxMs": 18.15,
+        "responseBytes": 4536,
+        "scope": "loopback disposable fixture, not production SLO evidence"
+      }
+    ]
+  },
+  "sqlCountRegression": {
+    "beforeOneTransaction": 14,
+    "beforeTwoTransactions": 15,
+    "afterOneTransaction": 14,
+    "afterTwoTransactions": 14,
+    "sqlTextOrParametersRetained": false,
+    "productionSloClaim": false
+  },
+  "checks": {
+    "typecheck": "PASS",
+    "apiBuild": "PASS",
+    "webBuild": "PASS_WITH_EXISTING_CHUNK_WARNING",
+    "codegenDrift": 0,
+    "codegenFiles": 546,
+    "stagedSecretScan": "PASS",
+    "outboundAttempts": 0
+  },
+  "claudeCoordination": {
+    "head": "56b0b51fccfef3d5c814e4fd97b4fa942ea9ee58",
+    "mergeBase": "34bb754d60617fbb49c26e6f1726f141234c8598",
+    "activeBranchMerged": false,
+    "intelligenceSourceOverlap": [],
+    "sharedAuthoredContract": [
+      "lib/api-spec/openapi.yaml"
+    ],
+    "regeneratedOverlap": [
+      "lib/api-client-react/src/generated/api.schemas.ts",
+      "lib/api-zod/src/generated/api.ts"
+    ]
+  },
+  "blockers": [
+    "GITHUB_API_NETWORK_POLICY",
+    "ORIGINAL_V2_TASK_OR_BUNDLE",
+    "CLAUDE_COORDINATED_INTELLIGENCE_INTEGRATION",
+    "AUTHORIZED_PROVIDER_SANDBOX_CREDENTIALS",
+    "APPROVED_PINNED_EGRESS",
+    "MANUAL_SPOKEN_SCREEN_READER_VALIDATION",
+    "EXTERNAL_LEGAL_LAUNCH_DECISIONS"
+  ],
+  "limits": [
+    "Synthetic provider/finance evidence, not live settlement",
+    "Comprehensive current-source local acceptance continues at the committed freeze",
+    "No main/Replit/Claude mutation, merge, force push, deployment, Railway or production database access"
+  ]
+}

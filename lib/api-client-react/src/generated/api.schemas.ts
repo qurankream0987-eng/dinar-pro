@@ -6055,6 +6055,191 @@ export interface ConnectAgreementView {
   acceptance: ConnectAgreementViewAcceptance;
 }
 
+export type ConnectDiagnosticsIntegrationsItemKind = typeof ConnectDiagnosticsIntegrationsItemKind[keyof typeof ConnectDiagnosticsIntegrationsItemKind];
+
+
+export const ConnectDiagnosticsIntegrationsItemKind = {
+  WEBSITE: 'WEBSITE',
+  FEED: 'FEED',
+  API: 'API',
+  OAUTH: 'OAUTH',
+  MCP: 'MCP',
+} as const;
+
+export type ConnectDiagnosticsIntegrationsItemStatus = typeof ConnectDiagnosticsIntegrationsItemStatus[keyof typeof ConnectDiagnosticsIntegrationsItemStatus];
+
+
+export const ConnectDiagnosticsIntegrationsItemStatus = {
+  PENDING_REVIEW: 'PENDING_REVIEW',
+  APPROVED: 'APPROVED',
+  REJECTED: 'REJECTED',
+  SUSPENDED: 'SUSPENDED',
+  REVOKED: 'REVOKED',
+} as const;
+
+export type ConnectDiagnosticsIntegrationsItemSiteStatus = typeof ConnectDiagnosticsIntegrationsItemSiteStatus[keyof typeof ConnectDiagnosticsIntegrationsItemSiteStatus];
+
+
+export const ConnectDiagnosticsIntegrationsItemSiteStatus = {
+  PENDING: 'PENDING',
+  VERIFIED: 'VERIFIED',
+  REVOKED: 'REVOKED',
+} as const;
+
+export type ConnectDiagnosticsIntegrationsItemIngressStatus = typeof ConnectDiagnosticsIntegrationsItemIngressStatus[keyof typeof ConnectDiagnosticsIntegrationsItemIngressStatus];
+
+
+export const ConnectDiagnosticsIntegrationsItemIngressStatus = {
+  ACTIVE: 'ACTIVE',
+  REVOKED: 'REVOKED',
+  NOT_CONFIGURED: 'NOT_CONFIGURED',
+} as const;
+
+export type ConnectDiagnosticsIntegrationsItemCatalog = {
+  /** @pattern ^\d+$ */
+  published: string;
+  /** @pattern ^\d+$ */
+  hidden: string;
+  /** @pattern ^\d+$ */
+  stale: string;
+};
+
+export type ConnectDiagnosticsIntegrationsItemLastObservedSyncOutcome = typeof ConnectDiagnosticsIntegrationsItemLastObservedSyncOutcome[keyof typeof ConnectDiagnosticsIntegrationsItemLastObservedSyncOutcome];
+
+
+export const ConnectDiagnosticsIntegrationsItemLastObservedSyncOutcome = {
+  COMPLETED: 'COMPLETED',
+  FAILED: 'FAILED',
+} as const;
+
+export type ConnectDiagnosticsIntegrationsItemLastObservedSyncReason = typeof ConnectDiagnosticsIntegrationsItemLastObservedSyncReason[keyof typeof ConnectDiagnosticsIntegrationsItemLastObservedSyncReason] | null;
+
+
+export const ConnectDiagnosticsIntegrationsItemLastObservedSyncReason = {
+  PROVIDER_TIMEOUT: 'PROVIDER_TIMEOUT',
+  PROVIDER_RATE_LIMITED: 'PROVIDER_RATE_LIMITED',
+  PROVIDER_UNAVAILABLE: 'PROVIDER_UNAVAILABLE',
+  PROVIDER_INVALID_RESPONSE: 'PROVIDER_INVALID_RESPONSE',
+  PROVIDER_INVALID_CONTENT_TYPE: 'PROVIDER_INVALID_CONTENT_TYPE',
+  PROVIDER_INVALID_CATALOG: 'PROVIDER_INVALID_CATALOG',
+  PROVIDER_RESPONSE_TOO_LARGE: 'PROVIDER_RESPONSE_TOO_LARGE',
+  PROVIDER_HEADERS_REFUSED: 'PROVIDER_HEADERS_REFUSED',
+  PRIVATE_ENDPOINT: 'PRIVATE_ENDPOINT',
+  REDIRECT_REFUSED: 'REDIRECT_REFUSED',
+  UNSAFE_EXTERNAL_URL: 'UNSAFE_EXTERNAL_URL',
+  MCP_INVALID_RESPONSE: 'MCP_INVALID_RESPONSE',
+  MCP_REVIEW_REQUIRED: 'MCP_REVIEW_REQUIRED',
+  PINNED_EGRESS_REQUIRED: 'PINNED_EGRESS_REQUIRED',
+  STALE_INTEGRATION: 'STALE_INTEGRATION',
+  SITE_NOT_VERIFIED: 'SITE_NOT_VERIFIED',
+  OAUTH_GRANT_UNAVAILABLE: 'OAUTH_GRANT_UNAVAILABLE',
+  WEBSITE_TOO_LARGE: 'WEBSITE_TOO_LARGE',
+  WEBSITE_TOO_COMPLEX: 'WEBSITE_TOO_COMPLEX',
+  WEBSITE_TOO_MANY_ITEMS: 'WEBSITE_TOO_MANY_ITEMS',
+  WEBSITE_INVALID_CONTENT_TYPE: 'WEBSITE_INVALID_CONTENT_TYPE',
+  UNEXPECTED_FAILURE: 'UNEXPECTED_FAILURE',
+} as const;
+
+export type ConnectDiagnosticsIntegrationsItemLastObservedSync = {
+  /** @pattern ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$ */
+  integrationId: string;
+  outcome: ConnectDiagnosticsIntegrationsItemLastObservedSyncOutcome;
+  reason: ConnectDiagnosticsIntegrationsItemLastObservedSyncReason;
+  /**
+     * @maximum 9007199254740991
+     * @exclusiveMinimum 0
+     */
+  reviewedRevision: number;
+  /**
+     * @minimum 0
+     * @maximum 9007199254740991
+     */
+  durationMs: number;
+  observedAt: string;
+} | null;
+
+export type ConnectDiagnosticsIntegrationsItem = {
+  /** @pattern ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$ */
+  id: string;
+  /**
+     * @minLength 1
+     * @maxLength 100
+     */
+  name: string;
+  kind: ConnectDiagnosticsIntegrationsItemKind;
+  status: ConnectDiagnosticsIntegrationsItemStatus;
+  /**
+     * @maximum 9007199254740991
+     * @exclusiveMinimum 0
+     */
+  revision: number;
+  approvedRevision: number | null;
+  endpointConfigured: boolean;
+  siteStatus: ConnectDiagnosticsIntegrationsItemSiteStatus;
+  proofValidUntil: null | string;
+  proofCurrentlyValid: boolean;
+  ingressStatus: ConnectDiagnosticsIntegrationsItemIngressStatus;
+  /** @pattern ^\d+$ */
+  activeIngressCredentials: string;
+  lastSuccessfulIngressAt: null | string;
+  lastCatalogAcceptedAt: null | string;
+  catalog: ConnectDiagnosticsIntegrationsItemCatalog;
+  lastObservedSync: ConnectDiagnosticsIntegrationsItemLastObservedSync;
+};
+
+export type ConnectDiagnosticsAuditItemActorKind = typeof ConnectDiagnosticsAuditItemActorKind[keyof typeof ConnectDiagnosticsAuditItemActorKind];
+
+
+export const ConnectDiagnosticsAuditItemActorKind = {
+  OWNER: 'OWNER',
+  ADMIN: 'ADMIN',
+  PROVIDER: 'PROVIDER',
+  SYSTEM: 'SYSTEM',
+} as const;
+
+export type ConnectDiagnosticsAuditItem = {
+  /** @pattern ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$ */
+  id: string;
+  actorKind: ConnectDiagnosticsAuditItemActorKind;
+  /** @pattern ^[A-Z][A-Z0-9_]{0,79}$ */
+  action: string;
+  createdAt: string;
+};
+
+export type ConnectDiagnosticsReviewSignals = {
+  /** @pattern ^\d+$ */
+  failedAdmittedReads24h: string;
+  /** @pattern ^\d+$ */
+  protectedResponseRefusals24h: string;
+  /** @pattern ^\d+$ */
+  suspensions24h: string;
+  /** @pattern ^\d+$ */
+  currentDisputes: string;
+  /** @pattern ^\d+$ */
+  recoveryObligationTransactions: string;
+};
+
+export interface ConnectDiagnostics {
+  /** @pattern ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$ */
+  partnerId: string;
+  generatedAt: string;
+  observationWindowStart: string;
+  providerHealth: 'NOT_PROBED';
+  /** @maxItems 50 */
+  integrations: ConnectDiagnosticsIntegrationsItem[];
+  /** @maxItems 50 */
+  audit: ConnectDiagnosticsAuditItem[];
+  reviewSignals: ConnectDiagnosticsReviewSignals;
+  nextIntegrationCursor: string | null;
+  nextAuditCursor: string | null;
+  secretsIncluded: false;
+  /**
+     * @minLength 1
+     * @maxLength 700
+     */
+  disclosure: string;
+}
+
 export type GetListingsParams = {
 search?: string;
 category?: string;
@@ -6163,6 +6348,26 @@ export type SearchConnectCatalogParams = {
  * @maxLength 120
  */
 search?: string;
+};
+
+export type GetConnectDiagnosticsParams = {
+integrationCursor?: string;
+auditCursor?: string;
+/**
+ * @minimum 1
+ * @maximum 50
+ */
+limit?: number;
+};
+
+export type GetAdminConnectDiagnosticsParams = {
+integrationCursor?: string;
+auditCursor?: string;
+/**
+ * @minimum 1
+ * @maximum 50
+ */
+limit?: number;
 };
 
 export type GetConnectPartnerReportParams = {

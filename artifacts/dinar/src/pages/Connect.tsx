@@ -6,6 +6,7 @@ import { ConnectAgreements } from "@/features/ConnectAgreements";
 import { CONNECT_MCP_CATALOG_TOOL, CONNECT_MCP_CATALOG_INPUT_SHA256, ConnectCatalogReceiptSchema } from "@workspace/api-zod/connect-platform";
 import { ConnectOAuthControls } from "@/features/ConnectOAuthControls";
 import { ConnectTeam, ConnectReadOnlyCatalog } from "@/features/ConnectTeam";
+import { ConnectDiagnosticsPanel } from "@/features/ConnectDiagnostics";
 import { ConnectDashboard } from "@/features/ConnectDashboard";
 type Site = { id: string; hostname: string; status: string };
 type Integration = {
@@ -180,6 +181,7 @@ export default function ConnectPage() {
         <>
           <ConnectReadOnlyCatalog key={`owner-catalog-${partner.id}-${message}`} partnerId={partner.id} />
           <ConnectTeam key={`team-${partner.id}`} partnerId={partner.id} />
+          <ConnectDiagnosticsPanel key={`diagnostics-${partner.id}`} partnerId={partner.id} />
           <ConnectAgreements key={partner.id} partnerId={partner.id} />
           <ConnectDashboard
             key={`report-${partner.id}`}

@@ -326,6 +326,8 @@ await test("real partner agreement acceptance and opt-in/withdrawal work through
     );
     assert.equal(report.noCommissionBeforeVerifiedEvent,true);
     assert.equal(report.adminFinanceThroughUi,true);
+    assert.equal(report.adminDiagnosticsThroughUi,true);
+    assert.equal(report.ownerDiagnosticsThroughUi,true);
     assert.ok((await pool.query("select count(*)::int n from connect_commission_ledger")).rows[0].n>ledgerBefore);
     const financial=(await pool.query("select id,state,mode from connect_transactions where partner_id=$1 and external_id='browser-external-order-1'",[partner.id])).rows[0];
     assert.ok(financial);assert.equal(financial.state,"SETTLED");assert.equal(financial.mode,"SIMULATION_ONLY");

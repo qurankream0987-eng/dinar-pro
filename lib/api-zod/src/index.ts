@@ -7,9 +7,13 @@ export {
   RemoveConnectReadOnlyTeamBody,
   GetConnectPartnerReportParams,
   GetAdminConnectPartnerReportParams,
+  GetConnectDiagnosticsParams,
+  GetAdminConnectDiagnosticsParams,
 } from "./generated/api";
 export type {
   RemoveConnectReadOnlyTeamBody as RemoveConnectReadOnlyTeamRequest,
   GetConnectPartnerReportParams as GetConnectPartnerReportQuery,
   GetAdminConnectPartnerReportParams as GetAdminConnectPartnerReportQuery,
+  GetConnectDiagnosticsParams as GetConnectDiagnosticsQuery,
+  GetAdminConnectDiagnosticsParams as GetAdminConnectDiagnosticsQuery,
 } from "./generated/types";

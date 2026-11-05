@@ -1197,6 +1197,22 @@ await test("partner and finance dashboards expose only owned external evidence, 
       .status,
     403,
   );
+  // Measure real HTTP/SQL work on this declared small disposable fixture. Count
+  // queries only: do not retain SQL text, parameters, credentials or response bodies.
+  const pgPrototype=(pool as any).Client.prototype,originalQuery=pgPrototype.query;
+  let queries=0;
+  pgPrototype.query=function(...args:any[]){queries++;return originalQuery.apply(this,args);};
+  try {
+   for(const [name,path] of [["partner-report",`/connect/partners/${partner.id}/report?limit=50`],["partner-diagnostics",`/connect/partners/${partner.id}/diagnostics?limit=50`]]){
+    const samples:number[]=[],queryCounts:number[]=[];let responseBytes=0;let oneRowQueries:number|undefined;
+    if(name==="partner-report"){const before=queries;const oneRow=await call(`/connect/partners/${partner.id}/report?limit=1`,owner);assert.equal(oneRow.response.status,200,oneRow.text);oneRowQueries=queries-before;}
+
+    for(let run=0;run<22;run++){const before=queries,started=performance.now();const measured=await call(path!,owner);const elapsed=performance.now()-started;assert.equal(measured.response.status,200,measured.text);if(run>=2){samples.push(elapsed);queryCounts.push(queries-before);responseBytes=Buffer.byteLength(measured.text);}}
+    if(oneRowQueries!==undefined)assert.ok(queryCounts.every(count=>count<=oneRowQueries!),`report query count must not grow with returned transactions: one=${oneRowQueries}, multiple=${queryCounts}`);
+    samples.sort((a,b)=>a-b);console.log("CONNECT_READ_PERFORMANCE",JSON.stringify({name,fixtureTransactions:2,samples:samples.length,oneRowSqlQueries:oneRowQueries,sqlQueriesPerRequest:[...new Set(queryCounts)].sort((a,b)=>a-b),p50Ms:Number(samples[Math.floor(samples.length*.5)]!.toFixed(2)),p95Ms:Number(samples[Math.ceil(samples.length*.95)-1]!.toFixed(2)),maxMs:Number(samples.at(-1)!.toFixed(2)),responseBytes,scope:"loopback disposable fixture, not production SLO evidence"}));
+   }
+  }finally{pgPrototype.query=originalQuery;}
+
 });
 await test("password-confirmed personal export includes owned Connect records without partner secrets or other customers", async () => {
   const exported = await call("/account/privacy/exports", other, {
@@ -1612,7 +1628,7 @@ await test("Connect staff inherit canonical D4 identity/version/revocation and r
  assert.equal((await call(`/connect/agreements/${agreement.id}/accept`,employee,{expectedDigest:agreement.termsDigest,accept:true,idempotencyKey:randomUUID()})).response.status,404);
  assert.equal((await call(teamPath,employee,{delegationId,expectedDelegationVersion:activeVersion,scopes:["REPORTS_READ"],confirm:true})).response.status,404);
  assert.equal((await call(teamPath,owner,{delegationId,expectedDelegationVersion:activeVersion,scopes:["INTEGRATIONS_MANAGE"],confirm:true})).response.status,400,"human management scopes are not part of the approved policy");
- const reporting=await call(teamPath,owner,{delegationId,expectedDelegationVersion:activeVersion,scopes:["CATALOG_READ","REPORTS_READ"],confirm:true});assert.equal(reporting.response.status,200,reporting.text);assert.equal((await call(`/connect/partners/${partner.id}/report`,employee)).response.status,200);
+ const reporting=await call(teamPath,owner,{delegationId,expectedDelegationVersion:activeVersion,scopes:["CATALOG_READ","REPORTS_READ"],confirm:true});assert.equal(reporting.response.status,200,reporting.text);assert.equal((await call(`/connect/partners/${partner.id}/report`,employee)).response.status,200);assert.equal((await call(`/connect/partners/${partner.id}/diagnostics`,employee)).response.status,404,"report permission never grants integration/key diagnostics");
  const suspended=await call(`${path}/${delegationId}/suspend`,owner,{confirm:true,expectedVersion:activeVersion});assert.equal(suspended.response.status,200,suspended.text);assert.equal((await call(`/connect/partners/${partner.id}`,employee)).response.status,404);
  const resumed=await call(`${path}/${delegationId}/resume`,owner,{confirm:true,expectedVersion:suspended.data.version});assert.equal(resumed.response.status,200,resumed.text);assert.equal((await call(`/connect/partners/${partner.id}`,employee)).response.status,404,"resuming D4 must not silently reactivate the old Connect version mapping");
  assert.equal((await call(teamPath,owner,{delegationId,expectedDelegationVersion:activeVersion,scopes:["CATALOG_READ"],confirm:true})).response.status,409);
@@ -1812,9 +1828,10 @@ await test("catalog admission cannot multiply provider requests by alternating a
  app.locals.connectNetwork=new ConnectNetwork({dns:app.locals.connectDns,transport:async()=>{providerCalls++;return Response.json({batchId:`admission-${providerCalls}`,items:[{externalId:`admission-${providerCalls}`,kind:"SERVICE",title:"خدمة ضبط طلبات",description:"",categoryId:category,price:null,availability:"UNKNOWN",targetPath:`/products/admission-${providerCalls}`,sourceVersion:1,sourceCheckedAt:new Date().toISOString(),attributes:[]}]});}});
  try {
   for(let attempt=0;attempt<15;attempt++){
+   const auditBefore=(await pool.query("select count(*)::int n from connect_audit_events where partner_id=$1 and action like 'CATALOG_SYNC_%'",[partner.id])).rows[0].n;
    const integration=integrations[attempt%2],before=providerCalls;const result=await call(`/connect/integrations/${integration.id}/sync`,owner,{confirm:true,expectedRevision:integration.revision});
    assert.ok([200,429].includes(result.response.status),result.text);
-   if(result.response.status===429){limited++;assert.equal(providerCalls,before,"denied admission performs no provider request");}
+   if(result.response.status===429){limited++;assert.equal(providerCalls,before,"denied admission performs no provider request");assert.equal((await pool.query("select count(*)::int n from connect_audit_events where partner_id=$1 and action like 'CATALOG_SYNC_%'",[partner.id])).rows[0].n,auditBefore,"denied admission cannot amplify diagnostic writes");}
   }
   assert.ok(limited>0,"alternating connectors must not bypass the shared admission budget");assert.ok(providerCalls<=10,`provider requests ${providerCalls} exceed shared budget`);
  } finally {delete app.locals.connectNetwork;}
@@ -1849,6 +1866,27 @@ await test("approved website observations index exact structured facts, preserve
   document=html([service]);const missing=await sync();assert.equal(missing.response.status,200,missing.text);assert.equal(missing.data.hiddenCount,1);assert.equal((await rows()).find(row=>row.title===product.name).status,"HIDDEN");
   document="<!doctype html><p>No verified structured catalog is present.</p>";const empty=await sync();assert.equal(empty.response.status,200,empty.text);assert.equal(empty.data.accepted,0);assert.equal(empty.data.websiteStatus,"NO_VERIFIABLE_DATA");assert.ok((await rows()).every(row=>row.status==="HIDDEN"));assert.equal((await rows()).length,2,"source history is retained");
   document=html([product,service]);assert.equal((await sync()).response.status,200);assert.ok((await rows()).every(row=>row.status==="PUBLISHED"));
+  const diagnosticPath=`/connect/partners/${p.data.id}/diagnostics`;
+  const diagnostic=await call(diagnosticPath,websiteOwner);assert.equal(diagnostic.response.status,200,diagnostic.text);assert.equal(diagnostic.response.headers.get("cache-control"),"no-store");assert.equal(diagnostic.data.providerHealth,"NOT_PROBED");assert.equal(diagnostic.data.secretsIncluded,false);
+  assert.equal(diagnostic.data.integrations.length,1);const summary=diagnostic.data.integrations[0];assert.equal(summary.id,created.data.id);assert.equal(summary.proofCurrentlyValid,true);assert.equal(summary.catalog.published,"2");assert.equal(summary.lastObservedSync.outcome,"COMPLETED");assert.equal(summary.lastObservedSync.reason,null);assert.ok(summary.lastObservedSync.durationMs>=0);assert.ok(summary.lastCatalogAcceptedAt);
+  assert.equal((await call(diagnosticPath,owner)).response.status,404);assert.equal((await call(diagnosticPath,other)).response.status,404);assert.equal((await call(diagnosticPath)).response.status,401);assert.equal((await call(`/admin/connect/partners/${p.data.id}/diagnostics`,websiteOwner)).response.status,403);assert.equal((await call(`/admin/connect/partners/${p.data.id}/diagnostics`,admin)).response.status,200);
+  assert.equal((await call(diagnosticPath+"?limit=51",websiteOwner)).response.status,400);assert.equal((await call(diagnosticPath+`?integrationCursor=${integration.id}`,websiteOwner)).response.status,404);
+  const foreignAudit=(await pool.query("select id from connect_audit_events where partner_id=$1 limit 1",[partner.id])).rows[0].id;assert.equal((await call(diagnosticPath+`?auditCursor=${foreignAudit}`,websiteOwner)).response.status,404);
+  await pool.query("insert into connect_audit_events (id,partner_id,actor_kind,action,details) values ($1,$2,'SYSTEM','DIAGNOSTIC_REDACTION_FIXTURE',$3::jsonb)",[randomUUID(),p.data.id,JSON.stringify({accessToken:"synthetic-private-token-canary",message:"synthetic-private-conversation-canary",credentialPrefix:"private-prefix-canary"})]);
+  const firstPage=await call(diagnosticPath+"?limit=2",websiteOwner);assert.equal(firstPage.response.status,200,firstPage.text);assert.equal(firstPage.data.audit.length,2);assert.ok(firstPage.data.nextAuditCursor);const secondPage=await call(diagnosticPath+`?limit=2&auditCursor=${firstPage.data.nextAuditCursor}`,websiteOwner);assert.equal(secondPage.response.status,200,secondPage.text);assert.ok(secondPage.data.audit.every((row:any)=>!firstPage.data.audit.some((prior:any)=>prior.id===row.id)));
+  const redacted=await call(diagnosticPath,websiteOwner);for(const canary of ["synthetic-private-token-canary","synthetic-private-conversation-canary","private-prefix-canary",providerKey])assert.equal(redacted.text.includes(canary),false);for(const entry of redacted.data.audit)assert.deepEqual(Object.keys(entry).sort(),["action","actorKind","createdAt","id"]);
+  const originalNetwork=app.locals.connectNetwork,versionsBeforeFailure=(await rows()).map(row=>row.source_version);
+  app.locals.connectNetwork=new ConnectNetwork({dns:app.locals.connectDns,timeoutMs:20,transport:async()=>new Promise(()=>{})});const timedOut=await sync();assert.equal(timedOut.response.status,504,timedOut.text);
+  app.locals.connectNetwork=new ConnectNetwork({dns:app.locals.connectDns,transport:async()=>new Response("synthetic-secret-provider-body",{status:302,headers:{location:"https://evil.example/"}})});const redirect=await sync();assert.equal(redirect.response.status,400,redirect.text);assert.equal(redirect.text.includes("synthetic-secret-provider-body"),false);
+  const failed=await call(diagnosticPath,websiteOwner);assert.equal(failed.response.status,200,failed.text);assert.equal(failed.data.integrations[0].lastObservedSync.reason,"REDIRECT_REFUSED");assert.equal(failed.data.integrations[0].lastObservedSync.outcome,"FAILED");assert.equal(failed.data.reviewSignals.failedAdmittedReads24h,"2");assert.equal(failed.data.reviewSignals.protectedResponseRefusals24h,"1");assert.deepEqual((await rows()).map(row=>row.source_version),versionsBeforeFailure);assert.equal(failed.text.includes("evil.example"),false);assert.equal(failed.text.includes("synthetic-secret-provider-body"),false);
+  app.locals.connectNetwork=originalNetwork;
+  // Disposable-only diagnostic storage outage: a completed catalog write must
+  // remain successful even when the separate append-only observation is refused.
+  await pool.query("create function connect_test_reject_sync_audit() returns trigger language plpgsql as $$ begin raise exception 'synthetic diagnostic append outage'; end $$");
+  await pool.query("create trigger connect_test_reject_sync_audit before insert on connect_audit_events for each row when (new.action='CATALOG_SYNC_COMPLETED') execute function connect_test_reject_sync_audit()");
+  try {const committed=await sync();assert.equal(committed.response.status,200,committed.text);assert.equal(committed.data.accepted,2);assert.ok((await rows()).every(row=>row.status==="PUBLISHED"));}
+  finally {await pool.query("drop trigger connect_test_reject_sync_audit on connect_audit_events");await pool.query("drop function connect_test_reject_sync_audit()");}
+
   const [marketRow] = await db.select().from(markets).where(eq(markets.id,"JO"));
   const market = await resolveMarket(marketRow);
   const observation = await readWebsiteCatalog(app.locals.connectNetwork, created.data.endpointUrl, {hostname:"indexer.partner.example",allowedPathPrefixes:["/products/"],categoryId:"other"});

@@ -1,0 +1,205 @@
+{
+  "date": "2026-11-05",
+  "codexParent": "34bb754d60617fbb49c26e6f1726f141234c8598",
+  "claudeMergeBase": "34bb754d60617fbb49c26e6f1726f141234c8598",
+  "heads": [
+    {
+      "ref": "refs/heads/ai-foundation-02",
+      "sha": "2ef9c07ab5fdcd15eca167f5a01ab32b6054400e"
+    },
+    {
+      "ref": "refs/heads/claude/02-sc-acceptance",
+      "sha": "9679e488c5f3d2260078d98c7d97704df6aac6ce"
+    },
+    {
+      "ref": "refs/heads/claude/04-reconciliation",
+      "sha": "e5bbd1ba59bddae8c5bd173a890fcdeafa046c25"
+    },
+    {
+      "ref": "refs/heads/claude/05-w04-context",
+      "sha": "4322fb6d7b66460626509401370f5ec3a5f6c6a8"
+    },
+    {
+      "ref": "refs/heads/claude/06-w02-ultra",
+      "sha": "8f4662b8a8d0c1ebc90bec06cd17c89795d8a480"
+    },
+    {
+      "ref": "refs/heads/claude/07-legal-cards",
+      "sha": "e17fad27339b9d40ccea341e46bef96941d34db8"
+    },
+    {
+      "ref": "refs/heads/claude/08-model-native",
+      "sha": "09ff489f0a3f5950b9f0a0ba8b6cfc49230a7747"
+    },
+    {
+      "ref": "refs/heads/claude/09-dual-tier",
+      "sha": "d416a047f3707d1f03c6763c76e96eee2ab69da4"
+    },
+    {
+      "ref": "refs/heads/claude/10-ultra-closure",
+      "sha": "9a0f86f0b3c727f48be58aee7db11a3045a94613"
+    },
+    {
+      "ref": "refs/heads/claude/11-c1-sql-search",
+      "sha": "d94477bad836bf4fe7b3330884170625d1698270"
+    },
+    {
+      "ref": "refs/heads/claude/12-d1-d2-business-foundation",
+      "sha": "91b09ee7e24b737879d1bcf0ff1f8c238026d3f4"
+    },
+    {
+      "ref": "refs/heads/claude/13-integration-preflight",
+      "sha": "fe1c23396930f836d97241a6e3333611c6a60e4d"
+    },
+    {
+      "ref": "refs/heads/claude/dinar-next-intelligence",
+      "sha": "56b0b51fccfef3d5c814e4fd97b4fa942ea9ee58"
+    },
+    {
+      "ref": "refs/heads/codex/11-c1-sql-search",
+      "sha": "f351f5d20d52d77b69bdcff66e2412796e53aa39"
+    },
+    {
+      "ref": "refs/heads/codex/dinar-next-unified-development",
+      "sha": "34bb754d60617fbb49c26e6f1726f141234c8598"
+    },
+    {
+      "ref": "refs/heads/main",
+      "sha": "b1b20e513ed25952bc086778fb71af88adcc54ba"
+    },
+    {
+      "ref": "refs/heads/qoder/04-sc02",
+      "sha": "f0a3c77fc1fd1a276fcb2a61214dd3b4b8e49ee3"
+    },
+    {
+      "ref": "refs/heads/qoder/05-sc06",
+      "sha": "56138dc97f2711862e41d635e2a009f5535da2bd"
+    },
+    {
+      "ref": "refs/heads/qoder/06-general-specs",
+      "sha": "6335603bfb44857dd5a7261c6f32e06b5b085582"
+    },
+    {
+      "ref": "refs/heads/qoder/07-stock",
+      "sha": "a80bbe32fdf8d9703875658e81b58923e20a1a13"
+    },
+    {
+      "ref": "refs/heads/qoder/08-integration",
+      "sha": "5dda1466cc08e2d6d61d4d757bf541b853819f65"
+    },
+    {
+      "ref": "refs/heads/qoder/09-launch-gates",
+      "sha": "5a005005224cf5ac05f72c8328258dd061a9846b"
+    },
+    {
+      "ref": "refs/heads/qoder/10-security-deps",
+      "sha": "2b0649066a8c9049f410c1224e9f6610bc99492a"
+    },
+    {
+      "ref": "refs/heads/qoder/11-wave01-security-close",
+      "sha": "772cda7193923cebe95a696f7c7c53c7ad37865a"
+    },
+    {
+      "ref": "refs/heads/qoder/12-wave02-card-reliability",
+      "sha": "2da7f9721c8a915ab3630613f9d83a36a55ab3d6"
+    },
+    {
+      "ref": "refs/heads/qoder/12-wave02-red-evidence",
+      "sha": "92aeb0c2858a2778a2cb496665c3f6b2b29ee5b5"
+    },
+    {
+      "ref": "refs/heads/qoder/13-wave03-card-envelope",
+      "sha": "c6e45942cf122582db01eddaba7356ce1b72029e"
+    },
+    {
+      "ref": "refs/heads/qoder/14-w02u3-canonical-reliability",
+      "sha": "6687df2d033c1b71eee5b46afb3e39d193f66ec2"
+    },
+    {
+      "ref": "refs/heads/qoder/15-d3a-native-business",
+      "sha": "939930d1037387f39f1a2c64ac5b2ae61146b251"
+    },
+    {
+      "ref": "refs/heads/qoder/17-unified-integration-candidate",
+      "sha": "4e60a56e3d21defea4c2d580c35fd3b198e52b5e"
+    },
+    {
+      "ref": "refs/heads/qoder/a01-baseline-audit",
+      "sha": "f107dd32984cbdcb8e7dce3602ea26d99d9af9b5"
+    },
+    {
+      "ref": "refs/heads/qoder/a02-d4-d5-security",
+      "sha": "8f9f6ad23067a7251a444dbe0e210ef4f1218b69"
+    },
+    {
+      "ref": "refs/heads/qoder/closure-12-executing-recovery",
+      "sha": "2e0cca1345d2a2e0a4295c24aeac5b8b4ce59143"
+    },
+    {
+      "ref": "refs/heads/qoder/d12-replit-integration",
+      "sha": "5d9bca1305245eb51686dda6083ae1aa2fb8e677"
+    },
+    {
+      "ref": "refs/heads/qoder/parallel-w07-w12-ultra",
+      "sha": "af89cb340be4eb11a46b290e3dc5217e52af07ce"
+    },
+    {
+      "ref": "refs/heads/qoder/temp-principal-sixwave-closure",
+      "sha": "44dfbf639fda27d4b8de7908c0aea8df25ab50ef"
+    },
+    {
+      "ref": "refs/heads/qoder/wave01-d1-d3-closure",
+      "sha": "adf5a5f86ecd96fad8214eda51d20d05a0e2b2b4"
+    },
+    {
+      "ref": "refs/heads/qoder/wave02-d4-d6-closure",
+      "sha": "845b0a48cfa7a726c97be75a00ed76fd8db5afca"
+    },
+    {
+      "ref": "refs/heads/qoder/wave03-d7-d9-closure",
+      "sha": "c1e0a010c5eb0b1479b8ca21e4a410279b11cb3d"
+    },
+    {
+      "ref": "refs/heads/qoder/wave04-d10-d12-closure",
+      "sha": "fd8215e8af4cf55e9f653c94cbc9105111e354eb"
+    },
+    {
+      "ref": "refs/heads/qoder/wave05-d13-d15-closure",
+      "sha": "0f50dc65bbf9120dc4d183825cfe7a243db4b398"
+    },
+    {
+      "ref": "refs/heads/qoder/wave06-d16-d17-closure",
+      "sha": "891c37d6a904c4ba8809e4531040c63f030bed99"
+    },
+    {
+      "ref": "refs/heads/qoder/wave06b-d16-d17-closure",
+      "sha": "d341917ec4a34ade3c1bdde8366a44dbbca9f35d"
+    },
+    {
+      "ref": "refs/heads/replit/d16-legal-privacy-compliance",
+      "sha": "c196a9bf892547322644540a5d03c338020581da"
+    },
+    {
+      "ref": "refs/heads/replit/dinar-next-complete-development",
+      "sha": "11d7fbe3326897924468ee4c6d5467972a92b973"
+    },
+    {
+      "ref": "refs/heads/replit/dinar-next-six-wave-unification",
+      "sha": "ebdd2d7a68f5a52af7ad973f21ef3b0cae914b4a"
+    },
+    {
+      "ref": "refs/heads/replit/railway-complete-infrastructure-readiness",
+      "sha": "21e8562a1b640ebcdd4a270146e7cf56c37f053b"
+    },
+    {
+      "ref": "refs/heads/replit/railway-integrations-readiness",
+      "sha": "75d59370884d8799df860d35895f19d987e93d17"
+    },
+    {
+      "ref": "refs/heads/replit/wave03-intent-integration",
+      "sha": "76a7e403117233122b6d5bce2009268bcc586680"
+    }
+  ],
+  "remoteMutation": false,
+  "claudeMerged": false
+}
