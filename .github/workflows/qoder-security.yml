@@ -10,6 +10,7 @@ on:
       - qoder/10-security-deps
       - qoder/11-wave01-security-close
       - qoder/12-wave02-card-reliability
+      - codex/dinar-next-unified-development
   workflow_dispatch:
 
 permissions:

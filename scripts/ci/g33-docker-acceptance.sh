@@ -5,8 +5,9 @@ set -Eeuo pipefail
   echo "G33: this runner is restricted to GitHub Actions" >&2
   exit 96
 }
-[[ "${GITHUB_REF:-}" == "refs/heads/replit/dinar-next-six-wave-unification" ]] || {
-  echo "G33: refusing any ref other than the isolated candidate branch" >&2
+[[ "${GITHUB_REF:-}" == "refs/heads/replit/dinar-next-six-wave-unification" ||
+   "${GITHUB_REF:-}" == "refs/heads/codex/dinar-next-unified-development" ]] || {
+  echo "G33: refusing refs outside the isolated candidate/development allowlist" >&2
   exit 96
 }
 [[ "${GITHUB_RUN_ID:-}" =~ ^[0-9]+$ && "${GITHUB_RUN_ATTEMPT:-}" =~ ^[0-9]+$ ]] || {
@@ -193,14 +194,32 @@ else
     DINAR_MARKET_LEGAL_TEST_FIXTURE=1
 fi
 
+# Connect uses a separate fresh fixture database; the legal/restart database below
+# is never reset. Runtime remains in the same internal-only network namespace.
+CONNECT_RELEASE=0
+[[ "$G33_POSTGRES_IMAGE" != "postgres:18" ]] || CONNECT_RELEASE=1
+docker run --rm \
+  --network "container:$POSTGRES" \
+  --volume "$TEST_SNAPSHOT:/app/artifacts/api-server/test" \
+  --tmpfs /app/artifacts/api-server/.test-build:rw,uid=1000,gid=1000,mode=0777,size=128m \
+  --memory 1g --cpus 2 --pids-limit 256 \
+  --env DINAR_LOCAL_PG="$PG_URL" \
+  --env DINAR_SUITE_DB="dinar_test_connect_${GITHUB_RUN_ID}_${GITHUB_RUN_ATTEMPT}" \
+  --env DINAR_SUITE_SEED=fixtures \
+  --env DINAR_SUITE_RELEASE_MIGRATIONS="$CONNECT_RELEASE" \
+  --entrypoint /bin/sh "$G33_APP_IMAGE" \
+  -lc 'cd /app/artifacts/api-server && sh test/isolation/local-suite.sh connect-partners.test connect-catalog-pull.test connect-network.test connect-card-contract.test ai-authority-boundary.test BDINAR_TEST_DATABASE=development'
+
 MIGRATION_FINGERPRINT() {
   docker exec "$POSTGRES" psql -v ON_ERROR_STOP=1 -U dinar_isolation -d "$DB" -Atqc \
     "SELECT count(*)::text || ':' || md5(COALESCE(string_agg(hash || ':' || created_at::text, E'\\n' ORDER BY id), '')) FROM drizzle.__drizzle_migrations" \
     | tr -d '\r'
 }
+EXPECTED_MIGRATION_COUNT="$(node -p 'require(process.argv[1]).length' "$ROOT/lib/db/drizzle/release-manifest.json")"
+[[ "$EXPECTED_MIGRATION_COUNT" =~ ^[1-9][0-9]*$ ]] || { echo "G33: invalid release manifest count" >&2; exit 96; }
 MIGRATIONS_BEFORE="$(MIGRATION_FINGERPRINT)"
-[[ "${MIGRATIONS_BEFORE%%:*}" == "57" ]] || {
-  echo "G33: expected the selected 57-migration manifest, got ${MIGRATIONS_BEFORE%%:*}" >&2
+[[ "${MIGRATIONS_BEFORE%%:*}" == "$EXPECTED_MIGRATION_COUNT" ]] || {
+  echo "G33: expected the checked-in $EXPECTED_MIGRATION_COUNT-migration manifest, got ${MIGRATIONS_BEFORE%%:*}" >&2
   exit 1
 }
 echo "G33_MIGRATION_MANIFEST count=${MIGRATIONS_BEFORE%%:*} fingerprint=${MIGRATIONS_BEFORE#*:}"

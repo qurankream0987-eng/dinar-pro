@@ -1,0 +1,17 @@
+DINAR NEXT now extends the verified Replit integration with server-owned conversation recovery, typed interactive commerce cards and an integrated Connect partner platform. External referrals and partner commission simulation use separate authority and accounting from the existing internal marketplace; clicks cannot create orders, payment success or earned commission.
+
+The branch preserves the complete original 57-migration chain and contributor commit identities. Three additive migrations bring the release manifest to 60 entries. The base is `replit/dinar-next-six-wave-unification` at `ebdd2d7a68f5a52af7ad973f21ef3b0cae914b4a`; no main/Replit branch mutation, deployment or live activation is included.
+
+Implemented:
+
+- Conversation Stop stops reception and verifies the server-owned outcome; recovery, IME submission and persistent cart/comparison reuse the existing runtime.
+- Typed internal/external/domain cards, strict provider URLs, documented read-only Cloudflare sandbox adapter, honest unconfigured-provider search links and accessible Arabic RTL navigation.
+- Free canonical-business partner registration, DNS proof verification/renewal/revocation, independent integration review, scoped credentials, guarded FEED/API JSON ingestion and read-only public-client OAuth/PKCE with encrypted tokens.
+- Consent-aware opaque referrals, immutable accepted agreements, strongly authenticated conversion events, append-only commission simulation, refunds/reversals/disputes and independent settlement reconciliation.
+- Owner/admin reports and strictly read-only human staff permissions bound to canonical D4 status/version/expiry; owner-only integration, key and agreement controls.
+
+Validation uses isolated synthetic providers and disposable PostgreSQL 16/18. Workspace typecheck, API/web builds, 60-migration release-runner checks, Connect/transport/card tests, unchanged model-authority tests, financial/legal/privacy/delegation regressions and actual Chromium mobile/RTL journeys pass at the documented source cuts. Secret scan passes. Checkpoint documents under `docs/dinar-next/CONNECT_*CHECKPOINT.md` distinguish passing checks, fixture corrections, optional TLS skip and blocked live-provider acceptance. The existing frontend chunk-size warning remains.
+
+This stays Draft while engineering continues: reviewed read-only MCP, website indexing, complete admin finance browser workflows, diagnostics/performance and comprehensive final project acceptance. Original Conversation V2 history recovery remains BLOCKED pending the original task or `codex-conversation-v2-authorized.bundle`; no replacement identities were fabricated. Provider credentials, pinned egress and external legal/launch approvals remain external dependencies. This PR does not claim launch readiness.
+
+Independent Claude review should preserve the original migration chain, financial/legal invariants, existing cart/action runtime and contributor history. The owner authorizes updates only to this Codex branch; merging and deployment remain unauthorized.

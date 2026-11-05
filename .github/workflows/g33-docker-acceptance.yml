@@ -1,6 +1,6 @@
 name: g33-docker-acceptance
 
-# This acceptance runs only on the isolated candidate branch. Dependency downloads happen in the
+# This acceptance runs only on the isolated candidate and owner-authorized Codex branches. Downloads happen in the
 # build/preflight phase. Runtime app, test runner and disposable PostgreSQL share an internal-only
 # Docker network, with no provider credentials or published ports.
 
@@ -8,6 +8,7 @@ on:
   push:
     branches:
       - replit/dinar-next-six-wave-unification
+      - codex/dinar-next-unified-development
 
 permissions:
   contents: read

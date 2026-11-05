@@ -1,0 +1,107 @@
+{
+  "referenceIntegration": "ebdd2d7a68f5a52af7ad973f21ef3b0cae914b4a",
+  "originalReviewedMigrations": 57,
+  "currentMigrations": 60,
+  "postgres18": {
+    "connectPartners": 18,
+    "catalogAdapter": 4,
+    "network": 4,
+    "unchangedAiAuthority": 6,
+    "financialStateMachine": 23,
+    "outboundAttempts": 0
+  },
+  "postgres16": {
+    "connectPartners": 18,
+    "catalogAdapter": 4,
+    "network": 4,
+    "unchangedAiAuthority": 6,
+    "outboundAttempts": 0
+  },
+  "browser": {
+    "widths": [
+      320,
+      390,
+      1280
+    ],
+    "pageErrors": [],
+    "consoleErrors": [],
+    "externalRequests": [],
+    "teamConfirmedThroughUi": true,
+    "staffReadOnly": true,
+    "defaultTracking": false,
+    "consentedTracking": true,
+    "opener": null,
+    "cartFlights": 0,
+    "withdrawn": true,
+    "oauthPopupOpener": null,
+    "oauthConsentLabel": "الموافقة على قراءة الكتالوج فقط",
+    "oauthAuthorizedThroughUi": true,
+    "oauthDisconnectedThroughUi": true,
+    "catalogSyncedThroughUi": true,
+    "siteLifecycleThroughUi": true
+  },
+  "checks": {
+    "codegen": "PASS",
+    "workspaceTypecheck": "PASS",
+    "apiBuild": "PASS",
+    "webBuild": "PASS_WITH_EXISTING_CHUNK_WARNING",
+    "credentialPatternScan": "PASS",
+    "oauthTokenCanaryLogLeaks": 0
+  },
+  "earlierSourceCuts": {
+    "release60Runner": {
+      "sourceCut": "98bb679bb92fe4735d8199ce4ca245320cfc5260",
+      "passed": 12,
+      "manifestUnchangedSince": true
+    },
+    "delegationAndPrivacy": {
+      "sourceCut": "98bb679bb92fe4735d8199ce4ca245320cfc5260",
+      "d4": 4,
+      "d4d5Isolation": 8,
+      "privacy": 11,
+      "legacyProviderG1": 39,
+      "readiness": 15,
+      "tlsPassed": 7,
+      "tlsOptionalSkipped": 1
+    }
+  },
+  "blocked": [
+    "Original Conversation V2 task/bundle recovery",
+    "Live provider acceptance: no authorized sandbox credentials/pinned egress",
+    "Draft PR and Actions observation: GitHub API Forbidden"
+  ],
+  "remainingInternalWork": [
+    "Reviewed read-only MCP",
+    "Website indexing adapter",
+    "Complete admin proposal/finance browser workflows",
+    "Diagnostics and performance",
+    "Comprehensive final project acceptance"
+  ],
+  "publication": {
+    "authorizedBranchOnly": "codex/dinar-next-unified-development",
+    "verifiedRemoteSha": "e0d1de0e829e57937ba261ba0386787d6fc5f3b4",
+    "mainUnchanged": true,
+    "replitUnchanged": true,
+    "draftPrCreated": false,
+    "actionsRunIds": []
+  },
+  "applicationSourceCut": "e0d1de0e829e57937ba261ba0386787d6fc5f3b4",
+  "domainBrowser": {
+    "widths": [
+      320,
+      390,
+      1280
+    ],
+    "turns": 1,
+    "pageErrors": [],
+    "consoleErrors": [],
+    "unexpectedExternalRequests": [],
+    "destination": "https://dash.cloudflare.com/",
+    "destinationFixture": true,
+    "opener": null,
+    "cartFlights": 0,
+    "partnerPortal": "REAL_BROWSER_FREE_REGISTRATION"
+  },
+  "domainBrowserApiCasesPassed": 2,
+  "browserHarnessCorrection": "Wait for fonts and two animation frames after resizing, retaining exact zero-overflow assertions"
+}
