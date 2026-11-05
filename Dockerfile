@@ -4,7 +4,14 @@ ARG PNPM_VERSION=10.26.1
 
 WORKDIR /app
 
-RUN corepack enable \
+# Optional managed-cloud trust is mounted for this step only; ordinary CI uses its
+# existing system roots. Never copy a session CA or disable TLS verification.
+RUN --mount=type=secret,id=proxy_ca \
+  set -eu; \
+  if [ -s /run/secrets/proxy_ca ]; then \
+    export NODE_EXTRA_CA_CERTS=/run/secrets/proxy_ca NODE_USE_ENV_PROXY=1; \
+  fi; \
+  corepack enable \
   && corepack prepare "pnpm@${PNPM_VERSION}" --activate
 
 # Keep dependency installation cached when application source changes. Keep this manifest list in
@@ -21,7 +28,12 @@ COPY lib/global/package.json lib/global/package.json
 COPY lib/integrations-openai-ai-server/package.json lib/integrations-openai-ai-server/package.json
 COPY scripts/package.json scripts/package.json
 
-RUN pnpm install --frozen-lockfile
+RUN --mount=type=secret,id=proxy_ca \
+  set -eu; \
+  if [ -s /run/secrets/proxy_ca ]; then \
+    export NODE_EXTRA_CA_CERTS=/run/secrets/proxy_ca NODE_USE_ENV_PROXY=1; \
+  fi; \
+  pnpm install --frozen-lockfile
 
 COPY . .
 

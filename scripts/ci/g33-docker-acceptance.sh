@@ -1,49 +1,78 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-[[ "${GITHUB_ACTIONS:-}" == "true" ]] || {
-  echo "G33: this runner is restricted to GitHub Actions" >&2
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+G33_DOCKER=(docker)
+G33_LOCAL_TEMP_CREATED=0
+if [[ "${GITHUB_ACTIONS:-}" == "true" ]]; then
+  [[ "${GITHUB_REF:-}" == "refs/heads/replit/dinar-next-six-wave-unification" ||
+     "${GITHUB_REF:-}" == "refs/heads/codex/dinar-next-unified-development" ]] || {
+    echo "G33: refusing refs outside the isolated candidate/development allowlist" >&2
+    exit 96
+  }
+  [[ "${GITHUB_RUN_ID:-}" =~ ^[0-9]+$ && "${GITHUB_RUN_ATTEMPT:-}" =~ ^[0-9]+$ ]] || {
+    echo "G33: invalid GitHub run identity" >&2
+    exit 96
+  }
+  G33_EXECUTION_MODE=GITHUB_ACTIONS
+  G33_SOURCE_SHA="${GITHUB_SHA:-}"
+  G33_RUN_ID="$GITHUB_RUN_ID"
+  G33_RUN_ATTEMPT="$GITHUB_RUN_ATTEMPT"
+  G33_TEMP_ROOT="${RUNNER_TEMP:?}"
+elif [[ "${DINAR_LOCAL_G33_ACCEPTANCE:-}" == "disposable" ]]; then
+  G33_BRANCH="$(git -C "$ROOT" symbolic-ref --quiet --short HEAD)" || {
+    echo "G33: local rehearsal requires the authorized development branch" >&2; exit 96;
+  }
+  [[ "$G33_BRANCH" == "codex/dinar-next-unified-development" ]] || {
+    echo "G33: local rehearsal requires the authorized development branch" >&2; exit 96;
+  }
+  [[ -z "$(git -C "$ROOT" status --porcelain)" ]] || {
+    echo "G33: local rehearsal requires a clean committed checkout" >&2; exit 96;
+  }
+  G33_SOURCE_SHA="$(git -C "$ROOT" rev-parse --verify HEAD)" || {
+    echo "G33: local rehearsal requires a committed source revision" >&2; exit 96;
+  }
+  G33_EXECUTION_MODE=LOCAL_DISPOSABLE
+  G33_RUN_ID="$(date +%s)${BASHPID}${RANDOM}"
+  G33_RUN_ATTEMPT=1
+  G33_DOCKER=(env -u DOCKER_HOST -u DOCKER_CONTEXT -u DOCKER_TLS -u DOCKER_TLS_VERIFY -u DOCKER_CERT_PATH docker --host=unix:///var/run/docker.sock)
+else
+  echo "G33: this runner requires GitHub Actions or explicit DINAR_LOCAL_G33_ACCEPTANCE=disposable" >&2
   exit 96
-}
-[[ "${GITHUB_REF:-}" == "refs/heads/replit/dinar-next-six-wave-unification" ||
-   "${GITHUB_REF:-}" == "refs/heads/codex/dinar-next-unified-development" ]] || {
-  echo "G33: refusing refs outside the isolated candidate/development allowlist" >&2
-  exit 96
-}
-[[ "${GITHUB_RUN_ID:-}" =~ ^[0-9]+$ && "${GITHUB_RUN_ATTEMPT:-}" =~ ^[0-9]+$ ]] || {
-  echo "G33: invalid GitHub run identity" >&2
-  exit 96
-}
-
+fi
+[[ "$G33_SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "G33: invalid source revision" >&2; exit 96; }
 : "${G33_APP_IMAGE:?set G33_APP_IMAGE to the image built from this commit}"
 : "${G33_POSTGRES_IMAGE:?set G33_POSTGRES_IMAGE to postgres:16 or postgres:18}"
 case "$G33_POSTGRES_IMAGE" in
   postgres:16|postgres:18) ;;
   *) echo "G33: PostgreSQL image must be allowlisted as postgres:16 or postgres:18" >&2; exit 96 ;;
 esac
-[[ "$G33_APP_IMAGE" == "dinar-next-g33:${GITHUB_SHA}" ]] || {
+[[ "$G33_APP_IMAGE" == "dinar-next-g33:${G33_SOURCE_SHA}" ]] || {
   echo "G33: app image tag must match the checked-out commit" >&2
   exit 96
 }
-
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 TEST_DIR="$ROOT/artifacts/api-server/test"
 [[ -d "$TEST_DIR/isolation" && -f "$ROOT/Dockerfile" ]] || {
   echo "G33: candidate sources are incomplete" >&2
   exit 96
 }
+if [[ "$G33_EXECUTION_MODE" == LOCAL_DISPOSABLE ]]; then
+  G33_TEMP_ROOT="$(mktemp -d /tmp/dinar-g33-local.XXXXXX)"
+  G33_LOCAL_TEMP_CREATED=1
+fi
+echo "G33_EXECUTION_MODE=$G33_EXECUTION_MODE source=$G33_SOURCE_SHA"
 
-SUFFIX="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+SUFFIX="${G33_RUN_ID}-${G33_RUN_ATTEMPT}"
 NETWORK="dinar-g33-${SUFFIX}"
 POSTGRES="dinar-g33-pg-${SUFFIX}"
 APP="dinar-g33-app-${SUFFIX}"
 RUNNER="dinar-g33-runner-${SUFFIX}"
-DB="dinar_test_legal_${GITHUB_RUN_ID}_${GITHUB_RUN_ATTEMPT}"
+DB="dinar_test_legal_${G33_RUN_ID}_${G33_RUN_ATTEMPT}"
 PG_URL="postgres://dinar_isolation@127.0.0.1:5432"
-HANDSHAKE="${RUNNER_TEMP:?}/dinar-g33-handshake-${SUFFIX}"
+HANDSHAKE="${G33_TEMP_ROOT:?}/dinar-g33-handshake-${SUFFIX}"
 TEST_SNAPSHOT="$HANDSHAKE/test"
-PROD_ENV="${RUNNER_TEMP}/dinar-g33-prod-${SUFFIX}.env"
-DEV_ENV="${RUNNER_TEMP}/dinar-g33-dev-${SUFFIX}.env"
+PROD_ENV="${G33_TEMP_ROOT}/dinar-g33-prod-${SUFFIX}.env"
+DEV_ENV="${G33_TEMP_ROOT}/dinar-g33-dev-${SUFFIX}.env"
 SESSION_SECRET="$(openssl rand -hex 32)"
 CREATED_NETWORK=0
 CREATED_POSTGRES=0
@@ -54,19 +83,22 @@ cleanup() {
   local status=$?
   set +e
   if [[ "$CREATED_RUNNER" == 1 ]]; then
-    docker rm -f "$RUNNER" >/dev/null 2>&1
+    "${G33_DOCKER[@]}" rm -f "$RUNNER" >/dev/null 2>&1
   fi
   if [[ "$CREATED_APP" == 1 ]]; then
-    docker rm -f "$APP" >/dev/null 2>&1
+    "${G33_DOCKER[@]}" rm -f "$APP" >/dev/null 2>&1
   fi
   if [[ "$CREATED_POSTGRES" == 1 ]]; then
-    docker rm -f "$POSTGRES" >/dev/null 2>&1
+    "${G33_DOCKER[@]}" rm -f --volumes "$POSTGRES" >/dev/null 2>&1
   fi
   if [[ "$CREATED_NETWORK" == 1 ]]; then
-    docker network rm "$NETWORK" >/dev/null 2>&1
+    "${G33_DOCKER[@]}" network rm "$NETWORK" >/dev/null 2>&1
   fi
   rm -f "$PROD_ENV" "$DEV_ENV"
   rm -rf "$HANDSHAKE"
+  if [[ "$G33_LOCAL_TEMP_CREATED" == 1 && "$G33_TEMP_ROOT" == /tmp/dinar-g33-local.* ]]; then
+    rm -rf "$G33_TEMP_ROOT"
+  fi
   exit "$status"
 }
 trap cleanup EXIT
@@ -111,19 +143,19 @@ EOF
 chmod 600 "$PROD_ENV" "$DEV_ENV"
 
 echo "G33_BUILD_EGRESS=dependency downloads were allowed before runtime isolation"
-docker pull "$G33_POSTGRES_IMAGE"
-docker network create --internal "$NETWORK" >/dev/null
+"${G33_DOCKER[@]}" pull "$G33_POSTGRES_IMAGE"
+"${G33_DOCKER[@]}" network create --internal "$NETWORK" >/dev/null
 CREATED_NETWORK=1
-[[ "$(docker network inspect --format '{{.Internal}}' "$NETWORK")" == "true" ]] || {
+[[ "$("${G33_DOCKER[@]}" network inspect --format '{{.Internal}}' "$NETWORK")" == "true" ]] || {
   echo "G33: Docker did not create an internal-only network" >&2
   exit 96
 }
 echo "G33_RUNTIME_NETWORK=internal; app, test runner and PostgreSQL will share its namespace"
-echo "G33_APP_IMAGE_ID=$(docker image inspect --format '{{.Id}}' "$G33_APP_IMAGE")"
-echo "G33_POSTGRES_IMAGE_ID=$(docker image inspect --format '{{.Id}}' "$G33_POSTGRES_IMAGE")"
-docker image inspect --format '{{range .RepoDigests}}{{println .}}{{end}}' "$G33_POSTGRES_IMAGE" | sed 's/^/G33_POSTGRES_REPO_DIGEST=/'
+echo "G33_APP_IMAGE_ID=$("${G33_DOCKER[@]}" image inspect --format '{{.Id}}' "$G33_APP_IMAGE")"
+echo "G33_POSTGRES_IMAGE_ID=$("${G33_DOCKER[@]}" image inspect --format '{{.Id}}' "$G33_POSTGRES_IMAGE")"
+"${G33_DOCKER[@]}" image inspect --format '{{range .RepoDigests}}{{println .}}{{end}}' "$G33_POSTGRES_IMAGE" | sed 's/^/G33_POSTGRES_REPO_DIGEST=/'
 
-docker run --detach \
+"${G33_DOCKER[@]}" run --detach \
   --name "$POSTGRES" \
   --network "$NETWORK" \
   --network-alias g33-postgres \
@@ -141,13 +173,13 @@ docker run --detach \
 CREATED_POSTGRES=1
 
 for _ in $(seq 1 60); do
-  health="$(docker inspect --format '{{.State.Health.Status}}' "$POSTGRES")"
+  health="$("${G33_DOCKER[@]}" inspect --format '{{.State.Health.Status}}' "$POSTGRES")"
   [[ "$health" == "healthy" ]] && break
-  [[ "$health" != "unhealthy" ]] || { docker logs "$POSTGRES" >&2; exit 1; }
+  [[ "$health" != "unhealthy" ]] || { "${G33_DOCKER[@]}" logs "$POSTGRES" >&2; exit 1; }
   sleep 2
 done
-[[ "$(docker inspect --format '{{.State.Health.Status}}' "$POSTGRES")" == "healthy" ]] || {
-  docker logs "$POSTGRES" >&2
+[[ "$("${G33_DOCKER[@]}" inspect --format '{{.State.Health.Status}}' "$POSTGRES")" == "healthy" ]] || {
+  "${G33_DOCKER[@]}" logs "$POSTGRES" >&2
   echo "G33: disposable PostgreSQL did not become healthy" >&2
   exit 1
 }
@@ -155,7 +187,7 @@ done
 run_local_suite() {
   local release_migrations="$1"
   shift
-  docker run --rm \
+  "${G33_DOCKER[@]}" run --rm \
     --network "container:$POSTGRES" \
     --volume "$TEST_SNAPSHOT:/app/artifacts/api-server/test" \
     --tmpfs /app/artifacts/api-server/.test-build:rw,uid=1000,gid=1000,mode=0777,size=128m \
@@ -173,7 +205,7 @@ run_local_suite() {
 }
 
 if [[ "$G33_POSTGRES_IMAGE" == "postgres:18" ]]; then
-  docker run --rm \
+  "${G33_DOCKER[@]}" run --rm \
     --network "container:$POSTGRES" \
     --volume "$TEST_SNAPSHOT:/app/artifacts/api-server/test" \
     --memory 1g \
@@ -198,20 +230,20 @@ fi
 # is never reset. Runtime remains in the same internal-only network namespace.
 CONNECT_RELEASE=0
 [[ "$G33_POSTGRES_IMAGE" != "postgres:18" ]] || CONNECT_RELEASE=1
-docker run --rm \
+"${G33_DOCKER[@]}" run --rm \
   --network "container:$POSTGRES" \
   --volume "$TEST_SNAPSHOT:/app/artifacts/api-server/test" \
   --tmpfs /app/artifacts/api-server/.test-build:rw,uid=1000,gid=1000,mode=0777,size=128m \
   --memory 1g --cpus 2 --pids-limit 256 \
   --env DINAR_LOCAL_PG="$PG_URL" \
-  --env DINAR_SUITE_DB="dinar_test_connect_${GITHUB_RUN_ID}_${GITHUB_RUN_ATTEMPT}" \
+  --env DINAR_SUITE_DB="dinar_test_connect_${G33_RUN_ID}_${G33_RUN_ATTEMPT}" \
   --env DINAR_SUITE_SEED=fixtures \
   --env DINAR_SUITE_RELEASE_MIGRATIONS="$CONNECT_RELEASE" \
   --entrypoint /bin/sh "$G33_APP_IMAGE" \
   -lc 'cd /app/artifacts/api-server && sh test/isolation/local-suite.sh connect-performance.test connect-commission-math.test connect-sync-observations.test connect-agreement-draft.test connect-card-presentation.test connect-website-catalog.test connect-partners.test connect-mcp-catalog.test connect-catalog-pull.test connect-network.test connect-card-contract.test ai-authority-boundary.test BDINAR_TEST_DATABASE=development'
 
 MIGRATION_FINGERPRINT() {
-  docker exec "$POSTGRES" psql -v ON_ERROR_STOP=1 -U dinar_isolation -d "$DB" -Atqc \
+  "${G33_DOCKER[@]}" exec "$POSTGRES" psql -v ON_ERROR_STOP=1 -U dinar_isolation -d "$DB" -Atqc \
     "SELECT count(*)::text || ':' || md5(COALESCE(string_agg(hash || ':' || created_at::text, E'\\n' ORDER BY id), '')) FROM drizzle.__drizzle_migrations" \
     | tr -d '\r'
 }
@@ -224,7 +256,7 @@ MIGRATIONS_BEFORE="$(MIGRATION_FINGERPRINT)"
 }
 echo "G33_MIGRATION_MANIFEST count=${MIGRATIONS_BEFORE%%:*} fingerprint=${MIGRATIONS_BEFORE#*:}"
 
-docker run --detach \
+"${G33_DOCKER[@]}" run --detach \
   --name "$APP" \
   --network "container:$POSTGRES" \
   --memory 1g \
@@ -235,7 +267,7 @@ docker run --detach \
 CREATED_APP=1
 
 probe_health() {
-  if docker run --rm \
+  if "${G33_DOCKER[@]}" run --rm \
     --network "container:$POSTGRES" \
     --entrypoint node \
     "$G33_APP_IMAGE" \
@@ -243,12 +275,12 @@ probe_health() {
     -e 'const deadline=Date.now()+120000; while(Date.now()<deadline){try{const r=await fetch("http://127.0.0.1:3000/healthz");if(r.status===200){console.log("G33_HEALTHZ status=200");process.exit(0)}}catch{} await new Promise(r=>setTimeout(r,1000))} console.error("G33_HEALTHZ timeout");process.exit(1)'; then
     return 0
   fi
-  docker inspect --format 'G33_APP_STATE={{.State.Status}} exit={{.State.ExitCode}} error={{.State.Error}}' "$APP" >&2 || true
-  docker logs "$APP" >&2 || true
+  "${G33_DOCKER[@]}" inspect --format 'G33_APP_STATE={{.State.Status}} exit={{.State.ExitCode}} error={{.State.Error}}' "$APP" >&2 || true
+  "${G33_DOCKER[@]}" logs "$APP" >&2 || true
   return 1
 }
 probe_readiness() {
-  docker run --rm \
+  "${G33_DOCKER[@]}" run --rm \
     --network "container:$POSTGRES" \
     --entrypoint node \
     "$G33_APP_IMAGE" \
@@ -264,14 +296,14 @@ probe_readiness
 }
 echo "G33_PRODUCTION_STARTUP_MIGRATIONS=unchanged"
 
-docker stop --time 30 "$APP" >/dev/null
-shutdown_code="$(docker inspect --format '{{.State.ExitCode}}' "$APP")"
+"${G33_DOCKER[@]}" stop --time 30 "$APP" >/dev/null
+shutdown_code="$("${G33_DOCKER[@]}" inspect --format '{{.State.ExitCode}}' "$APP")"
 echo "G33_PRODUCTION_CONTAINER_SHUTDOWN_EXIT=$shutdown_code"
 [[ "$shutdown_code" == "0" ]] || {
   echo "G33: production container did not shut down cleanly" >&2
   exit 1
 }
-docker start "$APP" >/dev/null
+"${G33_DOCKER[@]}" start "$APP" >/dev/null
 probe_health
 probe_readiness
 [[ "$(MIGRATION_FINGERPRINT)" == "$MIGRATIONS_BEFORE" ]] || {
@@ -280,17 +312,17 @@ probe_readiness
 }
 echo "G33_PRODUCTION_RESTART_MIGRATIONS=unchanged"
 
-docker stop --time 30 "$APP" >/dev/null
-shutdown_code="$(docker inspect --format '{{.State.ExitCode}}' "$APP")"
+"${G33_DOCKER[@]}" stop --time 30 "$APP" >/dev/null
+shutdown_code="$("${G33_DOCKER[@]}" inspect --format '{{.State.ExitCode}}' "$APP")"
 echo "G33_PRODUCTION_RESTART_CONTAINER_SHUTDOWN_EXIT=$shutdown_code"
 [[ "$shutdown_code" == "0" ]] || {
-  docker logs "$APP" >&2
+  "${G33_DOCKER[@]}" logs "$APP" >&2
   echo "G33: restarted production container did not shut down cleanly" >&2
   exit 1
 }
-docker rm "$APP" >/dev/null
+"${G33_DOCKER[@]}" rm "$APP" >/dev/null
 CREATED_APP=0
-docker run --detach \
+"${G33_DOCKER[@]}" run --detach \
   --name "$APP" \
   --network "container:$POSTGRES" \
   --memory 1g \
@@ -301,7 +333,7 @@ docker run --detach \
 CREATED_APP=1
 probe_health
 
-docker run --detach \
+"${G33_DOCKER[@]}" run --detach \
   --name "$RUNNER" \
   --network "container:$POSTGRES" \
   --volume "$TEST_SNAPSHOT:/app/artifacts/api-server/test" \
@@ -326,30 +358,30 @@ for _ in $(seq 1 600); do
     ready=1
     break
   fi
-  runner_state="$(docker inspect --format '{{.State.Status}}' "$RUNNER" 2>/dev/null || true)"
+  runner_state="$("${G33_DOCKER[@]}" inspect --format '{{.State.Status}}' "$RUNNER" 2>/dev/null || true)"
   if [[ "$runner_state" == "exited" ]]; then
-    docker logs "$RUNNER" >&2
+    "${G33_DOCKER[@]}" logs "$RUNNER" >&2
     echo "G33: transaction test exited before requesting the restart" >&2
     exit 1
   fi
   sleep 1
 done
 [[ "$ready" == "1" ]] || {
-  docker logs "$RUNNER" >&2
+  "${G33_DOCKER[@]}" logs "$RUNNER" >&2
   echo "G33: timed out waiting for the transaction/restart handshake" >&2
   exit 1
 }
 echo "G33_TRANSACTION=complete; restarting the isolated app container"
 
-docker stop --time 30 "$APP" >/dev/null
-shutdown_code="$(docker inspect --format '{{.State.ExitCode}}' "$APP")"
+"${G33_DOCKER[@]}" stop --time 30 "$APP" >/dev/null
+shutdown_code="$("${G33_DOCKER[@]}" inspect --format '{{.State.ExitCode}}' "$APP")"
 echo "G33_TEST_CONTAINER_SHUTDOWN_EXIT=$shutdown_code"
 [[ "$shutdown_code" == "0" ]] || {
-  docker logs "$APP" >&2
+  "${G33_DOCKER[@]}" logs "$APP" >&2
   echo "G33: test-mode app container did not shut down cleanly" >&2
   exit 1
 }
-docker start "$APP" >/dev/null
+"${G33_DOCKER[@]}" start "$APP" >/dev/null
 probe_health
 [[ "$(MIGRATION_FINGERPRINT)" == "$MIGRATIONS_BEFORE" ]] || {
   echo "G33: test-mode app restart changed the migration ledger" >&2
@@ -357,8 +389,8 @@ probe_health
 }
 printf 'restarted\n' >"$HANDSHAKE/restart-complete"
 
-runner_exit="$(docker wait "$RUNNER")"
-docker logs "$RUNNER"
+runner_exit="$("${G33_DOCKER[@]}" wait "$RUNNER")"
+"${G33_DOCKER[@]}" logs "$RUNNER"
 [[ "$runner_exit" == "0" ]] || {
   echo "G33: Docker API cash journey failed with exit $runner_exit" >&2
   exit 1

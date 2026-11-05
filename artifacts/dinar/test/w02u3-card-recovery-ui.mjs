@@ -76,11 +76,20 @@ async function alertText() {
   return (await alert.innerText()).replace(/\s+/g, " ");
 }
 
-async function sendExpectingAlert(text) {
+async function sendExpectingAlert(text, { pending = false } = {}) {
   await page.getByTestId("input-ai-composer").fill(text);
   await page.getByTestId("button-send-ai-message").click();
   const shown = await alertText();
-  await idle();
+  if (pending) {
+    // A recorded, unanswered turn locks the composer until its outcome is known.
+    // Waiting for idle here contradicts server-owned execution/recovery policy.
+    await page.getByTestId("button-verify-ai-turn").waitFor({ state: "visible", timeout: 15_000 });
+    assert.equal(await page.getByTestId("button-send-ai-message").getAttribute("aria-busy"), "true");
+    assert.equal(await page.getByTestId("button-send-ai-message").isDisabled(), true);
+    assert.equal(await page.getByTestId("button-retry-ai-turn").count(), 0);
+  } else {
+    await idle();
+  }
   return shown;
 }
 
@@ -129,7 +138,7 @@ try {
     await route.abort("connectionreset");
   });
 
-  const delivered = await sendExpectingAlert("نعم");
+  const delivered = await sendExpectingAlert("نعم", { pending: true });
   recovery.delivered.clientMessageId = posts[0]?.clientMessageId;
   recovery.delivered.posts = posts.length;
   assert.equal(posts.length, 1, "the delivered turn was posted once");

@@ -32,6 +32,8 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
+      - name: Guard local and CI isolation entry
+        run: node scripts/ci/g33-local-guards.test.mjs
       - name: Install build dependencies
         run: pnpm install --frozen-lockfile
       - name: Typecheck and build both artifacts

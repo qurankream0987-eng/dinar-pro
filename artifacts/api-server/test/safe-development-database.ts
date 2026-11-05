@@ -1,6 +1,10 @@
 import { resolveDatabaseUrl } from "@workspace/db/database-url";
 
 const approvalMessages: Record<string, string> = {
+  BDINAR_STOCK_SPEC_ACCEPTANCE: "BDINAR_STOCK_SPEC_ACCEPTANCE=development",
+  BDINAR_T3_ACCEPTANCE: "BDINAR_T3_ACCEPTANCE=development",
+  BDINAR_SC06_ACCEPTANCE: "BDINAR_SC06_ACCEPTANCE=development",
+  BDINAR_SC02_ACCEPTANCE: "BDINAR_SC02_ACCEPTANCE=development",
   BDINAR_SEED: "BDINAR_SEED=development",
   BDINAR_TEST_DATABASE: "BDINAR_TEST_DATABASE=development",
   BDINAR_PHASE1_ACCEPTANCE: "BDINAR_PHASE1_ACCEPTANCE=development",
@@ -93,6 +97,10 @@ export function requireSafeReplitDevelopmentDatabase(
 }
 
 const operationMessages: Record<keyof typeof approvalMessages, string> = {
+  BDINAR_STOCK_SPEC_ACCEPTANCE: "Stock and specification conversation acceptance",
+  BDINAR_T3_ACCEPTANCE: "T3 stock questions acceptance",
+  BDINAR_SC06_ACCEPTANCE: "SC06 specification questions acceptance",
+  BDINAR_SC02_ACCEPTANCE: "SC02 listing facts acceptance",
   BDINAR_SEED: "Development seed",
   BDINAR_TEST_DATABASE: "Database integration tests",
   BDINAR_PHASE1_ACCEPTANCE: "Phase-one acceptance run",

@@ -134,7 +134,8 @@ await test("setup", async () => {
 
 await test("D3 every surface literal the server emits is declared in the OpenAPI surface enum", () => {
   const yaml = fs.readFileSync(path.resolve("../../lib/api-spec/openapi.yaml"), "utf8");
-  const line = yaml.split("\n").find((row) => /surface: \{ type: string, enum: \[CART/u.test(row))!;
+  const line = yaml.split("\n").find((row) => /surface: \{ type: string, enum: \[/u.test(row));
+  assert.ok(line, "the authored surface enum must exist regardless of member ordering");
   const spec = new Set(line.match(/\[(.*)\]/u)![1]!.split(",").map((item) => item.trim()));
   const walk = (dir: string): string[] => fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => entry.isDirectory() ? walk(path.join(dir, entry.name)) : [path.join(dir, entry.name)]);
   const emitted = new Set<string>();

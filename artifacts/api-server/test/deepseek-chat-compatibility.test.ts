@@ -226,7 +226,14 @@ await test("DS-01 general Arabic: canonical request reaches DeepSeek and the val
   assert.equal(sent.body.max_tokens, 1200);
   for (const field of ["max_completion_tokens", "parallel_tool_calls", "provider", "stream"]) assert.equal(sent.body[field], undefined, field);
   assert.deepEqual(sent.body.thinking, { type: "disabled" }, "the documented non-thinking switch");
-  assert.deepEqual(sent.body.tools.map((tool: any) => tool.function.name), ["dinarConversationTurn"]);
+  // AI-FOUNDATION already exposes bounded reads and review preparation. Assert the exact
+  // current contract; never silently accept an added execution/payment tool.
+  assert.deepEqual(sent.body.tools.map((tool: any) => tool.function.name), [
+    "searchListings", "getResource", "compareListings", "readBusinessInquiries",
+    "prepareInquiryMessage", "readNegotiationStatus", "prepareNegotiationProposal",
+    "readCart", "prepareCartChange", "reviewCheckout", "readOrders", "readFulfillment",
+    "dinarConversationTurn",
+  ]);
   assert.equal(sent.body.messages[0].role, "system");
   assert.ok(sent.body.messages[0].content.startsWith(SYSTEM_PROMPT_MARKER));
   assert.ok(sent.body.messages.at(-1).content.endsWith(`USER: ${message}`));

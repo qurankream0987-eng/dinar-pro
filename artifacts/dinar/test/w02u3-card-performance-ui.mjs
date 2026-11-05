@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { writeFileSync } from "node:fs";
 import { chromium } from "@playwright/test";
 import { createRecorder } from "./sc-ui-session.mjs";
-import { settleToasts, signIn } from "./w02u3-ui-session.mjs";
+import { backend, settleToasts, signIn } from "./w02u3-ui-session.mjs";
 
 /**
  * W02U-3 — CR-15 long-conversation benchmark.
@@ -199,7 +199,26 @@ try {
     assert.notEqual(branch.id, largest.conversationId, "the original history is preserved");
     assert.equal(new URL(turn.url()).pathname, `/api/ai/conversations/${branch.id}/turns`, "the reply is sent on the current edit branch");
     assert.ok(turn.ok());
-    await turn.finished();
+    // Streaming transport completion is not the persisted server outcome. A browser
+    // may retain a streaming response handle after the server-owned turn completed.
+    const { clientMessageId } = turn.request().postDataJSON();
+    assert.equal(typeof clientMessageId, "string");
+    let persisted;
+    const deadline = Date.now() + 30_000;
+    while (Date.now() < deadline) {
+      const view = await backend(apiOrigin, buyer.cookie, `/ai/conversations/${branch.id}`);
+      assert.equal(view.status, 200, view.text);
+      const user = view.data.messages.find((message) => message.id === clientMessageId);
+      const answers = view.data.messages.filter((message) => message.replyToMessageId === clientMessageId);
+      if (user?.turnStatus === "completed" && answers.length === 1) {
+        persisted = { user, answers };
+        break;
+      }
+      await page.waitForTimeout(100);
+    }
+    assert.ok(persisted, "the owned edit branch must complete with exactly one persisted answer within 30 seconds");
+    assert.equal(persisted.user.body, editedBody);
+    assert.equal(persisted.answers[0].actor, "ASSISTANT");
     await page.locator('[data-testid="conversation-thread"]').getByText(editedBody, { exact: true }).waitFor();
     edits.push({ viewport: viewport.label, original: largest.conversationId, branch: branch.id });
     await context.close();

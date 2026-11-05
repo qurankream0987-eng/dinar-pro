@@ -165,7 +165,9 @@ const control = createServer(async (request_, response) => {
         actor: "ASSISTANT",
         body: String(body.body),
         contentType: "TEXT",
-        metadata: {},
+        // Simulate the current server completion contract: a reply must identify
+        // the exact user turn. An unlinked historical answer cannot settle it.
+        metadata: { replyToMessageId: String(body.clientMessageId) },
       });
       await db
         .update(messages)
