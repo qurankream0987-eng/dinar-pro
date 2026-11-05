@@ -77,6 +77,7 @@ import type {
   ConnectAgreementProposalInput,
   ConnectAttributionWithdrawalInput,
   ConnectCatalogImportInput,
+  ConnectCatalogSyncRequest,
   ConnectFinanceCommandInput,
   ConnectFinancialReceipt,
   ConnectIntegrationRegistrationInput,
@@ -19593,6 +19594,92 @@ export function useGetConnectReadOnlyCatalog<TData = Awaited<ReturnType<typeof g
 
 
 
+
+export const getSyncConnectCatalogUrl = (id: string,) => {
+
+
+
+
+  return `/api/connect/integrations/${id}/sync`
+}
+
+/**
+ * OWNER only. Explicitly confirmed single-batch structured JSON FEED/API pull from the persisted approved endpoint. No caller URL, credential or redirect. Existing ingestion rechecks source revision and revocation after network completion. Native pulls require approved pinned egress.
+ */
+export const syncConnectCatalog = async (id: string,
+    connectCatalogSyncRequest: ConnectCatalogSyncRequest, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getSyncConnectCatalogUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(connectCatalogSyncRequest)
+  }
+);}
+
+
+
+
+
+export const getSyncConnectCatalogMutationKey = () => ['syncConnectCatalog'] as const;
+
+export const getSyncConnectCatalogMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncConnectCatalog>>, TError,SyncConnectCatalogMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof syncConnectCatalog>>, TError,SyncConnectCatalogMutationVariables, TContext> => {
+
+const mutationKey = getSyncConnectCatalogMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof syncConnectCatalog>>, SyncConnectCatalogMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  syncConnectCatalog(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SyncConnectCatalogMutationResult = NonNullable<Awaited<ReturnType<typeof syncConnectCatalog>>>
+    export type SyncConnectCatalogMutationBody = BodyType<ConnectCatalogSyncRequest>
+    export type SyncConnectCatalogMutationError = ErrorType<void>
+    export type SyncConnectCatalogMutationVariables = {id: string;data: BodyType<ConnectCatalogSyncRequest>}
+
+    export const useSyncConnectCatalog = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncConnectCatalog>>, TError,SyncConnectCatalogMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof syncConnectCatalog>>,
+        TError,
+        SyncConnectCatalogMutationVariables,
+        TContext
+      > => {
+      return useMutation(getSyncConnectCatalogMutationOptions(options), queryClient);
+    }
 
 export const getRenewConnectSiteChallengeUrl = (id: string,) => {
 

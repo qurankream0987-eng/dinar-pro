@@ -189,6 +189,7 @@ export * from './connectCatalogImportInputItemsItemAttributesItem';
 export * from './connectCatalogImportInputItemsItemAvailability';
 export * from './connectCatalogImportInputItemsItemKind';
 export * from './connectCatalogImportInputItemsItemPrice';
+export * from './connectCatalogSyncRequest';
 export * from './connectExternalTransaction';
 export * from './connectExternalTransactionBalances';
 export * from './connectExternalTransactionMode';

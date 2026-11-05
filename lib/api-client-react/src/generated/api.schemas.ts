@@ -5828,6 +5828,15 @@ export const ConnectSiteLifecycleInputValue = {
 } as const;
 export type ConnectSiteLifecycleInput = typeof ConnectSiteLifecycleInputValue;
 
+export interface ConnectCatalogSyncRequest {
+  confirm: true;
+  /**
+     * @maximum 9007199254740991
+     * @exclusiveMinimum 0
+     */
+  expectedRevision: number;
+}
+
 export type GetListingsParams = {
 search?: string;
 category?: string;

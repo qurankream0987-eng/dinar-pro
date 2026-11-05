@@ -1338,6 +1338,7 @@ export async function importConnectOwnerCatalog(
   market: ConnectMarket,
   integrationId: string,
   raw: unknown,
+  sourceSnapshot?: { revision: number; endpointUrl: string; siteId: string },
 ) {
   return db.transaction(async (tx) => {
     const { partnerId } = await lockOwnedConnectIntegration(
@@ -1358,6 +1359,9 @@ export async function importConnectOwnerCatalog(
         "BUSINESS_CONTEXT_CHANGED",
         "تغيّر سياق الموصل؛ أعد فتح العملية",
       );
+    if (sourceSnapshot && (ready.integration.revision !== sourceSnapshot.revision ||
+        ready.integration.endpointUrl !== sourceSnapshot.endpointUrl || ready.site.id !== sourceSnapshot.siteId))
+      throw connectError(409, "STALE_INTEGRATION", "تغير الموصل أثناء جلب المصدر؛ لم يُستورد المحتوى");
     await assertMarketLegalCapability(market.id, "LISTING_PUBLICATION", tx);
     return importBatch(tx, ready, raw, market, actorId);
   });

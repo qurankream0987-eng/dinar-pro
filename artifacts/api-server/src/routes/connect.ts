@@ -15,6 +15,8 @@ import {
   connectError,
   externalDestination,
 } from "../connect/provider-registry";
+import { syncConnectCatalog } from "../connect/catalog-pull";
+import { ConnectNetwork } from "../connect/network";
 import * as sites from "../connect/sites";
 import * as team from "../connect/team";
 import * as partners from "../connect/partners";
@@ -171,6 +173,12 @@ router.post("/connect/partners/:id/sites", requireAuth, async (req, res) =>
       ),
     ),
 );
+router.post("/connect/integrations/:id/sync", requireAuth, async (req, res) => {
+  const injected = req.app.locals.connectNetwork;
+  if (injected) assertConnectTestDependencyInjection();
+  res.set("Cache-Control", "no-store").json(await syncConnectCatalog(req.actor!.id, await marketFor(req), idParam(req.params.id), req.body,
+    injected instanceof ConnectNetwork ? injected : undefined));
+});
 router.post("/connect/sites/:id/challenge", requireAuth, async (req, res) =>
   res.set("Cache-Control", "no-store").json(await sites.renewConnectSiteChallenge(req.actor!.id, await marketFor(req), idParam(req.params.id), req.body)));
 router.post("/connect/sites/:id/revoke", requireAuth, async (req, res) =>

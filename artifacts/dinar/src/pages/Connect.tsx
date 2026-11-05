@@ -12,6 +12,7 @@ type Integration = {
   status: string;
   kind: string;
   capabilities: string[];
+  endpointUrl: string | null;
   revision: number;
 };
 type Partner = {
@@ -34,6 +35,8 @@ export default function ConnectPage() {
       { id: string; displayName: string }[]
     >([]),
     [selected, setSelected] = useState("");
+  const [integrationKind, setIntegrationKind] = useState<"API" | "FEED">("API"), [endpoint, setEndpoint] = useState("");
+  const [syncReview, setSyncReview] = useState<string | null>(null);
   const [siteCommand, setSiteCommand] = useState<{ id: string; action: "challenge" | "revoke" } | null>(null);
   const [hostname, setHostname] = useState(""),
     [challenge, setChallenge] = useState<{
@@ -287,7 +290,8 @@ export default function ConnectPage() {
                       "POST",
                       {
                         siteId,
-                        kind: "API",
+                        kind: integrationKind,
+                        ...(endpoint.trim() ? { endpointUrl: endpoint.trim() } : {}),
                         name,
                         capabilities: [
                           "CATALOG_READ",
@@ -320,6 +324,8 @@ export default function ConnectPage() {
                     ))}
                 </select>
               </label>
+              <label className="block">نوع المصدر<select className={field} value={integrationKind} onChange={e => setIntegrationKind(e.target.value as "API" | "FEED")}><option value="API">API — إرسال أو قراءة JSON</option><option value="FEED">تغذية JSON للقراءة</option></select></label>
+              <label className="block">عنوان JSON للقراءة (اختياري عند إرسال API)<input className={field} type="url" dir="ltr" value={endpoint} required={integrationKind === "FEED"} maxLength={500} placeholder="https://shop.example.com/catalog.json" onChange={e => setEndpoint(e.target.value)} /></label>
               <label className="block">
                 اسم الربط
                 <input
@@ -388,6 +394,12 @@ export default function ConnectPage() {
                       </Button>
                     </>
                   )}
+                  {i.status === "APPROVED" && ["FEED", "API"].includes(i.kind) && i.endpointUrl && <>
+                    <Button variant="secondary" disabled={busy} aria-label={`مزامنة كتالوج ${i.name}`} onClick={() => setSyncReview(i.id)}>مراجعة مزامنة JSON</Button>
+                    {syncReview === i.id && <div className="w-full space-y-2 rounded-lg border p-3"><p>سيقرأ DINAR دفعة JSON واحدة من المصدر المعتمد ويحدّث الكتالوج بعد فحص الصلاحيات والبيانات. لا ينفذ شراءً ولا يتبع روابط أخرى.</p><Button disabled={busy} onClick={() => void run(async () => {
+                      await api(`/connect/integrations/${i.id}/sync`, "POST", { confirm: true, expectedRevision: i.revision }); setSyncReview(null);
+                    }, "اكتملت مزامنة الدفعة من المصدر المعتمد.")}>تأكيد قراءة الكتالوج ومزامنته</Button><Button variant="secondary" disabled={busy} onClick={() => setSyncReview(null)}>تراجع عن المزامنة</Button></div>}
+                  </>}
                   {i.status === "SUSPENDED" && (
                     <Button
                       disabled={busy}

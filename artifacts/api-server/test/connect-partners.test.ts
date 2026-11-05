@@ -5,6 +5,7 @@ import { randomUUID } from "node:crypto";
 import { db, pool, users,businessOperatingProfiles,connectTeamPermissions } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import app from "../src/app";
+import { ConnectNetwork } from "../src/connect/network";
 import { registerBusinessDocumentScanner } from "../src/lib/business-profiles";
 import { requireSafeReplitDevelopmentDatabase } from "./safe-development-database";
 requireSafeReplitDevelopmentDatabase("BDINAR_TEST_DATABASE");
@@ -1674,6 +1675,29 @@ await test("site proof renewal rejects stale DNS and revocation atomically retir
   assert.equal((await pool.query("select count(*)::int n from connect_commission_ledger")).rows[0].n, ledgerBefore);
   const deniedNew = await call(`/connect/partners/${partner.id}/integrations`, owner, { siteId: proof.id, kind: "API", name: "ربط بعد الإلغاء", mode: "SIMULATION_ONLY", capabilities: ["CATALOG_READ", "CATALOG_IMPORT"], allowedPathPrefixes: ["/products/"] });
   assert.equal(deniedNew.response.status, 409, deniedNew.text);
+});
+await test("approved feed pulls reuse authoritative catalog ingestion and recheck revocation after network completion", async () => {
+  const created = await call(`/connect/partners/${partner.id}/integrations`, owner, { siteId: site.id, kind: "FEED", name: "تغذية JSON للقراءة", endpointUrl: "https://catalog.partner.example/catalog.json", capabilities: ["CATALOG_READ", "CATALOG_IMPORT"], mode: "SIMULATION_ONLY", allowedPathPrefixes: ["/products/"] });
+  assert.equal(created.response.status,201,created.text);
+  const approved = await call(`/admin/connect/integrations/${created.data.id}/review`, admin, { decision: "APPROVE", expectedRevision: created.data.revision, reason: "Reviewed read-only structured JSON feed" });assert.equal(approved.response.status,200,approved.text);
+  let calls=0;const category=(await pool.query("select category_id from connect_offers limit 1")).rows[0].category_id;
+  const payload={batchId:"structured-feed-1",items:[{externalId:"feed-only-1",kind:"SERVICE",title:"خدمة من تغذية موثقة",description:"بيانات مصدر اصطناعي",categoryId:category,price:null,availability:"UNKNOWN",targetPath:"/products/feed-only-1",sourceVersion:1,sourceCheckedAt:new Date().toISOString(),attributes:[]}]};
+  app.locals.connectNetwork=new ConnectNetwork({dns:app.locals.connectDns,transport:async request=>{calls++;assert.equal(request.method,"GET");assert.equal(request.url,"https://catalog.partner.example/catalog.json");assert.equal(request.headers.has("authorization"),false);return Response.json(payload);}});
+  const syncPath=`/connect/integrations/${created.data.id}/sync`;
+  try {
+    const denied=await call(syncPath,other,{confirm:true,expectedRevision:approved.data.revision});assert.equal(denied.response.status,404);assert.equal(calls,0);
+    const stale=await call(syncPath,owner,{confirm:true,expectedRevision:999});assert.equal(stale.response.status,409);assert.equal(calls,0);
+    const unsafe=await call(syncPath,owner,{confirm:true,expectedRevision:approved.data.revision,url:"https://evil.example/"});assert.equal(unsafe.response.status,400);assert.equal(calls,0);
+    const imported=await call(syncPath,owner,{confirm:true,expectedRevision:approved.data.revision});assert.equal(imported.response.status,200,imported.text);assert.equal(calls,1);
+    const duplicate=await call(syncPath,owner,{confirm:true,expectedRevision:approved.data.revision});assert.equal(duplicate.response.status,200,duplicate.text);assert.equal(duplicate.data.duplicate,true);
+    const [stored]=(await pool.query("select * from connect_offers where integration_id=$1 and external_id='feed-only-1'",[created.data.id])).rows;assert.equal(stored.price_minor,null);assert.equal(stored.availability,"UNKNOWN");
+    let entered!:()=>void,release!:()=>void;const entering=new Promise<void>(resolve=>{entered=resolve;}),released=new Promise<void>(resolve=>{release=resolve;});
+    app.locals.connectNetwork=new ConnectNetwork({dns:app.locals.connectDns,transport:async()=>{entered();await released;return Response.json({...payload,batchId:"revoked-inflight",items:[{...payload.items[0],externalId:"never-import-after-revoke"}]});}});
+    const inflight=call(syncPath,owner,{confirm:true,expectedRevision:approved.data.revision});
+    try {await Promise.race([entering,new Promise((_,reject)=>setTimeout(()=>reject(new Error("feed request did not reach barrier")),2000))]);assert.equal((await call(`/connect/integrations/${created.data.id}/revoke`,owner,{})).response.status,200);release();assert.equal((await inflight).response.status,409);}
+    finally {release();}
+    assert.equal((await pool.query("select count(*)::int n from connect_offers where external_id='never-import-after-revoke'")).rows[0].n,0);
+  } finally {delete app.locals.connectNetwork;}
 });
 after(async () => {
   await new Promise<void>((resolve) => server.close(() => resolve()));

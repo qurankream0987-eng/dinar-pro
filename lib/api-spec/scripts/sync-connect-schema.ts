@@ -22,6 +22,7 @@ import {
   ConnectCatalogBatch,
   ConnectTeamInput,
   ConnectSiteCommandInput,
+  ConnectCatalogSyncInput,
 } from "../../api-zod/src/connect-platform";
 const require = createRequire(
   new URL("../../api-zod/package.json", import.meta.url),
@@ -77,6 +78,7 @@ for (const [name, source] of Object.entries({
   ConnectCatalogImportInput: ConnectCatalogBatch,
   ConnectTeamPermissionInput: ConnectTeamInput,
   ConnectSiteLifecycleInput: ConnectSiteCommandInput,
+  ConnectCatalogSyncRequest: ConnectCatalogSyncInput,
 })) {
   const generated = z.toJSONSchema(source);
   delete generated.$schema;

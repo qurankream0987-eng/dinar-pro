@@ -8241,6 +8241,26 @@ export const GetConnectReadOnlyCatalogResponse = zod.record(zod.string(), zod.un
 
 
 /**
+ * OWNER only. Explicitly confirmed single-batch structured JSON FEED/API pull from the persisted approved endpoint. No caller URL, credential or redirect. Existing ingestion rechecks source revision and revocation after network completion. Native pulls require approved pinned egress.
+ */
+export const SyncConnectCatalogParams = zod.object({
+  "id": zod.uuid()
+})
+
+export const syncConnectCatalogBodyExpectedRevisionExclusiveMin = 0;
+export const syncConnectCatalogBodyExpectedRevisionMax = 9007199254740991;
+
+
+
+export const SyncConnectCatalogBody = zod.object({
+  "confirm": zod.literal(true),
+  "expectedRevision": zod.int().gt(syncConnectCatalogBodyExpectedRevisionExclusiveMin).max(syncConnectCatalogBodyExpectedRevisionMax)
+})
+
+export const SyncConnectCatalogResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
  * OWNER only. Explicit confirmation rotates the 15-minute DNS TXT challenge. Existing verification retains its original expiry; no extension until fresh DNS verification. Revoked sites cannot renew.
  */
 export const RenewConnectSiteChallengeParams = zod.object({

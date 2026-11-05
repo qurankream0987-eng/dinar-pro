@@ -7,6 +7,7 @@ import { readFile, unlink } from "node:fs/promises";
 import { db, pool, users, businessProfiles, businessOperatingProfiles, businessMemberships } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import app from "../src/app";
+import { ConnectNetwork } from "../src/connect/network";
 import { startDinarBrowserTestWeb } from "./browser-test-web-server";
 import { requireSafeReplitDevelopmentDatabase } from "./safe-development-database";
 requireSafeReplitDevelopmentDatabase("BDINAR_TEST_DATABASE");
@@ -159,6 +160,15 @@ await test("real partner agreement acceptance and opt-in/withdrawal work through
     },
     credential.key,
   );
+  const feed = (await call(`/connect/partners/${partner.id}/integrations`, owner, {
+    siteId: site.id, kind: "FEED", name: "مصدر تغذية متصفح", endpointUrl: "https://browser.catalog.partner.example/catalog.json",
+    mode: "SIMULATION_ONLY", capabilities: ["CATALOG_READ", "CATALOG_IMPORT"], allowedPathPrefixes: ["/products/"],
+  })).data;
+  await call(`/admin/connect/integrations/${feed.id}/review`, admin, { decision: "APPROVE", expectedRevision: feed.revision, reason: "Reviewed isolated read-only JSON source" });
+  app.locals.connectNetwork = new ConnectNetwork({ dns: app.locals.connectDns, transport: async request => {
+    assert.equal(request.url, "https://browser.catalog.partner.example/catalog.json"); assert.equal(request.method, "GET");
+    return Response.json({ batchId: "browser-feed-1", items: [{ externalId: "browser-feed-only", kind: "SERVICE", title: "خدمة تغذية متصفح", description: "مصدر معزول", categoryId: "other", price: null, availability: "UNKNOWN", targetPath: "/products/browser-feed-only", sourceVersion: 1, sourceCheckedAt: new Date().toISOString(), attributes: [] }] });
+  }});
   const agreement = (
     await call(`/admin/connect/partners/${partner.id}/agreements`, admin, {
       mode: "SIMULATION_ONLY",
@@ -219,6 +229,8 @@ await test("real partner agreement acceptance and opt-in/withdrawal work through
     assert.equal(report.staffReadOnly, true);
     assert.equal(report.teamConfirmedThroughUi, true);
     assert.equal(report.siteLifecycleThroughUi, true);
+    assert.equal(report.catalogSyncedThroughUi, true);
+    assert.equal((await pool.query("select count(*)::int n from connect_offers where integration_id=$1 and external_id='browser-feed-only'", [feed.id])).rows[0].n, 1);
     assert.equal(report.opener, null);
     assert.equal(report.cartFlights, 0);
     assert.deepEqual(report.pageErrors, []);
