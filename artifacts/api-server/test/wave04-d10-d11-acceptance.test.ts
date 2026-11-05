@@ -546,7 +546,7 @@ test("W04-11-06 every capability carries its full security contract and names a 
     return existsSync(file) ? readFileSync(file, "utf8") : undefined;
   };
   assert.equal(LIVE_PROVIDER_STATUS, "LIVE_PROVIDER_NOT_VERIFIED");
-  assert.equal(CAPABILITY_NAMES.length, 20);
+  assert.equal(CAPABILITY_NAMES.length, 21);
   for (const name of CAPABILITY_NAMES) {
     const definition = CAPABILITY_REGISTRY[name];
     assert.equal(definition.name, name);

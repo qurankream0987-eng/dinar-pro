@@ -42,6 +42,7 @@ export const CAPABILITY_NAMES = [
   "describeCapabilities",
   "readOwnBusinessOverview",
   "readOwnOrderIssues",
+  "prepareBusinessListingChange",
 ] as const;
 export type CapabilityName = (typeof CAPABILITY_NAMES)[number];
 
@@ -555,6 +556,24 @@ export const CAPABILITY_REGISTRY: Record<CapabilityName, CapabilityDefinition> =
     canonicalService: "ai/model-read-capabilities.readOrderIssues",
     availability: "MODEL_TOOL",
     modelActors: ["BUYER", "SELLER"],
+  }),
+
+  prepareBusinessListingChange: capability({
+    name: "prepareBusinessListingChange",
+    toolName: "prepareBusinessListingAction",
+    purpose: "Prepare a price, pause, resume or stock-out change to the owner's own business product as a review; executed only after the owner confirms.",
+    inputSchema: z.object({ action: z.string(), product: z.string(), newPrice: z.string().optional() }).strict(),
+    outputSchema: z.object({ kind: z.literal("SURFACE"), surface: z.literal("BUSINESS_LISTING_REVIEW") }).passthrough(),
+    actors: ["SELLER"],
+    permissions: ["business.owner", "business.listing.update", "business.inventory.manage"],
+    mutation: "PREPARE_ONLY",
+    confirmation: "USER_CONFIRMATION",
+    idempotency: "IDEMPOTENCY_KEY",
+    timeoutMs: MODEL_TOOL_TIMEOUT_MS,
+    audit: "PENDING_ACTION_METADATA",
+    canonicalService: "ai/business-turn.executeBusinessTurn",
+    availability: "MODEL_TOOL",
+    modelActors: ["SELLER"],
   }),
 };
 
