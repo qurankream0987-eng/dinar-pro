@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import { api } from "@/account/Account";
 import { Button } from "@/ui/Button";
 import { ConnectAgreements } from "@/features/ConnectAgreements";
+import { ConnectTeam, ConnectReadOnlyCatalog } from "@/features/ConnectTeam";
 import { ConnectDashboard } from "@/features/ConnectDashboard";
 type Site = { id: string; hostname: string; status: string };
 type Integration = {
@@ -14,6 +15,8 @@ type Integration = {
   revision: number;
 };
 type Partner = {
+  role: "OWNER" | "STAFF";
+  allowedScopes: string[];
   id: string;
   businessId: string;
   displayName: string;
@@ -154,8 +157,14 @@ export default function ConnectPage() {
           </select>
         </label>
       )}
-      {partner && (
+      {partner?.role === "STAFF" && <>
+        <p role="status">وصول موظف للقراءة فقط؛ إدارة الربط والمفاتيح للمالك.</p>
+        {partner.allowedScopes.includes("CATALOG_READ") && <ConnectReadOnlyCatalog key={`catalog-${partner.id}`} partnerId={partner.id} />}
+        {partner.allowedScopes.includes("REPORTS_READ") && <ConnectDashboard key={`staff-report-${partner.id}`} partnerId={partner.id} />}
+      </>}
+      {partner?.role === "OWNER" && (
         <>
+          <ConnectTeam key={`team-${partner.id}`} partnerId={partner.id} />
           <ConnectAgreements key={partner.id} partnerId={partner.id} />
           <ConnectDashboard
             key={`report-${partner.id}`}

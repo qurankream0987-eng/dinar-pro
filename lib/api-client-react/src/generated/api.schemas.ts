@@ -5799,6 +5799,30 @@ export interface ConnectExternalTransaction {
   disclosure: string;
 }
 
+export type ConnectTeamPermissionInputScopesItem = typeof ConnectTeamPermissionInputScopesItem[keyof typeof ConnectTeamPermissionInputScopesItem];
+
+
+export const ConnectTeamPermissionInputScopesItem = {
+  CATALOG_READ: 'CATALOG_READ',
+  REPORTS_READ: 'REPORTS_READ',
+} as const;
+
+export interface ConnectTeamPermissionInput {
+  /** @pattern ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$ */
+  delegationId: string;
+  /**
+     * @maximum 9007199254740991
+     * @exclusiveMinimum 0
+     */
+  expectedDelegationVersion: number;
+  /**
+     * @minItems 1
+     * @maxItems 2
+     */
+  scopes: ConnectTeamPermissionInputScopesItem[];
+  confirm: true;
+}
+
 export type GetListingsParams = {
 search?: string;
 category?: string;
@@ -5877,6 +5901,10 @@ export const ListBusinessVerificationQueueStatus = {
 
 export type ListAdminSecurityIncidentsParams = {
 status?: SecurityIncidentStatus;
+};
+
+export type RemoveConnectReadOnlyTeamBody = {
+  confirm: true;
 };
 
 export type SearchConnectCatalogParams = {

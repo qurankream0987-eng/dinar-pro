@@ -473,6 +473,7 @@ export const connectIngestionBatches = pgTable(
   ],
 );
 export const connectTeamPermissions = pgTable("connect_team_permissions", {
+  delegationVersion: integer("delegation_version").notNull().default(0),
   delegationId: text("delegation_id")
     .primaryKey()
     .references(() => businessDelegations.id),

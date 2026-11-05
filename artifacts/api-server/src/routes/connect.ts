@@ -15,6 +15,7 @@ import {
   connectError,
   externalDestination,
 } from "../connect/provider-registry";
+import * as team from "../connect/team";
 import * as partners from "../connect/partners";
 import * as agreements from "../connect/agreements";
 import { ConnectFinancialReceiptSchema } from "@workspace/api-zod/connect-platform";
@@ -32,6 +33,14 @@ import { markets } from "@workspace/db";
 import { resolveMarket } from "../lib/markets";
 import { assertMarketLegalCapability } from "../lib/d16-readiness";
 const router = Router();
+router.get("/connect/partners/:id/team", requireAuth, async (req, res) =>
+  res.set("Cache-Control", "no-store").json(await team.listConnectTeam(req.actor!.id, await marketFor(req), idParam(req.params.id))));
+router.post("/connect/partners/:id/team", requireAuth, async (req, res) =>
+  res.set("Cache-Control", "no-store").json(await team.grantConnectTeam(req.actor!.id, await marketFor(req), idParam(req.params.id), req.body)));
+router.delete("/connect/partners/:id/team/:delegationId", requireAuth, async (req, res) =>
+  res.set("Cache-Control", "no-store").json(await team.removeConnectTeam(req.actor!.id, await marketFor(req), idParam(req.params.id), idParam(req.params.delegationId), req.body)));
+router.get("/connect/partners/:id/catalog", requireAuth, async (req, res) =>
+  res.set("Cache-Control", "no-store").json(await team.connectTeamCatalog(req.actor!.id, await marketFor(req), idParam(req.params.id))));
 router.get("/connect/partners/:id/report", requireAuth, async (req, res) =>
   res
     .set("Cache-Control", "no-store")

@@ -144,7 +144,7 @@ export async function listConnectAgreements(
   market: ConnectMarket,
   partnerId: string,
 ) {
-  await connectAccess(actorId, market.id, partnerId);
+  await connectAccess(actorId, market.id, partnerId, "REPORTS_READ");
   const rows = await db
     .select({
       agreement: connectAgreements,

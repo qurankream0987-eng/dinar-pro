@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { readFile, unlink } from "node:fs/promises";
-import { db, pool, users, businessProfiles } from "@workspace/db";
+import { db, pool, users, businessProfiles, businessOperatingProfiles, businessMemberships } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import app from "../src/app";
 import { startDinarBrowserTestWeb } from "./browser-test-web-server";
@@ -90,6 +90,13 @@ await test("real partner agreement acceptance and opt-in/withdrawal work through
     verifiedBy: admin.id,
     idempotencyKey: randomUUID(),
   });
+  const staff = await register("موظف متصفح Connect");
+  await db.insert(businessMemberships).values({ id: randomUUID(), businessId, userId: owner.id, role: "VERIFIED_OWNER", status: "ACTIVE", grantedBy: owner.id });
+  const operatingId = randomUUID();
+  await db.insert(businessOperatingProfiles).values({ id: operatingId, d2BusinessId: businessId, ownerUserId: owner.id, marketId: "JO", businessType: "OTHER", displayName: "امتداد تفويض المتصفح", status: "DRAFT" });
+  const delegationPath = `/business/profiles/${operatingId}/delegations`;
+  const delegation = (await call(delegationPath, owner, { employee: { type: "HUMAN", userId: staff.id }, capabilities: ["business.catalog.read"], resourceScope: { kind: "BUSINESS" }, expiresAt: new Date(Date.now() + 3600000).toISOString(), idempotencyKey: randomUUID() })).data.delegation;
+  await call(`${delegationPath}/${delegation.id}/activate`, owner, { confirm: true, expectedVersion: 1 });
   const partner = (await call("/connect/partners", owner, { businessId })).data;
   const site = (
     await call(`/connect/partners/${partner.id}/sites`, owner, {
@@ -193,6 +200,8 @@ await test("real partner agreement acceptance and opt-in/withdrawal work through
           CONNECT_WEB_BASE: web.baseUrl,
           CONNECT_OWNER_COOKIE: owner.cookie,
           CONNECT_BUYER_COOKIE: buyer.cookie,
+          CONNECT_STAFF_COOKIE: staff.cookie,
+          CONNECT_DELEGATION_ID: delegation.id,
           CONNECT_PARTNER_ID: partner.id,
           CONNECT_RESULT: resultPath,
         },
@@ -207,6 +216,8 @@ await test("real partner agreement acceptance and opt-in/withdrawal work through
     assert.equal(report.defaultTracking, false);
     assert.equal(report.consentedTracking, true);
     assert.equal(report.withdrawn, true);
+    assert.equal(report.staffReadOnly, true);
+    assert.equal(report.teamConfirmedThroughUi, true);
     assert.equal(report.opener, null);
     assert.equal(report.cartFlights, 0);
     assert.deepEqual(report.pageErrors, []);

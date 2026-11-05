@@ -8181,6 +8181,66 @@ export const GetConnectPartnerResponse = zod.record(zod.string(), zod.unknown())
 
 
 /**
+ * OWNER only. Lists existing canonical D4 human grants; never creates a second delegation.
+ */
+export const ListConnectTeamParams = zod.object({
+  "id": zod.uuid()
+})
+
+export const ListConnectTeamResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * OWNER only. Explicitly confirms CATALOG_READ and/or REPORTS_READ at the exact active D4 delegation version. No connector, credential or financial writes for staff.
+ */
+export const GrantConnectReadOnlyTeamParams = zod.object({
+  "id": zod.uuid()
+})
+
+export const grantConnectReadOnlyTeamBodyDelegationIdRegExp = new RegExp('^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$');
+export const grantConnectReadOnlyTeamBodyExpectedDelegationVersionExclusiveMin = 0;
+export const grantConnectReadOnlyTeamBodyExpectedDelegationVersionMax = 9007199254740991;
+
+export const grantConnectReadOnlyTeamBodyScopesMax = 2;
+
+
+
+export const GrantConnectReadOnlyTeamBody = zod.object({
+  "delegationId": zod.uuid().regex(grantConnectReadOnlyTeamBodyDelegationIdRegExp),
+  "expectedDelegationVersion": zod.int().gt(grantConnectReadOnlyTeamBodyExpectedDelegationVersionExclusiveMin).max(grantConnectReadOnlyTeamBodyExpectedDelegationVersionMax),
+  "scopes": zod.array(zod.enum(['CATALOG_READ', 'REPORTS_READ'])).min(1).max(grantConnectReadOnlyTeamBodyScopesMax),
+  "confirm": zod.literal(true)
+})
+
+export const GrantConnectReadOnlyTeamResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * OWNER only. Removes Connect scopes without changing the canonical D4 delegation.
+ */
+export const RemoveConnectReadOnlyTeamParams = zod.object({
+  "id": zod.uuid(),
+  "delegationId": zod.uuid()
+})
+
+export const RemoveConnectReadOnlyTeamBody = zod.object({
+  "confirm": zod.literal(true)
+})
+
+export const RemoveConnectReadOnlyTeamResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * OWNER or version-bound CATALOG_READ staff. Bounded external catalog only; no internal cart or purchase actions.
+ */
+export const GetConnectReadOnlyCatalogParams = zod.object({
+  "id": zod.uuid()
+})
+
+export const GetConnectReadOnlyCatalogResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
  * Access: AUTHENTICATED. Server checks current ownership, market legal gates and approval. External catalog only; no internal order, payment or automatic registration. Credentials returned only at issue time. Live financial activation is unsupported.
  */
 export const CreateConnectSiteParams = zod.object({

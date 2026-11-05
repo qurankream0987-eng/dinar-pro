@@ -414,6 +414,13 @@
       "when": 1793914911196,
       "tag": "0058_connect_projection_hardening",
       "breakpoints": true
+    },
+    {
+      "idx": 59,
+      "version": "7",
+      "when": 1794001311196,
+      "tag": "0059_connect_readonly_team",
+      "breakpoints": true
     }
   ]
 }

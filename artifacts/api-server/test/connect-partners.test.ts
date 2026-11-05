@@ -2,7 +2,7 @@ import { localObjectStorage } from "./local-object-storage";
 import { test, after } from "node:test";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
-import { db, pool, users } from "@workspace/db";
+import { db, pool, users,businessOperatingProfiles } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import app from "../src/app";
 import { registerBusinessDocumentScanner } from "../src/lib/business-profiles";
@@ -1457,6 +1457,161 @@ await test("a hostname already verified for another partner is rejected without 
     rows.find((row) => row.id === challenge.data.id).status,
     "PENDING",
   );
+});
+await test("parallel credential issuance for independent connectors does not deadlock the shared business authority", async () => {
+  const created = await call(
+    `/connect/partners/${partner.id}/integrations`,
+    owner,
+    {
+      siteId: site.id,
+      kind: "API",
+      name: "ربط تزامن المفاتيح",
+      mode: "SIMULATION_ONLY",
+      capabilities: ["CATALOG_IMPORT"],
+      allowedPathPrefixes: ["/products/"],
+    },
+  );
+  assert.equal(created.response.status, 201, created.text);
+  const second = created.data;
+  const reviewed = await call(
+    `/admin/connect/integrations/${second.id}/review`,
+    admin,
+    {
+      decision: "APPROVE",
+      expectedRevision: second.revision,
+      reason: "Reviewed isolated concurrent credential issuance",
+    },
+  );
+  assert.equal(reviewed.response.status, 200, reviewed.text);
+  const blocker = await pool.connect();
+  let released = false;
+  try {
+    await blocker.query("begin");
+    await blocker.query(
+      "select id from connect_partners where id=$1 for share",
+      [partner.id],
+    );
+    const pending = Promise.all([
+      call(`/connect/integrations/${integration.id}/credentials`, owner, {}),
+      call(`/connect/integrations/${second.id}/credentials`, owner, {}),
+    ]);
+    let blocked = 0;
+    const until = Date.now() + 1600;
+    while (Date.now() < until) {
+      blocked = Number(
+        (
+          await pool.query(
+            "select count(*)::int n from pg_stat_activity where datname=current_database() and pid<>pg_backend_pid() and wait_event_type='Lock' and query like '%connect_partners%'",
+          )
+        ).rows[0].n,
+      );
+      if (blocked >= 2) break;
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    }
+    await blocker.query("commit");
+    released = true;
+    const results = await pending;
+    for (const result of results)
+      assert.equal(result.response.status, 201, result.text);
+    assert.ok(
+      blocked >= 2,
+      "both requests must reach the shared-authority lock barrier",
+    );
+    console.log(
+      "CONNECT_CREDENTIAL_CONCURRENCY",
+      JSON.stringify({
+        requests: 2,
+        blockedWorkersObserved: blocked,
+        successful: results.length,
+      }),
+    );
+  } finally {
+    if (!released) await blocker.query("rollback");
+    blocker.release();
+  }
+});
+await test("foreign actors are rejected before acquiring an owner's exclusive connector authority", async () => {
+  const blocker = await pool.connect();
+  let released = false;
+  try {
+    await blocker.query("begin");
+    await blocker.query(
+      "select id from connect_partners where id=$1 for update",
+      [partner.id],
+    );
+    const batch = {
+      batchId: randomUUID(),
+      items: [
+        {
+          externalId: "unauthorized",
+          kind: "PRODUCT",
+          title: "غير مصرح",
+          description: "يجب ألا يُستورد",
+          categoryId: "other",
+          price: null,
+          availability: "UNKNOWN",
+          targetPath: "/products/unauthorized",
+          sourceVersion: 1,
+          sourceCheckedAt: new Date().toISOString(),
+          attributes: [],
+        },
+      ],
+    };
+    const pending = Promise.all([
+      call(`/connect/integrations/${integration.id}/credentials`, other, {}),
+      call(`/connect/integrations/${integration.id}/suspend`, other, {}),
+      call(`/connect/integrations/${integration.id}/catalog`, other, batch),
+    ]);
+    let timeout: ReturnType<typeof setTimeout> | undefined;
+    const rejectedBeforeUnlock = await Promise.race([
+      pending.then(() => true),
+      new Promise<boolean>((resolve) => {
+        timeout = setTimeout(() => resolve(false), 1200);
+      }),
+    ]);
+    if (timeout) clearTimeout(timeout);
+    await blocker.query("commit");
+    released = true;
+    const outcomes = await pending;
+    for (const outcome of outcomes)
+      assert.equal(outcome.response.status, 404, outcome.text);
+    assert.equal(
+      rejectedBeforeUnlock,
+      true,
+      "a foreign actor must be denied before waiting for the private business lock",
+    );
+  } finally {
+    if (!released) await blocker.query("rollback");
+    blocker.release();
+  }
+});
+await test("Connect staff inherit canonical D4 identity/version/revocation and receive only explicitly confirmed read scopes",async()=>{
+ const employee=await register("موظف قراءة Connect");const operatingId=randomUUID();
+ // Existing D3 extension fixture; all delegation creation, activation, membership,
+ // suspension, resumption and revocation below use the real canonical D4 API.
+ await db.insert(businessOperatingProfiles).values({id:operatingId,d2BusinessId:businessId,ownerUserId:owner.id,marketId:"JO",businessType:"OTHER",displayName:"امتداد تفويض الاختبار",status:"DRAFT"});
+ const path=`/business/profiles/${operatingId}/delegations`;
+ const draft=await call(path,owner,{employee:{type:"HUMAN",userId:employee.id},capabilities:["business.catalog.read"],resourceScope:{kind:"BUSINESS"},expiresAt:new Date(Date.now()+3600000).toISOString(),idempotencyKey:randomUUID()});assert.equal(draft.response.status,201,draft.text);const delegationId=draft.data.delegation.id;
+ const activated=await call(`${path}/${delegationId}/activate`,owner,{confirm:true,expectedVersion:1});assert.equal(activated.response.status,200,activated.text);const activeVersion=activated.data.version;
+ assert.equal((await call(`/connect/partners/${partner.id}`,employee)).response.status,404,"D4 membership alone does not imply Connect access");
+ const teamPath=`/connect/partners/${partner.id}/team`;
+ const granted=await call(teamPath,owner,{delegationId,expectedDelegationVersion:activeVersion,scopes:["CATALOG_READ"],confirm:true});assert.equal(granted.response.status,200,granted.text);
+ const view=await call(`/connect/partners/${partner.id}`,employee);assert.equal(view.response.status,200,view.text);assert.equal(view.data.role,"STAFF");assert.deepEqual(view.data.allowedScopes,["CATALOG_READ"]);assert.deepEqual(view.data.integrations,[],"read-only staff do not receive connector configuration");
+ const catalog=await call(`/connect/partners/${partner.id}/catalog`,employee);assert.equal(catalog.response.status,200,catalog.text);assert.ok(catalog.data.items.some((item:any)=>item.externalId==='sku-1'));assert.equal((await call(`/connect/partners/${partner.id}/report`,employee)).response.status,404);
+ for(const action of ["credentials","suspend","revoke"])assert.equal((await call(`/connect/integrations/${integration.id}/${action}`,employee,{})).response.status,404);
+ assert.equal((await call(`/connect/agreements/${agreement.id}/accept`,employee,{expectedDigest:agreement.termsDigest,accept:true,idempotencyKey:randomUUID()})).response.status,404);
+ assert.equal((await call(teamPath,employee,{delegationId,expectedDelegationVersion:activeVersion,scopes:["REPORTS_READ"],confirm:true})).response.status,404);
+ assert.equal((await call(teamPath,owner,{delegationId,expectedDelegationVersion:activeVersion,scopes:["INTEGRATIONS_MANAGE"],confirm:true})).response.status,400,"human management scopes are not part of the approved policy");
+ const reporting=await call(teamPath,owner,{delegationId,expectedDelegationVersion:activeVersion,scopes:["CATALOG_READ","REPORTS_READ"],confirm:true});assert.equal(reporting.response.status,200,reporting.text);assert.equal((await call(`/connect/partners/${partner.id}/report`,employee)).response.status,200);
+ const suspended=await call(`${path}/${delegationId}/suspend`,owner,{confirm:true,expectedVersion:activeVersion});assert.equal(suspended.response.status,200,suspended.text);assert.equal((await call(`/connect/partners/${partner.id}`,employee)).response.status,404);
+ const resumed=await call(`${path}/${delegationId}/resume`,owner,{confirm:true,expectedVersion:suspended.data.version});assert.equal(resumed.response.status,200,resumed.text);assert.equal((await call(`/connect/partners/${partner.id}`,employee)).response.status,404,"resuming D4 must not silently reactivate the old Connect version mapping");
+ assert.equal((await call(teamPath,owner,{delegationId,expectedDelegationVersion:activeVersion,scopes:["CATALOG_READ"],confirm:true})).response.status,409);
+ const currentVersion=resumed.data.version;assert.equal((await call(teamPath,owner,{delegationId,expectedDelegationVersion:currentVersion,scopes:["CATALOG_READ","REPORTS_READ"],confirm:true})).response.status,200);
+ const listed=await call("/connect/partners",employee);assert.equal(listed.response.status,200,listed.text);assert.ok(listed.data.some((row:any)=>row.id===partner.id&&row.role==='STAFF'));
+ const removed=await call(`${teamPath}/${delegationId}`,owner,{confirm:true},"DELETE");assert.equal(removed.response.status,200,removed.text);assert.equal((await call(`/connect/partners/${partner.id}/catalog`,employee)).response.status,404);assert.equal((await call(`/business/delegations/${delegationId}/catalog`,employee)).response.status,200,"removing Connect scopes must not alter the existing D4 authority");
+ assert.equal((await call(teamPath,owner,{delegationId,expectedDelegationVersion:currentVersion,scopes:["CATALOG_READ","REPORTS_READ"],confirm:true})).response.status,200);
+ const revoked=await call(`${path}/${delegationId}/revoke`,owner,{confirm:true,expectedVersion:currentVersion});assert.equal(revoked.response.status,200,revoked.text);assert.equal((await call(`/connect/partners/${partner.id}/catalog`,employee)).response.status,404);
+ const exported=await call("/account/privacy/exports",employee,{currentPassword:"connect-partner-local-1",idempotencyKey:randomUUID()});assert.equal(exported.response.status,200,exported.text);assert.equal(exported.data.export.connect.teamAccess.items.length,1);assert.equal(exported.data.export.connect.teamAccess.items[0].grantStatus,"REVOKED");assert.ok(!JSON.stringify(exported.data.export.connect.teamAccess).includes(owner.id));
 });
 after(async () => {
   await new Promise<void>((resolve) => server.close(() => resolve()));

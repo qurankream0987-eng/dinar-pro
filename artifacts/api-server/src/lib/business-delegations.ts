@@ -638,12 +638,11 @@ async function expireGrantIfNeeded(
  * The principal is supplied by trusted server code, never by a model-selected tool argument.
  * The public HTTP route constructs only the HUMAN form from the authenticated session.
  */
-export async function delegatedBusinessCatalog(input: {
-  delegationId: string;
-  marketId: string;
-  principal: Principal;
+/** Canonical D4 authority, shared by catalog and read-only capability extensions.
+ * Caller owns the transaction; denial audit/expiry changes commit only with it. */
+export async function resolveBusinessDelegationAuthorityTx(tx: BusinessDelegationTx, input: {
+  delegationId: string; marketId: string; principal: Principal;
 }) {
-  const result = await db.transaction(async (tx) => {
     const [initial] = await tx
       .select()
       .from(businessDelegations)
@@ -687,7 +686,7 @@ export async function delegatedBusinessCatalog(input: {
         delegationId: row.id,
         detail: { reason: "PRINCIPAL_MISMATCH" },
       });
-      return { denied: { status: 404, message: "التفويض غير موجود", code: "DELEGATION_NOT_FOUND" } as const };
+      return { allowed: false as const, denied: { status: 404, message: "التفويض غير موجود", code: "DELEGATION_NOT_FOUND" } as const };
     }
 
     const actorId = input.principal.type === "HUMAN" ? input.principal.userId : row.grantorActorId;
@@ -700,7 +699,7 @@ export async function delegatedBusinessCatalog(input: {
         delegationId: row.id,
         detail: { reason: liveRow.status === "EXPIRED" ? "EXPIRED" : "NOT_ACTIVE" },
       });
-      return { denied: { status: 403, message: "هذا التفويض غير نشط", code: "DELEGATION_NOT_ACTIVE" } as const };
+      return { allowed: false as const, denied: { status: 403, message: "هذا التفويض غير نشط", code: "DELEGATION_NOT_ACTIVE" } as const };
     }
     if (!liveRow.capabilities.includes("business.catalog.read") &&
         !liveRow.capabilities.includes("business.inventory.read")) {
@@ -711,7 +710,7 @@ export async function delegatedBusinessCatalog(input: {
         delegationId: row.id,
         detail: { reason: "CAPABILITY_NOT_GRANTED" },
       });
-      return { denied: { status: 403, message: "لا يتيح هذا التفويض عرض المنتجات", code: "DELEGATION_CAPABILITY_DENIED" } as const };
+      return { allowed: false as const, denied: { status: 403, message: "لا يتيح هذا التفويض عرض المنتجات", code: "DELEGATION_CAPABILITY_DENIED" } as const };
     }
 
     const [identity] = await tx
@@ -744,7 +743,7 @@ export async function delegatedBusinessCatalog(input: {
         delegationId: row.id,
         detail: { reason: "BUSINESS_ACCESS_BLOCKED" },
       });
-      return { denied: { status: 403, message: "توقف الوصول إلى هذا النشاط", code: "DELEGATION_BUSINESS_BLOCKED" } as const };
+      return { allowed: false as const, denied: { status: 403, message: "توقف الوصول إلى هذا النشاط", code: "DELEGATION_BUSINESS_BLOCKED" } as const };
     }
 
     if (input.principal.type === "HUMAN") {
@@ -767,9 +766,22 @@ export async function delegatedBusinessCatalog(input: {
           delegationId: row.id,
           detail: { reason: "MEMBERSHIP_NOT_ACTIVE" },
         });
-        return { denied: { status: 403, message: "عضوية الموظف غير نشطة", code: "DELEGATION_MEMBERSHIP_INACTIVE" } as const };
+        return { allowed: false as const, denied: { status: 403, message: "عضوية الموظف غير نشطة", code: "DELEGATION_MEMBERSHIP_INACTIVE" } as const };
       }
     }
+
+    return { allowed: true as const, business, row, liveRow, identity, actorId };
+}
+
+export async function delegatedBusinessCatalog(input: {
+  delegationId: string;
+  marketId: string;
+  principal: Principal;
+}) {
+  const result = await db.transaction(async (tx) => {
+    const authority = await resolveBusinessDelegationAuthorityTx(tx, input);
+    if (!authority.allowed) return { denied: authority.denied };
+    const { business, row, liveRow, identity, actorId } = authority;
 
     const resourceScope = liveRow.resourceScope as DelegationScope;
     const conditions = [

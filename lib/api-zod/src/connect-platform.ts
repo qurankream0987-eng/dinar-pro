@@ -243,18 +243,14 @@ export const ConnectFinanceCommand = z
     resolution: z.enum(["RESTORE_SUPPORTED_STATE", "REVERSE"]).optional(),
   })
   .strict();
-export const CONNECT_TEAM_SCOPES = [
-  "CATALOG_READ",
-  "CATALOG_MANAGE",
-  "INTEGRATIONS_MANAGE",
-  "REPORTS_READ",
-] as const;
-export const ConnectTeamInput = z
-  .object({
-    delegationId: z.string().uuid(),
-    scopes: z.array(z.enum(CONNECT_TEAM_SCOPES)).max(4),
-  })
-  .strict();
+export const CONNECT_TEAM_SCOPES = ["CATALOG_READ", "REPORTS_READ"] as const;
+export const ConnectTeamInput = z.object({
+  delegationId: z.string().uuid(),
+  expectedDelegationVersion: z.number().int().positive(),
+  scopes: z.array(z.enum(CONNECT_TEAM_SCOPES)).min(1).max(2)
+    .refine(values => new Set(values).size === values.length, "Duplicate scopes"),
+  confirm: z.literal(true),
+}).strict();
 
 const safeConnectMinor = z
   .number()

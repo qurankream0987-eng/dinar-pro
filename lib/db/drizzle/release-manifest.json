@@ -234,5 +234,9 @@
   {
     "tag": "0058_connect_projection_hardening",
     "sha256": "3ee1e9ec70af16c93fc2da80f2acac5cde30da5d6abc9e337b932716097aa864"
+  },
+  {
+    "tag": "0059_connect_readonly_team",
+    "sha256": "f47049420d4b63b77c07c88e3866ad95f173616b3ce48aa3d8a355b426fb556d"
   }
 ]

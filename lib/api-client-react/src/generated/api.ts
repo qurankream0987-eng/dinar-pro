@@ -88,6 +88,7 @@ import type {
   ConnectReferralDisclosure,
   ConnectReviewDecisionInput,
   ConnectSiteRegistrationInput,
+  ConnectTeamPermissionInput,
   ConnectUniversalCardsPayload,
   CountryLegalEvidence,
   CountryLegalEvidenceInput,
@@ -161,6 +162,7 @@ import type {
   PromotionProductInput,
   PromotionProductUpdate,
   ReadinessStatus,
+  RemoveConnectReadOnlyTeamBody,
   ResolveAdminDisputeInput,
   SearchConnectCatalogParams,
   SecurityIncident,
@@ -19209,6 +19211,376 @@ export function useGetConnectPartner<TData = Awaited<ReturnType<typeof getConnec
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetConnectPartnerQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getListConnectTeamUrl = (id: string,) => {
+
+
+
+
+  return `/api/connect/partners/${id}/team`
+}
+
+/**
+ * OWNER only. Lists existing canonical D4 human grants; never creates a second delegation.
+ */
+export const listConnectTeam = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+  return customFetch<ServerValidatedObject>(getListConnectTeamUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListConnectTeamQueryKey = (id: string,) => {
+    return [
+    `/api/connect/partners/${id}/team`
+    ] as const;
+    }
+
+
+export const getListConnectTeamQueryOptions = <TData = Awaited<ReturnType<typeof listConnectTeam>>, TError = ErrorType<void>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listConnectTeam>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListConnectTeamQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listConnectTeam>>> = ({ signal }) => listConnectTeam(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listConnectTeam>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListConnectTeamQueryResult = NonNullable<Awaited<ReturnType<typeof listConnectTeam>>>
+export type ListConnectTeamQueryError = ErrorType<void>
+
+
+export function useListConnectTeam<TData = Awaited<ReturnType<typeof listConnectTeam>>, TError = ErrorType<void>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listConnectTeam>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listConnectTeam>>,
+          TError,
+          Awaited<ReturnType<typeof listConnectTeam>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListConnectTeam<TData = Awaited<ReturnType<typeof listConnectTeam>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listConnectTeam>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listConnectTeam>>,
+          TError,
+          Awaited<ReturnType<typeof listConnectTeam>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListConnectTeam<TData = Awaited<ReturnType<typeof listConnectTeam>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listConnectTeam>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useListConnectTeam<TData = Awaited<ReturnType<typeof listConnectTeam>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listConnectTeam>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListConnectTeamQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGrantConnectReadOnlyTeamUrl = (id: string,) => {
+
+
+
+
+  return `/api/connect/partners/${id}/team`
+}
+
+/**
+ * OWNER only. Explicitly confirms CATALOG_READ and/or REPORTS_READ at the exact active D4 delegation version. No connector, credential or financial writes for staff.
+ */
+export const grantConnectReadOnlyTeam = async (id: string,
+    connectTeamPermissionInput: ConnectTeamPermissionInput, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getGrantConnectReadOnlyTeamUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(connectTeamPermissionInput)
+  }
+);}
+
+
+
+
+
+export const getGrantConnectReadOnlyTeamMutationKey = () => ['grantConnectReadOnlyTeam'] as const;
+
+export const getGrantConnectReadOnlyTeamMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof grantConnectReadOnlyTeam>>, TError,GrantConnectReadOnlyTeamMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof grantConnectReadOnlyTeam>>, TError,GrantConnectReadOnlyTeamMutationVariables, TContext> => {
+
+const mutationKey = getGrantConnectReadOnlyTeamMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof grantConnectReadOnlyTeam>>, GrantConnectReadOnlyTeamMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  grantConnectReadOnlyTeam(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type GrantConnectReadOnlyTeamMutationResult = NonNullable<Awaited<ReturnType<typeof grantConnectReadOnlyTeam>>>
+    export type GrantConnectReadOnlyTeamMutationBody = BodyType<ConnectTeamPermissionInput>
+    export type GrantConnectReadOnlyTeamMutationError = ErrorType<void>
+    export type GrantConnectReadOnlyTeamMutationVariables = {id: string;data: BodyType<ConnectTeamPermissionInput>}
+
+    export const useGrantConnectReadOnlyTeam = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof grantConnectReadOnlyTeam>>, TError,GrantConnectReadOnlyTeamMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof grantConnectReadOnlyTeam>>,
+        TError,
+        GrantConnectReadOnlyTeamMutationVariables,
+        TContext
+      > => {
+      return useMutation(getGrantConnectReadOnlyTeamMutationOptions(options), queryClient);
+    }
+
+export const getRemoveConnectReadOnlyTeamUrl = (id: string,
+    delegationId: string,) => {
+
+
+
+
+  return `/api/connect/partners/${id}/team/${delegationId}`
+}
+
+/**
+ * OWNER only. Removes Connect scopes without changing the canonical D4 delegation.
+ */
+export const removeConnectReadOnlyTeam = async (id: string,
+    delegationId: string,
+    removeConnectReadOnlyTeamBody: RemoveConnectReadOnlyTeamBody, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getRemoveConnectReadOnlyTeamUrl(id,delegationId),
+  {
+    ...options,
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(removeConnectReadOnlyTeamBody)
+  }
+);}
+
+
+
+
+
+export const getRemoveConnectReadOnlyTeamMutationKey = () => ['removeConnectReadOnlyTeam'] as const;
+
+export const getRemoveConnectReadOnlyTeamMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof removeConnectReadOnlyTeam>>, TError,RemoveConnectReadOnlyTeamMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof removeConnectReadOnlyTeam>>, TError,RemoveConnectReadOnlyTeamMutationVariables, TContext> => {
+
+const mutationKey = getRemoveConnectReadOnlyTeamMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof removeConnectReadOnlyTeam>>, RemoveConnectReadOnlyTeamMutationVariables> = (props) => {
+          const {id,delegationId,data} = props ?? {};
+
+          return  removeConnectReadOnlyTeam(id,delegationId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RemoveConnectReadOnlyTeamMutationResult = NonNullable<Awaited<ReturnType<typeof removeConnectReadOnlyTeam>>>
+    export type RemoveConnectReadOnlyTeamMutationBody = BodyType<RemoveConnectReadOnlyTeamBody>
+    export type RemoveConnectReadOnlyTeamMutationError = ErrorType<void>
+    export type RemoveConnectReadOnlyTeamMutationVariables = {id: string;delegationId: string;data: BodyType<RemoveConnectReadOnlyTeamBody>}
+
+    export const useRemoveConnectReadOnlyTeam = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof removeConnectReadOnlyTeam>>, TError,RemoveConnectReadOnlyTeamMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof removeConnectReadOnlyTeam>>,
+        TError,
+        RemoveConnectReadOnlyTeamMutationVariables,
+        TContext
+      > => {
+      return useMutation(getRemoveConnectReadOnlyTeamMutationOptions(options), queryClient);
+    }
+
+export const getGetConnectReadOnlyCatalogUrl = (id: string,) => {
+
+
+
+
+  return `/api/connect/partners/${id}/catalog`
+}
+
+/**
+ * OWNER or version-bound CATALOG_READ staff. Bounded external catalog only; no internal cart or purchase actions.
+ */
+export const getConnectReadOnlyCatalog = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+  return customFetch<ServerValidatedObject>(getGetConnectReadOnlyCatalogUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetConnectReadOnlyCatalogQueryKey = (id: string,) => {
+    return [
+    `/api/connect/partners/${id}/catalog`
+    ] as const;
+    }
+
+
+export const getGetConnectReadOnlyCatalogQueryOptions = <TData = Awaited<ReturnType<typeof getConnectReadOnlyCatalog>>, TError = ErrorType<void>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConnectReadOnlyCatalog>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetConnectReadOnlyCatalogQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getConnectReadOnlyCatalog>>> = ({ signal }) => getConnectReadOnlyCatalog(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getConnectReadOnlyCatalog>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetConnectReadOnlyCatalogQueryResult = NonNullable<Awaited<ReturnType<typeof getConnectReadOnlyCatalog>>>
+export type GetConnectReadOnlyCatalogQueryError = ErrorType<void>
+
+
+export function useGetConnectReadOnlyCatalog<TData = Awaited<ReturnType<typeof getConnectReadOnlyCatalog>>, TError = ErrorType<void>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConnectReadOnlyCatalog>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getConnectReadOnlyCatalog>>,
+          TError,
+          Awaited<ReturnType<typeof getConnectReadOnlyCatalog>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetConnectReadOnlyCatalog<TData = Awaited<ReturnType<typeof getConnectReadOnlyCatalog>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConnectReadOnlyCatalog>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getConnectReadOnlyCatalog>>,
+          TError,
+          Awaited<ReturnType<typeof getConnectReadOnlyCatalog>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetConnectReadOnlyCatalog<TData = Awaited<ReturnType<typeof getConnectReadOnlyCatalog>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConnectReadOnlyCatalog>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useGetConnectReadOnlyCatalog<TData = Awaited<ReturnType<typeof getConnectReadOnlyCatalog>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConnectReadOnlyCatalog>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetConnectReadOnlyCatalogQueryOptions(id,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

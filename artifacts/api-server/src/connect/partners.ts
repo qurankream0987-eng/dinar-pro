@@ -1,4 +1,4 @@
-import { and, eq, gt, inArray, sql } from "drizzle-orm";
+import { and, eq, gt, inArray, or, sql } from "drizzle-orm";
 import {
   createHash,
   randomBytes,
@@ -36,6 +36,7 @@ import {
   providerCredentials,
 } from "@workspace/db";
 import { assertMarketLegalCapability } from "../lib/d16-readiness";
+import { resolveBusinessDelegationAuthorityTx } from "../lib/business-delegations";
 import { getOwnBusiness } from "../lib/business-profiles";
 import {
   createProviderConnection,
@@ -124,7 +125,8 @@ export async function connectAccess(
   scope = "READ",
   tx: any = db,
   lock = false,
-) {
+): Promise<{ partner: typeof connectPartners.$inferSelect; business: typeof businessProfiles.$inferSelect; role: "OWNER" | "STAFF"; allowedScopes: string[] }> {
+  if (tx === db) return db.transaction(inner => connectAccess(actorId, marketId, partnerId, scope, inner, lock));
   const [actor] = await tx
     .select()
     .from(users)
@@ -144,6 +146,9 @@ export async function connectAccess(
         eq(connectPartners.id, partnerId),
         eq(connectPartners.marketId, marketId),
         eq(businessProfiles.marketId, marketId),
+        scope === "OWNER" || lock
+          ? eq(businessProfiles.ownerUserId, actorId)
+          : undefined,
       ),
     );
   const [row] = await (
@@ -151,55 +156,54 @@ export async function connectAccess(
   ).limit(1);
   if (!row) throw connectError(404, "NOT_FOUND", "الشريك غير موجود");
   if (row.business.ownerUserId === actorId)
-    return { ...row, role: "OWNER" as const };
-  if (scope === "OWNER")
+    return { ...row, role: "OWNER" as const, allowedScopes: ["CATALOG_READ", "REPORTS_READ"] };
+  if (lock || !["READ", "CATALOG_READ", "REPORTS_READ"].includes(scope))
     throw connectError(404, "NOT_FOUND", "الشريك غير موجود");
-  const grants = await tx
-    .select({
-      grant: businessDelegations,
-      permission: connectTeamPermissions,
-      operating: businessOperatingProfiles,
-      membership: businessMemberships,
-    })
+  const grants = await tx.select({ delegationId: connectTeamPermissions.delegationId })
     .from(connectTeamPermissions)
-    .innerJoin(
-      businessDelegations,
-      eq(businessDelegations.id, connectTeamPermissions.delegationId),
-    )
-    .innerJoin(
-      businessOperatingProfiles,
-      eq(businessOperatingProfiles.id, businessDelegations.businessId),
-    )
-    .innerJoin(
-      businessMemberships,
-      and(
-        eq(businessMemberships.businessId, row.business.id),
-        eq(businessMemberships.userId, actorId),
-      ),
-    )
-    .where(
-      and(
-        eq(connectTeamPermissions.partnerId, partnerId),
-        eq(businessDelegations.employeeUserId, actorId),
-        eq(businessDelegations.status, "ACTIVE"),
-        gt(businessDelegations.expiresAt, new Date()),
-        eq(businessOperatingProfiles.d2BusinessId, row.business.id),
-        eq(businessDelegations.marketId, marketId),
-        eq(businessMemberships.status, "ACTIVE"),
-      ),
-    )
-    .for("share");
-  const allowed = grants.some(
-    (entry: any) =>
-      entry.grant.employeeType === "HUMAN" &&
-      entry.grant.grantorActorId === row.business.ownerUserId &&
-      entry.operating.ownerUserId === row.business.ownerUserId &&
-      entry.grant.resourceScope?.kind === "BUSINESS" &&
-      entry.grant.capabilities.includes("business.catalog.read") &&
-      (scope === "READ" || entry.permission.scopes.includes(scope)),
+    .innerJoin(businessDelegations, eq(businessDelegations.id, connectTeamPermissions.delegationId))
+    .where(and(eq(connectTeamPermissions.partnerId, partnerId), eq(businessDelegations.employeeUserId, actorId)));
+  for (const grant of grants) {
+    const authority = await resolveBusinessDelegationAuthorityTx(tx, {
+      delegationId: grant.delegationId, marketId, principal: { type: "HUMAN", userId: actorId },
+    });
+    if (!authority.allowed) continue;
+    const { liveRow, business, identity } = authority;
+    if (identity.id !== row.business.id || business.ownerUserId !== row.business.ownerUserId ||
+        liveRow.grantorActorId !== row.business.ownerUserId ||
+        liveRow.resourceScope.kind !== "BUSINESS" || !liveRow.capabilities.includes("business.catalog.read")) continue;
+    const [permission] = await tx.select().from(connectTeamPermissions)
+      .where(and(eq(connectTeamPermissions.delegationId, grant.delegationId), eq(connectTeamPermissions.partnerId, partnerId)))
+      .for("share").limit(1);
+    if (!permission || permission.delegationVersion !== liveRow.version || permission.delegationVersion < 1 ||
+        permission.grantedBy !== row.business.ownerUserId || permission.scopes.length < 1 ||
+        permission.scopes.some((value: string) => !["CATALOG_READ", "REPORTS_READ"].includes(value)) ||
+        (scope !== "READ" && !permission.scopes.includes(scope))) continue;
+    return { ...row, role: "STAFF" as const, allowedScopes: permission.scopes };
+  }
+  throw connectError(404, "NOT_FOUND", "الشريك غير موجود");
+}
+/** Check ownership in the parent query before acquiring any exclusive child lock. */
+export async function lockOwnedConnectIntegration(
+  tx: ConnectTx,
+  actorId: string,
+  market: ConnectMarket,
+  integrationId: string,
+) {
+  const [initial] = await tx
+    .select({ partnerId: connectIntegrations.partnerId })
+    .from(connectIntegrations)
+    .where(eq(connectIntegrations.id, integrationId));
+  if (!initial) throw connectError(404, "NOT_FOUND", "الموصل غير موجود");
+  const access = await connectAccess(
+    actorId,
+    market.id,
+    initial.partnerId,
+    "OWNER",
+    tx,
+    true,
   );
-  if (!allowed) throw connectError(404, "NOT_FOUND", "الشريك غير موجود");
-  return { ...row, role: "STAFF" as const };
+  return { partnerId: initial.partnerId, access };
 }
 function siteView(site: typeof connectSites.$inferSelect) {
   return {
@@ -255,27 +259,25 @@ export async function partnerView(
     organicDisplayFeeMinor: 0,
     basicReferralFeeMinor: 0,
     role: access.role,
-    sites: sites.map(siteView),
-    integrations: integrations.map(integrationView),
+    allowedScopes: access.allowedScopes,
+    sites: access.role === "OWNER" ? sites.map(siteView) : [],
+    integrations: access.role === "OWNER" ? integrations.map(integrationView) : [],
     commissionPolicy: "SEPARATE_ACCEPTED_PARTNER_AGREEMENT",
   };
 }
 export async function listConnectPartners(actorId: string, marketId: string) {
-  const rows = await db
-    .select({ id: connectPartners.id })
-    .from(connectPartners)
-    .innerJoin(
-      businessProfiles,
-      eq(businessProfiles.id, connectPartners.businessId),
-    )
-    .where(
-      and(
-        eq(businessProfiles.ownerUserId, actorId),
-        eq(connectPartners.marketId, marketId),
-      ),
-    )
+  const rows = await db.selectDistinct({ id: connectPartners.id }).from(connectPartners)
+    .innerJoin(businessProfiles, eq(businessProfiles.id, connectPartners.businessId))
+    .leftJoin(connectTeamPermissions, eq(connectTeamPermissions.partnerId, connectPartners.id))
+    .leftJoin(businessDelegations, eq(businessDelegations.id, connectTeamPermissions.delegationId))
+    .where(and(eq(connectPartners.marketId, marketId), or(eq(businessProfiles.ownerUserId, actorId), eq(businessDelegations.employeeUserId, actorId))))
     .limit(50);
-  return Promise.all(rows.map((row) => partnerView(actorId, marketId, row.id)));
+  const visible = [];
+  for (const row of rows) {
+    try { visible.push(await partnerView(actorId, marketId, row.id)); }
+    catch (error) { if ((error as { status?: number }).status !== 404) throw error; }
+  }
+  return visible;
 }
 export async function registerConnectPartner(
   actorId: string,
@@ -340,7 +342,7 @@ export async function createConnectSite(
       actorId,
       market.id,
       partnerId,
-      "INTEGRATIONS_MANAGE",
+      "OWNER",
       tx,
       true,
     );
@@ -387,12 +389,7 @@ export async function verifyConnectSite(
     .from(connectSites)
     .where(eq(connectSites.id, siteId));
   if (!site) throw connectError(404, "NOT_FOUND", "الموقع غير موجود");
-  await connectAccess(
-    actorId,
-    market.id,
-    site.partnerId,
-    "INTEGRATIONS_MANAGE",
-  );
+  await connectAccess(actorId, market.id, site.partnerId, "OWNER");
   if (
     site.status === "REVOKED" ||
     site.challengeExpiresAt.getTime() <= Date.now()
@@ -428,7 +425,7 @@ export async function verifyConnectSite(
         actorId,
         market.id,
         site.partnerId,
-        "INTEGRATIONS_MANAGE",
+        "OWNER",
         tx,
         true,
       );
@@ -487,8 +484,8 @@ export async function verifyConnectSite(
       throw error;
     });
 }
-async function readyPartner(tx: any, partnerId: string) {
-  const [row] = await tx
+async function readyPartner(tx: any, partnerId: string, exclusive = false) {
+  const query = tx
     .select({
       partner: connectPartners,
       business: businessProfiles,
@@ -500,8 +497,30 @@ async function readyPartner(tx: any, partnerId: string) {
       eq(businessProfiles.id, connectPartners.businessId),
     )
     .innerJoin(users, eq(users.id, businessProfiles.ownerUserId))
-    .where(eq(connectPartners.id, partnerId))
-    .for("share");
+    .where(eq(connectPartners.id, partnerId));
+  const [row] = await query.for(exclusive ? "update" : "share", {
+    of: connectPartners,
+  });
+  if (row) {
+    const [owner] = await tx
+      .select()
+      .from(users)
+      .where(eq(users.id, row.business.ownerUserId))
+      .for("share");
+    const [business] = await tx
+      .select()
+      .from(businessProfiles)
+      .where(eq(businessProfiles.id, row.business.id))
+      .for("share");
+    if (!owner || !business || business.ownerUserId !== owner.id)
+      throw connectError(
+        409,
+        "BUSINESS_CONTEXT_CHANGED",
+        "تغيّر سياق ملكية النشاط؛ أعد فتح العملية",
+      );
+    row.owner = owner;
+    row.business = business;
+  }
   if (
     !row ||
     row.partner.status !== "APPROVED" ||
@@ -762,7 +781,7 @@ export async function createConnectIntegration(
       actorId,
       market.id,
       partnerId,
-      "INTEGRATIONS_MANAGE",
+      "OWNER",
       tx,
       true,
     );
@@ -802,11 +821,28 @@ export async function readyConnectIntegration(
   tx: any,
   integrationId: string,
   capability?: string,
+  exclusiveParent = false,
 ) {
+  const [initial] = await tx
+    .select({ partnerId: connectIntegrations.partnerId })
+    .from(connectIntegrations)
+    .where(eq(connectIntegrations.id, integrationId));
+  if (!initial)
+    throw connectError(
+      409,
+      "INTEGRATION_NOT_APPROVED",
+      "الموصل غير موجود أو غير معتمد",
+    );
+  const partner = await readyPartner(tx, initial.partnerId, exclusiveParent);
   const [row] = await tx
     .select()
     .from(connectIntegrations)
-    .where(eq(connectIntegrations.id, integrationId))
+    .where(
+      and(
+        eq(connectIntegrations.id, integrationId),
+        eq(connectIntegrations.partnerId, initial.partnerId),
+      ),
+    )
     .for("update");
   if (
     !row ||
@@ -819,7 +855,6 @@ export async function readyConnectIntegration(
       "INTEGRATION_NOT_APPROVED",
       "الموصل أو صلاحياته غير معتمدة حاليًا",
     );
-  const partner = await readyPartner(tx, row.partnerId);
   const [site] = await tx
     .select()
     .from(connectSites)
@@ -877,10 +912,16 @@ export async function reviewConnectIntegration(
     await publicConnectAddresses(site.hostname, dns);
   return db.transaction(async (tx) => {
     await assertConnectAdmin(actor, tx);
+    const parent = await readyPartner(tx, before.partnerId, true);
     const [row] = await tx
       .select()
       .from(connectIntegrations)
-      .where(eq(connectIntegrations.id, integrationId))
+      .where(
+        and(
+          eq(connectIntegrations.id, integrationId),
+          eq(connectIntegrations.partnerId, before.partnerId),
+        ),
+      )
       .for("update");
     if (!row || row.revision !== input.expectedRevision)
       throw connectError(409, "STALE_REVIEW", "تغيّرت إعدادات الموصل");
@@ -890,7 +931,6 @@ export async function reviewConnectIntegration(
         "INTEGRATION_REVOKED",
         "لا يمكن إعادة اعتماد ربط مُلغى؛ أنشئ ربطًا جديدًا",
       );
-    const parent = await readyPartner(tx, row.partnerId);
     if (
       parent.partner.marketId !== market.id ||
       parent.business.ownerUserId === actor.id
@@ -952,20 +992,30 @@ export async function setConnectIntegrationStatus(
   status: "SUSPENDED" | "REVOKED" | "APPROVED",
 ) {
   return db.transaction(async (tx) => {
-    const [row] = await tx
-      .select()
+    const [initial] = await tx
+      .select({ partnerId: connectIntegrations.partnerId })
       .from(connectIntegrations)
-      .where(eq(connectIntegrations.id, integrationId))
-      .for("update");
-    if (!row) throw connectError(404, "NOT_FOUND", "الموصل غير موجود");
+      .where(eq(connectIntegrations.id, integrationId));
+    if (!initial) throw connectError(404, "NOT_FOUND", "الموصل غير موجود");
     await connectAccess(
       actorId,
       market.id,
-      row.partnerId,
-      "INTEGRATIONS_MANAGE",
+      initial.partnerId,
+      "OWNER",
       tx,
       true,
     );
+    const [row] = await tx
+      .select()
+      .from(connectIntegrations)
+      .where(
+        and(
+          eq(connectIntegrations.id, integrationId),
+          eq(connectIntegrations.partnerId, initial.partnerId),
+        ),
+      )
+      .for("update");
+    if (!row) throw connectError(404, "NOT_FOUND", "الموصل غير موجود");
     if (
       row.status === "REVOKED" ||
       (status === "APPROVED" &&
@@ -1012,15 +1062,24 @@ export async function issueConnectCredential(
   integrationId: string,
 ) {
   return db.transaction(async (tx) => {
-    const ready = await readyConnectIntegration(tx, integrationId);
-    const access = await connectAccess(
-      actorId,
-      market.id,
-      ready.partner.id,
-      "OWNER",
+    const { access, partnerId } = await lockOwnedConnectIntegration(
       tx,
+      actorId,
+      market,
+      integrationId,
+    );
+    const ready = await readyConnectIntegration(
+      tx,
+      integrationId,
+      undefined,
       true,
     );
+    if (ready.partner.id !== partnerId)
+      throw connectError(
+        409,
+        "BUSINESS_CONTEXT_CHANGED",
+        "تغيّر سياق الموصل؛ أعد فتح العملية",
+      );
     const scopes = [
       ...(ready.integration.capabilities.includes("CATALOG_IMPORT")
         ? ["connect:catalog:write"]
@@ -1275,19 +1334,24 @@ export async function importConnectOwnerCatalog(
   raw: unknown,
 ) {
   return db.transaction(async (tx) => {
+    const { partnerId } = await lockOwnedConnectIntegration(
+      tx,
+      actorId,
+      market,
+      integrationId,
+    );
     const ready = await readyConnectIntegration(
       tx,
       integrationId,
       "CATALOG_IMPORT",
-    );
-    await connectAccess(
-      actorId,
-      market.id,
-      ready.partner.id,
-      "CATALOG_MANAGE",
-      tx,
       true,
     );
+    if (ready.partner.id !== partnerId)
+      throw connectError(
+        409,
+        "BUSINESS_CONTEXT_CHANGED",
+        "تغيّر سياق الموصل؛ أعد فتح العملية",
+      );
     await assertMarketLegalCapability(market.id, "LISTING_PUBLICATION", tx);
     return importBatch(tx, ready, raw, market, actorId);
   });
@@ -1402,7 +1466,7 @@ export async function discoverConnectCatalog(
           providerId: row.partner.id,
           targetId: row.offer.id,
           intent: "VIEW_ON_PROVIDER",
-          label: `افتح ${row.offer.title.slice(0,40)} لدى ${row.business.displayName.slice(0,30)}`,
+          label: `افتح ${row.offer.title.slice(0, 40)} لدى ${row.business.displayName.slice(0, 30)}`,
         },
       ],
       disclosure: `الشراء والدفع خارج DINAR. ${row.integration.mode === "SIMULATION_ONLY" ? "هذا تكامل اختبار وليس عملية شراء أو عمولة حقيقية. " : ""}لا تُستحق عمولة من مجرد فتح الرابط؛ يلزم اتفاق مقبول وتحويل موثّق.`,

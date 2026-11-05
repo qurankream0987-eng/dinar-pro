@@ -216,7 +216,12 @@ export async function createProviderConnection(input: {
   if (!scopes.length || scopes.some(scope => !permitted.includes(scope))) throw providerError(400, "INVALID_PAYLOAD", "صلاحيات المفتاح لا تنتمي إلى نوع الربط");
   const connectionLimit = namespace === "CONNECT" ? 20 : MAX_ACTIVE_PROVIDER_CONNECTIONS;
   const create = async (tx: ProviderTransaction) => {
-    const [owner] = await tx.select().from(users).where(eq(users.id, input.ownerId)).for("update");
+    const ownerQuery = tx.select().from(users).where(eq(users.id, input.ownerId));
+    const [owner] = await (namespace === "CONNECT" ? ownerQuery.for("share") : ownerQuery.for("update"));
+    // Connect readiness holds a shared owner lock. Serialize only its separate
+    // connection quota without upgrading that lock across independent partners.
+    if (namespace === "CONNECT" && owner)
+      await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${"connect-provider-quota:" + owner.id},0))`);
     if (!owner || owner.status !== "ACTIVE" || !owner.phoneVerified) throw fail(403, "حسابك غير نشط حاليًا");
     if (input.requestedMarketId !== undefined && input.requestedMarketId !== owner.activeMarketId)
       throw fail(409, "يُنشأ الربط في سوقك الحالي فقط", "MARKET_MISMATCH");

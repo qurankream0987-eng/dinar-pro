@@ -2,6 +2,8 @@ import { and, desc, eq } from "drizzle-orm";
 import {
   db,
   businessProfiles,
+  connectTeamPermissions,
+  businessDelegations,
   connectPartners,
   connectIntegrations,
   connectReferrals,
@@ -17,7 +19,7 @@ export async function connectPersonalDataExport(userId: string, limit: number) {
       items: rows.slice(0, limit),
       truncated: rows.length > limit,
     });
-  const [partners, integrations, referrals, conversions, acceptances] =
+  const [partners, integrations, referrals, conversions, acceptances, teamAccess] =
     await Promise.all([
       db
         .select({
@@ -119,8 +121,14 @@ export async function connectPersonalDataExport(userId: string, limit: number) {
         .where(eq(connectAgreementAcceptances.acceptedBy, userId))
         .orderBy(desc(connectAgreementAcceptances.createdAt))
         .limit(take),
+      db.select({ partnerId: connectTeamPermissions.partnerId, delegationId: connectTeamPermissions.delegationId,
+        scopes: connectTeamPermissions.scopes, reviewedDelegationVersion: connectTeamPermissions.delegationVersion,
+        grantVersion: businessDelegations.version, grantStatus: businessDelegations.status, expiresAt: businessDelegations.expiresAt })
+        .from(connectTeamPermissions).innerJoin(businessDelegations, eq(businessDelegations.id, connectTeamPermissions.delegationId))
+        .where(eq(businessDelegations.employeeUserId, userId)).orderBy(desc(connectTeamPermissions.updatedAt)).limit(take),
     ]);
   return {
+    teamAccess: bounded(teamAccess),
     partners: bounded(partners),
     integrations: bounded(integrations),
     referrals: bounded(referrals),
