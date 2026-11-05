@@ -121,10 +121,17 @@ const CONTENT_SECURITY_POLICY_DIRECTIVES = [
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
-  // Replit Preview embeds the app in a platform-controlled frame. Keep the allowlist narrow;
-  // X-Frame-Options cannot express it and would override this policy in older browsers.
-  "frame-ancestors 'self' https://replit.com https://*.replit.com https://*.replit.dev",
 ];
+/**
+ * Replit Preview embeds the app in a platform-controlled frame, so development keeps that
+ * narrow allowlist. A labelled staging/production deployment (Railway) is framed by itself only.
+ * X-Frame-Options cannot express the allowlist and would override this policy in older browsers.
+ */
+function frameAncestors(env: NodeJS.ProcessEnv = process.env) {
+  return env.DINAR_DEPLOYMENT_ENV === "staging" || env.DINAR_DEPLOYMENT_ENV === "production"
+    ? "frame-ancestors 'self'"
+    : "frame-ancestors 'self' https://replit.com https://*.replit.com https://*.replit.dev";
+}
 function browserConnectOrigins() {
   const origins = new Set<string>();
   const configured = process.env.CSP_CONNECT_EXTRA_ORIGINS ?? "";
@@ -141,6 +148,7 @@ function browserConnectOrigins() {
 function contentSecurityPolicy() {
   return [
     ...CONTENT_SECURITY_POLICY_DIRECTIVES,
+    frameAncestors(),
     `connect-src ${browserConnectOrigins()}`,
   ].join("; ");
 }
