@@ -1,0 +1,51 @@
+# DINAR self-hosted inference gateway (template). The inference server listens on 127.0.0.1:8000
+# only; this gateway is the single public entry. TLS is automatic for the configured host.
+# Secrets come from the environment of the gateway process, never from this file.
+{
+	admin off
+}
+
+{$DINAR_LLM_GATEWAY_HOST} {
+	# Only the two OpenAI-compatible routes DINAR uses; everything else (metrics, docs,
+	# tokenizer, admin and future vLLM routes) is refused before it reaches the server.
+	@allowed {
+		method POST
+		path /v1/chat/completions
+	}
+	@health {
+		method GET
+		path /health
+	}
+
+	request_body {
+		max_size 256KB
+	}
+
+	handle @health {
+		reverse_proxy 127.0.0.1:8000
+	}
+	handle @allowed {
+		@unauthorized not header Authorization "Bearer {$DINAR_LLM_GATEWAY_TOKEN}"
+		respond @unauthorized 401
+		reverse_proxy 127.0.0.1:8000 {
+			# The model server's own key is separate from the gateway token (two rotations).
+			header_up Authorization "Bearer {$DINAR_VLLM_INTERNAL_KEY}"
+			transport http {
+				response_header_timeout 60s
+			}
+		}
+	}
+	handle {
+		respond 404
+	}
+	log {
+		# Request lines only: no headers, no bodies (prompts and keys never reach the log).
+		format filter {
+			wrap json
+			fields {
+				request>headers delete
+				request>uri delete
+			}
+		}
+	}
+}
