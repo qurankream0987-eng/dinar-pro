@@ -1,6 +1,8 @@
 import type { UniversalCardsPayload } from "@workspace/api-zod/connect";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
+import { connectDomainSearchTurn, connectPartnerSearchTurn } from "../connect/conversation";
+import { dinarCapabilityCatalog, type DinarCapabilityCatalog } from "./dinar-capabilities";
 import { randomUUID } from "node:crypto";
 import { aiResultSets, db } from "@workspace/db";
 import type { ListingRecord } from "../lib/dinar-data";
@@ -56,6 +58,8 @@ export type ToolContext = {
 
 export type ToolResult = {
   universalCards?: UniversalCardsPayload;
+  /** Server-authored description of what DINAR can and cannot do for this actor; read only. */
+  capabilities?: DinarCapabilityCatalog;
   memory?: import("./personal-memory-turn").MemorySummary;
   /** RESULTS restores an existing result set exactly; it never creates a new one. */
   kind: "SEARCH" | "RESOURCE" | "RESULTS" | "SURFACE";
@@ -728,6 +732,103 @@ export const aiToolRegistry: Record<string, ToolDefinition> = {
       };
     },
   },
+
+  searchDomains: {
+    name: "searchDomains",
+    version: 1,
+    description:
+      "Check domain-name availability and registration offers with DINAR Connect providers. External referral only; never registers or pays.",
+    permissions: ["marketplace.read"],
+    riskLevel: "LOW",
+    idempotency: "READ_ONLY",
+    auditPolicy: "REDACTED_TURN_METADATA",
+    exposedToModel: true,
+    inputSchema: z
+      .object({
+        domain: z.string().trim().min(3).max(253).optional(),
+        name: z.string().trim().min(1).max(63).optional(),
+      })
+      .strict()
+      .refine((value) => Boolean(value.domain || value.name), "domain or name is required"),
+    modelDefinition: {
+      name: "searchDomains",
+      description:
+        "Use when the user wants a website address / internet name / domain for a project, even if they never say the word domain. Give `domain` when the user named a full domain (example.com); otherwise give `name` as a short Latin-letter brand label you derived with the user (e.g. 'oudhouse'), and DINAR checks it on common extensions. Results are provider facts at check time; DINAR does not register, buy or pay, and links open the provider outside DINAR.",
+      parameters: {
+        type: "object",
+        properties: {
+          domain: { type: "string", description: "A full domain such as myshop.com" },
+          name: { type: "string", description: "A short Latin label without extension, e.g. oudhouse" },
+        },
+        required: [],
+        additionalProperties: false,
+      },
+    },
+    execute: async (input: { domain?: string; name?: string }, context) => {
+      const raw = input.domain ?? `${input.name}.com`;
+      const execution = await connectDomainSearchTurn({
+        raw,
+        ...(context.actorId ? { actorId: context.actorId } : {}),
+        market: context.market,
+      });
+      // An unsafe or unusable domain is refused by the server, not handed back as model material.
+      if (execution.result.surface === "CLARIFY")
+        throw new ToolRejectedError(execution.result.prompt ?? "Invalid domain.", "CANONICAL_TOOL_REJECTED");
+      return execution.result;
+    },
+  },
+
+  searchPartnerOffers: {
+    name: "searchPartnerOffers",
+    version: 1,
+    description:
+      "Search reviewed DINAR Connect partner catalogs (external businesses) for products or services. External referral only.",
+    permissions: ["marketplace.read"],
+    riskLevel: "LOW",
+    idempotency: "READ_ONLY",
+    auditPolicy: "REDACTED_TURN_METADATA",
+    exposedToModel: true,
+    inputSchema: z.object({ query: z.string().trim().min(2).max(120) }).strict(),
+    modelDefinition: {
+      name: "searchPartnerOffers",
+      description:
+        "Search approved external partner businesses connected through DINAR Connect (services such as design, maintenance, booking providers, software, stores) when the user needs something DINAR's own marketplace may not sell, or asks for a company/provider. Only reviewed partners are returned; prices and availability are the partner's, purchase happens outside DINAR, and no internal order is created.",
+      parameters: {
+        type: "object",
+        properties: { query: { type: "string", description: "What to look for, in the user's language" } },
+        required: ["query"],
+        additionalProperties: false,
+      },
+    },
+    execute: async (input: { query: string }, context) =>
+      (await connectPartnerSearchTurn(context.market, input.query)).result,
+  },
+
+  describeDinarCapabilities: {
+    name: "describeDinarCapabilities",
+    version: 1,
+    description:
+      "Return DINAR's own server-authored list of what it can and cannot do for this actor in this market.",
+    permissions: ["marketplace.read"],
+    riskLevel: "LOW",
+    idempotency: "READ_ONLY",
+    auditPolicy: "REDACTED_TURN_METADATA",
+    exposedToModel: true,
+    inputSchema: z.object({}).strict(),
+    modelDefinition: {
+      name: "describeDinarCapabilities",
+      description:
+        "Call when the user asks whether DINAR can do something (book, pay, transfer, deliver, register, hire, connect a company...) or when you are unsure a capability exists. Answer only from this list: never promise an action that is not listed as available.",
+      parameters: { type: "object", properties: {}, required: [], additionalProperties: false },
+    },
+    execute: async (_input, context) => ({
+      kind: "SURFACE",
+      surface: "CAPABILITIES",
+      query: {},
+      listings: [],
+      capabilities: dinarCapabilityCatalog(context.market),
+    }),
+  },
 };
 
 /** The only tools the bounded model turn loop may execute; checked again at execution time. */
@@ -735,6 +836,9 @@ export const MODEL_LOOP_TOOL_ALLOWLIST = [
   "searchListings",
   "getResource",
   "compareListings",
+  "searchDomains",
+  "searchPartnerOffers",
+  "describeDinarCapabilities",
 ] as const;
 
 /** F01 read-only tools plus every F02 capability tool, filtered by server-derived roles. */

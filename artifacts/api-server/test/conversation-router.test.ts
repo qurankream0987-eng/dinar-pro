@@ -272,6 +272,11 @@ test("basket product searches do not navigate away from marketplace results", ()
   assert.equal(addToCartIntent(search), false);
   assert.equal(surfaceIntent("افتح سلة مشترياتي"), "CART");
   assert.equal(surfaceIntent("اعرض السلة"), "CART");
+  assert.equal(surfaceIntent("ورني سلة مشترياتي"), "CART");
+  assert.equal(surfaceIntent("دينار افتح لي السلة لو سمحت"), "CART");
+  // A cart word that the navigation verb does not govern is not a request to open the cart.
+  assert.equal(surfaceIntent("لا تضيف شي للسلة، بس ورني أسعار الجوالات"), undefined);
+  assert.equal(surfaceIntent("ورني الأسعار وبعدين أقرر أحط شي بالسلة"), undefined);
   assert.equal(addToCartIntent("أضف سلة الغسيل إلى السلة"), true);
 });
 
