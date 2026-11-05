@@ -1315,6 +1315,8 @@ function stableJson(value: unknown): string {
 function compactCapabilityRead(result: ToolResult) {
   if (result.kind !== "SURFACE") return undefined;
   if (result.capabilities) return { kind: "DINAR_CAPABILITIES", ...result.capabilities };
+  if (result.businessOverview) return { kind: "BUSINESS_OVERVIEW", ...result.businessOverview };
+  if (result.orderIssues) return { kind: "ORDER_ISSUES", ...result.orderIssues };
   if (result.universalCards)
     return {
       kind: "EXTERNAL_OFFERS",

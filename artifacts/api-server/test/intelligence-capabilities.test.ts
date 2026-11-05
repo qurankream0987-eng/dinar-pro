@@ -321,6 +321,32 @@ test("INT-05 every advertised tool is a registered capability and the new reads 
     assert.ok((MODEL_LOOP_TOOL_ALLOWLIST as readonly string[]).includes(name));
 });
 
+test("INT-06 business overview and order issues are the actor's own rows only", async () => {
+  // The seller published two listings above but owns no D3 business: the overview is empty, not invented.
+  const sellerConv = (await request("/ai/conversations", "POST", {}, seller.cookie)).data.id as string;
+  const text = `كيف أداء نشاطي ${run}؟`;
+  script.unshift({ key: text, reply: "OVERVIEW", toolSequence: [{ name: "readBusinessOverview", arguments: {} }] });
+  toolSequenceCalls.delete(text);
+  const overview = await say(seller.cookie, sellerConv, text);
+  assert.equal(overview.status, 200, overview.body);
+  const read = lastFeedback.find((item) => item.tool === "readBusinessOverview");
+  assert.equal(read?.status, "SUCCEEDED");
+  assert.deepEqual(read.result.businesses, []);
+
+  const buyer = await fresh();
+  const issues = `وين وصل استرجاع فلوسي ${run}؟`;
+  script.unshift({ key: issues, reply: "ISSUES", toolSequence: [{ name: "readOrderIssues", arguments: {} }] });
+  toolSequenceCalls.delete(issues);
+  const issueReply = await say(buyer.cookie, buyer.conv, issues);
+  assert.equal(issueReply.status, 200, issueReply.body);
+  const issueRead = lastFeedback.find((item) => item.tool === "readOrderIssues");
+  assert.equal(issueRead?.status, "SUCCEEDED");
+  assert.deepEqual(issueRead.result.orders, [], "a new buyer has no disputes or refunds; none are invented");
+  assert.match(issueRead.result.note, /REFUND_SUCCEEDED/u);
+  const direct = await executeModelTool("readOrderIssues", "{\"actorId\":\"someone-else\"}", { actorId: buyer.id, conversationId: buyer.conv, currentMessageId: "x", market: await marketFor({ actor: { activeMarketId: "JO" }, cookies: {} } as any) }).then(() => "ran", (error) => error.code);
+  assert.equal(direct, "CANONICAL_TOOL_REJECTED", "the model cannot pass an actor id");
+});
+
 after(async () => {
   server.close();
   await pool.end();

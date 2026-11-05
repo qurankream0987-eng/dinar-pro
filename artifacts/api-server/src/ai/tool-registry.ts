@@ -1,8 +1,7 @@
 import type { UniversalCardsPayload } from "@workspace/api-zod/connect";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
-import { connectDomainSearchTurn, connectPartnerSearchTurn } from "../connect/conversation";
-import { dinarCapabilityCatalog, type DinarCapabilityCatalog } from "./dinar-capabilities";
+import type { DinarCapabilityCatalog } from "./dinar-capabilities";
 import { randomUUID } from "node:crypto";
 import { aiResultSets, db } from "@workspace/db";
 import type { ListingRecord } from "../lib/dinar-data";
@@ -60,6 +59,10 @@ export type ToolResult = {
   universalCards?: UniversalCardsPayload;
   /** Server-authored description of what DINAR can and cannot do for this actor; read only. */
   capabilities?: DinarCapabilityCatalog;
+  /** The actor's own businesses (read only), see model-read-capabilities.ts. */
+  businessOverview?: import("./model-read-capabilities").BusinessOverview;
+  /** Disputes and refunds on the actor's own orders (read only). */
+  orderIssues?: import("./model-read-capabilities").OrderIssues;
   memory?: import("./personal-memory-turn").MemorySummary;
   /** RESULTS restores an existing result set exactly; it never creates a new one. */
   kind: "SEARCH" | "RESOURCE" | "RESULTS" | "SURFACE";
@@ -766,7 +769,7 @@ export const aiToolRegistry: Record<string, ToolDefinition> = {
     },
     execute: async (input: { domain?: string; name?: string }, context) => {
       const raw = input.domain ?? `${input.name}.com`;
-      const execution = await connectDomainSearchTurn({
+      const execution = await (await import("../connect/conversation")).connectDomainSearchTurn({
         raw,
         ...(context.actorId ? { actorId: context.actorId } : {}),
         market: context.market,
@@ -801,7 +804,7 @@ export const aiToolRegistry: Record<string, ToolDefinition> = {
       },
     },
     execute: async (input: { query: string }, context) =>
-      (await connectPartnerSearchTurn(context.market, input.query)).result,
+      (await (await import("../connect/conversation")).connectPartnerSearchTurn(context.market, input.query)).result,
   },
 
   describeDinarCapabilities: {
@@ -826,8 +829,44 @@ export const aiToolRegistry: Record<string, ToolDefinition> = {
       surface: "CAPABILITIES",
       query: {},
       listings: [],
-      capabilities: dinarCapabilityCatalog(context.market),
+      capabilities: (await import("./dinar-capabilities")).dinarCapabilityCatalog(context.market),
     }),
+  },
+
+  readBusinessOverview: {
+    name: "readBusinessOverview",
+    version: 1,
+    description: "Read the signed-in owner's own businesses in this market: status, verification, catalog counts and completed sales, within granted business permissions.",
+    permissions: ["marketplace.read"],
+    riskLevel: "LOW",
+    idempotency: "READ_ONLY",
+    auditPolicy: "REDACTED_TURN_METADATA",
+    exposedToModel: true,
+    inputSchema: z.object({}).strict(),
+    modelDefinition: {
+      name: "readBusinessOverview",
+      description: "Use when the user asks about their own business/shop/restaurant on DINAR: is it verified or published, how many products, paused or out of stock, how many completed orders or sales. Returns only the user's own businesses; withheld fields are listed, never guessed.",
+      parameters: { type: "object", properties: {}, required: [], additionalProperties: false },
+    },
+    execute: async (_input, context) => (await import("./model-read-capabilities")).readBusinessOverview(context),
+  },
+
+  readOrderIssues: {
+    name: "readOrderIssues",
+    version: 1,
+    description: "Read disputes, refund obligations and cash refund cases on the actor's own orders. Read only.",
+    permissions: ["marketplace.read"],
+    riskLevel: "LOW",
+    idempotency: "READ_ONLY",
+    auditPolicy: "REDACTED_TURN_METADATA",
+    exposedToModel: true,
+    inputSchema: z.object({}).strict(),
+    modelDefinition: {
+      name: "readOrderIssues",
+      description: "Use when the user asks about a refund, a returned payment, a dispute, a complaint or a cancelled order of their own. Returns only the user's orders. A refund obligation is not money received; never say a refund was paid unless the record says so.",
+      parameters: { type: "object", properties: {}, required: [], additionalProperties: false },
+    },
+    execute: async (_input, context) => (await import("./model-read-capabilities")).readOrderIssues(context),
   },
 };
 
@@ -839,6 +878,8 @@ export const MODEL_LOOP_TOOL_ALLOWLIST = [
   "searchDomains",
   "searchPartnerOffers",
   "describeDinarCapabilities",
+  "readBusinessOverview",
+  "readOrderIssues",
 ] as const;
 
 /** F01 read-only tools plus every F02 capability tool, filtered by server-derived roles. */

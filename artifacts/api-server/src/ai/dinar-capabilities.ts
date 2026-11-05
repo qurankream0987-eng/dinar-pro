@@ -48,7 +48,7 @@ export function dinarCapabilityCatalog(market: { id: string; currency?: string |
     }));
   return {
     version: 1,
-    market: { id: market.id, currency: market.currency ?? "" },
+    market: { id: market.id, currency: (market as { currencyCode?: string }).currencyCode ?? market.currency ?? "" },
     available,
     external: EXTERNAL,
     notAvailable: NOT_AVAILABLE,
