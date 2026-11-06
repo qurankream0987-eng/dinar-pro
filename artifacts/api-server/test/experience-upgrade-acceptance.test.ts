@@ -11,7 +11,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { and, eq } from "drizzle-orm";
-import { authRateLimitBuckets, aiResultSets, aiUsageCounters, businessSubscriptions, commercialPolicies, conversations, db, markets, messages, negotiations, offers } from "@workspace/db";
+import { authRateLimitBuckets, aiResultSets, aiUsageCounters, businessSubscriptions, commercialPolicies, conversations, db, markets, messages, negotiations, offers, users as userTable, orders as orderRows, marketplaceCategories, promotionProducts } from "@workspace/db";
 import app from "../src/app";
 import { executeRegisteredTool, ToolRejectedError } from "../src/ai/tool-registry";
 import { AIProviderError, type ConversationModelGateway, type ModelMessage } from "../src/ai/model-gateway";
@@ -928,7 +928,8 @@ async function startBuiltWeb() {
 }
 
 await test("BROWSER header, sidebar, starters, free topic changes, rendering and layout at 11 widths × 2 themes", { timeout: 1_800_000, skip: process.env.DINAR_XP_BROWSER === "0" }, async () => {
-  const users = { main: await register("Browser"), layout: await register("Layout"), seller, registeredA: await register("Registered A"), registeredB: await register("Registered B"), handoffC: await register("Handoff C"), handoffD: await register("Handoff D"), handoffE: await register("Handoff E"), handoffF: await register("Handoff F"), draftOwner: await register("Draft Owner"), cartOwner: await register("Cart Queue Owner"), cartOther: await register("Cart Queue Other") };
+  const users = { main: await register("Browser"), layout: await register("Layout"), seller, registeredA: await register("Registered A"), registeredB: await register("Registered B"), handoffC: await register("Handoff C"), handoffD: await register("Handoff D"), handoffE: await register("Handoff E"), handoffF: await register("Handoff F"), draftOwner: await register("Draft Owner"), cartOwner: await register("Cart Queue Owner"), cartOther: await register("Cart Queue Other"), admin: await register("Admin UI") };
+  await db.update(userTable).set({ role: "ADMIN" }).where(eq(userTable.id, users.admin.id));
   // Canonical pending receipt for the real notification → order navigation journey.
   const notificationSeller = await register("Notification Seller");
   const notificationListing = await publish(notificationSeller, `طلب تنبيه ${runId}`, 1, "3");
@@ -941,6 +942,9 @@ await test("BROWSER header, sidebar, starters, free topic changes, rendering and
   const cartSeed = await request("/cart", "PUT", { marketId: "JO", items: [{ listingId: L.itemUsedMid, quantity: 1 }] }, users.main.cookie);
   assert.equal(cartSeed.status, 200, cartSeed.raw);
   assert.equal((await request("/cart", "PUT", { marketId: "JO", items: [{ listingId: L.itemUsedMid, quantity: 1 }] }, users.cartOwner.cookie)).status, 200);
+  const financialProjection = { unitPriceMinor: orderRows.unitPriceMinor, subtotalMinor: orderRows.subtotalMinor, platformFeeMinor: orderRows.platformFeeMinor, sellerAmountMinor: orderRows.sellerAmountMinor, currencyCode: orderRows.currencyCode, minorUnitScale: orderRows.minorUnitScale, priceVersionId: orderRows.priceVersionId };
+  const lockedSnapshot = await db.select(financialProjection).from(orderRows).where(eq(orderRows.id, notificationOrder.data.id));
+  const originalCartView = await request("/cart", "GET", undefined, users.main.cookie);
   const web = await startBuiltWeb();
   const resultPath = `${OUT}/report.json`;
   await mkdir(`${OUT}/shots`, { recursive: true });
@@ -998,6 +1002,20 @@ await test("BROWSER header, sidebar, starters, free topic changes, rendering and
     assert.equal(Array.isArray(await mismatch.json()), false, "mismatched cart reads disclose no cart data");
   }
   assert.deepEqual((await request("/cart", "GET", undefined, users.cartOther.cookie)).data, []);
+  assert.deepEqual(await db.select(financialProjection).from(orderRows).where(eq(orderRows.id, notificationOrder.data.id)), lockedSnapshot, "admin market-price changes never reprice a persisted order");
+  assert.equal(cartAfterNavigation.data[0].unitPrice, originalCartView.data[0].unitPrice, "legacy market-unit configuration does not reprice an explicit listing in the cart");
+  const [registeredFromBrowser] = await db.select().from(userTable).where(eq(userTable.id, report.journeys["registered-phone-signup"].createdUserId));
+  assert.equal(registeredFromBrowser?.phoneVerified, true, "the actual UI registration persists the verified phone state");
+  assert.equal(registeredFromBrowser?.role, "USER", "browser registration never grants administrative authority");
+  const adminUi = report.journeys["admin-market-category-promotion-controls"];
+  const [categoryFromDb] = await db.select().from(marketplaceCategories).where(eq(marketplaceCategories.id, adminUi.categoryId));
+  assert.equal(categoryFromDb?.label, adminUi.updatedCategoryLabel);
+  const [planFromDb] = await db.select().from(promotionProducts).where(eq(promotionProducts.id, adminUi.planId));
+  assert.equal(planFromDb?.priceMinor, 2_500);
+  assert.equal(planFromDb?.currencyCode, "JOD");
+  assert.equal(planFromDb?.enabled, false);
+  const [marketFromDb] = await db.select().from(markets).where(eq(markets.id, "KW"));
+  assert.equal(marketFromDb?.status, "DISABLED");
   // What the browser renamed is what the server stores.
   const renamed = await db.select().from(conversations).where(and(eq(conversations.ownerUserId, users.main.id), eq(conversations.title, "دروس React")));
   assert.equal(renamed.length, 1, "the rename typed in the sidebar is the stored title");

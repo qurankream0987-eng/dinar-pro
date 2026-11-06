@@ -1,0 +1,243 @@
+{
+  "activePathPatterns": 26,
+  "sourceSHA": "1559a5f61c1176112f0b16b4d6f16513ad5a7c9d",
+  "routes": [
+    {
+      "path": "/",
+      "source": "artifacts/dinar/src/App.tsx",
+      "acceptanceSuites": [
+        "experience-upgrade-acceptance.test"
+      ],
+      "status": "PARTIAL",
+      "boundary": "Read source and compare actual final-source browser evidence; declaration alone is not PASS."
+    },
+    {
+      "path": "/ai",
+      "source": "artifacts/dinar/src/App.tsx",
+      "acceptanceSuites": [
+        "experience-upgrade-acceptance.test"
+      ],
+      "status": "PARTIAL",
+      "boundary": "Read source and compare actual final-source browser evidence; declaration alone is not PASS."
+    },
+    {
+      "path": "/orders",
+      "source": "artifacts/dinar/src/App.tsx",
+      "acceptanceSuites": [
+        "sc01-browser-journey.test"
+      ],
+      "status": "PARTIAL",
+      "boundary": "Read source and compare actual final-source browser evidence; declaration alone is not PASS."
+    },
+    {
+      "path": "/cart",
+      "source": "artifacts/dinar/src/App.tsx",
+      "acceptanceSuites": [
+        "experience-upgrade-acceptance.test"
+      ],
+      "status": "PARTIAL",
+      "boundary": "Read source and compare actual final-source browser evidence; declaration alone is not PASS."
+    },
+    {
+      "path": "/seller/offers",
+      "source": "artifacts/dinar/src/App.tsx",
+      "acceptanceSuites": [
+        "experience-upgrade-acceptance.test"
+      ],
+      "status": "PARTIAL",
+      "boundary": "Read source and compare actual final-source browser evidence; declaration alone is not PASS."
+    },
+    {
+      "path": "/seller/dues",
+      "source": "artifacts/dinar/src/App.tsx",
+      "acceptanceSuites": [
+        "experience-upgrade-acceptance.test"
+      ],
+      "status": "PARTIAL",
+      "boundary": "Read source and compare actual final-source browser evidence; declaration alone is not PASS."
+    },
+    {
+      "path": "/seller",
+      "source": "artifacts/dinar/src/App.tsx",
+      "acceptanceSuites": [
+        "experience-upgrade-acceptance.test"
+      ],
+      "status": "PARTIAL",
+      "boundary": "Read source and compare actual final-source browser evidence; declaration alone is not PASS."
+    },
+    {
+      "path": "/discover",
+      "source": "artifacts/dinar/src/App.tsx",
+      "acceptanceSuites": [
+        "experience-upgrade-acceptance.test"
+      ],
+      "status": "PARTIAL",
+      "boundary": "Read source and compare actual final-source browser evidence; declaration alone is not PASS."
+    },
+    {
+      "path": "/search",
+      "source": "artifacts/dinar/src/App.tsx",
+      "acceptanceSuites": [
+        "experience-upgrade-acceptance.test"
+      ],
+      "status": "PARTIAL",
+      "boundary": "Read source and compare actual final-source browser evidence; declaration alone is not PASS."
+    },
+    {
+      "path": "/login",
+      "source": "artifacts/dinar/src/App.tsx",
+      "acceptanceSuites": [
+        "experience-upgrade-acceptance.test"
+      ],
+      "status": "PARTIAL",
+      "boundary": "Read source and compare actual final-source browser evidence; declaration alone is not PASS."
+    },
+    {
+      "path": "/register",
+      "source": "artifacts/dinar/src/App.tsx",
+      "acceptanceSuites": [
+        "experience-upgrade-acceptance.test"
+      ],
+      "status": "PARTIAL",
+      "boundary": "Read source and compare actual final-source browser evidence; declaration alone is not PASS."
+    },
+    {
+      "path": "/notifications",
+      "source": "artifacts/dinar/src/App.tsx",
+      "acceptanceSuites": [
+        "experience-upgrade-acceptance.test"
+      ],
+      "status": "PARTIAL",
+      "boundary": "Read source and compare actual final-source browser evidence; declaration alone is not PASS."
+    },
+    {
+      "path": "/profile",
+      "source": "artifacts/dinar/src/App.tsx",
+      "acceptanceSuites": [
+        "experience-upgrade-acceptance.test"
+      ],
+      "status": "PARTIAL",
+      "boundary": "Read source and compare actual final-source browser evidence; declaration alone is not PASS."
+    },
+    {
+      "path": "/settings",
+      "source": "artifacts/dinar/src/App.tsx",
+      "acceptanceSuites": [
+        "experience-upgrade-acceptance.test"
+      ],
+      "status": "PARTIAL",
+      "boundary": "Read source and compare actual final-source browser evidence; declaration alone is not PASS."
+    },
+    {
+      "path": "/connect",
+      "source": "artifacts/dinar/src/App.tsx",
+      "acceptanceSuites": [
+        "connect-finance-browser-journey.test"
+      ],
+      "status": "PARTIAL",
+      "boundary": "Read source and compare actual final-source browser evidence; declaration alone is not PASS."
+    },
+    {
+      "path": "/admin/markets",
+      "source": "artifacts/dinar/src/App.tsx",
+      "acceptanceSuites": [
+        "experience-upgrade-acceptance.test"
+      ],
+      "status": "PARTIAL",
+      "boundary": "Read source and compare actual final-source browser evidence; declaration alone is not PASS."
+    },
+    {
+      "path": "/admin/connect",
+      "source": "artifacts/dinar/src/App.tsx",
+      "acceptanceSuites": [
+        "connect-finance-browser-journey.test"
+      ],
+      "status": "PARTIAL",
+      "boundary": "Read source and compare actual final-source browser evidence; declaration alone is not PASS."
+    },
+    {
+      "path": "/admin/categories",
+      "source": "artifacts/dinar/src/App.tsx",
+      "acceptanceSuites": [
+        "experience-upgrade-acceptance.test"
+      ],
+      "status": "PARTIAL",
+      "boundary": "Read source and compare actual final-source browser evidence; declaration alone is not PASS."
+    },
+    {
+      "path": "/admin/promotions",
+      "source": "artifacts/dinar/src/App.tsx",
+      "acceptanceSuites": [
+        "experience-upgrade-acceptance.test"
+      ],
+      "status": "PARTIAL",
+      "boundary": "Read source and compare actual final-source browser evidence; declaration alone is not PASS."
+    },
+    {
+      "path": "/admin/disputes",
+      "source": "artifacts/dinar/src/App.tsx",
+      "acceptanceSuites": [
+        "sc10-browser-journey.test"
+      ],
+      "status": "PARTIAL",
+      "boundary": "Read source and compare actual final-source browser evidence; declaration alone is not PASS."
+    },
+    {
+      "path": "/admin/trust-safety",
+      "source": "artifacts/dinar/src/App.tsx",
+      "acceptanceSuites": [
+        "wave3-acceptance.test"
+      ],
+      "status": "PARTIAL",
+      "boundary": "Read source and compare actual final-source browser evidence; declaration alone is not PASS."
+    },
+    {
+      "path": "/admin/legal-readiness",
+      "source": "artifacts/dinar/src/App.tsx",
+      "acceptanceSuites": [
+        "d16-readiness.test"
+      ],
+      "status": "PARTIAL",
+      "boundary": "Read source and compare actual final-source browser evidence; declaration alone is not PASS."
+    },
+    {
+      "path": "/terms",
+      "source": "artifacts/dinar/src/App.tsx",
+      "acceptanceSuites": [
+        "wave3-acceptance.test"
+      ],
+      "status": "PARTIAL",
+      "boundary": "Read source and compare actual final-source browser evidence; declaration alone is not PASS."
+    },
+    {
+      "path": "/policies",
+      "source": "artifacts/dinar/src/App.tsx",
+      "acceptanceSuites": [
+        "wave3-acceptance.test"
+      ],
+      "status": "PARTIAL",
+      "boundary": "Read source and compare actual final-source browser evidence; declaration alone is not PASS."
+    },
+    {
+      "path": "/policies/:key",
+      "source": "artifacts/dinar/src/App.tsx",
+      "acceptanceSuites": [
+        "wave3-acceptance.test"
+      ],
+      "status": "PARTIAL",
+      "boundary": "Read source and compare actual final-source browser evidence; declaration alone is not PASS."
+    },
+    {
+      "path": "/business/:id",
+      "source": "artifacts/dinar/src/App.tsx",
+      "acceptanceSuites": [
+        "d3a-native-business.test"
+      ],
+      "status": "PARTIAL",
+      "boundary": "Read source and compare actual final-source browser evidence; declaration alone is not PASS."
+    }
+  ],
+  "chatOnlyMode": true,
+  "inactiveStandaloneGraphicalRoutes": "NOT_IN_APPROVED_SCOPE; owner chat-first mode preserved",
+  "completion": false
+}

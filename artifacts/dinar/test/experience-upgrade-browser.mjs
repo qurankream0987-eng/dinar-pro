@@ -1373,6 +1373,127 @@ try {
     } finally { releaseAck(); await shot(page, "audit-cart-queued-cross-account").catch(() => {}); await context.close(); }
   });
 
+  await journey("registered-phone-signup", async () => {
+    const { context, page } = await openRegisteredUserJourney(browser, { clientIp: "198.18.202.11" });
+    try {
+      await page.goto("/register", { waitUntil: "domcontentloaded" });
+      const phone = String(50_000_000 + ((Date.now() + process.pid) % 999_000));
+      const password = `LocalOnly-${crypto.randomUUID()}!`;
+      await page.locator('input[name="displayName"]').fill(`مستخدم تدقيق ${process.env.XP_TOKEN}`);
+      await page.locator('input[name="phoneNumber"]').fill(phone);
+      await page.locator('input[name="password"]').fill(password);
+      await page.locator('input[name="confirmPassword"]').fill(password);
+      await page.locator('input[name="acceptTerms"]').check();
+      const submit = page.getByTestId("button-auth-submit");
+      const challengeRead = page.waitForResponse((r) => new URL(r.url()).pathname === "/api/auth/phone-verification/challenges" && r.request().method() === "POST");
+      await submit.click();
+      const challengeResponse = await challengeRead;
+      const challenge = await challengeResponse.json();
+      check(challengeResponse.ok() && /^\d{6}$/u.test(challenge.developmentCode), "explicit local development phone provider supplies a real challenge, not a verification bypass");
+      await page.getByTestId("input-phone-verification-code").fill(challenge.developmentCode);
+      const proofRead = page.waitForResponse((r) => new URL(r.url()).pathname === "/api/auth/phone-verification/challenges/verify" && r.request().method() === "POST");
+      await submit.click();
+      check((await proofRead).ok(), "phone ownership proof is verified through the real API");
+      await expect(submit).toHaveText("إنشاء الحساب");
+      const accountRead = page.waitForResponse((r) => new URL(r.url()).pathname === "/api/auth/register" && r.request().method() === "POST");
+      await submit.click();
+      const accountResponse = await accountRead;
+      const submitted = accountResponse.request().postDataJSON();
+      check(accountResponse.status() === 201 && typeof submitted.verificationToken === "string" && submitted.verificationToken.length > 0 && submitted.acceptTerms === true, "registration consumes verified phone proof and explicit terms consent");
+      await ready(page);
+      const me = await context.request.get(`${apiOrigin}/api/auth/me`);
+      const registered = (await me.json()).user;
+      check(me.status() === 200 && registered.phoneVerified === true, "new browser session belongs to the phone-verified registered account");
+      return { createdUserId: registered.id, registrationStatus: accountResponse.status(), phoneVerified: true, verificationProofInRequest: true, transport: "LOCAL_DEVELOPMENT_PROVIDER; not live SMS" };
+    } finally { await shot(page, "audit-registered-phone-signup").catch(() => {}); await context.close(); }
+  });
+
+  await journey("admin-market-category-promotion-controls", async () => {
+    const { context, page } = await open(browser, "admin", { width: 1440 });
+    const nonce = Date.now().toString(36);
+    const categoryId = `audit-ui-${nonce}`;
+    const categoryLabel = `تصنيف تدقيق ${process.env.XP_TOKEN}`;
+    const updatedCategoryLabel = `${categoryLabel} محدث`;
+    const planName = `خطة تدقيق ${nonce}`;
+    try {
+      await page.goto("/admin/categories", { waitUntil: "domcontentloaded" });
+      await page.getByLabel("معرّف ثابت بالإنجليزية", { exact: true }).fill(categoryId);
+      await page.getByLabel("اسم التصنيف بالعربية", { exact: true }).fill(categoryLabel);
+      await page.getByLabel("Name in English", { exact: true }).fill(`Audit ${nonce}`);
+      const categoryCreated = page.waitForResponse((r) => new URL(r.url()).pathname === "/api/admin/categories" && r.request().method() === "POST");
+      await page.getByRole("button", { name: "إضافة التصنيف", exact: true }).click();
+      const categoryReceipt = await categoryCreated;
+      check(categoryReceipt.status() === 201 && (await categoryReceipt.json()).id === categoryId, "category creation has a canonical backend receipt");
+      await page.getByRole("button", { name: `تعديل ${categoryLabel}`, exact: true }).click();
+      await page.getByLabel("اسم التصنيف بالعربية", { exact: true }).fill(updatedCategoryLabel);
+      const categoryUpdated = page.waitForResponse((r) => new URL(r.url()).pathname === `/api/admin/categories/${categoryId}` && r.request().method() === "PATCH");
+      await page.getByRole("button", { name: "حفظ التغييرات", exact: true }).click();
+      check((await categoryUpdated).status() === 200, "category update persisted");
+      const audit = await context.request.get(`${apiOrigin}/api/admin/categories/${categoryId}/audit`);
+      check(audit.status() === 200 && (await audit.json()).length >= 2, "category create/update audit persists");
+      await page.goto("/admin/promotions", { waitUntil: "domcontentloaded" });
+      await page.getByLabel("السوق", { exact: true }).selectOption("JO");
+      await page.getByLabel("التصنيف", { exact: true }).selectOption(categoryId);
+      await page.getByLabel("اسم الخطة", { exact: true }).fill(planName);
+      await page.getByLabel("السعر (JOD)", { exact: true }).fill("2.500");
+      await page.getByLabel("المدة بالأيام", { exact: true }).fill("7");
+      const planCreated = page.waitForResponse((r) => new URL(r.url()).pathname === "/api/admin/markets/JO/promotion-products" && r.request().method() === "POST");
+      await page.getByRole("button", { name: "إضافة الخطة", exact: true }).click();
+      const planReceipt = await planCreated;
+      const plan = await planReceipt.json();
+      check(planReceipt.status() === 201 && plan.priceMinor === 2_500 && plan.currencyCode === "JOD", "promotion catalog amount/currency are server receipts");
+      await page.locator("li").filter({ has: page.getByText(planName, { exact: true }) }).getByRole("button", { name: "تعديل", exact: true }).click();
+      await page.getByRole("checkbox", { name: "الخطة متاحة للبائعين", exact: true }).uncheck();
+      const planUpdated = page.waitForResponse((r) => new URL(r.url()).pathname === `/api/admin/markets/JO/promotion-products/${plan.id}` && r.request().method() === "PATCH");
+      await page.getByRole("button", { name: "حفظ التعديل", exact: true }).click();
+      check((await planUpdated).status() === 200, "promotion plan can be disabled through its actual editor");
+      await page.goto("/admin/markets", { waitUntil: "domcontentloaded" });
+      await page.getByTestId("button-select-market-JO").click();
+      await page.getByTestId("input-market-unit-price").fill("5.000");
+      await page.getByTestId("radio-price-immediate").check();
+      const priceCreated = page.waitForResponse((r) => new URL(r.url()).pathname === "/api/admin/markets/JO/prices" && r.request().method() === "POST");
+      await page.getByTestId("button-create-market-price").click();
+      const priceReceipt = await priceCreated;
+      check(priceReceipt.status() === 201, "market price editor persists a new reviewed fixture price version");
+      await page.getByTestId("button-select-market-KW").click();
+      await expect(page.getByTestId("form-market-configuration-KW")).toBeVisible();
+      await page.getByTestId("select-market-status").selectOption("DISABLED");
+      const configUpdated = page.waitForResponse((r) => new URL(r.url()).pathname === "/api/admin/markets/KW" && r.request().method() === "PATCH");
+      await page.getByTestId("button-save-market-configuration").click();
+      check((await configUpdated).status() === 200, "market can be safely disabled through the actual configuration form");
+      const profiles = [];
+      for (const path of ["/admin/categories", "/admin/promotions", "/admin/markets"]) {
+        for (const width of [320, 360, 390, 430, 768, 1024, 1440, 1920]) {
+          for (const scheme of ["light", "dark"]) {
+            await page.setViewportSize({ width, height: width < 768 ? 820 : 900 });
+            await page.emulateMedia({ colorScheme: scheme });
+            await page.goto(path, { waitUntil: "domcontentloaded" });
+            await expect(page.getByRole("heading", { name: path.endsWith("categories") ? "إدارة التصنيفات" : path.endsWith("promotions") ? "إدارة الترويج" : "إدارة الأسواق", exact: true }).first()).toBeVisible();
+            if (path.endsWith("categories")) await expect(page.getByRole("button", { name: `تعديل ${updatedCategoryLabel}`, exact: true })).toBeVisible();
+            if (path.endsWith("promotions")) {
+              await expect(page.getByText(planName, { exact: true })).toBeVisible();
+              await expect(page.getByLabel("التصنيف", { exact: true }).locator(`option[value="${categoryId}"]`)).toHaveCount(1);
+            }
+            if (path.endsWith("markets")) {
+              await page.getByTestId("button-select-market-JO").click();
+              await expect(page.getByTestId("form-market-configuration-JO")).toBeVisible();
+              await expect(page.getByTestId(`checkbox-restricted-category-${categoryId}`)).toBeVisible();
+            }
+            const facts = await page.evaluate(() => {
+              const named = (el) => (el.getAttribute("aria-label") || el.getAttribute("title") || el.getAttribute("placeholder") || (el.labels ? [...el.labels].map((l) => l.innerText).join(" ") : "") || el.textContent || "").trim();
+              const visible = [...document.querySelectorAll("button, a[href], input:not([type=hidden]), select, textarea")].filter((el) => { const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(el).visibility !== "hidden"; });
+              return { dir: document.documentElement.dir, dark: document.documentElement.classList.contains("dark"), overflow: document.documentElement.scrollWidth - innerWidth, unnamed: visible.filter((el) => !named(el)).map((el) => el.tagName) };
+            });
+            check(facts.dir === "rtl" && facts.dark === (scheme === "dark") && facts.overflow <= 0 && facts.unnamed.length === 0, `admin editor ${path} ${width}/${scheme}`, JSON.stringify(facts));
+            await shot(page, `admin-${path.split("/").at(-1)}-${width}-${scheme}`);
+            profiles.push({ path, width, scheme, ...facts });
+          }
+        }
+      }
+      return { categoryId, updatedCategoryLabel, planId: plan.id, priceMinor: 2_500, planEnabled: false, marketPriceVersion: "JO fixture changed; immutable order snapshot asserted by backend", disabledMarket: "KW", profiles };
+    } finally { await shot(page, "audit-admin-controls").catch(() => {}); await context.close(); }
+  });
+
 } finally {
   await browser.close();
 }
