@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { writeFileSync } from "node:fs";
-import { chromium } from "@playwright/test";
+import { chromium, expect } from "@playwright/test";
 import { createRecorder, openUser } from "./sc-ui-session.mjs";
 
 /**
@@ -142,18 +142,14 @@ try {
   await heba.page.getByTestId("input-delivery-proof").fill("استلمها راشد من البيت");
   await heba.page.getByTestId("button-mark-delivered").click();
   await heba.page.getByRole("button", { name: "نعم، تم التسليم" }).click();
-  await heba.page.waitForFunction(async (id) => {
-    const response = await fetch(`/api/orders/${id}`);
-    return response.ok && (await response.json()).status === "SELLER_MARKED_DELIVERED";
-  }, outcome.orderId, { timeout: 30_000 });
+  await expect.poll(async () => (await heba.api(`/orders/${outcome.orderId}`)).status,
+    { timeout: 30_000, message: "the canonical seller hand-off must be persisted" }).toBe("SELLER_MARKED_DELIVERED");
 
   panel = await orderCard(rashed);
   await rashed.page.getByTestId("button-confirm-receipt").click();
   await rashed.page.getByRole("button", { name: "نعم، استلمته" }).click();
-  await rashed.page.waitForFunction(async (id) => {
-    const response = await fetch(`/api/orders/${id}`);
-    return response.ok && (await response.json()).status === "COMPLETED";
-  }, outcome.orderId, { timeout: 30_000 });
+  await expect.poll(async () => (await rashed.api(`/orders/${outcome.orderId}`)).status,
+    { timeout: 30_000, message: "the canonical buyer receipt must complete the order" }).toBe("COMPLETED");
   recorder.checks.push("the order at 90 completed through cash pickup, hand-off and receipt in chat");
 } catch (error) {
   failure = error instanceof Error ? `${error.message}\n${error.stack ?? ""}` : String(error);

@@ -236,7 +236,7 @@ await test("browser: screenshots and layout metrics at 8 widths, light and dark"
         E_CONVERSATIONS: JSON.stringify(C),
         E_OUT: S,
         E_RESULT: resultPath,
-        E_WIDTHS: process.env.E_WIDTHS ?? "320,375,390,430,768,1024,1440,1600",
+        E_WIDTHS: process.env.E_WIDTHS ?? "320,360,375,390,430,768,1024,1440,1600,1920",
       },
       maxBuffer: 64 * 1024 * 1024,
       timeout: 1_700_000,
