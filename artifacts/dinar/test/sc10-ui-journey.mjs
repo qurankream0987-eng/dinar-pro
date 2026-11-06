@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { writeFileSync } from "node:fs";
-import { chromium } from "@playwright/test";
+import { chromium, expect } from "@playwright/test";
 import { createRecorder, openUser } from "./sc-ui-session.mjs";
 
 /**
@@ -106,7 +106,7 @@ try {
   await dana.page.getByTestId("input-delivery-proof").fill("سلّمتها يدًا بيد عند المحل");
   await dana.page.getByTestId("button-mark-delivered").click();
   await dana.page.getByRole("button", { name: "نعم، تم التسليم" }).click();
-  await dana.page.waitForFunction(async (id) => (await (await fetch(`/api/orders/${id}`)).json()).status === "SELLER_MARKED_DELIVERED", order.id, { timeout: 30_000 });
+  await expect.poll(async () => (await dana.api(`/orders/${order.id}`)).status, { timeout: 30_000 }).toBe("SELLER_MARKED_DELIVERED");
   recorder.checks.push("Dana recorded the hand-off from the order card");
 
   // ── 6–7. «لم أستلم الطلب، افتح لي شكوى»: Ahmed is shown his order and opens the dispute himself ──
@@ -126,7 +126,7 @@ try {
   await ahmed.page.getByTestId("input-dispute-evidence").fill(`محادثة الطلب بتاريخ ${new Date().toISOString().slice(0, 10)}`);
   await ahmed.page.getByTestId("button-dispute-next").click();
   await ahmed.page.getByTestId("button-submit-dispute").click();
-  await ahmed.page.waitForFunction(async (id) => (await (await fetch(`/api/orders/${id}`)).json()).status === "DISPUTED", order.id, { timeout: 30_000 });
+  await expect.poll(async () => (await ahmed.api(`/orders/${order.id}`)).status, { timeout: 30_000 }).toBe("DISPUTED");
   recorder.checks.push("Ahmed opened one dispute from the order card in chat");
 
   // ── 7. Nobody else sees it ──
@@ -151,7 +151,9 @@ try {
   await decision.waitFor();
   assert.match(await decision.innerText(), /لن يحدث ردّ مالي/u, "a cash order: no refund is claimed");
   await admin.page.getByRole("button", { name: "تأكيد الحسم النهائي" }).click();
-  await admin.page.waitForFunction(async (id) => (await (await fetch(`/api/orders/${id}`)).json()).status === "CANCELLED", order.id, { timeout: 30_000 });
+  await expect.poll(async () => (await ahmed.api(`/orders/${order.id}`)).status, { timeout: 30_000 }).toBe("CANCELLED");
+  const privateOrderRead = await admin.context.request.get(`${apiOrigin}/api/orders/${order.id}`);
+  assert.equal(privateOrderRead.status(), 404, "administrator review does not grant participant-only order access");
   recorder.checks.push("the administrator resolved for the buyer through a reviewed decision; no refund claimed");
 
   // ── 10. Both parties see the outcome ──

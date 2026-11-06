@@ -55,6 +55,16 @@ try {
     denied({ DINAR_LOCAL_G33_ACCEPTANCE: 'disposable', G33_APP_IMAGE: 'dinar-next-g33:wrong' }, /tag must match/);
     denied({ DINAR_LOCAL_G33_ACCEPTANCE: 'disposable', G33_POSTGRES_IMAGE: 'postgres:latest' }, /must be allowlisted/);
   });
+  await test('G33 permits only the explicitly owner-authorized local audit branch with the same identity guards', () => {
+    git('switch', '-c', 'codex/dinar-next-functional-audit');
+    const result = run({ DINAR_LOCAL_G33_ACCEPTANCE: 'disposable' });
+    assert.equal(result.status, 99, result.stderr);
+    assert.match(result.stdout, /G33_EXECUTION_MODE=LOCAL_DISPOSABLE/);
+    assert.match(result.stdout, new RegExp(`source=${sha}`));
+    assert.equal(readFileSync(marker, 'utf8'), '--host=unix:///var/run/docker.sock\npull\npostgres:16\n');
+    rmSync(marker);
+    git('switch', 'codex/dinar-next-unified-development');
+  });
   await test('G33 explicit local mode clears inherited Docker selectors and creates no CI identity', () => {
     const result = run({ DINAR_LOCAL_G33_ACCEPTANCE: 'disposable', DOCKER_HOST: 'tcp://invalid.example:2376', DOCKER_CONTEXT: 'foreign', DOCKER_TLS: '1', DOCKER_TLS_VERIFY: '1', DOCKER_CERT_PATH: '/not-used' });
     assert.equal(result.status, 99, result.stderr);

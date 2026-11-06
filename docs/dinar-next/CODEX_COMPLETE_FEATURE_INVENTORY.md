@@ -1,6 +1,6 @@
 # Fresh functional inventory — audit in progress
 
-Baseline `ab196c55964ed42947d07a88dcd7f2e5f66ccfa0`; isolated audit branch. Source discovery found 332 API declarations and 48 web route declarations. These are declarations, not verified features. Exact paths and locations: [source inventory](evidence/functional-audit/source-inventory.json).
+Baseline `ab196c55964ed42947d07a88dcd7f2e5f66ccfa0`; isolated audit branch. Source discovery found 313 literal Router declarations (refined from 332 candidate calls) and 48 web route declarations. These are declarations, not verified features. Exact paths and locations: [source inventory](evidence/functional-audit/source-inventory.json).
 
 App.tsx deliberately enables CHAT_ONLY_MODE: standalone seller/cart/checkout pages can redirect into conversation. Preserve this owner rule; test their canonical in-conversation equivalents and classify inaccessible graphical routes truthfully.
 

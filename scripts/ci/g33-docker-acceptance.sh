@@ -23,7 +23,8 @@ elif [[ "${DINAR_LOCAL_G33_ACCEPTANCE:-}" == "disposable" ]]; then
   G33_BRANCH="$(git -C "$ROOT" symbolic-ref --quiet --short HEAD)" || {
     echo "G33: local rehearsal requires the authorized development branch" >&2; exit 96;
   }
-  [[ "$G33_BRANCH" == "codex/dinar-next-unified-development" ]] || {
+  [[ "$G33_BRANCH" == "codex/dinar-next-unified-development" ||
+     "$G33_BRANCH" == "codex/dinar-next-functional-audit" ]] || {
     echo "G33: local rehearsal requires the authorized development branch" >&2; exit 96;
   }
   [[ -z "$(git -C "$ROOT" status --porcelain)" ]] || {

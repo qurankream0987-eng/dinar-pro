@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { writeFileSync } from "node:fs";
-import { chromium } from "@playwright/test";
+import { chromium, expect } from "@playwright/test";
 import { MODEL_FALLBACK_REPLY } from "./sc-ui-session.mjs";
 
 /**
@@ -325,10 +325,10 @@ try {
   await page.getByTestId("input-delivery-proof").fill(`تسليم يد بيد في ${city}`);
   await page.getByTestId("button-mark-delivered").click();
   await page.getByRole("button", { name: "نعم، تم التسليم" }).click();
-  await page.waitForFunction(async (id) => {
+  await expect.poll(async () => page.evaluate(async (id) => {
     const response = await fetch(`/api/orders/${id}`);
     return response.ok && (await response.json()).status === "SELLER_MARKED_DELIVERED";
-  }, orderId, { timeout: 30_000 });
+  }, orderId), { timeout: 30_000 }).toBe(true);
   checks.push("seller accepted the order and recorded the hand-off from the order card in chat");
 
   panel = await chatOrder(buyerCookie);
@@ -336,10 +336,10 @@ try {
   await widths("SC01 buyer receipt", panel);
   await page.getByTestId("button-confirm-receipt").click();
   await page.getByRole("button", { name: "نعم، استلمته" }).click();
-  await page.waitForFunction(async (id) => {
+  await expect.poll(async () => page.evaluate(async (id) => {
     const response = await fetch(`/api/orders/${id}`);
     return response.ok && (await response.json()).status === "COMPLETED";
-  }, orderId, { timeout: 30_000 });
+  }, orderId), { timeout: 30_000 }).toBe(true);
   checks.push("buyer confirmed receipt; the order is COMPLETED");
 
   // ── 11. Both come back in a fresh browser and see the same order, not a new one ──

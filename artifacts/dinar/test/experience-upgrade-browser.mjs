@@ -3,7 +3,7 @@
 // against the real API on a disposable database; the model is the suite's scripted gateway.
 // Every step is a real click or keystroke; every check is measured in the rendered page.
 import { writeFile } from "node:fs/promises";
-import { chromium } from "@playwright/test";
+import { chromium, expect } from "@playwright/test";
 
 const webBase = process.env.XP_WEB_BASE;
 const apiOrigin = process.env.XP_API_ORIGIN;
@@ -590,7 +590,7 @@ try {
       await page.goto("/settings", { waitUntil: "domcontentloaded" });
       await page.getByTestId("button-settings-logout").click();
       await page.getByTestId("dialog-confirm").getByTestId("button-confirm-action").click();
-      await page.waitForFunction(async () => (await fetch("/api/auth/me")).status === 401, undefined, { timeout: 15_000 });
+      await expect.poll(async () => page.evaluate(async () => (await fetch("/api/auth/me")).status), { timeout: 15_000 }).toBe(401);
 
       await loginInBrowser(page, "registeredB");
       const historyDrawer = page.getByTestId("button-toggle-conversation-history");
@@ -764,7 +764,7 @@ try {
         await other.goto("/settings", { waitUntil: "domcontentloaded" });
         await other.getByTestId("button-settings-logout").click();
         await other.getByTestId("dialog-confirm").getByTestId("button-confirm-action").click();
-        await other.waitForFunction(async () => (await fetch("/api/auth/me")).status === 401, undefined, { timeout: 15_000 });
+        await expect.poll(async () => other.evaluate(async () => (await fetch("/api/auth/me")).status), { timeout: 15_000 }).toBe(401);
         await loginInBrowser(other, "handoffF");
         // The first tab now loads as F while E's response is still in flight: E's pending
         // handoff is discarded — not sent as F, not shown, not reported to F as an error.
@@ -844,7 +844,7 @@ try {
       await page.goto("/settings", { waitUntil: "domcontentloaded" });
       await page.getByTestId("button-settings-logout").click();
       await page.getByTestId("dialog-confirm").getByTestId("button-confirm-action").click();
-      await page.waitForFunction(async () => (await fetch("/api/auth/me")).status === 401, undefined, { timeout: 15_000 });
+      await expect.poll(async () => page.evaluate(async () => (await fetch("/api/auth/me")).status), { timeout: 15_000 }).toBe(401);
     };
     try {
       await loginInBrowser(tab1, "registeredA");
