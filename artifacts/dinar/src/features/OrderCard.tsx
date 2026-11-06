@@ -11,7 +11,7 @@ export type OrderView = Order & { buyerId?: string; sellerId?: string };
 export const roleIn = (order: OrderView, userId?: string): Role =>
   order.sellerId && order.sellerId === userId ? "seller" : "buyer";
 
-export function OrderCard({ order, userId }: { order: OrderView; userId?: string }) {
+export function OrderCard({ order, userId, href }: { order: OrderView; userId?: string; href?: string }) {
   const role = roleIn(order, userId);
   const status = orderStatus(order.status, role);
   const todo = nextAction(order.status, role);
@@ -23,7 +23,7 @@ export function OrderCard({ order, userId }: { order: OrderView; userId?: string
   const title = order.items?.length === 1 ? order.items[0].listingTitle : order.listingTitle;
   return (
     <Link
-      href={`/orders/${order.id}`}
+      href={href ?? `/orders/${order.id}`}
       data-testid={`row-order-${order.id}`}
       className="pressable block rounded-xl border border-border bg-card p-3.5 hover:border-border-strong hover:shadow-sm md:p-4"
     >

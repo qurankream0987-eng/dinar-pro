@@ -480,10 +480,12 @@ export function AuthPage({ register = false, next, embedded = false }: { registe
 
 /** Gate for signed-in screens: shows sign-in in place and returns here afterwards. */
 export function Protected({ children }: { children: ReactNode }) {
-  const { user, loading } = useAccount();
+  const { user, loading, verifying } = useAccount();
   const [location] = useLocation();
   const search = useSearch();
-  if (loading)
+  // A different tab may have replaced the session. Hide private content, including portalled
+  // dialogs, until the existing identity check resolves and scoped queries are reset.
+  if (loading || verifying)
     return (
       <div className="container-app space-y-3 pt-8" aria-busy="true" aria-label="جارٍ التحقق من الجلسة">
         <Skeleton className="h-8 w-40" />

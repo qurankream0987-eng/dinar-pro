@@ -165,6 +165,17 @@ async function loginInBrowser(page, actor) {
   });
   check(me.status === 200 && (me.body.user ?? me.body).id === users[actor], `${actor} authenticated through the login form`, JSON.stringify(me.body));
 }
+// Logout replaces the document. Probe its real shared cookie jar outside that document,
+// so navigation cannot destroy a pending evaluate or turn an expected 401 into a console error.
+async function expectSignedOut(page) {
+  await expect.poll(async () => {
+    const request = page.context().request;
+    const identity = await request.get(`${apiOrigin}/api/auth/me`, { timeout: 5_000 });
+    const body = await identity.json();
+    const protectedRead = await request.get(`${apiOrigin}/api/ai/conversations`, { timeout: 5_000 });
+    return { identityStatus: identity.status(), user: body.user, protectedStatus: protectedRead.status() };
+  }, { timeout: 15_000 }).toEqual({ identityStatus: 200, user: null, protectedStatus: 401 });
+}
 async function ready(page) {
   await page.getByTestId("input-ai-composer").waitFor({ timeout: 30_000 });
   await page.evaluate(() => document.fonts.ready.then(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))));
@@ -590,7 +601,7 @@ try {
       await page.goto("/settings", { waitUntil: "domcontentloaded" });
       await page.getByTestId("button-settings-logout").click();
       await page.getByTestId("dialog-confirm").getByTestId("button-confirm-action").click();
-      await expect.poll(async () => page.evaluate(async () => (await fetch("/api/auth/me")).status), { timeout: 15_000 }).toBe(401);
+      await expectSignedOut(page);
 
       await loginInBrowser(page, "registeredB");
       const historyDrawer = page.getByTestId("button-toggle-conversation-history");
@@ -764,7 +775,7 @@ try {
         await other.goto("/settings", { waitUntil: "domcontentloaded" });
         await other.getByTestId("button-settings-logout").click();
         await other.getByTestId("dialog-confirm").getByTestId("button-confirm-action").click();
-        await expect.poll(async () => other.evaluate(async () => (await fetch("/api/auth/me")).status), { timeout: 15_000 }).toBe(401);
+        await expectSignedOut(other);
         await loginInBrowser(other, "handoffF");
         // The first tab now loads as F while E's response is still in flight: E's pending
         // handoff is discarded — not sent as F, not shown, not reported to F as an error.
@@ -844,7 +855,7 @@ try {
       await page.goto("/settings", { waitUntil: "domcontentloaded" });
       await page.getByTestId("button-settings-logout").click();
       await page.getByTestId("dialog-confirm").getByTestId("button-confirm-action").click();
-      await expect.poll(async () => page.evaluate(async () => (await fetch("/api/auth/me")).status), { timeout: 15_000 }).toBe(401);
+      await expectSignedOut(page);
     };
     try {
       await loginInBrowser(tab1, "registeredA");
@@ -1078,6 +1089,96 @@ try {
     }
     return details;
   });
+  // Functional audit: an exposed account link must reach its existing canonical view.
+  await journey("account-notification-navigation", async () => {
+    const { context, page } = await openRegisteredUserJourney(browser);
+    try {
+      await loginInBrowser(page, "main");
+      await page.goto("/profile", { waitUntil: "domcontentloaded" });
+      await page.getByRole("link", { name: "التنبيهات", exact: true }).click();
+      await expect(page.getByRole("heading", { name: "التنبيهات", exact: true })).toBeVisible({ timeout: 5_000 });
+      check(new URL(page.url()).pathname === "/notifications", "notification link reaches its named destination", page.url());
+      const response = await context.request.get(`${apiOrigin}/api/orders`);
+      check(response.status() === 200 && Array.isArray(await response.json()), "notifications use the authenticated canonical order source");
+      await page.reload({ waitUntil: "domcontentloaded" });
+      await expect(page.getByRole("heading", { name: "التنبيهات", exact: true })).toBeVisible();
+      const orderId = process.env.XP_NOTIFICATION_ORDER;
+      check(Boolean(orderId), "canonical pending-receipt fixture supplied");
+      const row = page.getByTestId(`row-order-${orderId}`);
+      await expect(row).toBeVisible();
+      await row.click();
+      await expect(page.getByTestId("button-confirm-receipt")).toBeVisible({ timeout: 5_000 });
+      check(new URL(page.url()).searchParams.get("order") === orderId, "notification preserves its exact order in navigation", page.url());
+      await page.reload({ waitUntil: "domcontentloaded" });
+      await expect(page.getByTestId("button-confirm-receipt")).toBeVisible();
+      await page.goBack();
+      await expect(page.getByRole("heading", { name: "التنبيهات", exact: true })).toBeVisible();
+      await expect(page.getByTestId(`row-order-${orderId}`)).toBeVisible();
+      await page.getByTestId(`row-order-${orderId}`).click();
+      await expect(page.getByTestId("button-confirm-receipt")).toBeVisible();
+      const detailProfiles = [];
+      for (const width of [320, 360, 390, 430, 768, 1024, 1440, 1920]) {
+        for (const scheme of ["light", "dark"]) {
+          await page.setViewportSize({ width, height: width < 768 ? 820 : 900 });
+          await page.emulateMedia({ colorScheme: scheme });
+          await page.reload({ waitUntil: "domcontentloaded" });
+          await expect(page.getByTestId("button-confirm-receipt")).toBeVisible();
+          const facts = await page.evaluate(() => ({
+            dir: document.documentElement.dir,
+            dark: document.documentElement.classList.contains("dark"),
+            overflow: document.documentElement.scrollWidth - window.innerWidth,
+          }));
+          check(facts.dir === "rtl" && facts.dark === (scheme === "dark") && facts.overflow <= 0,
+            `authoritative notification order at ${width}/${scheme}`, JSON.stringify(facts));
+          await shot(page, `notification-order-${width}-${scheme}`);
+          detailProfiles.push({ width, scheme, ...facts });
+        }
+      }
+      await page.setViewportSize({ width: 390, height: 820 });
+      const visibility = (state) => page.evaluate((value) => {
+        Object.defineProperty(document, "visibilityState", { configurable: true, get: () => value });
+        document.dispatchEvent(new Event("visibilitychange"));
+      }, state);
+      await visibility("hidden");
+      const other = await context.newPage();
+      await other.goto("/settings", { waitUntil: "domcontentloaded" });
+      await other.getByTestId("button-settings-logout").click();
+      await other.getByTestId("dialog-confirm").getByTestId("button-confirm-action").click();
+      await expectSignedOut(other);
+      await loginInBrowser(other, "registeredB");
+      let release;
+      identityGates.set(page, new Promise((resolve) => { release = resolve; }));
+      try {
+        await visibility("visible");
+        await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+        check(!(await page.getByTestId("button-confirm-receipt").isVisible()), "old owner's private order is hidden while session identity is revalidated");
+      } finally {
+        identityGates.delete(page);
+        release();
+      }
+      const privateRead = await context.request.get(`${apiOrigin}/api/orders/${orderId}`);
+      check(privateRead.status() === 404, "the new account cannot read the notification owner's order");
+      await expect(page.getByTestId("button-confirm-receipt")).toHaveCount(0);
+      await other.close();
+      const invalidOrderRequests = [];
+      page.on("request", (request) => {
+        const path = new URL(request.url()).pathname;
+        if (path.startsWith("/api/orders/")) invalidOrderRequests.push(path);
+      });
+      await page.goto(`/notifications?order=${encodeURIComponent("../../admin/markets")}`, { waitUntil: "domcontentloaded" });
+      await expect(page.getByText("رابط الطلب غير صحيح.", { exact: true })).toBeVisible();
+      check(invalidOrderRequests.length === 0, "malformed order references never become an API path", JSON.stringify(invalidOrderRequests));
+      await context.clearCookies();
+      await page.reload({ waitUntil: "domcontentloaded" });
+      await expect(page.locator('input[name="phoneNumber"]')).toBeVisible();
+      check((await context.request.get(`${apiOrigin}/api/orders`)).status() === 401, "anonymous notifications cannot read orders");
+      return { source: "GET /api/orders", orderId, detailProfiles, reload: "same canonical order", back: "notification list", accountSwitch: "old order masked; new account 404", invalidReference: "no order API request", anonymous: "login required; orders 401", execution: "no receipt confirmation" };
+    } finally {
+      await shot(page, "audit-notification-navigation").catch(() => {});
+      await context.close();
+    }
+  });
+
 } finally {
   await browser.close();
 }

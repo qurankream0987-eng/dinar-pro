@@ -929,6 +929,15 @@ async function startBuiltWeb() {
 
 await test("BROWSER header, sidebar, starters, free topic changes, rendering and layout at 11 widths × 2 themes", { timeout: 1_800_000, skip: process.env.DINAR_XP_BROWSER === "0" }, async () => {
   const users = { main: await register("Browser"), layout: await register("Layout"), seller, registeredA: await register("Registered A"), registeredB: await register("Registered B"), handoffC: await register("Handoff C"), handoffD: await register("Handoff D"), handoffE: await register("Handoff E"), handoffF: await register("Handoff F") };
+  // Canonical pending receipt for the real notification → order navigation journey.
+  const notificationSeller = await register("Notification Seller");
+  const notificationListing = await publish(notificationSeller, `طلب تنبيه ${runId}`, 1, "3");
+  const notificationOrder = await request("/orders", "POST", {
+    listingId: notificationListing, quantity: 1, fulfilmentType: "PICKUP", idempotencyKey: `xp-notification-${randomUUID()}`,
+  }, users.main.cookie);
+  assert.equal(notificationOrder.status, 201, notificationOrder.raw);
+  assert.equal((await request(`/orders/${notificationOrder.data.id}/accept`, "POST", {}, notificationSeller.cookie)).status, 200);
+  assert.equal((await request(`/orders/${notificationOrder.data.id}/delivery`, "POST", { proofType: "CODE", proofToken: "4821" }, notificationSeller.cookie)).status, 200);
   const web = await startBuiltWeb();
   const resultPath = `${OUT}/report.json`;
   await mkdir(`${OUT}/shots`, { recursive: true });
@@ -942,6 +951,7 @@ await test("BROWSER header, sidebar, starters, free topic changes, rendering and
         XP_USERS: JSON.stringify(Object.fromEntries(Object.entries(users).map(([key, actor]) => [key, actor.id]))),
         XP_AUTH: JSON.stringify(Object.fromEntries(Object.entries(users).map(([key, actor]) => [key, { phoneCountryCode: actor.phoneCountryCode, phoneNumber: actor.phoneNumber, password: actor.password }]))),
         XP_TOKEN: TOKEN,
+        XP_NOTIFICATION_ORDER: notificationOrder.data.id,
         XP_OUT: OUT,
         XP_RESULT: resultPath,
         ...(process.env.DINAR_CHROMIUM ? { CHROMIUM_PATH: process.env.DINAR_CHROMIUM } : {}),
@@ -956,6 +966,9 @@ await test("BROWSER header, sidebar, starters, free topic changes, rendering and
   console.log("XP_BROWSER_SUMMARY", JSON.stringify(report.summary));
   assert.deepEqual(report.summary.failed, [], JSON.stringify(report.failures ?? report.summary.failed));
   assert.deepEqual(report.summary.consoleErrors, [], "no console errors");
+  const notificationAfter = await request(`/orders/${notificationOrder.data.id}`, "GET", undefined, users.main.cookie);
+  assert.equal(notificationAfter.status, 200);
+  assert.equal(notificationAfter.data.status, "SELLER_MARKED_DELIVERED", "viewing a notification must never confirm receipt");
   // What the browser renamed is what the server stores.
   const renamed = await db.select().from(conversations).where(and(eq(conversations.ownerUserId, users.main.id), eq(conversations.title, "دروس React")));
   assert.equal(renamed.length, 1, "the rename typed in the sidebar is the stored title");

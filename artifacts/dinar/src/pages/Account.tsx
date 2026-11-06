@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState, type ChangeEvent } from "react";
-import { Link } from "wouter";
+import { lazy, Suspense, useEffect, useRef, useState, type ChangeEvent } from "react";
+import { Link, useSearch } from "wouter";
 import {
   Bell,
   Camera,
@@ -607,9 +607,26 @@ function DeleteAccountSection() {
 
 /* ---------------------------------------------------------------- Notifications */
 
+// Reuse the same authoritative detail renderer used by conversation order cards.
+const NotificationOrderDetail = lazy(() => import("./OrderDetails").then((module) => ({ default: module.OrderInlineSurface })));
+
 export function NotificationsPage() {
   const { user } = useAccount();
   const { list, query } = useActionableOrders();
+  const requestedOrderId = new URLSearchParams(useSearch()).get("order");
+  if (requestedOrderId) {
+    const validId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu.test(requestedOrderId);
+    return (
+      <div className="container-app max-w-2xl">
+        <PageHeader title="تفاصيل تنبيه الطلب" back="/notifications" />
+        {validId ? (
+          <Suspense fallback={<div aria-busy="true" aria-label="جارٍ تحميل الطلب"><Skeleton className="h-40" /></div>}>
+            <NotificationOrderDetail orderId={requestedOrderId} />
+          </Suspense>
+        ) : <InlineAlert tone="danger">رابط الطلب غير صحيح.</InlineAlert>}
+      </div>
+    );
+  }
   return (
     <div className="container-app max-w-2xl">
       <PageHeader title="التنبيهات" subtitle="طلبات تنتظر منك إجراءً" />
@@ -635,7 +652,7 @@ export function NotificationsPage() {
       ) : (
         <div className="space-y-3">
           {list.map((o) => (
-            <OrderCard key={o.id} order={o} userId={user?.id} />
+            <OrderCard key={o.id} order={o} userId={user?.id} href={`/notifications?order=${encodeURIComponent(o.id)}`} />
           ))}
           <Link
             href="/orders"

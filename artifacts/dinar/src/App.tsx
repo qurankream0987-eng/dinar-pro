@@ -78,6 +78,7 @@ const CHAT_ONLY_ADMIN_ROUTES = new Set([
   "/admin/legal-readiness",
 ]);
 const CHAT_ONLY_ACCOUNT_ROUTES = new Set([
+  "/notifications",
   "/connect",
   "/login",
   "/register",
@@ -131,6 +132,7 @@ function Routes() {
       </Route>
       <Route path="/login"><AuthPage /></Route>
       <Route path="/register"><AuthPage register /></Route>
+      <Route path="/notifications">{guard(<NotificationsPage />)}</Route>
       <Route path="/profile">{guard(<ProfilePage />)}</Route>
       <Route path="/settings">{guard(<SettingsPage />)}</Route>
       <Route path="/connect">{guard(<ConnectPage />)}</Route>
