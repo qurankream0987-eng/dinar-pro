@@ -17,7 +17,7 @@
 import { test, after } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { eq, sql } from "drizzle-orm";
+import { eq, inArray, sql } from "drizzle-orm";
 import { db, marketplaceCategories, offerSearchDocuments, offers, pool } from "@workspace/db";
 import { marketFor } from "../src/lib/markets";
 import { lastSearchStats, searchMarketplaceListings } from "../src/lib/marketplace-listings";
@@ -144,6 +144,27 @@ await test("SF-06 rows with an equal creation time are ordered by id (determinis
   process.env.DINAR_SEARCH_ENGINE = "SQL";
   const found = (await searchMarketplaceListings(market, { search: "تعادل", conversational: true })).map((listing) => listing.id);
   assert.deepEqual(found, ["sf-tie-zz-a", "sf-tie-zz-b", "sf-tie-zz-c"]);
+});
+
+await test("SF-HIST-C1 historical numeric whitespace, underflow and subnormal values retain JavaScript search semantics", async () => {
+  // Port the real edge values from codex/11-c1-sql-search without importing its obsolete SQL chain.
+  const values: unknown[] = [null, true, false, "", "  ", "12.5", "0x20", "0b11", "0o10", "bad", "Infinity", [], [null], [7], [1, 2], {}, 0, -7, 1e20, "v12", "12v", "v", "\u000b12\u000b", "2e-999", "1e999", ["v12"], [[7]], "1e-999999", "3e-324", "2e-324"];
+  const [seed] = await db.select().from(offers).where(eq(offers.id, idOf(LISTINGS[0]!.title))).limit(1);
+  assert.ok(seed);
+  const ids = values.map((_, index) => `sf-historical-number-${index}`);
+  await db.insert(offers).values(values.map((value, index) => ({ ...seed, id: ids[index]!, data: { ...seed.data, title: "سيارة اختبار التحويل", attributes: { year: value } } as typeof seed.data, createdAt: new Date(1_790_000_000_000 + index), updatedAt: new Date(1_790_000_000_000 + index) })));
+  try {
+    process.env.DINAR_SEARCH_ENGINE = "SQL";
+    const options = { search: "التحويل", categoryId: "cars", sponsoredPlacement: false as const, limit: 100 };
+    const numeric = (value: unknown) => { const n = Number(value); return Number.isFinite(n) ? n : null; };
+    const expected = values.map((value, index) => ({ index, value: numeric(value) })).sort((a, b) => a.value === null ? (b.value === null ? b.index - a.index : 1) : b.value === null ? -1 : a.value - b.value || b.index - a.index).map(row => ids[row.index]);
+    assert.deepEqual((await searchMarketplaceListings(market, { ...options, sort: "YEAR_ASC" })).map(row => row.id), expected);
+    for (const bound of [...new Set(values.map(numeric).filter((n): n is number => n !== null))]) {
+      const matches = await searchMarketplaceListings(market, { ...options, filters: [{ field: "year", operator: "eq", value: bound }] });
+      const expectedIds = values.flatMap((value, index) => value != null && numeric(value) === bound ? [ids[index]!] : []).sort();
+      assert.deepEqual(matches.map(row => row.id).sort(), expectedIds, `historical numeric bound ${String(bound)}`);
+    }
+  } finally { await db.delete(offers).where(inArray(offers.id, ids)); }
 });
 
 after(async () => {

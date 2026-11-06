@@ -1,3 +1,4 @@
+import { normalizeMarketplaceText } from "./arabic-normalization";
 import { isBareShowNumber, priceProposal } from "./price-proposal";
 import { statusQuestion } from "./context-intent";
 
@@ -122,11 +123,19 @@ export function stripCorrectionPrefix(message: string): string {
   return text.trim();
 }
 
+const MARKETPLACE_COMPARISON_SEARCH =
+  /^(?:قارن(?:\s+(?:لي|لنا))?|قارنلي|اعمل\s+مقارن[هة](?:\s+(?:لي|لنا))?)\s+(?:بين\s+)?(\S.+?)\s+(?:الموجود[هة]?|المتوفر[هة]?|المتاح[هة]?)(?:\s+(?:عند\s+البائعين|في\s+(?:السوق|المتاجر|دينار)))?$/u;
+/** Replit's available-product comparison grammar, shared by routing and query extraction. */
+export function marketplaceComparisonSearchTerms(message: string): string | undefined {
+  return MARKETPLACE_COMPARISON_SEARCH.exec(normalizeMarketplaceText(stripCorrectionPrefix(message)))?.[1];
+}
+
 export function searchTerms(message: string): string {
-  const terms = message
+  const request = message
     // «دينار ابحث لي عن …», «يا دينار دورلي على …»: the address and the search verb with its
     // «لي» and preposition are the request, not the product.
-    .replace(/^\s*(?:يا\s+)?(?:دينار|dinar)(?:\s*[،,:]\s*|\s+)/iu, "")
+    .replace(/^\s*(?:يا\s+)?(?:دينار|dinar)(?:\s*[،,:]\s*|\s+)/iu, "");
+  const terms = (marketplaceComparisonSearchTerms(request) ?? request)
     .replace(/(^|\s)(?:[أا]بحث|دو[ّ]?ر|فتش)(?:\s*لي)?\s+(?:عن|على|علي)(?=\s|$)|(^|\s)دو[ّ]?رلي(?:\s+(?:عن|على|علي))?(?=\s|$)/gu, " ")
     .replace(
       /(?:أريد|اريد|أبحث عن|ابحث عن|أحتاج|احتاج|أشتري|اشتري|أبغى|ابغى|من فضلك|فقط|بدينار)/g,

@@ -2661,6 +2661,27 @@ await acceptance("N31/N32", "buyer and seller ordinals select one of multiple ow
   assert.equal((await negotiationForParty(listSeller.id, other))!.status, "OPEN");
 });
 
+await acceptance("HIST-REPLIT-CART", "historical basket-product comparison searches verified listings without opening or mutating the cart", async () => {
+  const seller = await register("historical basket seller");
+  const buyer = await register("historical basket buyer");
+  const first = await publish(seller, `سلال التخزين ${TOKEN} صغيرة`, "3.000");
+  const second = await publish(seller, `سلال التخزين ${TOKEN} كبيرة`, "5.000");
+  const conv = await conversation(buyer);
+  const before = await effects();
+  const found = await deterministicTurn(buyer, "قارن سلال التخزين الموجودة عند البائعين", conv);
+  assert.equal(found.calls, 0, "the existing explicit marketplace path needs no model");
+  assert.equal(found.surface, "LISTING_RESULTS", found.body);
+  assert.ok(found.payload.resourceIds.includes(first), JSON.stringify(found.payload.resourceIds));
+  assert.ok(found.payload.resourceIds.includes(second), JSON.stringify(found.payload.resourceIds));
+  const compared = await deterministicTurn(buyer, "قارن الأول والثاني", conv);
+  assert.equal(compared.surface, "COMPARISON", compared.body);
+  assert.equal(compared.calls, 0);
+  assert.equal(await effects(), before, "search/comparison never writes an order, payment, price or promotion");
+  const cart = await request("/cart", "GET", undefined, buyer.cookie);
+  assert.equal(cart.status, 200, cart.raw);
+  assert.equal((cart.data.items ?? []).length, 0, "a basket-shaped product never becomes a cart addition");
+});
+
 await test("summary: architecture, bodies, external calls", {
   skip: contactConsentOnly ? "focused contact-consent run" : false,
 }, async () => {

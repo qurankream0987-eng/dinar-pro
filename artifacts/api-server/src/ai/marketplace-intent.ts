@@ -11,7 +11,7 @@ import {
   type NumericMention,
   type ResultReference,
 } from "./arabic-normalization";
-import { backIntent, stripCorrectionPrefix } from "./intent";
+import { backIntent, stripCorrectionPrefix, marketplaceComparisonSearchTerms } from "./intent";
 import { parseStructuredSearch } from "./search-query";
 
 /**
@@ -98,6 +98,8 @@ export function hasExplicitMarketplaceSearchIntent(message: string): boolean {
   const correction = normalizeMarketplaceText(stripCorrectionPrefix(message));
   if (correction !== normalized)
     return correction.length > 0 && !isVagueRequest(correction);
+  if (marketplaceComparisonSearchTerms(normalized) !== undefined && !isVagueRequest(normalized))
+    return true;
   if (MARKETPLACE_QUESTION.test(normalized) && !isVagueRequest(normalized)) return true;
   return (
     MARKETPLACE_REQUEST_ACTION.test(normalized) &&

@@ -287,3 +287,42 @@ test("every wire surface is registered and action buttons use the shared action 
   }
   assert.equal(conversationActionMessage("PROMOTE_LISTING", { position: 2 }), "روّج الإعلان رقم 2");
 });
+
+test("basket product wording stays in marketplace intent; cart navigation needs a cart request", () => {
+  const searches = [
+    "ابحث عن سلة غسيل",
+    "أريد شراء حقيبة سلة",
+    "قارن سلال التخزين الموجودة عند البائعين",
+  ];
+  for (const message of searches) {
+    assert.notEqual(surfaceIntent(message), "CART", message);
+    assert.equal(hasExplicitMarketplaceSearchIntent(message), true, message);
+  }
+
+  const add = "أضف سلة الغسيل إلى السلة";
+  assert.equal(addToCartIntent(add), true);
+  assert.notEqual(surfaceIntent(add), "CART");
+  assert.equal(addToCartIntent("ابحث عن سلة غسيل"), false);
+
+  assert.equal(surfaceIntent("افتح سلة مشترياتي"), "CART");
+  assert.equal(surfaceIntent("اعرض السلة"), "CART");
+  assert.equal(resolveConversationActionId("أريد شراء حقيبة سلة"), undefined);
+  assert.equal(resolveConversationActionId("أريد شراء الأول"), "BUY_LISTING");
+  assert.equal(resolveConversationActionId("أريد شراءها"), "BUY_LISTING");
+  assert.equal(resolveConversationActionId("اشتريها"), "BUY_LISTING");
+});
+
+test("historical available-product comparison strips request wording without absorbing general or ordinal comparisons", () => {
+  for (const [message, expected] of [
+    ["قارن سلال التخزين الموجودة عند البائعين", "سلال التخزين"],
+    ["قارن لي بين كراسي المكتب المتاحة في السوق", "كراسي المكتب"],
+    ["اعمل مقارنة بين مراوح السقف المتوفرة في المتاجر", "مراوح السقف"],
+  ]) {
+    assert.equal(hasExplicitMarketplaceSearchIntent(message!), true, message);
+    assert.equal(searchTerms(message!), expected, message);
+  }
+  for (const message of ["قارن الماء والهواء", "قارن الأول والثاني"]) {
+    assert.equal(hasExplicitMarketplaceSearchIntent(message), false, message);
+    assert.equal(searchTerms(message), message);
+  }
+});
