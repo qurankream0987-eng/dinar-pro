@@ -1189,6 +1189,57 @@ try {
     }
   });
 
+  await journey("editor-concurrent-version-guard", async () => {
+    const first = await openRegisteredUserJourney(browser), second = await openRegisteredUserJourney(browser);
+    const listingId = process.env.XP_CONCURRENT_EDIT_LISTING;
+    const draft = `مسودة تبويب ثانية ${process.env.XP_TOKEN}`, winnerTitle = `نسخة أولى مؤكدة ${process.env.XP_TOKEN}`, finalTitle = `نسخة نهائية مراجعة ${process.env.XP_TOKEN}`;
+    let writes = 0;
+    try {
+      for (const view of [first, second]) {
+        const split = cookies.seller.indexOf("=");
+        await view.context.addCookies([{name:cookies.seller.slice(0,split),value:cookies.seller.slice(split+1),domain:new URL(webBase).hostname,path:"/",httpOnly:true,sameSite:"Lax"}]);
+        view.page.on("request", request => {if(request.method()==="PATCH"&&new URL(request.url()).pathname===`/api/listings/${listingId}`)writes++;});
+        await view.page.goto("/ai?openSurface=listings",{waitUntil:"domcontentloaded"});
+        await view.page.getByTestId(`chat-edit-listing-${listingId}`).click();
+        await view.page.getByTestId("button-save-listing").waitFor();
+      }
+      check(writes===0,"two editors open without a stored mutation");
+      await second.page.getByLabel("عنوان العرض",{exact:true}).fill(draft);
+      await first.page.getByLabel("عنوان العرض",{exact:true}).fill(winnerTitle);
+      const saved = first.page.waitForResponse(r=>r.request().method()==="PATCH"&&new URL(r.url()).pathname===`/api/listings/${listingId}`);
+      await first.page.getByTestId("button-save-listing").click();check((await saved).status()===200,"first editor receives its real save receipt");
+      await second.page.evaluate(()=>document.dispatchEvent(new Event("visibilitychange")));
+      await expect(second.page.locator("#dinar-private-session-check")).toBeHidden();
+      await expect(second.page.getByLabel("عنوان العرض",{exact:true})).toHaveValue(draft);
+      for(let attempt=0;attempt<2;attempt++){
+        const stale=second.page.waitForResponse(r=>r.request().method()==="PATCH"&&new URL(r.url()).pathname===`/api/listings/${listingId}`);
+        await second.page.getByTestId("button-save-listing").click();check((await stale).status()===409,"stale or repeated save is rejected, never overwrites the winner");
+        await expect(second.page.getByLabel("عنوان العرض",{exact:true})).toHaveValue(draft);
+        const actual=await second.context.request.get(`${apiOrigin}/api/listings/${listingId}`);check((await actual.json()).title===winnerTitle,"independent read retains the winning title after rejection");
+      }
+      const conflictProfiles=[];
+      for(const width of [320,360,390,430,768,1024,1440,1920])for(const scheme of ["light","dark"]){
+        await second.page.setViewportSize({width,height:900});await second.page.emulateMedia({colorScheme:scheme});
+        await second.page.evaluate(async()=>{await document.fonts.ready;await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));});
+        const geometry=await second.page.evaluate(()=>({overflow:document.documentElement.scrollWidth-innerWidth,rtl:document.documentElement.dir,dark:document.documentElement.classList.contains("dark")}));
+        check(geometry.overflow===0&&geometry.rtl==="rtl"&&geometry.dark===(scheme==="dark"),`stale editor recovery ${width}/${scheme}`,JSON.stringify(geometry));
+        await expect(second.page.getByTestId("button-reload-edit-listing")).toBeVisible();conflictProfiles.push({width,scheme,...geometry});
+        await shot(second.page,`editor-stale-${width}-${scheme}`);
+      }
+      await second.page.setViewportSize({width:390,height:900});await second.page.emulateMedia({colorScheme:"light"});
+      await shot(second.page,"editor-stale-draft-preserved");
+      await second.page.getByTestId("button-reload-edit-listing").click();
+      await expect(second.page.getByLabel("عنوان العرض",{exact:true})).toHaveValue(winnerTitle);
+      await second.page.getByLabel("عنوان العرض",{exact:true}).fill(finalTitle);
+      const reviewed=second.page.waitForResponse(r=>r.request().method()==="PATCH"&&new URL(r.url()).pathname===`/api/listings/${listingId}`);
+      await second.page.getByTestId("button-save-listing").click();check((await reviewed).status()===200,"explicit reload and reviewed edit use a fresh version");
+      await second.page.reload({waitUntil:"domcontentloaded"});
+      await expect(second.page.getByTestId(`chat-seller-listing-${listingId}`).getByText(finalTitle,{exact:true})).toBeVisible();
+      check(writes===4,"two successful and two rejected saves; opening/refetch/reload perform no hidden writes");
+      return {listingId,finalTitle,staleStatuses:[409,409],successfulSaves:2,writes,backgroundDraftPreserved:true,explicitReload:true,conflictProfiles};
+    } finally {await first.context.close();await second.context.close();}
+  });
+
   await journey("site-cart-navigation", async () => {
     const { context, page } = await open(browser, "main", { width: 390 });
     try {

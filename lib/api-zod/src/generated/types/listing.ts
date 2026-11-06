@@ -74,4 +74,6 @@ export interface Listing {
   negotiable?: boolean;
   status: ListingStatus;
   createdAt?: string;
+  /** Server edit version; send unchanged as expectedUpdatedAt when saving an editor snapshot. */
+  updatedAt?: string;
 }

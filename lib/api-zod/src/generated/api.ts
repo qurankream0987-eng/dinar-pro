@@ -276,7 +276,8 @@ export const GetListingsResponseItem = zod.object({
   "contactPhone": zod.string().max(getListingsResponseContactPhoneMax).nullable(),
   "negotiable": zod.boolean().optional().describe('A buyer may propose a price on this listing (true for every listing with a known price representation). An agreed price is private to that buyer; the public price never changes.'),
   "status": zod.enum(['DRAFT', 'PUBLISHED', 'PAUSED', 'ARCHIVED']),
-  "createdAt": zod.string().optional()
+  "createdAt": zod.string().optional(),
+  "updatedAt": zod.string().optional().describe('Server edit version; send unchanged as expectedUpdatedAt when saving an editor snapshot.')
 })
 export const GetListingsResponse = zod.array(GetListingsResponseItem)
 
@@ -376,7 +377,8 @@ export const CreateListingResponse = zod.object({
   "contactPhone": zod.string().max(createListingResponseContactPhoneMax).nullable(),
   "negotiable": zod.boolean().optional().describe('A buyer may propose a price on this listing (true for every listing with a known price representation). An agreed price is private to that buyer; the public price never changes.'),
   "status": zod.enum(['DRAFT', 'PUBLISHED', 'PAUSED', 'ARCHIVED']),
-  "createdAt": zod.string().optional()
+  "createdAt": zod.string().optional(),
+  "updatedAt": zod.string().optional().describe('Server edit version; send unchanged as expectedUpdatedAt when saving an editor snapshot.')
 })
 
 
@@ -1119,7 +1121,8 @@ export const GetListingResponse = zod.object({
   "contactPhone": zod.string().max(getListingResponseContactPhoneMax).nullable(),
   "negotiable": zod.boolean().optional().describe('A buyer may propose a price on this listing (true for every listing with a known price representation). An agreed price is private to that buyer; the public price never changes.'),
   "status": zod.enum(['DRAFT', 'PUBLISHED', 'PAUSED', 'ARCHIVED']),
-  "createdAt": zod.string().optional()
+  "createdAt": zod.string().optional(),
+  "updatedAt": zod.string().optional().describe('Server edit version; send unchanged as expectedUpdatedAt when saving an editor snapshot.')
 })
 
 
@@ -1130,6 +1133,10 @@ export const UpdateListingParams = zod.object({
   "id": zod.coerce.string()
 })
 
+export const updateListingBodyExpectedUpdatedAtMax = 24;
+
+
+export const updateListingBodyExpectedUpdatedAtRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$');
 export const updateListingBodyTitleMin = 2;
 
 export const updateListingBodyDescriptionMin = 10;
@@ -1150,6 +1157,7 @@ export const updateListingBodyContactPhoneMax = 30;
 
 
 export const UpdateListingBody = zod.object({
+  "expectedUpdatedAt": zod.string().max(updateListingBodyExpectedUpdatedAtMax).regex(updateListingBodyExpectedUpdatedAtRegExp).optional().describe('Optional optimistic precondition from Listing.updatedAt; a stale snapshot is rejected409. Existing callers without it retain their authenticated contract.'),
   "title": zod.string().min(updateListingBodyTitleMin),
   "description": zod.string().min(updateListingBodyDescriptionMin),
   "category": zod.string(),
@@ -1219,7 +1227,8 @@ export const UpdateListingResponse = zod.object({
   "contactPhone": zod.string().max(updateListingResponseContactPhoneMax).nullable(),
   "negotiable": zod.boolean().optional().describe('A buyer may propose a price on this listing (true for every listing with a known price representation). An agreed price is private to that buyer; the public price never changes.'),
   "status": zod.enum(['DRAFT', 'PUBLISHED', 'PAUSED', 'ARCHIVED']),
-  "createdAt": zod.string().optional()
+  "createdAt": zod.string().optional(),
+  "updatedAt": zod.string().optional().describe('Server edit version; send unchanged as expectedUpdatedAt when saving an editor snapshot.')
 })
 
 
@@ -1280,7 +1289,8 @@ export const ArchiveListingResponse = zod.object({
   "contactPhone": zod.string().max(archiveListingResponseContactPhoneMax).nullable(),
   "negotiable": zod.boolean().optional().describe('A buyer may propose a price on this listing (true for every listing with a known price representation). An agreed price is private to that buyer; the public price never changes.'),
   "status": zod.enum(['DRAFT', 'PUBLISHED', 'PAUSED', 'ARCHIVED']),
-  "createdAt": zod.string().optional()
+  "createdAt": zod.string().optional(),
+  "updatedAt": zod.string().optional().describe('Server edit version; send unchanged as expectedUpdatedAt when saving an editor snapshot.')
 })
 
 
@@ -1345,7 +1355,8 @@ export const ChangeListingStatusResponse = zod.object({
   "contactPhone": zod.string().max(changeListingStatusResponseContactPhoneMax).nullable(),
   "negotiable": zod.boolean().optional().describe('A buyer may propose a price on this listing (true for every listing with a known price representation). An agreed price is private to that buyer; the public price never changes.'),
   "status": zod.enum(['DRAFT', 'PUBLISHED', 'PAUSED', 'ARCHIVED']),
-  "createdAt": zod.string().optional()
+  "createdAt": zod.string().optional(),
+  "updatedAt": zod.string().optional().describe('Server edit version; send unchanged as expectedUpdatedAt when saving an editor snapshot.')
 })
 
 
@@ -3121,7 +3132,8 @@ export const PreviewAiConversationResponse = zod.object({
   "contactPhone": zod.string().max(previewAiConversationResponseBlocksItemPayloadListingsItemContactPhoneMax).nullable(),
   "negotiable": zod.boolean().optional().describe('A buyer may propose a price on this listing (true for every listing with a known price representation). An agreed price is private to that buyer; the public price never changes.'),
   "status": zod.enum(['DRAFT', 'PUBLISHED', 'PAUSED', 'ARCHIVED']),
-  "createdAt": zod.string().optional()
+  "createdAt": zod.string().optional(),
+  "updatedAt": zod.string().optional().describe('Server edit version; send unchanged as expectedUpdatedAt when saving an editor snapshot.')
 }))
 })
 })).max(previewAiConversationResponseBlocksMax),
@@ -3602,7 +3614,8 @@ export const CreateAiGuestHandoffResponse = zod.object({
   "contactPhone": zod.string().max(createAiGuestHandoffResponseMessagesItemBlocksItemPayloadListingsItemContactPhoneMax).nullable(),
   "negotiable": zod.boolean().optional().describe('A buyer may propose a price on this listing (true for every listing with a known price representation). An agreed price is private to that buyer; the public price never changes.'),
   "status": zod.enum(['DRAFT', 'PUBLISHED', 'PAUSED', 'ARCHIVED']),
-  "createdAt": zod.string().optional()
+  "createdAt": zod.string().optional(),
+  "updatedAt": zod.string().optional().describe('Server edit version; send unchanged as expectedUpdatedAt when saving an editor snapshot.')
 }))
 })
 })),
@@ -3987,7 +4000,8 @@ export const GetAiConversationResponse = zod.object({
   "contactPhone": zod.string().max(getAiConversationResponseMessagesItemBlocksItemPayloadListingsItemContactPhoneMax).nullable(),
   "negotiable": zod.boolean().optional().describe('A buyer may propose a price on this listing (true for every listing with a known price representation). An agreed price is private to that buyer; the public price never changes.'),
   "status": zod.enum(['DRAFT', 'PUBLISHED', 'PAUSED', 'ARCHIVED']),
-  "createdAt": zod.string().optional()
+  "createdAt": zod.string().optional(),
+  "updatedAt": zod.string().optional().describe('Server edit version; send unchanged as expectedUpdatedAt when saving an editor snapshot.')
 }))
 })
 })),
@@ -4410,7 +4424,8 @@ export const CopyAiConversationResponse = zod.object({
   "contactPhone": zod.string().max(copyAiConversationResponseMessagesItemBlocksItemPayloadListingsItemContactPhoneMax).nullable(),
   "negotiable": zod.boolean().optional().describe('A buyer may propose a price on this listing (true for every listing with a known price representation). An agreed price is private to that buyer; the public price never changes.'),
   "status": zod.enum(['DRAFT', 'PUBLISHED', 'PAUSED', 'ARCHIVED']),
-  "createdAt": zod.string().optional()
+  "createdAt": zod.string().optional(),
+  "updatedAt": zod.string().optional().describe('Server edit version; send unchanged as expectedUpdatedAt when saving an editor snapshot.')
 }))
 })
 })),
@@ -4847,7 +4862,8 @@ export const AddAiListingToCartResponse = zod.object({
   "contactPhone": zod.string().max(addAiListingToCartResponseAssistantMessageBlocksItemPayloadListingsItemContactPhoneMax).nullable(),
   "negotiable": zod.boolean().optional().describe('A buyer may propose a price on this listing (true for every listing with a known price representation). An agreed price is private to that buyer; the public price never changes.'),
   "status": zod.enum(['DRAFT', 'PUBLISHED', 'PAUSED', 'ARCHIVED']),
-  "createdAt": zod.string().optional()
+  "createdAt": zod.string().optional(),
+  "updatedAt": zod.string().optional().describe('Server edit version; send unchanged as expectedUpdatedAt when saving an editor snapshot.')
 }))
 })
 })),
@@ -6523,7 +6539,8 @@ export const GetBusinessStorefrontResponse = zod.object({
   "contactPhone": zod.string().max(getBusinessStorefrontResponseListingsItemContactPhoneMax).nullable(),
   "negotiable": zod.boolean().optional().describe('A buyer may propose a price on this listing (true for every listing with a known price representation). An agreed price is private to that buyer; the public price never changes.'),
   "status": zod.enum(['DRAFT', 'PUBLISHED', 'PAUSED', 'ARCHIVED']),
-  "createdAt": zod.string().optional()
+  "createdAt": zod.string().optional(),
+  "updatedAt": zod.string().optional().describe('Server edit version; send unchanged as expectedUpdatedAt when saving an editor snapshot.')
 })).max(getBusinessStorefrontResponseListingsMax),
   "listingCount": zod.int().min(getBusinessStorefrontResponseListingCountMin)
 })

@@ -592,7 +592,7 @@ router.post("/listings", requireAuth, async (req, res) => {
   res.status(created.status).json(created.listing);
 });
 router.patch("/listings/:id", requireAuth, async (req, res) => {
-  const body = UpdateListingBody.parse(req.body);
+  const { expectedUpdatedAt, ...body } = UpdateListingBody.parse(req.body);
   if ("marketId" in req.body || "sellerId" in req.body)
     throw fail(400, "لا يمكن تغيير سوق العرض أو مالكه");
   const market = await marketFor(req);
@@ -603,6 +603,7 @@ router.patch("/listings/:id", requireAuth, async (req, res) => {
         ownerId: req.actor!.id,
         market,
         body,
+        expectedUpdatedAt,
       },
       tx,
     );

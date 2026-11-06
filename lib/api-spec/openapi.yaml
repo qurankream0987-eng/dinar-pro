@@ -4454,6 +4454,9 @@ components:
           description: A buyer may propose a price on this listing (true for every listing with a known price representation). An agreed price is private to that buyer; the public price never changes.
         status: { type: string, enum: [DRAFT, PUBLISHED, PAUSED, ARCHIVED] }
         createdAt: { type: string }
+        updatedAt:
+          type: string
+          description: Server edit version; send unchanged as expectedUpdatedAt when saving an editor snapshot.
     ListingInput:
       type: object
       required: [title, description, category, area, unitPrice, inventoryMode, fulfilmentType, imageUrl]
@@ -4490,6 +4493,11 @@ components:
       type: object
       required: [title, description, category, area, unitPrice, inventoryMode, fulfilmentType, imageUrl]
       properties:
+        expectedUpdatedAt:
+          type: string
+          maxLength: 24
+          pattern: '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$'
+          description: Optional optimistic precondition from Listing.updatedAt; a stale snapshot is rejected409. Existing callers without it retain their authenticated contract.
         title: { type: string, minLength: 2 }
         description: { type: string, minLength: 10 }
         category: { type: string }

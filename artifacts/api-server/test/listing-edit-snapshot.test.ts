@@ -102,6 +102,38 @@ await test("H: editing price and quantity leaves an existing order's snapshot an
   assert.equal(stored!.subtotalMinor, before.subtotalMinor);
 });
 
+await test("H: simultaneous versioned edits and repeated stale saves cannot overwrite the winning edit", async () => {
+  const listingId = await publish("تزامن التحرير", "FIXED");
+  const placed = await request("/orders", "POST", { listingId, quantity: 2, fulfilmentType: "PICKUP", idempotencyKey: `edit-race-${runId}` }, buyer);
+  assert.equal(placed.status, 201, placed.text);
+  const [original] = await db.select().from(offers).where(eq(offers.id, listingId));
+  const body = {
+    title: original!.data.title, description: original!.data.description, category: "أخرى", categoryId: "other",
+    area: "الصويفية", city: "عمّان", attributes: {}, pricingMode: "FIXED", inventoryMode: "LIMITED",
+    fulfilmentType: "PICKUP", unitPrice: "81", availableQuantity: 3, imageUrl: "", imageUrls: [],
+    expectedUpdatedAt: original!.updatedAt.toISOString(),
+  };
+  const edits = await Promise.all(["أولى", "ثانية"].map(label => request(`/listings/${listingId}`, "PATCH", { ...body, title: `نسخة ${label} ${runId}` }, seller)));
+  assert.deepEqual(edits.map(result => result.status).sort(), [200, 409], JSON.stringify(edits));
+  const winner = edits.find(result => result.status === 200)!;
+  const [saved] = await db.select().from(offers).where(eq(offers.id, listingId));
+  assert.equal(saved!.data.title, winner.data.title);
+  assert.equal("expectedUpdatedAt" in saved!.data, false, "transport precondition is never stored as listing presentation data");
+  assert.equal(saved!.sellerId, seller.id);
+  assert.equal(saved!.reservedQuantity, 2);
+  assert.equal(saved!.availableQuantity, 3);
+  assert.ok(saved!.updatedAt.getTime() > original!.updatedAt.getTime());
+  assert.equal(winner.data.updatedAt, saved!.updatedAt.toISOString());
+  assert.equal((await request(`/listings/${listingId}`, "PATCH", body, seller)).status, 409);
+  assert.equal((await request(`/listings/${listingId}`, "PATCH", { ...body, expectedUpdatedAt: saved!.updatedAt.toISOString() }, buyer)).status, 404);
+  assert.equal((await request(`/listings/${listingId}`, "PATCH", { ...body, expectedUpdatedAt: "not-a-version" }, seller)).status, 400);
+  const [unchanged] = await db.select().from(offers).where(eq(offers.id, listingId));
+  assert.deepEqual(unchanged, saved, "rejected and replayed edits have no database effect");
+  const order = await request(`/orders/${placed.data.id}`, "GET", undefined, buyer);
+  assert.equal(order.data.subtotalMinor, 100_000, "the original two-unit price snapshot survives concurrent edits");
+  assert.equal(order.data.platformFeeMinor + order.data.sellerAmountMinor, 100_000);
+});
+
 await test("H (recorded): an accepted agreement followed by a price edit", async () => {
   const listingId = await publish("قابلة للتفاوض", "NEGOTIABLE");
   const opened = await openNegotiation({ buyerId: negotiator.id, listingId, amountMinor: 45_000, quantity: 1, market: JO });

@@ -210,6 +210,7 @@ export function listing(
         : (row.unitPriceMinor / 10 ** minorUnitScale).toFixed(minorUnitScale),
     currency: currencyCode,
     createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
   } as unknown as ListingRecord;
 }
 

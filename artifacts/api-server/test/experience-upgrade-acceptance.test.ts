@@ -945,6 +945,7 @@ await test("BROWSER header, sidebar, starters, free topic changes, rendering and
   const financialProjection = { unitPriceMinor: orderRows.unitPriceMinor, subtotalMinor: orderRows.subtotalMinor, platformFeeMinor: orderRows.platformFeeMinor, sellerAmountMinor: orderRows.sellerAmountMinor, currencyCode: orderRows.currencyCode, minorUnitScale: orderRows.minorUnitScale, priceVersionId: orderRows.priceVersionId };
   const lockedSnapshot = await db.select(financialProjection).from(orderRows).where(eq(orderRows.id, notificationOrder.data.id));
   const originalCartView = await request("/cart", "GET", undefined, users.main.cookie);
+  const concurrentEditListing = await publish(users.seller, `تحرير متزامن ${TOKEN}`);
   const web = await startBuiltWeb();
   const resultPath = `${OUT}/report.json`;
   await mkdir(`${OUT}/shots`, { recursive: true });
@@ -960,6 +961,7 @@ await test("BROWSER header, sidebar, starters, free topic changes, rendering and
         XP_TOKEN: TOKEN,
         XP_NOTIFICATION_ORDER: notificationOrder.data.id,
         XP_CART_LISTING: L.itemUsedMid,
+        XP_CONCURRENT_EDIT_LISTING: concurrentEditListing,
         XP_OUT: OUT,
         XP_RESULT: resultPath,
         ...(process.env.DINAR_CHROMIUM ? { CHROMIUM_PATH: process.env.DINAR_CHROMIUM } : {}),
@@ -1010,6 +1012,11 @@ await test("BROWSER header, sidebar, starters, free topic changes, rendering and
   const [editedListing] = await db.select({ data: offers.data, sellerId: offers.sellerId }).from(offers).where(eq(offers.id, report.sellerEdit.listingId));
   assert.equal(editedListing?.data.title, report.sellerEdit.title, "confirmed conversation editor update is persisted");
   assert.equal(editedListing?.sellerId, users.seller.id, "editing never transfers listing ownership");
+  const concurrentEdit = report.journeys["editor-concurrent-version-guard"];
+  const [concurrentSaved] = await db.select().from(offers).where(eq(offers.id, concurrentEditListing));
+  assert.equal(concurrentSaved?.data.title, concurrentEdit.finalTitle);
+  assert.equal(concurrentSaved?.sellerId, users.seller.id);
+  assert.equal(concurrentSaved?.reservedQuantity, 0);
   const adminUi = report.journeys["admin-market-category-promotion-controls"];
   const [categoryFromDb] = await db.select().from(marketplaceCategories).where(eq(marketplaceCategories.id, adminUi.categoryId));
   assert.equal(categoryFromDb?.label, adminUi.updatedCategoryLabel);

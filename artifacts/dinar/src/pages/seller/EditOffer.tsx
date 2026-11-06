@@ -50,6 +50,8 @@ export default function EditOffer() {
   const [form, setForm] = useState<OfferFormState>(EMPTY_OFFER);
   const [errors, setErrors] = useState<Errors>({});
   const [error, setError] = useState("");
+  const [conflict, setConflict] = useState(false);
+  const [editSnapshot, setEditSnapshot] = useState<{ id: string; owner: string; version: string } | null>(null);
   const selectedCategory = categories.data?.find(
     (category) =>
       category.id === form.categoryId || category.label === form.category,
@@ -60,7 +62,10 @@ export default function EditOffer() {
 
   useEffect(() => {
     const d = listing.data as Offer | undefined;
-    if (!d) return;
+    if (!user || !d?.updatedAt || d.id !== id || d.sellerId !== user.id) return;
+    // Background reads must not silently replace a draft or advance its edit precondition.
+    if (editSnapshot?.id === id && editSnapshot.owner === user.id) return;
+    setEditSnapshot({ id, owner: user.id, version: d.updatedAt });
     setForm({
       title: d.title,
       category: d.category,
@@ -89,7 +94,7 @@ export default function EditOffer() {
         ),
       ) as Record<string, string | number>,
     });
-  }, [listing.data]);
+  }, [listing.data, id, user?.id, editSnapshot]);
 
   const set = <K extends keyof OfferFormState>(k: K, v: OfferFormState[K]) => {
     setErrors((e) => ({ ...e, [k]: undefined }));
@@ -145,6 +150,11 @@ export default function EditOffer() {
 
   const save = (e: React.FormEvent) => {
     e.preventDefault();
+    if (update.isPending) return;
+    if (!editSnapshot || editSnapshot.id !== id || editSnapshot.owner !== user?.id) {
+      setError("تعذر التحقق من نسخة العرض. أعد تحميله قبل الحفظ.");
+      return;
+    }
     const errs = validateOffer(
       form,
       "all",
@@ -157,8 +167,9 @@ export default function EditOffer() {
       return;
     }
     setError("");
+    setConflict(false);
     update.mutate(
-      { id, data: offerPayload(form, categories.data ?? []) },
+      { id, data: { ...offerPayload(form, categories.data ?? []), expectedUpdatedAt: editSnapshot.version } },
       {
         onSuccess: () => {
           void qc.invalidateQueries({ queryKey: getGetListingQueryKey(id) });
@@ -166,7 +177,10 @@ export default function EditOffer() {
           toast.success("تم حفظ التعديلات");
           navigate("/seller/offers");
         },
-        onError: (err) => setError(friendlyError(err, "تعذر حفظ التعديلات.")),
+        onError: (err) => {
+          setError(friendlyError(err, "تعذر حفظ التعديلات."));
+          setConflict(err.status === 409);
+        },
       },
     );
   };
@@ -213,6 +227,18 @@ export default function EditOffer() {
           <InlineAlert tone="danger" testId="status-edit-listing-error">
             {error}
           </InlineAlert>
+        )}
+        {conflict && (
+          <Button type="button" variant="secondary" data-testid="button-reload-edit-listing" onClick={async () => {
+            const latest = await listing.refetch();
+            if (latest.isSuccess) {
+              setEditSnapshot(null);
+              setConflict(false);
+              setError("");
+            }
+          }}>
+            تحميل النسخة الحالية وإهمال تعديلاتي
+          </Button>
         )}
         <div
           className="fixed inset-x-0 bottom-0 z-[var(--z-action-bar)] flex gap-2 border-t border-border bg-card/95 px-[var(--gutter)] pt-3 backdrop-blur-xl md:static md:justify-end md:border-0 md:bg-transparent md:p-0"

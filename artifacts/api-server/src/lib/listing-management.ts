@@ -329,7 +329,7 @@ export async function updateOwnedListing(
       },
       inventoryMode: item.inventoryMode,
       availableQuantity: item.availableQuantity,
-      updatedAt: new Date(),
+      updatedAt: new Date(Math.max(Date.now(), row.updatedAt.getTime() + 1)),
     })
     .where(eq(offers.id, row.id))
     .returning();
@@ -403,7 +403,7 @@ export async function changeOwnedListingStatus(
     .update(offers)
     .set({
       status: input.action === "PAUSE" ? "PAUSED" : "PUBLISHED",
-      updatedAt: new Date(),
+      updatedAt: new Date(Math.max(Date.now(), row.updatedAt.getTime() + 1)),
       ...(reviewedData ? { data: reviewedData } : {}),
     })
     .where(eq(offers.id, row.id))
@@ -466,7 +466,7 @@ export async function archiveOwnedListing(
 
   const [archived] = await tx
     .update(offers)
-    .set({ status: "ARCHIVED", updatedAt: new Date() })
+    .set({ status: "ARCHIVED", updatedAt: new Date(Math.max(Date.now(), row.updatedAt.getTime() + 1)) })
     .where(eq(offers.id, row.id))
     .returning();
   return archived;

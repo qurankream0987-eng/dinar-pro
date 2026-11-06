@@ -12,6 +12,12 @@ import type { ListingUpdateFulfilmentType } from './listingUpdateFulfilmentType'
 import type { ListingUpdateInventoryMode } from './listingUpdateInventoryMode';
 
 export interface ListingUpdate {
+  /**
+     * Optional optimistic precondition from Listing.updatedAt; a stale snapshot is rejected409. Existing callers without it retain their authenticated contract.
+     * @maxLength 24
+     * @pattern ^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$
+     */
+  expectedUpdatedAt?: string;
   /** @minLength 2 */
   title: string;
   /** @minLength 10 */
