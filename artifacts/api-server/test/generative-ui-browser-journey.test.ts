@@ -251,7 +251,7 @@ const rejectedUser = { ...user, conv: (await request("/ai/conversations", "POST"
 await proposed(rejectedUser, { version: 1, layout: "GRID", positions: [9] });
 
 await test("GENERATIVE-UI browser: restored layout, suggestion label, widths, keyboard and reload", async () => {
-  assert.deepEqual(grid.payload.composition, { source: "MODEL_PROPOSAL", layout: "GRID", highlightId: baseOrder[0] });
+  assert.deepEqual(grid.payload.composition, { source: "MODEL_PROPOSAL", layout: "GRID", highlightId: baseOrder[2] });
   const web = await startDinarBrowserTestWeb(origin);
   const resultPath = `/tmp/dinar-generative-ui-${run}.json`;
   const callsBefore = getModelGatewayCallCount();
@@ -267,7 +267,7 @@ await test("GENERATIVE-UI browser: restored layout, suggestion label, widths, ke
         GUI_USER_ID: user.id,
         GUI_GRID_CONVERSATION: user.conv,
         GUI_REJECTED_CONVERSATION: rejectedUser.conv,
-        GUI_HIGHLIGHT_ID: baseOrder[0]!,
+        GUI_HIGHLIGHT_ID: baseOrder[2]!,
         GUI_GRID_IDS: JSON.stringify([baseOrder[1], baseOrder[2], baseOrder[0]]),
         GUI_RESULT_PATH: resultPath,
       },
