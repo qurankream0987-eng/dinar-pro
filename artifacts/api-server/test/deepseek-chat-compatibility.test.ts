@@ -226,7 +226,12 @@ await test("DS-01 general Arabic: canonical request reaches DeepSeek and the val
   assert.equal(sent.body.max_tokens, 1200);
   for (const field of ["max_completion_tokens", "parallel_tool_calls", "provider", "stream"]) assert.equal(sent.body[field], undefined, field);
   assert.deepEqual(sent.body.thinking, { type: "disabled" }, "the documented non-thinking switch");
-  assert.deepEqual(sent.body.tools.map((tool: any) => tool.function.name), ["dinarConversationTurn"]);
+  // Since AI-FOUNDATION-02 the turn tool travels with the actor's read/prepare capability tools;
+  // the direct cart write is never offered to the model.
+  const offered: string[] = sent.body.tools.map((tool: any) => tool.function.name);
+  assert.ok(offered.includes("dinarConversationTurn"));
+  assert.equal(offered.includes("addToCart"), false);
+  assert.equal(new Set(offered).size, offered.length, "each tool is offered once");
   assert.equal(sent.body.messages[0].role, "system");
   assert.ok(sent.body.messages[0].content.startsWith(SYSTEM_PROMPT_MARKER));
   assert.ok(sent.body.messages.at(-1).content.endsWith(`USER: ${message}`));

@@ -221,16 +221,16 @@ test("F02-01 roles and advertised tools come from server rows, never from the me
     assert.equal(sellerTools.includes(name), true, `${name} is reachable for a seller as a buyer`);
   }
   assert.equal(buyerTools.length, 9);
-  assert.equal(sellerTools.length, 12);
+  assert.equal(sellerTools.length, 13, "seller tools include prepareBusinessListingAction");
   assert.deepEqual([...MODEL_TOOL_CAPABILITIES].sort(), [
     "compareListings", "listingFacts", "prepareCartMutation", "prepareInquiryReply", "prepareListingDraft",
     "prepareNegotiationProposal", "readAuthorizedOrders", "readBusinessInquiries", "readBuyerCart",
     "readFulfillmentStatus", "readInventory", "readNegotiationStatus", "requestPublicationReview",
-    "reviewCheckout", "searchListings",
+    "reviewCheckout", "searchListings", "searchExternalDomains", "searchConnectPartners", "describeCapabilities", "readOwnBusinessOverview", "readOwnOrderIssues", "prepareBusinessListingChange", "readOwnSellerDues", "readOwnAiUsage",
   ].sort());
-  assert.equal(MODEL_CAPABILITY_TOOL_NAMES.length, 12);
+  assert.equal(MODEL_CAPABILITY_TOOL_NAMES.length, 13);
   const advertised = modelToolDefinitions(contextFor(seller, sellerConversation), ["BUYER", "SELLER"]).map((tool) => tool.name);
-  assert.equal(new Set(advertised).size, 15);
+  assert.equal(new Set(advertised).size, 23);
   assert.equal(advertised.includes("addToCart"), false);
 });
 

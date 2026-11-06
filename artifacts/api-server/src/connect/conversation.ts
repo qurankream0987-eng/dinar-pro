@@ -59,11 +59,27 @@ export async function executeConnectReadTurn(input: {
     /^(?:دينار[،,\s]+)?(?:ابحث|أبحث|اعثر)\s+(?:لدى|عند)\s+الشركاء\s+(?:عن\s+)?(.{1,120})$/u.exec(
       input.message.trim(),
     );
-  if (partnerSearch && input.market) {
-    const payload = await discoverConnectCatalog(
-      input.market,
-      partnerSearch[1]!,
-    );
+  if (partnerSearch && input.market)
+    return connectPartnerSearchTurn(input.market, partnerSearch[1]!);
+  if (!isDomainSearchIntent(input.message)) return null;
+  const raw = input.message
+    .split(/\s+/u)
+    .map((part) => part.replace(/^[«»"“”`]+|[«»"“”،,؟?!؛;`]+$/gu, ""))
+    .find((part) => /[.。．｡]/u.test(part));
+  return connectDomainSearchTurn({
+    ...(raw ? { raw } : {}),
+    ...(input.actorId ? { actorId: input.actorId } : {}),
+    ...(input.market ? { market: input.market } : {}),
+    ...(input.providers ? { providers: input.providers } : {}),
+  });
+}
+
+/** Partner catalog discovery, shared by the explicit phrase and the model tool. Read only. */
+export async function connectPartnerSearchTurn(
+  market: ConnectMarket,
+  query: string,
+): Promise<{ tool: string; version: number; result: ToolResult }> {
+    const payload = await discoverConnectCatalog(market, query.slice(0, 120));
     return {
       tool: "searchConnectCatalog",
       version: 1,
@@ -79,14 +95,21 @@ export async function executeConnectReadTurn(input: {
         listings: [],
       },
     };
-  }
-  if (!isDomainSearchIntent(input.message)) return null;
+}
+
+/**
+ * Domain availability lookup, shared by the deterministic phrase route and the model tool.
+ * Read only: it never registers a domain, creates an order or a commission.
+ */
+export async function connectDomainSearchTurn(input: {
+  raw?: string;
+  actorId?: string;
+  market?: ConnectMarket;
+  providers?: DomainSearchProvider[];
+}): Promise<{ tool: string; version: number; result: ToolResult }> {
   if (input.market)
     await assertMarketLegalCapability(input.market.id, "BROWSING");
-  const raw = input.message
-    .split(/\s+/u)
-    .map((part) => part.replace(/^[«»"“”`]+|[«»"“”،,؟?!؛;`]+$/gu, ""))
-    .find((part) => /[.。．｡]/u.test(part));
+  const raw = input.raw;
   const clarify = (prompt: string) => ({
     tool: "searchDomains",
     version: 1,

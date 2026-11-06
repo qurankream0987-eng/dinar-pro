@@ -80,7 +80,15 @@ async function sendExpectingAlert(text) {
   await page.getByTestId("input-ai-composer").fill(text);
   await page.getByTestId("button-send-ai-message").click();
   const shown = await alertText();
-  await idle();
+  // A delivered-but-unconfirmed turn keeps this conversation's composer blocked while DINAR
+  // verifies it (no duplicate send); an absent turn returns the composer to idle with a retry.
+  await page.waitForFunction(
+    () =>
+      document.querySelector('[data-testid="button-send-ai-message"]')?.getAttribute("aria-label") === "إرسال الرسالة" ||
+      Boolean(document.querySelector('[data-testid="button-verify-ai-turn"]')),
+    null,
+    { timeout: 60_000 },
+  );
   return shown;
 }
 
@@ -137,6 +145,11 @@ try {
   assert.doesNotMatch(delivered, /لم يصل طلبك/u);
   assert.equal(await page.getByTestId("button-retry-ai-turn").count(), 0, "a delivered turn is never offered for resending");
   assert.equal(await page.getByTestId("button-verify-ai-turn").isVisible(), true, "the page offers «تحقق من النتيجة»");
+  assert.equal(
+    await page.getByTestId("button-send-ai-message").getAttribute("aria-label"),
+    "دينار يعمل الآن",
+    "a new send in this conversation waits for verification (no duplicate)",
+  );
   assert.equal(await cartQuantity(apiOrigin, buyer.cookie, listingId), 0, "a delivered turn executes nothing by itself");
   const pendingNow = await conversationFromServer();
   recovery.delivered.cartAfterDelivered = 0;

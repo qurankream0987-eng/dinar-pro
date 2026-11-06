@@ -74,12 +74,17 @@ const threadShape = (page) =>
     };
   });
 
+const progress = (step) => console.error(`W02U3_PERF_PROGRESS ${new Date().toISOString()} ${step}`);
+
 async function coldState(page) {
+  progress("cold:goto");
   await page.goto("/");
   await page.evaluate(() => localStorage.clear());
   await page.reload();
   await page.getByTestId("input-ai-composer").waitFor({ timeout: 45_000 });
+  progress("cold:composer");
   await settleToasts(page);
+  progress("cold:settled");
 }
 
 async function openTarget(page, target, mobile) {
@@ -90,6 +95,7 @@ async function openTarget(page, target, mobile) {
   }
   const item = page.getByTestId(`conversation-${target.conversationId}`);
   await item.waitFor({ state: "visible", timeout: 45_000 });
+  progress(`open:${target.messages ?? ""}:item-visible`);
   const startedAt = Date.now();
   await item.click();
   await page
@@ -199,8 +205,14 @@ try {
     assert.notEqual(branch.id, largest.conversationId, "the original history is preserved");
     assert.equal(new URL(turn.url()).pathname, `/api/ai/conversations/${branch.id}/turns`, "the reply is sent on the current edit branch");
     assert.ok(turn.ok());
-    await turn.finished();
-    await page.locator('[data-testid="conversation-thread"]').getByText(editedBody, { exact: true }).waitFor();
+    // The client cancels its SSE reader once the «complete» event arrives, so Playwright never
+    // reports this response as finished; the rendered branch is the observable completion.
+    await page.locator('[data-testid="conversation-thread"]').getByText(editedBody, { exact: true }).waitFor({ timeout: 45_000 });
+    await page.waitForFunction(
+      () => document.querySelector('[data-testid="button-send-ai-message"]')?.getAttribute("aria-label") === "إرسال الرسالة",
+      null,
+      { timeout: 45_000 },
+    );
     edits.push({ viewport: viewport.label, original: largest.conversationId, branch: branch.id });
     await context.close();
   }

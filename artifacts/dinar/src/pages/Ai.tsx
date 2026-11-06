@@ -1,6 +1,6 @@
 import "./AiChat.css";
 import { useStableCallback } from "@/hooks/use-stable-callback";
-import { replyForTurn, unfinishedTurn, verificationPollInterval } from "@/features/ai/turn-recovery";
+import { VERIFICATION_BLOCK_MS, replyForTurn, unfinishedTurn, verificationPollInterval } from "@/features/ai/turn-recovery";
 import * as Dialog from "@radix-ui/react-dialog";
 import { ConversationSidebar } from "@/features/ai/ConversationSidebar";
 import {
@@ -208,7 +208,22 @@ export default function AiPage() {
     activeStream.current?.controller.abort();
   }, []);
   const initializedId = useRef<string | undefined>(undefined);
-  const verifyingActiveTurn = Boolean(verifyingTurn && verifyingTurn.conversationId === activeId);
+  // Verification blocks a new send in this conversation only while automatic verification
+  // reads are still running (turn-recovery budget). After that the composer is usable again;
+  // «تحقق من النتيجة» stays available and nothing is ever resent automatically.
+  const [, setVerificationTick] = useState(0);
+  useEffect(() => {
+    if (!verifyingTurn) return;
+    const remaining = VERIFICATION_BLOCK_MS - (Date.now() - verifyingTurn.startedAt);
+    if (remaining <= 0) return;
+    const timer = setTimeout(() => setVerificationTick((value) => value + 1), remaining + 50);
+    return () => clearTimeout(timer);
+  }, [verifyingTurn]);
+  const verifyingActiveTurn = Boolean(
+    verifyingTurn &&
+      verifyingTurn.conversationId === activeId &&
+      Date.now() - verifyingTurn.startedAt < VERIFICATION_BLOCK_MS,
+  );
   const conversations = useGetAiConversations({ enabled: Boolean(user) });
   const detail = useGetAiConversation(activeId, {
     enabled: Boolean(user && activeId),

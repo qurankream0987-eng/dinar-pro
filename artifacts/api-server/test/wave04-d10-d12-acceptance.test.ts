@@ -783,10 +783,10 @@ test("W04-18 unapproved tools, admin names and loose schemas are unreachable fro
       name,
     );
   }
-  assert.equal(MODEL_CAPABILITY_TOOL_NAMES.length, 12);
-  assert.equal(MODEL_TOOL_CAPABILITIES.length, 15);
+  assert.equal(MODEL_CAPABILITY_TOOL_NAMES.length, 13);
+  assert.equal(MODEL_TOOL_CAPABILITIES.length, 23);
   const definitions = modelCapabilityToolDefinitions(["BUYER", "SELLER"]);
-  assert.equal(definitions.length, 12);
+  assert.equal(definitions.length, 13);
   for (const definition of definitions)
     assert.equal((definition.parameters as any).additionalProperties, false, `${definition.name} is strict`);
   for (const definition of Object.values(CAPABILITY_REGISTRY)) {

@@ -33,6 +33,7 @@ if (
 const checks = [];
 const pageErrors = [];
 const consoleErrors = [];
+const failedRequests = [];
 /** Diagnostics only: which response produced a «Failed to load resource» console error. */
 const failedResponses = [];
 const expectedMarketConversationConflicts = [];
@@ -80,6 +81,12 @@ async function openAuthenticatedSession(cookie) {
   sessionPage.on("pageerror", (error) => pageErrors.push(error.message));
   sessionPage.on("console", (message) => {
     if (message.type() === "error") consoleErrors.push(message.text());
+  });
+  // Diagnostics only: name the host behind a network-level console error.
+  sessionPage.on("requestfailed", (request) => {
+    const line = `${request.failure()?.errorText ?? "failed"} ${request.url().slice(0, 200)}`;
+    failedRequests.push(line);
+    console.error(`PHASE1_REQUEST_FAILED ${line}`);
   });
   sessionPage.on("response", (response) => {
     if (response.status() >= 400) failedResponses.push(`${response.status()} ${response.request().method()} ${response.url().slice(0, 160)}`);
@@ -1121,6 +1128,7 @@ try {
         checks,
         pageErrors,
         consoleErrors,
+        failedRequests,
         failedResponses,
         expectedMarketConversationConflicts,
         createdConversationIds,
@@ -1143,6 +1151,6 @@ if (failure) {
   process.exitCode = 1;
 } else {
   console.log(
-    JSON.stringify({ checks, pageErrors, consoleErrors, publishedOfferId }),
+    JSON.stringify({ checks, pageErrors, consoleErrors, failedRequests, publishedOfferId }),
   );
 }

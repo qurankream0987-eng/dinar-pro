@@ -184,7 +184,7 @@ if [ -n "$CHROMIUM" ]; then
   # Keep browser traffic local too: the web app's Google Fonts origin is served by this
   # HTTPS stub, and the wrapper trusts only this one-day certificate's public key.
   openssl req -x509 -newkey rsa:2048 -nodes -days 1 -subj "/CN=local-suite-third-party" \
-    -addext "subjectAltName=DNS:fonts.googleapis.com,DNS:fonts.gstatic.com$PROVIDER_NAV_SAN" \
+    -addext "subjectAltName=DNS:fonts.googleapis.com,DNS:fonts.gstatic.com,DNS:images.unsplash.com$PROVIDER_NAV_SAN" \
     -keyout "$WORK/stub.key" -out "$WORK/stub.crt" >/dev/null 2>&1
   SPKI=$(openssl x509 -in "$WORK/stub.crt" -pubkey -noout | openssl pkey -pubin -outform der | openssl dgst -sha256 -binary | base64)
   DINAR_ISOLATION_STUB_LOG="$WORK/third-party-stub.log"
@@ -229,11 +229,11 @@ if [ -n "$CHROMIUM" ]; then
   REAL_CHROMIUM=$CHROMIUM
   cat > "$WORK/chromium" <<WRAPPER
 #!/bin/sh
-exec "$REAL_CHROMIUM" --host-resolver-rules="MAP fonts.googleapis.com 127.0.0.1, MAP fonts.gstatic.com 127.0.0.1$PROVIDER_NAV_MAP" --ignore-certificate-errors-spki-list="$SPKI" "\$@"
+exec "$REAL_CHROMIUM" --host-resolver-rules="MAP fonts.googleapis.com 127.0.0.1, MAP fonts.gstatic.com 127.0.0.1, MAP images.unsplash.com 127.0.0.1$PROVIDER_NAV_MAP" --ignore-certificate-errors-spki-list="$SPKI" "\$@"
 WRAPPER
   chmod +x "$WORK/chromium"
   CHROMIUM="$WORK/chromium"
-  echo "LOCAL_SUITE_BROWSER_STUB hosts=fonts.googleapis.com,fonts.gstatic.com target=127.0.0.1:443"
+  echo "LOCAL_SUITE_BROWSER_STUB hosts=fonts.googleapis.com,fonts.gstatic.com,images.unsplash.com target=127.0.0.1:443"
 fi
 
 if [ "$REUSE_DB" = 1 ]; then

@@ -1314,6 +1314,23 @@ function stableJson(value: unknown): string {
 /** F02 reads: only the verified fields the model needs to answer, never a full row. */
 function compactCapabilityRead(result: ToolResult) {
   if (result.kind !== "SURFACE") return undefined;
+  if (result.capabilities) return { kind: "DINAR_CAPABILITIES", ...result.capabilities };
+  if (result.businessOverview) return { kind: "BUSINESS_OVERVIEW", ...result.businessOverview };
+  if (result.orderIssues) return { kind: "ORDER_ISSUES", ...result.orderIssues };
+  if (result.sellerDues) return { kind: "SELLER_DUES", ...result.sellerDues };
+  if (result.aiUsage) return { kind: "AI_USAGE", ...result.aiUsage };
+  if (result.universalCards)
+    return {
+      kind: "EXTERNAL_OFFERS",
+      note: "Third-party facts at check time; purchase happens outside DINAR; no internal order.",
+      cards: result.universalCards.cards.slice(0, 8).map((card) => ({
+        title: String(card.title ?? "").slice(0, 120),
+        kind: card.kind,
+        commerceMode: card.commerceMode,
+        availability: card.availability ?? null,
+        price: card.price ?? null,
+      })),
+    };
   if (result.inventory)
     return {
       kind: "INVENTORY",
@@ -1828,7 +1845,7 @@ export async function executeModelFallback(
           toolLoopStopReason = "PREPARED";
           break;
         }
-        if (result.kind === "SURFACE" && (result.inventory || result.inquiries || result.orders || result.cart || result.fulfillment)) {
+        if (result.kind === "SURFACE" && (result.inventory || result.inquiries || result.orders || result.cart || result.fulfillment || result.universalCards || result.aiUsage)) {
           lastCapabilityRead = result;
           lastCapabilityReadTool = execution.tool;
         }

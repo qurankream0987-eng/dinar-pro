@@ -6,6 +6,16 @@ const CART_NAVIGATION_ACTION =
 const CART_SURFACE_REFERENCE =
   /(?:^|\s)(?:السله|للسله|سله\s+(?:مشترياتي|المشتريات|التسوق|الشراء)|عربه\s+(?:التسوق|المشتريات|الشراء))(?:\s|$)/u;
 
+function cartNavigationGoverns(text: string): boolean {
+  const words = text.split(" ");
+  for (let index = 0; index < words.length; index += 1) {
+    if (!CART_NAVIGATION_ACTION.test(` ${words[index]} `)) continue;
+    const window = ` ${words.slice(index + 1, index + 4).join(" ")} `;
+    if (CART_SURFACE_REFERENCE.test(window)) return true;
+  }
+  return false;
+}
+
 /** Explicit navigation intents do not require a model or imply successful writes. */
 export function surfaceIntent(message: string): string | undefined {
   const text = message.replace(/[أإآ]/g, "ا");
@@ -25,10 +35,9 @@ export function surfaceIntent(message: string): string | undefined {
     .replace(/[؟?!،,.]+/g, " ")
     .replace(/\s+/g, " ")
     .trim();
-  if (
-    CART_NAVIGATION_ACTION.test(cartText) &&
-    CART_SURFACE_REFERENCE.test(cartText)
-  )
+  // The navigation verb must govern the cart reference («افتح السلة», «ورني سلة مشترياتي»):
+  // a cart word elsewhere in the sentence («لا تضيف شي للسلة، بس ورني الأسعار») is not a request to open it.
+  if (CART_NAVIGATION_ACTION.test(cartText) && CART_SURFACE_REFERENCE.test(cartText) && cartNavigationGoverns(cartText))
     return "CART";
   if (/طلباتي|اين طلبي|وين طلبي|تتبع.*طلب/.test(text) || statusQuestion(message)?.subject === "ORDER") return "ORDERS";
   if (/عروضي|ادارة.*عروض|اعلاناتي|قوائمي|عروضي المنشورة/.test(text))
@@ -106,6 +115,8 @@ const CORRECTION_PREFIXES = [
   /^\s*i\s+(?:mean|meant)\s+/iu,
   /^\s*(?:آسف|اسف|معذرة)\s*[,،]?\s*/iu,
   /^\s*actually\s*[,،:]?\s*/iu,
+  // «لا تضيف شي للسلة، بس ورني …», «ما أبي أشتري، فقط …»: a refused action followed by the real request.
+  /^\s*(?:لا|ما|مو)\s+[^،,.؟?!]{1,40}?\s*[,،]?\s*(?:بس|فقط|بل|لكن)\s+/iu,
 ];
 
 /** Remove only a leading correction marker; keep the corrected value and its constraints. */
@@ -123,7 +134,7 @@ export function stripCorrectionPrefix(message: string): string {
 }
 
 export function searchTerms(message: string): string {
-  const terms = message
+  const terms = stripCorrectionPrefix(message)
     // «دينار ابحث لي عن …», «يا دينار دورلي على …»: the address and the search verb with its
     // «لي» and preposition are the request, not the product.
     .replace(/^\s*(?:يا\s+)?(?:دينار|dinar)(?:\s*[،,:]\s*|\s+)/iu, "")
@@ -132,6 +143,9 @@ export function searchTerms(message: string): string {
       /(?:أريد|اريد|أبحث عن|ابحث عن|أحتاج|احتاج|أشتري|اشتري|أبغى|ابغى|من فضلك|فقط|بدينار)/g,
       " ",
     )
+    // «ورني أسعار …», «اعرض لي سعر …»: a show verb and the price noun describe the request, not the product.
+    .replace(/(^|\s)(?:ورني|وريني|ورّني|ارني|أرني|اعرض(?:\s*لي)?|شوف(?:\s*لي)?)(?=\s|$)/gu, " ")
+    .replace(/(^|\s)(?:أسعار|اسعار|سعر)(?=\s+\S)/gu, " ")
     // Short colloquial "I want" verbs only as whole words, so «ابيض» keeps its letters.
     .replace(/(^|\s)(?:أبي|ابي|أبغي|ابغي|بدي|ودي)(?=\s|$)/g, " ")
     .trim();

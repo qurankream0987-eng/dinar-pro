@@ -60,7 +60,8 @@ import { demandOptions } from "../lib/demand-rescue";
 import { normalizeSearch } from "./search-context";
 import { findOrdinalMention, foldArabicLetters, normalizeDigits, parseResultReference } from "./arabic-normalization";
 import { promotionIntent } from "./intent";
-import { plansCardPrompt, plansCardView, usageCardPrompt, usageCardView } from "./usage-turn";
+import { aiUsageSummary } from "../lib/ai-usage";
+import { plansCardPrompt, plansCardView, usageCardPrompt, usageCardView, usageProjection } from "./usage-turn";
 import { AI_USAGE_QUESTION } from "./usage-intent";
 import { resumeConversationDraftById } from "./draft-actions";
 import type { ToolResult } from "./tool-registry";
@@ -1162,11 +1163,38 @@ const WANTS_NAMED_TIER = /^(?:اريد|ابي|ابغي|ابغى|بدي|ودي|ح
  * from the usage ledger, the policy and the catalog; a tier change only opens the existing
  * Business review, which in turn needs the billing authority (simulation in development).
  */
+/**
+ * «هل يكفيني حتى نهاية الأسبوع؟»: an estimate from this period's actual pace (usage-turn.ts
+ * usageProjection), or an explicit statement that there is not enough data. Never invented.
+ */
+async function usageSufficiencyNote(actorId: string, market: Market, horizonDays?: number): Promise<string> {
+  const summary = await aiUsageSummary({ kind: "USER", userId: actorId, market: market as never });
+  const text = summary.resources.find((item) => item.resource === "TEXT_REQUEST");
+  if (!text) return "";
+  const until = horizonDays ? new Date(Date.now() + horizonDays * 24 * 60 * 60 * 1000) : undefined;
+  const projection = usageProjection(text, summary.period, new Date(), until);
+  const span = horizonDays === 7 ? "حتى نهاية الأسبوع" : horizonDays === 1 ? "حتى نهاية اليوم" : "حتى تجدد الحصة";
+  if (projection.kind === "INSUFFICIENT_DATA")
+    return `لا تتوفر بيانات استخدام كافية في هذه الفترة لتقدير ما إذا كانت حصتك تكفي ${span}؛ لم أخمّن رقمًا.\n`;
+  return projection.likelyToRunOut
+    ? `تقديريًا، وبوتيرة استخدامك الحالية (آخر ${projection.basisHours} ساعة)، قد تصل إلى حوالي ${projection.projectedUseAtEnd} طلبًا ${span}، وهذا يتجاوز حدك البالغ ${text.limit}. هذا تقدير وليس حدًا مضمونًا.\n`
+    : `تقديريًا، وبوتيرة استخدامك الحالية (آخر ${projection.basisHours} ساعة)، ستستخدم حوالي ${projection.projectedUseAtEnd} من ${text.limit} طلبًا ${span}، فيُتوقع أن تكفيك. هذا تقدير وليس ضمانًا.\n`;
+}
+
+/** The AI usage card exactly as the deterministic route builds it; shared with the model's usage read. */
+export async function aiUsageCardTurn(actorId: string, market: Market, question: "SUMMARY" | "RENEWAL" | "WHY_STOPPED" = "SUMMARY"): Promise<Turn> {
+  const view = await usageCardView(actorId, market);
+  return turnFor({ kind: "COMMERCE", ownerId: actorId, view: "AI_USAGE", usageQuestion: question }, [], usageCardPrompt(view, question), actorId, market);
+}
+
 async function aiUsageAndPlansTurn(text: string, actorId: string, market: Market, latest: CommerceQuery | undefined): Promise<Turn | null> {
   if (P.aiUsage.test(text)) {
     const question = /تتجدد|يتجدد|تنتجدد/u.test(text) ? "RENEWAL" : /(?:وقف|توقف|يوقف|ما\s+يرد|ما\s+يشتغل)/u.test(text) ? "WHY_STOPPED" : "SUMMARY";
     const view = await usageCardView(actorId, market);
-    return turnFor({ kind: "COMMERCE", ownerId: actorId, view: "AI_USAGE", usageQuestion: question }, [], usageCardPrompt(view, question), actorId, market);
+    const sufficiency = /(?:يكفي|يكفيني|بيكفي|بيكفيني|يوصلني|يكمل\s+معي|يلحقني)/u.test(text)
+      ? await usageSufficiencyNote(actorId, market, /(?:اسبوع|الاسبوع)/u.test(text) ? 7 : /(?:اليوم|لاخر\s+اليوم|نهايه\s+اليوم)/u.test(text) ? 1 : undefined)
+      : "";
+    return turnFor({ kind: "COMMERCE", ownerId: actorId, view: "AI_USAGE", usageQuestion: question }, [], `${sufficiency}${usageCardPrompt(view, question)}`, actorId, market);
   }
   const publicPlans = await publicPlansTurn(text, actorId, market);
   if (publicPlans) return publicPlans;

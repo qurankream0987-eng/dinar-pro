@@ -54,6 +54,21 @@ await test("missing files are 404, never the SPA shell", async () => {
   }
 });
 
+await test("a labelled staging or production deployment may only be framed by itself", async () => {
+  const previous = process.env.DINAR_DEPLOYMENT_ENV;
+  try {
+    for (const label of ["staging", "production"]) {
+      process.env.DINAR_DEPLOYMENT_ENV = label;
+      const csp = (await fetch(`${origin}/`, { headers: { Accept: "text/html" } })).headers.get("content-security-policy") ?? "";
+      assert.match(csp, /frame-ancestors 'self'(;|$)/, label);
+      assert.doesNotMatch(csp, /replit/u, `${label} is not embeddable by Replit`);
+    }
+  } finally {
+    if (previous === undefined) delete process.env.DINAR_DEPLOYMENT_ENV;
+    else process.env.DINAR_DEPLOYMENT_ENV = previous;
+  }
+});
+
 await test("the shell and API carry the browser security policy", async () => {
   const shell = await fetch(`${origin}/`, { headers: { Accept: "text/html" } });
   const csp = shell.headers.get("content-security-policy") ?? "";

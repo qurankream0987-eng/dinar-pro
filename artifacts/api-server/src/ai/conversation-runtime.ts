@@ -50,6 +50,7 @@ import {
   executeSellerListingManagementTurn,
   isMarketingRequest,
   isSellerBusinessQuestion,
+  isBareRemainingQuestion,
 } from "./seller-management";
 import { executeEmploymentTurn, isEmploymentQuery } from "./employment-turn";
 import { executeDeliveryTurn, isDeliveryQuery } from "./delivery-turn";
@@ -57,6 +58,7 @@ import { executePromotionTurn, explainSponsoredPlacement, isPromotionQuery } fro
 import { executeBuyerTurn, executePurchaseTurn, executeOrderContactRequest, reviewQuantity } from "./buyer-turn";
 import { executeListingFactQuestion } from "./listing-fact-question";
 import { executeStockQuestion } from "./stock-question";
+import { modelRolesForActor } from "./model-capability-tools";
 import { isAiUsageQuestion } from "./usage-intent";
 import { executeDriverTurn, isDriverOnboardingIntent, isDriverQuery } from "./driver-turn";
 import { executeDraftActionTurn } from "./draft-actions";
@@ -1297,7 +1299,23 @@ async function executeRuntime(context: RuntimeContext, incoming: RuntimeOptions)
   // «اقترح كيف أحسن…» as a promotion tutorial. Copy is drafted by the model from the
   // seller's facts (seller-management.ts sellerListingFacts) and changes nothing.
   if (!addToCart && !hasListingPhotos && context.location === undefined && context.actorId) {
-    if (isSellerBusinessQuestion(context.message)) {
+    // «كم باقي منه؟» right after a result is the stock of that listing; and a bare «كم باقي؟»
+    // from someone who sells nothing is never a seller-inventory question.
+    let sellerQuestion = isSellerBusinessQuestion(context.message);
+    if (sellerQuestion && isBareRemainingQuestion(context.message)) {
+      const stock = await executeStockQuestion({
+        conversationId: context.conversationId,
+        message: context.message,
+        market: context.market,
+        actorId: context.actorId,
+      });
+      if (stock) {
+        options.onToolSelected?.(stock.tool);
+        return stock;
+      }
+      sellerQuestion = (await modelRolesForActor(context.actorId, context.market.id)).includes("SELLER");
+    }
+    if (sellerQuestion) {
       const business = await executeSellerAdviceTurn({
         conversationId: context.conversationId,
         message: context.message,

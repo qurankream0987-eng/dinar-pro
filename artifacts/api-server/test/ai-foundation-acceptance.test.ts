@@ -246,9 +246,9 @@ const stableJson = (value: unknown): string => {
 const signatureOf = (tool: string, args: unknown) =>
   `${tool}:${createHash("sha256").update(stableJson(args)).digest("hex")}`;
 
-test("AI-F02 the capability registry names all fifteen capabilities and advertises them under one tool each", async () => {
-  assert.equal(CAPABILITY_NAMES.length, 15);
-  assert.equal(new Set(CAPABILITY_NAMES).size, 15);
+test("AI-F02 the capability registry names all twenty-three capabilities (15 F01/F02 + 7 intelligence reads + 1 business prepare) and advertises them under one tool each", async () => {
+  assert.equal(CAPABILITY_NAMES.length, 23);
+  assert.equal(new Set(CAPABILITY_NAMES).size, 23);
   for (const name of CAPABILITY_NAMES) {
     const definition = CAPABILITY_REGISTRY[name];
     assert.equal(definition.name, name);
@@ -274,11 +274,11 @@ test("AI-F02 the capability registry names all fifteen capabilities and advertis
   }
   assert.deepEqual([...MODEL_TOOL_CAPABILITIES].sort(), [...CAPABILITY_NAMES].sort());
   const toolNames = MODEL_TOOL_CAPABILITIES.map((name) => CAPABILITY_REGISTRY[name].toolName);
-  assert.equal(new Set(toolNames).size, 15, "every capability owns one distinct model tool name");
+  assert.equal(new Set(toolNames).size, 23, "every capability owns one distinct model tool name");
   assert.deepEqual(
     [...toolNames].filter((name) => (MODEL_LOOP_TOOL_ALLOWLIST as readonly string[]).includes(name)).sort(),
     [...MODEL_LOOP_TOOL_ALLOWLIST].sort(),
-    "the three F01 tools keep their names",
+    "the F01 and intelligence read tools keep their names",
   );
   const market = await marketFor({ actor: { activeMarketId: "JO" }, cookies: {} } as any);
   const advertised = modelToolDefinitions(
@@ -312,7 +312,7 @@ test("AI-F02 search then compare renders DINAR's own side-by-side surface and pe
   const reply = await say(user.cookie, user.conv, text, clientMessageId);
   assert.equal(reply.status, 200, reply.body);
   assert.equal(matchedScriptKey, text);
-  assert.deepEqual(observedToolNames.sort(), ["compareListings", "dinarConversationTurn", "getResource", "prepareCartChange", "prepareInquiryMessage", "prepareNegotiationProposal", "readBusinessInquiries", "readCart", "readFulfillment", "readNegotiationStatus", "readOrders", "reviewCheckout", "searchListings"]);
+  assert.deepEqual(observedToolNames.sort(), ["compareListings", "describeDinarCapabilities", "dinarConversationTurn", "getResource", "prepareCartChange", "prepareInquiryMessage", "prepareNegotiationProposal", "readAiUsage", "readBusinessInquiries", "readBusinessOverview", "readCart", "readFulfillment", "readNegotiationStatus", "readOrderIssues", "readOrders", "readSellerDues", "reviewCheckout", "searchDomains", "searchListings", "searchPartnerOffers"]);
   assert.equal(calls, 3, "search, comparison, final answer");
   assert.equal(sawUntrustedRule, true);
   assert.equal(reply.payload.surface, "COMPARISON", reply.body);
@@ -568,7 +568,7 @@ test("AI-F10 instructions inside listing text stay data: no cart or publication 
   calls = 0;
   const reply = await say(user.cookie, user.conv, text);
   assert.equal(reply.status, 200, reply.body);
-  assert.deepEqual(observedToolNames.sort(), ["compareListings", "dinarConversationTurn", "getResource", "prepareCartChange", "prepareInquiryMessage", "prepareNegotiationProposal", "readBusinessInquiries", "readCart", "readFulfillment", "readNegotiationStatus", "readOrders", "reviewCheckout", "searchListings"]);
+  assert.deepEqual(observedToolNames.sort(), ["compareListings", "describeDinarCapabilities", "dinarConversationTurn", "getResource", "prepareCartChange", "prepareInquiryMessage", "prepareNegotiationProposal", "readAiUsage", "readBusinessInquiries", "readBusinessOverview", "readCart", "readFulfillment", "readNegotiationStatus", "readOrderIssues", "readOrders", "readSellerDues", "reviewCheckout", "searchDomains", "searchListings", "searchPartnerOffers"]);
   assert.equal(observedToolNames.includes("addToCart"), false);
   assert.equal(sawUntrustedRule, true, "tool results are framed as untrusted listing data");
   assert.match(lastPromptText, /<dinar_tool_results>/u, "listing text is delivered inside the data envelope");
