@@ -928,7 +928,7 @@ async function startBuiltWeb() {
 }
 
 await test("BROWSER header, sidebar, starters, free topic changes, rendering and layout at 11 widths × 2 themes", { timeout: 1_800_000, skip: process.env.DINAR_XP_BROWSER === "0" }, async () => {
-  const users = { main: await register("Browser"), layout: await register("Layout"), seller, registeredA: await register("Registered A"), registeredB: await register("Registered B"), handoffC: await register("Handoff C"), handoffD: await register("Handoff D"), handoffE: await register("Handoff E"), handoffF: await register("Handoff F"), draftOwner: await register("Draft Owner") };
+  const users = { main: await register("Browser"), layout: await register("Layout"), seller, registeredA: await register("Registered A"), registeredB: await register("Registered B"), handoffC: await register("Handoff C"), handoffD: await register("Handoff D"), handoffE: await register("Handoff E"), handoffF: await register("Handoff F"), draftOwner: await register("Draft Owner"), cartOwner: await register("Cart Queue Owner"), cartOther: await register("Cart Queue Other") };
   // Canonical pending receipt for the real notification → order navigation journey.
   const notificationSeller = await register("Notification Seller");
   const notificationListing = await publish(notificationSeller, `طلب تنبيه ${runId}`, 1, "3");
@@ -940,6 +940,7 @@ await test("BROWSER header, sidebar, starters, free topic changes, rendering and
   assert.equal((await request(`/orders/${notificationOrder.data.id}/delivery`, "POST", { proofType: "CODE", proofToken: "4821" }, notificationSeller.cookie)).status, 200);
   const cartSeed = await request("/cart", "PUT", { marketId: "JO", items: [{ listingId: L.itemUsedMid, quantity: 1 }] }, users.main.cookie);
   assert.equal(cartSeed.status, 200, cartSeed.raw);
+  assert.equal((await request("/cart", "PUT", { marketId: "JO", items: [{ listingId: L.itemUsedMid, quantity: 1 }] }, users.cartOwner.cookie)).status, 200);
   const web = await startBuiltWeb();
   const resultPath = `${OUT}/report.json`;
   await mkdir(`${OUT}/shots`, { recursive: true });
@@ -967,6 +968,12 @@ await test("BROWSER header, sidebar, starters, free topic changes, rendering and
   }
   const report = JSON.parse(await readFile(resultPath, "utf8"));
   console.log("XP_BROWSER_SUMMARY", JSON.stringify(report.summary));
+  const diagnosticCartOwner = await request("/cart", "GET", undefined, users.cartOwner.cookie);
+  const diagnosticCartOther = await request("/cart", "GET", undefined, users.cartOther.cookie);
+  console.log("XP_CART_QUEUE_DIAGNOSTIC", JSON.stringify({
+    originalActor: { status: diagnosticCartOwner.status, quantities: diagnosticCartOwner.data.map((item: any) => item.quantity) },
+    newActor: { status: diagnosticCartOther.status, quantities: diagnosticCartOther.data.map((item: any) => item.quantity) },
+  }));
   assert.deepEqual(report.summary.failed, [], JSON.stringify(report.failures ?? report.summary.failed));
   assert.deepEqual(report.summary.consoleErrors, [], "no console errors");
   const notificationAfter = await request(`/orders/${notificationOrder.data.id}`, "GET", undefined, users.main.cookie);
@@ -977,6 +984,20 @@ await test("BROWSER header, sidebar, starters, free topic changes, rendering and
   assert.equal(cartAfterNavigation.data.length, 1, "read-only navigation does not change the canonical cart");
   assert.equal(cartAfterNavigation.data[0].listingId, L.itemUsedMid);
   assert.equal(cartAfterNavigation.data[0].quantity, 1);
+  const queueOwnerCart = await request("/cart", "GET", undefined, users.cartOwner.cookie);
+  const queueOtherCart = await request("/cart", "GET", undefined, users.cartOther.cookie);
+  assert.equal(queueOwnerCart.status, 200);
+  assert.equal(queueOwnerCart.data[0].quantity, 2, "only the acknowledged original-owner write persists");
+  assert.deepEqual(queueOtherCart.data, [], "the queued old-owner intent never writes another account's cart");
+  for (const method of ["GET", "PUT"]) {
+    const mismatch = await fetch(`${base}/cart`, {
+      method, headers: { Cookie: users.cartOther.cookie, "X-Dinar-Cart-Actor": users.cartOwner.id, ...(method === "PUT" ? { "Content-Type": "application/json" } : {}) },
+      ...(method === "PUT" ? { body: JSON.stringify({ marketId: "JO", items: [{ listingId: L.itemUsedMid, quantity: 4 }] }) } : {}),
+    });
+    assert.equal(mismatch.status, 409, `${method} cart must reject an intent bound to a different session actor`);
+    assert.equal(Array.isArray(await mismatch.json()), false, "mismatched cart reads disclose no cart data");
+  }
+  assert.deepEqual((await request("/cart", "GET", undefined, users.cartOther.cookie)).data, []);
   // What the browser renamed is what the server stores.
   const renamed = await db.select().from(conversations).where(and(eq(conversations.ownerUserId, users.main.id), eq(conversations.title, "دروس React")));
   assert.equal(renamed.length, 1, "the rename typed in the sidebar is the stored title");

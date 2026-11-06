@@ -614,6 +614,16 @@ router.use(
   ["/cart", "/checkout", "/orders", "/dashboard", "/seller-dues"],
   requireAuth,
 );
+// Bind queued browser intents to the authenticated actor who prepared them. The hint
+// never grants access; legacy callers without it retain the authenticated API contract.
+router.use("/cart", (req, res, next) => {
+  const preparedFor = req.get("X-Dinar-Cart-Actor");
+  if (preparedFor !== undefined && preparedFor !== req.actor!.id) {
+    res.status(409).json({ error: "تغيّر الحساب. أعد تحميل السلة قبل المتابعة.", code: "CART_ACTOR_CHANGED" });
+    return;
+  }
+  next();
+});
 router.get("/cart", async (req, res) => {
   const market = await marketFor(req);
   res.json(await getMarketplaceCart(req.actor!.id, market));

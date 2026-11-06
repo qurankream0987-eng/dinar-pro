@@ -39,6 +39,7 @@ type CartContextValue = {
 };
 
 const CartContext = createContext<CartContextValue | null>(null);
+const cartActorHeaders = (userId?: string): Record<string, string> => userId ? { "X-Dinar-Cart-Actor": userId } : {};
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const { user } = useAccount();
@@ -58,7 +59,7 @@ function ScopedCart({ children }: { children: ReactNode }) {
   useEffect(() => {
     let live = true;
     if (!user) return;
-    api("/cart")
+    api("/cart", "GET", undefined, cartActorHeaders(user?.id))
       .then((data) => {
         if (live) {
           saved.current = JSON.stringify(data);
@@ -86,7 +87,7 @@ function ScopedCart({ children }: { children: ReactNode }) {
         api("/cart", "PUT", {
           marketId: user.activeMarketId,
           items: JSON.parse(snapshot),
-        }),
+        }, cartActorHeaders(user?.id)),
       )
       .then(() => {
         setError("");
@@ -128,8 +129,8 @@ function ScopedCart({ children }: { children: ReactNode }) {
           const fresh = await api("/cart", "PUT", {
             marketId: user.activeMarketId,
             items: result.items,
-          });
-          const items = Array.isArray(fresh) ? fresh : await api("/cart");
+          }, cartActorHeaders(user?.id));
+          const items = Array.isArray(fresh) ? fresh : await api("/cart", "GET", undefined, cartActorHeaders(user?.id));
           saved.current = JSON.stringify(items);
           itemsRef.current = items;
           setItems(items);
@@ -151,7 +152,7 @@ function ScopedCart({ children }: { children: ReactNode }) {
   const refreshFromServer = useCallback(async () => {
     if (!user) return;
     try {
-      const data = await api("/cart");
+      const data = await api("/cart", "GET", undefined, cartActorHeaders(user?.id));
       const next = Array.isArray(data) ? data : [];
       saved.current = JSON.stringify(next);
       itemsRef.current = next;
@@ -210,7 +211,7 @@ function ScopedCart({ children }: { children: ReactNode }) {
       retry: () => {
         setError("");
         if (!ready) {
-          api("/cart")
+          api("/cart", "GET", undefined, cartActorHeaders(user?.id))
             .then((data) => {
               saved.current = JSON.stringify(data);
               itemsRef.current = data;
@@ -224,7 +225,7 @@ function ScopedCart({ children }: { children: ReactNode }) {
               api("/cart", "PUT", {
                 marketId: user!.activeMarketId,
                 items: itemsRef.current,
-              }),
+              }, cartActorHeaders(user?.id)),
             )
             .then(() => {
               setError("");

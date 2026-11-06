@@ -1325,6 +1325,54 @@ try {
     } finally { identityFailures.delete(page); await shot(page, "audit-failed-identity-revalidation").catch(() => {}); await context.close(); }
   });
 
+  await journey("cart-queued-cross-account-isolation", async () => {
+    const { context, page } = await openRegisteredUserJourney(browser, { clientIp: "198.18.201.10" });
+    let releaseAck = () => {};
+    try {
+      await loginInBrowser(page, "cartOwner");
+      await page.goto("/cart", { waitUntil: "domcontentloaded" });
+      const listingId = process.env.XP_CART_LISTING;
+      await expect(page.getByTestId(`row-cart-item-${listingId}`)).toBeVisible();
+      let firstReceiptStatus;
+      const ack = new Promise((resolve) => { releaseAck = resolve; });
+      let putCount = 0;
+      const writes = [];
+      page.on("response", (response) => {
+        if (new URL(response.url()).pathname === "/api/cart" && response.request().method() === "PUT") writes.push(response.status());
+      });
+      await context.route("**/api/cart", async (route) => {
+        if (route.request().method() !== "PUT" || route.request().frame().page() !== page || ++putCount !== 1) return route.fallback();
+        const response = await route.fetch({ url: `${apiOrigin}/api/cart`, headers: { ...route.request().headers(), origin: apiOrigin, referer: `${apiOrigin}/`, "x-forwarded-for": "198.18.201.10" } });
+        firstReceiptStatus = response.status();
+        await ack;
+        await route.fulfill({ response }).catch(() => {});
+      });
+      await page.getByTestId(`button-increase-${listingId}`).click();
+      await expect.poll(() => firstReceiptStatus, { timeout: 10_000 }).toBe(200);
+      await page.getByTestId(`button-increase-${listingId}`).click();
+      await page.evaluate(() => {
+        Object.defineProperty(document, "visibilityState", { configurable: true, get: () => "hidden" });
+        document.dispatchEvent(new Event("visibilitychange"));
+      });
+      const other = await context.newPage();
+      await other.goto("/settings", { waitUntil: "domcontentloaded" });
+      await other.getByTestId("button-settings-logout").click();
+      await other.getByTestId("dialog-confirm").getByTestId("button-confirm-action").click();
+      await expectSignedOut(other);
+      await loginInBrowser(other, "cartOther");
+      check((await (await context.request.get(`${apiOrigin}/api/cart`)).json()).length === 0, "new account starts with its own empty cart");
+      releaseAck();
+      await expect.poll(() => writes.length, { timeout: 15_000 }).toBe(2);
+      const identityAfterAck = await (await context.request.get(`${apiOrigin}/api/auth/me`)).json();
+      check(identityAfterAck.user.id === users.cartOther, "the new account is still the authenticated actor after the late acknowledgement");
+      const cart = await (await context.request.get(`${apiOrigin}/api/cart`)).json();
+      check(cart.length === 0, "queued previous-account cart mutation never changes the new account's cart", JSON.stringify({ writes, rows: cart.map((item) => ({ listingId: item.listingId, quantity: item.quantity })) }));
+      check(writes[0] === 200 && writes[1] === 409, "stale queued actor intent is explicitly rejected", JSON.stringify(writes));
+      await other.close();
+      return { initialOwnerReceipt: writes[0], staleQueuedIntent: writes[1], newAccountCart: "empty", state: "verified with canonical API" };
+    } finally { releaseAck(); await shot(page, "audit-cart-queued-cross-account").catch(() => {}); await context.close(); }
+  });
+
 } finally {
   await browser.close();
 }
