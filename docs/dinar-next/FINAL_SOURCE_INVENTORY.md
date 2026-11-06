@@ -27,7 +27,7 @@ Generated contract proof is mechanical regeneration from authored sources, follo
 
 [FINAL_49_BRANCH_RECONCILIATION](FINAL_49_BRANCH_RECONCILIATION.md) and its complete JSON list exact heads, original unique commits, every modified path/blob pair, semantic contributions, existing equivalents, missing behaviors and security/test evidence. Thirty ancestor heads preserve history but are not accepted solely by ancestry. Nineteen divergent source histories receive per-contribution classifications. Replit basket-product comparison and three historical model-native regressions were selectively restored; 30 C1 numeric edge inputs were ported into the canonical test suite. Reviewed compatible Qoder/Replit/Claude contributions remain the foundation.
 
-No accessible additional unpublished Qoder worktree/task artifact was identified. That is the scope of accessible evidence, not a claim that no work ever existed elsewhere. The active Claude branch is not modified or automatically merged; [FINAL_CLAUDE_INTEGRATION_HANDOFF](FINAL_CLAUDE_INTEGRATION_HANDOFF.md) records exact current conflicts, absent eight bindings and preserved original commits.
+No accessible additional unpublished Qoder worktree/task artifact was identified. That is the scope of accessible evidence, not a claim that no work ever existed elsewhere. The active Claude branch is not modified or automatically merged; [FINAL_CLAUDE_INTEGRATION_HANDOFF](FINAL_CLAUDE_INTEGRATION_HANDOFF.md) records exact current conflicts, absent ten bindings and preserved original commits.
 
 ## Original artifacts
 

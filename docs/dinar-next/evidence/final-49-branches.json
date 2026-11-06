@@ -1,12 +1,12 @@
 {
   "reviewedCodeSHA": "9101672a7370bb8080e598344840d1fde2f88291",
-  "remoteSnapshotFile": "final-remote-heads-code-published.tsv",
-  "remoteSnapshotSHA256": "8ea0784721f5e547e074584f86af674c4163098792dfa9ca6f34761991c2eccb",
-  "snapshotUTC": "2026-11-06T04:02:22.483296+00:00",
+  "remoteSnapshotFile": "final-remote-change-observation.tsv",
+  "remoteSnapshotSHA256": "ac1cb95845d0a169f7a700c8184b5e33925da6278748835348570c82561916d7",
+  "snapshotUTC": "2026-11-06T04:22:38.080763+00:00",
   "branchCount": 49,
   "ancestorHeads": 30,
   "divergentHeads": 19,
-  "contributionGroups": 89,
+  "contributionGroups": 92,
   "uniqueAndFileCountDefinition": "Unique commits candidate..branch; files merge-base(candidate,branch)..branch. Current behavior is independently qualified, not inferred from ancestry or filenames.",
   "branches": [
     {
@@ -1165,9 +1165,9 @@
     },
     {
       "branch": "claude/dinar-next-intelligence",
-      "head": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+      "head": "e75cb18e89d68361be17a477976cf5d6908deb47",
       "ancestor": false,
-      "uniqueCommits": 17,
+      "uniqueCommits": 19,
       "mergeBase": "34bb754d60617fbb49c26e6f1726f141234c8598",
       "files": [
         "artifacts/api-server/src/ai/business-turn.ts",
@@ -1200,6 +1200,8 @@
         "artifacts/api-server/test/isolation/local-suite.sh",
         "artifacts/api-server/test/live-model-benchmark-core.ts",
         "artifacts/api-server/test/live-model-benchmark.ts",
+        "artifacts/api-server/test/model-native-routing.test.ts",
+        "artifacts/api-server/test/multistep-intelligence.test.ts",
         "artifacts/api-server/test/same-origin-web.test.ts",
         "artifacts/api-server/test/self-hosted-model.test.ts",
         "artifacts/api-server/test/usage-intelligence.test.ts",
@@ -1216,12 +1218,18 @@
         "deploy/self-hosted-llm/Caddyfile",
         "deploy/self-hosted-llm/README.md",
         "deploy/self-hosted-llm/serve-vllm.sh",
+        "docs/dinar-next/CLAUDE_ARABIC_MODEL_BENCHMARK.md",
         "docs/dinar-next/CLAUDE_ARABIC_SEMANTIC_EVALUATION.md",
+        "docs/dinar-next/CLAUDE_CAPABILITY_COVERAGE.md",
         "docs/dinar-next/CLAUDE_CAPABILITY_ORCHESTRATION_MATRIX.md",
+        "docs/dinar-next/CLAUDE_CODEX_FINAL_INTEGRATION_HANDOFF.md",
         "docs/dinar-next/CLAUDE_FINAL_INTEGRATION_PLAN.md",
         "docs/dinar-next/CLAUDE_INTELLIGENCE_CODEX_INTEGRATION_HANDOFF.md",
         "docs/dinar-next/CLAUDE_INTELLIGENCE_SOURCE_AUDIT.md",
         "docs/dinar-next/CLAUDE_MODEL_ROUTING_EVALUATION.md",
+        "docs/dinar-next/CLAUDE_MULTISTEP_INTELLIGENCE_ACCEPTANCE.md",
+        "docs/dinar-next/CLAUDE_SELF_HOSTED_MODEL_READINESS.md",
+        "docs/dinar-next/CLAUDE_UNIVERSAL_AI_PROGRESS.md",
         "docs/dinar-next/CLAUDE_USAGE_INTELLIGENCE_ACCEPTANCE.md",
         "lib/api-client-react/src/generated/api.schemas.ts",
         "lib/api-spec/openapi.yaml",
@@ -1235,15 +1243,19 @@
           "currentBlob": "eab5e55ca3e32cefa98a09da0d714c75d6f123ea",
           "initialCurrentBlob": "e7ea22a2bc71351702a1b976b58436fd42055f77",
           "identicalAtFinalCode": false,
-          "identicalAtInitialCut": false
+          "identicalAtInitialCut": false,
+          "initialComparisonHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+          "initialHistoricalBlob": "a47379227727757c3c29e02077de69dab140a650"
         },
         {
           "path": "artifacts/api-server/src/ai/capability-registry.ts",
-          "historicalBlob": "efcb3f4d122f9f7cb6a38753676e7e89a93d5b92",
+          "historicalBlob": "8130e8252a64643e89758d55921f9b9427574345",
           "currentBlob": "37ef58afe381d305321831f05de21e12348d4d67",
           "initialCurrentBlob": "37ef58afe381d305321831f05de21e12348d4d67",
           "identicalAtFinalCode": false,
-          "identicalAtInitialCut": false
+          "identicalAtInitialCut": false,
+          "initialComparisonHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+          "initialHistoricalBlob": "efcb3f4d122f9f7cb6a38753676e7e89a93d5b92"
         },
         {
           "path": "artifacts/api-server/src/ai/commerce-turn.ts",
@@ -1251,31 +1263,39 @@
           "currentBlob": "8a360906df0a127425e1b0f616d617bd28827697",
           "initialCurrentBlob": "8a360906df0a127425e1b0f616d617bd28827697",
           "identicalAtFinalCode": false,
-          "identicalAtInitialCut": false
+          "identicalAtInitialCut": false,
+          "initialComparisonHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+          "initialHistoricalBlob": "ebd6ef044216556c5fd2051d1b8b0ec055cefab0"
         },
         {
           "path": "artifacts/api-server/src/ai/conversation-runtime.ts",
-          "historicalBlob": "b5d70ab81873f1e936e1ae1c31ccc62269a39cd6",
+          "historicalBlob": "b6e8d46c08e5cdcf40f19c7f0ee136814be7ea3d",
           "currentBlob": "282da09b2851bd1210c336bc501b7e949bb0db4c",
           "initialCurrentBlob": "282da09b2851bd1210c336bc501b7e949bb0db4c",
           "identicalAtFinalCode": false,
-          "identicalAtInitialCut": false
+          "identicalAtInitialCut": false,
+          "initialComparisonHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+          "initialHistoricalBlob": "b5d70ab81873f1e936e1ae1c31ccc62269a39cd6"
         },
         {
           "path": "artifacts/api-server/src/ai/dinar-capabilities.ts",
-          "historicalBlob": "d09d3c1379355f1489d85ee7c68998d95ceeaf96",
+          "historicalBlob": "6ea5d77e1afa76965a9d5abe260f5fe596e53160",
           "currentBlob": null,
           "initialCurrentBlob": null,
           "identicalAtFinalCode": false,
-          "identicalAtInitialCut": false
+          "identicalAtInitialCut": false,
+          "initialComparisonHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+          "initialHistoricalBlob": "d09d3c1379355f1489d85ee7c68998d95ceeaf96"
         },
         {
           "path": "artifacts/api-server/src/ai/intent.ts",
-          "historicalBlob": "9c11ab2293346d2c088b3407e69935f056601c79",
+          "historicalBlob": "d914d2a98d108b6028f897fde1e0af6bcebed2e3",
           "currentBlob": "1da151b43be89d325c7c93caaa69eda49219df04",
           "initialCurrentBlob": "7ba5d9ae621ab4016c22a13f1a4c23713552e993",
           "identicalAtFinalCode": false,
-          "identicalAtInitialCut": false
+          "identicalAtInitialCut": false,
+          "initialComparisonHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+          "initialHistoricalBlob": "9c11ab2293346d2c088b3407e69935f056601c79"
         },
         {
           "path": "artifacts/api-server/src/ai/model-capability-tools.ts",
@@ -1283,7 +1303,9 @@
           "currentBlob": "0b03fad6c28c14a4c17f643abbee5ed8945d0721",
           "initialCurrentBlob": "0b03fad6c28c14a4c17f643abbee5ed8945d0721",
           "identicalAtFinalCode": false,
-          "identicalAtInitialCut": false
+          "identicalAtInitialCut": false,
+          "initialComparisonHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+          "initialHistoricalBlob": "ffc8cf1655bc2cbb0f1bd43222fea49296d3b77a"
         },
         {
           "path": "artifacts/api-server/src/ai/model-gateway.ts",
@@ -1291,15 +1313,19 @@
           "currentBlob": "6f6209bf091c00c722836f7cfe63ed91d6fcc266",
           "initialCurrentBlob": "6f6209bf091c00c722836f7cfe63ed91d6fcc266",
           "identicalAtFinalCode": false,
-          "identicalAtInitialCut": false
+          "identicalAtInitialCut": false,
+          "initialComparisonHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+          "initialHistoricalBlob": "32cb675455b93cf215ba44e7111835b4a409cd3e"
         },
         {
           "path": "artifacts/api-server/src/ai/model-read-capabilities.ts",
-          "historicalBlob": "935830c7a1a7ba2a6a77ef16134f7c7c61e6bff2",
+          "historicalBlob": "c0f8c3f8178d08eedee3f93c11f8a2915eecb7e3",
           "currentBlob": null,
           "initialCurrentBlob": null,
           "identicalAtFinalCode": false,
-          "identicalAtInitialCut": false
+          "identicalAtInitialCut": false,
+          "initialComparisonHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+          "initialHistoricalBlob": "935830c7a1a7ba2a6a77ef16134f7c7c61e6bff2"
         },
         {
           "path": "artifacts/api-server/src/ai/seller-management.ts",
@@ -1307,23 +1333,29 @@
           "currentBlob": "0209fb7503233fcf6ce9ad0ceb0ffa2c53fc7a94",
           "initialCurrentBlob": "0209fb7503233fcf6ce9ad0ceb0ffa2c53fc7a94",
           "identicalAtFinalCode": false,
-          "identicalAtInitialCut": false
+          "identicalAtInitialCut": false,
+          "initialComparisonHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+          "initialHistoricalBlob": "2d94dd5373435113e5945436eaa018ee45283430"
         },
         {
           "path": "artifacts/api-server/src/ai/smart-turn.ts",
-          "historicalBlob": "d5448d706b6fd4380c648d6ed6e923c9cbb76d3e",
+          "historicalBlob": "dc1a99fa6fea89e9362ad8318f414f489e30c3ba",
           "currentBlob": "c2b1ad0be6e5c1d4e2eed4c4c5deae34efc7b8f2",
           "initialCurrentBlob": "c2b1ad0be6e5c1d4e2eed4c4c5deae34efc7b8f2",
           "identicalAtFinalCode": false,
-          "identicalAtInitialCut": false
+          "identicalAtInitialCut": false,
+          "initialComparisonHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+          "initialHistoricalBlob": "d5448d706b6fd4380c648d6ed6e923c9cbb76d3e"
         },
         {
           "path": "artifacts/api-server/src/ai/tool-registry.ts",
-          "historicalBlob": "c478898ffdb514231ac0f5e04490f87f648c0c4d",
+          "historicalBlob": "dd2b8f37c9847ef0629aed0298c3adf06f47f59e",
           "currentBlob": "6739233ee960f285c8e482f7e6f51abdcf2f9444",
           "initialCurrentBlob": "6739233ee960f285c8e482f7e6f51abdcf2f9444",
           "identicalAtFinalCode": false,
-          "identicalAtInitialCut": false
+          "identicalAtInitialCut": false,
+          "initialComparisonHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+          "initialHistoricalBlob": "c478898ffdb514231ac0f5e04490f87f648c0c4d"
         },
         {
           "path": "artifacts/api-server/src/ai/usage-turn.ts",
@@ -1331,7 +1363,9 @@
           "currentBlob": "03c812c5b6bd98d1a485fddc429965d82f2a751b",
           "initialCurrentBlob": "03c812c5b6bd98d1a485fddc429965d82f2a751b",
           "identicalAtFinalCode": false,
-          "identicalAtInitialCut": false
+          "identicalAtInitialCut": false,
+          "initialComparisonHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+          "initialHistoricalBlob": "bed2dc26835bd61c37be88fbdd200acf8706317f"
         },
         {
           "path": "artifacts/api-server/src/app.ts",
@@ -1339,15 +1373,19 @@
           "currentBlob": "08885b8b4fdc246d0c5a5a31fe944e2921c2caad",
           "initialCurrentBlob": "5ec74e1dbd691c111254cd4166f4e69134a40f9f",
           "identicalAtFinalCode": false,
-          "identicalAtInitialCut": false
+          "identicalAtInitialCut": false,
+          "initialComparisonHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+          "initialHistoricalBlob": "1d2f88e034aee697afadd5e5771b266ecfb76bb3"
         },
         {
           "path": "artifacts/api-server/src/connect/conversation.ts",
-          "historicalBlob": "5999eb424557f26104604df0d118f386303aab08",
+          "historicalBlob": "f207fe4d969d8b7ee464c57f09e25493bcb1e46d",
           "currentBlob": "f39cf09701396de2a8bf4ecfca910b87a65061c8",
           "initialCurrentBlob": "f39cf09701396de2a8bf4ecfca910b87a65061c8",
           "identicalAtFinalCode": false,
-          "identicalAtInitialCut": false
+          "identicalAtInitialCut": false,
+          "initialComparisonHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+          "initialHistoricalBlob": "5999eb424557f26104604df0d118f386303aab08"
         },
         {
           "path": "artifacts/api-server/src/lib/seller-dues.ts",
@@ -1355,7 +1393,9 @@
           "currentBlob": null,
           "initialCurrentBlob": null,
           "identicalAtFinalCode": false,
-          "identicalAtInitialCut": false
+          "identicalAtInitialCut": false,
+          "initialComparisonHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+          "initialHistoricalBlob": "0d7ad7267152ba7f0caedc4af2df2fe91f2a55cb"
         },
         {
           "path": "artifacts/api-server/src/routes/marketplace.ts",
@@ -1363,31 +1403,39 @@
           "currentBlob": "8caebf8dafd8cdf37b45cd21e7c1f111e43b1b2e",
           "initialCurrentBlob": "8caebf8dafd8cdf37b45cd21e7c1f111e43b1b2e",
           "identicalAtFinalCode": false,
-          "identicalAtInitialCut": false
+          "identicalAtInitialCut": false,
+          "initialComparisonHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+          "initialHistoricalBlob": "9098b10ebfc03bab787b73617a7a44a35edf5e84"
         },
         {
           "path": "artifacts/api-server/test/ai-foundation-02-acceptance.test.ts",
-          "historicalBlob": "5b13b1be64111f601bfbb890e291242cdf383654",
+          "historicalBlob": "17e3434d5780f882214d4c5331c97ca49664131c",
           "currentBlob": "057851335bac681bd944bcba445a9ee7288c6093",
           "initialCurrentBlob": "057851335bac681bd944bcba445a9ee7288c6093",
           "identicalAtFinalCode": false,
-          "identicalAtInitialCut": false
+          "identicalAtInitialCut": false,
+          "initialComparisonHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+          "initialHistoricalBlob": "5b13b1be64111f601bfbb890e291242cdf383654"
         },
         {
           "path": "artifacts/api-server/test/ai-foundation-acceptance.test.ts",
-          "historicalBlob": "c075d212a8139a24d0a1f372aca71d7e804f9aaa",
+          "historicalBlob": "49d56ec60d31b71de377facde52fa457f00cf106",
           "currentBlob": "833a277e253c62cffa3b42de3e7d8dc4c54d6eea",
           "initialCurrentBlob": "833a277e253c62cffa3b42de3e7d8dc4c54d6eea",
           "identicalAtFinalCode": false,
-          "identicalAtInitialCut": false
+          "identicalAtInitialCut": false,
+          "initialComparisonHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+          "initialHistoricalBlob": "c075d212a8139a24d0a1f372aca71d7e804f9aaa"
         },
         {
           "path": "artifacts/api-server/test/capability-init-order.test.ts",
-          "historicalBlob": "0a893c920e03b16c2692b758d8848ae83ce58092",
+          "historicalBlob": "dd3471385c4ffff2cb7839e4f85f3b90fab35c22",
           "currentBlob": null,
           "initialCurrentBlob": null,
           "identicalAtFinalCode": false,
-          "identicalAtInitialCut": false
+          "identicalAtInitialCut": false,
+          "initialComparisonHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+          "initialHistoricalBlob": "0a893c920e03b16c2692b758d8848ae83ce58092"
         },
         {
           "path": "artifacts/api-server/test/command-d-acceptance.test.ts",
@@ -1395,7 +1443,9 @@
           "currentBlob": "1ad8726e8d961b6527a36ccb947585f3ab6ba0f2",
           "initialCurrentBlob": "1ad8726e8d961b6527a36ccb947585f3ab6ba0f2",
           "identicalAtFinalCode": false,
-          "identicalAtInitialCut": false
+          "identicalAtInitialCut": false,
+          "initialComparisonHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+          "initialHistoricalBlob": "a1c75cc9e17d9fda5cc6c856243c2e7849cde0d3"
         },
         {
           "path": "artifacts/api-server/test/conversation-router.test.ts",
@@ -1403,7 +1453,9 @@
           "currentBlob": "1ae9c8bf332c9f59321adc5830166232a777826c",
           "initialCurrentBlob": "916034dcc90ba6bea0d1b7316bbab406462a8f44",
           "identicalAtFinalCode": false,
-          "identicalAtInitialCut": false
+          "identicalAtInitialCut": false,
+          "initialComparisonHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+          "initialHistoricalBlob": "40368ecbb260e016bb542f071ca6ee119569a071"
         },
         {
           "path": "artifacts/api-server/test/d3a-native-business.test.ts",
@@ -1411,7 +1463,9 @@
           "currentBlob": "457fdf23d7c05190d68ec45b191378d2d952f142",
           "initialCurrentBlob": "f997b12336a8a151f4eb891fccdd61831aad929a",
           "identicalAtFinalCode": false,
-          "identicalAtInitialCut": false
+          "identicalAtInitialCut": false,
+          "initialComparisonHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+          "initialHistoricalBlob": "b450b3f581ffd0bee30eb526ffbd9cc94fb50ae4"
         },
         {
           "path": "artifacts/api-server/test/deepseek-chat-compatibility.test.ts",
@@ -1419,7 +1473,9 @@
           "currentBlob": "e4ed7143b80b098aa74af40cd7f50c9889bd40c7",
           "initialCurrentBlob": "2d257611b019b6502412ef8a5450d5c630121801",
           "identicalAtFinalCode": false,
-          "identicalAtInitialCut": false
+          "identicalAtInitialCut": false,
+          "initialComparisonHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+          "initialHistoricalBlob": "00260f6d85981ce1793d45b310f10dcf194638ab"
         },
         {
           "path": "artifacts/api-server/test/experience-upgrade-acceptance.test.ts",
@@ -1427,7 +1483,9 @@
           "currentBlob": "dd5e20927bb4c2e495360899328d41299d59f44b",
           "initialCurrentBlob": "dd5e20927bb4c2e495360899328d41299d59f44b",
           "identicalAtFinalCode": false,
-          "identicalAtInitialCut": false
+          "identicalAtInitialCut": false,
+          "initialComparisonHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+          "initialHistoricalBlob": "df79eac454f9b918e2994d897ef1dd2ec1cea4a0"
         },
         {
           "path": "artifacts/api-server/test/intelligence-capabilities.test.ts",
@@ -1435,7 +1493,9 @@
           "currentBlob": null,
           "initialCurrentBlob": null,
           "identicalAtFinalCode": false,
-          "identicalAtInitialCut": false
+          "identicalAtInitialCut": false,
+          "initialComparisonHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+          "initialHistoricalBlob": "7f9fac67d3d0de9501c2973a5879184812cf1c2a"
         },
         {
           "path": "artifacts/api-server/test/intelligence-routing-eval.test.ts",
@@ -1443,7 +1503,9 @@
           "currentBlob": null,
           "initialCurrentBlob": null,
           "identicalAtFinalCode": false,
-          "identicalAtInitialCut": false
+          "identicalAtInitialCut": false,
+          "initialComparisonHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+          "initialHistoricalBlob": "af5f95a66e27dc84c94f20b446df413356d73c58"
         },
         {
           "path": "artifacts/api-server/test/isolation/local-suite.sh",
@@ -1451,15 +1513,19 @@
           "currentBlob": "2a7a229927cb54b1413af2c5997098ed9a3ddbe7",
           "initialCurrentBlob": "2a7a229927cb54b1413af2c5997098ed9a3ddbe7",
           "identicalAtFinalCode": false,
-          "identicalAtInitialCut": false
+          "identicalAtInitialCut": false,
+          "initialComparisonHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+          "initialHistoricalBlob": "30211241dab1eed23ef823424449c814881811ac"
         },
         {
           "path": "artifacts/api-server/test/live-model-benchmark-core.ts",
-          "historicalBlob": "58ad05643ac8663a0b2477500306813dad297480",
+          "historicalBlob": "ba4b02d55fa64117f1e2deaac8a794bafda1bfb5",
           "currentBlob": "083bacb555d52f2c01d91cdb9762e0a9587f26af",
           "initialCurrentBlob": "083bacb555d52f2c01d91cdb9762e0a9587f26af",
           "identicalAtFinalCode": false,
-          "identicalAtInitialCut": false
+          "identicalAtInitialCut": false,
+          "initialComparisonHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+          "initialHistoricalBlob": "58ad05643ac8663a0b2477500306813dad297480"
         },
         {
           "path": "artifacts/api-server/test/live-model-benchmark.ts",
@@ -1467,7 +1533,23 @@
           "currentBlob": "674cae56425adff1f4c67ed527864662ec5b30ec",
           "initialCurrentBlob": "674cae56425adff1f4c67ed527864662ec5b30ec",
           "identicalAtFinalCode": false,
-          "identicalAtInitialCut": false
+          "identicalAtInitialCut": false,
+          "initialComparisonHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+          "initialHistoricalBlob": "67a5db54a8e1552dbad607ac1f0b20f7bd2270f9"
+        },
+        {
+          "path": "artifacts/api-server/test/model-native-routing.test.ts",
+          "historicalBlob": "e29d58767a2bc1cf6278801e6ec4d1ae3d0f4caa",
+          "currentBlob": "69d250e5b8e9a6418ca701184e8aab67ac5d13e9",
+          "initialComparisonHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+          "identicalAtFinalCode": false
+        },
+        {
+          "path": "artifacts/api-server/test/multistep-intelligence.test.ts",
+          "historicalBlob": "d7d9ade804c85123dfe6f1b989c9a3f580e28a28",
+          "currentBlob": null,
+          "initialComparisonHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+          "identicalAtFinalCode": false
         },
         {
           "path": "artifacts/api-server/test/same-origin-web.test.ts",
@@ -1475,15 +1557,19 @@
           "currentBlob": "eed5bf4d92496bf0b40f9b63e88cf935000e20c1",
           "initialCurrentBlob": "19cc9682401b416d8ddc55d5a5a4e8f7723002c4",
           "identicalAtFinalCode": false,
-          "identicalAtInitialCut": false
+          "identicalAtInitialCut": false,
+          "initialComparisonHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+          "initialHistoricalBlob": "03201038052e9612bd4fe2f2e055dc75b92d2e78"
         },
         {
           "path": "artifacts/api-server/test/self-hosted-model.test.ts",
-          "historicalBlob": "777894a9aa29c8da59b67ac363ab9489f9307a8a",
+          "historicalBlob": "93e27c2c8011c9f1a0db228609fba7c390ceabf0",
           "currentBlob": null,
           "initialCurrentBlob": null,
           "identicalAtFinalCode": false,
-          "identicalAtInitialCut": false
+          "identicalAtInitialCut": false,
+          "initialComparisonHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+          "initialHistoricalBlob": "777894a9aa29c8da59b67ac363ab9489f9307a8a"
         },
         {
           "path": "artifacts/api-server/test/usage-intelligence.test.ts",
@@ -1491,7 +1577,9 @@
           "currentBlob": null,
           "initialCurrentBlob": null,
           "identicalAtFinalCode": false,
-          "identicalAtInitialCut": false
+          "identicalAtInitialCut": false,
+          "initialComparisonHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+          "initialHistoricalBlob": "7c6eac73cc45d8240b9e29b97ffdb746bb074a04"
         },
         {
           "path": "artifacts/api-server/test/w02u3-card-performance-browser-journey.test.ts",
@@ -1499,7 +1587,9 @@
           "currentBlob": "7fa6043757dc9660fe070afac4873aed33880b70",
           "initialCurrentBlob": "7fa6043757dc9660fe070afac4873aed33880b70",
           "identicalAtFinalCode": false,
-          "identicalAtInitialCut": false
+          "identicalAtInitialCut": false,
+          "initialComparisonHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+          "initialHistoricalBlob": "d30fc499edf3a4da3b62f2e07fd0bf3bc11bba02"
         },
         {
           "path": "artifacts/api-server/test/w02u3-card-recovery-browser-journey.test.ts",
@@ -1507,23 +1597,29 @@
           "currentBlob": "7efe10a35631b758db4cc243876fa210bd77dbac",
           "initialCurrentBlob": "7efe10a35631b758db4cc243876fa210bd77dbac",
           "identicalAtFinalCode": false,
-          "identicalAtInitialCut": false
+          "identicalAtInitialCut": false,
+          "initialComparisonHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+          "initialHistoricalBlob": "c97012d4675828da43cc39ced829892d9393064a"
         },
         {
           "path": "artifacts/api-server/test/wave04-d10-d11-acceptance.test.ts",
-          "historicalBlob": "605c5316f1801a95ddf91aabecfaf2f80a139f58",
+          "historicalBlob": "608e4faa66cb2c09ff5f26f7fea549d303f0bdf3",
           "currentBlob": "f0b4c0b6154f9e744e7e6f0abaa9d2d1a369aa0c",
           "initialCurrentBlob": "f0b4c0b6154f9e744e7e6f0abaa9d2d1a369aa0c",
           "identicalAtFinalCode": false,
-          "identicalAtInitialCut": false
+          "identicalAtInitialCut": false,
+          "initialComparisonHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+          "initialHistoricalBlob": "605c5316f1801a95ddf91aabecfaf2f80a139f58"
         },
         {
           "path": "artifacts/api-server/test/wave04-d10-d12-acceptance.test.ts",
-          "historicalBlob": "be3d52dc8c1fb9f1f55fe8fd7cb06ff815283235",
+          "historicalBlob": "f9829e078d38056858cdc6f182835c81f32120ed",
           "currentBlob": "f19c6f03b033baffe39cd9723edc61bbac261127",
           "initialCurrentBlob": "f19c6f03b033baffe39cd9723edc61bbac261127",
           "identicalAtFinalCode": false,
-          "identicalAtInitialCut": false
+          "identicalAtInitialCut": false,
+          "initialComparisonHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+          "initialHistoricalBlob": "be3d52dc8c1fb9f1f55fe8fd7cb06ff815283235"
         },
         {
           "path": "artifacts/dinar/src/features/ai/turn-recovery.ts",
@@ -1531,7 +1627,9 @@
           "currentBlob": "510f96d29faa43fac6a430be1271fab62d182eda",
           "initialCurrentBlob": "510f96d29faa43fac6a430be1271fab62d182eda",
           "identicalAtFinalCode": false,
-          "identicalAtInitialCut": false
+          "identicalAtInitialCut": false,
+          "initialComparisonHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+          "initialHistoricalBlob": "b37ba6f33d3df480b26323a3ee563543d1ef1dcf"
         },
         {
           "path": "artifacts/dinar/src/pages/Ai.tsx",
@@ -1539,7 +1637,9 @@
           "currentBlob": "2da25392256ccebb88437241cc4aafc03958dfae",
           "initialCurrentBlob": "2da25392256ccebb88437241cc4aafc03958dfae",
           "identicalAtFinalCode": false,
-          "identicalAtInitialCut": false
+          "identicalAtInitialCut": false,
+          "initialComparisonHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+          "initialHistoricalBlob": "effe5ec76cecaeb5f3ac482356a33b0eea12ad66"
         },
         {
           "path": "artifacts/dinar/test/connect-finance-ui.mjs",
@@ -1547,7 +1647,9 @@
           "currentBlob": "2117f912e65bf85687c975701a09e8bb28b88764",
           "initialCurrentBlob": "2117f912e65bf85687c975701a09e8bb28b88764",
           "identicalAtFinalCode": false,
-          "identicalAtInitialCut": false
+          "identicalAtInitialCut": false,
+          "initialComparisonHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+          "initialHistoricalBlob": "bcfe6578167ce588cc2a10ad58101ebb282286d6"
         },
         {
           "path": "artifacts/dinar/test/phase1-ui-acceptance.mjs",
@@ -1555,7 +1657,9 @@
           "currentBlob": "9962c1510efabb3c26b8bc0796b6e3fd5234dad3",
           "initialCurrentBlob": "9962c1510efabb3c26b8bc0796b6e3fd5234dad3",
           "identicalAtFinalCode": false,
-          "identicalAtInitialCut": false
+          "identicalAtInitialCut": false,
+          "initialComparisonHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+          "initialHistoricalBlob": "4fabe6cd05a62bcf41a100e1f3134aaa6bbc7d45"
         },
         {
           "path": "artifacts/dinar/test/w02u3-card-performance-ui.mjs",
@@ -1563,7 +1667,9 @@
           "currentBlob": "0ae7349f1ba0c836e19493f61027d75f0b807a02",
           "initialCurrentBlob": "0ae7349f1ba0c836e19493f61027d75f0b807a02",
           "identicalAtFinalCode": false,
-          "identicalAtInitialCut": false
+          "identicalAtInitialCut": false,
+          "initialComparisonHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+          "initialHistoricalBlob": "d7263fdba80e8d05394e2bb6cbb9693c14d7a85b"
         },
         {
           "path": "artifacts/dinar/test/w02u3-card-recovery-ui.mjs",
@@ -1571,7 +1677,9 @@
           "currentBlob": "2be2a3b6447219bf2c073a417adc00c97e07d8d0",
           "initialCurrentBlob": "2be2a3b6447219bf2c073a417adc00c97e07d8d0",
           "identicalAtFinalCode": false,
-          "identicalAtInitialCut": false
+          "identicalAtInitialCut": false,
+          "initialComparisonHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+          "initialHistoricalBlob": "6f25ffea779974e85d68ca4f7c5a695050c7a679"
         },
         {
           "path": "deploy/self-hosted-llm/Caddyfile",
@@ -1579,7 +1687,9 @@
           "currentBlob": null,
           "initialCurrentBlob": null,
           "identicalAtFinalCode": false,
-          "identicalAtInitialCut": false
+          "identicalAtInitialCut": false,
+          "initialComparisonHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+          "initialHistoricalBlob": "fa5beb69e63902e05f99ad55f523eaf2e668062a"
         },
         {
           "path": "deploy/self-hosted-llm/README.md",
@@ -1587,7 +1697,9 @@
           "currentBlob": null,
           "initialCurrentBlob": null,
           "identicalAtFinalCode": false,
-          "identicalAtInitialCut": false
+          "identicalAtInitialCut": false,
+          "initialComparisonHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+          "initialHistoricalBlob": "b9486495c8cfdb48f5ddf1de587a774a683258f4"
         },
         {
           "path": "deploy/self-hosted-llm/serve-vllm.sh",
@@ -1595,7 +1707,16 @@
           "currentBlob": null,
           "initialCurrentBlob": null,
           "identicalAtFinalCode": false,
-          "identicalAtInitialCut": false
+          "identicalAtInitialCut": false,
+          "initialComparisonHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+          "initialHistoricalBlob": "7c19d3d6dcf8ece31154250adb2e6a2a39b767be"
+        },
+        {
+          "path": "docs/dinar-next/CLAUDE_ARABIC_MODEL_BENCHMARK.md",
+          "historicalBlob": "e7802ee66763a919f4687e0bbbd0e7d53d612d61",
+          "currentBlob": null,
+          "initialComparisonHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+          "identicalAtFinalCode": false
         },
         {
           "path": "docs/dinar-next/CLAUDE_ARABIC_SEMANTIC_EVALUATION.md",
@@ -1603,7 +1724,16 @@
           "currentBlob": null,
           "initialCurrentBlob": null,
           "identicalAtFinalCode": false,
-          "identicalAtInitialCut": false
+          "identicalAtInitialCut": false,
+          "initialComparisonHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+          "initialHistoricalBlob": "140da8ea88a1725004a1ef8e63d54dff9eb9ecd4"
+        },
+        {
+          "path": "docs/dinar-next/CLAUDE_CAPABILITY_COVERAGE.md",
+          "historicalBlob": "8563bb9506ce65246133cb7d6fe16da03671bdcc",
+          "currentBlob": null,
+          "initialComparisonHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+          "identicalAtFinalCode": false
         },
         {
           "path": "docs/dinar-next/CLAUDE_CAPABILITY_ORCHESTRATION_MATRIX.md",
@@ -1611,7 +1741,16 @@
           "currentBlob": null,
           "initialCurrentBlob": null,
           "identicalAtFinalCode": false,
-          "identicalAtInitialCut": false
+          "identicalAtInitialCut": false,
+          "initialComparisonHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+          "initialHistoricalBlob": "7a3cab53108afe7be6964257d16912bc013fe1d4"
+        },
+        {
+          "path": "docs/dinar-next/CLAUDE_CODEX_FINAL_INTEGRATION_HANDOFF.md",
+          "historicalBlob": "7bcb7105f212c5d6f24321980e28f33e84d31873",
+          "currentBlob": null,
+          "initialComparisonHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+          "identicalAtFinalCode": false
         },
         {
           "path": "docs/dinar-next/CLAUDE_FINAL_INTEGRATION_PLAN.md",
@@ -1619,7 +1758,9 @@
           "currentBlob": null,
           "initialCurrentBlob": null,
           "identicalAtFinalCode": false,
-          "identicalAtInitialCut": false
+          "identicalAtInitialCut": false,
+          "initialComparisonHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+          "initialHistoricalBlob": "231e90c4c4edd90b2e2ab102026eae3a6804dce2"
         },
         {
           "path": "docs/dinar-next/CLAUDE_INTELLIGENCE_CODEX_INTEGRATION_HANDOFF.md",
@@ -1627,7 +1768,9 @@
           "currentBlob": null,
           "initialCurrentBlob": null,
           "identicalAtFinalCode": false,
-          "identicalAtInitialCut": false
+          "identicalAtInitialCut": false,
+          "initialComparisonHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+          "initialHistoricalBlob": "ae905f42b7b381dbe9f7762e14c46af569d8ccc4"
         },
         {
           "path": "docs/dinar-next/CLAUDE_INTELLIGENCE_SOURCE_AUDIT.md",
@@ -1635,7 +1778,9 @@
           "currentBlob": null,
           "initialCurrentBlob": null,
           "identicalAtFinalCode": false,
-          "identicalAtInitialCut": false
+          "identicalAtInitialCut": false,
+          "initialComparisonHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+          "initialHistoricalBlob": "58ca32381db5805e95edc3a53cf876028d2be00f"
         },
         {
           "path": "docs/dinar-next/CLAUDE_MODEL_ROUTING_EVALUATION.md",
@@ -1643,7 +1788,30 @@
           "currentBlob": null,
           "initialCurrentBlob": null,
           "identicalAtFinalCode": false,
-          "identicalAtInitialCut": false
+          "identicalAtInitialCut": false,
+          "initialComparisonHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+          "initialHistoricalBlob": "583762c7ee351bb04ead1dd5260ddfc6085656bf"
+        },
+        {
+          "path": "docs/dinar-next/CLAUDE_MULTISTEP_INTELLIGENCE_ACCEPTANCE.md",
+          "historicalBlob": "f003bcb94978f48015029a3dd6a26a2175a4aaaf",
+          "currentBlob": null,
+          "initialComparisonHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+          "identicalAtFinalCode": false
+        },
+        {
+          "path": "docs/dinar-next/CLAUDE_SELF_HOSTED_MODEL_READINESS.md",
+          "historicalBlob": "fb8262bc6b71f81c44e577e487ad78e0919a1fba",
+          "currentBlob": null,
+          "initialComparisonHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+          "identicalAtFinalCode": false
+        },
+        {
+          "path": "docs/dinar-next/CLAUDE_UNIVERSAL_AI_PROGRESS.md",
+          "historicalBlob": "99f4e18eff677d6e9837e5538eeb742cd5f75f84",
+          "currentBlob": null,
+          "initialComparisonHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+          "identicalAtFinalCode": false
         },
         {
           "path": "docs/dinar-next/CLAUDE_USAGE_INTELLIGENCE_ACCEPTANCE.md",
@@ -1651,7 +1819,9 @@
           "currentBlob": null,
           "initialCurrentBlob": null,
           "identicalAtFinalCode": false,
-          "identicalAtInitialCut": false
+          "identicalAtInitialCut": false,
+          "initialComparisonHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+          "initialHistoricalBlob": "fcfb0bcb6822ecb543cb3465714603d11c332516"
         },
         {
           "path": "lib/api-client-react/src/generated/api.schemas.ts",
@@ -1659,7 +1829,9 @@
           "currentBlob": "c242772eb56d488daa6744b7aa93f61adc40c572",
           "initialCurrentBlob": "c242772eb56d488daa6744b7aa93f61adc40c572",
           "identicalAtFinalCode": false,
-          "identicalAtInitialCut": false
+          "identicalAtInitialCut": false,
+          "initialComparisonHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+          "initialHistoricalBlob": "e01372bb7708d0c63fb82ebd239484e5ff58c7a6"
         },
         {
           "path": "lib/api-spec/openapi.yaml",
@@ -1667,7 +1839,9 @@
           "currentBlob": "483662ced8f614573dca6f5dcb12f46dbf8d9be3",
           "initialCurrentBlob": "483662ced8f614573dca6f5dcb12f46dbf8d9be3",
           "identicalAtFinalCode": false,
-          "identicalAtInitialCut": false
+          "identicalAtInitialCut": false,
+          "initialComparisonHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+          "initialHistoricalBlob": "ea1c5af54628bf30971982954404b6ee3f82208f"
         },
         {
           "path": "lib/api-zod/src/generated/api.ts",
@@ -1675,7 +1849,9 @@
           "currentBlob": "73f490f98894fb98ca474fb065bb0013756dba85",
           "initialCurrentBlob": "73f490f98894fb98ca474fb065bb0013756dba85",
           "identicalAtFinalCode": false,
-          "identicalAtInitialCut": false
+          "identicalAtInitialCut": false,
+          "initialComparisonHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+          "initialHistoricalBlob": "153ad35944a1ee3f52e2f4fc332481b0fb2833b5"
         },
         {
           "path": "lib/api-zod/src/generated/types/aiUiBlockPayloadSurface.ts",
@@ -1683,52 +1859,86 @@
           "currentBlob": "792864bc0d2689e571668a446b5c6047a8f5705f",
           "initialCurrentBlob": "792864bc0d2689e571668a446b5c6047a8f5705f",
           "identicalAtFinalCode": false,
-          "identicalAtInitialCut": false
+          "identicalAtInitialCut": false,
+          "initialComparisonHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+          "initialHistoricalBlob": "226772f7344d55ea666efa63c3184d286536452d"
         }
       ],
       "comparedInitialSHA": "dc1636d39917f39dd1c6e63d08b0042d5b400b23",
       "comparedFinalCodeSHA": "9101672a7370bb8080e598344840d1fde2f88291",
       "uniqueCommitEvidence": [
-        "2b62e92ab7e49453c2b11312f3a505356fa11fac feat(ai): model-discoverable Connect domain/partner search and DINAR self-knowledge; negation-safe cart routing",
-        "b21bc927bca90f10f376cc72e1803bf9289035ec fix(contracts): declare the CAPABILITIES surface; surface-enum check no longer assumes CART is first",
-        "03939c8cac0b0f2f53128110c3b5ccba0cda5c07 test(ai): DS-01 asserts the model-tool contract instead of the pre-AI-FOUNDATION single tool",
-        "6cc370e8b463f2c0e245e0c9e5aa50c917cf0689 feat(ai): routing evaluation across LEGACY/HYBRID/MODEL_FIRST; business setup no longer hijacks advisory requests",
-        "8f5e67a26d94553da3e76c792515b7eac81da0fa test(xp): XP-19 accepts DINAR's market-pulse family for a DINAR-scoped demand question (no model call still required)",
-        "aadff91ecf7e099a0805b40e5309952b532b8d0f test(ai): routing evaluation expanded to 42 cases with real tool outcomes and context references",
-        "701acb262408196a80dd5c945a4fe3d10f9fb436 feat(ai): business overview and order-issue reads for the model; fix a module cycle the first intelligence commit introduced",
-        "0173a441fb5dac9473c098c3e2371e843bc3a948 feat(ai): DINAR self-knowledge derived from the capability registry; init-order guard for the registry",
-        "56b0b51fccfef3d5c814e4fd97b4fa942ea9ee58 feat(ai): the model can prepare business product changes through the D3-A authority",
-        "46157ded7f60999c1adf763bd22603cdd90ae6eb fix(web,test): bounded verification block; isolated-runner fixes for phase1, connect-finance, W02U-3 recovery",
-        "2eea411f57818e856debc60929047c1034550584 test(w02u3): performance journey waits for the rendered edit branch, not response.finished()",
-        "53ca8efbd25d9140dce48602a560b85f359306d4 fix(security): a labelled staging/production deployment may only be framed by itself",
-        "b4f308386f9b69d527e804c0ba983ce33fce3ea0 feat(ai): readSellerDues through one dues service shared with GET /seller-dues",
-        "e1a063d65588eb40f8345b49b11035987537ca01 docs(integration): Claude-Codex final integration plan (not executed); G33 and phone-verification gates",
-        "a20706fb5e9330883ea882eb6f3b92130615fd49 feat(ai): self-hosted open-weight model through the existing OPENAI_COMPATIBLE slot (prepared, not deployed)",
+        "e75cb18e89d68361be17a477976cf5d6908deb47 Phase 2 docs; gpt-oss-20b self-hosted contract; Qwen3.5-9B vLLM serving flags",
+        "7f84cfb3af92c49a202f168676f6118db1614618 Phase 2: Connect partnership and policy reads, role-filtered capability catalog, plan-step model consult",
+        "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc docs(intelligence): source audit, orchestration matrix, usage acceptance, Arabic evaluation, routing evaluation, Codex handoff",
         "5dc5bc5df9836c1dfaa44d75fd04d685022c1aaa feat(ai): the AI allowance is a model capability and a grounded projection; bare \u00ab\u0643\u0645 \u0628\u0627\u0642\u064a\u061f\u00bb follows context",
-        "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc docs(intelligence): source audit, orchestration matrix, usage acceptance, Arabic evaluation, routing evaluation, Codex handoff"
+        "a20706fb5e9330883ea882eb6f3b92130615fd49 feat(ai): self-hosted open-weight model through the existing OPENAI_COMPATIBLE slot (prepared, not deployed)",
+        "e1a063d65588eb40f8345b49b11035987537ca01 docs(integration): Claude-Codex final integration plan (not executed); G33 and phone-verification gates",
+        "b4f308386f9b69d527e804c0ba983ce33fce3ea0 feat(ai): readSellerDues through one dues service shared with GET /seller-dues",
+        "53ca8efbd25d9140dce48602a560b85f359306d4 fix(security): a labelled staging/production deployment may only be framed by itself",
+        "2eea411f57818e856debc60929047c1034550584 test(w02u3): performance journey waits for the rendered edit branch, not response.finished()",
+        "46157ded7f60999c1adf763bd22603cdd90ae6eb fix(web,test): bounded verification block; isolated-runner fixes for phase1, connect-finance, W02U-3 recovery",
+        "56b0b51fccfef3d5c814e4fd97b4fa942ea9ee58 feat(ai): the model can prepare business product changes through the D3-A authority",
+        "0173a441fb5dac9473c098c3e2371e843bc3a948 feat(ai): DINAR self-knowledge derived from the capability registry; init-order guard for the registry",
+        "701acb262408196a80dd5c945a4fe3d10f9fb436 feat(ai): business overview and order-issue reads for the model; fix a module cycle the first intelligence commit introduced",
+        "aadff91ecf7e099a0805b40e5309952b532b8d0f test(ai): routing evaluation expanded to 42 cases with real tool outcomes and context references",
+        "8f5e67a26d94553da3e76c792515b7eac81da0fa test(xp): XP-19 accepts DINAR's market-pulse family for a DINAR-scoped demand question (no model call still required)",
+        "6cc370e8b463f2c0e245e0c9e5aa50c917cf0689 feat(ai): routing evaluation across LEGACY/HYBRID/MODEL_FIRST; business setup no longer hijacks advisory requests",
+        "03939c8cac0b0f2f53128110c3b5ccba0cda5c07 test(ai): DS-01 asserts the model-tool contract instead of the pre-AI-FOUNDATION single tool",
+        "b21bc927bca90f10f376cc72e1803bf9289035ec fix(contracts): declare the CAPABILITIES surface; surface-enum check no longer assumes CART is first",
+        "2b62e92ab7e49453c2b11312f3a505356fa11fac feat(ai): model-discoverable Connect domain/partner search and DINAR self-knowledge; negation-safe cart routing"
       ],
       "semanticContributions": [
         {
-          "contribution": "Eight absent model bindings and CAPABILITIES surface; existing canonical services are not absent",
+          "contribution": "Ten absent model bindings and CAPABILITIES surface; existing canonical services are not absent",
           "classification": "OWNER_DECISION_REQUIRED",
-          "currentEquivalent": "Claude d0c2f039: describeDinarCapabilities, prepareBusinessListingAction, readAiUsage, readBusinessOverview, readOrderIssues, readSellerDues, searchDomains, searchPartnerOffers",
+          "currentEquivalent": "Claude e75cb18e: describeDinarCapabilities, prepareBusinessListingAction, readAiUsage, readBusinessOverview, readOrderIssues, readSellerDues, searchDomains, searchPartnerOffers, readConnectPartnerStatus, readPolicy",
           "tests": [],
-          "securityImpact": "23 registered capabilities vs current 15; model tools remain read/preparation only. Preserve original 17 commits; owner-authorized joint candidate and role/initialization tests required.",
-          "missingBehavior": "These model bindings, usage forecast/context disambiguation, advisory routing, bounded verification and self-hosted prepared config are not integrated.",
+          "securityImpact": "25 registered capabilities vs current 15; model tools remain read/preparation only. Preserve original 19 commits; owner-authorized joint candidate and role/initialization tests required.",
+          "missingBehavior": "These model bindings, usage forecast/context disambiguation, advisory routing, bounded verification and self-hosted prepared config and Phase2 policy/partnership reads, role discovery and plan-step model consult are not integrated.",
           "actualRegressionEvidence": {}
         },
         {
           "contribution": "Claude regression/evaluation/doc work",
           "classification": "OWNER_DECISION_REQUIRED",
-          "currentEquivalent": "Exact 57 changed paths and nine current merge-tree text conflicts in FINAL_CLAUDE_INTEGRATION_HANDOFF",
+          "currentEquivalent": "Exact 65 changed paths and nine current merge-tree text conflicts in FINAL_CLAUDE_INTEGRATION_HANDOFF",
           "tests": [],
           "securityImpact": "PR6 Git head verified; API/draft metadata unavailable. Claude-reported tests are not joint-Codex acceptance.",
           "missingBehavior": "Current live Arabic quality and final independent approval remain unverified.",
           "actualRegressionEvidence": {}
+        },
+        {
+          "contribution": "Phase2 role-filtered capability discovery, readConnectPartnerStatus/readPolicy and bounded plan-step model consult",
+          "classification": "OWNER_DECISION_REQUIRED",
+          "currentEquivalent": "7f84cfb3af92c49a202f168676f6118db1614618 uses existing Connect/policy authorities; 25 registry entries vs current 15. Domain parser defers missing domains in long/planned goals; price noun stripping becomes leading-only.",
+          "missingBehavior": "Not integrated. Preserve role-derived catalog, domain deferral and one model interpretation stage per soft-missing plan step across all three modes, with existing spend/confirmation/UNKNOWN safeguards.",
+          "tests": [],
+          "actualRegressionEvidence": {},
+          "securityImpact": "Claude-only seven-case multistep suite and updated exact role/tool sets were source-inspected, not executed/accepted here; no new purchase or financial writer."
+        },
+        {
+          "contribution": "Positive partnership/agreement read mapping and acceptance coverage",
+          "classification": "MISSING_AND_REQUIRED",
+          "currentEquivalent": "Canonical connect/agreements.view returns terms.commission, accepted and acceptance.acceptedAt. New Claude readConnectPartnerStatus instead reads nonexistent top-level status, commissionRateBasisPoints/rateBasisPoints and acceptedAt.",
+          "missingBehavior": "P2 SOURCE_CONTRACT_MISMATCH on active Claude source, not a current Codex runtime failure. Joint integration must consume exact canonical DTO and add a real accepted-partner positive read plus staff/revocation/version tests; MS-05 covers only an empty non-partner and forged input.",
+          "tests": [],
+          "actualRegressionEvidence": {},
+          "securityImpact": "Do not fabricate agreement state, rate or acceptance date, and do not change canonical schema to accommodate the wrong mapper. No mutation/financial authority is granted by this read."
+        },
+        {
+          "contribution": "e75cb18 self-hosted contract/benchmark preparation and six Phase2 handoff documents",
+          "classification": "OWNER_DECISION_REQUIRED",
+          "currentEquivalent": "Existing OPENAI_COMPATIBLE transport remains authority. Metadata adds openai/gpt-oss-20b and Qwen3.5 vLLM parser guidance; DeepSeek text-only distill lacks required documented structured tool calls.",
+          "missingBehavior": "Not deployed, downloaded or live-tested here. Current licenses, hardware/capacity, parsing and live Arabic/tool quality require approved independent validation. Zero synthetic per-token price is not zero hosting cost.",
+          "tests": [],
+          "actualRegressionEvidence": {},
+          "securityImpact": "No paid inference/provider activation; preserve official-source uncertainty and no real tool execution from unstructured text."
         }
       ],
       "evidenceNote": "Full modified path list, per-file historical/current blobs and original unique commit identities are retained here; zero files means merge-base-to-branch, not equality of branch tree with current.",
-      "historicalContributionDiffSHA256": "631296dab4bfebe7f8685794ff35f0fb39418e17ac6d95960dc604291d141593"
+      "historicalContributionDiffSHA256": "74b7cbf6d4b4d57c9a2c4f3a4e3ccded3fd0cdbd0922cd018ea2aac2aed5ac0f",
+      "previousReviewedHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+      "latestAdvanceSourceInspected": true,
+      "previousReviewedContributionDiffSHA256": "631296dab4bfebe7f8685794ff35f0fb39418e17ac6d95960dc604291d141593"
     },
     {
       "branch": "codex/11-c1-sql-search",
@@ -13345,5 +13555,15 @@
       "historicalContributionDiffSHA256": "6c2dc39a4c764ce99363023d0646251eef026347883cfd1a5e9b4149cbd86818"
     }
   ],
-  "deliveryTipNote": "Snapshot follows qualified code publication; later supplemental delivery successor is in final owner-facing receipt. Contributor heads unchanged."
+  "deliveryTipNote": "Snapshot follows qualified code publication; later supplemental delivery successor is in final owner-facing receipt. Contributor heads unchanged.",
+  "activeContributorAdvance": {
+    "branch": "claude/dinar-next-intelligence",
+    "previousHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+    "latestInspectedHead": "e75cb18e89d68361be17a477976cf5d6908deb47",
+    "newOriginalCommits": [
+      "e75cb18e89d68361be17a477976cf5d6908deb47 Phase 2 docs; gpt-oss-20b self-hosted contract; Qwen3.5-9B vLLM serving flags",
+      "7f84cfb3af92c49a202f168676f6118db1614618 Phase 2: Connect partnership and policy reads, role-filtered capability catalog, plan-step model consult"
+    ],
+    "noRemoteMutationByCodex": true
+  }
 }

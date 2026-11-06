@@ -1,10 +1,10 @@
 {
   "codexQualifiedSHA": "9101672a7370bb8080e598344840d1fde2f88291",
-  "claudeGitHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+  "claudeGitHead": "e75cb18e89d68361be17a477976cf5d6908deb47",
   "pr6GitHeadVerified": true,
   "pr6ApiDraftBaseMetadata": "NOT_VERIFIED_API_POLICY_BLOCKED",
   "commonAncestor": "34bb754d60617fbb49c26e6f1726f141234c8598",
-  "originalClaudeUniqueCommits": 17,
+  "originalClaudeUniqueCommits": 19,
   "conflictSimulation": "git merge-tree --write-tree --name-only, no index/ref/branch mutation",
   "textConflictPaths": [
     "artifacts/api-server/src/ai/intent.ts",
@@ -78,7 +78,9 @@
         "readOwnOrderIssues",
         "prepareBusinessListingChange",
         "readOwnSellerDues",
-        "readOwnAiUsage"
+        "readOwnAiUsage",
+        "readOwnConnectPartnership",
+        "readPublishedPolicy"
       ],
       "toolBindings": [
         "searchListings",
@@ -103,31 +105,47 @@
         "readOrderIssues",
         "prepareBusinessListingAction",
         "readSellerDues",
-        "readAiUsage"
+        "readAiUsage",
+        "readConnectPartnerStatus",
+        "readPolicy"
       ]
     },
     "absentCapabilityNames": [
+      "searchExternalDomains",
+      "searchConnectPartners",
       "describeCapabilities",
-      "prepareBusinessListingChange",
-      "readOwnAiUsage",
       "readOwnBusinessOverview",
       "readOwnOrderIssues",
+      "prepareBusinessListingChange",
       "readOwnSellerDues",
-      "searchConnectPartners",
-      "searchExternalDomains"
+      "readOwnAiUsage",
+      "readOwnConnectPartnership",
+      "readPublishedPolicy"
     ],
     "absentToolBindings": [
+      "searchDomains",
+      "searchPartnerOffers",
       "describeDinarCapabilities",
-      "prepareBusinessListingAction",
-      "readAiUsage",
       "readBusinessOverview",
       "readOrderIssues",
+      "prepareBusinessListingAction",
       "readSellerDues",
-      "searchDomains",
-      "searchPartnerOffers"
+      "readAiUsage",
+      "readConnectPartnerStatus",
+      "readPolicy"
     ],
-    "note": "Static authored registry comparison; no Claude code executed or merged and no live provider quality inferred."
+    "note": "Static authored comparison at latest Phase2 head; no Claude source merged/executed here. Own 180-file acceptance excludes unmerged Claude tests.",
+    "inspectedClaudeHead": "e75cb18e89d68361be17a477976cf5d6908deb47"
   },
   "sourceHistoryPreserved": true,
-  "claudeBranchMutated": false
+  "claudeBranchMutated": false,
+  "previousInspectedHead": "d0c2f0390b6d06bece8bd2d95c5629d2384c19bc",
+  "latestSourceChangedPaths": 65,
+  "phase2OriginalCommits": [
+    "e75cb18e89d68361be17a477976cf5d6908deb47 Phase 2 docs; gpt-oss-20b self-hosted contract; Qwen3.5-9B vLLM serving flags",
+    "7f84cfb3af92c49a202f168676f6118db1614618 Phase 2: Connect partnership and policy reads, role-filtered capability catalog, plan-step model consult"
+  ],
+  "phase2SourceDiffSHA256": "289bd5d8b662388adff952a1fc2689faf1c24ed0ceeb6f94fd49ef42664d9aa0",
+  "sourceContractFinding": "P2: new agreement reader maps nonexistent top-level fields; canonical values are in terms/accepted/acceptance. Positive real-partner test absent from inspected seven-case suite.",
+  "claudeTestsExecutedHere": false
 }

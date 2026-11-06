@@ -24,7 +24,7 @@ Classification is per meaningful contribution; mixed branches have multiple clas
 | `claude/11-c1-sql-search` | `d94477bad836bf4fe7b3330884170625d1698270` | 0 | 0 | PRESENT_AND_VERIFIED |
 | `claude/12-d1-d2-business-foundation` | `91b09ee7e24b737879d1bcf0ff1f8c238026d3f4` | 0 | 0 | PRESENT_AND_VERIFIED |
 | `claude/13-integration-preflight` | `fe1c23396930f836d97241a6e3333611c6a60e4d` | 0 | 0 | PRESENT_AND_VERIFIED |
-| `claude/dinar-next-intelligence` | `d0c2f0390b6d06bece8bd2d95c5629d2384c19bc` | 17 | 57 | OWNER_DECISION_REQUIRED |
+| `claude/dinar-next-intelligence` | `e75cb18e89d68361be17a477976cf5d6908deb47` | 19 | 65 | OWNER_DECISION_REQUIRED / MISSING_AND_REQUIRED |
 | `codex/11-c1-sql-search` | `f351f5d20d52d77b69bdcff66e2412796e53aa39` | 7 | 16 | SUPERSEDED_WITH_PROOF / INCOMPATIBLE_OR_UNSAFE / PRESENT_BUT_REGRESSION_UNVERIFIED |
 | `codex/dinar-next-unified-development` | `9101672a7370bb8080e598344840d1fde2f88291` | 0 | 0 | PRESENT_AND_VERIFIED |
 | `main` | `b1b20e513ed25952bc086778fb71af88adcc54ba` | 0 | 0 | PRESENT_AND_VERIFIED |
@@ -86,19 +86,37 @@ HEAD `8f4662b8a8d0c1ebc90bec06cd17c89795d8a480`; 2 original unique commits; 1 mo
 
 ### `claude/dinar-next-intelligence`
 
-HEAD `d0c2f0390b6d06bece8bd2d95c5629d2384c19bc`; 17 original unique commits; 57 modified paths. Complete file/commit/blob evidence is in JSON.
+HEAD `e75cb18e89d68361be17a477976cf5d6908deb47`; 19 original unique commits; 65 modified paths. Latest two commits were fetched/source-inspected after the publication guard detected the active branch advance. Exact source/commit/blob proof is in JSON.
 
-- **OWNER_DECISION_REQUIRED — Eight absent model bindings and CAPABILITIES surface; existing canonical services are not absent**
-  Current equivalent: Claude d0c2f039: describeDinarCapabilities, prepareBusinessListingAction, readAiUsage, readBusinessOverview, readOrderIssues, readSellerDues, searchDomains, searchPartnerOffers
-  Missing/limit: These model bindings, usage forecast/context disambiguation, advisory routing, bounded verification and self-hosted prepared config are not integrated.
-  Evidence/tests: Source/workflow/artifact inspection; no runtime test claimed for documentation or unintegrated Claude code.
-  Security: 23 registered capabilities vs current 15; model tools remain read/preparation only. Preserve original 17 commits; owner-authorized joint candidate and role/initialization tests required.
+- **OWNER_DECISION_REQUIRED — Ten absent model bindings and CAPABILITIES surface; existing canonical services are not absent**
+  Current equivalent: Claude e75cb18e: describeDinarCapabilities, prepareBusinessListingAction, readAiUsage, readBusinessOverview, readOrderIssues, readSellerDues, searchDomains, searchPartnerOffers, readConnectPartnerStatus, readPolicy
+  Missing/limit: These model bindings, usage forecast/context disambiguation, advisory routing, bounded verification and self-hosted prepared config and Phase2 policy/partnership reads, role discovery and plan-step model consult are not integrated.
+  Tests: source inspection only; no unmerged Claude regression claimed as accepted.
+  Security: 25 registered capabilities vs current 15; model tools remain read/preparation only. Preserve original 19 commits; owner-authorized joint candidate and role/initialization tests required.
 
 - **OWNER_DECISION_REQUIRED — Claude regression/evaluation/doc work**
-  Current equivalent: Exact 57 changed paths and nine current merge-tree text conflicts in FINAL_CLAUDE_INTEGRATION_HANDOFF
+  Current equivalent: Exact 65 changed paths and nine current merge-tree text conflicts in FINAL_CLAUDE_INTEGRATION_HANDOFF
   Missing/limit: Current live Arabic quality and final independent approval remain unverified.
-  Evidence/tests: Source/workflow/artifact inspection; no runtime test claimed for documentation or unintegrated Claude code.
+  Tests: source inspection only; no unmerged Claude regression claimed as accepted.
   Security: PR6 Git head verified; API/draft metadata unavailable. Claude-reported tests are not joint-Codex acceptance.
+
+- **OWNER_DECISION_REQUIRED — Phase2 role-filtered capability discovery, readConnectPartnerStatus/readPolicy and bounded plan-step model consult**
+  Current equivalent: 7f84cfb3af92c49a202f168676f6118db1614618 uses existing Connect/policy authorities; 25 registry entries vs current 15. Domain parser defers missing domains in long/planned goals; price noun stripping becomes leading-only.
+  Missing/limit: Not integrated. Preserve role-derived catalog, domain deferral and one model interpretation stage per soft-missing plan step across all three modes, with existing spend/confirmation/UNKNOWN safeguards.
+  Tests: source inspection only; no unmerged Claude regression claimed as accepted.
+  Security: Claude-only seven-case multistep suite and updated exact role/tool sets were source-inspected, not executed/accepted here; no new purchase or financial writer.
+
+- **MISSING_AND_REQUIRED — Positive partnership/agreement read mapping and acceptance coverage**
+  Current equivalent: Canonical connect/agreements.view returns terms.commission, accepted and acceptance.acceptedAt. New Claude readConnectPartnerStatus instead reads nonexistent top-level status, commissionRateBasisPoints/rateBasisPoints and acceptedAt.
+  Missing/limit: P2 SOURCE_CONTRACT_MISMATCH on active Claude source, not a current Codex runtime failure. Joint integration must consume exact canonical DTO and add a real accepted-partner positive read plus staff/revocation/version tests; MS-05 covers only an empty non-partner and forged input.
+  Tests: source inspection only; no unmerged Claude regression claimed as accepted.
+  Security: Do not fabricate agreement state, rate or acceptance date, and do not change canonical schema to accommodate the wrong mapper. No mutation/financial authority is granted by this read.
+
+- **OWNER_DECISION_REQUIRED — e75cb18 self-hosted contract/benchmark preparation and six Phase2 handoff documents**
+  Current equivalent: Existing OPENAI_COMPATIBLE transport remains authority. Metadata adds openai/gpt-oss-20b and Qwen3.5 vLLM parser guidance; DeepSeek text-only distill lacks required documented structured tool calls.
+  Missing/limit: Not deployed, downloaded or live-tested here. Current licenses, hardware/capacity, parsing and live Arabic/tool quality require approved independent validation. Zero synthetic per-token price is not zero hosting cost.
+  Tests: source inspection only; no unmerged Claude regression claimed as accepted.
+  Security: No paid inference/provider activation; preserve official-source uncertainty and no real tool execution from unstructured text.
 
 ### `codex/11-c1-sql-search`
 
@@ -547,7 +565,7 @@ The separate confirmed lost-ack defect is fixed by `99cb0529c05c4af2c320922704d3
 
 ## Claude and original artifacts
 
-Claude `d0c2f0390b6d06bece8bd2d95c5629d2384c19bc` / PR6 Git head is active and untouched. Its eight missing model bindings and capabilities, 17 original commits, file/behavior deltas and nine current textual conflicts are handed off in [FINAL_CLAUDE_INTEGRATION_HANDOFF](FINAL_CLAUDE_INTEGRATION_HANDOFF.md). Underlying existing services are reused; unmerged intelligence is not claimed complete. API draft/base/run metadata is blocked, distinct from verified Git refs.
+Claude `e75cb18e89d68361be17a477976cf5d6908deb47` / PR6 Git head is active and untouched. Its ten missing model bindings and capabilities, 19 original commits, file/behavior deltas and nine current textual conflicts are handed off in [FINAL_CLAUDE_INTEGRATION_HANDOFF](FINAL_CLAUDE_INTEGRATION_HANDOFF.md). Underlying existing services are reused; unmerged intelligence is not claimed complete. API draft/base/run metadata is blocked, distinct from verified Git refs.
 
 Original Conversation V2 heads `719d4715a869f69831049a6a2f6c349cec934344` and `442008a5fdcb9dc6529a55364cd66e033c6a0909` remain **PRESERVATION_BLOCKED**, not declared lost. All accessible refs and 16 verified authorized bundles were inspected in a quarantined bare repository: 64 advertised tips are already reachable and neither object is present. No approved old-task/artifact search connector or expected `codex-conversation-v2-authorized.bundle` is available. Original IDs are never fabricated. Current V2/Stop/IME/stream/recovery tests independently prove named behaviors, not historical provenance. Gemini gateway implementation/testing exists; separate Gemini-agent artifact and live model quality/price/free quota are unverified.
 
@@ -555,6 +573,6 @@ Original Conversation V2 heads `719d4715a869f69831049a6a2f6c349cec934344` and `4
 
 C1 functional results and numeric edges are verified; fixed-128 cursor/constant-space and transaction-snapshot equivalence are explicitly not claimed for current keyset/attribute-sort strategy. Active Claude intelligence, original artifacts, manual assistive technology, live/sandbox providers, legal/commercial approval and staging remain separate gates. No production readiness is inferred from local acceptance. [Launch matrix](FINAL_LAUNCH_READINESS.md) separates platform handoff, joint engineering, staging and production.
 
-Remote snapshot includes the verified code publication. The later supplemental delivery tip is given by the final publication receipt/owner-facing report; all other 48 heads remain unchanged.
+Remote snapshot includes the verified code publication. The later supplemental delivery tip is given by the final publication receipt/owner-facing report; Codex wrote no contributor branch; the independently advanced Claude head is reflected in the refreshed snapshot.
 
 Delivery scanner review: [two documented non-secret detections and exact fingerprint exclusions](evidence/DELIVERY_SCANNER_TRIAGE.md). The qualified-code scan remains 555 commits/zero findings; later delivery sweeps report reviewed exclusions separately, never as nonexistent raw detections. Application/contract/migration acceptance still refers to the exact unchanged code cut.
