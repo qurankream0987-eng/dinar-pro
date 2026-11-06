@@ -9,7 +9,7 @@ import {
 import { refreshNegotiationPayload } from "../ai/negotiation-turn";
 import { refreshInquiryPayload } from "../ai/inquiry-turn";
 import { buildCardEnvelope } from "../ai/card-envelope";
-import { CardEnvelopeSchema } from "@workspace/api-zod/surface-composition";
+import { CardEnvelopeSchema, ResultCompositionSchema } from "@workspace/api-zod/surface-composition";
 import { acknowledgeClientAction, refreshControlPayload } from "../ai/product-control-turn";
 import { guestUsageKey, reserveAiUsage, settleAiUsage, type AiUsageMeasurement, type AiUsageOwner } from "../lib/ai-usage";
 import { usageLimitMessage } from "../ai/usage-turn";
@@ -249,6 +249,7 @@ const StoredBlockPayload = z
     resourceIds: z.array(z.string().min(1).max(200)).max(24),
     searchState: SearchStateSchema.optional(),
     presentation: Presentation.optional(),
+    composition: ResultCompositionSchema.optional(),
   })
   .strict();
 const SurfaceBlock = z.object({
@@ -342,6 +343,7 @@ const ListingBlock = z.object({
     resourceIds: z.array(z.string().min(1).max(200)).max(24).optional(),
     searchState: SearchStateSchema.optional(),
     presentation: Presentation.optional(),
+    composition: ResultCompositionSchema.optional(),
     listings: z.array(z.record(z.string(), z.unknown())),
     card: CardEnvelopeSchema.optional(),
   }),
@@ -723,6 +725,14 @@ async function freshBlocksForConversation(
           resourceIds: listings.map((listing) => listing.id),
           searchState: payload.searchState,
           ...(payload.presentation ? { presentation: payload.presentation } : {}),
+          // Restored with the block; a highlight survives only if that listing is still live.
+          ...(payload.composition
+            ? {
+                composition: payload.composition.highlightId && !listings.some((listing) => listing.id === payload.composition!.highlightId)
+                  ? { source: payload.composition.source, layout: payload.composition.layout }
+                  : payload.composition,
+              }
+            : {}),
           listings,
           card: buildCardEnvelope({
             conversationId,
@@ -2457,6 +2467,12 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
     const assistantMessageId = randomUUID();
     const messageCreatedAt = new Date();
     const presentation = toolResult.kind === "RESOURCE" ? "DETAILS" : "RESULTS";
+    // A highlight must name a listing this block actually shows; otherwise the layout alone stays.
+    const composition = toolResult.kind === "SEARCH" && toolResult.composition
+      ? toolResult.composition.highlightId && !resourceIds.includes(toolResult.composition.highlightId)
+        ? { source: toolResult.composition.source, layout: toolResult.composition.layout }
+        : toolResult.composition
+      : undefined;
     // Searches and restores always render a typed block, including a real empty state.
     const blocks =
       resourceIds.length || toolResult.kind !== "RESOURCE"
@@ -2469,6 +2485,7 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
                 resourceIds,
                 ...(searchState ? { searchState } : {}),
                 presentation,
+                ...(composition ? { composition } : {}),
                 listings: toolResult.listings,
                 card: buildCardEnvelope({
                   conversationId: conversation.id,
@@ -2492,6 +2509,7 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
       resourceIds,
       ...(searchState ? { searchState } : {}),
       presentation,
+      ...(composition ? { composition } : {}),
     });
 
     await db.transaction(async (tx) => {

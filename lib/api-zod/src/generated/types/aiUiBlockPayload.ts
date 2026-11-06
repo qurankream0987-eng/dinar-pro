@@ -14,6 +14,7 @@ import type { AiUiBlockPayloadBusiness } from './aiUiBlockPayloadBusiness';
 import type { AiUiBlockPayloadCard } from './aiUiBlockPayloadCard';
 import type { AiUiBlockPayloadCommerce } from './aiUiBlockPayloadCommerce';
 import type { AiUiBlockPayloadComparison } from './aiUiBlockPayloadComparison';
+import type { AiUiBlockPayloadComposition } from './aiUiBlockPayloadComposition';
 import type { AiUiBlockPayloadControl } from './aiUiBlockPayloadControl';
 import type { AiUiBlockPayloadDelivery } from './aiUiBlockPayloadDelivery';
 import type { AiUiBlockPayloadDraft } from './aiUiBlockPayloadDraft';
@@ -57,6 +58,8 @@ export type AiUiBlockPayload = {
   searchState?: AiSearchState;
   /** DETAILS marks one result opened from the conversation's current result set. */
   presentation?: AiUiBlockPayloadPresentation;
+  /** Generative UI. The server-resolved layout of a listing block, proposed by the model and validated against this block's own verified result set; a highlight is a labelled suggestion and never a sponsored listing. */
+  composition?: AiUiBlockPayloadComposition;
   photoSuggestionStatus?: AiUiBlockPayloadPhotoSuggestionStatus;
   /** @maxItems 12 */
   photoSuggestions?: AiPhotoSuggestion[];

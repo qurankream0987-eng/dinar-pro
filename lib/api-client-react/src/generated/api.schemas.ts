@@ -2148,6 +2148,22 @@ export const AiUiBlockPayloadPresentation = {
   DETAILS: 'DETAILS',
 } as const;
 
+export type AiUiBlockPayloadCompositionSource = typeof AiUiBlockPayloadCompositionSource[keyof typeof AiUiBlockPayloadCompositionSource];
+
+
+export const AiUiBlockPayloadCompositionSource = {
+  MODEL_PROPOSAL: 'MODEL_PROPOSAL',
+} as const;
+
+export type AiUiBlockPayloadCompositionLayout = typeof AiUiBlockPayloadCompositionLayout[keyof typeof AiUiBlockPayloadCompositionLayout];
+
+
+export const AiUiBlockPayloadCompositionLayout = {
+  GRID: 'GRID',
+  CAROUSEL: 'CAROUSEL',
+  LIST: 'LIST',
+} as const;
+
 export type AiUiBlockPayloadPhotoSuggestionStatus = typeof AiUiBlockPayloadPhotoSuggestionStatus[keyof typeof AiUiBlockPayloadPhotoSuggestionStatus];
 
 
@@ -2693,6 +2709,19 @@ export type AiUiBlockPayloadSellerInsight = { [key: string]: unknown };
 
 export type AiUiBlockPayloadAttributes = { [key: string]: unknown };
 
+/**
+ * Generative UI. The server-resolved layout of a listing block, proposed by the model and validated against this block's own verified result set; a highlight is a labelled suggestion and never a sponsored listing.
+ */
+export type AiUiBlockPayloadComposition = {
+  source: AiUiBlockPayloadCompositionSource;
+  layout: AiUiBlockPayloadCompositionLayout;
+  /**
+     * @minLength 1
+     * @maxLength 200
+     */
+  highlightId?: string;
+};
+
 export type AiUiBlockPayloadManagementPreview = {
   previewId: string;
   action: AiUiBlockPayloadManagementPreviewAction;
@@ -2811,6 +2840,8 @@ export type AiUiBlockPayload = {
   searchState?: AiSearchState;
   /** DETAILS marks one result opened from the conversation's current result set. */
   presentation?: AiUiBlockPayloadPresentation;
+  /** Generative UI. The server-resolved layout of a listing block, proposed by the model and validated against this block's own verified result set; a highlight is a labelled suggestion and never a sponsored listing. */
+  composition?: AiUiBlockPayloadComposition;
   photoSuggestionStatus?: AiUiBlockPayloadPhotoSuggestionStatus;
   /** @maxItems 12 */
   photoSuggestions?: AiPhotoSuggestion[];

@@ -1,3 +1,4 @@
+import { ResultCompositionSchema, type ResultComposition } from "@workspace/api-zod/surface-composition";
 import { UniversalCardsPayloadSchema, type UniversalCardsPayload } from "@workspace/api-zod/connect";
 import { DRIVER_SURFACES } from "./driver-types";
 import { MEMORY_SURFACES, normalizeMemory } from "./memory-types";
@@ -123,6 +124,8 @@ export type AiUiBlock = {
     searchState?: AiSearchState;
     /** DETAILS: one result opened from the conversation's current result set. */
     presentation?: "RESULTS" | "DETAILS";
+    /** Generative UI: the server-resolved layout the model proposed (validated twice). */
+    composition?: ResultComposition;
     photoSuggestionStatus?:
       | "UNAVAILABLE"
       | "FAILED"
@@ -354,6 +357,9 @@ function normalizeBlock(value: unknown): AiUiBlock | null {
     !["RESULTS", "DETAILS"].includes(payload.presentation)
   )
     return null;
+  // An invalid composition is dropped, never partially applied: the typed card renders as before.
+  if (payload.composition !== undefined && !ResultCompositionSchema.safeParse(payload.composition).success)
+    delete (payload as { composition?: unknown }).composition;
   if (
     payload.photoSuggestionStatus !== undefined &&
     !["UNAVAILABLE", "FAILED", "NO_SUGGESTIONS", "SUGGESTIONS"].includes(

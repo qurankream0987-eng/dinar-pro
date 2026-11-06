@@ -367,3 +367,84 @@ export function applyCardEnvelope(surface: ComposedSurface, envelope: CardEnvelo
   const state = envelope.surface || envelope.status.lifecycle !== "READY" ? envelope.status.lifecycle : base.state;
   return { ...base, state, sections };
 }
+
+// ─── Model presentation proposals (generative UI) ───────────────────────────
+
+/**
+ * What the model may propose about how verified results are shown. It names positions (1-based)
+ * in the result set the server produced in the same turn, a layout from a closed list, and
+ * comparison dimensions; never an identifier, a price, a URL, a style or markup. The server
+ * resolves every position against its own records and rejects the whole proposal when any part
+ * does not resolve; the typed card is then shown unchanged. A proposal authorizes nothing.
+ */
+export const PRESENTATION_PROPOSAL_VERSION = 1 as const;
+export const PRESENTATION_LAYOUTS = ["GRID", "CAROUSEL", "LIST", "COMPARISON"] as const;
+export type PresentationLayout = (typeof PRESENTATION_LAYOUTS)[number];
+export const PRESENTATION_DIMENSIONS = ["PRICE", "CONDITION", "CITY", "AVAILABILITY", "DELIVERY", "SELLER"] as const;
+export const PRESENTATION_MAX_ITEMS = 6;
+
+export const PresentationProposalSchema = z.object({
+  version: z.literal(PRESENTATION_PROPOSAL_VERSION),
+  layout: z.enum(PRESENTATION_LAYOUTS),
+  /** Which verified results to show, in this order (1-based positions of this turn's results). */
+  positions: z.array(z.number().int().min(1).max(24)).min(1).max(PRESENTATION_MAX_ITEMS).optional(),
+  /** One shown position the model suggests as the best fit; labelled as a suggestion. */
+  highlight: z.number().int().min(1).max(24).optional(),
+  dimensions: z.array(z.enum(PRESENTATION_DIMENSIONS)).min(1).max(4).optional(),
+}).strict();
+export type PresentationProposal = z.infer<typeof PresentationProposalSchema>;
+
+/** The server's resolved layout for a listing block, stored with the block and restored on reload. */
+export const ResultCompositionSchema = z.object({
+  source: z.literal("MODEL_PROPOSAL"),
+  layout: z.enum(["GRID", "CAROUSEL", "LIST"]),
+  /** A listing id from the block's own result set; never a sponsored listing. */
+  highlightId: z.string().min(1).max(200).optional(),
+}).strict();
+export type ResultComposition = z.infer<typeof ResultCompositionSchema>;
+
+export type PresentationResolution =
+  | { status: "NONE" }
+  | { status: "REJECTED"; reason: string }
+  | { status: "COMPARE"; positions: number[] }
+  | { status: "LAYOUT"; order: number[]; composition: ResultComposition };
+
+/**
+ * Resolves a proposal against the verified results of the same turn. Pure: the caller supplies
+ * the listings it actually read. Any unresolvable part rejects the whole proposal.
+ */
+export function resolvePresentationProposal(
+  raw: unknown,
+  listings: readonly { id: string; isSponsored?: boolean | null }[],
+): PresentationResolution {
+  if (raw === undefined || raw === null) return { status: "NONE" };
+  const parsed = PresentationProposalSchema.safeParse(raw);
+  if (!parsed.success) return { status: "REJECTED", reason: "INVALID_SHAPE" };
+  const proposal = parsed.data;
+  const count = listings.length;
+  if (!count) return { status: "REJECTED", reason: "NO_VERIFIED_RESULTS" };
+  const positions = proposal.positions ?? [];
+  if (positions.some((position) => position > count)) return { status: "REJECTED", reason: "POSITION_OUT_OF_RANGE" };
+  if (new Set(positions).size !== positions.length) return { status: "REJECTED", reason: "DUPLICATE_POSITION" };
+  if (proposal.layout === "COMPARISON") {
+    const chosen = positions.length ? positions : Array.from({ length: Math.min(3, count) }, (_, index) => index + 1);
+    if (chosen.length < 2 || chosen.length > 4) return { status: "REJECTED", reason: "COMPARISON_NEEDS_2_TO_4" };
+    if (proposal.highlight !== undefined) return { status: "REJECTED", reason: "NO_HIGHLIGHT_IN_COMPARISON" };
+    return { status: "COMPARE", positions: chosen };
+  }
+  if (proposal.dimensions) return { status: "REJECTED", reason: "DIMENSIONS_ONLY_FOR_COMPARISON" };
+  const order = positions.length ? positions : Array.from({ length: count }, (_, index) => index + 1);
+  let highlightId: string | undefined;
+  if (proposal.highlight !== undefined) {
+    if (!order.includes(proposal.highlight)) return { status: "REJECTED", reason: "HIGHLIGHT_NOT_SHOWN" };
+    const target = listings[proposal.highlight - 1]!;
+    // A paid placement is never presented as DINAR's own suggestion.
+    if (target.isSponsored) return { status: "REJECTED", reason: "SPONSORED_HIGHLIGHT" };
+    highlightId = target.id;
+  }
+  return {
+    status: "LAYOUT",
+    order,
+    composition: { source: "MODEL_PROPOSAL", layout: proposal.layout, ...(highlightId ? { highlightId } : {}) },
+  };
+}

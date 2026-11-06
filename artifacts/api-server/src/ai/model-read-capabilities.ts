@@ -186,9 +186,24 @@ export async function readConnectPartnerStatus(context: ToolContext): Promise<To
   for (const partner of partners) {
     let agreements: Record<string, unknown>[] | "NOT_PERMITTED" = "NOT_PERMITTED";
     try {
-      agreements = (await listConnectAgreements(context.actorId, context.market as never, String(partner.id))).slice(0, 5).map((row) => {
-        const item = row as Record<string, unknown>;
-        return { version: item.version, status: item.status, commissionRateBasisPoints: item.commissionRateBasisPoints ?? item.rateBasisPoints ?? null, acceptedAt: item.acceptedAt ?? null };
+      agreements = (await listConnectAgreements(context.actorId, context.market as never, String(partner.id))).slice(0, 5).map((row): Record<string, unknown> => {
+        // The canonical ConnectAgreementView: terms.commission, accepted, acceptance.acceptedAt.
+        // Mapped field by field; nothing is guessed, so a known fact never turns unknown.
+        const terms = row.terms;
+        return {
+          version: row.version,
+          accepted: row.accepted,
+          acceptedAt: row.acceptance?.acceptedAt ?? null,
+          mode: terms.mode,
+          currency: terms.currency,
+          commission: terms.commission.kind === "PERCENTAGE"
+            ? { kind: "PERCENTAGE", basisPoints: terms.commission.basisPoints }
+            : { kind: "FIXED", amountMinor: terms.commission.amountMinor },
+          categoryRates: terms.categoryRates.length,
+          eligibleEvents: terms.eligibleEvents,
+          effectiveFrom: terms.effectiveFrom,
+          effectiveUntil: terms.effectiveUntil,
+        };
       });
     } catch (error) {
       const status = (error as { status?: number }).status;

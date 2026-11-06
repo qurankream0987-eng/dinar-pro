@@ -2797,6 +2797,8 @@ export const previewAiConversationResponseBlocksItemPayloadSearchStateFiltersIte
 
 export const previewAiConversationResponseBlocksItemPayloadSearchStateFiltersMax = 12;
 
+export const previewAiConversationResponseBlocksItemPayloadCompositionHighlightIdMax = 200;
+
 export const previewAiConversationResponseBlocksItemPayloadPhotoSuggestionsItemFieldMax = 80;
 
 export const previewAiConversationResponseBlocksItemPayloadPhotoSuggestionsItemValueOneMax = 160;
@@ -2968,6 +2970,11 @@ export const PreviewAiConversationResponse = zod.object({
   "sort": zod.enum(['RELEVANCE', 'PRICE_ASC', 'PRICE_DESC', 'NEWEST', 'YEAR_ASC', 'YEAR_DESC', 'MILEAGE_ASC', 'MILEAGE_DESC', 'PROPERTY_SIZE_ASC', 'PROPERTY_SIZE_DESC']).optional()
 }).optional(),
   "presentation": zod.enum(['RESULTS', 'DETAILS']).optional().describe('DETAILS marks one result opened from the conversation\'s current result set.'),
+  "composition": zod.object({
+  "source": zod.enum(['MODEL_PROPOSAL']),
+  "layout": zod.enum(['GRID', 'CAROUSEL', 'LIST']),
+  "highlightId": zod.string().min(1).max(previewAiConversationResponseBlocksItemPayloadCompositionHighlightIdMax).optional()
+}).optional().describe('Generative UI. The server-resolved layout of a listing block, proposed by the model and validated against this block\'s own verified result set; a highlight is a labelled suggestion and never a sponsored listing.'),
   "photoSuggestionStatus": zod.enum(['UNAVAILABLE', 'FAILED', 'NO_SUGGESTIONS', 'SUGGESTIONS']).optional(),
   "photoSuggestions": zod.array(zod.object({
   "field": zod.string().min(1).max(previewAiConversationResponseBlocksItemPayloadPhotoSuggestionsItemFieldMax),
@@ -3260,6 +3267,8 @@ export const createAiGuestHandoffResponseMessagesItemBlocksItemPayloadSearchStat
 
 export const createAiGuestHandoffResponseMessagesItemBlocksItemPayloadSearchStateFiltersMax = 12;
 
+export const createAiGuestHandoffResponseMessagesItemBlocksItemPayloadCompositionHighlightIdMax = 200;
+
 export const createAiGuestHandoffResponseMessagesItemBlocksItemPayloadPhotoSuggestionsItemFieldMax = 80;
 
 export const createAiGuestHandoffResponseMessagesItemBlocksItemPayloadPhotoSuggestionsItemValueOneMax = 160;
@@ -3449,6 +3458,11 @@ export const CreateAiGuestHandoffResponse = zod.object({
   "sort": zod.enum(['RELEVANCE', 'PRICE_ASC', 'PRICE_DESC', 'NEWEST', 'YEAR_ASC', 'YEAR_DESC', 'MILEAGE_ASC', 'MILEAGE_DESC', 'PROPERTY_SIZE_ASC', 'PROPERTY_SIZE_DESC']).optional()
 }).optional(),
   "presentation": zod.enum(['RESULTS', 'DETAILS']).optional().describe('DETAILS marks one result opened from the conversation\'s current result set.'),
+  "composition": zod.object({
+  "source": zod.enum(['MODEL_PROPOSAL']),
+  "layout": zod.enum(['GRID', 'CAROUSEL', 'LIST']),
+  "highlightId": zod.string().min(1).max(createAiGuestHandoffResponseMessagesItemBlocksItemPayloadCompositionHighlightIdMax).optional()
+}).optional().describe('Generative UI. The server-resolved layout of a listing block, proposed by the model and validated against this block\'s own verified result set; a highlight is a labelled suggestion and never a sponsored listing.'),
   "photoSuggestionStatus": zod.enum(['UNAVAILABLE', 'FAILED', 'NO_SUGGESTIONS', 'SUGGESTIONS']).optional(),
   "photoSuggestions": zod.array(zod.object({
   "field": zod.string().min(1).max(createAiGuestHandoffResponseMessagesItemBlocksItemPayloadPhotoSuggestionsItemFieldMax),
@@ -3645,6 +3659,8 @@ export const getAiConversationResponseMessagesItemBlocksItemPayloadSearchStateFi
 
 export const getAiConversationResponseMessagesItemBlocksItemPayloadSearchStateFiltersMax = 12;
 
+export const getAiConversationResponseMessagesItemBlocksItemPayloadCompositionHighlightIdMax = 200;
+
 export const getAiConversationResponseMessagesItemBlocksItemPayloadPhotoSuggestionsItemFieldMax = 80;
 
 export const getAiConversationResponseMessagesItemBlocksItemPayloadPhotoSuggestionsItemValueOneMax = 160;
@@ -3834,6 +3850,11 @@ export const GetAiConversationResponse = zod.object({
   "sort": zod.enum(['RELEVANCE', 'PRICE_ASC', 'PRICE_DESC', 'NEWEST', 'YEAR_ASC', 'YEAR_DESC', 'MILEAGE_ASC', 'MILEAGE_DESC', 'PROPERTY_SIZE_ASC', 'PROPERTY_SIZE_DESC']).optional()
 }).optional(),
   "presentation": zod.enum(['RESULTS', 'DETAILS']).optional().describe('DETAILS marks one result opened from the conversation\'s current result set.'),
+  "composition": zod.object({
+  "source": zod.enum(['MODEL_PROPOSAL']),
+  "layout": zod.enum(['GRID', 'CAROUSEL', 'LIST']),
+  "highlightId": zod.string().min(1).max(getAiConversationResponseMessagesItemBlocksItemPayloadCompositionHighlightIdMax).optional()
+}).optional().describe('Generative UI. The server-resolved layout of a listing block, proposed by the model and validated against this block\'s own verified result set; a highlight is a labelled suggestion and never a sponsored listing.'),
   "photoSuggestionStatus": zod.enum(['UNAVAILABLE', 'FAILED', 'NO_SUGGESTIONS', 'SUGGESTIONS']).optional(),
   "photoSuggestions": zod.array(zod.object({
   "field": zod.string().min(1).max(getAiConversationResponseMessagesItemBlocksItemPayloadPhotoSuggestionsItemFieldMax),
@@ -4068,6 +4089,8 @@ export const copyAiConversationResponseMessagesItemBlocksItemPayloadSearchStateF
 
 export const copyAiConversationResponseMessagesItemBlocksItemPayloadSearchStateFiltersMax = 12;
 
+export const copyAiConversationResponseMessagesItemBlocksItemPayloadCompositionHighlightIdMax = 200;
+
 export const copyAiConversationResponseMessagesItemBlocksItemPayloadPhotoSuggestionsItemFieldMax = 80;
 
 export const copyAiConversationResponseMessagesItemBlocksItemPayloadPhotoSuggestionsItemValueOneMax = 160;
@@ -4257,6 +4280,11 @@ export const CopyAiConversationResponse = zod.object({
   "sort": zod.enum(['RELEVANCE', 'PRICE_ASC', 'PRICE_DESC', 'NEWEST', 'YEAR_ASC', 'YEAR_DESC', 'MILEAGE_ASC', 'MILEAGE_DESC', 'PROPERTY_SIZE_ASC', 'PROPERTY_SIZE_DESC']).optional()
 }).optional(),
   "presentation": zod.enum(['RESULTS', 'DETAILS']).optional().describe('DETAILS marks one result opened from the conversation\'s current result set.'),
+  "composition": zod.object({
+  "source": zod.enum(['MODEL_PROPOSAL']),
+  "layout": zod.enum(['GRID', 'CAROUSEL', 'LIST']),
+  "highlightId": zod.string().min(1).max(copyAiConversationResponseMessagesItemBlocksItemPayloadCompositionHighlightIdMax).optional()
+}).optional().describe('Generative UI. The server-resolved layout of a listing block, proposed by the model and validated against this block\'s own verified result set; a highlight is a labelled suggestion and never a sponsored listing.'),
   "photoSuggestionStatus": zod.enum(['UNAVAILABLE', 'FAILED', 'NO_SUGGESTIONS', 'SUGGESTIONS']).optional(),
   "photoSuggestions": zod.array(zod.object({
   "field": zod.string().min(1).max(copyAiConversationResponseMessagesItemBlocksItemPayloadPhotoSuggestionsItemFieldMax),
@@ -4513,6 +4541,8 @@ export const addAiListingToCartResponseAssistantMessageBlocksItemPayloadSearchSt
 
 export const addAiListingToCartResponseAssistantMessageBlocksItemPayloadSearchStateFiltersMax = 12;
 
+export const addAiListingToCartResponseAssistantMessageBlocksItemPayloadCompositionHighlightIdMax = 200;
+
 export const addAiListingToCartResponseAssistantMessageBlocksItemPayloadPhotoSuggestionsItemFieldMax = 80;
 
 export const addAiListingToCartResponseAssistantMessageBlocksItemPayloadPhotoSuggestionsItemValueOneMax = 160;
@@ -4694,6 +4724,11 @@ export const AddAiListingToCartResponse = zod.object({
   "sort": zod.enum(['RELEVANCE', 'PRICE_ASC', 'PRICE_DESC', 'NEWEST', 'YEAR_ASC', 'YEAR_DESC', 'MILEAGE_ASC', 'MILEAGE_DESC', 'PROPERTY_SIZE_ASC', 'PROPERTY_SIZE_DESC']).optional()
 }).optional(),
   "presentation": zod.enum(['RESULTS', 'DETAILS']).optional().describe('DETAILS marks one result opened from the conversation\'s current result set.'),
+  "composition": zod.object({
+  "source": zod.enum(['MODEL_PROPOSAL']),
+  "layout": zod.enum(['GRID', 'CAROUSEL', 'LIST']),
+  "highlightId": zod.string().min(1).max(addAiListingToCartResponseAssistantMessageBlocksItemPayloadCompositionHighlightIdMax).optional()
+}).optional().describe('Generative UI. The server-resolved layout of a listing block, proposed by the model and validated against this block\'s own verified result set; a highlight is a labelled suggestion and never a sponsored listing.'),
   "photoSuggestionStatus": zod.enum(['UNAVAILABLE', 'FAILED', 'NO_SUGGESTIONS', 'SUGGESTIONS']).optional(),
   "photoSuggestions": zod.array(zod.object({
   "field": zod.string().min(1).max(addAiListingToCartResponseAssistantMessageBlocksItemPayloadPhotoSuggestionsItemFieldMax),

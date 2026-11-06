@@ -15,6 +15,7 @@ import { aiRoutingMode, canonicalRequestProblem } from "./routing-mode";
 import { randomUUID } from "node:crypto";
 import { and, desc, eq, gte } from "drizzle-orm";
 import { CONVERSATION_SURFACE_FAMILIES, capabilityUtterance, type ProductCapabilityId } from "@workspace/api-zod/conversation-runtime";
+import { resolvePresentationProposal } from "@workspace/api-zod/surface-composition";
 import { countryByCode } from "@workspace/global";
 import { aiResultSets, aiUiBlocks, candidateProfiles, db, messages, offers } from "@workspace/db";
 import { isMarketAvailable, type marketFor } from "../lib/markets";
@@ -2033,7 +2034,41 @@ export async function executeModelFallback(
       GROUNDED_READ_ANSWER,
       input.conversationId,
     );
-    const result = lastSearchResult ?? lastResourceResult!;
+    let result = lastSearchResult ?? lastResourceResult!;
+    // Generative UI: the model may propose how this turn's verified results are shown. Every
+    // position is resolved against the listings DINAR itself returned; anything unresolvable
+    // rejects the whole proposal and the typed card stays as it was.
+    if (result.kind === "SEARCH") {
+      const resolution = resolvePresentationProposal(outcome.turn.presentation, result.listings);
+      if (resolution.status === "REJECTED")
+        logger.info({ conversationId: input.conversationId, reason: resolution.reason }, "presentation proposal rejected");
+      if (resolution.status === "COMPARE" && result.resultSetId) {
+        try {
+          // The server acts here, after validating the proposal: the canonical registered tool
+          // re-checks that the result set belongs to this conversation and market.
+          const { executeRegisteredTool } = await import("./tool-registry");
+          const compared = await executeRegisteredTool(
+            "compareListings",
+            JSON.stringify({ resultSetId: result.resultSetId, positions: resolution.positions }),
+            { conversationId: input.conversationId, market: input.market },
+          );
+          return {
+            tool: "compareListings",
+            version: 1,
+            result: withModelToolNote(compared.result, `${answer}${usageNote ? `\n\n${usageNote}` : ""}`),
+          };
+        } catch (error) {
+          // The comparison is refused (a listing went away): the verified results stay as they are.
+          logger.info({ conversationId: input.conversationId, err: error }, "presentation comparison refused");
+        }
+      }
+      if (resolution.status === "LAYOUT")
+        result = {
+          ...result,
+          listings: resolution.order.map((position) => result.listings[position - 1]!),
+          composition: resolution.composition,
+        };
+    }
     return {
       tool: result.kind === "SEARCH" ? "searchListings" : "getResource",
       version: 1,

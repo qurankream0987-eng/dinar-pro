@@ -5394,6 +5394,15 @@ components:
               type: string
               enum: [RESULTS, DETAILS]
               description: DETAILS marks one result opened from the conversation's current result set.
+            composition:
+              type: object
+              description: Generative UI. The server-resolved layout of a listing block, proposed by the model and validated against this block's own verified result set; a highlight is a labelled suggestion and never a sponsored listing.
+              required: [source, layout]
+              additionalProperties: false
+              properties:
+                source: { type: string, enum: [MODEL_PROPOSAL] }
+                layout: { type: string, enum: [GRID, CAROUSEL, LIST] }
+                highlightId: { type: string, minLength: 1, maxLength: 200 }
             photoSuggestionStatus:
               type: string
               enum: [UNAVAILABLE, FAILED, NO_SUGGESTIONS, SUGGESTIONS]

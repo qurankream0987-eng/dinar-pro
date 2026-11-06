@@ -72,6 +72,8 @@ export type ToolResult = {
   /** Published policy summaries (read only). */
   policies?: Record<string, unknown>[];
   memory?: import("./personal-memory-turn").MemorySummary;
+  /** Generative UI: the server-resolved layout of a listing block (model proposal, validated). */
+  composition?: import("@workspace/api-zod/surface-composition").ResultComposition;
   /** RESULTS restores an existing result set exactly; it never creates a new one. */
   kind: "SEARCH" | "RESOURCE" | "RESULTS" | "SURFACE";
   surface?: string;
