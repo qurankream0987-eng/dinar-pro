@@ -97,7 +97,10 @@ export function addToCartIntent(message: string): boolean {
   const text = message.replace(/[أإآ]/g, "ا");
   const folded = contextText(message);
   // «لا تحطه بالسلة», «ما بدي ضيفه», «مو لازم تضيفه»: a refused add, whatever the dialect.
-  if (/(?:^|\s)(?:لا|ما|مو|مش|ليس|بدون|بلاش)\s+(?:\S+\s+){0,2}?(?:ت|ا|ن)?(?:ضيف|ضف|حط|ضع|دخل)\S*(?:\s|$)/u.test(folded)) return false;
+  if (/(?:^|\s)(?:و\s*)?(?:لا|ما|مو|مش|ليس|بدون|بلاش)\s+(?:\S+\s+){0,2}?(?:ت|ا|ن)?(?:ضيف|ضف|حط|ضع|دخل)\S*(?:\s|$)/u.test(folded)) return false;
+  // «هل ينفع أضيف الأول؟», «هل أقدر أحطه بالسلة؟»: a question about what *I* may do (first
+  // person) asks for information. «هل تضيفه؟» (second person) stays a request, still confirmed.
+  if (/^هل\s+(?:\S+\s+){0,2}?(?:ا|ن)(?:ضيف|حط|ضع|دخل)\S*(?:\s|$)/u.test(folded)) return false;
   // «كيف أضيف منتج للسلة؟»: asking how is not asking DINAR to do it.
   if (/^(?:كيف|شلون|كيفاش|ازاي|طريقه|ممكن\s+تشرح)(?:\s|$)/u.test(folded)) return false;
   if (
@@ -128,6 +131,8 @@ const CORRECTION_PREFIXES = [
   /^\s*(?:لا|لأ)\s*[,،]?\s*(?:مو|مش)\s+(?:هذا|هذه|هذي|ذلك)\s*[,،]?\s*/iu,
   /^\s*(?:(?:لا|لأ)\s*[,،]?\s*)?(?:أقصد|اقصد|قصدي|أعني|اعني|كنت\s+أقصد|كنت\s+اقصد)(?:\s*[,،:]\s*|\s+)/iu,
   /^\s*(?:مو|مش|ليس)\s+(?:هذا|هذه|هذي|ذلك)\s*[,،]?\s*/iu,
+  // «هذا مو اللي أقصده، …», «هذي مش اللي بدي ياه»: the shown item is rejected; what follows is meant.
+  /^\s*(?:هذا|هذه|هذي|هاد|هادا|هيدا)\s+(?:مو|مش|ليس|مهو|ماهو)\s+(?:اللي|الي|يلي|الذي|التي)\s+[^،,]{1,20}?\s*[,،]\s*/iu,
   /^\s*not\s+(?:that|this|it)\s*[,،]?\s*(?:i\s+want\s*)?/iu,
   /^\s*بدل(?:ها|ه|هذا|هذه|هذي|ذلك)\s*(?:بـ?|ل)?\s*/iu,
   /^\s*(?:no\s*[,،]?\s*i\s+meant|actually\s+make\s+it)\s+/iu,
@@ -137,6 +142,33 @@ const CORRECTION_PREFIXES = [
   // «لا تضيف شي للسلة، بس ورني …», «ما أبي أشتري، فقط …»: a refused action followed by the real request.
   /^\s*(?:لا|ما|مو)\s+[^،,.؟?!]{1,40}?\s*[,،]?\s*(?:بس|فقط|بل|لكن)\s+/iu,
 ];
+
+/**
+ * A trailing refusal of a commercial action («…، ولا تضيفه للسلة», «… بدون ما تشتري»): it constrains
+ * what DINAR may do with the request, it is not part of what the user is pointing at.
+ */
+const TRAILING_REFUSAL =
+  /\s*[,،]?\s*(?:و\s*|(?:بس|لكن|بشرط)\s+)?(?:لا|ما|مو|مش|بدون(?:\s+ما)?|بلاش)\s+(?:\S+\s+){0,1}?(?:ت|ا|ن|ي)?(?:ضيف|ضف|حط|ضع|دخل|شتري|اشتري|طلب|دفع|كمل|ثبت|اكد)\S*(?:\s+\S+){0,3}\s*[.!؟?]*\s*$/u;
+
+/**
+ * What the user is actually asking for once a leading correction («لا، أقصد …») and trailing
+ * refusals are removed. The refusals still bind: callers use this only to resolve references,
+ * never to turn a refused action into an executed one.
+ */
+export function requestCore(message: string): string {
+  let text = stripCorrectionPrefix(message);
+  for (let pass = 0; pass < 3; pass += 1) {
+    const next = text.replace(TRAILING_REFUSAL, "").trim();
+    if (next === text || !next) break;
+    text = next;
+  }
+  return text.replace(/[.!؟?،,]+\s*$/u, "").trim();
+}
+
+/** A refused commercial action anywhere in the message: nothing commercial may be prepared from it. */
+export function refusesCommercialAction(message: string): boolean {
+  return /(?:^|\s)(?:و\s*)?(?:لا|ما|مو|مش|بدون(?:\s+ما)?|بلاش)\s+(?:\S+\s+){0,2}?(?:ت|ا|ن|ي)?(?:ضيف|ضف|حط|ضع|دخل|شتري|اشتري|طلب|دفع)\S*(?:\s|$)/u.test(contextText(message));
+}
 
 /** Remove only a leading correction marker; keep the corrected value and its constraints. */
 export function stripCorrectionPrefix(message: string): string {
