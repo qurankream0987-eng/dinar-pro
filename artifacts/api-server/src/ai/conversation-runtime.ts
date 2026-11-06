@@ -567,7 +567,7 @@ export async function executeAiConversationTurn(
   } = {},
 ): Promise<{ tool: string; version: number; result: ToolResult; taskPlan?: TaskPlan }> {
   if (!context.imageObjectPaths?.length && context.location === undefined) {
-    const connected = await executeConnectReadTurn({ message: context.message, actorId: context.actorId, market: context.market, providers: options.domainSearchProviders });
+    const connected = await executeConnectReadTurn({ message: context.message, actorId: context.actorId, market: context.market, providers: options.domainSearchProviders, ...(options.planStep ? { deferWithoutDomain: true } : {}) });
     if (connected) { options.onToolSelected?.(connected.tool); return connected; }
   }
   if ((!options.noModel && !options.planStep) &&
@@ -932,6 +932,16 @@ const isModelAnswer = (turn: RuntimeTurn) => turn.tool === "smartConversation";
  */
 async function executeWithRoutingMode(context: RuntimeContext, options: RuntimeOptions): Promise<RuntimeTurn> {
   const mode = aiRoutingMode();
+  // A step of a running plan («ساعدني أختار اسمًا», «ابحث عن دومين») that DINAR's own path only
+  // soft-misses (an empty product search) is interpreted once by the model, in every mode: an
+  // empty search is no answer to a step the user asked for. Bounded: one model stage per step.
+  if (options.planStep && !options.noModel && !options.modelStage && context.actorId && !context.imageObjectPaths?.length && context.location === undefined) {
+    const before = getModelGatewayCallCount();
+    const own = await executeRuntime(context, options);
+    if (getModelGatewayCallCount() > before || !isSoftMiss(own)) return own;
+    const interpreted = await executeRuntime(context, { ...options, modelStage: "ONLY" });
+    return interpreted !== NO_MODEL_RESULT && !isSoftMiss(interpreted) ? interpreted : own;
+  }
   const plain = mode === "LEGACY" || options.noModel || options.planStep || options.modelStage || !context.actorId || context.imageObjectPaths?.length || context.location !== undefined;
   if (plain) return executeRuntime(context, options);
   if (mode === "MODEL_FIRST") {

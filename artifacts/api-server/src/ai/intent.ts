@@ -145,7 +145,8 @@ export function searchTerms(message: string): string {
     )
     // «ورني أسعار …», «اعرض لي سعر …»: a show verb and the price noun describe the request, not the product.
     .replace(/(^|\s)(?:ورني|وريني|ورّني|ارني|أرني|اعرض(?:\s*لي)?|شوف(?:\s*لي)?)(?=\s|$)/gu, " ")
-    .replace(/(^|\s)(?:أسعار|اسعار|سعر)(?=\s+\S)/gu, " ")
+    // Only a leading price noun («ورني أسعار جوال» → «جوال»); inside a name («قطعة سعر …») it stays.
+    .replace(/^\s*(?:أسعار|اسعار|سعر)\s+(?=\S)/u, " ")
     // Short colloquial "I want" verbs only as whole words, so «ابيض» keeps its letters.
     .replace(/(^|\s)(?:أبي|ابي|أبغي|ابغي|بدي|ودي)(?=\s|$)/g, " ")
     .trim();

@@ -40,7 +40,7 @@ for (const entry of entries) {
     });
     const result = JSON.parse(output.trim().split("\n").at(-1)!);
     assert.deepEqual(result.broken, []);
-    assert.equal(result.count, 23);
+    assert.equal(result.count, 25);
     assert.ok(result.tools >= 20, `${result.tools} model tools advertised`);
   });
 }

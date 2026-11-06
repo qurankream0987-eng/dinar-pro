@@ -53,6 +53,8 @@ export async function executeConnectReadTurn(input: {
   actorId?: string;
   market?: ConnectMarket;
   providers?: DomainSearchProvider[];
+  /** A step of a running plan: without an explicit domain, the model (with the plan's context) decides. */
+  deferWithoutDomain?: boolean;
 }): Promise<{ tool: string; version: number; result: ToolResult } | null> {
   // Explicit partner search only. Ordinary marketplace requests keep their existing route.
   const partnerSearch =
@@ -62,10 +64,14 @@ export async function executeConnectReadTurn(input: {
   if (partnerSearch && input.market)
     return connectPartnerSearchTurn(input.market, partnerSearch[1]!);
   if (!isDomainSearchIntent(input.message)) return null;
+  // A domain token has a label, a dot and a label («myshop.com»), not a word ending a sentence
+  // («قهوة.»). Without one, a long multi-goal request («افتح مشروع… اسم… دومين… مصمم») belongs to
+  // the planner and the model; only a short «أبي دومين» gets the deterministic clarification.
   const raw = input.message
     .split(/\s+/u)
-    .map((part) => part.replace(/^[«»"“”`]+|[«»"“”،,؟?!؛;`]+$/gu, ""))
-    .find((part) => /[.。．｡]/u.test(part));
+    .map((part) => part.replace(/^[«»"“”`]+|[«»"“”،,؟?!؛;`.。．｡]+$/gu, ""))
+    .find((part) => /^[^\s.。．｡]+[.。．｡][^\s.。．｡]{2,}/u.test(part));
+  if (!raw && (input.deferWithoutDomain || input.message.trim().split(/\s+/u).length > 6)) return null;
   return connectDomainSearchTurn({
     ...(raw ? { raw } : {}),
     ...(input.actorId ? { actorId: input.actorId } : {}),

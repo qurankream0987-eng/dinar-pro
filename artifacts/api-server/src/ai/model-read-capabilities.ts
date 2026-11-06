@@ -172,3 +172,64 @@ export async function readAiUsage(
     },
   };
 }
+
+/**
+ * The actor's own DINAR Connect partnerships (owner or delegated team): partner status and the
+ * agreement status/terms, through connect/partners and connect/agreements, whose access checks
+ * apply unchanged. A partner whose agreements the actor may not read shows status only.
+ */
+export async function readConnectPartnerStatus(context: ToolContext): Promise<ToolResult> {
+  if (!context.actorId) throw Object.assign(new Error("Sign-in required."), { status: 401 });
+  const [{ listConnectPartners }, { listConnectAgreements }] = await Promise.all([import("../connect/partners"), import("../connect/agreements")]);
+  const partners = (await listConnectPartners(context.actorId, context.market.id)).slice(0, 10);
+  const view = [];
+  for (const partner of partners) {
+    let agreements: Record<string, unknown>[] | "NOT_PERMITTED" = "NOT_PERMITTED";
+    try {
+      agreements = (await listConnectAgreements(context.actorId, context.market as never, String(partner.id))).slice(0, 5).map((row) => {
+        const item = row as Record<string, unknown>;
+        return { version: item.version, status: item.status, commissionRateBasisPoints: item.commissionRateBasisPoints ?? item.rateBasisPoints ?? null, acceptedAt: item.acceptedAt ?? null };
+      });
+    } catch (error) {
+      const status = (error as { status?: number }).status;
+      if (status !== 403 && status !== 404) throw error;
+    }
+    view.push({ partnerId: partner.id, name: String(partner.displayName ?? "").slice(0, 120), status: partner.status, role: partner.role, businessVerification: partner.businessVerificationStatus, agreements });
+  }
+  return {
+    kind: "SURFACE",
+    surface: "CONNECT_RESULTS",
+    query: {},
+    listings: [],
+    connectStatus: {
+      partners: view,
+      note: "Free onboarding: no registration, display or basic referral fee. Commission exists only under an accepted agreement and only on provider-confirmed conversions; a click is not revenue.",
+    },
+    prompt: view.length ? "هذه حالة شراكاتك في DINAR Connect من سجلات DINAR." : "لا توجد لديك شراكة في DINAR Connect في هذا السوق.",
+  };
+}
+
+/** Published DINAR policies (terms, privacy, fees, refunds...): the current versions only. */
+export async function readPolicy(input: { key?: string }, context: ToolContext): Promise<ToolResult> {
+  const { currentPolicies, currentPolicy } = await import("../lib/policies");
+  const one = input.key ? currentPolicy(input.key) : undefined;
+  if (input.key && !one) throw Object.assign(new Error("Unknown policy."), { status: 404 });
+  const documents = one ? [one] : currentPolicies();
+  void context;
+  return {
+    kind: "SURFACE",
+    surface: "POLICIES",
+    query: {},
+    listings: [],
+    policies: documents.map((document) => ({
+      key: document.key,
+      title: document.titleAr,
+      version: document.version,
+      effectiveDate: document.effectiveDate,
+      summary: document.summaryAr,
+      legalReviewStatus: document.legalReviewStatus,
+      ...(one ? { sections: document.sections.slice(0, 12).map((section) => JSON.stringify(section).slice(0, 600)) } : {}),
+    })),
+    prompt: one ? `هذه سياسة «${one.titleAr}» المنشورة حاليًا.` : "هذه سياسات DINAR المنشورة حاليًا.",
+  };
+}

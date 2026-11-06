@@ -67,6 +67,10 @@ export type ToolResult = {
   sellerDues?: { dues: Record<string, unknown>[]; note: string };
   /** The actor's own DINAR AI allowance and an optional projection (read only). */
   aiUsage?: Record<string, unknown>;
+  /** The actor's own DINAR Connect partnerships and agreements (read only). */
+  connectStatus?: Record<string, unknown>;
+  /** Published policy summaries (read only). */
+  policies?: Record<string, unknown>[];
   memory?: import("./personal-memory-turn").MemorySummary;
   /** RESULTS restores an existing result set exactly; it never creates a new one. */
   kind: "SEARCH" | "RESOURCE" | "RESULTS" | "SURFACE";
@@ -833,7 +837,10 @@ export const aiToolRegistry: Record<string, ToolDefinition> = {
       surface: "CAPABILITIES",
       query: {},
       listings: [],
-      capabilities: (await import("./dinar-capabilities")).dinarCapabilityCatalog(context.market),
+      capabilities: (await import("./dinar-capabilities")).dinarCapabilityCatalog(
+        context.market,
+        context.actorId ? await modelRolesForActor(context.actorId, context.market.id) : ["BUYER"],
+      ),
     }),
   },
 
@@ -922,6 +929,42 @@ export const aiToolRegistry: Record<string, ToolDefinition> = {
     execute: async (input: { question?: "SUMMARY" | "RENEWAL" | "WHY_STOPPED"; horizonDays?: number }, context) =>
       (await import("./model-read-capabilities")).readAiUsage(input, context),
   },
+
+  readConnectPartnerStatus: {
+    name: "readConnectPartnerStatus",
+    version: 1,
+    description: "Read the signed-in user's own DINAR Connect partnerships: partner status and agreement status/terms. Read only.",
+    permissions: ["marketplace.read"],
+    riskLevel: "LOW",
+    idempotency: "READ_ONLY",
+    auditPolicy: "REDACTED_TURN_METADATA",
+    exposedToModel: true,
+    inputSchema: z.object({}).strict(),
+    modelDefinition: {
+      name: "readConnectPartnerStatus",
+      description: "Use when a business owner or their team asks about their company's DINAR Connect partnership: is it approved, what agreement or commission terms apply. Returns only partnerships the user may access. Never treat a click or referral as earned commission.",
+      parameters: { type: "object", properties: {}, required: [], additionalProperties: false },
+    },
+    execute: async (_input, context) => (await import("./model-read-capabilities")).readConnectPartnerStatus(context),
+  },
+
+  readPolicy: {
+    name: "readPolicy",
+    version: 1,
+    description: "Read DINAR's currently published policies (terms, privacy, fees, refunds, prohibited items). Read only.",
+    permissions: ["marketplace.read"],
+    riskLevel: "LOW",
+    idempotency: "READ_ONLY",
+    auditPolicy: "REDACTED_TURN_METADATA",
+    exposedToModel: true,
+    inputSchema: z.object({ key: z.string().trim().min(1).max(60).regex(/^[a-z0-9_-]+$/u).optional() }).strict(),
+    modelDefinition: {
+      name: "readPolicy",
+      description: "Use when the user asks what DINAR's rules, terms, privacy, fees, commission policy, refund or prohibited-items policy say. Call without a key to list policies, then with a key for one. Quote only what the policy says; it is not legal advice.",
+      parameters: { type: "object", properties: { key: { type: "string", description: "A policy key returned by a previous call" } }, required: [], additionalProperties: false },
+    },
+    execute: async (input: { key?: string }, context) => (await import("./model-read-capabilities")).readPolicy(input, context),
+  },
 };
 
 /** The only tools the bounded model turn loop may execute; checked again at execution time. */
@@ -936,6 +979,8 @@ export const MODEL_LOOP_TOOL_ALLOWLIST = [
   "readOrderIssues",
   "readSellerDues",
   "readAiUsage",
+  "readConnectPartnerStatus",
+  "readPolicy",
 ] as const;
 
 /** F01 read-only tools plus every F02 capability tool, filtered by server-derived roles. */

@@ -1319,6 +1319,8 @@ function compactCapabilityRead(result: ToolResult) {
   if (result.orderIssues) return { kind: "ORDER_ISSUES", ...result.orderIssues };
   if (result.sellerDues) return { kind: "SELLER_DUES", ...result.sellerDues };
   if (result.aiUsage) return { kind: "AI_USAGE", ...result.aiUsage };
+  if (result.connectStatus) return { kind: "CONNECT_PARTNERSHIP", ...result.connectStatus };
+  if (result.policies) return { kind: "POLICIES", policies: result.policies };
   if (result.universalCards)
     return {
       kind: "EXTERNAL_OFFERS",
