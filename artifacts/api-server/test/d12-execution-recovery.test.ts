@@ -18,6 +18,7 @@ import {
   EXECUTION_UNKNOWN_NOTICE,
   executionLeaseExpired,
   settleAbandonedExecutions,
+  recordUnknownExecution,
 } from "../src/ai/action-recovery";
 import { describeReceipt, lifecycleOfLedgerStatus } from "../src/ai/action-receipts";
 import { getModelGatewayCallCount } from "../src/ai/model-gateway";
@@ -323,6 +324,74 @@ await test("D12-10 recovery and retried confirmation never invoke the action aut
   } finally {
     ACTION_REGISTRY.ADD_TO_CART.execute = original;
   }
+});
+
+await test("D12-11 a lost acknowledgement after a durable canonical mutation is UNKNOWN, never rejected or replayed", async () => {
+  const target = `D12 lost ack ${randomUUID().slice(0, 6)}`;
+  const review = await createPendingAction({
+    conversationId: await conversation(actor), actorId: actor.id, market,
+    proposal: {
+      action: "UPDATE_DISPLAY_NAME", targetResource: profileKey(actor.id, market.id),
+      structuredInput: { displayName: { value: target, source: "USER_DECLARED" } },
+      missingFields: [], requiresConfirmation: true,
+    },
+  });
+  const original = ACTION_REGISTRY.UPDATE_DISPLAY_NAME.execute;
+  const lostAck = Object.assign(new Error("synthetic lost acknowledgement"), { status: 503 });
+  let executions = 0;
+  ACTION_REGISTRY.UPDATE_DISPLAY_NAME.execute = (async (input: any) => {
+    executions += 1;
+    await original(input);
+    throw lostAck;
+  }) as typeof original;
+  try {
+    const outcome = await confirmPendingAction({ actionId: review.actionId, actorId: actor.id, market, decision: "CONFIRM" });
+    assert.equal(outcome.status, "UNKNOWN");
+    assert.equal(outcome.message, EXECUTION_UNKNOWN_NOTICE);
+    assert.equal(outcome.executed, false);
+    assert.equal(outcome.result, undefined, "no acknowledgement becomes a success receipt");
+    const [after] = await db.select({ displayName: users.displayName }).from(users).where(eq(users.id, actor.id));
+    assert.equal(after!.displayName, target, "the original canonical authority committed before the acknowledgement was lost");
+    const query = (await rowOf(review.actionId)).query as any;
+    assert.equal(query.status, "UNKNOWN", "an execution error does not establish rollback or rejection");
+    assert.equal(query.notice, EXECUTION_UNKNOWN_NOTICE);
+    assert.equal(query.result, undefined, "no fabricated success receipt");
+    assert.equal((await confirmPendingAction({ actionId: review.actionId, actorId: actor.id, market, decision: "CONFIRM" })).status, "UNKNOWN");
+    assert.equal(executions, 1, "an uncertain committed effect is never replayed");
+  } finally {
+    ACTION_REGISTRY.UPDATE_DISPLAY_NAME.execute = original;
+  }
+});
+
+await test("D12-12 an unexpected non-Error rejection remains uncertain without exposing internal failure text", async () => {
+  const target = `D12 null ack ${randomUUID().slice(0, 6)}`;
+  const review = await createPendingAction({
+    conversationId: await conversation(actor), actorId: actor.id, market,
+    proposal: { action: "UPDATE_DISPLAY_NAME", targetResource: profileKey(actor.id, market.id),
+      structuredInput: { displayName: { value: target, source: "USER_DECLARED" } }, missingFields: [], requiresConfirmation: true },
+  });
+  const original = ACTION_REGISTRY.UPDATE_DISPLAY_NAME.execute;
+  ACTION_REGISTRY.UPDATE_DISPLAY_NAME.execute = (async () => { throw null; }) as typeof original;
+  try {
+    const outcome = await confirmPendingAction({ actionId: review.actionId, actorId: actor.id, market, decision: "CONFIRM" });
+    assert.equal(outcome.status, "UNKNOWN");
+    assert.equal(outcome.message, EXECUTION_UNKNOWN_NOTICE);
+    assert.equal(outcome.executed, false);
+    assert.equal(((await rowOf(review.actionId)).query as any).status, "UNKNOWN");
+    assert.notEqual((await db.select({ name: users.displayName }).from(users).where(eq(users.id, actor.id)))[0]!.name, target);
+  } finally { ACTION_REGISTRY.UPDATE_DISPLAY_NAME.execute = original; }
+});
+
+await test("D12-13 uncertainty settlement preserves claim evidence and cannot overwrite completion or unrelated ledgers", async () => {
+  const executingAt = new Date().toISOString();
+  const id = await plant({ status: "EXECUTING", executingAt });
+  const completed = await plant({ status: "CONFIRMED", executingAt });
+  const foreignKind = await plant({ status: "EXECUTING", executingAt, kind: "COMMERCE" });
+  await Promise.all([id, completed, foreignKind].map(recordUnknownExecution));
+  assert.equal(((await rowOf(id)).query as any).status, "UNKNOWN");
+  assert.equal(((await rowOf(id)).query as any).executingAt, executingAt);
+  assert.equal(((await rowOf(completed)).query as any).status, "CONFIRMED");
+  assert.equal(((await rowOf(foreignKind)).query as any).status, "EXECUTING");
 });
 
 assert.equal(external.length, 0, `outbound requests: ${external.join(", ")}`);

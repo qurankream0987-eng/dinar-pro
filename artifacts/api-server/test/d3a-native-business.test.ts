@@ -1036,6 +1036,75 @@ await focused("D3A-43", "one seller's differently priced lines become orders tha
   assert.equal((await db.select().from(orders).where(inArray(orders.id, orderIds))).length, 2);
 });
 
+// A failed ledger acknowledgement must not turn an already committed effect into a failure.
+async function rejectConfirmationWrite(actionId: string) {
+  await db.execute(sql.raw(`CREATE OR REPLACE FUNCTION dinar_test_reject_confirmation() RETURNS trigger LANGUAGE plpgsql AS $$
+    BEGIN
+      IF NEW.id::text = '${actionId}' AND NEW.query->>'status' = 'CONFIRMED' THEN
+        RAISE EXCEPTION 'synthetic acknowledgement outage';
+      END IF;
+      RETURN NEW;
+    END $$`));
+  await db.execute(sql.raw(`CREATE TRIGGER dinar_test_reject_confirmation BEFORE UPDATE ON ai_result_sets FOR EACH ROW EXECUTE FUNCTION dinar_test_reject_confirmation()`));
+}
+async function restoreConfirmationWrites() {
+  await db.execute(sql.raw('DROP TRIGGER IF EXISTS dinar_test_reject_confirmation ON ai_result_sets'));
+  await db.execute(sql.raw('DROP FUNCTION IF EXISTS dinar_test_reject_confirmation()'));
+}
+
+await focused("D3A-44", "activation acknowledgement failure preserves UNKNOWN and never claims rollback or repeats activation", async () => {
+  const owner = await register("Ack outage");
+  const conv = await conversation(owner);
+  const review = await completeSetup(owner, conv, "عندي متجر اسمه «متجر الأمان»", "هدايا صغيرة", "في عمان", "استلام من الفرع");
+  const id = review.business.pendingActionId as string;
+  await rejectConfirmationWrite(id);
+  try {
+    const response = await turn(owner, conv, "أكد");
+    const business = await businessOf(review.business.businessId);
+    assert.equal(business.status, "ACTIVE", "the canonical activation committed before the acknowledgement failed");
+    const [action] = await db.select().from(aiResultSets).where(eq(aiResultSets.id, id));
+    assert.equal(action!.query.status, "UNKNOWN");
+    assert.match(response.business.notice, /لم يتأكد|فلم يتأكد/u);
+    assert.doesNotMatch(JSON.stringify(response), /لم يتغير شيء|synthetic acknowledgement/u);
+    await turn(owner, conv, "أكد");
+    assert.equal((await businessOf(business.id)).version, business.version);
+    assert.equal((await audits(business.id)).filter(event => event.action === "BUSINESS_ACTIVATED").length, 1);
+  } finally { await restoreConfirmationWrites(); }
+});
+
+await focused("D3A-45", "catalog acknowledgement failure preserves the committed price without a false failure or replay", async () => {
+  const owner = await register("Catalog ack outage");
+  const conv = await conversation(owner);
+  const setup = await completeSetup(owner, conv, "عندي متجر اسمه «متجر السعر الآمن»", "مشروبات طازجة", "في عمان", "استلام من الفرع");
+  const businessId = setup.business.businessId as string;
+  await registerVerifiedD2Identity(businessId, owner);
+  assert.equal((await turn(owner, conv, "أكد")).business.status, "ACTIVE");
+  const [ownerRow] = await db.select().from(users).where(eq(users.id, owner.id));
+  const created = await publishBusinessDraft({ businessId, actor: ownerRow!, market: JO, body: listingBody("عصير الأمان", "1.500"), idempotencyKey: randomUUID() });
+  const juiceId = created.listing.id;
+  const checkout = await request("/checkout", "POST", { items: [{ listingId: juiceId, quantity: 1, fulfilmentType: "PICKUP" }], idempotencyKey: `d3-ack-${randomUUID()}` }, buyer.cookie);
+  assert.equal(checkout.status, 201, checkout.raw);
+  const review = await turn(owner, conv, "غير سعر عصير الأمان إلى 1.250");
+  assert.equal(review.business.view, "LISTING_REVIEW", JSON.stringify(review.business));
+  const id = review.business.pendingActionId as string;
+  const orderIds = checkout.data.orders.map((order: { id: string }) => order.id);
+  const priorOrders = await db.select({ id: orders.id, price: orders.unitPriceMinor, subtotal: orders.subtotalMinor }).from(orders).where(inArray(orders.id, orderIds)).orderBy(orders.id);
+  assert.ok(priorOrders.length > 0, "the existing canonical checkout created a historical price snapshot");
+  await rejectConfirmationWrite(id);
+  try {
+    const response = await turn(owner, conv, "أكد");
+    const changed = await offerOf(juiceId);
+    assert.equal(changed.unitPriceMinor, 1250, "the canonical listing authority committed before the acknowledgement failed");
+    assert.deepEqual(await db.select({ id: orders.id, price: orders.unitPriceMinor, subtotal: orders.subtotalMinor }).from(orders).where(inArray(orders.id, orderIds)).orderBy(orders.id), priorOrders, "the new catalog price cannot rewrite historical financial snapshots");
+    const [action] = await db.select().from(aiResultSets).where(eq(aiResultSets.id, id));
+    assert.equal(action!.query.status, "UNKNOWN");
+    assert.match(response.business.notice, /لم يتأكد|فلم يتأكد/u);
+    assert.doesNotMatch(JSON.stringify(response), /لم يتغير شيء|synthetic acknowledgement/u);
+    await turn(owner, conv, "أكد");
+    assert.equal((await offerOf(juiceId)).updatedAt.toISOString(), changed.updatedAt.toISOString(), "a settled uncertain action never calls the writer again");
+  } finally { await restoreConfirmationWrites(); }
+});
+
 await test("summary", async () => {
   const ids = Object.keys(results).sort();
   console.log("D3A_SUMMARY", JSON.stringify({

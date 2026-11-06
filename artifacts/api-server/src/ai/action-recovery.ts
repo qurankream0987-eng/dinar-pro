@@ -75,3 +75,15 @@ export async function settleAbandonedExecutions(input: { now?: Date; limit?: num
   }
   return settled;
 }
+
+/** Execution already started: an unexpected error cannot prove that the authority rolled back.
+ * Preserve the claim and any later authoritative completion; never enqueue a retry. */
+export async function recordUnknownExecution(actionId: string): Promise<void> {
+  await db.update(aiResultSets).set({
+    query: sql`${aiResultSets.query} || ${JSON.stringify({ status: "UNKNOWN", notice: EXECUTION_UNKNOWN_NOTICE })}::jsonb`,
+  }).where(and(
+    eq(aiResultSets.id, actionId),
+    sql`${aiResultSets.query} ->> 'status' = 'EXECUTING'`,
+    sql`${aiResultSets.query} ->> 'kind' in ${EXECUTION_KIND_SQL}`,
+  ));
+}

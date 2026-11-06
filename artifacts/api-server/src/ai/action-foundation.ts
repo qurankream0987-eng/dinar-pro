@@ -48,7 +48,7 @@ import {
 } from "../lib/provider-connections";
 import { UpdateListingBody } from "@workspace/api-zod";
 import { findOrdinalMention, foldArabicLetters, normalizeDigits, parseResultReference } from "./arabic-normalization";
-import { EXECUTION_UNKNOWN_NOTICE, executionLeaseExpired } from "./action-recovery";
+import { EXECUTION_UNKNOWN_NOTICE, executionLeaseExpired, recordUnknownExecution } from "./action-recovery";
 import { parsePromotionDuration } from "./promotion-turn";
 import {
   acceptedNegotiationForCheckout,
@@ -1443,10 +1443,10 @@ export async function confirmPendingAction(input: {
     });
     outcome = { status: "CONFIRMED", message: "تم التنفيذ بعد تأكيدك والتحقق من البيانات الحالية.", executed: true, ...(result ? { result } : {}) };
   } catch (error) {
-    const status = (error as { status?: unknown }).status;
-    if (!(typeof status === "number" && status < 500 && error instanceof Error)) {
-      await db.update(aiResultSets).set({ query: { ...query, status: "REJECTED", notice: "تعذر التنفيذ.", ...settledBy() } }).where(eq(aiResultSets.id, input.actionId));
-      throw error;
+    const status = (error as { status?: unknown } | null)?.status;
+    if (!(typeof status === "number" && status >= 400 && status < 500 && error instanceof Error)) {
+      await recordUnknownExecution(input.actionId);
+      return { status: "UNKNOWN", message: EXECUTION_UNKNOWN_NOTICE, executed: false };
     }
     outcome = { status: "REJECTED", message: `${error.message}. لم يتغير شيء.`, executed: false };
   }

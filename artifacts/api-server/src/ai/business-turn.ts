@@ -14,6 +14,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { aiResultSets, aiUiBlocks, businessOperatingProfiles, db, offers, users } from "@workspace/db";
 import type { marketFor } from "../lib/markets";
+import { EXECUTION_UNKNOWN_NOTICE, recordUnknownExecution } from "./action-recovery";
 import { foldArabicLetters, normalizeDigits } from "./arabic-normalization";
 import { normalizeSearch } from "./search-context";
 import {
@@ -1404,6 +1405,7 @@ async function activateBusiness(input: {
     ))
     .returning();
   if (!claimed) return businessOutput("BUSINESS_PROFILE_REVIEW", { view: "PROFILE_REVIEW", allowedActions: [] }, "تمت معالجة هذه المراجعة من قبل؛ لم يتغير شيء.");
+  let effectCommitted = false;
   try {
     const [updatedRow] = await db
       .update(businessOperatingProfiles)
@@ -1411,6 +1413,7 @@ async function activateBusiness(input: {
       .where(and(eq(businessOperatingProfiles.id, business.id), eq(businessOperatingProfiles.version, business.version)))
       .returning();
     if (!updatedRow) throw Object.assign(new Error("تغيّر النشاط منذ المراجعة؛ أعد المراجعة."), { status: 409 });
+    effectCommitted = true;
     const updated = await businessWithD2Identity(updatedRow);
     await recordBusinessAudit({
       businessId: business.id,
@@ -1443,8 +1446,13 @@ async function activateBusiness(input: {
       `تم تشغيل «${updated.displayName}» داخل DINAR. ${notice ?? "يمكنك الآن إدارة منتجاتك وطلباتك من المحادثة."}`,
     );
   } catch (error) {
-    const message = error instanceof Error ? error.message : "تعذر تشغيل النشاط.";
-    await db.update(aiResultSets).set({ query: { ...claimed.query, status: "FAILED" } }).where(eq(aiResultSets.id, review.id));
+    const status = (error as { status?: unknown } | null)?.status;
+    if (effectCommitted || !(error instanceof Error && typeof status === "number" && status >= 400 && status < 500)) {
+      await recordUnknownExecution(review.id);
+      return businessOutput("BUSINESS_PROFILE_REVIEW", { view: "PROFILE_REVIEW", businessId: business.id, notice: EXECUTION_UNKNOWN_NOTICE, allowedActions: [] }, EXECUTION_UNKNOWN_NOTICE);
+    }
+    const message = error.message;
+    await db.update(aiResultSets).set({ query: { ...claimed.query, status: "FAILED" } }).where(and(eq(aiResultSets.id, review.id), sql`${aiResultSets.query} ->> 'status' = 'EXECUTING'`));
     return businessOutput("BUSINESS_PROFILE_REVIEW", { view: "PROFILE_REVIEW", notice: message, allowedActions: [] }, `${message} لم يتغير شيء.`);
   }
 }
@@ -1503,6 +1511,7 @@ async function executeBusinessAction(input: {
   if (!claimed) return businessOutput("BUSINESS_LISTING_REVIEW", { view: "LISTING_REVIEW", allowedActions: [] }, "تمت معالجة هذا الإجراء من قبل؛ لم يتغير شيء.");
   const business = await ownedBusinessFor(input.actorId, input.market.id, query.businessId);
   if (!business) return businessOutput("BUSINESS_PROFILE", { view: "PROFILE", allowedActions: [] }, "النشاط غير موجود.");
+  let effectCommitted = false;
   try {
     if (query.action === "PUBLISH_DRAFT") {
       const created = await publishBusinessDraft({
@@ -1512,6 +1521,7 @@ async function executeBusinessAction(input: {
         body: query.body,
         idempotencyKey: query.idempotencyKey ?? row.id,
       });
+      effectCommitted = true;
       await db.update(aiResultSets).set({ query: { ...claimed.query, status: "CONFIRMED" } }).where(eq(aiResultSets.id, row.id));
       return businessOutput(
         "BUSINESS_PROFILE",
@@ -1560,6 +1570,7 @@ async function executeBusinessAction(input: {
         expectedUpdatedAt: query.expectedUpdatedAt ?? undefined,
       });
     }
+    effectCommitted = true;
     await db.update(aiResultSets).set({ query: { ...claimed.query, status: "CONFIRMED" } }).where(eq(aiResultSets.id, row.id));
     const access = await resolveBusinessAccess({ business, actorId: input.actorId, marketId: input.market.id });
     const listings = await businessListings(business, input.market.id);
@@ -1579,6 +1590,12 @@ async function executeBusinessAction(input: {
       query.action === "PRICE" ? "تم تحديث السعر." : query.action === "RESUME" ? "أُعيد تفعيل المنتج." : "أُوقف المنتج ولم يعد ظاهرًا للمشترين.",
     );
   } catch (error) {
+    const errorStatus = (error as { status?: unknown } | null)?.status;
+    const validationFailure = error instanceof Error && (error.name === "ZodError" || (typeof errorStatus === "number" && errorStatus >= 400 && errorStatus < 500));
+    if (effectCommitted || !validationFailure) {
+      await recordUnknownExecution(row.id);
+      return businessOutput("BUSINESS_LISTING_REVIEW", { view: "LISTING_REVIEW", businessId: business.id, notice: EXECUTION_UNKNOWN_NOTICE, allowedActions: [] }, EXECUTION_UNKNOWN_NOTICE);
+    }
     // A Zod failure is a raw developer message: the seller needs an actionable Arabic sentence.
     const message =
       error instanceof Error
@@ -1587,7 +1604,7 @@ async function executeBusinessAction(input: {
           : error.message
         : "تعذر تنفيذ الإجراء.";
     const status = (error as { status?: number }).status;
-    await db.update(aiResultSets).set({ query: { ...claimed.query, status: "FAILED", notice: message } }).where(eq(aiResultSets.id, row.id));
+    await db.update(aiResultSets).set({ query: { ...claimed.query, status: "FAILED", notice: message } }).where(and(eq(aiResultSets.id, row.id), sql`${aiResultSets.query} ->> 'status' = 'EXECUTING'`));
     return businessOutput(
       "BUSINESS_LISTING_REVIEW",
       {
