@@ -1,0 +1,3237 @@
+{
+  "baseline": "ab196c55964ed42947d07a88dcd7f2e5f66ccfa0",
+  "apiDeclarations": [
+    {
+      "file": "artifacts/api-server/src/app.ts",
+      "line": 65,
+      "router": "req",
+      "method": "GET",
+      "path": "host",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/app.ts",
+      "line": 183,
+      "router": "req",
+      "method": "GET",
+      "path": "content-type",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/connect/mcp-catalog.ts",
+      "line": 53,
+      "router": "headers",
+      "method": "GET",
+      "path": "mcp-session-id",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/connect/network.ts",
+      "line": 251,
+      "router": "headers",
+      "method": "GET",
+      "path": "content-type",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/connect/network.ts",
+      "line": 261,
+      "router": "headers",
+      "method": "GET",
+      "path": "content-type",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/connect/network.ts",
+      "line": 292,
+      "router": "headers",
+      "method": "GET",
+      "path": "content-type",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/connect/domains.ts",
+      "line": 156,
+      "router": "headers",
+      "method": "GET",
+      "path": "content-length",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/connect/domains.ts",
+      "line": 229,
+      "router": "headers",
+      "method": "GET",
+      "path": "retry-after",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/ai/listing-draft.ts",
+      "line": 1676,
+      "router": "values",
+      "method": "GET",
+      "path": "\u0627\u0644\u062a\u0635\u0646\u064a\u0641 \u0627\u0644\u0645\u0642\u062a\u0631\u062d",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/ai/listing-draft.ts",
+      "line": 1685,
+      "router": "values",
+      "method": "GET",
+      "path": "\u0627\u0644\u0639\u0646\u0648\u0627\u0646 \u0627\u0644\u0645\u0642\u062a\u0631\u062d",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/ai/listing-draft.ts",
+      "line": 1687,
+      "router": "values",
+      "method": "GET",
+      "path": "\u0627\u0644\u0648\u0635\u0641 \u0627\u0644\u0645\u0642\u062a\u0631\u062d",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/lib/auth.ts",
+      "line": 229,
+      "router": "router",
+      "method": "GET",
+      "path": "/auth/me",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/lib/auth.ts",
+      "line": 260,
+      "router": "router",
+      "method": "POST",
+      "path": "/auth/phone-verification/challenges",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/lib/auth.ts",
+      "line": 329,
+      "router": "router",
+      "method": "POST",
+      "path": "/auth/phone-verification/challenges/verify",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/lib/auth.ts",
+      "line": 404,
+      "router": "router",
+      "method": "POST",
+      "path": "/auth/register",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/lib/auth.ts",
+      "line": 548,
+      "router": "router",
+      "method": "POST",
+      "path": "/auth/login",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/lib/auth.ts",
+      "line": 643,
+      "router": "router",
+      "method": "POST",
+      "path": "/auth/logout",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/lib/auth.ts",
+      "line": 651,
+      "router": "router",
+      "method": "GET",
+      "path": "/countries",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/lib/auth.ts",
+      "line": 652,
+      "router": "router",
+      "method": "GET",
+      "path": "/markets",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/lib/auth.ts",
+      "line": 653,
+      "router": "router",
+      "method": "PATCH",
+      "path": "/account/market",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/lib/auth.ts",
+      "line": 690,
+      "router": "router",
+      "method": "PATCH",
+      "path": "/account/profile",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/lib/auth.ts",
+      "line": 716,
+      "router": "router",
+      "method": "POST",
+      "path": "/account/password",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/lib/ai-usage.ts",
+      "line": 369,
+      "router": "byResource",
+      "method": "GET",
+      "path": "ALL",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/ai.ts",
+      "line": 846,
+      "router": "router",
+      "method": "POST",
+      "path": "/ai/voice-transcription",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/ai.ts",
+      "line": 857,
+      "router": "req",
+      "method": "GET",
+      "path": "content-type",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/ai.ts",
+      "line": 937,
+      "router": "router",
+      "method": "POST",
+      "path": "/ai/preview",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/ai.ts",
+      "line": 1277,
+      "router": "router",
+      "method": "POST",
+      "path": "/ai/conversations",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/ai.ts",
+      "line": 1296,
+      "router": "router",
+      "method": "POST",
+      "path": "/ai/conversations/:id/copies",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/ai.ts",
+      "line": 1395,
+      "router": "router",
+      "method": "GET",
+      "path": "/ai/vision-capability",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/ai.ts",
+      "line": 1405,
+      "router": "router",
+      "method": "POST",
+      "path": "/ai/conversations/guest-handoff",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/ai.ts",
+      "line": 1649,
+      "router": "router",
+      "method": "GET",
+      "path": "/ai/conversations",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/ai.ts",
+      "line": 1665,
+      "router": "router",
+      "method": "GET",
+      "path": "/ai/conversations/:id",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/ai.ts",
+      "line": 1724,
+      "router": "router",
+      "method": "GET",
+      "path": "/ai/learning-history",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/ai.ts",
+      "line": 1744,
+      "router": "router",
+      "method": "POST",
+      "path": "/ai/learning-history",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/ai.ts",
+      "line": 1799,
+      "router": "router",
+      "method": "PATCH",
+      "path": "/ai/conversations/:id",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/ai.ts",
+      "line": 1817,
+      "router": "router",
+      "method": "DELETE",
+      "path": "/ai/conversations/:id",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/ai.ts",
+      "line": 1862,
+      "router": "router",
+      "method": "POST",
+      "path": "/ai/conversations/:id/actions/add-to-cart",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/ai.ts",
+      "line": 1943,
+      "router": "router",
+      "method": "POST",
+      "path": "/ai/conversations/:id/control-actions/:resultSetId/acknowledgement",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/ai.ts",
+      "line": 1959,
+      "router": "router",
+      "method": "POST",
+      "path": "/ai/listing-management-previews/:id/action",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/ai.ts",
+      "line": 1987,
+      "router": "router",
+      "method": "POST",
+      "path": "/ai/promotion-actions/:id/action",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/ai.ts",
+      "line": 2008,
+      "router": "router",
+      "method": "POST",
+      "path": "/ai/employment-actions/:id/action",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/ai.ts",
+      "line": 2027,
+      "router": "router",
+      "method": "POST",
+      "path": "/ai/conversations/:id/turns",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/connect.ts",
+      "line": 41,
+      "router": "router",
+      "method": "GET",
+      "path": "/connect/partners/:id/diagnostics",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/connect.ts",
+      "line": 42,
+      "router": "router",
+      "method": "GET",
+      "path": "/admin/connect/partners/:id/diagnostics",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/connect.ts",
+      "line": 44,
+      "router": "router",
+      "method": "GET",
+      "path": "/connect/partners/:id/team",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/connect.ts",
+      "line": 46,
+      "router": "router",
+      "method": "POST",
+      "path": "/connect/partners/:id/team",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/connect.ts",
+      "line": 48,
+      "router": "router",
+      "method": "DELETE",
+      "path": "/connect/partners/:id/team/:delegationId",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/connect.ts",
+      "line": 50,
+      "router": "router",
+      "method": "GET",
+      "path": "/connect/partners/:id/catalog",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/connect.ts",
+      "line": 52,
+      "router": "router",
+      "method": "GET",
+      "path": "/connect/partners/:id/report",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/connect.ts",
+      "line": 64,
+      "router": "router",
+      "method": "GET",
+      "path": "/admin/connect/partners/:id/report",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/connect.ts",
+      "line": 80,
+      "router": "router",
+      "method": "POST",
+      "path": "/admin/connect/partners/:id/agreements",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/connect.ts",
+      "line": 95,
+      "router": "router",
+      "method": "GET",
+      "path": "/connect/partners/:id/agreements",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/connect.ts",
+      "line": 104,
+      "router": "router",
+      "method": "POST",
+      "path": "/connect/agreements/:id/accept",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/connect.ts",
+      "line": 114,
+      "router": "router",
+      "method": "GET",
+      "path": "/connect/offers/:id/referral-terms",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/connect.ts",
+      "line": 127,
+      "router": "router",
+      "method": "POST",
+      "path": "/connect/privacy/attribution",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/connect.ts",
+      "line": 133,
+      "router": "router",
+      "method": "GET",
+      "path": "/admin/connect/review",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/connect.ts",
+      "line": 141,
+      "router": "router",
+      "method": "GET",
+      "path": "/connect/partners",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/connect.ts",
+      "line": 149,
+      "router": "router",
+      "method": "POST",
+      "path": "/connect/partners",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/connect.ts",
+      "line": 160,
+      "router": "router",
+      "method": "GET",
+      "path": "/connect/partners/:id",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/connect.ts",
+      "line": 169,
+      "router": "router",
+      "method": "POST",
+      "path": "/connect/partners/:id/sites",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/connect.ts",
+      "line": 186,
+      "router": "router",
+      "method": "GET",
+      "path": "/connect/integrations/:id/oauth/status",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/connect.ts",
+      "line": 188,
+      "router": "router",
+      "method": "POST",
+      "path": "/connect/integrations/:id/oauth/start",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/connect.ts",
+      "line": 190,
+      "router": "router",
+      "method": "POST",
+      "path": "/connect/integrations/:id/oauth/refresh",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/connect.ts",
+      "line": 192,
+      "router": "router",
+      "method": "POST",
+      "path": "/connect/integrations/:id/oauth/disconnect",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/connect.ts",
+      "line": 194,
+      "router": "router",
+      "method": "GET",
+      "path": "/connect/oauth/callback",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/connect.ts",
+      "line": 198,
+      "router": "router",
+      "method": "POST",
+      "path": "/connect/integrations/:id/sync",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/connect.ts",
+      "line": 201,
+      "router": "router",
+      "method": "POST",
+      "path": "/connect/sites/:id/challenge",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/connect.ts",
+      "line": 203,
+      "router": "router",
+      "method": "POST",
+      "path": "/connect/sites/:id/revoke",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/connect.ts",
+      "line": 205,
+      "router": "router",
+      "method": "POST",
+      "path": "/connect/sites/:id/verify",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/connect.ts",
+      "line": 215,
+      "router": "router",
+      "method": "POST",
+      "path": "/connect/partners/:id/submit",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/connect.ts",
+      "line": 224,
+      "router": "router",
+      "method": "POST",
+      "path": "/admin/connect/partners/:id/review",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/connect.ts",
+      "line": 237,
+      "router": "router",
+      "method": "POST",
+      "path": "/connect/partners/:id/integrations",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/connect.ts",
+      "line": 252,
+      "router": "router",
+      "method": "POST",
+      "path": "/admin/connect/integrations/:id/review",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/connect.ts",
+      "line": 266,
+      "router": "router",
+      "method": "POST",
+      "path": "/connect/integrations/:id/credentials",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/connect.ts",
+      "line": 298,
+      "router": "router",
+      "method": "POST",
+      "path": "/connect/integrations/:id/catalog",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/connect.ts",
+      "line": 311,
+      "router": "router",
+      "method": "GET",
+      "path": "/connect/catalog",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/connect.ts",
+      "line": 324,
+      "router": "req",
+      "method": "GET",
+      "path": "authorization",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/connect.ts",
+      "line": 340,
+      "router": "router",
+      "method": "POST",
+      "path": "/connect/provider/events",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/connect.ts",
+      "line": 348,
+      "router": "router",
+      "method": "POST",
+      "path": "/admin/connect/transactions/:id/finance",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/connect.ts",
+      "line": 363,
+      "router": "router",
+      "method": "POST",
+      "path": "/connect/provider/catalog",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/connect.ts",
+      "line": 394,
+      "router": "router",
+      "method": "POST",
+      "path": "/connect/outbound",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/connect.ts",
+      "line": 501,
+      "router": "router",
+      "method": "GET",
+      "path": "/connect/outbound/:id",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/profile-avatar.ts",
+      "line": 49,
+      "router": "router",
+      "method": "POST",
+      "path": "/account/profile-avatar/upload-url",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/profile-avatar.ts",
+      "line": 65,
+      "router": "router",
+      "method": "PUT",
+      "path": "/account/profile-avatar",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/profile-avatar.ts",
+      "line": 136,
+      "router": "router",
+      "method": "GET",
+      "path": "/storage/objects/*objectKey",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/listing-photos.ts",
+      "line": 24,
+      "router": "router",
+      "method": "POST",
+      "path": "/account/listing-photos/upload-url",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/listing-photos.ts",
+      "line": 65,
+      "router": "router",
+      "method": "POST",
+      "path": "/account/listing-photos/complete",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/admin-disputes.ts",
+      "line": 27,
+      "router": "router",
+      "method": "GET",
+      "path": "/admin/disputes",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/admin-disputes.ts",
+      "line": 139,
+      "router": "router",
+      "method": "POST",
+      "path": "/admin/disputes/:orderId/resolve",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/marketplace.ts",
+      "line": 245,
+      "router": "router",
+      "method": "GET",
+      "path": "/listings",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/marketplace.ts",
+      "line": 274,
+      "router": "router",
+      "method": "PATCH",
+      "path": "/listings/:id/status",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/marketplace.ts",
+      "line": 291,
+      "router": "router",
+      "method": "DELETE",
+      "path": "/listings/:id",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/marketplace.ts",
+      "line": 305,
+      "router": "router",
+      "method": "GET",
+      "path": "/listings/:id",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/marketplace.ts",
+      "line": 590,
+      "router": "router",
+      "method": "POST",
+      "path": "/listings",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/marketplace.ts",
+      "line": 591,
+      "router": "req",
+      "method": "GET",
+      "path": "Idempotency-Key",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/marketplace.ts",
+      "line": 594,
+      "router": "router",
+      "method": "PATCH",
+      "path": "/listings/:id",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/marketplace.ts",
+      "line": 617,
+      "router": "router",
+      "method": "GET",
+      "path": "/cart",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/marketplace.ts",
+      "line": 621,
+      "router": "router",
+      "method": "PUT",
+      "path": "/cart",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/marketplace.ts",
+      "line": 981,
+      "router": "router",
+      "method": "POST",
+      "path": "/checkout",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/marketplace.ts",
+      "line": 994,
+      "router": "router",
+      "method": "POST",
+      "path": "/orders",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/marketplace.ts",
+      "line": 1005,
+      "router": "router",
+      "method": "GET",
+      "path": "/orders",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/marketplace.ts",
+      "line": 1036,
+      "router": "router",
+      "method": "GET",
+      "path": "/orders/:id",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/marketplace.ts",
+      "line": 1044,
+      "router": "router",
+      "method": "GET",
+      "path": "/orders/:id/contact",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/marketplace.ts",
+      "line": 1058,
+      "router": "router",
+      "method": "GET",
+      "path": "/orders/:id/fulfillment",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/marketplace.ts",
+      "line": 1066,
+      "router": "router",
+      "method": "GET",
+      "path": "/orders/:id/tracking",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/marketplace.ts",
+      "line": 1082,
+      "router": "router",
+      "method": "GET",
+      "path": "/orders/:id/messages",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/marketplace.ts",
+      "line": 1108,
+      "router": "router",
+      "method": "POST",
+      "path": "/orders/:id/messages",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/marketplace.ts",
+      "line": 1132,
+      "router": "router",
+      "method": "POST",
+      "path": "/orders/:id/:action",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/marketplace.ts",
+      "line": 1266,
+      "router": "router",
+      "method": "GET",
+      "path": "/seller-dues",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/marketplace.ts",
+      "line": 1302,
+      "router": "router",
+      "method": "GET",
+      "path": "/dashboard",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/business-delegations.ts",
+      "line": 32,
+      "router": "router",
+      "method": "GET",
+      "path": "/business/profiles/:id/delegations",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/business-delegations.ts",
+      "line": 43,
+      "router": "router",
+      "method": "POST",
+      "path": "/business/profiles/:id/delegations",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/business-delegations.ts",
+      "line": 55,
+      "router": "router",
+      "method": "POST",
+      "path": "/business/profiles/:id/delegations/:delegationId/activate",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/business-delegations.ts",
+      "line": 67,
+      "router": "router",
+      "method": "POST",
+      "path": "/business/profiles/:id/delegations/:delegationId/suspend",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/business-delegations.ts",
+      "line": 79,
+      "router": "router",
+      "method": "POST",
+      "path": "/business/profiles/:id/delegations/:delegationId/resume",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/business-delegations.ts",
+      "line": 91,
+      "router": "router",
+      "method": "POST",
+      "path": "/business/profiles/:id/delegations/:delegationId/revoke",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/business-delegations.ts",
+      "line": 103,
+      "router": "router",
+      "method": "GET",
+      "path": "/business/delegations/:delegationId/catalog",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/courier.ts",
+      "line": 31,
+      "router": "router",
+      "method": "GET",
+      "path": "/orders/:id/courier-fare",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/courier.ts",
+      "line": 44,
+      "router": "router",
+      "method": "POST",
+      "path": "/orders/:id/courier-fare/proposals",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/courier.ts",
+      "line": 62,
+      "router": "router",
+      "method": "POST",
+      "path": "/orders/:id/courier-fare/confirm",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/courier.ts",
+      "line": 79,
+      "router": "router",
+      "method": "GET",
+      "path": "/courier/commission-account",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/courier.ts",
+      "line": 88,
+      "router": "router",
+      "method": "POST",
+      "path": "/courier/commission-account/settlements",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/admin-markets.ts",
+      "line": 36,
+      "router": "router",
+      "method": "GET",
+      "path": "/admin/markets",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/admin-markets.ts",
+      "line": 40,
+      "router": "router",
+      "method": "GET",
+      "path": "/admin/markets/:id/prices",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/admin-markets.ts",
+      "line": 50,
+      "router": "router",
+      "method": "GET",
+      "path": "/admin/markets/:id/audit",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/admin-markets.ts",
+      "line": 94,
+      "router": "router",
+      "method": "PATCH",
+      "path": "/admin/markets/:id",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/admin-markets.ts",
+      "line": 187,
+      "router": "router",
+      "method": "POST",
+      "path": "/admin/markets/:id/prices",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/admin-markets.ts",
+      "line": 257,
+      "router": "router",
+      "method": "PUT",
+      "path": "/admin/markets/:id/sellers/:userId",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/admin-drivers.ts",
+      "line": 15,
+      "router": "router",
+      "method": "POST",
+      "path": "/admin/drivers/:id/review",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/admin-drivers.ts",
+      "line": 30,
+      "router": "router",
+      "method": "POST",
+      "path": "/admin/orders/:id/courier-assignment/revoke",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/payments.ts",
+      "line": 57,
+      "router": "req",
+      "method": "GET",
+      "path": "Idempotency-Key",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/payments.ts",
+      "line": 86,
+      "router": "router",
+      "method": "POST",
+      "path": "/payments/intents",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/payments.ts",
+      "line": 107,
+      "router": "router",
+      "method": "POST",
+      "path": "/payments/webhooks/test",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/payments.ts",
+      "line": 109,
+      "router": "req",
+      "method": "GET",
+      "path": "x-payment-signature",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/payments.ts",
+      "line": 126,
+      "router": "router",
+      "method": "POST",
+      "path": "/admin/payments/intents/:id/refunds",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/payments.ts",
+      "line": 198,
+      "router": "router",
+      "method": "GET",
+      "path": "/admin/payments/refund-obligations",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/payments.ts",
+      "line": 216,
+      "router": "router",
+      "method": "POST",
+      "path": "/admin/payments/reconcile",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/business-profiles.ts",
+      "line": 41,
+      "router": "router",
+      "method": "GET",
+      "path": "/business/profiles",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/business-profiles.ts",
+      "line": 44,
+      "router": "router",
+      "method": "POST",
+      "path": "/business/profiles",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/business-profiles.ts",
+      "line": 50,
+      "router": "router",
+      "method": "GET",
+      "path": "/business/profiles/:id",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/business-profiles.ts",
+      "line": 53,
+      "router": "router",
+      "method": "PATCH",
+      "path": "/business/profiles/:id",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/business-profiles.ts",
+      "line": 56,
+      "router": "router",
+      "method": "POST",
+      "path": "/business/profiles/:id/start-verification",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/business-profiles.ts",
+      "line": 60,
+      "router": "router",
+      "method": "POST",
+      "path": "/business/profiles/:id/documents/upload-url",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/business-profiles.ts",
+      "line": 63,
+      "router": "router",
+      "method": "POST",
+      "path": "/business/profiles/:id/documents/:documentId/complete",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/business-profiles.ts",
+      "line": 67,
+      "router": "router",
+      "method": "POST",
+      "path": "/business/profiles/:id/submit",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/business-profiles.ts",
+      "line": 71,
+      "router": "router",
+      "method": "POST",
+      "path": "/business/profiles/:id/publication",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/business-profiles.ts",
+      "line": 78,
+      "router": "router",
+      "method": "POST",
+      "path": "/business/profiles/:id/integration-requests",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/business-profiles.ts",
+      "line": 83,
+      "router": "router",
+      "method": "POST",
+      "path": "/business/profiles/:id/listings/:listingId",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/business-profiles.ts",
+      "line": 89,
+      "router": "router",
+      "method": "GET",
+      "path": "/business/profiles/:id/listings",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/business-profiles.ts",
+      "line": 95,
+      "router": "router",
+      "method": "GET",
+      "path": "/businesses/:id",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/business-profiles.ts",
+      "line": 99,
+      "router": "router",
+      "method": "GET",
+      "path": "/admin/business-verification",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/business-profiles.ts",
+      "line": 103,
+      "router": "router",
+      "method": "GET",
+      "path": "/admin/business-verification/:id",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/business-profiles.ts",
+      "line": 106,
+      "router": "router",
+      "method": "POST",
+      "path": "/admin/business-verification/:id/decision",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/business-profiles.ts",
+      "line": 109,
+      "router": "router",
+      "method": "GET",
+      "path": "/admin/business-verification/documents/:documentId/content",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/privacy.ts",
+      "line": 50,
+      "router": "router",
+      "method": "GET",
+      "path": "/privacy/retention",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/privacy.ts",
+      "line": 54,
+      "router": "router",
+      "method": "GET",
+      "path": "/account/privacy",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/privacy.ts",
+      "line": 59,
+      "router": "router",
+      "method": "POST",
+      "path": "/account/privacy/exports",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/privacy.ts",
+      "line": 74,
+      "router": "router",
+      "method": "GET",
+      "path": "/account/privacy/preferences",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/privacy.ts",
+      "line": 78,
+      "router": "router",
+      "method": "PATCH",
+      "path": "/account/privacy/preferences",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/privacy.ts",
+      "line": 83,
+      "router": "router",
+      "method": "GET",
+      "path": "/account/privacy/requests",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/privacy.ts",
+      "line": 87,
+      "router": "router",
+      "method": "POST",
+      "path": "/account/privacy/requests",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/privacy.ts",
+      "line": 91,
+      "router": "router",
+      "method": "GET",
+      "path": "/account/privacy/requests/:id",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/privacy.ts",
+      "line": 95,
+      "router": "router",
+      "method": "POST",
+      "path": "/account/privacy/requests/:id/withdraw",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/privacy.ts",
+      "line": 107,
+      "router": "router",
+      "method": "GET",
+      "path": "/admin/privacy-requests",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/privacy.ts",
+      "line": 112,
+      "router": "router",
+      "method": "POST",
+      "path": "/admin/privacy-requests/:id/status",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/trust-ops.ts",
+      "line": 66,
+      "router": "router",
+      "method": "GET",
+      "path": "/account/support/cases",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/trust-ops.ts",
+      "line": 70,
+      "router": "router",
+      "method": "POST",
+      "path": "/account/support/cases",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/trust-ops.ts",
+      "line": 75,
+      "router": "router",
+      "method": "GET",
+      "path": "/account/support/cases/:id",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/trust-ops.ts",
+      "line": 79,
+      "router": "router",
+      "method": "POST",
+      "path": "/account/support/cases/:id/messages",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/trust-ops.ts",
+      "line": 86,
+      "router": "router",
+      "method": "GET",
+      "path": "/account/whatsapp/consent",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/trust-ops.ts",
+      "line": 90,
+      "router": "router",
+      "method": "POST",
+      "path": "/account/whatsapp/consent",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/trust-ops.ts",
+      "line": 99,
+      "router": "router",
+      "method": "GET",
+      "path": "/admin/support/cases",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/trust-ops.ts",
+      "line": 103,
+      "router": "router",
+      "method": "GET",
+      "path": "/admin/support/cases/:id",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/trust-ops.ts",
+      "line": 107,
+      "router": "router",
+      "method": "POST",
+      "path": "/admin/support/cases/:id/messages",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/trust-ops.ts",
+      "line": 112,
+      "router": "router",
+      "method": "POST",
+      "path": "/admin/support/cases/:id/assign",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/trust-ops.ts",
+      "line": 117,
+      "router": "router",
+      "method": "POST",
+      "path": "/admin/support/cases/:id/status",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/trust-ops.ts",
+      "line": 126,
+      "router": "router",
+      "method": "GET",
+      "path": "/admin/fraud/signals",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/trust-ops.ts",
+      "line": 132,
+      "router": "router",
+      "method": "POST",
+      "path": "/admin/fraud/signals",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/trust-ops.ts",
+      "line": 137,
+      "router": "router",
+      "method": "POST",
+      "path": "/admin/fraud/signals/:id/review",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/trust-ops.ts",
+      "line": 142,
+      "router": "router",
+      "method": "GET",
+      "path": "/admin/fraud/overview",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/trust-ops.ts",
+      "line": 150,
+      "router": "router",
+      "method": "GET",
+      "path": "/admin/whatsapp/templates",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/trust-ops.ts",
+      "line": 154,
+      "router": "router",
+      "method": "POST",
+      "path": "/admin/whatsapp/templates",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/trust-ops.ts",
+      "line": 159,
+      "router": "router",
+      "method": "POST",
+      "path": "/admin/whatsapp/templates/:key/status",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/trust-ops.ts",
+      "line": 164,
+      "router": "router",
+      "method": "POST",
+      "path": "/admin/whatsapp/intents",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/trust-ops.ts",
+      "line": 169,
+      "router": "router",
+      "method": "GET",
+      "path": "/admin/whatsapp/overview",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/appeals.ts",
+      "line": 22,
+      "router": "router",
+      "method": "POST",
+      "path": "/appeals",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/appeals.ts",
+      "line": 25,
+      "router": "router",
+      "method": "GET",
+      "path": "/appeals/mine",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/appeals.ts",
+      "line": 28,
+      "router": "router",
+      "method": "POST",
+      "path": "/appeals/:id/withdraw",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/appeals.ts",
+      "line": 31,
+      "router": "router",
+      "method": "POST",
+      "path": "/orders/:id/dispute/evidence",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/appeals.ts",
+      "line": 42,
+      "router": "router",
+      "method": "GET",
+      "path": "/admin/appeals",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/appeals.ts",
+      "line": 45,
+      "router": "router",
+      "method": "POST",
+      "path": "/admin/appeals/:id/decision",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/provider.ts",
+      "line": 58,
+      "router": "req",
+      "method": "GET",
+      "path": "authorization",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/provider.ts",
+      "line": 90,
+      "router": "router",
+      "method": "GET",
+      "path": "/provider/connection",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/provider.ts",
+      "line": 95,
+      "router": "router",
+      "method": "PUT",
+      "path": "/provider/listings/:externalRef",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/provider.ts",
+      "line": 100,
+      "router": "router",
+      "method": "GET",
+      "path": "/provider/listings/:externalRef",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/provider.ts",
+      "line": 104,
+      "router": "router",
+      "method": "DELETE",
+      "path": "/provider/listings/:externalRef",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/provider.ts",
+      "line": 108,
+      "router": "router",
+      "method": "POST",
+      "path": "/provider/listings/batch",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/provider.ts",
+      "line": 112,
+      "router": "router",
+      "method": "POST",
+      "path": "/provider/drivers/link",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/provider.ts",
+      "line": 116,
+      "router": "router",
+      "method": "GET",
+      "path": "/provider/drivers/:externalRef",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/provider.ts",
+      "line": 120,
+      "router": "router",
+      "method": "DELETE",
+      "path": "/provider/drivers/:externalRef",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/provider.ts",
+      "line": 151,
+      "router": "router",
+      "method": "GET",
+      "path": "/provider-connections",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/provider.ts",
+      "line": 156,
+      "router": "router",
+      "method": "POST",
+      "path": "/provider-connections",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/provider.ts",
+      "line": 170,
+      "router": "router",
+      "method": "POST",
+      "path": "/provider-connections/:id/credentials",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/provider.ts",
+      "line": 177,
+      "router": "router",
+      "method": "POST",
+      "path": "/provider-connections/:id/revoke",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/provider.ts",
+      "line": 186,
+      "router": "router",
+      "method": "POST",
+      "path": "/account/driver-link-code",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/provider.ts",
+      "line": 191,
+      "router": "router",
+      "method": "DELETE",
+      "path": "/account/driver-links",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/trust-safety.ts",
+      "line": 58,
+      "router": "router",
+      "method": "GET",
+      "path": "/policies",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/trust-safety.ts",
+      "line": 79,
+      "router": "router",
+      "method": "GET",
+      "path": "/policies/:key",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/trust-safety.ts",
+      "line": 90,
+      "router": "router",
+      "method": "GET",
+      "path": "/account/policy-acceptances",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/trust-safety.ts",
+      "line": 95,
+      "router": "router",
+      "method": "POST",
+      "path": "/account/policy-acceptances",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/trust-safety.ts",
+      "line": 116,
+      "router": "router",
+      "method": "GET",
+      "path": "/reports/reasons",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/trust-safety.ts",
+      "line": 245,
+      "router": "router",
+      "method": "POST",
+      "path": "/reports",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/trust-safety.ts",
+      "line": 317,
+      "router": "router",
+      "method": "GET",
+      "path": "/reports/mine",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/trust-safety.ts",
+      "line": 333,
+      "router": "router",
+      "method": "POST",
+      "path": "/account/deletion",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/trust-safety.ts",
+      "line": 488,
+      "router": "router",
+      "method": "GET",
+      "path": "/admin/reports",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/trust-safety.ts",
+      "line": 532,
+      "router": "router",
+      "method": "POST",
+      "path": "/admin/reports/:id/resolve",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/trust-safety.ts",
+      "line": 639,
+      "router": "router",
+      "method": "POST",
+      "path": "/admin/listings/:id/moderation",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/trust-safety.ts",
+      "line": 655,
+      "router": "router",
+      "method": "POST",
+      "path": "/admin/jobs/:id/moderation",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/trust-safety.ts",
+      "line": 669,
+      "router": "router",
+      "method": "POST",
+      "path": "/admin/candidate-profiles/:id/moderation",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/trust-safety.ts",
+      "line": 683,
+      "router": "router",
+      "method": "GET",
+      "path": "/admin/users",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/trust-safety.ts",
+      "line": 713,
+      "router": "router",
+      "method": "GET",
+      "path": "/admin/users/:id",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/trust-safety.ts",
+      "line": 719,
+      "router": "router",
+      "method": "POST",
+      "path": "/admin/users/:id/status",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/trust-safety.ts",
+      "line": 738,
+      "router": "router",
+      "method": "GET",
+      "path": "/admin/moderation-audit",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/trust-safety.ts",
+      "line": 764,
+      "router": "router",
+      "method": "GET",
+      "path": "/admin/policy-rules",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/trust-safety.ts",
+      "line": 773,
+      "router": "router",
+      "method": "POST",
+      "path": "/admin/policy-rules",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/trust-safety.ts",
+      "line": 824,
+      "router": "router",
+      "method": "PATCH",
+      "path": "/admin/policy-rules/:id",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/trust-safety.ts",
+      "line": 856,
+      "router": "router",
+      "method": "GET",
+      "path": "/admin/reason-codes",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/trust-safety.ts",
+      "line": 865,
+      "router": "router",
+      "method": "PATCH",
+      "path": "/admin/reason-codes/:code",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/trust-safety.ts",
+      "line": 897,
+      "router": "router",
+      "method": "GET",
+      "path": "/admin/policies",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/businesses.ts",
+      "line": 37,
+      "router": "router",
+      "method": "GET",
+      "path": "/businesses/:id/storefront",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/categories.ts",
+      "line": 35,
+      "router": "router",
+      "method": "GET",
+      "path": "/categories",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/categories.ts",
+      "line": 48,
+      "router": "router",
+      "method": "GET",
+      "path": "/admin/categories",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/categories.ts",
+      "line": 55,
+      "router": "router",
+      "method": "GET",
+      "path": "/admin/categories/:id/audit",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/categories.ts",
+      "line": 93,
+      "router": "router",
+      "method": "POST",
+      "path": "/admin/categories",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/categories.ts",
+      "line": 144,
+      "router": "router",
+      "method": "PATCH",
+      "path": "/admin/categories/:id",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/security-incidents.ts",
+      "line": 32,
+      "router": "router",
+      "method": "GET",
+      "path": "/admin/security/incidents",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/security-incidents.ts",
+      "line": 41,
+      "router": "router",
+      "method": "POST",
+      "path": "/admin/security/incidents",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/security-incidents.ts",
+      "line": 55,
+      "router": "router",
+      "method": "GET",
+      "path": "/admin/security/incidents/:id",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/security-incidents.ts",
+      "line": 64,
+      "router": "router",
+      "method": "POST",
+      "path": "/admin/security/incidents/:id/transition",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/commercial.ts",
+      "line": 90,
+      "router": "router",
+      "method": "GET",
+      "path": "/commercial/balance",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/commercial.ts",
+      "line": 98,
+      "router": "router",
+      "method": "POST",
+      "path": "/commercial/topups",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/commercial.ts",
+      "line": 107,
+      "router": "router",
+      "method": "POST",
+      "path": "/commercial/topups/:id/simulate-capture",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/commercial.ts",
+      "line": 115,
+      "router": "router",
+      "method": "POST",
+      "path": "/commercial/payment-webhooks",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/commercial.ts",
+      "line": 120,
+      "router": "router",
+      "method": "GET",
+      "path": "/commercial/products",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/commercial.ts",
+      "line": 134,
+      "router": "router",
+      "method": "POST",
+      "path": "/commercial/purchase-review",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/commercial.ts",
+      "line": 148,
+      "router": "router",
+      "method": "POST",
+      "path": "/commercial/purchases",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/commercial.ts",
+      "line": 163,
+      "router": "router",
+      "method": "GET",
+      "path": "/commercial/entitlements",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/commercial.ts",
+      "line": 168,
+      "router": "router",
+      "method": "GET",
+      "path": "/commercial/campaigns/analytics",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/commercial.ts",
+      "line": 176,
+      "router": "router",
+      "method": "POST",
+      "path": "/commercial/attribution",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/commercial.ts",
+      "line": 184,
+      "router": "router",
+      "method": "GET",
+      "path": "/market-pulse",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/commercial.ts",
+      "line": 215,
+      "router": "router",
+      "method": "GET",
+      "path": "/business/plans",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/commercial.ts",
+      "line": 220,
+      "router": "router",
+      "method": "GET",
+      "path": "/subscriptions/plans",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/commercial.ts",
+      "line": 224,
+      "router": "router",
+      "method": "GET",
+      "path": "/business/subscription",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/commercial.ts",
+      "line": 228,
+      "router": "router",
+      "method": "POST",
+      "path": "/business/subscription-review",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/commercial.ts",
+      "line": 233,
+      "router": "router",
+      "method": "POST",
+      "path": "/business/subscriptions",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/commercial.ts",
+      "line": 238,
+      "router": "router",
+      "method": "POST",
+      "path": "/business/subscription/cancel",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/commercial.ts",
+      "line": 245,
+      "router": "router",
+      "method": "POST",
+      "path": "/ai/commerce-actions/:id/action",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/commercial.ts",
+      "line": 286,
+      "router": "router",
+      "method": "GET",
+      "path": "/admin/markets/:marketId/commercial-products",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/commercial.ts",
+      "line": 292,
+      "router": "router",
+      "method": "POST",
+      "path": "/admin/markets/:marketId/commercial-products",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/commercial.ts",
+      "line": 350,
+      "router": "router",
+      "method": "PATCH",
+      "path": "/admin/commercial-products/:id",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/commercial.ts",
+      "line": 368,
+      "router": "router",
+      "method": "GET",
+      "path": "/admin/commercial-policies",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/commercial.ts",
+      "line": 378,
+      "router": "router",
+      "method": "POST",
+      "path": "/admin/commercial-policies",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/commercial.ts",
+      "line": 403,
+      "router": "router",
+      "method": "POST",
+      "path": "/admin/commercial-credits",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/commercial.ts",
+      "line": 411,
+      "router": "router",
+      "method": "POST",
+      "path": "/admin/commercial-refunds",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/commercial.ts",
+      "line": 417,
+      "router": "router",
+      "method": "GET",
+      "path": "/admin/markets/:marketId/commercial-summary",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/integrations.ts",
+      "line": 35,
+      "router": "router",
+      "method": "GET",
+      "path": "/admin/integrations/readiness",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/integrations.ts",
+      "line": 78,
+      "router": "router",
+      "method": "GET",
+      "path": "/admin/ai/model-prices",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/integrations.ts",
+      "line": 82,
+      "router": "router",
+      "method": "POST",
+      "path": "/admin/ai/model-prices",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/integrations.ts",
+      "line": 88,
+      "router": "router",
+      "method": "GET",
+      "path": "/business/plan-change-preview",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/integrations.ts",
+      "line": 111,
+      "router": "router",
+      "method": "POST",
+      "path": "/business/subscription-checkout",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/integrations.ts",
+      "line": 149,
+      "router": "router",
+      "method": "GET",
+      "path": "/admin/subscription-plans/economics",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/integrations.ts",
+      "line": 154,
+      "router": "router",
+      "method": "POST",
+      "path": "/billing/webhooks/:providerKey",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/health.ts",
+      "line": 16,
+      "router": "router",
+      "method": "GET",
+      "path": "/healthz",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/health.ts",
+      "line": 22,
+      "router": "router",
+      "method": "GET",
+      "path": "/readyz",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/compliance.ts",
+      "line": 131,
+      "router": "router",
+      "method": "GET",
+      "path": "/markets/:marketId/compliance",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/compliance.ts",
+      "line": 148,
+      "router": "router",
+      "method": "GET",
+      "path": "/account/policy-consents",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/compliance.ts",
+      "line": 165,
+      "router": "router",
+      "method": "POST",
+      "path": "/account/policy-decisions",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/compliance.ts",
+      "line": 180,
+      "router": "router",
+      "method": "GET",
+      "path": "/account/compliance",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/compliance.ts",
+      "line": 201,
+      "router": "router",
+      "method": "POST",
+      "path": "/account/age-declaration",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/compliance.ts",
+      "line": 222,
+      "router": "router",
+      "method": "POST",
+      "path": "/account/guardian-consent",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/compliance.ts",
+      "line": 237,
+      "router": "router",
+      "method": "GET",
+      "path": "/account/seller-verification",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/compliance.ts",
+      "line": 254,
+      "router": "router",
+      "method": "POST",
+      "path": "/account/seller-verification",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/compliance.ts",
+      "line": 270,
+      "router": "router",
+      "method": "GET",
+      "path": "/admin/compliance/policies",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/compliance.ts",
+      "line": 283,
+      "router": "router",
+      "method": "POST",
+      "path": "/admin/compliance/policies",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/compliance.ts",
+      "line": 302,
+      "router": "router",
+      "method": "POST",
+      "path": "/admin/compliance/policies/:id/transition",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/compliance.ts",
+      "line": 316,
+      "router": "router",
+      "method": "GET",
+      "path": "/admin/compliance/seller-verifications",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/compliance.ts",
+      "line": 331,
+      "router": "router",
+      "method": "POST",
+      "path": "/admin/compliance/seller-verifications/:id/decision",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/compliance.ts",
+      "line": 349,
+      "router": "router",
+      "method": "GET",
+      "path": "/admin/compliance/markets",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/compliance.ts",
+      "line": 353,
+      "router": "router",
+      "method": "GET",
+      "path": "/admin/compliance/markets/:marketId",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/compliance.ts",
+      "line": 363,
+      "router": "router",
+      "method": "GET",
+      "path": "/admin/compliance/markets/:marketId/capabilities",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/compliance.ts",
+      "line": 372,
+      "router": "router",
+      "method": "POST",
+      "path": "/admin/compliance/markets/:marketId/capabilities/:capability/review-request",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/compliance.ts",
+      "line": 389,
+      "router": "router",
+      "method": "POST",
+      "path": "/admin/compliance/markets/:marketId/capabilities/:capability/counsel-review",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/compliance.ts",
+      "line": 408,
+      "router": "router",
+      "method": "POST",
+      "path": "/admin/compliance/markets/:marketId/capabilities/:capability/enable",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/compliance.ts",
+      "line": 426,
+      "router": "router",
+      "method": "POST",
+      "path": "/admin/compliance/markets/:marketId/capabilities/:capability/disable",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/compliance.ts",
+      "line": 443,
+      "router": "router",
+      "method": "GET",
+      "path": "/admin/compliance/country-readiness",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/compliance.ts",
+      "line": 447,
+      "router": "router",
+      "method": "GET",
+      "path": "/admin/compliance/country-readiness/:marketId",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/compliance.ts",
+      "line": 456,
+      "router": "router",
+      "method": "POST",
+      "path": "/admin/compliance/country-readiness/:marketId/evidence",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/compliance.ts",
+      "line": 475,
+      "router": "router",
+      "method": "POST",
+      "path": "/admin/compliance/country-readiness/evidence/:evidenceId/review",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/compliance.ts",
+      "line": 492,
+      "router": "router",
+      "method": "POST",
+      "path": "/admin/compliance/country-readiness/:marketId/review-request",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/compliance.ts",
+      "line": 508,
+      "router": "router",
+      "method": "POST",
+      "path": "/admin/compliance/country-readiness/:marketId/topics/:topicKey/review",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/compliance.ts",
+      "line": 528,
+      "router": "router",
+      "method": "POST",
+      "path": "/admin/compliance/country-readiness/:marketId/counsel-review",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/compliance.ts",
+      "line": 545,
+      "router": "router",
+      "method": "POST",
+      "path": "/admin/compliance/country-readiness/:marketId/counsel-approval",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/compliance.ts",
+      "line": 559,
+      "router": "router",
+      "method": "POST",
+      "path": "/admin/compliance/country-readiness/:marketId/owner-approval",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/compliance.ts",
+      "line": 573,
+      "router": "router",
+      "method": "POST",
+      "path": "/admin/compliance/country-readiness/:marketId/technical-verification",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/compliance.ts",
+      "line": 587,
+      "router": "router",
+      "method": "POST",
+      "path": "/admin/compliance/country-readiness/:marketId/activate",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/compliance.ts",
+      "line": 601,
+      "router": "router",
+      "method": "POST",
+      "path": "/admin/compliance/country-readiness/:marketId/suspend",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/compliance.ts",
+      "line": 628,
+      "router": "router",
+      "method": "PUT",
+      "path": "/admin/compliance/markets/:marketId",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/compliance.ts",
+      "line": 641,
+      "router": "router",
+      "method": "GET",
+      "path": "/admin/compliance/legal-entities",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/compliance.ts",
+      "line": 654,
+      "router": "router",
+      "method": "POST",
+      "path": "/admin/compliance/legal-entities",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/compliance.ts",
+      "line": 665,
+      "router": "router",
+      "method": "POST",
+      "path": "/admin/compliance/legal-entities/:marketId/activate",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/compliance.ts",
+      "line": 679,
+      "router": "router",
+      "method": "POST",
+      "path": "/admin/compliance/legal-entities/:marketId/deactivate",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/promotions.ts",
+      "line": 94,
+      "router": "router",
+      "method": "GET",
+      "path": "/promotion-products",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/promotions.ts",
+      "line": 129,
+      "router": "router",
+      "method": "POST",
+      "path": "/listings/:id/promotion-preview",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/promotions.ts",
+      "line": 164,
+      "router": "router",
+      "method": "POST",
+      "path": "/listings/:id/promotions",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/promotions.ts",
+      "line": 185,
+      "router": "router",
+      "method": "GET",
+      "path": "/promotions",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/promotions.ts",
+      "line": 194,
+      "router": "router",
+      "method": "GET",
+      "path": "/promotions/:id",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/promotions.ts",
+      "line": 204,
+      "router": "router",
+      "method": "POST",
+      "path": "/promotions/:id/actions",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/promotions.ts",
+      "line": 217,
+      "router": "router",
+      "method": "GET",
+      "path": "/admin/markets/:marketId/promotions",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/promotions.ts",
+      "line": 230,
+      "router": "router",
+      "method": "GET",
+      "path": "/admin/markets/:marketId/promotion-products",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/promotions.ts",
+      "line": 247,
+      "router": "router",
+      "method": "POST",
+      "path": "/admin/markets/:marketId/promotion-products",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/promotions.ts",
+      "line": 290,
+      "router": "router",
+      "method": "PATCH",
+      "path": "/admin/markets/:marketId/promotion-products/:id",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/cash.ts",
+      "line": 72,
+      "router": "req",
+      "method": "GET",
+      "path": "Idempotency-Key",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/cash.ts",
+      "line": 80,
+      "router": "router",
+      "method": "POST",
+      "path": "/orders/:id/cash-payment/claim",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/cash.ts",
+      "line": 98,
+      "router": "router",
+      "method": "POST",
+      "path": "/orders/:id/cash-payment/confirm",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/cash.ts",
+      "line": 114,
+      "router": "router",
+      "method": "POST",
+      "path": "/orders/:id/cash-payment/deny",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/cash.ts",
+      "line": 129,
+      "router": "router",
+      "method": "POST",
+      "path": "/orders/:id/cash-payment/dispute",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/cash.ts",
+      "line": 144,
+      "router": "router",
+      "method": "GET",
+      "path": "/orders/:id/cash",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/cash.ts",
+      "line": 152,
+      "router": "router",
+      "method": "POST",
+      "path": "/orders/:id/cash-refunds",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/cash.ts",
+      "line": 171,
+      "router": "router",
+      "method": "POST",
+      "path": "/cash-refunds/:id/repayment-claim",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/cash.ts",
+      "line": 187,
+      "router": "router",
+      "method": "POST",
+      "path": "/cash-refunds/:id/confirm",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/cash.ts",
+      "line": 200,
+      "router": "router",
+      "method": "POST",
+      "path": "/cash-refunds/:id/dispute",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    },
+    {
+      "file": "artifacts/api-server/src/routes/cash.ts",
+      "line": 215,
+      "router": "router",
+      "method": "POST",
+      "path": "/cash-refunds/:id/withdraw",
+      "status": "PARTIAL",
+      "missingProof": "Mount expansion, authorization, domain/DB state and fresh user interaction must be traced; declaration is not acceptance."
+    }
+  ],
+  "webRouteDeclarations": [
+    {
+      "path": "/",
+      "line": 127,
+      "status": "PARTIAL"
+    },
+    {
+      "path": "/ai",
+      "line": 128,
+      "status": "PARTIAL"
+    },
+    {
+      "path": "/orders",
+      "line": 129,
+      "status": "PARTIAL"
+    },
+    {
+      "path": "/login",
+      "line": 132,
+      "status": "PARTIAL"
+    },
+    {
+      "path": "/register",
+      "line": 133,
+      "status": "PARTIAL"
+    },
+    {
+      "path": "/profile",
+      "line": 134,
+      "status": "PARTIAL"
+    },
+    {
+      "path": "/settings",
+      "line": 135,
+      "status": "PARTIAL"
+    },
+    {
+      "path": "/connect",
+      "line": 136,
+      "status": "PARTIAL"
+    },
+    {
+      "path": "/admin/markets",
+      "line": 137,
+      "status": "PARTIAL"
+    },
+    {
+      "path": "/admin/connect",
+      "line": 138,
+      "status": "PARTIAL"
+    },
+    {
+      "path": "/admin/categories",
+      "line": 139,
+      "status": "PARTIAL"
+    },
+    {
+      "path": "/admin/promotions",
+      "line": 140,
+      "status": "PARTIAL"
+    },
+    {
+      "path": "/admin/disputes",
+      "line": 141,
+      "status": "PARTIAL"
+    },
+    {
+      "path": "/admin/trust-safety",
+      "line": 142,
+      "status": "PARTIAL"
+    },
+    {
+      "path": "/admin/legal-readiness",
+      "line": 143,
+      "status": "PARTIAL"
+    },
+    {
+      "path": "/terms",
+      "line": 144,
+      "status": "PARTIAL"
+    },
+    {
+      "path": "/policies",
+      "line": 145,
+      "status": "PARTIAL"
+    },
+    {
+      "path": "/policies/:key",
+      "line": 146,
+      "status": "PARTIAL"
+    },
+    {
+      "path": "/business/:id",
+      "line": 147,
+      "status": "PARTIAL"
+    },
+    {
+      "path": "/",
+      "line": 152,
+      "status": "PARTIAL"
+    },
+    {
+      "path": "/discover",
+      "line": 153,
+      "status": "PARTIAL"
+    },
+    {
+      "path": "/search",
+      "line": 154,
+      "status": "PARTIAL"
+    },
+    {
+      "path": "/ai",
+      "line": 155,
+      "status": "PARTIAL"
+    },
+    {
+      "path": "/login",
+      "line": 156,
+      "status": "PARTIAL"
+    },
+    {
+      "path": "/register",
+      "line": 159,
+      "status": "PARTIAL"
+    },
+    {
+      "path": "/terms",
+      "line": 162,
+      "status": "PARTIAL"
+    },
+    {
+      "path": "/policies",
+      "line": 163,
+      "status": "PARTIAL"
+    },
+    {
+      "path": "/policies/:key",
+      "line": 164,
+      "status": "PARTIAL"
+    },
+    {
+      "path": "/listings/:id",
+      "line": 165,
+      "status": "PARTIAL"
+    },
+    {
+      "path": "/business/:id",
+      "line": 168,
+      "status": "PARTIAL"
+    },
+    {
+      "path": "/cart",
+      "line": 169,
+      "status": "PARTIAL"
+    },
+    {
+      "path": "/checkout",
+      "line": 170,
+      "status": "PARTIAL"
+    },
+    {
+      "path": "/orders",
+      "line": 171,
+      "status": "PARTIAL"
+    },
+    {
+      "path": "/orders/:id",
+      "line": 174,
+      "status": "PARTIAL"
+    },
+    {
+      "path": "/notifications",
+      "line": 175,
+      "status": "PARTIAL"
+    },
+    {
+      "path": "/profile",
+      "line": 176,
+      "status": "PARTIAL"
+    },
+    {
+      "path": "/settings",
+      "line": 177,
+      "status": "PARTIAL"
+    },
+    {
+      "path": "/seller",
+      "line": 178,
+      "status": "PARTIAL"
+    },
+    {
+      "path": "/seller/new",
+      "line": 179,
+      "status": "PARTIAL"
+    },
+    {
+      "path": "/seller/offers",
+      "line": 180,
+      "status": "PARTIAL"
+    },
+    {
+      "path": "/seller/offers/:id/edit",
+      "line": 181,
+      "status": "PARTIAL"
+    },
+    {
+      "path": "/seller/dues",
+      "line": 182,
+      "status": "PARTIAL"
+    },
+    {
+      "path": "/admin/markets",
+      "line": 183,
+      "status": "PARTIAL"
+    },
+    {
+      "path": "/admin/categories",
+      "line": 184,
+      "status": "PARTIAL"
+    },
+    {
+      "path": "/admin/promotions",
+      "line": 185,
+      "status": "PARTIAL"
+    },
+    {
+      "path": "/admin/disputes",
+      "line": 186,
+      "status": "PARTIAL"
+    },
+    {
+      "path": "/admin/trust-safety",
+      "line": 187,
+      "status": "PARTIAL"
+    },
+    {
+      "path": "/admin/legal-readiness",
+      "line": 188,
+      "status": "PARTIAL"
+    }
+  ],
+  "chatOnlyMode": true,
+  "warning": "Static discovery only. Hidden standalone routes are not public E2E success; original 3585 counts are excluded from this audit."
+}

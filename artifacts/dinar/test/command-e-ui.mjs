@@ -9,7 +9,7 @@ const users = JSON.parse(process.env.E_USERS ?? "{}");
 const conversations = JSON.parse(process.env.E_CONVERSATIONS ?? "{}");
 const out = process.env.E_OUT;
 const resultPath = process.env.E_RESULT;
-const widths = (process.env.E_WIDTHS ?? "320,375,390,430,768,1024,1440,1600").split(",").map(Number);
+const widths = (process.env.E_WIDTHS ?? "320,360,375,390,430,768,1024,1440,1600,1920").split(",").map(Number);
 if (!webBase || !apiOrigin || !out || !resultPath) throw new Error("Missing Command E browser configuration.");
 
 const report = { runs: [], perf: {}, journeys: {}, summary: {} };
@@ -115,7 +115,7 @@ try {
     for (const width of widths) {
       for (const [name, actor, id] of scenarios) {
         // Dark mode at every width for the core screens; the full set in light.
-        if (theme === "dark" && ![320, 390, 768, 1440].includes(width)) continue;
+        // Audit both themes at every required viewport; retain all existing assertions.
         const context = await contextFor(browser, width, theme, actor);
         const page = await context.newPage();
         const errors = [];
