@@ -59,7 +59,7 @@ export function surfaceIntent(message: string): string | undefined {
   if (/مستحقات|مستحقاتي/.test(text)) return "DUES";
   if (/غير.*سوق|غيّر.*سوق|حولني.*سوق|سوق الكويت|تغيير السوق/.test(text))
     return "MARKET";
-  if (/افتح حسابي|اعرض حسابي|ملفي الشخصي/.test(text)) return "ACCOUNT";
+  if (/افتح حسابي|اعرض حسابي|ملفي الشخصي/.test(text) || /(?:^|\s)(?:افتح|اعرض|ورني|وريني)\s+(?:لي\s+)?(?:خيارات|اعدادات)\s+(?:ال)?حساب(?:ي)?(?:\s|$)/u.test(folded)) return "ACCOUNT";
   // «أعرض 15 بدل 20», «اعرض 2»: an amount or a position names no item, so it is not a sale;
   // negotiation, the draft in progress or the visible results give it its meaning.
   if (priceProposal(message) || isBareShowNumber(message)) return undefined;

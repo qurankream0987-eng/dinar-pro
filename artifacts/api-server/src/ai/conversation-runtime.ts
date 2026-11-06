@@ -1071,6 +1071,18 @@ async function executeWithRoutingMode(context: RuntimeContext, options: RuntimeO
     return interpreted !== NO_MODEL_RESULT && !isSoftMiss(interpreted) ? interpreted : own;
   }
   const plain = mode === "LEGACY" || options.noModel || options.planStep || options.modelStage || !context.actorId || context.imageObjectPaths?.length || context.location !== undefined;
+  if (plain && !options.noModel && !options.planStep && !options.modelStage && context.actorId && !context.imageObjectPaths?.length && context.location === undefined) {
+    // A goal sentence («أبي أفتح مشروع، ساعدني من البداية», «أبي سائق ينقل الغسالة») that DINAR's own
+    // path could only read as a product search, and that matched nothing, is no answer: the model
+    // interprets it once. A short product phrase keeps the honest empty result, and without a
+    // model the empty result is returned as it is.
+    const before = getModelGatewayCallCount();
+    const own = await executeRuntime(context, options);
+    if (getModelGatewayCallCount() > before || own.result.kind !== "SEARCH" || own.result.listings.length) return own;
+    if (searchTerms(context.message).split(/\s+/u).filter(Boolean).length < 3) return own;
+    const interpreted = await executeRuntime(context, { ...options, modelStage: "ONLY" });
+    return interpreted !== NO_MODEL_RESULT && !isSoftMiss(interpreted) ? interpreted : own;
+  }
   if (plain) return executeRuntime(context, options);
   if (mode === "MODEL_FIRST") {
     // The model reads first. A canonical request it restated re-entered DINAR and wins; otherwise
