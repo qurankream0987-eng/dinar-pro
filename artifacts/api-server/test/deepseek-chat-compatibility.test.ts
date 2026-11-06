@@ -914,16 +914,35 @@ await test("DS-15 conversation start and resume: fresh, resume, slow history, re
       assert.ok(!(await historyOf(page)).includes("OLD"), "the slow restore never takes over");
       await context.close();
     }
-    // Reload during initialisation: the reloaded page still renders one coherent answer.
+    // Reload during initialisation with a known pending initial auth read.
     {
       const context = await ordersEntryContext(browser, actor, oldConversation);
+      let releaseAuth!: () => void;
+      let signalAuthHeld!: () => void;
+      const authGate = new Promise<void>(resolve => { releaseAuth = resolve; });
+      const authHeld = new Promise<void>(resolve => { signalAuthHeld = resolve; });
+      let intercepted = false;
+      await context.route(`${origin}/api/auth/me`, async (route: any) => {
+        if (intercepted || route.request().method() !== "GET") return route.continue();
+        intercepted = true;
+        signalAuthHeld();
+        await authGate;
+        // Reload cancels this old-document request; it can never complete initialization.
+        await route.abort("aborted").catch(() => undefined);
+      });
       const page = await context.newPage();
       const pageErrors: string[] = [];
       page.on("pageerror", (error: Error) => pageErrors.push(error.message));
-      await page.goto(`${origin}/orders`, { waitUntil: "commit" });
-      await page.reload({ waitUntil: "domcontentloaded" });
+      try {
+        await page.goto(`${origin}/orders`, { waitUntil: "domcontentloaded" });
+        let authTimeout: ReturnType<typeof setTimeout> | undefined;
+        try {
+          await Promise.race([authHeld, new Promise<never>((_, reject) => { authTimeout = setTimeout(() => reject(new Error("initial auth request was not intercepted")), 10_000); })]);
+        } finally { clearTimeout(authTimeout); }
+        await page.reload({ waitUntil: "domcontentloaded" });
+      } finally { releaseAuth(); }
       await answerOf(page).waitFor({ timeout: 8_000 });
-      outcomes.reload = { rendered: true, users: await page.locator('[data-testid^="message-user-"]').count(), pageErrors: pageErrors.length };
+      outcomes.reload = { rendered: true, authPendingAtReload: intercepted, users: await page.locator('[data-testid^="message-user-"]').count(), pageErrors: pageErrors.length };
       assert.deepEqual(pageErrors, []);
       await context.close();
     }

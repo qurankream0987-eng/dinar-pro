@@ -73,6 +73,38 @@ await test("deployed and production-mode pages reject third-party preview framin
   }
 });
 
+await test("deployment identity is fail-closed while explicit local preview still works", async () => {
+  const previous = {
+    NODE_ENV: process.env.NODE_ENV,
+    DINAR_DEPLOYMENT_ENV: process.env.DINAR_DEPLOYMENT_ENV,
+    REPLIT_DEPLOYMENT: process.env.REPLIT_DEPLOYMENT,
+  };
+  const set = (name: string, value: string | undefined) => {
+    if (value === undefined) delete process.env[name]; else process.env[name] = value;
+  };
+  try {
+    for (const [mode, deployment, marker] of [
+      ["development", undefined, "1"], ["development", "development", ""],
+      ["development", undefined, "0"], ["development", " Production ", undefined],
+      ["development", "STAGING", undefined], ["development", "unrecognized", undefined],
+      [undefined, undefined, undefined],
+    ] as const) {
+      set("NODE_ENV", mode); set("DINAR_DEPLOYMENT_ENV", deployment); set("REPLIT_DEPLOYMENT", marker);
+      const response = await fetch(`${origin}/`);
+      const csp = response.headers.get("content-security-policy") ?? "";
+      assert.equal(csp.split("; ").find((directive) => directive.startsWith("frame-ancestors ")), "frame-ancestors 'self'");
+      assert.doesNotMatch(csp, /replit\.com|replit\.dev/);
+    }
+    for (const [mode, deployment] of [["development", undefined], ["test", "test"], ["development", " Development "]] as const) {
+      set("NODE_ENV", mode); set("DINAR_DEPLOYMENT_ENV", deployment); delete process.env.REPLIT_DEPLOYMENT;
+      const response = await fetch(`${origin}/`);
+      assert.match(response.headers.get("content-security-policy") ?? "", /frame-ancestors 'self' https:\/\/replit\.com/);
+    }
+  } finally {
+    for (const [name, value] of Object.entries(previous)) set(name, value);
+  }
+});
+
 await test("the shell and API carry the browser security policy", async () => {
   const shell = await fetch(`${origin}/`, { headers: { Accept: "text/html" } });
   const csp = shell.headers.get("content-security-policy") ?? "";

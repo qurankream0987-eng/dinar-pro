@@ -27,6 +27,8 @@ const server = app.listen(0, "127.0.0.1");
 await new Promise<void>((resolve) => server.once("listening", resolve));
 const origin = `http://127.0.0.1:${(server.address() as { port: number }).port}`;
 const runId = randomUUID().slice(0, 8);
+// Public fixture text must never resemble a phone number; ids retain the original token.
+const publicRunId = runId.replace(/\d/g, digit => "ghijklmnop"[Number(digit)]!);
 const key = (label: string) => `w12c-${label}-${runId}-${randomUUID().slice(0, 6)}`;
 
 type Actor = { id: string; cookie: string };
@@ -92,8 +94,8 @@ async function publish(label: string): Promise<string> {
     "/listings",
     "POST",
     {
-      title: `${label} ${runId}`,
-      description: `وصف تفصيلي لاختبار التحقق قبل التكامل ${label} ${runId}`,
+      title: `${label} ${publicRunId}`,
+      description: `وصف تفصيلي لاختبار التحقق قبل التكامل ${label} ${publicRunId}`,
       category: "أخرى",
       categoryId: "other",
       area: "الصويفية",

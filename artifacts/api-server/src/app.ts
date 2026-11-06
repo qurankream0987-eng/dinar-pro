@@ -142,9 +142,9 @@ function contentSecurityPolicy() {
   return [
     ...CONTENT_SECURITY_POLICY_DIRECTIVES.map((directive) =>
       directive.startsWith("frame-ancestors ") && (
-        process.env.NODE_ENV === "production" ||
-        process.env.DINAR_DEPLOYMENT_ENV === "staging" ||
-        process.env.DINAR_DEPLOYMENT_ENV === "production"
+        (process.env.NODE_ENV !== "development" && process.env.NODE_ENV !== "test") ||
+        process.env.REPLIT_DEPLOYMENT !== undefined ||
+        !["", "development", "test"].includes(process.env.DINAR_DEPLOYMENT_ENV?.trim().toLowerCase() ?? "")
       ) ? "frame-ancestors 'self'" : directive,
     ),
     `connect-src ${browserConnectOrigins()}`,
