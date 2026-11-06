@@ -928,7 +928,7 @@ async function startBuiltWeb() {
 }
 
 await test("BROWSER header, sidebar, starters, free topic changes, rendering and layout at 11 widths × 2 themes", { timeout: 1_800_000, skip: process.env.DINAR_XP_BROWSER === "0" }, async () => {
-  const users = { main: await register("Browser"), layout: await register("Layout"), seller, registeredA: await register("Registered A"), registeredB: await register("Registered B"), handoffC: await register("Handoff C"), handoffD: await register("Handoff D"), handoffE: await register("Handoff E"), handoffF: await register("Handoff F") };
+  const users = { main: await register("Browser"), layout: await register("Layout"), seller, registeredA: await register("Registered A"), registeredB: await register("Registered B"), handoffC: await register("Handoff C"), handoffD: await register("Handoff D"), handoffE: await register("Handoff E"), handoffF: await register("Handoff F"), draftOwner: await register("Draft Owner") };
   // Canonical pending receipt for the real notification → order navigation journey.
   const notificationSeller = await register("Notification Seller");
   const notificationListing = await publish(notificationSeller, `طلب تنبيه ${runId}`, 1, "3");

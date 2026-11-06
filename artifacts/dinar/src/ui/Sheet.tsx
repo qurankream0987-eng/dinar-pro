@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useSessionChecking } from "@/account/Account";
 import { Button, IconButton, type ButtonVariant } from "./Button";
 
 /**
@@ -30,8 +31,9 @@ export function Sheet({
   hideClose?: boolean;
   testId?: string;
 }) {
+  const sessionChecking = useSessionChecking();
   return (
-    <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
+    <DialogPrimitive.Root open={open && !sessionChecking} onOpenChange={onOpenChange}>
       <DialogPrimitive.Portal>
         <DialogPrimitive.Overlay className="sheet-overlay" />
         <DialogPrimitive.Content

@@ -63,6 +63,7 @@ async function open(browser, actor, { width = 390, height, scheme = "light", mot
 }
 /** Per-page holds on /api/auth/me, applied inside the one proxy route (stacked routes race). */
 const identityGates = new WeakMap();
+const identityFailures = new WeakSet();
 /** `clientIp` gives a guest journey its own guest-preview allowance (20 per 15 minutes per IP). */
 async function openRegisteredUserJourney(browser, { clientIp } = {}) {
   const context = await browser.newContext({
@@ -80,6 +81,10 @@ async function openRegisteredUserJourney(browser, { clientIp } = {}) {
       try { page = route.request().frame().page(); } catch {}
       const gate = page && identityGates.get(page);
       if (gate) await gate;
+      if (page && identityFailures.has(page)) {
+        await route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ error: "temporary local identity fault fixture" }) });
+        return;
+      }
     }
     const headers = { ...route.request().headers(), origin: apiOrigin, referer: `${apiOrigin}/`, ...(clientIp ? { "x-forwarded-for": clientIp } : {}) };
     try {
@@ -104,7 +109,8 @@ async function openRegisteredUserJourney(browser, { clientIp } = {}) {
   page.on("response", (response) => {
     const status = response.status();
     const path = new URL(response.url()).pathname;
-    if ((status === 404 || status === 409) && path.startsWith("/api/")) {
+    const injectedIdentityFailure = status === 503 && path === "/api/auth/me" && identityFailures.has(page);
+    if (((status === 404 || status === 409) && path.startsWith("/api/")) || injectedIdentityFailure) {
       expectedHttpRejections.push({ status, path });
       apiRejectionCounts.set(status, (apiRejectionCounts.get(status) ?? 0) + 1);
     }
@@ -112,8 +118,8 @@ async function openRegisteredUserJourney(browser, { clientIp } = {}) {
   page.on("console", (message) => {
     if (message.type() !== "error") return;
     // Chromium reports fetch()'s expected authorization rejections as console errors.
-    // The test asserts the actual 404/409 responses and never replaces those API responses.
-    const match = message.text().match(/Failed to load resource: the server responded with a status of (404|409)/u);
+    // The test asserts the actual 404/409 responses; 503 is accepted only for the explicit local identity fault above.
+    const match = message.text().match(/Failed to load resource: the server responded with a status of (404|409|503)/u);
     if (match) {
       const status = Number(match[1]);
       const count = apiRejectionCounts.get(status) ?? 0;
@@ -1211,6 +1217,112 @@ try {
       }
       return { visited, authority: "existing seller listings, sales and dues services" };
     } finally { await shot(page, "audit-profile-commerce-navigation").catch(() => {}); await context.close(); }
+  });
+
+  await journey("protected-unsaved-form-revalidation", async () => {
+    const { context, page } = await openRegisteredUserJourney(browser);
+    try {
+      await loginInBrowser(page, "draftOwner");
+      await page.goto("/settings", { waitUntil: "domcontentloaded" });
+      const field = page.getByLabel("الاسم الظاهر", { exact: true });
+      const persisted = await field.inputValue();
+      const draft = `اسم غير محفوظ ${process.env.XP_TOKEN}`;
+      await field.fill(draft);
+      await page.getByTestId("button-settings-logout").click();
+      await expect(page.getByTestId("dialog-confirm")).toBeVisible();
+      let release;
+      identityGates.set(page, new Promise((resolve) => { release = resolve; }));
+      const visibility = (value) => page.evaluate((state) => {
+        Object.defineProperty(document, "visibilityState", { configurable: true, get: () => state });
+        document.dispatchEvent(new Event("visibilitychange"));
+      }, value);
+      try {
+        await visibility("hidden");
+        await visibility("visible");
+        await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+        check(!(await field.isVisible()), "private form hidden while identity is unknown");
+        check(!(await page.getByTestId("dialog-confirm").isVisible()), "portalled private dialog hidden while identity is unknown");
+      } finally { identityGates.delete(page); release(); }
+      await expect(field).toBeVisible();
+      const recovered = { value: await field.inputValue(), dialog: await page.getByTestId("dialog-confirm").isVisible() };
+      check(recovered.value === draft && recovered.dialog, "same-account verification preserves unsaved input and its reviewed dialog", JSON.stringify(recovered));
+      await page.getByTestId("dialog-confirm").getByRole("button", { name: "تراجع", exact: true }).click();
+      const me = await context.request.get(`${apiOrigin}/api/auth/me`);
+      check(me.status() === 200 && (await me.json()).user.displayName === persisted, "verification and cancellation do not save or log out");
+      return { privateForm: "hidden pending identity", privatePortal: "hidden pending identity", sameAccount: "draft and dialog preserved", writes: "none" };
+    } finally { await shot(page, "audit-unsaved-form-revalidation").catch(() => {}); await context.close(); }
+  });
+
+  await journey("site-search-and-selling-entry", async () => {
+    const { context, page } = await open(browser, "main", { width: 1440 });
+    try {
+      await page.goto("/profile", { waitUntil: "domcontentloaded" });
+      const query = `ألواح شمسية ${process.env.XP_TOKEN}`;
+      const search = page.getByRole("searchbox", { name: "البحث في العروض", exact: true });
+      await search.fill(query);
+      await search.press("Enter");
+      const composer = page.getByTestId("input-ai-composer");
+      await expect(composer).toHaveValue(`ابحث عن ${query}`, { timeout: 5_000 });
+      const found = await click(page, page.getByTestId("button-send-ai-message"));
+      check(found.text.includes(process.env.XP_TOKEN), "header search reaches authoritative internal results", found.text.slice(0, 250));
+      await expect(found.locator.locator('[data-testid^="card-ai-result-"]').first()).toBeVisible();
+      await page.setViewportSize({ width: 390, height: 820 });
+      await page.goto("/profile", { waitUntil: "domcontentloaded" });
+      await page.getByTestId("nav-discover").click();
+      await expect(composer).toHaveValue(/^ابحث عن/u);
+      await page.goto("/profile", { waitUntil: "domcontentloaded" });
+      await page.getByTestId("nav-seller").click();
+      await expect(composer).toHaveValue("أريد أن أبيع ");
+      return { desktopSearch: "query preserved then explicitly sent", discover: "search draft", sell: "existing sell draft; no automatic publication" };
+    } finally { await shot(page, "audit-site-search-and-selling-entry").catch(() => {}); await context.close(); }
+  });
+
+  await journey("protected-failed-identity-revalidation", async () => {
+    const { context, page } = await openRegisteredUserJourney(browser);
+    const visibility = (value) => page.evaluate((state) => {
+      Object.defineProperty(document, "visibilityState", { configurable: true, get: () => state });
+      document.dispatchEvent(new Event("visibilitychange"));
+    }, value);
+    try {
+      await loginInBrowser(page, "draftOwner");
+      await page.goto("/settings", { waitUntil: "domcontentloaded" });
+      const field = page.getByLabel("الاسم الظاهر", { exact: true });
+      const privateDraft = `مسودة خاصة ${process.env.XP_TOKEN}`;
+      await field.fill(privateDraft);
+      await page.getByTestId("button-settings-logout").click();
+      await expect(page.getByTestId("dialog-confirm")).toBeVisible();
+      identityFailures.add(page);
+      const failedRead = page.waitForResponse((response) => new URL(response.url()).pathname === "/api/auth/me" && response.status() === 503);
+      await visibility("hidden");
+      await visibility("visible");
+      await failedRead;
+      await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+      check(!(await field.isVisible()), "failed identity verification never reveals cached private data");
+      check(!(await page.getByTestId("dialog-confirm").isVisible()), "failed identity verification never reveals a private portal");
+      const other = await context.newPage();
+      await other.goto("/settings", { waitUntil: "domcontentloaded" });
+      await other.getByTestId("button-settings-logout").click();
+      await other.getByTestId("dialog-confirm").getByTestId("button-confirm-action").click();
+      await expectSignedOut(other);
+      await loginInBrowser(other, "registeredB");
+      await page.bringToFront();
+      const failedAgain = page.waitForResponse((response) => new URL(response.url()).pathname === "/api/auth/me" && response.status() === 503);
+      await visibility("visible");
+      await failedAgain;
+      const retry = page.getByTestId("button-retry-private-identity");
+      await expect(retry).toBeVisible();
+      check(!(await field.isVisible()), "old draft stays hidden after another account signs in");
+      identityFailures.delete(page);
+      await retry.click();
+      await expect(field).toBeVisible();
+      const me = await context.request.get(`${apiOrigin}/api/auth/me`);
+      const actual = (await me.json()).user;
+      check(me.status() === 200 && actual.id === users.registeredB, "retry verifies the actual new server identity");
+      check((await field.inputValue()) === actual.displayName && (await field.inputValue()) !== privateDraft, "another account never inherits the previous account's unsaved form");
+      await expect(page.getByTestId("dialog-confirm")).toHaveCount(0);
+      await other.close();
+      return { fault: "explicit local auth/me 503", privacy: "form and portal remain hidden", retry: "server-verified B; old local state discarded" };
+    } finally { identityFailures.delete(page); await shot(page, "audit-failed-identity-revalidation").catch(() => {}); await context.close(); }
   });
 
 } finally {

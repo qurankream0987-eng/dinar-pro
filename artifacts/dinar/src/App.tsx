@@ -78,6 +78,8 @@ const CHAT_ONLY_ADMIN_ROUTES = new Set([
   "/admin/legal-readiness",
 ]);
 const CHAT_ONLY_ACCOUNT_ROUTES = new Set([
+  "/discover",
+  "/search",
   "/cart",
   "/seller",
   "/seller/offers",
@@ -112,6 +114,7 @@ const guard = (node: ReactNode) => <Protected>{node}</Protected>;
 
 function Routes() {
   const [location, setLocation] = useLocation();
+  const searchQuery = new URLSearchParams(window.location.search).get("q")?.trim() ?? "";
   useEffect(() => {
     if (
       CHAT_ONLY_MODE &&
@@ -138,6 +141,8 @@ function Routes() {
       <Route path="/seller/offers"><Redirect to="/ai?openSurface=listings" /></Route>
       <Route path="/seller/dues"><Redirect to="/ai?openSurface=dues" /></Route>
       <Route path="/seller"><Redirect to="/ai?sell=1" /></Route>
+      <Route path="/discover"><Redirect to={`/ai?ask=${encodeURIComponent("ابحث عن ")}`} /></Route>
+      <Route path="/search"><Redirect to={`/ai?ask=${encodeURIComponent(`ابحث عن ${searchQuery}`)}`} /></Route>
       <Route path="/login"><AuthPage /></Route>
       <Route path="/register"><AuthPage register /></Route>
       <Route path="/notifications">{guard(<NotificationsPage />)}</Route>

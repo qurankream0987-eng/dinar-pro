@@ -2112,7 +2112,7 @@ export default function AiPage() {
             </TooltipProvider>
           </nav>
           <ConversationSidebar
-            open={sidebarOpen}
+            open={sidebarOpen && !identityVerifying}
             onOpenChange={setSidebarOpen}
             collapsed={sidebarCollapsed}
           >
@@ -2533,7 +2533,7 @@ export default function AiPage() {
           )}
           {searchContext && (
             <Dialog.Root
-              open={contextDrawerOpen}
+              open={contextDrawerOpen && !identityVerifying}
               onOpenChange={setContextDrawerOpen}
             >
               <Dialog.Portal>

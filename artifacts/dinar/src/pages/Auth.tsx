@@ -480,12 +480,10 @@ export function AuthPage({ register = false, next, embedded = false }: { registe
 
 /** Gate for signed-in screens: shows sign-in in place and returns here afterwards. */
 export function Protected({ children }: { children: ReactNode }) {
-  const { user, loading, verifying } = useAccount();
+  const { user, loading } = useAccount();
   const [location] = useLocation();
   const search = useSearch();
-  // A different tab may have replaced the session. Hide private content, including portalled
-  // dialogs, until the existing identity check resolves and scoped queries are reset.
-  if (loading || verifying)
+  if (loading)
     return (
       <div className="container-app space-y-3 pt-8" aria-busy="true" aria-label="جارٍ التحقق من الجلسة">
         <Skeleton className="h-8 w-40" />
@@ -494,5 +492,7 @@ export function Protected({ children }: { children: ReactNode }) {
       </div>
     );
   if (!user) return <AuthPage next={`${location}${search ? `?${search}` : ""}`} />;
-  return <>{children}</>;
+  // Revalidation hides this subtree and its portals centrally; change its key only when the
+  // verified owner changes, so another account cannot inherit local drafts or dialogs.
+  return <div key={user.id} data-private-screen className="contents">{children}</div>;
 }

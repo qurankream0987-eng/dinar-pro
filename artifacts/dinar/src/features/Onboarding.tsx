@@ -11,7 +11,7 @@ const KEY = "bdinar-onboarded";
 export const shouldOnboard = () => storage.get(KEY) !== "1";
 
 export function Onboarding({ onDone }: { onDone: () => void }) {
-  const { market } = useAccount();
+  const { market, verifying } = useAccount();
   const [step, setStep] = useState(0);
   const finish = () => {
     storage.set(KEY, "1");
@@ -38,7 +38,7 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
   const last = step === steps.length - 1;
 
   return (
-    <DialogPrimitive.Root open onOpenChange={(o) => !o && finish()}>
+    <DialogPrimitive.Root open={!verifying} onOpenChange={(o) => !o && finish()}>
       <DialogPrimitive.Portal>
         <DialogPrimitive.Overlay className="sheet-overlay" />
         <DialogPrimitive.Content

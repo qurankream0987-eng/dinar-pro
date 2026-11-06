@@ -4,6 +4,12 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Session verification must cover body portals as well as private page content. */
+#dinar-private-session-check { display: none; }
+body[data-private-session-check="true"] > :not(#dinar-private-session-check) { display: none !important; }
+body[data-private-session-check="true"] > #dinar-private-session-check { display: flex !important; }
+
+
 /* ==========================================================================
    BDINAR design tokens
    Brand foundation: deep blue + warm gold from the approved logo.

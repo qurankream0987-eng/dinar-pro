@@ -1,5 +1,7 @@
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { createPortal } from "react-dom";
+import { Button } from "@/ui/Button";
 import { DEFAULT_MARKET, formatMoney, minorToDecimal } from "@workspace/global";
 import { clearGuestHandoff } from "@/features/ai/conversation-storage";
 
@@ -95,6 +97,8 @@ type AccountContext = {
 };
 const Context = createContext<AccountContext>(null!);
 export const useAccount = () => useContext(Context);
+/** Presentation-only suspension; standalone UI tests have no account provider. */
+export const useSessionChecking = () => useContext(Context)?.verifying ?? false;
 
 export const marketUnitAmount = (market?: Market) => market?.priceConfigured ? minorToDecimal(market.unitPriceMinor, market.currencyCode) : "0";
 export const marketPrice = (market?: Market) => market?.priceConfigured ? formatMoney(market.unitPriceMinor, market.currencyCode) : "السعر لم يُعتمد بعد";
@@ -132,20 +136,60 @@ export function AccountProvider({ children }: { children: ReactNode }) {
     if (shownFor !== undefined && userId !== undefined) void qc.refetchQueries({ ...sessionScoped, type: "active" });
   }, [userId, shownFor, qc]);
   const [verifying, setVerifying] = useState(false);
+  const [verificationFailed, setVerificationFailed] = useState(false);
+  const verificationRevision = useRef(0);
+  const privateMaskActive = useRef(false);
+  const privateFocus = useRef<{ element: HTMLElement; owner: string | null | undefined; x: number; y: number } | undefined>(undefined);
   const refetchIdentity = me.refetch;
+  const revalidateIdentity = useCallback(async () => {
+    const revision = ++verificationRevision.current;
+    setVerifying(true);
+    setVerificationFailed(false);
+    try {
+      const result = await refetchIdentity();
+      if (revision !== verificationRevision.current) return;
+      // A failed read cannot establish who is signed in. Keep all private UI blocked until
+      // an explicit retry or a later visibility check succeeds.
+      if (result.isError) setVerificationFailed(true);
+      else setVerifying(false);
+    } catch {
+      if (revision === verificationRevision.current) setVerificationFailed(true);
+    }
+  }, [refetchIdentity]);
+  useLayoutEffect(() => {
+    const body = document.body;
+    if (verifying && (document.querySelector("[data-private-screen]") || verificationFailed || privateMaskActive.current)) {
+      if (!privateMaskActive.current && document.activeElement instanceof HTMLElement) {
+        privateFocus.current = { element: document.activeElement, owner: userId, x: window.scrollX, y: window.scrollY };
+      }
+      privateMaskActive.current = true;
+      // Hide every body root, including portalled dialogs, without destroying same-owner
+      // form state. Protected keys its subtree by the verified owner when that owner changes.
+      body.setAttribute("data-private-session-check", "true");
+      return () => body.removeAttribute("data-private-session-check");
+    }
+    body.removeAttribute("data-private-session-check");
+    if (!verifying) {
+      privateMaskActive.current = false;
+      const previous = privateFocus.current;
+      privateFocus.current = undefined;
+      if (previous && previous.owner === userId && previous.element.isConnected) {
+        previous.element.focus({ preventScroll: true });
+        window.scrollTo({ left: previous.x, top: previous.y, behavior: "instant" });
+      }
+    }
+    return undefined;
+  }, [verifying, verificationFailed, userId]);
   useEffect(() => {
-    let current = 0;
     const visible = () => {
-      if (document.visibilityState !== "visible") return;
-      const check = ++current;
-      setVerifying(true);
-      void refetchIdentity().finally(() => {
-        if (check === current) setVerifying(false);
-      });
+      if (document.visibilityState === "visible") void revalidateIdentity();
     };
     document.addEventListener("visibilitychange", visible);
-    return () => document.removeEventListener("visibilitychange", visible);
-  }, [refetchIdentity]);
+    return () => {
+      verificationRevision.current += 1;
+      document.removeEventListener("visibilitychange", visible);
+    };
+  }, [revalidateIdentity]);
   const markets = useQuery<Market[]>({
     queryKey: ["markets"],
     queryFn: () => api("/markets"),
@@ -187,6 +231,14 @@ export function AccountProvider({ children }: { children: ReactNode }) {
       }}
     >
       {children}
+      {createPortal(
+        <div id="dinar-private-session-check" role="status" aria-live="polite" aria-busy={verifying} className="fixed inset-0 z-[10000] pointer-events-auto items-center justify-center bg-background p-6 text-center text-foreground">
+          <div className="max-w-sm space-y-4">
+            <p role={verificationFailed ? "alert" : undefined}>{verificationFailed ? "تعذر التحقق من الجلسة. أعد المحاولة للمتابعة." : "جارٍ التحقق من الجلسة…"}</p>
+            {verificationFailed && <Button variant="secondary" onClick={() => void revalidateIdentity()} data-testid="button-retry-private-identity">إعادة المحاولة</Button>}
+          </div>
+        </div>, document.body,
+      )}
     </Context.Provider>
   );
 }
