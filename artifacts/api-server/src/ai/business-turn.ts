@@ -413,9 +413,14 @@ async function startSetup(input: {
     setupPayload(linked, access, {
       ...(step === "name" ? {} : {}),
     }),
-    `أنشأنا مسودة نشاطك داخل DINAR. ${SETUP_PROMPTS[step]}`,
+    `أنشأنا مسودة نشاطك داخل DINAR. ${SETUP_PROMPTS[step]}${CONNECT_MENTION.test(input.text) ? `\n\n${CONNECT_NEXT_STEP}` : ""}`,
   );
 }
+
+/** «سجل متجري في دينار كونكت»: Connect builds on this same D2 identity, so the draft is step one. */
+const CONNECT_MENTION = /(?:كونكت|كونيكت|connect)/iu;
+const CONNECT_NEXT_STEP =
+  "DINAR Connect يُبنى على هذا النشاط نفسه: بعد إكمال بياناته وتوثيقه، سجّله مجانًا من بوابة الشركاء (/connect) واختر طريقة المشاركة: البيع داخل دينار، أو العرض في دينار والشراء من موقعك، أو الاثنين معًا. لم يُسجَّل أي شيء في Connect بعد.";
 
 /** §C: one business resumes directly; several are offered, never guessed, never another account's. */
 async function resumeTurn(input: {
