@@ -88,6 +88,7 @@ import type {
   ConnectOAuthStatus,
   ConnectOutboundInput,
   ConnectOutboundPrepared,
+  ConnectParticipationModeInput,
   ConnectPartnerEventInput,
   ConnectPartnerRegistrationInput,
   ConnectPartnerReport,
@@ -20476,6 +20477,92 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
         TContext
       > => {
       return useMutation(getVerifyConnectSiteMutationOptions(options), queryClient);
+    }
+
+export const getChangeConnectParticipationModeUrl = (id: string,) => {
+
+
+
+
+  return `/api/connect/partners/${id}/participation-mode`
+}
+
+/**
+ * OWNER only (staff and strangers 404). Changes SELL_INSIDE_DINAR / BUY_ON_MERCHANT_WEBSITE / HYBRID at the revision the owner saw; suspended, revoked or rejected partners are refused. Deletes nothing; what the new mode excludes stops being served. Never enables native checkout.
+ */
+export const changeConnectParticipationMode = async (id: string,
+    connectParticipationModeInput: ConnectParticipationModeInput, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getChangeConnectParticipationModeUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(connectParticipationModeInput)
+  }
+);}
+
+
+
+
+
+export const getChangeConnectParticipationModeMutationKey = () => ['changeConnectParticipationMode'] as const;
+
+export const getChangeConnectParticipationModeMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof changeConnectParticipationMode>>, TError,ChangeConnectParticipationModeMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof changeConnectParticipationMode>>, TError,ChangeConnectParticipationModeMutationVariables, TContext> => {
+
+const mutationKey = getChangeConnectParticipationModeMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof changeConnectParticipationMode>>, ChangeConnectParticipationModeMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  changeConnectParticipationMode(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ChangeConnectParticipationModeMutationResult = NonNullable<Awaited<ReturnType<typeof changeConnectParticipationMode>>>
+    export type ChangeConnectParticipationModeMutationBody = BodyType<ConnectParticipationModeInput>
+    export type ChangeConnectParticipationModeMutationError = ErrorType<void>
+    export type ChangeConnectParticipationModeMutationVariables = {id: string;data: BodyType<ConnectParticipationModeInput>}
+
+    export const useChangeConnectParticipationMode = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof changeConnectParticipationMode>>, TError,ChangeConnectParticipationModeMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof changeConnectParticipationMode>>,
+        TError,
+        ChangeConnectParticipationModeMutationVariables,
+        TContext
+      > => {
+      return useMutation(getChangeConnectParticipationModeMutationOptions(options), queryClient);
     }
 
 export const getSubmitConnectPartnerUrl = (id: string,) => {

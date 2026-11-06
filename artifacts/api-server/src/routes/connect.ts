@@ -212,6 +212,16 @@ router.post("/connect/sites/:id/verify", requireAuth, async (req, res) =>
     ),
   ),
 );
+router.post("/connect/partners/:id/participation-mode", requireAuth, async (req, res) =>
+  res.set("Cache-Control", "no-store").json(
+    await partners.changeConnectParticipationMode(
+      req.actor!.id,
+      await marketFor(req),
+      idParam(req.params.id),
+      req.body,
+    ),
+  ),
+);
 router.post("/connect/partners/:id/submit", requireAuth, async (req, res) =>
   res.json(
     await partners.submitConnectPartner(

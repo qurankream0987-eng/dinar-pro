@@ -1,8 +1,34 @@
 import { z } from "zod";
 import { ConnectMoney } from "./connect";
 
+/**
+ * How a merchant takes part in DINAR Connect. The mode records the merchant's choice; what it
+ * may actually do is derived on the server (verification, review, a verified site, an approved
+ * integration). No mode turns on native checkout by itself.
+ */
+export const CONNECT_PARTICIPATION_MODES = ["SELL_INSIDE_DINAR", "BUY_ON_MERCHANT_WEBSITE", "HYBRID"] as const;
+export type ConnectParticipationMode = (typeof CONNECT_PARTICIPATION_MODES)[number];
+export const CONNECT_PARTICIPATION_MODE_LABELS: Record<ConnectParticipationMode, string> = {
+  SELL_INSIDE_DINAR: "بيع منتجات موقعي داخل دينار",
+  BUY_ON_MERCHANT_WEBSITE: "عرض منتجاتي في دينار والشراء من موقعي",
+  HYBRID: "البيع داخل دينار ومن موقعي معًا",
+};
+/** Modes in which a buyer may be sent to the merchant's own website. */
+export const CONNECT_EXTERNAL_PURCHASE_MODES: readonly ConnectParticipationMode[] = ["BUY_ON_MERCHANT_WEBSITE", "HYBRID"];
+/** Modes in which the merchant sells through DINAR's own listings and checkout. */
+export const CONNECT_INTERNAL_SALE_MODES: readonly ConnectParticipationMode[] = ["SELL_INSIDE_DINAR", "HYBRID"];
 export const ConnectPartnerInput = z
-  .object({ businessId: z.string().uuid() })
+  .object({
+    businessId: z.string().uuid(),
+    participationMode: z.enum(CONNECT_PARTICIPATION_MODES).optional(),
+  })
+  .strict();
+export const ConnectParticipationModeInput = z
+  .object({
+    mode: z.enum(CONNECT_PARTICIPATION_MODES),
+    /** The partner revision the owner saw; a stale view is refused instead of overwritten. */
+    expectedRevision: z.number().int().positive(),
+  })
   .strict();
 export const ConnectSiteInput = z
   .object({ hostname: z.string().min(3).max(253) })

@@ -518,6 +518,36 @@ await test("approved integrations issue scoped revocable credentials and import 
   );
 });
 let agreement: any, referral: any, referralCard: any;
+await test("CONNECT-01 registration stores the chosen mode; suspended merchants cannot change it", async () => {
+  const seller = await register("تاجر وضع المشاركة");
+  const created = await call("/business/profiles", seller, {
+    displayName: `متجر أوضاع ${randomUUID().replace(/[^a-f]/g, "").slice(0, 8)}`,
+    categoryKey: "OTHER",
+    idempotencyKey: randomUUID(),
+  });
+  assert.equal(created.response.status, 201, created.text);
+  const ownBusiness = created.data.business.id;
+  assert.equal((await call("/connect/partners", seller, { businessId: ownBusiness, participationMode: "WHATEVER" })).response.status, 400);
+  const registered = await call("/connect/partners", seller, { businessId: ownBusiness, participationMode: "SELL_INSIDE_DINAR" });
+  assert.equal(registered.response.status, 201, registered.text);
+  const view = (await call(`/connect/partners/${registered.data.id}`, seller)).data;
+  assert.equal(view.participationMode, "SELL_INSIDE_DINAR");
+  assert.equal(view.participation.internalSale.enabled, false, "unverified and unreviewed: chosen, not enabled");
+  assert.ok(view.participation.internalSale.requirements.some((text: string) => text.includes("توثيق")));
+  // Another business cannot register this business, with any mode.
+  assert.equal((await call("/connect/partners", other, { businessId: ownBusiness, participationMode: "HYBRID" })).response.status, 404);
+  // Suspension fixture: the canonical API offers no suspension path for an unsubmitted partner, so the
+  // state is set directly; the mode endpoint under test is exercised through HTTP.
+  await pool.query("update connect_partners set status='SUSPENDED' where id=$1", [registered.data.id]);
+  const suspended = (await call(`/connect/partners/${registered.data.id}`, seller)).data;
+  const refused = await call(`/connect/partners/${registered.data.id}/participation-mode`, seller, { mode: "HYBRID", expectedRevision: suspended.revision });
+  assert.equal(refused.response.status, 409, refused.text);
+  assert.equal((await call(`/connect/partners/${registered.data.id}`, seller)).data.participationMode, "SELL_INSIDE_DINAR");
+  assert.equal(suspended.participation.externalPurchase.enabled, false);
+  // The database itself refuses an unknown mode (migration constraint).
+  await assert.rejects(() => pool.query("update connect_partners set participation_mode='EVERYTHING' where id=$1", [registered.data.id]));
+});
+
 await test("only an independently proposed, explicitly accepted agreement can enable opt-in opaque attribution", async () => {
   const ledgerBefore = (
     await pool.query("select count(*)::int n from connect_commission_ledger")
@@ -632,6 +662,13 @@ await test("only an independently proposed, explicitly accepted agreement can en
   );
   assert.equal(accepted.response.status, 200, accepted.text);
   assert.equal(accepted.data.accepted, true);
+  // Agreement DTO: the canonical view nests the facts; no top-level status/rate/acceptedAt exists.
+  const listed = (await call(`/connect/partners/${partner.id}/agreements`, owner)).data[0];
+  assert.deepEqual(listed.terms.commission, { kind: "PERCENTAGE", basisPoints: 750 });
+  assert.equal(listed.accepted, true);
+  assert.match(listed.acceptance.acceptedAt, /^\d{4}-\d{2}-\d{2}T/);
+  for (const absent of ["status", "commissionRateBasisPoints", "rateBasisPoints", "acceptedAt"])
+    assert.equal(absent in listed, false, `${absent} is not part of the canonical agreement view`);
   assert.equal(
     (
       await call(`/connect/agreements/${agreement.id}/accept`, owner, {
@@ -717,6 +754,68 @@ await test("only an independently proposed, explicitly accepted agreement can en
   );
 });
 let externalTransaction: any, conversionEvent: any;
+await test("CONNECT-01 participation modes: compatibility, owner-only changes, server-side gating, nothing deleted", async () => {
+  // Existing partner compatibility: registered without a mode, it keeps the external-referral mode.
+  const before = (await call(`/connect/partners/${partner.id}`, owner)).data;
+  assert.equal(before.participationMode, "BUY_ON_MERCHANT_WEBSITE");
+  assert.equal(before.participation.externalPurchase.enabled, true, JSON.stringify(before.participation));
+  assert.equal(before.participation.internalSale.included, false);
+  assert.equal(before.participation.nativeCatalogCheckout.enabled, false, "no mode enables native checkout");
+  const searchCards = async () =>
+    (await call("/connect/catalog?search=" + encodeURIComponent("طاولة"), owner)).data.cards.filter(
+      (card: any) => card.provider?.id === partner.id || JSON.stringify(card).includes(partner.id),
+    ).length;
+  const cardsBefore = (await call("/connect/catalog?search=" + encodeURIComponent("طاولة"), owner)).data.cards.length;
+  assert.ok(cardsBefore >= 1);
+  const counts = async () =>
+    (await pool.query(
+      `select (select count(*) from connect_offers where partner_id=$1)::int offers,
+              (select count(*) from connect_agreements where partner_id=$1)::int agreements,
+              (select count(*) from orders)::int orders,
+              (select count(*) from connect_commission_ledger)::int ledger`,
+      [partner.id],
+    )).rows[0];
+  const recordsBefore = await counts();
+  const path = `/connect/partners/${partner.id}/participation-mode`;
+
+  // Unauthorized changes: a stranger and an unknown partner see nothing; bad input and stale views are refused.
+  assert.equal((await call(path, other, { mode: "HYBRID", expectedRevision: before.revision })).response.status, 404);
+  assert.equal((await call(`/connect/partners/${randomUUID()}/participation-mode`, owner, { mode: "HYBRID", expectedRevision: 1 })).response.status, 404);
+  assert.equal((await call(path, owner, { mode: "EVERYTHING", expectedRevision: before.revision })).response.status, 400);
+  assert.equal((await call(path, owner, { mode: "HYBRID", expectedRevision: before.revision, status: "APPROVED" })).response.status, 400, "no extra fields");
+  assert.equal((await call(path, owner, { mode: "HYBRID", expectedRevision: before.revision + 5 })).response.status, 409);
+
+  // Owner switches to selling inside DINAR only: website offers stop being served and old cards stop opening.
+  const sell = await call(path, owner, { mode: "SELL_INSIDE_DINAR", expectedRevision: before.revision });
+  assert.equal(sell.response.status, 200, sell.text);
+  assert.deepEqual([sell.data.participationMode, sell.data.revision, sell.data.changed], ["SELL_INSIDE_DINAR", before.revision + 1, true]);
+  const afterSell = (await call(`/connect/partners/${partner.id}`, owner)).data;
+  assert.equal(afterSell.participationMode, "SELL_INSIDE_DINAR", "persisted and read back after reload");
+  assert.ok(afterSell.participationModeChangedAt);
+  assert.equal(afterSell.participation.externalPurchase.enabled, false);
+  assert.equal(afterSell.participation.internalSale.included, true);
+  assert.equal(afterSell.participation.nativeCatalogCheckout.enabled, false, "selecting an internal mode does not enable native checkout");
+  assert.equal((await call("/connect/catalog?search=" + encodeURIComponent("طاولة"), owner)).data.cards.length, cardsBefore - 1);
+  assert.deepEqual(await counts(), recordsBefore, "a mode change deletes no offer, agreement, order or ledger row");
+  const audit = await pool.query("select details from connect_audit_events where partner_id=$1 and action='PARTICIPATION_MODE_CHANGED'", [partner.id]);
+  assert.deepEqual(audit.rows.map((row) => [row.details.from, row.details.to]), [["BUY_ON_MERCHANT_WEBSITE", "SELL_INSIDE_DINAR"]]);
+  // The old revision is now stale; resubmitting the same mode is an idempotent no-op.
+  assert.equal((await call(path, owner, { mode: "HYBRID", expectedRevision: before.revision })).response.status, 409);
+  const same = await call(path, owner, { mode: "SELL_INSIDE_DINAR", expectedRevision: afterSell.revision });
+  assert.deepEqual([same.response.status, same.data.changed, same.data.revision], [200, false, afterSell.revision]);
+
+  // HYBRID restores website purchases from the same records.
+  const hybrid = await call(path, owner, { mode: "HYBRID", expectedRevision: afterSell.revision });
+  assert.equal(hybrid.response.status, 200, hybrid.text);
+  assert.equal((await call("/connect/catalog?search=" + encodeURIComponent("طاولة"), owner)).data.cards.length, cardsBefore);
+  const afterHybrid = (await call(`/connect/partners/${partner.id}`, owner)).data;
+  assert.equal(afterHybrid.participation.externalPurchase.enabled, true);
+  assert.equal(afterHybrid.participation.internalSale.included, true);
+  assert.equal(afterHybrid.participation.nativeCatalogCheckout.enabled, false);
+  partner = afterHybrid;
+  void searchCards;
+});
+
 await test("strongly authenticated conversion evidence accrues once, with agreement, consent, ordering and currency checks", async () => {
   const prepared = await call("/connect/outbound", other, {
     ...referralCard,
