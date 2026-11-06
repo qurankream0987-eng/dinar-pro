@@ -1,0 +1,29 @@
+{
+  "mode": "PG16 focused actual API/browser; source identified by working diff snapshot in focused driver logs; final immutable-source qualification pending",
+  "files": [
+    {
+      "file": "audit-public-to-private-identity.png",
+      "sha256": "c4ceaae072881142f1d96d5b35036be41db068666dc9484fe11600aa98f3fcb9"
+    },
+    {
+      "file": "audit-system-theme-changes.png",
+      "sha256": "bb47214df94f716dd2405cd9488603d18beac69d3a667cecd9e7ba7b446743f7"
+    },
+    {
+      "file": "seller-editor-320-dark.png",
+      "sha256": "74f210976453b0a7a8a92cdaa946d8205dfba33d89f0092786c6b3be7ea61487"
+    },
+    {
+      "file": "seller-editor-1920-light.png",
+      "sha256": "d25742358bcb1313399fc394d66e5c4be4955c61132f6226357fff4180090350"
+    },
+    {
+      "file": "audit-admin-controls.png",
+      "sha256": "b5b125ffd79200c73aeab7d20701aaaabc78618f63799e8b03d752d48db8a35c"
+    },
+    {
+      "file": "audit-registered-phone-signup.png",
+      "sha256": "b35f131e4dde6cf4d2a7ffaffe3bc6f1b9104dcbb3439b10f15d27c655d9d3c7"
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "checks": 42,
+  "pageErrors": [],
+  "consoleErrors": [],
+  "horizontalOverflow": 0,
+  "externalRequests": [],
+  "staticFontRequests": 5,
+  "unlabeledSponsored": 0,
+  "commerce": {
+    "listingId": "ae537b04-cc3a-48a0-a6b0-f34bfb57fce1",
+    "orderId": "b1bfb749-ed20-4cb1-a636-1bf6b026dcbc",
+    "cartReceipt": 200,
+    "checkoutReceipt": 201,
+    "checkoutRequests": 1,
+    "reviewConsent": true,
+    "payment": "CASH_DIRECT; no provider charge"
+  }
+}

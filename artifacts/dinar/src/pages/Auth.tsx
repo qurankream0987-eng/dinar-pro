@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useState, type ReactNode } from "react";
 import { Link, useLocation, useSearch } from "wouter";
 import { toast } from "sonner";
 import { Eye, EyeOff, MessageCircle, ShieldCheck, Store, ShoppingBag } from "lucide-react";
@@ -18,7 +18,15 @@ import { PhoneInput } from "@/ui/PhoneInput";
 
 import { CountrySelector } from "@/ui/CountrySelector";
 /** Only allow same-app relative redirects. */
-const safeNext = (value: string | null) => (value && value.startsWith("/") && !value.startsWith("//") ? value : "/");
+const safeNext = (value: string | null) => {
+  if (!value?.startsWith("/") || value.startsWith("//")) return "/";
+  try {
+    const target = new URL(value, window.location.origin);
+    return target.origin === window.location.origin ? `${target.pathname}${target.search}${target.hash}` : "/";
+  } catch {
+    return "/";
+  }
+};
 const phoneVerificationEnabled = !import.meta.env.DEV;
 
 function PasswordInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
@@ -79,7 +87,7 @@ export function AuthPage({ register = false, next, embedded = false }: { registe
   const { refresh, user } = useAccount();
   const [location, navigate] = useLocation();
   const params = new URLSearchParams(useSearch());
-  const target = next ?? safeNext(params.get("next"));
+  const target = safeNext(next ?? params.get("next"));
   const [country, setCountry] = useState("KW");
   const [phoneCountry, setPhoneCountry] = useState("KW");
   const [dialCode, setDialCode] = useState("+965");
@@ -480,7 +488,10 @@ export function AuthPage({ register = false, next, embedded = false }: { registe
 
 /** Gate for signed-in screens: shows sign-in in place and returns here afterwards. */
 export function Protected({ children }: { children: ReactNode }) {
-  const { user, loading } = useAccount();
+  const { user, loading, registerPrivateScreen } = useAccount();
+  // A private route may mount while a visibility-triggered identity read is already pending.
+  // Register its scope with the existing central presentation guard before the browser paints.
+  useLayoutEffect(() => registerPrivateScreen(), [registerPrivateScreen]);
   const [location] = useLocation();
   const search = useSearch();
   if (loading)

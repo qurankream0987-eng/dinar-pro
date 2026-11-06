@@ -1,0 +1,50 @@
+{
+  "mode": "actual production web build; isolated auth/market API fixtures; no backend authorization acceptance and no live network",
+  "results": [
+    {
+      "label": "normal",
+      "expected": "/profile",
+      "path": "/profile",
+      "passed": true,
+      "errors": [],
+      "external": []
+    },
+    {
+      "label": "backslash",
+      "expected": "/",
+      "path": "/",
+      "passed": true,
+      "errors": [],
+      "external": []
+    },
+    {
+      "label": "newline",
+      "expected": "/",
+      "path": "/",
+      "passed": true,
+      "errors": [],
+      "external": []
+    },
+    {
+      "label": "protocol-relative",
+      "expected": "/",
+      "path": "/",
+      "passed": true,
+      "errors": [],
+      "external": []
+    },
+    {
+      "label": "absolute",
+      "expected": "/",
+      "path": "/",
+      "passed": true,
+      "errors": [],
+      "external": []
+    },
+    {
+      "label": "public-to-private-revalidation",
+      "passed": true,
+      "errors": []
+    }
+  ]
+}

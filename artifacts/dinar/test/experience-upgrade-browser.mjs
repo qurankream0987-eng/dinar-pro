@@ -1209,6 +1209,50 @@ try {
         await page.goto("/profile", { waitUntil: "domcontentloaded" });
         await page.getByTestId(`link-profile-${shortcut}`).click();
         if (target === "listings") await expect(page.locator('[data-testid^="chat-seller-listing-"]').first()).toBeVisible({ timeout: 5_000 });
+        if (target === "listings") {
+          const edit = page.locator('[data-testid^="chat-edit-listing-"]').first();
+          const listingId = (await edit.getAttribute("data-testid")).replace("chat-edit-listing-", "");
+          const routeBefore = page.url();
+          const updates = [];
+          page.on("request", (request) => { if (request.method() === "PATCH" && new URL(request.url()).pathname === `/api/listings/${listingId}`) updates.push(request.postDataJSON()); });
+          await edit.click();
+          const editor = page.locator(".ai-workflow").filter({ has: page.getByTestId("button-save-listing") }).last();
+          await expect(editor.getByRole("heading", { name: "تعديل العرض", exact: true })).toBeVisible();
+          check(page.url() === routeBefore && updates.length === 0, "opening the existing editor preserves conversation and performs no write");
+          await expect(editor.getByLabel("عنوان العرض", { exact: true })).not.toHaveValue("");
+          const editorProfiles = [];
+          for (const width of [320, 360, 390, 430, 768, 1024, 1440, 1920]) {
+            for (const scheme of ["light", "dark"]) {
+              await page.setViewportSize({ width, height: 900 });
+              await page.emulateMedia({ colorScheme: scheme });
+              await page.evaluate(async () => { await document.fonts.ready; await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))); });
+              const layout = await editor.evaluate(node => ({ viewport: document.documentElement.scrollWidth - innerWidth, panel: node.scrollWidth - node.clientWidth, rtl: document.documentElement.dir, dark: document.documentElement.classList.contains("dark") }));
+              check(layout.viewport <= 0 && layout.panel <= 0 && layout.rtl === "rtl" && layout.dark === (scheme === "dark"), `existing seller editor ${width}/${scheme}`, JSON.stringify(layout));
+              await shot(page, `seller-editor-${width}-${scheme}`);
+              editorProfiles.push({ width, scheme, ...layout });
+            }
+          }
+          await page.setViewportSize({ width: 390, height: 900 });
+          await page.emulateMedia({ colorScheme: "light" });
+          await editor.getByLabel("عنوان العرض", { exact: true }).fill("مسودة غير محفوظة");
+          await editor.getByTestId("button-back").click();
+          check(updates.length === 0, "cancelling the editor does not save");
+          await expect(page.getByTestId(`chat-seller-listing-${listingId}`)).toBeVisible();
+          await edit.click();
+          const title = `عرض محدث ${process.env.XP_TOKEN}`;
+          await editor.getByLabel("عنوان العرض", { exact: true }).fill(title);
+          check(updates.length === 0, "editing fields never writes before the explicit save button");
+          const receipt = page.waitForResponse((response) => response.request().method() === "PATCH" && new URL(response.url()).pathname === `/api/listings/${listingId}`);
+          await editor.getByTestId("button-save-listing").click();
+          check((await receipt).status() === 200, "listing update has a canonical backend receipt");
+          await expect(editor).toBeHidden();
+          await expect(page.getByTestId(`chat-seller-listing-${listingId}`).getByText(title, { exact: true })).toBeVisible();
+          const saved = await context.request.get(`${apiOrigin}/api/listings/${listingId}`);
+          check(saved.status() === 200 && (await saved.json()).title === title && updates.length === 1, "one confirmed update persists through canonical listing read");
+          await page.reload({ waitUntil: "domcontentloaded" });
+          await expect(page.getByTestId(`chat-seller-listing-${listingId}`).getByText(title, { exact: true })).toBeVisible();
+          report.sellerEdit = { listingId, title, writes: updates.length, sameConversation: true, reload: true, profiles: editorProfiles };
+        }
         if (target === "sales") await expect(page.getByTestId("sales-summary")).toBeVisible({ timeout: 5_000 });
         if (target === "dues") await expect(page.getByTestId("text-dues-total").first()).toBeVisible({ timeout: 5_000 });
         check((await page.getByTestId("input-ai-composer").count()) === 1, "account shortcuts reuse the one conversation runtime");
@@ -1371,6 +1415,92 @@ try {
       await other.close();
       return { initialOwnerReceipt: writes[0], staleQueuedIntent: writes[1], newAccountCart: "empty", state: "verified with canonical API" };
     } finally { releaseAck(); await shot(page, "audit-cart-queued-cross-account").catch(() => {}); await context.close(); }
+  });
+
+  await journey("system-theme-changes", async () => {
+    const { context, page } = await open(browser, "main", { width: 390 });
+    const isDark = () => page.evaluate(() => document.documentElement.classList.contains("dark"));
+    try {
+      await page.emulateMedia({ colorScheme: "dark" });
+      await expect.poll(isDark).toBe(true);
+      await page.goto("/settings", { waitUntil: "domcontentloaded" });
+      await page.getByTestId("button-theme-light").click();
+      await expect.poll(isDark).toBe(false);
+      await page.goto("/", { waitUntil: "domcontentloaded" });
+      await ready(page);
+      await page.emulateMedia({ colorScheme: "light" });
+      await page.emulateMedia({ colorScheme: "dark" });
+      await expect.poll(isDark).toBe(false);
+      check(await page.evaluate(() => localStorage.getItem("dinar-theme")) === "light", "system changes respect an explicit light preference outside settings");
+      await page.goto("/settings", { waitUntil: "domcontentloaded" });
+      await page.getByTestId("button-theme-system").click();
+      await expect.poll(isDark).toBe(true);
+      await page.goto("/", { waitUntil: "domcontentloaded" });
+      await ready(page);
+      await page.emulateMedia({ colorScheme: "light" });
+      await expect.poll(isDark).toBe(false);
+      await page.reload({ waitUntil: "domcontentloaded" });
+      await expect.poll(isDark).toBe(false);
+      return { automatic: "follows both system transitions outside settings", manual: "explicit light survives system dark", reload: "retains automatic preference" };
+    } finally { await shot(page, "audit-system-theme-changes").catch(() => {}); await context.close(); }
+  });
+
+  await journey("login-safe-return-targets", async () => {
+    const results = [];
+    for (const [label, target, expected] of [["backslash", "/\\blocked.invalid", "/"], ["newline", "/\n/blocked.invalid", "/"], ["valid-relative", "/profile", "/profile"]]) {
+      const { context, page } = await openRegisteredUserJourney(browser, { clientIp: "198.18.202.12" });
+      const external = [];
+      try {
+        await context.route("**://blocked.invalid/**", route => { external.push(route.request().url()); return route.abort(); });
+        await page.goto(`/login?next=${encodeURIComponent(target)}`, { waitUntil: "domcontentloaded" });
+        await page.locator('input[name="phoneNumber"]').fill(auth.registeredA.phoneNumber);
+        await page.locator('input[name="password"]').fill(auth.registeredA.password);
+        await page.getByTestId("button-auth-submit").click();
+        await expect.poll(() => new URL(page.url()).pathname).toBe(expected);
+        const me = await context.request.get(`${apiOrigin}/api/auth/me`);
+        check(me.status() === 200 && (await me.json()).user.id === users.registeredA && external.length === 0, "return target preserves the real authenticated session and never requests another origin", label);
+        results.push({ label, path: expected, externalRequests: external.length });
+      } finally { await context.close(); }
+    }
+    return { results, source: "real login API and production web UI" };
+  });
+
+  await journey("public-to-private-pending-identity", async () => {
+    const { context, page } = await openRegisteredUserJourney(browser, { clientIp: "198.18.202.13" });
+    let release;
+    try {
+      await loginInBrowser(page, "registeredA");
+      await page.setViewportSize({ width: 1440, height: 900 });
+      await page.goto("/policies", { waitUntil: "domcontentloaded" });
+      await page.getByTestId("link-sidebar-profile").waitFor();
+      await page.evaluate(() => Object.defineProperty(document, "visibilityState", { configurable: true, get: () => "hidden" }));
+      const other = await context.newPage();
+      await other.goto("/settings", { waitUntil: "domcontentloaded" });
+      await other.getByTestId("button-settings-logout").click();
+      await other.getByTestId("dialog-confirm").getByTestId("button-confirm-action").click();
+      await expectSignedOut(other);
+      await loginInBrowser(other, "registeredB");
+      const current = (await (await context.request.get(`${apiOrigin}/api/auth/me`)).json()).user;
+      check(current.id === users.registeredB, "the server has already changed to the second account");
+      let started;
+      const pending = new Promise(resolve => { started = resolve; });
+      identityGates.set(page, new Promise(resolve => { release = resolve; }));
+      const observe = request => { if (new URL(request.url()).pathname === "/api/auth/me") started(); };
+      page.on("request", observe);
+      await page.evaluate(() => { Object.defineProperty(document, "visibilityState", { configurable: true, get: () => "visible" }); document.dispatchEvent(new Event("visibilitychange")); });
+      await pending;
+      page.off("request", observe);
+      await page.locator('a[href="/settings"]:visible').first().click();
+      const field = page.getByLabel("الاسم الظاهر", { exact: true });
+      await field.waitFor({ state: "attached" });
+      await expect(field).toBeHidden();
+      await expect(page.locator("#dinar-private-session-check")).toBeVisible();
+      identityGates.delete(page); release();
+      await expect(field).toBeVisible();
+      await expect(field).toHaveValue(current.displayName);
+      await other.close();
+      return { entry: "public policy page → private settings", pending: "old cached identity remains hidden", outcome: "server-verified second actor only" };
+    } finally { identityGates.delete(page); release?.(); await shot(page, "audit-public-to-private-identity").catch(() => {}); await context.close(); }
   });
 
   await journey("registered-phone-signup", async () => {

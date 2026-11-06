@@ -1268,6 +1268,7 @@ await acceptance("E34", "connected seller promotion and buyer recommendation jou
         BLOCKE_BUYER_COOKIE: browserBuyer.cookie,
         BLOCKE_RUN_ID: runId,
         BLOCKE_LISTING_TITLE: listingTitle,
+        BLOCKE_LISTING_ID: promoted,
         BLOCKE_UI_RESULT_PATH: resultPath,
       },
       timeout: 900_000,
@@ -1298,6 +1299,26 @@ await acceptance("E34", "connected seller promotion and buyer recommendation jou
   assert.equal(rows.length, 1);
   assert.equal(rows[0]!.status, "ACTIVE");
   assert.equal(rows[0]!.paymentStatus, "SIMULATION_CAPTURED");
+  assert.equal(browserReport.commerce.listingId, promoted);
+  assert.equal(browserReport.commerce.checkoutRequests, 1);
+  const actualOrders = await db.select().from(orders).where(eq(orders.buyerId, browserBuyer.id));
+  assert.equal(actualOrders.length, 1, "the fresh browser buyer has exactly one authoritative order");
+  const ordered = actualOrders[0]!;
+  assert.equal(ordered.id, browserReport.commerce.orderId);
+  assert.equal(ordered.sellerId, browserSeller.id);
+  assert.equal(ordered.status, "CREATED");
+  assert.equal(ordered.currencyCode, "JOD");
+  assert.equal(ordered.subtotalMinor, 45_000);
+  assert.equal(ordered.platformFeeMinor + ordered.sellerAmountMinor, ordered.subtotalMinor);
+  assert.equal(ordered.orderLineIntegrityVersion, 1);
+  const lines = await db.select().from(orderItems).where(eq(orderItems.orderId, ordered.id));
+  assert.equal(lines.length, 1);
+  assert.equal(lines[0]!.offerId, promoted);
+  assert.equal(lines[0]!.quantity, 1);
+  assert.equal(lines[0]!.unitPriceMinor, 45_000);
+  const [stock] = await db.select().from(offers).where(eq(offers.id, promoted));
+  assert.equal(stock?.reservedQuantity, 1, "checkout reserves the advertised stock through the canonical service");
+  assert.equal((await db.select().from(paymentIntents).where(eq(paymentIntents.orderId, ordered.id))).length, 0, "cash checkout never creates a paid provider intent");
   assert.equal(getModelGatewayCallCount(), 0, "browser journeys must not reach the model");
 });
 

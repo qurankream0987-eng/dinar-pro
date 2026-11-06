@@ -7,7 +7,7 @@ import { conversationSurfaceSize } from "@workspace/api-zod/conversation-runtime
 import { TutorialVideoCard } from "./TutorialVideoCard";
 import { conversationActionMessage } from "@workspace/api-zod/conversation-runtime";
 import { privateTranscript } from "./transcript-privacy";
-import { Router, Route, Switch } from "wouter";
+import { Router, Route, Switch, Redirect } from "wouter";
 import { memoryLocation } from "wouter/memory-location";
 import { AuthPage } from "@/pages/Auth";
 import {
@@ -320,6 +320,7 @@ function Workflow({
                       onSend={onSend}
                     />
                   </Route>
+                  <Route path="/seller/offers"><Redirect to="/seller/listings" /></Route>
                   <Route
                     path="/seller/offers/:id/edit"
                     component={EditOfferSurface}

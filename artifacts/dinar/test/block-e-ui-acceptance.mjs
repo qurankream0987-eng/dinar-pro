@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { writeFileSync } from "node:fs";
-import { chromium } from "@playwright/test";
+import { chromium, expect } from "@playwright/test";
 
 const webBase = process.env.BLOCKE_WEB_BASE;
 const apiOrigin = process.env.BLOCKE_API_ORIGIN;
@@ -8,8 +8,9 @@ const sellerCookie = process.env.BLOCKE_SELLER_COOKIE;
 const buyerCookie = process.env.BLOCKE_BUYER_COOKIE;
 const runId = process.env.BLOCKE_RUN_ID;
 const listingTitle = process.env.BLOCKE_LISTING_TITLE;
+const promotedListingId = process.env.BLOCKE_LISTING_ID;
 const resultPath = process.env.BLOCKE_UI_RESULT_PATH;
-if (!webBase || !apiOrigin || !sellerCookie || !buyerCookie || !runId || !listingTitle || !resultPath)
+if (!webBase || !apiOrigin || !sellerCookie || !buyerCookie || !runId || !listingTitle || !promotedListingId || !resultPath)
   throw new Error("Missing Block E browser acceptance configuration.");
 
 const checks = [];
@@ -22,6 +23,7 @@ let unlabeledSponsored = 0;
 // Server truth: listing ids the API itself marked as paid placements in turn responses.
 const serverSponsored = new Set();
 let failure;
+let commerce;
 let browser;
 const contexts = [];
 let page;
@@ -302,6 +304,49 @@ try {
   const restoredRecommendations = page.locator(`[data-testid="ai-results-list"]`).last();
   await restoredRecommendations.locator('[data-testid^="recommendation-reasons-"]').first().waitFor();
   checks.push("reload restored the recommendation result set with its reasons");
+
+  // Follow the same sponsored offer through the shared server cart and real checkout UI.
+  const readCart = async () => {
+    const response = await page.context().request.get(`${apiOrigin}/api/cart`, { headers: { Cookie: buyerCookie } });
+    assert.equal(response.status(), 200);
+    return response.json();
+  };
+  assert.deepEqual(await readCart(), [], "the new buyer's canonical cart starts empty");
+  await newConversation();
+  await sendTurn(`ابحث عن ثريا ${runId}`);
+  const advertised = latestAssistant().locator(`[data-testid="card-ai-result-${promotedListingId}"]`);
+  await advertised.locator('[data-testid^="label-sponsored-"]').waitFor();
+  const addReceipt = page.waitForResponse(response => response.request().method() === "POST" && new URL(response.url()).pathname.endsWith("/actions/add-to-cart"));
+  await clickTurn(advertised.getByTestId(`button-add-to-cart-${promotedListingId}`));
+  const added = await addReceipt;
+  assert.equal(added.status(), 200);
+  assert.ok((await added.json()).assistantMessage?.id, "addition returns the authoritative assistant receipt");
+  await expect.poll(async () => (await readCart()).map(item => ({ listingId: item.listingId, quantity: item.quantity }))).toEqual([{ listingId: promotedListingId, quantity: 1 }]);
+  checks.push("the exact disclosed sponsored item entered the canonical persistent cart after its backend receipt");
+  await sendTurn("اعرض السلة");
+  await latestAssistant().getByTestId("page-cart").waitFor();
+  await latestAssistant().getByTestId(`row-cart-item-${promotedListingId}`).waitFor();
+  await page.screenshot({ path: resultPath + ".sponsored-cart-390.png", fullPage: true });
+  await latestAssistant().getByTestId("button-cart-checkout").click();
+  await latestAssistant().getByTestId("checkbox-agree").waitFor();
+  const checkoutCalls = [];
+  page.on("request", request => { if (request.method() === "POST" && new URL(request.url()).pathname === "/api/checkout") checkoutCalls.push(request.postDataJSON()); });
+  await latestAssistant().getByTestId("button-cart-checkout").click();
+  await latestAssistant().getByTestId("alert-cart-checkout-error").waitFor();
+  assert.equal(checkoutCalls.length, 0, "no order before the actual review consent checkbox");
+  await latestAssistant().getByTestId("checkbox-agree").check();
+  await page.screenshot({ path: resultPath + ".sponsored-checkout-review-390.png", fullPage: true });
+  const orderReceipt = page.waitForResponse(response => response.request().method() === "POST" && new URL(response.url()).pathname === "/api/checkout");
+  await latestAssistant().getByTestId("button-cart-checkout").click();
+  const placed = await orderReceipt;
+  assert.equal(placed.status(), 201);
+  const created = await placed.json();
+  assert.equal(created.orders.length, 1, "one order for the advertised item's seller");
+  assert.equal(checkoutCalls.length, 1, "one explicit checkout request");
+  await expect.poll(readCart).toEqual([]);
+  commerce = { listingId: promotedListingId, orderId: created.orders[0].id, cartReceipt: added.status(), checkoutReceipt: placed.status(), checkoutRequests: checkoutCalls.length, reviewConsent: true, payment: "CASH_DIRECT; no provider charge" };
+  checks.push("the advertised item's checkout required explicit consent and returned one real order receipt; cart cleared");
+
 } catch (error) {
   failure = error instanceof Error ? `${error.message}\n${error.stack ?? ""}` : String(error);
 } finally {
@@ -320,6 +365,7 @@ try {
         externalRequests,
         staticFontRequests,
         unlabeledSponsored,
+        commerce,
         failure,
       },
       null,

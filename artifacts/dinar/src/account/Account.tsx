@@ -91,6 +91,7 @@ type AccountContext = {
    * another tab may have signed out or switched accounts meanwhile, so private views wait.
    */
   verifying: boolean;
+  registerPrivateScreen: () => () => void;
   refresh: () => Promise<void>;
   refreshMarkets: () => Promise<void>;
   logout: () => Promise<void>;
@@ -137,6 +138,11 @@ export function AccountProvider({ children }: { children: ReactNode }) {
   }, [userId, shownFor, qc]);
   const [verifying, setVerifying] = useState(false);
   const [verificationFailed, setVerificationFailed] = useState(false);
+  const [privateScreens, setPrivateScreens] = useState(0);
+  const registerPrivateScreen = useCallback(() => {
+    setPrivateScreens(count => count + 1);
+    return () => setPrivateScreens(count => Math.max(0, count - 1));
+  }, []);
   const verificationRevision = useRef(0);
   const privateMaskActive = useRef(false);
   const privateFocus = useRef<{ element: HTMLElement; owner: string | null | undefined; x: number; y: number } | undefined>(undefined);
@@ -158,7 +164,7 @@ export function AccountProvider({ children }: { children: ReactNode }) {
   }, [refetchIdentity]);
   useLayoutEffect(() => {
     const body = document.body;
-    if (verifying && (document.querySelector("[data-private-screen]") || verificationFailed || privateMaskActive.current)) {
+    if (verifying && (privateScreens > 0 || document.querySelector("[data-private-screen]") || verificationFailed || privateMaskActive.current)) {
       if (!privateMaskActive.current && document.activeElement instanceof HTMLElement) {
         privateFocus.current = { element: document.activeElement, owner: userId, x: window.scrollX, y: window.scrollY };
       }
@@ -179,7 +185,7 @@ export function AccountProvider({ children }: { children: ReactNode }) {
       }
     }
     return undefined;
-  }, [verifying, verificationFailed, userId]);
+  }, [verifying, verificationFailed, userId, privateScreens]);
   useEffect(() => {
     const visible = () => {
       if (document.visibilityState === "visible") void revalidateIdentity();
@@ -225,6 +231,7 @@ export function AccountProvider({ children }: { children: ReactNode }) {
         market: markets.data?.find((m) => m.id === currentMarketId),
         loading: me.isLoading,
         verifying,
+        registerPrivateScreen,
         refresh,
         refreshMarkets,
         logout,

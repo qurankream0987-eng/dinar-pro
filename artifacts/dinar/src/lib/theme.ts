@@ -42,6 +42,10 @@ export function setThemePreference(pref: ThemePreference): boolean {
 
 /** Other tabs follow a change made here (the storage event fires only in the other tabs). */
 export function followThemeAcrossTabs() {
+  // System appearance belongs to the app lifecycle, not just the mounted settings page.
+  window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+    if (readTheme() === "system") applyTheme("system");
+  });
   window.addEventListener("storage", (event) => {
     if (event.key === KEY || event.key === null) {
       applyTheme();
@@ -60,11 +64,6 @@ export function useTheme() {
   useEffect(() => {
     applyTheme(pref);
     persist(pref);
-    if (pref !== "system") return;
-    const mq = window.matchMedia("(prefers-color-scheme: dark)");
-    const onChange = () => applyTheme("system");
-    mq.addEventListener("change", onChange);
-    return () => mq.removeEventListener("change", onChange);
   }, [pref]);
   return [pref, setPref] as const;
 }

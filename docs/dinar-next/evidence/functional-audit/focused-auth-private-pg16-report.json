@@ -1,0 +1,1192 @@
+{
+  "journeys": {
+    "layout-matrix": {
+      "status": "PASS",
+      "ms": 15545,
+      "cases": 22
+    },
+    "starter-free-topic-resume-390": {
+      "status": "PASS",
+      "ms": 2240
+    },
+    "drawer-390": {
+      "status": "PASS",
+      "ms": 1238
+    },
+    "compose-starter": {
+      "status": "PASS",
+      "ms": 1046
+    },
+    "desktop-sidebar-1280": {
+      "status": "PASS",
+      "ms": 2617
+    },
+    "business-surfaces-390-dark": {
+      "status": "PASS",
+      "ms": 1885
+    },
+    "accessibility-motion": {
+      "status": "PASS",
+      "ms": 1575
+    },
+    "registered-market-account-isolation": {
+      "status": "PASS",
+      "ms": 13188,
+      "accountA": "login/logout/browser login",
+      "selectedMarket": "KW",
+      "currency": "KWD",
+      "crossAccountConversation": "404/404",
+      "guestHandoffCalls": 0,
+      "expectedHttpRejections": [
+        {
+          "status": 404,
+          "path": "/api/ai/conversations/c67396c2-7bc7-41da-9d37-16f04acc93e9"
+        },
+        {
+          "status": 404,
+          "path": "/api/ai/conversations/c67396c2-7bc7-41da-9d37-16f04acc93e9/turns"
+        }
+      ]
+    },
+    "guest-topic-resume-390": {
+      "status": "PASS",
+      "ms": 4675,
+      "previews": 10,
+      "hints": 3,
+      "requestBytes": 2154
+    },
+    "guest-handoff-races": {
+      "status": "PASS",
+      "ms": 14104,
+      "reloadDuringPending": {
+        "calls": 1,
+        "statuses": [
+          200
+        ]
+      },
+      "otherTabLogin": {
+        "guestTabCalls": 1,
+        "signInTabCalls": 0
+      },
+      "logoutOtherTabThenSwitch": {
+        "calls": [],
+        "fRead": 404
+      }
+    },
+    "multi-tab-identity": {
+      "status": "PASS",
+      "ms": 9124,
+      "switchWithin30s": "A→B",
+      "pendingHiddenAndInert": true,
+      "crossAccount": "404/404",
+      "signedOutRead": 401,
+      "guestHandoffCalls": 0
+    },
+    "search-follow-ups": {
+      "status": "PASS",
+      "ms": 10678,
+      "390-light": {
+        "all": 3,
+        "used": 2,
+        "sorted": "blue,silver",
+        "opened": "silver",
+        "hypothetical": "108 → review",
+        "firstUsefulCardMs": 241,
+        "firstTurnSettledMs": 504,
+        "followUpTurnSettledMs": [
+          421,
+          394,
+          426
+        ]
+      },
+      "1280-dark": {
+        "all": 3,
+        "used": 2,
+        "sorted": "blue,silver",
+        "opened": "silver",
+        "hypothetical": "108 → review",
+        "firstUsefulCardMs": 211,
+        "firstTurnSettledMs": 470,
+        "followUpTurnSettledMs": [
+          431,
+          420,
+          437
+        ]
+      }
+    },
+    "composed-surfaces": {
+      "status": "PASS",
+      "ms": 12881,
+      "widths": [
+        {
+          "width": 320,
+          "scheme": "light",
+          "sales": 296,
+          "plans": 296,
+          "columns": 1
+        },
+        {
+          "width": 390,
+          "scheme": "dark",
+          "sales": 366,
+          "plans": 366,
+          "columns": 1
+        },
+        {
+          "width": 768,
+          "scheme": "light",
+          "sales": 722,
+          "plans": 722,
+          "columns": 3
+        },
+        {
+          "width": 1280,
+          "scheme": "dark",
+          "sales": 780,
+          "plans": 780,
+          "columns": 3
+        },
+        {
+          "width": 1600,
+          "scheme": "light",
+          "sales": 780,
+          "plans": 780,
+          "columns": 3
+        }
+      ],
+      "salesFollowUps": [
+        "THIS_MONTH",
+        "LAST_7_DAYS",
+        "LAST_7_DAYS vs previous"
+      ]
+    },
+    "account-notification-navigation": {
+      "status": "PASS",
+      "ms": 16415,
+      "source": "GET /api/orders",
+      "orderId": "82a7edfb-efc6-4cc4-bb95-6ae328623f1f",
+      "detailProfiles": [
+        {
+          "width": 320,
+          "scheme": "light",
+          "dir": "rtl",
+          "dark": false,
+          "overflow": 0
+        },
+        {
+          "width": 320,
+          "scheme": "dark",
+          "dir": "rtl",
+          "dark": true,
+          "overflow": 0
+        },
+        {
+          "width": 360,
+          "scheme": "light",
+          "dir": "rtl",
+          "dark": false,
+          "overflow": 0
+        },
+        {
+          "width": 360,
+          "scheme": "dark",
+          "dir": "rtl",
+          "dark": true,
+          "overflow": 0
+        },
+        {
+          "width": 390,
+          "scheme": "light",
+          "dir": "rtl",
+          "dark": false,
+          "overflow": 0
+        },
+        {
+          "width": 390,
+          "scheme": "dark",
+          "dir": "rtl",
+          "dark": true,
+          "overflow": 0
+        },
+        {
+          "width": 430,
+          "scheme": "light",
+          "dir": "rtl",
+          "dark": false,
+          "overflow": 0
+        },
+        {
+          "width": 430,
+          "scheme": "dark",
+          "dir": "rtl",
+          "dark": true,
+          "overflow": 0
+        },
+        {
+          "width": 768,
+          "scheme": "light",
+          "dir": "rtl",
+          "dark": false,
+          "overflow": 0
+        },
+        {
+          "width": 768,
+          "scheme": "dark",
+          "dir": "rtl",
+          "dark": true,
+          "overflow": 0
+        },
+        {
+          "width": 1024,
+          "scheme": "light",
+          "dir": "rtl",
+          "dark": false,
+          "overflow": 0
+        },
+        {
+          "width": 1024,
+          "scheme": "dark",
+          "dir": "rtl",
+          "dark": true,
+          "overflow": 0
+        },
+        {
+          "width": 1440,
+          "scheme": "light",
+          "dir": "rtl",
+          "dark": false,
+          "overflow": 0
+        },
+        {
+          "width": 1440,
+          "scheme": "dark",
+          "dir": "rtl",
+          "dark": true,
+          "overflow": 0
+        },
+        {
+          "width": 1920,
+          "scheme": "light",
+          "dir": "rtl",
+          "dark": false,
+          "overflow": 0
+        },
+        {
+          "width": 1920,
+          "scheme": "dark",
+          "dir": "rtl",
+          "dark": true,
+          "overflow": 0
+        }
+      ],
+      "reload": "same canonical order",
+      "back": "notification list",
+      "accountSwitch": "old order masked; new account 404",
+      "invalidReference": "no order API request",
+      "anonymous": "login required; orders 401",
+      "execution": "no receipt confirmation"
+    },
+    "site-cart-navigation": {
+      "status": "PASS",
+      "ms": 1298,
+      "persistedListing": "9be07322-75dd-4a00-aa30-3e3038268a20",
+      "source": "canonical conversation CART surface and GET /api/cart"
+    },
+    "profile-commerce-navigation": {
+      "status": "PASS",
+      "ms": 16152,
+      "visited": [
+        "offers",
+        "sales",
+        "dues"
+      ],
+      "authority": "existing seller listings, sales and dues services"
+    },
+    "protected-unsaved-form-revalidation": {
+      "status": "PASS",
+      "ms": 2146,
+      "privateForm": "hidden pending identity",
+      "privatePortal": "hidden pending identity",
+      "sameAccount": "draft and dialog preserved",
+      "writes": "none"
+    },
+    "site-search-and-selling-entry": {
+      "status": "PASS",
+      "ms": 2445,
+      "desktopSearch": "query preserved then explicitly sent",
+      "discover": "search draft",
+      "sell": "existing sell draft; no automatic publication"
+    },
+    "protected-failed-identity-revalidation": {
+      "status": "PASS",
+      "ms": 4162,
+      "fault": "explicit local auth/me 503",
+      "privacy": "form and portal remain hidden",
+      "retry": "server-verified B; old local state discarded"
+    },
+    "cart-queued-cross-account-isolation": {
+      "status": "PASS",
+      "ms": 3671,
+      "initialOwnerReceipt": 200,
+      "staleQueuedIntent": 409,
+      "newAccountCart": "empty",
+      "state": "verified with canonical API"
+    },
+    "system-theme-changes": {
+      "status": "PASS",
+      "ms": 4015,
+      "automatic": "follows both system transitions outside settings",
+      "manual": "explicit light survives system dark",
+      "reload": "retains automatic preference"
+    },
+    "login-safe-return-targets": {
+      "status": "PASS",
+      "ms": 2935,
+      "results": [
+        {
+          "label": "backslash",
+          "path": "/",
+          "externalRequests": 0
+        },
+        {
+          "label": "newline",
+          "path": "/",
+          "externalRequests": 0
+        },
+        {
+          "label": "valid-relative",
+          "path": "/profile",
+          "externalRequests": 0
+        }
+      ],
+      "source": "real login API and production web UI"
+    },
+    "public-to-private-pending-identity": {
+      "status": "PASS",
+      "ms": 4116,
+      "entry": "public policy page → private settings",
+      "pending": "old cached identity remains hidden",
+      "outcome": "server-verified second actor only"
+    },
+    "registered-phone-signup": {
+      "status": "PASS",
+      "ms": 1112,
+      "createdUserId": "c376a5ae-2f72-41ea-86a1-e9b5398b1f14",
+      "registrationStatus": 201,
+      "phoneVerified": true,
+      "verificationProofInRequest": true,
+      "transport": "LOCAL_DEVELOPMENT_PROVIDER; not live SMS"
+    },
+    "admin-market-category-promotion-controls": {
+      "status": "PASS",
+      "ms": 46385,
+      "categoryId": "audit-ui-mw57ju8e",
+      "updatedCategoryLabel": "تصنيف تدقيق زولطكل محدث",
+      "planId": "ec2dbcdc-881e-471b-8ba1-7268d497a46a",
+      "priceMinor": 2500,
+      "planEnabled": false,
+      "marketPriceVersion": "JO fixture changed; immutable order snapshot asserted by backend",
+      "disabledMarket": "KW",
+      "profiles": [
+        {
+          "path": "/admin/categories",
+          "width": 320,
+          "scheme": "light",
+          "dir": "rtl",
+          "dark": false,
+          "overflow": 0,
+          "unnamed": []
+        },
+        {
+          "path": "/admin/categories",
+          "width": 320,
+          "scheme": "dark",
+          "dir": "rtl",
+          "dark": true,
+          "overflow": 0,
+          "unnamed": []
+        },
+        {
+          "path": "/admin/categories",
+          "width": 360,
+          "scheme": "light",
+          "dir": "rtl",
+          "dark": false,
+          "overflow": 0,
+          "unnamed": []
+        },
+        {
+          "path": "/admin/categories",
+          "width": 360,
+          "scheme": "dark",
+          "dir": "rtl",
+          "dark": true,
+          "overflow": 0,
+          "unnamed": []
+        },
+        {
+          "path": "/admin/categories",
+          "width": 390,
+          "scheme": "light",
+          "dir": "rtl",
+          "dark": false,
+          "overflow": 0,
+          "unnamed": []
+        },
+        {
+          "path": "/admin/categories",
+          "width": 390,
+          "scheme": "dark",
+          "dir": "rtl",
+          "dark": true,
+          "overflow": 0,
+          "unnamed": []
+        },
+        {
+          "path": "/admin/categories",
+          "width": 430,
+          "scheme": "light",
+          "dir": "rtl",
+          "dark": false,
+          "overflow": 0,
+          "unnamed": []
+        },
+        {
+          "path": "/admin/categories",
+          "width": 430,
+          "scheme": "dark",
+          "dir": "rtl",
+          "dark": true,
+          "overflow": 0,
+          "unnamed": []
+        },
+        {
+          "path": "/admin/categories",
+          "width": 768,
+          "scheme": "light",
+          "dir": "rtl",
+          "dark": false,
+          "overflow": 0,
+          "unnamed": []
+        },
+        {
+          "path": "/admin/categories",
+          "width": 768,
+          "scheme": "dark",
+          "dir": "rtl",
+          "dark": true,
+          "overflow": 0,
+          "unnamed": []
+        },
+        {
+          "path": "/admin/categories",
+          "width": 1024,
+          "scheme": "light",
+          "dir": "rtl",
+          "dark": false,
+          "overflow": 0,
+          "unnamed": []
+        },
+        {
+          "path": "/admin/categories",
+          "width": 1024,
+          "scheme": "dark",
+          "dir": "rtl",
+          "dark": true,
+          "overflow": 0,
+          "unnamed": []
+        },
+        {
+          "path": "/admin/categories",
+          "width": 1440,
+          "scheme": "light",
+          "dir": "rtl",
+          "dark": false,
+          "overflow": 0,
+          "unnamed": []
+        },
+        {
+          "path": "/admin/categories",
+          "width": 1440,
+          "scheme": "dark",
+          "dir": "rtl",
+          "dark": true,
+          "overflow": 0,
+          "unnamed": []
+        },
+        {
+          "path": "/admin/categories",
+          "width": 1920,
+          "scheme": "light",
+          "dir": "rtl",
+          "dark": false,
+          "overflow": 0,
+          "unnamed": []
+        },
+        {
+          "path": "/admin/categories",
+          "width": 1920,
+          "scheme": "dark",
+          "dir": "rtl",
+          "dark": true,
+          "overflow": 0,
+          "unnamed": []
+        },
+        {
+          "path": "/admin/promotions",
+          "width": 320,
+          "scheme": "light",
+          "dir": "rtl",
+          "dark": false,
+          "overflow": 0,
+          "unnamed": []
+        },
+        {
+          "path": "/admin/promotions",
+          "width": 320,
+          "scheme": "dark",
+          "dir": "rtl",
+          "dark": true,
+          "overflow": 0,
+          "unnamed": []
+        },
+        {
+          "path": "/admin/promotions",
+          "width": 360,
+          "scheme": "light",
+          "dir": "rtl",
+          "dark": false,
+          "overflow": 0,
+          "unnamed": []
+        },
+        {
+          "path": "/admin/promotions",
+          "width": 360,
+          "scheme": "dark",
+          "dir": "rtl",
+          "dark": true,
+          "overflow": 0,
+          "unnamed": []
+        },
+        {
+          "path": "/admin/promotions",
+          "width": 390,
+          "scheme": "light",
+          "dir": "rtl",
+          "dark": false,
+          "overflow": 0,
+          "unnamed": []
+        },
+        {
+          "path": "/admin/promotions",
+          "width": 390,
+          "scheme": "dark",
+          "dir": "rtl",
+          "dark": true,
+          "overflow": 0,
+          "unnamed": []
+        },
+        {
+          "path": "/admin/promotions",
+          "width": 430,
+          "scheme": "light",
+          "dir": "rtl",
+          "dark": false,
+          "overflow": 0,
+          "unnamed": []
+        },
+        {
+          "path": "/admin/promotions",
+          "width": 430,
+          "scheme": "dark",
+          "dir": "rtl",
+          "dark": true,
+          "overflow": 0,
+          "unnamed": []
+        },
+        {
+          "path": "/admin/promotions",
+          "width": 768,
+          "scheme": "light",
+          "dir": "rtl",
+          "dark": false,
+          "overflow": 0,
+          "unnamed": []
+        },
+        {
+          "path": "/admin/promotions",
+          "width": 768,
+          "scheme": "dark",
+          "dir": "rtl",
+          "dark": true,
+          "overflow": 0,
+          "unnamed": []
+        },
+        {
+          "path": "/admin/promotions",
+          "width": 1024,
+          "scheme": "light",
+          "dir": "rtl",
+          "dark": false,
+          "overflow": 0,
+          "unnamed": []
+        },
+        {
+          "path": "/admin/promotions",
+          "width": 1024,
+          "scheme": "dark",
+          "dir": "rtl",
+          "dark": true,
+          "overflow": 0,
+          "unnamed": []
+        },
+        {
+          "path": "/admin/promotions",
+          "width": 1440,
+          "scheme": "light",
+          "dir": "rtl",
+          "dark": false,
+          "overflow": 0,
+          "unnamed": []
+        },
+        {
+          "path": "/admin/promotions",
+          "width": 1440,
+          "scheme": "dark",
+          "dir": "rtl",
+          "dark": true,
+          "overflow": 0,
+          "unnamed": []
+        },
+        {
+          "path": "/admin/promotions",
+          "width": 1920,
+          "scheme": "light",
+          "dir": "rtl",
+          "dark": false,
+          "overflow": 0,
+          "unnamed": []
+        },
+        {
+          "path": "/admin/promotions",
+          "width": 1920,
+          "scheme": "dark",
+          "dir": "rtl",
+          "dark": true,
+          "overflow": 0,
+          "unnamed": []
+        },
+        {
+          "path": "/admin/markets",
+          "width": 320,
+          "scheme": "light",
+          "dir": "rtl",
+          "dark": false,
+          "overflow": 0,
+          "unnamed": []
+        },
+        {
+          "path": "/admin/markets",
+          "width": 320,
+          "scheme": "dark",
+          "dir": "rtl",
+          "dark": true,
+          "overflow": 0,
+          "unnamed": []
+        },
+        {
+          "path": "/admin/markets",
+          "width": 360,
+          "scheme": "light",
+          "dir": "rtl",
+          "dark": false,
+          "overflow": 0,
+          "unnamed": []
+        },
+        {
+          "path": "/admin/markets",
+          "width": 360,
+          "scheme": "dark",
+          "dir": "rtl",
+          "dark": true,
+          "overflow": 0,
+          "unnamed": []
+        },
+        {
+          "path": "/admin/markets",
+          "width": 390,
+          "scheme": "light",
+          "dir": "rtl",
+          "dark": false,
+          "overflow": 0,
+          "unnamed": []
+        },
+        {
+          "path": "/admin/markets",
+          "width": 390,
+          "scheme": "dark",
+          "dir": "rtl",
+          "dark": true,
+          "overflow": 0,
+          "unnamed": []
+        },
+        {
+          "path": "/admin/markets",
+          "width": 430,
+          "scheme": "light",
+          "dir": "rtl",
+          "dark": false,
+          "overflow": 0,
+          "unnamed": []
+        },
+        {
+          "path": "/admin/markets",
+          "width": 430,
+          "scheme": "dark",
+          "dir": "rtl",
+          "dark": true,
+          "overflow": 0,
+          "unnamed": []
+        },
+        {
+          "path": "/admin/markets",
+          "width": 768,
+          "scheme": "light",
+          "dir": "rtl",
+          "dark": false,
+          "overflow": 0,
+          "unnamed": []
+        },
+        {
+          "path": "/admin/markets",
+          "width": 768,
+          "scheme": "dark",
+          "dir": "rtl",
+          "dark": true,
+          "overflow": 0,
+          "unnamed": []
+        },
+        {
+          "path": "/admin/markets",
+          "width": 1024,
+          "scheme": "light",
+          "dir": "rtl",
+          "dark": false,
+          "overflow": 0,
+          "unnamed": []
+        },
+        {
+          "path": "/admin/markets",
+          "width": 1024,
+          "scheme": "dark",
+          "dir": "rtl",
+          "dark": true,
+          "overflow": 0,
+          "unnamed": []
+        },
+        {
+          "path": "/admin/markets",
+          "width": 1440,
+          "scheme": "light",
+          "dir": "rtl",
+          "dark": false,
+          "overflow": 0,
+          "unnamed": []
+        },
+        {
+          "path": "/admin/markets",
+          "width": 1440,
+          "scheme": "dark",
+          "dir": "rtl",
+          "dark": true,
+          "overflow": 0,
+          "unnamed": []
+        },
+        {
+          "path": "/admin/markets",
+          "width": 1920,
+          "scheme": "light",
+          "dir": "rtl",
+          "dark": false,
+          "overflow": 0,
+          "unnamed": []
+        },
+        {
+          "path": "/admin/markets",
+          "width": 1920,
+          "scheme": "dark",
+          "dir": "rtl",
+          "dark": true,
+          "overflow": 0,
+          "unnamed": []
+        }
+      ]
+    }
+  },
+  "layout": [
+    {
+      "label": "320-light",
+      "overflow": 0,
+      "header": 0,
+      "starters": 6,
+      "groupHeight": 48,
+      "composerBottom": 736,
+      "font": 16,
+      "sidebar": false
+    },
+    {
+      "label": "360-light",
+      "overflow": 0,
+      "header": 0,
+      "starters": 6,
+      "groupHeight": 48,
+      "composerBottom": 736,
+      "font": 16,
+      "sidebar": false
+    },
+    {
+      "label": "375-light",
+      "overflow": 0,
+      "header": 0,
+      "starters": 6,
+      "groupHeight": 48,
+      "composerBottom": 736,
+      "font": 16,
+      "sidebar": false
+    },
+    {
+      "label": "390-light",
+      "overflow": 0,
+      "header": 0,
+      "starters": 6,
+      "groupHeight": 48,
+      "composerBottom": 736,
+      "font": 16,
+      "sidebar": false
+    },
+    {
+      "label": "414-light",
+      "overflow": 0,
+      "header": 0,
+      "starters": 6,
+      "groupHeight": 48,
+      "composerBottom": 736,
+      "font": 16,
+      "sidebar": false
+    },
+    {
+      "label": "430-light",
+      "overflow": 0,
+      "header": 0,
+      "starters": 6,
+      "groupHeight": 48,
+      "composerBottom": 736,
+      "font": 16,
+      "sidebar": false
+    },
+    {
+      "label": "768-light",
+      "overflow": 0,
+      "header": 0,
+      "starters": 6,
+      "groupHeight": 96,
+      "composerBottom": 643,
+      "font": 16,
+      "sidebar": false
+    },
+    {
+      "label": "1024-light",
+      "overflow": 0,
+      "header": 0,
+      "starters": 6,
+      "groupHeight": 96,
+      "composerBottom": 648,
+      "font": 16,
+      "sidebar": true
+    },
+    {
+      "label": "1280-light",
+      "overflow": 0,
+      "header": 0,
+      "starters": 6,
+      "groupHeight": 96,
+      "composerBottom": 648,
+      "font": 16,
+      "sidebar": true
+    },
+    {
+      "label": "1440-light",
+      "overflow": 0,
+      "header": 0,
+      "starters": 6,
+      "groupHeight": 96,
+      "composerBottom": 648,
+      "font": 16,
+      "sidebar": true
+    },
+    {
+      "label": "1600-light",
+      "overflow": 0,
+      "header": 0,
+      "starters": 6,
+      "groupHeight": 96,
+      "composerBottom": 648,
+      "font": 16,
+      "sidebar": true
+    },
+    {
+      "label": "320-dark",
+      "overflow": 0,
+      "header": 0,
+      "starters": 6,
+      "groupHeight": 48,
+      "composerBottom": 736,
+      "font": 16,
+      "sidebar": false
+    },
+    {
+      "label": "360-dark",
+      "overflow": 0,
+      "header": 0,
+      "starters": 6,
+      "groupHeight": 48,
+      "composerBottom": 736,
+      "font": 16,
+      "sidebar": false
+    },
+    {
+      "label": "375-dark",
+      "overflow": 0,
+      "header": 0,
+      "starters": 6,
+      "groupHeight": 48,
+      "composerBottom": 736,
+      "font": 16,
+      "sidebar": false
+    },
+    {
+      "label": "390-dark",
+      "overflow": 0,
+      "header": 0,
+      "starters": 6,
+      "groupHeight": 48,
+      "composerBottom": 736,
+      "font": 16,
+      "sidebar": false
+    },
+    {
+      "label": "414-dark",
+      "overflow": 0,
+      "header": 0,
+      "starters": 6,
+      "groupHeight": 48,
+      "composerBottom": 736,
+      "font": 16,
+      "sidebar": false
+    },
+    {
+      "label": "430-dark",
+      "overflow": 0,
+      "header": 0,
+      "starters": 6,
+      "groupHeight": 48,
+      "composerBottom": 736,
+      "font": 16,
+      "sidebar": false
+    },
+    {
+      "label": "768-dark",
+      "overflow": 0,
+      "header": 0,
+      "starters": 6,
+      "groupHeight": 96,
+      "composerBottom": 643,
+      "font": 16,
+      "sidebar": false
+    },
+    {
+      "label": "1024-dark",
+      "overflow": 0,
+      "header": 0,
+      "starters": 6,
+      "groupHeight": 96,
+      "composerBottom": 648,
+      "font": 16,
+      "sidebar": true
+    },
+    {
+      "label": "1280-dark",
+      "overflow": 0,
+      "header": 0,
+      "starters": 6,
+      "groupHeight": 96,
+      "composerBottom": 648,
+      "font": 16,
+      "sidebar": true
+    },
+    {
+      "label": "1440-dark",
+      "overflow": 0,
+      "header": 0,
+      "starters": 6,
+      "groupHeight": 96,
+      "composerBottom": 648,
+      "font": 16,
+      "sidebar": true
+    },
+    {
+      "label": "1600-dark",
+      "overflow": 0,
+      "header": 0,
+      "starters": 6,
+      "groupHeight": 96,
+      "composerBottom": 648,
+      "font": 16,
+      "sidebar": true
+    }
+  ],
+  "summary": {
+    "failed": [],
+    "consoleErrors": [],
+    "journeys": 25,
+    "layoutCases": 22
+  },
+  "sellerEdit": {
+    "listingId": "7c1980e1-98a1-4201-bb5b-268a6f2f30da",
+    "title": "عرض محدث زولطكل",
+    "writes": 1,
+    "sameConversation": true,
+    "reload": true,
+    "profiles": [
+      {
+        "width": 320,
+        "scheme": "light",
+        "viewport": 0,
+        "panel": 0,
+        "rtl": "rtl",
+        "dark": false
+      },
+      {
+        "width": 320,
+        "scheme": "dark",
+        "viewport": 0,
+        "panel": 0,
+        "rtl": "rtl",
+        "dark": true
+      },
+      {
+        "width": 360,
+        "scheme": "light",
+        "viewport": 0,
+        "panel": 0,
+        "rtl": "rtl",
+        "dark": false
+      },
+      {
+        "width": 360,
+        "scheme": "dark",
+        "viewport": 0,
+        "panel": 0,
+        "rtl": "rtl",
+        "dark": true
+      },
+      {
+        "width": 390,
+        "scheme": "light",
+        "viewport": 0,
+        "panel": 0,
+        "rtl": "rtl",
+        "dark": false
+      },
+      {
+        "width": 390,
+        "scheme": "dark",
+        "viewport": 0,
+        "panel": 0,
+        "rtl": "rtl",
+        "dark": true
+      },
+      {
+        "width": 430,
+        "scheme": "light",
+        "viewport": 0,
+        "panel": 0,
+        "rtl": "rtl",
+        "dark": false
+      },
+      {
+        "width": 430,
+        "scheme": "dark",
+        "viewport": 0,
+        "panel": 0,
+        "rtl": "rtl",
+        "dark": true
+      },
+      {
+        "width": 768,
+        "scheme": "light",
+        "viewport": 0,
+        "panel": 0,
+        "rtl": "rtl",
+        "dark": false
+      },
+      {
+        "width": 768,
+        "scheme": "dark",
+        "viewport": 0,
+        "panel": 0,
+        "rtl": "rtl",
+        "dark": true
+      },
+      {
+        "width": 1024,
+        "scheme": "light",
+        "viewport": 0,
+        "panel": 0,
+        "rtl": "rtl",
+        "dark": false
+      },
+      {
+        "width": 1024,
+        "scheme": "dark",
+        "viewport": 0,
+        "panel": 0,
+        "rtl": "rtl",
+        "dark": true
+      },
+      {
+        "width": 1440,
+        "scheme": "light",
+        "viewport": 0,
+        "panel": 0,
+        "rtl": "rtl",
+        "dark": false
+      },
+      {
+        "width": 1440,
+        "scheme": "dark",
+        "viewport": 0,
+        "panel": 0,
+        "rtl": "rtl",
+        "dark": true
+      },
+      {
+        "width": 1920,
+        "scheme": "light",
+        "viewport": 0,
+        "panel": 0,
+        "rtl": "rtl",
+        "dark": false
+      },
+      {
+        "width": 1920,
+        "scheme": "dark",
+        "viewport": 0,
+        "panel": 0,
+        "rtl": "rtl",
+        "dark": true
+      }
+    ]
+  },
+  "failures": []
+}

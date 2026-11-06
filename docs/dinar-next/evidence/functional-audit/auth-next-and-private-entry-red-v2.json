@@ -1,0 +1,53 @@
+{
+  "mode": "actual production web build; isolated auth/market API fixtures; no backend authorization acceptance and no live network",
+  "results": [
+    {
+      "label": "normal",
+      "expected": "/profile",
+      "path": "/profile",
+      "passed": true,
+      "errors": [],
+      "external": []
+    },
+    {
+      "label": "backslash",
+      "expected": "/",
+      "path": "/login",
+      "passed": false,
+      "errors": [],
+      "external": [],
+      "failure": "expect(received).toBe(expected) // Object.is equality\n\nExpected: \"/\"\nReceived: \"/login\"\n\nCall Log:\n- Timeout 4000ms exceeded while waiting on the predicate"
+    },
+    {
+      "label": "newline",
+      "expected": "/",
+      "path": "/login",
+      "passed": false,
+      "errors": [],
+      "external": [],
+      "failure": "expect(received).toBe(expected) // Object.is equality\n\nExpected: \"/\"\nReceived: \"/login\"\n\nCall Log:\n- Timeout 4000ms exceeded while waiting on the predicate"
+    },
+    {
+      "label": "protocol-relative",
+      "expected": "/",
+      "path": "/",
+      "passed": true,
+      "errors": [],
+      "external": []
+    },
+    {
+      "label": "absolute",
+      "expected": "/",
+      "path": "/",
+      "passed": true,
+      "errors": [],
+      "external": []
+    },
+    {
+      "label": "public-to-private-revalidation",
+      "passed": false,
+      "errors": [],
+      "failure": "expect(locator).toBeHidden() failed\n\nLocator:  getByLabel('الاسم الظاهر', { exact: true })\nExpected: hidden\nReceived: visible\nTimeout:  5000ms\n\nCall log:\n  - Expect \"toBeHidden\" getByLabel('الاسم الظاهر', { exact: true }) with timeout 5000ms\n  - waiting for getByLabel('الاسم الظاهر', { exact: true })\n    14 × locator resolved to <input id=\"«r6»\" required=\"\" minlength=\"2\" maxlength=\"80\" value=\"مستخدم واجهة اختبار\" class=\"w-full min-w-0 rounded-md border border-input bg-card px-3.5 text-md text-foreground placeholder:text-muted-foreground transition-[border-color,box-shadow] duration-200 hover:border-border-strong focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/12 disabled:bg-muted disabled:text-muted-foreground aria-[invalid=true]:border-destructive aria-[invalid=true]:focus:ring-destructive/12 h-12\"/>\n       - unexpected value \"visible\"\n"
+    }
+  ]
+}

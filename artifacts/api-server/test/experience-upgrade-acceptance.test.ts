@@ -1007,6 +1007,9 @@ await test("BROWSER header, sidebar, starters, free topic changes, rendering and
   const [registeredFromBrowser] = await db.select().from(userTable).where(eq(userTable.id, report.journeys["registered-phone-signup"].createdUserId));
   assert.equal(registeredFromBrowser?.phoneVerified, true, "the actual UI registration persists the verified phone state");
   assert.equal(registeredFromBrowser?.role, "USER", "browser registration never grants administrative authority");
+  const [editedListing] = await db.select({ data: offers.data, sellerId: offers.sellerId }).from(offers).where(eq(offers.id, report.sellerEdit.listingId));
+  assert.equal(editedListing?.data.title, report.sellerEdit.title, "confirmed conversation editor update is persisted");
+  assert.equal(editedListing?.sellerId, users.seller.id, "editing never transfers listing ownership");
   const adminUi = report.journeys["admin-market-category-promotion-controls"];
   const [categoryFromDb] = await db.select().from(marketplaceCategories).where(eq(marketplaceCategories.id, adminUi.categoryId));
   assert.equal(categoryFromDb?.label, adminUi.updatedCategoryLabel);
