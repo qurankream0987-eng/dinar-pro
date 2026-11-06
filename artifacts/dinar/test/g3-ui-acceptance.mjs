@@ -23,6 +23,10 @@ const results = {};
 const failures = {};
 const pageErrors = [];
 const consoleErrors = [];
+const consoleErrorDetails = [];
+const expectedConsoleResources = [];
+const errorResponses = [];
+let activeConsoleCheck = "startup";
 const externalRequests = [];
 let expectedResourceErrors = 0;
 let expectedConflictErrors = 0;
@@ -57,7 +61,42 @@ const urlsSeen = [];
 const allowedHosts = new Set([new URL(webBase).host, new URL(apiOrigin).host]);
 const fontHosts = new Set(["fonts.googleapis.com", "fonts.gstatic.com"]);
 
+/** Only a native resource error for this exact injected URL/status may consume its budget. */
+function unexpectedConsoleMessages(messages, injected) {
+  const budgets = new Map();
+  for (const reply of injected) {
+    const key = `${reply.status} ${reply.url}`;
+    budgets.set(key, (budgets.get(key) ?? 0) + 1);
+  }
+  return messages.filter((message) => {
+    // Existing offline scenario: the browser may report the deliberately disconnected request.
+    if (/ERR_INTERNET_DISCONNECTED/.test(message.text)) return false;
+    const native = /^Failed to load resource: the server responded with a status of (500|409)(?: |$)/.exec(message.text);
+    const key = native ? `${native[1]} ${message.location.url}` : "";
+    const remaining = budgets.get(key) ?? 0;
+    if (native && remaining > 0) {
+      budgets.set(key, remaining - 1);
+      return false;
+    }
+    return true;
+  });
+}
+async function injectedFailure(route, reply) {
+  assert.ok(reply.status === 500 || reply.status === 409);
+  expectedConsoleResources.push({ url: route.request().url(), status: reply.status, check: activeConsoleCheck });
+  if (reply.status === 500) expectedResourceErrors++;
+  return route.fulfill(reply);
+}
+// Adversarial evidence: an allowed fixture cannot hide an unrelated, excess or script error.
+const classifierFixture = { url: "https://fixture.invalid/api/known", status: 500 };
+const classifierMessage = { text: "Failed to load resource: the server responded with a status of 500 (Internal Server Error)", location: { url: classifierFixture.url } };
+assert.equal(unexpectedConsoleMessages([classifierMessage], [classifierFixture]).length, 0);
+assert.equal(unexpectedConsoleMessages([classifierMessage, classifierMessage], [classifierFixture]).length, 1);
+assert.equal(unexpectedConsoleMessages([{ ...classifierMessage, location: { url: "https://fixture.invalid/api/unexpected" } }], [classifierFixture]).length, 1);
+assert.equal(unexpectedConsoleMessages([{ ...classifierMessage, text: "application error: status of 500" }], [classifierFixture]).length, 1);
+
 async function record(id, name, body) {
+  activeConsoleCheck = id;
   try {
     await body();
     results[id] = "PASS";
@@ -247,9 +286,15 @@ async function openSession(cookie) {
   });
   opened.on("console", (message) => {
     consoleTexts.push(message.text());
-    if (message.type() === "error") consoleErrors.push(message.text());
+    if (message.type() === "error") {
+      consoleErrors.push(message.text());
+      consoleErrorDetails.push({ text: message.text(), location: message.location(), check: activeConsoleCheck });
+    }
   });
   opened.on("framenavigated", (frame) => urlsSeen.push(frame.url()));
+  opened.on("response", (response) => {
+    if (response.status() >= 400) errorResponses.push({ status: response.status(), url: response.url(), check: activeConsoleCheck });
+  });
   opened.on("request", (request) => {
     urlsSeen.push(request.url());
     const url = new URL(request.url());
@@ -433,7 +478,7 @@ try {
       if (route.request().method() !== "PATCH") return route.fallback();
       staleChoicePatchCount++;
       expectedConflictErrors++;
-      await route.fulfill({
+      await injectedFailure(route, {
         status: 409,
         contentType: "application/json",
         body: JSON.stringify({
@@ -551,9 +596,8 @@ try {
     await fileInput.setInputFiles([{ name: "b.png", mimeType: "image/png", buffer: PNG }]);
     await page.getByRole("img", { name: "معاينة صورة الإعلان 1" }).waitFor();
     await page.route("**/api/account/listing-photos/upload-url", (route) =>
-      route.fulfill({ status: 500, contentType: "application/json", body: JSON.stringify({ error: 'error: relation "listing_photos" does not exist at /home/runner/workspace/src/x.ts:12' }) }),
+      injectedFailure(route, { status: 500, contentType: "application/json", body: JSON.stringify({ error: 'error: relation "listing_photos" does not exist at /home/runner/workspace/src/x.ts:12' }) }),
     );
-    expectedResourceErrors++;
     await page.getByTestId("input-ai-composer").fill("أريد أبيع هذه الصورة");
     await page.getByTestId("button-send-ai-message").click();
     const alert = page.locator('.dinar-chat-dock [role="alert"]');
@@ -563,6 +607,13 @@ try {
     assert.doesNotMatch(alertText, /relation|\/home\/|\.ts:/);
     await page.getByTestId("button-retry-ai-turn").waitFor();
     assert.equal(await page.getByTestId("input-ai-composer").inputValue(), "أريد أبيع هذه الصورة", "the text is kept");
+    await page.getByRole("img", { name: "معاينة صورة الإعلان 1" }).waitFor();
+    // A real second retry must retain the same local photo/text and acknowledge another failure.
+    const uploadRetried = page.waitForResponse((response) => new URL(response.url()).pathname === "/api/account/listing-photos/upload-url" && response.request().method() === "POST");
+    await page.getByTestId("button-retry-ai-turn").click();
+    assert.equal((await uploadRetried).status(), 500);
+    await alert.waitFor();
+    assert.equal(await page.getByTestId("input-ai-composer").inputValue(), "أريد أبيع هذه الصورة");
     await page.getByRole("img", { name: "معاينة صورة الإعلان 1" }).waitFor();
     await page.unroute("**/api/account/listing-photos/upload-url");
     // Object storage is a provider boundary: send the text alone after removing the photo.
@@ -600,9 +651,8 @@ try {
     for (const status of seen.statuses) assert.doesNotMatch(status, /الذكاء|أفكر|يفكّ?ر|AI/, "no claimed AI reasoning");
     // A failed turn: friendly Arabic, no internals, retryable, not duplicated.
     await page.route("**/api/ai/conversations/*/turns", (route) =>
-      route.fulfill({ status: 500, contentType: "application/json", body: JSON.stringify({ error: "error: duplicate key value violates unique constraint at /home/runner/workspace/src/routes/ai.ts:900" }) }),
+      injectedFailure(route, { status: 500, contentType: "application/json", body: JSON.stringify({ error: "error: duplicate key value violates unique constraint at /home/runner/workspace/src/routes/ai.ts:900" }) }),
     { times: 1 });
-    expectedResourceErrors++;
     await page.getByTestId("input-ai-composer").fill("اعرض لي إعلاناتي");
     await page.getByTestId("button-send-ai-message").click();
     const alert = page.locator('.dinar-chat-dock [role="alert"]');
@@ -1328,7 +1378,7 @@ try {
     await page.route(`**/api/ai/conversations/${target}`, (route) => {
       if (route.request().method() !== "GET") return route.fallback();
       hits++;
-      return route.fulfill({ status: 500, contentType: "application/json", body: JSON.stringify({ error: "TypeError: Cannot read properties of undefined\n    at Object.<anonymous> (/home/runner/workspace/artifacts/api-server/src/routes/ai.ts:640:12)\n    at ZodError: [{\"code\":\"invalid_type\"}] select * from messages" }) });
+      return injectedFailure(route, { status: 500, contentType: "application/json", body: JSON.stringify({ error: "TypeError: Cannot read properties of undefined\n    at Object.<anonymous> (/home/runner/workspace/artifacts/api-server/src/routes/ai.ts:640:12)\n    at ZodError: [{\"code\":\"invalid_type\"}] select * from messages" }) });
     });
     const toggle = page.locator('[data-testid="button-toggle-conversation-history"]:visible').first();
     const item = page.locator(`button[data-testid="conversation-${target}"]`);
@@ -1339,8 +1389,8 @@ try {
     const text = await page.locator("body").innerText();
     if (/Object\.<anonymous>|\/home\/runner|ZodError|select \*|TypeError/.test(text)) counters.technicalErrorLeaks++;
     assert.doesNotMatch(text, /Object\.<anonymous>|\/home\/runner|ZodError|select \*|TypeError/);
-    await page.unroute(`**/api/ai/conversations/${target}`);
-    expectedResourceErrors += hits;
+    await page.unrouteAll({ behavior: "wait" });
+    assert.ok(hits > 0, "the technical-failure fixture was actually exercised");
     await alert.getByRole("button", { name: "إعادة المحاولة" }).click();
     await page.locator('[data-testid^="message-assistant-"]').first().waitFor();
     assert.equal(counters.technicalErrorLeaks, 0);
@@ -1363,16 +1413,12 @@ const providerKeyPattern = /dnr_[A-Za-z0-9_-]{20,}/;
 counters.secretUrlLeaks = urlsSeen.filter((url) => providerKeyPattern.test(decodeURIComponent(url))).length;
 counters.secretConsoleLeaks = consoleTexts.filter((text) => providerKeyPattern.test(text)).length;
 counters.pageErrors = pageErrors.length;
-const resourceErrors = consoleErrors.filter((text) => /status of 500|ERR_INTERNET_DISCONNECTED/.test(text));
-const conflictErrors = consoleErrors.filter((text) => /status of 409/.test(text));
-const unexpected = consoleErrors.filter((text) => !/status of 500|ERR_INTERNET_DISCONNECTED|status of 409/.test(text));
-counters.unexpectedConsoleErrors =
-  unexpected.length +
-  Math.max(0, resourceErrors.filter((text) => /status of 500/.test(text)).length - expectedResourceErrors) +
-  Math.max(0, conflictErrors.length - expectedConflictErrors);
+const unexpectedDetails = unexpectedConsoleMessages(consoleErrorDetails, expectedConsoleResources);
+const unexpected = unexpectedDetails.map((message) => message.text);
+counters.unexpectedConsoleErrors = unexpected.length;
 counters.unexpectedExternalRequests = externalRequests.length;
 const failure = Object.keys(failures).length ? JSON.stringify(failures, null, 1) : undefined;
-  writeFileSync(resultPath, JSON.stringify({ results, counters, widths, checks, checkList: checks, pageErrors, consoleErrors: unexpected, externalRequests, guestMarketGate, staleMarketSelection, tutorialBrowser, failure }, null, 2));
+  writeFileSync(resultPath, JSON.stringify({ results, counters, widths, checks, checkList: checks, pageErrors, consoleErrors: unexpected, consoleErrorDetails, expectedConsoleResources, errorResponses, unexpectedConsoleDetails: unexpectedDetails, expectedResourceErrors, expectedConflictErrors, externalRequests, guestMarketGate, staleMarketSelection, tutorialBrowser, failure }, null, 2));
 if (failure) {
   console.error(failure);
   process.exitCode = 1;
