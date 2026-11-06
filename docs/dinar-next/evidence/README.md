@@ -1,3 +1,9 @@
+# Final qualified local evidence
+
+`final-local-acceptance.json` records exact source cuts, supported profiles, raw failures/retries and qualified counts. Five `closure-*.png` captures are fresh C2A PG18 images, with provenance in `closure-provenance.json`; final source retains that frontend tree, with a separately qualified server CSP change. `closure-command-e-summary.json` records 96 width/theme runs. All providers/people/money are synthetic; no live availability/payment/affiliate claim is evidenced.
+
+The following earlier captures and their original source attribution are historical, not final reruns.
+
 # Synthetic browser and source-cut evidence
 
 `connect-acceptance-e0d1de0.json` records PostgreSQL 18/16 outcomes, current browser evidence, source cuts, skips and blockers. Application source is `e0d1de0`; this publication commit adds CI/reporting and a viewport-settling test-harness correction. It is not a claim that every project gate has passed.

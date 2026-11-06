@@ -1,0 +1,39 @@
+{
+  "sourceSHA": "9101672a7370bb8080e598344840d1fde2f88291",
+  "imageID": "sha256:f711bf12a0cc55ad95b6f4155554180aa7e3c36e30a41427ecd223eb61a7370c",
+  "imageTag": "dinar-next-g33:9101672a7370bb8080e598344840d1fde2f88291",
+  "dockerfile": "Dockerfile",
+  "buildArgs": {
+    "PNPM_VERSION": "10.30.3"
+  },
+  "dependencyInstall": "Frozen lockfile; unchanged dependency layers may be cached",
+  "ephemeralTrust": "Optional BuildKit proxy_ca secret mounted for package acquisition only; no disabled TLS verification or CA copied to layers",
+  "buildLogSHA256": "bbad16e194f99837674235d8014c43c99e2b163778ba070bf2158ca8d4d88ec6",
+  "g33": [
+    {
+      "pg": 16,
+      "sourceSHA": "9101672a7370bb8080e598344840d1fde2f88291",
+      "exit": 0,
+      "seconds": 252.88,
+      "mode": "LOCAL_DISPOSABLE",
+      "githubActionsRun": false,
+      "scheduler": "Two independent official PostgreSQL containers/internal networks in parallel; existing per-container resource caps unchanged"
+    },
+    {
+      "pg": 18,
+      "sourceSHA": "9101672a7370bb8080e598344840d1fde2f88291",
+      "exit": 0,
+      "seconds": 297.65,
+      "mode": "LOCAL_DISPOSABLE",
+      "githubActionsRun": false,
+      "scheduler": "Two independent official PostgreSQL containers/internal networks in parallel; existing per-container resource caps unchanged"
+    }
+  ],
+  "migrationFingerprint": "60:cfcab14965fb5d5cbc2e2e936d44c5dc",
+  "appShutdownExitCodes": 0,
+  "productionHealthStatus": 200,
+  "productionReadinessStatus": 503,
+  "readinessReason": "Dedicated real SMS provider not configured; expected fail-closed acceptance assertion, not staging approval",
+  "hostPortsPublished": false,
+  "hostedCIRunClaimed": false
+}

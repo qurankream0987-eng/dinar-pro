@@ -1,0 +1,42 @@
+{
+  "sourceSHA": "c2a8717e1f345b4c9a2c5f39ae5a41b6e868ad82",
+  "pg": 18,
+  "suite": "command-e-ui.test",
+  "summary": {
+    "runs": 96,
+    "rtl": [
+      "rtl"
+    ],
+    "overflow": [],
+    "unnamedControls": [],
+    "smallTapTargets": [],
+    "composerHidden": [],
+    "consoleErrors": [],
+    "darkApplied": true,
+    "journeys": {
+      "sidebarDrawer390": {
+        "overflowing": [],
+        "unnamed": []
+      },
+      "drawerClosesOnEscape390": true,
+      "scrollToLatest390": {
+        "returnVisible": true,
+        "lastVisible": true
+      },
+      "composerFocusable390": true,
+      "scrollToLatest1440": {
+        "returnVisible": true,
+        "lastVisible": true
+      },
+      "composerFocusable1440": true
+    },
+    "perf": {
+      "jsFiles": 1,
+      "jsTransferKB": 264,
+      "cssTransferKB": 38,
+      "domContentLoadedMs": 208,
+      "firstAnswerVisibleMs": 893
+    },
+    "failures": []
+  }
+}

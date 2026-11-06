@@ -29,4 +29,4 @@ For other acceptance suites use `artifacts/api-server/test/isolation/local-suite
 
 For recovery fixtures, assistant completion must contain `metadata.replyToMessageId` for the original recorded user turn. Persisted unanswered turns lock the composer and permit verification, not replay. An absent turn may retry with its original identity. Long-stream UI checks should bound the wait and verify the owned persisted user/assistant correlation; a browser transport handle alone is not proof of execution completion.
 
-See `UNIFIED_ACCEPTANCE_REPORT.md` for actual runs, initial red evidence, retries, source revisions, skips and external blockers. A command documented here is not itself a passing run.
+See `CODEX_COMPLETE_LOCAL_ACCEPTANCE.md` for actual runs, initial red evidence, retries, source revisions, skips and external blockers. A command documented here is not itself a passing run.

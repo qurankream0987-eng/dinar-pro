@@ -1,3 +1,5 @@
+> Historical checkpoint retained. Current qualified source and status: [FINAL_SOURCE_INVENTORY](FINAL_SOURCE_INVENTORY.md), [49-branch reconciliation](FINAL_49_BRANCH_RECONCILIATION.md), [Claude handoff](FINAL_CLAUDE_INTEGRATION_HANDOFF.md). Earlier heads/counts below are historical snapshots.
+
 # DINAR NEXT G0 — Existing Entitlement and Buyer–Seller Communication Audit
 
 Date: 2026-10-20. Branch `main`, HEAD `d6bf588` (clean tree). Preceding work: A–F + FINAL

@@ -1,0 +1,14 @@
+{
+  "authoritySHA": "ebdd2d7a68f5a52af7ad973f21ef3b0cae914b4a",
+  "reviewedCodeSHA": "c2a8717e1f345b4c9a2c5f39ae5a41b6e868ad82",
+  "originalSQLCount": 57,
+  "currentSQLCount": 60,
+  "originalSQLByteIdentical": true,
+  "manifestPrefixIdentical": true,
+  "manifestSHA256": "24dd1a2040848d3229995984405c2bb27fd70c62219052d36b44260936fdde2d",
+  "newMigrationInFinalReconciliation": false,
+  "originalWorktreeBranch": "work",
+  "originalWorktreeSHA": "b1b20e513ed25952bc086778fb71af88adcc54ba",
+  "originalWorktreeClean": true,
+  "utc": "2026-11-06T02:01:00.342095+00:00"
+}

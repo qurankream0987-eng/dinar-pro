@@ -1,0 +1,11 @@
+{
+  "specRevision": "1",
+  "observationsCurrent": true,
+  "networkMode": "restricted",
+  "networkState": "enforced",
+  "githubApiAllowed": false,
+  "githubGitAllowed": true,
+  "configuredSecretBindings": 0,
+  "outboundIdentities": 0,
+  "configurationMutated": false
+}

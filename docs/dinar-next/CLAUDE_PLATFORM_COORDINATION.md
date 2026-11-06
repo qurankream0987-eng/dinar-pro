@@ -1,3 +1,5 @@
+> Historical checkpoint retained. Current qualified source and status: [FINAL_SOURCE_INVENTORY](FINAL_SOURCE_INVENTORY.md), [49-branch reconciliation](FINAL_49_BRANCH_RECONCILIATION.md), [Claude handoff](FINAL_CLAUDE_INTEGRATION_HANDOFF.md). Earlier heads/counts below are historical snapshots.
+
 # Platform / intelligence coordination — owner directive, 2026-11-05
 
 The platform is preserved and extended, not rebuilt. Latest authenticated Git-head inspection found:
@@ -69,3 +71,7 @@ Authenticated read/fetch found `a20706fb5e9330883ea882eb6f3b92130615fd49`, six n
 Additional necessary overlap: `artifacts/dinar/test/w02u3-card-{performance,recovery}-ui.mjs`, recovery wrapper, `artifacts/api-server/src/app.ts` and `test/same-origin-web.test.ts`. The platform reproduces and minimally repairs production framing locally (also requiring self-only under NODE_ENV=production), independently aligned with Claude's security finding 53ca8efb; no active branch commit is imported or rewritten. At integration retain both label and runtime-production protection and attribute the existing original commit.
 
 The platform's new `routes/ai.ts` correction ends copied message timestamps before the next live turn; otherwise a 500-message copy can sort a newly edited turn into the middle of its history after hydration. Preserve this server ordering correction alongside Claude's rendered-completion wait. Keep exact correlated persistence, visible edited text and idle composer assertions; do not replace them with transport-only waits or a weaker fixture. Claude's bounded-verification `Ai.tsx` changes remain intelligence-branch work, not silently claimed integrated.
+
+## Final reconciliation refresh
+
+Claude/PR6 Git head `d0c2f0390b6d06bece8bd2d95c5629d2384c19bc`, 17 original commits, remains untouched. FINAL_CLAUDE_INTEGRATION_HANDOFF and CODEX_CLAUDE_INTEGRATION_MAP supersede the earlier zero/limited-overlap observations: nine text conflicts, eight absent model bindings, shared intent grammar/BUY matcher, business UNKNOWN, authored API/schema and server-owned verification requirements. All 49 remote heads were revalidated. No active branch was merged.

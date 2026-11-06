@@ -1,0 +1,96 @@
+{
+  "qualifiedCodeSHA": "9101672a7370bb8080e598344840d1fde2f88291",
+  "commands": {
+    "typecheck": [
+      "pnpm",
+      "run",
+      "typecheck"
+    ],
+    "codegen": [
+      "pnpm",
+      "--filter",
+      "@workspace/api-spec",
+      "run",
+      "codegen"
+    ],
+    "docker-build": [
+      "docker",
+      "--host=unix:///var/run/docker.sock",
+      "build",
+      "--build-arg",
+      "PNPM_VERSION=10.30.3",
+      "--secret",
+      "id=proxy_ca,src=<session CA path>",
+      "-t",
+      "dinar-next-g33:9101672a7370bb8080e598344840d1fde2f88291",
+      "."
+    ],
+    "g33-entry-guards": [
+      "node",
+      "scripts/ci/g33-local-guards.test.mjs"
+    ],
+    "card-surfaces": [
+      "pnpm",
+      "--filter",
+      "@workspace/dinar",
+      "run",
+      "test:surfaces"
+    ],
+    "gitleaks": [
+      "gitleaks",
+      "git",
+      ".",
+      "--log-opts=--all --full-history -m",
+      "--redact=100"
+    ],
+    "dependency-audit": [
+      "pnpm",
+      "audit",
+      "--json"
+    ]
+  },
+  "successfulLogEvidence": {
+    "typecheck": {
+      "workspaceLog": "/workspace/dinar-connect-evidence/final-typecheck-9101672.log",
+      "sha256": "6cfdeeb33836707900965dd3ecc08cccf7496a7761f14ddb8296004fd2baec73",
+      "exit": 0
+    },
+    "codegen": {
+      "workspaceLog": "/workspace/dinar-connect-evidence/final-codegen-9101672.log",
+      "sha256": "869e45f187d3682392dc4ec402452a94b5316c80d01353de97dba108c2bd5db0",
+      "exit": 0
+    },
+    "docker-build": {
+      "workspaceLog": "/workspace/dinar-connect-evidence/final-docker-build-9101672.log",
+      "sha256": "bbad16e194f99837674235d8014c43c99e2b163778ba070bf2158ca8d4d88ec6",
+      "exit": 0
+    },
+    "g33-entry-guards": {
+      "workspaceLog": "/workspace/dinar-connect-evidence/final-g33-guards-9101672.log",
+      "sha256": "91ee1f7fa6aabde81ceacb466a74b5fa9f998a2d86b175c7fcb9c312d445d064",
+      "exit": 0
+    },
+    "card-surfaces": {
+      "workspaceLog": "/workspace/dinar-connect-evidence/final-surfaces-9101672.log",
+      "sha256": "7fa618ba8b48ef656be1e392c06fa30fe1686487c3be51e65303ef22aeffb5e5",
+      "exit": 0
+    },
+    "gitleaks": {
+      "workspaceLog": "/workspace/dinar-connect-evidence/final-gitleaks-9101672.log",
+      "sha256": "80f04a25cc30e121e3ee1163b4e6f0f36298600c2af13c978e2cb0058f6b07f7",
+      "exit": 0
+    },
+    "dependency-audit": {
+      "workspaceLog": "/workspace/dinar-connect-evidence/final-audit-9101672.json",
+      "sha256": "08da3844f3ab95a1188952dab917d6aa1c83828df150ef722421c17d907fdf58",
+      "exit": 0
+    }
+  },
+  "generatedSourceDriftExit": 0,
+  "initialFailuresRetained": {
+    "regularInventory": "final-local-acceptance.json rawFailures",
+    "generationRace": "final-local-acceptance.json allFinalQualificationAttempts",
+    "nativeWrapper": "final-native-harness-evidence.json",
+    "backupProbe": "Original migration-0001 guard returns P0001; final exact-trigger assertions pass. Initial expectation/probe diagnostics retained outside repository."
+  }
+}

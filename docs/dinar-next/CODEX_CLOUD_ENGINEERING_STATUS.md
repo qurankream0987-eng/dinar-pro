@@ -1,3 +1,5 @@
+> Historical checkpoint retained. Current qualified source and status: [FINAL_SOURCE_INVENTORY](FINAL_SOURCE_INVENTORY.md), [49-branch reconciliation](FINAL_49_BRANCH_RECONCILIATION.md), [Claude handoff](FINAL_CLAUDE_INTEGRATION_HANDOFF.md). Earlier heads/counts below are historical snapshots.
+
 # Codex Cloud engineering status — 2026-11-04
 
 This is a local engineering handoff for independent Claude review. It is not a

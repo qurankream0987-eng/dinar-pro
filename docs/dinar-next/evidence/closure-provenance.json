@@ -1,0 +1,42 @@
+[
+  {
+    "file": "closure-domain-320.png",
+    "sourceSHA": "c2a8717e1f345b4c9a2c5f39ae5a41b6e868ad82",
+    "pg": 18,
+    "suite": "connect-cards-browser-journey.test",
+    "sha256": "5cd85fe14de4518517dccde411247aa256018ec32c125e362e387387f49cab8f",
+    "synthetic": true
+  },
+  {
+    "file": "closure-internal-product-320.png",
+    "sourceSHA": "c2a8717e1f345b4c9a2c5f39ae5a41b6e868ad82",
+    "pg": 18,
+    "suite": "command-e-ui.test",
+    "sha256": "1de22f8591512ae6ada9fd08969e1fa52c54fe8b96af04731480d3ee613d2ddf",
+    "synthetic": true
+  },
+  {
+    "file": "closure-admin-finance-320.png",
+    "sourceSHA": "c2a8717e1f345b4c9a2c5f39ae5a41b6e868ad82",
+    "pg": 18,
+    "suite": "connect-finance-browser-journey.test",
+    "sha256": "f68549d5323b1c06332294ac1e7177ef69a3c24f3295f386587f6f4d7b5e5737",
+    "synthetic": true
+  },
+  {
+    "file": "closure-staff-320.png",
+    "sourceSHA": "c2a8717e1f345b4c9a2c5f39ae5a41b6e868ad82",
+    "pg": 18,
+    "suite": "connect-finance-browser-journey.test",
+    "sha256": "4d51951f5e568e2ef44c476421a4dbd9255c3eca65130a6df3f4cc63b022b635",
+    "synthetic": true
+  },
+  {
+    "file": "closure-website-320.png",
+    "sourceSHA": "c2a8717e1f345b4c9a2c5f39ae5a41b6e868ad82",
+    "pg": 18,
+    "suite": "connect-finance-browser-journey.test",
+    "sha256": "3df8027027104f1c4cd3081740f4bc0ec020d456db0868d47c72f91cd861b0ae",
+    "synthetic": true
+  }
+]

@@ -1,0 +1,37 @@
+{
+  "results": [
+    {
+      "log": "/workspace/dinar-connect-evidence/final-native-guards-c2a8717.log",
+      "sha256": "420a345cf7bb57c23380d4abe5fae73d87cb3b849e5d6724db81633812eb1eaf",
+      "sourceSHA": "c2a8717e1f345b4c9a2c5f39ae5a41b6e868ad82",
+      "classification": "PASS",
+      "tests": 9,
+      "pass": 9,
+      "fail": 0,
+      "skipped": 0
+    },
+    {
+      "log": "/workspace/dinar-connect-evidence/final-native-sandbox-c2a8717.log",
+      "sha256": "bdc8faed169a7d3b90d15c486acea071d92b8590312b49b002f1e48c93de1c1b",
+      "sourceSHA": "c2a8717e1f345b4c9a2c5f39ae5a41b6e868ad82",
+      "classification": "ENVIRONMENT_BLOCKED",
+      "tests": 6,
+      "pass": 1,
+      "fail": 5,
+      "skipped": 0
+    },
+    {
+      "log": "/workspace/dinar-connect-evidence/native-preflight-loopback-only/result.log",
+      "sha256": "6ed17c8fb8a37eeba4aa7238b73624ba0468151b920ab265b724d0fa525233be",
+      "sourceSHA": "c2a8717e1f345b4c9a2c5f39ae5a41b6e868ad82",
+      "classification": "PASS_WITH_EXPLICIT_NON_BROWSER_SETUP_ADAPTATION",
+      "tests": 21,
+      "pass": 21,
+      "fail": 0,
+      "skipped": 0
+    }
+  ],
+  "originalWrapperRootCause": "Native user/network namespaces work, kernel sit0 device absent; failure precedes PostgreSQL. No tracked harness modification.",
+  "adaptation": "Outside-repository preflight-only setup omits three sit0 addressing/up statements. Unchanged 21 assertions, true no-route namespace, actual sentinel cluster, zero outbound and own-cluster teardown. Not full original wrapper/browser acceptance.",
+  "wrongCwdAttempt": "final-native-guards-wrong-cwd.log retained as setup error; correct API-directory invocation passes nine."
+}

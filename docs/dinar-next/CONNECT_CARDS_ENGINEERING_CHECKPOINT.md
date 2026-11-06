@@ -1,3 +1,5 @@
+> Historical checkpoint retained. Current qualified source and status: [FINAL_SOURCE_INVENTORY](FINAL_SOURCE_INVENTORY.md), [49-branch reconciliation](FINAL_49_BRANCH_RECONCILIATION.md), [Claude handoff](FINAL_CLAUDE_INTEGRATION_HANDOFF.md). Earlier heads/counts below are historical snapshots.
+
 # Universal cards and Connect onboarding checkpoint
 
 This checkpoint implements the owner's universal interactive card request in the integrated application. It also delivers the first onboarding/catalog milestone of the larger DINAR Connect mission. It is **not** acceptance of the full Connect commission/connector platform or of every feature in the comprehensive project mission.
