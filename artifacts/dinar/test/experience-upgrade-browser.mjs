@@ -1160,10 +1160,14 @@ try {
       check(privateRead.status() === 404, "the new account cannot read the notification owner's order");
       await expect(page.getByTestId("button-confirm-receipt")).toHaveCount(0);
       await other.close();
+      // Leave the old private detail route before observing the malformed-reference case:
+      // its legitimate account-switch refetch is independent of this input.
+      await page.goto("/notifications", { waitUntil: "domcontentloaded" });
+      await expect(page.getByRole("heading", { name: "التنبيهات", exact: true })).toBeVisible();
       const invalidOrderRequests = [];
       page.on("request", (request) => {
         const path = new URL(request.url()).pathname;
-        if (path.startsWith("/api/orders/")) invalidOrderRequests.push(path);
+        if (path.startsWith("/api/orders/") || path.startsWith("/api/admin/") || path.startsWith("/admin/")) invalidOrderRequests.push(path);
       });
       await page.goto(`/notifications?order=${encodeURIComponent("../../admin/markets")}`, { waitUntil: "domcontentloaded" });
       await expect(page.getByText("رابط الطلب غير صحيح.", { exact: true })).toBeVisible();

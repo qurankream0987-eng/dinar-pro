@@ -531,4 +531,27 @@ await test("G1-20 financial boundaries unchanged: commission 10%, no auto-renew,
   assert.ok(conv.length > 0);
 });
 
+await test("G1-21 effective market policy wins despite more than twenty newer global revisions", async () => {
+  const past = new Date(Date.now() - 60_000);
+  const future = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  await db.insert(commercialPolicies).values([
+    { id: randomUUID(), marketId: "JO", version: 50_000, effectiveFrom: past, policy: { minCohortSize: 77 } },
+    { id: randomUUID(), marketId: "JO", version: 300_000, effectiveFrom: future, policy: { minCohortSize: 88 } },
+    { id: randomUUID(), marketId: "KW", version: 200_000, effectiveFrom: past, policy: { minCohortSize: 99 } },
+    ...Array.from({ length: 25 }, (_, index) => ({ id: randomUUID(), marketId: null, version: 100_000 + index, effectiveFrom: past, policy: { minCohortSize: 10 } })),
+    { id: randomUUID(), marketId: null, version: 300_001, effectiveFrom: future, policy: { minCohortSize: 66 } },
+  ]);
+  const selected = await getCommercialPolicy("JO");
+  assert.equal(selected.version, 50_000, "global history must never hide an effective market override");
+  assert.equal(selected.minCohortSize, 77, "the market's privacy cohort policy is authoritative");
+  const global = await getCommercialPolicy("SA");
+  assert.equal(global.version, 100_024, "a market without its own override receives the latest effective global policy");
+  assert.equal(global.minCohortSize, 10);
+  assert.equal((await getCommercialPolicy("KW")).minCohortSize, 99, "another market retains its separate override");
+  await db.insert(commercialPolicies).values({ id: randomUUID(), marketId: "JO", version: 50_001, effectiveFrom: past, policy: { minCohortSize: 78 } });
+  const revised = await getCommercialPolicy("JO");
+  assert.equal(revised.version, 50_001);
+  assert.equal(revised.minCohortSize, 78, "latest effective market revision wins within its own scope");
+});
+
 server.close();

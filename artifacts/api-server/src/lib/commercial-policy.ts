@@ -6,7 +6,7 @@
  */
 import { createHmac } from "node:crypto";
 import { DEFAULT_SUBSCRIPTION_PLANS_POLICY, SubscriptionPlansPolicySchema } from "./subscription-plans";
-import { and, desc, eq, isNull, lte, or } from "drizzle-orm";
+import { and, desc, eq, isNull, lte, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import { commercialPolicies, db } from "@workspace/db";
 import { AiUsagePolicySchema, DEFAULT_AI_USAGE_POLICY } from "./ai-usage-policy";
@@ -99,8 +99,10 @@ export async function getCommercialPolicy(marketId: string, tx: any = db, now = 
     .select()
     .from(commercialPolicies)
     .where(and(or(eq(commercialPolicies.marketId, marketId), isNull(commercialPolicies.marketId)), lte(commercialPolicies.effectiveFrom, now)))
-    .orderBy(desc(commercialPolicies.version))
-    .limit(20);
+    // Scope precedence must be applied before limiting: newer global history must never
+    // evict an effective market-specific override from the candidate set.
+    .orderBy(desc(sql`${commercialPolicies.marketId} IS NOT NULL`), desc(commercialPolicies.version))
+    .limit(1);
   const row = rows.find((item: typeof commercialPolicies.$inferSelect) => item.marketId === marketId) ?? rows.find((item: typeof commercialPolicies.$inferSelect) => item.marketId === null);
   if (!row) return DEFAULT_COMMERCIAL_POLICY;
   const merged = CommercialPolicySchema.safeParse({ ...withoutVersion(DEFAULT_COMMERCIAL_POLICY), ...(row.policy as object) });
