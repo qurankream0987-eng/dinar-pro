@@ -105,7 +105,7 @@ await test("SH-07 the live benchmark accepts a self-hosted gateway only over HTT
   assert.equal(benchmarkEndpoint("SELF_HOSTED", { DINAR_BENCH_SELF_HOSTED_BASE_URL: "https://llm.example.org/v1/" } as NodeJS.ProcessEnv), "https://llm.example.org/v1");
   for (const bad of ["http://llm.example.org/v1", "https://user:pw@llm.example.org/v1", "https://llm.example.org/v1?key=x", "", "not a url"])
     assert.throws(() => benchmarkEndpoint("SELF_HOSTED", { DINAR_BENCH_SELF_HOSTED_BASE_URL: bad } as NodeJS.ProcessEnv), /DINAR_BENCH_SELF_HOSTED_BASE_URL/, bad);
-  for (const model of ["Qwen/Qwen3-14B", "Qwen/Qwen3.5-9B"]) {
+  for (const model of ["Qwen/Qwen3-14B", "Qwen/Qwen3.5-9B", "openai/gpt-oss-20b"]) {
     assert.equal(MODEL_CONTRACTS[model]?.provider, "SELF_HOSTED", model);
     assert.deepEqual(MODEL_CONTRACTS[model]?.toolChoices, ["REQUIRED"], model);
   }

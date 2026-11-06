@@ -148,8 +148,21 @@ export const MODEL_CONTRACTS: Record<string, ModelContract> = {
     priceTiers: [{ fromInputTokens: 0, inputPer1M: 0, outputPer1M: 0 }],
     sources: ["https://huggingface.co/Qwen/Qwen3.5-9B"],
     checkedAt: "2026-11-05",
-    notes: "Official card shows an SGLang example with the qwen3_coder tool-call parser; the vLLM parser flag is unverified until approval.",
+    notes: "vLLM recipe (recipes.vllm.ai): vLLM >= 0.17.0, --enable-auto-tool-choice --tool-call-parser qwen3_coder --reasoning-parser qwen3. Licence Apache-2.0 per mirrors; confirm on the official LICENSE at approval.",
   },
+  "openai/gpt-oss-20b": {
+    provider: "SELF_HOSTED",
+    transports: { CHAT_COMPLETIONS: ["default"] },
+    toolChoices: ["REQUIRED"],
+    defaultEffort: "none",
+    priceTiers: [{ fromInputTokens: 0, inputPer1M: 0, outputPer1M: 0 }],
+    sources: ["https://huggingface.co/openai/gpt-oss-20b"],
+    checkedAt: "2026-11-06",
+    notes: "Apache-2.0; MXFP4 MoE weights fit in ~16 GB. Requires the harmony format (vLLM handles it); native function calling. Reasoning effort is set by the model's own system prompt, not enable_thinking.",
+  },
+  // DeepSeek-R1-Distill-Qwen-14B (MIT) is deliberately NOT a contract: no official tool-calling
+  // support is documented, and DINAR's model loop requires structured tool calls. A text-only
+  // tool call fails closed (SH-04), so it could only ever answer without tools.
   "deepseek-flash": {
     provider: "DEEPSEEK",
     transports: { CHAT_COMPLETIONS: ["none"] },
