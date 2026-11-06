@@ -139,15 +139,30 @@ try {
   observations.keyboard.sendTabStops = sendReached;
 
   let releaseTurn;
+  let signalTurnHeld;
+  const turnHeld = new Promise((resolve) => { signalTurnHeld = resolve; });
   const turnGate = new Promise((resolve) => {
     releaseTurn = resolve;
   });
   await context.route(/\/api\/ai\/conversations\/[^/]+\/turns$/, async (route) => {
     if (route.request().method() !== "POST") return route.fallback();
-    await Promise.race([turnGate, sleep(15_000)]);
+    signalTurnHeld();
+    let timeout;
+    const released = await Promise.race([
+      turnGate.then(() => true),
+      new Promise((resolve) => { timeout = setTimeout(() => resolve(false), 30_000); }),
+    ]);
+    clearTimeout(timeout);
+    // Never let a diagnostic timeout complete the action while the test is
+    // asserting its in-flight state. Abort instead and fail the unchanged journey.
+    if (!released) return route.abort("timedout");
     await route.continue();
   });
   await page.keyboard.press("Enter");
+  await Promise.race([
+    turnHeld,
+    sleep(10_000).then(() => { throw new Error("the accessibility fixture did not hold the turn request"); }),
+  ]);
   await page.waitForFunction(() => document.querySelector('[data-testid="button-send-ai-message"]')?.getAttribute("aria-busy") === "true", null, { timeout: 10_000 });
   const busy = await page.getByTestId("button-send-ai-message").evaluate((node) => ({ label: node.getAttribute("aria-label"), disabled: node.disabled }));
   assert.equal(busy.label, "دينار يعمل الآن", "the busy send button announces its state");

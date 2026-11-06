@@ -94,6 +94,17 @@ test("wrong credentials are refused by the endpoint and surface as errors, not a
   assert.equal(s3.requests.at(-1)?.status, 403);
 });
 
+test("an unavailable S3 endpoint cannot report upload success or a missing object", async () => {
+  const stopped = await startS3CompatibleTestServer(credentials);
+  const endpoint = stopped.endpoint;
+  await stopped.close();
+  const storage = new S3CompatibleObjectStorageService({ ...env, OBJECT_STORAGE_S3_ENDPOINT: endpoint });
+  const unavailable = (error: unknown) => error instanceof Error && !(error instanceof ObjectNotFoundError) && (error as Error & { code?: string }).code === "ECONNREFUSED";
+  await assert.rejects(() => storage.saveObjectEntityFromBuffer("/objects/outage/photo.png", png, "image/png"), unavailable);
+  await assert.rejects(() => storage.getObjectEntityFile("/objects/outage/photo.png"), unavailable);
+  assert.equal(stopped.objects.size, 0, "the unavailable provider persisted no object");
+});
+
 test("traversal and foreign paths are refused before any request is sent", async () => {
   const storage = new ObjectStorageService(env);
   const before = s3.requests.length;
