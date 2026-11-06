@@ -219,3 +219,33 @@ export function plansCardPrompt(view: PlansCardView, focus?: "BUSINESS_GO" | "BU
     ...(view.provisional ? ["الحدود المعروضة مؤقتة وغير معتمدة نهائيًا."] : []),
   ].join("\n");
 }
+
+/**
+ * A projection of the current period's text-request use to its end, from the actual pace so far.
+ * Returned only when enough of the period has elapsed and something has been used; otherwise the
+ * reason is returned instead of a number. Arithmetic only: no model, no invented history.
+ */
+export function usageProjection(
+  resource: { used: number; limit: number; remaining: number },
+  period: { start: string; renewsAt: string },
+  now = new Date(),
+  until?: Date,
+): { kind: "PROJECTED"; projectedUseAtEnd: number; likelyToRunOut: boolean; basisHours: number; untilLabel: "PERIOD_END" | "REQUESTED_DATE" } | { kind: "INSUFFICIENT_DATA"; reason: string } {
+  const start = Date.parse(period.start);
+  const end = Date.parse(period.renewsAt);
+  const target = until && until.getTime() < end ? until.getTime() : end;
+  const elapsedMs = now.getTime() - start;
+  if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) return { kind: "INSUFFICIENT_DATA", reason: "PERIOD_UNKNOWN" };
+  if (resource.limit <= 0) return { kind: "INSUFFICIENT_DATA", reason: "NO_LIMIT_CONFIGURED" };
+  // Less than 6 hours of the period, or nothing used yet, is not a defensible pace.
+  if (elapsedMs < 6 * 60 * 60 * 1000 || resource.used === 0) return { kind: "INSUFFICIENT_DATA", reason: resource.used === 0 ? "NO_USE_YET" : "PERIOD_TOO_YOUNG" };
+  const ratePerMs = resource.used / elapsedMs;
+  const projectedUseAtEnd = Math.round(resource.used + ratePerMs * Math.max(0, target - now.getTime()));
+  return {
+    kind: "PROJECTED",
+    projectedUseAtEnd,
+    likelyToRunOut: projectedUseAtEnd > resource.limit,
+    basisHours: Math.round(elapsedMs / 3_600_000),
+    untilLabel: target === end ? "PERIOD_END" : "REQUESTED_DATE",
+  };
+}

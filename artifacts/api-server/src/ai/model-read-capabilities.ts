@@ -136,3 +136,39 @@ export async function readSellerDues(context: ToolContext): Promise<ToolResult> 
     prompt: dues.length ? "هذه مستحقات عمولة DINAR على طلباتك المكتملة." : "لا توجد مستحقات عمولة عليك في هذا السوق.",
   };
 }
+
+/**
+ * The actor's own AI allowance: the same card as the deterministic usage route (recorded
+ * consumption, limits, renewal, provisional flag), plus an optional server-side projection.
+ * Read only; identity from the session; a provider's own token balance is never involved.
+ */
+export async function readAiUsage(
+  input: { question?: "SUMMARY" | "RENEWAL" | "WHY_STOPPED"; horizonDays?: number },
+  context: ToolContext,
+): Promise<ToolResult> {
+  if (!context.actorId) throw Object.assign(new Error("Sign-in required."), { status: 401 });
+  const [{ aiUsageCardTurn }, { aiUsageSummary }, { usageProjection }] = await Promise.all([
+    import("./commerce-turn"),
+    import("../lib/ai-usage"),
+    import("./usage-turn"),
+  ]);
+  const turn = await aiUsageCardTurn(context.actorId, context.market as never, input.question ?? "SUMMARY");
+  const summary = await aiUsageSummary({ kind: "USER", userId: context.actorId, market: context.market as never });
+  const text = summary.resources.find((item) => item.resource === "TEXT_REQUEST");
+  const until = input.horizonDays ? new Date(Date.now() + input.horizonDays * 24 * 60 * 60 * 1000) : undefined;
+  const projection = text
+    ? usageProjection({ used: text.used, limit: text.limit, remaining: text.remaining }, summary.period, new Date(), until)
+    : { kind: "INSUFFICIENT_DATA" as const, reason: "NO_TEXT_RESOURCE" };
+  return {
+    ...turn.result,
+    aiUsage: {
+      tier: summary.tierLabel,
+      provisional: !summary.approved,
+      renewsAt: summary.period.renewsAt,
+      resources: summary.resources.map((item) => ({ resource: item.resource, label: item.label, used: item.used, limit: item.limit, remaining: item.remaining })),
+      tokens: { used: summary.tokens.used, limit: summary.tokens.limit },
+      projection,
+      note: "DINAR's own allowance from its usage ledger, not any AI provider's balance. A projection is an estimate from this period's pace; say so, and when it is INSUFFICIENT_DATA do not give a number.",
+    },
+  };
+}

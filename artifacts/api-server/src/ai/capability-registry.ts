@@ -44,6 +44,7 @@ export const CAPABILITY_NAMES = [
   "readOwnOrderIssues",
   "prepareBusinessListingChange",
   "readOwnSellerDues",
+  "readOwnAiUsage",
 ] as const;
 export type CapabilityName = (typeof CAPABILITY_NAMES)[number];
 
@@ -593,6 +594,24 @@ export const CAPABILITY_REGISTRY: Record<CapabilityName, CapabilityDefinition> =
     canonicalService: "lib/seller-dues.sellerDuesView",
     availability: "MODEL_TOOL",
     modelActors: ["SELLER"],
+  }),
+
+  readOwnAiUsage: capability({
+    name: "readOwnAiUsage",
+    toolName: "readAiUsage",
+    purpose: "Read the user's own DINAR AI allowance (recorded use, limits, renewal, provisional flag) with an optional server-computed projection.",
+    inputSchema: z.object({ question: z.string().optional(), horizonDays: z.number().optional() }).strict(),
+    outputSchema: z.object({ kind: z.literal("SURFACE"), surface: z.literal("AI_USAGE") }).passthrough(),
+    actors: ["BUYER", "SELLER"],
+    permissions: ["marketplace.read", "ai.usage.owner"],
+    mutation: "READ_ONLY",
+    confirmation: "NONE",
+    idempotency: "READ_ONLY",
+    timeoutMs: MODEL_TOOL_TIMEOUT_MS,
+    audit: "REDACTED_TURN_METADATA",
+    canonicalService: "ai/usage-turn.usageCardView",
+    availability: "MODEL_TOOL",
+    modelActors: ["BUYER", "SELLER"],
   }),
 };
 

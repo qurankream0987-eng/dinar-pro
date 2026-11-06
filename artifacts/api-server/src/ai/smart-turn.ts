@@ -1318,6 +1318,7 @@ function compactCapabilityRead(result: ToolResult) {
   if (result.businessOverview) return { kind: "BUSINESS_OVERVIEW", ...result.businessOverview };
   if (result.orderIssues) return { kind: "ORDER_ISSUES", ...result.orderIssues };
   if (result.sellerDues) return { kind: "SELLER_DUES", ...result.sellerDues };
+  if (result.aiUsage) return { kind: "AI_USAGE", ...result.aiUsage };
   if (result.universalCards)
     return {
       kind: "EXTERNAL_OFFERS",
@@ -1844,7 +1845,7 @@ export async function executeModelFallback(
           toolLoopStopReason = "PREPARED";
           break;
         }
-        if (result.kind === "SURFACE" && (result.inventory || result.inquiries || result.orders || result.cart || result.fulfillment || result.universalCards)) {
+        if (result.kind === "SURFACE" && (result.inventory || result.inquiries || result.orders || result.cart || result.fulfillment || result.universalCards || result.aiUsage)) {
           lastCapabilityRead = result;
           lastCapabilityReadTool = execution.tool;
         }

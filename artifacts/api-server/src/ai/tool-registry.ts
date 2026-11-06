@@ -65,6 +65,8 @@ export type ToolResult = {
   orderIssues?: import("./model-read-capabilities").OrderIssues;
   /** The seller's own commission dues (read only). */
   sellerDues?: { dues: Record<string, unknown>[]; note: string };
+  /** The actor's own DINAR AI allowance and an optional projection (read only). */
+  aiUsage?: Record<string, unknown>;
   memory?: import("./personal-memory-turn").MemorySummary;
   /** RESULTS restores an existing result set exactly; it never creates a new one. */
   kind: "SEARCH" | "RESOURCE" | "RESULTS" | "SURFACE";
@@ -888,6 +890,38 @@ export const aiToolRegistry: Record<string, ToolDefinition> = {
     },
     execute: async (_input, context) => (await import("./model-read-capabilities")).readSellerDues(context),
   },
+
+  readAiUsage: {
+    name: "readAiUsage",
+    version: 1,
+    description: "Read the signed-in user's own DINAR AI allowance: recorded use, limits, renewal and an optional projection. Read only.",
+    permissions: ["marketplace.read"],
+    riskLevel: "LOW",
+    idempotency: "READ_ONLY",
+    auditPolicy: "REDACTED_TURN_METADATA",
+    exposedToModel: true,
+    inputSchema: z
+      .object({
+        question: z.enum(["SUMMARY", "RENEWAL", "WHY_STOPPED"]).optional(),
+        horizonDays: z.number().int().min(1).max(31).optional(),
+      })
+      .strict(),
+    modelDefinition: {
+      name: "readAiUsage",
+      description: "Use when the user asks about their own DINAR assistant usage, quota, remaining messages, when it renews, why the assistant stopped answering them, or whether their allowance will last (pass horizonDays, e.g. 'until the end of the week'). Answer only from the returned numbers; if the projection is INSUFFICIENT_DATA, explain that instead of estimating. Do not use for stock, money, orders or delivery.",
+      parameters: {
+        type: "object",
+        properties: {
+          question: { type: "string", enum: ["SUMMARY", "RENEWAL", "WHY_STOPPED"] },
+          horizonDays: { type: "integer", minimum: 1, maximum: 31, description: "Only when the user asks whether the allowance lasts until a time; days from now" },
+        },
+        required: [],
+        additionalProperties: false,
+      },
+    },
+    execute: async (input: { question?: "SUMMARY" | "RENEWAL" | "WHY_STOPPED"; horizonDays?: number }, context) =>
+      (await import("./model-read-capabilities")).readAiUsage(input, context),
+  },
 };
 
 /** The only tools the bounded model turn loop may execute; checked again at execution time. */
@@ -901,6 +935,7 @@ export const MODEL_LOOP_TOOL_ALLOWLIST = [
   "readBusinessOverview",
   "readOrderIssues",
   "readSellerDues",
+  "readAiUsage",
 ] as const;
 
 /** F01 read-only tools plus every F02 capability tool, filtered by server-derived roles. */

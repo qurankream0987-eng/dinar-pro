@@ -226,11 +226,11 @@ test("F02-01 roles and advertised tools come from server rows, never from the me
     "compareListings", "listingFacts", "prepareCartMutation", "prepareInquiryReply", "prepareListingDraft",
     "prepareNegotiationProposal", "readAuthorizedOrders", "readBusinessInquiries", "readBuyerCart",
     "readFulfillmentStatus", "readInventory", "readNegotiationStatus", "requestPublicationReview",
-    "reviewCheckout", "searchListings", "searchExternalDomains", "searchConnectPartners", "describeCapabilities", "readOwnBusinessOverview", "readOwnOrderIssues", "prepareBusinessListingChange", "readOwnSellerDues",
+    "reviewCheckout", "searchListings", "searchExternalDomains", "searchConnectPartners", "describeCapabilities", "readOwnBusinessOverview", "readOwnOrderIssues", "prepareBusinessListingChange", "readOwnSellerDues", "readOwnAiUsage",
   ].sort());
   assert.equal(MODEL_CAPABILITY_TOOL_NAMES.length, 13);
   const advertised = modelToolDefinitions(contextFor(seller, sellerConversation), ["BUYER", "SELLER"]).map((tool) => tool.name);
-  assert.equal(new Set(advertised).size, 22);
+  assert.equal(new Set(advertised).size, 23);
   assert.equal(advertised.includes("addToCart"), false);
 });
 
