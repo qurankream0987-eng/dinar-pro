@@ -1598,13 +1598,25 @@ export default function AiPage() {
     else void startConversation(value, []);
   };
   useEffect(() => {
-    if (ordersEntryHandled.current || accountLoading || !market || detail.isLoading)
+    if (ordersEntryHandled.current || accountLoading || identityVerifying || !market || detail.isLoading)
       return;
-    if (new URLSearchParams(window.location.search).get("openOrders") !== "1")
-      return;
+    const params = new URLSearchParams(window.location.search);
+    // These links request existing read-only surfaces through the same runtime as the sidebar.
+    // A URL cannot supply an arbitrary command or execute a commercial action.
+    const readCommands = new Map([
+      ["cart", "اعرض السلة"],
+      ["listings", "اعرض إعلاناتي"],
+      ["sales", "دينار أعطني إحصائيات مبيعاتي"],
+      ["dues", "اعرض مستحقاتي"],
+    ]);
+    const command = params.get("openOrders") === "1"
+      ? "طلباتي"
+      : readCommands.get(params.get("openSurface") ?? "");
+    if (!command) return;
     ordersEntryHandled.current = true;
-    runCommand("طلباتي");
-  }, [accountLoading, market?.id, detail.isLoading, runCommand]);
+    if (params.has("openSurface")) window.history.replaceState(null, "", window.location.pathname);
+    runCommand(command);
+  }, [accountLoading, identityVerifying, market?.id, detail.isLoading, runCommand]);
   useEffect(() => {
     if (sellEntryHandled.current || accountLoading || !market || detail.isLoading)
       return;

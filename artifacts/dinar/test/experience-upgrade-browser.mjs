@@ -1183,6 +1183,36 @@ try {
     }
   });
 
+  await journey("site-cart-navigation", async () => {
+    const { context, page } = await open(browser, "main", { width: 390 });
+    try {
+      await page.locator('[data-testid="link-cart"]:visible').first().click();
+      await expect(page.getByTestId("page-cart")).toBeVisible({ timeout: 5_000 });
+      await expect(page.getByTestId(`row-cart-item-${process.env.XP_CART_LISTING}`)).toBeVisible();
+      await page.reload({ waitUntil: "domcontentloaded" });
+      await expect(page.getByTestId(`row-cart-item-${process.env.XP_CART_LISTING}`)).toBeVisible();
+      return { persistedListing: process.env.XP_CART_LISTING, source: "canonical conversation CART surface and GET /api/cart" };
+    } finally { await shot(page, "audit-site-cart-navigation").catch(() => {}); await context.close(); }
+  });
+
+  await journey("profile-commerce-navigation", async () => {
+    const { context, page } = await open(browser, "seller", { width: 390 });
+    const visited = [];
+    try {
+      for (const [shortcut, target] of [["offers", "listings"], ["sales", "sales"], ["dues", "dues"]]) {
+        await page.goto("/profile", { waitUntil: "domcontentloaded" });
+        await page.getByTestId(`link-profile-${shortcut}`).click();
+        if (target === "listings") await expect(page.locator('[data-testid^="chat-seller-listing-"]').first()).toBeVisible({ timeout: 5_000 });
+        if (target === "sales") await expect(page.getByTestId("sales-summary")).toBeVisible({ timeout: 5_000 });
+        if (target === "dues") await expect(page.getByTestId("text-dues-total").first()).toBeVisible({ timeout: 5_000 });
+        check((await page.getByTestId("input-ai-composer").count()) === 1, "account shortcuts reuse the one conversation runtime");
+        await shot(page, `audit-profile-${shortcut}`);
+        visited.push(shortcut);
+      }
+      return { visited, authority: "existing seller listings, sales and dues services" };
+    } finally { await shot(page, "audit-profile-commerce-navigation").catch(() => {}); await context.close(); }
+  });
+
 } finally {
   await browser.close();
 }

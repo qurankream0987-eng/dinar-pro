@@ -123,7 +123,7 @@ export function ProfilePage() {
       testId: "link-profile-offers",
     },
     {
-      href: "/seller",
+      href: "/ai?openSurface=sales",
       label: "المبيعات",
       icon: Store,
       value: d?.completedOrders,

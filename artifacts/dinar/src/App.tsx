@@ -78,6 +78,10 @@ const CHAT_ONLY_ADMIN_ROUTES = new Set([
   "/admin/legal-readiness",
 ]);
 const CHAT_ONLY_ACCOUNT_ROUTES = new Set([
+  "/cart",
+  "/seller",
+  "/seller/offers",
+  "/seller/dues",
   "/notifications",
   "/connect",
   "/login",
@@ -130,6 +134,10 @@ function Routes() {
       <Route path="/orders">
         <Redirect to="/ai?openOrders=1" />
       </Route>
+      <Route path="/cart"><Redirect to="/ai?openSurface=cart" /></Route>
+      <Route path="/seller/offers"><Redirect to="/ai?openSurface=listings" /></Route>
+      <Route path="/seller/dues"><Redirect to="/ai?openSurface=dues" /></Route>
+      <Route path="/seller"><Redirect to="/ai?sell=1" /></Route>
       <Route path="/login"><AuthPage /></Route>
       <Route path="/register"><AuthPage register /></Route>
       <Route path="/notifications">{guard(<NotificationsPage />)}</Route>

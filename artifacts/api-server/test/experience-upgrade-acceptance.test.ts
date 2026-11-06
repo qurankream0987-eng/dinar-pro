@@ -938,6 +938,8 @@ await test("BROWSER header, sidebar, starters, free topic changes, rendering and
   assert.equal(notificationOrder.status, 201, notificationOrder.raw);
   assert.equal((await request(`/orders/${notificationOrder.data.id}/accept`, "POST", {}, notificationSeller.cookie)).status, 200);
   assert.equal((await request(`/orders/${notificationOrder.data.id}/delivery`, "POST", { proofType: "CODE", proofToken: "4821" }, notificationSeller.cookie)).status, 200);
+  const cartSeed = await request("/cart", "PUT", { marketId: "JO", items: [{ listingId: L.itemUsedMid, quantity: 1 }] }, users.main.cookie);
+  assert.equal(cartSeed.status, 200, cartSeed.raw);
   const web = await startBuiltWeb();
   const resultPath = `${OUT}/report.json`;
   await mkdir(`${OUT}/shots`, { recursive: true });
@@ -952,6 +954,7 @@ await test("BROWSER header, sidebar, starters, free topic changes, rendering and
         XP_AUTH: JSON.stringify(Object.fromEntries(Object.entries(users).map(([key, actor]) => [key, { phoneCountryCode: actor.phoneCountryCode, phoneNumber: actor.phoneNumber, password: actor.password }]))),
         XP_TOKEN: TOKEN,
         XP_NOTIFICATION_ORDER: notificationOrder.data.id,
+        XP_CART_LISTING: L.itemUsedMid,
         XP_OUT: OUT,
         XP_RESULT: resultPath,
         ...(process.env.DINAR_CHROMIUM ? { CHROMIUM_PATH: process.env.DINAR_CHROMIUM } : {}),
@@ -969,6 +972,11 @@ await test("BROWSER header, sidebar, starters, free topic changes, rendering and
   const notificationAfter = await request(`/orders/${notificationOrder.data.id}`, "GET", undefined, users.main.cookie);
   assert.equal(notificationAfter.status, 200);
   assert.equal(notificationAfter.data.status, "SELLER_MARKED_DELIVERED", "viewing a notification must never confirm receipt");
+  const cartAfterNavigation = await request("/cart", "GET", undefined, users.main.cookie);
+  assert.equal(cartAfterNavigation.status, 200);
+  assert.equal(cartAfterNavigation.data.length, 1, "read-only navigation does not change the canonical cart");
+  assert.equal(cartAfterNavigation.data[0].listingId, L.itemUsedMid);
+  assert.equal(cartAfterNavigation.data[0].quantity, 1);
   // What the browser renamed is what the server stores.
   const renamed = await db.select().from(conversations).where(and(eq(conversations.ownerUserId, users.main.id), eq(conversations.title, "دروس React")));
   assert.equal(renamed.length, 1, "the rename typed in the sidebar is the stored title");
