@@ -1,6 +1,6 @@
 # Final test evidence
 
-Fresh complete inventory frozen at `c2a8717e1f345b4c9a2c5f39ae5a41b6e868ad82`; the later explicit-local-preview CSP correction is separately qualified at final code/test cut `9101672a7370bb8080e598344840d1fde2f88291`. Any later delivery tip adds documentation/evidence only. All counts are actual executions, not a union of historical success claims.
+Fresh complete inventory frozen at `c2a8717e1f345b4c9a2c5f39ae5a41b6e868ad82`; the later explicit-local-preview CSP correction is separately qualified at final code/test cut `9101672a7370bb8080e598344840d1fde2f88291`. Delivery adds documentation/evidence plus two exact historical scanner fingerprints for reviewed documentation false alarms; application, contracts and SQL remain unchanged. All counts are actual executions, not a union of historical success claims.
 
 | Gate | Actual result and source |
 | --- | --- |
@@ -48,3 +48,5 @@ The unchanged preflight's 21 assertions were additionally executed successfully 
 All eight query shapes retain exact canonical/legacy result ordering at 1k/10k/100k; original row-bound and median-improvement assertions pass (4 cases per PG). Heap figures are observed per-query growth, not an absolute peak-memory proof or production SLO. Fixed-128 cursor/constant-space/snapshot equivalence remains explicitly unproved.
 
 Backup probe attempts are retained. An initial assertion expected only 55000/23514; diagnostic proved the preserved migration-0001 trigger correctly returns P0001. Final probes require the exact code, message and trigger function, and explicitly select version-1 canonical checkout rows. No database invariant was changed. The one final-qualification setup failure was caused by concurrent generation cleaning source outputs; generation finished at zero drift and the affected/remaining groups reran serially.
+
+Delivery scanner review: [two documented non-secret detections and exact fingerprint exclusions](evidence/DELIVERY_SCANNER_TRIAGE.md). The qualified-code scan remains 555 commits/zero findings; later delivery sweeps report reviewed exclusions separately, never as nonexistent raw detections. Application/contract/migration acceptance still refers to the exact unchanged code cut.

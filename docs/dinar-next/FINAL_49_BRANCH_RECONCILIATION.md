@@ -555,4 +555,6 @@ Original Conversation V2 heads `719d4715a869f69831049a6a2f6c349cec934344` and `4
 
 C1 functional results and numeric edges are verified; fixed-128 cursor/constant-space and transaction-snapshot equivalence are explicitly not claimed for current keyset/attribute-sort strategy. Active Claude intelligence, original artifacts, manual assistive technology, live/sandbox providers, legal/commercial approval and staging remain separate gates. No production readiness is inferred from local acceptance. [Launch matrix](FINAL_LAUNCH_READINESS.md) separates platform handoff, joint engineering, staging and production.
 
-Remote snapshot includes the verified code publication. The later documentation-only delivery tip is given by the final publication receipt/owner-facing report; all other 48 heads remain unchanged.
+Remote snapshot includes the verified code publication. The later supplemental delivery tip is given by the final publication receipt/owner-facing report; all other 48 heads remain unchanged.
+
+Delivery scanner review: [two documented non-secret detections and exact fingerprint exclusions](evidence/DELIVERY_SCANNER_TRIAGE.md). The qualified-code scan remains 555 commits/zero findings; later delivery sweeps report reviewed exclusions separately, never as nonexistent raw detections. Application/contract/migration acceptance still refers to the exact unchanged code cut.

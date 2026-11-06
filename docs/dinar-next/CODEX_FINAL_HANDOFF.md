@@ -2,7 +2,7 @@
 
 **CODEX_PLATFORM_HANDOFF_COMPLETE** — qualified local platform frozen for Claude integration review; full joint ENGINEERING_READY, STAGING_READY and PRODUCTION_READY remain NO.
 
-Authorized branch `codex/dinar-next-unified-development`, isolated worktree `/workspace/dinar-next-unified`. Qualified code/acceptance source `9101672a7370bb8080e598344840d1fde2f88291`. The later delivery commit adds reports/evidence only; its exact remotely verified SHA is in the owner-facing completion message and publication receipt. No application change follows the accepted code cut.
+Authorized branch `codex/dinar-next-unified-development`, isolated worktree `/workspace/dinar-next-unified`. Qualified code/acceptance source `9101672a7370bb8080e598344840d1fde2f88291`. The later delivery adds reports/evidence and narrowly reviewed scanner configuration; its exact remotely verified SHA is in the owner-facing completion message and publication receipt. No application change follows the accepted code cut.
 
 ## Preserved foundation and historical reconciliation
 
@@ -29,3 +29,5 @@ Latest inspected Claude/PR6 Git head `d0c2f0390b6d06bece8bd2d95c5629d2384c19bc`,
 Authenticated normal publication is authorized only to this existing Codex branch. GitHub API/Draft PR/Actions metadata remain blocked by enforced network policy; owner-reported billing is not a verified run root cause. Actual local acceptance is never called hosted CI. Real provider/model quality, legal/commercial/retention decisions, original artifacts, manual assistive technology and genuine staging remain external gates. [FINAL_LAUNCH_READINESS](FINAL_LAUNCH_READINESS.md) separates all verdicts; PRODUCTION_READY is NO.
 
 **Freeze the platform candidate for Claude's independent integration review.** No main merge, force push, contributor-branch mutation, deployment, Railway/production database access, paid AI, real messaging or live payments occurred.
+
+Delivery scanner review: [two documented non-secret detections and exact fingerprint exclusions](evidence/DELIVERY_SCANNER_TRIAGE.md). The qualified-code scan remains 555 commits/zero findings; later delivery sweeps report reviewed exclusions separately, never as nonexistent raw detections. Application/contract/migration acceptance still refers to the exact unchanged code cut.

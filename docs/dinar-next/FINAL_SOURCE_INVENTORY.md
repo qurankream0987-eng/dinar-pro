@@ -62,3 +62,5 @@ Authenticated Git transport can read heads and normally publish the owner-author
 - [Canonical closure matrix](CODEX_FINAL_CLOSURE_MATRIX.md)
 - [Complete branch/file/commit evidence](evidence/final-49-branches.json)
 - [Exact test-source ledger](evidence/final-local-acceptance.json)
+
+Delivery scanner review: [two documented non-secret detections and exact fingerprint exclusions](evidence/DELIVERY_SCANNER_TRIAGE.md). The qualified-code scan remains 555 commits/zero findings; later delivery sweeps report reviewed exclusions separately, never as nonexistent raw detections. Application/contract/migration acceptance still refers to the exact unchanged code cut.

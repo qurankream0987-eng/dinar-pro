@@ -1,0 +1,39 @@
+{
+  "rawDeliveryCommit": "ae6c722300d7a63e581b8240d8e2ed4c90eba29d",
+  "rawHistoryCommits": 556,
+  "rawScannerExit": 1,
+  "rawDetections": 2,
+  "reviewedNonSecretDetections": 2,
+  "reviewedExactFingerprints": 2,
+  "reviewedLocations": [
+    {
+      "path": "docs/dinar-next/CODEX_EXTERNAL_LAUNCH_BLOCKERS.md",
+      "line": 13,
+      "reason": "Ordinary policy prose; exact literal verified locally, not a credential",
+      "ignoreFileLine": 2
+    },
+    {
+      "path": "docs/dinar-next/evidence/final-self-audit.json",
+      "line": 43,
+      "reason": "Exact Git tree object for the qualified authored schema package; type and identity verified without external service",
+      "ignoreFileLine": 3
+    }
+  ],
+  "fullHistorySweepWithReviewedFingerprintsExit": 0,
+  "unreviewedDetections": 0,
+  "globalRuleOrPathDisabled": false,
+  "historyRewritten": false,
+  "scopeCounterexample": {
+    "status": "PASS_NEGATIVE_SCOPE",
+    "scannerExit": 1,
+    "expectedDetectionCount": 1,
+    "detectedFile": "probe.md",
+    "ignoredFingerprintCount": 2,
+    "differentCommitAndPathStillDetected": true,
+    "fixtureDeleted": true,
+    "productionCredentialUsed": false,
+    "ignoreFileSHA256": "ea1f3ce9747118cdc97b969b9bc4256981264b86c99fb367b7a880e40d87f794"
+  },
+  "ignoreFileSHA256": "ea1f3ce9747118cdc97b969b9bc4256981264b86c99fb367b7a880e40d87f794",
+  "followupSweepNote": "Final committed delivery is rescanned before publication; final receipt identifies its exact SHA. Original raw report retained and not called initially clean."
+}

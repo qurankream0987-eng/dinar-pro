@@ -51,3 +51,7 @@ Paths below use `artifacts/api-server/src/` unless specified. These are source r
 Final re-audit at `9101672a7370bb8080e598344840d1fde2f88291` rechecked the bounded CSP/fixture patch, all historical repairs and affected authority paths after acceptance. Exact source fingerprints are in `evidence/final-self-audit.json`. All confirmed P1/P2 application findings above are closed by executable regressions. Native sit0 failures, C1 unproved strategy properties, active Claude integration and external provenance/provider/legal/staging gates remain disclosed. No application source changes follow the accepted code cut.
 
 After any confirmed repair the affected tests and critical regressions are rerun, and the patch is re-audited. New feature requests are not added to closure. External policies/providers and Claude's semantic work remain in their explicit matrix states. Final handoff freezes the platform branch until the owner reopens it.
+
+## Delivery-only scanner review
+
+The post-documentation sweep flagged two non-secret documentation values, independently verified as ordinary policy prose and a real Git tree object ID. Exactly two historical fingerprints are reviewed in [DELIVERY_SCANNER_TRIAGE](evidence/DELIVERY_SCANNER_TRIAGE.md). No global exclusion or history rewrite is used; full scanning and a different-commit/path negative probe verify scope. Raw detections and reviewed exclusions remain explicit. No application, authorization, financial, migration or generated-contract source changed after qualification.

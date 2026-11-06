@@ -1,11 +1,12 @@
 {
   "startingPublishedSHA": "414331473448a35426d4187587fdb095402baffe",
   "qualifiedCodeSHA": "9101672a7370bb8080e598344840d1fde2f88291",
-  "delivery": "Subsequent documentation/evidence-only commit; final exact published delivery SHA is in owner-facing receipt",
-  "changedFileCount": 83,
+  "delivery": "Subsequent documentation/evidence and reviewed-scanner-configuration commit; final exact published delivery SHA is in owner-facing receipt",
+  "changedFileCount": 86,
   "runtimeAndTestCount": 30,
   "files": [
     ".github/workflows/g33-docker-acceptance.yml",
+    ".gitleaksignore",
     "Dockerfile",
     "artifacts/api-server/src/ai/action-foundation.ts",
     "artifacts/api-server/src/ai/action-recovery.ts",
@@ -57,6 +58,7 @@
     "docs/dinar-next/FINAL_W00_W12_RELEASE_MATRIX.md",
     "docs/dinar-next/G0_EXISTING_CAPABILITY_AUDIT.md",
     "docs/dinar-next/LOCAL_ACCEPTANCE_REHEARSAL.md",
+    "docs/dinar-next/evidence/DELIVERY_SCANNER_TRIAGE.md",
     "docs/dinar-next/evidence/README.md",
     "docs/dinar-next/evidence/backup-restore-pg16.json",
     "docs/dinar-next/evidence/backup-restore-pg18.json",
@@ -69,6 +71,7 @@
     "docs/dinar-next/evidence/closure-provenance.json",
     "docs/dinar-next/evidence/closure-staff-320.png",
     "docs/dinar-next/evidence/closure-website-320.png",
+    "docs/dinar-next/evidence/delivery-scanner-triage.json",
     "docs/dinar-next/evidence/final-49-branches.json",
     "docs/dinar-next/evidence/final-build-and-g33.json",
     "docs/dinar-next/evidence/final-change-inventory.json",
@@ -88,5 +91,7 @@
     "lib/api-zod/src/conversation-runtime.ts",
     "scripts/ci/g33-docker-acceptance.sh",
     "scripts/ci/g33-local-guards.test.mjs"
-  ]
+  ],
+  "additionalReviewedScannerConfigCount": 1,
+  "documentationEvidenceCount": 55
 }

@@ -43,3 +43,7 @@ Navigation is an expiring actor/conversation/market-bound capability, with trust
 Current package audit reports zero known advisories at all severities. Official gitleaks 8.30.1, verified against official checksums, scans all accessible refs including full merge-parent diffs with 100% redaction; zero findings. Exact scan source/counts and tool provenance are retained. Historical pattern scanning is an additional narrower check, not a substitute. Actual hosted CI remains unverified because API access is blocked. No live credentials, provider activation, paid inference, production DB or money transfer was used.
 
 No unresolved demonstrated P0/P1 internal finding remains within the recorded local platform scope. Financial/legal/permission protections pass the actual current regressions. External approval, native sit0 harness failures, historical C1 space/snapshot equivalence and unmerged Claude intelligence remain explicit limits; this is not production certification.
+
+## Delivery-only scanner review
+
+The post-documentation sweep flagged two non-secret documentation values, independently verified as ordinary policy prose and a real Git tree object ID. Exactly two historical fingerprints are reviewed in [DELIVERY_SCANNER_TRIAGE](evidence/DELIVERY_SCANNER_TRIAGE.md). No global exclusion or history rewrite is used; full scanning and a different-commit/path negative probe verify scope. Raw detections and reviewed exclusions remain explicit. No application, authorization, financial, migration or generated-contract source changed after qualification.

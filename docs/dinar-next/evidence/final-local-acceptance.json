@@ -1,7 +1,7 @@
 {
   "qualifiedCodeSHA": "9101672a7370bb8080e598344840d1fde2f88291",
   "freshCompleteInventorySHA": "c2a8717e1f345b4c9a2c5f39ae5a41b6e868ad82",
-  "sourceAttribution": "Fresh full inventory on C2A; final explicit-local-preview CSP predicate and deterministic W07/DS15 fixture changes separately qualified on exact code SHA. No claim of whole-application byte equivalence. Subsequent delivery is documentation/evidence only.",
+  "sourceAttribution": "Fresh full inventory on C2A; final explicit-local-preview CSP predicate and deterministic W07/DS15 fixture changes separately qualified on exact code SHA. No claim of whole-application byte equivalence. Subsequent delivery adds documentation/evidence and two narrowly reviewed scanner fingerprints; application code is unchanged.",
   "regularExecutions": 350,
   "uniqueApiTestFiles": 180,
   "qualifiedInventoryExecutions": 357,
