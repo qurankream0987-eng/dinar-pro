@@ -5,13 +5,13 @@
 - mobile context (390×844, touch);
 - single runs on a shared cloud container, so the numbers carry noise of roughly ±20 %.
 
-The "before" run was on ; the "after" run includes this command's change. The change is server text only, so the web bundle is identical.
+The "before" run was on `5b540c8`; the "after" run includes this command's change. The change is server text only, so the web bundle is identical.
 
 ## Bundle (production build)
 
 | Asset | Raw | Gzip |
 |---|---|---|
-| Main chunk  | 914,482 B | 268,914 B |
+| Main chunk `index-*.js` | 914,482 B | 268,914 B |
 | All JS | 1,404,596 B | 402,963 B |
 | CSS | 222,940 B | 38,535 B |
 
