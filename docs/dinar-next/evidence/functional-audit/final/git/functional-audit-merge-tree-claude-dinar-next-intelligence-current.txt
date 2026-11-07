@@ -1,0 +1,66 @@
+1a6a967862af3e11aa947cb66cd46795bf1cbdf8
+100644 7ba5d9ae621ab4016c22a13f1a4c23713552e993 1	artifacts/api-server/src/ai/intent.ts
+100644 1da151b43be89d325c7c93caaa69eda49219df04 2	artifacts/api-server/src/ai/intent.ts
+100644 e7230df8db34d451bca79ffcbcd08ce974cd0109 3	artifacts/api-server/src/ai/intent.ts
+100644 60d9fa3d463d85fcf17b65e380763677cd92fdca 1	artifacts/api-server/src/app.ts
+100644 08885b8b4fdc246d0c5a5a31fe944e2921c2caad 2	artifacts/api-server/src/app.ts
+100644 1d2f88e034aee697afadd5e5771b266ecfb76bb3 3	artifacts/api-server/src/app.ts
+100644 18488098f45361e3195ea37818c43b548757bd2a 1	artifacts/api-server/test/command-d-acceptance.test.ts
+100644 1ad8726e8d961b6527a36ccb947585f3ab6ba0f2 2	artifacts/api-server/test/command-d-acceptance.test.ts
+100644 a1c75cc9e17d9fda5cc6c856243c2e7849cde0d3 3	artifacts/api-server/test/command-d-acceptance.test.ts
+100644 c8691c346d8afc65720e87e89e20c449fff47395 1	artifacts/api-server/test/deepseek-chat-compatibility.test.ts
+100644 e4ed7143b80b098aa74af40cd7f50c9889bd40c7 2	artifacts/api-server/test/deepseek-chat-compatibility.test.ts
+100644 00260f6d85981ce1793d45b310f10dcf194638ab 3	artifacts/api-server/test/deepseek-chat-compatibility.test.ts
+100644 ea25d2e74184d3894b7b21dd4038a1eaa452106a 1	artifacts/api-server/test/experience-upgrade-acceptance.test.ts
+100644 bcaa6250b4c7581eb7a3fc584884f05a2840c16d 2	artifacts/api-server/test/experience-upgrade-acceptance.test.ts
+100644 df79eac454f9b918e2994d897ef1dd2ec1cea4a0 3	artifacts/api-server/test/experience-upgrade-acceptance.test.ts
+100644 acebcfb2635d2a8d10bf72645d6087d42cffb867 1	artifacts/api-server/test/same-origin-web.test.ts
+100644 eed5bf4d92496bf0b40f9b63e88cf935000e20c1 2	artifacts/api-server/test/same-origin-web.test.ts
+100644 03201038052e9612bd4fe2f2e055dc75b92d2e78 3	artifacts/api-server/test/same-origin-web.test.ts
+100644 5d78f13bd01b7db87ede2884a2b19f5ec34b6e55 1	artifacts/api-server/test/w02u3-card-recovery-browser-journey.test.ts
+100644 7efe10a35631b758db4cc243876fa210bd77dbac 2	artifacts/api-server/test/w02u3-card-recovery-browser-journey.test.ts
+100644 c97012d4675828da43cc39ced829892d9393064a 3	artifacts/api-server/test/w02u3-card-recovery-browser-journey.test.ts
+100644 cec1682514bd8b586ca6c5bd1c1c39819c7efdb4 1	artifacts/dinar/test/connect-finance-ui.mjs
+100644 c24711126bfe44dc628ef4846b0a9c5238f4963c 2	artifacts/dinar/test/connect-finance-ui.mjs
+100644 bcfe6578167ce588cc2a10ad58101ebb282286d6 3	artifacts/dinar/test/connect-finance-ui.mjs
+100644 1e6aaf38cf42e086055686cdb42d6d3acfefab46 1	artifacts/dinar/test/w02u3-card-performance-ui.mjs
+100644 0ae7349f1ba0c836e19493f61027d75f0b807a02 2	artifacts/dinar/test/w02u3-card-performance-ui.mjs
+100644 d7263fdba80e8d05394e2bb6cbb9693c14d7a85b 3	artifacts/dinar/test/w02u3-card-performance-ui.mjs
+100644 1e5a7ffaacf14eddea43376250d1037cc4b89478 1	artifacts/dinar/test/w02u3-card-recovery-ui.mjs
+100644 2be2a3b6447219bf2c073a417adc00c97e07d8d0 2	artifacts/dinar/test/w02u3-card-recovery-ui.mjs
+100644 6f25ffea779974e85d68ca4f7c5a695050c7a679 3	artifacts/dinar/test/w02u3-card-recovery-ui.mjs
+
+Auto-merging artifacts/api-server/src/ai/business-turn.ts
+Auto-merging artifacts/api-server/src/ai/intent.ts
+CONFLICT (content): Merge conflict in artifacts/api-server/src/ai/intent.ts
+Auto-merging artifacts/api-server/src/app.ts
+CONFLICT (content): Merge conflict in artifacts/api-server/src/app.ts
+Auto-merging artifacts/api-server/src/routes/ai.ts
+Auto-merging artifacts/api-server/src/routes/marketplace.ts
+Auto-merging artifacts/api-server/test/command-d-acceptance.test.ts
+CONFLICT (content): Merge conflict in artifacts/api-server/test/command-d-acceptance.test.ts
+Auto-merging artifacts/api-server/test/connect-partners.test.ts
+Auto-merging artifacts/api-server/test/conversation-router.test.ts
+Auto-merging artifacts/api-server/test/d3a-native-business.test.ts
+Auto-merging artifacts/api-server/test/deepseek-chat-compatibility.test.ts
+CONFLICT (content): Merge conflict in artifacts/api-server/test/deepseek-chat-compatibility.test.ts
+Auto-merging artifacts/api-server/test/experience-upgrade-acceptance.test.ts
+CONFLICT (content): Merge conflict in artifacts/api-server/test/experience-upgrade-acceptance.test.ts
+Auto-merging artifacts/api-server/test/model-native-routing.test.ts
+Auto-merging artifacts/api-server/test/same-origin-web.test.ts
+CONFLICT (content): Merge conflict in artifacts/api-server/test/same-origin-web.test.ts
+Auto-merging artifacts/api-server/test/w02u3-card-recovery-browser-journey.test.ts
+CONFLICT (content): Merge conflict in artifacts/api-server/test/w02u3-card-recovery-browser-journey.test.ts
+Auto-merging artifacts/dinar/src/features/ai/ConversationContent.tsx
+Auto-merging artifacts/dinar/src/pages/Ai.tsx
+Auto-merging artifacts/dinar/test/connect-finance-ui.mjs
+CONFLICT (content): Merge conflict in artifacts/dinar/test/connect-finance-ui.mjs
+Auto-merging artifacts/dinar/test/phase1-ui-acceptance.mjs
+Auto-merging artifacts/dinar/test/w02u3-card-performance-ui.mjs
+CONFLICT (content): Merge conflict in artifacts/dinar/test/w02u3-card-performance-ui.mjs
+Auto-merging artifacts/dinar/test/w02u3-card-recovery-ui.mjs
+CONFLICT (content): Merge conflict in artifacts/dinar/test/w02u3-card-recovery-ui.mjs
+Auto-merging lib/api-client-react/src/generated/api.schemas.ts
+Auto-merging lib/api-spec/openapi.yaml
+Auto-merging lib/api-zod/src/generated/api.ts
+Auto-merging lib/api-zod/src/generated/types/index.ts

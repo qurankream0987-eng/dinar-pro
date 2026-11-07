@@ -1,0 +1,307 @@
+{
+  "sourceSHA": "5121c9198ca80fb0cb02be4ef168b396d8aa12c0",
+  "inspectedAtUTC": "2026-11-07T13:40:27.427573+00:00",
+  "snapshot": "/workspace/dinar-connect-evidence/closure-remote-heads-final-current.tsv",
+  "heads": [
+    {
+      "branch": "ai-foundation-02",
+      "head": "2ef9c07ab5fdcd15eca167f5a01ab32b6054400e",
+      "headContained": true,
+      "uniqueCommits": 0
+    },
+    {
+      "branch": "claude/02-sc-acceptance",
+      "head": "9679e488c5f3d2260078d98c7d97704df6aac6ce",
+      "headContained": true,
+      "uniqueCommits": 0
+    },
+    {
+      "branch": "claude/04-reconciliation",
+      "head": "e5bbd1ba59bddae8c5bd173a890fcdeafa046c25",
+      "headContained": true,
+      "uniqueCommits": 0
+    },
+    {
+      "branch": "claude/05-w04-context",
+      "head": "4322fb6d7b66460626509401370f5ec3a5f6c6a8",
+      "headContained": true,
+      "uniqueCommits": 0
+    },
+    {
+      "branch": "claude/06-w02-ultra",
+      "head": "8f4662b8a8d0c1ebc90bec06cd17c89795d8a480",
+      "headContained": false,
+      "uniqueCommits": 2
+    },
+    {
+      "branch": "claude/07-legal-cards",
+      "head": "e17fad27339b9d40ccea341e46bef96941d34db8",
+      "headContained": true,
+      "uniqueCommits": 0
+    },
+    {
+      "branch": "claude/08-model-native",
+      "head": "09ff489f0a3f5950b9f0a0ba8b6cfc49230a7747",
+      "headContained": true,
+      "uniqueCommits": 0
+    },
+    {
+      "branch": "claude/09-dual-tier",
+      "head": "d416a047f3707d1f03c6763c76e96eee2ab69da4",
+      "headContained": true,
+      "uniqueCommits": 0
+    },
+    {
+      "branch": "claude/10-ultra-closure",
+      "head": "9a0f86f0b3c727f48be58aee7db11a3045a94613",
+      "headContained": true,
+      "uniqueCommits": 0
+    },
+    {
+      "branch": "claude/11-c1-sql-search",
+      "head": "d94477bad836bf4fe7b3330884170625d1698270",
+      "headContained": true,
+      "uniqueCommits": 0
+    },
+    {
+      "branch": "claude/12-d1-d2-business-foundation",
+      "head": "91b09ee7e24b737879d1bcf0ff1f8c238026d3f4",
+      "headContained": true,
+      "uniqueCommits": 0
+    },
+    {
+      "branch": "claude/13-integration-preflight",
+      "head": "fe1c23396930f836d97241a6e3333611c6a60e4d",
+      "headContained": true,
+      "uniqueCommits": 0
+    },
+    {
+      "branch": "claude/connect-01-modes",
+      "head": "7d42dd015b3f644cdc9c60999e8dc8a196366436",
+      "headContained": false,
+      "uniqueCommits": 1
+    },
+    {
+      "branch": "claude/dinar-next-intelligence",
+      "head": "974fb1e2f60aba3d415ac8561d913458c148fd4e",
+      "headContained": false,
+      "uniqueCommits": 27
+    },
+    {
+      "branch": "codex/11-c1-sql-search",
+      "head": "f351f5d20d52d77b69bdcff66e2412796e53aa39",
+      "headContained": false,
+      "uniqueCommits": 7
+    },
+    {
+      "branch": "codex/dinar-next-unified-development",
+      "head": "ab196c55964ed42947d07a88dcd7f2e5f66ccfa0",
+      "headContained": true,
+      "uniqueCommits": 0
+    },
+    {
+      "branch": "main",
+      "head": "b1b20e513ed25952bc086778fb71af88adcc54ba",
+      "headContained": true,
+      "uniqueCommits": 0
+    },
+    {
+      "branch": "qoder/04-sc02",
+      "head": "f0a3c77fc1fd1a276fcb2a61214dd3b4b8e49ee3",
+      "headContained": true,
+      "uniqueCommits": 0
+    },
+    {
+      "branch": "qoder/05-sc06",
+      "head": "56138dc97f2711862e41d635e2a009f5535da2bd",
+      "headContained": true,
+      "uniqueCommits": 0
+    },
+    {
+      "branch": "qoder/06-general-specs",
+      "head": "6335603bfb44857dd5a7261c6f32e06b5b085582",
+      "headContained": true,
+      "uniqueCommits": 0
+    },
+    {
+      "branch": "qoder/07-stock",
+      "head": "a80bbe32fdf8d9703875658e81b58923e20a1a13",
+      "headContained": false,
+      "uniqueCommits": 3
+    },
+    {
+      "branch": "qoder/08-integration",
+      "head": "5dda1466cc08e2d6d61d4d757bf541b853819f65",
+      "headContained": true,
+      "uniqueCommits": 0
+    },
+    {
+      "branch": "qoder/09-launch-gates",
+      "head": "5a005005224cf5ac05f72c8328258dd061a9846b",
+      "headContained": false,
+      "uniqueCommits": 2
+    },
+    {
+      "branch": "qoder/10-security-deps",
+      "head": "2b0649066a8c9049f410c1224e9f6610bc99492a",
+      "headContained": true,
+      "uniqueCommits": 0
+    },
+    {
+      "branch": "qoder/11-wave01-security-close",
+      "head": "772cda7193923cebe95a696f7c7c53c7ad37865a",
+      "headContained": true,
+      "uniqueCommits": 0
+    },
+    {
+      "branch": "qoder/12-wave02-card-reliability",
+      "head": "2da7f9721c8a915ab3630613f9d83a36a55ab3d6",
+      "headContained": true,
+      "uniqueCommits": 0
+    },
+    {
+      "branch": "qoder/12-wave02-red-evidence",
+      "head": "92aeb0c2858a2778a2cb496665c3f6b2b29ee5b5",
+      "headContained": false,
+      "uniqueCommits": 1
+    },
+    {
+      "branch": "qoder/13-wave03-card-envelope",
+      "head": "c6e45942cf122582db01eddaba7356ce1b72029e",
+      "headContained": true,
+      "uniqueCommits": 0
+    },
+    {
+      "branch": "qoder/14-w02u3-canonical-reliability",
+      "head": "6687df2d033c1b71eee5b46afb3e39d193f66ec2",
+      "headContained": true,
+      "uniqueCommits": 0
+    },
+    {
+      "branch": "qoder/15-d3a-native-business",
+      "head": "939930d1037387f39f1a2c64ac5b2ae61146b251",
+      "headContained": false,
+      "uniqueCommits": 13
+    },
+    {
+      "branch": "qoder/17-unified-integration-candidate",
+      "head": "4e60a56e3d21defea4c2d580c35fd3b198e52b5e",
+      "headContained": false,
+      "uniqueCommits": 41
+    },
+    {
+      "branch": "qoder/a01-baseline-audit",
+      "head": "f107dd32984cbdcb8e7dce3602ea26d99d9af9b5",
+      "headContained": false,
+      "uniqueCommits": 5
+    },
+    {
+      "branch": "qoder/a02-d4-d5-security",
+      "head": "8f9f6ad23067a7251a444dbe0e210ef4f1218b69",
+      "headContained": false,
+      "uniqueCommits": 5
+    },
+    {
+      "branch": "qoder/closure-12-executing-recovery",
+      "head": "2e0cca1345d2a2e0a4295c24aeac5b8b4ce59143",
+      "headContained": false,
+      "uniqueCommits": 3
+    },
+    {
+      "branch": "qoder/d12-replit-integration",
+      "head": "5d9bca1305245eb51686dda6083ae1aa2fb8e677",
+      "headContained": true,
+      "uniqueCommits": 0
+    },
+    {
+      "branch": "qoder/parallel-w07-w12-ultra",
+      "head": "af89cb340be4eb11a46b290e3dc5217e52af07ce",
+      "headContained": false,
+      "uniqueCommits": 20
+    },
+    {
+      "branch": "qoder/temp-principal-sixwave-closure",
+      "head": "44dfbf639fda27d4b8de7908c0aea8df25ab50ef",
+      "headContained": false,
+      "uniqueCommits": 16
+    },
+    {
+      "branch": "qoder/wave01-d1-d3-closure",
+      "head": "adf5a5f86ecd96fad8214eda51d20d05a0e2b2b4",
+      "headContained": true,
+      "uniqueCommits": 0
+    },
+    {
+      "branch": "qoder/wave02-d4-d6-closure",
+      "head": "845b0a48cfa7a726c97be75a00ed76fd8db5afca",
+      "headContained": true,
+      "uniqueCommits": 0
+    },
+    {
+      "branch": "qoder/wave03-d7-d9-closure",
+      "head": "c1e0a010c5eb0b1479b8ca21e4a410279b11cb3d",
+      "headContained": true,
+      "uniqueCommits": 0
+    },
+    {
+      "branch": "qoder/wave04-d10-d12-closure",
+      "head": "fd8215e8af4cf55e9f653c94cbc9105111e354eb",
+      "headContained": true,
+      "uniqueCommits": 0
+    },
+    {
+      "branch": "qoder/wave05-d13-d15-closure",
+      "head": "0f50dc65bbf9120dc4d183825cfe7a243db4b398",
+      "headContained": true,
+      "uniqueCommits": 0
+    },
+    {
+      "branch": "qoder/wave06-d16-d17-closure",
+      "head": "891c37d6a904c4ba8809e4531040c63f030bed99",
+      "headContained": false,
+      "uniqueCommits": 23
+    },
+    {
+      "branch": "qoder/wave06b-d16-d17-closure",
+      "head": "d341917ec4a34ade3c1bdde8366a44dbbca9f35d",
+      "headContained": false,
+      "uniqueCommits": 14
+    },
+    {
+      "branch": "replit/d16-legal-privacy-compliance",
+      "head": "c196a9bf892547322644540a5d03c338020581da",
+      "headContained": false,
+      "uniqueCommits": 1
+    },
+    {
+      "branch": "replit/dinar-next-complete-development",
+      "head": "11d7fbe3326897924468ee4c6d5467972a92b973",
+      "headContained": true,
+      "uniqueCommits": 0
+    },
+    {
+      "branch": "replit/dinar-next-six-wave-unification",
+      "head": "ebdd2d7a68f5a52af7ad973f21ef3b0cae914b4a",
+      "headContained": true,
+      "uniqueCommits": 0
+    },
+    {
+      "branch": "replit/railway-complete-infrastructure-readiness",
+      "head": "21e8562a1b640ebcdd4a270146e7cf56c37f053b",
+      "headContained": false,
+      "uniqueCommits": 6
+    },
+    {
+      "branch": "replit/railway-integrations-readiness",
+      "head": "75d59370884d8799df860d35895f19d987e93d17",
+      "headContained": false,
+      "uniqueCommits": 3
+    },
+    {
+      "branch": "replit/wave03-intent-integration",
+      "head": "76a7e403117233122b6d5bce2009268bcc586680",
+      "headContained": false,
+      "uniqueCommits": 2
+    }
+  ]
+}

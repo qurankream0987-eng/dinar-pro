@@ -1,0 +1,57 @@
+{
+  "sourceSHA": "0c683345b4bc999196993bf3b0813f76aba0ac06",
+  "pausedAtUTC": "2026-11-06T22:38:06.736994+00:00",
+  "reason": "Investigate G3 unexpectedConsoleErrors counter1; all32checks/7journeys pass but gate fails; do not weaken counter or edit source mid-run",
+  "controllers": [
+    {
+      "pid": 1110283,
+      "script": "run-current-closure-all.py"
+    },
+    {
+      "pid": 1110290,
+      "script": "run-functional-audit-frozen-program.py"
+    },
+    {
+      "pid": 1110742,
+      "script": "run-functional-audit-final-current.py"
+    }
+  ],
+  "inflightChildren": [],
+  "inflightLogs": [
+    "/workspace/dinar-connect-evidence/functional-audit-fresh-0c68334/pg18-market-capability-registry.test.log",
+    "/workspace/dinar-connect-evidence/functional-audit-fresh-0c68334/pg16-sc01-browser-journey.test.log",
+    "/workspace/dinar-connect-evidence/functional-audit-fresh-0c68334/pg18-market-legal-acceptance.test.log"
+  ],
+  "recordedFinished": 215,
+  "recordedPass": 214,
+  "recordedFail": 1,
+  "namespaceAndRelaysMustRemainAliveUntilChildCleanup": true,
+  "stoppedAtUTC": "2026-11-06T22:39:16.885886+00:00",
+  "inflightFinal": [
+    {
+      "log": "/workspace/dinar-connect-evidence/functional-audit-fresh-0c68334/pg18-market-capability-registry.test.log",
+      "suite": "pg18-market-capability-registry.test.log",
+      "finished": false,
+      "exit": null,
+      "note": "Not started; empty/prelude not launched, never counted as a completed group"
+    },
+    {
+      "log": "/workspace/dinar-connect-evidence/functional-audit-fresh-0c68334/pg16-sc01-browser-journey.test.log",
+      "suite": "sc01-browser-journey.test",
+      "finished": true,
+      "exit": 0,
+      "note": "Finished with canonical cleanup before controllers terminated"
+    },
+    {
+      "log": "/workspace/dinar-connect-evidence/functional-audit-fresh-0c68334/pg18-market-legal-acceptance.test.log",
+      "suite": "pg18-market-legal-acceptance.test.log",
+      "finished": false,
+      "exit": null,
+      "note": "Not started; empty/prelude not launched, never counted as a completed group"
+    }
+  ],
+  "totalFinished": 216,
+  "totalPass": 215,
+  "totalFail": 1,
+  "notACompleted350": true
+}

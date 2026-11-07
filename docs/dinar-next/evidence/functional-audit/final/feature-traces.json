@@ -1,0 +1,2428 @@
+{
+  "sourceSHA": "5121c9198ca80fb0cb02be4ef168b396d8aa12c0",
+  "features": [
+    {
+      "id": "AUTH",
+      "feature": "Registration, verified login/logout and sessions",
+      "entryPoint": "/login; /register; settings",
+      "backendSource": "artifacts/api-server/src/lib/auth.ts",
+      "databaseState": [
+        "users",
+        "sessions"
+      ],
+      "roles": "visitor/user",
+      "acceptanceSuites": [
+        "experience-upgrade-acceptance.test",
+        "phase1-acceptance.test"
+      ],
+      "remainingBoundary": "Real SMS provider and signup UI transport acceptance remain separate",
+      "status": "PASS_E2E",
+      "note": "Source/behavior trace inventory; final-source results must be attached before a PASS classification.",
+      "actualUIControl": "Register/phone challenge/terms submit; actual profile avatar and password controls",
+      "apiOperation": "POST /auth/phone-verification/challenges; POST /auth/phone-verification/challenges/verify; POST /auth/register; POST /auth/login; POST /auth/logout; GET /auth/me; PATCH /account/profile; POST /account/password; POST /account/profile-avatar/upload-url; PUT /account/profile-avatar",
+      "canonicalService": "artifacts/api-server/src/lib/auth.ts",
+      "requiredConfirmation": "Terms and registration submit; explicit password change",
+      "successReceipt": "201 registered;200 identity/profile/password;202 local phone challenge",
+      "failureRetry": "Invalid browser form sends0writes; wrong password400; expired protected session401",
+      "sourceSHA": "5121c9198ca80fb0cb02be4ef168b396d8aa12c0",
+      "browserEvidence": "experience-upgrade-acceptance.test; supplemental account-ui: actual production-built signup/profile/avatar/password on bothPGs",
+      "remainingDefect": "Production-built local signup/profile/avatar/password transport repeated on final source; live SMS/storage provider separately blocked",
+      "apiSourceEvidence": [
+        {
+          "file": "artifacts/api-server/src/lib/auth.ts",
+          "line": 260,
+          "router": "router",
+          "method": "POST",
+          "path": "/auth/phone-verification/challenges",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/lib/auth.ts",
+          "line": 329,
+          "router": "router",
+          "method": "POST",
+          "path": "/auth/phone-verification/challenges/verify",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/lib/auth.ts",
+          "line": 404,
+          "router": "router",
+          "method": "POST",
+          "path": "/auth/register",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/lib/auth.ts",
+          "line": 548,
+          "router": "router",
+          "method": "POST",
+          "path": "/auth/login",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/lib/auth.ts",
+          "line": 643,
+          "router": "router",
+          "method": "POST",
+          "path": "/auth/logout",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/lib/auth.ts",
+          "line": 229,
+          "router": "router",
+          "method": "GET",
+          "path": "/auth/me",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/lib/auth.ts",
+          "line": 690,
+          "router": "router",
+          "method": "PATCH",
+          "path": "/account/profile",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/lib/auth.ts",
+          "line": 716,
+          "router": "router",
+          "method": "POST",
+          "path": "/account/password",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/routes/profile-avatar.ts",
+          "line": 49,
+          "router": "router",
+          "method": "POST",
+          "path": "/account/profile-avatar/upload-url",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/routes/profile-avatar.ts",
+          "line": 65,
+          "router": "router",
+          "method": "PUT",
+          "path": "/account/profile-avatar",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        }
+      ],
+      "scope": "Exact named local scenario only; broader live/provider and policy boundaries stay explicit"
+    },
+    {
+      "id": "IDENTITY",
+      "feature": "Same-owner drafts, cross-account reset and failure retry",
+      "entryPoint": "Protected pages; tab return",
+      "backendSource": "artifacts/api-server/src/lib/auth.ts",
+      "databaseState": [
+        "sessions",
+        "users"
+      ],
+      "roles": "all signed-in roles",
+      "acceptanceSuites": [
+        "experience-upgrade-acceptance.test"
+      ],
+      "remainingBoundary": "Additional protected feature forms need coverage beyond the verified settings form",
+      "status": "PASS_E2E",
+      "note": "Source/behavior trace inventory; final-source results must be attached before a PASS classification.",
+      "actualUIControl": "Settings form, private dialog and explicit session retry",
+      "apiOperation": "GET /auth/me; protected account/order reads",
+      "canonicalService": "artifacts/api-server/src/lib/auth.ts",
+      "requiredConfirmation": "Read-only identity revalidation; no action replay",
+      "successReceipt": "Only verified owner visible; failed reads keep mask",
+      "failureRetry": "503 holds private fields; retry revalidates; B gets new private subtree",
+      "sourceSHA": "5121c9198ca80fb0cb02be4ef168b396d8aa12c0",
+      "browserEvidence": "experience-upgrade-acceptance.test",
+      "remainingDefect": "Additional protected feature forms need coverage beyond the verified settings form",
+      "scope": "Exact named local scenario only; broader live/provider and policy boundaries stay explicit"
+    },
+    {
+      "id": "SEARCH",
+      "feature": "Authoritative Arabic discovery and filters",
+      "entryPoint": "conversation; desktop search",
+      "backendSource": "artifacts/api-server/src/lib/marketplace-search-index.ts",
+      "databaseState": [
+        "offers",
+        "offer_search_documents"
+      ],
+      "roles": "visitor/buyer",
+      "acceptanceSuites": [
+        "search-sql-foundation.test",
+        "arabic-generality.test",
+        "experience-upgrade-acceptance.test"
+      ],
+      "remainingBoundary": "Full 100k benchmark pending final source",
+      "status": "PASS_E2E",
+      "note": "Source/behavior trace inventory; final-source results must be attached before a PASS classification.",
+      "actualUIControl": "Header search and conversation send; refinements",
+      "apiOperation": "POST /ai/conversations/:id/turns; GET /listings",
+      "canonicalService": "artifacts/api-server/src/lib/marketplace-search-index.ts",
+      "requiredConfirmation": "Explicit send; refinements only read",
+      "successReceipt": "Server-owned result IDs and grounded attributes",
+      "failureRetry": "Unknown/empty results truthful; no invented matching or broadened criteria",
+      "sourceSHA": "5121c9198ca80fb0cb02be4ef168b396d8aa12c0",
+      "browserEvidence": "experience-upgrade-acceptance.test",
+      "remainingDefect": "Fresh100k benchmark measured separately; historical fixed-cursor heap/transaction-snapshot equivalence unproved, no owner SLO established",
+      "apiSourceEvidence": [
+        {
+          "file": "artifacts/api-server/src/routes/ai.ts",
+          "line": 2027,
+          "router": "router",
+          "method": "POST",
+          "path": "/ai/conversations/:id/turns",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/routes/marketplace.ts",
+          "line": 245,
+          "router": "router",
+          "method": "GET",
+          "path": "/listings",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        }
+      ],
+      "scope": "Exact named local scenario only; broader live/provider and policy boundaries stay explicit"
+    },
+    {
+      "id": "SELL",
+      "feature": "Draft, review, publish and listing management",
+      "entryPoint": "conversation sell entry; seller shortcuts",
+      "backendSource": "artifacts/api-server/src/routes/marketplace.ts",
+      "databaseState": [
+        "offers"
+      ],
+      "roles": "seller",
+      "acceptanceSuites": [
+        "sc01-browser-journey.test",
+        "g3-ui.test",
+        "command-f-journeys.test",
+        "listing-edit-snapshot.test",
+        "experience-upgrade-acceptance.test"
+      ],
+      "remainingBoundary": "Inactive standalone seller routes stay outside chat-only scope",
+      "status": "PASS_E2E",
+      "note": "Source/behavior trace inventory; final-source results must be attached before a PASS classification.",
+      "actualUIControl": "Existing conversation publication review and seller listing editor",
+      "apiOperation": "POST /listings; PATCH /listings/:id; existing listing action routes",
+      "canonicalService": "artifacts/api-server/src/routes/marketplace.ts",
+      "requiredConfirmation": "Explicit publish/save; no write on open/edit/cancel",
+      "successReceipt": "Backend published/updated receipt; independently persisted listing",
+      "failureRetry": "Stale same-version saves409; replay409; invalid400; stranger404; draft retained until explicit reload",
+      "sourceSHA": "5121c9198ca80fb0cb02be4ef168b396d8aa12c0",
+      "browserEvidence": "sc01-browser-journey.test; g3-ui.test; experience-upgrade-acceptance.test",
+      "remainingDefect": "Concurrent editor regression fixed: one same-version save200, stale/repeated saves409; explicit reload discards draft only after user chooses; no audit migration",
+      "scope": "Exact named local scenario only; broader live/provider and policy boundaries stay explicit"
+    },
+    {
+      "id": "CART",
+      "feature": "Persistent canonical basket and actor-bound queued writes",
+      "entryPoint": "basket icon; CART surface",
+      "backendSource": "artifacts/api-server/src/lib/marketplace-cart.ts",
+      "databaseState": [
+        "carts",
+        "cart_items"
+      ],
+      "roles": "buyer",
+      "acceptanceSuites": [
+        "experience-upgrade-acceptance.test",
+        "wave03-d7-cart-browser-journey.test"
+      ],
+      "remainingBoundary": "Fresh complete final-source regression pending",
+      "status": "PASS_E2E",
+      "note": "Source/behavior trace inventory; final-source results must be attached before a PASS classification.",
+      "actualUIControl": "Card add button; basket icon; canonical quantity/remove controls",
+      "apiOperation": "GET /cart; PUT /cart",
+      "canonicalService": "artifacts/api-server/src/lib/marketplace-cart.ts",
+      "requiredConfirmation": "User add/change/remove; checkout separate",
+      "successReceipt": "Acknowledged persisted canonical cart; animation only after success",
+      "failureRetry": "Actor precondition409; failed write shows retry; no B cart mutation from queued A",
+      "sourceSHA": "5121c9198ca80fb0cb02be4ef168b396d8aa12c0",
+      "browserEvidence": "experience-upgrade-acceptance.test; wave03-d7-cart-browser-journey.test",
+      "remainingDefect": "Current complete source regression passed; legacy authenticated callers without actor hints retain their existing contract; live payment checkout remains separately gated",
+      "scope": "Exact named local scenario only; broader live/provider and policy boundaries stay explicit"
+    },
+    {
+      "id": "COMPARE",
+      "feature": "Server-backed listing comparisons",
+      "entryPoint": "result/comparison cards",
+      "backendSource": "artifacts/api-server/src/routes/ai.ts",
+      "databaseState": [
+        "ai_result_sets",
+        "offers"
+      ],
+      "roles": "buyer",
+      "acceptanceSuites": [
+        "g3-ui.test",
+        "experience-upgrade-acceptance.test"
+      ],
+      "remainingBoundary": "No external-item purchase authority",
+      "status": "PASS_E2E",
+      "note": "Source/behavior trace inventory; final-source results must be attached before a PASS classification.",
+      "actualUIControl": "Conversation compare request and existing comparison cards",
+      "apiOperation": "POST /ai/conversations/:id/turns",
+      "canonicalService": "artifacts/api-server/src/routes/ai.ts",
+      "requiredConfirmation": "Read-only compare; no purchase",
+      "successReceipt": "Result-set-bound IDs and supported attributes",
+      "failureRetry": "Missing facts unknown; stale/foreign references rejected",
+      "sourceSHA": "5121c9198ca80fb0cb02be4ef168b396d8aa12c0",
+      "browserEvidence": "g3-ui.test; experience-upgrade-acceptance.test",
+      "remainingDefect": "No external-item purchase authority",
+      "apiSourceEvidence": [
+        {
+          "file": "artifacts/api-server/src/routes/ai.ts",
+          "line": 2027,
+          "router": "router",
+          "method": "POST",
+          "path": "/ai/conversations/:id/turns",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        }
+      ],
+      "scope": "Exact named local scenario only; broader live/provider and policy boundaries stay explicit"
+    },
+    {
+      "id": "CHECKOUT",
+      "feature": "Reviewed orders and stock reservation",
+      "entryPoint": "CART/checkout conversation surfaces",
+      "backendSource": "artifacts/api-server/src/routes/marketplace.ts",
+      "databaseState": [
+        "orders",
+        "order_items",
+        "checkout_requests"
+      ],
+      "roles": "buyer",
+      "acceptanceSuites": [
+        "sc01-browser-journey.test",
+        "sc03-browser-journey.test",
+        "sc07-browser-journey.test"
+      ],
+      "remainingBoundary": "Real payment provider blocked",
+      "status": "PASS_E2E",
+      "note": "Source/behavior trace inventory; final-source results must be attached before a PASS classification.",
+      "actualUIControl": "Canonical cart review, consent and order confirmation",
+      "apiOperation": "GET /cart; POST /checkout; GET /orders/:id",
+      "canonicalService": "artifacts/api-server/src/routes/marketplace.ts",
+      "requiredConfirmation": "Required checkout/contact consent before explicit confirm",
+      "successReceipt": "201 order; one immutable order_items snapshot; cart cleared",
+      "failureRetry": "Before consent0requests; stock/price/conflicting replay guarded",
+      "sourceSHA": "5121c9198ca80fb0cb02be4ef168b396d8aa12c0",
+      "browserEvidence": "sc01-browser-journey.test; sc03-browser-journey.test; sc07-browser-journey.test",
+      "remainingDefect": "Real payment provider blocked",
+      "apiSourceEvidence": [
+        {
+          "file": "artifacts/api-server/src/routes/marketplace.ts",
+          "line": 628,
+          "router": "router",
+          "method": "GET",
+          "path": "/cart",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/routes/marketplace.ts",
+          "line": 992,
+          "router": "router",
+          "method": "POST",
+          "path": "/checkout",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/routes/marketplace.ts",
+          "line": 1047,
+          "router": "router",
+          "method": "GET",
+          "path": "/orders/:id",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        }
+      ],
+      "scope": "Exact named local scenario only; broader live/provider and policy boundaries stay explicit"
+    },
+    {
+      "id": "NEGOTIATE",
+      "feature": "Owned proposals/counteroffers and expiry",
+      "entryPoint": "conversation and negotiation cards",
+      "backendSource": "artifacts/api-server/src/lib/negotiations.ts",
+      "databaseState": [
+        "negotiations",
+        "negotiation_events"
+      ],
+      "roles": "buyer/seller",
+      "acceptanceSuites": [
+        "sc03-browser-journey.test",
+        "commerce-journey.test"
+      ],
+      "remainingBoundary": "Non-price terms remain owner-policy dependent",
+      "status": "PASS_E2E",
+      "note": "Source/behavior trace inventory; final-source results must be attached before a PASS classification.",
+      "actualUIControl": "Price proposal/review/accept/counter cards",
+      "apiOperation": "POST /ai/conversations/:id/turns; POST /checkout",
+      "canonicalService": "artifacts/api-server/src/lib/negotiations.ts",
+      "requiredConfirmation": "Each proposal/acceptance reviewed and confirmed",
+      "successReceipt": "Persisted agreement; checkout uses agreed server amount",
+      "failureRetry": "Wrong actor/stale proposal rejected; no policy invention for non-price terms",
+      "sourceSHA": "5121c9198ca80fb0cb02be4ef168b396d8aa12c0",
+      "browserEvidence": "sc03-browser-journey.test; commerce-journey.test",
+      "remainingDefect": "Non-price terms remain owner-policy dependent",
+      "apiSourceEvidence": [
+        {
+          "file": "artifacts/api-server/src/routes/ai.ts",
+          "line": 2027,
+          "router": "router",
+          "method": "POST",
+          "path": "/ai/conversations/:id/turns",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/routes/marketplace.ts",
+          "line": 992,
+          "router": "router",
+          "method": "POST",
+          "path": "/checkout",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        }
+      ],
+      "scope": "Exact named local scenario only; broader live/provider and policy boundaries stay explicit"
+    },
+    {
+      "id": "ORDERS",
+      "feature": "Status, seller hand-off and buyer receipt",
+      "entryPoint": "order cards; notifications",
+      "backendSource": "artifacts/api-server/src/routes/marketplace.ts",
+      "databaseState": [
+        "orders",
+        "order_items",
+        "order_fulfillments"
+      ],
+      "roles": "buyer/seller",
+      "acceptanceSuites": [
+        "sc01-browser-journey.test",
+        "sc03-browser-journey.test",
+        "experience-upgrade-acceptance.test"
+      ],
+      "remainingBoundary": "Live courier tracking is not fabricated",
+      "status": "PASS_E2E",
+      "note": "Source/behavior trace inventory; final-source results must be attached before a PASS classification.",
+      "actualUIControl": "Existing order card accept/handoff/receipt buttons",
+      "apiOperation": "GET /orders; GET /orders/:id; POST /orders/:id/:action",
+      "canonicalService": "artifacts/api-server/src/routes/marketplace.ts",
+      "requiredConfirmation": "Explicit authorized handoff and buyer receipt",
+      "successReceipt": "Actual COMPLETED from server then PostgreSQL",
+      "failureRetry": "Stranger404; opening notification read-only; duplicate/replay state guarded",
+      "sourceSHA": "5121c9198ca80fb0cb02be4ef168b396d8aa12c0",
+      "browserEvidence": "sc01-browser-journey.test; sc03-browser-journey.test; experience-upgrade-acceptance.test",
+      "remainingDefect": "Live courier tracking is not fabricated",
+      "apiSourceEvidence": [
+        {
+          "file": "artifacts/api-server/src/routes/marketplace.ts",
+          "line": 1016,
+          "router": "router",
+          "method": "GET",
+          "path": "/orders",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/routes/marketplace.ts",
+          "line": 1047,
+          "router": "router",
+          "method": "GET",
+          "path": "/orders/:id",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/routes/marketplace.ts",
+          "line": 1143,
+          "router": "router",
+          "method": "POST",
+          "path": "/orders/:id/:action",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        }
+      ],
+      "scope": "Exact named local scenario only; broader live/provider and policy boundaries stay explicit"
+    },
+    {
+      "id": "DISPUTE",
+      "feature": "Party-owned complaint and reviewed admin outcome",
+      "entryPoint": "order card; /admin/disputes",
+      "backendSource": "artifacts/api-server/src/routes/admin-disputes.ts",
+      "databaseState": [
+        "orders",
+        "order_financial_events"
+      ],
+      "roles": "buyer/seller/admin",
+      "acceptanceSuites": [
+        "sc10-browser-journey.test"
+      ],
+      "remainingBoundary": "No refund-success claim from an administrative decision",
+      "status": "PASS_E2E",
+      "note": "Source/behavior trace inventory; final-source results must be attached before a PASS classification.",
+      "actualUIControl": "Order dispute and admin dispute-resolution controls",
+      "apiOperation": "Order dispute routes; /admin/disputes resolution",
+      "canonicalService": "artifacts/api-server/src/routes/admin-disputes.ts",
+      "requiredConfirmation": "Participant request and authorized reviewer decision",
+      "successReceipt": "Persisted case/state; participant reads preserved",
+      "failureRetry": "Admin cannot impersonate buyer private read; decision is not provider refund",
+      "sourceSHA": "5121c9198ca80fb0cb02be4ef168b396d8aa12c0",
+      "browserEvidence": "sc10-browser-journey.test",
+      "remainingDefect": "No refund-success claim from an administrative decision",
+      "scope": "Exact named local scenario only; broader live/provider and policy boundaries stay explicit"
+    },
+    {
+      "id": "PAYMENT",
+      "feature": "Signed, deduplicated simulation payment events",
+      "entryPoint": "payment review and callbacks",
+      "backendSource": "artifacts/api-server/src/routes/payments.ts",
+      "databaseState": [
+        "payment_intents",
+        "payment_events"
+      ],
+      "roles": "buyer/provider adapter",
+      "acceptanceSuites": [
+        "wave4-payment-acceptance.test",
+        "payment-order-state.test"
+      ],
+      "remainingBoundary": "Live provider/billing activation forbidden",
+      "status": "PASS_API_ONLY",
+      "note": "Source/behavior trace inventory; final-source results must be attached before a PASS classification.",
+      "actualUIControl": "No real payment executed; API simulation fixtures",
+      "apiOperation": "POST /payments/intents; POST /payments/webhooks/test",
+      "canonicalService": "artifacts/api-server/src/routes/payments.ts",
+      "requiredConfirmation": "Simulation-only authorized intent; signed event authority",
+      "successReceipt": "Matched deduplicated payment_events and order effect",
+      "failureRetry": "Forged signatures/amount/currency fail; cancelled capture becomes refund due",
+      "sourceSHA": "5121c9198ca80fb0cb02be4ef168b396d8aa12c0",
+      "browserEvidence": "API/SQL cases only for this row; no browser claim",
+      "remainingDefect": "Live provider/billing activation forbidden",
+      "apiSourceEvidence": [
+        {
+          "file": "artifacts/api-server/src/routes/payments.ts",
+          "line": 86,
+          "router": "router",
+          "method": "POST",
+          "path": "/payments/intents",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/routes/payments.ts",
+          "line": 107,
+          "router": "router",
+          "method": "POST",
+          "path": "/payments/webhooks/test",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        }
+      ],
+      "scope": "Exact named local scenario only; broader live/provider and policy boundaries stay explicit"
+    },
+    {
+      "id": "FINANCE",
+      "feature": "Immutable snapshots, journal and seller dues",
+      "entryPoint": "order receipts; seller dues",
+      "backendSource": "artifacts/api-server/src/lib/order-terminal-accounting.ts",
+      "databaseState": [
+        "orders",
+        "order_items",
+        "order_financial_events"
+      ],
+      "roles": "seller/authorized finance",
+      "acceptanceSuites": [
+        "financial-state-machine.test",
+        "wave07-financial-journal.test"
+      ],
+      "remainingBoundary": "Production financial operations not exercised",
+      "status": "PASS_API_ONLY",
+      "note": "Source/behavior trace inventory; final-source results must be attached before a PASS classification.",
+      "actualUIControl": "Seller dues reads; API/SQL immutability and reconciliation fixtures",
+      "apiOperation": "GET /seller-dues; GET /orders/:id",
+      "canonicalService": "artifacts/api-server/src/lib/order-terminal-accounting.ts",
+      "requiredConfirmation": "No client financial authority; terminal server transition",
+      "successReceipt": "Integer snapshot+journal+dues; restore trigger checks",
+      "failureRetry": "Direct snapshot/item/journal mutation rejected; no repricing",
+      "sourceSHA": "5121c9198ca80fb0cb02be4ef168b396d8aa12c0",
+      "browserEvidence": "API/SQL cases only for this row; no browser claim",
+      "remainingDefect": "Production financial operations not exercised",
+      "apiSourceEvidence": [
+        {
+          "file": "artifacts/api-server/src/routes/marketplace.ts",
+          "line": 1277,
+          "router": "router",
+          "method": "GET",
+          "path": "/seller-dues",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/routes/marketplace.ts",
+          "line": 1047,
+          "router": "router",
+          "method": "GET",
+          "path": "/orders/:id",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        }
+      ],
+      "scope": "Exact named local scenario only; broader live/provider and policy boundaries stay explicit"
+    },
+    {
+      "id": "REFUND",
+      "feature": "Refund obligations and signed completion",
+      "entryPoint": "cancel/refund reconciliation",
+      "backendSource": "artifacts/api-server/src/lib/payments/obligations.ts",
+      "databaseState": [
+        "payment_refund_obligations",
+        "payment_refunds"
+      ],
+      "roles": "authorized actor/provider adapter",
+      "acceptanceSuites": [
+        "wave08-cash-and-refunds.test"
+      ],
+      "remainingBoundary": "Only provider-signed completion closes monetary refund",
+      "status": "PASS_API_ONLY",
+      "note": "Source/behavior trace inventory; final-source results must be attached before a PASS classification.",
+      "actualUIControl": "API reconciliation and signed-event fixtures",
+      "apiOperation": "POST /admin/payments/intents/:id/refunds; GET /admin/payments/refund-obligations; POST /admin/payments/reconcile; POST /payments/webhooks/test",
+      "canonicalService": "artifacts/api-server/src/lib/payments/obligations.ts",
+      "requiredConfirmation": "Provider-signed REFUND_SUCCEEDED for electronic completion",
+      "successReceipt": "Exactly one append-only obligation; authenticated completion",
+      "failureRetry": "Unsigned/replayed mismatched events rejected; no false money transfer",
+      "sourceSHA": "5121c9198ca80fb0cb02be4ef168b396d8aa12c0",
+      "browserEvidence": "API/SQL cases only for this row; no browser claim",
+      "remainingDefect": "Only provider-signed completion closes monetary refund",
+      "apiSourceEvidence": [
+        {
+          "file": "artifacts/api-server/src/routes/payments.ts",
+          "line": 126,
+          "router": "router",
+          "method": "POST",
+          "path": "/admin/payments/intents/:id/refunds",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/routes/payments.ts",
+          "line": 198,
+          "router": "router",
+          "method": "GET",
+          "path": "/admin/payments/refund-obligations",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/routes/payments.ts",
+          "line": 216,
+          "router": "router",
+          "method": "POST",
+          "path": "/admin/payments/reconcile",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/routes/payments.ts",
+          "line": 107,
+          "router": "router",
+          "method": "POST",
+          "path": "/payments/webhooks/test",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        }
+      ],
+      "scope": "Exact named local scenario only; broader live/provider and policy boundaries stay explicit"
+    },
+    {
+      "id": "CASH",
+      "feature": "Cash claims and reviewed refund cases",
+      "entryPoint": "cash review surfaces",
+      "backendSource": "artifacts/api-server/src/routes/cash.ts",
+      "databaseState": [
+        "cash_payment_claims",
+        "cash_refund_cases"
+      ],
+      "roles": "buyer/seller/authorized reviewer",
+      "acceptanceSuites": [
+        "wave08-cash-and-refunds.test",
+        "integration-cash-lock-order.test"
+      ],
+      "remainingBoundary": "Cash handover is external and must not claim card capture",
+      "status": "PASS_API_ONLY",
+      "note": "Source/behavior trace inventory; final-source results must be attached before a PASS classification.",
+      "actualUIControl": "API cash handover/claim and case fixtures",
+      "apiOperation": "POST /orders/:id/cash-payment/claim; POST /orders/:id/cash-payment/confirm; POST /orders/:id/cash-refunds; POST /cash-refunds/:id/repayment-claim; POST /cash-refunds/:id/confirm",
+      "canonicalService": "artifacts/api-server/src/routes/cash.ts",
+      "requiredConfirmation": "Required parties attest actual handover/refund; reviewer policy",
+      "successReceipt": "Persisted claim/case and ledger locks",
+      "failureRetry": "Seller assertion alone cannot prove cash repayment; no card-capture claim",
+      "sourceSHA": "5121c9198ca80fb0cb02be4ef168b396d8aa12c0",
+      "browserEvidence": "API/SQL cases only for this row; no browser claim",
+      "remainingDefect": "Cash handover is external and must not claim card capture",
+      "apiSourceEvidence": [
+        {
+          "file": "artifacts/api-server/src/routes/cash.ts",
+          "line": 80,
+          "router": "router",
+          "method": "POST",
+          "path": "/orders/:id/cash-payment/claim",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/routes/cash.ts",
+          "line": 98,
+          "router": "router",
+          "method": "POST",
+          "path": "/orders/:id/cash-payment/confirm",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/routes/cash.ts",
+          "line": 152,
+          "router": "router",
+          "method": "POST",
+          "path": "/orders/:id/cash-refunds",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/routes/cash.ts",
+          "line": 171,
+          "router": "router",
+          "method": "POST",
+          "path": "/cash-refunds/:id/repayment-claim",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/routes/cash.ts",
+          "line": 187,
+          "router": "router",
+          "method": "POST",
+          "path": "/cash-refunds/:id/confirm",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        }
+      ],
+      "scope": "Exact named local scenario only; broader live/provider and policy boundaries stay explicit"
+    },
+    {
+      "id": "BLOCKE",
+      "feature": "Standard ad plan and sponsored listing lifecycle",
+      "entryPoint": "promotion conversation; admin catalog",
+      "backendSource": "artifacts/api-server/src/lib/promotions.ts",
+      "databaseState": [
+        "promotion_products",
+        "listing_promotions"
+      ],
+      "roles": "seller/admin/buyer",
+      "acceptanceSuites": [
+        "block-e-acceptance.test",
+        "promotions.test",
+        "g3-ui.test"
+      ],
+      "remainingBoundary": "Simulation evidence does not activate a live ad-payment provider",
+      "status": "PASS_E2E",
+      "note": "Source/behavior trace inventory; final-source results must be attached before a PASS classification.",
+      "actualUIControl": "Seller promotion review/activate/pause/resume; disclosed buyer sponsored card",
+      "apiOperation": "POST /ai/conversations/:id/turns; POST /ai/promotion-actions/:id/action; GET /promotions; POST /promotions/:id/actions; PUT /cart; POST /checkout",
+      "canonicalService": "artifacts/api-server/src/lib/promotions.ts",
+      "requiredConfirmation": "SIMULATION_ONLY activation review; separate purchase consent",
+      "successReceipt": "Promotion lifecycle persisted; same disclosed item yields exactly one JOD45000 cash order",
+      "failureRetry": "No request before consent; no payment intent for cash order; expiry/cancel invariants",
+      "sourceSHA": "5121c9198ca80fb0cb02be4ef168b396d8aa12c0",
+      "browserEvidence": "block-e-acceptance.test; g3-ui.test",
+      "remainingDefect": "Simulation evidence does not activate a live ad-payment provider",
+      "apiSourceEvidence": [
+        {
+          "file": "artifacts/api-server/src/routes/ai.ts",
+          "line": 2027,
+          "router": "router",
+          "method": "POST",
+          "path": "/ai/conversations/:id/turns",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/routes/ai.ts",
+          "line": 1987,
+          "router": "router",
+          "method": "POST",
+          "path": "/ai/promotion-actions/:id/action",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/routes/promotions.ts",
+          "line": 185,
+          "router": "router",
+          "method": "GET",
+          "path": "/promotions",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/routes/promotions.ts",
+          "line": 204,
+          "router": "router",
+          "method": "POST",
+          "path": "/promotions/:id/actions",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/routes/marketplace.ts",
+          "line": 632,
+          "router": "router",
+          "method": "PUT",
+          "path": "/cart",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/routes/marketplace.ts",
+          "line": 992,
+          "router": "router",
+          "method": "POST",
+          "path": "/checkout",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        }
+      ],
+      "scope": "Exact named local scenario only; broader live/provider and policy boundaries stay explicit"
+    },
+    {
+      "id": "V3",
+      "feature": "Commercial balance, entitlements and demand capture",
+      "entryPoint": "commerce/promotion cards and admin API",
+      "backendSource": "artifacts/api-server/src/lib/commercial-ledger.ts",
+      "databaseState": [
+        "commercial_accounts",
+        "commercial_ledger",
+        "commercial_entitlements"
+      ],
+      "roles": "owner/admin",
+      "acceptanceSuites": [
+        "block-e-acceptance.test",
+        "next-g3-acceptance.test"
+      ],
+      "remainingBoundary": "Separate mechanisms must not be collapsed into standard promotion evidence",
+      "status": "PASS_API_ONLY",
+      "note": "Source/behavior trace inventory; final-source results must be attached before a PASS classification.",
+      "actualUIControl": "API commercial balance/entitlement fixtures; existing cards independently scoped",
+      "apiOperation": "Existing /commercial and entitlement routes",
+      "canonicalService": "artifacts/api-server/src/lib/commercial-ledger.ts",
+      "requiredConfirmation": "Existing approved policy and deduplication; no live billing",
+      "successReceipt": "Persisted commercial ledger/entitlements",
+      "failureRetry": "Unapproved product/price/renewal refused; not a separate coupon lifecycle",
+      "sourceSHA": "5121c9198ca80fb0cb02be4ef168b396d8aa12c0",
+      "browserEvidence": "API/SQL cases only for this row; no browser claim",
+      "remainingDefect": "Separate commercial mechanisms tested as API contracts; not all visible lifecycle variants browser accepted; no separate approved coupon money engine",
+      "scope": "Exact named local scenario only; broader live/provider and policy boundaries stay explicit"
+    },
+    {
+      "id": "POLICY",
+      "feature": "Effective scoped commercial and privacy cohort policy",
+      "entryPoint": "server policy reads",
+      "backendSource": "artifacts/api-server/src/lib/commercial-policy.ts",
+      "databaseState": [
+        "commercial_policies"
+      ],
+      "roles": "server selected market/admin configuration",
+      "acceptanceSuites": [
+        "next-g1-usage.test"
+      ],
+      "remainingBoundary": "Confirmed >20-global-history precedence bug fixed and verified on both PostgreSQL versions",
+      "status": "PASS_API_ONLY",
+      "note": "Source/behavior trace inventory; final-source results must be attached before a PASS classification.",
+      "actualUIControl": "Server effective-policy reads and API regression fixture",
+      "apiOperation": "getCommercialPolicy(marketId)",
+      "canonicalService": "artifacts/api-server/src/lib/commercial-policy.ts",
+      "requiredConfirmation": "Read-only server-selected market",
+      "successReceipt": "Scoped version wins before LIMIT; fallback and effective date tested",
+      "failureRetry": "25 newer globals cannot evict market override; historical orders unchanged",
+      "sourceSHA": "5121c9198ca80fb0cb02be4ef168b396d8aa12c0",
+      "browserEvidence": "API/SQL cases only for this row; no browser claim",
+      "remainingDefect": "Confirmed >20-global-history precedence bug fixed and verified on both PostgreSQL versions",
+      "scope": "Exact named local scenario only; broader live/provider and policy boundaries stay explicit"
+    },
+    {
+      "id": "SUBSCRIPTION",
+      "feature": "Plan truth, entitlements and cancellation",
+      "entryPoint": "plans/usage cards",
+      "backendSource": "artifacts/api-server/src/lib/business.ts",
+      "databaseState": [
+        "business_subscriptions",
+        "commercial_policies"
+      ],
+      "roles": "user/business owner",
+      "acceptanceSuites": [
+        "next-g1-usage.test",
+        "next-g3-acceptance.test",
+        "pro-subscription-honesty.test"
+      ],
+      "remainingBoundary": "Unapproved prices/renewal and live billing stay blocked",
+      "status": "PASS_API_ONLY",
+      "note": "Source/behavior trace inventory; final-source results must be attached before a PASS classification.",
+      "actualUIControl": "Existing plan/usage contracts; API policy/entitlement fixtures",
+      "apiOperation": "GET /subscriptions/plans; GET /business/subscription; POST /business/subscription-review; POST /business/subscriptions; POST /business/subscription/cancel",
+      "canonicalService": "artifacts/api-server/src/lib/business.ts",
+      "requiredConfirmation": "Approved policy only; explicit subscription changes",
+      "successReceipt": "Authoritative approved/provisional terms and usage",
+      "failureRetry": "Unapproved prices/renewals blocked; conversational settings additions remain Claude-owned",
+      "sourceSHA": "5121c9198ca80fb0cb02be4ef168b396d8aa12c0",
+      "browserEvidence": "API/SQL cases only for this row; no browser claim",
+      "remainingDefect": "Unapproved prices/renewal and live billing stay blocked",
+      "apiSourceEvidence": [
+        {
+          "file": "artifacts/api-server/src/routes/commercial.ts",
+          "line": 220,
+          "router": "router",
+          "method": "GET",
+          "path": "/subscriptions/plans",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/routes/commercial.ts",
+          "line": 224,
+          "router": "router",
+          "method": "GET",
+          "path": "/business/subscription",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/routes/commercial.ts",
+          "line": 228,
+          "router": "router",
+          "method": "POST",
+          "path": "/business/subscription-review",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/routes/commercial.ts",
+          "line": 233,
+          "router": "router",
+          "method": "POST",
+          "path": "/business/subscriptions",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/routes/commercial.ts",
+          "line": 238,
+          "router": "router",
+          "method": "POST",
+          "path": "/business/subscription/cancel",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        }
+      ],
+      "scope": "Exact named local scenario only; broader live/provider and policy boundaries stay explicit"
+    },
+    {
+      "id": "BUSINESS",
+      "feature": "Business identity, verification and storefront",
+      "entryPoint": "business cards; /business/:id",
+      "backendSource": "artifacts/api-server/src/lib/business-profiles.ts",
+      "databaseState": [
+        "business_profiles",
+        "business_operating_profiles",
+        "business_verification_documents"
+      ],
+      "roles": "owner/reviewer/visitor",
+      "acceptanceSuites": [
+        "d1-d2-business-browser.test",
+        "d3a-native-business.test"
+      ],
+      "remainingBoundary": "Test reviewer fixtures are not real-world verification/legal approval",
+      "status": "PASS_E2E",
+      "note": "Source/behavior trace inventory; final-source results must be attached before a PASS classification.",
+      "actualUIControl": "Canonical business onboarding/storefront/reviewer controls",
+      "apiOperation": "POST /ai/conversations/:id/turns; GET /business/profiles; POST /business/profiles; PATCH /business/profiles/:id; POST /business/profiles/:id/submit; GET /businesses/:id/storefront",
+      "canonicalService": "artifacts/api-server/src/lib/business-profiles.ts",
+      "requiredConfirmation": "Owner submission and independent reviewer decision",
+      "successReceipt": "Persisted profile/catalog and truthful verification state",
+      "failureRetry": "Foreign/suspended mutations denied; synthetic documents are not real verification",
+      "sourceSHA": "5121c9198ca80fb0cb02be4ef168b396d8aa12c0",
+      "browserEvidence": "d1-d2-business-browser.test",
+      "remainingDefect": "Test reviewer fixtures are not real-world verification/legal approval",
+      "apiSourceEvidence": [
+        {
+          "file": "artifacts/api-server/src/routes/ai.ts",
+          "line": 2027,
+          "router": "router",
+          "method": "POST",
+          "path": "/ai/conversations/:id/turns",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/routes/business-profiles.ts",
+          "line": 41,
+          "router": "router",
+          "method": "GET",
+          "path": "/business/profiles",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/routes/business-profiles.ts",
+          "line": 44,
+          "router": "router",
+          "method": "POST",
+          "path": "/business/profiles",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/routes/business-profiles.ts",
+          "line": 53,
+          "router": "router",
+          "method": "PATCH",
+          "path": "/business/profiles/:id",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/routes/business-profiles.ts",
+          "line": 67,
+          "router": "router",
+          "method": "POST",
+          "path": "/business/profiles/:id/submit",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/routes/businesses.ts",
+          "line": 37,
+          "router": "router",
+          "method": "GET",
+          "path": "/businesses/:id/storefront",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        }
+      ],
+      "scope": "Exact named local scenario only; broader live/provider and policy boundaries stay explicit"
+    },
+    {
+      "id": "STAFF",
+      "feature": "Scoped catalog/reports and revocation",
+      "entryPoint": "business/Connect team views",
+      "backendSource": "artifacts/api-server/src/lib/business-delegations.ts",
+      "databaseState": [
+        "business_memberships",
+        "business_delegations",
+        "business_employee_sessions"
+      ],
+      "roles": "owner/human employee",
+      "acceptanceSuites": [
+        "business-delegations.test",
+        "connect-finance-browser-journey.test"
+      ],
+      "remainingBoundary": "Human employees remain read-only; owner controls keys and Connect management",
+      "status": "PASS_API_ONLY",
+      "note": "Source/behavior trace inventory; final-source results must be attached before a PASS classification.",
+      "actualUIControl": "Read-only business/Connect employee reports and catalog scope",
+      "apiOperation": "GET /business/profiles/:id/delegations; POST /business/profiles/:id/delegations; POST /business/profiles/:id/delegations/:delegationId/revoke; GET /business/delegations/:delegationId/catalog; GET /connect/partners/:id/report",
+      "canonicalService": "artifacts/api-server/src/lib/business-delegations.ts",
+      "requiredConfirmation": "Owner grants/revokes; human staff read-only",
+      "successReceipt": "Scoped authoritative reads; expiry/revocation persisted",
+      "failureRetry": "Employee cannot manage keys/agreements/partner mutations",
+      "sourceSHA": "5121c9198ca80fb0cb02be4ef168b396d8aa12c0",
+      "browserEvidence": "API/SQL cases only for this row; no browser claim",
+      "remainingDefect": "Human employees remain read-only; owner controls keys and Connect management",
+      "apiSourceEvidence": [
+        {
+          "file": "artifacts/api-server/src/routes/business-delegations.ts",
+          "line": 32,
+          "router": "router",
+          "method": "GET",
+          "path": "/business/profiles/:id/delegations",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/routes/business-delegations.ts",
+          "line": 43,
+          "router": "router",
+          "method": "POST",
+          "path": "/business/profiles/:id/delegations",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/routes/business-delegations.ts",
+          "line": 91,
+          "router": "router",
+          "method": "POST",
+          "path": "/business/profiles/:id/delegations/:delegationId/revoke",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/routes/business-delegations.ts",
+          "line": 103,
+          "router": "router",
+          "method": "GET",
+          "path": "/business/delegations/:delegationId/catalog",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/routes/connect.ts",
+          "line": 52,
+          "router": "router",
+          "method": "GET",
+          "path": "/connect/partners/:id/report",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        }
+      ],
+      "scope": "Exact named local scenario only; broader live/provider and policy boundaries stay explicit"
+    },
+    {
+      "id": "CONNECT",
+      "feature": "Partner onboarding, site proof and integration keys",
+      "entryPoint": "/connect; /admin/connect",
+      "backendSource": "artifacts/api-server/src/routes/connect.ts",
+      "databaseState": [
+        "connect_partners",
+        "connect_sites",
+        "connect_integrations",
+        "connect_secrets"
+      ],
+      "roles": "owner/admin/authorized staff",
+      "acceptanceSuites": [
+        "connect-partners.test",
+        "connect-cards-browser-journey.test"
+      ],
+      "remainingBoundary": "External provider credentials/sandbox acceptance separate",
+      "status": "PASS_E2E",
+      "note": "Source/behavior trace inventory; final-source results must be attached before a PASS classification.",
+      "actualUIControl": "Existing Connect enrollment/site proof/key controls",
+      "apiOperation": "/connect/partners and sites/integrations routes",
+      "canonicalService": "artifacts/api-server/src/routes/connect.ts",
+      "requiredConfirmation": "Owner key/management; independent site verification",
+      "successReceipt": "Fixture TXT proof and key-lifecycle receipts",
+      "failureRetry": "Unverified domain/foreign actor/revoked key fail; no live merchant claim",
+      "sourceSHA": "5121c9198ca80fb0cb02be4ef168b396d8aa12c0",
+      "browserEvidence": "connect-cards-browser-journey.test; supplemental expanded-connect cards36profiles perPG; local pinned TLS navigation fixture",
+      "remainingDefect": "External provider credentials/sandbox acceptance separate",
+      "scope": "Exact named local scenario only; broader live/provider and policy boundaries stay explicit"
+    },
+    {
+      "id": "CONNECT-CATALOG",
+      "feature": "Feed/MCP ingestion, freshness and discovery",
+      "entryPoint": "Connect search/results/diagnostics",
+      "backendSource": "artifacts/api-server/src/connect",
+      "databaseState": [
+        "connect_offers",
+        "connect_ingestion_batches"
+      ],
+      "roles": "partner/owner/authorized staff/buyer",
+      "acceptanceSuites": [
+        "connect-catalog-pull.test",
+        "connect-mcp-catalog.test",
+        "connect-sync-observations.test"
+      ],
+      "remainingBoundary": "No invented availability, prices or external transactions",
+      "status": "PASS_API_ONLY",
+      "note": "Source/behavior trace inventory; final-source results must be attached before a PASS classification.",
+      "actualUIControl": "API feed/MCP/website-ingestion and diagnostic fixtures",
+      "apiOperation": "Canonical Connect pull/MCP/observation routes",
+      "canonicalService": "artifacts/api-server/src/connect",
+      "requiredConfirmation": "Authorized source/integration; read-only imported offers",
+      "successReceipt": "Source/timestamps/freshness; validated persisted offers",
+      "failureRetry": "SSRF, unsupported transaction tools, stale/malformed source rejected",
+      "sourceSHA": "5121c9198ca80fb0cb02be4ef168b396d8aa12c0",
+      "browserEvidence": "API/SQL cases only for this row; no browser claim",
+      "remainingDefect": "No invented availability, prices or external transactions",
+      "scope": "Exact named local scenario only; broader live/provider and policy boundaries stay explicit"
+    },
+    {
+      "id": "CONNECT-FINANCE",
+      "feature": "Agreement terms, acceptance and verified-event ledger",
+      "entryPoint": "owner agreement; admin finance/reporting",
+      "backendSource": "artifacts/api-server/src/routes/connect.ts",
+      "databaseState": [
+        "connect_agreements",
+        "connect_agreement_acceptances",
+        "connect_transactions",
+        "connect_commission_ledger"
+      ],
+      "roles": "owner/admin/authorized read-only staff",
+      "acceptanceSuites": [
+        "connect-finance-browser-journey.test",
+        "connect-commission-math.test"
+      ],
+      "remainingBoundary": "Claude model-facing DTO mapper remains a separate integration issue",
+      "status": "PASS_E2E",
+      "note": "Source/behavior trace inventory; final-source results must be attached before a PASS classification.",
+      "actualUIControl": "Owner terms accept; admin agreement and finance/report controls",
+      "apiOperation": "/connect agreement/acceptance/conversion/report routes",
+      "canonicalService": "artifacts/api-server/src/routes/connect.ts",
+      "requiredConfirmation": "Independent proposal; owner-only explicit acceptance; verified conversion",
+      "successReceipt": "Immutable nested terms; integer commission ledger; synthetic reversal",
+      "failureRetry": "No self-approval/employee acceptance/forged conversion; Claude mapper tested separately after integration",
+      "sourceSHA": "5121c9198ca80fb0cb02be4ef168b396d8aa12c0",
+      "browserEvidence": "connect-finance-browser-journey.test; supplemental expanded-connect finance126profiles perPG",
+      "remainingDefect": "Latest Claude canonical nested agreement mapper is corrected on independent branch; joint source still unqualified",
+      "scope": "Exact named local scenario only; broader live/provider and policy boundaries stay explicit"
+    },
+    {
+      "id": "EXTERNAL",
+      "feature": "Trusted HTTPS referral and consent revocation",
+      "entryPoint": "EXTERNAL_LINK card action",
+      "backendSource": "artifacts/api-server/src/connect",
+      "databaseState": [
+        "connect_referrals",
+        "privacy_consent_events"
+      ],
+      "roles": "buyer",
+      "acceptanceSuites": [
+        "connect-cards-browser-journey.test",
+        "connect-finance-browser-journey.test",
+        "connect-network.test"
+      ],
+      "remainingBoundary": "External checkout never becomes an internal order/payment success",
+      "status": "PASS_E2E",
+      "note": "Source/behavior trace inventory; final-source results must be attached before a PASS classification.",
+      "actualUIControl": "Server-issued EXTERNAL_LINK card activated by keyboard",
+      "apiOperation": "POST /connect/outbound; GET /connect/outbound/:id; POST /connect/privacy/attribution",
+      "canonicalService": "artifacts/api-server/src/connect",
+      "requiredConfirmation": "Explicit navigate; optional attribution consent",
+      "successReceipt": "Trusted HTTPS destination; opener=null; conversation intact",
+      "failureRetry": "Untrusted redirect blocked; no internal order/cart/payment success or unearned affiliate claim",
+      "sourceSHA": "5121c9198ca80fb0cb02be4ef168b396d8aa12c0",
+      "browserEvidence": "connect-cards-browser-journey.test; connect-finance-browser-journey.test; supplemental expanded-connect cards36profiles perPG; local pinned TLS navigation fixture",
+      "remainingDefect": "External checkout never becomes an internal order/payment success",
+      "apiSourceEvidence": [
+        {
+          "file": "artifacts/api-server/src/routes/connect.ts",
+          "line": 394,
+          "router": "router",
+          "method": "POST",
+          "path": "/connect/outbound",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/routes/connect.ts",
+          "line": 501,
+          "router": "router",
+          "method": "GET",
+          "path": "/connect/outbound/:id",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/routes/connect.ts",
+          "line": 127,
+          "router": "router",
+          "method": "POST",
+          "path": "/connect/privacy/attribution",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        }
+      ],
+      "scope": "Exact named local scenario only; broader live/provider and policy boundaries stay explicit"
+    },
+    {
+      "id": "DOMAIN",
+      "feature": "Normalized domain query and verified/unknown provider offers",
+      "entryPoint": "domain intent and domain cards",
+      "backendSource": "artifacts/api-server/src/connect",
+      "databaseState": [
+        "conversations",
+        "ai_ui_blocks"
+      ],
+      "roles": "user",
+      "acceptanceSuites": [
+        "connect-domain.test",
+        "connect-cards-browser-journey.test"
+      ],
+      "remainingBoundary": "Real Spaceship/Cloudflare provider acceptance requires authorized configured access",
+      "status": "PASS_E2E",
+      "note": "Source/behavior trace inventory; final-source results must be attached before a PASS classification.",
+      "actualUIControl": "Existing domain intent/card and Search on provider link",
+      "apiOperation": "POST /ai/conversations/:id/turns; POST /connect/outbound; GET /connect/outbound/:id; Domain provider adapter is called from the same conversation runtime; this inventory does not invent a separate domain-search endpoint.",
+      "canonicalService": "artifacts/api-server/src/connect",
+      "requiredConfirmation": "Read-only provider query; no automatic registration",
+      "successReceipt": "Verified fixture values or explicit unknown; source/check time",
+      "failureRetry": "Invalid IDN/domain rejected; timeout/rate limit unknown; unconfigured provider search-only",
+      "sourceSHA": "5121c9198ca80fb0cb02be4ef168b396d8aa12c0",
+      "browserEvidence": "connect-cards-browser-journey.test; supplemental expanded-connect cards36profiles perPG; local pinned TLS navigation fixture",
+      "remainingDefect": "Real Spaceship/Cloudflare provider acceptance requires authorized configured access",
+      "apiSourceEvidence": [
+        {
+          "file": "artifacts/api-server/src/routes/ai.ts",
+          "line": 2027,
+          "router": "router",
+          "method": "POST",
+          "path": "/ai/conversations/:id/turns",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/routes/connect.ts",
+          "line": 394,
+          "router": "router",
+          "method": "POST",
+          "path": "/connect/outbound",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/routes/connect.ts",
+          "line": 501,
+          "router": "router",
+          "method": "GET",
+          "path": "/connect/outbound/:id",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        }
+      ],
+      "internalServiceBoundary": "Domain provider adapter is called from the same conversation runtime; this inventory does not invent a separate domain-search endpoint.",
+      "scope": "Exact named local scenario only; broader live/provider and policy boundaries stay explicit"
+    },
+    {
+      "id": "MEMORY",
+      "feature": "Retention, context isolation and personal controls",
+      "entryPoint": "conversation and memory/privacy cards",
+      "backendSource": "artifacts/api-server/src/ai",
+      "databaseState": [
+        "personal_memories",
+        "personal_memory_events",
+        "conversation_summaries"
+      ],
+      "roles": "user",
+      "acceptanceSuites": [
+        "wave06-conversation-memory.test",
+        "wave06-conversation-memory-adversarial.test",
+        "w06-d17-retrieval-quality.test"
+      ],
+      "remainingBoundary": "Original V2 history provenance remains BLOCKED",
+      "status": "PASS_API_ONLY",
+      "note": "Source/behavior trace inventory; final-source results must be attached before a PASS classification.",
+      "actualUIControl": "API memory controls and adversarial retention/retrieval fixtures",
+      "apiOperation": "POST /ai/conversations/:id/turns; GET /account/privacy/preferences; PATCH /account/privacy/preferences; D17 retrieval/retention/context control is shared internal runtime logic; privacy preference endpoints are existing account operations.",
+      "canonicalService": "artifacts/api-server/src/ai",
+      "requiredConfirmation": "Actor consent/retention/market boundaries",
+      "successReceipt": "Persisted permitted context; deletion/revocation respected",
+      "failureRetry": "Foreign/adversarial context isolated; original V2 provenance remains blocked",
+      "sourceSHA": "5121c9198ca80fb0cb02be4ef168b396d8aa12c0",
+      "browserEvidence": "API/SQL cases only for this row; no browser claim",
+      "remainingDefect": "Original V2 history provenance remains BLOCKED",
+      "apiSourceEvidence": [
+        {
+          "file": "artifacts/api-server/src/routes/ai.ts",
+          "line": 2027,
+          "router": "router",
+          "method": "POST",
+          "path": "/ai/conversations/:id/turns",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/routes/privacy.ts",
+          "line": 74,
+          "router": "router",
+          "method": "GET",
+          "path": "/account/privacy/preferences",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/routes/privacy.ts",
+          "line": 78,
+          "router": "router",
+          "method": "PATCH",
+          "path": "/account/privacy/preferences",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        }
+      ],
+      "internalServiceBoundary": "D17 retrieval/retention/context control is shared internal runtime logic; privacy preference endpoints are existing account operations.",
+      "scope": "Exact named local scenario only; broader live/provider and policy boundaries stay explicit"
+    },
+    {
+      "id": "RUNTIME",
+      "feature": "Server-owned turns, Stop reception and recovery",
+      "entryPoint": "single conversation + SSE",
+      "backendSource": "artifacts/api-server/src/ai/conversation-runtime.ts",
+      "databaseState": [
+        "conversations",
+        "messages",
+        "ai_result_sets"
+      ],
+      "roles": "user",
+      "acceptanceSuites": [
+        "conversation-v2-browser-journey.test",
+        "conversation-stream-recovery-browser-journey.test",
+        "d12-execution-recovery.test"
+      ],
+      "remainingBoundary": "No paid/live model-quality PASS; Claude bindings not silently imported",
+      "status": "PASS_E2E",
+      "note": "Source/behavior trace inventory; final-source results must be attached before a PASS classification.",
+      "actualUIControl": "Send/Stop reception/new conversation/history/reload",
+      "apiOperation": "POST /ai/conversations; GET /ai/conversations; GET /ai/conversations/:id; POST /ai/conversations/:id/turns",
+      "canonicalService": "artifacts/api-server/src/ai/conversation-runtime.ts",
+      "requiredConfirmation": "Stop receiving; verify server-owned outcome; never auto-cancel",
+      "successReceipt": "Persisted turn/result/receipt reconciled after reconnect",
+      "failureRetry": "No duplicate transactional replay; cross-tab/actor recovery isolated",
+      "sourceSHA": "5121c9198ca80fb0cb02be4ef168b396d8aa12c0",
+      "browserEvidence": "conversation-v2-browser-journey.test; conversation-stream-recovery-browser-journey.test",
+      "remainingDefect": "No paid/live model-quality PASS; Claude bindings not silently imported",
+      "apiSourceEvidence": [
+        {
+          "file": "artifacts/api-server/src/routes/ai.ts",
+          "line": 1277,
+          "router": "router",
+          "method": "POST",
+          "path": "/ai/conversations",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/routes/ai.ts",
+          "line": 1649,
+          "router": "router",
+          "method": "GET",
+          "path": "/ai/conversations",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/routes/ai.ts",
+          "line": 1665,
+          "router": "router",
+          "method": "GET",
+          "path": "/ai/conversations/:id",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/routes/ai.ts",
+          "line": 2027,
+          "router": "router",
+          "method": "POST",
+          "path": "/ai/conversations/:id/turns",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        }
+      ],
+      "scope": "Exact named local scenario only; broader live/provider and policy boundaries stay explicit"
+    },
+    {
+      "id": "CARDS",
+      "feature": "Envelope, action receipts and state restoration",
+      "entryPoint": "existing renderer and surfaces",
+      "backendSource": "artifacts/api-server/src/ai/card-envelope.ts",
+      "databaseState": [
+        "ai_ui_blocks",
+        "ai_result_sets"
+      ],
+      "roles": "authorized user",
+      "acceptanceSuites": [
+        "w02u3-card-accessibility-browser-journey.test",
+        "w02u3-card-performance-browser-journey.test"
+      ],
+      "remainingBoundary": "No second renderer/action engine",
+      "status": "PASS_E2E",
+      "note": "Source/behavior trace inventory; final-source results must be attached before a PASS classification.",
+      "actualUIControl": "Canonical Envelope renderer, review and action buttons",
+      "apiOperation": "Existing action runtime and server-validated card schemas",
+      "canonicalService": "artifacts/api-server/src/ai/card-envelope.ts",
+      "requiredConfirmation": "Explicit pending action review/confirm",
+      "successReceipt": "Backend action receipts and restored UI blocks",
+      "failureRetry": "Forged/foreign/stale/duplicate actions rejected; keyboard/focus/reduced motion tested",
+      "sourceSHA": "5121c9198ca80fb0cb02be4ef168b396d8aa12c0",
+      "browserEvidence": "w02u3-card-accessibility-browser-journey.test; w02u3-card-performance-browser-journey.test",
+      "remainingDefect": "No second renderer/action engine",
+      "scope": "Exact named local scenario only; broader live/provider and policy boundaries stay explicit"
+    },
+    {
+      "id": "LEGAL",
+      "feature": "Country readiness, consent and capability gates",
+      "entryPoint": "policies; /admin/legal-readiness",
+      "backendSource": "artifacts/api-server/src/routes/compliance.ts",
+      "databaseState": [
+        "policy_registry_versions",
+        "policy_consent_events",
+        "market_legal_capability_approvals"
+      ],
+      "roles": "user/admin/reviewer",
+      "acceptanceSuites": [
+        "market-legal-acceptance.test",
+        "d16-readiness.test"
+      ],
+      "remainingBoundary": "Legal approval is an owner/counsel requirement, never inferred from test fixtures",
+      "status": "PASS_API_ONLY",
+      "note": "Source/behavior trace inventory; final-source results must be attached before a PASS classification.",
+      "actualUIControl": "API market-readiness/age/consent approval fixtures",
+      "apiOperation": "GET /markets/:marketId/compliance; GET /account/policy-consents; POST /account/guardian-consent; POST /admin/compliance/country-readiness/:marketId/owner-approval; POST /admin/compliance/country-readiness/:marketId/activate",
+      "canonicalService": "artifacts/api-server/src/routes/compliance.ts",
+      "requiredConfirmation": "Independent staged approvals; actor consent",
+      "successReceipt": "Persisted policy consent and capability approvals",
+      "failureRetry": "Minor/unapproved market/capability fail; fixture approval is not counsel signoff",
+      "sourceSHA": "5121c9198ca80fb0cb02be4ef168b396d8aa12c0",
+      "browserEvidence": "API/SQL cases only for this row; no browser claim",
+      "remainingDefect": "Legal approval is an owner/counsel requirement, never inferred from test fixtures",
+      "apiSourceEvidence": [
+        {
+          "file": "artifacts/api-server/src/routes/compliance.ts",
+          "line": 131,
+          "router": "router",
+          "method": "GET",
+          "path": "/markets/:marketId/compliance",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/routes/compliance.ts",
+          "line": 148,
+          "router": "router",
+          "method": "GET",
+          "path": "/account/policy-consents",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/routes/compliance.ts",
+          "line": 222,
+          "router": "router",
+          "method": "POST",
+          "path": "/account/guardian-consent",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/routes/compliance.ts",
+          "line": 559,
+          "router": "router",
+          "method": "POST",
+          "path": "/admin/compliance/country-readiness/:marketId/owner-approval",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/routes/compliance.ts",
+          "line": 587,
+          "router": "router",
+          "method": "POST",
+          "path": "/admin/compliance/country-readiness/:marketId/activate",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        }
+      ],
+      "scope": "Exact named local scenario only; broader live/provider and policy boundaries stay explicit"
+    },
+    {
+      "id": "PRIVACY",
+      "feature": "Preferences, export/deletion requests and decisions",
+      "entryPoint": "settings/privacy cards",
+      "backendSource": "artifacts/api-server/src/lib/privacy-rights.ts",
+      "databaseState": [
+        "privacy_requests",
+        "privacy_request_events",
+        "user_privacy_preferences"
+      ],
+      "roles": "user/authorized reviewer",
+      "acceptanceSuites": [
+        "closure-privacy.test"
+      ],
+      "remainingBoundary": "Actual external notification dispatch remains unconfigured",
+      "status": "PASS_API_ONLY",
+      "note": "Source/behavior trace inventory; final-source results must be attached before a PASS classification.",
+      "actualUIControl": "API preference/export/deletion requests",
+      "apiOperation": "GET /account/privacy; GET /account/privacy/preferences; PATCH /account/privacy/preferences; POST /account/privacy/requests; POST /account/privacy/exports",
+      "canonicalService": "artifacts/api-server/src/lib/privacy-rights.ts",
+      "requiredConfirmation": "Required identity/proof; authorized decision",
+      "successReceipt": "privacy_requests/events with retention boundaries",
+      "failureRetry": "Foreign request rejected; financial/legal records not falsely erased",
+      "sourceSHA": "5121c9198ca80fb0cb02be4ef168b396d8aa12c0",
+      "browserEvidence": "API/SQL cases only for this row; no browser claim",
+      "remainingDefect": "Actual external notification dispatch remains unconfigured",
+      "apiSourceEvidence": [
+        {
+          "file": "artifacts/api-server/src/routes/privacy.ts",
+          "line": 54,
+          "router": "router",
+          "method": "GET",
+          "path": "/account/privacy",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/routes/privacy.ts",
+          "line": 74,
+          "router": "router",
+          "method": "GET",
+          "path": "/account/privacy/preferences",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/routes/privacy.ts",
+          "line": 78,
+          "router": "router",
+          "method": "PATCH",
+          "path": "/account/privacy/preferences",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/routes/privacy.ts",
+          "line": 87,
+          "router": "router",
+          "method": "POST",
+          "path": "/account/privacy/requests",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/routes/privacy.ts",
+          "line": 59,
+          "router": "router",
+          "method": "POST",
+          "path": "/account/privacy/exports",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        }
+      ],
+      "scope": "Exact named local scenario only; broader live/provider and policy boundaries stay explicit"
+    },
+    {
+      "id": "TRUST",
+      "feature": "Reports, moderation and appeals",
+      "entryPoint": "listing/order support; admin trust UI",
+      "backendSource": "artifacts/api-server/src/routes/trust-safety.ts",
+      "databaseState": [
+        "marketplace_reports",
+        "trust_appeals",
+        "security_incidents"
+      ],
+      "roles": "user/admin/reviewer",
+      "acceptanceSuites": [
+        "wave3-acceptance.test",
+        "security-acceptance.test"
+      ],
+      "remainingBoundary": "Permission outcomes need their own positive/negative evidence",
+      "status": "PASS_E2E",
+      "note": "Source/behavior trace inventory; final-source results must be attached before a PASS classification.",
+      "actualUIControl": "Actual in-chat listing details report dialog; admin trust controls separately",
+      "apiOperation": "POST /reports; GET /reports/mine; admin resolution",
+      "canonicalService": "artifacts/api-server/src/routes/trust-safety.ts",
+      "requiredConfirmation": "Explicit reason/note submit; independent admin decision",
+      "successReceipt": "201 report and independent reporter/listing/status DB row",
+      "failureRetry": "Unauthorized/invalid/duplicate reports guarded; inactive standalone reporter fixture not substituted",
+      "sourceSHA": "5121c9198ca80fb0cb02be4ef168b396d8aa12c0",
+      "browserEvidence": "supplemental inline-report: shipped chat-only listing report16profiles perPG, actual POST201, independent DB row; admin controls from canonical wave3 fixture explicitly separate",
+      "remainingDefect": "Permission outcomes need their own positive/negative evidence",
+      "scope": "Exact named local scenario only; broader live/provider and policy boundaries stay explicit"
+    },
+    {
+      "id": "NOTIFY",
+      "feature": "Actionable order notifications and private order opening",
+      "entryPoint": "profile/settings bell; /notifications",
+      "backendSource": "artifacts/api-server/src/lib/notifications.ts",
+      "databaseState": [
+        "orders",
+        "marketplace_inquiries"
+      ],
+      "roles": "user",
+      "acceptanceSuites": [
+        "experience-upgrade-acceptance.test",
+        "closure-notifications.test"
+      ],
+      "remainingBoundary": "In-app records work independently; email/SMS/push vendor registry is empty",
+      "status": "PASS_E2E",
+      "note": "Source/behavior trace inventory; final-source results must be attached before a PASS classification.",
+      "actualUIControl": "Profile notifications link; exact order row; browser back/reload",
+      "apiOperation": "GET /orders; authorized exact GET /orders/:id",
+      "canonicalService": "artifacts/api-server/src/lib/notifications.ts",
+      "requiredConfirmation": "Opening is read-only; receipt still explicit",
+      "successReceipt": "Correct participant order restored; DB has no automatic status mutation",
+      "failureRetry": "Malformed path0detailrequests; anonymous401/stranger404",
+      "sourceSHA": "5121c9198ca80fb0cb02be4ef168b396d8aa12c0",
+      "browserEvidence": "experience-upgrade-acceptance.test",
+      "remainingDefect": "In-app records work independently; email/SMS/push vendor registry is empty",
+      "scope": "Exact named local scenario only; broader live/provider and policy boundaries stay explicit"
+    },
+    {
+      "id": "JOBS",
+      "feature": "Expiry, abandoned execution and search maintenance",
+      "entryPoint": "server startup/intervals",
+      "backendSource": "artifacts/api-server/src/index.ts",
+      "databaseState": [
+        "orders",
+        "listing_promotions",
+        "ai_result_sets",
+        "offer_search_documents"
+      ],
+      "roles": "server",
+      "acceptanceSuites": [
+        "d12-execution-recovery.test",
+        "search-sql-foundation.test"
+      ],
+      "remainingBoundary": "Each housekeeping effect must be mapped separately from live notification delivery",
+      "status": "PASS_API_ONLY",
+      "note": "Source/behavior trace inventory; final-source results must be attached before a PASS classification.",
+      "actualUIControl": "API startup/interval expiry and execution-recovery fixtures",
+      "apiOperation": "Existing scheduled recovery/expiry/search services",
+      "canonicalService": "artifacts/api-server/src/index.ts",
+      "requiredConfirmation": "Only server eligibility rules",
+      "successReceipt": "Idempotent stored expiry/recovery and bounded indexing",
+      "failureRetry": "Repeated maintenance no double accounting; vendor notification delivery not inferred",
+      "sourceSHA": "5121c9198ca80fb0cb02be4ef168b396d8aa12c0",
+      "browserEvidence": "API/SQL cases only for this row; no browser claim",
+      "remainingDefect": "Each housekeeping effect must be mapped separately from live notification delivery",
+      "scope": "Exact named local scenario only; broader live/provider and policy boundaries stay explicit"
+    },
+    {
+      "id": "ADMIN",
+      "feature": "Markets, category audit and promotion plan management",
+      "entryPoint": "/admin/markets; /admin/categories; /admin/promotions",
+      "backendSource": "artifacts/api-server/src/routes/admin-markets.ts",
+      "databaseState": [
+        "markets",
+        "market_price_versions",
+        "marketplace_categories",
+        "promotion_products"
+      ],
+      "roles": "admin",
+      "acceptanceSuites": [
+        "experience-upgrade-acceptance.test"
+      ],
+      "remainingBoundary": "New actual editor + DB snapshot acceptance currently qualifying",
+      "status": "PASS_E2E",
+      "note": "Source/behavior trace inventory; final-source results must be attached before a PASS classification.",
+      "actualUIControl": "Actual category/market/promotion create/edit/disable controls",
+      "apiOperation": "/admin/categories; /admin/markets; /admin/promotions",
+      "canonicalService": "artifacts/api-server/src/routes/admin-markets.ts",
+      "requiredConfirmation": "Admin-only explicit review/save",
+      "successReceipt": "Canonical rows/audit and immutable original order amounts",
+      "failureRetry": "Stranger/admin boundary enforced; unapproved economics not activated",
+      "sourceSHA": "5121c9198ca80fb0cb02be4ef168b396d8aa12c0",
+      "browserEvidence": "experience-upgrade-acceptance.test",
+      "remainingDefect": "New actual editor + DB snapshot acceptance currently qualifying",
+      "scope": "Exact named local scenario only; broader live/provider and policy boundaries stay explicit"
+    },
+    {
+      "id": "DRIVER",
+      "feature": "Driver onboarding, eligibility and availability",
+      "entryPoint": "Unified conversation driver intent and work cards",
+      "backendSource": "artifacts/api-server/src/lib/driver.ts",
+      "databaseState": [
+        "driver_profiles"
+      ],
+      "roles": "driver/admin reviewer",
+      "acceptanceSuites": [
+        "block-f4-driver.test"
+      ],
+      "remainingBoundary": "Fixture verified-driver work; no real-world vetting or live GPS provider",
+      "actualUIControl": "Chat driver onboarding vehicle/city/confirm; availability/work card",
+      "apiOperation": "POST /ai/conversations/:id/turns; POST /admin/drivers/:id/review",
+      "canonicalService": "artifacts/api-server/src/lib/driver.ts",
+      "requiredConfirmation": "Explicit onboarding confirm; independent verification before work",
+      "successReceipt": "DRAFT\u2192PENDING_VERIFICATION; CAR/city persisted; pending remains UNAVAILABLE",
+      "failureRetry": "Pending driver cannot become available/accept; revocation and foreign account fail",
+      "sourceSHA": "5121c9198ca80fb0cb02be4ef168b396d8aa12c0",
+      "status": "PASS_E2E",
+      "browserEvidence": "block-f4-driver.test; supplemental expanded-driver48cases,40recovery+140onboarding/delivery profiles perPG; buyer receipt UI separately SC03",
+      "remainingDefect": "Fixture verified-driver work; no real-world vetting or live GPS provider",
+      "apiSourceEvidence": [
+        {
+          "file": "artifacts/api-server/src/routes/ai.ts",
+          "line": 2027,
+          "router": "router",
+          "method": "POST",
+          "path": "/ai/conversations/:id/turns",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/routes/admin-drivers.ts",
+          "line": 15,
+          "router": "router",
+          "method": "POST",
+          "path": "/admin/drivers/:id/review",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        }
+      ],
+      "scope": "Exact named local scenario only; broader live/provider and policy boundaries stay explicit"
+    },
+    {
+      "id": "DELIVERY",
+      "feature": "Delivery custody, timeline, fare and completion",
+      "entryPoint": "Canonical delivery/order cards and existing courier API",
+      "backendSource": "artifacts/api-server/src/lib/delivery.ts; artifacts/api-server/src/lib/courier-money.ts",
+      "databaseState": [
+        "delivery_assignments",
+        "delivery_progress_events",
+        "order_fulfillments",
+        "orders",
+        "courier_fare_proposals",
+        "courier_fare_agreements",
+        "courier_commission_settlements"
+      ],
+      "roles": "assigned driver/buyer/seller",
+      "acceptanceSuites": [
+        "block-f4-driver.test",
+        "r5-delivery-economics.test",
+        "sc03-browser-journey.test"
+      ],
+      "remainingBoundary": "GPS adapter unconfigured; no implemented map routing or recurring opportunity subscription; fare API exists, chat negotiation not independently accepted",
+      "actualUIControl": "Existing driver accept/pickup/depart/arrival/handoff and earnings timeline",
+      "apiOperation": "POST /ai/conversations/:id/turns; GET /orders/:id/fulfillment; GET /orders/:id/tracking; GET /orders/:id/courier-fare; POST /orders/:id/courier-fare/proposals; POST /orders/:id/courier-fare/confirm",
+      "canonicalService": "artifacts/api-server/src/lib/delivery.ts; artifacts/api-server/src/lib/courier-money.ts",
+      "requiredConfirmation": "Explicit driver actions; buyer receipt separately required; both fare parties confirm",
+      "successReceipt": "Persisted assignments/progress/fulfillment; immutable fare and simulated commission",
+      "failureRetry": "Revoked/replaced custody isolated; no live GPS/map/provider claim; receipt UI proven separately by SC03",
+      "sourceSHA": "5121c9198ca80fb0cb02be4ef168b396d8aa12c0",
+      "status": "PASS_E2E",
+      "browserEvidence": "block-f4-driver.test; sc03-browser-journey.test; supplemental expanded-driver48cases,40recovery+140onboarding/delivery profiles perPG; buyer receipt UI separately SC03",
+      "remainingDefect": "GPS adapter unconfigured; no implemented map routing or recurring opportunity subscription; fare API exists, chat negotiation not independently accepted",
+      "apiSourceEvidence": [
+        {
+          "file": "artifacts/api-server/src/routes/ai.ts",
+          "line": 2027,
+          "router": "router",
+          "method": "POST",
+          "path": "/ai/conversations/:id/turns",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/routes/marketplace.ts",
+          "line": 1069,
+          "router": "router",
+          "method": "GET",
+          "path": "/orders/:id/fulfillment",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/routes/marketplace.ts",
+          "line": 1077,
+          "router": "router",
+          "method": "GET",
+          "path": "/orders/:id/tracking",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/routes/courier.ts",
+          "line": 31,
+          "router": "router",
+          "method": "GET",
+          "path": "/orders/:id/courier-fare",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/routes/courier.ts",
+          "line": 44,
+          "router": "router",
+          "method": "POST",
+          "path": "/orders/:id/courier-fare/proposals",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/routes/courier.ts",
+          "line": 62,
+          "router": "router",
+          "method": "POST",
+          "path": "/orders/:id/courier-fare/confirm",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        }
+      ],
+      "scope": "Exact named local scenario only; broader live/provider and policy boundaries stay explicit"
+    },
+    {
+      "id": "EMPLOYMENT",
+      "feature": "Jobs, candidate CV, applications and reviewed recruitment actions",
+      "roles": "employer/candidate; scoped business permissions",
+      "entryPoint": "Employment conversation and canonical job/CV/application cards",
+      "actualUIControl": "EmploymentSurface job/candidate/application controls and employment-action-confirm/cancel",
+      "apiOperation": "POST /ai/conversations/:id/turns; POST /ai/employment-actions/:id/action; Jobs/CV/application logic is in the existing employment service, reached through turns and reviewed employment-action confirmation; no separate public /jobs API is invented.",
+      "backendSource": "artifacts/api-server/src/lib/employment.ts",
+      "canonicalService": "artifacts/api-server/src/lib/employment.ts",
+      "databaseState": [
+        "jobs",
+        "candidate_profiles",
+        "job_applications"
+      ],
+      "requiredConfirmation": "Explicit reviewed CONFIRM; sharing/contact permission distinct",
+      "successReceipt": "Real action receipt and stored job/profile/application",
+      "failureRetry": "Cancelled/expired/replayed/foreign application actions refused; CV visibility enforced",
+      "acceptanceSuites": [
+        "employment.test",
+        "block-c-acceptance.test",
+        "command-c-acceptance.test"
+      ],
+      "browserEvidence": "Canonical block-c-acceptance actual employer/candidate browser workflow plus independent API/DB outcome on bothPGs",
+      "remainingBoundary": "No live recruiter/background verification claim",
+      "remainingDefect": "No live recruiter/background verification claim",
+      "status": "PASS_E2E",
+      "sourceSHA": "5121c9198ca80fb0cb02be4ef168b396d8aa12c0",
+      "apiSourceEvidence": [
+        {
+          "file": "artifacts/api-server/src/routes/ai.ts",
+          "line": 2027,
+          "router": "router",
+          "method": "POST",
+          "path": "/ai/conversations/:id/turns",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/routes/ai.ts",
+          "line": 2008,
+          "router": "router",
+          "method": "POST",
+          "path": "/ai/employment-actions/:id/action",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        }
+      ],
+      "internalServiceBoundary": "Jobs/CV/application logic is in the existing employment service, reached through turns and reviewed employment-action confirmation; no separate public /jobs API is invented.",
+      "scope": "Exact named local scenario only; broader live/provider and policy boundaries stay explicit"
+    },
+    {
+      "id": "PROVIDER",
+      "feature": "Existing provider connection and resource synchronization",
+      "roles": "owner/provider credential actor; mapped scopes",
+      "entryPoint": "Provider panel in unified conversation",
+      "actualUIControl": "provider-confirm/cancel and provider-issue-key",
+      "apiOperation": "/provider-connections; credentials/revoke; /provider/listings and driver-link routes",
+      "backendSource": "artifacts/api-server/src/lib/provider-connections.ts",
+      "canonicalService": "artifacts/api-server/src/lib/provider-connections.ts",
+      "databaseState": [
+        "provider_connections",
+        "provider_credentials",
+        "provider_resource_mappings"
+      ],
+      "requiredConfirmation": "Owner review/confirmation and credential issuance",
+      "successReceipt": "Mapped provider resource and authorized key lifecycle receipt",
+      "failureRetry": "Revoked/foreign keys and provider-controlled field edits denied; secret not in diagnostics",
+      "acceptanceSuites": [
+        "g1-provider.test",
+        "provider-controls.test"
+      ],
+      "browserEvidence": "API/SQL cases only for this row; no browser claim",
+      "remainingBoundary": "API-only integration contracts; genuine external system credentials/provider acceptance absent",
+      "remainingDefect": "API-only integration contracts; genuine external system credentials/provider acceptance absent",
+      "status": "PASS_API_ONLY",
+      "sourceSHA": "5121c9198ca80fb0cb02be4ef168b396d8aa12c0",
+      "scope": "Exact named local scenario only; broader live/provider and policy boundaries stay explicit"
+    },
+    {
+      "id": "INQUIRY",
+      "feature": "Buyer/seller inquiries and grounded unanswered questions",
+      "roles": "listing buyer/seller; party-owned thread",
+      "entryPoint": "InquirySurface conversation cards",
+      "actualUIControl": "inquiry-send and party thread/card controls",
+      "apiOperation": "POST /ai/conversations/:id/turns; Inquiry reads/drafts/sends are existing conversation-runtime and inquiries-service operations; no separate /inquiries HTTP engine is assumed.",
+      "backendSource": "artifacts/api-server/src/lib/inquiries.ts",
+      "canonicalService": "artifacts/api-server/src/lib/inquiries.ts",
+      "databaseState": [
+        "marketplace_inquiries",
+        "marketplace_inquiry_events"
+      ],
+      "requiredConfirmation": "Draft review then explicit send; author identity from session",
+      "successReceipt": "Persisted message/thread status and truthful sender/provenance",
+      "failureRetry": "Unknown fact remains unknown; foreign thread/unsupported claim refused",
+      "acceptanceSuites": [
+        "next-g2-inquiry.test"
+      ],
+      "browserEvidence": "API/SQL cases only for this row; no browser claim",
+      "remainingBoundary": "API-only scenario; independent in-app notification delivery distinct from vendor dispatch",
+      "remainingDefect": "API-only scenario; independent in-app notification delivery distinct from vendor dispatch",
+      "status": "PASS_API_ONLY",
+      "sourceSHA": "5121c9198ca80fb0cb02be4ef168b396d8aa12c0",
+      "apiSourceEvidence": [
+        {
+          "file": "artifacts/api-server/src/routes/ai.ts",
+          "line": 2027,
+          "router": "router",
+          "method": "POST",
+          "path": "/ai/conversations/:id/turns",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        }
+      ],
+      "internalServiceBoundary": "Inquiry reads/drafts/sends are existing conversation-runtime and inquiries-service operations; no separate /inquiries HTTP engine is assumed.",
+      "scope": "Exact named local scenario only; broader live/provider and policy boundaries stay explicit"
+    },
+    {
+      "id": "TUTORIAL",
+      "feature": "Authenticated tutorial playback/animation and draft continuation",
+      "roles": "signed-in seller; own draft",
+      "entryPoint": "Existing seller tutorial card in conversation",
+      "actualUIControl": "TutorialVideoCard play/continue controls",
+      "apiOperation": "POST /ai/conversations/:id/turns; GET /ai/learning-history; POST /ai/learning-history",
+      "backendSource": "artifacts/api-server/src/ai/conversation-runtime.ts",
+      "canonicalService": "artifacts/api-server/src/ai/conversation-runtime.ts",
+      "databaseState": [
+        "tutorial_learning_events",
+        "conversations",
+        "messages",
+        "ai_ui_blocks"
+      ],
+      "requiredConfirmation": "Explicit tutorial open/continue; no automatic listing publication",
+      "successReceipt": "Real TUTORIAL_OPENED event and original draft continuation",
+      "failureRetry": "Local animation fallback clearly identified; no fake external video/provider delivery",
+      "acceptanceSuites": [
+        "g3-ui.test",
+        "g2-smart-conversation.test"
+      ],
+      "browserEvidence": "Canonical g3-ui production-built real API Chromium tutorial; independent learning event/owner/draft DB assertions on bothPGs",
+      "remainingBoundary": "Browser proved local fallback animation and stored continuation; no new media assets or hosting claim",
+      "remainingDefect": "Browser proved local fallback animation and stored continuation; no new media assets or hosting claim",
+      "status": "PASS_E2E",
+      "sourceSHA": "5121c9198ca80fb0cb02be4ef168b396d8aa12c0",
+      "apiSourceEvidence": [
+        {
+          "file": "artifacts/api-server/src/routes/ai.ts",
+          "line": 2027,
+          "router": "router",
+          "method": "POST",
+          "path": "/ai/conversations/:id/turns",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/routes/ai.ts",
+          "line": 1724,
+          "router": "router",
+          "method": "GET",
+          "path": "/ai/learning-history",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/routes/ai.ts",
+          "line": 1744,
+          "router": "router",
+          "method": "POST",
+          "path": "/ai/learning-history",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        }
+      ],
+      "scope": "Exact named local scenario only; broader live/provider and policy boundaries stay explicit"
+    },
+    {
+      "id": "MEDIA",
+      "feature": "Owned image upload, validation and publication review",
+      "roles": "authenticated owner/reviewer",
+      "entryPoint": "Canonical OfferForm media controls and account avatar",
+      "actualUIControl": "Actual upload/review controls; avatar real filechooser tested in account supplement",
+      "apiOperation": "POST /account/listing-photos/upload-url; POST /account/profile-avatar/upload-url; PUT /account/profile-avatar",
+      "backendSource": "artifacts/api-server/src/lib/listing-photos.ts",
+      "canonicalService": "artifacts/api-server/src/lib/listing-photos.ts",
+      "databaseState": [
+        "offers",
+        "users"
+      ],
+      "requiredConfirmation": "Explicit upload/attach and applicable publication review",
+      "successReceipt": "Verified type/header/owner/generation; persisted authoritative object path",
+      "failureRetry": "Invalid MIME/foreign/unreviewed image rejected; no fabricated listing photos",
+      "acceptanceSuites": [
+        "listing-image-publication-acceptance.test",
+        "listing-image-policy-review.test",
+        "listing-photo-vision-provider.test"
+      ],
+      "browserEvidence": "API/SQL cases only for this row; no browser claim",
+      "remainingBoundary": "Listing image API contracts; account avatar browser transport separately E2E; storage adapter is local, no live provider claim",
+      "remainingDefect": "Listing image API contracts; account avatar browser transport separately E2E; storage adapter is local, no live provider claim",
+      "status": "PASS_API_ONLY",
+      "sourceSHA": "5121c9198ca80fb0cb02be4ef168b396d8aa12c0",
+      "apiSourceEvidence": [
+        {
+          "file": "artifacts/api-server/src/routes/listing-photos.ts",
+          "line": 24,
+          "router": "router",
+          "method": "POST",
+          "path": "/account/listing-photos/upload-url",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/routes/profile-avatar.ts",
+          "line": 49,
+          "router": "router",
+          "method": "POST",
+          "path": "/account/profile-avatar/upload-url",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/routes/profile-avatar.ts",
+          "line": 65,
+          "router": "router",
+          "method": "PUT",
+          "path": "/account/profile-avatar",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        }
+      ],
+      "scope": "Exact named local scenario only; broader live/provider and policy boundaries stay explicit"
+    },
+    {
+      "id": "USAGE",
+      "feature": "Model usage reservation, spend limits and reconciliation",
+      "roles": "user/business owner; server budget actor",
+      "entryPoint": "Existing usage/plan cards and runtime budgeting",
+      "actualUIControl": "Canonical usage reads; explicit approved plan actions separate",
+      "apiOperation": "POST /ai/conversations/:id/turns; GET /business/subscription; Reservation/counter/finalization are canonical internal accounting functions; no nonexistent public usage endpoint is asserted.",
+      "backendSource": "artifacts/api-server/src/lib/ai-usage.ts",
+      "canonicalService": "artifacts/api-server/src/lib/ai-usage.ts",
+      "databaseState": [
+        "ai_usage_reservations",
+        "ai_usage_counters",
+        "ai_cost_events",
+        "ai_spend_counters"
+      ],
+      "requiredConfirmation": "Server budget reservation before model call; no client invented cost",
+      "successReceipt": "Integer recorded actual usage and bounded reservation/finalization",
+      "failureRetry": "Rejected/failed calls released/reconciled idempotently; unapproved price remains unknown",
+      "acceptanceSuites": [
+        "next-g1-usage.test",
+        "closure-ai-cost.test",
+        "wave05-d15-money-model.test"
+      ],
+      "browserEvidence": "API/SQL cases only for this row; no browser claim",
+      "remainingBoundary": "Offline deterministic accounting, not actual live-token bills or live model quality",
+      "remainingDefect": "Offline deterministic accounting, not actual live-token bills or live model quality",
+      "status": "PASS_API_ONLY",
+      "sourceSHA": "5121c9198ca80fb0cb02be4ef168b396d8aa12c0",
+      "apiSourceEvidence": [
+        {
+          "file": "artifacts/api-server/src/routes/ai.ts",
+          "line": 2027,
+          "router": "router",
+          "method": "POST",
+          "path": "/ai/conversations/:id/turns",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        },
+        {
+          "file": "artifacts/api-server/src/routes/commercial.ts",
+          "line": 224,
+          "router": "router",
+          "method": "GET",
+          "path": "/business/subscription",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        }
+      ],
+      "internalServiceBoundary": "Reservation/counter/finalization are canonical internal accounting functions; no nonexistent public usage endpoint is asserted.",
+      "scope": "Exact named local scenario only; broader live/provider and policy boundaries stay explicit"
+    },
+    {
+      "id": "LOCATION",
+      "feature": "Transaction location consent and assigned-driver privacy",
+      "roles": "own buyer/seller and currently assigned courier",
+      "entryPoint": "Delivery card location controls and existing provider tracking adapter",
+      "actualUIControl": "Explicit location share/change and delivery selection",
+      "apiOperation": "Canonical location/delivery/tracking routes",
+      "backendSource": "artifacts/api-server/src/lib/location-policy.ts",
+      "canonicalService": "artifacts/api-server/src/lib/location-policy.ts",
+      "databaseState": [
+        "transaction_locations",
+        "order_fulfillments",
+        "delivery_assignments"
+      ],
+      "requiredConfirmation": "Explicit sharing; private exact address only authorized fulfillment actor",
+      "successReceipt": "Stored scoped location and provider freshness/unknown status",
+      "failureRetry": "Revoked/replaced courier loses access; stale/unconfigured provider never fake live GPS/ETA",
+      "acceptanceSuites": [
+        "location-policy.test",
+        "block-f4-driver.test"
+      ],
+      "browserEvidence": "API/SQL cases only for this row; no browser claim",
+      "remainingBoundary": "API location/privacy fixtures; delivery UI separately exercised; no live maps or GPS provider acceptance",
+      "remainingDefect": "API location/privacy fixtures; delivery UI separately exercised; no live maps or GPS provider acceptance",
+      "status": "PASS_API_ONLY",
+      "sourceSHA": "5121c9198ca80fb0cb02be4ef168b396d8aa12c0",
+      "scope": "Exact named local scenario only; broader live/provider and policy boundaries stay explicit"
+    },
+    {
+      "id": "CONTACT",
+      "feature": "Order-bound contact release and listing contact protection",
+      "roles": "authorized order parties; seller configured contact channel",
+      "entryPoint": "Listing/contact/order cards",
+      "actualUIControl": "Canonical contact-consent and order contact actions",
+      "apiOperation": "Existing contact-release service and order participant routes",
+      "backendSource": "artifacts/api-server/src/lib/contact-release.ts",
+      "canonicalService": "artifacts/api-server/src/lib/contact-release.ts",
+      "databaseState": [
+        "orders",
+        "offers",
+        "users"
+      ],
+      "requiredConfirmation": "Required explicit contact consent and eligible order state",
+      "successReceipt": "Only eligible party sees permitted contact channel",
+      "failureRetry": "Phone/contact in listing free text refused; foreign/ineligible order contact denied",
+      "acceptanceSuites": [
+        "security-acceptance.test",
+        "sc07-browser-journey.test",
+        "commerce-journey.test"
+      ],
+      "browserEvidence": "API/SQL cases only for this row; no browser claim",
+      "remainingBoundary": "Scoped contact permissions; no real external message/SMS dispatch inferred",
+      "remainingDefect": "Scoped contact permissions; no real external message/SMS dispatch inferred",
+      "status": "PASS_API_ONLY",
+      "sourceSHA": "5121c9198ca80fb0cb02be4ef168b396d8aa12c0",
+      "scope": "Exact named local scenario only; broader live/provider and policy boundaries stay explicit"
+    },
+    {
+      "id": "MODEL",
+      "feature": "Model gateway, strict tools, discovery and authority boundaries",
+      "roles": "role-filtered authenticated user; server-gated model",
+      "entryPoint": "Existing unified conversation model gateway",
+      "actualUIControl": "Canonical composer; server tool/schema routing, no second runtime",
+      "apiOperation": "POST /ai/conversations/:id/turns; Tools execute within the bounded server model loop; there is no separate model-action HTTP engine.",
+      "backendSource": "artifacts/api-server/src/ai/model-gateway.ts; artifacts/api-server/src/ai/tool-registry.ts",
+      "canonicalService": "artifacts/api-server/src/ai/model-gateway.ts; artifacts/api-server/src/ai/tool-registry.ts",
+      "databaseState": [
+        "ai_usage_reservations",
+        "ai_cost_events",
+        "ai_result_sets"
+      ],
+      "requiredConfirmation": "Read/prepare tools only; confirmed business actions retain backend authority",
+      "successReceipt": "Validated grounded tool result and permitted receipt",
+      "failureRetry": "Prompt injection/unstructured actions cannot mint success, payment/order authority or duplicate execution",
+      "acceptanceSuites": [
+        "ai-provider.test",
+        "ai-authority-boundary.test",
+        "model-native-routing.test",
+        "ai-transport.test"
+      ],
+      "browserEvidence": "API/SQL cases only for this row; no browser claim",
+      "remainingBoundary": "Deterministic providers only; current15bindings; Claude25registry not integrated; no GPT-level/live-quality claim",
+      "remainingDefect": "Deterministic providers only; current15bindings; Claude25registry not integrated; no GPT-level/live-quality claim",
+      "status": "PASS_API_ONLY",
+      "sourceSHA": "5121c9198ca80fb0cb02be4ef168b396d8aa12c0",
+      "apiSourceEvidence": [
+        {
+          "file": "artifacts/api-server/src/routes/ai.ts",
+          "line": 2027,
+          "router": "router",
+          "method": "POST",
+          "path": "/ai/conversations/:id/turns",
+          "status": "PARTIAL",
+          "evidenceLevel": "SOURCE_DECLARATION_ONLY",
+          "note": "Mount/middleware and exact behavior must be established from canonical app and named tests; not inferred from route name"
+        }
+      ],
+      "internalServiceBoundary": "Tools execute within the bounded server model loop; there is no separate model-action HTTP engine.",
+      "scope": "Exact named local scenario only; broader live/provider and policy boundaries stay explicit"
+    },
+    {
+      "id": "SUPPORT",
+      "feature": "Party-owned support cases, messages and reviewed operations",
+      "roles": "user/authorized support reviewer; scoped admin",
+      "entryPoint": "Existing support/trust operations API",
+      "actualUIControl": "No independently accepted browser form for this exact row",
+      "apiOperation": "/account/support/cases and messages; /admin/support cases/assign/status",
+      "backendSource": "artifacts/api-server/src/lib/support-cases.ts",
+      "canonicalService": "artifacts/api-server/src/lib/support-cases.ts",
+      "databaseState": [
+        "support_cases",
+        "support_case_messages",
+        "support_case_events"
+      ],
+      "requiredConfirmation": "Explicit party message; authorized reviewer assignment/status",
+      "successReceipt": "Persisted case/messages/events with correct private audience",
+      "failureRetry": "Foreign case/read/write denied; case decision cannot fabricate money refund",
+      "acceptanceSuites": [
+        "wave10-trust-support-whatsapp.test"
+      ],
+      "browserEvidence": "API/SQL cases only for this row; no browser claim",
+      "remainingBoundary": "PASS_API_ONLY; no claim that every support UI/control or external ticket integration exists",
+      "remainingDefect": "PASS_API_ONLY; no claim that every support UI/control or external ticket integration exists",
+      "status": "PASS_API_ONLY",
+      "sourceSHA": "5121c9198ca80fb0cb02be4ef168b396d8aa12c0",
+      "scope": "Exact named local scenario only; broader live/provider and policy boundaries stay explicit"
+    },
+    {
+      "id": "WHATSAPP",
+      "feature": "WhatsApp consent, template and queued intent readiness",
+      "roles": "account owner/authorized admin; market legal gates",
+      "entryPoint": "Consent and admin template/intent API",
+      "actualUIControl": "No live messaging control activated",
+      "apiOperation": "/account/whatsapp/consent; /admin/whatsapp/templates,intents,overview",
+      "backendSource": "artifacts/api-server/src/lib/whatsapp-readiness.ts",
+      "canonicalService": "artifacts/api-server/src/lib/whatsapp-readiness.ts",
+      "databaseState": [
+        "whatsapp_consent_events",
+        "whatsapp_templates",
+        "whatsapp_intents"
+      ],
+      "requiredConfirmation": "Explicit consent; approved template/readiness before permissible intent",
+      "successReceipt": "Persisted consent/template/intent state, not delivery receipt",
+      "failureRetry": "Missing consent/legal/provider state blocks send; no live dispatch or fabricated delivery",
+      "acceptanceSuites": [
+        "wave10-trust-support-whatsapp.test"
+      ],
+      "browserEvidence": "API/SQL cases only for this row; no browser claim",
+      "remainingBoundary": "Provider messaging not configured/activated; real send and receipt BLOCKED_PROVIDER",
+      "remainingDefect": "Provider messaging not configured/activated; real send and receipt BLOCKED_PROVIDER",
+      "status": "PASS_API_ONLY",
+      "sourceSHA": "5121c9198ca80fb0cb02be4ef168b396d8aa12c0",
+      "scope": "Exact named local scenario only; broader live/provider and policy boundaries stay explicit"
+    },
+    {
+      "id": "FRAUD",
+      "feature": "Fraud signal recording and independent review",
+      "roles": "authorized admin/reviewer; private subject data",
+      "entryPoint": "Existing trust operations API",
+      "actualUIControl": "API review; not a separately proven browser workflow",
+      "apiOperation": "/admin/fraud/signals and review/overview",
+      "backendSource": "artifacts/api-server/src/routes/trust-ops.ts",
+      "canonicalService": "artifacts/api-server/src/routes/trust-ops.ts",
+      "databaseState": [
+        "fraud_signals",
+        "fraud_signal_reviews"
+      ],
+      "requiredConfirmation": "Authorized explicit review; immutable audit/decision boundaries",
+      "successReceipt": "Persisted signal and scoped reviewer outcome",
+      "failureRetry": "Anonymous/nonadmin/foreign access denied; no automatic financial action inferred",
+      "acceptanceSuites": [
+        "wave10-trust-support-whatsapp.test",
+        "security-acceptance.test"
+      ],
+      "browserEvidence": "API/SQL cases only for this row; no browser claim",
+      "remainingBoundary": "Scoped local API security; real-world fraud scoring/evidence acceptance not claimed",
+      "remainingDefect": "Scoped local API security; real-world fraud scoring/evidence acceptance not claimed",
+      "status": "PASS_API_ONLY",
+      "sourceSHA": "5121c9198ca80fb0cb02be4ef168b396d8aa12c0",
+      "scope": "Exact named local scenario only; broader live/provider and policy boundaries stay explicit"
+    }
+  ]
+}

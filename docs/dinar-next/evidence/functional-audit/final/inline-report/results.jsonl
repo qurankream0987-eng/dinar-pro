@@ -1,0 +1,2 @@
+{"pg": 16, "sourceSHA": "5121c9198ca80fb0cb02be4ef168b396d8aa12c0", "exit": 0, "seconds": 53.98, "mode": "canonical SC01 actual commerce plus additional shipped inline listing report; no App.tsx override", "outbound": 0, "tests": 1, "pass": 1, "fail": 0, "skipped": 0, "reportProfiles": 16}
+{"pg": 18, "sourceSHA": "5121c9198ca80fb0cb02be4ef168b396d8aa12c0", "exit": 0, "seconds": 53.65, "mode": "canonical SC01 actual commerce plus additional shipped inline listing report; no App.tsx override", "outbound": 0, "tests": 1, "pass": 1, "fail": 0, "skipped": 0, "reportProfiles": 16}

@@ -1,0 +1,29 @@
+{
+  "mode": "actual production-built web/API plus canonical local storage fixture; not live SMS or live object-storage acceptance",
+  "pageErrors": [],
+  "consoleErrors": [],
+  "externalRequests": [],
+  "expectedPasswordRejections": 1,
+  "profile": {
+    "displayName": "حساب تدقيق واجهة",
+    "city": "مدينة الكويت",
+    "area": "شرق"
+  },
+  "avatar": {
+    "objectPath": "/objects/profile-avatars/d816a70d-2929-425c-bb3f-80695487f899/70ba43aa-00ec-496b-b43a-e692970da154.png",
+    "bytesVerified": true,
+    "provider": "canonical local fixture"
+  },
+  "password": {
+    "wrongCurrent": 400,
+    "changed": 200,
+    "oldSessionCleared": true,
+    "newPasswordBrowserLogin": true
+  },
+  "registration": {
+    "id": "081cfdf0-8cc3-4409-a53b-9fc77a73a71a",
+    "displayName": "تسجيل واجهة تدقيق",
+    "phoneVerified": true,
+    "mode": "production frontend; canonical development SMS challenge/proof; not live SMS"
+  }
+}

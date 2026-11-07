@@ -1,0 +1,271 @@
+{
+  "expandedDriverProfiles": [
+    {
+      "width": 320,
+      "scheme": "light",
+      "label": "recovery-confirmation"
+    },
+    {
+      "width": 320,
+      "scheme": "dark",
+      "label": "recovery-confirmation"
+    },
+    {
+      "width": 360,
+      "scheme": "light",
+      "label": "recovery-confirmation"
+    },
+    {
+      "width": 360,
+      "scheme": "dark",
+      "label": "recovery-confirmation"
+    },
+    {
+      "width": 375,
+      "scheme": "light",
+      "label": "recovery-confirmation"
+    },
+    {
+      "width": 375,
+      "scheme": "dark",
+      "label": "recovery-confirmation"
+    },
+    {
+      "width": 390,
+      "scheme": "light",
+      "label": "recovery-confirmation"
+    },
+    {
+      "width": 390,
+      "scheme": "dark",
+      "label": "recovery-confirmation"
+    },
+    {
+      "width": 430,
+      "scheme": "light",
+      "label": "recovery-confirmation"
+    },
+    {
+      "width": 430,
+      "scheme": "dark",
+      "label": "recovery-confirmation"
+    },
+    {
+      "width": 768,
+      "scheme": "light",
+      "label": "recovery-confirmation"
+    },
+    {
+      "width": 768,
+      "scheme": "dark",
+      "label": "recovery-confirmation"
+    },
+    {
+      "width": 1024,
+      "scheme": "light",
+      "label": "recovery-confirmation"
+    },
+    {
+      "width": 1024,
+      "scheme": "dark",
+      "label": "recovery-confirmation"
+    },
+    {
+      "width": 1440,
+      "scheme": "light",
+      "label": "recovery-confirmation"
+    },
+    {
+      "width": 1440,
+      "scheme": "dark",
+      "label": "recovery-confirmation"
+    },
+    {
+      "width": 1600,
+      "scheme": "light",
+      "label": "recovery-confirmation"
+    },
+    {
+      "width": 1600,
+      "scheme": "dark",
+      "label": "recovery-confirmation"
+    },
+    {
+      "width": 1920,
+      "scheme": "light",
+      "label": "recovery-confirmation"
+    },
+    {
+      "width": 1920,
+      "scheme": "dark",
+      "label": "recovery-confirmation"
+    },
+    {
+      "width": 320,
+      "scheme": "light",
+      "label": "updated-order-status"
+    },
+    {
+      "width": 320,
+      "scheme": "dark",
+      "label": "updated-order-status"
+    },
+    {
+      "width": 360,
+      "scheme": "light",
+      "label": "updated-order-status"
+    },
+    {
+      "width": 360,
+      "scheme": "dark",
+      "label": "updated-order-status"
+    },
+    {
+      "width": 375,
+      "scheme": "light",
+      "label": "updated-order-status"
+    },
+    {
+      "width": 375,
+      "scheme": "dark",
+      "label": "updated-order-status"
+    },
+    {
+      "width": 390,
+      "scheme": "light",
+      "label": "updated-order-status"
+    },
+    {
+      "width": 390,
+      "scheme": "dark",
+      "label": "updated-order-status"
+    },
+    {
+      "width": 430,
+      "scheme": "light",
+      "label": "updated-order-status"
+    },
+    {
+      "width": 430,
+      "scheme": "dark",
+      "label": "updated-order-status"
+    },
+    {
+      "width": 768,
+      "scheme": "light",
+      "label": "updated-order-status"
+    },
+    {
+      "width": 768,
+      "scheme": "dark",
+      "label": "updated-order-status"
+    },
+    {
+      "width": 1024,
+      "scheme": "light",
+      "label": "updated-order-status"
+    },
+    {
+      "width": 1024,
+      "scheme": "dark",
+      "label": "updated-order-status"
+    },
+    {
+      "width": 1440,
+      "scheme": "light",
+      "label": "updated-order-status"
+    },
+    {
+      "width": 1440,
+      "scheme": "dark",
+      "label": "updated-order-status"
+    },
+    {
+      "width": 1600,
+      "scheme": "light",
+      "label": "updated-order-status"
+    },
+    {
+      "width": 1600,
+      "scheme": "dark",
+      "label": "updated-order-status"
+    },
+    {
+      "width": 1920,
+      "scheme": "light",
+      "label": "updated-order-status"
+    },
+    {
+      "width": 1920,
+      "scheme": "dark",
+      "label": "updated-order-status"
+    }
+  ],
+  "checks": [
+    "buyer sees the correct order before courier acceptance",
+    "courier A accepts the real work card, then withdraws before pickup",
+    "recovery-confirmation:320",
+    "recovery-confirmation:320",
+    "recovery-confirmation:360",
+    "recovery-confirmation:360",
+    "recovery-confirmation:375",
+    "recovery-confirmation:375",
+    "recovery-confirmation:390",
+    "recovery-confirmation:390",
+    "recovery-confirmation:430",
+    "recovery-confirmation:430",
+    "recovery-confirmation:768",
+    "recovery-confirmation:768",
+    "recovery-confirmation:1024",
+    "recovery-confirmation:1024",
+    "recovery-confirmation:1440",
+    "recovery-confirmation:1440",
+    "recovery-confirmation:1600",
+    "recovery-confirmation:1600",
+    "recovery-confirmation:1920",
+    "recovery-confirmation:1920",
+    "buyer gets the typed recovery summary, not an automatic reassignment",
+    "buyer explicitly confirms the new courier choice and fresh destination",
+    "courier A's stale confirmation cannot restore its assignment after courier B accepts",
+    "courier B receives a fresh assignment; courier A's session loses fulfillment and fare access",
+    "admin browser session revokes a pre-pickup assignment and is refused for in-custody order",
+    "updated-order-status:320",
+    "updated-order-status:320",
+    "updated-order-status:360",
+    "updated-order-status:360",
+    "updated-order-status:375",
+    "updated-order-status:375",
+    "updated-order-status:390",
+    "updated-order-status:390",
+    "updated-order-status:430",
+    "updated-order-status:430",
+    "updated-order-status:768",
+    "updated-order-status:768",
+    "updated-order-status:1024",
+    "updated-order-status:1024",
+    "updated-order-status:1440",
+    "updated-order-status:1440",
+    "updated-order-status:1600",
+    "updated-order-status:1600",
+    "updated-order-status:1920",
+    "updated-order-status:1920"
+  ],
+  "pageErrors": [],
+  "consoleErrors": [],
+  "expectedApiErrors": [
+    {
+      "path": "/api/orders/0db9f51c-a9d1-4d47-ad93-07d6713cd3b5/fulfillment",
+      "status": 404
+    },
+    {
+      "path": "/api/orders/0db9f51c-a9d1-4d47-ad93-07d6713cd3b5/courier-fare",
+      "status": 404
+    },
+    {
+      "path": "/api/admin/orders/6d5442b6-3e5b-44c4-a978-199220e023fd/courier-assignment/revoke",
+      "status": 409
+    }
+  ],
+  "externalRequests": [],
+  "urlLeaks": []
+}

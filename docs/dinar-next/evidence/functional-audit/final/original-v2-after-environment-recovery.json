@@ -1,0 +1,15 @@
+{
+  "objects": [
+    {
+      "sha": "442008a5fdcb9dc6529a55364cd66e033c6a0909",
+      "presentAfterEnvironmentRecovery": false
+    },
+    {
+      "sha": "719d4715a869f69831049a6a2f6c349cec934344",
+      "presentAfterEnvironmentRecovery": false
+    }
+  ],
+  "status": "BLOCKED_ORIGINAL_ARTIFACT_REQUIRED",
+  "notDataLossFinding": true,
+  "currentAuditHistoryRecovered": true
+}

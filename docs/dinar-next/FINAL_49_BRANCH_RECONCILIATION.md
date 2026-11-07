@@ -1,3 +1,5 @@
+> Historical49branch snapshot retained below. Current tested source is `5121c9198ca80fb0cb02be4ef168b396d8aa12c0`; the current50head reconciliation and named regression evidence are in the addendum and final JSON. The old Claude mapper discrepancy was fixed on current independent Claude source and is not a current Codex defect.
+
 # Final 49-branch historical reconciliation
 
 Candidate `9101672a7370bb8080e598344840d1fde2f88291`; owner-authorized branch `codex/dinar-next-unified-development`. Main and contributor branches remain unchanged. The read-only inventory contains **49 branches: 30 ancestor heads and 19 divergent heads**. Counts are inventory facts, not feature acceptance. No blind merges, replacement migration chain or recreated historical commit identities were used.
@@ -576,3 +578,63 @@ C1 functional results and numeric edges are verified; fixed-128 cursor/constant-
 Remote snapshot includes the verified code publication. The later supplemental delivery tip is given by the final publication receipt/owner-facing report; Codex wrote no contributor branch; the independently advanced Claude head is reflected in the refreshed snapshot.
 
 Delivery scanner review: [two documented non-secret detections and exact fingerprint exclusions](evidence/DELIVERY_SCANNER_TRIAGE.md). The qualified-code scan remains 555 commits/zero findings; later delivery sweeps report reviewed exclusions separately, never as nonexistent raw detections. Application/contract/migration acceptance still refers to the exact unchanged code cut.
+
+
+## Current functional-audit reconciliation addendum
+
+Tested source `5121c9198ca80fb0cb02be4ef168b396d8aa12c0`; current inventory50heads:30contained and20divergent. The earlier49branch report and92contribution snapshot remain historical evidence. The old Claude agreement-mapper discrepancy is fixed on latest independent Claude source; joint integration remains unqualified. Current source preserves all57ReplitSQLbytes and60migration hashes. No branch merge, history reconstruction or remote mutation.
+
+| Branch | Exact HEAD | Unique commits | Branch-side changed paths | Current semantic classification / evidence |
+| --- | --- | ---: | ---: | --- |
+| ai-foundation-02 | 2ef9c07ab5fdcd15eca167f5a01ab32b6054400e | 0 | 0 | PRESENT_AND_VERIFIED; full contribution/service/missing/test/security fields in final branch JSON |
+| claude/02-sc-acceptance | 9679e488c5f3d2260078d98c7d97704df6aac6ce | 0 | 0 | PRESENT_AND_VERIFIED; full contribution/service/missing/test/security fields in final branch JSON |
+| claude/04-reconciliation | e5bbd1ba59bddae8c5bd173a890fcdeafa046c25 | 0 | 0 | PRESENT_AND_VERIFIED; full contribution/service/missing/test/security fields in final branch JSON |
+| claude/05-w04-context | 4322fb6d7b66460626509401370f5ec3a5f6c6a8 | 0 | 0 | PRESENT_AND_VERIFIED; full contribution/service/missing/test/security fields in final branch JSON |
+| claude/06-w02-ultra | 8f4662b8a8d0c1ebc90bec06cd17c89795d8a480 | 2 | 1 | DOCUMENTATION_ONLY; full contribution/service/missing/test/security fields in final branch JSON |
+| claude/07-legal-cards | e17fad27339b9d40ccea341e46bef96941d34db8 | 0 | 0 | PRESENT_AND_VERIFIED; full contribution/service/missing/test/security fields in final branch JSON |
+| claude/08-model-native | 09ff489f0a3f5950b9f0a0ba8b6cfc49230a7747 | 0 | 0 | PRESENT_AND_VERIFIED; full contribution/service/missing/test/security fields in final branch JSON |
+| claude/09-dual-tier | d416a047f3707d1f03c6763c76e96eee2ab69da4 | 0 | 0 | PRESENT_AND_VERIFIED; full contribution/service/missing/test/security fields in final branch JSON |
+| claude/10-ultra-closure | 9a0f86f0b3c727f48be58aee7db11a3045a94613 | 0 | 0 | PRESENT_AND_VERIFIED; full contribution/service/missing/test/security fields in final branch JSON |
+| claude/11-c1-sql-search | d94477bad836bf4fe7b3330884170625d1698270 | 0 | 0 | PRESENT_AND_VERIFIED; full contribution/service/missing/test/security fields in final branch JSON |
+| claude/12-d1-d2-business-foundation | 91b09ee7e24b737879d1bcf0ff1f8c238026d3f4 | 0 | 0 | PRESENT_AND_VERIFIED; full contribution/service/missing/test/security fields in final branch JSON |
+| claude/13-integration-preflight | fe1c23396930f836d97241a6e3333611c6a60e4d | 0 | 0 | PRESENT_AND_VERIFIED; full contribution/service/missing/test/security fields in final branch JSON |
+| claude/connect-01-modes | 7d42dd015b3f644cdc9c60999e8dc8a196366436 | 1 | 25 | MISSING_AND_REQUIRED; OWNER_DECISION_REQUIRED; full contribution/service/missing/test/security fields in final branch JSON |
+| claude/dinar-next-intelligence | 974fb1e2f60aba3d415ac8561d913458c148fd4e | 27 | 162 | MISSING_AND_REQUIRED; SUPERSEDED_WITH_PROOF; OWNER_DECISION_REQUIRED; full contribution/service/missing/test/security fields in final branch JSON |
+| codex/11-c1-sql-search | f351f5d20d52d77b69bdcff66e2412796e53aa39 | 7 | 16 | SUPERSEDED_WITH_PROOF; INCOMPATIBLE_OR_UNSAFE; PRESENT_BUT_REGRESSION_UNVERIFIED; full contribution/service/missing/test/security fields in final branch JSON |
+| codex/dinar-next-unified-development | ab196c55964ed42947d07a88dcd7f2e5f66ccfa0 | 0 | 0 | PRESENT_AND_VERIFIED; full contribution/service/missing/test/security fields in final branch JSON |
+| main | b1b20e513ed25952bc086778fb71af88adcc54ba | 0 | 0 | PRESENT_AND_VERIFIED; full contribution/service/missing/test/security fields in final branch JSON |
+| qoder/04-sc02 | f0a3c77fc1fd1a276fcb2a61214dd3b4b8e49ee3 | 0 | 0 | PRESENT_AND_VERIFIED; full contribution/service/missing/test/security fields in final branch JSON |
+| qoder/05-sc06 | 56138dc97f2711862e41d635e2a009f5535da2bd | 0 | 0 | PRESENT_AND_VERIFIED; full contribution/service/missing/test/security fields in final branch JSON |
+| qoder/06-general-specs | 6335603bfb44857dd5a7261c6f32e06b5b085582 | 0 | 0 | PRESENT_AND_VERIFIED; full contribution/service/missing/test/security fields in final branch JSON |
+| qoder/07-stock | a80bbe32fdf8d9703875658e81b58923e20a1a13 | 3 | 4 | PRESENT_AND_VERIFIED; full contribution/service/missing/test/security fields in final branch JSON |
+| qoder/08-integration | 5dda1466cc08e2d6d61d4d757bf541b853819f65 | 0 | 0 | PRESENT_AND_VERIFIED; full contribution/service/missing/test/security fields in final branch JSON |
+| qoder/09-launch-gates | 5a005005224cf5ac05f72c8328258dd061a9846b | 2 | 1 | SUPERSEDED_WITH_PROOF; full contribution/service/missing/test/security fields in final branch JSON |
+| qoder/10-security-deps | 2b0649066a8c9049f410c1224e9f6610bc99492a | 0 | 0 | PRESENT_AND_VERIFIED; full contribution/service/missing/test/security fields in final branch JSON |
+| qoder/11-wave01-security-close | 772cda7193923cebe95a696f7c7c53c7ad37865a | 0 | 0 | PRESENT_AND_VERIFIED; full contribution/service/missing/test/security fields in final branch JSON |
+| qoder/12-wave02-card-reliability | 2da7f9721c8a915ab3630613f9d83a36a55ab3d6 | 0 | 0 | PRESENT_AND_VERIFIED; full contribution/service/missing/test/security fields in final branch JSON |
+| qoder/12-wave02-red-evidence | 92aeb0c2858a2778a2cb496665c3f6b2b29ee5b5 | 1 | 1 | SUPERSEDED_WITH_PROOF; full contribution/service/missing/test/security fields in final branch JSON |
+| qoder/13-wave03-card-envelope | c6e45942cf122582db01eddaba7356ce1b72029e | 0 | 0 | PRESENT_AND_VERIFIED; full contribution/service/missing/test/security fields in final branch JSON |
+| qoder/14-w02u3-canonical-reliability | 6687df2d033c1b71eee5b46afb3e39d193f66ec2 | 0 | 0 | PRESENT_AND_VERIFIED; full contribution/service/missing/test/security fields in final branch JSON |
+| qoder/15-d3a-native-business | 939930d1037387f39f1a2c64ac5b2ae61146b251 | 13 | 44 | PRESENT_AND_VERIFIED; SUPERSEDED_WITH_PROOF; INCOMPATIBLE_OR_UNSAFE; full contribution/service/missing/test/security fields in final branch JSON |
+| qoder/17-unified-integration-candidate | 4e60a56e3d21defea4c2d580c35fd3b198e52b5e | 41 | 149 | PRESENT_AND_VERIFIED; SUPERSEDED_WITH_PROOF; INCOMPATIBLE_OR_UNSAFE; full contribution/service/missing/test/security fields in final branch JSON |
+| qoder/a01-baseline-audit | f107dd32984cbdcb8e7dce3602ea26d99d9af9b5 | 5 | 7 | PRESENT_AND_VERIFIED; full contribution/service/missing/test/security fields in final branch JSON |
+| qoder/a02-d4-d5-security | 8f9f6ad23067a7251a444dbe0e210ef4f1218b69 | 5 | 4 | PRESENT_AND_VERIFIED; full contribution/service/missing/test/security fields in final branch JSON |
+| qoder/closure-12-executing-recovery | 2e0cca1345d2a2e0a4295c24aeac5b8b4ce59143 | 3 | 8 | PRESENT_AND_VERIFIED; SUPERSEDED_WITH_PROOF; full contribution/service/missing/test/security fields in final branch JSON |
+| qoder/d12-replit-integration | 5d9bca1305245eb51686dda6083ae1aa2fb8e677 | 0 | 0 | PRESENT_AND_VERIFIED; full contribution/service/missing/test/security fields in final branch JSON |
+| qoder/parallel-w07-w12-ultra | af89cb340be4eb11a46b290e3dc5217e52af07ce | 20 | 56 | PRESENT_AND_VERIFIED; SUPERSEDED_WITH_PROOF; full contribution/service/missing/test/security fields in final branch JSON |
+| qoder/temp-principal-sixwave-closure | 44dfbf639fda27d4b8de7908c0aea8df25ab50ef | 16 | 17 | PRESENT_AND_VERIFIED; DOCUMENTATION_ONLY; full contribution/service/missing/test/security fields in final branch JSON |
+| qoder/wave01-d1-d3-closure | adf5a5f86ecd96fad8214eda51d20d05a0e2b2b4 | 0 | 0 | PRESENT_AND_VERIFIED; full contribution/service/missing/test/security fields in final branch JSON |
+| qoder/wave02-d4-d6-closure | 845b0a48cfa7a726c97be75a00ed76fd8db5afca | 0 | 0 | PRESENT_AND_VERIFIED; full contribution/service/missing/test/security fields in final branch JSON |
+| qoder/wave03-d7-d9-closure | c1e0a010c5eb0b1479b8ca21e4a410279b11cb3d | 0 | 0 | PRESENT_AND_VERIFIED; full contribution/service/missing/test/security fields in final branch JSON |
+| qoder/wave04-d10-d12-closure | fd8215e8af4cf55e9f653c94cbc9105111e354eb | 0 | 0 | PRESENT_AND_VERIFIED; full contribution/service/missing/test/security fields in final branch JSON |
+| qoder/wave05-d13-d15-closure | 0f50dc65bbf9120dc4d183825cfe7a243db4b398 | 0 | 0 | PRESENT_AND_VERIFIED; full contribution/service/missing/test/security fields in final branch JSON |
+| qoder/wave06-d16-d17-closure | 891c37d6a904c4ba8809e4531040c63f030bed99 | 23 | 113 | PRESENT_AND_VERIFIED; SUPERSEDED_WITH_PROOF; INCOMPATIBLE_OR_UNSAFE; full contribution/service/missing/test/security fields in final branch JSON |
+| qoder/wave06b-d16-d17-closure | d341917ec4a34ade3c1bdde8366a44dbbca9f35d | 14 | 108 | PRESENT_AND_VERIFIED; SUPERSEDED_WITH_PROOF; INCOMPATIBLE_OR_UNSAFE; full contribution/service/missing/test/security fields in final branch JSON |
+| replit/d16-legal-privacy-compliance | c196a9bf892547322644540a5d03c338020581da | 1 | 92 | PRESENT_AND_VERIFIED; SUPERSEDED_WITH_PROOF; INCOMPATIBLE_OR_UNSAFE; full contribution/service/missing/test/security fields in final branch JSON |
+| replit/dinar-next-complete-development | 11d7fbe3326897924468ee4c6d5467972a92b973 | 0 | 0 | PRESENT_AND_VERIFIED; full contribution/service/missing/test/security fields in final branch JSON |
+| replit/dinar-next-six-wave-unification | ebdd2d7a68f5a52af7ad973f21ef3b0cae914b4a | 0 | 0 | PRESENT_AND_VERIFIED; full contribution/service/missing/test/security fields in final branch JSON |
+| replit/railway-complete-infrastructure-readiness | 21e8562a1b640ebcdd4a270146e7cf56c37f053b | 6 | 27 | SUPERSEDED_WITH_PROOF; DOCUMENTATION_ONLY; full contribution/service/missing/test/security fields in final branch JSON |
+| replit/railway-integrations-readiness | 75d59370884d8799df860d35895f19d987e93d17 | 3 | 11 | SUPERSEDED_WITH_PROOF; full contribution/service/missing/test/security fields in final branch JSON |
+| replit/wave03-intent-integration | 76a7e403117233122b6d5bce2009268bcc586680 | 2 | 19 | PRESENT_AND_VERIFIED; full contribution/service/missing/test/security fields in final branch JSON |
+
+Exact original commit IDs, full modified-file lists and every meaningful historical contribution are in `evidence/functional-audit/final/branch-reconciliation.json`. Current350acceptance is bound pernamedtest on bothPGs, never copied from older source counts. Original C1fixedcursor heap/snapshot equivalence and originalV2/Gemini provenance remain unproved. Claude intelligence and61migration modes remain separate and require owner-coordinated integration; see CODEX_UPDATED_CLAUDE_HANDOFF.md.

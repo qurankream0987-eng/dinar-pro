@@ -1,0 +1,21 @@
+{
+  "sourceSHA": "0c683345b4bc999196993bf3b0813f76aba0ac06",
+  "archivedPaths": [
+    {
+      "original": "/workspace/dinar-connect-evidence/functional-audit-fresh-0c68334",
+      "preserved": "/workspace/dinar-connect-evidence/functional-audit-fresh-0c68334-uds-attempt",
+      "rawFilesUnchanged": true
+    },
+    {
+      "original": "/workspace/dinar-connect-evidence/functional-audit-program-0c68334",
+      "preserved": "/workspace/dinar-connect-evidence/functional-audit-program-0c68334-uds-attempt",
+      "rawFilesUnchanged": true
+    }
+  ],
+  "warning": "Raw JSON record absolute log paths describe the old output root. Resolve each old log basename under its preserved archive root; never read a later clean attempt using an old raw path.",
+  "actualFinishedGroups": 130,
+  "passingGroups": 129,
+  "environmentFailedGroups": 1,
+  "notACompleted350": true,
+  "failedSuite": "pg16 listing-pricing-invariants.test; pre-case inet_client_addr NULL under Unix backend transport"
+}

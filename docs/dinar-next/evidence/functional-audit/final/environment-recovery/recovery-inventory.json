@@ -1,0 +1,49 @@
+{
+  "sourceSHA": "4c09d8a12f9a25d9b3bdbc93877c0fdbe0f037eb",
+  "branch": "codex/dinar-next-functional-audit",
+  "worktreeClean": true,
+  "preservedExistingCheckout": true,
+  "recordedGroups": 120,
+  "recordedPass": 120,
+  "recordedFail": 0,
+  "unrecordedLogs": [
+    {
+      "log": "/workspace/dinar-connect-evidence/functional-audit-fresh-4c09d8a/pg16-sc02-listing-facts.test.log",
+      "completed": false,
+      "exit": null,
+      "bytes": 1198
+    },
+    {
+      "log": "/workspace/dinar-connect-evidence/functional-audit-fresh-4c09d8a/pg18-experience-upgrade-acceptance.test.log",
+      "completed": true,
+      "exit": 1,
+      "bytes": 400879
+    },
+    {
+      "log": "/workspace/dinar-connect-evidence/functional-audit-fresh-4c09d8a/pg16-sc-scenarios-probe.test.log",
+      "completed": false,
+      "exit": null,
+      "bytes": 19618
+    }
+  ],
+  "bundle": "/workspace/dinar-connect-evidence/environment-recovery-20261107T110618Z/preserved-audit-4c09d8a.bundle",
+  "bundleSHA256": "c5b392e07767c0114bccd45614ae6cabbf4d556860442cdf7fa3ffbf768df38c",
+  "bundleVerified": true,
+  "runnerProcessesPresent": false,
+  "postgresProcessesPresent": false,
+  "recoveryCause": "Executor became inaccessible and later resumed with files retained but test/PG processes absent; provider evidence does not distinguish compute shutdown/session/quota/root cause; no evidence of deleted workspace",
+  "remoteMutation": false,
+  "actualCompletedGroups": 121,
+  "actualPassingGroups": 120,
+  "actualFailingGroups": 1,
+  "unrecordedFailure": {
+    "suite": "experience-upgrade-acceptance.test",
+    "pg": 18,
+    "exit": 1,
+    "nodePass": 21,
+    "nodeFail": 1,
+    "causeStatus": "ENVIRONMENT/DB_TRANSPORT: retained auth authority log records ECONNREFUSED during widespread API500/503; no current source PASS inferred; fresh full qualification required"
+  },
+  "archivePathMap": "/workspace/dinar-connect-evidence/environment-recovery-20261107T110618Z/interrupted-attempt/ARCHIVE_PATH_MAP.json",
+  "oldDisposableDatabasesPreserved": true
+}

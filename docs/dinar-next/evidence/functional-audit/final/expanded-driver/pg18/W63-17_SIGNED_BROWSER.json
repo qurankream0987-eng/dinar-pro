@@ -1,0 +1,740 @@
+{
+  "expandedDriverProfiles": [
+    {
+      "width": 320,
+      "scheme": "light",
+      "label": "driver registration review"
+    },
+    {
+      "width": 320,
+      "scheme": "dark",
+      "label": "driver registration review"
+    },
+    {
+      "width": 360,
+      "scheme": "light",
+      "label": "driver registration review"
+    },
+    {
+      "width": 360,
+      "scheme": "dark",
+      "label": "driver registration review"
+    },
+    {
+      "width": 375,
+      "scheme": "light",
+      "label": "driver registration review"
+    },
+    {
+      "width": 375,
+      "scheme": "dark",
+      "label": "driver registration review"
+    },
+    {
+      "width": 390,
+      "scheme": "light",
+      "label": "driver registration review"
+    },
+    {
+      "width": 390,
+      "scheme": "dark",
+      "label": "driver registration review"
+    },
+    {
+      "width": 430,
+      "scheme": "light",
+      "label": "driver registration review"
+    },
+    {
+      "width": 430,
+      "scheme": "dark",
+      "label": "driver registration review"
+    },
+    {
+      "width": 768,
+      "scheme": "light",
+      "label": "driver registration review"
+    },
+    {
+      "width": 768,
+      "scheme": "dark",
+      "label": "driver registration review"
+    },
+    {
+      "width": 1024,
+      "scheme": "light",
+      "label": "driver registration review"
+    },
+    {
+      "width": 1024,
+      "scheme": "dark",
+      "label": "driver registration review"
+    },
+    {
+      "width": 1440,
+      "scheme": "light",
+      "label": "driver registration review"
+    },
+    {
+      "width": 1440,
+      "scheme": "dark",
+      "label": "driver registration review"
+    },
+    {
+      "width": 1600,
+      "scheme": "light",
+      "label": "driver registration review"
+    },
+    {
+      "width": 1600,
+      "scheme": "dark",
+      "label": "driver registration review"
+    },
+    {
+      "width": 1920,
+      "scheme": "light",
+      "label": "driver registration review"
+    },
+    {
+      "width": 1920,
+      "scheme": "dark",
+      "label": "driver registration review"
+    },
+    {
+      "width": 320,
+      "scheme": "light",
+      "label": "courier task card"
+    },
+    {
+      "width": 320,
+      "scheme": "dark",
+      "label": "courier task card"
+    },
+    {
+      "width": 360,
+      "scheme": "light",
+      "label": "courier task card"
+    },
+    {
+      "width": 360,
+      "scheme": "dark",
+      "label": "courier task card"
+    },
+    {
+      "width": 375,
+      "scheme": "light",
+      "label": "courier task card"
+    },
+    {
+      "width": 375,
+      "scheme": "dark",
+      "label": "courier task card"
+    },
+    {
+      "width": 390,
+      "scheme": "light",
+      "label": "courier task card"
+    },
+    {
+      "width": 390,
+      "scheme": "dark",
+      "label": "courier task card"
+    },
+    {
+      "width": 430,
+      "scheme": "light",
+      "label": "courier task card"
+    },
+    {
+      "width": 430,
+      "scheme": "dark",
+      "label": "courier task card"
+    },
+    {
+      "width": 768,
+      "scheme": "light",
+      "label": "courier task card"
+    },
+    {
+      "width": 768,
+      "scheme": "dark",
+      "label": "courier task card"
+    },
+    {
+      "width": 1024,
+      "scheme": "light",
+      "label": "courier task card"
+    },
+    {
+      "width": 1024,
+      "scheme": "dark",
+      "label": "courier task card"
+    },
+    {
+      "width": 1440,
+      "scheme": "light",
+      "label": "courier task card"
+    },
+    {
+      "width": 1440,
+      "scheme": "dark",
+      "label": "courier task card"
+    },
+    {
+      "width": 1600,
+      "scheme": "light",
+      "label": "courier task card"
+    },
+    {
+      "width": 1600,
+      "scheme": "dark",
+      "label": "courier task card"
+    },
+    {
+      "width": 1920,
+      "scheme": "light",
+      "label": "courier task card"
+    },
+    {
+      "width": 1920,
+      "scheme": "dark",
+      "label": "courier task card"
+    },
+    {
+      "width": 320,
+      "scheme": "light",
+      "label": "buyer tracking timeline"
+    },
+    {
+      "width": 320,
+      "scheme": "dark",
+      "label": "buyer tracking timeline"
+    },
+    {
+      "width": 360,
+      "scheme": "light",
+      "label": "buyer tracking timeline"
+    },
+    {
+      "width": 360,
+      "scheme": "dark",
+      "label": "buyer tracking timeline"
+    },
+    {
+      "width": 375,
+      "scheme": "light",
+      "label": "buyer tracking timeline"
+    },
+    {
+      "width": 375,
+      "scheme": "dark",
+      "label": "buyer tracking timeline"
+    },
+    {
+      "width": 390,
+      "scheme": "light",
+      "label": "buyer tracking timeline"
+    },
+    {
+      "width": 390,
+      "scheme": "dark",
+      "label": "buyer tracking timeline"
+    },
+    {
+      "width": 430,
+      "scheme": "light",
+      "label": "buyer tracking timeline"
+    },
+    {
+      "width": 430,
+      "scheme": "dark",
+      "label": "buyer tracking timeline"
+    },
+    {
+      "width": 768,
+      "scheme": "light",
+      "label": "buyer tracking timeline"
+    },
+    {
+      "width": 768,
+      "scheme": "dark",
+      "label": "buyer tracking timeline"
+    },
+    {
+      "width": 1024,
+      "scheme": "light",
+      "label": "buyer tracking timeline"
+    },
+    {
+      "width": 1024,
+      "scheme": "dark",
+      "label": "buyer tracking timeline"
+    },
+    {
+      "width": 1440,
+      "scheme": "light",
+      "label": "buyer tracking timeline"
+    },
+    {
+      "width": 1440,
+      "scheme": "dark",
+      "label": "buyer tracking timeline"
+    },
+    {
+      "width": 1600,
+      "scheme": "light",
+      "label": "buyer tracking timeline"
+    },
+    {
+      "width": 1600,
+      "scheme": "dark",
+      "label": "buyer tracking timeline"
+    },
+    {
+      "width": 1920,
+      "scheme": "light",
+      "label": "buyer tracking timeline"
+    },
+    {
+      "width": 1920,
+      "scheme": "dark",
+      "label": "buyer tracking timeline"
+    },
+    {
+      "width": 320,
+      "scheme": "light",
+      "label": "persisted buyer milestones"
+    },
+    {
+      "width": 320,
+      "scheme": "dark",
+      "label": "persisted buyer milestones"
+    },
+    {
+      "width": 360,
+      "scheme": "light",
+      "label": "persisted buyer milestones"
+    },
+    {
+      "width": 360,
+      "scheme": "dark",
+      "label": "persisted buyer milestones"
+    },
+    {
+      "width": 375,
+      "scheme": "light",
+      "label": "persisted buyer milestones"
+    },
+    {
+      "width": 375,
+      "scheme": "dark",
+      "label": "persisted buyer milestones"
+    },
+    {
+      "width": 390,
+      "scheme": "light",
+      "label": "persisted buyer milestones"
+    },
+    {
+      "width": 390,
+      "scheme": "dark",
+      "label": "persisted buyer milestones"
+    },
+    {
+      "width": 430,
+      "scheme": "light",
+      "label": "persisted buyer milestones"
+    },
+    {
+      "width": 430,
+      "scheme": "dark",
+      "label": "persisted buyer milestones"
+    },
+    {
+      "width": 768,
+      "scheme": "light",
+      "label": "persisted buyer milestones"
+    },
+    {
+      "width": 768,
+      "scheme": "dark",
+      "label": "persisted buyer milestones"
+    },
+    {
+      "width": 1024,
+      "scheme": "light",
+      "label": "persisted buyer milestones"
+    },
+    {
+      "width": 1024,
+      "scheme": "dark",
+      "label": "persisted buyer milestones"
+    },
+    {
+      "width": 1440,
+      "scheme": "light",
+      "label": "persisted buyer milestones"
+    },
+    {
+      "width": 1440,
+      "scheme": "dark",
+      "label": "persisted buyer milestones"
+    },
+    {
+      "width": 1600,
+      "scheme": "light",
+      "label": "persisted buyer milestones"
+    },
+    {
+      "width": 1600,
+      "scheme": "dark",
+      "label": "persisted buyer milestones"
+    },
+    {
+      "width": 1920,
+      "scheme": "light",
+      "label": "persisted buyer milestones"
+    },
+    {
+      "width": 1920,
+      "scheme": "dark",
+      "label": "persisted buyer milestones"
+    },
+    {
+      "width": 320,
+      "scheme": "light",
+      "label": "completed receipt timeline"
+    },
+    {
+      "width": 320,
+      "scheme": "dark",
+      "label": "completed receipt timeline"
+    },
+    {
+      "width": 360,
+      "scheme": "light",
+      "label": "completed receipt timeline"
+    },
+    {
+      "width": 360,
+      "scheme": "dark",
+      "label": "completed receipt timeline"
+    },
+    {
+      "width": 375,
+      "scheme": "light",
+      "label": "completed receipt timeline"
+    },
+    {
+      "width": 375,
+      "scheme": "dark",
+      "label": "completed receipt timeline"
+    },
+    {
+      "width": 390,
+      "scheme": "light",
+      "label": "completed receipt timeline"
+    },
+    {
+      "width": 390,
+      "scheme": "dark",
+      "label": "completed receipt timeline"
+    },
+    {
+      "width": 430,
+      "scheme": "light",
+      "label": "completed receipt timeline"
+    },
+    {
+      "width": 430,
+      "scheme": "dark",
+      "label": "completed receipt timeline"
+    },
+    {
+      "width": 768,
+      "scheme": "light",
+      "label": "completed receipt timeline"
+    },
+    {
+      "width": 768,
+      "scheme": "dark",
+      "label": "completed receipt timeline"
+    },
+    {
+      "width": 1024,
+      "scheme": "light",
+      "label": "completed receipt timeline"
+    },
+    {
+      "width": 1024,
+      "scheme": "dark",
+      "label": "completed receipt timeline"
+    },
+    {
+      "width": 1440,
+      "scheme": "light",
+      "label": "completed receipt timeline"
+    },
+    {
+      "width": 1440,
+      "scheme": "dark",
+      "label": "completed receipt timeline"
+    },
+    {
+      "width": 1600,
+      "scheme": "light",
+      "label": "completed receipt timeline"
+    },
+    {
+      "width": 1600,
+      "scheme": "dark",
+      "label": "completed receipt timeline"
+    },
+    {
+      "width": 1920,
+      "scheme": "light",
+      "label": "completed receipt timeline"
+    },
+    {
+      "width": 1920,
+      "scheme": "dark",
+      "label": "completed receipt timeline"
+    },
+    {
+      "width": 320,
+      "scheme": "light",
+      "label": "conversation-native completed order receipt"
+    },
+    {
+      "width": 320,
+      "scheme": "dark",
+      "label": "conversation-native completed order receipt"
+    },
+    {
+      "width": 360,
+      "scheme": "light",
+      "label": "conversation-native completed order receipt"
+    },
+    {
+      "width": 360,
+      "scheme": "dark",
+      "label": "conversation-native completed order receipt"
+    },
+    {
+      "width": 375,
+      "scheme": "light",
+      "label": "conversation-native completed order receipt"
+    },
+    {
+      "width": 375,
+      "scheme": "dark",
+      "label": "conversation-native completed order receipt"
+    },
+    {
+      "width": 390,
+      "scheme": "light",
+      "label": "conversation-native completed order receipt"
+    },
+    {
+      "width": 390,
+      "scheme": "dark",
+      "label": "conversation-native completed order receipt"
+    },
+    {
+      "width": 430,
+      "scheme": "light",
+      "label": "conversation-native completed order receipt"
+    },
+    {
+      "width": 430,
+      "scheme": "dark",
+      "label": "conversation-native completed order receipt"
+    },
+    {
+      "width": 768,
+      "scheme": "light",
+      "label": "conversation-native completed order receipt"
+    },
+    {
+      "width": 768,
+      "scheme": "dark",
+      "label": "conversation-native completed order receipt"
+    },
+    {
+      "width": 1024,
+      "scheme": "light",
+      "label": "conversation-native completed order receipt"
+    },
+    {
+      "width": 1024,
+      "scheme": "dark",
+      "label": "conversation-native completed order receipt"
+    },
+    {
+      "width": 1440,
+      "scheme": "light",
+      "label": "conversation-native completed order receipt"
+    },
+    {
+      "width": 1440,
+      "scheme": "dark",
+      "label": "conversation-native completed order receipt"
+    },
+    {
+      "width": 1600,
+      "scheme": "light",
+      "label": "conversation-native completed order receipt"
+    },
+    {
+      "width": 1600,
+      "scheme": "dark",
+      "label": "conversation-native completed order receipt"
+    },
+    {
+      "width": 1920,
+      "scheme": "light",
+      "label": "conversation-native completed order receipt"
+    },
+    {
+      "width": 1920,
+      "scheme": "dark",
+      "label": "conversation-native completed order receipt"
+    },
+    {
+      "width": 320,
+      "scheme": "light",
+      "label": "courier earnings history"
+    },
+    {
+      "width": 320,
+      "scheme": "dark",
+      "label": "courier earnings history"
+    },
+    {
+      "width": 360,
+      "scheme": "light",
+      "label": "courier earnings history"
+    },
+    {
+      "width": 360,
+      "scheme": "dark",
+      "label": "courier earnings history"
+    },
+    {
+      "width": 375,
+      "scheme": "light",
+      "label": "courier earnings history"
+    },
+    {
+      "width": 375,
+      "scheme": "dark",
+      "label": "courier earnings history"
+    },
+    {
+      "width": 390,
+      "scheme": "light",
+      "label": "courier earnings history"
+    },
+    {
+      "width": 390,
+      "scheme": "dark",
+      "label": "courier earnings history"
+    },
+    {
+      "width": 430,
+      "scheme": "light",
+      "label": "courier earnings history"
+    },
+    {
+      "width": 430,
+      "scheme": "dark",
+      "label": "courier earnings history"
+    },
+    {
+      "width": 768,
+      "scheme": "light",
+      "label": "courier earnings history"
+    },
+    {
+      "width": 768,
+      "scheme": "dark",
+      "label": "courier earnings history"
+    },
+    {
+      "width": 1024,
+      "scheme": "light",
+      "label": "courier earnings history"
+    },
+    {
+      "width": 1024,
+      "scheme": "dark",
+      "label": "courier earnings history"
+    },
+    {
+      "width": 1440,
+      "scheme": "light",
+      "label": "courier earnings history"
+    },
+    {
+      "width": 1440,
+      "scheme": "dark",
+      "label": "courier earnings history"
+    },
+    {
+      "width": 1600,
+      "scheme": "light",
+      "label": "courier earnings history"
+    },
+    {
+      "width": 1600,
+      "scheme": "dark",
+      "label": "courier earnings history"
+    },
+    {
+      "width": 1920,
+      "scheme": "light",
+      "label": "courier earnings history"
+    },
+    {
+      "width": 1920,
+      "scheme": "dark",
+      "label": "courier earnings history"
+    }
+  ],
+  "status": "PASS",
+  "onboardingEvidence": {
+    "draftBeforeConfirmation": true,
+    "statusAfterConfirmation": "PENDING_VERIFICATION",
+    "reload": true,
+    "noApproval": true,
+    "noWorkAcceptance": true
+  },
+  "checks": [
+    "buyer tracking",
+    "courier work-card acceptance",
+    "pickup",
+    "departure",
+    "arrival",
+    "handoff",
+    "buyer timeline",
+    "explicit receipt",
+    "conversation-native invoice",
+    "courier earnings history",
+    "persisted completion"
+  ],
+  "widths": [
+    320,
+    360,
+    375,
+    390,
+    430,
+    768,
+    1024,
+    1440,
+    1600,
+    1920
+  ],
+  "pageErrors": [],
+  "consoleErrors": [],
+  "externalRequests": []
+}

@@ -1,0 +1,565 @@
+{
+  "pg": 16,
+  "sourceSHA": "5121c9198ca80fb0cb02be4ef168b396d8aa12c0",
+  "exit": 0,
+  "mode": "DISPOSABLE_LOOPBACK",
+  "migrationMode": "reviewed SQL/Drizzle PG16 compatibility",
+  "tables": {
+    "drizzle.__drizzle_migrations": {
+      "rows": 60,
+      "md5": "2192c006219bcd6bd9c8045a980941c2"
+    },
+    "public.ai_billing_reconciliations": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.ai_cost_events": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.ai_model_prices": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.ai_result_sets": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.ai_spend_counters": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.ai_spend_holds": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.ai_ui_blocks": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.ai_usage_counters": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.ai_usage_reservations": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.auth_rate_limit_buckets": {
+      "rows": 3,
+      "md5": "a7b8deab867bac03889ccfe7fcbfa03a"
+    },
+    "public.billing_webhook_events": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.business_audit_events": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.business_delegations": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.business_employee_sessions": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.business_memberships": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.business_operating_profiles": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.business_profiles": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.business_subscriptions": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.business_verification_documents": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.business_verification_events": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.candidate_profiles": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.cart_items": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.carts": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.cash_payment_claims": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.cash_refund_cases": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.checkout_requests": {
+      "rows": 45,
+      "md5": "2640501a39482dbe5f9d3f5a5e94a032"
+    },
+    "public.commercial_accounts": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.commercial_entitlements": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.commercial_ledger": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.commercial_policies": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.commercial_topups": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.commission_policies": {
+      "rows": 1,
+      "md5": "50eca90a84cd2278dca8b42faa7fec8f"
+    },
+    "public.connect_agreement_acceptances": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.connect_agreements": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.connect_audit_events": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.connect_commission_ledger": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.connect_external_events": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.connect_ingestion_batches": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.connect_integrations": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.connect_oauth_states": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.connect_offers": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.connect_partners": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.connect_referrals": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.connect_secrets": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.connect_sites": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.connect_team_permissions": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.connect_transactions": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.conversation_summaries": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.conversations": {
+      "rows": 45,
+      "md5": "0ec7772e9028ce9743a4bb230de5dd62"
+    },
+    "public.courier_commission_receivables": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.courier_commission_settlements": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.courier_fare_agreements": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.courier_fare_proposals": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.delivery_assignments": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.delivery_progress_events": {
+      "rows": 3,
+      "md5": "10c11795d48e9630e894edc9c9745555"
+    },
+    "public.demand_signals": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.disputes": {
+      "rows": 1,
+      "md5": "06fc563bdee993cc600131e08b50e5ac"
+    },
+    "public.driver_profiles": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.fraud_signal_reviews": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.fraud_signals": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.job_applications": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.jobs": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.legal_entities": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.listing_promotions": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.market_audit": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.market_compliance_settings": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.market_legal_capability_approvals": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.market_legal_capability_events": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.market_legal_evidence": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.market_legal_intake_events": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.market_legal_intake_topics": {
+      "rows": 48,
+      "md5": "037028b8dddf58146798b6790d6f6f8a"
+    },
+    "public.market_legal_intakes": {
+      "rows": 3,
+      "md5": "7e8c8afd3cbd2b702b6cbe1f1967564c"
+    },
+    "public.market_price_versions": {
+      "rows": 3,
+      "md5": "909870da1fcfd3cb798ba3284e7ab844"
+    },
+    "public.marketplace_categories": {
+      "rows": 8,
+      "md5": "16e394beb76dc1a52e1f5f15fd947cd2"
+    },
+    "public.marketplace_category_audit": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.marketplace_inquiries": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.marketplace_inquiry_events": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.marketplace_policy_rules": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.marketplace_reports": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.markets": {
+      "rows": 249,
+      "md5": "0ad438ffaf6ff47430710d4c3d2483c1"
+    },
+    "public.messages": {
+      "rows": 84,
+      "md5": "457493268f63d29ea2f7c4f81c4dd049"
+    },
+    "public.minor_protection_declarations": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.moderation_audit": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.moderation_reason_codes": {
+      "rows": 15,
+      "md5": "014cd10537a3bd5f26a7fb6140cddee3"
+    },
+    "public.negotiation_events": {
+      "rows": 2,
+      "md5": "1c793222ae319a475cf365f11145cbdc"
+    },
+    "public.negotiations": {
+      "rows": 1,
+      "md5": "1b4b4f8d4a14c08d060918b333ad7d7d"
+    },
+    "public.offer_search_documents": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.offers": {
+      "rows": 33,
+      "md5": "1e93522a1fbdf418a2d70144ddfafc18"
+    },
+    "public.order_financial_events": {
+      "rows": 145,
+      "md5": "89e28e92fc47fd925eea5a6be273c6bc"
+    },
+    "public.order_fulfillments": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.order_items": {
+      "rows": 45,
+      "md5": "066774992d16102f08a13afb857497dd"
+    },
+    "public.orders": {
+      "rows": 45,
+      "md5": "3dc0ee2c0a870a8c10f1d8b5e191e6b2"
+    },
+    "public.payment_dispute_events": {
+      "rows": 1,
+      "md5": "39155c34e0611098e46e2f63998cc3c6"
+    },
+    "public.payment_events": {
+      "rows": 38,
+      "md5": "c796c7c6dd2f9b8327d499edd7ded949"
+    },
+    "public.payment_intents": {
+      "rows": 37,
+      "md5": "d4f8e12a42d1e82d345f3277d0829c64"
+    },
+    "public.payment_reconciliation_items": {
+      "rows": 102,
+      "md5": "4506665833bee8c61e2510c058f65644"
+    },
+    "public.payment_reconciliation_runs": {
+      "rows": 3,
+      "md5": "35c91c00cbe0b1e6713d535349a3ae55"
+    },
+    "public.payment_refund_obligations": {
+      "rows": 24,
+      "md5": "011a454b0f5c5b8515424a38fae50b52"
+    },
+    "public.payment_refunds": {
+      "rows": 6,
+      "md5": "11e2e58bbd3c83084f0f0659b777f5ad"
+    },
+    "public.personal_memories": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.personal_memory_controls": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.personal_memory_events": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.phone_verification_challenges": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.policy_acceptances": {
+      "rows": 34,
+      "md5": "cd4aeff744caf1e77d120361a66bb615"
+    },
+    "public.policy_consent_events": {
+      "rows": 22,
+      "md5": "7ad647a989976e18cb15a27267e2b8c6"
+    },
+    "public.policy_registry_versions": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.privacy_consent_events": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.privacy_request_events": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.privacy_requests": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.promotion_attributions": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.promotion_products": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.provider_connections": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.provider_credentials": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.provider_resource_mappings": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.security_incident_events": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.security_incidents": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.seller_dues": {
+      "rows": 3,
+      "md5": "7a8e945458191e596bcfd2286b63942c"
+    },
+    "public.seller_market_eligibility": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.seller_verification_profiles": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.sessions": {
+      "rows": 11,
+      "md5": "669fbde2d670bdcb2808f015dfa28342"
+    },
+    "public.support_case_events": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.support_case_messages": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.support_cases": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.transaction_locations": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.trust_appeal_events": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.trust_appeals": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.tutorial_learning_events": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.user_privacy_preferences": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.users": {
+      "rows": 17,
+      "md5": "b774da6336ca6931a5563d5e73b484a7"
+    },
+    "public.whatsapp_consent_events": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.whatsapp_intents": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    },
+    "public.whatsapp_templates": {
+      "rows": 0,
+      "md5": "d751713988987e9331980363e24189ce"
+    }
+  },
+  "allTableDigestsEqual": true,
+  "restoredFinancialGuards": {
+    "order_snapshot": {
+      "status": "REJECTED_WITH_EXACT_INVARIANT",
+      "sqlstate": "P0001",
+      "message": "Order price and identity snapshot is immutable",
+      "function": "bdinar_order_snapshot_immutable"
+    },
+    "order_items": {
+      "status": "REJECTED_WITH_EXACT_INVARIANT",
+      "sqlstate": "55000",
+      "message": "Order items are immutable after checkout",
+      "function": "dinar_reject_order_item_mutation"
+    },
+    "journal": {
+      "status": "REJECTED_WITH_EXACT_INVARIANT",
+      "sqlstate": "23514",
+      "message": "order_financial_events is append-only",
+      "function": "order_financial_events_guard"
+    }
+  },
+  "dumpSHA256": "4c66d10c8353687bf64901045eedd15a0cd3f06c6f3aa2c7e9475c396af9ca2a",
+  "seconds": 12.31,
+  "dumpRetained": false
+}

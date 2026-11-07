@@ -1,0 +1,10 @@
+{
+  "sourceSHA": "5121c9198ca80fb0cb02be4ef168b396d8aa12c0",
+  "candidateAncestor": "ebdd2d7a68f5a52af7ad973f21ef3b0cae914b4a",
+  "originalSQLCount": 57,
+  "originalSQLChanged": [],
+  "currentSQLCount": 60,
+  "allManifestHashesMatch": true,
+  "releaseManifestSHA256": "24dd1a2040848d3229995984405c2bb27fd70c62219052d36b44260936fdde2d",
+  "checkedAtUTC": "2026-11-07T13:40:27.047379+00:00"
+}

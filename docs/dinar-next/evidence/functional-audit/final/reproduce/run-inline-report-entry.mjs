@@ -1,0 +1,11 @@
+import {createRequire} from 'node:module';
+import {readFile} from 'node:fs/promises';
+import {spawn} from 'node:child_process';
+const root='/workspace/dinar-next-functional-audit',api=root+'/artifacts/api-server';
+const require=createRequire(api+'/package.json');
+const {build}=require('esbuild');
+(await import(api+'/test/acceptance-database-guard.mjs')).validateAcceptanceDatabase();
+const bundle=api+'/.test-build/inline-report-evidence.mjs';
+await build({stdin:{contents:await readFile('/workspace/dinar-connect-evidence/inline-report/inline-report-entry.ts','utf8'),resolveDir:api+'/test',sourcefile:'expanded-driver-entry.ts',loader:'ts'},bundle:true,platform:'node',format:'esm',outfile:bundle,external:['pg-native','pino','pino-http'],logLevel:'warning',banner:{js:"import {createRequire} from 'node:module';const require=createRequire(import.meta.url);"}});
+const env={...process.env,BDINAR_BLOCK_MODEL_CALLS:'1',DINAR_AI_MODEL_FALLBACK:'false'};for(const key of ['OPENROUTER_API_KEY','OPENAI_API_KEY','GROQ_API_KEY','AI_INTEGRATIONS_OPENAI_API_KEY','AI_INTEGRATIONS_OPENAI_BASE_URL','ANTHROPIC_API_KEY'])delete env[key];
+const child=spawn(process.execPath,[bundle],{cwd:api,env,stdio:'inherit'});process.exitCode=await new Promise(resolve=>child.on('close',code=>resolve(code??1)));

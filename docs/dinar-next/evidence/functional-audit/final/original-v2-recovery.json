@@ -1,0 +1,18 @@
+{
+  "afterFetchingAllSixPRHeadsAndAllAdvertisedMergeSnapshots": true,
+  "mergeSnapshotsFetched": 6,
+  "objects": [
+    {
+      "sha": "719d4715a869f69831049a6a2f6c349cec934344",
+      "present": false,
+      "type": null
+    },
+    {
+      "sha": "442008a5fdcb9dc6529a55364cd66e033c6a0909",
+      "present": false,
+      "type": null
+    }
+  ],
+  "status": "BLOCKED_UNAVAILABLE_ORIGINAL_TASK_OR_BUNDLE",
+  "notLostClaim": true
+}

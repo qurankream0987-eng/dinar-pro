@@ -1,0 +1,43 @@
+{
+  "sourceSHA": "4c09d8a12f9a25d9b3bdbc93877c0fdbe0f037eb",
+  "pausedAtUTC": "2026-11-07T12:01:37.775772+00:00",
+  "reason": "Confirmed seeded Unsplash image dependency; strict diagnostic red reproduced2DNSerrors, fixture-only green83checks and actual owned-photo decode passed; stop before changing tracked fixtures/tests",
+  "controllers": [
+    {
+      "pid": 1524,
+      "script": "run-current-closure-all.py"
+    },
+    {
+      "pid": 1531,
+      "script": "run-functional-audit-frozen-program.py"
+    },
+    {
+      "pid": 1980,
+      "script": "run-functional-audit-final-current.py"
+    }
+  ],
+  "childrenAllowedToFinish": [
+    {
+      "pid": 82540,
+      "state": "S (sleeping)"
+    }
+  ],
+  "unrecordedLogs": [
+    "/workspace/dinar-connect-evidence/functional-audit-fresh-4c09d8a/pg18-block-a-acceptance.test.log"
+  ],
+  "recordedFinished": 318,
+  "recordedPass": 317,
+  "recordedFail": 1,
+  "stoppedAtUTC": "2026-11-07T12:02:48.426997+00:00",
+  "unrecordedFinal": [
+    {
+      "log": "/workspace/dinar-connect-evidence/functional-audit-fresh-4c09d8a/pg18-block-a-acceptance.test.log",
+      "completed": true,
+      "exit": 0
+    }
+  ],
+  "totalFinished": 319,
+  "totalPass": 318,
+  "totalFail": 1,
+  "notAComplete350": true
+}

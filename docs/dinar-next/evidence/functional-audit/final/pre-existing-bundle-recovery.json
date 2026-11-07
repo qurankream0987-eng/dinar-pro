@@ -1,0 +1,4008 @@
+{
+  "bundles": [
+    {
+      "file": "/workspace/dinar-completion/codex-completion-checkpoint.bundle",
+      "bytes": 18085351,
+      "listExit": 0,
+      "tips": [
+        {
+          "sha": "70694c301a5e8608ec0f99ab722ac232a9cf0b56",
+          "ref": "refs/heads/codex/dinar-next-unified-development",
+          "fetchExit": 0,
+          "localRef": "refs/audit-preservation/bundle-tips/0-0"
+        },
+        {
+          "sha": "b1b20e513ed25952bc086778fb71af88adcc54ba",
+          "ref": "refs/heads/work",
+          "fetchExit": 0,
+          "localRef": "refs/audit-preservation/bundle-tips/0-1"
+        },
+        {
+          "sha": "2ef9c07ab5fdcd15eca167f5a01ab32b6054400e",
+          "ref": "refs/remotes/origin/ai-foundation-02",
+          "fetchExit": 0,
+          "localRef": "refs/audit-preservation/bundle-tips/0-2"
+        },
+        {
+          "sha": "9679e488c5f3d2260078d98c7d97704df6aac6ce",
+          "ref": "refs/remotes/origin/claude/02-sc-acceptance",
+          "fetchExit": 0,
+          "localRef": "refs/audit-preservation/bundle-tips/0-3"
+        },
+        {
+          "sha": "e5bbd1ba59bddae8c5bd173a890fcdeafa046c25",
+          "ref": "refs/remotes/origin/claude/04-reconciliation",
+          "fetchExit": 0,
+          "localRef": "refs/audit-preservation/bundle-tips/0-4"
+        },
+        {
+          "sha": "4322fb6d7b66460626509401370f5ec3a5f6c6a8",
+          "ref": "refs/remotes/origin/claude/05-w04-context",
+          "fetchExit": 0,
+          "localRef": "refs/audit-preservation/bundle-tips/0-5"
+        },
+        {
+          "sha": "8f4662b8a8d0c1ebc90bec06cd17c89795d8a480",
+          "ref": "refs/remotes/origin/claude/06-w02-ultra",
+          "fetchExit": 0,
+          "localRef": "refs/audit-preservation/bundle-tips/0-6"
+        },
+        {
+          "sha": "e17fad27339b9d40ccea341e46bef96941d34db8",
+          "ref": "refs/remotes/origin/claude/07-legal-cards",
+          "fetchExit": 0,
+          "localRef": "refs/audit-preservation/bundle-tips/0-7"
+        },
+        {
+          "sha": "09ff489f0a3f5950b9f0a0ba8b6cfc49230a7747",
+          "ref": "refs/remotes/origin/claude/08-model-native",
+          "fetchExit": 0,
+          "localRef": "refs/audit-preservation/bundle-tips/0-8"
+        },
+        {
+          "sha": "d416a047f3707d1f03c6763c76e96eee2ab69da4",
+          "ref": "refs/remotes/origin/claude/09-dual-tier",
+          "fetchExit": 0,
+          "localRef": "refs/audit-preservation/bundle-tips/0-9"
+        },
+        {
+          "sha": "9a0f86f0b3c727f48be58aee7db11a3045a94613",
+          "ref": "refs/remotes/origin/claude/10-ultra-closure",
+          "fetchExit": 0,
+          "localRef": "refs/audit-preservation/bundle-tips/0-10"
+        },
+        {
+          "sha": "d94477bad836bf4fe7b3330884170625d1698270",
+          "ref": "refs/remotes/origin/claude/11-c1-sql-search",
+          "fetchExit": 0,
+          "localRef": "refs/audit-preservation/bundle-tips/0-11"
+        },
+        {
+          "sha": "91b09ee7e24b737879d1bcf0ff1f8c238026d3f4",
+          "ref": "refs/remotes/origin/claude/12-d1-d2-business-foundation",
+          "fetchExit": 0,
+          "localRef": "refs/audit-preservation/bundle-tips/0-12"
+        },
+        {
+          "sha": "fe1c23396930f836d97241a6e3333611c6a60e4d",
+          "ref": "refs/remotes/origin/claude/13-integration-preflight",
+          "fetchExit": 0,
+          "localRef": "refs/audit-preservation/bundle-tips/0-13"
+        },
+        {
+          "sha": "f351f5d20d52d77b69bdcff66e2412796e53aa39",
+          "ref": "refs/remotes/origin/codex/11-c1-sql-search",
+          "fetchExit": 0,
+          "localRef": "refs/audit-preservation/bundle-tips/0-14"
+        },
+        {
+          "sha": "b1b20e513ed25952bc086778fb71af88adcc54ba",
+          "ref": "refs/remotes/origin/main",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "ebdd2d7a68f5a52af7ad973f21ef3b0cae914b4a",
+          "ref": "refs/remotes/origin/pr-5-head",
+          "fetchExit": 0,
+          "localRef": "refs/audit-preservation/bundle-tips/0-16"
+        },
+        {
+          "sha": "f0a3c77fc1fd1a276fcb2a61214dd3b4b8e49ee3",
+          "ref": "refs/remotes/origin/qoder/04-sc02",
+          "fetchExit": 0,
+          "localRef": "refs/audit-preservation/bundle-tips/0-17"
+        },
+        {
+          "sha": "56138dc97f2711862e41d635e2a009f5535da2bd",
+          "ref": "refs/remotes/origin/qoder/05-sc06",
+          "fetchExit": 0,
+          "localRef": "refs/audit-preservation/bundle-tips/0-18"
+        },
+        {
+          "sha": "6335603bfb44857dd5a7261c6f32e06b5b085582",
+          "ref": "refs/remotes/origin/qoder/06-general-specs",
+          "fetchExit": 0,
+          "localRef": "refs/audit-preservation/bundle-tips/0-19"
+        },
+        {
+          "sha": "a80bbe32fdf8d9703875658e81b58923e20a1a13",
+          "ref": "refs/remotes/origin/qoder/07-stock",
+          "fetchExit": 0,
+          "localRef": "refs/audit-preservation/bundle-tips/0-20"
+        },
+        {
+          "sha": "5dda1466cc08e2d6d61d4d757bf541b853819f65",
+          "ref": "refs/remotes/origin/qoder/08-integration",
+          "fetchExit": 0,
+          "localRef": "refs/audit-preservation/bundle-tips/0-21"
+        },
+        {
+          "sha": "5a005005224cf5ac05f72c8328258dd061a9846b",
+          "ref": "refs/remotes/origin/qoder/09-launch-gates",
+          "fetchExit": 0,
+          "localRef": "refs/audit-preservation/bundle-tips/0-22"
+        },
+        {
+          "sha": "2b0649066a8c9049f410c1224e9f6610bc99492a",
+          "ref": "refs/remotes/origin/qoder/10-security-deps",
+          "fetchExit": 0,
+          "localRef": "refs/audit-preservation/bundle-tips/0-23"
+        },
+        {
+          "sha": "772cda7193923cebe95a696f7c7c53c7ad37865a",
+          "ref": "refs/remotes/origin/qoder/11-wave01-security-close",
+          "fetchExit": 0,
+          "localRef": "refs/audit-preservation/bundle-tips/0-24"
+        },
+        {
+          "sha": "2da7f9721c8a915ab3630613f9d83a36a55ab3d6",
+          "ref": "refs/remotes/origin/qoder/12-wave02-card-reliability",
+          "fetchExit": 0,
+          "localRef": "refs/audit-preservation/bundle-tips/0-25"
+        },
+        {
+          "sha": "92aeb0c2858a2778a2cb496665c3f6b2b29ee5b5",
+          "ref": "refs/remotes/origin/qoder/12-wave02-red-evidence",
+          "fetchExit": 0,
+          "localRef": "refs/audit-preservation/bundle-tips/0-26"
+        },
+        {
+          "sha": "c6e45942cf122582db01eddaba7356ce1b72029e",
+          "ref": "refs/remotes/origin/qoder/13-wave03-card-envelope",
+          "fetchExit": 0,
+          "localRef": "refs/audit-preservation/bundle-tips/0-27"
+        },
+        {
+          "sha": "6687df2d033c1b71eee5b46afb3e39d193f66ec2",
+          "ref": "refs/remotes/origin/qoder/14-w02u3-canonical-reliability",
+          "fetchExit": 0,
+          "localRef": "refs/audit-preservation/bundle-tips/0-28"
+        },
+        {
+          "sha": "939930d1037387f39f1a2c64ac5b2ae61146b251",
+          "ref": "refs/remotes/origin/qoder/15-d3a-native-business",
+          "fetchExit": 0,
+          "localRef": "refs/audit-preservation/bundle-tips/0-29"
+        },
+        {
+          "sha": "4e60a56e3d21defea4c2d580c35fd3b198e52b5e",
+          "ref": "refs/remotes/origin/qoder/17-unified-integration-candidate",
+          "fetchExit": 0,
+          "localRef": "refs/audit-preservation/bundle-tips/0-30"
+        },
+        {
+          "sha": "f107dd32984cbdcb8e7dce3602ea26d99d9af9b5",
+          "ref": "refs/remotes/origin/qoder/a01-baseline-audit",
+          "fetchExit": 0,
+          "localRef": "refs/audit-preservation/bundle-tips/0-31"
+        },
+        {
+          "sha": "8f9f6ad23067a7251a444dbe0e210ef4f1218b69",
+          "ref": "refs/remotes/origin/qoder/a02-d4-d5-security",
+          "fetchExit": 0,
+          "localRef": "refs/audit-preservation/bundle-tips/0-32"
+        },
+        {
+          "sha": "2e0cca1345d2a2e0a4295c24aeac5b8b4ce59143",
+          "ref": "refs/remotes/origin/qoder/closure-12-executing-recovery",
+          "fetchExit": 0,
+          "localRef": "refs/audit-preservation/bundle-tips/0-33"
+        },
+        {
+          "sha": "5d9bca1305245eb51686dda6083ae1aa2fb8e677",
+          "ref": "refs/remotes/origin/qoder/d12-replit-integration",
+          "fetchExit": 0,
+          "localRef": "refs/audit-preservation/bundle-tips/0-34"
+        },
+        {
+          "sha": "af89cb340be4eb11a46b290e3dc5217e52af07ce",
+          "ref": "refs/remotes/origin/qoder/parallel-w07-w12-ultra",
+          "fetchExit": 0,
+          "localRef": "refs/audit-preservation/bundle-tips/0-35"
+        },
+        {
+          "sha": "44dfbf639fda27d4b8de7908c0aea8df25ab50ef",
+          "ref": "refs/remotes/origin/qoder/temp-principal-sixwave-closure",
+          "fetchExit": 0,
+          "localRef": "refs/audit-preservation/bundle-tips/0-36"
+        },
+        {
+          "sha": "adf5a5f86ecd96fad8214eda51d20d05a0e2b2b4",
+          "ref": "refs/remotes/origin/qoder/wave01-d1-d3-closure",
+          "fetchExit": 0,
+          "localRef": "refs/audit-preservation/bundle-tips/0-37"
+        },
+        {
+          "sha": "845b0a48cfa7a726c97be75a00ed76fd8db5afca",
+          "ref": "refs/remotes/origin/qoder/wave02-d4-d6-closure",
+          "fetchExit": 0,
+          "localRef": "refs/audit-preservation/bundle-tips/0-38"
+        },
+        {
+          "sha": "c1e0a010c5eb0b1479b8ca21e4a410279b11cb3d",
+          "ref": "refs/remotes/origin/qoder/wave03-d7-d9-closure",
+          "fetchExit": 0,
+          "localRef": "refs/audit-preservation/bundle-tips/0-39"
+        },
+        {
+          "sha": "fd8215e8af4cf55e9f653c94cbc9105111e354eb",
+          "ref": "refs/remotes/origin/qoder/wave04-d10-d12-closure",
+          "fetchExit": 0,
+          "localRef": "refs/audit-preservation/bundle-tips/0-40"
+        },
+        {
+          "sha": "0f50dc65bbf9120dc4d183825cfe7a243db4b398",
+          "ref": "refs/remotes/origin/qoder/wave05-d13-d15-closure",
+          "fetchExit": 0,
+          "localRef": "refs/audit-preservation/bundle-tips/0-41"
+        },
+        {
+          "sha": "891c37d6a904c4ba8809e4531040c63f030bed99",
+          "ref": "refs/remotes/origin/qoder/wave06-d16-d17-closure",
+          "fetchExit": 0,
+          "localRef": "refs/audit-preservation/bundle-tips/0-42"
+        },
+        {
+          "sha": "d341917ec4a34ade3c1bdde8366a44dbbca9f35d",
+          "ref": "refs/remotes/origin/qoder/wave06b-d16-d17-closure",
+          "fetchExit": 0,
+          "localRef": "refs/audit-preservation/bundle-tips/0-43"
+        },
+        {
+          "sha": "c196a9bf892547322644540a5d03c338020581da",
+          "ref": "refs/remotes/origin/replit/d16-legal-privacy-compliance",
+          "fetchExit": 0,
+          "localRef": "refs/audit-preservation/bundle-tips/0-44"
+        },
+        {
+          "sha": "11d7fbe3326897924468ee4c6d5467972a92b973",
+          "ref": "refs/remotes/origin/replit/dinar-next-complete-development",
+          "fetchExit": 0,
+          "localRef": "refs/audit-preservation/bundle-tips/0-45"
+        },
+        {
+          "sha": "ebdd2d7a68f5a52af7ad973f21ef3b0cae914b4a",
+          "ref": "refs/remotes/origin/replit/dinar-next-six-wave-unification",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "21e8562a1b640ebcdd4a270146e7cf56c37f053b",
+          "ref": "refs/remotes/origin/replit/railway-complete-infrastructure-readiness",
+          "fetchExit": 0,
+          "localRef": "refs/audit-preservation/bundle-tips/0-47"
+        },
+        {
+          "sha": "75d59370884d8799df860d35895f19d987e93d17",
+          "ref": "refs/remotes/origin/replit/railway-integrations-readiness",
+          "fetchExit": 0,
+          "localRef": "refs/audit-preservation/bundle-tips/0-48"
+        },
+        {
+          "sha": "76a7e403117233122b6d5bce2009268bcc586680",
+          "ref": "refs/remotes/origin/replit/wave03-intent-integration",
+          "fetchExit": 0,
+          "localRef": "refs/audit-preservation/bundle-tips/0-49"
+        },
+        {
+          "sha": "70694c301a5e8608ec0f99ab722ac232a9cf0b56",
+          "ref": "HEAD",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "b1b20e513ed25952bc086778fb71af88adcc54ba",
+          "ref": "main-worktree/HEAD",
+          "alreadyFetched": true
+        }
+      ]
+    },
+    {
+      "file": "/workspace/dinar-completion/codex-recovery-afc5d02.bundle",
+      "bytes": 18086351,
+      "listExit": 0,
+      "tips": [
+        {
+          "sha": "afc5d023ff2159d9b5d441cfc1ec962e45772ec8",
+          "ref": "refs/heads/codex/dinar-next-unified-development",
+          "fetchExit": 0,
+          "localRef": "refs/audit-preservation/bundle-tips/1-0"
+        },
+        {
+          "sha": "b1b20e513ed25952bc086778fb71af88adcc54ba",
+          "ref": "refs/heads/work",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "2ef9c07ab5fdcd15eca167f5a01ab32b6054400e",
+          "ref": "refs/remotes/origin/ai-foundation-02",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "9679e488c5f3d2260078d98c7d97704df6aac6ce",
+          "ref": "refs/remotes/origin/claude/02-sc-acceptance",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "e5bbd1ba59bddae8c5bd173a890fcdeafa046c25",
+          "ref": "refs/remotes/origin/claude/04-reconciliation",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "4322fb6d7b66460626509401370f5ec3a5f6c6a8",
+          "ref": "refs/remotes/origin/claude/05-w04-context",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "8f4662b8a8d0c1ebc90bec06cd17c89795d8a480",
+          "ref": "refs/remotes/origin/claude/06-w02-ultra",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "e17fad27339b9d40ccea341e46bef96941d34db8",
+          "ref": "refs/remotes/origin/claude/07-legal-cards",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "09ff489f0a3f5950b9f0a0ba8b6cfc49230a7747",
+          "ref": "refs/remotes/origin/claude/08-model-native",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "d416a047f3707d1f03c6763c76e96eee2ab69da4",
+          "ref": "refs/remotes/origin/claude/09-dual-tier",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "9a0f86f0b3c727f48be58aee7db11a3045a94613",
+          "ref": "refs/remotes/origin/claude/10-ultra-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "d94477bad836bf4fe7b3330884170625d1698270",
+          "ref": "refs/remotes/origin/claude/11-c1-sql-search",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "91b09ee7e24b737879d1bcf0ff1f8c238026d3f4",
+          "ref": "refs/remotes/origin/claude/12-d1-d2-business-foundation",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "fe1c23396930f836d97241a6e3333611c6a60e4d",
+          "ref": "refs/remotes/origin/claude/13-integration-preflight",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "f351f5d20d52d77b69bdcff66e2412796e53aa39",
+          "ref": "refs/remotes/origin/codex/11-c1-sql-search",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "b1b20e513ed25952bc086778fb71af88adcc54ba",
+          "ref": "refs/remotes/origin/main",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "ebdd2d7a68f5a52af7ad973f21ef3b0cae914b4a",
+          "ref": "refs/remotes/origin/pr-5-head",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "f0a3c77fc1fd1a276fcb2a61214dd3b4b8e49ee3",
+          "ref": "refs/remotes/origin/qoder/04-sc02",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "56138dc97f2711862e41d635e2a009f5535da2bd",
+          "ref": "refs/remotes/origin/qoder/05-sc06",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "6335603bfb44857dd5a7261c6f32e06b5b085582",
+          "ref": "refs/remotes/origin/qoder/06-general-specs",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "a80bbe32fdf8d9703875658e81b58923e20a1a13",
+          "ref": "refs/remotes/origin/qoder/07-stock",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "5dda1466cc08e2d6d61d4d757bf541b853819f65",
+          "ref": "refs/remotes/origin/qoder/08-integration",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "5a005005224cf5ac05f72c8328258dd061a9846b",
+          "ref": "refs/remotes/origin/qoder/09-launch-gates",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "2b0649066a8c9049f410c1224e9f6610bc99492a",
+          "ref": "refs/remotes/origin/qoder/10-security-deps",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "772cda7193923cebe95a696f7c7c53c7ad37865a",
+          "ref": "refs/remotes/origin/qoder/11-wave01-security-close",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "2da7f9721c8a915ab3630613f9d83a36a55ab3d6",
+          "ref": "refs/remotes/origin/qoder/12-wave02-card-reliability",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "92aeb0c2858a2778a2cb496665c3f6b2b29ee5b5",
+          "ref": "refs/remotes/origin/qoder/12-wave02-red-evidence",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "c6e45942cf122582db01eddaba7356ce1b72029e",
+          "ref": "refs/remotes/origin/qoder/13-wave03-card-envelope",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "6687df2d033c1b71eee5b46afb3e39d193f66ec2",
+          "ref": "refs/remotes/origin/qoder/14-w02u3-canonical-reliability",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "939930d1037387f39f1a2c64ac5b2ae61146b251",
+          "ref": "refs/remotes/origin/qoder/15-d3a-native-business",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "4e60a56e3d21defea4c2d580c35fd3b198e52b5e",
+          "ref": "refs/remotes/origin/qoder/17-unified-integration-candidate",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "f107dd32984cbdcb8e7dce3602ea26d99d9af9b5",
+          "ref": "refs/remotes/origin/qoder/a01-baseline-audit",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "8f9f6ad23067a7251a444dbe0e210ef4f1218b69",
+          "ref": "refs/remotes/origin/qoder/a02-d4-d5-security",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "2e0cca1345d2a2e0a4295c24aeac5b8b4ce59143",
+          "ref": "refs/remotes/origin/qoder/closure-12-executing-recovery",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "5d9bca1305245eb51686dda6083ae1aa2fb8e677",
+          "ref": "refs/remotes/origin/qoder/d12-replit-integration",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "af89cb340be4eb11a46b290e3dc5217e52af07ce",
+          "ref": "refs/remotes/origin/qoder/parallel-w07-w12-ultra",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "44dfbf639fda27d4b8de7908c0aea8df25ab50ef",
+          "ref": "refs/remotes/origin/qoder/temp-principal-sixwave-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "adf5a5f86ecd96fad8214eda51d20d05a0e2b2b4",
+          "ref": "refs/remotes/origin/qoder/wave01-d1-d3-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "845b0a48cfa7a726c97be75a00ed76fd8db5afca",
+          "ref": "refs/remotes/origin/qoder/wave02-d4-d6-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "c1e0a010c5eb0b1479b8ca21e4a410279b11cb3d",
+          "ref": "refs/remotes/origin/qoder/wave03-d7-d9-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "fd8215e8af4cf55e9f653c94cbc9105111e354eb",
+          "ref": "refs/remotes/origin/qoder/wave04-d10-d12-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "0f50dc65bbf9120dc4d183825cfe7a243db4b398",
+          "ref": "refs/remotes/origin/qoder/wave05-d13-d15-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "891c37d6a904c4ba8809e4531040c63f030bed99",
+          "ref": "refs/remotes/origin/qoder/wave06-d16-d17-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "d341917ec4a34ade3c1bdde8366a44dbbca9f35d",
+          "ref": "refs/remotes/origin/qoder/wave06b-d16-d17-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "c196a9bf892547322644540a5d03c338020581da",
+          "ref": "refs/remotes/origin/replit/d16-legal-privacy-compliance",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "11d7fbe3326897924468ee4c6d5467972a92b973",
+          "ref": "refs/remotes/origin/replit/dinar-next-complete-development",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "ebdd2d7a68f5a52af7ad973f21ef3b0cae914b4a",
+          "ref": "refs/remotes/origin/replit/dinar-next-six-wave-unification",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "21e8562a1b640ebcdd4a270146e7cf56c37f053b",
+          "ref": "refs/remotes/origin/replit/railway-complete-infrastructure-readiness",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "75d59370884d8799df860d35895f19d987e93d17",
+          "ref": "refs/remotes/origin/replit/railway-integrations-readiness",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "76a7e403117233122b6d5bce2009268bcc586680",
+          "ref": "refs/remotes/origin/replit/wave03-intent-integration",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "afc5d023ff2159d9b5d441cfc1ec962e45772ec8",
+          "ref": "HEAD",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "b1b20e513ed25952bc086778fb71af88adcc54ba",
+          "ref": "main-worktree/HEAD",
+          "alreadyFetched": true
+        }
+      ]
+    },
+    {
+      "file": "/workspace/dinar-connect-evidence/codex-dinar-next-final-ab196c5.bundle",
+      "bytes": 20532070,
+      "listExit": 0,
+      "tips": [
+        {
+          "sha": "ab196c55964ed42947d07a88dcd7f2e5f66ccfa0",
+          "ref": "refs/heads/codex/dinar-next-unified-development",
+          "fetchExit": 0,
+          "localRef": "refs/audit-preservation/bundle-tips/2-0"
+        },
+        {
+          "sha": "b1b20e513ed25952bc086778fb71af88adcc54ba",
+          "ref": "refs/heads/work",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "44dfbf639fda27d4b8de7908c0aea8df25ab50ef",
+          "ref": "refs/preservation/qoder-temp-principal-sixwave-closure-44dfbf639fda27d4b8de7908c0aea8df25ab50ef",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "b1b20e513ed25952bc086778fb71af88adcc54ba",
+          "ref": "refs/remotes/origin/HEAD",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "2ef9c07ab5fdcd15eca167f5a01ab32b6054400e",
+          "ref": "refs/remotes/origin/ai-foundation-02",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "9679e488c5f3d2260078d98c7d97704df6aac6ce",
+          "ref": "refs/remotes/origin/claude/02-sc-acceptance",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "e5bbd1ba59bddae8c5bd173a890fcdeafa046c25",
+          "ref": "refs/remotes/origin/claude/04-reconciliation",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "4322fb6d7b66460626509401370f5ec3a5f6c6a8",
+          "ref": "refs/remotes/origin/claude/05-w04-context",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "8f4662b8a8d0c1ebc90bec06cd17c89795d8a480",
+          "ref": "refs/remotes/origin/claude/06-w02-ultra",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "e17fad27339b9d40ccea341e46bef96941d34db8",
+          "ref": "refs/remotes/origin/claude/07-legal-cards",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "09ff489f0a3f5950b9f0a0ba8b6cfc49230a7747",
+          "ref": "refs/remotes/origin/claude/08-model-native",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "d416a047f3707d1f03c6763c76e96eee2ab69da4",
+          "ref": "refs/remotes/origin/claude/09-dual-tier",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "9a0f86f0b3c727f48be58aee7db11a3045a94613",
+          "ref": "refs/remotes/origin/claude/10-ultra-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "d94477bad836bf4fe7b3330884170625d1698270",
+          "ref": "refs/remotes/origin/claude/11-c1-sql-search",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "91b09ee7e24b737879d1bcf0ff1f8c238026d3f4",
+          "ref": "refs/remotes/origin/claude/12-d1-d2-business-foundation",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "fe1c23396930f836d97241a6e3333611c6a60e4d",
+          "ref": "refs/remotes/origin/claude/13-integration-preflight",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "e75cb18e89d68361be17a477976cf5d6908deb47",
+          "ref": "refs/remotes/origin/claude/dinar-next-intelligence",
+          "fetchExit": 0,
+          "localRef": "refs/audit-preservation/bundle-tips/2-16"
+        },
+        {
+          "sha": "f351f5d20d52d77b69bdcff66e2412796e53aa39",
+          "ref": "refs/remotes/origin/codex/11-c1-sql-search",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "414331473448a35426d4187587fdb095402baffe",
+          "ref": "refs/remotes/origin/codex/dinar-next-unified-development",
+          "fetchExit": 0,
+          "localRef": "refs/audit-preservation/bundle-tips/2-18"
+        },
+        {
+          "sha": "b1b20e513ed25952bc086778fb71af88adcc54ba",
+          "ref": "refs/remotes/origin/main",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "ebdd2d7a68f5a52af7ad973f21ef3b0cae914b4a",
+          "ref": "refs/remotes/origin/pr-5-head",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "f0a3c77fc1fd1a276fcb2a61214dd3b4b8e49ee3",
+          "ref": "refs/remotes/origin/qoder/04-sc02",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "56138dc97f2711862e41d635e2a009f5535da2bd",
+          "ref": "refs/remotes/origin/qoder/05-sc06",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "6335603bfb44857dd5a7261c6f32e06b5b085582",
+          "ref": "refs/remotes/origin/qoder/06-general-specs",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "a80bbe32fdf8d9703875658e81b58923e20a1a13",
+          "ref": "refs/remotes/origin/qoder/07-stock",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "5dda1466cc08e2d6d61d4d757bf541b853819f65",
+          "ref": "refs/remotes/origin/qoder/08-integration",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "5a005005224cf5ac05f72c8328258dd061a9846b",
+          "ref": "refs/remotes/origin/qoder/09-launch-gates",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "2b0649066a8c9049f410c1224e9f6610bc99492a",
+          "ref": "refs/remotes/origin/qoder/10-security-deps",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "772cda7193923cebe95a696f7c7c53c7ad37865a",
+          "ref": "refs/remotes/origin/qoder/11-wave01-security-close",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "2da7f9721c8a915ab3630613f9d83a36a55ab3d6",
+          "ref": "refs/remotes/origin/qoder/12-wave02-card-reliability",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "92aeb0c2858a2778a2cb496665c3f6b2b29ee5b5",
+          "ref": "refs/remotes/origin/qoder/12-wave02-red-evidence",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "c6e45942cf122582db01eddaba7356ce1b72029e",
+          "ref": "refs/remotes/origin/qoder/13-wave03-card-envelope",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "6687df2d033c1b71eee5b46afb3e39d193f66ec2",
+          "ref": "refs/remotes/origin/qoder/14-w02u3-canonical-reliability",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "939930d1037387f39f1a2c64ac5b2ae61146b251",
+          "ref": "refs/remotes/origin/qoder/15-d3a-native-business",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "4e60a56e3d21defea4c2d580c35fd3b198e52b5e",
+          "ref": "refs/remotes/origin/qoder/17-unified-integration-candidate",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "f107dd32984cbdcb8e7dce3602ea26d99d9af9b5",
+          "ref": "refs/remotes/origin/qoder/a01-baseline-audit",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "8f9f6ad23067a7251a444dbe0e210ef4f1218b69",
+          "ref": "refs/remotes/origin/qoder/a02-d4-d5-security",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "2e0cca1345d2a2e0a4295c24aeac5b8b4ce59143",
+          "ref": "refs/remotes/origin/qoder/closure-12-executing-recovery",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "5d9bca1305245eb51686dda6083ae1aa2fb8e677",
+          "ref": "refs/remotes/origin/qoder/d12-replit-integration",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "af89cb340be4eb11a46b290e3dc5217e52af07ce",
+          "ref": "refs/remotes/origin/qoder/parallel-w07-w12-ultra",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "44dfbf639fda27d4b8de7908c0aea8df25ab50ef",
+          "ref": "refs/remotes/origin/qoder/temp-principal-sixwave-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "adf5a5f86ecd96fad8214eda51d20d05a0e2b2b4",
+          "ref": "refs/remotes/origin/qoder/wave01-d1-d3-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "845b0a48cfa7a726c97be75a00ed76fd8db5afca",
+          "ref": "refs/remotes/origin/qoder/wave02-d4-d6-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "c1e0a010c5eb0b1479b8ca21e4a410279b11cb3d",
+          "ref": "refs/remotes/origin/qoder/wave03-d7-d9-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "fd8215e8af4cf55e9f653c94cbc9105111e354eb",
+          "ref": "refs/remotes/origin/qoder/wave04-d10-d12-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "0f50dc65bbf9120dc4d183825cfe7a243db4b398",
+          "ref": "refs/remotes/origin/qoder/wave05-d13-d15-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "891c37d6a904c4ba8809e4531040c63f030bed99",
+          "ref": "refs/remotes/origin/qoder/wave06-d16-d17-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "d341917ec4a34ade3c1bdde8366a44dbbca9f35d",
+          "ref": "refs/remotes/origin/qoder/wave06b-d16-d17-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "c196a9bf892547322644540a5d03c338020581da",
+          "ref": "refs/remotes/origin/replit/d16-legal-privacy-compliance",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "11d7fbe3326897924468ee4c6d5467972a92b973",
+          "ref": "refs/remotes/origin/replit/dinar-next-complete-development",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "ebdd2d7a68f5a52af7ad973f21ef3b0cae914b4a",
+          "ref": "refs/remotes/origin/replit/dinar-next-six-wave-unification",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "21e8562a1b640ebcdd4a270146e7cf56c37f053b",
+          "ref": "refs/remotes/origin/replit/railway-complete-infrastructure-readiness",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "75d59370884d8799df860d35895f19d987e93d17",
+          "ref": "refs/remotes/origin/replit/railway-integrations-readiness",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "76a7e403117233122b6d5bce2009268bcc586680",
+          "ref": "refs/remotes/origin/replit/wave03-intent-integration",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "ab196c55964ed42947d07a88dcd7f2e5f66ccfa0",
+          "ref": "HEAD",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "b1b20e513ed25952bc086778fb71af88adcc54ba",
+          "ref": "main-worktree/HEAD",
+          "alreadyFetched": true
+        }
+      ]
+    },
+    {
+      "file": "/workspace/dinar-connect-evidence/connect-admin-finance.bundle",
+      "bytes": 18580768,
+      "listExit": 0,
+      "tips": [
+        {
+          "sha": "34bb754d60617fbb49c26e6f1726f141234c8598",
+          "ref": "refs/heads/codex/dinar-next-unified-development",
+          "fetchExit": 0,
+          "localRef": "refs/audit-preservation/bundle-tips/3-0"
+        },
+        {
+          "sha": "b1b20e513ed25952bc086778fb71af88adcc54ba",
+          "ref": "refs/heads/work",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "b1b20e513ed25952bc086778fb71af88adcc54ba",
+          "ref": "refs/remotes/origin/HEAD",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "2ef9c07ab5fdcd15eca167f5a01ab32b6054400e",
+          "ref": "refs/remotes/origin/ai-foundation-02",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "9679e488c5f3d2260078d98c7d97704df6aac6ce",
+          "ref": "refs/remotes/origin/claude/02-sc-acceptance",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "e5bbd1ba59bddae8c5bd173a890fcdeafa046c25",
+          "ref": "refs/remotes/origin/claude/04-reconciliation",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "4322fb6d7b66460626509401370f5ec3a5f6c6a8",
+          "ref": "refs/remotes/origin/claude/05-w04-context",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "8f4662b8a8d0c1ebc90bec06cd17c89795d8a480",
+          "ref": "refs/remotes/origin/claude/06-w02-ultra",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "e17fad27339b9d40ccea341e46bef96941d34db8",
+          "ref": "refs/remotes/origin/claude/07-legal-cards",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "09ff489f0a3f5950b9f0a0ba8b6cfc49230a7747",
+          "ref": "refs/remotes/origin/claude/08-model-native",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "d416a047f3707d1f03c6763c76e96eee2ab69da4",
+          "ref": "refs/remotes/origin/claude/09-dual-tier",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "9a0f86f0b3c727f48be58aee7db11a3045a94613",
+          "ref": "refs/remotes/origin/claude/10-ultra-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "d94477bad836bf4fe7b3330884170625d1698270",
+          "ref": "refs/remotes/origin/claude/11-c1-sql-search",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "91b09ee7e24b737879d1bcf0ff1f8c238026d3f4",
+          "ref": "refs/remotes/origin/claude/12-d1-d2-business-foundation",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "fe1c23396930f836d97241a6e3333611c6a60e4d",
+          "ref": "refs/remotes/origin/claude/13-integration-preflight",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "f351f5d20d52d77b69bdcff66e2412796e53aa39",
+          "ref": "refs/remotes/origin/codex/11-c1-sql-search",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "b1b20e513ed25952bc086778fb71af88adcc54ba",
+          "ref": "refs/remotes/origin/main",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "ebdd2d7a68f5a52af7ad973f21ef3b0cae914b4a",
+          "ref": "refs/remotes/origin/pr-5-head",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "f0a3c77fc1fd1a276fcb2a61214dd3b4b8e49ee3",
+          "ref": "refs/remotes/origin/qoder/04-sc02",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "56138dc97f2711862e41d635e2a009f5535da2bd",
+          "ref": "refs/remotes/origin/qoder/05-sc06",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "6335603bfb44857dd5a7261c6f32e06b5b085582",
+          "ref": "refs/remotes/origin/qoder/06-general-specs",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "a80bbe32fdf8d9703875658e81b58923e20a1a13",
+          "ref": "refs/remotes/origin/qoder/07-stock",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "5dda1466cc08e2d6d61d4d757bf541b853819f65",
+          "ref": "refs/remotes/origin/qoder/08-integration",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "5a005005224cf5ac05f72c8328258dd061a9846b",
+          "ref": "refs/remotes/origin/qoder/09-launch-gates",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "2b0649066a8c9049f410c1224e9f6610bc99492a",
+          "ref": "refs/remotes/origin/qoder/10-security-deps",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "772cda7193923cebe95a696f7c7c53c7ad37865a",
+          "ref": "refs/remotes/origin/qoder/11-wave01-security-close",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "2da7f9721c8a915ab3630613f9d83a36a55ab3d6",
+          "ref": "refs/remotes/origin/qoder/12-wave02-card-reliability",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "92aeb0c2858a2778a2cb496665c3f6b2b29ee5b5",
+          "ref": "refs/remotes/origin/qoder/12-wave02-red-evidence",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "c6e45942cf122582db01eddaba7356ce1b72029e",
+          "ref": "refs/remotes/origin/qoder/13-wave03-card-envelope",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "6687df2d033c1b71eee5b46afb3e39d193f66ec2",
+          "ref": "refs/remotes/origin/qoder/14-w02u3-canonical-reliability",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "939930d1037387f39f1a2c64ac5b2ae61146b251",
+          "ref": "refs/remotes/origin/qoder/15-d3a-native-business",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "4e60a56e3d21defea4c2d580c35fd3b198e52b5e",
+          "ref": "refs/remotes/origin/qoder/17-unified-integration-candidate",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "f107dd32984cbdcb8e7dce3602ea26d99d9af9b5",
+          "ref": "refs/remotes/origin/qoder/a01-baseline-audit",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "8f9f6ad23067a7251a444dbe0e210ef4f1218b69",
+          "ref": "refs/remotes/origin/qoder/a02-d4-d5-security",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "2e0cca1345d2a2e0a4295c24aeac5b8b4ce59143",
+          "ref": "refs/remotes/origin/qoder/closure-12-executing-recovery",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "5d9bca1305245eb51686dda6083ae1aa2fb8e677",
+          "ref": "refs/remotes/origin/qoder/d12-replit-integration",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "af89cb340be4eb11a46b290e3dc5217e52af07ce",
+          "ref": "refs/remotes/origin/qoder/parallel-w07-w12-ultra",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "44dfbf639fda27d4b8de7908c0aea8df25ab50ef",
+          "ref": "refs/remotes/origin/qoder/temp-principal-sixwave-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "adf5a5f86ecd96fad8214eda51d20d05a0e2b2b4",
+          "ref": "refs/remotes/origin/qoder/wave01-d1-d3-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "845b0a48cfa7a726c97be75a00ed76fd8db5afca",
+          "ref": "refs/remotes/origin/qoder/wave02-d4-d6-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "c1e0a010c5eb0b1479b8ca21e4a410279b11cb3d",
+          "ref": "refs/remotes/origin/qoder/wave03-d7-d9-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "fd8215e8af4cf55e9f653c94cbc9105111e354eb",
+          "ref": "refs/remotes/origin/qoder/wave04-d10-d12-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "0f50dc65bbf9120dc4d183825cfe7a243db4b398",
+          "ref": "refs/remotes/origin/qoder/wave05-d13-d15-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "891c37d6a904c4ba8809e4531040c63f030bed99",
+          "ref": "refs/remotes/origin/qoder/wave06-d16-d17-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "d341917ec4a34ade3c1bdde8366a44dbbca9f35d",
+          "ref": "refs/remotes/origin/qoder/wave06b-d16-d17-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "c196a9bf892547322644540a5d03c338020581da",
+          "ref": "refs/remotes/origin/replit/d16-legal-privacy-compliance",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "11d7fbe3326897924468ee4c6d5467972a92b973",
+          "ref": "refs/remotes/origin/replit/dinar-next-complete-development",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "ebdd2d7a68f5a52af7ad973f21ef3b0cae914b4a",
+          "ref": "refs/remotes/origin/replit/dinar-next-six-wave-unification",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "21e8562a1b640ebcdd4a270146e7cf56c37f053b",
+          "ref": "refs/remotes/origin/replit/railway-complete-infrastructure-readiness",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "75d59370884d8799df860d35895f19d987e93d17",
+          "ref": "refs/remotes/origin/replit/railway-integrations-readiness",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "76a7e403117233122b6d5bce2009268bcc586680",
+          "ref": "refs/remotes/origin/replit/wave03-intent-integration",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "34bb754d60617fbb49c26e6f1726f141234c8598",
+          "ref": "HEAD",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "b1b20e513ed25952bc086778fb71af88adcc54ba",
+          "ref": "main-worktree/HEAD",
+          "alreadyFetched": true
+        }
+      ]
+    },
+    {
+      "file": "/workspace/dinar-connect-evidence/connect-cards-e2ea41a.bundle",
+      "bytes": 17977043,
+      "listExit": 0,
+      "tips": [
+        {
+          "sha": "e2ea41a5133d8dad71722f693ee6f874029e1cb6",
+          "ref": "refs/heads/codex/dinar-next-unified-development",
+          "fetchExit": 0,
+          "localRef": "refs/audit-preservation/bundle-tips/4-0"
+        },
+        {
+          "sha": "b1b20e513ed25952bc086778fb71af88adcc54ba",
+          "ref": "refs/heads/work",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "2ef9c07ab5fdcd15eca167f5a01ab32b6054400e",
+          "ref": "refs/remotes/origin/ai-foundation-02",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "9679e488c5f3d2260078d98c7d97704df6aac6ce",
+          "ref": "refs/remotes/origin/claude/02-sc-acceptance",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "e5bbd1ba59bddae8c5bd173a890fcdeafa046c25",
+          "ref": "refs/remotes/origin/claude/04-reconciliation",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "4322fb6d7b66460626509401370f5ec3a5f6c6a8",
+          "ref": "refs/remotes/origin/claude/05-w04-context",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "8f4662b8a8d0c1ebc90bec06cd17c89795d8a480",
+          "ref": "refs/remotes/origin/claude/06-w02-ultra",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "e17fad27339b9d40ccea341e46bef96941d34db8",
+          "ref": "refs/remotes/origin/claude/07-legal-cards",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "09ff489f0a3f5950b9f0a0ba8b6cfc49230a7747",
+          "ref": "refs/remotes/origin/claude/08-model-native",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "d416a047f3707d1f03c6763c76e96eee2ab69da4",
+          "ref": "refs/remotes/origin/claude/09-dual-tier",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "9a0f86f0b3c727f48be58aee7db11a3045a94613",
+          "ref": "refs/remotes/origin/claude/10-ultra-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "d94477bad836bf4fe7b3330884170625d1698270",
+          "ref": "refs/remotes/origin/claude/11-c1-sql-search",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "91b09ee7e24b737879d1bcf0ff1f8c238026d3f4",
+          "ref": "refs/remotes/origin/claude/12-d1-d2-business-foundation",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "fe1c23396930f836d97241a6e3333611c6a60e4d",
+          "ref": "refs/remotes/origin/claude/13-integration-preflight",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "f351f5d20d52d77b69bdcff66e2412796e53aa39",
+          "ref": "refs/remotes/origin/codex/11-c1-sql-search",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "b1b20e513ed25952bc086778fb71af88adcc54ba",
+          "ref": "refs/remotes/origin/main",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "ebdd2d7a68f5a52af7ad973f21ef3b0cae914b4a",
+          "ref": "refs/remotes/origin/pr-5-head",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "f0a3c77fc1fd1a276fcb2a61214dd3b4b8e49ee3",
+          "ref": "refs/remotes/origin/qoder/04-sc02",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "56138dc97f2711862e41d635e2a009f5535da2bd",
+          "ref": "refs/remotes/origin/qoder/05-sc06",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "6335603bfb44857dd5a7261c6f32e06b5b085582",
+          "ref": "refs/remotes/origin/qoder/06-general-specs",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "a80bbe32fdf8d9703875658e81b58923e20a1a13",
+          "ref": "refs/remotes/origin/qoder/07-stock",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "5dda1466cc08e2d6d61d4d757bf541b853819f65",
+          "ref": "refs/remotes/origin/qoder/08-integration",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "5a005005224cf5ac05f72c8328258dd061a9846b",
+          "ref": "refs/remotes/origin/qoder/09-launch-gates",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "2b0649066a8c9049f410c1224e9f6610bc99492a",
+          "ref": "refs/remotes/origin/qoder/10-security-deps",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "772cda7193923cebe95a696f7c7c53c7ad37865a",
+          "ref": "refs/remotes/origin/qoder/11-wave01-security-close",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "2da7f9721c8a915ab3630613f9d83a36a55ab3d6",
+          "ref": "refs/remotes/origin/qoder/12-wave02-card-reliability",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "92aeb0c2858a2778a2cb496665c3f6b2b29ee5b5",
+          "ref": "refs/remotes/origin/qoder/12-wave02-red-evidence",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "c6e45942cf122582db01eddaba7356ce1b72029e",
+          "ref": "refs/remotes/origin/qoder/13-wave03-card-envelope",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "6687df2d033c1b71eee5b46afb3e39d193f66ec2",
+          "ref": "refs/remotes/origin/qoder/14-w02u3-canonical-reliability",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "939930d1037387f39f1a2c64ac5b2ae61146b251",
+          "ref": "refs/remotes/origin/qoder/15-d3a-native-business",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "4e60a56e3d21defea4c2d580c35fd3b198e52b5e",
+          "ref": "refs/remotes/origin/qoder/17-unified-integration-candidate",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "f107dd32984cbdcb8e7dce3602ea26d99d9af9b5",
+          "ref": "refs/remotes/origin/qoder/a01-baseline-audit",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "8f9f6ad23067a7251a444dbe0e210ef4f1218b69",
+          "ref": "refs/remotes/origin/qoder/a02-d4-d5-security",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "2e0cca1345d2a2e0a4295c24aeac5b8b4ce59143",
+          "ref": "refs/remotes/origin/qoder/closure-12-executing-recovery",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "5d9bca1305245eb51686dda6083ae1aa2fb8e677",
+          "ref": "refs/remotes/origin/qoder/d12-replit-integration",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "af89cb340be4eb11a46b290e3dc5217e52af07ce",
+          "ref": "refs/remotes/origin/qoder/parallel-w07-w12-ultra",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "44dfbf639fda27d4b8de7908c0aea8df25ab50ef",
+          "ref": "refs/remotes/origin/qoder/temp-principal-sixwave-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "adf5a5f86ecd96fad8214eda51d20d05a0e2b2b4",
+          "ref": "refs/remotes/origin/qoder/wave01-d1-d3-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "845b0a48cfa7a726c97be75a00ed76fd8db5afca",
+          "ref": "refs/remotes/origin/qoder/wave02-d4-d6-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "c1e0a010c5eb0b1479b8ca21e4a410279b11cb3d",
+          "ref": "refs/remotes/origin/qoder/wave03-d7-d9-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "fd8215e8af4cf55e9f653c94cbc9105111e354eb",
+          "ref": "refs/remotes/origin/qoder/wave04-d10-d12-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "0f50dc65bbf9120dc4d183825cfe7a243db4b398",
+          "ref": "refs/remotes/origin/qoder/wave05-d13-d15-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "891c37d6a904c4ba8809e4531040c63f030bed99",
+          "ref": "refs/remotes/origin/qoder/wave06-d16-d17-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "d341917ec4a34ade3c1bdde8366a44dbbca9f35d",
+          "ref": "refs/remotes/origin/qoder/wave06b-d16-d17-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "c196a9bf892547322644540a5d03c338020581da",
+          "ref": "refs/remotes/origin/replit/d16-legal-privacy-compliance",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "11d7fbe3326897924468ee4c6d5467972a92b973",
+          "ref": "refs/remotes/origin/replit/dinar-next-complete-development",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "ebdd2d7a68f5a52af7ad973f21ef3b0cae914b4a",
+          "ref": "refs/remotes/origin/replit/dinar-next-six-wave-unification",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "21e8562a1b640ebcdd4a270146e7cf56c37f053b",
+          "ref": "refs/remotes/origin/replit/railway-complete-infrastructure-readiness",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "75d59370884d8799df860d35895f19d987e93d17",
+          "ref": "refs/remotes/origin/replit/railway-integrations-readiness",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "76a7e403117233122b6d5bce2009268bcc586680",
+          "ref": "refs/remotes/origin/replit/wave03-intent-integration",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "e2ea41a5133d8dad71722f693ee6f874029e1cb6",
+          "ref": "HEAD",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "b1b20e513ed25952bc086778fb71af88adcc54ba",
+          "ref": "main-worktree/HEAD",
+          "alreadyFetched": true
+        }
+      ]
+    },
+    {
+      "file": "/workspace/dinar-connect-evidence/connect-ci-ed4a6e5.bundle",
+      "bytes": 18307300,
+      "listExit": 0,
+      "tips": [
+        {
+          "sha": "ed4a6e56c4b0c56c8b157ca4eb635758b6d11472",
+          "ref": "refs/heads/codex/dinar-next-unified-development",
+          "fetchExit": 0,
+          "localRef": "refs/audit-preservation/bundle-tips/5-0"
+        },
+        {
+          "sha": "b1b20e513ed25952bc086778fb71af88adcc54ba",
+          "ref": "refs/heads/work",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "b1b20e513ed25952bc086778fb71af88adcc54ba",
+          "ref": "refs/remotes/origin/HEAD",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "2ef9c07ab5fdcd15eca167f5a01ab32b6054400e",
+          "ref": "refs/remotes/origin/ai-foundation-02",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "9679e488c5f3d2260078d98c7d97704df6aac6ce",
+          "ref": "refs/remotes/origin/claude/02-sc-acceptance",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "e5bbd1ba59bddae8c5bd173a890fcdeafa046c25",
+          "ref": "refs/remotes/origin/claude/04-reconciliation",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "4322fb6d7b66460626509401370f5ec3a5f6c6a8",
+          "ref": "refs/remotes/origin/claude/05-w04-context",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "8f4662b8a8d0c1ebc90bec06cd17c89795d8a480",
+          "ref": "refs/remotes/origin/claude/06-w02-ultra",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "e17fad27339b9d40ccea341e46bef96941d34db8",
+          "ref": "refs/remotes/origin/claude/07-legal-cards",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "09ff489f0a3f5950b9f0a0ba8b6cfc49230a7747",
+          "ref": "refs/remotes/origin/claude/08-model-native",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "d416a047f3707d1f03c6763c76e96eee2ab69da4",
+          "ref": "refs/remotes/origin/claude/09-dual-tier",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "9a0f86f0b3c727f48be58aee7db11a3045a94613",
+          "ref": "refs/remotes/origin/claude/10-ultra-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "d94477bad836bf4fe7b3330884170625d1698270",
+          "ref": "refs/remotes/origin/claude/11-c1-sql-search",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "91b09ee7e24b737879d1bcf0ff1f8c238026d3f4",
+          "ref": "refs/remotes/origin/claude/12-d1-d2-business-foundation",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "fe1c23396930f836d97241a6e3333611c6a60e4d",
+          "ref": "refs/remotes/origin/claude/13-integration-preflight",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "f351f5d20d52d77b69bdcff66e2412796e53aa39",
+          "ref": "refs/remotes/origin/codex/11-c1-sql-search",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "b1b20e513ed25952bc086778fb71af88adcc54ba",
+          "ref": "refs/remotes/origin/main",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "ebdd2d7a68f5a52af7ad973f21ef3b0cae914b4a",
+          "ref": "refs/remotes/origin/pr-5-head",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "f0a3c77fc1fd1a276fcb2a61214dd3b4b8e49ee3",
+          "ref": "refs/remotes/origin/qoder/04-sc02",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "56138dc97f2711862e41d635e2a009f5535da2bd",
+          "ref": "refs/remotes/origin/qoder/05-sc06",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "6335603bfb44857dd5a7261c6f32e06b5b085582",
+          "ref": "refs/remotes/origin/qoder/06-general-specs",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "a80bbe32fdf8d9703875658e81b58923e20a1a13",
+          "ref": "refs/remotes/origin/qoder/07-stock",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "5dda1466cc08e2d6d61d4d757bf541b853819f65",
+          "ref": "refs/remotes/origin/qoder/08-integration",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "5a005005224cf5ac05f72c8328258dd061a9846b",
+          "ref": "refs/remotes/origin/qoder/09-launch-gates",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "2b0649066a8c9049f410c1224e9f6610bc99492a",
+          "ref": "refs/remotes/origin/qoder/10-security-deps",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "772cda7193923cebe95a696f7c7c53c7ad37865a",
+          "ref": "refs/remotes/origin/qoder/11-wave01-security-close",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "2da7f9721c8a915ab3630613f9d83a36a55ab3d6",
+          "ref": "refs/remotes/origin/qoder/12-wave02-card-reliability",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "92aeb0c2858a2778a2cb496665c3f6b2b29ee5b5",
+          "ref": "refs/remotes/origin/qoder/12-wave02-red-evidence",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "c6e45942cf122582db01eddaba7356ce1b72029e",
+          "ref": "refs/remotes/origin/qoder/13-wave03-card-envelope",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "6687df2d033c1b71eee5b46afb3e39d193f66ec2",
+          "ref": "refs/remotes/origin/qoder/14-w02u3-canonical-reliability",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "939930d1037387f39f1a2c64ac5b2ae61146b251",
+          "ref": "refs/remotes/origin/qoder/15-d3a-native-business",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "4e60a56e3d21defea4c2d580c35fd3b198e52b5e",
+          "ref": "refs/remotes/origin/qoder/17-unified-integration-candidate",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "f107dd32984cbdcb8e7dce3602ea26d99d9af9b5",
+          "ref": "refs/remotes/origin/qoder/a01-baseline-audit",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "8f9f6ad23067a7251a444dbe0e210ef4f1218b69",
+          "ref": "refs/remotes/origin/qoder/a02-d4-d5-security",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "2e0cca1345d2a2e0a4295c24aeac5b8b4ce59143",
+          "ref": "refs/remotes/origin/qoder/closure-12-executing-recovery",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "5d9bca1305245eb51686dda6083ae1aa2fb8e677",
+          "ref": "refs/remotes/origin/qoder/d12-replit-integration",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "af89cb340be4eb11a46b290e3dc5217e52af07ce",
+          "ref": "refs/remotes/origin/qoder/parallel-w07-w12-ultra",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "44dfbf639fda27d4b8de7908c0aea8df25ab50ef",
+          "ref": "refs/remotes/origin/qoder/temp-principal-sixwave-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "adf5a5f86ecd96fad8214eda51d20d05a0e2b2b4",
+          "ref": "refs/remotes/origin/qoder/wave01-d1-d3-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "845b0a48cfa7a726c97be75a00ed76fd8db5afca",
+          "ref": "refs/remotes/origin/qoder/wave02-d4-d6-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "c1e0a010c5eb0b1479b8ca21e4a410279b11cb3d",
+          "ref": "refs/remotes/origin/qoder/wave03-d7-d9-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "fd8215e8af4cf55e9f653c94cbc9105111e354eb",
+          "ref": "refs/remotes/origin/qoder/wave04-d10-d12-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "0f50dc65bbf9120dc4d183825cfe7a243db4b398",
+          "ref": "refs/remotes/origin/qoder/wave05-d13-d15-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "891c37d6a904c4ba8809e4531040c63f030bed99",
+          "ref": "refs/remotes/origin/qoder/wave06-d16-d17-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "d341917ec4a34ade3c1bdde8366a44dbbca9f35d",
+          "ref": "refs/remotes/origin/qoder/wave06b-d16-d17-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "c196a9bf892547322644540a5d03c338020581da",
+          "ref": "refs/remotes/origin/replit/d16-legal-privacy-compliance",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "11d7fbe3326897924468ee4c6d5467972a92b973",
+          "ref": "refs/remotes/origin/replit/dinar-next-complete-development",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "ebdd2d7a68f5a52af7ad973f21ef3b0cae914b4a",
+          "ref": "refs/remotes/origin/replit/dinar-next-six-wave-unification",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "21e8562a1b640ebcdd4a270146e7cf56c37f053b",
+          "ref": "refs/remotes/origin/replit/railway-complete-infrastructure-readiness",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "75d59370884d8799df860d35895f19d987e93d17",
+          "ref": "refs/remotes/origin/replit/railway-integrations-readiness",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "76a7e403117233122b6d5bce2009268bcc586680",
+          "ref": "refs/remotes/origin/replit/wave03-intent-integration",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "ed4a6e56c4b0c56c8b157ca4eb635758b6d11472",
+          "ref": "HEAD",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "b1b20e513ed25952bc086778fb71af88adcc54ba",
+          "ref": "main-worktree/HEAD",
+          "alreadyFetched": true
+        }
+      ]
+    },
+    {
+      "file": "/workspace/dinar-connect-evidence/connect-diagnostics.bundle",
+      "bytes": 19037292,
+      "listExit": 0,
+      "tips": [
+        {
+          "sha": "414331473448a35426d4187587fdb095402baffe",
+          "ref": "refs/heads/codex/dinar-next-unified-development",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "b1b20e513ed25952bc086778fb71af88adcc54ba",
+          "ref": "refs/heads/work",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "44dfbf639fda27d4b8de7908c0aea8df25ab50ef",
+          "ref": "refs/preservation/qoder-temp-principal-sixwave-closure-44dfbf639fda27d4b8de7908c0aea8df25ab50ef",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "b1b20e513ed25952bc086778fb71af88adcc54ba",
+          "ref": "refs/remotes/origin/HEAD",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "2ef9c07ab5fdcd15eca167f5a01ab32b6054400e",
+          "ref": "refs/remotes/origin/ai-foundation-02",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "9679e488c5f3d2260078d98c7d97704df6aac6ce",
+          "ref": "refs/remotes/origin/claude/02-sc-acceptance",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "e5bbd1ba59bddae8c5bd173a890fcdeafa046c25",
+          "ref": "refs/remotes/origin/claude/04-reconciliation",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "4322fb6d7b66460626509401370f5ec3a5f6c6a8",
+          "ref": "refs/remotes/origin/claude/05-w04-context",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "8f4662b8a8d0c1ebc90bec06cd17c89795d8a480",
+          "ref": "refs/remotes/origin/claude/06-w02-ultra",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "e17fad27339b9d40ccea341e46bef96941d34db8",
+          "ref": "refs/remotes/origin/claude/07-legal-cards",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "09ff489f0a3f5950b9f0a0ba8b6cfc49230a7747",
+          "ref": "refs/remotes/origin/claude/08-model-native",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "d416a047f3707d1f03c6763c76e96eee2ab69da4",
+          "ref": "refs/remotes/origin/claude/09-dual-tier",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "9a0f86f0b3c727f48be58aee7db11a3045a94613",
+          "ref": "refs/remotes/origin/claude/10-ultra-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "d94477bad836bf4fe7b3330884170625d1698270",
+          "ref": "refs/remotes/origin/claude/11-c1-sql-search",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "91b09ee7e24b737879d1bcf0ff1f8c238026d3f4",
+          "ref": "refs/remotes/origin/claude/12-d1-d2-business-foundation",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "fe1c23396930f836d97241a6e3333611c6a60e4d",
+          "ref": "refs/remotes/origin/claude/13-integration-preflight",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "56b0b51fccfef3d5c814e4fd97b4fa942ea9ee58",
+          "ref": "refs/remotes/origin/claude/dinar-next-intelligence",
+          "fetchExit": 0,
+          "localRef": "refs/audit-preservation/bundle-tips/6-16"
+        },
+        {
+          "sha": "f351f5d20d52d77b69bdcff66e2412796e53aa39",
+          "ref": "refs/remotes/origin/codex/11-c1-sql-search",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "b1b20e513ed25952bc086778fb71af88adcc54ba",
+          "ref": "refs/remotes/origin/main",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "ebdd2d7a68f5a52af7ad973f21ef3b0cae914b4a",
+          "ref": "refs/remotes/origin/pr-5-head",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "f0a3c77fc1fd1a276fcb2a61214dd3b4b8e49ee3",
+          "ref": "refs/remotes/origin/qoder/04-sc02",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "56138dc97f2711862e41d635e2a009f5535da2bd",
+          "ref": "refs/remotes/origin/qoder/05-sc06",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "6335603bfb44857dd5a7261c6f32e06b5b085582",
+          "ref": "refs/remotes/origin/qoder/06-general-specs",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "a80bbe32fdf8d9703875658e81b58923e20a1a13",
+          "ref": "refs/remotes/origin/qoder/07-stock",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "5dda1466cc08e2d6d61d4d757bf541b853819f65",
+          "ref": "refs/remotes/origin/qoder/08-integration",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "5a005005224cf5ac05f72c8328258dd061a9846b",
+          "ref": "refs/remotes/origin/qoder/09-launch-gates",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "2b0649066a8c9049f410c1224e9f6610bc99492a",
+          "ref": "refs/remotes/origin/qoder/10-security-deps",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "772cda7193923cebe95a696f7c7c53c7ad37865a",
+          "ref": "refs/remotes/origin/qoder/11-wave01-security-close",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "2da7f9721c8a915ab3630613f9d83a36a55ab3d6",
+          "ref": "refs/remotes/origin/qoder/12-wave02-card-reliability",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "92aeb0c2858a2778a2cb496665c3f6b2b29ee5b5",
+          "ref": "refs/remotes/origin/qoder/12-wave02-red-evidence",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "c6e45942cf122582db01eddaba7356ce1b72029e",
+          "ref": "refs/remotes/origin/qoder/13-wave03-card-envelope",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "6687df2d033c1b71eee5b46afb3e39d193f66ec2",
+          "ref": "refs/remotes/origin/qoder/14-w02u3-canonical-reliability",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "939930d1037387f39f1a2c64ac5b2ae61146b251",
+          "ref": "refs/remotes/origin/qoder/15-d3a-native-business",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "4e60a56e3d21defea4c2d580c35fd3b198e52b5e",
+          "ref": "refs/remotes/origin/qoder/17-unified-integration-candidate",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "f107dd32984cbdcb8e7dce3602ea26d99d9af9b5",
+          "ref": "refs/remotes/origin/qoder/a01-baseline-audit",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "8f9f6ad23067a7251a444dbe0e210ef4f1218b69",
+          "ref": "refs/remotes/origin/qoder/a02-d4-d5-security",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "2e0cca1345d2a2e0a4295c24aeac5b8b4ce59143",
+          "ref": "refs/remotes/origin/qoder/closure-12-executing-recovery",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "5d9bca1305245eb51686dda6083ae1aa2fb8e677",
+          "ref": "refs/remotes/origin/qoder/d12-replit-integration",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "af89cb340be4eb11a46b290e3dc5217e52af07ce",
+          "ref": "refs/remotes/origin/qoder/parallel-w07-w12-ultra",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "44dfbf639fda27d4b8de7908c0aea8df25ab50ef",
+          "ref": "refs/remotes/origin/qoder/temp-principal-sixwave-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "adf5a5f86ecd96fad8214eda51d20d05a0e2b2b4",
+          "ref": "refs/remotes/origin/qoder/wave01-d1-d3-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "845b0a48cfa7a726c97be75a00ed76fd8db5afca",
+          "ref": "refs/remotes/origin/qoder/wave02-d4-d6-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "c1e0a010c5eb0b1479b8ca21e4a410279b11cb3d",
+          "ref": "refs/remotes/origin/qoder/wave03-d7-d9-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "fd8215e8af4cf55e9f653c94cbc9105111e354eb",
+          "ref": "refs/remotes/origin/qoder/wave04-d10-d12-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "0f50dc65bbf9120dc4d183825cfe7a243db4b398",
+          "ref": "refs/remotes/origin/qoder/wave05-d13-d15-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "891c37d6a904c4ba8809e4531040c63f030bed99",
+          "ref": "refs/remotes/origin/qoder/wave06-d16-d17-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "d341917ec4a34ade3c1bdde8366a44dbbca9f35d",
+          "ref": "refs/remotes/origin/qoder/wave06b-d16-d17-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "c196a9bf892547322644540a5d03c338020581da",
+          "ref": "refs/remotes/origin/replit/d16-legal-privacy-compliance",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "11d7fbe3326897924468ee4c6d5467972a92b973",
+          "ref": "refs/remotes/origin/replit/dinar-next-complete-development",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "ebdd2d7a68f5a52af7ad973f21ef3b0cae914b4a",
+          "ref": "refs/remotes/origin/replit/dinar-next-six-wave-unification",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "21e8562a1b640ebcdd4a270146e7cf56c37f053b",
+          "ref": "refs/remotes/origin/replit/railway-complete-infrastructure-readiness",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "75d59370884d8799df860d35895f19d987e93d17",
+          "ref": "refs/remotes/origin/replit/railway-integrations-readiness",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "76a7e403117233122b6d5bce2009268bcc586680",
+          "ref": "refs/remotes/origin/replit/wave03-intent-integration",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "414331473448a35426d4187587fdb095402baffe",
+          "ref": "HEAD",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "b1b20e513ed25952bc086778fb71af88adcc54ba",
+          "ref": "main-worktree/HEAD",
+          "alreadyFetched": true
+        }
+      ]
+    },
+    {
+      "file": "/workspace/dinar-connect-evidence/connect-finance-816a707.bundle",
+      "bytes": 18049950,
+      "listExit": 0,
+      "tips": [
+        {
+          "sha": "816a707984a4d093c035de725a8fde38b4c97f5f",
+          "ref": "refs/heads/codex/dinar-next-unified-development",
+          "fetchExit": 0,
+          "localRef": "refs/audit-preservation/bundle-tips/7-0"
+        },
+        {
+          "sha": "b1b20e513ed25952bc086778fb71af88adcc54ba",
+          "ref": "refs/heads/work",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "2ef9c07ab5fdcd15eca167f5a01ab32b6054400e",
+          "ref": "refs/remotes/origin/ai-foundation-02",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "9679e488c5f3d2260078d98c7d97704df6aac6ce",
+          "ref": "refs/remotes/origin/claude/02-sc-acceptance",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "e5bbd1ba59bddae8c5bd173a890fcdeafa046c25",
+          "ref": "refs/remotes/origin/claude/04-reconciliation",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "4322fb6d7b66460626509401370f5ec3a5f6c6a8",
+          "ref": "refs/remotes/origin/claude/05-w04-context",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "8f4662b8a8d0c1ebc90bec06cd17c89795d8a480",
+          "ref": "refs/remotes/origin/claude/06-w02-ultra",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "e17fad27339b9d40ccea341e46bef96941d34db8",
+          "ref": "refs/remotes/origin/claude/07-legal-cards",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "09ff489f0a3f5950b9f0a0ba8b6cfc49230a7747",
+          "ref": "refs/remotes/origin/claude/08-model-native",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "d416a047f3707d1f03c6763c76e96eee2ab69da4",
+          "ref": "refs/remotes/origin/claude/09-dual-tier",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "9a0f86f0b3c727f48be58aee7db11a3045a94613",
+          "ref": "refs/remotes/origin/claude/10-ultra-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "d94477bad836bf4fe7b3330884170625d1698270",
+          "ref": "refs/remotes/origin/claude/11-c1-sql-search",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "91b09ee7e24b737879d1bcf0ff1f8c238026d3f4",
+          "ref": "refs/remotes/origin/claude/12-d1-d2-business-foundation",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "fe1c23396930f836d97241a6e3333611c6a60e4d",
+          "ref": "refs/remotes/origin/claude/13-integration-preflight",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "f351f5d20d52d77b69bdcff66e2412796e53aa39",
+          "ref": "refs/remotes/origin/codex/11-c1-sql-search",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "b1b20e513ed25952bc086778fb71af88adcc54ba",
+          "ref": "refs/remotes/origin/main",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "ebdd2d7a68f5a52af7ad973f21ef3b0cae914b4a",
+          "ref": "refs/remotes/origin/pr-5-head",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "f0a3c77fc1fd1a276fcb2a61214dd3b4b8e49ee3",
+          "ref": "refs/remotes/origin/qoder/04-sc02",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "56138dc97f2711862e41d635e2a009f5535da2bd",
+          "ref": "refs/remotes/origin/qoder/05-sc06",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "6335603bfb44857dd5a7261c6f32e06b5b085582",
+          "ref": "refs/remotes/origin/qoder/06-general-specs",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "a80bbe32fdf8d9703875658e81b58923e20a1a13",
+          "ref": "refs/remotes/origin/qoder/07-stock",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "5dda1466cc08e2d6d61d4d757bf541b853819f65",
+          "ref": "refs/remotes/origin/qoder/08-integration",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "5a005005224cf5ac05f72c8328258dd061a9846b",
+          "ref": "refs/remotes/origin/qoder/09-launch-gates",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "2b0649066a8c9049f410c1224e9f6610bc99492a",
+          "ref": "refs/remotes/origin/qoder/10-security-deps",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "772cda7193923cebe95a696f7c7c53c7ad37865a",
+          "ref": "refs/remotes/origin/qoder/11-wave01-security-close",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "2da7f9721c8a915ab3630613f9d83a36a55ab3d6",
+          "ref": "refs/remotes/origin/qoder/12-wave02-card-reliability",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "92aeb0c2858a2778a2cb496665c3f6b2b29ee5b5",
+          "ref": "refs/remotes/origin/qoder/12-wave02-red-evidence",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "c6e45942cf122582db01eddaba7356ce1b72029e",
+          "ref": "refs/remotes/origin/qoder/13-wave03-card-envelope",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "6687df2d033c1b71eee5b46afb3e39d193f66ec2",
+          "ref": "refs/remotes/origin/qoder/14-w02u3-canonical-reliability",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "939930d1037387f39f1a2c64ac5b2ae61146b251",
+          "ref": "refs/remotes/origin/qoder/15-d3a-native-business",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "4e60a56e3d21defea4c2d580c35fd3b198e52b5e",
+          "ref": "refs/remotes/origin/qoder/17-unified-integration-candidate",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "f107dd32984cbdcb8e7dce3602ea26d99d9af9b5",
+          "ref": "refs/remotes/origin/qoder/a01-baseline-audit",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "8f9f6ad23067a7251a444dbe0e210ef4f1218b69",
+          "ref": "refs/remotes/origin/qoder/a02-d4-d5-security",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "2e0cca1345d2a2e0a4295c24aeac5b8b4ce59143",
+          "ref": "refs/remotes/origin/qoder/closure-12-executing-recovery",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "5d9bca1305245eb51686dda6083ae1aa2fb8e677",
+          "ref": "refs/remotes/origin/qoder/d12-replit-integration",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "af89cb340be4eb11a46b290e3dc5217e52af07ce",
+          "ref": "refs/remotes/origin/qoder/parallel-w07-w12-ultra",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "44dfbf639fda27d4b8de7908c0aea8df25ab50ef",
+          "ref": "refs/remotes/origin/qoder/temp-principal-sixwave-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "adf5a5f86ecd96fad8214eda51d20d05a0e2b2b4",
+          "ref": "refs/remotes/origin/qoder/wave01-d1-d3-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "845b0a48cfa7a726c97be75a00ed76fd8db5afca",
+          "ref": "refs/remotes/origin/qoder/wave02-d4-d6-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "c1e0a010c5eb0b1479b8ca21e4a410279b11cb3d",
+          "ref": "refs/remotes/origin/qoder/wave03-d7-d9-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "fd8215e8af4cf55e9f653c94cbc9105111e354eb",
+          "ref": "refs/remotes/origin/qoder/wave04-d10-d12-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "0f50dc65bbf9120dc4d183825cfe7a243db4b398",
+          "ref": "refs/remotes/origin/qoder/wave05-d13-d15-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "891c37d6a904c4ba8809e4531040c63f030bed99",
+          "ref": "refs/remotes/origin/qoder/wave06-d16-d17-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "d341917ec4a34ade3c1bdde8366a44dbbca9f35d",
+          "ref": "refs/remotes/origin/qoder/wave06b-d16-d17-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "c196a9bf892547322644540a5d03c338020581da",
+          "ref": "refs/remotes/origin/replit/d16-legal-privacy-compliance",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "11d7fbe3326897924468ee4c6d5467972a92b973",
+          "ref": "refs/remotes/origin/replit/dinar-next-complete-development",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "ebdd2d7a68f5a52af7ad973f21ef3b0cae914b4a",
+          "ref": "refs/remotes/origin/replit/dinar-next-six-wave-unification",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "21e8562a1b640ebcdd4a270146e7cf56c37f053b",
+          "ref": "refs/remotes/origin/replit/railway-complete-infrastructure-readiness",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "75d59370884d8799df860d35895f19d987e93d17",
+          "ref": "refs/remotes/origin/replit/railway-integrations-readiness",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "76a7e403117233122b6d5bce2009268bcc586680",
+          "ref": "refs/remotes/origin/replit/wave03-intent-integration",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "816a707984a4d093c035de725a8fde38b4c97f5f",
+          "ref": "HEAD",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "b1b20e513ed25952bc086778fb71af88adcc54ba",
+          "ref": "main-worktree/HEAD",
+          "alreadyFetched": true
+        }
+      ]
+    },
+    {
+      "file": "/workspace/dinar-connect-evidence/connect-mcp.bundle",
+      "bytes": 18327159,
+      "listExit": 0,
+      "tips": [
+        {
+          "sha": "35bd574f56438c89256211948c1465f4dfca83a0",
+          "ref": "refs/heads/codex/dinar-next-unified-development",
+          "fetchExit": 0,
+          "localRef": "refs/audit-preservation/bundle-tips/8-0"
+        },
+        {
+          "sha": "b1b20e513ed25952bc086778fb71af88adcc54ba",
+          "ref": "refs/heads/work",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "b1b20e513ed25952bc086778fb71af88adcc54ba",
+          "ref": "refs/remotes/origin/HEAD",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "2ef9c07ab5fdcd15eca167f5a01ab32b6054400e",
+          "ref": "refs/remotes/origin/ai-foundation-02",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "9679e488c5f3d2260078d98c7d97704df6aac6ce",
+          "ref": "refs/remotes/origin/claude/02-sc-acceptance",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "e5bbd1ba59bddae8c5bd173a890fcdeafa046c25",
+          "ref": "refs/remotes/origin/claude/04-reconciliation",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "4322fb6d7b66460626509401370f5ec3a5f6c6a8",
+          "ref": "refs/remotes/origin/claude/05-w04-context",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "8f4662b8a8d0c1ebc90bec06cd17c89795d8a480",
+          "ref": "refs/remotes/origin/claude/06-w02-ultra",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "e17fad27339b9d40ccea341e46bef96941d34db8",
+          "ref": "refs/remotes/origin/claude/07-legal-cards",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "09ff489f0a3f5950b9f0a0ba8b6cfc49230a7747",
+          "ref": "refs/remotes/origin/claude/08-model-native",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "d416a047f3707d1f03c6763c76e96eee2ab69da4",
+          "ref": "refs/remotes/origin/claude/09-dual-tier",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "9a0f86f0b3c727f48be58aee7db11a3045a94613",
+          "ref": "refs/remotes/origin/claude/10-ultra-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "d94477bad836bf4fe7b3330884170625d1698270",
+          "ref": "refs/remotes/origin/claude/11-c1-sql-search",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "91b09ee7e24b737879d1bcf0ff1f8c238026d3f4",
+          "ref": "refs/remotes/origin/claude/12-d1-d2-business-foundation",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "fe1c23396930f836d97241a6e3333611c6a60e4d",
+          "ref": "refs/remotes/origin/claude/13-integration-preflight",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "f351f5d20d52d77b69bdcff66e2412796e53aa39",
+          "ref": "refs/remotes/origin/codex/11-c1-sql-search",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "b1b20e513ed25952bc086778fb71af88adcc54ba",
+          "ref": "refs/remotes/origin/main",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "ebdd2d7a68f5a52af7ad973f21ef3b0cae914b4a",
+          "ref": "refs/remotes/origin/pr-5-head",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "f0a3c77fc1fd1a276fcb2a61214dd3b4b8e49ee3",
+          "ref": "refs/remotes/origin/qoder/04-sc02",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "56138dc97f2711862e41d635e2a009f5535da2bd",
+          "ref": "refs/remotes/origin/qoder/05-sc06",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "6335603bfb44857dd5a7261c6f32e06b5b085582",
+          "ref": "refs/remotes/origin/qoder/06-general-specs",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "a80bbe32fdf8d9703875658e81b58923e20a1a13",
+          "ref": "refs/remotes/origin/qoder/07-stock",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "5dda1466cc08e2d6d61d4d757bf541b853819f65",
+          "ref": "refs/remotes/origin/qoder/08-integration",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "5a005005224cf5ac05f72c8328258dd061a9846b",
+          "ref": "refs/remotes/origin/qoder/09-launch-gates",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "2b0649066a8c9049f410c1224e9f6610bc99492a",
+          "ref": "refs/remotes/origin/qoder/10-security-deps",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "772cda7193923cebe95a696f7c7c53c7ad37865a",
+          "ref": "refs/remotes/origin/qoder/11-wave01-security-close",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "2da7f9721c8a915ab3630613f9d83a36a55ab3d6",
+          "ref": "refs/remotes/origin/qoder/12-wave02-card-reliability",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "92aeb0c2858a2778a2cb496665c3f6b2b29ee5b5",
+          "ref": "refs/remotes/origin/qoder/12-wave02-red-evidence",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "c6e45942cf122582db01eddaba7356ce1b72029e",
+          "ref": "refs/remotes/origin/qoder/13-wave03-card-envelope",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "6687df2d033c1b71eee5b46afb3e39d193f66ec2",
+          "ref": "refs/remotes/origin/qoder/14-w02u3-canonical-reliability",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "939930d1037387f39f1a2c64ac5b2ae61146b251",
+          "ref": "refs/remotes/origin/qoder/15-d3a-native-business",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "4e60a56e3d21defea4c2d580c35fd3b198e52b5e",
+          "ref": "refs/remotes/origin/qoder/17-unified-integration-candidate",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "f107dd32984cbdcb8e7dce3602ea26d99d9af9b5",
+          "ref": "refs/remotes/origin/qoder/a01-baseline-audit",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "8f9f6ad23067a7251a444dbe0e210ef4f1218b69",
+          "ref": "refs/remotes/origin/qoder/a02-d4-d5-security",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "2e0cca1345d2a2e0a4295c24aeac5b8b4ce59143",
+          "ref": "refs/remotes/origin/qoder/closure-12-executing-recovery",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "5d9bca1305245eb51686dda6083ae1aa2fb8e677",
+          "ref": "refs/remotes/origin/qoder/d12-replit-integration",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "af89cb340be4eb11a46b290e3dc5217e52af07ce",
+          "ref": "refs/remotes/origin/qoder/parallel-w07-w12-ultra",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "44dfbf639fda27d4b8de7908c0aea8df25ab50ef",
+          "ref": "refs/remotes/origin/qoder/temp-principal-sixwave-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "adf5a5f86ecd96fad8214eda51d20d05a0e2b2b4",
+          "ref": "refs/remotes/origin/qoder/wave01-d1-d3-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "845b0a48cfa7a726c97be75a00ed76fd8db5afca",
+          "ref": "refs/remotes/origin/qoder/wave02-d4-d6-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "c1e0a010c5eb0b1479b8ca21e4a410279b11cb3d",
+          "ref": "refs/remotes/origin/qoder/wave03-d7-d9-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "fd8215e8af4cf55e9f653c94cbc9105111e354eb",
+          "ref": "refs/remotes/origin/qoder/wave04-d10-d12-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "0f50dc65bbf9120dc4d183825cfe7a243db4b398",
+          "ref": "refs/remotes/origin/qoder/wave05-d13-d15-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "891c37d6a904c4ba8809e4531040c63f030bed99",
+          "ref": "refs/remotes/origin/qoder/wave06-d16-d17-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "d341917ec4a34ade3c1bdde8366a44dbbca9f35d",
+          "ref": "refs/remotes/origin/qoder/wave06b-d16-d17-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "c196a9bf892547322644540a5d03c338020581da",
+          "ref": "refs/remotes/origin/replit/d16-legal-privacy-compliance",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "11d7fbe3326897924468ee4c6d5467972a92b973",
+          "ref": "refs/remotes/origin/replit/dinar-next-complete-development",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "ebdd2d7a68f5a52af7ad973f21ef3b0cae914b4a",
+          "ref": "refs/remotes/origin/replit/dinar-next-six-wave-unification",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "21e8562a1b640ebcdd4a270146e7cf56c37f053b",
+          "ref": "refs/remotes/origin/replit/railway-complete-infrastructure-readiness",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "75d59370884d8799df860d35895f19d987e93d17",
+          "ref": "refs/remotes/origin/replit/railway-integrations-readiness",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "76a7e403117233122b6d5bce2009268bcc586680",
+          "ref": "refs/remotes/origin/replit/wave03-intent-integration",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "35bd574f56438c89256211948c1465f4dfca83a0",
+          "ref": "HEAD",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "b1b20e513ed25952bc086778fb71af88adcc54ba",
+          "ref": "main-worktree/HEAD",
+          "alreadyFetched": true
+        }
+      ]
+    },
+    {
+      "file": "/workspace/dinar-connect-evidence/connect-oauth-publication.bundle",
+      "bytes": 18136391,
+      "listExit": 0,
+      "tips": [
+        {
+          "sha": "e0d1de0e829e57937ba261ba0386787d6fc5f3b4",
+          "ref": "refs/heads/codex/dinar-next-unified-development",
+          "fetchExit": 0,
+          "localRef": "refs/audit-preservation/bundle-tips/9-0"
+        },
+        {
+          "sha": "b1b20e513ed25952bc086778fb71af88adcc54ba",
+          "ref": "refs/heads/work",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "b1b20e513ed25952bc086778fb71af88adcc54ba",
+          "ref": "refs/remotes/origin/HEAD",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "2ef9c07ab5fdcd15eca167f5a01ab32b6054400e",
+          "ref": "refs/remotes/origin/ai-foundation-02",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "9679e488c5f3d2260078d98c7d97704df6aac6ce",
+          "ref": "refs/remotes/origin/claude/02-sc-acceptance",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "e5bbd1ba59bddae8c5bd173a890fcdeafa046c25",
+          "ref": "refs/remotes/origin/claude/04-reconciliation",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "4322fb6d7b66460626509401370f5ec3a5f6c6a8",
+          "ref": "refs/remotes/origin/claude/05-w04-context",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "8f4662b8a8d0c1ebc90bec06cd17c89795d8a480",
+          "ref": "refs/remotes/origin/claude/06-w02-ultra",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "e17fad27339b9d40ccea341e46bef96941d34db8",
+          "ref": "refs/remotes/origin/claude/07-legal-cards",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "09ff489f0a3f5950b9f0a0ba8b6cfc49230a7747",
+          "ref": "refs/remotes/origin/claude/08-model-native",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "d416a047f3707d1f03c6763c76e96eee2ab69da4",
+          "ref": "refs/remotes/origin/claude/09-dual-tier",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "9a0f86f0b3c727f48be58aee7db11a3045a94613",
+          "ref": "refs/remotes/origin/claude/10-ultra-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "d94477bad836bf4fe7b3330884170625d1698270",
+          "ref": "refs/remotes/origin/claude/11-c1-sql-search",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "91b09ee7e24b737879d1bcf0ff1f8c238026d3f4",
+          "ref": "refs/remotes/origin/claude/12-d1-d2-business-foundation",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "fe1c23396930f836d97241a6e3333611c6a60e4d",
+          "ref": "refs/remotes/origin/claude/13-integration-preflight",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "f351f5d20d52d77b69bdcff66e2412796e53aa39",
+          "ref": "refs/remotes/origin/codex/11-c1-sql-search",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "b1b20e513ed25952bc086778fb71af88adcc54ba",
+          "ref": "refs/remotes/origin/main",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "ebdd2d7a68f5a52af7ad973f21ef3b0cae914b4a",
+          "ref": "refs/remotes/origin/pr-5-head",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "f0a3c77fc1fd1a276fcb2a61214dd3b4b8e49ee3",
+          "ref": "refs/remotes/origin/qoder/04-sc02",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "56138dc97f2711862e41d635e2a009f5535da2bd",
+          "ref": "refs/remotes/origin/qoder/05-sc06",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "6335603bfb44857dd5a7261c6f32e06b5b085582",
+          "ref": "refs/remotes/origin/qoder/06-general-specs",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "a80bbe32fdf8d9703875658e81b58923e20a1a13",
+          "ref": "refs/remotes/origin/qoder/07-stock",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "5dda1466cc08e2d6d61d4d757bf541b853819f65",
+          "ref": "refs/remotes/origin/qoder/08-integration",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "5a005005224cf5ac05f72c8328258dd061a9846b",
+          "ref": "refs/remotes/origin/qoder/09-launch-gates",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "2b0649066a8c9049f410c1224e9f6610bc99492a",
+          "ref": "refs/remotes/origin/qoder/10-security-deps",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "772cda7193923cebe95a696f7c7c53c7ad37865a",
+          "ref": "refs/remotes/origin/qoder/11-wave01-security-close",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "2da7f9721c8a915ab3630613f9d83a36a55ab3d6",
+          "ref": "refs/remotes/origin/qoder/12-wave02-card-reliability",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "92aeb0c2858a2778a2cb496665c3f6b2b29ee5b5",
+          "ref": "refs/remotes/origin/qoder/12-wave02-red-evidence",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "c6e45942cf122582db01eddaba7356ce1b72029e",
+          "ref": "refs/remotes/origin/qoder/13-wave03-card-envelope",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "6687df2d033c1b71eee5b46afb3e39d193f66ec2",
+          "ref": "refs/remotes/origin/qoder/14-w02u3-canonical-reliability",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "939930d1037387f39f1a2c64ac5b2ae61146b251",
+          "ref": "refs/remotes/origin/qoder/15-d3a-native-business",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "4e60a56e3d21defea4c2d580c35fd3b198e52b5e",
+          "ref": "refs/remotes/origin/qoder/17-unified-integration-candidate",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "f107dd32984cbdcb8e7dce3602ea26d99d9af9b5",
+          "ref": "refs/remotes/origin/qoder/a01-baseline-audit",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "8f9f6ad23067a7251a444dbe0e210ef4f1218b69",
+          "ref": "refs/remotes/origin/qoder/a02-d4-d5-security",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "2e0cca1345d2a2e0a4295c24aeac5b8b4ce59143",
+          "ref": "refs/remotes/origin/qoder/closure-12-executing-recovery",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "5d9bca1305245eb51686dda6083ae1aa2fb8e677",
+          "ref": "refs/remotes/origin/qoder/d12-replit-integration",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "af89cb340be4eb11a46b290e3dc5217e52af07ce",
+          "ref": "refs/remotes/origin/qoder/parallel-w07-w12-ultra",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "44dfbf639fda27d4b8de7908c0aea8df25ab50ef",
+          "ref": "refs/remotes/origin/qoder/temp-principal-sixwave-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "adf5a5f86ecd96fad8214eda51d20d05a0e2b2b4",
+          "ref": "refs/remotes/origin/qoder/wave01-d1-d3-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "845b0a48cfa7a726c97be75a00ed76fd8db5afca",
+          "ref": "refs/remotes/origin/qoder/wave02-d4-d6-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "c1e0a010c5eb0b1479b8ca21e4a410279b11cb3d",
+          "ref": "refs/remotes/origin/qoder/wave03-d7-d9-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "fd8215e8af4cf55e9f653c94cbc9105111e354eb",
+          "ref": "refs/remotes/origin/qoder/wave04-d10-d12-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "0f50dc65bbf9120dc4d183825cfe7a243db4b398",
+          "ref": "refs/remotes/origin/qoder/wave05-d13-d15-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "891c37d6a904c4ba8809e4531040c63f030bed99",
+          "ref": "refs/remotes/origin/qoder/wave06-d16-d17-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "d341917ec4a34ade3c1bdde8366a44dbbca9f35d",
+          "ref": "refs/remotes/origin/qoder/wave06b-d16-d17-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "c196a9bf892547322644540a5d03c338020581da",
+          "ref": "refs/remotes/origin/replit/d16-legal-privacy-compliance",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "11d7fbe3326897924468ee4c6d5467972a92b973",
+          "ref": "refs/remotes/origin/replit/dinar-next-complete-development",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "ebdd2d7a68f5a52af7ad973f21ef3b0cae914b4a",
+          "ref": "refs/remotes/origin/replit/dinar-next-six-wave-unification",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "21e8562a1b640ebcdd4a270146e7cf56c37f053b",
+          "ref": "refs/remotes/origin/replit/railway-complete-infrastructure-readiness",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "75d59370884d8799df860d35895f19d987e93d17",
+          "ref": "refs/remotes/origin/replit/railway-integrations-readiness",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "76a7e403117233122b6d5bce2009268bcc586680",
+          "ref": "refs/remotes/origin/replit/wave03-intent-integration",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "e0d1de0e829e57937ba261ba0386787d6fc5f3b4",
+          "ref": "HEAD",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "b1b20e513ed25952bc086778fb71af88adcc54ba",
+          "ref": "main-worktree/HEAD",
+          "alreadyFetched": true
+        }
+      ]
+    },
+    {
+      "file": "/workspace/dinar-connect-evidence/connect-site-lifecycle.bundle",
+      "bytes": 18079233,
+      "listExit": 0,
+      "tips": [
+        {
+          "sha": "42d06ddab79b6b66ea99994e48b39b3909c78ab3",
+          "ref": "refs/heads/codex/dinar-next-unified-development",
+          "fetchExit": 0,
+          "localRef": "refs/audit-preservation/bundle-tips/10-0"
+        },
+        {
+          "sha": "b1b20e513ed25952bc086778fb71af88adcc54ba",
+          "ref": "refs/heads/work",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "2ef9c07ab5fdcd15eca167f5a01ab32b6054400e",
+          "ref": "refs/remotes/origin/ai-foundation-02",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "9679e488c5f3d2260078d98c7d97704df6aac6ce",
+          "ref": "refs/remotes/origin/claude/02-sc-acceptance",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "e5bbd1ba59bddae8c5bd173a890fcdeafa046c25",
+          "ref": "refs/remotes/origin/claude/04-reconciliation",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "4322fb6d7b66460626509401370f5ec3a5f6c6a8",
+          "ref": "refs/remotes/origin/claude/05-w04-context",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "8f4662b8a8d0c1ebc90bec06cd17c89795d8a480",
+          "ref": "refs/remotes/origin/claude/06-w02-ultra",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "e17fad27339b9d40ccea341e46bef96941d34db8",
+          "ref": "refs/remotes/origin/claude/07-legal-cards",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "09ff489f0a3f5950b9f0a0ba8b6cfc49230a7747",
+          "ref": "refs/remotes/origin/claude/08-model-native",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "d416a047f3707d1f03c6763c76e96eee2ab69da4",
+          "ref": "refs/remotes/origin/claude/09-dual-tier",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "9a0f86f0b3c727f48be58aee7db11a3045a94613",
+          "ref": "refs/remotes/origin/claude/10-ultra-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "d94477bad836bf4fe7b3330884170625d1698270",
+          "ref": "refs/remotes/origin/claude/11-c1-sql-search",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "91b09ee7e24b737879d1bcf0ff1f8c238026d3f4",
+          "ref": "refs/remotes/origin/claude/12-d1-d2-business-foundation",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "fe1c23396930f836d97241a6e3333611c6a60e4d",
+          "ref": "refs/remotes/origin/claude/13-integration-preflight",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "f351f5d20d52d77b69bdcff66e2412796e53aa39",
+          "ref": "refs/remotes/origin/codex/11-c1-sql-search",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "b1b20e513ed25952bc086778fb71af88adcc54ba",
+          "ref": "refs/remotes/origin/main",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "ebdd2d7a68f5a52af7ad973f21ef3b0cae914b4a",
+          "ref": "refs/remotes/origin/pr-5-head",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "f0a3c77fc1fd1a276fcb2a61214dd3b4b8e49ee3",
+          "ref": "refs/remotes/origin/qoder/04-sc02",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "56138dc97f2711862e41d635e2a009f5535da2bd",
+          "ref": "refs/remotes/origin/qoder/05-sc06",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "6335603bfb44857dd5a7261c6f32e06b5b085582",
+          "ref": "refs/remotes/origin/qoder/06-general-specs",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "a80bbe32fdf8d9703875658e81b58923e20a1a13",
+          "ref": "refs/remotes/origin/qoder/07-stock",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "5dda1466cc08e2d6d61d4d757bf541b853819f65",
+          "ref": "refs/remotes/origin/qoder/08-integration",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "5a005005224cf5ac05f72c8328258dd061a9846b",
+          "ref": "refs/remotes/origin/qoder/09-launch-gates",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "2b0649066a8c9049f410c1224e9f6610bc99492a",
+          "ref": "refs/remotes/origin/qoder/10-security-deps",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "772cda7193923cebe95a696f7c7c53c7ad37865a",
+          "ref": "refs/remotes/origin/qoder/11-wave01-security-close",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "2da7f9721c8a915ab3630613f9d83a36a55ab3d6",
+          "ref": "refs/remotes/origin/qoder/12-wave02-card-reliability",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "92aeb0c2858a2778a2cb496665c3f6b2b29ee5b5",
+          "ref": "refs/remotes/origin/qoder/12-wave02-red-evidence",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "c6e45942cf122582db01eddaba7356ce1b72029e",
+          "ref": "refs/remotes/origin/qoder/13-wave03-card-envelope",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "6687df2d033c1b71eee5b46afb3e39d193f66ec2",
+          "ref": "refs/remotes/origin/qoder/14-w02u3-canonical-reliability",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "939930d1037387f39f1a2c64ac5b2ae61146b251",
+          "ref": "refs/remotes/origin/qoder/15-d3a-native-business",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "4e60a56e3d21defea4c2d580c35fd3b198e52b5e",
+          "ref": "refs/remotes/origin/qoder/17-unified-integration-candidate",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "f107dd32984cbdcb8e7dce3602ea26d99d9af9b5",
+          "ref": "refs/remotes/origin/qoder/a01-baseline-audit",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "8f9f6ad23067a7251a444dbe0e210ef4f1218b69",
+          "ref": "refs/remotes/origin/qoder/a02-d4-d5-security",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "2e0cca1345d2a2e0a4295c24aeac5b8b4ce59143",
+          "ref": "refs/remotes/origin/qoder/closure-12-executing-recovery",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "5d9bca1305245eb51686dda6083ae1aa2fb8e677",
+          "ref": "refs/remotes/origin/qoder/d12-replit-integration",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "af89cb340be4eb11a46b290e3dc5217e52af07ce",
+          "ref": "refs/remotes/origin/qoder/parallel-w07-w12-ultra",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "44dfbf639fda27d4b8de7908c0aea8df25ab50ef",
+          "ref": "refs/remotes/origin/qoder/temp-principal-sixwave-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "adf5a5f86ecd96fad8214eda51d20d05a0e2b2b4",
+          "ref": "refs/remotes/origin/qoder/wave01-d1-d3-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "845b0a48cfa7a726c97be75a00ed76fd8db5afca",
+          "ref": "refs/remotes/origin/qoder/wave02-d4-d6-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "c1e0a010c5eb0b1479b8ca21e4a410279b11cb3d",
+          "ref": "refs/remotes/origin/qoder/wave03-d7-d9-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "fd8215e8af4cf55e9f653c94cbc9105111e354eb",
+          "ref": "refs/remotes/origin/qoder/wave04-d10-d12-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "0f50dc65bbf9120dc4d183825cfe7a243db4b398",
+          "ref": "refs/remotes/origin/qoder/wave05-d13-d15-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "891c37d6a904c4ba8809e4531040c63f030bed99",
+          "ref": "refs/remotes/origin/qoder/wave06-d16-d17-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "d341917ec4a34ade3c1bdde8366a44dbbca9f35d",
+          "ref": "refs/remotes/origin/qoder/wave06b-d16-d17-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "c196a9bf892547322644540a5d03c338020581da",
+          "ref": "refs/remotes/origin/replit/d16-legal-privacy-compliance",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "11d7fbe3326897924468ee4c6d5467972a92b973",
+          "ref": "refs/remotes/origin/replit/dinar-next-complete-development",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "ebdd2d7a68f5a52af7ad973f21ef3b0cae914b4a",
+          "ref": "refs/remotes/origin/replit/dinar-next-six-wave-unification",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "21e8562a1b640ebcdd4a270146e7cf56c37f053b",
+          "ref": "refs/remotes/origin/replit/railway-complete-infrastructure-readiness",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "75d59370884d8799df860d35895f19d987e93d17",
+          "ref": "refs/remotes/origin/replit/railway-integrations-readiness",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "76a7e403117233122b6d5bce2009268bcc586680",
+          "ref": "refs/remotes/origin/replit/wave03-intent-integration",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "42d06ddab79b6b66ea99994e48b39b3909c78ab3",
+          "ref": "HEAD",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "b1b20e513ed25952bc086778fb71af88adcc54ba",
+          "ref": "main-worktree/HEAD",
+          "alreadyFetched": true
+        }
+      ]
+    },
+    {
+      "file": "/workspace/dinar-connect-evidence/connect-structured-catalog.bundle",
+      "bytes": 18074548,
+      "listExit": 0,
+      "tips": [
+        {
+          "sha": "a6ad106f37b8beb3b660d0a560d896cf83d736a8",
+          "ref": "refs/heads/codex/dinar-next-unified-development",
+          "fetchExit": 0,
+          "localRef": "refs/audit-preservation/bundle-tips/11-0"
+        },
+        {
+          "sha": "b1b20e513ed25952bc086778fb71af88adcc54ba",
+          "ref": "refs/heads/work",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "2ef9c07ab5fdcd15eca167f5a01ab32b6054400e",
+          "ref": "refs/remotes/origin/ai-foundation-02",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "9679e488c5f3d2260078d98c7d97704df6aac6ce",
+          "ref": "refs/remotes/origin/claude/02-sc-acceptance",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "e5bbd1ba59bddae8c5bd173a890fcdeafa046c25",
+          "ref": "refs/remotes/origin/claude/04-reconciliation",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "4322fb6d7b66460626509401370f5ec3a5f6c6a8",
+          "ref": "refs/remotes/origin/claude/05-w04-context",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "8f4662b8a8d0c1ebc90bec06cd17c89795d8a480",
+          "ref": "refs/remotes/origin/claude/06-w02-ultra",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "e17fad27339b9d40ccea341e46bef96941d34db8",
+          "ref": "refs/remotes/origin/claude/07-legal-cards",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "09ff489f0a3f5950b9f0a0ba8b6cfc49230a7747",
+          "ref": "refs/remotes/origin/claude/08-model-native",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "d416a047f3707d1f03c6763c76e96eee2ab69da4",
+          "ref": "refs/remotes/origin/claude/09-dual-tier",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "9a0f86f0b3c727f48be58aee7db11a3045a94613",
+          "ref": "refs/remotes/origin/claude/10-ultra-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "d94477bad836bf4fe7b3330884170625d1698270",
+          "ref": "refs/remotes/origin/claude/11-c1-sql-search",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "91b09ee7e24b737879d1bcf0ff1f8c238026d3f4",
+          "ref": "refs/remotes/origin/claude/12-d1-d2-business-foundation",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "fe1c23396930f836d97241a6e3333611c6a60e4d",
+          "ref": "refs/remotes/origin/claude/13-integration-preflight",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "f351f5d20d52d77b69bdcff66e2412796e53aa39",
+          "ref": "refs/remotes/origin/codex/11-c1-sql-search",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "b1b20e513ed25952bc086778fb71af88adcc54ba",
+          "ref": "refs/remotes/origin/main",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "ebdd2d7a68f5a52af7ad973f21ef3b0cae914b4a",
+          "ref": "refs/remotes/origin/pr-5-head",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "f0a3c77fc1fd1a276fcb2a61214dd3b4b8e49ee3",
+          "ref": "refs/remotes/origin/qoder/04-sc02",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "56138dc97f2711862e41d635e2a009f5535da2bd",
+          "ref": "refs/remotes/origin/qoder/05-sc06",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "6335603bfb44857dd5a7261c6f32e06b5b085582",
+          "ref": "refs/remotes/origin/qoder/06-general-specs",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "a80bbe32fdf8d9703875658e81b58923e20a1a13",
+          "ref": "refs/remotes/origin/qoder/07-stock",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "5dda1466cc08e2d6d61d4d757bf541b853819f65",
+          "ref": "refs/remotes/origin/qoder/08-integration",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "5a005005224cf5ac05f72c8328258dd061a9846b",
+          "ref": "refs/remotes/origin/qoder/09-launch-gates",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "2b0649066a8c9049f410c1224e9f6610bc99492a",
+          "ref": "refs/remotes/origin/qoder/10-security-deps",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "772cda7193923cebe95a696f7c7c53c7ad37865a",
+          "ref": "refs/remotes/origin/qoder/11-wave01-security-close",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "2da7f9721c8a915ab3630613f9d83a36a55ab3d6",
+          "ref": "refs/remotes/origin/qoder/12-wave02-card-reliability",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "92aeb0c2858a2778a2cb496665c3f6b2b29ee5b5",
+          "ref": "refs/remotes/origin/qoder/12-wave02-red-evidence",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "c6e45942cf122582db01eddaba7356ce1b72029e",
+          "ref": "refs/remotes/origin/qoder/13-wave03-card-envelope",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "6687df2d033c1b71eee5b46afb3e39d193f66ec2",
+          "ref": "refs/remotes/origin/qoder/14-w02u3-canonical-reliability",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "939930d1037387f39f1a2c64ac5b2ae61146b251",
+          "ref": "refs/remotes/origin/qoder/15-d3a-native-business",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "4e60a56e3d21defea4c2d580c35fd3b198e52b5e",
+          "ref": "refs/remotes/origin/qoder/17-unified-integration-candidate",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "f107dd32984cbdcb8e7dce3602ea26d99d9af9b5",
+          "ref": "refs/remotes/origin/qoder/a01-baseline-audit",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "8f9f6ad23067a7251a444dbe0e210ef4f1218b69",
+          "ref": "refs/remotes/origin/qoder/a02-d4-d5-security",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "2e0cca1345d2a2e0a4295c24aeac5b8b4ce59143",
+          "ref": "refs/remotes/origin/qoder/closure-12-executing-recovery",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "5d9bca1305245eb51686dda6083ae1aa2fb8e677",
+          "ref": "refs/remotes/origin/qoder/d12-replit-integration",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "af89cb340be4eb11a46b290e3dc5217e52af07ce",
+          "ref": "refs/remotes/origin/qoder/parallel-w07-w12-ultra",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "44dfbf639fda27d4b8de7908c0aea8df25ab50ef",
+          "ref": "refs/remotes/origin/qoder/temp-principal-sixwave-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "adf5a5f86ecd96fad8214eda51d20d05a0e2b2b4",
+          "ref": "refs/remotes/origin/qoder/wave01-d1-d3-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "845b0a48cfa7a726c97be75a00ed76fd8db5afca",
+          "ref": "refs/remotes/origin/qoder/wave02-d4-d6-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "c1e0a010c5eb0b1479b8ca21e4a410279b11cb3d",
+          "ref": "refs/remotes/origin/qoder/wave03-d7-d9-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "fd8215e8af4cf55e9f653c94cbc9105111e354eb",
+          "ref": "refs/remotes/origin/qoder/wave04-d10-d12-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "0f50dc65bbf9120dc4d183825cfe7a243db4b398",
+          "ref": "refs/remotes/origin/qoder/wave05-d13-d15-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "891c37d6a904c4ba8809e4531040c63f030bed99",
+          "ref": "refs/remotes/origin/qoder/wave06-d16-d17-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "d341917ec4a34ade3c1bdde8366a44dbbca9f35d",
+          "ref": "refs/remotes/origin/qoder/wave06b-d16-d17-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "c196a9bf892547322644540a5d03c338020581da",
+          "ref": "refs/remotes/origin/replit/d16-legal-privacy-compliance",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "11d7fbe3326897924468ee4c6d5467972a92b973",
+          "ref": "refs/remotes/origin/replit/dinar-next-complete-development",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "ebdd2d7a68f5a52af7ad973f21ef3b0cae914b4a",
+          "ref": "refs/remotes/origin/replit/dinar-next-six-wave-unification",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "21e8562a1b640ebcdd4a270146e7cf56c37f053b",
+          "ref": "refs/remotes/origin/replit/railway-complete-infrastructure-readiness",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "75d59370884d8799df860d35895f19d987e93d17",
+          "ref": "refs/remotes/origin/replit/railway-integrations-readiness",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "76a7e403117233122b6d5bce2009268bcc586680",
+          "ref": "refs/remotes/origin/replit/wave03-intent-integration",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "a6ad106f37b8beb3b660d0a560d896cf83d736a8",
+          "ref": "HEAD",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "b1b20e513ed25952bc086778fb71af88adcc54ba",
+          "ref": "main-worktree/HEAD",
+          "alreadyFetched": true
+        }
+      ]
+    },
+    {
+      "file": "/workspace/dinar-connect-evidence/connect-team-98bb679.bundle",
+      "bytes": 18053333,
+      "listExit": 0,
+      "tips": [
+        {
+          "sha": "98bb679bb92fe4735d8199ce4ca245320cfc5260",
+          "ref": "refs/heads/codex/dinar-next-unified-development",
+          "fetchExit": 0,
+          "localRef": "refs/audit-preservation/bundle-tips/12-0"
+        },
+        {
+          "sha": "b1b20e513ed25952bc086778fb71af88adcc54ba",
+          "ref": "refs/heads/work",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "2ef9c07ab5fdcd15eca167f5a01ab32b6054400e",
+          "ref": "refs/remotes/origin/ai-foundation-02",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "9679e488c5f3d2260078d98c7d97704df6aac6ce",
+          "ref": "refs/remotes/origin/claude/02-sc-acceptance",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "e5bbd1ba59bddae8c5bd173a890fcdeafa046c25",
+          "ref": "refs/remotes/origin/claude/04-reconciliation",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "4322fb6d7b66460626509401370f5ec3a5f6c6a8",
+          "ref": "refs/remotes/origin/claude/05-w04-context",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "8f4662b8a8d0c1ebc90bec06cd17c89795d8a480",
+          "ref": "refs/remotes/origin/claude/06-w02-ultra",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "e17fad27339b9d40ccea341e46bef96941d34db8",
+          "ref": "refs/remotes/origin/claude/07-legal-cards",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "09ff489f0a3f5950b9f0a0ba8b6cfc49230a7747",
+          "ref": "refs/remotes/origin/claude/08-model-native",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "d416a047f3707d1f03c6763c76e96eee2ab69da4",
+          "ref": "refs/remotes/origin/claude/09-dual-tier",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "9a0f86f0b3c727f48be58aee7db11a3045a94613",
+          "ref": "refs/remotes/origin/claude/10-ultra-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "d94477bad836bf4fe7b3330884170625d1698270",
+          "ref": "refs/remotes/origin/claude/11-c1-sql-search",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "91b09ee7e24b737879d1bcf0ff1f8c238026d3f4",
+          "ref": "refs/remotes/origin/claude/12-d1-d2-business-foundation",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "fe1c23396930f836d97241a6e3333611c6a60e4d",
+          "ref": "refs/remotes/origin/claude/13-integration-preflight",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "f351f5d20d52d77b69bdcff66e2412796e53aa39",
+          "ref": "refs/remotes/origin/codex/11-c1-sql-search",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "b1b20e513ed25952bc086778fb71af88adcc54ba",
+          "ref": "refs/remotes/origin/main",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "ebdd2d7a68f5a52af7ad973f21ef3b0cae914b4a",
+          "ref": "refs/remotes/origin/pr-5-head",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "f0a3c77fc1fd1a276fcb2a61214dd3b4b8e49ee3",
+          "ref": "refs/remotes/origin/qoder/04-sc02",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "56138dc97f2711862e41d635e2a009f5535da2bd",
+          "ref": "refs/remotes/origin/qoder/05-sc06",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "6335603bfb44857dd5a7261c6f32e06b5b085582",
+          "ref": "refs/remotes/origin/qoder/06-general-specs",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "a80bbe32fdf8d9703875658e81b58923e20a1a13",
+          "ref": "refs/remotes/origin/qoder/07-stock",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "5dda1466cc08e2d6d61d4d757bf541b853819f65",
+          "ref": "refs/remotes/origin/qoder/08-integration",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "5a005005224cf5ac05f72c8328258dd061a9846b",
+          "ref": "refs/remotes/origin/qoder/09-launch-gates",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "2b0649066a8c9049f410c1224e9f6610bc99492a",
+          "ref": "refs/remotes/origin/qoder/10-security-deps",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "772cda7193923cebe95a696f7c7c53c7ad37865a",
+          "ref": "refs/remotes/origin/qoder/11-wave01-security-close",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "2da7f9721c8a915ab3630613f9d83a36a55ab3d6",
+          "ref": "refs/remotes/origin/qoder/12-wave02-card-reliability",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "92aeb0c2858a2778a2cb496665c3f6b2b29ee5b5",
+          "ref": "refs/remotes/origin/qoder/12-wave02-red-evidence",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "c6e45942cf122582db01eddaba7356ce1b72029e",
+          "ref": "refs/remotes/origin/qoder/13-wave03-card-envelope",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "6687df2d033c1b71eee5b46afb3e39d193f66ec2",
+          "ref": "refs/remotes/origin/qoder/14-w02u3-canonical-reliability",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "939930d1037387f39f1a2c64ac5b2ae61146b251",
+          "ref": "refs/remotes/origin/qoder/15-d3a-native-business",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "4e60a56e3d21defea4c2d580c35fd3b198e52b5e",
+          "ref": "refs/remotes/origin/qoder/17-unified-integration-candidate",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "f107dd32984cbdcb8e7dce3602ea26d99d9af9b5",
+          "ref": "refs/remotes/origin/qoder/a01-baseline-audit",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "8f9f6ad23067a7251a444dbe0e210ef4f1218b69",
+          "ref": "refs/remotes/origin/qoder/a02-d4-d5-security",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "2e0cca1345d2a2e0a4295c24aeac5b8b4ce59143",
+          "ref": "refs/remotes/origin/qoder/closure-12-executing-recovery",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "5d9bca1305245eb51686dda6083ae1aa2fb8e677",
+          "ref": "refs/remotes/origin/qoder/d12-replit-integration",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "af89cb340be4eb11a46b290e3dc5217e52af07ce",
+          "ref": "refs/remotes/origin/qoder/parallel-w07-w12-ultra",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "44dfbf639fda27d4b8de7908c0aea8df25ab50ef",
+          "ref": "refs/remotes/origin/qoder/temp-principal-sixwave-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "adf5a5f86ecd96fad8214eda51d20d05a0e2b2b4",
+          "ref": "refs/remotes/origin/qoder/wave01-d1-d3-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "845b0a48cfa7a726c97be75a00ed76fd8db5afca",
+          "ref": "refs/remotes/origin/qoder/wave02-d4-d6-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "c1e0a010c5eb0b1479b8ca21e4a410279b11cb3d",
+          "ref": "refs/remotes/origin/qoder/wave03-d7-d9-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "fd8215e8af4cf55e9f653c94cbc9105111e354eb",
+          "ref": "refs/remotes/origin/qoder/wave04-d10-d12-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "0f50dc65bbf9120dc4d183825cfe7a243db4b398",
+          "ref": "refs/remotes/origin/qoder/wave05-d13-d15-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "891c37d6a904c4ba8809e4531040c63f030bed99",
+          "ref": "refs/remotes/origin/qoder/wave06-d16-d17-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "d341917ec4a34ade3c1bdde8366a44dbbca9f35d",
+          "ref": "refs/remotes/origin/qoder/wave06b-d16-d17-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "c196a9bf892547322644540a5d03c338020581da",
+          "ref": "refs/remotes/origin/replit/d16-legal-privacy-compliance",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "11d7fbe3326897924468ee4c6d5467972a92b973",
+          "ref": "refs/remotes/origin/replit/dinar-next-complete-development",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "ebdd2d7a68f5a52af7ad973f21ef3b0cae914b4a",
+          "ref": "refs/remotes/origin/replit/dinar-next-six-wave-unification",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "21e8562a1b640ebcdd4a270146e7cf56c37f053b",
+          "ref": "refs/remotes/origin/replit/railway-complete-infrastructure-readiness",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "75d59370884d8799df860d35895f19d987e93d17",
+          "ref": "refs/remotes/origin/replit/railway-integrations-readiness",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "76a7e403117233122b6d5bce2009268bcc586680",
+          "ref": "refs/remotes/origin/replit/wave03-intent-integration",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "98bb679bb92fe4735d8199ce4ca245320cfc5260",
+          "ref": "HEAD",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "b1b20e513ed25952bc086778fb71af88adcc54ba",
+          "ref": "main-worktree/HEAD",
+          "alreadyFetched": true
+        }
+      ]
+    },
+    {
+      "file": "/workspace/dinar-connect-evidence/connect-website.bundle",
+      "bytes": 18558117,
+      "listExit": 0,
+      "tips": [
+        {
+          "sha": "6fe95050f99d362702bc74964f3820eecb0677de",
+          "ref": "refs/heads/codex/dinar-next-unified-development",
+          "fetchExit": 0,
+          "localRef": "refs/audit-preservation/bundle-tips/13-0"
+        },
+        {
+          "sha": "b1b20e513ed25952bc086778fb71af88adcc54ba",
+          "ref": "refs/heads/work",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "b1b20e513ed25952bc086778fb71af88adcc54ba",
+          "ref": "refs/remotes/origin/HEAD",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "2ef9c07ab5fdcd15eca167f5a01ab32b6054400e",
+          "ref": "refs/remotes/origin/ai-foundation-02",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "9679e488c5f3d2260078d98c7d97704df6aac6ce",
+          "ref": "refs/remotes/origin/claude/02-sc-acceptance",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "e5bbd1ba59bddae8c5bd173a890fcdeafa046c25",
+          "ref": "refs/remotes/origin/claude/04-reconciliation",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "4322fb6d7b66460626509401370f5ec3a5f6c6a8",
+          "ref": "refs/remotes/origin/claude/05-w04-context",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "8f4662b8a8d0c1ebc90bec06cd17c89795d8a480",
+          "ref": "refs/remotes/origin/claude/06-w02-ultra",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "e17fad27339b9d40ccea341e46bef96941d34db8",
+          "ref": "refs/remotes/origin/claude/07-legal-cards",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "09ff489f0a3f5950b9f0a0ba8b6cfc49230a7747",
+          "ref": "refs/remotes/origin/claude/08-model-native",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "d416a047f3707d1f03c6763c76e96eee2ab69da4",
+          "ref": "refs/remotes/origin/claude/09-dual-tier",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "9a0f86f0b3c727f48be58aee7db11a3045a94613",
+          "ref": "refs/remotes/origin/claude/10-ultra-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "d94477bad836bf4fe7b3330884170625d1698270",
+          "ref": "refs/remotes/origin/claude/11-c1-sql-search",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "91b09ee7e24b737879d1bcf0ff1f8c238026d3f4",
+          "ref": "refs/remotes/origin/claude/12-d1-d2-business-foundation",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "fe1c23396930f836d97241a6e3333611c6a60e4d",
+          "ref": "refs/remotes/origin/claude/13-integration-preflight",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "f351f5d20d52d77b69bdcff66e2412796e53aa39",
+          "ref": "refs/remotes/origin/codex/11-c1-sql-search",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "b1b20e513ed25952bc086778fb71af88adcc54ba",
+          "ref": "refs/remotes/origin/main",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "ebdd2d7a68f5a52af7ad973f21ef3b0cae914b4a",
+          "ref": "refs/remotes/origin/pr-5-head",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "f0a3c77fc1fd1a276fcb2a61214dd3b4b8e49ee3",
+          "ref": "refs/remotes/origin/qoder/04-sc02",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "56138dc97f2711862e41d635e2a009f5535da2bd",
+          "ref": "refs/remotes/origin/qoder/05-sc06",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "6335603bfb44857dd5a7261c6f32e06b5b085582",
+          "ref": "refs/remotes/origin/qoder/06-general-specs",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "a80bbe32fdf8d9703875658e81b58923e20a1a13",
+          "ref": "refs/remotes/origin/qoder/07-stock",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "5dda1466cc08e2d6d61d4d757bf541b853819f65",
+          "ref": "refs/remotes/origin/qoder/08-integration",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "5a005005224cf5ac05f72c8328258dd061a9846b",
+          "ref": "refs/remotes/origin/qoder/09-launch-gates",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "2b0649066a8c9049f410c1224e9f6610bc99492a",
+          "ref": "refs/remotes/origin/qoder/10-security-deps",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "772cda7193923cebe95a696f7c7c53c7ad37865a",
+          "ref": "refs/remotes/origin/qoder/11-wave01-security-close",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "2da7f9721c8a915ab3630613f9d83a36a55ab3d6",
+          "ref": "refs/remotes/origin/qoder/12-wave02-card-reliability",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "92aeb0c2858a2778a2cb496665c3f6b2b29ee5b5",
+          "ref": "refs/remotes/origin/qoder/12-wave02-red-evidence",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "c6e45942cf122582db01eddaba7356ce1b72029e",
+          "ref": "refs/remotes/origin/qoder/13-wave03-card-envelope",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "6687df2d033c1b71eee5b46afb3e39d193f66ec2",
+          "ref": "refs/remotes/origin/qoder/14-w02u3-canonical-reliability",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "939930d1037387f39f1a2c64ac5b2ae61146b251",
+          "ref": "refs/remotes/origin/qoder/15-d3a-native-business",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "4e60a56e3d21defea4c2d580c35fd3b198e52b5e",
+          "ref": "refs/remotes/origin/qoder/17-unified-integration-candidate",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "f107dd32984cbdcb8e7dce3602ea26d99d9af9b5",
+          "ref": "refs/remotes/origin/qoder/a01-baseline-audit",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "8f9f6ad23067a7251a444dbe0e210ef4f1218b69",
+          "ref": "refs/remotes/origin/qoder/a02-d4-d5-security",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "2e0cca1345d2a2e0a4295c24aeac5b8b4ce59143",
+          "ref": "refs/remotes/origin/qoder/closure-12-executing-recovery",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "5d9bca1305245eb51686dda6083ae1aa2fb8e677",
+          "ref": "refs/remotes/origin/qoder/d12-replit-integration",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "af89cb340be4eb11a46b290e3dc5217e52af07ce",
+          "ref": "refs/remotes/origin/qoder/parallel-w07-w12-ultra",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "44dfbf639fda27d4b8de7908c0aea8df25ab50ef",
+          "ref": "refs/remotes/origin/qoder/temp-principal-sixwave-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "adf5a5f86ecd96fad8214eda51d20d05a0e2b2b4",
+          "ref": "refs/remotes/origin/qoder/wave01-d1-d3-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "845b0a48cfa7a726c97be75a00ed76fd8db5afca",
+          "ref": "refs/remotes/origin/qoder/wave02-d4-d6-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "c1e0a010c5eb0b1479b8ca21e4a410279b11cb3d",
+          "ref": "refs/remotes/origin/qoder/wave03-d7-d9-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "fd8215e8af4cf55e9f653c94cbc9105111e354eb",
+          "ref": "refs/remotes/origin/qoder/wave04-d10-d12-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "0f50dc65bbf9120dc4d183825cfe7a243db4b398",
+          "ref": "refs/remotes/origin/qoder/wave05-d13-d15-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "891c37d6a904c4ba8809e4531040c63f030bed99",
+          "ref": "refs/remotes/origin/qoder/wave06-d16-d17-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "d341917ec4a34ade3c1bdde8366a44dbbca9f35d",
+          "ref": "refs/remotes/origin/qoder/wave06b-d16-d17-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "c196a9bf892547322644540a5d03c338020581da",
+          "ref": "refs/remotes/origin/replit/d16-legal-privacy-compliance",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "11d7fbe3326897924468ee4c6d5467972a92b973",
+          "ref": "refs/remotes/origin/replit/dinar-next-complete-development",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "ebdd2d7a68f5a52af7ad973f21ef3b0cae914b4a",
+          "ref": "refs/remotes/origin/replit/dinar-next-six-wave-unification",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "21e8562a1b640ebcdd4a270146e7cf56c37f053b",
+          "ref": "refs/remotes/origin/replit/railway-complete-infrastructure-readiness",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "75d59370884d8799df860d35895f19d987e93d17",
+          "ref": "refs/remotes/origin/replit/railway-integrations-readiness",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "76a7e403117233122b6d5bce2009268bcc586680",
+          "ref": "refs/remotes/origin/replit/wave03-intent-integration",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "6fe95050f99d362702bc74964f3820eecb0677de",
+          "ref": "HEAD",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "b1b20e513ed25952bc086778fb71af88adcc54ba",
+          "ref": "main-worktree/HEAD",
+          "alreadyFetched": true
+        }
+      ]
+    },
+    {
+      "file": "/workspace/dinar-preparation/codex-cloud-local-development.bundle",
+      "bytes": 18107132,
+      "listExit": 0,
+      "tips": [
+        {
+          "sha": "492944fb053dfbfc1a1507055ccb4e3ea2100bc4",
+          "ref": "refs/heads/codex/dinar-next-unified-development",
+          "fetchExit": 0,
+          "localRef": "refs/audit-preservation/bundle-tips/14-0"
+        },
+        {
+          "sha": "b1b20e513ed25952bc086778fb71af88adcc54ba",
+          "ref": "refs/heads/work",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "ebdd2d7a68f5a52af7ad973f21ef3b0cae914b4a",
+          "ref": "refs/remotes/origin/pr-5-head",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "5446ccb8e4b0164c339a78350dd155c985b54c74",
+          "ref": "refs/remotes/origin/qoder/temp-principal-sixwave-closure",
+          "fetchExit": 0,
+          "localRef": "refs/audit-preservation/bundle-tips/14-3"
+        },
+        {
+          "sha": "ebdd2d7a68f5a52af7ad973f21ef3b0cae914b4a",
+          "ref": "refs/remotes/origin/replit/dinar-next-six-wave-unification",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "492944fb053dfbfc1a1507055ccb4e3ea2100bc4",
+          "ref": "HEAD",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "b1b20e513ed25952bc086778fb71af88adcc54ba",
+          "ref": "main-worktree/HEAD",
+          "alreadyFetched": true
+        }
+      ]
+    },
+    {
+      "file": "/workspace/dinar-preparation/mission-start-492944f.bundle",
+      "bytes": 18085816,
+      "listExit": 0,
+      "tips": [
+        {
+          "sha": "492944fb053dfbfc1a1507055ccb4e3ea2100bc4",
+          "ref": "refs/heads/codex/dinar-next-unified-development",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "b1b20e513ed25952bc086778fb71af88adcc54ba",
+          "ref": "refs/heads/work",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "ebdd2d7a68f5a52af7ad973f21ef3b0cae914b4a",
+          "ref": "refs/remotes/origin/pr-5-head",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "5446ccb8e4b0164c339a78350dd155c985b54c74",
+          "ref": "refs/remotes/origin/qoder/temp-principal-sixwave-closure",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "ebdd2d7a68f5a52af7ad973f21ef3b0cae914b4a",
+          "ref": "refs/remotes/origin/replit/dinar-next-six-wave-unification",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "492944fb053dfbfc1a1507055ccb4e3ea2100bc4",
+          "ref": "HEAD",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "b1b20e513ed25952bc086778fb71af88adcc54ba",
+          "ref": "main-worktree/HEAD",
+          "alreadyFetched": true
+        }
+      ]
+    },
+    {
+      "file": "/workspace/dinar-preparation/pre-engineering.bundle",
+      "bytes": 18092175,
+      "listExit": 0,
+      "tips": [
+        {
+          "sha": "ebdd2d7a68f5a52af7ad973f21ef3b0cae914b4a",
+          "ref": "refs/heads/codex/dinar-next-unified-development",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "b1b20e513ed25952bc086778fb71af88adcc54ba",
+          "ref": "refs/heads/work",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "ebdd2d7a68f5a52af7ad973f21ef3b0cae914b4a",
+          "ref": "refs/remotes/origin/pr-5-head",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "e76e6b03d5103df0f8f04e67fd9513c8075e44dc",
+          "ref": "refs/remotes/origin/qoder/temp-principal-sixwave-closure",
+          "fetchExit": 0,
+          "localRef": "refs/audit-preservation/bundle-tips/16-3"
+        },
+        {
+          "sha": "ebdd2d7a68f5a52af7ad973f21ef3b0cae914b4a",
+          "ref": "refs/remotes/origin/replit/dinar-next-six-wave-unification",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "ebdd2d7a68f5a52af7ad973f21ef3b0cae914b4a",
+          "ref": "HEAD",
+          "alreadyFetched": true
+        },
+        {
+          "sha": "b1b20e513ed25952bc086778fb71af88adcc54ba",
+          "ref": "main-worktree/HEAD",
+          "alreadyFetched": true
+        }
+      ]
+    }
+  ],
+  "uniqueTipsFetched": 66,
+  "originalObjectsAfterFetch": [
+    {
+      "sha": "719d4715a869f69831049a6a2f6c349cec934344",
+      "present": false,
+      "type": null
+    },
+    {
+      "sha": "442008a5fdcb9dc6529a55364cd66e033c6a0909",
+      "present": false,
+      "type": null
+    }
+  ],
+  "noHistoryReconstruction": true
+}

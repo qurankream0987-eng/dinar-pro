@@ -1,3 +1,5 @@
+> Historical publication authorization: the latest owner directive for the current isolated audit is [OWNER_FINAL_ENGINEERING_CLOSURE.md](OWNER_FINAL_ENGINEERING_CLOSURE.md). Current audit delivery is local only. Do not publish it or route it onto the older authorized remote branch without new owner approval.
+
 # DINAR NEXT — CODEX COMPLETE DEVELOPMENT AND GITHUB PUBLICATION
 
 ## OWNER AUTHORIZATION — CONTINUE, COMPLETE, TEST AND PUSH

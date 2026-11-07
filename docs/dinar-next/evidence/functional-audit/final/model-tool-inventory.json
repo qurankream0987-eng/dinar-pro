@@ -1,0 +1,62 @@
+[
+  {
+    "owner": "codex",
+    "sourceSHA": "5121c9198ca80fb0cb02be4ef168b396d8aa12c0",
+    "boundedCore": [
+      "searchListings",
+      "getResource",
+      "compareListings"
+    ],
+    "roleFilteredCapabilityAdapters": [
+      "readInventory",
+      "readBusinessInquiries",
+      "prepareInquiryMessage",
+      "prepareListingDraft",
+      "requestPublicationReview",
+      "readNegotiationStatus",
+      "prepareNegotiationProposal",
+      "readCart",
+      "prepareCartChange",
+      "reviewCheckout",
+      "readOrders",
+      "readFulfillment"
+    ],
+    "maximumAuthenticatedBoundedToolCount": 15,
+    "note": "Source upper bound; actual offered tools are narrowed by server-derived roles/context; registry membership does not grant model authority"
+  },
+  {
+    "owner": "claude",
+    "sourceSHA": "974fb1e2f60aba3d415ac8561d913458c148fd4e",
+    "boundedCore": [
+      "searchListings",
+      "getResource",
+      "compareListings",
+      "searchDomains",
+      "searchPartnerOffers",
+      "describeDinarCapabilities",
+      "readBusinessOverview",
+      "readOrderIssues",
+      "readSellerDues",
+      "readAiUsage",
+      "readConnectPartnerStatus",
+      "readPolicy"
+    ],
+    "roleFilteredCapabilityAdapters": [
+      "readInventory",
+      "readBusinessInquiries",
+      "prepareInquiryMessage",
+      "prepareListingDraft",
+      "requestPublicationReview",
+      "readNegotiationStatus",
+      "prepareNegotiationProposal",
+      "readCart",
+      "prepareCartChange",
+      "reviewCheckout",
+      "readOrders",
+      "readFulfillment",
+      "prepareBusinessListingAction"
+    ],
+    "maximumAuthenticatedBoundedToolCount": 25,
+    "note": "Source upper bound; actual offered tools are narrowed by server-derived roles/context; registry membership does not grant model authority"
+  }
+]

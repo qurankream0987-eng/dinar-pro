@@ -1,0 +1,23 @@
+{
+  "status": "PASS_WITH_EXPLAINED_INSTALL_OPTIMIZATION",
+  "rawStoreStatus": "nonzero; esbuild flagged by base launcher-file comparison",
+  "registryPackageFiles": "all7 original CAS files match their SRI; installed postinstall sideEffects variant matches all files",
+  "reason": "Official install.js maybeOptimizePackage hard-links the declared native executable over the generic JS launcher. Installed binary matches both locked official platform archive and declared esbuild.binaryHashes. No package, lockfile or runtime binary was changed by this audit.",
+  "evidence": [
+    {
+      "package": "esbuild@0.28.2",
+      "url": "https://registry.npmjs.org/esbuild/-/esbuild-0.28.2.tgz",
+      "archiveIntegrityMatchesLock": true,
+      "archiveSHA512": "1ca54b4bc76f208fb1a0a5bd926ab16d12ab9d61177c926bfc56618499a2a880747b4e7740d605a8e068b9330efe4e6c203e0cbc28940afbfc6fd338877db020",
+      "declaredNativeBinarySHA256": "e1698a3d5c6c0798fee4fd3b5cc816651f460c63d390a7a26ea4beb0b1884100"
+    },
+    {
+      "package": "'@esbuild/linux-x64@0.28.2'",
+      "url": "https://registry.npmjs.org/@esbuild/linux-x64/-/linux-x64-0.28.2.tgz",
+      "archiveIntegrityMatchesLock": true,
+      "archiveSHA512": "e314d9af5154992a105b85c85a68addedcd0ad44d933e3773f45d5f3144e298179d177c8ef178ef74fb56d9bcdc3122e7d0f610d0551247e588603d517c03f1d",
+      "installedNativeBytesEqualOfficialLockedArchive": true,
+      "binarySHA256": "e1698a3d5c6c0798fee4fd3b5cc816651f460c63d390a7a26ea4beb0b1884100"
+    }
+  ]
+}
