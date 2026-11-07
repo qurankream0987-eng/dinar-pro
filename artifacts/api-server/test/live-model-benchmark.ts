@@ -21,6 +21,7 @@ import { resolve } from "node:path";
 import {
   BENCHMARK_CREDENTIALS,
   BENCHMARK_ENDPOINTS,
+  benchmarkEndpoint,
   BENCHMARK_TASKS,
   GROQ_BENCHMARK_TASKS,
   GEMINI_BENCHMARK_TASKS,
@@ -188,7 +189,8 @@ function candidateGateway(candidate: BenchmarkCandidate): Promise<Gateway> {
     ...(geminiFree ? { DINAR_GEMINI_BENCHMARK_CONTEXT: "1" } : {}),
     ...(groqFree ? { DINAR_GROQ_FREE_ONLY: "true", DINAR_GROQ_BENCHMARK_CONTEXT: "1" } : {}),
     ...(deepseek ? { DEEPSEEK_BENCHMARK_CONTEXT: "1" } : {}),
-    ...(!gemmaFree && !geminiFree && !groqFree ? { DINAR_AI_BASE_URL: BENCHMARK_ENDPOINTS[provider] } : {}),
+    ...(!gemmaFree && !geminiFree && !groqFree ? { DINAR_AI_BASE_URL: benchmarkEndpoint(provider) } : {}),
+    ...(provider === "SELF_HOSTED" ? { DINAR_AI_THINKING: "disabled" } : {}),
     DINAR_AI_MODEL: candidate.model,
     ...(gemmaFree ? { DINAR_BENCH_OPENROUTER_API_KEY: process.env[BENCHMARK_CREDENTIALS[provider]] } : geminiFree ? { DINAR_BENCH_GEMINI_API_KEY: process.env[BENCHMARK_CREDENTIALS[provider]] } : groqFree ? { DINAR_BENCH_GROQ_API_KEY: process.env[BENCHMARK_CREDENTIALS[provider]] } : deepseek ? { DINAR_BENCH_DEEPSEEK_API_KEY: process.env[BENCHMARK_CREDENTIALS[provider]] } : { DINAR_AI_API_KEY: process.env[BENCHMARK_CREDENTIALS[provider]] }),
     DINAR_AI_TRANSPORT: candidate.transport,

@@ -226,14 +226,36 @@ await test("DS-01 general Arabic: canonical request reaches DeepSeek and the val
   assert.equal(sent.body.max_tokens, 1200);
   for (const field of ["max_completion_tokens", "parallel_tool_calls", "provider", "stream"]) assert.equal(sent.body[field], undefined, field);
   assert.deepEqual(sent.body.thinking, { type: "disabled" }, "the documented non-thinking switch");
-  // AI-FOUNDATION already exposes bounded reads and review preparation. Assert the exact
-  // current contract; never silently accept an added execution/payment tool.
-  assert.deepEqual(sent.body.tools.map((tool: any) => tool.function.name), [
-    "searchListings", "getResource", "compareListings", "readBusinessInquiries",
-    "prepareInquiryMessage", "readNegotiationStatus", "prepareNegotiationProposal",
-    "readCart", "prepareCartChange", "reviewCheckout", "readOrders", "readFulfillment",
+  // Codex: assert the exact current contract; never silently accept an added execution/payment tool.
+  // Claude: the integrated loop also carries the role-filtered read/prepare capabilities.
+  const offered: string[] = sent.body.tools.map((tool: any) => tool.function.name);
+  assert.deepEqual(offered, [
+    "searchListings",
+    "getResource",
+    "compareListings",
+    "searchDomains",
+    "searchPartnerOffers",
+    "describeDinarCapabilities",
+    "readBusinessOverview",
+    "readOrderIssues",
+    "readSellerDues",
+    "readAiUsage",
+    "readConnectPartnerStatus",
+    "readPolicy",
+    "readBusinessInquiries",
+    "prepareInquiryMessage",
+    "readNegotiationStatus",
+    "prepareNegotiationProposal",
+    "readCart",
+    "prepareCartChange",
+    "reviewCheckout",
+    "readOrders",
+    "readFulfillment",
     "dinarConversationTurn",
   ]);
+  assert.ok(offered.includes("dinarConversationTurn"));
+  assert.equal(offered.includes("addToCart"), false, "the direct cart write is never offered to the model");
+  assert.equal(new Set(offered).size, offered.length, "each tool is offered once");
   assert.equal(sent.body.messages[0].role, "system");
   assert.ok(sent.body.messages[0].content.startsWith(SYSTEM_PROMPT_MARKER));
   assert.ok(sent.body.messages.at(-1).content.endsWith(`USER: ${message}`));

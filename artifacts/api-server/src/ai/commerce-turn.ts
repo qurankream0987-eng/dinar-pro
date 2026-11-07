@@ -60,7 +60,8 @@ import { demandOptions } from "../lib/demand-rescue";
 import { normalizeSearch } from "./search-context";
 import { findOrdinalMention, foldArabicLetters, normalizeDigits, parseResultReference } from "./arabic-normalization";
 import { promotionIntent } from "./intent";
-import { plansCardPrompt, plansCardView, usageCardPrompt, usageCardView } from "./usage-turn";
+import { aiUsageSummary } from "../lib/ai-usage";
+import { plansCardPrompt, plansCardView, usageCardPrompt, usageCardView, usageProjection } from "./usage-turn";
 import { AI_USAGE_QUESTION } from "./usage-intent";
 import { resumeConversationDraftById } from "./draft-actions";
 import type { ToolResult } from "./tool-registry";
@@ -203,7 +204,7 @@ const P = {
   aiUsage: AI_USAGE_QUESTION,
   // «كم سعر برو؟», «اشترك في Go»: a tier name only counts next to a plan word, so «ايفون pro» stays a search.
   aiPlanTier: /^(?=.*(?:باقه|باقات|اشتراك|اشترك|ترقي|ارقي|بزنس|بيزنس|business|الفرق|خطه))(?=.*(?:^|\s)(?:go|pro|جو|برو)(?:\s|$)).*$|(?:سعر|تكلفه|كلفه|بكم)\s+(?:باقه\s+)?(?:go|pro|جو|برو)(?:\s|$)|^(?:اريد|ابي|ابغي|ابغى|بدي|ودي|حاب)\s+(?:باقه\s+)?(?:go|pro|جو|برو)$/u,
-  aiPlans: /^(?:(?:اعرض|وريني|شوف|ما\s+هي|شو|وش|ايش)\s+)?(?:ال)?باقات(?:ك|كم)?(?:\s+(?:الاشتراك|الاشتراكات|دينار|المتاحه))?$|(?:الفرق|فرق)\s+بين\s+(?:ال)?(?:مجاني|باقات)|^(?:اريد|ابي|ابغي|ابغى|بدي|ودي|حاب)\s+(?:ان\s+)?(?:اشترك|(?:ال)?اشتراك)(?:\s+(?:في|ب)?\s*(?:دينار|الباقات|باقه))?$|(?:ترقيه|ترقيت|ارقي|رقي|رق)\s+(?:حسابي|باقتي|اشتراكي)|(?:ترقيه|اشتراك)\s+(?:ال)?حساب|(?:^|\s)(?:ادفع|دفع|سداد|اسدد|اجدد|تجديد)\s+(?:ال)?اشتراك(?:ي)?(?:\s|$)/u,
+  aiPlans: /^(?:(?:اعرض|وريني|شوف|ما\s+هي|شو|وش|ايش)\s+)?(?:ال)?باقات(?:ك|كم)?(?:\s+(?:الاشتراك|الاشتراكات|دينار|المتاحه))?$|(?:الفرق|فرق)\s+بين\s+(?:ال)?(?:مجاني|باقات)|^(?:اريد|ابي|ابغي|ابغى|بدي|ودي|حاب)\s+(?:ان\s+)?(?:اشترك|(?:ال)?اشتراك)(?:\s+(?:في|ب)?\s*(?:دينار|الباقات|باقه))?$|(?:ترقيه|ترقيت|ارقي|رقي|رق)\s+(?:حسابي|باقتي|اشتراكي)|(?:ترقيه|اشتراك)\s+(?:ال)?حساب|(?:^|\s)(?:ادفع|دفع|سداد|اسدد|اجدد|تجديد)\s+(?:ال)?اشتراك(?:ي)?(?:\s|$)|(?:^|\s)(?:غير|حول|بدل)\s+(?:اشتراكي|باقتي|خطتي)(?:\s|$)/u,
   sellForNeed: /بع\s+لهذا\s+الطلب|بيع\s+لهذا\s+الطلب/u,
   unsatisfied: /ما\s+عجبني|ولا\s+(?:واحد|وحده|شي|شيء)\s+(?:عجبني|مناسب|ينفع)|في\s+غيرهم|فيه\s+غيرهم|في\s+غيرها|ما\s+لقيت\s+(?:اللي|الي|شي)|ابي\s+خيار\s+ثاني|اريد\s+خيارات\s+(?:ثانيه|اخري|غيرها)|خيارات\s+ثانيه|غير\s+هذول|ولا\s+واحد/u,
 };
@@ -824,7 +825,8 @@ export async function executeCommerceTurn(input: CommerceTurnInput): Promise<Tur
   const claimed =
     isCommerceCommand(input.message) ||
     (P.unsatisfied.test(text) && Boolean(latestSet && !(latestSet.query as { kind?: unknown })?.kind)) ||
-    Boolean(latest && ((latest.action && (latest.status ?? "PENDING") === "PENDING" && (CONFIRM.test(text) || CANCEL.test(text))) || latest.step || latest.view === "MARKET_PULSE" || latest.view === "COMMERCIAL_PRODUCTS"));
+    Boolean(latest && ((latest.action && (latest.status ?? "PENDING") === "PENDING" && (CONFIRM.test(text) || CANCEL.test(text))) || latest.step || latest.view === "MARKET_PULSE" || latest.view === "COMMERCIAL_PRODUCTS")) ||
+    Boolean(latest && PLAN_VIEWS.includes(String(latest.view)) && KEEP_PLAN.test(text));
   if (!claimed) return null;
   if (!input.actorId) return null;
   const actorId = input.actorId;
@@ -844,7 +846,11 @@ export async function executeCommerceTurn(input: CommerceTurnInput): Promise<Tur
     if (P.employment.test(text))
       return notice(actorId, "لا يمكن شراء ترتيب أو ظهور ممول في التوظيف: ترتيب المرشحين والطلبات لا يتأثر بأي دفع أو اشتراك. لم يتغير شيء.", market);
     // G1: usage and plan questions are deterministic and work even when AI usage is exhausted.
-    const usage = await aiUsageAndPlansTurn(text, actorId, market, latest);
+    // «لا، خل الاشتراك مثل ما هو» right after a plans card or plan review: the user keeps the plan.
+  // Nothing was pending to cancel; DINAR says so without a model call, and no later «نعم» can act.
+  if (latest && PLAN_VIEWS.includes(String(latest.view)) && !(latest.action && (latest.status ?? "PENDING") === "PENDING") && KEEP_PLAN.test(text))
+    return turnFor({ kind: "COMMERCE", ownerId: actorId, view: "AI_PLANS" }, [], "تمام، يبقى اشتراكك كما هو. لم يتغير شيء ولم يُخصم أي مبلغ.", actorId, market);
+  const usage = await aiUsageAndPlansTurn(text, actorId, market, latest);
     if (usage) return usage;
     if (!isPromotionFeatureEnabled()) return notice(actorId, "الخدمات التجارية غير مفعّلة في هذه البيئة. لم يتغير شيء.", market);
     return await commerceTurn(text, input, actorId, market, sets, latestSet, latest);
@@ -1152,7 +1158,16 @@ async function businessReview(actorId: string, market: Market, planId?: string, 
   );
 }
 
-const WANTS_TIER_CHANGE = /(?:^|\s)(?:اشترك|اشتراك\s+في|ترقي|ارقي|رقي|رق|فعل|حولني|انقلني)/u;
+const PLAN_VIEWS = ["AI_PLANS", "BUSINESS_PLAN_REVIEW"];
+/** «لا، خل الاشتراك مثل ما هو», «خليه زي ما هو», «لا ما أبي أغير»: keep the current plan. */
+const KEEP_PLAN = /^(?:(?:لا|لأ)\s+)?(?:(?:خل|خلي|خليه|خليها|خله|خلها|اترك|اتركه|ابق|ابقي)\s+(?:ال)?(?:اشتراك|باقه|خطه)?\S*\s*(?:مثل|زي|كما|متل)\s+(?:ما\s+)?(?:هو|هي|كان|كانت)|ما\s+(?:ابي|اريد|بدي|ابغي|ابغى)\s+(?:اغير|اشترك|ارقي|ترقيه)\S*|لا\s+شكرا|لا)$/u;
+const WANTS_TIER_CHANGE = /(?:^|\s)(?:اشترك|اشتراك\s+في|ترقي|ارقي|رقي|رق|فعل|حولني|انقلني|غير|حول|بدل)/u;
+/**
+ * «غير اشتراكي للخطة الأعلى», «رقني للباقة الأكبر»: a tier named relative to the user's own
+ * current tier. It is resolved against the real plans card, never guessed.
+ */
+const RELATIVE_TIER = /(?:^|\s)(?:(?:الي|الى)\s+)?(?:لل|ال|ل)?(?:خطه|باقه|اشتراك)\s+(?:ال)?(?:اعلي|اعلى|اكبر|احسن|اقوى|اقوي|الي\s+بعدها|التاليه)(?:\s|$)/u;
+const PLAN_OBJECT = /(?:اشتراكي|باقتي|خطتي|حسابي|اشتراك|باقه|خطه)/u;
 const ASKS_TIER_PRICE = /(?:^|\s)(?:سعر|كم|بكم|الفرق|فرق)(?:\s|$)/u;
 /** «أريد Go», «أبي برو»: wanting a named tier is asking for it. */
 const WANTS_NAMED_TIER = /^(?:اريد|ابي|ابغي|ابغى|بدي|ودي|حاب)\s+(?:باقه\s+)?(?:go|pro|جو|برو)$/u;
@@ -1162,21 +1177,56 @@ const WANTS_NAMED_TIER = /^(?:اريد|ابي|ابغي|ابغى|بدي|ودي|ح
  * from the usage ledger, the policy and the catalog; a tier change only opens the existing
  * Business review, which in turn needs the billing authority (simulation in development).
  */
+/**
+ * «هل يكفيني حتى نهاية الأسبوع؟»: an estimate from this period's actual pace (usage-turn.ts
+ * usageProjection), or an explicit statement that there is not enough data. Never invented.
+ */
+async function usageSufficiencyNote(actorId: string, market: Market, horizonDays?: number): Promise<string> {
+  const summary = await aiUsageSummary({ kind: "USER", userId: actorId, market: market as never });
+  const text = summary.resources.find((item) => item.resource === "TEXT_REQUEST");
+  if (!text) return "";
+  const until = horizonDays ? new Date(Date.now() + horizonDays * 24 * 60 * 60 * 1000) : undefined;
+  const projection = usageProjection(text, summary.period, new Date(), until);
+  const span = horizonDays === 7 ? "حتى نهاية الأسبوع" : horizonDays === 1 ? "حتى نهاية اليوم" : "حتى تجدد الحصة";
+  if (projection.kind === "INSUFFICIENT_DATA")
+    return `لا تتوفر بيانات استخدام كافية في هذه الفترة لتقدير ما إذا كانت حصتك تكفي ${span}؛ لم أخمّن رقمًا.\n`;
+  return projection.likelyToRunOut
+    ? `تقديريًا، وبوتيرة استخدامك الحالية (آخر ${projection.basisHours} ساعة)، قد تصل إلى حوالي ${projection.projectedUseAtEnd} طلبًا ${span}، وهذا يتجاوز حدك البالغ ${text.limit}. هذا تقدير وليس حدًا مضمونًا.\n`
+    : `تقديريًا، وبوتيرة استخدامك الحالية (آخر ${projection.basisHours} ساعة)، ستستخدم حوالي ${projection.projectedUseAtEnd} من ${text.limit} طلبًا ${span}، فيُتوقع أن تكفيك. هذا تقدير وليس ضمانًا.\n`;
+}
+
+/** The AI usage card exactly as the deterministic route builds it; shared with the model's usage read. */
+export async function aiUsageCardTurn(actorId: string, market: Market, question: "SUMMARY" | "RENEWAL" | "WHY_STOPPED" = "SUMMARY"): Promise<Turn> {
+  const view = await usageCardView(actorId, market);
+  return turnFor({ kind: "COMMERCE", ownerId: actorId, view: "AI_USAGE", usageQuestion: question }, [], usageCardPrompt(view, question), actorId, market);
+}
+
 async function aiUsageAndPlansTurn(text: string, actorId: string, market: Market, latest: CommerceQuery | undefined): Promise<Turn | null> {
   if (P.aiUsage.test(text)) {
     const question = /تتجدد|يتجدد|تنتجدد/u.test(text) ? "RENEWAL" : /(?:وقف|توقف|يوقف|ما\s+يرد|ما\s+يشتغل)/u.test(text) ? "WHY_STOPPED" : "SUMMARY";
     const view = await usageCardView(actorId, market);
-    return turnFor({ kind: "COMMERCE", ownerId: actorId, view: "AI_USAGE", usageQuestion: question }, [], usageCardPrompt(view, question), actorId, market);
+    const sufficiency = /(?:يكفي|يكفيني|بيكفي|بيكفيني|يوصلني|يكمل\s+معي|يلحقني)/u.test(text)
+      ? await usageSufficiencyNote(actorId, market, /(?:اسبوع|الاسبوع)/u.test(text) ? 7 : /(?:اليوم|لاخر\s+اليوم|نهايه\s+اليوم)/u.test(text) ? 1 : undefined)
+      : "";
+    return turnFor({ kind: "COMMERCE", ownerId: actorId, view: "AI_USAGE", usageQuestion: question }, [], `${sufficiency}${usageCardPrompt(view, question)}`, actorId, market);
   }
   const publicPlans = await publicPlansTurn(text, actorId, market);
   if (publicPlans) return publicPlans;
-  const named = P.aiPlanTier.test(text) ? (/(?:^|\s)(?:pro|برو)(?:\s|$)/u.test(text) ? "BUSINESS_PRO" : "BUSINESS_GO") : undefined;
+  let named: "BUSINESS_GO" | "BUSINESS_PRO" | undefined = P.aiPlanTier.test(text) ? (/(?:^|\s)(?:pro|برو)(?:\s|$)/u.test(text) ? "BUSINESS_PRO" : "BUSINESS_GO") : undefined;
+  if (!named && RELATIVE_TIER.test(text) && PLAN_OBJECT.test(text) && WANTS_TIER_CHANGE.test(text)) {
+    const order = ["FREE", "BUSINESS_GO", "BUSINESS_PRO"] as const;
+    const current = (await plansCardView(actorId, market)).currentTier;
+    const next = order[Math.max(0, order.indexOf(current as (typeof order)[number])) + 1] as "BUSINESS_GO" | "BUSINESS_PRO" | undefined;
+    if (!next)
+      return turnFor({ kind: "COMMERCE", ownerId: actorId, view: "AI_PLANS" }, [], "أنت على أعلى باقة متاحة بالفعل. لم يتغير شيء.", actorId, market);
+    named = next;
+  }
   // «اشترك» right after the plans card picks a tier from that card.
   const afterPlans = latest?.view === "AI_PLANS";
   if (!named && !P.aiPlans.test(text) && !(afterPlans && WANTS_TIER_CHANGE.test(text))) return null;
   const view = await plansCardView(actorId, market);
   const wantsChange = (WANTS_TIER_CHANGE.test(text) || (Boolean(named) && WANTS_NAMED_TIER.test(text))) && !ASKS_TIER_PRICE.test(text);
-  if (named && wantsChange) {
+  if (named && (wantsChange || (RELATIVE_TIER.test(text) && WANTS_TIER_CHANGE.test(text)))) {
     const tier = view.tiers.find((item) => item.tier === named)!;
     const order = ["FREE", "BUSINESS_GO", "BUSINESS_PRO"];
     if (view.currentTier === named)

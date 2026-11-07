@@ -443,6 +443,27 @@ function readableFieldLabel(field: string) {
 }
 
 /** The swipeable result row; arrows appear only when the row really overflows (RTL-aware). */
+/**
+ * Generative UI layouts for a verified result set. GRID and LIST rearrange the same typed cards;
+ * the carousel stays the default. Nothing here changes what the cards say or what they can do.
+ */
+function ResultLayout({ resultSetId, layout, children }: { resultSetId: string; layout?: "GRID" | "CAROUSEL" | "LIST"; children: ReactNode }) {
+  if (layout === "GRID" || layout === "LIST")
+    return (
+      <div
+        dir="rtl"
+        role="list"
+        aria-label="نتائج العروض"
+        data-testid={`ai-results-${layout.toLowerCase()}-${resultSetId}`}
+        data-layout={layout}
+        className={layout === "GRID" ? "ai-result-grid grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 lg:grid-cols-3" : "ai-result-list flex flex-col gap-3"}
+      >
+        {children}
+      </div>
+    );
+  return <ResultCarousel resultSetId={resultSetId}>{children}</ResultCarousel>;
+}
+
 function ResultCarousel({ resultSetId, children }: { resultSetId: string; children: ReactNode }) {
   const rowRef = useRef<HTMLDivElement>(null);
   const [edges, setEdges] = useState({ back: false, forward: false });
@@ -1139,7 +1160,7 @@ function ResultBlock({
           <span>يمكنك تعديل طلبك أو تجربة بحث أوسع.</span>
         </div>
       ) : (
-      <ResultCarousel resultSetId={block.payload.resultSetId}>
+      <ResultLayout resultSetId={block.payload.resultSetId} layout={block.payload.composition?.layout}>
         {listings.map((listing, index) => {
           const storedIndex = resourceIds.indexOf(listing.id);
           const resultIndex = storedIndex >= 0 ? storedIndex : index;
@@ -1159,11 +1180,22 @@ function ResultBlock({
               data-testid={`card-ai-result-${listing.id}`}
               data-result-index={resultIndex}
               data-resource-id={listing.id}
-              role="group"
               aria-roledescription="بطاقة نتيجة"
-              aria-label={`النتيجة ${resultIndex + 1}: ${listing.title}`}
-              className="ai-result-item relative w-[76vw] min-w-[220px] max-w-[290px] shrink-0 snap-start sm:w-[252px]"
+              aria-label={`النتيجة ${resultIndex + 1}: ${listing.title}${listing.id === block.payload.composition?.highlightId ? " — اقتراح دينار" : ""}`}
+              role={block.payload.composition?.layout === "GRID" || block.payload.composition?.layout === "LIST" ? "listitem" : "group"}
+              data-highlighted={listing.id === block.payload.composition?.highlightId ? "true" : undefined}
+              className={
+                block.payload.composition?.layout === "GRID" || block.payload.composition?.layout === "LIST"
+                  ? `ai-result-item relative min-w-0${listing.id === block.payload.composition?.highlightId ? " ring-2 ring-primary rounded-2xl" : ""}`
+                  : `ai-result-item relative w-[76vw] min-w-[220px] max-w-[290px] shrink-0 snap-start sm:w-[252px]${listing.id === block.payload.composition?.highlightId ? " ring-2 ring-primary rounded-2xl" : ""}`
+              }
             >
+              {listing.id === block.payload.composition?.highlightId && (
+                // A model suggestion over DINAR's own verified facts, labelled as such; never sponsored.
+                <span className="absolute end-2.5 top-2.5 z-10 rounded-full bg-primary px-2 py-0.5 text-[11px] font-semibold text-primary-foreground" data-testid={`result-highlight-${listing.id}`}>
+                  اقتراح دينار
+                </span>
+              )}
               <span
                 className="ai-result-position num pointer-events-none absolute start-2.5 top-2.5 z-10"
                 data-testid={`result-position-${resultIndex + 1}`}
@@ -1263,7 +1295,7 @@ function ResultBlock({
             </div>
           );
         })}
-      </ResultCarousel>
+      </ResultLayout>
       )}
       {selected && (
         <div>

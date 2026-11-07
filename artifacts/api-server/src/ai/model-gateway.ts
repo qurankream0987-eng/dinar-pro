@@ -62,6 +62,11 @@ export type AIProviderConfiguration = {
   gemmaFreeOnly?: boolean;
   /** Sent as the provider's reasoning-effort field when set; omitted otherwise. */
   reasoningEffort?: AIReasoningEffort;
+  /**
+   * Self-hosted chat templates (e.g. Qwen3 served by vLLM/SGLang) that default to a thinking
+   * phase: "disabled" sends chat_template_kwargs.enable_thinking=false. OPENAI_COMPATIBLE only.
+   */
+  thinking?: "disabled";
   credentialName:
     | "GROQ_API_KEY"
     | "OPENROUTER_API_KEY"
@@ -216,6 +221,8 @@ export function resolveAIProviderConfiguration(
     const transport = (env[`${prefix}TRANSPORT`]?.trim().toUpperCase() || "CHAT_COMPLETIONS") as AITransport;
     const toolChoice = (env[`${prefix}TOOL_CHOICE`]?.trim().toUpperCase() || "REQUIRED") as AIToolChoice;
     const effort = env[`${prefix}REASONING_EFFORT`]?.trim().toLowerCase();
+    const thinking = env[`${prefix}THINKING`]?.trim().toLowerCase();
+    if (thinking && thinking !== "disabled") throw new Error(`${prefix}THINKING may only be "disabled".`);
     if (!["CHAT_COMPLETIONS", "RESPONSES"].includes(transport)) throw new Error(`${prefix}TRANSPORT must be CHAT_COMPLETIONS or RESPONSES.`);
     if (!["REQUIRED", "AUTO"].includes(toolChoice)) throw new Error(`${prefix}TOOL_CHOICE must be REQUIRED or AUTO.`);
     if (effort && !(AI_REASONING_EFFORTS as readonly string[]).includes(effort)) throw new Error(`${prefix}REASONING_EFFORT must be one of ${AI_REASONING_EFFORTS.join(", ")}.`);
@@ -231,6 +238,7 @@ export function resolveAIProviderConfiguration(
       ...(transport !== "CHAT_COMPLETIONS" ? { transport } : {}),
       ...(toolChoice !== "REQUIRED" ? { toolChoice } : {}),
       ...(effort ? { reasoningEffort: effort as AIReasoningEffort } : {}),
+      ...(thinking ? { thinking: "disabled" as const } : {}),
     };
   }
   throw new Error(`${prefix}PROVIDER must be GROQ, OPENROUTER, OPENAI, REPLIT_OPENAI, OPENAI_COMPATIBLE, GEMINI or DEEPSEEK.`);
@@ -327,6 +335,7 @@ export function describeAIModelReadiness(env: NodeJS.ProcessEnv = process.env) {
     transport: configuration.transport ?? "CHAT_COMPLETIONS",
     toolChoice: configuration.toolChoice ?? "REQUIRED",
     reasoningEffort: configuration.reasoningEffort ?? null,
+    thinking: configuration.thinking ?? null,
     configured: providerConfigured(configuration, env),
   });
   try {
@@ -673,6 +682,7 @@ class OpenAICompatibleChatGateway implements ConversationModelGateway {
     private readonly policy: { toolChoice?: AIToolChoice; reasoningEffort?: AIReasoningEffort } = {},
     private readonly requestTimeoutMs = REQUEST_TIMEOUT_MS,
     private readonly gemmaFreeOnly = false,
+    private readonly selfHostedThinking?: "disabled",
   ) {}
 
   /** Only Groq's gpt-oss applies a per-call effort; DeepSeek ignores one (its turn stays non-thinking). */
@@ -720,6 +730,10 @@ class OpenAICompatibleChatGateway implements ConversationModelGateway {
           // equivalent): both name the same mode, so no reasoning tokens consume the output.
           ...(this.providerInfo.provider === "DEEPSEEK" && this.policy.reasoningEffort === "none"
             ? { thinking: { type: "disabled" } }
+            : {}),
+          // Self-hosted Qwen-style templates: no thinking phase before the forced tool call.
+          ...(this.providerInfo.provider === "OPENAI_COMPATIBLE" && this.selfHostedThinking === "disabled"
+            ? { chat_template_kwargs: { enable_thinking: false } }
             : {}),
           messages,
           tools: tools.map((tool) => ({
@@ -1069,7 +1083,7 @@ function chatGateway(configuration: AIProviderConfiguration, env: NodeJS.Process
   };
   if (configuration.transport === "RESPONSES")
     return new OpenAIResponsesGateway(client, providerInfo, fallback, maxOutputTokens, policy, timeoutMs);
-  return new OpenAICompatibleChatGateway(client, providerInfo, fallback, maxOutputTokens, policy, timeoutMs, configuration.gemmaFreeOnly === true);
+  return new OpenAICompatibleChatGateway(client, providerInfo, fallback, maxOutputTokens, policy, timeoutMs, configuration.gemmaFreeOnly === true, configuration.thinking);
 }
 
 export async function createConversationModelGateway(

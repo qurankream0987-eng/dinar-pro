@@ -84,6 +84,10 @@ const SETUP_INTENT = [
   /^(?:هذا|هذه)\s+نشاطي|^(?:نشاطي التجاري|حسابي التجاري|متجري|مطعمي)$/u,
 ];
 
+const OWNERSHIP_STATEMENT = 2;
+const ADVISORY_OR_COMPOUND =
+  /(?:كيف|ما\s*(?:ا|أ)?عرف|من\s*وين|من\s*اين|من\s*أين|وش|ايش|إيش|شو|اقترح|ساعدني|تاكد|تأكد|ابحث|دور\s*لي|نصيح|انصحني|اشرح|[؟?])/u;
+
 const RESUME_INTENT = /^(?:ارجع|رجعني|افتح|ورني|اعرض)\s+(?:لي\s+)?(?:نشاطي|نشاط|متجري|مطعمي|حسابي التجاري)|^(?:نشاطي|متجري|مطعمي|النشاط)$/u;
 
 const CATALOG_INTENT = /(?:منتجاتي|منتجات النشاط|منتجات المتجر|عروض النشاط|عروضي|قائمه المنتجات|قائمة المنتجات|ورني المنتجات|اعرض المنتجات|اعرض منتجاتي|وش عندي|ايش عندي|شنو عندي)/u;
@@ -410,9 +414,14 @@ async function startSetup(input: {
     setupPayload(linked, access, {
       ...(step === "name" ? {} : {}),
     }),
-    `أنشأنا مسودة نشاطك داخل DINAR. ${SETUP_PROMPTS[step]}`,
+    `أنشأنا مسودة نشاطك داخل DINAR. ${SETUP_PROMPTS[step]}${CONNECT_MENTION.test(input.text) ? `\n\n${CONNECT_NEXT_STEP}` : ""}`,
   );
 }
+
+/** «سجل متجري في دينار كونكت»: Connect builds on this same D2 identity, so the draft is step one. */
+const CONNECT_MENTION = /(?:كونكت|كونيكت|connect)/iu;
+const CONNECT_NEXT_STEP =
+  "DINAR Connect يُبنى على هذا النشاط نفسه: بعد إكمال بياناته وتوثيقه، سجّله مجانًا من بوابة الشركاء (/connect) واختر طريقة المشاركة: البيع داخل دينار، أو العرض في دينار والشراء من موقعك، أو الاثنين معًا. لم يُسجَّل أي شيء في Connect بعد.";
 
 /** §C: one business resumes directly; several are offered, never guessed, never another account's. */
 async function resumeTurn(input: {
@@ -1704,7 +1713,11 @@ export async function executeBusinessTurn(input: {
   if (!DECISION.test(text) && !CANCEL.test(text) && lastPrompt?.pendingActionId)
     await supersedeVisibleBusinessReview(input.conversationId, actorId, lastPrompt.pendingActionId);
 
-  const setupIntent = SETUP_INTENT.some((pattern) => has(text, pattern));
+  // «عندي مطعم …» is a registration statement; with a question or another goal
+  // («وما أعرف من وين أبدأ», «اقترح اسمًا وتأكد من العنوان») it is a request the model interprets.
+  const setupIntent = SETUP_INTENT.some((pattern, index) =>
+    has(text, pattern) && (index !== OWNERSHIP_STATEMENT || !ADVISORY_OR_COMPOUND.test(text)),
+  );
   if (setupIntent) {
     return startSetup({ conversationId: input.conversationId, actorId, market: input.market, text: input.message });
   }

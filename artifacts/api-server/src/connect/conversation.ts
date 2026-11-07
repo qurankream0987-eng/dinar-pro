@@ -53,17 +53,39 @@ export async function executeConnectReadTurn(input: {
   actorId?: string;
   market?: ConnectMarket;
   providers?: DomainSearchProvider[];
+  /** A step of a running plan: without an explicit domain, the model (with the plan's context) decides. */
+  deferWithoutDomain?: boolean;
 }): Promise<{ tool: string; version: number; result: ToolResult } | null> {
   // Explicit partner search only. Ordinary marketplace requests keep their existing route.
   const partnerSearch =
     /^(?:دينار[،,\s]+)?(?:ابحث|أبحث|اعثر)\s+(?:لدى|عند)\s+الشركاء\s+(?:عن\s+)?(.{1,120})$/u.exec(
       input.message.trim(),
     );
-  if (partnerSearch && input.market) {
-    const payload = await discoverConnectCatalog(
-      input.market,
-      partnerSearch[1]!,
-    );
+  if (partnerSearch && input.market)
+    return connectPartnerSearchTurn(input.market, partnerSearch[1]!);
+  if (!isDomainSearchIntent(input.message)) return null;
+  // A domain token has a label, a dot and a label («myshop.com»), not a word ending a sentence
+  // («قهوة.»). Without one, a long multi-goal request («افتح مشروع… اسم… دومين… مصمم») belongs to
+  // the planner and the model; only a short «أبي دومين» gets the deterministic clarification.
+  const raw = input.message
+    .split(/\s+/u)
+    .map((part) => part.replace(/^[«»"“”`]+|[«»"“”،,؟?!؛;`.。．｡]+$/gu, ""))
+    .find((part) => /^[^\s.。．｡]+[.。．｡][^\s.。．｡]{2,}/u.test(part));
+  if (!raw && (input.deferWithoutDomain || input.message.trim().split(/\s+/u).length > 6)) return null;
+  return connectDomainSearchTurn({
+    ...(raw ? { raw } : {}),
+    ...(input.actorId ? { actorId: input.actorId } : {}),
+    ...(input.market ? { market: input.market } : {}),
+    ...(input.providers ? { providers: input.providers } : {}),
+  });
+}
+
+/** Partner catalog discovery, shared by the explicit phrase and the model tool. Read only. */
+export async function connectPartnerSearchTurn(
+  market: ConnectMarket,
+  query: string,
+): Promise<{ tool: string; version: number; result: ToolResult }> {
+    const payload = await discoverConnectCatalog(market, query.slice(0, 120));
     return {
       tool: "searchConnectCatalog",
       version: 1,
@@ -79,14 +101,21 @@ export async function executeConnectReadTurn(input: {
         listings: [],
       },
     };
-  }
-  if (!isDomainSearchIntent(input.message)) return null;
+}
+
+/**
+ * Domain availability lookup, shared by the deterministic phrase route and the model tool.
+ * Read only: it never registers a domain, creates an order or a commission.
+ */
+export async function connectDomainSearchTurn(input: {
+  raw?: string;
+  actorId?: string;
+  market?: ConnectMarket;
+  providers?: DomainSearchProvider[];
+}): Promise<{ tool: string; version: number; result: ToolResult }> {
   if (input.market)
     await assertMarketLegalCapability(input.market.id, "BROWSING");
-  const raw = input.message
-    .split(/\s+/u)
-    .map((part) => part.replace(/^[«»"“”`]+|[«»"“”،,؟?!؛;`]+$/gu, ""))
-    .find((part) => /[.。．｡]/u.test(part));
+  const raw = input.raw;
   const clarify = (prompt: string) => ({
     tool: "searchDomains",
     version: 1,

@@ -1,6 +1,7 @@
 import type { UniversalCardsPayload } from "@workspace/api-zod/connect";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
+import type { DinarCapabilityCatalog } from "./dinar-capabilities";
 import { randomUUID } from "node:crypto";
 import { aiResultSets, db } from "@workspace/db";
 import type { ListingRecord } from "../lib/dinar-data";
@@ -56,7 +57,23 @@ export type ToolContext = {
 
 export type ToolResult = {
   universalCards?: UniversalCardsPayload;
+  /** Server-authored description of what DINAR can and cannot do for this actor; read only. */
+  capabilities?: DinarCapabilityCatalog;
+  /** The actor's own businesses (read only), see model-read-capabilities.ts. */
+  businessOverview?: import("./model-read-capabilities").BusinessOverview;
+  /** Disputes and refunds on the actor's own orders (read only). */
+  orderIssues?: import("./model-read-capabilities").OrderIssues;
+  /** The seller's own commission dues (read only). */
+  sellerDues?: { dues: Record<string, unknown>[]; note: string };
+  /** The actor's own DINAR AI allowance and an optional projection (read only). */
+  aiUsage?: Record<string, unknown>;
+  /** The actor's own DINAR Connect partnerships and agreements (read only). */
+  connectStatus?: Record<string, unknown>;
+  /** Published policy summaries (read only). */
+  policies?: Record<string, unknown>[];
   memory?: import("./personal-memory-turn").MemorySummary;
+  /** Generative UI: the server-resolved layout of a listing block (model proposal, validated). */
+  composition?: import("@workspace/api-zod/surface-composition").ResultComposition;
   /** RESULTS restores an existing result set exactly; it never creates a new one. */
   kind: "SEARCH" | "RESOURCE" | "RESULTS" | "SURFACE";
   surface?: string;
@@ -728,6 +745,228 @@ export const aiToolRegistry: Record<string, ToolDefinition> = {
       };
     },
   },
+
+  searchDomains: {
+    name: "searchDomains",
+    version: 1,
+    description:
+      "Check domain-name availability and registration offers with DINAR Connect providers. External referral only; never registers or pays.",
+    permissions: ["marketplace.read"],
+    riskLevel: "LOW",
+    idempotency: "READ_ONLY",
+    auditPolicy: "REDACTED_TURN_METADATA",
+    exposedToModel: true,
+    inputSchema: z
+      .object({
+        domain: z.string().trim().min(3).max(253).optional(),
+        name: z.string().trim().min(1).max(63).optional(),
+      })
+      .strict()
+      .refine((value) => Boolean(value.domain || value.name), "domain or name is required"),
+    modelDefinition: {
+      name: "searchDomains",
+      description:
+        "Use when the user wants a website address / internet name / domain for a project, even if they never say the word domain. Give `domain` when the user named a full domain (example.com); otherwise give `name` as a short Latin-letter brand label you derived with the user (e.g. 'oudhouse'), and DINAR checks it on common extensions. Results are provider facts at check time; DINAR does not register, buy or pay, and links open the provider outside DINAR.",
+      parameters: {
+        type: "object",
+        properties: {
+          domain: { type: "string", description: "A full domain such as myshop.com" },
+          name: { type: "string", description: "A short Latin label without extension, e.g. oudhouse" },
+        },
+        required: [],
+        additionalProperties: false,
+      },
+    },
+    execute: async (input: { domain?: string; name?: string }, context) => {
+      const raw = input.domain ?? `${input.name}.com`;
+      const execution = await (await import("../connect/conversation")).connectDomainSearchTurn({
+        raw,
+        ...(context.actorId ? { actorId: context.actorId } : {}),
+        market: context.market,
+      });
+      // An unsafe or unusable domain is refused by the server, not handed back as model material.
+      if (execution.result.surface === "CLARIFY")
+        throw new ToolRejectedError(execution.result.prompt ?? "Invalid domain.", "CANONICAL_TOOL_REJECTED");
+      return execution.result;
+    },
+  },
+
+  searchPartnerOffers: {
+    name: "searchPartnerOffers",
+    version: 1,
+    description:
+      "Search reviewed DINAR Connect partner catalogs (external businesses) for products or services. External referral only.",
+    permissions: ["marketplace.read"],
+    riskLevel: "LOW",
+    idempotency: "READ_ONLY",
+    auditPolicy: "REDACTED_TURN_METADATA",
+    exposedToModel: true,
+    inputSchema: z.object({ query: z.string().trim().min(2).max(120) }).strict(),
+    modelDefinition: {
+      name: "searchPartnerOffers",
+      description:
+        "Search approved external partner businesses connected through DINAR Connect (services such as design, maintenance, booking providers, software, stores) when the user needs something DINAR's own marketplace may not sell, or asks for a company/provider. Only reviewed partners are returned; prices and availability are the partner's, purchase happens outside DINAR, and no internal order is created.",
+      parameters: {
+        type: "object",
+        properties: { query: { type: "string", description: "What to look for, in the user's language" } },
+        required: ["query"],
+        additionalProperties: false,
+      },
+    },
+    execute: async (input: { query: string }, context) =>
+      (await (await import("../connect/conversation")).connectPartnerSearchTurn(context.market, input.query)).result,
+  },
+
+  describeDinarCapabilities: {
+    name: "describeDinarCapabilities",
+    version: 1,
+    description:
+      "Return DINAR's own server-authored list of what it can and cannot do for this actor in this market.",
+    permissions: ["marketplace.read"],
+    riskLevel: "LOW",
+    idempotency: "READ_ONLY",
+    auditPolicy: "REDACTED_TURN_METADATA",
+    exposedToModel: true,
+    inputSchema: z.object({}).strict(),
+    modelDefinition: {
+      name: "describeDinarCapabilities",
+      description:
+        "Call when the user asks whether DINAR can do something (book, pay, transfer, deliver, register, hire, connect a company...) or when you are unsure a capability exists. Answer only from this list: never promise an action that is not listed as available.",
+      parameters: { type: "object", properties: {}, required: [], additionalProperties: false },
+    },
+    execute: async (_input, context) => ({
+      kind: "SURFACE",
+      surface: "CAPABILITIES",
+      query: {},
+      listings: [],
+      capabilities: (await import("./dinar-capabilities")).dinarCapabilityCatalog(
+        context.market,
+        context.actorId ? await modelRolesForActor(context.actorId, context.market.id) : ["BUYER"],
+      ),
+    }),
+  },
+
+  readBusinessOverview: {
+    name: "readBusinessOverview",
+    version: 1,
+    description: "Read the signed-in owner's own businesses in this market: status, verification, catalog counts and completed sales, within granted business permissions.",
+    permissions: ["marketplace.read"],
+    riskLevel: "LOW",
+    idempotency: "READ_ONLY",
+    auditPolicy: "REDACTED_TURN_METADATA",
+    exposedToModel: true,
+    inputSchema: z.object({}).strict(),
+    modelDefinition: {
+      name: "readBusinessOverview",
+      description: "Use when the user asks about their own business/shop/restaurant on DINAR: is it verified or published, how many products, paused or out of stock, how many completed orders or sales. Returns only the user's own businesses; withheld fields are listed, never guessed.",
+      parameters: { type: "object", properties: {}, required: [], additionalProperties: false },
+    },
+    execute: async (_input, context) => (await import("./model-read-capabilities")).readBusinessOverview(context),
+  },
+
+  readOrderIssues: {
+    name: "readOrderIssues",
+    version: 1,
+    description: "Read disputes, refund obligations and cash refund cases on the actor's own orders. Read only.",
+    permissions: ["marketplace.read"],
+    riskLevel: "LOW",
+    idempotency: "READ_ONLY",
+    auditPolicy: "REDACTED_TURN_METADATA",
+    exposedToModel: true,
+    inputSchema: z.object({}).strict(),
+    modelDefinition: {
+      name: "readOrderIssues",
+      description: "Use when the user asks about a refund, a returned payment, a dispute, a complaint or a cancelled order of their own. Returns only the user's orders. A refund obligation is not money received; never say a refund was paid unless the record says so.",
+      parameters: { type: "object", properties: {}, required: [], additionalProperties: false },
+    },
+    execute: async (_input, context) => (await import("./model-read-capabilities")).readOrderIssues(context),
+  },
+
+  readSellerDues: {
+    name: "readSellerDues",
+    version: 1,
+    description: "Read the signed-in seller's own DINAR commission dues in this market (net of recorded reversals). Read only.",
+    permissions: ["marketplace.read"],
+    riskLevel: "LOW",
+    idempotency: "READ_ONLY",
+    auditPolicy: "REDACTED_TURN_METADATA",
+    exposedToModel: true,
+    inputSchema: z.object({}).strict(),
+    modelDefinition: {
+      name: "readSellerDues",
+      description: "Use when a seller asks what they owe DINAR, about commission, fees on completed orders or their dues. Returns only the user's own dues; amounts come from DINAR's records, never estimate them.",
+      parameters: { type: "object", properties: {}, required: [], additionalProperties: false },
+    },
+    execute: async (_input, context) => (await import("./model-read-capabilities")).readSellerDues(context),
+  },
+
+  readAiUsage: {
+    name: "readAiUsage",
+    version: 1,
+    description: "Read the signed-in user's own DINAR AI allowance: recorded use, limits, renewal and an optional projection. Read only.",
+    permissions: ["marketplace.read"],
+    riskLevel: "LOW",
+    idempotency: "READ_ONLY",
+    auditPolicy: "REDACTED_TURN_METADATA",
+    exposedToModel: true,
+    inputSchema: z
+      .object({
+        question: z.enum(["SUMMARY", "RENEWAL", "WHY_STOPPED"]).optional(),
+        horizonDays: z.number().int().min(1).max(31).optional(),
+      })
+      .strict(),
+    modelDefinition: {
+      name: "readAiUsage",
+      description: "Use when the user asks about their own DINAR assistant usage, quota, remaining messages, when it renews, why the assistant stopped answering them, or whether their allowance will last (pass horizonDays, e.g. 'until the end of the week'). Answer only from the returned numbers; if the projection is INSUFFICIENT_DATA, explain that instead of estimating. Do not use for stock, money, orders or delivery.",
+      parameters: {
+        type: "object",
+        properties: {
+          question: { type: "string", enum: ["SUMMARY", "RENEWAL", "WHY_STOPPED"] },
+          horizonDays: { type: "integer", minimum: 1, maximum: 31, description: "Only when the user asks whether the allowance lasts until a time; days from now" },
+        },
+        required: [],
+        additionalProperties: false,
+      },
+    },
+    execute: async (input: { question?: "SUMMARY" | "RENEWAL" | "WHY_STOPPED"; horizonDays?: number }, context) =>
+      (await import("./model-read-capabilities")).readAiUsage(input, context),
+  },
+
+  readConnectPartnerStatus: {
+    name: "readConnectPartnerStatus",
+    version: 1,
+    description: "Read the signed-in user's own DINAR Connect partnerships: partner status and agreement status/terms. Read only.",
+    permissions: ["marketplace.read"],
+    riskLevel: "LOW",
+    idempotency: "READ_ONLY",
+    auditPolicy: "REDACTED_TURN_METADATA",
+    exposedToModel: true,
+    inputSchema: z.object({}).strict(),
+    modelDefinition: {
+      name: "readConnectPartnerStatus",
+      description: "Use when a business owner or their team asks about their company's DINAR Connect partnership: is it approved, what agreement or commission terms apply. Returns only partnerships the user may access. Never treat a click or referral as earned commission.",
+      parameters: { type: "object", properties: {}, required: [], additionalProperties: false },
+    },
+    execute: async (_input, context) => (await import("./model-read-capabilities")).readConnectPartnerStatus(context),
+  },
+
+  readPolicy: {
+    name: "readPolicy",
+    version: 1,
+    description: "Read DINAR's currently published policies (terms, privacy, fees, refunds, prohibited items). Read only.",
+    permissions: ["marketplace.read"],
+    riskLevel: "LOW",
+    idempotency: "READ_ONLY",
+    auditPolicy: "REDACTED_TURN_METADATA",
+    exposedToModel: true,
+    inputSchema: z.object({ key: z.string().trim().min(1).max(60).regex(/^[a-z0-9_-]+$/u).optional() }).strict(),
+    modelDefinition: {
+      name: "readPolicy",
+      description: "Use when the user asks what DINAR's rules, terms, privacy, fees, commission policy, refund or prohibited-items policy say. Call without a key to list policies, then with a key for one. Quote only what the policy says; it is not legal advice.",
+      parameters: { type: "object", properties: { key: { type: "string", description: "A policy key returned by a previous call" } }, required: [], additionalProperties: false },
+    },
+    execute: async (input: { key?: string }, context) => (await import("./model-read-capabilities")).readPolicy(input, context),
+  },
 };
 
 /** The only tools the bounded model turn loop may execute; checked again at execution time. */
@@ -735,6 +974,15 @@ export const MODEL_LOOP_TOOL_ALLOWLIST = [
   "searchListings",
   "getResource",
   "compareListings",
+  "searchDomains",
+  "searchPartnerOffers",
+  "describeDinarCapabilities",
+  "readBusinessOverview",
+  "readOrderIssues",
+  "readSellerDues",
+  "readAiUsage",
+  "readConnectPartnerStatus",
+  "readPolicy",
 ] as const;
 
 /** F01 read-only tools plus every F02 capability tool, filtered by server-derived roles. */

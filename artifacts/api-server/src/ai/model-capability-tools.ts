@@ -47,6 +47,7 @@ export class ModelCapabilityRejected extends Error {
 
 const SELLER_TOOLS = new Set([
   "readInventory",
+  "prepareBusinessListingAction",
   "readBusinessInquiries",
   "prepareInquiryMessage",
   "prepareListingDraft",
@@ -82,6 +83,7 @@ export const MODEL_CAPABILITY_TOOL_NAMES = [
   "reviewCheckout",
   "readOrders",
   "readFulfillment",
+  "prepareBusinessListingAction",
 ] as const;
 
 export type ModelCapabilityToolName = (typeof MODEL_CAPABILITY_TOOL_NAMES)[number];
@@ -129,6 +131,20 @@ const noArguments = (): ModelToolDefinition["parameters"] => ({ type: "object", 
 export function modelCapabilityToolDefinitions(roles: readonly ModelCapabilityRole[] = ["BUYER", "SELLER"]): ModelToolDefinition[] {
   const allowed = new Set(modelCapabilityToolNamesForRoles(roles));
   return [
+    definition(
+      "prepareBusinessListingAction",
+      "Prepare a change to one product of the signed-in owner's own DINAR business: PRICE (with newPrice in the market currency), PAUSE, RESUME or STOCK_OUT. DINAR resolves the product, checks business permissions and publication rules, and shows a review; nothing changes until the owner confirms. Use the product name the owner used.",
+      {
+        type: "object",
+        properties: {
+          action: { type: "string", enum: ["PRICE", "PAUSE", "RESUME", "STOCK_OUT"] },
+          product: { type: "string", description: "The product name or words the owner used" },
+          newPrice: { type: "string", description: "Only for PRICE: the new price as digits, e.g. 2.5" },
+        },
+        required: ["action", "product"],
+        additionalProperties: false,
+      },
+    ),
     definition(
       "readInventory",
       "Read the signed-in seller's own offers in the active market (title, status, price, available quantity). Never returns another seller's inventory.",
@@ -554,6 +570,43 @@ async function requestPublicationReview(input: { draftId: string }, context: Too
   );
 }
 
+const BusinessActionArgs = z
+  .object({
+    action: z.enum(["PRICE", "PAUSE", "RESUME", "STOCK_OUT"]),
+    product: z.string().trim().min(1).max(80).regex(/^[^\n\r<>{}]+$/u),
+    newPrice: z.string().trim().regex(/^\d{1,9}(?:[.,]\d{1,3})?$/u).optional(),
+  })
+  .strict()
+  .refine((value) => value.action !== "PRICE" || Boolean(value.newPrice), "newPrice is required for PRICE");
+
+/**
+ * The model's structured choice becomes the canonical owner command and re-enters D3-A's own
+ * business turn, which resolves the product, checks capabilities and the publication gate, and
+ * records the pending review. Execution happens only on the owner's later confirmation.
+ */
+async function prepareBusinessListingAction(input: z.infer<typeof BusinessActionArgs>, context: ToolContext): Promise<ToolResult> {
+  if (!context.actorId) throw new ModelCapabilityRejected("لا يمكن تعديل منتجات النشاط دون حساب.", "TOOL_NOT_ALLOWED");
+  const product = input.product.replace(/\d/gu, "").replace(/\s+/gu, " ").trim();
+  if (!product) throw new ModelCapabilityRejected("حدد اسم المنتج.", "INVALID_ARGUMENTS");
+  const command = {
+    PRICE: `غير سعر ${product} الى ${input.newPrice ?? ""}`,
+    PAUSE: `اوقف منتج ${product}`,
+    RESUME: `فعل منتج ${product}`,
+    STOCK_OUT: `نفد مخزون ${product}`,
+  }[input.action];
+  const { executeBusinessTurn } = await import("./business-turn");
+  const turn = await executeBusinessTurn({ conversationId: context.conversationId, message: command, market: context.market, actorId: context.actorId });
+  if (!turn) throw new ModelCapabilityRejected("لا يوجد نشاط تجاري لك في هذا السوق يمكن تعديله.", "TARGET_UNAVAILABLE");
+  const result = turn.result as ToolResult & { business?: { pendingActionId?: string; listingId?: string } };
+  const pendingActionId = result.business?.pendingActionId;
+  if (result.surface !== "BUSINESS_LISTING_REVIEW" || !pendingActionId)
+    throw new ModelCapabilityRejected(result.prompt ?? "تعذر تجهيز التغيير.", "ACTION_UNAVAILABLE");
+  return {
+    ...result,
+    preparedAction: { actionId: pendingActionId, action: `BUSINESS_${input.action}`, targetResource: result.business?.listingId ?? "" },
+  };
+}
+
 async function readNegotiationStatus(input: { negotiationId: string }, context: ToolContext): Promise<ToolResult> {
   if (!context.actorId) throw new ModelCapabilityRejected("لا يمكن قراءة التفاوض دون حساب.", "TOOL_NOT_ALLOWED");
   const row = await negotiationForParty(context.actorId, input.negotiationId);
@@ -697,6 +750,8 @@ export async function executeModelCapabilityTool(
         return await readNegotiationStatus(NegotiationReadArgs.parse(parsed), context);
       case "prepareNegotiationProposal":
         return await prepareNegotiationProposal(ProposalArgs.parse(parsed), context);
+      case "prepareBusinessListingAction":
+        return await prepareBusinessListingAction(BusinessActionArgs.parse(parsed), context);
     }
   } catch (error) {
     if (error instanceof ModelCapabilityRejected || error instanceof z.ZodError) throw error;

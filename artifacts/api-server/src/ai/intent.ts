@@ -1,17 +1,41 @@
 import { normalizeMarketplaceText } from "./arabic-normalization";
 import { isBareShowNumber, priceProposal } from "./price-proposal";
-import { statusQuestion } from "./context-intent";
+import { contextText, statusQuestion } from "./context-intent";
 
 const CART_NAVIGATION_ACTION =
   /(?:^|\s)(?:افتح(?:لي)?|اعرض(?:لي)?|ارني|ورني|وريني|اظهر|اذهب|روح|انتقل|خذني|وديني|حولني)(?:\s|$)/u;
 const CART_SURFACE_REFERENCE =
   /(?:^|\s)(?:السله|للسله|سله\s+(?:مشترياتي|المشتريات|التسوق|الشراء)|عربه\s+(?:التسوق|المشتريات|الشراء))(?:\s|$)/u;
 
+function cartNavigationGoverns(text: string): boolean {
+  const words = text.split(" ");
+  for (let index = 0; index < words.length; index += 1) {
+    if (!CART_NAVIGATION_ACTION.test(` ${words[index]} `)) continue;
+    const window = ` ${words.slice(index + 1, index + 4).join(" ")} `;
+    if (CART_SURFACE_REFERENCE.test(window)) return true;
+  }
+  return false;
+}
+
 /** Explicit navigation intents do not require a model or imply successful writes. */
 export function surfaceIntent(message: string): string | undefined {
   const text = message.replace(/[أإآ]/g, "ا");
-  if (/سجلني خروج|تسجيل الخروج/.test(text)) return "LOGOUT";
-  if (/كمل.*طلب|اكمل.*طلب|اتمام.*طلب|الدفع/.test(text)) return "CHECKOUT";
+  const folded = contextText(message);
+  // A refused action is not a request for it («لا تدفع الحين», «ما ابي ادفع، بس …»).
+  const refused = /(?:^|\s)(?:لا|ما|مو|مش|بلاش|بدون)\s+(?:\S+\s+){0,2}?(?:ت|ا|ن)?(?:دفع|ادفع|كمل|اكمل)/u.test(folded);
+  if (/سجلني خروج|تسجيل الخروج/.test(text) || /(?:^|\s)(?:طلعني|اطلعني|خرجني|اخرجني)\s+(?:من\s+)?حسابي(?:\s|$)/u.test(folded)) return "LOGOUT";
+  if (!refused && (/كمل.*طلب|اكمل.*طلب|اتمام.*طلب|الدفع/.test(text) ||
+    /(?:^|\s)(?:اريد|ابي|ابغي|ابغى|بدي|ودي|عايز|عاوز|حاب)\s+(?:ان\s+)?ادفع(?:\s|$)|(?:^|\s)(?:اكمل|كمل|اتمم)\s+(?:ال)?(?:شراء|دفع)(?:\s|$)/u.test(folded)))
+    return "CHECKOUT";
+  // «كم عمولة دينار؟», «رسوم دينار»: the platform's own fee terms. A refund or return word alone
+  // is not routed here: «وين وصل استرجاع فلوسي» asks about the user's own refund, and a precise
+  // policy question is answered from the published policy (readPolicy), not a generic page.
+  if (/(?:^|\s)(?:عموله|رسوم)\s+دينار(?:\s|$)/u.test(folded)) return "POLICIES";
+  if (/(?:^|\s)(?:انزل|نزل|نزلي|احط|حط)\s+(?:لي\s+)?اعلان(?:\s|$)/u.test(folded)) return "SELL";
+  if (/(?:^|\s)(?:شو|وش|ايش|شنو)\s+(?:في\s+)?(?:ب|في\s+)?سلتي(?:\s|$)|(?:^|\s)(?:اشوف|اطالع|اتفرج\s+على)\s+(?:ال)?سل(?:ه|تي)(?:\s|$)/u.test(folded))
+    return "CART";
+  if (/(?:^|\s)(?:ب|على\s+)?طلبي\s+(?:ا?ت?اخر|متاخر|تاخر)(?:\s|$)|(?:^|\s)(?:الاوردر|اوردري)(?:\s|$)|(?:شو|وش|ايش)\s+صار\s+(?:ب|على\s+|في\s+)?طلبي/u.test(folded))
+    return "ORDERS";
   if (/سجلني دخول|تسجيل الدخول/.test(text)) return "AUTH";
   if (
     /الشروط|سياسة الخصوصية|سياسه الخصوصيه|قواعد السوق|المنتجات المحظورة|الممنوعات|سياسة الاسترداد|حذف حسابي|حذف الحساب|العمولة|عمولة بدينار|رسوم بدينار/.test(
@@ -26,10 +50,9 @@ export function surfaceIntent(message: string): string | undefined {
     .replace(/[؟?!،,.]+/g, " ")
     .replace(/\s+/g, " ")
     .trim();
-  if (
-    CART_NAVIGATION_ACTION.test(cartText) &&
-    CART_SURFACE_REFERENCE.test(cartText)
-  )
+  // The navigation verb must govern the cart reference («افتح السلة», «ورني سلة مشترياتي»):
+  // a cart word elsewhere in the sentence («لا تضيف شي للسلة، بس ورني الأسعار») is not a request to open it.
+  if (CART_NAVIGATION_ACTION.test(cartText) && CART_SURFACE_REFERENCE.test(cartText) && cartNavigationGoverns(cartText))
     return "CART";
   if (/طلباتي|اين طلبي|وين طلبي|تتبع.*طلب/.test(text) || statusQuestion(message)?.subject === "ORDER") return "ORDERS";
   if (/عروضي|ادارة.*عروض|اعلاناتي|قوائمي|عروضي المنشورة/.test(text))
@@ -37,7 +60,7 @@ export function surfaceIntent(message: string): string | undefined {
   if (/مستحقات|مستحقاتي/.test(text)) return "DUES";
   if (/غير.*سوق|غيّر.*سوق|حولني.*سوق|سوق الكويت|تغيير السوق/.test(text))
     return "MARKET";
-  if (/افتح حسابي|اعرض حسابي|ملفي الشخصي/.test(text)) return "ACCOUNT";
+  if (/افتح حسابي|اعرض حسابي|ملفي الشخصي/.test(text) || /(?:^|\s)(?:افتح|اعرض|ورني|وريني)\s+(?:لي\s+)?(?:خيارات|اعدادات)\s+(?:ال)?حساب(?:ي)?(?:\s|$)/u.test(folded)) return "ACCOUNT";
   // «أعرض 15 بدل 20», «اعرض 2»: an amount or a position names no item, so it is not a sale;
   // negotiation, the draft in progress or the visible results give it its meaning.
   if (priceProposal(message) || isBareShowNumber(message)) return undefined;
@@ -73,6 +96,14 @@ export function surfaceIntent(message: string): string | undefined {
 
 export function addToCartIntent(message: string): boolean {
   const text = message.replace(/[أإآ]/g, "ا");
+  const folded = contextText(message);
+  // «لا تحطه بالسلة», «ما بدي ضيفه», «مو لازم تضيفه»: a refused add, whatever the dialect.
+  if (/(?:^|\s)(?:و\s*)?(?:لا|ما|مو|مش|ليس|بدون|بلاش)\s+(?:\S+\s+){0,2}?(?:ت|ا|ن)?(?:ضيف|ضف|حط|ضع|دخل)\S*(?:\s|$)/u.test(folded)) return false;
+  // «هل ينفع أضيف الأول؟», «هل أقدر أحطه بالسلة؟»: a question about what *I* may do (first
+  // person) asks for information. «هل تضيفه؟» (second person) stays a request, still confirmed.
+  if (/^هل\s+(?:\S+\s+){0,2}?(?:ا|ن)(?:ضيف|حط|ضع|دخل)\S*(?:\s|$)/u.test(folded)) return false;
+  // «كيف أضيف منتج للسلة؟»: asking how is not asking DINAR to do it.
+  if (/^(?:كيف|شلون|كيفاش|ازاي|طريقه|ممكن\s+تشرح)(?:\s|$)/u.test(folded)) return false;
   if (
     /(?:^|\s)(?:لا|ما|مو|ليس|بدون)(?:\s+(?:اريد|ابي|ابغى|ان)){0,2}\s*(?:اضف|اضيف|اضافة|ضيف|تضيف|تضيفه|تضف|تضفه|حط|حطه|ضع|تضع|ادخل|دخل|تدخل)/.test(
       text,
@@ -101,13 +132,44 @@ const CORRECTION_PREFIXES = [
   /^\s*(?:لا|لأ)\s*[,،]?\s*(?:مو|مش)\s+(?:هذا|هذه|هذي|ذلك)\s*[,،]?\s*/iu,
   /^\s*(?:(?:لا|لأ)\s*[,،]?\s*)?(?:أقصد|اقصد|قصدي|أعني|اعني|كنت\s+أقصد|كنت\s+اقصد)(?:\s*[,،:]\s*|\s+)/iu,
   /^\s*(?:مو|مش|ليس)\s+(?:هذا|هذه|هذي|ذلك)\s*[,،]?\s*/iu,
+  // «هذا مو اللي أقصده، …», «هذي مش اللي بدي ياه»: the shown item is rejected; what follows is meant.
+  /^\s*(?:هذا|هذه|هذي|هاد|هادا|هيدا)\s+(?:مو|مش|ليس|مهو|ماهو)\s+(?:اللي|الي|يلي|الذي|التي)\s+[^،,]{1,20}?\s*[,،]\s*/iu,
   /^\s*not\s+(?:that|this|it)\s*[,،]?\s*(?:i\s+want\s*)?/iu,
   /^\s*بدل(?:ها|ه|هذا|هذه|هذي|ذلك)\s*(?:بـ?|ل)?\s*/iu,
   /^\s*(?:no\s*[,،]?\s*i\s+meant|actually\s+make\s+it)\s+/iu,
   /^\s*i\s+(?:mean|meant)\s+/iu,
   /^\s*(?:آسف|اسف|معذرة)\s*[,،]?\s*/iu,
   /^\s*actually\s*[,،:]?\s*/iu,
+  // «لا تضيف شي للسلة، بس ورني …», «ما أبي أشتري، فقط …»: a refused action followed by the real request.
+  /^\s*(?:لا|ما|مو)\s+[^،,.؟?!]{1,40}?\s*[,،]?\s*(?:بس|فقط|بل|لكن)\s+/iu,
 ];
+
+/**
+ * A trailing refusal of a commercial action («…، ولا تضيفه للسلة», «… بدون ما تشتري»): it constrains
+ * what DINAR may do with the request, it is not part of what the user is pointing at.
+ */
+const TRAILING_REFUSAL =
+  /\s*[,،]?\s*(?:و\s*|(?:بس|لكن|بشرط)\s+)?(?:لا|ما|مو|مش|بدون(?:\s+ما)?|بلاش)\s+(?:\S+\s+){0,1}?(?:ت|ا|ن|ي)?(?:ضيف|ضف|حط|ضع|دخل|شتري|اشتري|طلب|دفع|كمل|ثبت|اكد)\S*(?:\s+\S+){0,3}\s*[.!؟?]*\s*$/u;
+
+/**
+ * What the user is actually asking for once a leading correction («لا، أقصد …») and trailing
+ * refusals are removed. The refusals still bind: callers use this only to resolve references,
+ * never to turn a refused action into an executed one.
+ */
+export function requestCore(message: string): string {
+  let text = stripCorrectionPrefix(message);
+  for (let pass = 0; pass < 3; pass += 1) {
+    const next = text.replace(TRAILING_REFUSAL, "").trim();
+    if (next === text || !next) break;
+    text = next;
+  }
+  return text.replace(/[.!؟?،,]+\s*$/u, "").trim();
+}
+
+/** A refused commercial action anywhere in the message: nothing commercial may be prepared from it. */
+export function refusesCommercialAction(message: string): boolean {
+  return /(?:^|\s)(?:و\s*)?(?:لا|ما|مو|مش|بدون(?:\s+ما)?|بلاش)\s+(?:\S+\s+){0,2}?(?:ت|ا|ن|ي)?(?:ضيف|ضف|حط|ضع|دخل|شتري|اشتري|طلب|دفع)\S*(?:\s|$)/u.test(contextText(message));
+}
 
 /** Remove only a leading correction marker; keep the corrected value and its constraints. */
 export function stripCorrectionPrefix(message: string): string {
@@ -131,7 +193,8 @@ export function marketplaceComparisonSearchTerms(message: string): string | unde
 }
 
 export function searchTerms(message: string): string {
-  const request = message
+  // Codex: comparison-aware request extraction; Claude: a leading correction is set aside first.
+  const request = stripCorrectionPrefix(message)
     // «دينار ابحث لي عن …», «يا دينار دورلي على …»: the address and the search verb with its
     // «لي» and preposition are the request, not the product.
     .replace(/^\s*(?:يا\s+)?(?:دينار|dinar)(?:\s*[،,:]\s*|\s+)/iu, "");
@@ -141,8 +204,15 @@ export function searchTerms(message: string): string {
       /(?:أريد|اريد|أبحث عن|ابحث عن|أحتاج|احتاج|أشتري|اشتري|أبغى|ابغى|من فضلك|فقط|بدينار)/g,
       " ",
     )
+    // «ورني أسعار …», «اعرض لي سعر …»: a show verb and the price noun describe the request, not the product.
+    .replace(/(^|\s)(?:ورني|وريني|ورّني|ارني|أرني|اعرض(?:\s*لي)?|شوف(?:\s*لي)?)(?=\s|$)/gu, " ")
+    // Only a leading price noun («ورني أسعار جوال» → «جوال»); inside a name («قطعة سعر …») it stays.
+    .replace(/^\s*(?:أسعار|اسعار|سعر)\s+(?=\S)/u, " ")
     // Short colloquial "I want" verbs only as whole words, so «ابيض» keeps its letters.
-    .replace(/(^|\s)(?:أبي|ابي|أبغي|ابغي|بدي|ودي)(?=\s|$)/g, " ")
+    .replace(/(^|\s)(?:أبي|ابي|أبغي|ابغي|بدي|ودي|عايز|عاوز|عايزه|عاوزه)(?=\s|$)/g, " ")
+    // «شو عندكم ساعات», «في عندكم دراجة؟», «هل يوجد …»: asking for stock, not part of the product.
+    .replace(/^\s*(?:(?:شو|وش|ايش|شنو|هل|في|فيه)\s+)?(?:عندكم|عندك|يوجد|تبيعون|تبيعوا)(?=\s|$)/u, " ")
+    .replace(/[؟?]+\s*$/u, "")
     .trim();
   return stripCorrectionPrefix(terms)
     .replace(/\s+/g, " ");

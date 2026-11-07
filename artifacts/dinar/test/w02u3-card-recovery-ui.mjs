@@ -146,6 +146,11 @@ try {
   assert.doesNotMatch(delivered, /لم يصل طلبك/u);
   assert.equal(await page.getByTestId("button-retry-ai-turn").count(), 0, "a delivered turn is never offered for resending");
   assert.equal(await page.getByTestId("button-verify-ai-turn").isVisible(), true, "the page offers «تحقق من النتيجة»");
+  assert.equal(
+    await page.getByTestId("button-send-ai-message").getAttribute("aria-label"),
+    "دينار يعمل الآن",
+    "a new send in this conversation waits for verification (no duplicate)",
+  );
   assert.equal(await cartQuantity(apiOrigin, buyer.cookie, listingId), 0, "a delivered turn executes nothing by itself");
   const pendingNow = await conversationFromServer();
   recovery.delivered.cartAfterDelivered = 0;

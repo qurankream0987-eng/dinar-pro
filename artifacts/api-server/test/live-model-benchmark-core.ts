@@ -30,6 +30,8 @@ export const BENCHMARK_ENDPOINTS = {
   GROQ: "https://api.groq.com/openai/v1",
   GEMINI: "https://generativelanguage.googleapis.com/v1beta/models",
   DEEPSEEK: "https://api.deepseek.com",
+  /** The owner's own vLLM/SGLang gateway: read from DINAR_BENCH_SELF_HOSTED_BASE_URL (HTTPS only). */
+  SELF_HOSTED: "",
 } as const;
 /** Dedicated benchmark keys: never the production or development runtime credentials. */
 export const BENCHMARK_CREDENTIALS = {
@@ -39,7 +41,25 @@ export const BENCHMARK_CREDENTIALS = {
   GROQ: "DINAR_BENCH_GROQ_API_KEY",
   GEMINI: "DINAR_BENCH_GEMINI_API_KEY",
   DEEPSEEK: "DINAR_BENCH_DEEPSEEK_API_KEY",
+  SELF_HOSTED: "DINAR_BENCH_SELF_HOSTED_API_KEY",
 } as const;
+/**
+ * The benchmark endpoint for a provider. SELF_HOSTED is the owner's gateway in front of the
+ * inference server; it must be an HTTPS origin path without credentials, query or fragment.
+ */
+export function benchmarkEndpoint(provider: BenchmarkProvider, env: NodeJS.ProcessEnv = process.env): string {
+  if (provider !== "SELF_HOSTED") return BENCHMARK_ENDPOINTS[provider];
+  const raw = env.DINAR_BENCH_SELF_HOSTED_BASE_URL?.trim() ?? "";
+  let url: URL;
+  try {
+    url = new URL(raw);
+  } catch {
+    throw new Error("DINAR_BENCH_SELF_HOSTED_BASE_URL must be an https URL of the owner's inference gateway.");
+  }
+  if (url.protocol !== "https:" || url.username || url.password || url.search || url.hash)
+    throw new Error("DINAR_BENCH_SELF_HOSTED_BASE_URL must be https without credentials, query or fragment.");
+  return url.toString().replace(/\/$/, "");
+}
 export type BenchmarkProvider = keyof typeof BENCHMARK_ENDPOINTS;
 export const OPENROUTER_FREE_REQUESTS_PER_MINUTE = 20;
 export const OPENROUTER_FREE_REQUESTS_PER_DAY = 50;
@@ -105,6 +125,44 @@ export type ModelContract = {
  * The benchmark sends only DINAR's own function: no billable server tools are possible.
  */
 export const MODEL_CONTRACTS: Record<string, ModelContract> = {
+  // Self-hosted open-weight candidates. Token prices are 0 because the GPU is billed by time,
+  // not per token: the approval's GPU-hour budget is the cost control, and the report computes
+  // the effective cost per completed task from measured wall time × the approved hourly rate.
+  // Serving flags (tool-call and reasoning parsers) differ between the two models and must be
+  // verified against the pinned vLLM/SGLang version at approval time (deploy/self-hosted-llm).
+  "Qwen/Qwen3-14B": {
+    provider: "SELF_HOSTED",
+    transports: { CHAT_COMPLETIONS: ["default"] },
+    toolChoices: ["REQUIRED"],
+    defaultEffort: "none",
+    priceTiers: [{ fromInputTokens: 0, inputPer1M: 0, outputPer1M: 0 }],
+    sources: ["https://huggingface.co/Qwen/Qwen3-14B"],
+    checkedAt: "2026-11-05",
+    notes: "Served with chat_template_kwargs.enable_thinking=false (DINAR_AI_THINKING=disabled). Official card: vLLM >= 0.8.5.",
+  },
+  "Qwen/Qwen3.5-9B": {
+    provider: "SELF_HOSTED",
+    transports: { CHAT_COMPLETIONS: ["default"] },
+    toolChoices: ["REQUIRED"],
+    defaultEffort: "none",
+    priceTiers: [{ fromInputTokens: 0, inputPer1M: 0, outputPer1M: 0 }],
+    sources: ["https://huggingface.co/Qwen/Qwen3.5-9B"],
+    checkedAt: "2026-11-05",
+    notes: "vLLM recipe (recipes.vllm.ai): vLLM >= 0.17.0, --enable-auto-tool-choice --tool-call-parser qwen3_coder --reasoning-parser qwen3. Licence Apache-2.0 per mirrors; confirm on the official LICENSE at approval.",
+  },
+  "openai/gpt-oss-20b": {
+    provider: "SELF_HOSTED",
+    transports: { CHAT_COMPLETIONS: ["default"] },
+    toolChoices: ["REQUIRED"],
+    defaultEffort: "none",
+    priceTiers: [{ fromInputTokens: 0, inputPer1M: 0, outputPer1M: 0 }],
+    sources: ["https://huggingface.co/openai/gpt-oss-20b"],
+    checkedAt: "2026-11-06",
+    notes: "Apache-2.0; MXFP4 MoE weights fit in ~16 GB. Requires the harmony format (vLLM handles it); native function calling. Reasoning effort is set by the model's own system prompt, not enable_thinking.",
+  },
+  // DeepSeek-R1-Distill-Qwen-14B (MIT) is deliberately NOT a contract: no official tool-calling
+  // support is documented, and DINAR's model loop requires structured tool calls. A text-only
+  // tool call fails closed (SH-04), so it could only ever answer without tools.
   "deepseek-flash": {
     provider: "DEEPSEEK",
     transports: { CHAT_COMPLETIONS: ["none"] },
@@ -451,7 +509,7 @@ export function planBenchmark(config: BenchmarkConfig, taskCount: number, now = 
       effectiveEffort: candidate.reasoningEffort ?? contract.defaultEffort,
       endpoint: contract.provider === "GEMINI"
         ? `${BENCHMARK_ENDPOINTS.GEMINI}/${candidate.model}:generateContent`
-        : `${BENCHMARK_ENDPOINTS[contract.provider]}/${candidate.transport === "RESPONSES" ? "responses" : "chat/completions"}`,
+        : `${benchmarkEndpoint(contract.provider)}/${candidate.transport === "RESPONSES" ? "responses" : "chat/completions"}`,
       worstCaseUsd: round(config.limits.maxRequestsPerCandidate * worstCaseCallUsd(candidate, config.limits)),
       priceCheckedAt: contract.checkedAt,
     };

@@ -17,6 +17,7 @@ import { storedSponsoredIds } from "../lib/recommendations";
 import { normalizeSearch } from "./search-context";
 import { foldArabicLetters, normalizeDigits } from "./arabic-normalization";
 import { interpretMarketplaceTurn } from "./marketplace-intent";
+import { requestCore } from "./intent";
 import { SearchFilterInput } from "./search-state";
 import {
   commandFacts,
@@ -682,14 +683,17 @@ export async function executeBuyerTurn(input: {
       ? "ما عندي نتائج أقدر أختار منها الآن. حدّث البحث أو اكتب طلبًا جديدًا."
       : `لا يوجد العرض رقم ${ordinalPosition} ضمن النتائج الحالية. اختر رقمًا ظاهرًا أو ابدأ بحثًا جديدًا.`);
 
-  const compare = text.match(COMPARE);
-  if (set && COMPARE_ALL.test(text)) {
+  // A comparison is read-only, so it is matched on the request once a refusal preface or a
+  // correction is set aside («لا تشتري ولا تضيف شي، بس قارن بينهم»). Nothing else is.
+  const compareText = normalizeBuyerText(requestCore(input.message));
+  const compare = compareText.match(COMPARE);
+  if (set && COMPARE_ALL.test(compareText)) {
     if (set.resourceIds.length < 2 || set.resourceIds.length > 4)
       return notice(`اختر العروض التي تريد مقارنتها، مثل «قارن الأول بالثاني» (لديك ${set.resourceIds.length}).`);
     return comparison(set, set.resourceIds.map((_, index) => index + 1), input.market);
   }
   if (compare && set) return comparison(set, positionsIn(compare[1]!), input.market);
-  const difference = text.match(DIFFERENCE);
+  const difference = compareText.match(DIFFERENCE);
   if (difference && set) {
     const rest = difference[1]!.replace(/^بين\s*/u, "");
     if (/^(?:هم|ها|هن|بينهم|الاثنين)$/u.test(rest) || difference[1] === "بينهم") {

@@ -679,6 +679,25 @@ await test("only an independently proposed, explicitly accepted agreement can en
     ).data.duplicate,
     true,
   );
+  // AI read (readConnectPartnerStatus) consumes the canonical agreement view exactly: an accepted
+  // percentage agreement keeps its state, rate and acceptance date; a stranger sees nothing.
+  {
+    const { readConnectPartnerStatus } = await import("../src/ai/model-read-capabilities");
+    const [jo] = await db.select().from(markets).where(eq(markets.id, partner.marketId ?? "JO"));
+    const aiMarket = await resolveMarket(jo!);
+    const canonical = (await call(`/connect/partners/${partner.id}/agreements`, owner)).data[0];
+    const read: any = await readConnectPartnerStatus({ actorId: owner.id, market: aiMarket, conversationId: randomUUID() } as never);
+    const mine = read.connectStatus.partners.find((item: any) => item.partnerId === partner.id);
+    assert.ok(mine, "the owner's partnership is read");
+    assert.deepEqual(mine.agreements[0].commission, { kind: "PERCENTAGE", basisPoints: 750 });
+    assert.equal(mine.agreements[0].accepted, true);
+    assert.equal(mine.agreements[0].acceptedAt, canonical.acceptance.acceptedAt);
+    assert.equal(mine.agreements[0].version, canonical.version);
+    assert.equal(mine.agreements[0].mode, "SIMULATION_ONLY");
+    assert.equal(mine.agreements[0].currency, "USD");
+    const stranger: any = await readConnectPartnerStatus({ actorId: other.id, market: aiMarket, conversationId: randomUUID() } as never);
+    assert.equal(stranger.connectStatus.partners.some((item: any) => item.partnerId === partner.id), false, "no cross-business read");
+  }
   await assert.rejects(() =>
     pool.query("update connect_agreements set terms='{}' where id=$1", [
       agreement.id,

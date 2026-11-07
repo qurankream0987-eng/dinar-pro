@@ -10,11 +10,12 @@ import {
 } from "./listing-draft";
 import { orderContext } from "./order-context";
 import { contextualQuery, hasCategoryAlias } from "./search-context";
-import { addToCartIntent, backIntent, searchTerms, stripCorrectionPrefix, surfaceIntent } from "./intent";
+import { addToCartIntent, backIntent, refusesCommercialAction, requestCore, searchTerms, stripCorrectionPrefix, surfaceIntent } from "./intent";
 import {
   findOrdinalMention,
   findOrdinalMentions,
   foldArabicLetters,
+  parseContextualReference,
   parseResultReference,
 } from "./arabic-normalization";
 import {
@@ -24,9 +25,9 @@ import {
   needsMarketplaceCategoryContext,
 } from "./marketplace-intent";
 import { SearchFilterInput, SearchSortInput } from "./search-state";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
-import { aiResultSets, aiUiBlocks, db, messages } from "@workspace/db";
+import { aiResultSets, aiUiBlocks, db, messages, offers } from "@workspace/db";
 import { isMarketAvailable, type marketFor } from "../lib/markets";
 import { publishedListingCities, searchMarketplaceListings } from "../lib/marketplace-listings";
 import {
@@ -50,6 +51,7 @@ import {
   executeSellerListingManagementTurn,
   isMarketingRequest,
   isSellerBusinessQuestion,
+  isBareRemainingQuestion,
 } from "./seller-management";
 import { executeEmploymentTurn, isEmploymentQuery } from "./employment-turn";
 import { executeDeliveryTurn, isDeliveryQuery } from "./delivery-turn";
@@ -57,6 +59,7 @@ import { executePromotionTurn, explainSponsoredPlacement, isPromotionQuery } fro
 import { executeBuyerTurn, executePurchaseTurn, executeOrderContactRequest, reviewQuantity } from "./buyer-turn";
 import { executeListingFactQuestion } from "./listing-fact-question";
 import { executeStockQuestion } from "./stock-question";
+import { modelRolesForActor } from "./model-capability-tools";
 import { isAiUsageQuestion } from "./usage-intent";
 import { executeDriverTurn, isDriverOnboardingIntent, isDriverQuery } from "./driver-turn";
 import { executeDraftActionTurn } from "./draft-actions";
@@ -120,7 +123,7 @@ import {
   type ConversationActionId,
   type ConversationRouteDecision,
 } from "@workspace/api-zod/conversation-runtime";
-import { correction, namesCommercialObject, namesPrice } from "./context-intent";
+import { contextText, correction, namesCommercialObject, namesPrice } from "./context-intent";
 
 type ConversationMarket = Awaited<ReturnType<typeof marketFor>>;
 const OPEN_SELLER_QUESTION =
@@ -354,6 +357,133 @@ export function withoutAcknowledgement(message: string): string {
   return rest.trim() ? rest : message;
 }
 
+type StoredResultSet = typeof aiResultSets.$inferSelect;
+
+/** The latest listing result sets of this conversation (state, preview and action sets excluded). */
+async function recentListingResultSets(context: TurnContext): Promise<StoredResultSet[]> {
+  return db
+    .select()
+    .from(aiResultSets)
+    .where(
+      and(
+        eq(aiResultSets.conversationId, context.conversationId),
+        eq(aiResultSets.marketId, context.market.id),
+      ),
+    )
+    .orderBy(desc(aiResultSets.createdAt))
+    .limit(12)
+    .then((sets) =>
+      sets
+        .filter((set) => {
+          const kind = (set.query as { kind?: unknown } | null)?.kind;
+          return kind !== "SELLER_CONTEXT" && kind !== "LISTING_PREVIEW" && kind !== "ACTION" && kind !== "ORDERS" && !SMART_STATE_KINDS.includes(String(kind)) && !isEmploymentQuery(set.query) && !isDeliveryQuery(set.query) && !isPromotionQuery(set.query) && !isDriverQuery(set.query);
+        })
+        .slice(0, 3),
+    );
+}
+
+/** The listing the user last opened from this result set, when the latest card shows exactly one. */
+async function focusedIndex(conversationId: string, set: StoredResultSet): Promise<number | undefined> {
+  const [block] = await db
+    .select({ payload: aiUiBlocks.payload })
+    .from(aiUiBlocks)
+    .where(eq(aiUiBlocks.conversationId, conversationId))
+    .orderBy(desc(aiUiBlocks.createdAt))
+    .limit(1);
+  const payload = (block?.payload ?? {}) as { listings?: Array<{ id?: unknown }>; resourceIds?: unknown[] };
+  const shown = payload.listings?.length
+    ? payload.listings.map((listing) => String(listing.id ?? ""))
+    : (payload.resourceIds ?? []).map(String);
+  if (shown.length !== 1) return undefined;
+  const index = set.resourceIds.indexOf(shown[0]!);
+  return index >= 0 ? index : undefined;
+}
+
+const RETURN_TO_TOPIC =
+  /^(?:(?:طيب|طب|خلص|خلاص)\s+)?(?:ارجع|رجعني|ارجعني|خلينا\s+نرجع|نرجع|رجعنا|عود)\s+(?:ل|الي|علي|عل)\s*(.+)$/u;
+const TOPIC_FILLER = /(?:^|\s)(?:اللي|الي|يلي|الذي|التي|شفناها|شفناه|شفتها|شفته|شفتهم|شفناهم|قبل|شوي|السابقه|السابق|الاولي|الاول|تبع|تبعت|حقت|عن|موضوع|نتائج|بحث)(?=\s|$)/gu;
+const topicStem = (word: string) =>
+  word.replace(/^(?:وال|بال|لل|ال|و|ب|ل)(?=\S{3})/u, "").replace(/(?:ات|ين|ون|ه|ة)$/u, "");
+
+/**
+ * References that only the conversation can resolve, before the single-utterance interpreter:
+ *  - relative to the listing in focus («واللي قبله؟»), superlatives over the results in view
+ *    («أي واحد الأرخص فيهم؟»), and a corrected reference («لا، أقصد الثالث، ولا تضيفه»): each
+ *    opens one listing read-only through getResource, so a refused add never becomes an action;
+ *  - a return to an earlier topic («ارجع للابتوبات اللي شفناها»): the earlier stored search is run
+ *    again live (fresh prices and availability), becoming the current results.
+ * Every index is resolved against a persisted result set of this conversation only.
+ */
+async function resolveConversationReference(
+  context: TurnContext,
+  latest: StoredResultSet | undefined,
+  recent: StoredResultSet[],
+): Promise<{ tool: string; version: number; result: ToolResult } | undefined> {
+  const toolContext = { conversationId: context.conversationId, market: context.market };
+  const folded = contextText(context.message).replace(/ى/g, "ي");
+  const back = folded.match(RETURN_TO_TOPIC);
+  if (back) {
+    const wanted = back[1]!.replace(TOPIC_FILLER, " ").split(/\s+/u).map(topicStem).filter((word) => word.length >= 3);
+    const earlier = recent.find((set) => {
+      // The topic may be the current one («خلينا نرجع للجوالات» after a side question): re-running it is still right.
+      if (set.expiresAt && set.expiresAt.getTime() <= Date.now()) return false;
+      const stored = StoredSearchQuery.safeParse(set.query ?? {});
+      const words = contextText(stored.success ? stored.data.search ?? "" : "").replace(/ى/g, "ي").split(/\s+/u).map(topicStem).filter((word) => word.length >= 3);
+      return wanted.some((want) => words.some((word) => word.startsWith(want) || want.startsWith(word)));
+    });
+    if (earlier) {
+      const stored = StoredSearchQuery.safeParse(earlier.query ?? {});
+      if (stored.success)
+        return executeRegisteredTool(
+          "searchListings",
+          JSON.stringify({
+            query: stored.data.search ?? "",
+            ...(stored.data.categoryId ? { categoryId: stored.data.categoryId } : {}),
+            filters: stored.data.filters ?? [],
+            ...(stored.data.sort ? { sort: stored.data.sort } : {}),
+          }),
+          toolContext,
+        );
+    }
+  }
+  if (!latest || latest.resourceIds.length === 0) return undefined;
+  const open = (index: number) =>
+    executeRegisteredTool("getResource", JSON.stringify({ resultSetId: latest.id, resourceId: latest.resourceIds[index] }), toolContext);
+  const core = requestCore(context.message);
+  const corrected = stripCorrectionPrefix(context.message) !== context.message.trim();
+  const reference = parseContextualReference(core, { correction: corrected }) ?? parseContextualReference(context.message);
+  if (reference?.kind === "PREVIOUS" || reference?.kind === "NEXT") {
+    const focus = await focusedIndex(context.conversationId, latest);
+    if (focus === undefined) return clarify("أي عرض تقصد؟ اذكر رقمه من القائمة الحالية.");
+    const index = focus + (reference.kind === "PREVIOUS" ? -1 : 1);
+    if (index < 0 || index >= latest.resourceIds.length)
+      return clarify(reference.kind === "PREVIOUS" ? "هذا أول عرض في القائمة؛ لا يوجد عرض قبله." : "هذا آخر عرض في القائمة؛ لا يوجد عرض بعده.");
+    return open(index);
+  }
+  if (reference?.kind === "CHEAPEST" || reference?.kind === "PRICIEST") {
+    const rows = await db
+      .select({ id: offers.id, price: offers.unitPriceMinor })
+      .from(offers)
+      .where(and(inArray(offers.id, latest.resourceIds), eq(offers.marketId, context.market.id)));
+    const priced = rows.filter((row) => row.price !== null && row.price !== undefined);
+    if (!priced.length) return undefined;
+    const pick = priced.reduce((best, row) =>
+      (reference.kind === "CHEAPEST" ? Number(row.price) < Number(best.price) : Number(row.price) > Number(best.price)) ? row : best);
+    const index = latest.resourceIds.indexOf(pick.id);
+    return index >= 0 ? open(index) : undefined;
+  }
+  // «لا، أقصد الثالث، ولا تضيفه للسلة»: once the correction and the refusal are set aside, what
+  // remains is a plain reference. It is only opened (read-only), whatever the message refused.
+  if (core !== context.message.trim() && refusesCommercialAction(context.message) || core !== stripCorrectionPrefix(context.message)) {
+    const whole = parseResultReference(core);
+    if (whole) {
+      const index = whole.kind === "LAST" ? latest.resourceIds.length - 1 : whole.index;
+      if (index < latest.resourceIds.length) return open(index);
+    }
+  }
+  return undefined;
+}
+
 function clarify(prompt?: string): { tool: string; version: number; result: ToolResult } {
   return {
     tool: "openSurface",
@@ -565,7 +695,7 @@ export async function executeAiConversationTurn(
   } = {},
 ): Promise<{ tool: string; version: number; result: ToolResult; taskPlan?: TaskPlan }> {
   if (!context.imageObjectPaths?.length && context.location === undefined) {
-    const connected = await executeConnectReadTurn({ message: context.message, actorId: context.actorId, market: context.market, providers: options.domainSearchProviders });
+    const connected = await executeConnectReadTurn({ message: context.message, actorId: context.actorId, market: context.market, providers: options.domainSearchProviders, ...(options.planStep ? { deferWithoutDomain: true } : {}) });
     if (connected) { options.onToolSelected?.(connected.tool); return connected; }
   }
   if ((!options.noModel && !options.planStep) &&
@@ -930,7 +1060,29 @@ const isModelAnswer = (turn: RuntimeTurn) => turn.tool === "smartConversation";
  */
 async function executeWithRoutingMode(context: RuntimeContext, options: RuntimeOptions): Promise<RuntimeTurn> {
   const mode = aiRoutingMode();
+  // A step of a running plan («ساعدني أختار اسمًا», «ابحث عن دومين») that DINAR's own path only
+  // soft-misses (an empty product search) is interpreted once by the model, in every mode: an
+  // empty search is no answer to a step the user asked for. Bounded: one model stage per step.
+  if (options.planStep && !options.noModel && !options.modelStage && context.actorId && !context.imageObjectPaths?.length && context.location === undefined) {
+    const before = getModelGatewayCallCount();
+    const own = await executeRuntime(context, options);
+    if (getModelGatewayCallCount() > before || !isSoftMiss(own)) return own;
+    const interpreted = await executeRuntime(context, { ...options, modelStage: "ONLY" });
+    return interpreted !== NO_MODEL_RESULT && !isSoftMiss(interpreted) ? interpreted : own;
+  }
   const plain = mode === "LEGACY" || options.noModel || options.planStep || options.modelStage || !context.actorId || context.imageObjectPaths?.length || context.location !== undefined;
+  if (plain && !options.noModel && !options.planStep && !options.modelStage && context.actorId && !context.imageObjectPaths?.length && context.location === undefined) {
+    // A goal sentence («أبي أفتح مشروع، ساعدني من البداية», «أبي سائق ينقل الغسالة») that DINAR's own
+    // path could only read as a product search, and that matched nothing, is no answer: the model
+    // interprets it once. A short product phrase keeps the honest empty result, and without a
+    // model the empty result is returned as it is.
+    const before = getModelGatewayCallCount();
+    const own = await executeRuntime(context, options);
+    if (getModelGatewayCallCount() > before || own.result.kind !== "SEARCH" || own.result.listings.length) return own;
+    if (searchTerms(context.message).split(/\s+/u).filter(Boolean).length < 3) return own;
+    const interpreted = await executeRuntime(context, { ...options, modelStage: "ONLY" });
+    return interpreted !== NO_MODEL_RESULT && !isSoftMiss(interpreted) ? interpreted : own;
+  }
   if (plain) return executeRuntime(context, options);
   if (mode === "MODEL_FIRST") {
     // The model reads first. A canonical request it restated re-entered DINAR and wins; otherwise
@@ -1023,7 +1175,7 @@ async function executeRuntime(context: RuntimeContext, incoming: RuntimeOptions)
   // R3E: a correction («أقصد عرض الشراء», «مو الإعلان، العرض», «نرجع للعرض السابق») repairs the
   // reading in context. A position in a visible list keeps the existing rewrite; any other
   // corrected clause is resolved against the conversation, never sent to search.
-  let repair: { back?: boolean } | undefined;
+  let repair: { back?: boolean; meant?: string } | undefined;
   const original = context.message;
   if (context.actorId && !context.imageObjectPaths?.length && context.location === undefined) {
     const rewritten = await resultReferenceCorrection(context.conversationId, context.message);
@@ -1032,7 +1184,7 @@ async function executeRuntime(context: RuntimeContext, incoming: RuntimeOptions)
     else if (!(await hasActiveListingDraft(context.conversationId))) {
       const corrected = correction(context.message);
       if (corrected?.meant) {
-        repair = { ...(corrected.back ? { back: true } : {}) };
+        repair = { ...(corrected.back ? { back: true } : {}), ...(corrected.meant ? { meant: corrected.meant } : {}) };
         context = { ...context, message: corrected.meant };
       }
     }
@@ -1285,6 +1437,15 @@ async function executeRuntime(context: RuntimeContext, incoming: RuntimeOptions)
   // resolves gets one question, never a search. Any other correction («أقصد الأرخص») goes on
   // through the ordinary routing in the user's own words.
   if (repair && namesCommercialObject(context.message)) {
+    // «لا، أقصد الثالث، ولا تضيفه للسلة»: a correction that names a position in the results in view
+    // is resolved against them (read-only) before asking what the user means.
+    const recent = await recentListingResultSets(context);
+    const live = recent.find((set) => !set.expiresAt || set.expiresAt.getTime() > Date.now());
+    const resolved = await resolveConversationReference(context, live, recent);
+    if (resolved) {
+      options.onToolSelected?.(resolved.tool);
+      return resolved;
+    }
     options.onToolSelected?.("openSurface");
     return clarify("ما الذي تقصده تحديدًا؟ اذكر العرض أو الإعلان أو رقمه من القائمة. لم أنفّذ شيئًا.");
   }
@@ -1297,7 +1458,23 @@ async function executeRuntime(context: RuntimeContext, incoming: RuntimeOptions)
   // «اقترح كيف أحسن…» as a promotion tutorial. Copy is drafted by the model from the
   // seller's facts (seller-management.ts sellerListingFacts) and changes nothing.
   if (!addToCart && !hasListingPhotos && context.location === undefined && context.actorId) {
-    if (isSellerBusinessQuestion(context.message)) {
+    // «كم باقي منه؟» right after a result is the stock of that listing; and a bare «كم باقي؟»
+    // from someone who sells nothing is never a seller-inventory question.
+    let sellerQuestion = isSellerBusinessQuestion(context.message);
+    if (sellerQuestion && isBareRemainingQuestion(context.message)) {
+      const stock = await executeStockQuestion({
+        conversationId: context.conversationId,
+        message: context.message,
+        market: context.market,
+        actorId: context.actorId,
+      });
+      if (stock) {
+        options.onToolSelected?.(stock.tool);
+        return stock;
+      }
+      sellerQuestion = (await modelRolesForActor(context.actorId, context.market.id)).includes("SELLER");
+    }
+    if (sellerQuestion) {
       const business = await executeSellerAdviceTurn({
         conversationId: context.conversationId,
         message: context.message,
@@ -1514,25 +1691,7 @@ async function executeRuntime(context: RuntimeContext, incoming: RuntimeOptions)
       conversationId: context.conversationId,
       market: context.market,
     });
-  const recentResultSets = await db
-    .select()
-    .from(aiResultSets)
-    .where(
-      and(
-        eq(aiResultSets.conversationId, context.conversationId),
-        eq(aiResultSets.marketId, context.market.id),
-      ),
-    )
-    .orderBy(desc(aiResultSets.createdAt))
-    .limit(12)
-    .then((sets) =>
-      sets
-        .filter((set) => {
-          const kind = (set.query as { kind?: unknown } | null)?.kind;
-          return kind !== "SELLER_CONTEXT" && kind !== "LISTING_PREVIEW" && kind !== "ACTION" && kind !== "ORDERS" && !SMART_STATE_KINDS.includes(String(kind)) && !isEmploymentQuery(set.query) && !isDeliveryQuery(set.query) && !isPromotionQuery(set.query) && !isDriverQuery(set.query);
-        })
-        .slice(0, 3),
-    );
+  const recentResultSets = await recentListingResultSets(context);
   const latest = recentResultSets.find(
     (set) => !set.expiresAt || set.expiresAt.getTime() > Date.now(),
   );
@@ -1653,6 +1812,12 @@ async function executeRuntime(context: RuntimeContext, incoming: RuntimeOptions)
       }),
       { conversationId: context.conversationId, market: context.market },
     );
+  }
+  // References only the conversation resolves (focus, superlatives, corrections, earlier topics).
+  const contextual = await resolveConversationReference(context, latest, recentResultSets);
+  if (contextual) {
+    options.onToolSelected?.(contextual.tool);
+    return contextual;
   }
   // Buyer refinements, ranking, comparison and selection on the current list (Block F2).
   const buyer = await executeBuyerTurn({

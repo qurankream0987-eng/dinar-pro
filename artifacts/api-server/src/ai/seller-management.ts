@@ -1202,6 +1202,16 @@ const IMPROVE =
 const businessText = (message: string) =>
   normalizeSearch(message).replace(/[ًٌٍَُِّْ]/gu, "").replace(/[؟?!.,،:;«»"'()]/gu, " ").replace(/\s+/gu, " ").trim();
 
+const BARE_REMAINING = /^(?:دينار\s+)?كم\s+(?:بقي|باقي|ظل|ضل|تبقي|متبقي|متوفر|المتاح|الكميه)(?:\s+(?:منه|منها|منهم))?$/u;
+
+/**
+ * «كم باقي؟», «كم باقي منه؟» with no seller wording: it may be the stock of the listing in view,
+ * the seller's own stock, or something else entirely; the caller decides from context.
+ */
+export function isBareRemainingQuestion(message: string): boolean {
+  return BARE_REMAINING.test(businessText(message));
+}
+
 /** Stock, orders, performance and improvement questions about the seller's own listings. */
 export function isSellerBusinessQuestion(message: string): boolean {
   // «كم باقي من حصتي؟» is about the AI allowance, not stock (G1 usage card).

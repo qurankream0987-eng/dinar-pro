@@ -628,7 +628,7 @@ export async function executeNegotiationTurn(input: {
   market: Market;
   actorId?: string;
   /** The message is the clause a correction meant (conversation-runtime.ts): resolve it in context. */
-  repair?: { back?: boolean };
+  repair?: { back?: boolean; meant?: string };
 }): Promise<Turn | null> {
   if (!input.actorId) return null;
   const actorId = input.actorId;
@@ -764,7 +764,13 @@ export async function executeNegotiationTurn(input: {
 
   // ── R3E: a question about an offer's state, or the offer a correction pointed back to: read
   // from the actor's own negotiations, never inferred and never changed.
-  const offerReference = input.repair && !edit && (OFFER_REFERENCE.test(text) || input.repair.back === true);
+  // «خلينا نرجع للجوالات» goes back to a named topic, not to an offer: only an unnamed return
+  // («ارجع للي قبل») or one naming an offer points back to a negotiation.
+  const backTarget = normalizeNegotiationText(input.repair?.meant ?? "");
+  const returnsToOtherTopic =
+    backTarget.length >= 3 && !OFFER_REFERENCE.test(` ${backTarget} `) &&
+    !/^(?:(?:ال)?(?:عرض|عروض|سعر|تفاوض|مفاوض)|اللي|الي|يلي|قبل|السابق)/u.test(backTarget);
+  const offerReference = input.repair && !edit && (OFFER_REFERENCE.test(text) || (input.repair.back === true && !returnsToOtherTopic));
   if (status?.subject === "OFFER" || offerReference) {
     const found = await offerInContext(context, input.message, { party: status?.party, back: input.repair?.back === true });
     if (found.kind === "ONE") {

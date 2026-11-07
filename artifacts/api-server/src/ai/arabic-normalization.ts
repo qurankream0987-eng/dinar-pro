@@ -225,6 +225,34 @@ export function parseResultReference(message: string): ResultReference | undefin
   return ordinalWord(token);
 }
 
+export type ContextualReference = { kind: "PREVIOUS" | "NEXT" | "CHEAPEST" | "PRICIEST" };
+
+/**
+ * A whole-utterance reference that needs the conversation to resolve: relative to the listing
+ * the user was last looking at («واللي قبله؟», «اللي بعده»), or a superlative over the results in
+ * view («أي واحد الأرخص فيهم؟», «أقصد الأغلى»). A bare «الأرخص» stays a sort request: a
+ * superlative names one item only with a set word, a which-question or a correction.
+ */
+export function parseContextualReference(message: string, options: { correction?: boolean } = {}): ContextualReference | undefined {
+  const text = foldArabicLetters(normalizeDigits(message))
+    .replace(/ى/g, "ي")
+    .replace(/[؟?!.،,]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/^(?:(?:طيب|طب|اوكي|تمام|و|يعني)\s+)+/u, "")
+    .replace(/\s+(?:كم\s+سعره|بكم|شو\s+سعره|وش\s+سعره|لو\s+سمحت|من\s+فضلك)$/u, "");
+  if (/^و?(?:اللي|الي|يلي|الذي)\s+(?:قبله|قبلها|قبل)$|^و?(?:السابق|السابقه)$/u.test(text)) return { kind: "PREVIOUS" };
+  if (/^و?(?:اللي|الي|يلي|الذي)\s+(?:بعده|بعدها)$/u.test(text)) return { kind: "NEXT" };
+  const superlative = text.match(
+    /^(?:(?:لا\s+)?(?:اقصد|قصدي|اعني)\s+|(?:(?:اي|مين|ايش|شو|وش|انو|اني)\s+(?:واحد|وحده|واحده|عرض|فيهم|منهم)\s+(?:هو\s+|يكون\s+)?))?(?:ال)?(ارخص|اغلي)(?:\s+(?:واحد|وحده|واحده))?(\s+(?:فيهم|منهم|بينهم|فيها|منها|بينها|فيهن))?$/u,
+  );
+  if (!superlative) return undefined;
+  // In a correction («هذا مو اللي أقصده، أقصد الأغلى») the superlative picks among what was shown.
+  const qualified = options.correction || superlative[2] !== undefined || !/^(?:ال)?(?:ارخص|اغلي)/u.test(text);
+  if (!qualified) return undefined;
+  return { kind: superlative[1] === "ارخص" ? "CHEAPEST" : "PRICIEST" };
+}
+
 /** An ordinal anywhere in a command ("أضف الثانية للسلة"); bare digits need a listing noun. */
 export function findOrdinalMention(message: string): ResultReference | undefined {
   const text = foldArabicLetters(normalizeDigits(message));

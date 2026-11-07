@@ -116,6 +116,13 @@ export const ModelTurnOutput = z
      * An utterance, never an identifier or an action; decisions and contact details are refused.
      */
     canonicalRequest: z.string().trim().min(2).max(160).optional(),
+    /**
+     * Generative UI (optional): how the verified results of this turn should be shown. Kept
+     * opaque here so a malformed proposal never discards the turn or its verified reads; it is
+     * validated against the turn's own result set by resolvePresentationProposal and, when any
+     * part does not resolve, the typed card is shown unchanged. It authorizes nothing.
+     */
+    presentation: z.unknown().optional(),
   })
   .strict();
 export type ModelTurn = z.infer<typeof ModelTurnOutput>;
@@ -187,6 +194,20 @@ export const MODEL_TOOL: ModelToolDefinition = {
         maxLength: 160,
         description: "Optional: the user's DINAR request restated as one short Arabic command (never a confirmation, payment, acceptance or contact detail).",
       },
+      presentation: {
+        type: "object",
+        description:
+          "Optional, only after a successful searchListings in this turn: how to show its verified results. Positions are 1-based positions in those results; never identifiers, prices or links. COMPARISON compares 2–4 positions; GRID/CAROUSEL/LIST show the chosen positions in your order, and highlight marks the one you consider the best fit (never a sponsored result).",
+        properties: {
+          version: { type: "integer", enum: [1] },
+          layout: { type: "string", enum: ["GRID", "CAROUSEL", "LIST", "COMPARISON"] },
+          positions: { type: "array", items: { type: "integer", minimum: 1, maximum: 24 }, minItems: 1, maxItems: 6 },
+          highlight: { type: "integer", minimum: 1, maximum: 24 },
+          dimensions: { type: "array", items: { type: "string", enum: ["PRICE", "CONDITION", "CITY", "AVAILABILITY", "DELIVERY", "SELLER"] }, minItems: 1, maxItems: 4 },
+        },
+        required: ["version", "layout"],
+        additionalProperties: false,
+      },
       conversationalReply: {
         type: "string",
         maxLength: MAX_REPLY,
@@ -204,6 +225,7 @@ const SYSTEM_PROMPT = [
   "Help fully with any everyday or expert topic: general knowledge, programming and debugging, mathematics and reasoning, science and renewable energy, education, writing and editing, planning and business management. Commerce is one of your capabilities, not your only subject.",
   "Each message is judged on its own intent in context: an earlier marketplace task (a sale draft, a search, a negotiation) never turns an unrelated new question into a marketplace request. Answer the new question; the earlier task stays available for the user to resume.",
   "Always answer by calling dinarConversationTurn exactly once.",
+  "After searchListings succeeds you may add presentation to choose how its verified results are shown: COMPARISON when the user wants to compare or decide between a few, CAROUSEL or GRID to browse, LIST for a short ranked answer, with positions you picked and an optional highlight for the best fit with a one-sentence reason in your reply. Use only positions from the results you received; the server shows its own facts and rejects anything else.",
   "You understand and suggest; DINAR's server decides and executes. You never create a published listing, pay, approve, promote, accept or publish anything, and you never output identifiers.",
   "Ordinary open-domain conversation is a valid default, regardless of marketplace categories, search results, or market availability.",
   "A product or category mentioned in a knowledge question or personal statement is not by itself a request to search DINAR listings. Suggest SEARCH_LISTINGS only when the user is asking to find or browse marketplace inventory.",

@@ -24,13 +24,22 @@ import { ACTION_REGISTRY } from "../src/ai/action-foundation";
 test("the model sees the three F01 reads plus every F02 prepare/read, and no direct writer", () => {
   const names = modelToolDefinitions().map((definition: any) => definition.function?.name ?? definition.name).sort();
   assert.deepEqual(names, [
-    "compareListings", "getResource", "openSurface",
-    "prepareCartChange", "prepareInquiryMessage", "prepareListingDraft", "prepareNegotiationProposal",
-    "readBusinessInquiries", "readCart", "readFulfillment", "readInventory", "readNegotiationStatus",
-    "readOrders", "requestPublicationReview", "reviewCheckout", "searchListings",
+    "compareListings", "describeDinarCapabilities", "getResource", "openSurface",
+    "prepareBusinessListingAction", "prepareCartChange", "prepareInquiryMessage", "prepareListingDraft", "prepareNegotiationProposal",
+    "readAiUsage", "readBusinessInquiries", "readBusinessOverview", "readCart", "readConnectPartnerStatus", "readFulfillment",
+    "readInventory", "readNegotiationStatus", "readOrderIssues", "readOrders", "readPolicy", "readSellerDues",
+    "requestPublicationReview", "reviewCheckout", "searchDomains", "searchListings", "searchPartnerOffers",
   ]);
-  assert.deepEqual([...MODEL_LOOP_TOOL_ALLOWLIST].sort(), ["compareListings", "getResource", "searchListings"],
-    "the bounded turn loop still advertises exactly the three F01 marketplace reads");
+  // The bounded loop advertises the F01 marketplace reads plus the intelligence reads; every one
+  // is a registered read-only tool with read permission only (asserted for all tools below).
+  assert.deepEqual([...MODEL_LOOP_TOOL_ALLOWLIST].sort(), [
+    "compareListings", "describeDinarCapabilities", "getResource", "readAiUsage", "readBusinessOverview",
+    "readConnectPartnerStatus", "readOrderIssues", "readPolicy", "readSellerDues", "searchDomains", "searchListings", "searchPartnerOffers",
+  ]);
+  for (const name of MODEL_LOOP_TOOL_ALLOWLIST) {
+    assert.equal(aiToolRegistry[name]?.idempotency, "READ_ONLY", `${name} in the loop is read-only`);
+    assert.deepEqual(aiToolRegistry[name]?.permissions, ["marketplace.read"], `${name} reads only`);
+  }
   assert.equal(aiToolRegistry.compareListings?.exposedToModel, true);
   assert.equal(aiToolRegistry.compareListings?.idempotency, "READ_ONLY");
   assert.deepEqual(aiToolRegistry.compareListings?.permissions, ["marketplace.read"]);
@@ -74,8 +83,11 @@ test("seller-only capabilities are not advertised to a buyer role", () => {
     assert.equal(buyer.includes(name), true, name);
     assert.equal(seller.includes(name), true, `${name} is shared`);
   }
+  // D3-A: the business product-change prepare (user-confirmed) belongs to sellers only.
+  assert.equal(buyer.includes("prepareBusinessListingAction"), false, "prepareBusinessListingAction is seller-only");
+  assert.equal(seller.includes("prepareBusinessListingAction"), true);
   assert.equal(modelCapabilityToolDefinitions(["BUYER"]).length, 9);
-  assert.equal(modelCapabilityToolDefinitions(["SELLER"]).length, 8);
+  assert.equal(modelCapabilityToolDefinitions(["SELLER"]).length, 9);
 });
 
 test("a model-proposed financial or order tool is rejected before anything runs", async () => {
