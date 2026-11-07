@@ -30,6 +30,8 @@ export const BENCHMARK_ENDPOINTS = {
   GROQ: "https://api.groq.com/openai/v1",
   GEMINI: "https://generativelanguage.googleapis.com/v1beta/models",
   DEEPSEEK: "https://api.deepseek.com",
+  /** Owner-approved fallback inference provider for the Gemma 4 family (OpenAI-compatible). */
+  DEEPINFRA: "https://api.deepinfra.com/v1/openai",
   /** The owner's own vLLM/SGLang gateway: read from DINAR_BENCH_SELF_HOSTED_BASE_URL (HTTPS only). */
   SELF_HOSTED: "",
 } as const;
@@ -41,6 +43,7 @@ export const BENCHMARK_CREDENTIALS = {
   GROQ: "DINAR_BENCH_GROQ_API_KEY",
   GEMINI: "DINAR_BENCH_GEMINI_API_KEY",
   DEEPSEEK: "DINAR_BENCH_DEEPSEEK_API_KEY",
+  DEEPINFRA: "DINAR_BENCH_DEEPINFRA_API_KEY",
   SELF_HOSTED: "DINAR_BENCH_SELF_HOSTED_API_KEY",
 } as const;
 /**
@@ -179,6 +182,51 @@ export const MODEL_CONTRACTS: Record<string, ModelContract> = {
     ],
     checkedAt: "2026-10-25",
     notes: "Re-verified 2026-10-25: deepseek-flash is served as DeepSeek-V4.1-Flash-1017; peak $0.30/1M cache-miss input, $0.006 cache hit, $1.20 output (off-peak half; peak 01-04 and 06-10 UTC Mon-Fri). Non-thinking is thinking={type:disabled}, which the gateway sends with reasoning_effort=none. R3: 6 × (8,000 × $0.30 + 2,000 × $1.20) / 1M = $0.0288 ≤ $0.05. Peak rates used for the conservative cost ceiling. Chat Completions uses max_tokens. Thinking defaults to enabled/high and rejects tool_choice=required; reasoning_effort=none (non-thinking) with required keeps the whole output budget for the one DINAR tool call. The 2026-10-24 R1 run with high/AUTO at 500 tokens truncated all four calls. Non-thinking full answers can exceed 500 tokens, so R2 allows up to 1,200 (the runtime default); 4 × (18,000 × $0.30 + 1,200 × $1.20) / 1M = $0.02736 stays within $0.03. Do not send parallel_tool_calls.",
+  },
+  // ── Owner-approved model family (2026-11-07): Gemma 4 31B primary, 26B A4B efficient. ──
+  // Paid usage-based routes. Prices are the HIGHEST observed across sources on 2026-11-07, so the
+  // worst-case budget check stays conservative; re-verify on the provider pages at approval.
+  // Both run through DINAR's OPENAI_COMPATIBLE slot with a pinned OpenRouter provider order
+  // (allow_fallbacks=false, require_parameters, data_collection=deny, zdr where eligible).
+  "google/gemma-4-31b-it": {
+    provider: "OPENROUTER",
+    transports: { CHAT_COMPLETIONS: ["default"] },
+    toolChoices: ["REQUIRED", "AUTO"],
+    defaultEffort: "none",
+    priceTiers: [{ fromInputTokens: 0, inputPer1M: 0.13, outputPer1M: 0.38 }],
+    sources: ["https://openrouter.ai/models/google/gemma-4-31b-it", "https://www.llmreference.com/provider/openrouter/gemma-4-31b-it"],
+    checkedAt: "2026-11-07",
+    notes: "PRIMARY. OpenRouter lists tools, tool_choice and JSON Schema response_format; 262K context, 8,192 max output; 13 providers (some fp8), so evaluation must pin one provider. Reasoning is configurable; measured per task class before enabling. Paid: never run without the owner's approval id and budget.",
+  },
+  "google/gemma-4-26b-a4b-it": {
+    provider: "OPENROUTER",
+    transports: { CHAT_COMPLETIONS: ["default"] },
+    toolChoices: ["REQUIRED", "AUTO"],
+    defaultEffort: "none",
+    priceTiers: [{ fromInputTokens: 0, inputPer1M: 0.08, outputPer1M: 0.35 }],
+    sources: ["https://openrouter.ai/models/google/gemma-4-26b-a4b-it", "https://artificialanalysis.ai/models/gemma-4-26b-a4b/providers"],
+    checkedAt: "2026-11-07",
+    notes: "EFFICIENT (MoE, ~4B active). Receives a task class only after it matches 31B on the identical acceptance suite. Same pinning and privacy requirements as 31B.",
+  },
+  "google/gemma-4-31B-it": {
+    provider: "DEEPINFRA",
+    transports: { CHAT_COMPLETIONS: ["default"] },
+    toolChoices: ["REQUIRED", "AUTO"],
+    defaultEffort: "none",
+    priceTiers: [{ fromInputTokens: 0, inputPer1M: 0.13, outputPer1M: 0.38 }],
+    sources: ["https://deepinfra.com/blog/gemma-4-model-overview"],
+    checkedAt: "2026-11-07",
+    notes: "FALLBACK provider. The exact DeepInfra model id and its price must be read from deepinfra.com at approval (VERIFY_AT_ACTIVATION); listed conservatively at the OpenRouter ceiling. Served at fp8. No user data before the owner approves DeepInfra's data terms.",
+  },
+  "google/gemma-4-26B-A4B-it": {
+    provider: "DEEPINFRA",
+    transports: { CHAT_COMPLETIONS: ["default"] },
+    toolChoices: ["REQUIRED", "AUTO"],
+    defaultEffort: "none",
+    priceTiers: [{ fromInputTokens: 0, inputPer1M: 0.08, outputPer1M: 0.35 }],
+    sources: ["https://deepinfra.com/google/gemma-4-26B-A4B-it/versions", "https://deepinfra.com/blog/gemma-4-pricing-benchmarks-cost-scenarios"],
+    checkedAt: "2026-11-07",
+    notes: "FALLBACK provider. DeepInfra lists $0.07 input / $0.34 output (standard), priority 1.5x, flex 0.8x; recorded at the observed ceiling. No user data before the owner approves DeepInfra's data terms.",
   },
   "google/gemma-4-26b-a4b-it:free": {
     provider: "OPENROUTER",
@@ -526,7 +574,8 @@ export function planBenchmark(config: BenchmarkConfig, taskCount: number, now = 
   const worstCaseUsd = round(candidates.reduce((sum, candidate) => sum + candidate.worstCaseUsd, 0));
   if (worstCaseUsd > config.approval.budgetUsd)
     problems.push(`worst case $${worstCaseUsd} exceeds the approved budget $${config.approval.budgetUsd}`);
-  const openRouterCalls = config.candidates.filter((candidate) => contractOf(candidate).provider === "OPENROUTER").length * callsPerCandidate;
+  // The free-request ceiling applies to OpenRouter's :free routes only; paid routes are bounded by the budget.
+  const openRouterCalls = config.candidates.filter((candidate) => contractOf(candidate).provider === "OPENROUTER" && candidate.model.endsWith(":free")).length * callsPerCandidate;
   if (openRouterCalls > OPENROUTER_FREE_REQUESTS_PER_DAY)
     problems.push(`OpenRouter free requests ${openRouterCalls} exceed the conservative ${OPENROUTER_FREE_REQUESTS_PER_DAY}/UTC-day local ceiling`);
   const geminiCalls = config.candidates.filter((candidate) => contractOf(candidate).provider === "GEMINI").length * callsPerCandidate;
