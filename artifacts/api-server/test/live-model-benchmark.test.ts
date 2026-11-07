@@ -84,7 +84,13 @@ test("Gemma free contracts are exact, zero-priced, tool-capable and kept under t
     assert.deepEqual(contract.toolChoices, ["AUTO"]);
     assert.equal(contract.priceTiers[0]!.inputPer1M + contract.priceTiers[0]!.outputPer1M, 0);
   }
-  assert.equal(MODEL_CONTRACTS["google/gemma-4-26b-a4b-it"] , undefined, "the paid/non-free alias is not accepted");
+  // Owner decision 2026-11-07: the paid usage-based Gemma 4 routes are approved (approval id and
+  // budget still required). The paid alias is a separate, priced contract, so it can never be
+  // planned as a free route and always counts against the approved budget.
+  for (const paid of ["google/gemma-4-26b-a4b-it", "google/gemma-4-31b-it"]) {
+    assert.ok(MODEL_CONTRACTS[paid], `${paid} is an approved paid contract`);
+    assert.ok(MODEL_CONTRACTS[paid]!.priceTiers[0]!.inputPer1M > 0 && MODEL_CONTRACTS[paid]!.priceTiers[0]!.outputPer1M > 0, `${paid} is priced, never free`);
+  }
   const gemmaConfig = BenchmarkConfigSchema.parse({
     approval: { id: "owner-ok-gemma", approvedBy: "DINAR owner", approvedAt: "2026-10-24T00:00:00Z", providers: ["OPENROUTER"], budgetUsd: 5 },
     limits: { ...example.limits, maxRequestsPerCandidate: 24, maxRetries: 0, maxConcurrency: 1, repetitions: 1 },

@@ -67,6 +67,17 @@ export type AIProviderConfiguration = {
    * phase: "disabled" sends chat_template_kwargs.enable_thinking=false. OPENAI_COMPATIBLE only.
    */
   thinking?: "disabled";
+  /**
+   * OpenRouter request routing for an OPENAI_COMPATIBLE slot pointed at openrouter.ai: a pinned
+   * provider order with fallbacks off, required parameter support (tools, JSON Schema), and the
+   * owner's privacy requirements. Refused for any other host, which would silently ignore it.
+   */
+  openRouterRouting?: {
+    order: string[];
+    requireParameters: boolean;
+    dataCollection?: "deny";
+    zdr?: boolean;
+  };
   credentialName:
     | "GROQ_API_KEY"
     | "OPENROUTER_API_KEY"
@@ -230,9 +241,32 @@ export function resolveAIProviderConfiguration(
     // (A loopback endpoint is accepted only in development, where safeProviderBaseUrl allows it: test doubles.)
     if (transport === "RESPONSES" && baseURL && new URL(baseURL).host !== "api.openai.com" && new URL(baseURL).protocol !== "http:")
       throw new Error(`${prefix}TRANSPORT=RESPONSES is only supported for api.openai.com.`);
+    const order = env[`${prefix}PROVIDER_ORDER`]?.split(",").map((item) => item.trim()).filter(Boolean) ?? [];
+    const dataCollection = env[`${prefix}DATA_COLLECTION`]?.trim().toLowerCase();
+    const zdr = env[`${prefix}ZDR`]?.trim().toLowerCase();
+    const requireParameters = env[`${prefix}REQUIRE_PARAMETERS`]?.trim().toLowerCase();
+    const routingRequested = order.length > 0 || Boolean(dataCollection) || Boolean(zdr) || Boolean(requireParameters);
+    let openRouterRouting: AIProviderConfiguration["openRouterRouting"];
+    if (routingRequested) {
+      const host = baseURL ? new URL(baseURL).host : "";
+      const openRouter = host === "openrouter.ai" || (env.NODE_ENV === "development" && /^(?:127\.0\.0\.1|localhost)(?::\d+)?$/.test(host));
+      if (!openRouter) throw new Error(`${prefix}PROVIDER_ORDER, DATA_COLLECTION, ZDR and REQUIRE_PARAMETERS apply only to openrouter.ai.`);
+      if (!order.length) throw new Error(`${prefix}PROVIDER_ORDER must pin at least one provider so evaluation and traffic are not re-routed.`);
+      if (order.some((item) => !/^[a-z0-9][a-z0-9._/-]{0,63}$/.test(item))) throw new Error(`${prefix}PROVIDER_ORDER must list provider slugs.`);
+      if (dataCollection && dataCollection !== "deny") throw new Error(`${prefix}DATA_COLLECTION may only be "deny".`);
+      if (zdr && zdr !== "true") throw new Error(`${prefix}ZDR may only be "true".`);
+      if (requireParameters && requireParameters !== "true") throw new Error(`${prefix}REQUIRE_PARAMETERS may only be "true".`);
+      openRouterRouting = {
+        order,
+        requireParameters: requireParameters === "true",
+        ...(dataCollection === "deny" ? { dataCollection: "deny" as const } : {}),
+        ...(zdr === "true" ? { zdr: true } : {}),
+      };
+    }
     return {
       provider: "OPENAI_COMPATIBLE",
       requestedModel: model ?? "",
+      ...(openRouterRouting ? { openRouterRouting } : {}),
       credentialName: slot === "PRIMARY" ? "DINAR_AI_API_KEY" : "DINAR_AI_FALLBACK_API_KEY",
       baseURL,
       ...(transport !== "CHAT_COMPLETIONS" ? { transport } : {}),
@@ -336,6 +370,9 @@ export function describeAIModelReadiness(env: NodeJS.ProcessEnv = process.env) {
     toolChoice: configuration.toolChoice ?? "REQUIRED",
     reasoningEffort: configuration.reasoningEffort ?? null,
     thinking: configuration.thinking ?? null,
+    providerRouting: configuration.openRouterRouting
+      ? { order: configuration.openRouterRouting.order, allowFallbacks: false, requireParameters: configuration.openRouterRouting.requireParameters, dataCollection: configuration.openRouterRouting.dataCollection ?? null, zdr: configuration.openRouterRouting.zdr ?? false }
+      : null,
     configured: providerConfigured(configuration, env),
   });
   try {
@@ -683,6 +720,7 @@ class OpenAICompatibleChatGateway implements ConversationModelGateway {
     private readonly requestTimeoutMs = REQUEST_TIMEOUT_MS,
     private readonly gemmaFreeOnly = false,
     private readonly selfHostedThinking?: "disabled",
+    private readonly openRouterRouting?: AIProviderConfiguration["openRouterRouting"],
   ) {}
 
   /** Only Groq's gpt-oss applies a per-call effort; DeepSeek ignores one (its turn stays non-thinking). */
@@ -732,8 +770,11 @@ class OpenAICompatibleChatGateway implements ConversationModelGateway {
             ? { thinking: { type: "disabled" } }
             : {}),
           // Self-hosted Qwen-style templates: no thinking phase before the forced tool call.
+          // Self-hosted templates take chat_template_kwargs; OpenRouter normalizes reasoning itself.
           ...(this.providerInfo.provider === "OPENAI_COMPATIBLE" && this.selfHostedThinking === "disabled"
-            ? { chat_template_kwargs: { enable_thinking: false } }
+            ? this.openRouterRouting
+              ? { reasoning: { enabled: false } }
+              : { chat_template_kwargs: { enable_thinking: false } }
             : {}),
           messages,
           tools: tools.map((tool) => ({
@@ -748,6 +789,15 @@ class OpenAICompatibleChatGateway implements ConversationModelGateway {
           ...(this.policy.toolChoice === "AUTO" && !this.gemmaFreeOnly && this.providerInfo.provider !== "DEEPSEEK"
             ? { parallel_tool_calls: false }
             : {}),
+          ...(this.openRouterRouting ? {
+            provider: {
+              order: this.openRouterRouting.order,
+              allow_fallbacks: false,
+              require_parameters: this.openRouterRouting.requireParameters,
+              ...(this.openRouterRouting.dataCollection ? { data_collection: this.openRouterRouting.dataCollection } : {}),
+              ...(this.openRouterRouting.zdr ? { zdr: true } : {}),
+            },
+          } : {}),
           ...(this.gemmaFreeOnly ? {
             provider: {
               allow_fallbacks: false,
@@ -765,7 +815,8 @@ class OpenAICompatibleChatGateway implements ConversationModelGateway {
         /^[A-Za-z0-9._:/-]{1,120}$/.test(result.model)
           ? result.model
           : undefined;
-      if (this.gemmaFreeOnly && actualModel !== this.providerInfo.requestedModel)
+      // A pinned route must answer with the exact model requested; a substitution is not that model's result.
+      if ((this.gemmaFreeOnly || this.openRouterRouting) && actualModel !== this.providerInfo.requestedModel)
         throw new AIProviderError(this.providerInfo.provider, "INVALID_RESPONSE", this.providerInfo.requestedModel, latencyMs, undefined, actualModel);
       const cached = result.usage?.prompt_tokens_details?.cached_tokens;
       const reasoning = result.usage?.completion_tokens_details?.reasoning_tokens;
@@ -1083,7 +1134,7 @@ function chatGateway(configuration: AIProviderConfiguration, env: NodeJS.Process
   };
   if (configuration.transport === "RESPONSES")
     return new OpenAIResponsesGateway(client, providerInfo, fallback, maxOutputTokens, policy, timeoutMs);
-  return new OpenAICompatibleChatGateway(client, providerInfo, fallback, maxOutputTokens, policy, timeoutMs, configuration.gemmaFreeOnly === true, configuration.thinking);
+  return new OpenAICompatibleChatGateway(client, providerInfo, fallback, maxOutputTokens, policy, timeoutMs, configuration.gemmaFreeOnly === true, configuration.thinking, configuration.openRouterRouting);
 }
 
 export async function createConversationModelGateway(
