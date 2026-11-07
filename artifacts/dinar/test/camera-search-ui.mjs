@@ -131,6 +131,8 @@ try {
   await cameraButton.click();
   const [gif] = await Promise.all([page.waitForEvent("filechooser"), page.getByTestId("camera-choose").click()]);
   await gif.setFiles({ name: "x.gif", mimeType: "image/gif", buffer: Buffer.from("GIF89a") });
+  // The refusal is rendered asynchronously after the file change event: wait for it, then assert it.
+  await page.getByTestId("camera-message").filter({ hasText: /JPEG أو PNG أو WebP/ }).waitFor({ timeout: 10_000 });
   assert.match(await page.getByTestId("camera-message").innerText(), /JPEG أو PNG أو WebP/);
   await page.getByTestId("camera-cancel").click();
   checks.push("an unsupported file is refused in the dialog");
