@@ -1,0 +1,192 @@
+{
+ "shots": [
+  "chat-light-320",
+  "results-light-320",
+  "chat-light-375",
+  "results-light-375",
+  "chat-light-390",
+  "results-light-390",
+  "chat-light-430",
+  "results-light-430",
+  "chat-light-768",
+  "results-light-768",
+  "chat-light-1024",
+  "results-light-1024",
+  "chat-light-1280",
+  "results-light-1280",
+  "chat-light-1440",
+  "results-light-1440",
+  "chat-dark-320",
+  "results-dark-320",
+  "chat-dark-375",
+  "results-dark-375",
+  "chat-dark-390",
+  "results-dark-390",
+  "chat-dark-430",
+  "results-dark-430",
+  "chat-dark-768",
+  "results-dark-768",
+  "chat-dark-1024",
+  "results-dark-1024",
+  "chat-dark-1280",
+  "results-dark-1280",
+  "chat-dark-1440",
+  "results-dark-1440",
+  "account-light-1280",
+  "cart-page-light-1280",
+  "login-light-390",
+  "login-dark-1280",
+  "composer-320",
+  "camera-320",
+  "composer-375",
+  "camera-375",
+  "composer-390",
+  "camera-390",
+  "composer-430",
+  "camera-430"
+ ],
+ "checks": [
+  "light-320: the DINAR AI mark is visible and loaded (2)",
+  "light-375: the DINAR AI mark is visible and loaded (2)",
+  "IBM Plex Sans Arabic is the loaded chat font",
+  "light-390: the DINAR AI mark is visible and loaded (2)",
+  "light-430: the DINAR AI mark is visible and loaded (2)",
+  "light-768: the DINAR AI mark is visible and loaded (2)",
+  "light-1024: the DINAR AI mark is visible and loaded (2)",
+  "light-1280: the DINAR AI mark is visible and loaded (2)",
+  "light-1440: the DINAR AI mark is visible and loaded (2)",
+  "dark-320: the DINAR AI mark is visible and loaded (2)",
+  "dark-375: the DINAR AI mark is visible and loaded (2)",
+  "dark-390: the DINAR AI mark is visible and loaded (2)",
+  "dark-430: the DINAR AI mark is visible and loaded (2)",
+  "dark-768: the DINAR AI mark is visible and loaded (2)",
+  "dark-1024: the DINAR AI mark is visible and loaded (2)",
+  "dark-1280: the DINAR AI mark is visible and loaded (2)",
+  "dark-1440: the DINAR AI mark is visible and loaded (2)",
+  "sidebar wordmark reads DINAR AI",
+  "page title is DINAR AI — دينار",
+  "favicon is the small DINAR AI icon and is served",
+  "app shell pages show the DINAR AI mark",
+  "login 390: DINAR AI mark present",
+  "login 1280: DINAR AI mark present",
+  "320: composer text 262px on its own row; 44px controls; no overlap",
+  "320: Tab stays inside the camera dialog",
+  "320: Shift+Tab stays inside the camera dialog",
+  "320: Escape returns focus to the camera button",
+  "320: camera dialog unmounted after Escape",
+  "375: composer text 313px on its own row; 44px controls; no overlap",
+  "375: Tab stays inside the camera dialog",
+  "375: Shift+Tab stays inside the camera dialog",
+  "375: Escape returns focus to the camera button",
+  "375: camera dialog unmounted after Escape",
+  "390: composer text 328px on its own row; 44px controls; no overlap",
+  "390: Tab stays inside the camera dialog",
+  "390: Shift+Tab stays inside the camera dialog",
+  "390: Escape returns focus to the camera button",
+  "390: camera dialog unmounted after Escape",
+  "430: composer text 368px on its own row; 44px controls; no overlap",
+  "430: Tab stays inside the camera dialog",
+  "430: Shift+Tab stays inside the camera dialog",
+  "430: Escape returns focus to the camera button",
+  "430: camera dialog unmounted after Escape",
+  "reduced motion: the camera sheet does not animate",
+  "reduced motion: result cards appear without entrance motion",
+  "catch class toggled",
+  "catch class toggled",
+  "catch class toggled",
+  "repeated adds: 3 confirmed adds -> 1 flights (all ended) + 2 image-less acknowledgements",
+  "server cart grew by exactly 3",
+  "no flight clone left in the DOM",
+  "a failed add shows no flight and no skip",
+  "a failed add leaves the server cart unchanged",
+  "a double activation yields at most one flight"
+ ],
+ "metrics": {
+  "composer-light-320": 262,
+  "composer-light-375": 313,
+  "composer-light-390": 328,
+  "composer-light-430": 368,
+  "composer-light-768": 400,
+  "composer-light-1024": 343,
+  "composer-light-1280": 394,
+  "composer-light-1440": 394,
+  "composer-dark-320": 262,
+  "composer-dark-375": 313,
+  "composer-dark-390": 328,
+  "composer-dark-430": 368,
+  "composer-dark-768": 400,
+  "composer-dark-1024": 343,
+  "composer-dark-1280": 394,
+  "composer-dark-1440": 394,
+  "add-ابحث عن ايفون": {
+   "settled": true,
+   "flights": [
+    {
+     "n": "dinar:cart-flight-start",
+     "d": {
+      "left": 88,
+      "top": 202.1875
+     }
+    },
+    {
+     "n": "dinar:cart-flight-end",
+     "d": {}
+    }
+   ],
+   "alert": "",
+   "cart": 1
+  },
+  "add-ابحث عن مصباح طاولة": {
+   "settled": true,
+   "flights": [
+    {
+     "n": "dinar:cart-flight-end",
+     "d": {}
+    },
+    {
+     "n": "dinar:cart-flight-skipped",
+     "d": {
+      "reason": "no-image"
+     }
+    }
+   ],
+   "alert": "",
+   "cart": 2
+  },
+  "add-ابحث عن تي شيرت": {
+   "settled": true,
+   "flights": [
+    {
+     "n": "dinar:cart-flight-skipped",
+     "d": {
+      "reason": "no-image"
+     }
+    },
+    {
+     "n": "dinar:cart-flight-skipped",
+     "d": {
+      "reason": "no-image"
+     }
+    }
+   ],
+   "alert": "",
+   "cart": 3
+  },
+  "repeated": {
+   "confirmed": 3,
+   "starts": 1,
+   "ends": 1,
+   "skips": 2
+  },
+  "cartNotice": "أُضيف «مصباح طاولة خشبي» إلى السلة."
+ },
+ "failures": [],
+ "overflow": [],
+ "pageErrors": [],
+ "axe": {
+  "login-390": [],
+  "camera-390": [],
+  "chat-results-390": [],
+  "chat-results-dark-1280": []
+ }
+}

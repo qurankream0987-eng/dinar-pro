@@ -151,7 +151,7 @@ export function BrandMark({
       {wordmark && (
         <span className="flex flex-col leading-none">
           <span className="text-lg font-bold tracking-[0.04em] text-foreground" dir="ltr">
-            DINAR <span className="text-[#B8892A] dark:text-[#D7AA42]">AI</span>
+            DINAR <span className="text-[#8A6312] dark:text-[#E6C372]">AI</span>
           </span>
           <span className="mt-0.5 text-[11px] font-semibold text-muted-foreground">دينار</span>
         </span>
