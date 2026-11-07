@@ -131,6 +131,8 @@ export async function seedAcceptanceFixtures(requested: AcceptanceFixtureModule[
           reservedQuantity: 0,
           data: {
             ...listing,
+            // Sample fixture media must remain local/unknown; never depend on an external CDN.
+            imageUrl: listing.imageUrl?.startsWith("/") && !listing.imageUrl.startsWith("//") ? listing.imageUrl : "",
             area: listing.fulfilmentType === "DIGITAL" ? "عن بُعد" : market.countryNameAr,
             rating: 0,
             reviewCount: 0,

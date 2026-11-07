@@ -79,7 +79,19 @@ async function openAuthenticatedSession(cookie) {
   const sessionPage = await sessionContext.newPage();
   sessionPage.on("pageerror", (error) => pageErrors.push(error.message));
   sessionPage.on("console", (message) => {
-    if (message.type() === "error") consoleErrors.push(message.text());
+    if (message.type() === "error") {
+      consoleErrors.push(message.text());
+      let source = message.location().url;
+      try { const url = new URL(source); source = url.origin + url.pathname; } catch {}
+      failedResponses.push(`CONSOLE_ERROR ${source}: ${message.text()}`);
+    }
+  });
+  sessionPage.on("requestfailed", (request) => {
+    const error = request.failure()?.errorText ?? "unknown";
+    // Navigation/Stop intentionally abort in-flight reads; retain actionable transport diagnostics.
+    if (error === "net::ERR_ABORTED") return;
+    const url = new URL(request.url());
+    failedResponses.push(`REQUEST_FAILED ${request.method()} ${url.origin}${url.pathname}: ${error}`);
   });
   sessionPage.on("response", (response) => {
     if (response.status() >= 400) failedResponses.push(`${response.status()} ${response.request().method()} ${response.url().slice(0, 160)}`);
@@ -941,6 +953,9 @@ try {
   );
   await assertResponsive("desktop buyer photo gallery", 1440, 900);
   const offerImage = page.getByTestId("img-offer");
+  await offerImage.scrollIntoViewIfNeeded();
+  await offerImage.evaluate((image) => image.decode());
+  assert.ok(await offerImage.evaluate((image) => image.complete && image.naturalWidth > 0), "the first owned uploaded photo is genuinely decoded");
   const firstImageSrc = await offerImage.getAttribute("src");
   await page.getByRole("button", { name: "الصورة 2" }).click();
   await page.waitForFunction(
@@ -950,6 +965,8 @@ try {
         ?.getAttribute("src") !== previous,
     firstImageSrc,
   );
+  await offerImage.evaluate((image) => image.decode());
+  assert.ok(await offerImage.evaluate((image) => image.complete && image.naturalWidth > 0), "the second owned uploaded photo is genuinely decoded");
   checks.push(
     "buyer conversational search finds the persisted offer and detail gallery shows both photos",
   );

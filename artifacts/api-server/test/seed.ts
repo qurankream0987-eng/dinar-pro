@@ -116,6 +116,8 @@ for (const market of configured)
         reservedQuantity: 0,
         data: {
           ...l,
+          // Sample fixture media must remain local/unknown; never depend on an external CDN.
+          imageUrl: l.imageUrl?.startsWith("/") && !l.imageUrl.startsWith("//") ? l.imageUrl : "",
           area:
             l.fulfilmentType === "DIGITAL" ? "عن بُعد" : market.countryNameAr,
           rating: 0,
