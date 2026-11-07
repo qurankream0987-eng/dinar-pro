@@ -149,6 +149,51 @@ try {
   assert.equal(await refused.page.getByTestId("camera-choose").isEnabled(), true);
   await refused.widths("camera denied", refused.page.getByTestId("camera-capture"), [320, 390]);
   checks.push("denied camera permission explains itself and leaves the device photo option, at 320/390");
+
+  // No camera on the device.
+  const rp = refused.page;
+  await rp.getByTestId("camera-cancel").click();
+  await rp.evaluate(() => { navigator.mediaDevices.getUserMedia = () => Promise.reject(new DOMException("none", "NotFoundError")); });
+  await rp.getByTestId("button-ai-camera").click();
+  await rp.getByText("تعذر فتح الكاميرا. اختر صورة من جهازك بدلًا من ذلك.").waitFor({ timeout: 20_000 });
+  assert.equal(await rp.getByTestId("camera-shutter").isDisabled(), true);
+  await rp.getByTestId("camera-cancel").click();
+  checks.push("a device without a camera gets an honest message and the device photo option");
+
+  // A slow camera closed while it is still starting is stopped the moment it arrives.
+  await rp.evaluate(() => {
+    navigator.mediaDevices.getUserMedia = () => new Promise((resolve) => setTimeout(() => {
+      const canvas = Object.assign(document.createElement("canvas"), { width: 64, height: 64 });
+      canvas.getContext("2d").fillRect(0, 0, 64, 64);
+      window.__late = canvas.captureStream(5);
+      resolve(window.__late);
+    }, 1200));
+  });
+  await rp.getByTestId("button-ai-camera").click();
+  assert.equal(await rp.getByTestId("camera-capture").getAttribute("data-state"), "starting");
+  await rp.getByTestId("camera-cancel").click();
+  await rp.waitForTimeout(2000);
+  assert.equal(await rp.evaluate(() => window.__late.getTracks().every((track) => track.readyState === "ended")), true, "the late stream was stopped");
+  assert.equal(await rp.getByTestId("camera-capture").count(), 0);
+  checks.push("closing the camera during initialisation stops the late stream and leaves no dialog");
+
+  // Keyboard and accessible names; no motion is imposed.
+  await rp.emulateMedia({ reducedMotion: "reduce" });
+  await rp.getByTestId("button-ai-camera").focus();
+  await rp.keyboard.press("Enter");
+  const kbDialog = rp.getByTestId("camera-capture");
+  await kbDialog.waitFor({ state: "visible" });
+  assert.equal(await kbDialog.getAttribute("aria-modal"), "true");
+  assert.equal(await kbDialog.getAttribute("aria-label"), "البحث بصورة");
+  for (const id of ["camera-cancel", "camera-choose", "camera-shutter"]) {
+    const name = (await rp.getByTestId(id).getAttribute("aria-label")) ?? (await rp.getByTestId(id).innerText());
+    assert.ok(name.trim().length > 0, `${id} has an accessible name`);
+  }
+  const motion = await kbDialog.evaluate((node) => [node, ...node.querySelectorAll("*")].map((el) => getComputedStyle(el)).filter((style) => style.animationName !== "none" || (parseFloat(style.transitionDuration) || 0) > 0.3).length);
+  assert.equal(motion, 0, "no long animation or transition in the camera dialog");
+  await rp.keyboard.press("Escape");
+  await kbDialog.waitFor({ state: "detached" });
+  checks.push("the camera opens and closes by keyboard, controls are named, and no motion is imposed (reduced motion)");
 } catch (error) {
   failure = error instanceof Error ? `${error.message}\n${error.stack ?? ""}` : String(error);
 } finally {

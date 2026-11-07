@@ -66,7 +66,7 @@ await test("CAMERA-SEARCH browser: open, capture, preview, retake, cancel, denia
   assert.deepEqual(report.consoleErrors, []);
   assert.deepEqual(report.externalRequests, []);
   assert.equal(report.horizontalOverflow, 0);
-  assert.ok(report.checks.length >= 10, JSON.stringify(report.checks));
+  assert.ok(report.checks.length >= 16, JSON.stringify(report.checks));
 });
 
 after(async () => {

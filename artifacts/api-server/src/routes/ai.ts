@@ -2144,7 +2144,8 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
   let visualNotice = "";
   if (visualImage) {
     const analyzer = (req.app.locals.visualAnalyzer as VisualAnalyzer | undefined) ?? createVisualAnalyzer();
-    const analyzed = await analyzer.analyze(visualImage, message);
+    // An analyzer that throws is an unavailable provider, never a failed turn or an invented answer.
+    const analyzed = await analyzer.analyze(visualImage, message).catch(() => ({ status: "FAILED" as const, reason: "ANALYZER_ERROR" }));
     if (analyzed.status === "ANALYZED" && analyzed.analysis.isProduct && visualSearchTerms(analyzed.analysis)) {
       visualAnalysis = analyzed.analysis;
       // «…عند الشركاء»: the same canonical Connect partner search, which honours participation modes.
