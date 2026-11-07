@@ -37,11 +37,17 @@ export const connectPartners = pgTable(
       .references(() => markets.id),
     status: text("status").default("DRAFT").notNull(),
     revision: integer("revision").default(1).notNull(),
+    participationMode: text("participation_mode").default("BUY_ON_MERCHANT_WEBSITE").notNull(),
+    participationModeChangedAt: timestamp("participation_mode_changed_at", { withTimezone: true }),
     createdAt: created(),
     updatedAt: updated(),
   },
   (t) => [
     uniqueIndex("connect_partners_business_unique").on(t.businessId),
+    check(
+      "connect_partners_participation_mode_valid",
+      sql`${t.participationMode} IN ('SELL_INSIDE_DINAR','BUY_ON_MERCHANT_WEBSITE','HYBRID')`,
+    ),
     index("connect_partners_market_status_idx").on(t.marketId, t.status),
     check(
       "connect_partners_status_valid",

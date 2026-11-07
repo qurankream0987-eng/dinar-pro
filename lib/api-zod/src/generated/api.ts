@@ -8181,7 +8181,8 @@ export const registerConnectPartnerBodyBusinessIdRegExp = new RegExp('^([0-9a-fA
 
 
 export const RegisterConnectPartnerBody = zod.object({
-  "businessId": zod.uuid().regex(registerConnectPartnerBodyBusinessIdRegExp)
+  "businessId": zod.uuid().regex(registerConnectPartnerBodyBusinessIdRegExp),
+  "participationMode": zod.enum(['SELL_INSIDE_DINAR', 'BUY_ON_MERCHANT_WEBSITE', 'HYBRID']).optional()
 })
 
 export const RegisterConnectPartnerResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
@@ -8450,6 +8451,26 @@ export const VerifyConnectSiteParams = zod.object({
 })
 
 export const VerifyConnectSiteResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * OWNER only (staff and strangers 404). Changes SELL_INSIDE_DINAR / BUY_ON_MERCHANT_WEBSITE / HYBRID at the revision the owner saw; suspended, revoked or rejected partners are refused. Deletes nothing; what the new mode excludes stops being served. Never enables native checkout.
+ */
+export const ChangeConnectParticipationModeParams = zod.object({
+  "id": zod.uuid()
+})
+
+export const changeConnectParticipationModeBodyExpectedRevisionExclusiveMin = 0;
+export const changeConnectParticipationModeBodyExpectedRevisionMax = 9007199254740991;
+
+
+
+export const ChangeConnectParticipationModeBody = zod.object({
+  "mode": zod.enum(['SELL_INSIDE_DINAR', 'BUY_ON_MERCHANT_WEBSITE', 'HYBRID']),
+  "expectedRevision": zod.int().gt(changeConnectParticipationModeBodyExpectedRevisionExclusiveMin).max(changeConnectParticipationModeBodyExpectedRevisionMax)
+})
+
+export const ChangeConnectParticipationModeResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
 
 
 /**

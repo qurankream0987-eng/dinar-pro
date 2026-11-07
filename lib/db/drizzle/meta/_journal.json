@@ -421,6 +421,13 @@
       "when": 1794001311196,
       "tag": "0059_connect_readonly_team",
       "breakpoints": true
+    },
+    {
+      "idx": 60,
+      "version": "7",
+      "when": 1794001371196,
+      "tag": "0060_connect_participation_mode",
+      "breakpoints": true
     }
   ]
 }

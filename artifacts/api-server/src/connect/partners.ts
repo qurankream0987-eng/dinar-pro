@@ -18,6 +18,10 @@ import {
   ConnectCatalogItem,
   ConnectCatalogReceiptSchema,
   ConnectTeamInput,
+  ConnectParticipationModeInput,
+  CONNECT_EXTERNAL_PURCHASE_MODES,
+  CONNECT_INTERNAL_SALE_MODES,
+  type ConnectParticipationMode,
 } from "@workspace/api-zod/connect-platform";
 import { currencyScale } from "@workspace/global";
 import {
@@ -237,6 +241,51 @@ export function integrationView(row: typeof connectIntegrations.$inferSelect) {
     credentialsIssued: Boolean(row.providerConnectionId),
   };
 }
+/**
+ * What a partner's mode actually permits right now, derived from canonical records only.
+ * The mode is the merchant's choice; capability also needs review, verification, a verified
+ * site and an approved referral integration. Native checkout of Connect catalog items is not
+ * built, so no mode enables it.
+ */
+export function connectParticipationCapabilities(input: {
+  mode: ConnectParticipationMode;
+  partnerStatus: string;
+  businessVerificationStatus: string;
+  verifiedSite: boolean;
+  approvedReferralIntegration: boolean;
+}) {
+  const external = CONNECT_EXTERNAL_PURCHASE_MODES.includes(input.mode);
+  const internal = CONNECT_INTERNAL_SALE_MODES.includes(input.mode);
+  const blockers: string[] = [];
+  if (input.partnerStatus !== "APPROVED") blockers.push("يجب أن يعتمد فريق DINAR حسابك بعد المراجعة.");
+  if (input.businessVerificationStatus !== "VERIFIED") blockers.push("يجب توثيق نشاطك التجاري.");
+  const externalBlockers = [...blockers];
+  if (!input.verifiedSite) externalBlockers.push("أثبت ملكية موقعك (سجل DNS) قبل توجيه المشترين إليه.");
+  if (!input.approvedReferralIntegration) externalBlockers.push("يلزم موصل كتالوج معتمد لعروض موقعك.");
+  return {
+    externalPurchase: external
+      ? { included: true, enabled: externalBlockers.length === 0, requirements: externalBlockers }
+      : { included: false, enabled: false, requirements: ["وضعك الحالي لا يشمل الشراء من موقعك."] },
+    internalSale: internal
+      ? {
+          included: true,
+          // Selling inside DINAR is DINAR's own listings, orders and checkout (simulation only).
+          enabled: blockers.length === 0,
+          path: "DINAR_LISTINGS",
+          requirements: [
+            ...blockers,
+            "تُنشر المنتجات داخل دينار كإعلانات دينار عادية، بأسعارها ومخزونها في دينار.",
+          ],
+        }
+      : { included: false, enabled: false, path: "DINAR_LISTINGS", requirements: ["وضعك الحالي لا يشمل البيع داخل دينار."] },
+    // Never derived from the mode: importing a website catalog into DINAR's checkout does not exist.
+    nativeCatalogCheckout: {
+      enabled: false,
+      requirements: ["تحويل كتالوج موقعك إلى بيع داخل دينار غير متاح بعد؛ اختيار الوضع لا يفعّل الدفع داخل دينار."],
+    },
+  };
+}
+
 export async function partnerView(
   actorId: string,
   marketId: string,
@@ -259,6 +308,17 @@ export async function partnerView(
     status: access.partner.status,
     revision: access.partner.revision,
     businessVerificationStatus: access.business.verificationStatus,
+    participationMode: access.partner.participationMode as ConnectParticipationMode,
+    participationModeChangedAt: access.partner.participationModeChangedAt?.toISOString() ?? null,
+    participation: connectParticipationCapabilities({
+      mode: access.partner.participationMode as ConnectParticipationMode,
+      partnerStatus: access.partner.status,
+      businessVerificationStatus: access.business.verificationStatus,
+      verifiedSite: sites.some((site) => site.status === "VERIFIED" && (!site.validUntil || site.validUntil > new Date())),
+      approvedReferralIntegration: integrations.some(
+        (integration) => integration.status === "APPROVED" && (integration.capabilities as string[]).includes("EXTERNAL_REFERRAL"),
+      ),
+    }),
     registrationFeeMinor: 0,
     subscriptionRequired: false,
     organicDisplayFeeMinor: 0,
@@ -313,7 +373,7 @@ export async function registerConnectPartner(
     const id = randomUUID();
     const [created] = await tx
       .insert(connectPartners)
-      .values({ id, businessId: input.businessId, marketId: market.id })
+      .values({ id, businessId: input.businessId, marketId: market.id, participationMode: input.participationMode ?? "BUY_ON_MERCHANT_WEBSITE" })
       .onConflictDoNothing()
       .returning();
     if (!created) {
@@ -326,10 +386,49 @@ export async function registerConnectPartner(
     await connectAudit(tx, id, actorId, "OWNER", "PARTNER_REGISTERED_FREE", {
       businessId: input.businessId,
       feeMinor: 0,
+      participationMode: created.participationMode,
     });
     return { id, created: true };
   });
 }
+/**
+ * The owner changes how the business takes part. Owner only (staff and strangers get 404), under
+ * a row lock with the revision the owner saw. A suspended, revoked or rejected partner cannot
+ * change mode. Nothing is deleted: offers, agreements, referrals, orders and commission records
+ * stay; what the new mode excludes simply stops being offered (enforced where offers are served).
+ */
+export async function changeConnectParticipationMode(
+  actorId: string,
+  market: ConnectMarket,
+  partnerId: string,
+  raw: unknown,
+) {
+  const input = ConnectParticipationModeInput.parse(raw);
+  return db.transaction(async (tx) => {
+    const access = await connectAccess(actorId, market.id, partnerId, "OWNER", tx, true);
+    const partner = access.partner;
+    if (["SUSPENDED", "REVOKED", "REJECTED"].includes(partner.status))
+      throw connectError(409, "PARTNER_NOT_ACTIVE", "لا يمكن تغيير وضع المشاركة لحساب موقوف أو ملغى أو مرفوض.");
+    if (partner.revision !== input.expectedRevision)
+      throw connectError(409, "STALE_REVISION", "تغيّر الحساب منذ آخر عرض؛ حدّث الصفحة ثم أعد المحاولة.");
+    if (partner.participationMode === input.mode)
+      return { id: partner.id, participationMode: partner.participationMode, revision: partner.revision, changed: false };
+    const changedAt = new Date();
+    const [updated] = await tx
+      .update(connectPartners)
+      .set({ participationMode: input.mode, participationModeChangedAt: changedAt, revision: partner.revision + 1, updatedAt: changedAt })
+      .where(and(eq(connectPartners.id, partner.id), eq(connectPartners.revision, partner.revision)))
+      .returning();
+    if (!updated) throw connectError(409, "STALE_REVISION", "تغيّر الحساب منذ آخر عرض؛ حدّث الصفحة ثم أعد المحاولة.");
+    await connectAudit(tx, partner.id, actorId, "OWNER", "PARTICIPATION_MODE_CHANGED", {
+      from: partner.participationMode,
+      to: input.mode,
+      revision: updated.revision,
+    });
+    return { id: updated.id, participationMode: updated.participationMode, revision: updated.revision, changed: true };
+  });
+}
+
 export async function createConnectSite(
   actorId: string,
   market: ConnectMarket,
@@ -1458,6 +1557,8 @@ export async function discoverConnectCatalog(
       and(
         eq(connectPartners.marketId, market.id),
         eq(connectPartners.status, "APPROVED"),
+        // Only merchants whose mode includes buying on their own website are offered externally.
+        inArray(connectPartners.participationMode, [...CONNECT_EXTERNAL_PURCHASE_MODES]),
         eq(businessProfiles.verificationStatus, "VERIFIED"),
         eq(users.status, "ACTIVE"),
         eq(connectIntegrations.status, "APPROVED"),
@@ -1561,6 +1662,9 @@ export async function approvedConnectOffer(
   );
   if (ready.partner.marketId !== market.id)
     throw connectError(404, "OFFER_UNAVAILABLE", "العرض غير متاح في هذا السوق");
+  // Re-checked at click time: a mode change away from website purchases closes old cards too.
+  if (!CONNECT_EXTERNAL_PURCHASE_MODES.includes(ready.partner.participationMode as ConnectParticipationMode))
+    throw connectError(404, "OFFER_UNAVAILABLE", "التاجر لا يستقبل مشتريات خارجية حاليًا");
   const category = await categoryById(offer.categoryId, tx);
   if (!category || !category.isActive || categoryIsRestricted(market, category))
     throw connectError(404, "OFFER_UNAVAILABLE", "العرض غير متاح");

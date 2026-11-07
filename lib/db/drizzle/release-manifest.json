@@ -238,5 +238,9 @@
   {
     "tag": "0059_connect_readonly_team",
     "sha256": "f47049420d4b63b77c07c88e3866ad95f173616b3ce48aa3d8a355b426fb556d"
+  },
+  {
+    "tag": "0060_connect_participation_mode",
+    "sha256": "5691852fafdc9a2410f4cf08139d6b6207b7192043ad948c71e273d60510a0d8"
   }
 ]

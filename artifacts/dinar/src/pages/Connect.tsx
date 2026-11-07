@@ -3,7 +3,7 @@ import { Link } from "wouter";
 import { api } from "@/account/Account";
 import { Button } from "@/ui/Button";
 import { ConnectAgreements } from "@/features/ConnectAgreements";
-import { CONNECT_MCP_CATALOG_TOOL, CONNECT_MCP_CATALOG_INPUT_SHA256, ConnectCatalogReceiptSchema } from "@workspace/api-zod/connect-platform";
+import { CONNECT_MCP_CATALOG_TOOL, CONNECT_MCP_CATALOG_INPUT_SHA256, ConnectCatalogReceiptSchema, CONNECT_PARTICIPATION_MODES, CONNECT_PARTICIPATION_MODE_LABELS, type ConnectParticipationMode } from "@workspace/api-zod/connect-platform";
 import { ConnectOAuthControls } from "@/features/ConnectOAuthControls";
 import { ConnectTeam, ConnectReadOnlyCatalog } from "@/features/ConnectTeam";
 import { ConnectDiagnosticsPanel } from "@/features/ConnectDiagnostics";
@@ -30,7 +30,61 @@ type Partner = {
   businessVerificationStatus: string;
   sites: Site[];
   integrations: Integration[];
+  participationMode?: ConnectParticipationMode;
+  participationModeChangedAt?: string | null;
+  participation?: {
+    externalPurchase: Capability;
+    internalSale: Capability;
+    nativeCatalogCheckout: Capability;
+  };
 };
+type Capability = { included?: boolean; enabled: boolean; requirements: string[] };
+/** What each mode means, in the merchant's words; the server decides what is actually enabled. */
+const MODE_EXPLANATIONS: Record<ConnectParticipationMode, string> = {
+  SELL_INSIDE_DINAR:
+    "تعرض منتجاتك كإعلانات دينار، ويتم الطلب والدفع داخل دينار (الدفع حاليًا محاكاة). يتطلب توثيق النشاط واعتماد الحساب.",
+  BUY_ON_MERCHANT_WEBSITE:
+    "تظهر منتجات موقعك في دينار، ويُكمل المشتري الشراء في موقعك. يتطلب إثبات ملكية الموقع وموصل كتالوج معتمد. النقرة ليست بيعًا ولا تُحتسب عمولة إلا باتفاق مقبول وتحويل موثّق.",
+  HYBRID:
+    "تجمع الطريقتين: إعلانات داخل دينار وعروض تُشترى من موقعك. لكل طريقة متطلباتها، وتُفعّل كل واحدة وحدها عند استيفائها.",
+};
+function ModeChoice({ value, onChange, name }: { value: ConnectParticipationMode; onChange: (mode: ConnectParticipationMode) => void; name: string }) {
+  return (
+    <fieldset className="space-y-2" data-testid={`connect-mode-choice-${name}`}>
+      <legend className="font-semibold">طريقة المشاركة في DINAR Connect</legend>
+      {CONNECT_PARTICIPATION_MODES.map((mode) => (
+        <label key={mode} className="flex min-h-11 cursor-pointer items-start gap-3 rounded-lg border p-3 has-[:checked]:border-primary">
+          <input
+            type="radio"
+            name={name}
+            value={mode}
+            checked={value === mode}
+            onChange={() => onChange(mode)}
+            className="mt-1 size-4 shrink-0"
+            data-testid={`connect-mode-${mode}`}
+          />
+          <span className="min-w-0">
+            <span className="block font-medium">{CONNECT_PARTICIPATION_MODE_LABELS[mode]}</span>
+            <span className="block text-sm text-muted-foreground">{MODE_EXPLANATIONS[mode]}</span>
+          </span>
+        </label>
+      ))}
+    </fieldset>
+  );
+}
+function CapabilityLine({ label, capability, testId }: { label: string; capability: Capability; testId: string }) {
+  return (
+    <li data-testid={testId} data-enabled={capability.enabled ? "true" : "false"} className="space-y-1">
+      <span className="font-medium">{label}: </span>
+      <span>{capability.enabled ? "مفعّل" : capability.included === false ? "غير مشمول في وضعك" : "غير مفعّل بعد"}</span>
+      {!capability.enabled && capability.requirements.length > 0 && (
+        <ul className="list-disc ps-5 text-sm text-muted-foreground">
+          {capability.requirements.map((item) => <li key={item}>{item}</li>)}
+        </ul>
+      )}
+    </li>
+  );
+}
 const field =
   "min-h-11 w-full rounded-lg border bg-background px-3 py-2 text-foreground focus-visible:outline-2 focus-visible:outline-offset-2";
 export default function ConnectPage() {
@@ -39,6 +93,8 @@ export default function ConnectPage() {
       { id: string; displayName: string }[]
     >([]),
     [selected, setSelected] = useState("");
+  const [registrationMode, setRegistrationMode] = useState<ConnectParticipationMode>("BUY_ON_MERCHANT_WEBSITE");
+  const [modeDraft, setModeDraft] = useState<ConnectParticipationMode | null>(null);
   const [integrationKind, setIntegrationKind] = useState<"API" | "FEED" | "OAUTH" | "MCP" | "WEBSITE">("API"), [endpoint, setEndpoint] = useState("");
   const [websiteCategoryId, setWebsiteCategoryId] = useState(""), [categories, setCategories] = useState<{ id: string; label: string }[]>([]);
   const [mcpOAuth, setMcpOAuth] = useState(false);
@@ -129,7 +185,9 @@ export default function ConnectPage() {
             Connect هوية تجارية ثانية.
           </p>
         ) : (
-          businesses.map((b) => (
+          <>
+          <ModeChoice name="register" value={registrationMode} onChange={setRegistrationMode} />
+          {businesses.map((b) => (
             <div key={b.id} className="flex flex-wrap items-center gap-3">
               <span>{b.displayName}</span>
               <Button
@@ -139,6 +197,7 @@ export default function ConnectPage() {
                   void run(async () => {
                     const p = await api("/connect/partners", "POST", {
                       businessId: b.id,
+                      participationMode: registrationMode,
                     });
                     setSelected(p.id);
                   }, "تم حفظ التسجيل المجاني؛ النشر يتطلب التوثيق والمراجعة.")
@@ -148,7 +207,8 @@ export default function ConnectPage() {
                 تسجيل مجاني في Connect
               </Button>
             </div>
-          ))
+          ))}
+          </>
         )}
       </section>
       {partners.length > 0 && (
@@ -187,6 +247,40 @@ export default function ConnectPage() {
             key={`report-${partner.id}`}
             partnerId={partner.id}
           />
+          <section className="space-y-3 rounded-xl border p-4" data-testid="connect-mode-panel">
+            <h2 className="font-bold">وضع المشاركة</h2>
+            <p data-testid="connect-mode-current" data-mode={partner.participationMode}>
+              الوضع الحالي: {partner.participationMode ? CONNECT_PARTICIPATION_MODE_LABELS[partner.participationMode] : "غير معروف"}
+            </p>
+            {partner.participation && (
+              <ul className="space-y-2" aria-label="ما يتيحه وضعك الآن">
+                <CapabilityLine label="الشراء من موقعك" capability={partner.participation.externalPurchase} testId="connect-cap-external" />
+                <CapabilityLine label="البيع داخل دينار" capability={partner.participation.internalSale} testId="connect-cap-internal" />
+                <CapabilityLine label="الدفع داخل دينار لمنتجات موقعك" capability={partner.participation.nativeCatalogCheckout} testId="connect-cap-native" />
+              </ul>
+            )}
+            {["SUSPENDED", "REVOKED", "REJECTED"].includes(partner.status) ? (
+              <p role="status">لا يمكن تغيير وضع المشاركة لحساب موقوف أو ملغى أو مرفوض.</p>
+            ) : (
+              <form
+                className="space-y-3"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  const mode = modeDraft ?? partner.participationMode;
+                  if (!mode) return;
+                  void run(
+                    () => api(`/connect/partners/${partner.id}/participation-mode`, "POST", { mode, expectedRevision: partner.revision }),
+                    "حُفظ وضع المشاركة. لم يُحذف أي طلب أو اتفاق أو التزام مالي.",
+                  ).then(() => setModeDraft(null));
+                }}
+              >
+                <ModeChoice name={`change-${partner.id}`} value={modeDraft ?? partner.participationMode ?? "BUY_ON_MERCHANT_WEBSITE"} onChange={setModeDraft} />
+                <Button type="submit" disabled={busy || !modeDraft || modeDraft === partner.participationMode} data-testid="connect-mode-save">
+                  حفظ وضع المشاركة
+                </Button>
+              </form>
+            )}
+          </section>
           <section className="space-y-3 rounded-xl border p-4">
             <h2 className="font-bold">حالة الحساب</h2>
             <p data-testid="connect-partner-status">

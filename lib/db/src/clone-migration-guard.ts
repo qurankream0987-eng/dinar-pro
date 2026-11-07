@@ -66,6 +66,7 @@ export const REVIEWED_PENDING_MIGRATIONS: ReadonlyArray<{ tag: string; sha256: s
   { tag: "0057_dinar_connect", sha256: "4376a15434f865f4faf4a751df90f8a2de8dd5d1fe0d0e9b98c0ccbc637dcebd" },
   { tag: "0058_connect_projection_hardening", sha256: "3ee1e9ec70af16c93fc2da80f2acac5cde30da5d6abc9e337b932716097aa864" },
   { tag: "0059_connect_readonly_team", sha256: "f47049420d4b63b77c07c88e3866ad95f173616b3ce48aa3d8a355b426fb556d" },
+  { tag: "0060_connect_participation_mode", sha256: "5691852fafdc9a2410f4cf08139d6b6207b7192043ad948c71e273d60510a0d8" },
 ];
 export const EXPECTED_JOURNAL_ENTRIES =
   EXPECTED_BASELINE_MIGRATIONS + REVIEWED_PENDING_MIGRATIONS.length;

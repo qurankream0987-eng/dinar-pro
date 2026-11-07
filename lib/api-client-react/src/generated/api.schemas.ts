@@ -5015,9 +5015,19 @@ export interface ConnectOutboundPrepared {
   internalOrderCreated: false;
 }
 
+export type ConnectPartnerRegistrationInputParticipationMode = typeof ConnectPartnerRegistrationInputParticipationMode[keyof typeof ConnectPartnerRegistrationInputParticipationMode];
+
+
+export const ConnectPartnerRegistrationInputParticipationMode = {
+  SELL_INSIDE_DINAR: 'SELL_INSIDE_DINAR',
+  BUY_ON_MERCHANT_WEBSITE: 'BUY_ON_MERCHANT_WEBSITE',
+  HYBRID: 'HYBRID',
+} as const;
+
 export interface ConnectPartnerRegistrationInput {
   /** @pattern ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$ */
   businessId: string;
+  participationMode?: ConnectPartnerRegistrationInputParticipationMode;
 }
 
 export interface ConnectSiteRegistrationInput {
@@ -6246,6 +6256,24 @@ export interface ConnectDiagnostics {
      * @maxLength 700
      */
   disclosure: string;
+}
+
+export type ConnectParticipationModeInputMode = typeof ConnectParticipationModeInputMode[keyof typeof ConnectParticipationModeInputMode];
+
+
+export const ConnectParticipationModeInputMode = {
+  SELL_INSIDE_DINAR: 'SELL_INSIDE_DINAR',
+  BUY_ON_MERCHANT_WEBSITE: 'BUY_ON_MERCHANT_WEBSITE',
+  HYBRID: 'HYBRID',
+} as const;
+
+export interface ConnectParticipationModeInput {
+  mode: ConnectParticipationModeInputMode;
+  /**
+     * @maximum 9007199254740991
+     * @exclusiveMinimum 0
+     */
+  expectedRevision: number;
 }
 
 export type GetListingsParams = {
