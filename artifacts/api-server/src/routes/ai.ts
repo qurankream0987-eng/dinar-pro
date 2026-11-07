@@ -1,3 +1,5 @@
+import { isVisualSearchPath, loadVisualSearchImage, MAX_VISUAL_SEARCH_IMAGES } from "../lib/visual-search-images";
+import { createVisualAnalyzer, rankVisualMatches, visualFallbackTerms, visualSearchTerms, type VisualAnalysis, type VisualAnalyzer } from "../ai/visual-search";
 import { UniversalCardsPayloadSchema } from "@workspace/api-zod/connect";
 import type { DomainSearchProvider } from "../connect/domains";
 import {
@@ -2042,7 +2044,14 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
   const message = input.message.trim();
   if (!message) throw fail(400, "أدخل رسالة قبل الإرسال");
   const imageObjectPaths = input.imageObjectPaths ?? [];
-  await validateListingPhotoPathsForOwner(imageObjectPaths, req.actor!.id);
+  // A buyer's private search photo and a seller's listing photo are different things: the path
+  // prefix decides, and one message never mixes them.
+  const visualPaths = imageObjectPaths.filter(isVisualSearchPath);
+  if (visualPaths.length && visualPaths.length !== imageObjectPaths.length)
+    throw fail(400, "لا يمكن خلط صورة البحث بصور الإعلان في رسالة واحدة.");
+  if (visualPaths.length > MAX_VISUAL_SEARCH_IMAGES) throw fail(400, "أرسل صورة واحدة للبحث في كل رسالة.");
+  const visualImage = visualPaths.length ? await loadVisualSearchImage(visualPaths[0]!, req.actor!.id) : undefined;
+  if (!visualImage) await validateListingPhotoPathsForOwner(imageObjectPaths, req.actor!.id);
   if ((input.location === undefined) !== (input.locationRequestId === undefined))
     throw fail(400, "بيانات الموقع غير صالحة");
   if (input.location && imageObjectPaths.length)
@@ -2123,18 +2132,39 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
   send(res, { type: "status", stage: "understanding" });
 
   let toolName = "unknown";
+  // Photo search reuses the one conversation runtime: the photo becomes search words, the
+  // canonical search (and eligible Connect providers) finds real listings, and labels are
+  // computed from those persisted listings. No model text becomes an offer.
+  let runtimeMessage = message;
+  let visualAnalysis: VisualAnalysis | undefined;
+  let visualNotice = "";
+  if (visualImage) {
+    const analyzer = (req.app.locals.visualAnalyzer as VisualAnalyzer | undefined) ?? createVisualAnalyzer();
+    const analyzed = await analyzer.analyze(visualImage, message);
+    if (analyzed.status === "ANALYZED" && analyzed.analysis.isProduct && visualSearchTerms(analyzed.analysis)) {
+      visualAnalysis = analyzed.analysis;
+      // «…عند الشركاء»: the same canonical Connect partner search, which honours participation modes.
+      runtimeMessage = /(?:لدى|عند)\s+الشركاء|الشركاء|connect/iu.test(message)
+        ? `ابحث لدى الشركاء عن ${visualSearchTerms(analyzed.analysis).slice(0, 110)}`
+        : `ابحث عن ${visualSearchTerms(analyzed.analysis)}`;
+      visualNotice = `من الصورة فهمت: ${[analyzed.analysis.brand, analyzed.analysis.model, analyzed.analysis.category, analyzed.analysis.color].filter(Boolean).join(" ")}. التطابق محسوب من بيانات العروض المنشورة.`;
+    } else
+      visualNotice = analyzed.status === "ANALYZED"
+        ? "لا تبدو الصورة لمنتج. التقط صورة للمنتج نفسه أو صفه بكلمات."
+        : "تعذر تحليل الصورة الآن، فلم أستنتج منها شيئًا. صف المنتج بكلمات (النوع، الماركة، اللون) وسأبحث لك.";
+  }
   try {
     // Receipts are the ledger rows this turn opened or settled (stamped through the turn
     // context), read by the server; no handler claims them.
-    const execution = await runInTurn(userMessageId, () => executeAiConversationTurn(
+    const runTurn = (turnMessage: string) => runInTurn(userMessageId, () => executeAiConversationTurn(
       {
         conversationId: conversation.id,
         currentMessageId: userMessageId,
         modelToolContinuation,
-        message,
+        message: turnMessage,
         market,
           actorId: req.actor!.id,
-        imageObjectPaths,
+        imageObjectPaths: visualImage ? [] : imageObjectPaths,
         reasoningEffort: input.reasoningEffort,
         location: input.location,
         locationRequestId: input.locationRequestId,
@@ -2169,6 +2199,11 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
         },
       },
     ));
+    let execution = await runTurn(runtimeMessage);
+    // Photo search: when the distinctive words find nothing, one broader read-only search.
+    const broader = visualAnalysis ? visualFallbackTerms(visualAnalysis) : undefined;
+    if (broader && execution.result.kind === "SEARCH" && !execution.result.listings.length)
+      execution = await runTurn(`ابحث عن ${broader}`);
     toolName = execution.tool;
     const actionReceipts = await receiptsForTurn(conversation.id, req.actor!.id, userMessageId);
     execution.result = enforceModelAuthority(execution.result, actionReceipts);
@@ -2179,7 +2214,8 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
     };
     const withPlanNotice = (text: string) => {
       const notice = execution.taskPlan ? taskPlanNotice(execution.taskPlan) : "";
-      return notice ? `${text}\n\n${notice}` : text;
+      const withVisual = visualNotice ? `${visualNotice}\n\n${text}` : text;
+      return notice ? `${withVisual}\n\n${notice}` : withVisual;
     };
 
     const toolResult = execution.result;
@@ -2407,6 +2443,9 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
         toolResult.query.sponsoredCampaigns = Object.fromEntries(Object.entries(sponsoredCampaigns).filter(([id]) => paidIds.includes(id)));
       }
     }
+    if (visualAnalysis && toolResult.kind === "SEARCH")
+      toolResult.listings = rankVisualMatches(visualAnalysis, toolResult.listings)
+        .map(({ listing, match }) => Object.assign(listing, { visualMatch: match }));
     if (toolResult.kind === "SEARCH" || toolResult.kind === "RESULTS" || toolResult.kind === "RESOURCE")
       toolResult.listings = await decoratePaidCards(toolResult.listings, toolResult.query, { actorId: req.actor!.id, marketId: market.id, resultSetId });
     const resourceIds = toolResult.listings.map((listing) => listing.id);

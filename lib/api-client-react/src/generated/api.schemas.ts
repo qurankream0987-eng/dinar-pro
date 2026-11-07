@@ -644,6 +644,18 @@ export type BusinessStorefrontProfile = {
 };
 
 /**
+ * Set only by the server for a photo search; computed from the persisted listing, never from model text.
+ */
+export type ListingVisualMatch = typeof ListingVisualMatch[keyof typeof ListingVisualMatch];
+
+
+export const ListingVisualMatch = {
+  EXACT: 'EXACT',
+  PROBABLE: 'PROBABLE',
+  SIMILAR: 'SIMILAR',
+} as const;
+
+/**
  * Paid tier of a sponsored slot; VIP is shown together with «ممول» and never means a verified seller.
  */
 export type ListingSponsoredTier = typeof ListingSponsoredTier[keyof typeof ListingSponsoredTier];
@@ -723,6 +735,8 @@ export interface Listing {
   categoryId?: string;
   /** Set only by the server for a paid placement; always rendered with a visible «إعلان ممول» label. */
   isSponsored?: boolean;
+  /** Set only by the server for a photo search; computed from the persisted listing, never from model text. */
+  visualMatch?: ListingVisualMatch;
   /** Paid tier of a sponsored slot; VIP is shown together with «ممول» and never means a verified seller. */
   sponsoredTier?: ListingSponsoredTier;
   /**

@@ -15,7 +15,7 @@ import {
 } from "../src/lib/visual-search-images";
 import { isOwnedListingPhotoPath } from "../src/lib/listing-photos";
 import { ObjectNotFoundError } from "../src/lib/objectStorage";
-import { classifyVisualMatch, createVisualAnalyzer, rankVisualMatches, visualSearchTerms, type VisualAnalysis } from "../src/ai/visual-search";
+import { classifyVisualMatch, createVisualAnalyzer, rankVisualMatches, visualFallbackTerms, visualSearchTerms, type VisualAnalysis } from "../src/ai/visual-search";
 
 const JPEG = Buffer.concat([Buffer.from([0xff, 0xd8, 0xff, 0xe0]), Buffer.alloc(60, 1)]);
 type Stored = { bytes: Buffer; contentType: string; owner?: string; visibility?: string };
@@ -131,5 +131,7 @@ test("VS-07 match labels are deterministic from persisted listings, not model te
   assert.equal(classifyVisualMatch({ ...analysis, confidence: 0.3 }, { title: "Apple iPhone 13", description: "" }), "PROBABLE", "low confidence never claims EXACT");
   const ranked = rankVisualMatches(analysis, [{ title: "غطاء", description: "" }, { title: "Apple iPhone 13", description: "" }]);
   assert.deepEqual(ranked.map((r) => r.match), ["EXACT", "SIMILAR"]);
-  assert.equal(visualSearchTerms(analysis, "مستعمل"), "مستعمل Apple iPhone 13 هواتف ايفون هاتف");
+  assert.equal(visualSearchTerms(analysis), "Apple iPhone 13");
+  assert.equal(visualSearchTerms({ ...analysis, brand: undefined, model: undefined }), "هواتف ايفون هاتف");
+  assert.equal(visualFallbackTerms(analysis), "Apple ايفون");
 });

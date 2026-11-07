@@ -131,12 +131,22 @@ export function createVisualAnalyzer(
   };
 }
 
-/** Search words from the analysis plus the buyer's own words; the buyer's words come first. */
-export function visualSearchTerms(analysis: VisualAnalysis, text?: string): string {
-  const parts = [text, analysis.brand, analysis.model, analysis.category, ...analysis.keywords]
-    .map((value) => (value ?? "").trim())
-    .filter(Boolean);
-  return [...new Set(parts)].join(" ").slice(0, 200);
+/**
+ * Search words from the analysis. The most distinctive words only: brand + model when the photo
+ * shows them, otherwise the category and the first keywords. Piling every word on narrows the
+ * canonical search to nothing; labels then rank what it finds.
+ */
+export function visualSearchTerms(analysis: VisualAnalysis): string {
+  const identity = [analysis.brand, analysis.model].map((value) => (value ?? "").trim()).filter(Boolean);
+  const parts = identity.length ? identity : [analysis.category, ...analysis.keywords.slice(0, 2)].map((value) => (value ?? "").trim()).filter(Boolean);
+  return [...new Set(parts)].join(" ").slice(0, 120);
+}
+
+/** A broader second attempt when the distinctive words find nothing. */
+export function visualFallbackTerms(analysis: VisualAnalysis): string | undefined {
+  const broad = [analysis.brand ?? analysis.category, ...analysis.keywords.slice(0, 1)].map((value) => (value ?? "").trim()).filter(Boolean);
+  const terms = [...new Set(broad)].join(" ").slice(0, 120);
+  return terms && terms !== visualSearchTerms(analysis) ? terms : undefined;
 }
 
 const tokens = (value: string) => new Set(normalizeMarketplaceText(value).split(/\s+/u).filter((word) => word.length > 1));

@@ -138,7 +138,9 @@ router.get("/storage/objects/*objectKey", async (req, res) => {
   const objectKey = Array.isArray(raw) ? raw.join("/") : raw;
   const isAvatar = objectKey.startsWith("profile-avatars/");
   const isListingPhoto = objectKey.startsWith("listing-photos/");
-  if (!isAvatar && !isListingPhoto) {
+  // A buyer's search photo is shown to its owner only; it is never public.
+  const isVisualSearch = objectKey.startsWith("visual-search/");
+  if (!isAvatar && !isListingPhoto && !isVisualSearch) {
     res.status(404).json({ error: "الصورة غير موجودة" });
     return;
   }
@@ -156,7 +158,9 @@ router.get("/storage/objects/*objectKey", async (req, res) => {
       objectKey.startsWith(`listing-photos/${req.actor!.id}/`);
     const publishedListingPhoto =
       isListingPhoto && (await isPublishedListingPhoto(`/objects/${objectKey}`));
-    const authorized = isListingPhoto
+    const authorized = isVisualSearch
+      ? Boolean(req.actor?.id) && objectKey.startsWith(`visual-search/${req.actor!.id}/`) && canRead
+      : isListingPhoto
       ? ownerPath
         ? canRead
         : publishedListingPhoto

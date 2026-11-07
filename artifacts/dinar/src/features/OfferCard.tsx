@@ -83,6 +83,16 @@ export function OfferCard({
               إعلان ممول
             </span>
           )}
+          {offer.visualMatch && (
+            <span
+              data-testid={`label-visual-match-${offer.id}`}
+              data-match={offer.visualMatch}
+              className="mb-1 inline-flex w-fit items-center rounded-full bg-muted px-2 py-0.5 text-2xs font-semibold text-foreground"
+              title="محسوب من بيانات العرض المنشورة، لا من وصف الصورة وحده"
+            >
+              {offer.visualMatch === "EXACT" ? "مطابق للصورة" : offer.visualMatch === "PROBABLE" ? "مطابق محتمل" : "منتج مشابه"}
+            </span>
+          )}
           {offer.fulfilmentType === "SERVICE" && (
             <span
               data-testid={`label-service-${offer.id}`}
@@ -188,6 +198,16 @@ export function OfferCard({
             title="ظهر هذا العرض في موضع مدفوع لأنه يطابق بحثك"
           >
             إعلان ممول
+          </span>
+        )}
+          {offer.visualMatch && (
+          <span
+            data-testid={`label-visual-match-${offer.id}`}
+            data-match={offer.visualMatch}
+            className="mb-1 inline-flex w-fit items-center rounded-full bg-muted px-2 py-0.5 text-2xs font-semibold text-foreground"
+            title="محسوب من بيانات العرض المنشورة، لا من وصف الصورة وحده"
+          >
+            {offer.visualMatch === "EXACT" ? "مطابق للصورة" : offer.visualMatch === "PROBABLE" ? "مطابق محتمل" : "منتج مشابه"}
           </span>
         )}
         <h3 className="line-clamp-2 min-h-[44px] text-base font-semibold leading-[22px] text-foreground">

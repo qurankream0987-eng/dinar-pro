@@ -19,7 +19,8 @@ import type {
 } from "@/features/ai/conversation-storage";
 import { ChatComposer, type ReasoningEffort } from "@/features/ai/ChatComposer";
 import { publishCardSync, useCardSync } from "@/features/ai/card-sync";
-import { uploadListingPhoto } from "@/features/listing-photo-upload";
+import { uploadListingPhoto, uploadVisualSearchPhoto } from "@/features/listing-photo-upload";
+import { DEFAULT_PHOTO_SEARCH_MESSAGE, isSearchPhoto } from "@/features/ai/visual-search-photo";
 import {
   MessageBubble,
   SearchRefinements,
@@ -1002,7 +1003,7 @@ export default function AiPage() {
     setShowJumpToBottom(false);
     if (!user) {
       if (photos.length) {
-        setError("سجّل الدخول لرفع صور الإعلان.");
+        setError(photos.some(isSearchPhoto) ? "سجّل الدخول للبحث بصورة." : "سجّل الدخول لرفع صور الإعلان.");
         return;
       }
       if (firstMessage) await guestTurn(firstMessage);
@@ -1189,7 +1190,7 @@ export default function AiPage() {
         for (const file of photos) {
           let objectPath = uploadedPhotoPaths.current.get(file);
           if (!objectPath) {
-            objectPath = await uploadListingPhoto(file);
+            objectPath = await (isSearchPhoto(file) ? uploadVisualSearchPhoto(file) : uploadListingPhoto(file));
             uploadedPhotoPaths.current.set(file, objectPath);
           }
           imageObjectPaths.push(objectPath);
@@ -1366,7 +1367,8 @@ export default function AiPage() {
 
   const submit = async () => {
     const value =
-      draft.trim() || (selectedPhotos.length ? "أريد انشر إعلان" : "");
+      draft.trim() ||
+      (selectedPhotos.some(isSearchPhoto) ? DEFAULT_PHOTO_SEARCH_MESSAGE : selectedPhotos.length ? "أريد انشر إعلان" : "");
     if (!value || streaming || createConversation.isPending || sending.current)
       return;
     if (!activeId) {

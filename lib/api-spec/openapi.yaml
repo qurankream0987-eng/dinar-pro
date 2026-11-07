@@ -4414,6 +4414,10 @@ components:
         isSponsored:
           type: boolean
           description: Set only by the server for a paid placement; always rendered with a visible «إعلان ممول» label.
+        visualMatch:
+          type: string
+          enum: [EXACT, PROBABLE, SIMILAR]
+          description: Set only by the server for a photo search; computed from the persisted listing, never from model text.
         sponsoredTier:
           type: string
           enum: [STANDARD, VIP]
