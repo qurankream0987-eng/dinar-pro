@@ -135,6 +135,30 @@ await test("VST-06 a photo search among partners uses the canonical Connect sear
   assert.doesNotMatch(turn.text, /"visualMatch"/);
 });
 
+await test("VST-07 photo alone, photo with Arabic words, then the conversation continues on the results", async () => {
+  const id = await conversation(buyer);
+  // Photo alone: the client sends its default request; the server needs no buyer words.
+  const alone = await call(`/ai/conversations/${id}/turns`, buyer, { message: "دينار، أريد هذا المنتج", imageObjectPaths: [await upload(buyer, "visual-search")] });
+  assert.equal(alone.response.status, 200, alone.text);
+  assert.ok(alone.text.includes('"visualMatch":"EXACT"'));
+  // Photo with the buyer's own Arabic words.
+  const worded = await call(`/ai/conversations/${id}/turns`, buyer, { message: "شو سعر هذا الجوال؟ بدي واحد بحالة ممتازة", imageObjectPaths: [await upload(buyer, "visual-search")] });
+  assert.equal(worded.response.status, 200, worded.text);
+  assert.match(worded.text, /من الصورة فهمت: iPhone 14 Pro/);
+  assert.ok(worded.text.includes("iPhone 14 Pro بحالة ممتازة"));
+  // Plain text follow-ups act on the same result set, through the same runtime.
+  const cheapest = await call(`/ai/conversations/${id}/turns`, buyer, { message: "رتبها من الأرخص" });
+  assert.equal(cheapest.response.status, 200, cheapest.text);
+  assert.match(cheapest.text, /"type":"complete"/);
+  assert.doesNotMatch(cheapest.text, /من الصورة فهمت/, "a text turn never claims a photo");
+  const first = await call(`/ai/conversations/${id}/turns`, buyer, { message: "افتح الأول" });
+  assert.equal(first.response.status, 200, first.text);
+  assert.ok(first.text.includes("iPhone 14 Pro"), "the follow-up opens the listing the photo search found");
+  const reread = await call(`/ai/conversations/${id}`, buyer);
+  assert.equal(reread.response.status, 200);
+  assert.ok(reread.text.includes('"visualMatch":"EXACT"'), "badges survive later turns and a reload");
+});
+
 server.close();
 await localObjectStorage?.close?.();
 await pool.end();

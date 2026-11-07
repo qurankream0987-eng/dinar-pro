@@ -115,6 +115,18 @@ try {
   await page.locator('[data-testid^="label-visual-match-"]').nth(1).waitFor({ state: "visible", timeout: 60_000 });
   checks.push("a photo chosen from the device is sent with the buyer's message");
 
+  // The conversation continues after photo results, in text, with the badges still in place.
+  await page.reload();
+  await page.locator('[data-testid^="label-visual-match-"]').first().waitFor({ state: "visible", timeout: 45_000 });
+  checks.push("match badges are still on the cards after reloading the conversation");
+  const beforeFollowUp = await page.locator('[data-testid^="message-assistant-"]').count();
+  await page.getByRole("textbox", { name: "رسالتك إلى DINAR AI" }).fill("رتبها من الأرخص");
+  await page.getByRole("button", { name: "إرسال الرسالة" }).click();
+  await page.waitForFunction((count) => document.querySelectorAll('[data-testid^="message-assistant-"]').length > count, beforeFollowUp, { timeout: 60_000 });
+  await page.waitForFunction(() => !document.querySelector('[data-testid^="message-assistant-"]:last-of-type [aria-busy="true"]'), null, { timeout: 60_000 });
+  assert.doesNotMatch(await buyer.latest().innerText(), /من الصورة فهمت/);
+  checks.push("the buyer continues the conversation in text after photo results");
+
   // An unsupported file is refused before any upload.
   await cameraButton.click();
   const [gif] = await Promise.all([page.waitForEvent("filechooser"), page.getByTestId("camera-choose").click()]);
