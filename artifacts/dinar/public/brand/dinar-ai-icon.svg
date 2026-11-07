@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none">
+  <title>DINAR AI</title>
+  <!-- Small-size mark (favicon, 16–32 px): the D and the bubble only; no circuitry or cart. -->
+  <rect width="64" height="64" rx="14" fill="#0B1E46"/>
+  <rect x="13" y="11" width="22" height="42" rx="6" fill="#2E6FD8"/>
+  <path d="M29 11h3a21 21 0 0 1 0 42h-3v-7h3a14 14 0 0 0 0-28h-3Z" fill="#D7AA42"/>
+  <path d="M22 26a6 6 0 0 1 6-6h14a6 6 0 0 1 6 6v5a6 6 0 0 1-6 6H29l-6 5 1-6a6 6 0 0 1-2-5Z" fill="#DDF3FF"/>
+  <g fill="#123B91"><circle cx="29" cy="28.5" r="2"/><circle cx="35" cy="28.5" r="2"/><circle cx="41" cy="28.5" r="2"/></g>
+</svg>

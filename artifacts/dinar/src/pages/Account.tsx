@@ -170,7 +170,7 @@ export function ProfilePage() {
             data-testid="button-profile-avatar"
             disabled={avatarBusy}
             onClick={() => avatarInput.current?.click()}
-            className={`${iconButtonClass("solid")} absolute bottom-0 start-0`}
+            className={`${iconButtonClass("solid")} !absolute bottom-0 start-0`}
           >
             {avatarBusy ? (
               <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-e-transparent" />

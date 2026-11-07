@@ -147,16 +147,13 @@ export function BrandMark({
 }) {
   return (
     <span className={cn("inline-flex items-center gap-2.5", className)}>
-      <DinarMark size={size} alt={wordmark ? "" : "بدينار"} />
+      <DinarMark size={size} alt={wordmark ? "" : "DINAR AI"} />
       {wordmark && (
         <span className="flex flex-col leading-none">
-          <span className="text-lg font-bold text-foreground">بدينار</span>
-          <span
-            className="mt-0.5 text-[10px] font-semibold tracking-[0.2em] text-muted-foreground"
-            dir="ltr"
-          >
-            BDINAR
+          <span className="text-lg font-bold tracking-[0.04em] text-foreground" dir="ltr">
+            DINAR <span className="text-[#8A6312] dark:text-[#E6C372]">AI</span>
           </span>
+          <span className="mt-0.5 text-[11px] font-semibold text-muted-foreground">دينار</span>
         </span>
       )}
     </span>

@@ -483,7 +483,7 @@ export function ImageField({ form, set, errors }: Props) {
                   type="button"
                   aria-label={`حذف الصورة ${index + 1}`}
                   onClick={() => setImages(images.filter((_, i) => i !== index))}
-                  className={`${iconButtonClass("outline")} absolute end-1 top-1`}
+                  className={`${iconButtonClass("outline")} !absolute end-1 top-1`}
                 >
                   <X size={15} aria-hidden />
                 </button>

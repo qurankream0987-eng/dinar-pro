@@ -1,44 +1,35 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" preserveAspectRatio="xMidYMid meet" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" fill="none">
+  <title>DINAR AI</title>
+  <!-- DINAR AI mark: a D whose stem is royal-blue glass with fine circuit traces and whose bowl
+       is gold; inside, a conversation bubble over a small cart (conversation + commerce). -->
   <defs>
-    <linearGradient id="dinar-mark-blue-gradient-2026" x1="100" y1="85" x2="407" y2="420" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#1674C4"/>
-      <stop offset=".42" stop-color="#07559A"/>
-      <stop offset="1" stop-color="#031B35"/>
+    <linearGradient id="dai-stem" x1="104" y1="88" x2="300" y2="424" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7CC4FF"/>
+      <stop offset=".45" stop-color="#2E6FD8"/>
+      <stop offset="1" stop-color="#123B91"/>
     </linearGradient>
-    <linearGradient id="dinar-mark-gold-gradient-2026" x1="92" y1="87" x2="420" y2="424" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#FFE09A"/>
-      <stop offset=".38" stop-color="#F2C45E"/>
-      <stop offset=".72" stop-color="#D79B32"/>
-      <stop offset="1" stop-color="#8F5A13"/>
+    <linearGradient id="dai-gold" x1="256" y1="88" x2="424" y2="424" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F6DC94"/>
+      <stop offset=".5" stop-color="#D7AA42"/>
+      <stop offset="1" stop-color="#A97A1E"/>
     </linearGradient>
-    <clipPath id="dinar-mark-northwest-weave-2026">
-      <path d="M0 0h256v256H0z"/>
-    </clipPath>
+    <linearGradient id="dai-bubble" x1="180" y1="190" x2="350" y2="310" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2F72DA"/>
+      <stop offset="1" stop-color="#123B91"/>
+    </linearGradient>
   </defs>
-
-  <!-- Four angular ribbon turns form one woven mark around an untouched center. -->
-  <g stroke-linejoin="round">
-    <path
-      d="M78 213 198 93c32-32 84-32 116 0l120 120c7 7 7 19 0 26l-21 21L256 108 99 260l-21-21c-7-7-7-19 0-26Z"
-      fill="url(#dinar-mark-gold-gradient-2026)"
-    />
-    <path
-      d="m299 78 120 120c32 32 32 84 0 116L299 434c-7 7-19 7-26 0l-21-21 156-157L256 99l21-21c7-7 19-7 26 0Z"
-      fill="url(#dinar-mark-blue-gradient-2026)"
-    />
-    <path
-      d="m434 299-120 120c-32 32-84 32-116 0L78 299c-7-7-7-19 0-26l21-21 157 156 157-156 21 21c7 7 7 19 0 26Z"
-      fill="url(#dinar-mark-gold-gradient-2026)"
-    />
-    <path
-      d="M213 434 93 314c-32-32-32-84 0-116L213 78c7-7 19-7 26 0l21 21-156 157 156 157-21 21c-7 7-19 7-26 0Z"
-      fill="url(#dinar-mark-blue-gradient-2026)"
-    />
-    <!-- This alternating overpass completes the four-way weave. -->
-    <path
-      d="M78 213 198 93c32-32 84-32 116 0l120 120c7 7 7 19 0 26l-21 21L256 108 99 260l-21-21c-7-7-7-19 0-26Z"
-      fill="url(#dinar-mark-gold-gradient-2026)"
-      clip-path="url(#dinar-mark-northwest-weave-2026)"
-    />
+  <rect x="104" y="88" width="176" height="336" rx="44" fill="url(#dai-stem)"/>
+  <path d="M120 104h120" stroke="#DDF3FF" stroke-opacity=".45" stroke-width="4" stroke-linecap="round"/>
+  <g stroke="#DDF3FF" stroke-opacity=".7" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M128 132h44"/>
+    <path d="M128 158h28l14 14h22"/>
   </g>
+  <g fill="#DDF3FF"><circle cx="180" cy="132" r="8"/><circle cx="200" cy="172" r="8"/></g>
+  <path d="M232 88h24a168 168 0 0 1 0 336h-24v-50h24a118 118 0 0 0 0-236h-24Z" fill="url(#dai-gold)"/>
+  <path d="M180 214a40 40 0 0 1 40-40h104a40 40 0 0 1 40 40v38a40 40 0 0 1-40 40h-98l-34 28 6-32a40 40 0 0 1-18-34Z" fill="url(#dai-bubble)" stroke="#DDF3FF" stroke-opacity=".55" stroke-width="4"/>
+  <g fill="#DDF3FF"><circle cx="230" cy="233" r="12"/><circle cx="272" cy="233" r="12"/><circle cx="314" cy="233" r="12"/></g>
+  <g stroke="url(#dai-gold)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M226 322h20l14 40h58l12-30h-74"/>
+  </g>
+  <g fill="#D7AA42"><circle cx="266" cy="384" r="10"/><circle cx="310" cy="384" r="10"/></g>
 </svg>
