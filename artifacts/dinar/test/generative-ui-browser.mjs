@@ -29,11 +29,16 @@ let failure;
 let browser;
 
 async function restore(page, conversationId) {
-  await page.goto("/");
-  await page.getByTestId("input-ai-composer").waitFor({ timeout: 45_000 });
+  // The open chat saves its current conversation on unload, so a key written while it is mounted
+  // can be overwritten by the reload. Write it where the chat is not mounted, then open the chat,
+  // and prove the requested conversation is the one actually open.
+  await page.goto("/connect");
   await page.evaluate(([key, id]) => localStorage.setItem(key, id), [`dinar-conversation:${userId}:JO`, conversationId]);
   const started = Date.now();
-  await page.reload();
+  await page.goto("/");
+  await page.getByTestId("input-ai-composer").waitFor({ timeout: 45_000 });
+  await page.waitForLoadState("networkidle");
+  assert.equal(await page.evaluate((key) => localStorage.getItem(key), `dinar-conversation:${userId}:JO`), conversationId, "the requested conversation is the one open");
   return started;
 }
 
@@ -81,6 +86,9 @@ try {
   await restore(page, rejectedConversation);
   const carousel = page.locator('[data-testid^="ai-results-carousel-"]').last();
   await carousel.waitFor({ state: "visible", timeout: 45_000 });
+  // Record every element carrying data-layout, so a failure names what actually rendered.
+  const layouts = await page.locator("[data-layout]").evaluateAll((nodes) => nodes.map((node) => ({ tag: node.tagName, cls: node.className, layout: node.getAttribute("data-layout"), testid: node.getAttribute("data-testid"), card: node.closest("[data-testid]")?.getAttribute("data-testid"), text: node.textContent?.slice(0, 80) })));
+  checks.push(`data-layout elements on the rejected-proposal page: ${JSON.stringify(layouts)}`);
   assert.equal(await page.locator("[data-layout]").count(), 0, "no generated layout for a rejected proposal");
   assert.equal(await page.locator('[data-testid^="result-highlight-"]').count(), 0);
   checks.push("a rejected proposal renders the default typed carousel, unchanged");

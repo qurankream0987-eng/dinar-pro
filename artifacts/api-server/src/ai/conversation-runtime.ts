@@ -17,9 +17,11 @@ import {
   foldArabicLetters,
   parseContextualReference,
   parseResultReference,
+  normalizeMarketplaceText,
 } from "./arabic-normalization";
 import {
   clarificationPrompt,
+  EXPLICIT_SEARCH_ACTION,
   hasExplicitMarketplaceSearchIntent,
   interpretMarketplaceTurn,
   needsMarketplaceCategoryContext,
@@ -1080,6 +1082,9 @@ async function executeWithRoutingMode(context: RuntimeContext, options: RuntimeO
     const own = await executeRuntime(context, options);
     if (getModelGatewayCallCount() > before || own.result.kind !== "SEARCH" || own.result.listings.length) return own;
     if (searchTerms(context.message).split(/\s+/u).filter(Boolean).length < 3) return own;
+    // An explicit search («ابحث عن …», «دوّر لي …», «ورني …») that found nothing is answered by
+    // that honest empty result: the model is never asked to stand in for missing listings.
+    if (EXPLICIT_SEARCH_ACTION.test(normalizeMarketplaceText(context.message))) return own;
     const interpreted = await executeRuntime(context, { ...options, modelStage: "ONLY" });
     return interpreted !== NO_MODEL_RESULT && !isSoftMiss(interpreted) ? interpreted : own;
   }

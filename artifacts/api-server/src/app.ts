@@ -121,6 +121,9 @@ const CONTENT_SECURITY_POLICY_DIRECTIVES = [
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
+  // Replit Preview embeds the app in a platform-controlled frame. Keep the allowlist narrow;
+  // X-Frame-Options cannot express it and would override this policy in older browsers.
+  "frame-ancestors 'self' https://replit.com https://*.replit.com https://*.replit.dev",
 ];
 /**
  * Replit Preview embeds the app in a platform-controlled frame, so development keeps that

@@ -70,7 +70,7 @@ export function isVagueRequest(message: string): boolean {
   return words.length > 0 && words.every((word) => VAGUE_WORDS.has(word));
 }
 
-const EXPLICIT_SEARCH_ACTION =
+export const EXPLICIT_SEARCH_ACTION =
   /(?:^|\s)(?:ابحث(?:\s+لي)?|ابحثلي|ادور|دور(?:\s+لي)?|دورلي|فتش|شوف\s+الموجود|فرجني|وريني|ورني|ورينا|راويني|ارني|اعرض|search|find|look\s+for|show\s+me)(?=\s|$)/u;
 const MARKETPLACE_REQUEST_ACTION =
   /(?:^|\s)(?:اريد|ابي|ابغي|احتاج|بدي|ودي|حاب|نفسي|ابغى|عايز|عاوز|محتاج|محتاجه|نبي|نبغى|بدنا)\s/u;
