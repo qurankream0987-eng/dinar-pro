@@ -13,6 +13,7 @@ export function CameraCapture({ onConfirm, onClose }: { onConfirm: (file: File) 
   const video = useRef<HTMLVideoElement>(null);
   const stream = useRef<MediaStream | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
+  const dialog = useRef<HTMLDivElement>(null);
   const [state, setState] = useState<"starting" | "live" | "preview" | "unavailable">("starting");
   const [message, setMessage] = useState("");
   const [shot, setShot] = useState<{ file: File; url: string } | null>(null);
@@ -68,6 +69,23 @@ export function CameraCapture({ onConfirm, onClose }: { onConfirm: (file: File) 
     return () => stop();
   }, [start, stop]);
   useEffect(() => () => { if (shot) URL.revokeObjectURL(shot.url); }, [shot]);
+  // Focus moves into the dialog and stays there until it closes (WCAG 2.4.3 / 2.1.2).
+  useEffect(() => { dialog.current?.focus(); }, []);
+  const trapFocus = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key !== "Tab" || !dialog.current) return;
+    const focusable = [...dialog.current.querySelectorAll<HTMLElement>("button:not(:disabled), [href], input:not([tabindex='-1'])")]
+      .filter((element) => element.offsetParent !== null);
+    if (!focusable.length) return;
+    const first = focusable[0]!;
+    const last = focusable[focusable.length - 1]!;
+    if (event.shiftKey && (document.activeElement === first || document.activeElement === dialog.current)) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  };
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => { if (event.key === "Escape") close(); };
     window.addEventListener("keydown", onKey);
@@ -102,9 +120,9 @@ export function CameraCapture({ onConfirm, onClose }: { onConfirm: (file: File) 
   };
 
   return (
-    <div role="dialog" aria-modal="true" aria-label="البحث بصورة" dir="rtl" data-testid="camera-capture" data-state={state}
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 sm:items-center">
-      <div className="flex max-h-[100dvh] w-full max-w-md flex-col gap-3 rounded-t-2xl bg-background p-4 sm:rounded-2xl">
+    <div ref={dialog} tabIndex={-1} onKeyDown={trapFocus} role="dialog" aria-modal="true" aria-label="البحث بصورة" dir="rtl" data-testid="camera-capture" data-state={state}
+      className="dinar-camera-backdrop fixed inset-0 z-50 flex items-end justify-center bg-[#07122b]/70 outline-none backdrop-blur-sm sm:items-center">
+      <div className="dinar-camera-sheet flex max-h-[100dvh] w-full max-w-md flex-col gap-3 rounded-t-[28px] bg-background p-4 pb-[max(16px,env(safe-area-inset-bottom))] shadow-2xl sm:rounded-[24px]">
         <div className="flex items-center justify-between">
           <h2 className="text-base font-semibold">ابحث بصورة</h2>
           <button type="button" aria-label="إلغاء" data-testid="camera-cancel" onClick={close} className={iconButtonClass("ghost")}><X size={18} aria-hidden /></button>

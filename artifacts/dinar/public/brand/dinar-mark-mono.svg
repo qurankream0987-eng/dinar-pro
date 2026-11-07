@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" fill="none">
+  <title>DINAR AI</title>
+  <!-- Monochrome variant (high-contrast / print): one ink, shapes only. -->
+  <g fill="currentColor">
+    <rect x="104" y="88" width="176" height="336" rx="44" opacity=".85"/>
+    <path d="M232 88h24a168 168 0 0 1 0 336h-24v-50h24a118 118 0 0 0 0-236h-24Z"/>
+  </g>
+  <path d="M180 214a40 40 0 0 1 40-40h104a40 40 0 0 1 40 40v38a40 40 0 0 1-40 40h-98l-34 28 6-32a40 40 0 0 1-18-34Z" fill="#fff"/>
+  <g fill="currentColor"><circle cx="230" cy="233" r="12"/><circle cx="272" cy="233" r="12"/><circle cx="314" cy="233" r="12"/></g>
+</svg>

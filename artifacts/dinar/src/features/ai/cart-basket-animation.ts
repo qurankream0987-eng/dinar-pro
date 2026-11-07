@@ -92,28 +92,35 @@ export function animateListingToBasket(
   }
   announce("dinar:cart-flight-start", { left: from.left, top: from.top });
 
-  const animation = flight.animate(
-    [
-      { transform: "translate(0px, 0px) scale(1)", opacity: 1, offset: 0 },
-      {
-        transform: `translate(${dx * 0.55}px, ${dy * 0.45 - Math.min(48, Math.abs(dy) * 0.15)}px) scale(${(1 + arrivalScale) / 2})`,
-        opacity: 0.92,
-        offset: 0.55,
-      },
-      {
-        transform: `translate(${dx}px, ${dy}px) scale(${arrivalScale})`,
-        opacity: 0,
-        offset: 1,
-      },
-    ],
-    {
-      duration: 620,
-      easing: "cubic-bezier(.22,.61,.36,1)",
-      fill: "forwards",
-    },
-  );
+  // A basketball shot: a quadratic arc whose apex sits above both ends, sampled into keyframes
+  // so the browser interpolates transforms only (no layout work during the flight).
+  const lift = Math.min(160, 56 + Math.abs(dx) * 0.22);
+  const control = { x: dx * 0.5, y: Math.min(0, dy) - lift };
+  const frames: Keyframe[] = [];
+  const steps = 10;
+  for (let index = 0; index <= steps; index++) {
+    const t = index / steps;
+    const x = 2 * (1 - t) * t * control.x + t * t * dx;
+    const y = 2 * (1 - t) * t * control.y + t * t * dy;
+    const scale = 1 + (arrivalScale - 1) * t;
+    frames.push({
+      transform: `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) scale(${scale.toFixed(3)})`,
+      opacity: t < 0.8 ? 1 : 1 - (t - 0.8) / 0.2,
+      offset: t,
+    });
+  }
+  const animation = flight.animate(frames, {
+    duration: 620,
+    easing: "cubic-bezier(.33,.0,.67,1)",
+    fill: "forwards",
+  });
   const finish = () => {
     flight.remove();
+    // The basket "catches" the product: a short scale/tilt on the real cart target.
+    target.classList.remove("dinar-basket-catch");
+    void target.offsetWidth; // restart the animation for consecutive adds
+    target.classList.add("dinar-basket-catch");
+    window.setTimeout(() => target.classList.remove("dinar-basket-catch"), 420);
     announce("dinar:cart-flight-end", {});
   };
   animation.finished.then(finish, finish);

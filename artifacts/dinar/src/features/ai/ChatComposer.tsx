@@ -1,7 +1,8 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { iconButtonClass } from "@/ui/Button";
 import { ArrowUp, Camera, LoaderCircle, Mic, MicOff, Plus, Square, X } from "lucide-react";
-import { CameraCapture } from "./CameraCapture";
+// The camera is loaded on first use; it is not part of the chat's initial bundle.
+const CameraCapture = lazy(() => import("./CameraCapture").then((module) => ({ default: module.CameraCapture })));
 import { isSearchPhoto, markSearchPhoto } from "./visual-search-photo";
 import { textDirection } from "./rich-text";
 import { transcribeAiVoiceRecording } from "./ai-api";
@@ -36,6 +37,7 @@ export function ChatComposer({
 }) {
   const input = useRef<HTMLTextAreaElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
+  const cameraButton = useRef<HTMLButtonElement>(null);
   const recorder = useRef<MediaRecorder | null>(null);
   const mediaStream = useRef<MediaStream | null>(null);
   const audioChunks = useRef<Blob[]>([]);
@@ -204,8 +206,13 @@ export function ChatComposer({
   return (
     <>
     {cameraOpen && (
+      <Suspense fallback={null}>
       <CameraCapture
-        onClose={() => setCameraOpen(false)}
+        onClose={() => {
+          setCameraOpen(false);
+          // Focus returns to the control that opened the camera.
+          window.requestAnimationFrame(() => cameraButton.current?.focus());
+        }}
         onConfirm={(file) => {
           setCameraOpen(false);
           // One search photo per message; it replaces listing photos rather than mixing with them.
@@ -214,6 +221,7 @@ export function ChatComposer({
           input.current?.focus();
         }}
       />
+      </Suspense>
     )}
     <form
       dir="rtl"
@@ -308,7 +316,9 @@ export function ChatComposer({
         </button>
         <button
           type="button"
+          ref={cameraButton}
           aria-label="ابحث بصورة"
+          aria-haspopup="dialog"
           data-testid="button-ai-camera"
           disabled={busy || offline}
           onClick={() => {

@@ -2502,3 +2502,156 @@ body:has(.dinar-chatgpt) {
 }
 .dinar-chatgpt .ds-panel .ds-facts { margin-top: var(--ds-2); }
 .dinar-chatgpt .ds-panel .ds-actions { margin-top: var(--ds-3); }
+
+/* ═══ DINAR AI premium layer ═══════════════════════════════════════════════════════════
+   Owner palette: royal #123B91, gold #D7AA42, sky #DDF3FF, midnight navy. This block only
+   re-tunes tokens and refines components; it changes no data, action or card contract.
+   Motion tokens: one small scale reused everywhere (DINAR_AI_MOTION_SYSTEM.md). */
+:root {
+  --motion-micro: 140ms;
+  --motion-message: 220ms;
+  --motion-card: 280ms;
+  --motion-drawer: 300ms;
+  --motion-cart: 620ms;
+  --ease-standard: cubic-bezier(.2, .8, .2, 1);
+  --ease-exit: cubic-bezier(.4, 0, 1, 1);
+  --ease-catch: cubic-bezier(.34, 1.56, .64, 1);
+  --brand-royal: #123B91;
+  --brand-gold: #D7AA42;
+  --brand-sky: #DDF3FF;
+  --brand-navy: #0B1E46;
+}
+.dinar-chatgpt,
+.ai-history-drawer {
+  --chat-ground: #f6f9fe;
+  --chat-panel: #f3f7fd;
+  --chat-surface: #ffffff;
+  --chat-surface-2: #edf3fc;
+  --chat-ink: #0b1e46;
+  --chat-ink-2: #2b4066;
+  --chat-ink-3: #56698a;
+  --chat-gold-ink: #8a6312;
+  --chat-line: 18 59 145;
+  --chat-blue: 18 59 145;
+  --chat-gold: 183 139 40;
+  --chat-hi: 11 30 70;
+  --chat-shadow: 11 30 70;
+}
+.dark .dinar-chatgpt,
+.dark .ai-history-drawer {
+  --chat-ground: #07122b;
+  --chat-panel: #08152f;
+  --chat-surface: #0d1d3d;
+  --chat-surface-2: #13264b;
+  --chat-ink: #eef3fb;
+  --chat-ink-2: #bccbe4;
+  --chat-ink-3: #91a3c4;
+  --chat-gold-ink: #e6c372;
+  --chat-line: 120 160 245;
+  --chat-blue: 120 160 245;
+  --chat-gold: 215 170 66;
+  --chat-hi: 255 255 255;
+  --chat-shadow: 0 0 0;
+}
+
+/* Wordmark: DINAR in ink, AI in gold. */
+.ai-sidebar-wordmark { letter-spacing: .08em; font-size: 15px; }
+.ai-wordmark-ai { color: var(--chat-gold-ink); }
+
+/* New conversation: the one gold primary control of the sidebar. */
+.ai-sidebar-new {
+  border-color: transparent;
+  background: linear-gradient(135deg, #e9c66f, var(--brand-gold));
+  color: #0b1e46;
+  box-shadow: 0 6px 16px rgb(183 139 40 / .22);
+}
+.ai-sidebar-new svg { color: #0b1e46; }
+.ai-sidebar-new kbd { color: rgb(11 30 70 / .62); }
+.ai-sidebar-new:hover:not(:disabled) { border-color: transparent; background: linear-gradient(135deg, #f0d184, #ddb24e); }
+
+/* Messages: the buyer's own words sit on sky, DINAR AI answers on the canvas. */
+.ai-user-bubble { background: var(--brand-sky); color: #0b1e46; border-end-end-radius: 6px; }
+.dark .ai-user-bubble { background: #17306a; color: #eef3fb; }
+.dinar-chatgpt .ai-message-in { animation-duration: var(--motion-message); }
+
+/* Result cards: one orchestrated entrance per result set, then still. */
+.dinar-chatgpt .ai-result-item { animation: dinar-card-enter var(--motion-card) var(--ease-standard) both; }
+.dinar-chatgpt .ai-result-item:nth-child(2) { animation-delay: 45ms; }
+.dinar-chatgpt .ai-result-item:nth-child(3) { animation-delay: 90ms; }
+.dinar-chatgpt .ai-result-item:nth-child(n + 4) { animation-delay: 135ms; }
+@keyframes dinar-card-enter {
+  from { opacity: 0; transform: translateY(10px) scale(.985); }
+  to { opacity: 1; transform: none; }
+}
+.dinar-chatgpt .ai-result-card {
+  border-color: rgb(var(--chat-line) / .16);
+  border-radius: 18px;
+  background: var(--chat-surface);
+  box-shadow: 0 1px 2px rgb(var(--chat-shadow) / .06), 0 8px 24px rgb(var(--chat-shadow) / calc(.08 * var(--chat-shadow-k)));
+  transition: border-color var(--motion-micro), transform var(--motion-micro) var(--ease-standard), box-shadow var(--motion-micro);
+}
+.dinar-chatgpt .ai-result-card:hover,
+.dinar-chatgpt .ai-result-card:focus-visible { border-color: rgb(var(--chat-gold) / .55); }
+.dinar-chatgpt .ai-result-cart:active:not(:disabled) { transform: scale(.94); }
+
+/* Photo-search match labels: three distinct, honest tones (text carries the meaning). */
+[data-match] { gap: 4px; border: 1px solid transparent; }
+[data-match="EXACT"] { background: #e3f5ec; color: #0f5a3d; border-color: #b5e2cb; }
+[data-match="PROBABLE"] { background: var(--brand-sky); color: #123b91; border-color: #b4dcf5; }
+[data-match="SIMILAR"] { background: #eef1f6; color: #3d4d68; border-color: #d7dde8; }
+.dark [data-match="EXACT"] { background: #113b2c; color: #a8e3c6; border-color: #1f5c44; }
+.dark [data-match="PROBABLE"] { background: #15305e; color: #cfe7ff; border-color: #24467f; }
+.dark [data-match="SIMILAR"] { background: #1a2742; color: #c3cee2; border-color: #2a3a5c; }
+
+/* Basket catch: the cart reacts when the confirmed product lands (cart-basket-animation.ts). */
+.dinar-basket-catch { animation: dinar-basket-catch 360ms var(--ease-catch); }
+@keyframes dinar-basket-catch {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.22) rotate(-6deg); }
+  70% { transform: scale(.94); }
+  100% { transform: scale(1); }
+}
+
+/* Processing mark: the DINAR AI symbol breathes instead of spinning. */
+.ai-typing-mark { animation-name: dinar-ai-breathe; animation-duration: 1.6s; }
+.ai-typing[data-stage="searching"] .ai-typing-mark { animation-name: dinar-mark-spin; }
+@keyframes dinar-ai-breathe {
+  0%, 100% { transform: scale(.92); opacity: .8; }
+  50% { transform: scale(1.06); opacity: 1; }
+}
+
+/* Composer: two rows on phones and small tablets (P1). The text gets the whole first row; the
+   attachment, camera, thinking level, microphone and send controls share the second. */
+.dinar-chatgpt .dinar-composer-send[data-ready="true"] { background: linear-gradient(145deg, #ecc96f, var(--brand-gold)); color: #0b1e46; }
+@media (max-width: 640px) {
+  .dinar-chatgpt .ai-composer-box {
+    display: grid;
+    grid-template-columns: auto auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 2px 4px;
+    min-height: 0;
+    padding: 6px 8px 6px;
+    border-radius: 24px;
+  }
+  .dinar-chatgpt .ai-composer-box textarea {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    width: 100%;
+    min-height: 44px;
+    padding-inline: 10px;
+  }
+  .dinar-chatgpt .ai-composer-box > .dinar-composer-attachment:nth-of-type(1) { grid-column: 1; grid-row: 2; }
+  .dinar-chatgpt .ai-composer-box > .dinar-composer-attachment:nth-of-type(2) { grid-column: 2; grid-row: 2; }
+  .dinar-chatgpt .ai-composer-box > div { grid-column: 4; grid-row: 2; justify-content: flex-end; gap: 2px; }
+  .dinar-chatgpt .dinar-composer-attachment,
+  .dinar-chatgpt .dinar-composer-mic,
+  .dinar-chatgpt .dinar-composer-send { width: 44px; height: 44px; }
+  .dinar-chatgpt .dinar-composer-effort { max-width: 84px; padding-inline: 8px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dinar-chatgpt .ai-result-item,
+  .dinar-basket-catch,
+  .ai-typing-mark { animation: none; }
+  .dinar-chatgpt .ai-result-cart:active:not(:disabled) { transform: none; }
+}

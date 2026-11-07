@@ -158,6 +158,8 @@ export default function AiPage() {
   const [visibleMessageCount, setVisibleMessageCount] = useState(40);
   const [showJumpToBottom, setShowJumpToBottom] = useState(false);
   const [addingListingId, setAddingListingId] = useState<string>();
+  // Screen-reader confirmation of a server-confirmed cart add (the receipt is also in the thread).
+  const [cartNotice, setCartNotice] = useState("");
   // A stored cart receipt is returned again on every retry. It is shown and acknowledged once.
   const confirmedReceipts = useRef<Set<string>>(new Set());
   const { refreshFromServer: refreshCartFromServer, unitCount } = useCart();
@@ -1349,6 +1351,7 @@ export default function AiPage() {
           ]);
         }
         await refreshCartFromServer();
+        if (!alreadyConfirmed) setCartNotice(`أُضيف «${listing.title}» إلى السلة.`);
         refreshConversationData(activeId);
         if (user && market) publishCardSync(user.id, market.id, activeId);
         return !alreadyConfirmed;
@@ -1907,6 +1910,7 @@ export default function AiPage() {
 
   const composerRegion = (
     <div className="dinar-chat-dock">
+      <p className="sr-only" role="status" aria-live="polite" data-testid="cart-confirmation-status">{cartNotice}</p>
       {error && (
         <div
           className="mx-4 mb-2 rounded-lg bg-destructive-soft px-3 py-2 text-sm text-destructive md:mx-10"
@@ -2035,7 +2039,7 @@ export default function AiPage() {
           <nav className="ai-desktop-rail" aria-label="أدوات DINAR">
             <TooltipProvider delayDuration={300} skipDelayDuration={100}>
               <span className="ai-rail-brand" aria-hidden="true">
-                <DinarMark size={26} />
+                <DinarMark size={30} />
               </span>
               <div className="ai-rail-actions">
                 <Tooltip>
@@ -2135,9 +2139,9 @@ export default function AiPage() {
           >
             <div className="ai-history-header">
               <span className="ai-sidebar-mark" aria-hidden="true">
-                <DinarMark size={26} />
+                <DinarMark size={30} />
               </span>
-              <span className="ai-sidebar-wordmark">DINAR</span>
+              <span className="ai-sidebar-wordmark" dir="ltr">DINAR <span className="ai-wordmark-ai">AI</span></span>
               <button
                 type="button"
                 className="ai-sidebar-collapse is-wide-only"

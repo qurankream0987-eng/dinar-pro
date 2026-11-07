@@ -189,7 +189,7 @@ export function Welcome({
   return (
     <div className="ai-welcome">
       <div className="ai-welcome-copy">
-        <DinarMark size={36} alt="DINAR" className="ai-welcome-logo" />
+        <DinarMark size={36} alt="DINAR AI" className="ai-welcome-logo" />
         <h1>كيف أساعدك اليوم؟</h1>
         <p>
           اسأل عن أي شيء — معرفة، كتابة، برمجة، تخطيط — أو بِع واشترِ وأدِر أعمالك في دينار.

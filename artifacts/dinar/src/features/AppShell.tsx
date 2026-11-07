@@ -129,7 +129,7 @@ function SiteSidebar({ location }: { location: string }) {
   const { user } = useAccount();
   return (
     <aside
-      aria-label="التنقل في بدينار"
+      aria-label="التنقل في DINAR AI"
       data-testid="site-sidebar"
       className="site-nav-dark site-sidebar fixed inset-y-0 start-0 z-[var(--z-sidebar)] hidden w-[var(--site-sidebar-width)] flex-col items-center border-e border-accent/30 px-3 py-4 lg:flex"
     >
@@ -190,7 +190,7 @@ function SiteSidebar({ location }: { location: string }) {
       <Link
         href="/"
         data-testid="link-brand-sidebar"
-        aria-label="بدينار — الرئيسية"
+        aria-label="DINAR AI — الرئيسية"
         className="site-sidebar-brand flex h-24 w-full items-center justify-center rounded-xl"
       >
         <DinarMark size={84} className="site-sidebar-logo" />
@@ -404,7 +404,7 @@ function TopBar({ location, minimal }: { location: string; minimal: boolean }) {
         <Link
           href="/"
           data-testid="link-brand"
-          aria-label="بدينار — الرئيسية"
+          aria-label="DINAR AI — الرئيسية"
           className="shrink-0 rounded-md lg:hidden"
         >
           <BrandMark
@@ -573,7 +573,7 @@ function Footer() {
           <Link href="/settings" className="hover:text-foreground">
             الإعدادات
           </Link>
-          <span>© {new Date().getFullYear()} BDINAR</span>
+          <span>© {new Date().getFullYear()} DINAR AI</span>
         </nav>
       </div>
     </footer>

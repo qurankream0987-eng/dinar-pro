@@ -1396,7 +1396,7 @@ function MessageTurn({
           assistant ? "ai-assistant-content w-full text-foreground" : "ai-user-content",
         )}
       >
-        {assistant && <span className="sr-only">DINAR</span>}
+        {assistant && <span className="sr-only">DINAR AI</span>}
         {message.body &&
           !(assistant && controlOnly(message.blocks)) &&
           (assistant ? (

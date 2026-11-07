@@ -667,3 +667,13 @@ body[data-private-session-check="true"] > #dinar-private-session-check { display
     scroll-behavior: auto !important;
   }
 }
+
+/* DINAR AI camera sheet: rises on phones, settles on desktop; still under reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .dinar-camera-backdrop { animation: fade var(--dur-base) ease-out; }
+  .dinar-camera-sheet { animation: dinar-sheet-rise 300ms cubic-bezier(.2, .8, .2, 1); }
+}
+@keyframes dinar-sheet-rise {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: none; }
+}
