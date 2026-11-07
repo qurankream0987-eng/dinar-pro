@@ -17,7 +17,11 @@ export function CameraCapture({ onConfirm, onClose }: { onConfirm: (file: File) 
   const [message, setMessage] = useState("");
   const [shot, setShot] = useState<{ file: File; url: string } | null>(null);
 
+  // Each start/stop is a new session: a camera that finishes opening after the buyer already
+  // chose a photo, captured, or closed the dialog is stopped at once and never shown.
+  const session = useRef(0);
   const stop = useCallback(() => {
+    session.current++;
     stream.current?.getTracks().forEach((track) => track.stop());
     stream.current = null;
     if (video.current) video.current.srcObject = null;
@@ -25,6 +29,7 @@ export function CameraCapture({ onConfirm, onClose }: { onConfirm: (file: File) 
 
   const start = useCallback(async () => {
     stop();
+    const id = session.current;
     if (!navigator.mediaDevices?.getUserMedia) {
       setState("unavailable");
       setMessage("الكاميرا غير مدعومة في هذا المتصفح. اختر صورة من جهازك.");
@@ -33,14 +38,21 @@ export function CameraCapture({ onConfirm, onClose }: { onConfirm: (file: File) 
     setState("starting");
     try {
       const media = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" } }, audio: false });
+      if (id !== session.current) {
+        media.getTracks().forEach((track) => track.stop());
+        return;
+      }
       stream.current = media;
       if (video.current) {
         video.current.srcObject = media;
         await video.current.play().catch(() => undefined);
       }
+      // The buyer may have chosen a photo or closed the dialog while the preview was starting.
+      if (id !== session.current) return;
       setState("live");
       setMessage("");
     } catch (error) {
+      if (id !== session.current) return;
       stop();
       setState("unavailable");
       setMessage(
@@ -90,7 +102,7 @@ export function CameraCapture({ onConfirm, onClose }: { onConfirm: (file: File) 
   };
 
   return (
-    <div role="dialog" aria-modal="true" aria-label="البحث بصورة" dir="rtl" data-testid="camera-capture"
+    <div role="dialog" aria-modal="true" aria-label="البحث بصورة" dir="rtl" data-testid="camera-capture" data-state={state}
       className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 sm:items-center">
       <div className="flex max-h-[100dvh] w-full max-w-md flex-col gap-3 rounded-t-2xl bg-background p-4 sm:rounded-2xl">
         <div className="flex items-center justify-between">

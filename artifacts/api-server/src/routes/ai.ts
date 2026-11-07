@@ -770,8 +770,12 @@ async function decoratePaidCards(
   context: { actorId?: string; marketId: string; resultSetId: string },
 ): Promise<ListingRecord[]> {
   const stored = ((query as { sponsoredCampaigns?: unknown } | null)?.sponsoredCampaigns ?? {}) as Record<string, { promotionId?: unknown; placement?: unknown }>;
+  // Photo-search labels are server state of this result set, restored with it on every read.
+  const visualMatches = ((query as { visualMatches?: unknown } | null)?.visualMatches ?? {}) as Record<string, unknown>;
   return Promise.all(
-    listings.map(async (listing) => {
+    listings.map(async (raw) => {
+      const match = visualMatches[raw.id];
+      const listing: ListingRecord = match === "EXACT" || match === "PROBABLE" || match === "SIMILAR" ? { ...raw, visualMatch: match as ListingRecord["visualMatch"] } : raw;
       if (!listing.isSponsored) return listing;
       const promotionId = typeof stored[listing.id]?.promotionId === "string" ? String(stored[listing.id]!.promotionId) : listing.sponsoredCampaignId;
       const placement = typeof stored[listing.id]?.placement === "string" ? String(stored[listing.id]!.placement) : listing.sponsoredPlacement;
@@ -2446,6 +2450,8 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
     if (visualAnalysis && toolResult.kind === "SEARCH")
       toolResult.listings = rankVisualMatches(visualAnalysis, toolResult.listings)
         .map(({ listing, match }) => Object.assign(listing, { visualMatch: match }));
+    if (visualAnalysis && toolResult.kind === "SEARCH")
+      toolResult.query.visualMatches = Object.fromEntries(toolResult.listings.map((listing) => [listing.id, listing.visualMatch]));
     if (toolResult.kind === "SEARCH" || toolResult.kind === "RESULTS" || toolResult.kind === "RESOURCE")
       toolResult.listings = await decoratePaidCards(toolResult.listings, toolResult.query, { actorId: req.actor!.id, marketId: market.id, resultSetId });
     const resourceIds = toolResult.listings.map((listing) => listing.id);

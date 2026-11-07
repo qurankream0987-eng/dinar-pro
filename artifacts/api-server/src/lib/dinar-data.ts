@@ -11,6 +11,8 @@ export type ListingRecord = {
   categoryId?: string;
   marketId?: string;
   isSponsored?: boolean;
+  /** Photo search only: computed from this persisted listing (ai/visual-search.ts). */
+  visualMatch?: "EXACT" | "PROBABLE" | "SIMILAR";
   /** Server-only: the paid placement behind a sponsored slot (never trusted from a client). */
   sponsoredCampaignId?: string;
   sponsoredPlacement?: string;

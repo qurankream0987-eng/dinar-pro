@@ -76,6 +76,9 @@ await test("VST-01 a photo search runs through the one runtime and labels real l
   assert.match(turn.text, /من الصورة فهمت: iPhone 14 Pro/);
   assert.ok(turn.text.includes('"visualMatch":"EXACT"'), turn.text.slice(0, 3000));
   assert.ok(turn.text.includes("iPhone 14 Pro بحالة ممتازة"), "the result is a real persisted listing");
+  const reread = await call(`/ai/conversations/${id}`, buyer);
+  assert.equal(reread.response.status, 200, reread.text);
+  assert.ok(reread.text.includes('"visualMatch":"EXACT"'), "labels are restored with the stored result set after a reload");
 });
 
 await test("VST-02 a stranger cannot use, read or complete the buyer's photo", async () => {
