@@ -141,7 +141,8 @@ await test("PREMIUM-UX browser: performance, visual matrix, journeys", async () 
   const web = await startDinarBrowserTestWeb(origin);
   const resultPath = `/tmp/dinar-premium-ux-${run}.json`;
   const phase = process.env.DINAR_PUX_PHASE ?? "after";
-  const shots = `${process.cwd()}/../../docs/dinar-next/evidence/premium-ux`;
+  // Screenshots go outside the repository unless a reviewer names a directory: a run never edits tracked files.
+  const shots = process.env.DINAR_PUX_SHOTS_DIR ?? `/tmp/dinar-premium-ux-${run}`;
   let browserError: unknown;
   try {
     await promisify(execFile)(process.execPath, [`${process.cwd()}/../dinar/test/premium-ux-browser.mjs`], {
