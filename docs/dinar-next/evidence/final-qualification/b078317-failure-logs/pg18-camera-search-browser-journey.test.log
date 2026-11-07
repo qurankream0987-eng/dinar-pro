@@ -1,0 +1,434 @@
+LOCAL_SUITE_BROWSER_STUB hosts=fonts.googleapis.com,fonts.gstatic.com,images.unsplash.com target=127.0.0.1:443
+LOCAL_SUITE_PRELUDE exit=0 outbound=0
+(node:4907) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+TAP version 13
+[20:23:05.159] [32mINFO[39m (4907): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "2acf7036-a9dd-41cf-b56d-3dbea829e8ed",
+      "method": "POST",
+      "url": "/api/auth/register"
+    }
+    [35mres[39m: {
+      "statusCode": 201
+    }
+    [35mresponseTime[39m: 177
+[20:23:07.738] [32mINFO[39m (4907): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "8f51200c-efd6-402a-9de8-7e41d85c5df3",
+      "method": "GET",
+      "url": "/api/auth/me"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 18
+[20:23:07.750] [32mINFO[39m (4907): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "79ed49a7-71de-42e6-b3bb-3a9006c6ecab",
+      "method": "GET",
+      "url": "/api/markets"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 26
+[20:23:07.843] [32mINFO[39m (4907): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "d04f8981-d9f2-4b48-b76c-0b0fabf3978f",
+      "method": "GET",
+      "url": "/api/ai/conversations"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 11
+[20:23:07.848] [32mINFO[39m (4907): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "73a3ffbf-708d-40f7-aebb-7bb2328e515b",
+      "method": "GET",
+      "url": "/api/cart"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 13
+[20:23:09.130] [32mINFO[39m (4907): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "fe67e0aa-a214-4ccc-9fff-6fbf2c608f6c",
+      "method": "POST",
+      "url": "/api/ai/conversations"
+    }
+    [35mres[39m: {
+      "statusCode": 201
+    }
+    [35mresponseTime[39m: 12
+[20:23:09.170] [32mINFO[39m (4907): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "fa46fb18-f53f-4961-b320-ed1c4ee96255",
+      "method": "POST",
+      "url": "/api/account/visual-search/upload-url"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 27
+[20:23:09.172] [32mINFO[39m (4907): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "86c5687f-3949-455e-bc25-6e35378fc417",
+      "method": "GET",
+      "url": "/api/ai/conversations"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 30
+[20:23:09.251] [32mINFO[39m (4907): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "1bfda71d-d916-4216-b753-448ea8ae37ba",
+      "method": "POST",
+      "url": "/api/account/visual-search/complete"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 57
+[20:23:09.552] [32mINFO[39m (4907): [36mDINAR AI turn completed[39m
+    [35mreq[39m: {
+      "id": "ceb4ab29-3566-4e04-963d-6d8f243831cf",
+      "method": "POST",
+      "url": "/api/ai/conversations/2f1be4ce-d837-4798-850c-7c275c1daeee/turns"
+    }
+    [35mevent[39m: "dinar_ai_turn"
+    [35mconversationId[39m: "2f1be4ce-d837-4798-850c-7c275c1daeee"
+    [35mturnId[39m: "51a7d1e7-fa7e-4ae8-a80f-9cad5e92d2b4"
+    [35mtoolName[39m: "searchListings"
+    [35mresultCount[39m: 1
+    [35mstatus[39m: "completed"
+[20:23:09.552] [32mINFO[39m (4907): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "ceb4ab29-3566-4e04-963d-6d8f243831cf",
+      "method": "POST",
+      "url": "/api/ai/conversations/2f1be4ce-d837-4798-850c-7c275c1daeee/turns"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 294
+[20:23:09.572] [32mINFO[39m (4907): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "191b1d76-1e79-4461-ba4c-ed0a01e37140",
+      "method": "GET",
+      "url": "/api/ai/conversations"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 4
+[20:23:09.592] [32mINFO[39m (4907): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "27297cb1-c471-45ad-b814-86bbd26e33aa",
+      "method": "GET",
+      "url": "/api/ai/conversations/2f1be4ce-d837-4798-850c-7c275c1daeee"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 23
+[20:23:09.641] [32mINFO[39m (4907): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "397f4241-9c39-4ddd-8478-e2182c8567fe",
+      "method": "GET",
+      "url": "/api/categories"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 11
+[20:23:09.647] [32mINFO[39m (4907): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "6c94cdd9-a7a7-49d7-a314-38dc15ae12cf",
+      "method": "GET",
+      "url": "/api/ai/conversations"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 6
+[20:23:09.659] [32mINFO[39m (4907): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "4e34ec1d-9d43-4328-9b6e-cfa5b9f6c7ec",
+      "method": "GET",
+      "url": "/api/ai/conversations/2f1be4ce-d837-4798-850c-7c275c1daeee"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 17
+[20:23:12.083] [32mINFO[39m (4907): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "ca226954-9219-485f-95dd-1f1200da7afe",
+      "method": "POST",
+      "url": "/api/account/visual-search/upload-url"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 6
+[20:23:12.122] [32mINFO[39m (4907): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "b7f387f8-e0b9-4a6b-85c9-efcca3074f3c",
+      "method": "POST",
+      "url": "/api/account/visual-search/complete"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 20
+[20:23:12.276] [32mINFO[39m (4907): [36mDINAR AI turn completed[39m
+    [35mreq[39m: {
+      "id": "9b8d48d2-4ea7-4288-aa5e-c3c79a3c4835",
+      "method": "POST",
+      "url": "/api/ai/conversations/2f1be4ce-d837-4798-850c-7c275c1daeee/turns"
+    }
+    [35mevent[39m: "dinar_ai_turn"
+    [35mconversationId[39m: "2f1be4ce-d837-4798-850c-7c275c1daeee"
+    [35mturnId[39m: "0cac05f4-083e-4c9c-917e-a51eb83fd21d"
+    [35mtoolName[39m: "searchListings"
+    [35mresultCount[39m: 1
+    [35mstatus[39m: "completed"
+[20:23:12.277] [32mINFO[39m (4907): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "9b8d48d2-4ea7-4288-aa5e-c3c79a3c4835",
+      "method": "POST",
+      "url": "/api/ai/conversations/2f1be4ce-d837-4798-850c-7c275c1daeee/turns"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 149
+[20:23:12.290] [32mINFO[39m (4907): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "907a3aa8-9e64-4938-a504-4465b6028762",
+      "method": "GET",
+      "url": "/api/ai/conversations"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 4
+[20:23:12.310] [32mINFO[39m (4907): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "23869ffa-cf6c-4035-9b75-a3f1799187d4",
+      "method": "GET",
+      "url": "/api/ai/conversations/2f1be4ce-d837-4798-850c-7c275c1daeee"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 23
+[20:23:12.330] [32mINFO[39m (4907): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "e068fc86-9604-41d2-8842-511b40a109ee",
+      "method": "GET",
+      "url": "/api/ai/conversations"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 6
+[20:23:12.347] [32mINFO[39m (4907): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "38ae34b8-719b-4cc1-b395-ca86aa250e4b",
+      "method": "GET",
+      "url": "/api/ai/conversations/2f1be4ce-d837-4798-850c-7c275c1daeee"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 18
+[20:23:12.776] [32mINFO[39m (4907): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "f909b4f9-d02a-4698-8752-87545bbff92f",
+      "method": "GET",
+      "url": "/api/auth/me"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 8
+[20:23:12.779] [32mINFO[39m (4907): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "e84ca38a-82a6-4ae1-94a2-d446310900c3",
+      "method": "GET",
+      "url": "/api/markets"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 10
+[20:23:12.915] [32mINFO[39m (4907): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "9adf42bd-f9af-4e7d-85b8-4f24891ecb8f",
+      "method": "GET",
+      "url": "/api/ai/conversations"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 5
+[20:23:12.916] [32mINFO[39m (4907): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "ff489a72-a1b5-4d0d-a9f1-410c912c71d4",
+      "method": "GET",
+      "url": "/api/cart"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 5
+[20:23:12.997] [32mINFO[39m (4907): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "188be1e4-d48f-4a3f-a067-3c823330a27d",
+      "method": "GET",
+      "url": "/api/ai/conversations/2f1be4ce-d837-4798-850c-7c275c1daeee"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 37
+[20:23:13.088] [32mINFO[39m (4907): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "fd064c00-bc60-4dae-88eb-131dd7016b14",
+      "method": "GET",
+      "url": "/api/categories"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 8
+[20:23:13.326] [32mINFO[39m (4907): [36mDINAR AI turn completed[39m
+    [35mreq[39m: {
+      "id": "dbb80252-8d24-4ee4-abf7-e9350f798da9",
+      "method": "POST",
+      "url": "/api/ai/conversations/2f1be4ce-d837-4798-850c-7c275c1daeee/turns"
+    }
+    [35mevent[39m: "dinar_ai_turn"
+    [35mconversationId[39m: "2f1be4ce-d837-4798-850c-7c275c1daeee"
+    [35mturnId[39m: "6ff199e2-83c4-4bc0-84b2-56fc0f5236e1"
+    [35mtoolName[39m: "buyerRank"
+    [35mresultCount[39m: 1
+    [35mstatus[39m: "completed"
+[20:23:13.326] [32mINFO[39m (4907): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "dbb80252-8d24-4ee4-abf7-e9350f798da9",
+      "method": "POST",
+      "url": "/api/ai/conversations/2f1be4ce-d837-4798-850c-7c275c1daeee/turns"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 88
+[20:23:13.337] [32mINFO[39m (4907): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "0f9c820c-e158-4033-96da-39b80de3b4b0",
+      "method": "GET",
+      "url": "/api/ai/conversations"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 3
+[20:23:13.357] [32mINFO[39m (4907): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "564c901a-15e6-4ef2-8b73-6689cb4eaa1b",
+      "method": "GET",
+      "url": "/api/ai/conversations/2f1be4ce-d837-4798-850c-7c275c1daeee"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 23
+[20:23:13.381] [32mINFO[39m (4907): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "46ce8e2c-bb51-481e-a2fb-289448301ca7",
+      "method": "GET",
+      "url": "/api/ai/conversations"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 4
+[20:23:13.403] [32mINFO[39m (4907): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "8fc622a7-640a-4e35-8394-abd4a9b2b8a5",
+      "method": "GET",
+      "url": "/api/ai/conversations/2f1be4ce-d837-4798-850c-7c275c1daeee"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 25
+CAMERA_SEARCH_BROWSER {"checks":["the camera opens inside the conversation after permission, with a live preview","the camera dialog fits 320/390/1280 without horizontal overflow","capture shows a preview and stops the camera tracks","retake restarts the camera; cancel closes the dialog and stops every track","Escape closes the camera and stops its tracks","a captured photo is uploaded privately, searched by DINAR, and real cards carry match badges","photo search results fit 320/390/1280","a photo chosen from the device is sent with the buyer's message","match badges are still on the cards after reloading the conversation","the buyer continues the conversation in text after photo results","camera dialog 320px: RTL, no overflow, content and named buttons inside the viewport","camera dialog 390px: RTL, no overflow, content and named buttons inside the viewport","camera dialog 1280px: RTL, no overflow, content and named buttons inside the viewport","photo search results 320px: RTL, no overflow, content and named buttons inside the viewport","photo search results 390px: RTL, no overflow, content and named buttons inside the viewport","photo search results 1280px: RTL, no overflow, content and named buttons inside the viewport"],"failure":"The input did not match the regular expression /JPEG أو PNG أو WebP/. Input:\n\n''\n\nAssertionError [ERR_ASSERTION]: The input did not match the regular expression /JPEG أو PNG أو WebP/. Input:\n\n''\n\n    at file:///home/user/dinar-final/artifacts/dinar/test/camera-search-ui.mjs:134:10","pageErrors":[],"consoleErrors":[],"externalRequests":[],"horizontalOverflow":0}
+# Subtest: CAMERA-SEARCH browser: open, capture, preview, retake, cancel, denial, device photo, send, 320 px
+not ok 1 - CAMERA-SEARCH browser: open, capture, preview, retake, cancel, denial, device photo, send, 320 px
+  ---
+  duration_ms: 8708.216637
+  type: 'test'
+  location: '/home/user/dinar-final/artifacts/api-server/.test-build/camera-search-browser-journey.test.mjs:235552:7'
+  failureType: 'testCodeFailure'
+  error: |-
+    The input did not match the regular expression /JPEG أو PNG أو WebP/. Input:
+    
+    ''
+    
+    AssertionError [ERR_ASSERTION]: The input did not match the regular expression /JPEG أو PNG أو WebP/. Input:
+    
+    ''
+    
+        at file:///home/user/dinar-final/artifacts/dinar/test/camera-search-ui.mjs:134:10
+    + actual - expected
+    
+    + 'The input did not match the regular expression /JPEG أو PNG أو WebP/. Input:\n' +
+    +   '\n' +
+    +   "''\n" +
+    +   '\n' +
+    +   'AssertionError [ERR_ASSERTION]: The input did not match the regular expression /JPEG أو PNG أو WebP/. Input:\n' +
+    +   '\n' +
+    +   "''\n" +
+    +   '\n' +
+    +   '    at file:///home/user/dinar-final/artifacts/dinar/test/camera-search-ui.mjs:134:10'
+    - undefined
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  actual: |-
+    The input did not match the regular expression /JPEG أو PNG أو WebP/. Input:
+    
+    ''
+    
+    AssertionError [ERR_ASSERTION]: The input did not match the regular expression /JPEG أو PNG أو WebP/. Input:
+    
+    ''
+    
+        at file:///home/user/dinar-final/artifacts/dinar/test/camera-search-ui.mjs:134:10
+  operator: 'strictEqual'
+  stack: |-
+    file:///home/user/dinar-final/artifacts/dinar/test/camera-search-ui.mjs:134:10
+    TestContext.<anonymous> (file:///home/user/dinar-final/artifacts/api-server/.test-build/camera-search-browser-journey.test.mjs:235592:11)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+    async file:///home/user/dinar-final/artifacts/api-server/.test-build/camera-search-browser-journey.test.mjs:235552:1
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 11690.18475
+LOCAL_SUITE suite=camera-search-browser-journey.test db=dinar_test_int_18_22 exit=1 outbound=0
+LOCAL_SUITE_CHAIN suites=1 db=dinar_test_int_18_22 exit=1 first_failed=camera-search-browser-journey.test
+LOCAL_SUITE_BROWSER_STUB requests=2

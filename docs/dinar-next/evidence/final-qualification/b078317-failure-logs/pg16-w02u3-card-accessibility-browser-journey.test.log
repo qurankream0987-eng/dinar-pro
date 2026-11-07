@@ -1,0 +1,318 @@
+LOCAL_SUITE_BROWSER_STUB hosts=fonts.googleapis.com,fonts.gstatic.com,images.unsplash.com target=127.0.0.1:443
+LOCAL_SUITE_PRELUDE exit=0 outbound=0
+(node:25522) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[20:04:40.476] [32mINFO[39m (25522): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "eb66ec18-a0f3-4dc5-83d5-49f4917adfcb",
+      "method": "POST",
+      "url": "/api/auth/register"
+    }
+    [35mres[39m: {
+      "statusCode": 201
+    }
+    [35mresponseTime[39m: 154
+[20:04:40.589] [32mINFO[39m (25522): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "8b135afc-7b0a-4f30-ae9d-4f2631107682",
+      "method": "POST",
+      "url": "/api/auth/register"
+    }
+    [35mres[39m: {
+      "statusCode": 201
+    }
+    [35mresponseTime[39m: 105
+[20:04:40.642] [32mINFO[39m (25522): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "bd2ab333-71d6-4e05-8c77-5b79060ba237",
+      "method": "POST",
+      "url": "/api/listings"
+    }
+    [35mres[39m: {
+      "statusCode": 201
+    }
+    [35mresponseTime[39m: 50
+[20:04:40.653] [32mINFO[39m (25522): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "0dccc362-e45a-4510-97ea-c31e4614b9d5",
+      "method": "POST",
+      "url": "/api/ai/conversations"
+    }
+    [35mres[39m: {
+      "statusCode": 201
+    }
+    [35mresponseTime[39m: 8
+[20:04:40.921] [32mINFO[39m (25522): [36mDINAR AI turn completed[39m
+    [35mreq[39m: {
+      "id": "d4ced302-6b74-4fcd-98c8-f8b618f7645c",
+      "method": "POST",
+      "url": "/api/ai/conversations/5970ec80-efa0-4d65-9eb9-305830521098/turns"
+    }
+    [35mevent[39m: "dinar_ai_turn"
+    [35mconversationId[39m: "5970ec80-efa0-4d65-9eb9-305830521098"
+    [35mturnId[39m: "fc3bc809-df0c-4aa4-bde0-ebbceb8c7892"
+    [35mtoolName[39m: "searchListings"
+    [35mresultCount[39m: 1
+    [35mstatus[39m: "completed"
+[20:04:40.922] [32mINFO[39m (25522): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "d4ced302-6b74-4fcd-98c8-f8b618f7645c",
+      "method": "POST",
+      "url": "/api/ai/conversations/5970ec80-efa0-4d65-9eb9-305830521098/turns"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 266
+[20:04:41.054] [32mINFO[39m (25522): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "23dace20-6649-4414-9f11-951a534b5cd1",
+      "method": "POST",
+      "url": "/api/ai/conversations/5970ec80-efa0-4d65-9eb9-305830521098/turns"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 130
+[20:04:41.061] [32mINFO[39m (25522): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "dc0585db-686d-44af-b0f5-bd5dacd71a86",
+      "method": "POST",
+      "url": "/api/ai/conversations"
+    }
+    [35mres[39m: {
+      "statusCode": 201
+    }
+    [35mresponseTime[39m: 5
+[20:04:41.138] [32mINFO[39m (25522): [36mDINAR AI turn completed[39m
+    [35mreq[39m: {
+      "id": "917c30ac-19c5-4b2b-aab8-a0c12ffba5c2",
+      "method": "POST",
+      "url": "/api/ai/conversations/d98989ae-f844-4605-b054-3819ee67ff69/turns"
+    }
+    [35mevent[39m: "dinar_ai_turn"
+    [35mconversationId[39m: "d98989ae-f844-4605-b054-3819ee67ff69"
+    [35mturnId[39m: "daf182b3-5f0f-4f18-a3f8-af487e134509"
+    [35mtoolName[39m: "searchListings"
+    [35mresultCount[39m: 1
+    [35mstatus[39m: "completed"
+[20:04:41.138] [32mINFO[39m (25522): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "917c30ac-19c5-4b2b-aab8-a0c12ffba5c2",
+      "method": "POST",
+      "url": "/api/ai/conversations/d98989ae-f844-4605-b054-3819ee67ff69/turns"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 75
+[20:04:41.206] [32mINFO[39m (25522): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "a1aa87d3-b804-4159-b14e-ec77be2422ff",
+      "method": "POST",
+      "url": "/api/ai/conversations/d98989ae-f844-4605-b054-3819ee67ff69/turns"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 65
+TAP version 13
+[20:04:43.664] [32mINFO[39m (25522): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "b794b541-56fd-4656-8fa5-2b18f73c0138",
+      "method": "GET",
+      "url": "/api/auth/me"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 11
+[20:04:43.666] [32mINFO[39m (25522): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "4b90322f-df6a-46ac-b1c2-49912e555b0f",
+      "method": "GET",
+      "url": "/api/markets"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 11
+[20:04:45.085] [32mINFO[39m (25522): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "a66d2389-58a5-4bf7-9f02-fe7190607555",
+      "method": "POST",
+      "url": "/api/auth/login"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 104
+[20:04:45.096] [32mINFO[39m (25522): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "5e632201-5b25-497e-a67b-c020d52cb460",
+      "method": "GET",
+      "url": "/api/auth/me"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 4
+[20:04:45.240] [32mINFO[39m (25522): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "8bf820f8-b9ad-4e11-9b38-f43d046bda2e",
+      "method": "GET",
+      "url": "/api/ai/conversations"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 5
+[20:04:45.245] [32mINFO[39m (25522): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "53cacf4e-6082-4504-9098-05e4f6defed7",
+      "method": "GET",
+      "url": "/api/cart"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 6
+[20:04:45.261] [32mINFO[39m (25522): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "68c46047-4e9f-4b25-b1ae-0108408cccf8",
+      "method": "GET",
+      "url": "/api/auth/me"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 7
+[20:04:48.538] [32mINFO[39m (25522): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "374d505d-c6c6-4b7d-8df9-96a49dda48e1",
+      "method": "GET",
+      "url": "/api/ai/conversations/5970ec80-efa0-4d65-9eb9-305830521098"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 30
+[20:04:48.615] [32mINFO[39m (25522): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "d079d48a-f69f-4d7c-9df8-72cb8c94e4f2",
+      "method": "GET",
+      "url": "/api/categories"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 12
+[20:04:48.921] [32mINFO[39m (25522): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "201c5325-bfcb-4cdd-8e93-6c35fa5ff0dc",
+      "method": "POST",
+      "url": "/api/ai/conversations/5970ec80-efa0-4d65-9eb9-305830521098/turns"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 104
+[20:04:48.939] [32mINFO[39m (25522): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "eec927ab-7eab-4555-a966-3fe83f555376",
+      "method": "GET",
+      "url": "/api/ai/conversations"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 4
+[20:04:48.954] [32mINFO[39m (25522): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "6ca81314-b74b-4dbb-a353-a813f7759071",
+      "method": "GET",
+      "url": "/api/ai/conversations/5970ec80-efa0-4d65-9eb9-305830521098"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 18
+[20:04:48.982] [32mINFO[39m (25522): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "6f739342-c110-4a16-9bbb-96f303d33ddc",
+      "method": "GET",
+      "url": "/api/cart"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 10
+[20:04:49.002] [32mINFO[39m (25522): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "f7f47022-7dea-4d8c-a61e-3a1041e950fc",
+      "method": "GET",
+      "url": "/api/ai/conversations"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 3
+[20:04:49.028] [32mINFO[39m (25522): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "97ee87fe-87cb-4175-a433-8de455ee3822",
+      "method": "GET",
+      "url": "/api/ai/conversations/5970ec80-efa0-4d65-9eb9-305830521098"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 25
+W02U3_A11Y {"checks":["a11y: keyboard opens, closes and reopens the drawer, selecting the conversation and restoring focus"],"failure":"the accessibility fixture did not hold the turn request\nError: the accessibility fixture did not hold the turn request\n    at file:///home/user/dinar-final/artifacts/dinar/test/w02u3-card-accessibility-ui.mjs:164:38\n    at async file:///home/user/dinar-final/artifacts/dinar/test/w02u3-card-accessibility-ui.mjs:162:3","at":{"screenReader":"AT_MANUAL_BLOCKED","note":"No screen reader (NVDA/JAWS/VoiceOver) runs in CI; these are DOM and keyboard assertions, not a spoken-output pass.","manualChecklist":["NVDA + Firefox on Windows: drawer opens/closes, conversation is announced, the review card's label and lifecycle are spoken, and «تأكيد الإضافة إلى السلة» is reachable.","VoiceOver + Safari on iOS: the card and its buttons are spoken in Arabic RTL order, and the success state is announced once.","TalkBack + Chrome on Android: the composer, send button and card confirmation are reachable by swipe and activated by double-tap.","Announcement review: the busy state («دينار يعمل الآن») and the settled card are announced without duplicate live-region chatter."]},"observations":{"keyboard":{"dialogReceivesFocus":true,"escapeRestoresFocus":true,"conversationTabStops":5,"selectionRestoresFocus":true,"composerTabStops":17,"sendTabStops":3},"card":{},"small":{}},"pageErrors":[],"consoleErrors":[],"externalRequests":[],"modelFallbacks":[]}
+# Subtest: W02U3 accessibility real browser: keyboard, announcements, focus and 320px card
+not ok 1 - W02U3 accessibility real browser: keyboard, announcements, focus and 320px card
+  ---
+  duration_ms: 17764.42063
+  type: 'test'
+  location: '/home/user/dinar-final/artifacts/api-server/.test-build/w02u3-card-accessibility-browser-journey.test.mjs:235459:7'
+  failureType: 'testCodeFailure'
+  error: |-
+    the accessibility fixture did not hold the turn request
+    Error: the accessibility fixture did not hold the turn request
+        at file:///home/user/dinar-final/artifacts/dinar/test/w02u3-card-accessibility-ui.mjs:164:38
+        at async file:///home/user/dinar-final/artifacts/dinar/test/w02u3-card-accessibility-ui.mjs:162:3
+    + actual - expected
+    
+    + 'the accessibility fixture did not hold the turn request\n' +
+    +   'Error: the accessibility fixture did not hold the turn request\n' +
+    +   '    at file:///home/user/dinar-final/artifacts/dinar/test/w02u3-card-accessibility-ui.mjs:164:38\n' +
+    +   '    at async file:///home/user/dinar-final/artifacts/dinar/test/w02u3-card-accessibility-ui.mjs:162:3'
+    - undefined
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  actual: |-
+    the accessibility fixture did not hold the turn request
+    Error: the accessibility fixture did not hold the turn request
+        at file:///home/user/dinar-final/artifacts/dinar/test/w02u3-card-accessibility-ui.mjs:164:38
+        at async file:///home/user/dinar-final/artifacts/dinar/test/w02u3-card-accessibility-ui.mjs:162:3
+  operator: 'strictEqual'
+  stack: |-
+    file:///home/user/dinar-final/artifacts/dinar/test/w02u3-card-accessibility-ui.mjs:164:38
+    async file:///home/user/dinar-final/artifacts/dinar/test/w02u3-card-accessibility-ui.mjs:162:3
+    TestContext.<anonymous> (file:///home/user/dinar-final/artifacts/api-server/.test-build/w02u3-card-accessibility-browser-journey.test.mjs:235499:11)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+    async file:///home/user/dinar-final/artifacts/api-server/.test-build/w02u3-card-accessibility-browser-journey.test.mjs:235459:1
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 20738.076899
+LOCAL_SUITE suite=w02u3-card-accessibility-browser-journey.test db=dinar_test_int_16_157 exit=1 outbound=0
+LOCAL_SUITE_CHAIN suites=1 db=dinar_test_int_16_157 exit=1 first_failed=w02u3-card-accessibility-browser-journey.test
+LOCAL_SUITE_BROWSER_STUB requests=1
