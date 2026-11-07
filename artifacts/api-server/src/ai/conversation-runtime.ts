@@ -1084,7 +1084,11 @@ async function executeWithRoutingMode(context: RuntimeContext, options: RuntimeO
     if (searchTerms(context.message).split(/\s+/u).filter(Boolean).length < 3) return own;
     // An explicit search («ابحث عن …», «دوّر لي …», «ورني …») that found nothing is answered by
     // that honest empty result: the model is never asked to stand in for missing listings.
-    if (EXPLICIT_SEARCH_ACTION.test(normalizeMarketplaceText(context.message))) return own;
+    // The guard covers a search of the marketplace: the search verb leads the request and the request
+    // is not about the user's own catalogue («اعرض لي منتجات متجري وحسّن وصفها» is a seller task).
+    const asked = normalizeMarketplaceText(context.message).replace(/^(?:(?:يا\s+)?دينار\s*)/u, "");
+    const ownCatalogue = /(?:^|\s)(?:متجري|منتجاتي|اعلاناتي|إعلاناتي|عروضي|نشاطي|محلي|بضاعتي)(?=\s|$)/u.test(asked);
+    if (!ownCatalogue && EXPLICIT_SEARCH_ACTION.test(asked.split(/\s+/u).slice(0, 2).join(" "))) return own;
     const interpreted = await executeRuntime(context, { ...options, modelStage: "ONLY" });
     return interpreted !== NO_MODEL_RESULT && !isSoftMiss(interpreted) ? interpreted : own;
   }
