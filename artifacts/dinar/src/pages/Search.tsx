@@ -197,7 +197,7 @@ export default function SearchPage() {
                   setQuery("");
                   input.current?.focus();
                 }}
-                className={`${iconButtonClass("ghost")} absolute end-2 top-1/2 -translate-y-1/2`}
+                className={`${iconButtonClass("ghost")} !absolute end-2 top-1/2 -translate-y-1/2`}
               >
                 <X size={17} />
               </button>

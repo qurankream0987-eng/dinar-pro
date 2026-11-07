@@ -80,6 +80,9 @@ try {
       await guest.page.goto("/login"); await settle(guest.page); await guest.page.waitForTimeout(800);
       await shot(guest.page, `login-${t}-${w}`); await overflow(guest.page, `login-${t}-${w}`);
       ok(await guest.page.locator('img[src*="brand/dinar-mark.svg"]').count() >= 1, `login ${w}: DINAR AI mark present`);
+      const eye = await guest.page.evaluate(() => { const b = document.querySelector('button[aria-label="إظهار كلمة المرور"]').getBoundingClientRect(); const i = document.querySelector('input[type="password"]').getBoundingClientRect(); return b.top >= i.top - 1 && b.bottom <= i.bottom + 1 && b.left >= i.left - 1 && b.right <= i.right + 1; });
+      ok(eye, `login ${w}: the show-password button sits inside the password field`);
+      ok((await guest.page.locator("body").innerText()).includes("جديد على DINAR AI"), `login ${w}: sign-up prompt names DINAR AI`);
       if (w === 390) await runAxe(guest.page, "login-390");
       await guest.context.close();
     }

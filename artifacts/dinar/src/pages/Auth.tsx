@@ -39,7 +39,7 @@ function PasswordInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
         aria-label={show ? "إخفاء كلمة المرور" : "إظهار كلمة المرور"}
         aria-pressed={show}
         onClick={() => setShow(!show)}
-        className={`${iconButtonClass("ghost")} absolute left-1 top-1/2 -translate-y-1/2`}
+        className={`${iconButtonClass("ghost")} !absolute left-1 top-1/2 -translate-y-1/2`}
       >
         {show ? <EyeOff size={19} /> : <Eye size={19} />}
       </button>
@@ -255,7 +255,7 @@ export function AuthPage({ register = false, next, embedded = false }: { registe
       }
       await refresh();
       if (!embedded) navigate(target, { replace: true });
-      toast.success(register ? "أهلًا بك في بدينار" : "أهلًا بعودتك");
+      toast.success(register ? "أهلًا بك في DINAR AI" : "أهلًا بعودتك");
     } catch (err) {
       setError(friendlyError(err));
     } finally {
@@ -272,7 +272,7 @@ export function AuthPage({ register = false, next, embedded = false }: { registe
           </div>
           <h1 className="text-2xl font-bold md:text-3xl">{register ? "أنشئ حسابك" : "مرحبًا بعودتك"}</h1>
           <p className="mt-1.5 text-base text-muted-foreground">
-            {register ? "حساب واحد للشراء والبيع في بدينار." : "سجّل دخولك لمتابعة طلباتك وسلتك وعروضك."}
+            {register ? "حساب واحد للشراء والبيع في DINAR AI." : "سجّل دخولك لمتابعة طلباتك وسلتك وعروضك."}
           </p>
         </div>
 
@@ -473,7 +473,7 @@ export function AuthPage({ register = false, next, embedded = false }: { registe
         </form>
 
         <p className="mt-6 text-center text-base text-muted-foreground">
-          {register ? "لديك حساب؟" : "جديد على بدينار؟"}{" "}
+          {register ? "لديك حساب؟" : "جديد على DINAR AI؟"}{" "}
           <Link
             href={`${register ? "/login" : "/register"}${target !== "/" ? `?next=${encodeURIComponent(target)}` : ""}`}
             className="font-bold text-primary hover:underline"

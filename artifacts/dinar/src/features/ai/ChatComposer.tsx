@@ -253,7 +253,7 @@ export function ChatComposer({
                 aria-label={`إزالة الصورة ${index + 1}`}
                 disabled={busy}
                 onClick={() => onPhotosChange(photos.filter((_, i) => i !== index))}
-                className={`${iconButtonClass("outline")} absolute end-0.5 top-0.5`}
+                className={`${iconButtonClass("outline")} !absolute end-0.5 top-0.5`}
               >
                 <X size={14} aria-hidden />
               </button>
