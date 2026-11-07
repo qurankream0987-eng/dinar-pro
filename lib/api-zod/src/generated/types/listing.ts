@@ -13,6 +13,7 @@ import type { ListingPriceRepresentation } from './listingPriceRepresentation';
 import type { ListingPricingMode } from './listingPricingMode';
 import type { ListingSponsoredTier } from './listingSponsoredTier';
 import type { ListingStatus } from './listingStatus';
+import type { ListingVisualMatch } from './listingVisualMatch';
 
 export interface Listing {
   id: string;
@@ -22,6 +23,8 @@ export interface Listing {
   categoryId?: string;
   /** Set only by the server for a paid placement; always rendered with a visible «إعلان ممول» label. */
   isSponsored?: boolean;
+  /** Set only by the server for a photo search; computed from the persisted listing, never from model text. */
+  visualMatch?: ListingVisualMatch;
   /** Paid tier of a sponsored slot; VIP is shown together with «ممول» and never means a verified seller. */
   sponsoredTier?: ListingSponsoredTier;
   /**

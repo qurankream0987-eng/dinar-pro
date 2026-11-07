@@ -387,6 +387,7 @@ export * from './listingUpdate';
 export * from './listingUpdateAttributes';
 export * from './listingUpdateFulfilmentType';
 export * from './listingUpdateInventoryMode';
+export * from './listingVisualMatch';
 export * from './marketCapabilityCounselReviewInput';
 export * from './marketCapabilityCounselReviewInputOutcome';
 export * from './marketCapabilityOwnerApprovalInput';

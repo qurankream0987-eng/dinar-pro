@@ -1,6 +1,8 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { iconButtonClass } from "@/ui/Button";
-import { ArrowUp, LoaderCircle, Mic, MicOff, Plus, Square, X } from "lucide-react";
+import { ArrowUp, Camera, LoaderCircle, Mic, MicOff, Plus, Square, X } from "lucide-react";
+import { CameraCapture } from "./CameraCapture";
+import { isSearchPhoto, markSearchPhoto } from "./visual-search-photo";
 import { textDirection } from "./rich-text";
 import { transcribeAiVoiceRecording } from "./ai-api";
 
@@ -41,6 +43,8 @@ export function ChatComposer({
   const voiceBase = useRef("");
   const [hint, setHint] = useState("");
   const [recording, setRecording] = useState(false);
+  const [cameraOpen, setCameraOpen] = useState(false);
+  const searching = photos.some(isSearchPhoto);
   const [transcribing, setTranscribing] = useState(false);
   const [previews, setPreviews] = useState<Array<{ file: File; url: string }>>(
     [],
@@ -198,6 +202,19 @@ export function ChatComposer({
   }, [draft]);
 
   return (
+    <>
+    {cameraOpen && (
+      <CameraCapture
+        onClose={() => setCameraOpen(false)}
+        onConfirm={(file) => {
+          setCameraOpen(false);
+          // One search photo per message; it replaces listing photos rather than mixing with them.
+          onPhotosChange([markSearchPhoto(file)]);
+          setHint("أضف وصفًا إن شئت، ثم أرسل الصورة إلى DINAR.");
+          input.current?.focus();
+        }}
+      />
+    )}
     <form
       dir="rtl"
       className="dinar-chat-composer ai-composer"
@@ -211,7 +228,7 @@ export function ChatComposer({
         <div
           dir="rtl"
           className="mx-auto mb-2 flex max-w-3xl items-center gap-2 overflow-x-auto px-1"
-          aria-label="صور الإعلان المرفقة"
+          aria-label={searching ? "صورة البحث المرفقة" : "صور الإعلان المرفقة"}
         >
           {previews.map(({ file, url }, index) => (
             <div
@@ -220,7 +237,7 @@ export function ChatComposer({
             >
               <img
                 src={url}
-                alt={`معاينة صورة الإعلان ${index + 1}`}
+                alt={searching ? "صورة المنتج الذي تبحث عنه" : `معاينة صورة الإعلان ${index + 1}`}
                 className="h-full w-full object-cover"
               />
               <button
@@ -235,7 +252,9 @@ export function ChatComposer({
             </div>
           ))}
           <p className="min-w-32 text-xs leading-5 text-muted-foreground">
-            يمكن لـDINAR اقتراح عنوان ووصف ومواصفات مرئية من الصور. راجع كل اقتراح قبل استخدامه.
+            {searching
+              ? "سأبحث عن هذا المنتج في العروض المنشورة. صورتك خاصة بك ولا تُنشر."
+              : "يمكن لـDINAR اقتراح عنوان ووصف ومواصفات مرئية من الصور. راجع كل اقتراح قبل استخدامه."}
           </p>
         </div>
       )}
@@ -266,7 +285,7 @@ export function ChatComposer({
             setHint("يمكن إرفاق أربع صور كحد أقصى.");
           else setHint("");
           if (accepted.length)
-            onPhotosChange([...photos, ...accepted]);
+            onPhotosChange([...photos.filter((file) => !isSearchPhoto(file)), ...accepted]);
         }}
       />
       <div className="ai-composer-box" dir="ltr">
@@ -286,6 +305,22 @@ export function ChatComposer({
           className={`${iconButtonClass("ghost")} dinar-composer-attachment`}
         >
           <Plus size={20} aria-hidden />
+        </button>
+        <button
+          type="button"
+          aria-label="ابحث بصورة"
+          data-testid="button-ai-camera"
+          disabled={busy || offline}
+          onClick={() => {
+            if (!canUploadPhotos) {
+              setHint("سجّل الدخول للبحث بصورة.");
+              return;
+            }
+            setCameraOpen(true);
+          }}
+          className={`${iconButtonClass("ghost")} dinar-composer-attachment`}
+        >
+          <Camera size={20} aria-hidden />
         </button>
         <textarea
           ref={input}
@@ -373,5 +408,6 @@ export function ChatComposer({
       </p>
       {!hint && <p className="ai-composer-helper">راجع تفاصيل الإجراء قبل تأكيده.</p>}
     </form>
+    </>
   );
 }
