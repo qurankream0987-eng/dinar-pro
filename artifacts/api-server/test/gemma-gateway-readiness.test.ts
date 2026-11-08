@@ -165,6 +165,53 @@ await test("GM-10 staging and production require a pinned non-free OpenRouter ro
   );
 });
 
+await test("GM-11 OpenRouter privacy routing normalizes case and terminal DNS dots", () => {
+  for (const hostname of ["openrouter.ai", "OPENROUTER.AI", "openrouter.ai.", "OpenRouter.Ai.:443"]) {
+    const secure = env({
+      NODE_ENV: "production",
+      DINAR_DEPLOYMENT_ENV: "staging",
+      DINAR_AI_BASE_URL: `https://${hostname}/api/v1`,
+    });
+    const configuration = resolveAIProviderConfiguration(secure);
+    assert.deepEqual(
+      configuration.openRouterRouting,
+      {
+        order: ["deepinfra"],
+        requireParameters: true,
+        dataCollection: "deny",
+        zdr: true,
+      },
+      hostname,
+    );
+
+    const missingControls = {
+      ...secure,
+      DINAR_AI_PROVIDER_ORDER: undefined,
+      DINAR_AI_DATA_COLLECTION: undefined,
+      DINAR_AI_ZDR: undefined,
+      DINAR_AI_REQUIRE_PARAMETERS: undefined,
+    } as NodeJS.ProcessEnv;
+    assert.throws(
+      () => resolveAIProviderConfiguration(missingControls),
+      /staging\/production OpenRouter requires one pinned provider/i,
+      `${hostname} must not bypass the deployment privacy guard`,
+    );
+  }
+
+  assert.throws(
+    () =>
+      resolveAIProviderConfiguration(
+        env({
+          NODE_ENV: "production",
+          DINAR_DEPLOYMENT_ENV: "staging",
+          DINAR_AI_BASE_URL: "https://openrouter.ai.evil.example/api/v1",
+        }),
+      ),
+    /apply only to openrouter\.ai/i,
+    "a lookalike suffix is not the OpenRouter hostname",
+  );
+});
+
 await test("GM-07 provider failures fail closed: overload, timeout, malformed body, text-only tool call", async () => {
   const gateway = await createConversationModelGateway(env({ DINAR_MODEL_TIMEOUT_MS: "200" }));
   next = [{ status: 503, body: { error: { message: "overloaded" } } }];

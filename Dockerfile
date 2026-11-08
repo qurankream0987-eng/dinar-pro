@@ -1,4 +1,4 @@
-FROM node:24-bookworm-slim
+FROM node:24-bookworm-slim AS builder
 
 ARG PNPM_VERSION=10.26.1
 
@@ -44,8 +44,13 @@ RUN pnpm --filter @workspace/dinar run build \
 
 # Keep compilers, test runners and frontend tooling out of the runtime dependency tree.
 # All artifacts are built above; frozen offline pruning cannot fetch an unreviewed package.
-RUN pnpm install --prod --frozen-lockfile --offline \
+RUN CI=true pnpm install --prod --frozen-lockfile --offline \
   && pnpm store prune
+
+FROM node:24-bookworm-slim AS runtime
+
+WORKDIR /app
+COPY --from=builder --chown=node:node /app/ /app/
 
 ENV NODE_ENV=production
 ENV DINAR_WEB_DIST=/app/artifacts/dinar/dist/public

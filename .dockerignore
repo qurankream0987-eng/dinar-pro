@@ -17,4 +17,10 @@ artifacts/dinar/test/
 .replit.*
 private-data
 generated-artifacts
+/docs
+/.github
+/scripts/ci
+/scripts/post-merge.sh
+/lib/db/scripts/*.test.mjs
+/lib/db/scripts/rehearsal
 *.log

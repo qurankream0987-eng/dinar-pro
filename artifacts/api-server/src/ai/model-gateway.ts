@@ -256,8 +256,10 @@ export function resolveAIProviderConfiguration(
     const dataCollection = env[`${prefix}DATA_COLLECTION`]?.trim().toLowerCase();
     const zdr = env[`${prefix}ZDR`]?.trim().toLowerCase();
     const requireParameters = env[`${prefix}REQUIRE_PARAMETERS`]?.trim().toLowerCase();
-    const endpointHost = baseURL ? new URL(baseURL).host : "";
-    const openRouterEndpoint = endpointHost === "openrouter.ai";
+    const endpointHostname = baseURL
+      ? new URL(baseURL).hostname.toLowerCase().replace(/\.+$/, "")
+      : "";
+    const openRouterEndpoint = endpointHostname === "openrouter.ai";
     if (
       deploymentRestricted &&
       openRouterEndpoint &&
@@ -278,8 +280,9 @@ export function resolveAIProviderConfiguration(
     const routingRequested = order.length > 0 || Boolean(dataCollection) || Boolean(zdr) || Boolean(requireParameters);
     let openRouterRouting: AIProviderConfiguration["openRouterRouting"];
     if (routingRequested) {
-      const host = baseURL ? new URL(baseURL).host : "";
-      const openRouter = host === "openrouter.ai" || (env.NODE_ENV === "development" && /^(?:127\.0\.0\.1|localhost)(?::\d+)?$/.test(host));
+      const openRouter =
+        endpointHostname === "openrouter.ai" ||
+        (env.NODE_ENV === "development" && ["127.0.0.1", "localhost", "[::1]"].includes(endpointHostname));
       if (!openRouter) throw new Error(`${prefix}PROVIDER_ORDER, DATA_COLLECTION, ZDR and REQUIRE_PARAMETERS apply only to openrouter.ai.`);
       if (!order.length) throw new Error(`${prefix}PROVIDER_ORDER must pin at least one provider so evaluation and traffic are not re-routed.`);
       if (order.some((item) => !/^[a-z0-9][a-z0-9._/-]{0,63}$/.test(item))) throw new Error(`${prefix}PROVIDER_ORDER must list provider slugs.`);
