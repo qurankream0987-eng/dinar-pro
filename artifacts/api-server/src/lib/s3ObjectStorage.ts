@@ -18,7 +18,8 @@ import type { ObjectFileLike, ObjectMetadata } from "./objectStorageTypes";
 const UPLOAD_URL_TTL_SECONDS = 15 * 60;
 const ACL_METADATA_KEY = "custom:aclPolicy";
 type S3Env = NodeJS.ProcessEnv;
-type Config = { endpoint: string; region: string; bucket: string; accessKeyId: string; secretAccessKey: string; privatePrefix: string; publicPrefixes: string[] };
+type S3UrlStyle = "path" | "virtual";
+type Config = { endpoint: string; region: string; bucket: string; accessKeyId: string; secretAccessKey: string; privatePrefix: string; publicPrefixes: string[]; urlStyle: S3UrlStyle };
 
 function parseConfig(env: S3Env): Config {
   const required = ["OBJECT_STORAGE_S3_ENDPOINT", "OBJECT_STORAGE_S3_REGION", "OBJECT_STORAGE_S3_BUCKET", "OBJECT_STORAGE_S3_ACCESS_KEY_ID", "OBJECT_STORAGE_S3_SECRET_ACCESS_KEY"];
@@ -32,13 +33,16 @@ function parseConfig(env: S3Env): Config {
   const bucket = env.OBJECT_STORAGE_S3_BUCKET!.trim();
   if (!/^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$/.test(bucket))
     throw new Error("OBJECT_STORAGE_S3_BUCKET is invalid.");
+  const urlStyle = env.OBJECT_STORAGE_S3_URL_STYLE ?? "path";
+  if (urlStyle !== "path" && urlStyle !== "virtual")
+    throw new Error("OBJECT_STORAGE_S3_URL_STYLE must be path or virtual.");
   const privatePrefix = (env.OBJECT_STORAGE_S3_PRIVATE_PREFIX ?? "private").trim().replace(/^\/+|\/+$/g, "");
   if (!privatePrefix || privatePrefix.split("/").some((part) => !part || part === "." || part === ".."))
     throw new Error("OBJECT_STORAGE_S3_PRIVATE_PREFIX is invalid.");
   const publicPrefixes = (env.OBJECT_STORAGE_S3_PUBLIC_PREFIXES ?? "").split(",").map((v) => v.trim().replace(/^\/+|\/+$/g, "")).filter(Boolean);
   if (publicPrefixes.some((v) => v.split("/").some((part) => !part || part === "." || part === "..")))
     throw new Error("OBJECT_STORAGE_S3_PUBLIC_PREFIXES is invalid.");
-  return { endpoint: endpoint.toString().replace(/\/$/, ""), region: env.OBJECT_STORAGE_S3_REGION!.trim(), bucket, accessKeyId: env.OBJECT_STORAGE_S3_ACCESS_KEY_ID!.trim(), secretAccessKey: env.OBJECT_STORAGE_S3_SECRET_ACCESS_KEY!, privatePrefix, publicPrefixes };
+  return { endpoint: endpoint.toString().replace(/\/$/, ""), region: env.OBJECT_STORAGE_S3_REGION!.trim(), bucket, accessKeyId: env.OBJECT_STORAGE_S3_ACCESS_KEY_ID!.trim(), secretAccessKey: env.OBJECT_STORAGE_S3_SECRET_ACCESS_KEY!, privatePrefix, publicPrefixes, urlStyle };
 }
 
 function isMissing(error: unknown): boolean {
@@ -118,7 +122,7 @@ export class S3CompatibleObjectStorageService {
   constructor(env: S3Env = process.env, client?: S3Client) {
     this.config = parseConfig(env);
     const clientConfig: S3ClientConfig = {
-      endpoint: this.config.endpoint, region: this.config.region, forcePathStyle: true,
+      endpoint: this.config.endpoint, region: this.config.region, forcePathStyle: this.config.urlStyle === "path",
       credentials: { accessKeyId: this.config.accessKeyId, secretAccessKey: this.config.secretAccessKey },
     };
     this.client = client ?? new S3Client(clientConfig);

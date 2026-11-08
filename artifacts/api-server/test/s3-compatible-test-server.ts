@@ -2,14 +2,15 @@
  * A loopback, in-memory S3-compatible server for adapter tests (P0-5). It is not a mock of the
  * SDK: the real S3Client and presigner talk to it over HTTP, and every request must carry a valid
  * AWS Signature Version 4 (header or presigned query) for the one configured key pair, or it is
- * refused with 403 like a real bucket would. Path-style addressing only (forcePathStyle).
+ * refused with 403 like a real bucket would. Supports both path-style and virtual-hosted
+ * addressing while preserving the signed Host header.
  */
 import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import type { AddressInfo } from "node:net";
 
 type StoredObject = { bytes: Buffer; contentType: string; cacheControl?: string; metadata: Record<string, string>; lastModified: Date };
-export type S3RequestRecord = { method: string; path: string; auth: "header" | "presigned" | "none"; status: number };
+export type S3RequestRecord = { method: string; path: string; host: string; auth: "header" | "presigned" | "none"; authError?: string; status: number };
 
 const sha256 = (data: string | Buffer) => createHash("sha256").update(data).digest("hex");
 const hmac = (key: string | Buffer, data: string) => createHmac("sha256", key).update(data).digest();
@@ -33,10 +34,22 @@ function parseAmzDate(value: string): number {
  * loopback web origin: preflight OPTIONS is answered unsigned (as S3 does) and responses carry
  * that origin. Signature checks on the actual request are unchanged.
  */
-export async function startS3CompatibleTestServer(options: { accessKeyId: string; secretAccessKey: string; region: string; bucket: string; basePath?: string; corsLoopbackOrigins?: boolean }) {
+export async function startS3CompatibleTestServer(options: {
+  accessKeyId: string;
+  secretAccessKey: string;
+  region: string;
+  bucket: string;
+  basePath?: string;
+  urlStyle?: "path" | "virtual";
+  virtualHostSuffix?: string;
+  corsLoopbackOrigins?: boolean;
+  corsAllowedOrigins?: readonly string[];
+}) {
   const objects = new Map<string, StoredObject>();
   const requests: S3RequestRecord[] = [];
   const basePath = (options.basePath ?? "").replace(/\/+$/, "");
+  const urlStyle = options.urlStyle ?? "path";
+  let expectedHost = "";
 
   function verify(req: IncomingMessage, rawPath: string, query: URLSearchParams, body: Buffer): "header" | "presigned" | string {
     const header = req.headers.authorization;
@@ -98,10 +111,14 @@ export async function startS3CompatibleTestServer(options: { accessKeyId: string
     const body = Buffer.concat(chunks);
     const url = new URL(req.url ?? "/", "http://placeholder");
     const rawPath = (req.url ?? "/").split("?")[0]!;
-    const record: S3RequestRecord = { method: req.method ?? "", path: rawPath, auth: "none", status: 0 };
+    const record: S3RequestRecord = { method: req.method ?? "", path: rawPath, host: String(req.headers.host ?? ""), auth: "none", status: 0 };
     requests.push(record);
     const origin = req.headers.origin;
-    if (options.corsLoopbackOrigins && origin && /^http:\/\/(127\.0\.0\.1|localhost):\d+$/.test(origin)) {
+    const corsAllowed = Boolean(origin && (
+      (options.corsLoopbackOrigins && /^http:\/\/(127\.0\.0\.1|localhost):\d+$/.test(origin)) ||
+      options.corsAllowedOrigins?.includes(origin)
+    ));
+    if (corsAllowed && origin) {
       res.setHeader("access-control-allow-origin", origin);
       res.setHeader("vary", "origin");
       res.setHeader("access-control-expose-headers", "etag");
@@ -121,11 +138,16 @@ export async function startS3CompatibleTestServer(options: { accessKeyId: string
       if (code) xmlError(res, status, code);
     };
     const auth = verify(req, rawPath, url.searchParams, body);
-    if (auth !== "header" && auth !== "presigned") return respond(403, auth.split(":")[0]!);
+    if (auth !== "header" && auth !== "presigned") {
+      record.authError = auth;
+      return respond(403, auth.split(":")[0]!);
+    }
     record.auth = auth;
 
-    const bucketPath = `${basePath}/${options.bucket}`;
-    if (rawPath.replace(/\/+$/, "") === bucketPath && req.method === "GET" && url.searchParams.get("list-type") === "2") {
+    if (req.headers.host !== expectedHost) return respond(404, "NoSuchBucket");
+    const bucketRoot = (urlStyle === "path" ? `${basePath}/${options.bucket}` : basePath).replace(/\/+$/, "");
+    const keyPathPrefix = `${bucketRoot}/`;
+    if (rawPath.replace(/\/+$/, "") === bucketRoot && req.method === "GET" && url.searchParams.get("list-type") === "2") {
       const prefix = url.searchParams.get("prefix") ?? "";
       const entries = [...objects.entries()].filter(([key]) => key.startsWith(prefix));
       const xml = (value: string) => value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
@@ -136,8 +158,8 @@ export async function startS3CompatibleTestServer(options: { accessKeyId: string
       res.writeHead(200, { "content-type": "application/xml" });
       return res.end(`<?xml version="1.0" encoding="UTF-8"?><ListBucketResult><Name>${xml(options.bucket)}</Name><Prefix>${xml(prefix)}</Prefix><KeyCount>${entries.length}</KeyCount><MaxKeys>1000</MaxKeys><IsTruncated>false</IsTruncated>${contents}</ListBucketResult>`);
     }
-    if (!rawPath.startsWith(`${bucketPath}/`)) return respond(404, "NoSuchBucket");
-    const key = rawPath.slice(`${basePath}/${options.bucket}/`.length).split("/").map(decodeURIComponent).join("/");
+    if (!rawPath.startsWith(keyPathPrefix)) return respond(404, "NoSuchBucket");
+    const key = rawPath.slice(keyPathPrefix.length).split("/").map(decodeURIComponent).join("/");
     const existing = objects.get(key);
     const content = body;
     switch (req.method) {
@@ -207,8 +229,13 @@ export async function startS3CompatibleTestServer(options: { accessKeyId: string
   });
   await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
   const { port } = server.address() as AddressInfo;
+  const endpointHost = `127.0.0.1:${port}`;
+  const virtualHostSuffix = options.virtualHostSuffix ?? "127.0.0.1";
+  expectedHost = urlStyle === "virtual" ? `${options.bucket}.${virtualHostSuffix}:${port}` : endpointHost;
   return {
     endpoint: `http://127.0.0.1:${port}${basePath}`,
+    virtualEndpoint: `http://${virtualHostSuffix}:${port}${basePath}`,
+    expectedHost,
     objects,
     requests,
     close: () => new Promise<void>((resolve) => {

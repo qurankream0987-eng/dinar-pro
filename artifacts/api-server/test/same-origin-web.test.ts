@@ -212,20 +212,26 @@ await test("the connect sources grow only through an explicit origin allowlist",
 await test("a configured S3 upload endpoint is the only storage origin allowed", async () => {
   const previousProvider = process.env.OBJECT_STORAGE_PROVIDER;
   const previousEndpoint = process.env.OBJECT_STORAGE_S3_ENDPOINT;
+  const previousExtraOrigins = process.env.CSP_CONNECT_EXTRA_ORIGINS;
   process.env.OBJECT_STORAGE_PROVIDER = "s3";
   process.env.OBJECT_STORAGE_S3_ENDPOINT = "https://objects.example.test";
+  process.env.CSP_CONNECT_EXTRA_ORIGINS = "https://dinar-wave1.objects.example.test";
   try {
     const csp = (await fetch(`${origin}/api/healthz`)).headers.get("content-security-policy") ?? "";
     assert.match(
       csp,
-      /connect-src 'self' https:\/\/objects\.example\.test(;|$)/,
+      /connect-src 'self' [^;]*https:\/\/objects\.example\.test(;|$)/,
       "the presigned PUT origin is reachable without widening anything else",
     );
+    assert.match(csp, /connect-src 'self' https:\/\/dinar-wave1\.objects\.example\.test https:\/\/objects\.example\.test(;|$)/);
+    assert.doesNotMatch(csp, /https:\/\/\*\.objects\.example\.test/, "virtual-hosted bucket access stays an exact-origin allowlist");
   } finally {
     if (previousProvider === undefined) delete process.env.OBJECT_STORAGE_PROVIDER;
     else process.env.OBJECT_STORAGE_PROVIDER = previousProvider;
     if (previousEndpoint === undefined) delete process.env.OBJECT_STORAGE_S3_ENDPOINT;
     else process.env.OBJECT_STORAGE_S3_ENDPOINT = previousEndpoint;
+    if (previousExtraOrigins === undefined) delete process.env.CSP_CONNECT_EXTRA_ORIGINS;
+    else process.env.CSP_CONNECT_EXTRA_ORIGINS = previousExtraOrigins;
   }
 });
 

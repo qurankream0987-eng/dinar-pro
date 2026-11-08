@@ -6,7 +6,7 @@ import { ObjectNotFoundError, validateObjectStorageConfiguration } from "../src/
 import { ObjectPermission } from "../src/lib/objectAcl";
 
 const env: NodeJS.ProcessEnv = {
-  OBJECT_STORAGE_S3_ENDPOINT: "http://127.0.0.1:9000/gateway",
+  OBJECT_STORAGE_S3_ENDPOINT: "http://objects.example.test:9000/gateway",
   OBJECT_STORAGE_S3_REGION: "us-east-1",
   OBJECT_STORAGE_S3_BUCKET: "dinar-local-test",
   OBJECT_STORAGE_S3_ACCESS_KEY_ID: "LOCAL_TEST_KEY",
@@ -116,5 +116,27 @@ test("storage startup validation reports setting names only and rejects malforme
   assert.throws(
     () => new S3CompatibleObjectStorageService({ ...env, OBJECT_STORAGE_S3_SECRET_ACCESS_KEY: "" }),
     /OBJECT_STORAGE_S3_SECRET_ACCESS_KEY/,
+  );
+});
+
+test("S3 URL style defaults to path and supports virtual addressing explicitly", async () => {
+  const pathStorage = new S3CompatibleObjectStorageService(env);
+  const pathUrl = new URL(await pathStorage.getObjectEntityUploadURL("listing-photos/user-a/path.png"));
+  assert.match(pathUrl.pathname, /dinar-local-test\/private\/listing-photos\/user-a\/path\.png$/);
+
+  const virtualStorage = new S3CompatibleObjectStorageService({
+    ...env,
+    OBJECT_STORAGE_S3_URL_STYLE: "virtual",
+  });
+  const virtualUrl = new URL(await virtualStorage.getObjectEntityUploadURL("listing-photos/user-a/virtual.png"));
+  assert.match(virtualUrl.hostname, /^dinar-local-test\./);
+  assert.doesNotMatch(virtualUrl.pathname, /dinar-local-test/);
+
+  assert.throws(
+    () => new S3CompatibleObjectStorageService({
+      ...env,
+      OBJECT_STORAGE_S3_URL_STYLE: "virtual-hosted",
+    }),
+    /OBJECT_STORAGE_S3_URL_STYLE/,
   );
 });

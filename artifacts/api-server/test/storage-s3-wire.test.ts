@@ -3,6 +3,8 @@
 // decides whether a deployment can silently fall back to Replit's local sidecar.
 import { test, after } from "node:test";
 import assert from "node:assert/strict";
+import dns from "node:dns";
+import { request as httpRequest } from "node:http";
 import { S3CompatibleObjectStorageService } from "../src/lib/s3ObjectStorage";
 import { ObjectNotFoundError, ObjectStorageService, validateObjectStorageConfiguration } from "../src/lib/objectStorage";
 import { ObjectPermission } from "../src/lib/objectAcl";
@@ -22,6 +24,44 @@ const env: NodeJS.ProcessEnv = {
   OBJECT_STORAGE_S3_PUBLIC_PREFIXES: "public",
 };
 const png = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68, 82]);
+
+function requestVirtualHostThroughLoopback(url: string | URL, options: { method: string; body?: Buffer; headers?: Record<string, string> }) {
+  const target = new URL(url);
+  return new Promise<{ status: number; headers: import("node:http").IncomingHttpHeaders; body: Buffer }>((resolve, reject) => {
+    const request = httpRequest({
+      hostname: "127.0.0.1",
+      port: Number(target.port),
+      method: options.method,
+      path: `${target.pathname}${target.search}`,
+      headers: { host: target.host, ...options.headers },
+      setHost: false,
+    }, (response) => {
+      const chunks: Buffer[] = [];
+      response.on("data", (chunk) => chunks.push(Buffer.from(chunk)));
+      response.on("end", () => resolve({
+        status: response.statusCode ?? 0,
+        headers: response.headers,
+        body: Buffer.concat(chunks),
+      }));
+    });
+    request.on("error", reject);
+    request.end(options.body);
+  });
+}
+
+function routeVirtualHostDnsThroughLoopback() {
+  const originalLookup = dns.lookup;
+  (dns as any).lookup = (hostname: string, options: any, callback?: any) => {
+    if (hostname.endsWith(".objects.example.test")) {
+      const done = typeof options === "function" ? options : callback;
+      if (typeof options === "object" && options?.all)
+        return done(null, [{ address: "127.0.0.1", family: 4 }]);
+      return done(null, "127.0.0.1", 4);
+    }
+    return (originalLookup as any)(hostname, options, callback);
+  };
+  return () => { (dns as any).lookup = originalLookup; };
+}
 
 test("signed save, read, range, ACL and delete over HTTP with the selected s3 provider", async () => {
   const storage = new ObjectStorageService(env);
@@ -101,6 +141,101 @@ test("a presigned upload URL works for the browser's PUT and only for its own ke
   lengthened.searchParams.set("X-Amz-Expires", "604800");
   assert.equal((await fetch(lengthened, { method: "PUT", body: png })).status, 403, "the expiry is signed");
   assert.equal(new URL(uploadURL).searchParams.get("X-Amz-Expires"), "900");
+});
+
+test("virtual-hosted URLs preserve SigV4 host, private ACL, CORS and object operations", async () => {
+  const origin = "https://dinar-staging.example.test";
+  const virtualServer = await startS3CompatibleTestServer({
+    ...credentials,
+    basePath: "/gateway",
+    urlStyle: "virtual",
+    virtualHostSuffix: "objects.example.test",
+    corsAllowedOrigins: [origin],
+  });
+  try {
+    const virtualEnv = {
+      ...env,
+      OBJECT_STORAGE_S3_ENDPOINT: virtualServer.virtualEndpoint,
+      OBJECT_STORAGE_S3_URL_STYLE: "virtual",
+    };
+    const adapterPresigner = new S3CompatibleObjectStorageService(virtualEnv);
+    const uploadURL = await adapterPresigner.getObjectEntityUploadURL("visual-search/buyer-1/virtual-upload.png");
+    const signedURL = new URL(uploadURL);
+    assert.equal(signedURL.host, virtualServer.expectedHost);
+    assert.match(signedURL.pathname, /^\/gateway\/private\/visual-search\/buyer-1\/virtual-upload\.png$/);
+    assert.equal(adapterPresigner.normalizeObjectEntityPath(uploadURL), "/objects/visual-search/buyer-1/virtual-upload.png");
+
+    const approvedPreflight = await requestVirtualHostThroughLoopback(uploadURL, {
+      method: "OPTIONS",
+      headers: {
+        origin,
+        "access-control-request-method": "PUT",
+        "access-control-request-headers": "content-type",
+      },
+    });
+    assert.equal(approvedPreflight.status, 204);
+    assert.equal(approvedPreflight.headers["access-control-allow-origin"], origin);
+    assert.match(String(approvedPreflight.headers["access-control-allow-methods"]), /\bPUT\b/);
+
+    const rejectedPreflight = await requestVirtualHostThroughLoopback(uploadURL, {
+      method: "OPTIONS",
+      headers: { origin: "https://unapproved.example.test", "access-control-request-method": "PUT" },
+    });
+    assert.equal(rejectedPreflight.status, 403);
+    assert.equal(rejectedPreflight.headers["access-control-allow-origin"], undefined);
+
+    const uploaded = await requestVirtualHostThroughLoopback(uploadURL, {
+      method: "PUT",
+      body: png,
+      headers: { origin, "content-type": "image/png" },
+    });
+    assert.equal(uploaded.status, 200, uploaded.body.toString());
+    assert.equal(uploaded.headers["access-control-allow-origin"], origin);
+
+    const restoreDns = routeVirtualHostDnsThroughLoopback();
+    try {
+      const storage = new S3CompatibleObjectStorageService(virtualEnv);
+      const file = await storage.getObjectEntityFile("/objects/visual-search/buyer-1/virtual-upload.png");
+      const [metadata] = await file.getMetadata();
+      assert.equal(metadata.size, png.length);
+      assert.equal(metadata.contentType, "image/png");
+      assert.deepEqual((await file.download())[0], png);
+      assert.deepEqual((await file.download({ start: 0, end: 7 }))[0], png.subarray(0, 8));
+
+      await storage.trySetObjectEntityAclPolicy(file.name, { owner: "buyer-1", visibility: "private" });
+      assert.equal(await storage.canAccessObjectEntity({ userId: "buyer-1", objectFile: file }), true);
+      assert.equal(await storage.canAccessObjectEntity({ userId: "buyer-10", objectFile: file }), false);
+      assert.equal(await storage.canAccessObjectEntity({ objectFile: file }), false);
+      assert.equal(virtualServer.objects.get("private/visual-search/buyer-1/virtual-upload.png")?.contentType, "image/png");
+
+      const ownFiles = await storage.listObjectEntityFiles("visual-search/buyer-1/");
+      assert.deepEqual(ownFiles.map((item) => item.name), [file.name]);
+      const anonymousURL = new URL(uploadURL);
+      anonymousURL.search = "";
+      const anonymousRead = await requestVirtualHostThroughLoopback(anonymousURL, { method: "GET" });
+      assert.equal(anonymousRead.status, 403, "private object URLs do not grant anonymous reads");
+
+      const tamperedHost = await requestVirtualHostThroughLoopback(uploadURL, {
+        method: "PUT",
+        body: png,
+        headers: { host: `other-bucket.${signedURL.host}`, "content-type": "image/png" },
+      });
+      assert.equal(tamperedHost.status, 403, "the signed virtual-host name cannot be changed");
+
+      await file.delete();
+      await assert.rejects(() => storage.getObjectEntityFile(file.name), ObjectNotFoundError);
+      assert.ok(virtualServer.requests.some((request) => request.method === "GET" && request.status === 200 && request.path.replace(/\/+$/, "") === "/gateway"));
+      assert.deepEqual(
+        virtualServer.requests.filter((request) => request.auth === "none").map((request) => request.method).sort(),
+        ["GET", "OPTIONS", "OPTIONS", "PUT"],
+        "only anonymous read, CORS preflights and the deliberately retargeted upload are unsigned",
+      );
+    } finally {
+      restoreDns();
+    }
+  } finally {
+    await virtualServer.close();
+  }
 });
 
 test("wrong credentials are refused by the endpoint and surface as errors, not as missing objects", async () => {
