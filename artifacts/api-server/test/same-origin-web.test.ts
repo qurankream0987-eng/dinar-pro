@@ -120,6 +120,29 @@ await test("a labelled staging or production deployment may only be framed by it
   }
 });
 
+await test("staging sends server-side noindex headers without weakening API authentication", async () => {
+  const previousMode = process.env.NODE_ENV;
+  const previousDeployment = process.env.DINAR_DEPLOYMENT_ENV;
+  try {
+    process.env.NODE_ENV = "production";
+    process.env.DINAR_DEPLOYMENT_ENV = "staging";
+    const shell = await fetch(`${origin}/`, { headers: { Accept: "text/html" } });
+    assert.equal(shell.status, 200);
+    assert.equal(shell.headers.get("x-robots-tag"), "noindex, nofollow, noarchive");
+
+    const asset = await fetch(`${origin}/assets/index-abc123.js`);
+    assert.equal(asset.status, 200);
+    assert.equal(asset.headers.get("x-robots-tag"), "noindex, nofollow, noarchive");
+
+    const privateApi = await fetch(`${origin}/api/account/privacy`);
+    assert.equal(privateApi.status, 401, "crawler protection does not bypass authentication");
+    assert.equal(privateApi.headers.get("x-robots-tag"), "noindex, nofollow, noarchive");
+  } finally {
+    if (previousMode === undefined) delete process.env.NODE_ENV; else process.env.NODE_ENV = previousMode;
+    if (previousDeployment === undefined) delete process.env.DINAR_DEPLOYMENT_ENV; else process.env.DINAR_DEPLOYMENT_ENV = previousDeployment;
+  }
+});
+
 await test("the shell and API carry the browser security policy", async () => {
   const shell = await fetch(`${origin}/`, { headers: { Accept: "text/html" } });
   const csp = shell.headers.get("content-security-policy") ?? "";

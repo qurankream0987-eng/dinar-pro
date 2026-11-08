@@ -105,6 +105,14 @@ export const GEMMA_FREE_MODELS = [
 ] as const;
 export const GEMINI_FREE_MODELS = ["gemini-3.5-flash-lite", "gemini-3.8-flash"] as const;
 const OPENROUTER_API_BASE_URL = "https://openrouter.ai/api/v1";
+
+function deploymentRequiresProviderSafety(env: NodeJS.ProcessEnv) {
+  const label = env.DINAR_DEPLOYMENT_ENV?.trim().toLowerCase();
+  return env.NODE_ENV === "production" ||
+    (Boolean(label) && label !== "development" && label !== "test") ||
+    env.REPLIT_DEPLOYMENT !== undefined ||
+    env.RAILWAY_ENVIRONMENT !== undefined;
+}
 const OPENAI_MODEL = "gpt-5.6-terra";
 // Replit AI Integrations proxy OpenAI with Replit-managed credentials; the endpoint is
 // provisioned per Repl, so it is read from the environment and never hard-coded.
@@ -120,6 +128,7 @@ export function resolveAIProviderConfiguration(
   env: NodeJS.ProcessEnv = process.env,
   slot: "PRIMARY" | "FALLBACK" | "HEAVY" = "PRIMARY",
 ): AIProviderConfiguration {
+  const deploymentRestricted = deploymentRequiresProviderSafety(env);
   if (env.DINAR_GEMMA_FREE_ONLY === "true" && slot !== "PRIMARY")
     throw new Error("DINAR_GEMMA_FREE_ONLY does not allow fallback providers.");
   const prefix = slot === "PRIMARY" ? "DINAR_AI_" : slot === "FALLBACK" ? "DINAR_AI_FALLBACK_" : "DINAR_AI_HEAVY_";
@@ -151,6 +160,8 @@ export function resolveAIProviderConfiguration(
     };
   }
   if (configured === "OPENROUTER") {
+    if (deploymentRestricted)
+      throw new Error(`${prefix}OPENROUTER cannot use the free/alias route in staging or production; use a pinned OPENAI_COMPATIBLE OpenRouter route.`);
     if (env.DINAR_GEMMA_FREE_ONLY === "true") {
       if (slot !== "PRIMARY") throw new Error("Gemma free-only mode does not allow fallback providers.");
       const requestedModel = model?.trim();
@@ -245,6 +256,25 @@ export function resolveAIProviderConfiguration(
     const dataCollection = env[`${prefix}DATA_COLLECTION`]?.trim().toLowerCase();
     const zdr = env[`${prefix}ZDR`]?.trim().toLowerCase();
     const requireParameters = env[`${prefix}REQUIRE_PARAMETERS`]?.trim().toLowerCase();
+    const endpointHost = baseURL ? new URL(baseURL).host : "";
+    const openRouterEndpoint = endpointHost === "openrouter.ai";
+    if (
+      deploymentRestricted &&
+      openRouterEndpoint &&
+      (
+        order.length !== 1 ||
+        dataCollection !== "deny" ||
+        zdr !== "true" ||
+        requireParameters !== "true"
+      )
+    )
+      throw new Error(`${prefix} staging/production OpenRouter requires one pinned provider, DATA_COLLECTION=deny, ZDR=true and REQUIRE_PARAMETERS=true.`);
+    if (
+      deploymentRestricted &&
+      openRouterEndpoint &&
+      (!model || model.toLowerCase() === OPENROUTER_FREE_MODEL || model.toLowerCase().endsWith(":free"))
+    )
+      throw new Error(`${prefix} staging/production OpenRouter model must be explicit and non-free; free model IDs are not permitted.`);
     const routingRequested = order.length > 0 || Boolean(dataCollection) || Boolean(zdr) || Boolean(requireParameters);
     let openRouterRouting: AIProviderConfiguration["openRouterRouting"];
     if (routingRequested) {

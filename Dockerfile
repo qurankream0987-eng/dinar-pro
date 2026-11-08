@@ -42,6 +42,11 @@ COPY --chown=node:node . .
 RUN pnpm --filter @workspace/dinar run build \
   && pnpm --filter @workspace/api-server run build
 
+# Keep compilers, test runners and frontend tooling out of the runtime dependency tree.
+# All artifacts are built above; frozen offline pruning cannot fetch an unreviewed package.
+RUN pnpm install --prod --frozen-lockfile --offline \
+  && pnpm store prune
+
 ENV NODE_ENV=production
 ENV DINAR_WEB_DIST=/app/artifacts/dinar/dist/public
 

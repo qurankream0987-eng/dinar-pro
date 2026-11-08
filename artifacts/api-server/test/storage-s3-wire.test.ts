@@ -68,6 +68,22 @@ test("metadata carries a generation that changes when the object is replaced (ph
   await file.delete();
 });
 
+test("private object listing is strictly scoped to the requested prefix", async () => {
+  const storage = new ObjectStorageService(env);
+  const own = "/objects/visual-search/buyer-1/photo.png";
+  const otherBuyer = "/objects/visual-search/buyer-10/photo.png";
+  const listing = "/objects/listing-photos/buyer-1/photo.png";
+  for (const path of [own, otherBuyer, listing])
+    assert.equal(await storage.saveObjectEntityFromBuffer(path, png, "image/png"), true);
+
+  const files = await storage.listObjectEntityFiles("visual-search/buyer-1/");
+  assert.deepEqual(files.map((file) => file.name), [own]);
+  const [metadata] = await files[0]!.getMetadata();
+  assert.ok(metadata.timeCreated instanceof Date, "the adapter exposes creation time for expiry checks");
+  assert.equal(s3.objects.has("private/visual-search/buyer-10/photo.png"), true);
+  assert.equal(s3.objects.has("private/listing-photos/buyer-1/photo.png"), true);
+});
+
 test("a presigned upload URL works for the browser's PUT and only for its own key", async () => {
   const storage = new ObjectStorageService(env);
   const uploadURL = await storage.getObjectEntityUploadURL("listing-photos/seller-1/upload.png");

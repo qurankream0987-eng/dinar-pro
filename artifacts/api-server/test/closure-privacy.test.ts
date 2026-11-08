@@ -8,8 +8,10 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { and, eq } from "drizzle-orm";
 import { db, pool, privacyConsentEvents, privacyRequests, userPrivacyPreferences, users } from "@workspace/db";
+import { localObjectStorage } from "./local-object-storage";
 import app from "../src/app";
 import { deviceLocationSharingAllowed, retentionPolicy } from "../src/lib/privacy-rights";
+import { ObjectStorageService } from "../src/lib/objectStorage";
 import { requireSafeReplitDevelopmentDatabase } from "./safe-development-database";
 
 requireSafeReplitDevelopmentDatabase("BDINAR_CLOSURE_ACCEPTANCE");
@@ -236,18 +238,49 @@ await test("P2-08 conversation: view, export card (no password in chat), prefere
 
 await test("P2-09 account deletion is tracked and keeps required records", async () => {
   const carol = await register("carol");
+  const storage = new ObjectStorageService();
+  const searchPhoto = `/objects/visual-search/${carol.id}/${randomUUID()}.jpg`;
+  const listingPhoto = `/objects/listing-photos/${carol.id}/${randomUUID()}.jpg`;
+  const syntheticJpeg = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 1, 2, 3]);
+  assert.equal(await storage.saveObjectEntityFromBuffer(searchPhoto, syntheticJpeg, "image/jpeg"), true);
+  assert.equal(await storage.saveObjectEntityFromBuffer(listingPhoto, syntheticJpeg, "image/jpeg"), true);
+  await storage.trySetObjectEntityAclPolicy(searchPhoto, { owner: carol.id, visibility: "private" });
+  await storage.trySetObjectEntityAclPolicy(listingPhoto, { owner: carol.id, visibility: "private" });
   const deleted = await request("/account/deletion", "POST", { currentPassword: carol.password, confirm: true }, carol.cookie);
   assert.equal(deleted.status, 200, deleted.raw);
+  await assert.rejects(storage.getObjectEntityFile(searchPhoto), /Object not found/, "synthetic buyer search photo was deleted");
+  assert.ok(await storage.getObjectEntityFile(listingPhoto), "account closure does not delete listing media");
   const [row] = await db.select().from(privacyRequests).where(and(eq(privacyRequests.userId, carol.id), eq(privacyRequests.kind, "DELETION")));
   assert.deepEqual([row!.status, row!.outcomeCode], ["COMPLETED", "ACCOUNT_DEACTIVATED_RECORDS_RETAINED"]);
   assert.equal((await request("/account/privacy", "GET", undefined, carol.cookie)).status, 401, "the deleted account's session is gone");
 });
 
-await test("P2-10 retention periods are configuration pending legal approval", () => {
+await test("P2-09b account closure completes when private-photo cleanup is unavailable", async () => {
+  const dana = await register("dana");
+  const originalList = ObjectStorageService.prototype.listObjectEntityFiles;
+  ObjectStorageService.prototype.listObjectEntityFiles = async () => {
+    throw new Error("synthetic storage outage");
+  };
+  try {
+    const deleted = await request("/account/deletion", "POST", { currentPassword: dana.password, confirm: true }, dana.cookie);
+    assert.equal(deleted.status, 200, deleted.raw);
+    const [row] = await db.select().from(users).where(eq(users.id, dana.id));
+    assert.equal(row?.status, "DEACTIVATED", "storage failure does not roll back account closure");
+  } finally {
+    ObjectStorageService.prototype.listObjectEntityFiles = originalList;
+  }
+});
+
+await test("P2-10 retention periods are configuration pending legal approval", async () => {
   const configured = retentionPolicy({ DINAR_RETENTION_PERIODS_JSON: JSON.stringify({ "disputes, reports, moderation audit": 1825 }) } as NodeJS.ProcessEnv);
   assert.equal(configured.approved, false);
   assert.equal(configured.records.find((item) => item.record === "disputes, reports, moderation audit")!.period, "1825_DAYS");
   assert.equal(retentionPolicy({ DINAR_RETENTION_PERIODS_JSON: "{not json" } as NodeJS.ProcessEnv).records[0]!.period, "REQUIRES_LAUNCH_COUNTRY_REVIEW", "invalid configuration falls back, never crashes");
   assert.equal(retentionPolicy({ DINAR_RETENTION_APPROVED: "true" } as NodeJS.ProcessEnv).approved, true);
-  server.close();
+  await new Promise<void>((resolve, reject) => {
+    server.close((error) => error ? reject(error) : resolve());
+    server.closeAllConnections();
+  });
+  await localObjectStorage?.close();
+  await pool.end();
 });

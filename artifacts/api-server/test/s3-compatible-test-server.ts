@@ -8,7 +8,7 @@ import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import type { AddressInfo } from "node:net";
 
-type StoredObject = { bytes: Buffer; contentType: string; cacheControl?: string; metadata: Record<string, string> };
+type StoredObject = { bytes: Buffer; contentType: string; cacheControl?: string; metadata: Record<string, string>; lastModified: Date };
 export type S3RequestRecord = { method: string; path: string; auth: "header" | "presigned" | "none"; status: number };
 
 const sha256 = (data: string | Buffer) => createHash("sha256").update(data).digest("hex");
@@ -124,7 +124,19 @@ export async function startS3CompatibleTestServer(options: { accessKeyId: string
     if (auth !== "header" && auth !== "presigned") return respond(403, auth.split(":")[0]!);
     record.auth = auth;
 
-    if (!rawPath.startsWith(`${basePath}/${options.bucket}/`)) return respond(404, "NoSuchBucket");
+    const bucketPath = `${basePath}/${options.bucket}`;
+    if (rawPath.replace(/\/+$/, "") === bucketPath && req.method === "GET" && url.searchParams.get("list-type") === "2") {
+      const prefix = url.searchParams.get("prefix") ?? "";
+      const entries = [...objects.entries()].filter(([key]) => key.startsWith(prefix));
+      const xml = (value: string) => value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+      const contents = entries.map(([key, object]) =>
+        `<Contents><Key>${xml(key)}</Key><LastModified>${object.lastModified.toISOString()}</LastModified><ETag>"${sha256(object.bytes).slice(0, 32)}"</ETag><Size>${object.bytes.length}</Size><StorageClass>STANDARD</StorageClass></Contents>`,
+      ).join("");
+      record.status = 200;
+      res.writeHead(200, { "content-type": "application/xml" });
+      return res.end(`<?xml version="1.0" encoding="UTF-8"?><ListBucketResult><Name>${xml(options.bucket)}</Name><Prefix>${xml(prefix)}</Prefix><KeyCount>${entries.length}</KeyCount><MaxKeys>1000</MaxKeys><IsTruncated>false</IsTruncated>${contents}</ListBucketResult>`);
+    }
+    if (!rawPath.startsWith(`${bucketPath}/`)) return respond(404, "NoSuchBucket");
     const key = rawPath.slice(`${basePath}/${options.bucket}/`.length).split("/").map(decodeURIComponent).join("/");
     const existing = objects.get(key);
     const content = body;
@@ -135,6 +147,7 @@ export async function startS3CompatibleTestServer(options: { accessKeyId: string
         res.writeHead(200, {
           "content-length": existing.bytes.length,
           "content-type": existing.contentType,
+          "last-modified": existing.lastModified.toUTCString(),
           etag: `"${sha256(existing.bytes).slice(0, 32)}"`,
           ...(existing.cacheControl ? { "cache-control": existing.cacheControl } : {}),
           ...Object.fromEntries(Object.entries(existing.metadata).map(([name, value]) => [`x-amz-meta-${name}`, value])),
@@ -165,13 +178,20 @@ export async function startS3CompatibleTestServer(options: { accessKeyId: string
             contentType: replace ? String(req.headers["content-type"] ?? original.contentType) : original.contentType,
             cacheControl: replace ? (req.headers["cache-control"] as string | undefined) : original.cacheControl,
             metadata: replace ? metadata : original.metadata,
+            lastModified: new Date(),
           });
           record.status = 200;
           res.writeHead(200, { "content-type": "application/xml" });
           return res.end(`<?xml version="1.0" encoding="UTF-8"?><CopyObjectResult><ETag>"${sha256(original.bytes).slice(0, 32)}"</ETag></CopyObjectResult>`);
         }
         if (req.headers["if-none-match"] === "*" && existing) return respond(412, "PreconditionFailed");
-        objects.set(key, { bytes: content, contentType: String(req.headers["content-type"] ?? "application/octet-stream"), cacheControl: req.headers["cache-control"] as string | undefined, metadata });
+        objects.set(key, {
+          bytes: content,
+          contentType: String(req.headers["content-type"] ?? "application/octet-stream"),
+          cacheControl: req.headers["cache-control"] as string | undefined,
+          metadata,
+          lastModified: new Date(),
+        });
         record.status = 200;
         res.writeHead(200, { etag: `"${sha256(content).slice(0, 32)}"` });
         return res.end();
@@ -191,6 +211,9 @@ export async function startS3CompatibleTestServer(options: { accessKeyId: string
     endpoint: `http://127.0.0.1:${port}${basePath}`,
     objects,
     requests,
-    close: () => new Promise<void>((resolve) => server.close(() => resolve())),
+    close: () => new Promise<void>((resolve) => {
+      server.close(() => resolve());
+      server.closeAllConnections();
+    }),
   };
 }

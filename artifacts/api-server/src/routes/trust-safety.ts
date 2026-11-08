@@ -38,6 +38,7 @@ import {
 } from "../lib/policy-lifecycle";
 import { PLATFORM_FEE_BASIS_POINTS } from "../lib/market-pricing";
 import { ObjectStorageService } from "../lib/objectStorage";
+import { deleteVisualSearchImagesForOwner } from "../lib/visual-search-images";
 import { logger } from "../lib/logger";
 import { recordPrivacyRequest } from "../lib/privacy-rights";
 import { notifyUserAfterDecision } from "../lib/notifications";
@@ -354,6 +355,13 @@ router.post("/account/deletion", requireAuth, deletionLimit, async (req, res) =>
     );
     return outcome;
   });
+  try {
+    const removed = await deleteVisualSearchImagesForOwner(req.actor!.id);
+    if (removed > 0) logger.info({ count: removed }, "Closed account visual-search photos removed");
+  } catch (error) {
+    // Account closure remains committed; the scheduled expiry sweep retries failed private-photo cleanup.
+    logger.warn({ err: error }, "Closed account visual-search photos could not all be removed");
+  }
   if (previousAvatarObjectPath) {
     try {
       const file = await new ObjectStorageService().getObjectEntityFile(

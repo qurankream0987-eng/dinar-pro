@@ -1,6 +1,7 @@
 import { createHash, randomUUID } from "node:crypto";
 import { ObjectNotFoundError, ObjectStorageService } from "./objectStorage";
 import { ObjectPermission } from "./objectAcl";
+import type { ObjectFileLike } from "./objectStorageTypes";
 
 /**
  * Buyers' visual-search photos. They live in their own namespace, are always private to the
@@ -10,6 +11,8 @@ import { ObjectPermission } from "./objectAcl";
 export const VISUAL_SEARCH_PREFIX = "visual-search";
 export const MAX_VISUAL_SEARCH_BYTES = 5 * 1024 * 1024;
 export const MAX_VISUAL_SEARCH_IMAGES = 1;
+export const VISUAL_SEARCH_RETENTION_MS = 24 * 60 * 60 * 1000;
+export const VISUAL_SEARCH_EXPIRY_SWEEP_INTERVAL_MS = 60 * 60 * 1000;
 
 export const VISUAL_SEARCH_EXTENSIONS: Record<string, string> = {
   "image/jpeg": "jpg",
@@ -17,6 +20,7 @@ export const VISUAL_SEARCH_EXTENSIONS: Record<string, string> = {
   "image/webp": "webp",
 };
 const fileName = /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}\.(?:jpg|png|webp)$/i;
+const ownerIdPattern = /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i;
 const fail = (status: number, message: string) => Object.assign(new Error(message), { status });
 
 export function isVisualSearchPath(objectPath: string) {
@@ -24,8 +28,94 @@ export function isVisualSearchPath(objectPath: string) {
 }
 
 export function isOwnedVisualSearchPath(objectPath: string, ownerId: string) {
+  if (!ownerIdPattern.test(ownerId)) return false;
   const prefix = `/objects/${VISUAL_SEARCH_PREFIX}/${ownerId}/`;
   return objectPath.startsWith(prefix) && fileName.test(objectPath.slice(prefix.length));
+}
+
+function isCanonicalVisualSearchPath(objectPath: string) {
+  const match = /^\/objects\/visual-search\/([0-9a-f-]{36})\/([^/]+)$/i.exec(objectPath);
+  return Boolean(match && ownerIdPattern.test(match[1]!) && fileName.test(match[2]!));
+}
+
+async function deleteFiles(files: ObjectFileLike[]) {
+  let deleted = 0;
+  let firstError: unknown;
+  for (const file of files) {
+    try {
+      await file.delete({ ignoreNotFound: true });
+      deleted++;
+    } catch (error) {
+      firstError ??= error;
+    }
+  }
+  if (firstError) throw new Error(`Visual-search photo cleanup failed after deleting ${deleted} object(s).`, { cause: firstError });
+  return deleted;
+}
+
+/** Removes only the closed account's private buyer-search photos; listing and avatar media are out of scope. */
+export async function deleteVisualSearchImagesForOwner(ownerId: string, storage = new ObjectStorageService()) {
+  if (!ownerIdPattern.test(ownerId)) throw new Error("Visual-search cleanup requires a valid account ID.");
+  const prefix = `${VISUAL_SEARCH_PREFIX}/${ownerId}/`;
+  const files = (await storage.listObjectEntityFiles(prefix))
+    .filter((file) => isOwnedVisualSearchPath(file.name, ownerId));
+  return deleteFiles(files);
+}
+
+/** Deletes only well-formed search-photo objects older than the fixed temporary-retention window. */
+export async function expireVisualSearchImages(
+  now = new Date(),
+  storage: Pick<ObjectStorageService, "listObjectEntityFiles"> = new ObjectStorageService(),
+) {
+  const files = await storage.listObjectEntityFiles(`${VISUAL_SEARCH_PREFIX}/`);
+  const expired: ObjectFileLike[] = [];
+  let firstError: unknown;
+  for (const file of files) {
+    if (!isCanonicalVisualSearchPath(file.name)) continue;
+    try {
+      const [metadata] = await file.getMetadata();
+      const createdAt = metadata.timeCreated instanceof Date
+        ? metadata.timeCreated.getTime()
+        : typeof metadata.timeCreated === "string"
+          ? Date.parse(metadata.timeCreated)
+          : Number.NaN;
+      if (Number.isFinite(createdAt) && createdAt <= now.getTime() - VISUAL_SEARCH_RETENTION_MS)
+        expired.push(file);
+    } catch (error) {
+      firstError ??= error;
+    }
+  }
+  const deleted = await deleteFiles(expired);
+  if (firstError) throw new Error(`Visual-search expiry could not inspect every object; deleted ${deleted} expired object(s).`, { cause: firstError });
+  return deleted;
+}
+
+export function startVisualSearchExpirySweep({
+  storage = new ObjectStorageService(),
+  intervalMs = VISUAL_SEARCH_EXPIRY_SWEEP_INTERVAL_MS,
+  now = () => new Date(),
+  onDeleted = () => undefined,
+  onError = () => undefined,
+}: {
+  storage?: Pick<ObjectStorageService, "listObjectEntityFiles">;
+  intervalMs?: number;
+  now?: () => Date;
+  onDeleted?: (count: number) => void;
+  onError?: (error: unknown) => void;
+} = {}) {
+  let running = false;
+  const sweep = () => {
+    if (running) return;
+    running = true;
+    void expireVisualSearchImages(now(), storage)
+      .then((count) => { if (count > 0) onDeleted(count); })
+      .catch(onError)
+      .finally(() => { running = false; });
+  };
+  sweep();
+  const timer = setInterval(sweep, intervalMs);
+  timer.unref();
+  return () => clearInterval(timer);
 }
 
 function signatureMatches(bytes: Buffer, contentType: string) {

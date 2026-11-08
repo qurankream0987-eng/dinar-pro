@@ -5,6 +5,7 @@ import {
   DeleteObjectCommand,
   GetObjectCommand,
   HeadObjectCommand,
+  ListObjectsV2Command,
   PutObjectCommand,
   S3Client,
   type S3ClientConfig,
@@ -65,10 +66,18 @@ export class S3ObjectFile implements ObjectFileLike {
       const result = await this.client.send(new HeadObjectCommand({ Bucket: this.bucket, Key: this.key }));
       const metadata: Record<string, string> = {};
       if (result.Metadata?.aclpolicy) metadata[ACL_METADATA_KEY] = result.Metadata.aclpolicy;
+      // S3 exposes LastModified rather than a distinct creation timestamp; use it as the age baseline.
       // `generation` detects replacement between two reads (listing-photo verification requires
       // it): the version id on versioned buckets, otherwise the ETag, which changes with content.
       const generation = result.VersionId ?? result.ETag?.replace(/"/g, "");
-      return [{ size: result.ContentLength, contentType: result.ContentType, cacheControl: result.CacheControl, metadata, ...(generation ? { generation } : {}) }];
+      return [{
+        size: result.ContentLength,
+        contentType: result.ContentType,
+        cacheControl: result.CacheControl,
+        metadata,
+        ...(result.LastModified ? { timeCreated: result.LastModified } : {}),
+        ...(generation ? { generation } : {}),
+      }];
     } catch (error) { if (isMissing(error)) throw new ObjectNotFoundError(); throw error; }
   }
   async setMetadata(input: { metadata: Record<string, string> }): Promise<void> {
@@ -148,6 +157,28 @@ export class S3CompatibleObjectStorageService {
     const file = this.file(`${this.config.privatePrefix}/${relative}`, objectPath);
     if (!(await file.exists())[0]) throw new ObjectNotFoundError();
     return file;
+  }
+  async listObjectEntityFiles(prefix: string): Promise<S3ObjectFile[]> {
+    const normalized = this.validateRelative(prefix.replace(/^\/+|\/+$/g, ""));
+    const objectPrefix = `${this.config.privatePrefix}/${normalized}/`;
+    const files: S3ObjectFile[] = [];
+    let continuationToken: string | undefined;
+    do {
+      const page = await this.client.send(new ListObjectsV2Command({
+        Bucket: this.config.bucket,
+        Prefix: objectPrefix,
+        ...(continuationToken ? { ContinuationToken: continuationToken } : {}),
+      }));
+      for (const item of page.Contents ?? []) {
+        const key = item.Key;
+        if (!key?.startsWith(objectPrefix) || key.endsWith("/")) continue;
+        files.push(this.file(key));
+      }
+      if (page.IsTruncated && !page.NextContinuationToken)
+        throw new Error("S3 object listing was truncated without a continuation token.");
+      continuationToken = page.IsTruncated ? page.NextContinuationToken : undefined;
+    } while (continuationToken);
+    return files;
   }
   async saveObjectEntityFromBuffer(objectPath: string, contents: Buffer, contentType: string): Promise<boolean> {
     if (!objectPath.startsWith("/objects/")) throw new ObjectNotFoundError();

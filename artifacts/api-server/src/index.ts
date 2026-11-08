@@ -7,6 +7,7 @@ import { scrubStaleLocationPreviews } from "./ai/delivery-turn";
 import { settleAbandonedExecutions } from "./ai/action-recovery";
 import { expireStalePromotions } from "./lib/promotions";
 import { validateObjectStorageConfiguration } from "./lib/objectStorage";
+import { startVisualSearchExpirySweep } from "./lib/visual-search-images";
 import { deploymentConfigurationProblems } from "./lib/deployment-configuration";
 import { installGracefulShutdown } from "./server-lifecycle";
 
@@ -36,6 +37,11 @@ const port = Number(rawPort);
 if (Number.isNaN(port) || port <= 0) {
   throw new Error(`Invalid PORT value: "${rawPort}"`);
 }
+
+const stopVisualSearchExpirySweep = startVisualSearchExpirySweep({
+  onDeleted: (count) => logger.info({ count }, "Expired visual-search photos removed"),
+  onError: (err) => logger.error({ err }, "Failed to expire visual-search photos; the next sweep will retry"),
+});
 
 const sweepExpiredReservations = () => {
   // Unconfirmed location previews never outlive their confirmation window.
@@ -82,6 +88,7 @@ const server = app.listen(port, (err) => {
 installGracefulShutdown(server, {
   beforeShutdown: () => {
     clearInterval(reservationSweep);
+    stopVisualSearchExpirySweep();
     stopSearchIndexMaintenance?.();
   },
 });

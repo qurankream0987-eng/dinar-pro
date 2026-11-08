@@ -3,6 +3,7 @@ import type { Readable } from "node:stream";
 export type ObjectMetadata = {
   size?: string | number;
   generation?: string;
+  timeCreated?: string | Date;
   contentType?: string;
   cacheControl?: string;
   metadata?: Record<string, string>;

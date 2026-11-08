@@ -9,8 +9,12 @@ import { randomUUID } from "node:crypto";
 import { createServer } from "node:http";
 import {
   completeVisualSearchUpload,
+  deleteVisualSearchImagesForOwner,
+  expireVisualSearchImages,
   isOwnedVisualSearchPath,
   loadVisualSearchImage,
+  VISUAL_SEARCH_RETENTION_MS,
+  startVisualSearchExpirySweep,
   visualSearchObjectName,
 } from "../src/lib/visual-search-images";
 import { isOwnedListingPhotoPath } from "../src/lib/listing-photos";
@@ -18,7 +22,7 @@ import { ObjectNotFoundError } from "../src/lib/objectStorage";
 import { classifyVisualMatch, createVisualAnalyzer, rankVisualMatches, visualFallbackTerms, visualSearchTerms, type VisualAnalysis } from "../src/ai/visual-search";
 
 const JPEG = Buffer.concat([Buffer.from([0xff, 0xd8, 0xff, 0xe0]), Buffer.alloc(60, 1)]);
-type Stored = { bytes: Buffer; contentType: string; owner?: string; visibility?: string };
+type Stored = { bytes: Buffer; contentType: string; owner?: string; visibility?: string; createdAt?: string };
 function fakeStorage() {
   const objects = new Map<string, Stored>();
   return {
@@ -28,9 +32,24 @@ function fakeStorage() {
       if (!stored) throw new ObjectNotFoundError();
       return {
         path,
+        name: path,
         getMetadata: async () => [{ size: stored.bytes.length, contentType: stored.contentType }],
         download: async () => [stored.bytes],
+        delete: async () => { objects.delete(path); },
       };
+    },
+    async listObjectEntityFiles(prefix: string) {
+      const objectPrefix = `/objects/${prefix}`;
+      return [...objects.keys()]
+        .filter((path) => path.startsWith(objectPrefix))
+        .map((path) => ({
+          name: path,
+          getMetadata: async () => {
+            const stored = objects.get(path);
+            return [{ timeCreated: stored?.createdAt, size: stored?.bytes.length, contentType: stored?.contentType }];
+          },
+          delete: async () => { objects.delete(path); },
+        }));
     },
     async canAccessObjectEntity({ userId, objectFile }: any) {
       const stored = objects.get(objectFile.path)!;
@@ -78,6 +97,84 @@ test("VS-04 content that does not match its declared type is refused", async () 
   const path = `/objects/${visualSearchObjectName(buyer, "image/png", 64)}`;
   storage.objects.set(path, { bytes: JPEG, contentType: "image/png" });
   await assert.rejects(completeVisualSearchUpload(path, buyer, storage), (e: any) => e.status === 400);
+});
+
+test("VS-08 account closure deletes only that buyer's private visual-search photos", async () => {
+  const storage = fakeStorage();
+  const ownSearch = `/objects/${visualSearchObjectName(buyer, "image/jpeg", JPEG.length)}`;
+  const otherSearch = `/objects/${visualSearchObjectName(stranger, "image/jpeg", JPEG.length)}`;
+  const listingPhoto = `/objects/listing-photos/${buyer}/${randomUUID()}.jpg`;
+  for (const path of [ownSearch, otherSearch, listingPhoto])
+    storage.objects.set(path, { bytes: JPEG, contentType: "image/jpeg", owner: path === ownSearch ? buyer : stranger, visibility: "private" });
+
+  assert.equal(await deleteVisualSearchImagesForOwner(buyer, storage), 1);
+  assert.equal(storage.objects.has(ownSearch), false);
+  assert.equal(storage.objects.has(otherSearch), true, "another buyer's media is untouched");
+  assert.equal(storage.objects.has(listingPhoto), true, "listing media is not part of search-photo cleanup");
+});
+
+test("VS-09 automatic expiry removes only old well-formed visual-search photos", async () => {
+  const storage = fakeStorage();
+  const now = new Date("2026-11-08T00:00:00.000Z");
+  const expired = `/objects/${visualSearchObjectName(buyer, "image/jpeg", JPEG.length)}`;
+  const recent = `/objects/${visualSearchObjectName(buyer, "image/png", JPEG.length)}`;
+  const oldListing = `/objects/listing-photos/${buyer}/${randomUUID()}.jpg`;
+  const invalidSearch = `/objects/visual-search/${buyer}/not-an-upload.jpg`;
+  storage.objects.set(expired, { bytes: JPEG, contentType: "image/jpeg", createdAt: new Date(now.getTime() - VISUAL_SEARCH_RETENTION_MS - 1).toISOString() });
+  storage.objects.set(recent, { bytes: JPEG, contentType: "image/png", createdAt: new Date(now.getTime() - VISUAL_SEARCH_RETENTION_MS + 1).toISOString() });
+  storage.objects.set(oldListing, { bytes: JPEG, contentType: "image/jpeg", createdAt: new Date(0).toISOString() });
+  storage.objects.set(invalidSearch, { bytes: JPEG, contentType: "image/jpeg", createdAt: new Date(0).toISOString() });
+
+  assert.equal(await expireVisualSearchImages(now, storage), 1);
+  assert.equal(storage.objects.has(expired), false);
+  assert.equal(storage.objects.has(recent), true);
+  assert.equal(storage.objects.has(oldListing), true, "expired listing photos are outside this cleanup");
+  assert.equal(storage.objects.has(invalidSearch), true, "unrecognized paths are not deleted");
+});
+
+test("VS-10 cleanup errors are surfaced for retry instead of reported as successful deletion", async () => {
+  const storage = fakeStorage();
+  const path = `/objects/${visualSearchObjectName(buyer, "image/jpeg", JPEG.length)}`;
+  storage.objects.set(path, { bytes: JPEG, contentType: "image/jpeg", owner: buyer });
+  const failingStorage = {
+    ...storage,
+    async listObjectEntityFiles(prefix: string) {
+      const files = await storage.listObjectEntityFiles(prefix);
+      return files.map((file: any) => ({ ...file, delete: async () => { throw new Error("synthetic storage outage"); } }));
+    },
+  };
+
+  await assert.rejects(
+    deleteVisualSearchImagesForOwner(buyer, failingStorage),
+    (error: any) => error.cause?.message === "synthetic storage outage",
+  );
+  assert.equal(storage.objects.has(path), true, "a failed deletion remains eligible for a later retry");
+});
+
+test("VS-11 the scheduled expiry sweep retries on its interval without a user request", async () => {
+  const storage = fakeStorage();
+  const now = new Date("2026-11-08T00:00:00.000Z");
+  const path = `/objects/${visualSearchObjectName(buyer, "image/jpeg", JPEG.length)}`;
+  let deleted = 0;
+  const stop = startVisualSearchExpirySweep({
+    storage,
+    intervalMs: 5,
+    now: () => now,
+    onDeleted: (count) => { deleted += count; },
+    onError: (error) => { throw error; },
+  });
+  storage.objects.set(path, {
+    bytes: JPEG,
+    contentType: "image/jpeg",
+    createdAt: new Date(now.getTime() - VISUAL_SEARCH_RETENTION_MS - 1).toISOString(),
+  });
+  try {
+    await new Promise((resolve) => setTimeout(resolve, 30));
+  } finally {
+    stop();
+  }
+  assert.equal(storage.objects.has(path), false);
+  assert.equal(deleted, 1);
 });
 
 test("VS-05 no image-capable provider is BLOCKED_PROVIDER, with no network call", async () => {

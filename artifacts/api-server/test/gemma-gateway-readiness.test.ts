@@ -9,7 +9,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { MODEL_CONTRACTS, BENCHMARK_ENDPOINTS, BENCHMARK_CREDENTIALS } from "./live-model-benchmark-core";
-import { AIProviderError, createConversationModelGateway, describeAIModelReadiness, resolveAIProviderConfiguration } from "../src/ai/model-gateway";
+import { AIProviderError, createConversationModelGateway, describeAIModelReadiness, resolveAIModelRuntimeConfiguration, resolveAIProviderConfiguration } from "../src/ai/model-gateway";
 import { MODEL_TOOL, ModelTurnOutput } from "../src/ai/model-turn";
 
 type Reply = { status?: number; body?: unknown; delayMs?: number };
@@ -107,6 +107,62 @@ await test("GM-06 unsafe routing configuration is refused before any request", (
   // DeepInfra direct (fallback) is a plain OPENAI_COMPATIBLE slot without OpenRouter routing.
   const direct = resolveAIProviderConfiguration({ NODE_ENV: "production", DINAR_AI_PROVIDER: "OPENAI_COMPATIBLE", DINAR_AI_BASE_URL: "https://api.deepinfra.com/v1/openai", DINAR_AI_MODEL: "google/gemma-4-26B-A4B-it", DINAR_AI_API_KEY: "x" } as NodeJS.ProcessEnv);
   assert.equal(direct.openRouterRouting, undefined);
+});
+
+await test("GM-10 staging and production require a pinned non-free OpenRouter route with privacy controls", () => {
+  const secure = env({
+    NODE_ENV: "production",
+    DINAR_DEPLOYMENT_ENV: "staging",
+    DINAR_AI_BASE_URL: "https://openrouter.ai/api/v1",
+  });
+  const configuration = resolveAIProviderConfiguration(secure);
+  assert.deepEqual(configuration.openRouterRouting, {
+    order: ["deepinfra"],
+    requireParameters: true,
+    dataCollection: "deny",
+    zdr: true,
+  });
+
+  for (const [name, value] of [
+    ["DINAR_AI_PROVIDER_ORDER", ""],
+    ["DINAR_AI_DATA_COLLECTION", undefined],
+    ["DINAR_AI_ZDR", undefined],
+    ["DINAR_AI_REQUIRE_PARAMETERS", undefined],
+  ] as const) {
+    const unsafe = { ...secure };
+    if (value === undefined) delete unsafe[name];
+    else unsafe[name] = value;
+    assert.throws(() => resolveAIProviderConfiguration(unsafe), /staging\/production.*require|requires.*staging\/production/i, name);
+  }
+
+  assert.throws(
+    () => resolveAIProviderConfiguration({ ...secure, DINAR_AI_PROVIDER: "OPENROUTER" }),
+    /pinned OPENAI_COMPATIBLE OpenRouter route/,
+    "the direct OpenRouter alias/free route is not deployable",
+  );
+  assert.throws(
+    () => resolveAIProviderConfiguration({ ...secure, DINAR_AI_MODEL: "google/gemma-4-31b-it:free" }),
+    /free model IDs are not permitted/,
+  );
+  assert.throws(
+    () => resolveAIProviderConfiguration({ ...secure, DINAR_AI_MODEL: "OPENROUTER/FREE" }),
+    /free model IDs are not permitted/,
+    "the free alias is rejected without relying on its casing",
+  );
+  assert.throws(
+    () => resolveAIModelRuntimeConfiguration({
+      ...secure,
+      DINAR_AI_FALLBACK_PROVIDER: "OPENAI_COMPATIBLE",
+      DINAR_AI_FALLBACK_MODEL: "google/gemma-4-31b-it:free",
+      DINAR_AI_FALLBACK_BASE_URL: "https://openrouter.ai/api/v1",
+      DINAR_AI_FALLBACK_PROVIDER_ORDER: "deepinfra",
+      DINAR_AI_FALLBACK_DATA_COLLECTION: "deny",
+      DINAR_AI_FALLBACK_ZDR: "true",
+      DINAR_AI_FALLBACK_REQUIRE_PARAMETERS: "true",
+    }),
+    /free model IDs are not permitted/,
+    "a free OpenRouter route cannot be introduced as a fallback",
+  );
 });
 
 await test("GM-07 provider failures fail closed: overload, timeout, malformed body, text-only tool call", async () => {

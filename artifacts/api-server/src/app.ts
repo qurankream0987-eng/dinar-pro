@@ -170,6 +170,8 @@ app.use((req, res, next) => {
   res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
   res.setHeader("Content-Security-Policy", contentSecurityPolicy());
   res.setHeader("Permissions-Policy", PERMISSIONS_POLICY);
+  if (process.env.DINAR_DEPLOYMENT_ENV?.trim().toLowerCase() === "staging")
+    res.setHeader("X-Robots-Tag", "noindex, nofollow, noarchive");
   if (process.env.NODE_ENV === "production")
     // Subdomain coverage stays opt-in: it is only safe once every subdomain of the approved
     // domain is HTTPS-only, and no approved domain inventory exists in this repository yet.

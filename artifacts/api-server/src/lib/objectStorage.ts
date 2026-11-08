@@ -6,7 +6,7 @@ import type { ObjectFileLike, ObjectMetadata } from './objectStorageTypes';
 
 class ReplitObjectFile implements ObjectFileLike {
   readonly name: string;
-  constructor(private readonly file: File) { this.name = file.name; }
+  constructor(private readonly file: File, name = file.name) { this.name = name; }
   exists() { return this.file.exists(); }
   async getMetadata(): Promise<[ObjectMetadata]> {
     const [metadata] = await this.file.getMetadata();
@@ -182,6 +182,17 @@ class ReplitObjectStorageService {
     return new ReplitObjectFile(objectFile);
   }
 
+  async listObjectEntityFiles(prefix: string): Promise<ObjectFileLike[]> {
+    const normalized = validatePrivateObjectPrefix(prefix);
+    const privateDir = this.getPrivateObjectDir().replace(/\/+$/, "");
+    const { bucketName, objectName: privateObjectRoot } = parseObjectPath(privateDir);
+    const objectPrefix = `${privateObjectRoot.replace(/\/+$/, "")}/${normalized}/`;
+    const [files] = await objectStorageClient.bucket(bucketName).getFiles({ prefix: objectPrefix });
+    return files
+      .filter((file) => file.name.startsWith(objectPrefix) && !file.name.endsWith("/"))
+      .map((file) => new ReplitObjectFile(file, `/objects/${file.name.slice(privateObjectRoot.replace(/\/+$/, "").length + 1)}`));
+  }
+
   /**
    * Persists server-owned bytes at a fresh object path. Callers must generate
    * an unguessable destination under this private bucket; generation-match zero
@@ -294,6 +305,7 @@ export class ObjectStorageService {
   downloadObject(file: ObjectFileLike, ttl?: number) { return this.provider.downloadObject(file, ttl); }
   getObjectEntityUploadURL(name?: string) { return this.provider.getObjectEntityUploadURL(name); }
   getObjectEntityFile(path: string) { return this.provider.getObjectEntityFile(path); }
+  listObjectEntityFiles(prefix: string) { return this.provider.listObjectEntityFiles(prefix); }
   saveObjectEntityFromBuffer(path: string, contents: Buffer, contentType: string) {
     return this.provider.saveObjectEntityFromBuffer(path, contents, contentType);
   }
@@ -355,6 +367,17 @@ function parseObjectPath(path: string): {
     bucketName,
     objectName,
   };
+}
+
+function validatePrivateObjectPrefix(prefix: string) {
+  const normalized = prefix.replace(/^\/+|\/+$/g, "");
+  if (
+    !normalized ||
+    normalized.split("/").some((part) => !part || part === "." || part === "..") ||
+    !/^[a-zA-Z0-9._/-]+$/.test(normalized)
+  )
+    throw new Error("Invalid private object prefix.");
+  return normalized;
 }
 
 async function signObjectURL({
