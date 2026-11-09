@@ -1,0 +1,109 @@
+{
+  "_purpose": "Staging AI usage + spend policy: $5 per calendar month platform-wide (USD micros), unpriced models refused. Submit with POST /admin/commercial-policies {marketId:\"JO\", policy:{aiUsage}} only after owner approval; keep approved=false until the owner approves the quotas.",
+  "marketId": "JO",
+  "policy": {
+    "aiUsage": {
+      "approved": false,
+      "period": {
+        "kind": "CALENDAR_MONTH",
+        "timeZone": "UTC"
+      },
+      "tiers": {
+        "GUEST": {
+          "requests": {
+            "TEXT_REQUEST": 5,
+            "MARKETING_GENERATION": 0,
+            "BUSINESS_ANALYTICS": 0,
+            "IMAGE_UNDERSTANDING": 0,
+            "AGENT_MULTI_STEP": 0,
+            "AUDIO_TRANSCRIPTION": 0
+          },
+          "tokens": 20000
+        },
+        "FREE": {
+          "requests": {
+            "TEXT_REQUEST": 40,
+            "MARKETING_GENERATION": 5,
+            "BUSINESS_ANALYTICS": 5,
+            "IMAGE_UNDERSTANDING": 5,
+            "AGENT_MULTI_STEP": 0,
+            "AUDIO_TRANSCRIPTION": 0
+          },
+          "tokens": 200000
+        },
+        "BUSINESS_GO": {
+          "requests": {
+            "TEXT_REQUEST": 80,
+            "MARKETING_GENERATION": 10,
+            "BUSINESS_ANALYTICS": 10,
+            "IMAGE_UNDERSTANDING": 10,
+            "AGENT_MULTI_STEP": 2,
+            "AUDIO_TRANSCRIPTION": 0
+          },
+          "tokens": 400000
+        },
+        "BUSINESS_PRO": {
+          "requests": {
+            "TEXT_REQUEST": 120,
+            "MARKETING_GENERATION": 20,
+            "BUSINESS_ANALYTICS": 20,
+            "IMAGE_UNDERSTANDING": 20,
+            "AGENT_MULTI_STEP": 5,
+            "AUDIO_TRANSCRIPTION": 0
+          },
+          "tokens": 800000
+        }
+      },
+      "tokenEstimates": {
+        "TEXT_REQUEST": 4000,
+        "MARKETING_GENERATION": 6000,
+        "BUSINESS_ANALYTICS": 5000,
+        "IMAGE_UNDERSTANDING": 6000,
+        "AGENT_MULTI_STEP": 12000,
+        "AUDIO_TRANSCRIPTION": 2000
+      },
+      "reservationTtlSeconds": 180,
+      "nearLimitRatio": 0.8,
+      "globalGuard": {
+        "enabled": true,
+        "period": {
+          "kind": "CALENDAR_DAY",
+          "timeZone": "UTC"
+        },
+        "requests": 500,
+        "tokens": 2000000
+      },
+      "spend": {
+        "currencyCode": "USD",
+        "global": {
+          "period": {
+            "kind": "CALENDAR_MONTH",
+            "timeZone": "UTC"
+          },
+          "limitMicros": 5000000
+        },
+        "perAccount": {
+          "GUEST": 50000,
+          "FREE": 500000,
+          "BUSINESS_GO": 1000000,
+          "BUSINESS_PRO": 1500000
+        },
+        "perPlan": {
+          "GUEST": 500000,
+          "FREE": 2500000,
+          "BUSINESS_GO": 2500000,
+          "BUSINESS_PRO": 2500000
+        },
+        "holdMicros": {
+          "TEXT_REQUEST": 20000,
+          "MARKETING_GENERATION": 30000,
+          "BUSINESS_ANALYTICS": 30000,
+          "IMAGE_UNDERSTANDING": 30000,
+          "AGENT_MULTI_STEP": 60000,
+          "AUDIO_TRANSCRIPTION": 20000
+        },
+        "unpricedModel": "REFUSE"
+      }
+    }
+  }
+}

@@ -1,0 +1,111 @@
+{
+  "_purpose": "Synthetic STAGING placeholders for the JO legal intake. They are NOT legal evidence and claim no counsel or regulator review. COUNSEL_FINDINGS is deliberately absent: only the designated counsel reviewer may author it.",
+  "marketId": "JO",
+  "evidence": [
+    {
+      "topicKey": "OPERATING_ENTITY",
+      "evidenceType": "STAGING_SYNTHETIC_PLACEHOLDER",
+      "documentVersion": "staging-synthetic-v1",
+      "referenceCode": "STG-JO-01",
+      "idempotencyKey": "stg-jo-evidence-operating-entity-v1"
+    },
+    {
+      "topicKey": "MARKETPLACE_RULES",
+      "evidenceType": "STAGING_SYNTHETIC_PLACEHOLDER",
+      "documentVersion": "staging-synthetic-v1",
+      "referenceCode": "STG-JO-02",
+      "idempotencyKey": "stg-jo-evidence-marketplace-rules-v1"
+    },
+    {
+      "topicKey": "SELLER_ELIGIBILITY",
+      "evidenceType": "STAGING_SYNTHETIC_PLACEHOLDER",
+      "documentVersion": "staging-synthetic-v1",
+      "referenceCode": "STG-JO-03",
+      "idempotencyKey": "stg-jo-evidence-seller-eligibility-v1"
+    },
+    {
+      "topicKey": "BUSINESS_KYC",
+      "evidenceType": "STAGING_SYNTHETIC_PLACEHOLDER",
+      "documentVersion": "staging-synthetic-v1",
+      "referenceCode": "STG-JO-04",
+      "idempotencyKey": "stg-jo-evidence-business-kyc-v1"
+    },
+    {
+      "topicKey": "CONSUMER_PROTECTION",
+      "evidenceType": "STAGING_SYNTHETIC_PLACEHOLDER",
+      "documentVersion": "staging-synthetic-v1",
+      "referenceCode": "STG-JO-05",
+      "idempotencyKey": "stg-jo-evidence-consumer-protection-v1"
+    },
+    {
+      "topicKey": "FEES_AND_TAX",
+      "evidenceType": "STAGING_SYNTHETIC_PLACEHOLDER",
+      "documentVersion": "staging-synthetic-v1",
+      "referenceCode": "STG-JO-06",
+      "idempotencyKey": "stg-jo-evidence-fees-and-tax-v1"
+    },
+    {
+      "topicKey": "PAYMENTS",
+      "evidenceType": "STAGING_SYNTHETIC_PLACEHOLDER",
+      "documentVersion": "staging-synthetic-v1",
+      "referenceCode": "STG-JO-07",
+      "idempotencyKey": "stg-jo-evidence-payments-v1"
+    },
+    {
+      "topicKey": "DELIVERY_LOGISTICS",
+      "evidenceType": "STAGING_SYNTHETIC_PLACEHOLDER",
+      "documentVersion": "staging-synthetic-v1",
+      "referenceCode": "STG-JO-08",
+      "idempotencyKey": "stg-jo-evidence-delivery-logistics-v1"
+    },
+    {
+      "topicKey": "PERSONAL_DATA",
+      "evidenceType": "STAGING_SYNTHETIC_PLACEHOLDER",
+      "documentVersion": "staging-synthetic-v1",
+      "referenceCode": "STG-JO-09",
+      "idempotencyKey": "stg-jo-evidence-personal-data-v1"
+    },
+    {
+      "topicKey": "EXTERNAL_AI",
+      "evidenceType": "STAGING_SYNTHETIC_PLACEHOLDER",
+      "documentVersion": "staging-synthetic-v1",
+      "referenceCode": "STG-JO-10",
+      "idempotencyKey": "stg-jo-evidence-external-ai-v1"
+    },
+    {
+      "topicKey": "MINORS_RESTRICTED_GOODS_ADVERTISING",
+      "evidenceType": "STAGING_SYNTHETIC_PLACEHOLDER",
+      "documentVersion": "staging-synthetic-v1",
+      "referenceCode": "STG-JO-11",
+      "idempotencyKey": "stg-jo-evidence-minors-restricted-goods-advertising-v1"
+    },
+    {
+      "topicKey": "IP_COMPLAINTS_DISPUTES",
+      "evidenceType": "STAGING_SYNTHETIC_PLACEHOLDER",
+      "documentVersion": "staging-synthetic-v1",
+      "referenceCode": "STG-JO-12",
+      "idempotencyKey": "stg-jo-evidence-ip-complaints-disputes-v1"
+    },
+    {
+      "topicKey": "INCIDENT_NOTIFICATION",
+      "evidenceType": "STAGING_SYNTHETIC_PLACEHOLDER",
+      "documentVersion": "staging-synthetic-v1",
+      "referenceCode": "STG-JO-13",
+      "idempotencyKey": "stg-jo-evidence-incident-notification-v1"
+    },
+    {
+      "topicKey": "POLICY_VERSIONS",
+      "evidenceType": "STAGING_SYNTHETIC_PLACEHOLDER",
+      "documentVersion": "staging-synthetic-v1",
+      "referenceCode": "STG-JO-14",
+      "idempotencyKey": "stg-jo-evidence-policy-versions-v1"
+    },
+    {
+      "topicKey": "OFFICIAL_REFERENCES",
+      "evidenceType": "STAGING_SYNTHETIC_PLACEHOLDER",
+      "documentVersion": "staging-synthetic-v1",
+      "referenceCode": "STG-JO-15",
+      "idempotencyKey": "stg-jo-evidence-official-references-v1"
+    }
+  ]
+}
