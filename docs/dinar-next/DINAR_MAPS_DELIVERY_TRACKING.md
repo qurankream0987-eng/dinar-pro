@@ -104,9 +104,21 @@ Not done:
 - **Native background location** (iOS "Always", Android foreground service) needs a native app, outside this web codebase.
 - **Notifications** reuse the existing order and delivery events; no new paid SMS was added.
 
-## 5. Tests (local, PostgreSQL 16, 0 outbound requests)
+## 5. Tests (local PostgreSQL 16; release migration on PostgreSQL 18; 0 outbound requests)
 
-See section 7 for exact results.
+| Suite | Result |
+|---|---|
+| `driver-location-tracking` (new) | 13/13 |
+| `maps-tracking-browser-journey` (new, real Chromium) | 1/1 (35 browser checks) |
+| `block-d-acceptance` (D19 guard narrowed, with log scan) | 28/28 |
+| `block-f4-driver` | 48/48 |
+| `readiness` | 15/15 |
+| `fresh-environment` | 9/9 |
+| `development-tls` | 7/7 |
+| `lib/db test:release-migration` (PG 18.6, 62 migrations) | 12/12 |
+| Typecheck and builds (API, web) | pass |
+
+Bundle: MapLibre is a separate lazy chunk (940 kB, 256 kB gzipped), loaded only when a map is shown. The map component itself is 4 kB.
 
 ## 6. Screenshots (`docs/dinar-next/evidence/maps-tracking/`, synthetic data, labelled on the map)
 
@@ -120,10 +132,6 @@ See section 7 for exact results.
 | 6 | `06-driver-active-sharing-mobile.png` | driver active-delivery controls, sharing on |
 | 7 | `07-delivered-tracking-stopped-mobile.png`, `07b-driver-after-delivery-mobile.png` | delivered: tracking stopped |
 | 8 | all of the above at 390 px (plus 320 px) | mobile RTL |
-
-## 7. Results
-
-(Filled in from the final run; see the commit message.)
 
 ## 8. Provider keys required (none are needed for local or staging tests)
 
