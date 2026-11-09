@@ -18,6 +18,7 @@ export async function verifyWelcomeActions({ browser, contextFor, openConversati
         if (url.pathname.startsWith('/api/') && !['GET','HEAD','OPTIONS'].includes(request.method())) mutations.push(url.pathname);
       });
       page.on('pageerror', error => errors.push(error.message));
+      page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
       try {
         await openConversation(page, 'buyer', null);
         const before = mutations.length;
@@ -38,13 +39,26 @@ export async function verifyWelcomeActions({ browser, contextFor, openConversati
           }
         } else if (behavior === 'image') {
           await page.waitForTimeout(250);
-          if (!(await input.inputValue()).includes('الصورة المرفقة')) throw new Error('image action must preserve search intent instead of the empty-photo listing default');
+          if (!(await input.inputValue()).includes('للصورة المرفقة')) throw new Error('image action must preserve search intent instead of the empty-photo listing default');
           if (actor === 'buyer' && !fileChooser) throw new Error('authenticated image action did not open the existing file chooser');
           if (actor === 'anonymous' && fileChooser) throw new Error('anonymous upload bypassed the existing gate');
         } else {
           if (!(await input.inputValue()).trim()) throw new Error('action did not prefill composer');
           await page.waitForFunction(() => document.activeElement?.getAttribute('data-testid') === 'input-ai-composer', null, { timeout: 3000 });
           if (!await input.evaluate(el => document.activeElement === el)) throw new Error('prefill did not focus composer');
+        }
+        if (actor === 'buyer' && id === 'code') {
+          const savedDraft = await input.inputValue();
+          await page.getByTestId('link-cart').first().click();
+          await page.waitForURL('**/cart');
+          await page.goBack();
+          await input.waitFor({ state: 'visible' });
+          await page.waitForFunction(value => document.querySelector('[data-testid="input-ai-composer"]')?.value === value, savedDraft);
+          await page.goForward();
+          await page.waitForURL('**/cart');
+          await page.goBack();
+          await input.waitFor({ state: 'visible' });
+          await page.waitForFunction(value => document.querySelector('[data-testid="input-ai-composer"]')?.value === value, savedDraft);
         }
         const posted = mutations.slice(before);
         if (posted.some(path => /\/(orders|payments|listings|cart|promotions)(\/|$)/.test(path))) throw new Error('welcome action mutated a commerce resource');

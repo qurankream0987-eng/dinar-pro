@@ -51,6 +51,7 @@ export async function verifyPremiumPresentation({ browser, contextFor, openConve
         const sample = time => { if (last) intervals.push(time-last); last=time; if (intervals.length >= 90) resolve(intervals); else requestAnimationFrame(sample); };
         requestAnimationFrame(sample);
       }));
+      await page.screenshot({ path: `${out}/premium-hover-${viewport.width}x${viewport.height}-${preference}.png` });
       const reduced = await page.evaluate(() => [...document.querySelectorAll(".ai-welcome, .ai-starter, .ai-composer-box")].every(el => getComputedStyle(el).transitionDuration.split(",").every(t => parseFloat(t) === 0) && getComputedStyle(el).animationName === "none"));
       const check = (ok, label) => { if (!ok) failures.push(`premium ${viewport.width}/${preference}: ${label}`); };
       check(initialLayout.scrollOverflow <= 1 && !initialLayout.overflowing.length, "initial viewport overflow");
