@@ -19,6 +19,7 @@ async function buildAll() {
       path.resolve(artifactDir, "src/index.ts"),
       // Operator command, run on demand (pnpm run admin:bootstrap); never imported by the server.
       path.resolve(artifactDir, "src/bin/bootstrap-admin.ts"),
+      path.resolve(artifactDir, "src/bin/apply-commercial-policy.ts"),
     ],
     platform: "node",
     bundle: true,

@@ -64,6 +64,7 @@ import { applyCommerceAction } from "../ai/commerce-turn";
 import { BUSINESS_ENTITLEMENT_KEYS, PLAN_CODES, validateCatalogProductForPlan } from "../lib/subscription-plans";
 import { subscriptionPlansOverview } from "../lib/subscription-overview";
 import { resolveMarketplaceCategory } from "../lib/marketplace-categories";
+import { appendCommercialPolicy } from "../lib/commercial-policy-append";
 
 const router = Router();
 const fail = (status: number, message: string, code?: string) => Object.assign(new Error(message), { status, ...(code ? { code } : {}) });
@@ -378,26 +379,7 @@ router.get("/admin/commercial-policies", requireAuth, requireCommercialAdmin, as
 router.post("/admin/commercial-policies", requireAuth, requireCommercialAdmin, async (req, res) => {
   const body = z.object({ marketId: z.string().min(1).max(8).optional(), policy: CommercialPolicySchema.partial() }).strict().parse(req.body);
   if (body.marketId) await marketById(body.marketId);
-  const current = await getCommercialPolicy(body.marketId ?? "");
-  const { version: _version, ...base } = current;
-  const merged = CommercialPolicySchema.parse({ ...base, ...body.policy });
-  // D1: a changed reference price must carry a new price version (the history stays readable).
-  for (const code of PLAN_CODES) {
-    const before = base.subscriptionPlans.plans[code];
-    const after = merged.subscriptionPlans.plans[code];
-    if (JSON.stringify(before.referencePrice) !== JSON.stringify(after.referencePrice) && after.priceVersion <= before.priceVersion)
-      throw refuse(400, `تغيير سعر ${after.nameAr} يحتاج إصدار تسعير أعلى من ${before.priceVersion}`, "PRICE_VERSION_REQUIRED");
-    if (after.priceVersion < before.priceVersion) throw refuse(400, "لا يمكن إرجاع إصدار التسعير", "PRICE_VERSION_REQUIRED");
-  }
-  const [latest] = await db
-    .select({ version: sql<number>`coalesce(max(${commercialPolicies.version}), 0)::int` })
-    .from(commercialPolicies)
-    .where(body.marketId ? eq(commercialPolicies.marketId, body.marketId) : sql`${commercialPolicies.marketId} is null`);
-  const [row] = await db
-    .insert(commercialPolicies)
-    .values({ id: randomUUID(), marketId: body.marketId ?? null, version: (latest?.version ?? 0) + 1, policy: merged, createdBy: req.actor!.id })
-    .returning();
-  res.status(201).json({ id: row!.id, marketId: row!.marketId, version: row!.version, policy: row!.policy });
+  res.status(201).json(await appendCommercialPolicy({ marketId: body.marketId, policy: body.policy, actorId: req.actor!.id }));
 });
 
 router.post("/admin/commercial-credits", requireAuth, requireCommercialAdmin, async (req, res) => {
