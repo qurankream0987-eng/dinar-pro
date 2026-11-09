@@ -11,6 +11,12 @@ import {
   settleCourierCommissionSimulation,
 } from "../lib/courier-economics";
 import { assertMarketActive, marketError, marketFor } from "../lib/markets";
+import {
+  driverLocationSharingStatus,
+  startDriverLocationSharing,
+  stopDriverLocationSharing,
+  updateDriverLocation,
+} from "../lib/driver-location";
 
 const router: IRouter = Router();
 const FareProposalBody = z
@@ -127,3 +133,50 @@ router.post("/courier/commission-account/settlements", requireAuth, async (req, 
 });
 
 export default router;
+
+// ─── Driver location sharing (first-party live tracking, migration 0061) ─────────────────────
+// Driver-only, assignment-bound, no-store. Coordinates are accepted here and served to the buyer
+// only through GET /orders/:id/tracking; they never appear in logs, audits or conversation state.
+const StartLocationSharingBody = z.object({ consent: z.literal(true) }).strict();
+const DriverLocationUpdateBody = z
+  .object({
+    latitude: z.number().min(-90).max(90),
+    longitude: z.number().min(-180).max(180),
+    accuracyMeters: z.number().min(0).max(100_000),
+    observedAt: z.string().datetime({ offset: true }),
+    sequence: z.number().int().min(1).max(Number.MAX_SAFE_INTEGER),
+  })
+  .strict();
+
+function noStore(res: import("express").Response) {
+  res.set("Cache-Control", "private, no-store, no-cache, max-age=0");
+  res.set("Pragma", "no-cache");
+}
+
+router.get("/courier/orders/:id/location-sharing", requireAuth, async (req, res) => {
+  noStore(res);
+  const market = await marketFor(req);
+  res.json(await driverLocationSharingStatus({ actorId: req.actor!.id, orderId: String(req.params.id), marketId: market.id }));
+});
+
+router.post("/courier/orders/:id/location-sharing/start", requireAuth, async (req, res) => {
+  noStore(res);
+  const body = StartLocationSharingBody.parse(req.body);
+  const market = await marketFor(req);
+  res.json(await startDriverLocationSharing({ actorId: req.actor!.id, orderId: String(req.params.id), marketId: market.id, consent: body.consent }));
+});
+
+router.post("/courier/orders/:id/location-sharing/location", requireAuth, async (req, res) => {
+  noStore(res);
+  const body = DriverLocationUpdateBody.parse(req.body);
+  const market = await marketFor(req);
+  const result = await updateDriverLocation({ actorId: req.actor!.id, orderId: String(req.params.id), marketId: market.id, update: body });
+  if (!result.accepted && result.reason === "TOO_FREQUENT") res.set("Retry-After", String(Math.ceil((result.retryAfterMs ?? 1000) / 1000)));
+  res.status(result.accepted ? 202 : result.reason === "TOO_FREQUENT" ? 429 : 409).json(result);
+});
+
+router.post("/courier/orders/:id/location-sharing/stop", requireAuth, async (req, res) => {
+  noStore(res);
+  const market = await marketFor(req);
+  res.json(await stopDriverLocationSharing({ actorId: req.actor!.id, orderId: String(req.params.id), marketId: market.id }));
+});

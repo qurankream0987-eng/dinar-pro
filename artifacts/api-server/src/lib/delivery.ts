@@ -28,6 +28,7 @@ import { requireCourierFareAgreement } from "./courier-economics";
 import { hasEligibleCourierSupply } from "./courier-supply";
 import { deviceLocationSharingAllowed } from "./privacy-rights";
 import { marketAllowsFulfilment } from "./market-capability-registry";
+import { endLocationSharingForOrder } from "./driver-location";
 import type { marketFor } from "./markets";
 
 type Market = Awaited<ReturnType<typeof marketFor>>;
@@ -802,6 +803,8 @@ export async function transitionDelivery(
  * records DELIVERED / PICKED_UP. Without one, the legacy handoff is unchanged.
  */
 export async function recordOrderHandoff(tx: any, order: OrderRow, actorId: string, now: Date) {
+  // Handoff completes the courier leg: live position sharing ends with it.
+  await endLocationSharingForOrder(tx, order.id, "DELIVERY_ENDED", now);
   const fulfillment = await fulfillmentFor(tx, order.id, true);
   if (!fulfillment || !ACTIVE_FULFILMENT.includes(fulfillment.status as DeliveryStatus)) return;
   if (fulfillment.method === "COURIER") {
@@ -862,6 +865,8 @@ export async function orderHandoff(
  * the method/state history remain for authorized order history.
  */
 export async function settleOrderFulfillment(tx: any, orderId: string, terminal: "COMPLETED" | "CANCELLED", now: Date) {
+  // A finished order never keeps a live driver position.
+  await endLocationSharingForOrder(tx, orderId, "DELIVERY_ENDED", now);
   await tx
     .update(transactionLocations)
     .set({ latitude: null, longitude: null, accuracyMeters: null, addressText: null, note: null, redactedAt: now, updatedAt: now })
@@ -877,6 +882,7 @@ export async function settleOrderFulfillment(tx: any, orderId: string, terminal:
 
 /** Ends an order's active driver assignment; the row stays as history. */
 async function releaseAssignments(tx: any, orderId: string, now: Date) {
+  await endLocationSharingForOrder(tx, orderId, "ASSIGNMENT_ENDED", now);
   await tx
     .update(deliveryAssignments)
     .set({ status: "RELEASED", releasedAt: now, updatedAt: now })

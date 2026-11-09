@@ -24,6 +24,7 @@ import {
   transactionLocations,
   users,
 } from "@workspace/db";
+import { endLocationSharingForOrder } from "./driver-location";
 import { ACCOUNT_STATUS } from "./account-status";
 import { getCourierCommissionAccount } from "./courier-economics";
 import { sameCourierCity } from "./courier-supply";
@@ -194,6 +195,7 @@ export async function reviewDriverProfile(input: { adminId: string; profileId: s
           .where(and(eq(deliveryProgressEvents.orderId, assignment.orderId), eq(deliveryProgressEvents.type, "PICKED_UP")));
         if (custody) continue;
         const now = new Date();
+        await endLocationSharingForOrder(tx, assignment.orderId, "ASSIGNMENT_ENDED", now);
         await tx.update(deliveryAssignments)
           .set({ status: "RELEASED", releasedAt: now, updatedAt: now })
           .where(eq(deliveryAssignments.id, assignment.id));
@@ -528,6 +530,7 @@ export async function revokeCourierAssignment(input: {
       throw fail(409, "استلم المندوب الطلب بالفعل؛ يلزم حل يدوي آمن قبل أي نقل.", "CUSTODY_RESOLUTION_REQUIRED");
 
     const now = new Date();
+    await endLocationSharingForOrder(tx, order.id, "ASSIGNMENT_ENDED", now);
     await tx.update(deliveryAssignments)
       .set({ status: "RELEASED", releasedAt: now, updatedAt: now })
       .where(eq(deliveryAssignments.id, assignment.id));

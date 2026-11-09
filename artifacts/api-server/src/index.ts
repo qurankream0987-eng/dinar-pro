@@ -10,6 +10,7 @@ import { validateObjectStorageConfiguration } from "./lib/objectStorage";
 import { startVisualSearchExpirySweep } from "./lib/visual-search-images";
 import { deploymentConfigurationProblems } from "./lib/deployment-configuration";
 import { installGracefulShutdown } from "./server-lifecycle";
+import { sweepDriverLocationShares } from "./lib/driver-location";
 
 // Alerting: a provider/model circuit opening is a warning; closing is info. No prompt, user or key.
 onProviderBreakerTransition((event) =>
@@ -70,6 +71,16 @@ const sweepExpiredReservations = () => {
       logger.error({ err }, "Failed to settle abandoned action executions"),
     );
 };
+// Ends idle or no-longer-authorized location sharing and drops expired audit rows.
+const sweepDriverLocations = () =>
+  void sweepDriverLocationShares()
+    .then(({ ended, deleted }) => {
+      if (ended || deleted) logger.info({ ended, deleted }, "Driver location sharing housekeeping");
+    })
+    .catch((err) => logger.error({ err }, "Driver location sharing housekeeping failed; the next sweep will retry"));
+sweepDriverLocations();
+const driverLocationSweep = setInterval(sweepDriverLocations, 60_000);
+driverLocationSweep.unref?.();
 sweepExpiredReservations();
 const reservationSweep = setInterval(sweepExpiredReservations, 60_000);
 reservationSweep.unref();

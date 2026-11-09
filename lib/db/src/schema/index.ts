@@ -2114,6 +2114,66 @@ export const deliveryAssignments = pgTable(
     check("delivery_assignments_release_consistent", sql`(${t.status} = 'RELEASED') = (${t.releasedAt} IS NOT NULL)`),
   ],
 );
+/**
+ * First-party driver location sharing (migration 0061). One row per courier assignment with
+ * only the latest validated position while the driver has explicitly started sharing; every
+ * update overwrites it and ending the session clears the coordinates (no movement history).
+ */
+export const driverLocationShares = pgTable(
+  "driver_location_shares",
+  {
+    assignmentId: text("assignment_id")
+      .primaryKey()
+      .references(() => deliveryAssignments.id),
+    orderId: text("order_id")
+      .notNull()
+      .references(() => orders.id),
+    marketId: text("market_id")
+      .notNull()
+      .references(() => markets.id),
+    driverId: text("driver_id")
+      .notNull()
+      .references(() => users.id),
+    status: text("status").default("ACTIVE").notNull(),
+    consentedAt: timestamp("consented_at", { withTimezone: true }).notNull(),
+    endedAt: timestamp("ended_at", { withTimezone: true }),
+    endReason: text("end_reason"),
+    latitude: doublePrecision("latitude"),
+    longitude: doublePrecision("longitude"),
+    accuracyMeters: integer("accuracy_meters"),
+    observedAt: timestamp("observed_at", { withTimezone: true }),
+    receivedAt: timestamp("received_at", { withTimezone: true }),
+    sequence: bigint("sequence", { mode: "number" }).default(0).notNull(),
+    ...dates(),
+  },
+  (t) => [
+    uniqueIndex("driver_location_shares_one_active_per_order").on(t.orderId).where(sql`${t.status} = 'ACTIVE'`),
+    index("driver_location_shares_driver_status_idx").on(t.driverId, t.status),
+    check("driver_location_shares_status_valid", sql`${t.status} IN ('ACTIVE', 'ENDED')`),
+    check(
+      "driver_location_shares_end_consistent",
+      sql`(${t.status} = 'ENDED') = (${t.endedAt} IS NOT NULL) AND (${t.status} = 'ENDED') = (${t.endReason} IS NOT NULL)`,
+    ),
+    check(
+      "driver_location_shares_end_reason_valid",
+      sql`${t.endReason} IS NULL OR ${t.endReason} IN ('DRIVER_STOPPED', 'DELIVERY_ENDED', 'ASSIGNMENT_ENDED', 'EXPIRED')`,
+    ),
+    check(
+      "driver_location_shares_no_position_after_end",
+      sql`${t.status} = 'ACTIVE' OR (${t.latitude} IS NULL AND ${t.longitude} IS NULL AND ${t.accuracyMeters} IS NULL AND ${t.observedAt} IS NULL)`,
+    ),
+    check(
+      "driver_location_shares_position_complete",
+      sql`(${t.latitude} IS NULL) = (${t.longitude} IS NULL) AND (${t.latitude} IS NULL) = (${t.observedAt} IS NULL)`,
+    ),
+    check(
+      "driver_location_shares_position_range",
+      sql`${t.latitude} IS NULL OR (${t.latitude} BETWEEN -90 AND 90 AND ${t.longitude} BETWEEN -180 AND 180)`,
+    ),
+    check("driver_location_shares_accuracy_range", sql`${t.accuracyMeters} IS NULL OR ${t.accuracyMeters} BETWEEN 0 AND 5000`),
+    check("driver_location_shares_sequence_nonnegative", sql`${t.sequence} >= 0`),
+  ],
+);
 /** Append-only, actor-authorized courier/buyer progress for one order. */
 export const deliveryProgressEvents = pgTable(
   "delivery_progress_events",

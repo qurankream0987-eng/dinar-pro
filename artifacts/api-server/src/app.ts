@@ -10,12 +10,19 @@ import { reportServerError } from "./lib/monitoring";
 import { createDevelopmentListingPhotoSuggestionProvider } from "./ai/groq-listing-photo-provider";
 import { ListingImagePolicyReviewError } from "./ai/listing-image-policy-review";
 import { createWebFrontend } from "./lib/web-frontend";
+import { driverLocationSharingEnabled, firstPartyTrackingProvider } from "./lib/driver-location";
 
 const app: Express = express();
 const listingPhotoSuggestionProvider =
   createDevelopmentListingPhotoSuggestionProvider();
 if (listingPhotoSuggestionProvider)
   app.locals.listingPhotoSuggestionProvider = listingPhotoSuggestionProvider;
+// Live courier position comes from the assigned driver's own device, only while that driver has
+// started sharing; a test or a future provider may replace it before the app serves requests.
+app.locals.orderTrackingProvider = {
+  getSnapshot: (input: Parameters<typeof firstPartyTrackingProvider.getSnapshot>[0]) =>
+    driverLocationSharingEnabled() ? firstPartyTrackingProvider.getSnapshot(input) : Promise.resolve(null),
+};
 // Replit routes requests through one trusted ingress proxy. Keep the hop count
 // explicit; trusting every forwarded hop would let callers spoof their IP.
 app.set("trust proxy", 1);
