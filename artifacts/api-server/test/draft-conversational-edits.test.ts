@@ -111,4 +111,26 @@ await test("without a draft, edits create nothing and memory commands still work
   assert.equal(memory.surface, "MEMORY_UPDATED", memory.body);
 });
 
+await test("short draft: contact and payment are defaults, never questions, and stay editable", async () => {
+  const s = await seller();
+  const asked: string[] = [];
+  let turn = await say(s, "دينار بيع لي كنبة زاوية بحالة جيدة بسعر 150");
+  for (const answer of ["1", "عمّان", "استلام", "كنبة زاوية رمادية بحالة جيدة مع وسائد إضافية"]) {
+    asked.push(turn.step);
+    if (turn.step === "review") break;
+    turn = await say(s, answer);
+  }
+  asked.push(turn.step);
+  assert.ok(!asked.includes("contact") && !asked.includes("payment_methods"), JSON.stringify(asked));
+  assert.equal(turn.draft.contactPreference, "CHAT_ONLY");
+  assert.deepEqual(turn.draft.paymentMethods, ["CASH_DIRECT"]);
+  const phone = await say(s, "رقم التواصل +962790000777");
+  assert.equal(phone.surface, "SELL", phone.body);
+  assert.equal(phone.draft.contactPreference, "LISTING_PHONE");
+  assert.match(phone.body, /أضفت رقم التواصل/);
+  const chat = await say(s, "خلي التواصل عبر المحادثة فقط");
+  assert.equal(chat.draft.contactPreference, "CHAT_ONLY");
+  assert.equal(chat.draft.contactPhone, undefined);
+});
+
 await test("teardown", async () => { server.close(); await pool.end(); });

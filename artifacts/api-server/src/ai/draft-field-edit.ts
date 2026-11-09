@@ -36,7 +36,9 @@ export type DraftFieldEdit =
   | { field: "area"; value: string }
   | { field: "descriptionAppend"; value: string }
   | { field: "descriptionRemove"; value: string }
-  | { field: "descriptionReplace"; value: string };
+  | { field: "descriptionReplace"; value: string }
+  | { field: "contactPhone" }
+  | { field: "contactChatOnly" };
 
 const VERB_CHANGE = "(?:غير|عدل|خلي|بدل|حط|اجعل|صحح)";
 const TO = "(?:الى|إلى|ل|لـ|ليصير|ليكون|يصير|يكون|:)?";
@@ -45,6 +47,8 @@ export function draftFieldEdit(message: string): DraftFieldEdit | undefined {
   const text = clean(message);
   if (!text || text.length > 600) return undefined;
   let m: RegExpMatchArray | null;
+  if (/^(?:رقم التواصل|رقم الاعلان|رقم الإعلان|رقمي للاعلان|رقمي للإعلان)\s*(?:هو|:)?\s*\+?[\d\s-]{7,20}$/u.test(text)) return { field: "contactPhone" };
+  if (/^(?:التواصل|خلي التواصل|اجعل التواصل)\s+(?:عبر|في|من خلال)?\s*(?:المحادثة|محادثة دينار|الشات)\s*(?:فقط)?$/u.test(text)) return { field: "contactChatOnly" };
   if ((m = text.match(/^(?:الكمية|الكميه|العدد|عدد القطع|عددها|عدده)\s*(?:هي|صارت|صار|=|:)?\s*(.+)$/u))) {
     if (/غير محدود|بدون حد|مفتوح/.test(m[1]!)) return { field: "unlimited" };
     const quantity = statedQuantity(m[1]!);
@@ -119,5 +123,8 @@ export function applyDraftFieldEdit(
     case "descriptionReplace":
       draft.description = edit.value.slice(0, 5000);
       return { ok: true, ack: "استبدلت الوصف بما كتبته." };
+    case "contactPhone":
+    case "contactChatOnly":
+      return { ok: true, ack: "" };
   }
 }

@@ -390,6 +390,22 @@ function categoryForDraft(
   );
 }
 
+/**
+ * Short draft (owner decision): contact defaults to DINAR chat (phones are shown to both parties
+ * once the seller accepts an order) and payment to direct settlement between the parties (in-app
+ * card is not offered yet). Both appear in the review and change by saying so in the chat.
+ */
+function applyShortDraftDefaults(draft: z.infer<typeof ConversationDraft>) {
+  if (!draft.contactPreference) {
+    draft.contactPreference = "CHAT_ONLY";
+    draft.sources = { ...(draft.sources ?? {}), contactPreference: "DINAR_DERIVED" };
+  }
+  if (!draft.paymentMethods?.length) {
+    draft.paymentMethods = ["CASH_DIRECT"];
+    draft.sources = { ...(draft.sources ?? {}), paymentMethods: "DINAR_DERIVED" };
+  }
+}
+
 function missingDraftSteps(
   draft: z.infer<typeof ConversationDraft>,
   configured: readonly MarketplaceCategorySchema[],
@@ -424,6 +440,7 @@ function missingDraftSteps(
   }
   if (!draft.pricingMode && pricing.allowedModes.length === 1)
     draft.pricingMode = pricing.defaultMode;
+  applyShortDraftDefaults(draft);
 
   for (const [key, definition] of Object.entries(schema.attributes))
     if (
@@ -1924,7 +1941,18 @@ export async function listingDraft(
     // An explicit field edit («الكمية 2», «غيّر العنوان إلى …», «احذف … من الوصف») applies to its
     // own field whatever is being asked now; the current question is not consumed by it.
     const fieldEdit = explicitEdit;
-    if (fieldEdit) {
+    if (fieldEdit?.field === "contactPhone") {
+      const contact = extractListingContactPhone(text);
+      if (contact.phone) {
+        draft.contactPhone = contact.phone;
+        draft.contactPreference = "LISTING_PHONE";
+        editAck = "أضفت رقم التواصل لهذا الإعلان.";
+      } else editAck = "لم أتعرف على رقم صالح؛ اكتبه كاملًا مع رمز الدولة.";
+    } else if (fieldEdit?.field === "contactChatOnly") {
+      delete draft.contactPhone;
+      draft.contactPreference = "CHAT_ONLY";
+      editAck = "سيكون التواصل عبر محادثة دينار فقط.";
+    } else if (fieldEdit) {
       const outcome = applyDraftFieldEdit(draft, fieldEdit, categoryForDraft(draft, configured)?.rules.inventory);
       editAck = outcome.ok ? outcome.ack : outcome.reason;
     }
@@ -1994,6 +2022,7 @@ export async function listingDraft(
         : following;
   }
 
+  if (step !== "cancelled" && step !== "published") applyShortDraftDefaults(draft);
   const uploadedImages = [...new Set(imageObjectPaths)].slice(0, 4);
   // G1: image understanding is metered. Without allowance the photos are still attached and
   // the draft continues manually; nothing is inferred and nothing is charged.
