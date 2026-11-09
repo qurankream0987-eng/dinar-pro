@@ -853,6 +853,12 @@ function consumeDraftAnswer(
   }
   if (step === "contact") {
     if (hasPersonalNumberIntent(text)) return false;
+    // Withdrawn consent always falls back to the private default.
+    if (/^(?:لا\s*[،,]?\s*)?(?:لا تستخدم|لا تستعمل|ما ابي|ما ابغى)\s+(?:رقمي|رقم حسابي)$/u.test(normalizeSearch(text))) {
+      delete draft.contactPhone;
+      draft.contactPreference = "CHAT_ONLY";
+      return true;
+    }
     if (explicitAccountPhoneConsent(text)) {
       delete draft.contactPhone;
       draft.contactPreference = "ACCOUNT_PHONE";
@@ -1956,6 +1962,18 @@ export async function listingDraft(
       const outcome = applyDraftFieldEdit(draft, fieldEdit, categoryForDraft(draft, configured)?.rules.inventory);
       editAck = outcome.ok ? outcome.ack : outcome.reason;
     }
+    // Contact is a default (chat only), not a question: the seller's own contact sentences reach the
+    // same consent path at any step («على رقمي» still asks for explicit confirmation first).
+    if (
+      !fieldEdit &&
+      step !== "contact" &&
+      step !== "contact_account_confirmation" &&
+      (hasPersonalNumberIntent(text) ||
+        explicitAccountPhoneConsent(text) ||
+        /^(?:محادثه فقط|محادثة فقط|التواصل بالمحادثه فقط|بدون رقم|لا تستخدم رقمي|لا لا تستخدم رقمي)$/u.test(normalizeSearch(text).replace(/[،,]/g, " ").replace(/\s+/g, " ").trim()) ||
+        /^رقمي\s+\+?\d/u.test(normalizeSearch(text)))
+    )
+      step = "contact";
     const accountPhoneIntent =
       step === "contact" && hasPersonalNumberIntent(text);
     const categorySelection = accountPhoneIntent || fieldEdit

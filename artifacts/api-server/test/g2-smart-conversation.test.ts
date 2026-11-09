@@ -1087,7 +1087,9 @@ await acceptance("CONTACT-02", "explicit seller contact stays private outside se
   const actor = await register("account-phone-consent");
   const conv = actor.conv;
   let current = await deterministicTurn(actor, "أبي أبيع آيفون 16 برو 256 مستعمل نظيف بـ500 في عمان", conv);
-  for (let index = 0; index < 8 && current.payload.draftStep !== "contact"; index++) {
+  // Short draft (owner decision): contact is a private default (DINAR chat), never a question; the
+  // consent flow below is reached by the seller's own sentences at the review step.
+  for (let index = 0; index < 8 && current.payload.draftStep !== "review"; index++) {
     const missing = current.payload.draftReview?.missingFields?.[0]?.field;
     const answer: Record<string, string> = {
       category: "إلكترونيات",
@@ -1098,15 +1100,16 @@ await acceptance("CONTACT-02", "explicit seller contact stays private outside se
       area: "عمان",
       fulfilment: "استلام",
     };
-    assert.ok(missing && answer[missing], `unexpected missing field before contact: ${missing}`);
+    assert.ok(missing && answer[missing], `unexpected missing field before review: ${missing}`);
     current = await deterministicTurn(actor, answer[missing]!, conv);
   }
-  assert.equal(current.payload.draftStep, "contact", current.body);
+  assert.equal(current.payload.draftStep, "review", current.body);
+  assert.equal(current.payload.draft.contactPreference, "CHAT_ONLY", "the default is the private one");
   const draftId = current.payload.draft.draftId;
 
   const ambiguous = await deterministicTurn(actor, "على رقمي", conv);
   assert.equal(ambiguous.payload.draftStep, "contact_account_confirmation", ambiguous.body);
-  assert.equal(ambiguous.payload.draft.contactPreference, undefined);
+  assert.equal(ambiguous.payload.draft.contactPreference, "CHAT_ONLY", "an ambiguous «على رقمي» changes nothing before confirmation");
   assert.equal(ambiguous.payload.draft.contactPhone, undefined);
   assert.doesNotMatch(JSON.stringify(ambiguous.payload), new RegExp(actor.phone));
 
@@ -1118,7 +1121,7 @@ await acceptance("CONTACT-02", "explicit seller contact stays private outside se
   assert.doesNotMatch(JSON.stringify(consented.payload), new RegExp(actor.phone));
   const withdrawn = await deterministicTurn(actor, "لا، لا تستخدم رقمي", conv);
   assert.equal(withdrawn.payload.draft.draftId, draftId);
-  assert.equal(withdrawn.payload.draft.contactPreference, undefined);
+  assert.equal(withdrawn.payload.draft.contactPreference, "CHAT_ONLY", "withdrawn consent returns to the private default");
   const alternate = await deterministicTurn(actor, "رقمي 60000001", conv);
   assert.equal(alternate.payload.draft.draftId, draftId);
   assert.equal(alternate.payload.draft.contactPreference, "LISTING_PHONE");
