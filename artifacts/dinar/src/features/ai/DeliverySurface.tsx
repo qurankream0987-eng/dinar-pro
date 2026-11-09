@@ -1,5 +1,5 @@
-import { useState, type FormEvent, type ReactNode } from "react";
-import { Check, LocateFixed, MapPin, PenLine, RotateCcw, Truck, X } from "lucide-react";
+import { lazy, Suspense, useMemo, useState, type FormEvent, type ReactNode } from "react";
+import { Check, LocateFixed, Map as MapIcon, MapPin, PenLine, RotateCcw, Truck, X } from "lucide-react";
 import { Button } from "@/ui/Button";
 import { Field, Input, Textarea } from "@/ui/Field";
 import { CourierFareCard } from "./CourierEconomicsSurfaces";
@@ -10,6 +10,44 @@ import type {
   LocationSubmission,
 } from "./delivery-types";
 import { readDeviceLocationOnce } from "./one-time-location";
+import { resolveMapStyle } from "../maps/map-style";
+import type { MapPoint } from "../maps/DinarMap";
+
+const DinarMap = lazy(() => import("../maps/DinarMap"));
+const mapConfigured = () => resolveMapStyle().kind !== "NONE";
+
+/**
+ * Choose or adjust a delivery point on the map. Nothing is sent until the user confirms; the
+ * point is submitted as source MAP (chosen on a map), never presented as a device reading.
+ */
+function MapPicker({ requestId, onSend, start, onClose }: { requestId: string; onSend: Send; start: MapPoint | null; onClose: () => void }) {
+  const [point, setPoint] = useState<MapPoint | null>(start);
+  const markers = useMemo(() => (point ? [{ id: "selection", kind: "selection" as const, point, label: "النقطة المختارة للتسليم" }] : []), [point]);
+  return (
+    <div className="mt-3" data-testid="delivery-map-picker">
+      <p className="mb-2 text-sm text-muted-foreground">
+        {point ? "اسحب العلامة أو اضغط على الخريطة لتعديل نقطة التسليم، ثم أكّد." : "اضغط على الخريطة لاختيار نقطة التسليم."}
+      </p>
+      <Suspense fallback={<div className="skeleton h-[260px] w-full rounded-2xl" />}>
+        <DinarMap markers={markers} ariaLabel="اختيار نقطة التسليم على الخريطة" height={260} onSelect={setPoint} testId="delivery-picker-map" />
+      </Suspense>
+      <SurfaceActions>
+        <Button
+          size="sm"
+          disabled={!point}
+          icon={<Check size={14} aria-hidden />}
+          onClick={() => point && onSend("استخدم النقطة المحددة على الخريطة", { locationRequestId: requestId, location: { source: "MAP", latitude: point.latitude, longitude: point.longitude } })}
+          data-testid="delivery-map-use-point"
+        >
+          استخدم هذه النقطة
+        </Button>
+        <Button size="sm" variant="ghost" icon={<X size={14} aria-hidden />} onClick={onClose} data-testid="delivery-map-close">
+          رجوع
+        </Button>
+      </SurfaceActions>
+    </div>
+  );
+}
 import { FactList, SurfaceActions, SurfacePanel, factRows } from "./surface/primitives";
 
 type Send = (text: string, location?: LocationSubmission) => void;
@@ -38,8 +76,8 @@ const METHOD_COMMANDS: Record<string, string> = {
 /** Text-only place summary; no map provider and no coordinates in any link. */
 function placeLines(place: Pick<DeliveryLocation, "source" | "latitude" | "longitude" | "accuracyNote" | "city" | "area" | "addressText" | "note">): [string, ReactNode][] {
   const rows: [string, ReactNode][] = [];
-  if (place.source === "DEVICE" && place.latitude !== null && place.longitude !== null)
-    rows.push(["الموقع", "تم استلام الموقع لهذا الطلب؛ لا تُعرض الإحداثيات في المحادثة."]);
+  if (place.source !== "MANUAL" && place.latitude !== null && place.longitude !== null)
+    rows.push(["الموقع", place.source === "MAP" ? "نقطة محددة على الخريطة لهذا الطلب؛ لا تُعرض الإحداثيات في المحادثة." : "تم استلام الموقع لهذا الطلب؛ لا تُعرض الإحداثيات في المحادثة."]);
   const coarse = [place.city, place.area].filter(Boolean).join("، ");
   if (coarse) rows.push(["المنطقة", coarse]);
   if (place.addressText) rows.push(["العنوان", place.addressText]);
@@ -66,6 +104,7 @@ function PlaceCard({ place, testId }: { place: DeliveryLocation; testId: string 
 /** One explicit tap → one device reading. Denial or failure offers manual entry and an explicit retry. */
 function ShareLocationButtons({ requestId, onSend }: { requestId: string; onSend: Send }) {
   const [reading, setReading] = useState(false);
+  const [picking, setPicking] = useState(false);
   const [problem, setProblem] = useState<"DENIED" | "UNAVAILABLE" | "TIMEOUT" | null>(null);
   const share = async () => {
     setReading(true);
@@ -117,10 +156,16 @@ function ShareLocationButtons({ requestId, onSend }: { requestId: string; onSend
         >
           اكتب العنوان يدويًا
         </Button>
+        {mapConfigured() && !picking && (
+          <Button size="sm" variant="secondary" disabled={reading} icon={<MapIcon size={14} aria-hidden />} onClick={() => setPicking(true)} data-testid="delivery-pick-on-map">
+            اختيار على الخريطة
+          </Button>
+        )}
         <Button size="sm" variant="ghost" disabled={reading} icon={<X size={14} aria-hidden />} onClick={() => onSend("إلغاء")} data-testid="delivery-cancel">
           إلغاء
         </Button>
       </SurfaceActions>
+      {picking && <MapPicker requestId={requestId} onSend={onSend} start={null} onClose={() => setPicking(false)} />}
     </>
   );
 }
@@ -192,9 +237,21 @@ function PreviewCard({ preview }: { preview: DeliveryPreview }) {
       <p className="flex items-center gap-1.5 text-sm font-semibold">
         <MapPin size={15} aria-hidden /> {preview.purposeLabel}
         <span className="text-xs font-normal text-muted-foreground">
-          · {preview.source === "DEVICE" ? "من موقع جهازك" : "عنوان مكتوب"}
+          · {preview.source === "DEVICE" ? "من موقع جهازك" : preview.source === "MAP" ? "نقطة اخترتها على الخريطة" : "عنوان مكتوب"}
         </span>
       </p>
+      {preview.available && preview.latitude !== null && preview.longitude !== null && mapConfigured() && (
+        <div className="mt-2">
+          <Suspense fallback={<div className="skeleton h-[180px] w-full rounded-2xl" />}>
+            <DinarMap
+              markers={[{ id: "preview", kind: "destination", point: { latitude: preview.latitude, longitude: preview.longitude }, label: preview.purposeLabel }]}
+              ariaLabel="معاينة نقطة التسليم"
+              height={180}
+              testId="delivery-preview-map"
+            />
+          </Suspense>
+        </div>
+      )}
       {preview.available ? (
         <FactList rows={factRows(placeLines(preview))} />
       ) : (
@@ -275,6 +332,13 @@ export function DeliverySurface({
                   </SurfaceActions>
                   {delivery.preview.source === "DEVICE" && (
                     <ShareLocationButtonsRetry requestId={delivery.action.actionId} onSend={send} />
+                  )}
+                  {delivery.preview.source !== "MANUAL" && delivery.preview.latitude !== null && delivery.preview.longitude !== null && mapConfigured() && (
+                    <AdjustOnMap
+                      requestId={delivery.action.actionId}
+                      onSend={send}
+                      start={{ latitude: delivery.preview.latitude, longitude: delivery.preview.longitude }}
+                    />
                   )}
                 </>
               ) : (
@@ -388,6 +452,20 @@ export function DeliverySurface({
           )}
       </SurfacePanel>
     </section>
+  );
+}
+
+/** Adjust a previewed point on the map; the adjusted point is submitted as MAP, not as a device reading. */
+function AdjustOnMap({ requestId, onSend, start }: { requestId: string; onSend: Send; start: MapPoint }) {
+  const [open, setOpen] = useState(false);
+  return open ? (
+    <MapPicker requestId={requestId} onSend={onSend} start={start} onClose={() => setOpen(false)} />
+  ) : (
+    <SurfaceActions>
+      <Button size="sm" variant="secondary" icon={<MapIcon size={14} aria-hidden />} onClick={() => setOpen(true)} data-testid="delivery-adjust-on-map">
+        تعديل النقطة على الخريطة
+      </Button>
+    </SurfaceActions>
   );
 }
 

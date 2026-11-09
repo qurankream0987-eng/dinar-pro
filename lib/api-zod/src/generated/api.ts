@@ -1850,7 +1850,7 @@ export const GetOrderFulfillmentResponse = zod.object({
   "id": zod.string(),
   "purpose": zod.enum(['DELIVERY_DESTINATION', 'PICKUP_POINT', 'SERVICE_APPOINTMENT']),
   "purposeLabel": zod.string(),
-  "source": zod.enum(['DEVICE', 'MANUAL']),
+  "source": zod.enum(['DEVICE', 'MANUAL', 'MAP']),
   "latitude": zod.number().nullable(),
   "longitude": zod.number().nullable(),
   "accuracyMeters": zod.number().nullable(),
@@ -1867,7 +1867,7 @@ export const GetOrderFulfillmentResponse = zod.object({
   "id": zod.string(),
   "purpose": zod.enum(['DELIVERY_DESTINATION', 'PICKUP_POINT', 'SERVICE_APPOINTMENT']),
   "purposeLabel": zod.string(),
-  "source": zod.enum(['DEVICE', 'MANUAL']),
+  "source": zod.enum(['DEVICE', 'MANUAL', 'MAP']),
   "latitude": zod.number().nullable(),
   "longitude": zod.number().nullable(),
   "accuracyMeters": zod.number().nullable(),
@@ -1884,7 +1884,7 @@ export const GetOrderFulfillmentResponse = zod.object({
   "id": zod.string(),
   "purpose": zod.enum(['DELIVERY_DESTINATION', 'PICKUP_POINT', 'SERVICE_APPOINTMENT']),
   "purposeLabel": zod.string(),
-  "source": zod.enum(['DEVICE', 'MANUAL']),
+  "source": zod.enum(['DEVICE', 'MANUAL', 'MAP']),
   "latitude": zod.number().nullable(),
   "longitude": zod.number().nullable(),
   "accuracyMeters": zod.number().nullable(),
@@ -1907,6 +1907,105 @@ export const GetOrderFulfillmentResponse = zod.object({
   "nextActions": zod.array(zod.enum(['ACCEPTED', 'OUT_FOR_DELIVERY', 'READY_FOR_PICKUP', 'CANCELLED', 'FAILED'])),
   "awaitingHandoff": zod.boolean()
 }).describe('Participant-only delivery view of one order (buyer or seller of that order).')
+
+
+/**
+ * @summary The assigned driver's own location-sharing state for one order
+ */
+export const GetDriverLocationSharingParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const getDriverLocationSharingResponseSequenceMin = 0;
+
+
+
+export const GetDriverLocationSharingResponse = zod.object({
+  "active": zod.boolean(),
+  "consentedAt": zod.coerce.date().nullable(),
+  "lastObservedAt": zod.coerce.date().nullable(),
+  "sequence": zod.int().min(getDriverLocationSharingResponseSequenceMin),
+  "endReason": zod.union([zod.literal('DRIVER_STOPPED'),zod.literal('DELIVERY_ENDED'),zod.literal('ASSIGNMENT_ENDED'),zod.literal('EXPIRED'),zod.literal(null)]).nullable()
+})
+
+
+/**
+ * @summary Start sharing the assigned driver's location for this delivery (explicit consent)
+ */
+export const StartDriverLocationSharingParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const StartDriverLocationSharingBody = zod.object({
+  "consent": zod.literal(true)
+})
+
+export const startDriverLocationSharingResponseSequenceMin = 0;
+
+
+
+export const StartDriverLocationSharingResponse = zod.object({
+  "active": zod.boolean(),
+  "consentedAt": zod.coerce.date().nullable(),
+  "lastObservedAt": zod.coerce.date().nullable(),
+  "sequence": zod.int().min(startDriverLocationSharingResponseSequenceMin),
+  "endReason": zod.union([zod.literal('DRIVER_STOPPED'),zod.literal('DELIVERY_ENDED'),zod.literal('ASSIGNMENT_ENDED'),zod.literal('EXPIRED'),zod.literal(null)]).nullable()
+})
+
+
+/**
+ * @summary Submit one validated position during an active sharing session
+ */
+export const UpdateDriverLocationParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const updateDriverLocationBodyLatitudeMin = -90;
+export const updateDriverLocationBodyLatitudeMax = 90;
+
+export const updateDriverLocationBodyLongitudeMin = -180;
+export const updateDriverLocationBodyLongitudeMax = 180;
+
+export const updateDriverLocationBodyAccuracyMetersMin = 0;
+export const updateDriverLocationBodyAccuracyMetersMax = 100000;
+
+
+
+
+export const UpdateDriverLocationBody = zod.object({
+  "latitude": zod.number().min(updateDriverLocationBodyLatitudeMin).max(updateDriverLocationBodyLatitudeMax),
+  "longitude": zod.number().min(updateDriverLocationBodyLongitudeMin).max(updateDriverLocationBodyLongitudeMax),
+  "accuracyMeters": zod.number().min(updateDriverLocationBodyAccuracyMetersMin).max(updateDriverLocationBodyAccuracyMetersMax),
+  "observedAt": zod.coerce.date(),
+  "sequence": zod.int().min(1)
+})
+
+export const UpdateDriverLocationResponse = zod.object({
+  "accepted": zod.boolean(),
+  "sequence": zod.int().optional(),
+  "reason": zod.enum(['DUPLICATE_OR_OUT_OF_ORDER', 'TOO_FREQUENT']).optional(),
+  "retryAfterMs": zod.int().optional()
+})
+
+
+/**
+ * @summary Stop sharing; stored coordinates are cleared
+ */
+export const StopDriverLocationSharingParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const stopDriverLocationSharingResponseSequenceMin = 0;
+
+
+
+export const StopDriverLocationSharingResponse = zod.object({
+  "active": zod.boolean(),
+  "consentedAt": zod.coerce.date().nullable(),
+  "lastObservedAt": zod.coerce.date().nullable(),
+  "sequence": zod.int().min(stopDriverLocationSharingResponseSequenceMin),
+  "endReason": zod.union([zod.literal('DRIVER_STOPPED'),zod.literal('DELIVERY_ENDED'),zod.literal('ASSIGNMENT_ENDED'),zod.literal('EXPIRED'),zod.literal(null)]).nullable()
+})
 
 
 /**
@@ -2206,6 +2305,12 @@ export const getOrderTrackingResponseTrackingThreePositionAccuracyMetersMin = 0;
 
 export const getOrderTrackingResponseTrackingThreeRouteEncodedPolylineMax = 200000;
 
+export const getOrderTrackingResponseDestinationLatitudeMin = -90;
+export const getOrderTrackingResponseDestinationLatitudeMax = 90;
+
+export const getOrderTrackingResponseDestinationLongitudeMin = -180;
+export const getOrderTrackingResponseDestinationLongitudeMax = 180;
+
 
 
 export const GetOrderTrackingResponse = zod.object({
@@ -2245,7 +2350,11 @@ export const GetOrderTrackingResponse = zod.object({
   "type": zod.enum(['PICKED_UP', 'OUT_FOR_DELIVERY', 'ARRIVED', 'HANDED_OFF', 'BUYER_RECEIVED']),
   "occurredAt": zod.coerce.date(),
   "actorRole": zod.enum(['COURIER', 'BUYER'])
-}))
+})),
+  "destination": zod.object({
+  "latitude": zod.number().min(getOrderTrackingResponseDestinationLatitudeMin).max(getOrderTrackingResponseDestinationLatitudeMax),
+  "longitude": zod.number().min(getOrderTrackingResponseDestinationLongitudeMin).max(getOrderTrackingResponseDestinationLongitudeMax)
+}).nullish().describe('The buyer\'s own pinned delivery point (device-shared coordinates only), returned to the buyer while the delivery is active; never to other parties.')
 })
 
 
@@ -4526,7 +4635,7 @@ export const SendAiConversationTurnBody = zod.object({
   "imageObjectPaths": zod.array(zod.string().min(1).max(sendAiConversationTurnBodyImageObjectPathsItemMax)).max(sendAiConversationTurnBodyImageObjectPathsMax).optional(),
   "locationRequestId": zod.uuid().optional().describe('The delivery location request or preview this explicit submission answers.'),
   "location": zod.object({
-  "source": zod.enum(['DEVICE', 'MANUAL']),
+  "source": zod.enum(['DEVICE', 'MANUAL', 'MAP']),
   "latitude": zod.number().min(sendAiConversationTurnBodyLocationLatitudeMin).max(sendAiConversationTurnBodyLocationLatitudeMax).optional(),
   "longitude": zod.number().min(sendAiConversationTurnBodyLocationLongitudeMin).max(sendAiConversationTurnBodyLocationLongitudeMax).optional(),
   "accuracyMeters": zod.number().min(sendAiConversationTurnBodyLocationAccuracyMetersMin).optional(),

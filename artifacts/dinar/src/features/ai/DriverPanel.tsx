@@ -2,6 +2,7 @@ import { Check, PackageCheck, MapPin, X } from "lucide-react";
 import { Button } from "@/ui/Button";
 import { PendingNotice } from "./SmartSurfaces";
 import { CourierCommissionPanel, CourierFareCard } from "./CourierEconomicsSurfaces";
+import { DriverLocationSharingControl } from "./DriverLocationSharingControl";
 
 export { DRIVER_SURFACES, isDriverPayload, type DriverPayload, type DriverSurface } from "./driver-types";
 import type { DriverPayload, Place } from "./driver-types";
@@ -69,6 +70,10 @@ export function DriverPanel({ driver, active, activeMarketId, onSend }: { driver
               <div className="mt-2">
                 <CourierFareCard orderId={row.orderId} role="COURIER" active={active} />
               </div>
+              <DriverLocationSharingControl
+                orderId={row.orderId}
+                enabled={["ACCEPTED", "READY_FOR_PICKUP", "PICKED_UP", "OUT_FOR_DELIVERY"].includes(String(row.status ?? ""))}
+              />
               {canAct && (
                 <div className="mt-3 flex flex-wrap gap-2 border-t border-border pt-3" data-testid={`driver-tracking-actions-${row.orderId}`}>
                   {row.status === "ACCEPTED" && <Button

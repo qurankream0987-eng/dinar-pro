@@ -7,6 +7,7 @@
  */
 import type { OrderProgressEvent } from './orderProgressEvent';
 import type { OrderTrackingDelivery } from './orderTrackingDelivery';
+import type { OrderTrackingDestination } from './orderTrackingDestination';
 import type { OrderTrackingLive } from './orderTrackingLive';
 import type { OrderTrackingStopped } from './orderTrackingStopped';
 import type { OrderTrackingUnavailable } from './orderTrackingUnavailable';
@@ -18,4 +19,9 @@ export interface OrderTracking {
   delivery: OrderTrackingDelivery;
   tracking: OrderTrackingUnavailable | OrderTrackingStopped | OrderTrackingLive;
   progress: OrderProgressEvent[];
+  /**
+     * The buyer's own pinned delivery point (device-shared coordinates only), returned to the buyer while the delivery is active; never to other parties.
+     * @nullable
+     */
+  destination?: OrderTrackingDestination;
 }

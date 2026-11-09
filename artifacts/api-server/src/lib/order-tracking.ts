@@ -1,5 +1,5 @@
 import { and, eq } from "drizzle-orm";
-import { db, deliveryAssignments, deliveryProgressEvents, orderFulfillments, users } from "@workspace/db";
+import { db, deliveryAssignments, deliveryProgressEvents, orderFulfillments, transactionLocations, users } from "@workspace/db";
 import {
   METHOD_LABELS,
   participantOrder,
@@ -56,6 +56,8 @@ export type OrderTrackingView = {
         eta: EphemeralTrackingSnapshot["eta"];
       };
   progress: { type: string; occurredAt: string; actorRole: "COURIER" | "BUYER" }[];
+  /** The buyer's own device-pinned delivery point, only for the buyer and only while active. */
+  destination?: { latitude: number; longitude: number } | null;
 };
 
 const TERMINAL_ORDER_STATUSES = new Set([
@@ -161,10 +163,18 @@ export async function getOrderTrackingView(input: {
     return stopped(order.id, order.status, delivery, progress);
   if (role !== "BUYER")
     return unavailable(order.id, order.status, delivery, progress, "NOT_BUYER");
+  const [pinned] = await db
+    .select({ latitude: transactionLocations.latitude, longitude: transactionLocations.longitude })
+    .from(transactionLocations)
+    .where(and(eq(transactionLocations.orderId, order.id), eq(transactionLocations.purpose, "DELIVERY_DESTINATION")))
+    .limit(1);
+  const destination =
+    pinned?.latitude != null && pinned.longitude != null ? { latitude: pinned.latitude, longitude: pinned.longitude } : null;
+  const buyerView = (view: OrderTrackingView): OrderTrackingView => ({ ...view, destination });
   if (method !== "COURIER" || !fulfillment)
-    return unavailable(order.id, order.status, delivery, progress, "NOT_COURIER");
+    return buyerView(unavailable(order.id, order.status, delivery, progress, "NOT_COURIER"));
   if (!status || !TRACKABLE_DELIVERY_STATUSES.has(status))
-    return unavailable(order.id, order.status, delivery, progress, "NOT_ACTIVE");
+    return buyerView(unavailable(order.id, order.status, delivery, progress, "NOT_ACTIVE"));
 
   const [assignment] = await db
     .select({ driverId: deliveryAssignments.driverId })
@@ -176,9 +186,9 @@ export async function getOrderTrackingView(input: {
       ),
     )
     .limit(1);
-  if (!assignment) return unavailable(order.id, order.status, delivery, progress, "NO_DRIVER");
+  if (!assignment) return buyerView(unavailable(order.id, order.status, delivery, progress, "NO_DRIVER"));
   if (!input.provider)
-    return unavailable(order.id, order.status, delivery, progress, "NO_PROVIDER");
+    return buyerView(unavailable(order.id, order.status, delivery, progress, "NO_PROVIDER"));
 
   let snapshotValue: EphemeralTrackingSnapshot | null;
   try {
@@ -189,10 +199,10 @@ export async function getOrderTrackingView(input: {
     });
   } catch {
     // Provider errors may contain precise coordinates; never forward or log them.
-    return unavailable(order.id, order.status, delivery, progress, "NO_PROVIDER");
+    return buyerView(unavailable(order.id, order.status, delivery, progress, "NO_PROVIDER"));
   }
   if (!snapshotValue || !validSnapshot(snapshotValue))
-    return unavailable(order.id, order.status, delivery, progress, "NO_PROVIDER");
+    return buyerView(unavailable(order.id, order.status, delivery, progress, "NO_PROVIDER"));
 
   // Discard a provider response if the order became terminal while the request was in flight.
   const { order: currentOrder } = await participantOrder(db, order.id, input.actorId);
@@ -221,7 +231,7 @@ export async function getOrderTrackingView(input: {
     currentFulfillment?.method !== "COURIER" ||
     !TRACKABLE_DELIVERY_STATUSES.has(currentFulfillment.status)
   )
-    return unavailable(order.id, currentOrder.status, delivery, progress, "NOT_ACTIVE");
+    return buyerView(unavailable(order.id, currentOrder.status, delivery, progress, "NOT_ACTIVE"));
   const [currentAssignment] = await db
     .select({ driverId: deliveryAssignments.driverId })
     .from(deliveryAssignments)
@@ -233,13 +243,13 @@ export async function getOrderTrackingView(input: {
     )
     .limit(1);
   if (!currentAssignment || currentAssignment.driverId !== assignment.driverId)
-    return unavailable(order.id, currentOrder.status, delivery, progress, "NO_DRIVER");
+    return buyerView(unavailable(order.id, currentOrder.status, delivery, progress, "NO_DRIVER"));
 
   const state =
     Date.now() - Date.parse(snapshotValue.position.observedAt) <= MAX_LOCATION_AGE_MS
       ? "LIVE"
       : "STALE";
-  return {
+  return buyerView({
     orderId: order.id,
     orderStatus: currentOrder.status,
     delivery,
@@ -250,5 +260,5 @@ export async function getOrderTrackingView(input: {
       route: snapshotValue.route ?? null,
       eta: snapshotValue.eta ?? null,
     },
-  };
+  });
 }

@@ -9,7 +9,7 @@ export type DeliveryLocation = {
   id: string;
   purpose: LocationPurpose;
   purposeLabel: string;
-  source: "DEVICE" | "MANUAL";
+  source: "DEVICE" | "MANUAL" | "MAP";
   latitude: number | null;
   longitude: number | null;
   accuracyMeters: number | null;
@@ -52,7 +52,7 @@ export type DeliveryOrderView = {
 export type DeliveryPreview = {
   purpose: LocationPurpose;
   purposeLabel: string;
-  source: "DEVICE" | "MANUAL";
+  source: "DEVICE" | "MANUAL" | "MAP";
   latitude: number | null;
   longitude: number | null;
   accuracyMeters: number | null;
@@ -86,7 +86,8 @@ export type LocationSubmission = {
   locationRequestId: string;
   location:
     | { source: "DEVICE"; latitude: number; longitude: number; accuracyMeters?: number }
-    | { source: "MANUAL"; city?: string; area?: string; addressText: string; note?: string };
+    | { source: "MANUAL"; city?: string; area?: string; addressText: string; note?: string }
+    | { source: "MAP"; latitude: number; longitude: number };
 };
 
 const isObject = (value: unknown): value is Record<string, unknown> =>

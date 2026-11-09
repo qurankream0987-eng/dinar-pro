@@ -69,7 +69,7 @@ const PendingAction = z.discriminatedUnion("type", [
       purpose: z.enum(LOCATION_PURPOSES),
       // Removed once the action is settled, expired or superseded.
       location: LocationInput.optional(),
-      source: z.enum(["DEVICE", "MANUAL"]),
+      source: z.enum(["DEVICE", "MANUAL", "MAP"]),
       replacing: z.boolean(),
     })
     .strict(),
@@ -281,8 +281,8 @@ function previewOf(action: Extract<PendingAction, { type: "SHARE_LOCATION" }>) {
     purpose: action.purpose,
     purposeLabel: PURPOSE_LABELS[action.purpose],
     source: action.source,
-    latitude: location?.source === "DEVICE" ? location.latitude : null,
-    longitude: location?.source === "DEVICE" ? location.longitude : null,
+    latitude: location && location.source !== "MANUAL" ? location.latitude : null,
+    longitude: location && location.source !== "MANUAL" ? location.longitude : null,
     accuracyMeters: location?.source === "DEVICE" ? (location.accuracyMeters ?? null) : null,
     accuracyNote: location?.source === "DEVICE" ? accuracyNote(location.accuracyMeters) : null,
     poorAccuracy: location?.source === "DEVICE" && (location.accuracyMeters ?? 0) > POOR_ACCURACY_METERS,

@@ -2019,7 +2019,8 @@ export const transactionLocations = pgTable(
       "transaction_locations_purpose_valid",
       sql`${t.purpose} IN ('DELIVERY_DESTINATION', 'PICKUP_POINT', 'SERVICE_APPOINTMENT')`,
     ),
-    check("transaction_locations_source_valid", sql`${t.source} IN ('DEVICE', 'MANUAL')`),
+    check("transaction_locations_source_valid", sql`${t.source} IN ('DEVICE', 'MANUAL', 'MAP')`),
+    check("transaction_locations_map_has_no_accuracy", sql`${t.source} <> 'MAP' OR ${t.accuracyMeters} IS NULL`),
     check(
       "transaction_locations_coordinates_paired",
       sql`(${t.latitude} IS NULL) = (${t.longitude} IS NULL)`,
@@ -2038,7 +2039,7 @@ export const transactionLocations = pgTable(
     ),
     check(
       "transaction_locations_content_present",
-      sql`${t.redactedAt} IS NOT NULL OR (${t.source} = 'DEVICE' AND ${t.latitude} IS NOT NULL) OR (${t.source} = 'MANUAL' AND ${t.addressText} IS NOT NULL)`,
+      sql`${t.redactedAt} IS NOT NULL OR (${t.source} IN ('DEVICE', 'MAP') AND ${t.latitude} IS NOT NULL) OR (${t.source} = 'MANUAL' AND ${t.addressText} IS NOT NULL)`,
     ),
     check(
       "transaction_locations_redaction_consistent",

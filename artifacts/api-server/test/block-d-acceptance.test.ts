@@ -354,9 +354,14 @@ await test("setup: providers off, disposable markets, fresh actors, real orders"
   for (const actor of [buyerA, buyerB, buyerC, buyerE, sellerD, sellerP, sellerS, sellerB]) conv[actor.label] = await conversation(actor);
 });
 
-await acceptance("D19", "no live tracking: no watchPosition, background reader, polling or movement tables", async () => {
+await acceptance("D19", "location reading stays scoped: one-time reader for parties, driver-only active-session sharing, no movement history", async () => {
+  // Updated for the owner-approved first-party courier tracking (migration 0061): continuous reading
+  // is allowed in exactly one place, the driver's explicit sharing module; nothing else reads
+  // location continuously or in the background, and no movement history is ever stored.
   const roots = [join(process.cwd(), "src"), join(process.cwd(), "../dinar/src")];
-  const hits: string[] = [];
+  const continuous: string[] = [];
+  const background: string[] = [];
+  const readers: string[] = [];
   const walk = async (dir: string): Promise<void> => {
     for (const entry of await readdir(dir, { withFileTypes: true })) {
       const path = join(dir, entry.name);
@@ -364,34 +369,29 @@ await acceptance("D19", "no live tracking: no watchPosition, background reader, 
       else if (/\.(ts|tsx|js|mjs)$/.test(entry.name)) {
         const text = await readFile(path, "utf8");
         // Calls only: comments documenting the rule are not usage.
-        if (/\.watchPosition\s*\(|startLocationUpdates\s*\(|BackgroundGeolocation|setInterval\([^)]*getCurrentPosition/.test(text)) hits.push(path);
+        if (/\.watchPosition\s*\(/.test(text)) continuous.push(path);
+        if (/startLocationUpdates\s*\(|BackgroundGeolocation|setInterval\([^)]*getCurrentPosition/.test(text)) background.push(path);
+        if (/\.(ts|tsx)$/.test(entry.name) && text.includes("getCurrentPosition")) readers.push(path);
       }
     }
   };
   for (const root of roots) await walk(root);
-  assert.deepEqual(hits, [], "no continuous or background location API in DINAR source");
-  const readers = [];
-  for (const root of roots) {
-    const walkReaders = async (dir: string): Promise<void> => {
-      for (const entry of await readdir(dir, { withFileTypes: true })) {
-        const path = join(dir, entry.name);
-        if (entry.isDirectory()) await walkReaders(path);
-        else if (/\.(ts|tsx)$/.test(entry.name) && (await readFile(path, "utf8")).includes("getCurrentPosition")) readers.push(path);
-      }
-    };
-    await walkReaders(root);
-  }
+  assert.deepEqual(background, [], "no background or polled location API in DINAR source");
+  assert.deepEqual(continuous.map((path) => path.split("/").at(-1)), ["driver-location-sharing.ts"], "continuous reading only in the driver's explicit sharing module");
   assert.equal(readers.length, 1, `one explicit one-time reader only: ${readers.join(", ")}`);
   const tables = await pool.query(
-    "select tablename from pg_tables where schemaname = 'public' and tablename ~ '(track|gps|movement|position|location_history|location_event|driver_(location|route|point|ping))'",
+    "select tablename from pg_tables where schemaname = 'public' and tablename ~ '(track|gps|movement|position|location_history|location_event|driver_(location|route|point|ping))' order by 1",
   );
-  assert.deepEqual(tables.rows, [], "no tracking, GPS-point or movement tables");
-  // Block F4 driver tables hold lifecycle and assignment only: the one transaction-scoped
-  // snapshot table is the only place a coordinate column exists.
+  assert.deepEqual(tables.rows.map((row: { tablename: string }) => row.tablename), ["driver_location_shares"], "only the single-latest-point sharing table");
+  // One row per assignment (primary key), so the table cannot accumulate a trail of points.
+  const key = await pool.query(
+    "select a.attname from pg_index i join pg_attribute a on a.attrelid = i.indrelid and a.attnum = any(i.indkey) where i.indrelid = 'driver_location_shares'::regclass and i.indisprimary",
+  );
+  assert.deepEqual(key.rows.map((row: { attname: string }) => row.attname), ["assignment_id"]);
   const coordinates = await pool.query(
-    "select distinct table_name from information_schema.columns where table_schema = 'public' and column_name ~ '(latitude|longitude)'",
+    "select distinct table_name from information_schema.columns where table_schema = 'public' and column_name ~ '(latitude|longitude)' order by 1",
   );
-  assert.deepEqual(coordinates.rows.map((row: { table_name: string }) => row.table_name), ["transaction_locations"]);
+  assert.deepEqual(coordinates.rows.map((row: { table_name: string }) => row.table_name), ["driver_location_shares", "transaction_locations"]);
 });
 
 await acceptance("D01", "permission request first; nothing is read or stored until the user acts; manual fallback", async () => {

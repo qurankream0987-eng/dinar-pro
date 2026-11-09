@@ -12,4 +12,5 @@ export type TransactionLocationInputSource = typeof TransactionLocationInputSour
 export const TransactionLocationInputSource = {
   DEVICE: 'DEVICE',
   MANUAL: 'MANUAL',
+  MAP: 'MAP',
 } as const;

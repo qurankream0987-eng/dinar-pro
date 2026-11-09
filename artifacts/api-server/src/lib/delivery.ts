@@ -114,8 +114,16 @@ const cleanText = (max: number) =>
     .transform((value) => value.replace(/[\u0000-\u001f\u007f]+/g, " ").replace(/\s+/g, " ").trim())
     .pipe(z.string().max(max));
 
-/** What a buyer or seller explicitly submits: one device reading or a typed address. */
+/** What a buyer or seller explicitly submits: one device reading, a point chosen on a map, or a typed address. */
 export const LocationInput = z.discriminatedUnion("source", [
+  z
+    .object({
+      source: z.literal("MAP"),
+      latitude: z.number().finite().min(-90).max(90),
+      longitude: z.number().finite().min(-180).max(180),
+      note: cleanText(300).optional(),
+    })
+    .strict(),
   z
     .object({
       source: z.literal("DEVICE"),
@@ -143,6 +151,13 @@ export function normalizeLocationInput(raw: unknown): LocationInput {
   if (!parsed.success)
     throw fail(400, "بيانات الموقع غير صالحة. شارك موقعك من جديد أو اكتب العنوان يدويًا.", "LOCATION_INVALID");
   const value = parsed.data;
+  if (value.source === "MAP")
+    return {
+      source: "MAP",
+      latitude: Math.round(value.latitude * 1e6) / 1e6,
+      longitude: Math.round(value.longitude * 1e6) / 1e6,
+      ...(value.note ? { note: value.note } : {}),
+    };
   if (value.source === "DEVICE")
     return {
       source: "DEVICE",
@@ -308,7 +323,7 @@ export type LocationView = {
   id: string;
   purpose: LocationPurpose;
   purposeLabel: string;
-  source: "DEVICE" | "MANUAL";
+  source: "DEVICE" | "MANUAL" | "MAP";
   latitude: number | null;
   longitude: number | null;
   accuracyMeters: number | null;
@@ -328,7 +343,7 @@ function locationView(row: LocationRow, order: OrderRow): LocationView {
     id: row.id,
     purpose: row.purpose as LocationPurpose,
     purposeLabel: PURPOSE_LABELS[row.purpose as LocationPurpose],
-    source: row.source as "DEVICE" | "MANUAL",
+    source: row.source as "DEVICE" | "MANUAL" | "MAP",
     latitude: row.latitude,
     longitude: row.longitude,
     accuracyMeters: row.accuracyMeters,
@@ -559,6 +574,13 @@ export function purposeFor(order: OrderRow, role: DeliveryRole): LocationPurpose
 
 function sameLocation(row: LocationRow, location: LocationInput) {
   if (row.redactedAt) return false;
+  if (location.source === "MAP")
+    return (
+      row.source === "MAP" &&
+      row.latitude === location.latitude &&
+      row.longitude === location.longitude &&
+      row.note === (location.note ?? null)
+    );
   if (location.source === "DEVICE")
     return (
       row.source === "DEVICE" &&
@@ -614,8 +636,8 @@ export async function attachTransactionLocation(
   const now = new Date();
   const values = {
     source: location.source,
-    latitude: location.source === "DEVICE" ? location.latitude : null,
-    longitude: location.source === "DEVICE" ? location.longitude : null,
+    latitude: location.source === "MANUAL" ? null : location.latitude,
+    longitude: location.source === "MANUAL" ? null : location.longitude,
     accuracyMeters: location.source === "DEVICE" ? (location.accuracyMeters ?? null) : null,
     city: location.source === "MANUAL" ? (location.city ?? "") : "",
     area: location.source === "MANUAL" ? (location.area ?? "") : "",

@@ -119,6 +119,9 @@ import type {
   Dashboard,
   DelegatedBusinessCatalog,
   DeliveryInput,
+  DriverLocationSharing,
+  DriverLocationUpdateInput,
+  DriverLocationUpdateResult,
   EmptyInput,
   EmptyObject,
   GetAdminConnectDiagnosticsParams,
@@ -183,6 +186,7 @@ import type {
   SellerPromotion,
   SellerPromotionAction,
   ServerValidatedObject,
+  StartDriverLocationSharingInput,
   SubscriptionCheckoutRequest,
   SubscriptionPlansOverview,
   TutorialLearningEvent,
@@ -3043,6 +3047,359 @@ export function useGetOrderFulfillment<TData = Awaited<ReturnType<typeof getOrde
 
 
 
+
+export const getGetDriverLocationSharingUrl = (id: string,) => {
+
+
+
+
+  return `/api/courier/orders/${id}/location-sharing`
+}
+
+/**
+ * @summary The assigned driver's own location-sharing state for one order
+ */
+export const getDriverLocationSharing = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<DriverLocationSharing> => {
+
+  return customFetch<DriverLocationSharing>(getGetDriverLocationSharingUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetDriverLocationSharingQueryKey = (id: string,) => {
+    return [
+    `/api/courier/orders/${id}/location-sharing`
+    ] as const;
+    }
+
+
+export const getGetDriverLocationSharingQueryOptions = <TData = Awaited<ReturnType<typeof getDriverLocationSharing>>, TError = ErrorType<unknown>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDriverLocationSharing>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetDriverLocationSharingQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getDriverLocationSharing>>> = ({ signal }) => getDriverLocationSharing(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getDriverLocationSharing>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetDriverLocationSharingQueryResult = NonNullable<Awaited<ReturnType<typeof getDriverLocationSharing>>>
+export type GetDriverLocationSharingQueryError = ErrorType<unknown>
+
+
+export function useGetDriverLocationSharing<TData = Awaited<ReturnType<typeof getDriverLocationSharing>>, TError = ErrorType<unknown>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDriverLocationSharing>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getDriverLocationSharing>>,
+          TError,
+          Awaited<ReturnType<typeof getDriverLocationSharing>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetDriverLocationSharing<TData = Awaited<ReturnType<typeof getDriverLocationSharing>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDriverLocationSharing>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getDriverLocationSharing>>,
+          TError,
+          Awaited<ReturnType<typeof getDriverLocationSharing>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetDriverLocationSharing<TData = Awaited<ReturnType<typeof getDriverLocationSharing>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDriverLocationSharing>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary The assigned driver's own location-sharing state for one order
+ */
+
+export function useGetDriverLocationSharing<TData = Awaited<ReturnType<typeof getDriverLocationSharing>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDriverLocationSharing>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetDriverLocationSharingQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getStartDriverLocationSharingUrl = (id: string,) => {
+
+
+
+
+  return `/api/courier/orders/${id}/location-sharing/start`
+}
+
+/**
+ * @summary Start sharing the assigned driver's location for this delivery (explicit consent)
+ */
+export const startDriverLocationSharing = async (id: string,
+    startDriverLocationSharingInput: StartDriverLocationSharingInput, options?: Parameters<typeof customFetch>[1]): Promise<DriverLocationSharing> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<DriverLocationSharing>(getStartDriverLocationSharingUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(startDriverLocationSharingInput)
+  }
+);}
+
+
+
+
+
+export const getStartDriverLocationSharingMutationKey = () => ['startDriverLocationSharing'] as const;
+
+export const getStartDriverLocationSharingMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof startDriverLocationSharing>>, TError,StartDriverLocationSharingMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof startDriverLocationSharing>>, TError,StartDriverLocationSharingMutationVariables, TContext> => {
+
+const mutationKey = getStartDriverLocationSharingMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof startDriverLocationSharing>>, StartDriverLocationSharingMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  startDriverLocationSharing(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type StartDriverLocationSharingMutationResult = NonNullable<Awaited<ReturnType<typeof startDriverLocationSharing>>>
+    export type StartDriverLocationSharingMutationBody = BodyType<StartDriverLocationSharingInput>
+    export type StartDriverLocationSharingMutationError = ErrorType<unknown>
+    export type StartDriverLocationSharingMutationVariables = {id: string;data: BodyType<StartDriverLocationSharingInput>}
+
+    /**
+ * @summary Start sharing the assigned driver's location for this delivery (explicit consent)
+ */
+export const useStartDriverLocationSharing = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof startDriverLocationSharing>>, TError,StartDriverLocationSharingMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof startDriverLocationSharing>>,
+        TError,
+        StartDriverLocationSharingMutationVariables,
+        TContext
+      > => {
+      return useMutation(getStartDriverLocationSharingMutationOptions(options), queryClient);
+    }
+
+export const getUpdateDriverLocationUrl = (id: string,) => {
+
+
+
+
+  return `/api/courier/orders/${id}/location-sharing/location`
+}
+
+/**
+ * @summary Submit one validated position during an active sharing session
+ */
+export const updateDriverLocation = async (id: string,
+    driverLocationUpdateInput: DriverLocationUpdateInput, options?: Parameters<typeof customFetch>[1]): Promise<DriverLocationUpdateResult> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<DriverLocationUpdateResult>(getUpdateDriverLocationUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(driverLocationUpdateInput)
+  }
+);}
+
+
+
+
+
+export const getUpdateDriverLocationMutationKey = () => ['updateDriverLocation'] as const;
+
+export const getUpdateDriverLocationMutationOptions = <TError = ErrorType<DriverLocationUpdateResult>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateDriverLocation>>, TError,UpdateDriverLocationMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateDriverLocation>>, TError,UpdateDriverLocationMutationVariables, TContext> => {
+
+const mutationKey = getUpdateDriverLocationMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateDriverLocation>>, UpdateDriverLocationMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateDriverLocation(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateDriverLocationMutationResult = NonNullable<Awaited<ReturnType<typeof updateDriverLocation>>>
+    export type UpdateDriverLocationMutationBody = BodyType<DriverLocationUpdateInput>
+    export type UpdateDriverLocationMutationError = ErrorType<DriverLocationUpdateResult>
+    export type UpdateDriverLocationMutationVariables = {id: string;data: BodyType<DriverLocationUpdateInput>}
+
+    /**
+ * @summary Submit one validated position during an active sharing session
+ */
+export const useUpdateDriverLocation = <TError = ErrorType<DriverLocationUpdateResult>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateDriverLocation>>, TError,UpdateDriverLocationMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateDriverLocation>>,
+        TError,
+        UpdateDriverLocationMutationVariables,
+        TContext
+      > => {
+      return useMutation(getUpdateDriverLocationMutationOptions(options), queryClient);
+    }
+
+export const getStopDriverLocationSharingUrl = (id: string,) => {
+
+
+
+
+  return `/api/courier/orders/${id}/location-sharing/stop`
+}
+
+/**
+ * @summary Stop sharing; stored coordinates are cleared
+ */
+export const stopDriverLocationSharing = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<DriverLocationSharing> => {
+
+  return customFetch<DriverLocationSharing>(getStopDriverLocationSharingUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getStopDriverLocationSharingMutationKey = () => ['stopDriverLocationSharing'] as const;
+
+export const getStopDriverLocationSharingMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof stopDriverLocationSharing>>, TError,StopDriverLocationSharingMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof stopDriverLocationSharing>>, TError,StopDriverLocationSharingMutationVariables, TContext> => {
+
+const mutationKey = getStopDriverLocationSharingMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof stopDriverLocationSharing>>, StopDriverLocationSharingMutationVariables> = (props) => {
+          const {id} = props ?? {};
+
+          return  stopDriverLocationSharing(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type StopDriverLocationSharingMutationResult = NonNullable<Awaited<ReturnType<typeof stopDriverLocationSharing>>>
+
+    export type StopDriverLocationSharingMutationError = ErrorType<unknown>
+    export type StopDriverLocationSharingMutationVariables = {id: string}
+
+    /**
+ * @summary Stop sharing; stored coordinates are cleared
+ */
+export const useStopDriverLocationSharing = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof stopDriverLocationSharing>>, TError,StopDriverLocationSharingMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof stopDriverLocationSharing>>,
+        TError,
+        StopDriverLocationSharingMutationVariables,
+        TContext
+      > => {
+      return useMutation(getStopDriverLocationSharingMutationOptions(options), queryClient);
+    }
 
 export const getGetCourierFareUrl = (id: string,) => {
 

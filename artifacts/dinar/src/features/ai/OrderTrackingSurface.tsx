@@ -1,3 +1,5 @@
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import type { DinarMapMarker } from "../maps/DinarMap";
 import {
   getGetOrderTrackingQueryKey,
   useGetOrderTracking,
@@ -14,12 +16,32 @@ type OrderTrackingWithProgress = OrderTracking & {
   progress?: unknown;
 };
 
+const DinarMap = lazy(() => import("../maps/DinarMap"));
+const TRACKABLE_DELIVERY = new Set(["ACCEPTED", "READY_FOR_PICKUP", "PICKED_UP", "OUT_FOR_DELIVERY"]);
+
+function useNow(active: boolean) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (!active) return;
+    const timer = window.setInterval(() => setNow(Date.now()), 5_000);
+    return () => window.clearInterval(timer);
+  }, [active]);
+  return now;
+}
+
+function ageLabel(observedAt: string, now: number) {
+  const seconds = Math.max(0, Math.round((now - Date.parse(observedAt)) / 1000));
+  if (seconds < 60) return `قبل ${seconds} ثانية`;
+  const minutes = Math.round(seconds / 60);
+  return `قبل ${minutes} دقيقة`;
+}
+
 const UNAVAILABLE_COPY: Record<string, string> = {
   NOT_BUYER: "التتبع متاح للمشتري فقط.",
   NOT_COURIER: "هذا الطلب لا يستخدم توصيل المندوب.",
   NOT_ACTIVE: "التسليم ليس في حالة تسمح بالتتبع المباشر الآن.",
   NO_DRIVER: "لم يُسجّل مندوب توصيل معتمد لهذا الطلب بعد.",
-  NO_PROVIDER: "التتبع المباشر غير متاح؛ لم يُربط مزود تتبع بهذا الطلب.",
+  NO_PROVIDER: "لا يتوفر موقع مباشر للمندوب الآن: لم يبدأ مشاركة موقعه أو لا توجد قراءة حديثة. تُعرض حالة الطلب أدناه.",
 };
 
 const EVENT_LABELS: Record<string, string> = {
@@ -69,9 +91,9 @@ function getLiveTrackingMessage(tracking: OrderTracking["tracking"] | undefined)
     return "توقف التتبع المباشر بعد وصول الطلب إلى حالة نهائية.";
   }
   if (tracking.state === "STALE") {
-    return "بيانات الموقع قديمة وليست مباشرة. لا تتوفر خريطة أو تقديرات وصول حالية.";
+    return "آخر موقع معروف للمندوب قديم وليس مباشرًا؛ قد يكون الاتصال انقطع. لا يُعرض وقت وصول.";
   }
-  return "بيانات الموقع لا تُعرض في هذه المحادثة. لا تتوفر خريطة أو تقديرات وصول هنا.";
+  return "موقع المندوب مباشر من جهازه. لا يُعرض وقت وصول متوقع لأن خدمة المسارات غير مفعّلة.";
 }
 
 export default function OrderTrackingSurface({
@@ -84,12 +106,32 @@ export default function OrderTrackingSurface({
       queryKey: getGetOrderTrackingQueryKey(orderId),
       staleTime: 0,
       gcTime: 0,
-      refetchInterval: (query) =>
-        query.state.data?.tracking.state === "LIVE" ? 15_000 : false,
+      // Poll only while something can still change, and never in a hidden tab (React Query default).
+      refetchInterval: (query) => {
+        const value = query.state.data;
+        if (!value || value.tracking.state === "STOPPED") return false;
+        if (value.tracking.state === "LIVE" || value.tracking.state === "STALE") return 10_000;
+        return value.delivery && TRACKABLE_DELIVERY.has(value.delivery.status) && value.delivery.method === "COURIER" ? 20_000 : false;
+      },
     },
   });
 
   const data = tracking.data as OrderTrackingWithProgress | undefined;
+  const live = data?.tracking.state === "LIVE" || data?.tracking.state === "STALE" ? data.tracking : null;
+  const now = useNow(Boolean(live));
+  const markers = useMemo<DinarMapMarker[]>(() => {
+    const list: DinarMapMarker[] = [];
+    if (live)
+      list.push({
+        id: "driver",
+        kind: "driver",
+        point: { latitude: live.position.latitude, longitude: live.position.longitude },
+        label: live.state === "STALE" ? "آخر موقع معروف للمندوب" : "موقع المندوب الآن",
+        stale: live.state === "STALE",
+      });
+    if (data?.destination) list.push({ id: "destination", kind: "destination", point: data.destination, label: "نقطة التسليم" });
+    return list;
+  }, [live, data?.destination]);
   const progress = Array.isArray(data?.progress)
     ? data.progress.filter(isProgressEvent)
     : [];
@@ -103,7 +145,7 @@ export default function OrderTrackingSurface({
       aria-busy={tracking.isLoading || undefined}
     >
       <header className="min-w-0">
-        <h3 className="font-semibold text-foreground">تتبع الطلب</h3>
+        <h3 className="font-semibold text-foreground">متابعة التوصيل</h3>
         {data?.delivery ? (
           <p className="mt-1 text-sm text-muted-foreground" data-testid={`tracking-delivery-status-${orderId}`}>
             {data.delivery.methodLabel} · {data.delivery.statusLabel}
@@ -139,9 +181,24 @@ export default function OrderTrackingSurface({
         </div>
       ) : (
         <>
-          <p className="mt-3 rounded-lg bg-muted/60 px-3 py-2 text-sm text-muted-foreground" role="status" data-testid={`tracking-live-state-${orderId}`}>
+          <p className="mt-3 rounded-lg bg-muted/60 px-3 py-2 text-sm text-muted-foreground" role="status" data-testid={`tracking-live-state-${orderId}`} data-state={data?.tracking.state}>
             {getLiveTrackingMessage(data?.tracking)}
+            {live && (
+              <>
+                {" "}
+                <span className="text-foreground" data-testid={`tracking-last-update-${orderId}`}>
+                  آخر تحديث للموقع: <time dateTime={live.position.observedAt}>{ageLabel(live.position.observedAt, now)}</time>
+                </span>
+              </>
+            )}
           </p>
+          {markers.length > 0 && (
+            <div className="mt-3">
+              <Suspense fallback={<div className="skeleton h-[220px] w-full rounded-2xl" />}>
+                <DinarMap markers={markers} ariaLabel="خريطة متابعة التوصيل" testId={`tracking-map-${orderId}`} />
+              </Suspense>
+            </div>
+          )}
 
           <div className="mt-4" data-testid={`tracking-progress-${orderId}`}>
             <h4 className="text-sm font-semibold text-foreground">سجل تقدم الطلب</h4>

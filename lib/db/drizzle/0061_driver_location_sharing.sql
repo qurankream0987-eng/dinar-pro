@@ -32,3 +32,15 @@ CREATE TABLE "driver_location_shares" (
 CREATE UNIQUE INDEX "driver_location_shares_one_active_per_order" ON "driver_location_shares" ("order_id") WHERE "status" = 'ACTIVE';
 --> statement-breakpoint
 CREATE INDEX "driver_location_shares_driver_status_idx" ON "driver_location_shares" ("driver_id", "status");
+--> statement-breakpoint
+-- A delivery point the user chose or adjusted on a map is its own source (MAP): precise like a
+-- device reading but not claimed to come from the device, and it carries no accuracy figure.
+ALTER TABLE "transaction_locations" DROP CONSTRAINT "transaction_locations_source_valid";
+--> statement-breakpoint
+ALTER TABLE "transaction_locations" ADD CONSTRAINT "transaction_locations_source_valid" CHECK ("source" IN ('DEVICE', 'MANUAL', 'MAP'));
+--> statement-breakpoint
+ALTER TABLE "transaction_locations" DROP CONSTRAINT "transaction_locations_content_present";
+--> statement-breakpoint
+ALTER TABLE "transaction_locations" ADD CONSTRAINT "transaction_locations_content_present" CHECK ("redacted_at" IS NOT NULL OR ("source" IN ('DEVICE', 'MAP') AND "latitude" IS NOT NULL) OR ("source" = 'MANUAL' AND "address_text" IS NOT NULL));
+--> statement-breakpoint
+ALTER TABLE "transaction_locations" ADD CONSTRAINT "transaction_locations_map_has_no_accuracy" CHECK ("source" <> 'MAP' OR "accuracy_meters" IS NULL);

@@ -1972,6 +1972,7 @@ export type TransactionLocationInputSource = typeof TransactionLocationInputSour
 export const TransactionLocationInputSource = {
   DEVICE: 'DEVICE',
   MANUAL: 'MANUAL',
+  MAP: 'MAP',
 } as const;
 
 /**
@@ -3116,6 +3117,7 @@ export type TransactionLocationSource = typeof TransactionLocationSource[keyof t
 export const TransactionLocationSource = {
   DEVICE: 'DEVICE',
   MANUAL: 'MANUAL',
+  MAP: 'MAP',
 } as const;
 
 export type TransactionLocationSharedByRole = typeof TransactionLocationSharedByRole[keyof typeof TransactionLocationSharedByRole];
@@ -3576,6 +3578,23 @@ export type OrderTrackingDelivery = {
   updatedAt: string;
 } | null;
 
+/**
+ * The buyer's own pinned delivery point (device-shared coordinates only), returned to the buyer while the delivery is active; never to other parties.
+ * @nullable
+ */
+export type OrderTrackingDestination = {
+  /**
+     * @minimum -90
+     * @maximum 90
+     */
+  latitude: number;
+  /**
+     * @minimum -180
+     * @maximum 180
+     */
+  longitude: number;
+} | null;
+
 export type OrderTrackingUnavailableReason = typeof OrderTrackingUnavailableReason[keyof typeof OrderTrackingUnavailableReason];
 
 
@@ -3683,6 +3702,77 @@ export interface OrderTracking {
   delivery: OrderTrackingDelivery;
   tracking: OrderTrackingUnavailable | OrderTrackingStopped | OrderTrackingLive;
   progress: OrderProgressEvent[];
+  /**
+     * The buyer's own pinned delivery point (device-shared coordinates only), returned to the buyer while the delivery is active; never to other parties.
+     * @nullable
+     */
+  destination?: OrderTrackingDestination;
+}
+
+/**
+ * @nullable
+ */
+export type DriverLocationSharingEndReason = typeof DriverLocationSharingEndReason[keyof typeof DriverLocationSharingEndReason] | null;
+
+
+export const DriverLocationSharingEndReason = {
+  DRIVER_STOPPED: 'DRIVER_STOPPED',
+  DELIVERY_ENDED: 'DELIVERY_ENDED',
+  ASSIGNMENT_ENDED: 'ASSIGNMENT_ENDED',
+  EXPIRED: 'EXPIRED',
+} as const;
+
+export interface DriverLocationSharing {
+  active: boolean;
+  /** @nullable */
+  consentedAt: string | null;
+  /** @nullable */
+  lastObservedAt: string | null;
+  /** @minimum 0 */
+  sequence: number;
+  /** @nullable */
+  endReason: DriverLocationSharingEndReason;
+}
+
+export const StartDriverLocationSharingInputValue = {
+  consent: true,
+} as const;
+export type StartDriverLocationSharingInput = typeof StartDriverLocationSharingInputValue;
+
+export interface DriverLocationUpdateInput {
+  /**
+     * @minimum -90
+     * @maximum 90
+     */
+  latitude: number;
+  /**
+     * @minimum -180
+     * @maximum 180
+     */
+  longitude: number;
+  /**
+     * @minimum 0
+     * @maximum 100000
+     */
+  accuracyMeters: number;
+  observedAt: string;
+  /** @minimum 1 */
+  sequence: number;
+}
+
+export type DriverLocationUpdateResultReason = typeof DriverLocationUpdateResultReason[keyof typeof DriverLocationUpdateResultReason];
+
+
+export const DriverLocationUpdateResultReason = {
+  DUPLICATE_OR_OUT_OF_ORDER: 'DUPLICATE_OR_OUT_OF_ORDER',
+  TOO_FREQUENT: 'TOO_FREQUENT',
+} as const;
+
+export interface DriverLocationUpdateResult {
+  accepted: boolean;
+  sequence?: number;
+  reason?: DriverLocationUpdateResultReason;
+  retryAfterMs?: number;
 }
 
 export interface AiListingCartAction {
