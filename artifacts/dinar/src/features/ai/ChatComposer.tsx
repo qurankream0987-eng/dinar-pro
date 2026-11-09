@@ -272,13 +272,13 @@ export function ChatComposer({
       <div className="ai-composer-box" dir="ltr">
         <button
           type="button"
-          aria-label="إضافة صور للإعلان"
+          aria-label="إرفاق صور للمحادثة"
           aria-describedby="composer-hint"
           data-testid="button-ai-attachment-info"
           disabled={busy || offline}
           onClick={() => {
             if (!canUploadPhotos) {
-              setHint("سجّل الدخول لإضافة صور إلى مسودة الإعلان.");
+              setHint("سجّل الدخول لإرفاق صور في المحادثة.");
               return;
             }
             fileInput.current?.click();

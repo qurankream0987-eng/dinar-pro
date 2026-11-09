@@ -222,6 +222,7 @@ await test("seed: real conversations for every required screen", async () => {
 });
 
 await test("browser: screenshots and layout metrics at 8 widths, light and dark", { timeout: 1_800_000 }, async () => {
+  const beforeCommerce = { orders: (await db.select({ id: orders.id }).from(orders)).length, listings: (await db.select({ id: offers.id }).from(offers)).length };
   const web = await startBuiltWeb();
   const resultPath = `${S}/report.json`;
   await mkdir(`${S}/shots`, { recursive: true });
@@ -245,6 +246,9 @@ await test("browser: screenshots and layout metrics at 8 widths, light and dark"
     web.stop();
   }
   const report = JSON.parse(await readFile(resultPath, "utf8"));
+  const afterCommerce = { orders: (await db.select({ id: orders.id }).from(orders)).length, listings: (await db.select({ id: offers.id }).from(offers)).length };
+  assert.deepEqual(afterCommerce, beforeCommerce, "welcome actions must not create orders or published listings");
+  console.log("WELCOME_COMMERCE_COUNTS", JSON.stringify({ beforeCommerce, afterCommerce }));
   console.log("E_SUMMARY", JSON.stringify(report.summary));
   if (process.env.DINAR_E_UI_MODE === "capture") return;
   assert.deepEqual(report.summary.overflow, [], "no horizontal overflow at any width");

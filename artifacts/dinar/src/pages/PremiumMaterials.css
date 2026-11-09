@@ -118,3 +118,97 @@
 @media (prefers-reduced-motion: reduce) {
   .dinar-chatgpt .ai-result-card:hover img { transform: none; }
 }
+
+/* Welcome actions are entry points into the existing conversation, never checkout controls. */
+.premium-welcome { width: 100%; gap: 28px; }
+.premium-welcome .ai-welcome-copy { max-width: 850px; gap: 14px; }
+.premium-welcome .ai-welcome-copy p { max-width: 62ch; }
+.premium-hero { position: relative; width: min(100%, 460px); height: 170px; display: grid; place-items: center; isolation: isolate; }
+.premium-hero::before { content: ''; position: absolute; inset: 25% -10% -10%; background: radial-gradient(ellipse, rgb(var(--chat-blue) / .22), transparent 67%); z-index: -1; }
+.premium-brand-tile { display: grid; place-items: center; width: 126px; height: 126px; border-radius: 32px; background: var(--premium-material); border: 1px solid rgb(var(--chat-gold) / .65); box-shadow: inset 0 2px 3px #fff5, 0 0 26px rgb(var(--chat-gold) / .18), 0 16px 38px #0003; transform: rotate(-6deg); }
+.premium-orbit { position: absolute; width: 90%; height: 58%; border: 1px solid rgb(var(--chat-gold) / .45); border-radius: 50%; transform: rotate(-10deg); z-index: -1; }
+.premium-symbol { position: absolute; display: grid; place-items: center; width: 66px; height: 60px; border: 1px solid var(--premium-edge); border-radius: 18px; background: var(--premium-material); box-shadow: var(--premium-depth); color: var(--chat-gold-ink); z-index: -1; }
+.premium-symbol svg { width: 30px; height: 30px; }
+.premium-symbol.is-shop { top: 0; left: 45%; transform: translateY(-12px) rotate(-5deg); }
+.premium-symbol.is-cart { left: 12%; top: 45%; transform: rotate(8deg); }
+.premium-symbol.is-chart { right: 10%; top: 18%; transform: rotate(-10deg); }
+.premium-symbol.is-code { right: 17%; bottom: 0; color: var(--chat-ink-2); }
+.premium-primary-actions { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 18px; width: 100%; }
+.premium-action-card { display: flex; align-items: center; gap: 16px; text-align: start; min-width: 0; min-height: 156px; padding: 24px 20px; border-radius: 30px; border: 1px solid var(--premium-edge); color: var(--chat-ink); background: var(--premium-material); box-shadow: inset 0 2px 3px rgb(var(--chat-hi) / .18), 0 12px 30px rgb(var(--chat-shadow) / .2); }
+.premium-action-card[data-action="sell"] { border-color: rgb(var(--chat-gold) / .6); background: linear-gradient(135deg, rgb(var(--chat-gold) / .25), transparent 65%),var(--premium-material); }
+.premium-action-icon { display: grid; place-items: center; flex: none; width: 54px; height: 58px; border-radius: 18px; background: linear-gradient(140deg,rgb(var(--chat-blue) / .35),rgb(var(--chat-blue) / .08)); border: 1px solid var(--premium-edge); color: var(--chat-gold-ink); }
+.premium-action-icon svg { width: 30px; height: 30px; }
+.premium-action-copy { display: grid; gap: 10px; }
+.premium-action-copy strong { font-size: clamp(18px,1.65vw,25px); line-height: 1.5; }
+.premium-action-copy > span { color: var(--chat-ink-2); font-size: 13px; line-height: 1.8; }
+.premium-welcome .ai-starters { width: 100%; max-width: none; flex-wrap: wrap; justify-content: center; gap: 10px; margin: 0; padding: 4px; overflow: visible; mask-image: none; }
+.premium-welcome .ai-starter { min-height: 44px; padding-inline: 14px; }
+.dinar-chatgpt .ai-home-stack { width: min(100%,1100px); max-width: 1100px; }
+@media (hover:hover) { .premium-action-card:hover { border-color: rgb(var(--chat-blue) / .85); box-shadow: inset 0 2px 3px rgb(var(--chat-hi) / .25),0 12px 36px rgb(var(--chat-blue) / .16); } }
+@media (max-width:767px) {
+ .premium-welcome { gap: 18px; }
+ .premium-hero { height: 100px; width: 260px; }
+ .premium-brand-tile { width: 82px; height: 82px; border-radius: 24px; }
+ .premium-symbol { width: 42px; height: 40px; border-radius: 12px; }
+ .premium-symbol svg { width: 22px; height: 22px; }
+ .premium-primary-actions { grid-template-columns: 1fr; gap: 10px; }
+ .premium-action-card { min-height: 86px; padding: 12px 16px; border-radius: 22px; gap: 14px; }
+ .premium-action-icon { width: 44px; height: 46px; border-radius: 14px; }
+ .premium-action-copy { gap: 2px; }
+ .premium-action-copy strong { font-size: 18px; }
+ .premium-action-copy > span { font-size: 12px; }
+ .premium-welcome .ai-starters { gap: 7px; }
+ .premium-welcome .ai-starter { font-size: 12px; padding-inline: 10px; }
+ .dinar-chatgpt .ai-home-stack { padding-top: 18px; }
+}
+@media (max-height:560px) { .premium-hero { display:none; } .premium-primary-actions { gap:8px; } .premium-action-card { min-height:78px; padding:10px; } }
+@media (prefers-reduced-motion:reduce) { .premium-action-card { transform:none !important; } }
+@media (max-width:767px) {
+ .premium-welcome .ai-welcome-copy { gap: 8px; }
+ .premium-welcome .ai-welcome-copy p { font-size: 13px; line-height: 1.7; }
+ .premium-welcome h1 { font-size: 27px; }
+}
+
+@media (max-width:767px) {
+ .dinar-chatgpt .ai-home-stack { justify-content: flex-start; }
+ .premium-welcome { margin-block: 0; padding-block: 12px 16px; }
+ .ai-home-scroll { scroll-padding-block: 80px 150px; }
+}
+
+@media (max-height:560px) {
+ .dinar-chatgpt .ai-home-stack { justify-content:flex-start; }
+}
+@media (hover:hover) and (prefers-reduced-motion:no-preference) {
+ .premium-action-icon svg { transition: transform var(--premium-fast) var(--premium-ease); }
+ .premium-action-card:hover .premium-action-icon svg { transform:translateY(-2px); }
+}
+
+/* Scroll the welcome actions independently; the composer owns a stable final flex row. */
+@media (max-width:767px), (max-height:560px) {
+ .dinar-chatgpt .ai-home-scroll { display:flex; flex-direction:column; overflow:hidden; }
+ .dinar-chatgpt .ai-home-stack { display:contents; }
+ .premium-welcome { display:flex; flex-direction:column; align-items:center; flex:1 1 0; min-height:0; overflow-y:auto; overscroll-behavior:contain; margin:0; padding:22px 12px; scroll-padding-block:16px; }
+ .premium-welcome > * { flex-shrink:0; }
+ .dinar-chatgpt .ai-home-stack > .dinar-chat-dock { position:static; flex:none; padding:8px 12px; margin:0; }
+}
+.dinar-chatgpt[data-keyboard="open"] .premium-hero { display:none; }
+.dark .dinar-chatgpt .ai-home-content {
+ background-image: url('/brand/dinar-atmosphere.svg'),radial-gradient(ellipse at 50% 35%, #14346666, transparent 65%);
+ background-size:100% 100%; background-color:var(--chat-ground);
+}
+.dark .premium-action-card { background:linear-gradient(130deg,#234d7b99,#0c2344aa 65%,#48668a55); border-color:#80bbef66; }
+.dark .premium-action-card[data-action="sell"] { background:linear-gradient(130deg,#d0a54c66,#25344b88 60%,#6683a055); border-color:#f0ce7a99; }
+@media (max-width:1023px) {
+ .dinar-chatgpt .ai-layout,
+ .dinar-chatgpt .ai-layout[data-history-open="true"] { padding-block-start:calc(env(safe-area-inset-top, 0px) + 68px); }
+}
+.dark .dinar-chatgpt .ai-layout,
+.dark .dinar-chatgpt .ai-layout[data-history-open="true"] {
+ background-image:url('/brand/dinar-atmosphere.svg'),radial-gradient(ellipse at 50% 35%,#14346666,transparent 65%);
+ background-size:100% 100%; background-color:var(--chat-ground);
+}
+
+/* The phone material is opaque enough to simulate glass without a full-width blur pass. */
+@media (max-width:767px) { .dinar-chatgpt .ai-composer-box { backdrop-filter:none; } }
+
+.ai-context-drawer { background:linear-gradient(140deg,hsl(var(--primary) / .10),transparent 65%),hsl(var(--card)); color:hsl(var(--foreground)); border:1px solid hsl(var(--primary) / .3); box-shadow:0 24px 60px #0004,inset 0 1px 0 #ffffff20; }

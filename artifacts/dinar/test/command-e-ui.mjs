@@ -199,6 +199,11 @@ try {
     report.perf.firstAnswerVisibleMs = Date.now() - started;
     await context.close();
   }
+  const { verifyPremiumPresentation } = await import('./premium-presentation-ui.mjs');
+  const { verifyWelcomeActions } = await import('./welcome-actions-ui.mjs');
+  report.premium = await verifyPremiumPresentation({ browser, contextFor, openConversation, measure, out });
+  report.welcomeActions = await verifyWelcomeActions({ browser, contextFor, openConversation, measure, out });
+  failures.push(...report.premium.failures, ...report.welcomeActions.failures);
 } finally {
   await browser.close();
 }

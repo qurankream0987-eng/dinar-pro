@@ -2370,6 +2370,11 @@ export default function AiPage() {
                           : startConversation(value)
                       }
                       onCompose={composeStarter}
+                      busy={!online || streaming || createConversation.isPending}
+                      onImage={() => {
+                        composeStarter("ابحث عن منتج مشابه للصورة المرفقة: ");
+                        document.querySelector<HTMLButtonElement>('[data-testid="button-ai-attachment-info"]')?.click();
+                      }}
                     />
                     {composerRegion}
                   </div>
