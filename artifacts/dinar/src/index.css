@@ -667,3 +667,8 @@ body[data-private-session-check="true"] > #dinar-private-session-check { display
     scroll-behavior: auto !important;
   }
 }
+
+/* Canonical DINAR lockup, including non-chat entry surfaces. */
+.dinar-wordmark { font-family: system-ui, sans-serif; display: inline-block; white-space: nowrap; font-weight: 800; letter-spacing: .055em; color: hsl(var(--foreground)); }
+.dinar-wordmark > span { color: #90600d; }
+.dark .dinar-wordmark > span { color: #f3cb70; }

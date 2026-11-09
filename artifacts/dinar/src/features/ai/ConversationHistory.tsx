@@ -1,3 +1,5 @@
+import { LazyMotion, domAnimation, m, useReducedMotion } from "framer-motion";
+import { surfaceSpring } from "@/lib/presentation-motion";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import {
@@ -13,7 +15,7 @@ import {
   Trash2,
   type LucideIcon,
 } from "lucide-react";
-import { DinarMark } from "@/ui/DinarMark";
+import { DinarMark, DinarWordmark } from "@/ui/DinarMark";
 
 /**
  * Conversation starters are only a first message or a composer prefill. None of them sets a
@@ -186,10 +188,13 @@ export function Welcome({
   onStarter: (value: string) => void;
   onCompose: (prefill: string) => void;
 }) {
+  const reduceMotion = useReducedMotion();
   return (
-    <div className="ai-welcome">
+    <LazyMotion features={domAnimation} strict>
+    <m.div className="ai-welcome" initial={reduceMotion ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={reduceMotion ? { duration: 0 } : surfaceSpring}>
       <div className="ai-welcome-copy">
-        <DinarMark size={36} alt="DINAR" className="ai-welcome-logo" />
+        <DinarMark size={100} alt="" className="ai-welcome-logo" />
+        <DinarWordmark className="ai-welcome-brand" />
         <h1>كيف أساعدك اليوم؟</h1>
         <p>
           اسأل عن أي شيء — معرفة، كتابة، برمجة، تخطيط — أو بِع واشترِ وأدِر أعمالك في دينار.
@@ -210,6 +215,7 @@ export function Welcome({
           </button>
         ))}
       </div>
-    </div>
+    </m.div>
+    </LazyMotion>
   );
 }

@@ -1,44 +1,15 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" preserveAspectRatio="xMidYMid meet" fill="none">
-  <defs>
-    <linearGradient id="dinar-mark-blue-gradient-2026" x1="100" y1="85" x2="407" y2="420" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#1674C4"/>
-      <stop offset=".42" stop-color="#07559A"/>
-      <stop offset="1" stop-color="#031B35"/>
-    </linearGradient>
-    <linearGradient id="dinar-mark-gold-gradient-2026" x1="92" y1="87" x2="420" y2="424" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#FFE09A"/>
-      <stop offset=".38" stop-color="#F2C45E"/>
-      <stop offset=".72" stop-color="#D79B32"/>
-      <stop offset="1" stop-color="#8F5A13"/>
-    </linearGradient>
-    <clipPath id="dinar-mark-northwest-weave-2026">
-      <path d="M0 0h256v256H0z"/>
-    </clipPath>
-  </defs>
-
-  <!-- Four angular ribbon turns form one woven mark around an untouched center. -->
-  <g stroke-linejoin="round">
-    <path
-      d="M78 213 198 93c32-32 84-32 116 0l120 120c7 7 7 19 0 26l-21 21L256 108 99 260l-21-21c-7-7-7-19 0-26Z"
-      fill="url(#dinar-mark-gold-gradient-2026)"
-    />
-    <path
-      d="m299 78 120 120c32 32 32 84 0 116L299 434c-7 7-19 7-26 0l-21-21 156-157L256 99l21-21c7-7 19-7 26 0Z"
-      fill="url(#dinar-mark-blue-gradient-2026)"
-    />
-    <path
-      d="m434 299-120 120c-32 32-84 32-116 0L78 299c-7-7-7-19 0-26l21-21 157 156 157-156 21 21c7 7 7 19 0 26Z"
-      fill="url(#dinar-mark-gold-gradient-2026)"
-    />
-    <path
-      d="M213 434 93 314c-32-32-32-84 0-116L213 78c7-7 19-7 26 0l21 21-156 157 156 157-21 21c-7 7-19 7-26 0Z"
-      fill="url(#dinar-mark-blue-gradient-2026)"
-    />
-    <!-- This alternating overpass completes the four-way weave. -->
-    <path
-      d="M78 213 198 93c32-32 84-32 116 0l120 120c7 7 7 19 0 26l-21 21L256 108 99 260l-21-21c-7-7-7-19 0-26Z"
-      fill="url(#dinar-mark-gold-gradient-2026)"
-      clip-path="url(#dinar-mark-northwest-weave-2026)"
-    />
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+ <defs>
+  <linearGradient id="blue" x1="18" y1="15" x2="104" y2="116" gradientUnits="userSpaceOnUse"><stop stop-color="#9cecff"/><stop offset=".22" stop-color="#258dcc"/><stop offset=".55" stop-color="#103e68"/><stop offset="1" stop-color="#06182e"/></linearGradient>
+  <linearGradient id="gold" x1="30" y1="8" x2="113" y2="116" gradientUnits="userSpaceOnUse"><stop stop-color="#fff5ce"/><stop offset=".3" stop-color="#f3ce72"/><stop offset=".68" stop-color="#d69a30"/><stop offset=".88" stop-color="#ffe9a5"/><stop offset="1" stop-color="#b57419"/></linearGradient>
+  <linearGradient id="bubble" x1="40" y1="40" x2="88" y2="80" gradientUnits="userSpaceOnUse"><stop stop-color="#8ee9ff"/><stop offset=".3" stop-color="#297db8"/><stop offset="1" stop-color="#071d36"/></linearGradient>
+ </defs>
+ <path d="M23 13H60C92 13 113 35 113 64S91 115 60 115H23C16 115 12 110 12 103V25C12 18 16 13 23 13Z" fill="url(#blue)" stroke="#6dc3ed" stroke-width="1.2"/>
+ <path d="M35 13H62C96 13 116 35 116 64S95 115 62 115H27L46 102H61C86 102 100 86 100 64S85 25 60 25Z" fill="url(#gold)"/>
+ <path d="M14 47L28 33H48M14 34L24 24H36" stroke="#88dcff" stroke-width="2.5" stroke-linecap="round"/>
+ <circle cx="49" cy="33" r="3.5" fill="#a1eeff"/><circle cx="37" cy="24" r="3" fill="#a1eeff"/>
+ <path d="M45 41H76C86 41 91 47 91 57V63C91 72 85 77 76 77H54L40 88V55C40 46 42 41 45 41Z" fill="url(#bubble)" stroke="#8cdfff" stroke-width="1.2"/>
+ <g fill="#a6edff"><circle cx="53" cy="58" r="3.5"/><circle cx="66" cy="58" r="3.5"/><circle cx="79" cy="58" r="3.5"/></g>
+ <path d="M53 84H58L63 96H80L85 87H61" stroke="url(#gold)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="65" cy="104" r="3.5" fill="#efc766"/><circle cx="79" cy="104" r="3.5" fill="#efc766"/>
+ <path d="M108 1C108 10 105 13 98 15C105 17 108 21 108 29C110 21 113 17 121 15C113 13 110 10 108 1Z" fill="url(#gold)"/>
 </svg>

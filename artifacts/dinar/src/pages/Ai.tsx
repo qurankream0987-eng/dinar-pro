@@ -1,4 +1,5 @@
 import "./AiChat.css";
+import "./PremiumMaterials.css";
 import { useStableCallback } from "@/hooks/use-stable-callback";
 import { replyForTurn, unfinishedTurn, verificationPollInterval } from "@/features/ai/turn-recovery";
 import * as Dialog from "@radix-ui/react-dialog";
@@ -70,7 +71,7 @@ import { ErrorState, Skeleton } from "@/ui/Feedback";
 import { ConfirmDialog } from "@/ui/Sheet";
 import { MarketChip } from "@/features/MarketSelector";
 import { Avatar, SmartImage } from "@/ui/Media";
-import { DinarMark } from "@/ui/DinarMark";
+import { DinarMark, DinarWordmark } from "@/ui/DinarMark";
 import {
   Tooltip,
   TooltipContent,
@@ -2120,7 +2121,7 @@ export default function AiPage() {
               <span className="ai-sidebar-mark" aria-hidden="true">
                 <DinarMark size={26} />
               </span>
-              <span className="ai-sidebar-wordmark">DINAR</span>
+              <DinarWordmark className="ai-sidebar-wordmark" />
               <button
                 type="button"
                 className="ai-sidebar-collapse is-wide-only"
