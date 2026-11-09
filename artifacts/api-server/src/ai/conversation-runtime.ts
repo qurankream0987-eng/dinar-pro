@@ -1,6 +1,7 @@
 import { executeConnectReadTurn } from "../connect/conversation";
 import type { DomainSearchProvider } from "../connect/domains";
 import {
+  hasResumableListingDraft,
   hasActiveListingDraft,
   hasPendingListingPhotoSuggestions,
   isListingPhotoSuggestionCommand,
@@ -101,6 +102,7 @@ import {
 import type { ListingPhotoSuggestionProvider } from "./listing-photo-intelligence";
 import { personalContext } from "./personal-context-service";
 import { executePersonalMemoryTurn, memoryAcknowledgement } from "./personal-memory-turn";
+import { draftFieldEdit } from "./draft-field-edit";
 import { modelGatewayFor } from "./model-turn";
 import { resolveConversationRoute } from "./conversation-router";
 import { isDraftResumeRequest } from "./draft-actions";
@@ -1290,6 +1292,18 @@ async function executeRuntime(context: RuntimeContext, incoming: RuntimeOptions)
       options.photoSuggestionProvider,
       context.actorId,
     );
+    if (result) return { tool: "openSurface", version: 1, result };
+  }
+  // An explicit edit of a draft field («الكمية 2», «غيّر العنوان إلى …», «احذف … من الوصف») belongs
+  // to the seller's draft in progress before memory, search, cart or order handlers read the words.
+  if (
+    context.actorId &&
+    !context.imageObjectPaths?.length &&
+    context.location === undefined &&
+    draftFieldEdit(context.message) &&
+    (await hasResumableListingDraft(context.conversationId))
+  ) {
+    const result = await listingDraft(context.conversationId, context.message, "SELL", [], options.photoSuggestionProvider, context.actorId);
     if (result) return { tool: "openSurface", version: 1, result };
   }
   const addToCart = addToCartIntent(context.message);

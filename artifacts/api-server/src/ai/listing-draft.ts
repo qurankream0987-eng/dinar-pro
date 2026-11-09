@@ -28,6 +28,8 @@ import {
 import { priceProposal } from "./price-proposal";
 import { priceEdit } from "./context-intent";
 
+import { applyDraftFieldEdit, draftFieldEdit, statedQuantity } from "./draft-field-edit";
+
 export const ConversationDraft = z.object({
   draftId: z.string().uuid().optional(),
   category: z.string().max(100).optional(),
@@ -791,8 +793,9 @@ function consumeDraftAnswer(
       delete draft.availableQuantity;
       return true;
     }
-    if (/^\d+$/.test(normalized)) {
-      const quantity = Number(normalized);
+    const stated = /^\d+$/.test(normalized) ? Number(normalized) : statedQuantity(text);
+    if (stated !== undefined) {
+      const quantity = stated;
       if (
         inventory?.allowedModes.includes("LIMITED") &&
         Number.isSafeInteger(quantity) &&
@@ -1758,10 +1761,13 @@ export async function listingDraft(
     .orderBy(desc(aiUiBlocks.createdAt))
     .limit(1);
   // A published draft or a draft-choice list (Block F5) is not a draft in progress.
-  const previous =
+  const latestDraft =
     latest?.payload.surface === "SELL" && !["published", "choose_draft"].includes(String(latest.payload.draftStep ?? ""))
       ? latest.payload
       : undefined;
+  // An explicit field edit also reaches a draft that is not the last reply (another answer came in
+  // between); bare answers keep the strict rule so they never hijack another conversation.
+  const previous = latestDraft ?? (draftFieldEdit(message) && !imageObjectPaths.length ? await resumableDraftPayload(conversationId) : undefined);
   const previousPhotoCandidates = previousSuggestions(previous);
   const priorPhotoUncertainties = previousPhotoUncertainties(previous);
   const photoAction = photoSuggestionCommand(originalMessage);
@@ -1854,7 +1860,7 @@ export async function listingDraft(
   // «أعرض 15» / «بعرض 15 بدل 20» name an amount and no item: in a draft, its asking price.
   const proposedPrice = priceProposal(message)?.amount;
   // «عدّل السعر», «خليه 15», «بدي أنزلها من 20 إلى 15», «خلّي البداية من 30»: the draft's price (R3E).
-  const draftEdit = previous?.draft && !imageObjectPaths.length ? priceEdit(message) : undefined;
+  const draftEdit = previous?.draft && !imageObjectPaths.length && !draftFieldEdit(message) ? priceEdit(message) : undefined;
   if (
     !imageObjectPaths.length &&
     surface !== "SELL" &&
@@ -1868,6 +1874,7 @@ export async function listingDraft(
   let draft = ConversationDraft.parse(previous?.draft ?? {});
   let step =
     typeof previous?.draftStep === "string" ? previous.draftStep : "title";
+  let editAck: string | undefined;
   // A change with no amount is asked about, never taken as the answer to the current step.
   if (draftEdit && draftEdit.amount === undefined) {
     const { resultSetId: _resultSetId, ...kept } = (previous ?? {}) as Record<string, unknown>;
@@ -1884,7 +1891,8 @@ export async function listingDraft(
   }
   // "اعرض هذا بـ10" / "بيعه بـ10" names no new item: it edits the draft in progress;
   // so does «خلنا نحطه 500» (G2).
-  const deicticPrice = previous?.draft && !imageObjectPaths.length
+  const explicitEdit = previous?.draft && !imageObjectPaths.length ? draftFieldEdit(message) : undefined;
+  const deicticPrice = previous?.draft && !imageObjectPaths.length && !explicitEdit
     ? (draftEdit?.amount !== undefined ? { value: draftEdit.amount } : undefined) ?? (!cleanTitle(message) ? extractInitialUnitPrice(message) : undefined) ?? draftPricePhrase(message) ?? (proposedPrice !== undefined ? { value: proposedPrice } : undefined)
     : undefined;
   const startsAnotherSale =
@@ -1913,9 +1921,16 @@ export async function listingDraft(
       if (draftEdit?.startingFrom) setPriceRepresentation(draft, "STARTING_FROM");
     }
     updateDraftImages(draft, text, imageObjectPaths);
+    // An explicit field edit («الكمية 2», «غيّر العنوان إلى …», «احذف … من الوصف») applies to its
+    // own field whatever is being asked now; the current question is not consumed by it.
+    const fieldEdit = explicitEdit;
+    if (fieldEdit) {
+      const outcome = applyDraftFieldEdit(draft, fieldEdit, categoryForDraft(draft, configured)?.rules.inventory);
+      editAck = outcome.ok ? outcome.ack : outcome.reason;
+    }
     const accountPhoneIntent =
       step === "contact" && hasPersonalNumberIntent(text);
-    const categorySelection = accountPhoneIntent
+    const categorySelection = accountPhoneIntent || fieldEdit
       ? undefined
       : explicitConfiguredCategory(text, configured);
     const categoryChanges =
@@ -1923,6 +1938,7 @@ export async function listingDraft(
       categorySelection.id !== categoryForDraft(draft, configured)?.id;
     const activeSchema = categoryForDraft(draft, configured);
     const correction =
+      !fieldEdit &&
       !categoryChanges &&
       (isLabelledFieldCorrection(text, activeSchema) ||
         isNaturalAttributeCorrection(text, activeSchema))
@@ -1933,13 +1949,14 @@ export async function listingDraft(
       !categoryChanges &&
       !correction?.changed &&
       accountPhoneIntent;
-    const factCorrected = !categoryChanges && !correction?.changed && correctDescribedFact(draft, text);
-    const stepAnswerConsumed = categoryChanges || correction?.changed || factCorrected
+    const factCorrected = !fieldEdit && !categoryChanges && !correction?.changed && correctDescribedFact(draft, text);
+    const stepAnswerConsumed = fieldEdit || categoryChanges || correction?.changed || factCorrected
       ? false
       : accountPhoneClarification
         ? true
         : consumeDraftAnswer(draft, step, text, configured);
     if (
+      !fieldEdit &&
       (!stepAnswerConsumed || step === "title" || step === "description") &&
       !correction?.changed &&
       !factCorrected
@@ -2080,6 +2097,7 @@ export async function listingDraft(
       ? { photoSuggestionUncertainties: activePhotoUncertainties }
       : {}),
     prompt: [
+      editAck,
       step === "category"
         ? categoryPrompt
         : promptForDraftStep(step, draft, configured),
@@ -2109,6 +2127,23 @@ async function reserveImageUnderstanding(conversationId: string, actorId: string
 }
 
 /** Keeps an open seller draft from being replaced by a conversational side question. */
+/** The newest SELL draft still in progress among recent replies, for explicit field edits only. */
+export async function resumableDraftPayload(conversationId: string): Promise<Record<string, any> | undefined> {
+  const recent = await db
+    .select()
+    .from(aiUiBlocks)
+    .where(eq(aiUiBlocks.conversationId, conversationId))
+    .orderBy(desc(aiUiBlocks.createdAt))
+    .limit(25);
+  const sell = recent.find((block) => block.payload.surface === "SELL");
+  if (!sell?.payload.draft) return undefined;
+  return ["published", "choose_draft", "cancelled"].includes(String(sell.payload.draftStep ?? "")) ? undefined : sell.payload;
+}
+
+export async function hasResumableListingDraft(conversationId: string): Promise<boolean> {
+  return Boolean(await resumableDraftPayload(conversationId));
+}
+
 export async function hasActiveListingDraft(conversationId: string): Promise<boolean> {
   const [latest] = await db
     .select()

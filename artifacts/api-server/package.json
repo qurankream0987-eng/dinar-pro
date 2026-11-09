@@ -80,7 +80,8 @@
     "test:d16-readiness": "NODE_ENV=development BDINAR_D16_ACCEPTANCE=development BDINAR_DISPOSABLE_ACCEPTANCE_DB=1 BDINAR_DISPOSABLE_TEST_DATABASE=1 node test/run.mjs d16-readiness.test",
     "test:legal-market": "sh test/isolation/legal-market-suite.sh",
     "test:google-signin": "NODE_ENV=development BDINAR_TEST_DATABASE=development node test/run.mjs google-signin.test",
-    "test:order-settlement": "NODE_ENV=development BDINAR_TEST_DATABASE=development node test/run.mjs order-settlement.test"
+    "test:order-settlement": "NODE_ENV=development BDINAR_TEST_DATABASE=development node test/run.mjs order-settlement.test",
+    "test:draft-conversational-edits": "NODE_ENV=development BDINAR_TEST_DATABASE=development node test/run.mjs draft-conversational-edits.test"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1155.0",
