@@ -49,6 +49,10 @@ await test("parser: explicit field edits only", () => {
   assert.deepEqual(draftFieldEdit("أضف للوصف أن البطارية 89٪"), { field: "descriptionAppend", value: "البطارية 89٪" });
   assert.deepEqual(draftFieldEdit("احذف كلمة نظيف من الوصف"), { field: "descriptionRemove", value: "نظيف" });
   assert.deepEqual(draftFieldEdit("الوصف: جهاز بحالة ممتازة مع الكرتونة"), { field: "descriptionReplace", value: "جهاز بحالة ممتازة مع الكرتونة" });
+  assert.deepEqual(draftFieldEdit("غيّر الوصف إلى جهاز نظيف جدًا مع الشاحن الأصلي"), { field: "descriptionReplace", value: "جهاز نظيف جدا مع الشاحن الأصلي" });
+  // An improvement request is never taken as replacement text (found by the live DeepSeek probe).
+  assert.equal(draftFieldEdit("خلي الوصف أحلى وأوضح للمشتري"), undefined);
+  assert.equal(draftFieldEdit("غير الوصف أفضل"), undefined);
   for (const other of ["ابحث عن ايفون", "كم سعر الايفون؟", "احذف اهتمام الساعات", "300", "مرحبا"]) assert.equal(draftFieldEdit(other), undefined, other);
   assert.equal(statedQuantity("عندي حبتين"), 2);
 });

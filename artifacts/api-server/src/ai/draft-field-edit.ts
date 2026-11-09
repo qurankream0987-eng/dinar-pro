@@ -65,8 +65,10 @@ export function draftFieldEdit(message: string): DraftFieldEdit | undefined {
     return { field: "descriptionAppend", value: m[1]!.trim() };
   if ((m = text.match(/^(?:احذف|شيل|امسح|اشطب)\s+(?:كلمة|كلمه|عبارة|عباره|جملة|جمله)?\s*[«"']?(.{1,120}?)[»"']?\s+من\s+الوصف$/u)))
     return { field: "descriptionRemove", value: m[1]!.trim() };
-  if ((m = text.match(new RegExp(`^(?:(?:${VERB_CHANGE})\\s+الوصف\\s*${TO}|الوصف\\s*(?:الجديد)?\\s*:)\\s*(.{10,5000})$`, "u"))))
-    return { field: "descriptionReplace", value: m[1]!.trim() };
+  // «غيّر الوصف إلى …» / «الوصف: …» replace it; «خلي الوصف أحلى» asks for an improvement, not new text.
+  if ((m = text.match(new RegExp(`^(?:(?:${VERB_CHANGE})\\s+الوصف\\s*(?:الى|إلى|:)|الوصف\\s*(?:الجديد)?\\s*:)\\s*(.{10,5000})$`, "u"))))
+    if (!/^(?:احلى|أحلى|اوضح|أوضح|افضل|أفضل|اجمل|أجمل|اقصر|أقصر|اطول|أطول)(?:\s|$)/u.test(m[1]!.trim()))
+      return { field: "descriptionReplace", value: m[1]!.trim() };
   return undefined;
 }
 
