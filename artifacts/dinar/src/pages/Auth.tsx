@@ -17,6 +17,7 @@ import { BrandMark, Flag } from "@/ui/Media";
 import { PhoneInput } from "@/ui/PhoneInput";
 
 import { CountrySelector } from "@/ui/CountrySelector";
+import { GoogleSignIn, googleSignInConfigured } from "./GoogleSignIn";
 /** Only allow same-app relative redirects. */
 const safeNext = (value: string | null) => {
   if (!value?.startsWith("/") || value.startsWith("//")) return "/";
@@ -276,6 +277,18 @@ export function AuthPage({ register = false, next, embedded = false }: { registe
           </p>
         </div>
 
+        {googleSignInConfigured && (
+          <div className="mb-5 grid gap-3">
+            <GoogleSignIn
+              onSignedIn={async () => {
+                await refresh();
+                if (!embedded) navigate(target, { replace: true });
+                toast.success("أهلًا بك في DINAR AI");
+              }}
+            />
+            <p className="text-center text-xs text-muted-foreground">أو تابع برقم الهاتف</p>
+          </div>
+        )}
         <form noValidate onSubmit={submit} className="grid gap-4">
           {register && (
             <>

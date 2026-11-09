@@ -99,6 +99,23 @@ paths:
           description: Too many registration attempts
         "503":
           description: No eligible account market is available
+  /auth/google:
+    post:
+      operationId: signInWithGoogle
+      tags: [auth]
+      summary: Verify a Google ID token; signs in a linked account or starts phone verification
+      requestBody: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/GoogleSignInInput" } } } }
+      responses:
+        "200": { description: "Signed in, or phone verification required", content: { application/json: { schema: { $ref: "#/components/schemas/GoogleSignInResult" } } } }
+  /auth/google/complete:
+    post:
+      operationId: completeGoogleSignIn
+      tags: [auth]
+      summary: Link or create the account after SMS phone verification
+      requestBody: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/GoogleCompleteInput" } } } }
+      responses:
+        "200": { description: "Linked to the existing account of this phone", content: { application/json: { schema: { $ref: "#/components/schemas/GoogleSignInResult" } } } }
+        "201": { description: "Account created", content: { application/json: { schema: { $ref: "#/components/schemas/GoogleSignInResult" } } } }
   /auth/login:
     post:
       operationId: loginAccount
@@ -4927,6 +4944,31 @@ components:
         continuationStatus:
           type: string
           enum: [NOT_STARTED, PENDING, FAILED, COMPLETED, UNCERTAIN]
+    GoogleSignInInput:
+      type: object
+      additionalProperties: false
+      required: [idToken]
+      properties:
+        idToken: { type: string, minLength: 20, maxLength: 4096 }
+    GoogleCompleteInput:
+      type: object
+      additionalProperties: false
+      required: [phoneCountryCode, phoneNumber, accountCountry, acceptTerms, verificationToken]
+      properties:
+        displayName: { type: string, minLength: 2, maxLength: 80 }
+        phoneCountryCode: { type: string, maxLength: 5 }
+        phoneNumber: { type: string, maxLength: 32 }
+        accountCountry: { type: string, maxLength: 3 }
+        acceptTerms: { type: boolean, const: true }
+        verificationToken: { type: string, pattern: "^[0-9a-f]{64}$" }
+    GoogleSignInResult:
+      type: object
+      required: [status]
+      properties:
+        status: { type: string, enum: [SIGNED_IN, PHONE_VERIFICATION_REQUIRED, CREATED, LINKED] }
+        email: { type: string }
+        name: { type: string, nullable: true }
+        user: { type: object, additionalProperties: true }
     TransactionLocationInput:
       type: object
       description: >

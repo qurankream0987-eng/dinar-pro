@@ -131,6 +131,9 @@ import type {
   GetListingsParams,
   GetOrdersParams,
   GetSubscriptionPlanEconomicsParams,
+  GoogleCompleteInput,
+  GoogleSignInInput,
+  GoogleSignInResult,
   HealthStatus,
   LegalReadinessMarket,
   ListAdminSecurityIncidentsParams,
@@ -483,6 +486,182 @@ export const useRegisterAccount = <TError = ErrorType<void>,
         TContext
       > => {
       return useMutation(getRegisterAccountMutationOptions(options), queryClient);
+    }
+
+export const getSignInWithGoogleUrl = () => {
+
+
+
+
+  return `/api/auth/google`
+}
+
+/**
+ * @summary Verify a Google ID token; signs in a linked account or starts phone verification
+ */
+export const signInWithGoogle = async (googleSignInInput: GoogleSignInInput, options?: Parameters<typeof customFetch>[1]): Promise<GoogleSignInResult> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<GoogleSignInResult>(getSignInWithGoogleUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(googleSignInInput)
+  }
+);}
+
+
+
+
+
+export const getSignInWithGoogleMutationKey = () => ['signInWithGoogle'] as const;
+
+export const getSignInWithGoogleMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof signInWithGoogle>>, TError,SignInWithGoogleMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof signInWithGoogle>>, TError,SignInWithGoogleMutationVariables, TContext> => {
+
+const mutationKey = getSignInWithGoogleMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof signInWithGoogle>>, SignInWithGoogleMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  signInWithGoogle(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SignInWithGoogleMutationResult = NonNullable<Awaited<ReturnType<typeof signInWithGoogle>>>
+    export type SignInWithGoogleMutationBody = BodyType<GoogleSignInInput>
+    export type SignInWithGoogleMutationError = ErrorType<unknown>
+    export type SignInWithGoogleMutationVariables = {data: BodyType<GoogleSignInInput>}
+
+    /**
+ * @summary Verify a Google ID token; signs in a linked account or starts phone verification
+ */
+export const useSignInWithGoogle = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof signInWithGoogle>>, TError,SignInWithGoogleMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof signInWithGoogle>>,
+        TError,
+        SignInWithGoogleMutationVariables,
+        TContext
+      > => {
+      return useMutation(getSignInWithGoogleMutationOptions(options), queryClient);
+    }
+
+export const getCompleteGoogleSignInUrl = () => {
+
+
+
+
+  return `/api/auth/google/complete`
+}
+
+/**
+ * @summary Link or create the account after SMS phone verification
+ */
+export const completeGoogleSignIn = async (googleCompleteInput: GoogleCompleteInput, options?: Parameters<typeof customFetch>[1]): Promise<GoogleSignInResult> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<GoogleSignInResult>(getCompleteGoogleSignInUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(googleCompleteInput)
+  }
+);}
+
+
+
+
+
+export const getCompleteGoogleSignInMutationKey = () => ['completeGoogleSignIn'] as const;
+
+export const getCompleteGoogleSignInMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof completeGoogleSignIn>>, TError,CompleteGoogleSignInMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof completeGoogleSignIn>>, TError,CompleteGoogleSignInMutationVariables, TContext> => {
+
+const mutationKey = getCompleteGoogleSignInMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof completeGoogleSignIn>>, CompleteGoogleSignInMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  completeGoogleSignIn(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CompleteGoogleSignInMutationResult = NonNullable<Awaited<ReturnType<typeof completeGoogleSignIn>>>
+    export type CompleteGoogleSignInMutationBody = BodyType<GoogleCompleteInput>
+    export type CompleteGoogleSignInMutationError = ErrorType<unknown>
+    export type CompleteGoogleSignInMutationVariables = {data: BodyType<GoogleCompleteInput>}
+
+    /**
+ * @summary Link or create the account after SMS phone verification
+ */
+export const useCompleteGoogleSignIn = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof completeGoogleSignIn>>, TError,CompleteGoogleSignInMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof completeGoogleSignIn>>,
+        TError,
+        CompleteGoogleSignInMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCompleteGoogleSignInMutationOptions(options), queryClient);
     }
 
 export const getLoginAccountUrl = () => {

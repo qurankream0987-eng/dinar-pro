@@ -9,6 +9,7 @@ import {
 import { Router, type RequestHandler } from "express";
 import {
   db,
+  accountIdentities,
   users,
   sessions,
   markets,
@@ -28,6 +29,16 @@ import { canHoldSession, SESSION_STATUSES } from "./account-status";
 import { signupConsentRows } from "./policy-lifecycle";
 import { and, eq, gt, inArray, isNotNull, isNull, lte } from "drizzle-orm";
 import { parsePhoneNumberFromString } from "libphonenumber-js/max";
+import { z } from "zod";
+import {
+  GOOGLE_PENDING_COOKIE,
+  GOOGLE_PROVIDER,
+  PENDING_TICKET_TTL_MS,
+  googleClientId,
+  issuePendingTicket,
+  readPendingTicket,
+  verifyGoogleIdToken,
+} from "./google-identity";
 import { countries, countryByCode } from "@workspace/global";
 import {
   allMarkets,
@@ -401,6 +412,61 @@ router.post(
   },
 );
 
+/** The market a new account starts in (shared by password and Google sign-up). */
+async function resolveSignupMarket(accountCountry: unknown): Promise<{ country: { countryCode: string }; activeMarketId: string } | { status: number; error: string }> {
+  const country = typeof accountCountry === "string" ? countryByCode.get(accountCountry) : undefined;
+  if (!country?.isSelectable) return { status: 400, error: "الدولة غير متاحة للتسجيل" };
+  const [market] = await db
+    .select()
+    .from(markets)
+    .where(
+      and(
+        eq(markets.countryCode, country.countryCode),
+      ),
+    );
+  const [fallback] = await db.select().from(markets).where(eq(markets.id, DEFAULT_MARKET));
+  let activeMarketId = market?.id;
+  if (market) {
+    const selectedMarket = await resolveMarket(market);
+    if (!isMarketAvailable(selectedMarket) && fallback) {
+      const fallbackMarket = await resolveMarket(fallback);
+      if (isMarketAvailable(fallbackMarket)) activeMarketId = fallback.id;
+    }
+  } else if (fallback) {
+    // Market launch must not gate account creation. If the requested country
+    // has no row yet, attach the account to the configured default market even
+    // while it is still preparing; transactional routes remain market-gated.
+    activeMarketId = fallback.id;
+  }
+  if (!activeMarketId) return { status: 503, error: "لا يوجد سوق افتراضي متاح حاليًا للتسجيل" };
+  return { country, activeMarketId };
+}
+
+/** Consumes one verified, unexpired phone challenge for exactly this phone; false if none. */
+async function consumePhoneVerification(tx: any, verificationToken: string, normalizedPhone: string, now: Date) {
+  const tokenHash = phoneVerificationDigest("registration-token", verificationToken);
+  const phoneHash = phoneVerificationDigest("phone", normalizedPhone);
+  const [challenge] = await tx
+    .select()
+    .from(phoneVerificationChallenges)
+    .where(
+      and(
+        eq(phoneVerificationChallenges.registrationTokenHash, tokenHash),
+        eq(phoneVerificationChallenges.phoneHash, phoneHash),
+        isNotNull(phoneVerificationChallenges.verifiedAt),
+        isNull(phoneVerificationChallenges.consumedAt),
+        gt(phoneVerificationChallenges.expiresAt, now),
+      ),
+    )
+    .for("update");
+  if (!challenge) return false;
+  await tx
+    .update(phoneVerificationChallenges)
+    .set({ consumedAt: now, updatedAt: now })
+    .where(eq(phoneVerificationChallenges.id, challenge.id));
+  return true;
+}
+
 router.post("/auth/register", registrationLimit, async (req, res) => {
   const parsed = RegisterAccountBody.safeParse(req.body);
   if (!parsed.success) {
@@ -433,63 +499,18 @@ router.post("/auth/register", registrationLimit, async (req, res) => {
     });
     return;
   }
-  const country = countryByCode.get(b.accountCountry);
-  if (!country?.isSelectable) { res.status(400).json({ error: "الدولة غير متاحة للتسجيل" }); return; }
-  const [market] = await db
-    .select()
-    .from(markets)
-    .where(
-      and(
-        eq(markets.countryCode, country.countryCode),
-      ),
-    );
-  const [fallback] = await db.select().from(markets).where(eq(markets.id, DEFAULT_MARKET));
-  let activeMarketId = market?.id;
-  if (market) {
-    const selectedMarket = await resolveMarket(market);
-    if (!isMarketAvailable(selectedMarket) && fallback) {
-      const fallbackMarket = await resolveMarket(fallback);
-      if (isMarketAvailable(fallbackMarket)) activeMarketId = fallback.id;
-    }
-  } else if (fallback) {
-    // Market launch must not gate account creation. If the requested country
-    // has no row yet, attach the account to the configured default market even
-    // while it is still preparing; transactional routes remain market-gated.
-    activeMarketId = fallback.id;
-  }
-  if (!activeMarketId) {
-    res.status(503).json({ error: "لا يوجد سوق افتراضي متاح حاليًا للتسجيل" });
+  const signupMarket = await resolveSignupMarket(b.accountCountry);
+  if ("error" in signupMarket) {
+    res.status(signupMarket.status).json({ error: signupMarket.error });
     return;
   }
+  const { country, activeMarketId } = signupMarket;
   const passwordHash = await hashPassword(b.password);
   const user = await db.transaction(async (tx) => {
     const now = new Date();
     let phoneVerified = false;
     if (b.verificationToken) {
-      const tokenHash = phoneVerificationDigest(
-        "registration-token",
-        b.verificationToken,
-      );
-      const phoneHash = phoneVerificationDigest("phone", phone.normalizedPhone);
-      const [challenge] = await tx
-        .select()
-        .from(phoneVerificationChallenges)
-        .where(
-          and(
-            eq(phoneVerificationChallenges.registrationTokenHash, tokenHash),
-            eq(phoneVerificationChallenges.phoneHash, phoneHash),
-            isNotNull(phoneVerificationChallenges.verifiedAt),
-            isNull(phoneVerificationChallenges.consumedAt),
-            gt(phoneVerificationChallenges.expiresAt, now),
-          ),
-        )
-        .for("update");
-      if (!challenge) return { kind: "unverified" as const };
-
-      await tx
-        .update(phoneVerificationChallenges)
-        .set({ consumedAt: now, updatedAt: now })
-        .where(eq(phoneVerificationChallenges.id, challenge.id));
+      if (!(await consumePhoneVerification(tx, b.verificationToken, phone.normalizedPhone, now))) return { kind: "unverified" as const };
       phoneVerified = true;
     } else if (phoneVerificationRequired()) {
       return { kind: "unverified" as const };
@@ -545,6 +566,141 @@ router.post("/auth/register", registrationLimit, async (req, res) => {
     ),
   });
 });
+// ─── Sign in with Google (identity only; phone ownership is still verified by SMS) ──────────────
+const GoogleSignInBody = z.object({ idToken: z.string().min(20).max(4096) }).strict();
+const GoogleCompleteBody = z
+  .object({
+    displayName: z.string().trim().min(2).max(80).optional(),
+    phoneCountryCode: z.string().min(1).max(5),
+    phoneNumber: z.string().min(1).max(32),
+    accountCountry: z.string().min(2).max(3),
+    acceptTerms: z.literal(true),
+    verificationToken: z.string().regex(/^[0-9a-f]{64}$/),
+  })
+  .strict();
+const pendingCookieOptions = { ...cookieOptions, sameSite: "strict" as const, maxAge: PENDING_TICKET_TTL_MS };
+
+function requireGoogle() {
+  const clientId = googleClientId();
+  if (!clientId) throw Object.assign(new Error("تسجيل الدخول بحساب Google غير مفعّل."), { status: 503, code: "GOOGLE_SIGN_IN_DISABLED", expose: true });
+  return clientId;
+}
+
+router.post("/auth/google", registrationLimit, async (req, res): Promise<void> => {
+  const clientId = requireGoogle();
+  const body = GoogleSignInBody.safeParse(req.body);
+  if (!body.success) {
+    res.status(400).json({ error: "طلب Google غير صالح" });
+    return;
+  }
+  const identity = await verifyGoogleIdToken(body.data.idToken, { clientId });
+  const [linked] = await db
+    .select({ user: users, identityId: accountIdentities.id })
+    .from(accountIdentities)
+    .innerJoin(users, eq(users.id, accountIdentities.userId))
+    .where(and(eq(accountIdentities.provider, GOOGLE_PROVIDER), eq(accountIdentities.subject, identity.subject)))
+    .limit(1);
+  res.set("Cache-Control", "no-store");
+  if (linked) {
+    if (!canHoldSession(linked.user.status) || !linked.user.phoneVerified) {
+      res.status(403).json({ error: "لا يمكن تسجيل الدخول بهذا الحساب حاليًا." });
+      return;
+    }
+    await db.update(accountIdentities).set({ lastUsedAt: new Date(), updatedAt: new Date() }).where(eq(accountIdentities.id, linked.identityId));
+    res.clearCookie(GOOGLE_PENDING_COOKIE, pendingCookieOptions);
+    if (req.actor && req.actor.id !== linked.user.id) await invalidateSellerEmployeeSessionsForActor(req.actor.id, "ACCOUNT_SWITCH");
+    res.json({ status: "SIGNED_IN", user: await startSession(res, linked.user, req.cookies?.[GUEST_MARKET_COOKIE]) });
+    return;
+  }
+  // Not linked yet: nothing is created. The browser keeps a short-lived signed ticket and must
+  // now prove phone ownership through the existing SMS challenge.
+  res.cookie(GOOGLE_PENDING_COOKIE, issuePendingTicket(identity), pendingCookieOptions);
+  res.json({ status: "PHONE_VERIFICATION_REQUIRED", email: identity.email, name: identity.name });
+});
+
+router.post("/auth/google/complete", registrationLimit, async (req, res): Promise<void> => {
+  requireGoogle();
+  res.set("Cache-Control", "no-store");
+  const identity = readPendingTicket(req.cookies?.[GOOGLE_PENDING_COOKIE]);
+  if (!identity) {
+    res.status(401).json({ error: "انتهت جلسة Google. سجّل الدخول بحساب Google من جديد." });
+    return;
+  }
+  const parsed = GoogleCompleteBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "راجع رقم الهاتف ورمز التحقق والموافقة على الشروط" });
+    return;
+  }
+  const b = parsed.data;
+  let phone;
+  try {
+    phone = normalizePhone(b.phoneCountryCode, b.phoneNumber);
+  } catch {
+    res.status(400).json({ error: "رقم الهاتف غير صالح للدولة المختارة" });
+    return;
+  }
+  const signupMarket = await resolveSignupMarket(b.accountCountry);
+  if ("error" in signupMarket) {
+    res.status(signupMarket.status).json({ error: signupMarket.error });
+    return;
+  }
+  // Google users sign in with Google; the password is random and unknown (reset sets a real one).
+  const passwordHash = await hashPassword(randomBytes(32).toString("base64url"));
+  const result = await db.transaction(async (tx) => {
+    const now = new Date();
+    if (!(await consumePhoneVerification(tx, b.verificationToken, phone.normalizedPhone, now))) return { kind: "unverified" as const };
+    const [existing] = await tx.select().from(users).where(eq(users.normalizedPhone, phone.normalizedPhone)).for("update").limit(1);
+    let user = existing;
+    let kind: "LINKED" | "CREATED" = "LINKED";
+    if (existing) {
+      // The SMS code just proved ownership of this account's phone: linking is allowed, once.
+      if (!canHoldSession(existing.status)) return { kind: "blocked" as const };
+      if (!existing.phoneVerified) await tx.update(users).set({ phoneVerified: true }).where(eq(users.id, existing.id));
+    } else {
+      const displayName = (b.displayName ?? identity.name ?? "").trim();
+      if (displayName.length < 2) return { kind: "name" as const };
+      const [created] = await tx
+        .insert(users)
+        .values({ id: randomUUID(), displayName: displayName.slice(0, 80), ...phone, accountCountry: signupMarket.country.countryCode, activeMarketId: signupMarket.activeMarketId, passwordHash, phoneVerified: true })
+        .onConflictDoNothing({ target: users.normalizedPhone })
+        .returning();
+      if (!created) return { kind: "duplicate" as const };
+      const consentRows = await signupConsentRows(created.id, tx);
+      await tx.insert(policyAcceptances).values(consentRows.map((row) => ({ userId: created.id, policyKey: row.policyKey, policyVersion: row.policyVersion })));
+      await tx.insert(policyConsentEvents).values(consentRows);
+      user = created;
+      kind = "CREATED";
+    }
+    const [identityRow] = await tx
+      .insert(accountIdentities)
+      .values({ id: randomUUID(), userId: user!.id, provider: GOOGLE_PROVIDER, subject: identity.subject, email: identity.email, emailVerified: true, lastUsedAt: now })
+      .onConflictDoNothing()
+      .returning();
+    // The Google account is already linked elsewhere, or this account already has another one.
+    if (!identityRow) return { kind: "conflict" as const };
+    return { kind, user: user! };
+  });
+  if (result.kind === "unverified") {
+    res.status(400).json({ error: "يلزم التحقق من ملكية رقم الهاتف برمز SMS صالح" });
+    return;
+  }
+  if (result.kind === "name") {
+    res.status(400).json({ error: "اكتب اسمك (حرفان على الأقل)" });
+    return;
+  }
+  if (result.kind === "blocked") {
+    res.status(403).json({ error: "لا يمكن ربط هذا الحساب حاليًا." });
+    return;
+  }
+  if (result.kind === "duplicate" || result.kind === "conflict") {
+    res.status(409).json({ error: "حساب Google هذا أو رقم الهاتف مرتبط بحساب آخر. سجّل الدخول بالطريقة المعتادة." });
+    return;
+  }
+  res.clearCookie(GOOGLE_PENDING_COOKIE, pendingCookieOptions);
+  if (req.actor && req.actor.id !== result.user.id) await invalidateSellerEmployeeSessionsForActor(req.actor.id, "ACCOUNT_SWITCH");
+  res.status(result.kind === "CREATED" ? 201 : 200).json({ status: result.kind, user: await startSession(res, result.user, req.cookies?.[GUEST_MARKET_COOKIE]) });
+});
+
 router.post("/auth/login", loginLimit, async (req, res): Promise<void> => {
   const parsed = LoginAccountBody.safeParse(req.body);
   if (!parsed.success) {

@@ -3102,6 +3102,51 @@ export interface AiGuestHandoffResponse {
   continuationStatus: AiGuestHandoffResponseContinuationStatus;
 }
 
+export interface GoogleSignInInput {
+  /**
+     * @minLength 20
+     * @maxLength 4096
+     */
+  idToken: string;
+}
+
+export interface GoogleCompleteInput {
+  /**
+     * @minLength 2
+     * @maxLength 80
+     */
+  displayName?: string;
+  /** @maxLength 5 */
+  phoneCountryCode: string;
+  /** @maxLength 32 */
+  phoneNumber: string;
+  /** @maxLength 3 */
+  accountCountry: string;
+  acceptTerms: true;
+  /** @pattern ^[0-9a-f]{64}$ */
+  verificationToken: string;
+}
+
+export type GoogleSignInResultStatus = typeof GoogleSignInResultStatus[keyof typeof GoogleSignInResultStatus];
+
+
+export const GoogleSignInResultStatus = {
+  SIGNED_IN: 'SIGNED_IN',
+  PHONE_VERIFICATION_REQUIRED: 'PHONE_VERIFICATION_REQUIRED',
+  CREATED: 'CREATED',
+  LINKED: 'LINKED',
+} as const;
+
+export type GoogleSignInResultUser = { [key: string]: unknown };
+
+export interface GoogleSignInResult {
+  status: GoogleSignInResultStatus;
+  email?: string;
+  /** @nullable */
+  name?: string | null;
+  user?: GoogleSignInResultUser;
+}
+
 export type TransactionLocationPurpose = typeof TransactionLocationPurpose[keyof typeof TransactionLocationPurpose];
 
 

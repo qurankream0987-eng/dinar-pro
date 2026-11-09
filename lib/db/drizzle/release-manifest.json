@@ -246,5 +246,9 @@
   {
     "tag": "0061_driver_location_sharing",
     "sha256": "fcf438b0ebfc10daa2107e63b29846fdfa70a679552de5321a1a2f79c9102177"
+  },
+  {
+    "tag": "0062_account_identities",
+    "sha256": "a109f2fdd27eda8bd17484ab8e78080570de1df4a99076b0ef329c2eb613b071"
   }
 ]

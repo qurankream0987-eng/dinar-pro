@@ -2115,6 +2115,29 @@ export const deliveryAssignments = pgTable(
     check("delivery_assignments_release_consistent", sql`(${t.status} = 'RELEASED') = (${t.releasedAt} IS NOT NULL)`),
   ],
 );
+/** External sign-in identities (migration 0062). Linked only after DINAR phone verification. */
+export const accountIdentities = pgTable(
+  "account_identities",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id),
+    provider: text("provider").notNull(),
+    subject: text("subject").notNull(),
+    email: text("email"),
+    emailVerified: boolean("email_verified").default(false).notNull(),
+    lastUsedAt: timestamp("last_used_at", { withTimezone: true }),
+    ...dates(),
+  },
+  (t) => [
+    uniqueIndex("account_identities_provider_subject_unique").on(t.provider, t.subject),
+    uniqueIndex("account_identities_user_provider_unique").on(t.userId, t.provider),
+    check("account_identities_provider_valid", sql`${t.provider} IN ('GOOGLE')`),
+    check("account_identities_subject_length", sql`char_length(${t.subject}) BETWEEN 1 AND 255`),
+    check("account_identities_email_length", sql`${t.email} IS NULL OR char_length(${t.email}) <= 320`),
+  ],
+);
 /**
  * First-party driver location sharing (migration 0061). One row per courier assignment with
  * only the latest validated position while the driver has explicitly started sharing; every

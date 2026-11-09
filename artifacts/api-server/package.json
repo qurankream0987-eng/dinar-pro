@@ -78,7 +78,8 @@
     "test:integration": "NODE_ENV=development BDINAR_INTEGRATION_ACCEPTANCE=development BDINAR_WAVE4_ACCEPTANCE=development sh -c 'node test/run.mjs integration-cash-lock-order.test && node test/run.mjs integration-policy-consent.test && node test/run.mjs integration-openapi-coverage.test && node test/run.mjs integration-business-listings.test'",
     "test:w12c": "NODE_ENV=development BDINAR_W12C_ACCEPTANCE=development BDINAR_WAVE4_ACCEPTANCE=development node test/run.mjs wave07-w12-contract-hardening.test",
     "test:d16-readiness": "NODE_ENV=development BDINAR_D16_ACCEPTANCE=development BDINAR_DISPOSABLE_ACCEPTANCE_DB=1 BDINAR_DISPOSABLE_TEST_DATABASE=1 node test/run.mjs d16-readiness.test",
-    "test:legal-market": "sh test/isolation/legal-market-suite.sh"
+    "test:legal-market": "sh test/isolation/legal-market-suite.sh",
+    "test:google-signin": "NODE_ENV=development BDINAR_TEST_DATABASE=development node test/run.mjs google-signin.test"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1155.0",

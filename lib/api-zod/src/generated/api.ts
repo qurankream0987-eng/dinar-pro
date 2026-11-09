@@ -91,6 +91,58 @@ export const RegisterAccountResponse = zod.void()
 
 
 /**
+ * @summary Verify a Google ID token; signs in a linked account or starts phone verification
+ */
+export const signInWithGoogleBodyIdTokenMin = 20;
+export const signInWithGoogleBodyIdTokenMax = 4096;
+
+
+
+export const SignInWithGoogleBody = zod.object({
+  "idToken": zod.string().min(signInWithGoogleBodyIdTokenMin).max(signInWithGoogleBodyIdTokenMax)
+})
+
+export const SignInWithGoogleResponse = zod.object({
+  "status": zod.enum(['SIGNED_IN', 'PHONE_VERIFICATION_REQUIRED', 'CREATED', 'LINKED']),
+  "email": zod.string().optional(),
+  "name": zod.string().nullish(),
+  "user": zod.record(zod.string(), zod.unknown()).optional()
+})
+
+
+/**
+ * @summary Link or create the account after SMS phone verification
+ */
+export const completeGoogleSignInBodyDisplayNameMin = 2;
+export const completeGoogleSignInBodyDisplayNameMax = 80;
+
+export const completeGoogleSignInBodyPhoneCountryCodeMax = 5;
+
+export const completeGoogleSignInBodyPhoneNumberMax = 32;
+
+export const completeGoogleSignInBodyAccountCountryMax = 3;
+
+export const completeGoogleSignInBodyVerificationTokenRegExp = new RegExp('^[0-9a-f]{64}$');
+
+
+export const CompleteGoogleSignInBody = zod.object({
+  "displayName": zod.string().min(completeGoogleSignInBodyDisplayNameMin).max(completeGoogleSignInBodyDisplayNameMax).optional(),
+  "phoneCountryCode": zod.string().max(completeGoogleSignInBodyPhoneCountryCodeMax),
+  "phoneNumber": zod.string().max(completeGoogleSignInBodyPhoneNumberMax),
+  "accountCountry": zod.string().max(completeGoogleSignInBodyAccountCountryMax),
+  "acceptTerms": zod.literal(true),
+  "verificationToken": zod.string().regex(completeGoogleSignInBodyVerificationTokenRegExp)
+})
+
+export const CompleteGoogleSignInResponse = zod.object({
+  "status": zod.enum(['SIGNED_IN', 'PHONE_VERIFICATION_REQUIRED', 'CREATED', 'LINKED']),
+  "email": zod.string().optional(),
+  "name": zod.string().nullish(),
+  "user": zod.record(zod.string(), zod.unknown()).optional()
+})
+
+
+/**
  * @summary Start a session for a phone-verified account
  */
 export const loginAccountBodyPhoneCountryCodeMin = 2;

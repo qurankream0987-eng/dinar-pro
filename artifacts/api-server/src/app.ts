@@ -10,6 +10,7 @@ import { reportServerError } from "./lib/monitoring";
 import { createDevelopmentListingPhotoSuggestionProvider } from "./ai/groq-listing-photo-provider";
 import { ListingImagePolicyReviewError } from "./ai/listing-image-policy-review";
 import { createWebFrontend } from "./lib/web-frontend";
+import { googleClientId } from "./lib/google-identity";
 import { driverLocationSharingEnabled, firstPartyTrackingProvider } from "./lib/driver-location";
 
 const app: Express = express();
@@ -150,16 +151,25 @@ function browserConnectOrigins() {
   }
   return ["'self'", ...origins].join(" ");
 }
+/** Google Identity Services origins, allowed only when Google sign-in is configured. */
+const GOOGLE_IDENTITY_ORIGIN = "https://accounts.google.com";
+function withGoogleIdentity(directive: string) {
+  if (!googleClientId()) return directive;
+  if (directive.startsWith("script-src ")) return `${directive} ${GOOGLE_IDENTITY_ORIGIN}/gsi/client`;
+  if (directive.startsWith("style-src ")) return `${directive} ${GOOGLE_IDENTITY_ORIGIN}/gsi/style`;
+  return directive;
+}
 function contentSecurityPolicy() {
   return [
-    ...CONTENT_SECURITY_POLICY_DIRECTIVES.map((directive) =>
+    ...CONTENT_SECURITY_POLICY_DIRECTIVES.map(withGoogleIdentity).map((directive) =>
       directive.startsWith("frame-ancestors ") && (
         (process.env.NODE_ENV !== "development" && process.env.NODE_ENV !== "test") ||
         process.env.REPLIT_DEPLOYMENT !== undefined ||
         !["", "development", "test"].includes(process.env.DINAR_DEPLOYMENT_ENV?.trim().toLowerCase() ?? "")
       ) ? "frame-ancestors 'self'" : directive,
     ),
-    `connect-src ${browserConnectOrigins()}`,
+    `connect-src ${browserConnectOrigins()}${googleClientId() ? ` ${GOOGLE_IDENTITY_ORIGIN}/gsi/` : ""}`,
+    ...(googleClientId() ? [`frame-src ${GOOGLE_IDENTITY_ORIGIN}/gsi/`] : []),
   ].join("; ");
 }
 const PERMISSIONS_POLICY = [
