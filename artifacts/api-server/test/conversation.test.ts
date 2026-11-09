@@ -876,7 +876,7 @@ test("generic offer wording enters the sell flow without hijacking account navig
   assert.equal(surfaceIntent("اعرض حسابي"), "ACCOUNT");
 });
 
-test("seller payment choices use canonical values and remain explicit in draft review", () => {
+test("seller payment choices use canonical values; the short draft defaults to direct payment", () => {
   assert.deepEqual(parseSellerPaymentMethods("كاش", true), ["CASH_DIRECT"]);
   assert.deepEqual(parseSellerPaymentMethods("فيزا", true), ["CARD"]);
   assert.deepEqual(parseSellerPaymentMethods("الاثنين", true), [
@@ -893,10 +893,14 @@ test("seller payment choices use canonical values and remain explicit in draft r
     "أريد أبيع سيارة تويوتا برادو 2020",
     TEST_MARKETPLACE_CATEGORY_SCHEMAS,
   );
+  // Short draft (owner decision): payment is not asked; it defaults to direct settlement,
+  // labelled as a DINAR default (not the seller's statement) and editable in the chat.
   assert.ok(
-    buildDraftReview(incompleteSale.draft, TEST_MARKETPLACE_CATEGORY_SCHEMAS)
+    !buildDraftReview(incompleteSale.draft, TEST_MARKETPLACE_CATEGORY_SCHEMAS)
       .missingFields.some((field) => field.field === "payment_methods"),
   );
+  assert.deepEqual(incompleteSale.draft.paymentMethods, ["CASH_DIRECT"]);
+  assert.equal(incompleteSale.draft.sources?.paymentMethods, "DINAR_DERIVED");
 
   const sale = createInitialSaleDraft(
     "أريد أبيع سيارة تويوتا برادو 2020، والدفع كاش أو فيزا",
