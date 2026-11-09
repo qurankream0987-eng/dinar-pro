@@ -1634,6 +1634,88 @@ export interface Order {
   items?: OrderItem[];
 }
 
+export type SettlementPreferenceInputMethod = typeof SettlementPreferenceInputMethod[keyof typeof SettlementPreferenceInputMethod];
+
+
+export const SettlementPreferenceInputMethod = {
+  CASH: 'CASH',
+  BANK_TRANSFER: 'BANK_TRANSFER',
+  CLIQ: 'CLIQ',
+  KNET: 'KNET',
+  MADA: 'MADA',
+  STC_PAY: 'STC_PAY',
+  BENEFIT_PAY: 'BENEFIT_PAY',
+} as const;
+
+export interface SettlementPreferenceInput {
+  method: SettlementPreferenceInputMethod;
+}
+
+export type OrderCounterpartContactReason = typeof OrderCounterpartContactReason[keyof typeof OrderCounterpartContactReason];
+
+
+export const OrderCounterpartContactReason = {
+  AVAILABLE: 'AVAILABLE',
+  AWAITING_SELLER_ACCEPTANCE: 'AWAITING_SELLER_ACCEPTANCE',
+  ORDER_CLOSED: 'ORDER_CLOSED',
+} as const;
+
+export type OrderCounterpartContactCounterpartRole = typeof OrderCounterpartContactCounterpartRole[keyof typeof OrderCounterpartContactCounterpartRole];
+
+
+export const OrderCounterpartContactCounterpartRole = {
+  BUYER: 'BUYER',
+  SELLER: 'SELLER',
+} as const;
+
+/**
+ * @nullable
+ */
+export type OrderCounterpartContactCounterpart = {
+  role: OrderCounterpartContactCounterpartRole;
+  name: string;
+  phone: string;
+} | null;
+
+/**
+ * @nullable
+ */
+export type OrderCounterpartContactSettlementPreference = {
+  method: string;
+  label: string;
+  setAt: string;
+} | null;
+
+export type OrderCounterpartContactSettlementMethodsItemMethod = typeof OrderCounterpartContactSettlementMethodsItemMethod[keyof typeof OrderCounterpartContactSettlementMethodsItemMethod];
+
+
+export const OrderCounterpartContactSettlementMethodsItemMethod = {
+  CASH: 'CASH',
+  BANK_TRANSFER: 'BANK_TRANSFER',
+  CLIQ: 'CLIQ',
+  KNET: 'KNET',
+  MADA: 'MADA',
+  STC_PAY: 'STC_PAY',
+  BENEFIT_PAY: 'BENEFIT_PAY',
+} as const;
+
+export type OrderCounterpartContactSettlementMethodsItem = {
+  method: OrderCounterpartContactSettlementMethodsItemMethod;
+  label: string;
+};
+
+export interface OrderCounterpartContact {
+  orderId: string;
+  available: boolean;
+  reason: OrderCounterpartContactReason;
+  /** @nullable */
+  counterpart: OrderCounterpartContactCounterpart;
+  /** @nullable */
+  settlementPreference: OrderCounterpartContactSettlementPreference;
+  settlementMethods: OrderCounterpartContactSettlementMethodsItem[];
+  notice: string;
+}
+
 export type OrderContactReleaseContactsItem = {
   listingTitle: string;
   phone: string;
@@ -6503,6 +6585,8 @@ export const GetOrdersRole = {
   buyer: 'buyer',
   seller: 'seller',
 } as const;
+
+export type SetOrderSettlementPreference200 = { [key: string]: unknown };
 
 export type PreviewBusinessPlanChangeParams = {
 /**

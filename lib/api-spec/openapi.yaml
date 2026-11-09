@@ -606,6 +606,23 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Order" }
+  /orders/{id}/counterpart-contact:
+    get:
+      operationId: getOrderCounterpartContact
+      tags: [orders]
+      summary: The other party's name and phone after the seller accepts, plus the buyer's payment preference
+      parameters: [{ in: path, name: id, required: true, schema: { type: string } }]
+      responses:
+        "200": { description: "Contact state", content: { application/json: { schema: { $ref: "#/components/schemas/OrderCounterpartContact" } } } }
+  /orders/{id}/settlement-preference:
+    put:
+      operationId: setOrderSettlementPreference
+      tags: [orders]
+      summary: The buyer states how they prefer to pay outside DINAR (information only)
+      parameters: [{ in: path, name: id, required: true, schema: { type: string } }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: "#/components/schemas/SettlementPreferenceInput" } } } }
+      responses:
+        "200": { description: "Preference stored", content: { application/json: { schema: { type: object, additionalProperties: true } } } }
   /orders/{id}/contact:
     get:
       operationId: getOrderContact
@@ -4634,6 +4651,44 @@ components:
         items:
           type: array
           items: { $ref: "#/components/schemas/OrderItem" }
+    SettlementPreferenceInput:
+      type: object
+      additionalProperties: false
+      required: [method]
+      properties:
+        method: { type: string, enum: [CASH, BANK_TRANSFER, CLIQ, KNET, MADA, STC_PAY, BENEFIT_PAY] }
+    OrderCounterpartContact:
+      type: object
+      required: [orderId, available, reason, counterpart, settlementPreference, settlementMethods, notice]
+      properties:
+        orderId: { type: string }
+        available: { type: boolean }
+        reason: { type: string, enum: [AVAILABLE, AWAITING_SELLER_ACCEPTANCE, ORDER_CLOSED] }
+        counterpart:
+          type: object
+          nullable: true
+          required: [role, name, phone]
+          properties:
+            role: { type: string, enum: [BUYER, SELLER] }
+            name: { type: string }
+            phone: { type: string }
+        settlementPreference:
+          type: object
+          nullable: true
+          required: [method, label, setAt]
+          properties:
+            method: { type: string }
+            label: { type: string }
+            setAt: { type: string }
+        settlementMethods:
+          type: array
+          items:
+            type: object
+            required: [method, label]
+            properties:
+              method: { type: string, enum: [CASH, BANK_TRANSFER, CLIQ, KNET, MADA, STC_PAY, BENEFIT_PAY] }
+              label: { type: string }
+        notice: { type: string }
     OrderContactRelease:
       type: object
       required: [orderId, contacts]

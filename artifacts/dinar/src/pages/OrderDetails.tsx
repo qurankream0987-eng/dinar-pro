@@ -1,4 +1,5 @@
 import { ReportButton } from "@/features/ReportButton";
+import { OrderSettlementCard } from "@/features/ai/OrderSettlementCard";
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useParams } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
@@ -646,6 +647,7 @@ function OrderView({ order }: { order: Detail }) {
         <div className="min-w-0 space-y-4">
           {action}
           {error && <InlineAlert tone="danger">{error}</InlineAlert>}
+          <OrderSettlementCard orderId={order.id} role={role === "seller" ? "seller" : role === "buyer" ? "buyer" : null} />
           <OrderChat
             orderId={order.id}
             title={`المحادثة مع ${other}`}

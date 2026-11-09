@@ -35,6 +35,8 @@ import {
   ConfirmOrderBody,
   CancelOrderBody,
 } from "@workspace/api-zod";
+import { z } from "zod";
+import { counterpartContact, setSettlementPreference, SETTLEMENT_METHODS } from "../lib/order-settlement";
 import { requireAuth } from "../lib/auth";
 import { applyTerminalOrderAccounting } from "../lib/order-terminal-accounting";
 import { expireOrderReservation } from "../lib/order-expiry";
@@ -1065,6 +1067,19 @@ router.get("/orders/:id/contact", async (req, res) => {
   });
   if (!release) throw fail(404, "بيانات التواصل غير متاحة");
   res.json(release);
+});
+// Buyer and seller of this order only: the other party's name and phone after the seller accepts,
+// and the buyer's stated off-platform payment preference (information only, never a payment).
+router.get("/orders/:id/counterpart-contact", async (req, res) => {
+  res.set("Cache-Control", "private, no-store, no-cache, max-age=0");
+  res.set("Pragma", "no-cache");
+  const market = await marketFor(req);
+  res.json(await counterpartContact({ actorId: req.actor!.id, orderId: String(req.params.id), marketId: market.id, countryCode: market.countryCode }));
+});
+router.put("/orders/:id/settlement-preference", async (req, res) => {
+  const body = z.object({ method: z.enum(SETTLEMENT_METHODS) }).strict().parse(req.body);
+  const market = await marketFor(req);
+  res.json(await setSettlementPreference({ actorId: req.actor!.id, orderId: String(req.params.id), marketId: market.id, countryCode: market.countryCode, method: body.method }));
 });
 // Buyer and seller of this order only; the explicit delivery serializer, never a row spread.
 router.get("/orders/:id/fulfillment", async (req, res) => {

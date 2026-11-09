@@ -1853,6 +1853,49 @@ export const GetOrderResponse = zod.object({
 
 
 /**
+ * @summary The other party's name and phone after the seller accepts, plus the buyer's payment preference
+ */
+export const GetOrderCounterpartContactParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const GetOrderCounterpartContactResponse = zod.object({
+  "orderId": zod.string(),
+  "available": zod.boolean(),
+  "reason": zod.enum(['AVAILABLE', 'AWAITING_SELLER_ACCEPTANCE', 'ORDER_CLOSED']),
+  "counterpart": zod.object({
+  "role": zod.enum(['BUYER', 'SELLER']),
+  "name": zod.string(),
+  "phone": zod.string()
+}).nullable(),
+  "settlementPreference": zod.object({
+  "method": zod.string(),
+  "label": zod.string(),
+  "setAt": zod.string()
+}).nullable(),
+  "settlementMethods": zod.array(zod.object({
+  "method": zod.enum(['CASH', 'BANK_TRANSFER', 'CLIQ', 'KNET', 'MADA', 'STC_PAY', 'BENEFIT_PAY']),
+  "label": zod.string()
+})),
+  "notice": zod.string()
+})
+
+
+/**
+ * @summary The buyer states how they prefer to pay outside DINAR (information only)
+ */
+export const SetOrderSettlementPreferenceParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const SetOrderSettlementPreferenceBody = zod.object({
+  "method": zod.enum(['CASH', 'BANK_TRANSFER', 'CLIQ', 'KNET', 'MADA', 'STC_PAY', 'BENEFIT_PAY'])
+})
+
+export const SetOrderSettlementPreferenceResponse = zod.record(zod.string(), zod.unknown())
+
+
+/**
  * @summary Retrieve seller-approved contact for an eligible order buyer
  */
 export const GetOrderContactParams = zod.object({
