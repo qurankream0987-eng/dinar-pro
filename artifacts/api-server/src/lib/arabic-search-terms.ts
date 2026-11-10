@@ -41,6 +41,8 @@ const LEXICON: readonly (readonly string[])[] = [
   ["مقهي", "كافيه", "كوفي"],
   ["شعار", "لوجو", "لوغو"],
   ["طعام", "سفره", "سفرة"],
+  ["تصليح", "اصلاح", "صيانه", "صيانة"],
+  ["لابتوب", "laptop"],
   ["كوب", "اكواب", "كاس", "كاسات", "كاسه", "كاسة"],
   // Brands and model words written in Arabic or Latin letters: a buyer types «ايفون», the seller
   // titled the listing «iPhone» (and back). Transliteration only — no product facts.
@@ -59,6 +61,8 @@ const POSSESSIVES = ["كم", "هم", "ها", "نا", "ي", "ك"];
 /** Every surface form a request token may take in a listing. */
 export function tokenVariants(token: string): string[] {
   const forms = new Set<string>([token]);
+  const beneficiary = /^([يتنب][\p{Script=Arabic}]{3,5})لي$/u.exec(token);
+  if (beneficiary) for (const form of tokenVariants(beneficiary[1]!)) forms.add(form);
   const cardinal = cardinalWordValue(token);
   if (cardinal !== undefined) forms.add(String(cardinal));
   for (const prefix of PROCLITICS)
@@ -74,6 +78,7 @@ export function tokenVariants(token: string): string[] {
       forms.add(`${stem}ة`).add(`${stem}ه`).add(stem);
     }
     // Final «ه» written for «ة» and back: «طاوله» ↔ «طاولة».
+    if (token.endsWith("تي") && form.endsWith("ت") && form.length >= 4) forms.add(`${form.slice(0,-1)}ة`).add(`${form.slice(0,-1)}ه`);
     if (form.length >= 3 && form.endsWith("ه")) forms.add(`${form.slice(0, -1)}ة`);
     if (form.length >= 3 && form.endsWith("ة")) forms.add(`${form.slice(0, -1)}ه`);
     // A singular in ة names one of a collective noun: «كنبة» ↔ «كنب», «شجرة» ↔ «شجر» (W04).
@@ -98,6 +103,7 @@ export function tokenVariants(token: string): string[] {
     const agent = LEXICON_BY_WORD.has(form) ? null : /^م(\S)(\S)(\S)$/u.exec(form);
     if (agent) forms.add(`ت${agent[1]}${agent[2]}ي${agent[3]}`);
   }
+  for (const form of [...forms]) for (const synonym of LEXICON_BY_WORD.get(form) ?? []) forms.add(synonym);
   for (const form of [...forms]) for (const synonym of LEXICON_BY_WORD.get(form) ?? []) forms.add(synonym);
   return [...forms];
 }

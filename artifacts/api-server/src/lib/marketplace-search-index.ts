@@ -19,7 +19,7 @@ import { categorySchema as categorySchemaFromRow, listMarketplaceCategories, typ
 import { logger } from "./logger";
 
 /** Bump when `searchableTextOf` changes: older documents then stop counting as fresh. */
-export const SEARCH_TEXT_VERSION = 1;
+export const SEARCH_TEXT_VERSION = 2;
 
 type Offer = typeof offers.$inferSelect;
 export type SearchTextContext = {

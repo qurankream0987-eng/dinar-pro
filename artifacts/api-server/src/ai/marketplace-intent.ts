@@ -100,8 +100,8 @@ const ABSTRACT_OBJECT =
   /(?:^|\s)(?:ابحث|ابحثلي|دور|دورلي|دورولي|شوفلي|شوف|شوفي|جيبلي|جيب|هاتلي|هات|لقيلي|لاقيلي|طالعلي|فتشلي)(?:\s+لي)?(?:\s+(?:عن|على|علي))?\s+(?:ال)?(?:فكره|افكار|حل|حلول|طريقه|طرق|نصيحه|نصائح|معلومه|معلومات|جواب|اجابه|شرح|خطه|اسم|اسماء|موضوع|مواضيع|سبب|اسباب|راي|رايك|معني|تفسير|ترجمه|ملخص|مقال|قصه|نكته|شعر)(?:\s|$)/u;
 
 export function hasExplicitMarketplaceSearchIntent(message: string): boolean {
-  const normalized = normalizeMarketplaceText(message);
-  if (ABSTRACT_OBJECT.test(normalized.replace(/ة/g, "ه"))) return false;
+  const normalized = normalizeMarketplaceText(stripCorrectionPrefix(message));
+  if (ABSTRACT_OBJECT.test(normalized.replace(/ة/g, "ه")) || /^(?:ابي|اريد)\s+(?:على\s+)?(?:فكره|فكرة|حل|طريقه|طريقة)(?:\s|$)/u.test(normalized)) return false;
   if (EXPLICIT_SEARCH_ACTION.test(normalized)) return true;
   const correction = normalizeMarketplaceText(stripCorrectionPrefix(message));
   if (correction !== normalized)
