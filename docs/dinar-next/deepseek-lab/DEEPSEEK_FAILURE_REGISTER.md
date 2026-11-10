@@ -27,6 +27,8 @@ every failing case is `DEEPSEEK_FAILURE_LIST.generated.md`.
 | D-14 | Medium (search) | live `G05-017`: «ابحث عن ترجمة» showed six unrelated services | the word was a category alias and was dropped before trying other categories | when relaxing would drop every word the buyer gave, the exact words are searched across categories first (`a89b2f1`) |
 | D-15 | Low (search) | `G13-001`, `G05-026`: Arabic «ايفون/سامسونج ألترا» missed English-titled listings | no transliteration | brand/model transliteration groups in the search lexicon; search golden updated for exactly 3 queries (`32919ad`) |
 | D-16 | Low | `G10-018`: «اعرض موقع طلب جاري» opened a **seller draft** | «اعرض» read as offering for sale | «اعرض موقع/طلب/حالة/سلة/تفاصيل» is navigation (`a89b2f1`) |
+| D-18 | Medium (search recall) | H2/H3: an extra word or spelling variant emptied a request («غسالة ملابس اوتوماتيك», «مكيف سبلت») | strict all-words matching | bounded relaxation keeping the item word, across categories, ≥3 words, never more than half dropped, lone item word must be in the title; reply names relaxed words (`eb28c5d`, `1e209a4`). Measured on independent sets: H3 7/30 → 24/30 (3 wrong-item results in that first version, recorded), H4 19/20 + 9/10, H5 16/20 + **10/10 negatives** |
+| D-19 | Low (introduced and fixed) | H3 v1: «غسالة اوتوماتيك للبيت» showed an apartment; «ساعة رولكس» showed an hour-long lesson; regression «ينظف سيارتي» showed house cleaning | relaxation dropped the defining word / matched a description word | the fixes in D-18 (item word kept, title guard, ≥3 words); mutation-checked regression |
 | D-17 | Low (regression introduced and fixed in this campaign) | A2 `G10-006`: «افتح متابعة الطلب» opened checkout after D-06 | «متابعة الطلب» added to the checkout verbs | removed; regression test added (`a89b2f1`) |
 
 ## B. Test-runner / catalog defects (not product defects; corrected and recorded)
@@ -60,6 +62,8 @@ every failing case is `DEEPSEEK_FAILURE_LIST.generated.md`.
 | C-07 | search | a title mention is ignored when a structured attribute filter is applied and the attribute is missing | recall | missed listing |
 | C-08 | deterministic layer | follow-ups like «لا خلها 350», «وكمان كنافة» need the model; without it DINAR says honestly that smart chat is unavailable | deterministic coverage | none (no mutation) |
 | C-09 | `G01-010` | «كيف أكتب سيرة ذاتية؟» now shows job-search results (read-only) instead of advice | routing | no write; unhelpful |
+| C-11 | H5 (independent) 4/20 positives | requests combining «مستعملة/رخيص» with extra words take the buyer-filter path («رتّبتها من الأرخص»), which has no subset relaxation | recall | no result |
+| C-12 | **High** — live B final `G04-048` (10-turn, several subjects) | the card can lag the model's reply (read-repeat guard shows the previous results; the reply describes a sofa while the card shows an AC). The cart guard (D-01) **held live**: «حط الكنب بالسلة» was refused and nothing was added. Not root-caused further (live server logs kept only errors) | card/prose consistency | misleading card in long conversations; no wrong add |
 | C-10 | live, transient | one provider failure («تعذر عليّ التفكير») with 0 retries | PROVIDER_ERROR | honest message; nothing changed |
 
 Status of each remaining case in the final runs is in `DEEPSEEK_LIVE_EXECUTION_REPORT.md` and `DEEPSEEK_DETERMINISTIC_RESULTS.md`.

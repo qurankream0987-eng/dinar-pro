@@ -9,10 +9,12 @@ const json = (file) => existsSync(path.join(EV, file)) ? JSON.parse(readFileSync
 const runs = {
   "A1 baseline (deterministic, pre-fix)": load("baseline/A1-det-results.jsonl"),
   "B baseline (live DeepSeek, pre-fix)": load("baseline/B-live-results.jsonl"),
-  "A3 final (deterministic, post-fix)": load("final/A3-det-results.jsonl"),
-  "B2 final (live DeepSeek, post-fix)": load("final/B2-live-results.jsonl"),
-  "H held-out (deterministic, post-fix)": load("final/H-det-results.jsonl"),
-  "H held-out (live DeepSeek, post-fix)": load("final/H-live-results.jsonl"),
+  "H held-out first run (live DeepSeek, 32919ad — independent)": load("intermediate/H-live-32919ad.jsonl"),
+  "A final (deterministic, 1e209a4)": load("final/A-det-results.jsonl"),
+  "B final (live DeepSeek, 1e209a4)": load("final/B-live-results.jsonl"),
+  "H held-out final (deterministic, 1e209a4)": load("final/H-det-results.jsonl"),
+  "H held-out final (live DeepSeek, 1e209a4 — informed later fixes, not independent)": load("final/H-live-results.jsonl"),
+  "H5 validation (live DeepSeek, 1e209a4 — independent)": load("final/H5-live-results.jsonl"),
 };
 const VERDICTS = ["PASS", "FAIL", "BLOCKED", "NOT_EXECUTABLE_DET", "NOT_EXECUTED"];
 const count = (rows, key = (r) => r.group) => {
@@ -55,7 +57,7 @@ writeFileSync(path.join(DOCS, "DEEPSEEK_DETERMINISTIC_RESULTS.md"), det);
 
 // Multi-turn: every case with ≥3 turns, turn by turn, final runs.
 let mt = "# Multi-turn report\n\nEvery executed case with three or more turns, from the final live run (B2) and the held-out live run, turn by turn: what the user said, which runtime tool ran, which card appeared, the persisted delta, and the failures.\n\n";
-for (const name of ["B2 final (live DeepSeek, post-fix)", "H held-out (live DeepSeek, post-fix)"]) {
+for (const name of ["B final (live DeepSeek, 1e209a4)", "H held-out final (live DeepSeek, 1e209a4 — informed later fixes, not independent)"]) {
   for (const r of runs[name].filter((x) => (x.turns ?? []).length >= 3)) {
     mt += `### ${r.id} — ${r.verdict}\n\n| # | User | Tool | Card | Δ cart | Δ orders | Failure |\n|---|---|---|---|---:|---:|---|\n`;
     r.turns.forEach((t, i) => { mt += `| ${i + 1} | ${String(t.say).replace(/\|/g, "/").slice(0, 60)} | ${t.tool ?? "—"} | ${(t.surfaces ?? []).join(",") || "text"} | ${t.delta?.cart ?? 0} | ${t.delta?.ordersAll ?? 0} | ${(t.failures ?? []).map((f) => f[1]).join("; ").replace(/\|/g, "/").slice(0, 120)} |\n`; });
@@ -88,5 +90,5 @@ for (const [name, rows] of Object.entries(runs)) {
   fr += "\n";
 }
 writeFileSync(path.join(DOCS, "DEEPSEEK_FAILURE_LIST.generated.md"), fr);
-const browser = json("final/browser-report.json");
+const browser = json("browser/browser-report.json");
 console.log(JSON.stringify({ runs: Object.fromEntries(Object.entries(runs).map(([k, v]) => [k, Object.fromEntries(VERDICTS.map((x) => [x, v.filter((r) => r.verdict === x).length]))])), browserChecks: browser?.checks?.length ?? null }));
