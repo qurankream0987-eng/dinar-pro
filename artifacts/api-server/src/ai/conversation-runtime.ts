@@ -486,16 +486,17 @@ async function resolveConversationReference(
     return open(index);
   }
   if (reference?.kind === "CHEAPEST" || reference?.kind === "PRICIEST") {
-    const rows = await db
-      .select({ id: offers.id, price: offers.unitPriceMinor })
-      .from(offers)
-      .where(and(inArray(offers.id, latest.resourceIds), eq(offers.marketId, context.market.id)));
-    const priced = rows.filter((row) => row.price !== null && row.price !== undefined);
-    if (!priced.length) return undefined;
+    const rows = await searchMarketplaceListings(context.market, { search: "", allowedIds: latest.resourceIds, conversational: true, sponsoredPlacement: false });
+    const priced = rows.filter((row) => row.unitPrice !== null);
+    if (!priced.length) return clarify("لا توجد أسعار معلنة للعروض المتاحة الآن.");
     const pick = priced.reduce((best, row) =>
-      (reference.kind === "CHEAPEST" ? Number(row.price) < Number(best.price) : Number(row.price) > Number(best.price)) ? row : best);
+      (reference.kind === "CHEAPEST" ? Number(row.unitPrice) < Number(best.unitPrice) : Number(row.unitPrice) > Number(best.unitPrice)) ? row : best);
     const index = latest.resourceIds.indexOf(pick.id);
-    return index >= 0 ? open(index) : undefined;
+    if (index < 0) return undefined;
+    const selected = await open(index);
+    const current = selected.result.listings[0];
+    if (current) selected.result.query = { ...selected.result.query, buyer: { authority: "DINAR", message: `${reference.kind === "CHEAPEST" ? "الأرخص" : "الأغلى"} بين العروض الظاهرة المتاحة: «${current.title}» بسعر ${current.unitPrice} ${current.currency}. من سجل DINAR الحالي، بدون التوصيل أو أي رسوم. لم يتغير شيء.` } };
+    return selected;
   }
   // «لا، أقصد الثالث، ولا تضيفه للسلة»: once the correction and the refusal are set aside, what
   // remains is a plain reference. It is only opened (read-only), whatever the message refused.

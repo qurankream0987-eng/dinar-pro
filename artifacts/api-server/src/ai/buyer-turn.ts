@@ -711,6 +711,11 @@ export async function executeBuyerTurn(input: {
 
   const set = await latestListingSet(input.conversationId, input.market.id);
   const state = stateOf(set);
+  const additive = text.match(/^(?:وكمان|وكذلك|وايضا|كمان|وايضًا)\s+(.+)$/u);
+  if (set && additive && !/^(?:اكتب|اشرح|فسر|لخص|ترجم|خطط|قارن|اقترح|كيف|ما|ليش|لماذا)(?:\s|$)/u.test(additive[1]!)) {
+    const { executeRegisteredTool } = await import("./tool-registry");
+    return executeRegisteredTool("searchListings", JSON.stringify({ query: additive[1] }), { conversationId: input.conversationId, market: input.market, actorId });
+  }
 
   if (CHEAPEST.test(text) && set && /^(?:اي واحد|ايهم|ايهن|مين|منو|اياهم)\s/u.test(text)) {
     const current = await searchMarketplaceListings(input.market, { search: "", allowedIds: set.resourceIds, conversational: true, sponsoredPlacement: false });
