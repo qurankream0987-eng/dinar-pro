@@ -1,0 +1,16 @@
+{
+ "mode": "det",
+ "database": "dinar_test_lab_run_mwa9lch4",
+ "cases": 500,
+ "stopped": null,
+ "balanceStart": null,
+ "balanceEnd": null,
+ "spend": {
+  "calls": 0,
+  "inputTokens": 0,
+  "cachedTokens": 0,
+  "outputTokens": 0,
+  "usdAtRates": 0
+ },
+ "finishedAt": "2026-11-10T05:52:44.663Z"
+}
