@@ -1,0 +1,937 @@
+{
+ "catalog": "held-out-2",
+ "frozenAt": "2026-11-10",
+ "total": 30,
+ "cases": [
+  {
+   "id": "H2-DIA-001",
+   "group": "H2-DIA",
+   "type": "dialect-search",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "unseen dialect/loanword search after the canonical-request fix",
+   "turns": [
+    {
+     "say": "ابي بايسكل للصغير",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_kids_bike"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H2-DIA-002",
+   "group": "H2-DIA",
+   "type": "dialect-search",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "unseen dialect/loanword search after the canonical-request fix",
+   "turns": [
+    {
+     "say": "بدي براد صغير للغرفة",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_fridge_small"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H2-DIA-003",
+   "group": "H2-DIA",
+   "type": "dialect-search",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "unseen dialect/loanword search after the canonical-request fix",
+   "turns": [
+    {
+     "say": "اريد تكييف شباك",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_ac_window"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H2-DIA-004",
+   "group": "H2-DIA",
+   "type": "dialect-search",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "unseen dialect/loanword search after the canonical-request fix",
+   "turns": [
+    {
+     "say": "ابي كنباية زاوية",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_sofa_corner"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H2-DIA-005",
+   "group": "H2-DIA",
+   "type": "dialect-search",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "unseen dialect/loanword search after the canonical-request fix",
+   "turns": [
+    {
+     "say": "دور على تيفي ال جي كبير",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_tv_lg"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H2-DIA-006",
+   "group": "H2-DIA",
+   "type": "dialect-search",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "unseen dialect/loanword search after the canonical-request fix",
+   "turns": [
+    {
+     "say": "بدي جهاز العاب بلاي ستيشن",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_ps5"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H2-DIA-007",
+   "group": "H2-DIA",
+   "type": "dialect-search",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "unseen dialect/loanword search after the canonical-request fix",
+   "turns": [
+    {
+     "say": "عندكم سماعة راس سوني؟",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_headphones"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H2-DIA-008",
+   "group": "H2-DIA",
+   "type": "dialect-search",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "unseen dialect/loanword search after the canonical-request fix",
+   "turns": [
+    {
+     "say": "بدي غسالة ملابس اوتوماتيك",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_washer"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H2-DIA-009",
+   "group": "H2-DIA",
+   "type": "dialect-search",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "unseen dialect/loanword search after the canonical-request fix",
+   "turns": [
+    {
+     "say": "ابغى دلة قهوة نحاس",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_dallah"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H2-DIA-010",
+   "group": "H2-DIA",
+   "type": "dialect-search",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "unseen dialect/loanword search after the canonical-request fix",
+   "turns": [
+    {
+     "say": "بدي لابتوب ماك",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_laptop_mac_air"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H2-DIA-011",
+   "group": "H2-DIA",
+   "type": "dialect-search",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "unseen dialect/loanword search after the canonical-request fix",
+   "turns": [
+    {
+     "say": "ابي سيارة كامري",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_camry_2019"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H2-DIA-012",
+   "group": "H2-DIA",
+   "type": "dialect-search",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "unseen dialect/loanword search after the canonical-request fix",
+   "turns": [
+    {
+     "say": "حدا بيصلح كمبيوترات؟",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_svc_pc_fix"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H2-DIA-013",
+   "group": "H2-DIA",
+   "type": "dialect-search",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "unseen dialect/loanword search after the canonical-request fix",
+   "turns": [
+    {
+     "say": "اريد عامل تنظيف للبيت",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_svc_cleaning"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H2-DIA-014",
+   "group": "H2-DIA",
+   "type": "dialect-search",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "unseen dialect/loanword search after the canonical-request fix",
+   "turns": [
+    {
+     "say": "مين بيعمل تصميم شعارات",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_svc_design"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H2-DIA-015",
+   "group": "H2-DIA",
+   "type": "dialect-search",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "unseen dialect/loanword search after the canonical-request fix",
+   "turns": [
+    {
+     "say": "ابي معلم برمجة بايثون اونلاين",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_svc_tutor"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H2-DIA-016",
+   "group": "H2-DIA",
+   "type": "dialect-search",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "unseen dialect/loanword search after the canonical-request fix",
+   "turns": [
+    {
+     "say": "بدي حدا ينقل عفشي",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_svc_moving"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H2-DIA-017",
+   "group": "H2-DIA",
+   "type": "dialect-search",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "unseen dialect/loanword search after the canonical-request fix",
+   "turns": [
+    {
+     "say": "ابي حلو كنافة",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_food_kunafa"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H2-DIA-018",
+   "group": "H2-DIA",
+   "type": "dialect-search",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "unseen dialect/loanword search after the canonical-request fix",
+   "turns": [
+    {
+     "say": "عايز شاشة ال جي ٥٥ بوصة",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_tv_lg"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H2-DIA-019",
+   "group": "H2-DIA",
+   "type": "dialect-search",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "unseen dialect/loanword search after the canonical-request fix",
+   "turns": [
+    {
+     "say": "ابي فون ١٣ نظيف",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_iphone13_a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H2-DIA-020",
+   "group": "H2-DIA",
+   "type": "dialect-search",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "unseen dialect/loanword search after the canonical-request fix",
+   "turns": [
+    {
+     "say": "بدي جوال شاومي",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_redmi_note"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H2-DIA-021",
+   "group": "H2-DIA",
+   "type": "dialect-search",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "unseen dialect/loanword search after the canonical-request fix",
+   "turns": [
+    {
+     "say": "ابي ماوس العاب لوجيتك",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_mixed_lang"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H2-DIA-022",
+   "group": "H2-DIA",
+   "type": "dialect-search",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "unseen dialect/loanword search after the canonical-request fix",
+   "turns": [
+    {
+     "say": "بدي شاحن تايب سي",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_bulk_cables"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H2-DIA-023",
+   "group": "H2-DIA",
+   "type": "dialect-search",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "unseen dialect/loanword search after the canonical-request fix",
+   "turns": [
+    {
+     "say": "ابغا مكيف سبلت جديد",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_ac_split"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H2-DIA-024",
+   "group": "H2-DIA",
+   "type": "dialect-search",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "unseen dialect/loanword search after the canonical-request fix",
+   "turns": [
+    {
+     "say": "بدي تخت دبل مع فرشة",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_bed"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H2-DIA-025",
+   "group": "H2-DIA",
+   "type": "dialect-search",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "unseen dialect/loanword search after the canonical-request fix",
+   "turns": [
+    {
+     "say": "ابي طاولة اكل مع كراسي",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_table_dining"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H2-DIA-026",
+   "group": "H2-DIA",
+   "type": "dialect-search",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "unseen dialect/loanword search after the canonical-request fix",
+   "turns": [
+    {
+     "say": "بدي كرسي للمكتب",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_nophoto_chair"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H2-DIA-027",
+   "group": "H2-DIA",
+   "type": "dialect-search",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "unseen dialect/loanword search after the canonical-request fix",
+   "turns": [
+    {
+     "say": "اريد سماعات ابل لاسلكية",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_airpods"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H2-DIA-028",
+   "group": "H2-DIA",
+   "type": "dialect-search",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "unseen dialect/loanword search after the canonical-request fix",
+   "turns": [
+    {
+     "say": "ابي عطر رجالي للهدية",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_gift_perfume"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H2-DIA-029",
+   "group": "H2-DIA",
+   "type": "dialect-search",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "unseen dialect/loanword search after the canonical-request fix",
+   "turns": [
+    {
+     "say": "بدي ماكينة درزة صناعية",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_machine_sewing"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H2-DIA-030",
+   "group": "H2-DIA",
+   "type": "dialect-search",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "unseen dialect/loanword search after the canonical-request fix",
+   "turns": [
+    {
+     "say": "اريد كيا كهربا",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_kia_ev"
+      ]
+     }
+    }
+   ]
+  }
+ ]
+}
