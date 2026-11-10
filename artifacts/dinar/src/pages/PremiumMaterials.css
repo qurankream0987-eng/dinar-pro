@@ -220,10 +220,8 @@
 }
 
 /* ─── Frameless shell and the living DINAR mark (owner review, 2026-11-10) ─── */
-/* No boxed frames: the sidebar and the conversation share one continuous ground; the sidebar is
-   set apart by a soft light edge instead of a border. */
+/* No boxed frames or separator lines: the sidebar and the conversation share one continuous ground. */
 .dinar-chatgpt .ai-history { border: 0; box-shadow: none; background: linear-gradient(180deg, rgb(var(--chat-glass) / .34), rgb(var(--chat-glass) / .12)); }
-.dinar-chatgpt .ai-history::after { content: ""; position: absolute; inset-block: 8%; inset-inline-end: 0; width: 1px; background: linear-gradient(180deg, transparent, rgb(var(--chat-line) / .28), transparent); pointer-events: none; }
 .dinar-chatgpt .ai-history { position: relative; }
 @media (min-width: 1024px) {
   .dinar-chatgpt .ai-history { margin: 0; border-radius: 0; }
