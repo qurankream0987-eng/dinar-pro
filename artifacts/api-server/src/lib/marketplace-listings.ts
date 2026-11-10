@@ -273,7 +273,21 @@ export async function searchMarketplaceListings(
   // «فني مكيفات», «معلم بلاط»: a generic role noun names who does the work, not a word
   // the listing must contain; it is dropped only when other words remain.
   // «…مستعملة؟»: punctuation is a word break, never part of a word to find.
-  const allTokens = normalizeSearch(term.replace(/[؟?!،,؛;.()«»"']+/gu, " ")).split(/\s+/).filter(Boolean);
+  const originalTokens = normalizeSearch(term.replace(/[؟?!،,؛;.()«»"']+/gu, " ")).split(/\s+/).filter(Boolean);
+  const conditionOf = (word: string) => /^(?:ال)?(?:مستعمل[ةه]?|مستخدم[ةه]?)$/u.test(word) ? "مستعمل" : /^(?:ال)?جديد[ةه]?$/u.test(word) ? "جديد" : undefined;
+  const conditionWords = options.conversational && !/(?:^|\s)(?:مو|مش|ليس|غير|بدون|لا)(?:\s|$)/u.test(originalTokens.join(" "))
+    ? originalTokens.filter((word) => conditionOf(word) !== undefined) : [];
+  const conditions = new Set(conditionWords.map(conditionOf));
+  const requiredCondition = conditions.size === 1 ? [...conditions][0] : undefined;
+  const allTokens = requiredCondition ? originalTokens.filter((word) => !conditionWords.includes(word)) : originalTokens;
+  const matchesCondition = (offer: typeof offers.$inferSelect) => {
+    if (!requiredCondition) return true;
+    const stored = offer.data.attributes?.condition;
+    if (stored != null) return conditionOf(normalizeSearch(String(stored))) === requiredCondition;
+    const title = normalizeSearch(String(offer.data.title ?? ""));
+    return !/(?:^|\s)(?:مو|مش|ليس|غير|بدون|لا)\s+(?:ال)?(?:مستعمل|مستخدم|جديد)/u.test(title)
+      && title.split(/\s+/u).some((word) => conditionOf(word) === requiredCondition);
+  };
   const meaningful = allTokens.filter((token) => !SERVICE_ROLE_WORDS.has(token));
   const tokens = itemTokens(meaningful.length ? meaningful : allTokens);
   // Product words that are also category aliases ("سماعات") match inflections by stem.
@@ -298,7 +312,7 @@ export async function searchMarketplaceListings(
         // Legacy descriptive brand/model fields may be omitted while the seller's title
         // states them. This is text evidence only: never infer price, condition, numbers,
         // certification, ownership or a negative constraint, and never override stored data.
-        if (!["make", "model", "brand", "manufacturer"].includes(filter.field) || typeof filter.value !== "string" || !["eq", "contains"].includes(filter.operator)) return false;
+        if (!["make", "model", "brand", "manufacturer", "color", "colour", "condition", "audience"].includes(filter.field) || typeof filter.value !== "string" || !["eq", "contains"].includes(filter.operator)) return false;
         const title = normalizeSearch(String(offer.data.title ?? "")).split(/\s+/u);
         return normalizeSearch(filter.value).split(/\s+/u).filter(Boolean).every((word) => title.some((part) => tokenVariants(word).some((form) => tokenVariants(part).includes(form))));
       }
@@ -344,7 +358,7 @@ export async function searchMarketplaceListings(
         (!category ||
           offer.data.categoryId === categoryRow?.id ||
           (!offer.data.categoryId && offer.data.category === category)) &&
-        matchesFilters(offer) &&
+        matchesFilters(offer) && matchesCondition(offer) &&
         (!options.allowedIds || options.allowedIds.includes(offer.id)) &&
         (!options.conversational ||
           offer.inventoryMode === "UNLIMITED" ||

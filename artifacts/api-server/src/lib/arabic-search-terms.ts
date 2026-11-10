@@ -164,13 +164,21 @@ export async function boundedItemRelaxation<T extends { title: string }>(query: 
   const words = itemTokens(normalize(query).split(/\s+/u).filter(Boolean)).slice(0, 6);
   if (words.length < 3) return undefined;
   const [head, ...others] = words;
+  // A definite adjective after a purpose/recipient phrase describes that destination,
+  // not the item: do not turn «للمنزل الجديد» into a hard new-item constraint.
+  const purposeAdjectives = new Set<number>();
+  for (let i = 1; i < words.length - 1; i++) {
+    if (!/^ل\S{2,}$/u.test(words[i]!)) continue;
+    for (let j = i + 1; j < Math.min(words.length, i + 3) && /^ال/u.test(words[j]!) && DESCRIPTIVE.test(words[j]!); j++) purposeAdjectives.add(j);
+  }
+  const hardDescriptors = new Set(words.filter((word, index) => DESCRIPTIVE.test(word) && !purposeAdjectives.has(index)));
   let tried = 0;
   const combinations = (items: string[], count: number): string[][] => count === 0 ? [[]] : items.flatMap((item, i) => combinations(items.slice(i + 1), count - 1).map((rest) => [item, ...rest]));
   for (let keep = others.length - 1; keep >= 0 && keep >= others.length - 3 && keep + 1 >= Math.ceil(words.length / 2); keep--) {
     for (const rest of combinations(others, keep)) {
       const subset = [head!, ...rest];
       const dropped = others.filter((word) => !rest.includes(word));
-      if (dropped.some((word) => /\d/u.test(word) || cardinalWordValue(word) !== undefined || DESCRIPTIVE.test(word)) || isDescriptiveOnly(subset)) continue;
+      if (dropped.some((word) => /\d/u.test(word) || cardinalWordValue(word) !== undefined || hardDescriptors.has(word)) || isDescriptiveOnly(subset)) continue;
       if (++tried > 14) return undefined;
       let listings = await run(subset.join(" "));
       if (!rest.length) listings = listings.filter((listing) => textMatchesToken(normalize(listing.title), head!));
