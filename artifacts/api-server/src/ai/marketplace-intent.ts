@@ -139,7 +139,7 @@ export function interpretMarketplaceTurn(
   message: string,
   context: MarketplaceTurnContext,
 ): MarketplaceTurnIntent {
-  const normalized = normalizeMarketplaceText(message);
+  const normalized = normalizeMarketplaceText(stripCorrectionPrefix(message));
   const numbers = parseNumericMentions(normalized);
   const asksForDetails =
     /(?:تفاصيل|معلومات|مواصفات|(?:وش|شو|ايش|شنو|ماذا|ما)\s+(?:يقدم|تقدم|فيه|فيها|يشمل|تشمل|يحتوي|تحتوي))/u.test(normalized);
@@ -196,7 +196,7 @@ export function interpretMarketplaceTurn(
       confidence: "HIGH",
     };
 
-  const query = parseStructuredSearch(message, context.previous, context.categories, {
+  const query = parseStructuredSearch(stripCorrectionPrefix(message), context.previous, context.categories, {
     knownCities: context.knownCities,
   });
   if (query) {

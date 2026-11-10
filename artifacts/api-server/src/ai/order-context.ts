@@ -54,7 +54,7 @@ function requestFor(message: string, surface?: string): OrderPurpose | "HIDE_MAP
 }
 
 function isOrderFollowup(message: string) {
-  return /كلم البائع|اكد الاستلام|وينه|وينها|حالتها|حالته|وضعه|وضعها|متى يوصل|متى يصل/u.test(
+  return /كلم البائع|اكد الاستلام|(?:طيب\s+)?وين\s+وصل|وينه|وينها|حالتها|حالته|وضعه|وضعها|متى يوصل|متى يصل/u.test(
     normalized(message),
   );
 }

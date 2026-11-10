@@ -178,7 +178,7 @@ async function executeCartConversationTurn(input: {
     )
     .orderBy(desc(messages.createdAt))
     .limit(1);
-  if (!latestAssistant) return null;
+  if (!latestAssistant) return continueCheckout ? clarify("لا توجد مراجعة سلة حالية. افتح السلة أو طلباتك وحدد ما تريد متابعته؛ لم أنفّذ شيئًا.") : null;
   const [latestSurface] = await db
     .select({ payload: aiUiBlocks.payload })
     .from(aiUiBlocks)
@@ -1447,6 +1447,12 @@ async function executeRuntime(context: RuntimeContext, incoming: RuntimeOptions)
   // the inactive-market gate; every other marketplace action remains behind it.
   if (!isMarketAvailable(context.market))
     return (await modelFallback()) ?? clarify();
+  // An explicit ceiling increase while a search is in view is a search refinement,
+  // not a counter-offer/quantity edit on one of the search rows.
+  if (/^(?:طيب\s+)?(?:ارفعها|ارفعه|زيدها)\s+/u.test(normalizeSearch(context.message))) {
+    const [last] = await db.select().from(aiResultSets).where(and(eq(aiResultSets.conversationId,context.conversationId),eq(aiResultSets.marketId,context.market.id))).orderBy(desc(aiResultSets.createdAt)).limit(1);
+    if (last && !(last.query as {kind?:unknown}).kind) { const refined = await executeBuyerTurn(context); if (refined) return refined; }
+  }
   // Best-price requests are explicit negotiation actions; do not let generic
   // commerce routing reinterpret them as a search or discussion.
   if (!addToCart && !hasListingPhotos && isBestPriceRequest(context.message)) {
