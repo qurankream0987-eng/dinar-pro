@@ -6,6 +6,7 @@ const CameraCapture = lazy(() => import("./CameraCapture").then((module) => ({ d
 import { isSearchPhoto, markSearchPhoto } from "./visual-search-photo";
 import { textDirection } from "./rich-text";
 import { transcribeAiVoiceRecording } from "./ai-api";
+import { EffortPicker } from "./EffortPicker";
 
 export type ReasoningEffort = "low" | "medium" | "high";
 
@@ -203,6 +204,37 @@ export function ChatComposer({
     return undefined;
   }, [draft]);
 
+  /** One path for picker, paste and drop: same types, size and count limits. */
+  const addFiles = (selected: File[]) => {
+    if (!selected.length) return;
+    if (!canUploadPhotos) {
+      setHint("سجّل الدخول لإرفاق صور في المحادثة.");
+      return;
+    }
+    if (selected.some((file) => file.type.startsWith("video/"))) {
+      setHint("إرفاق الفيديو غير متاح بعد؛ أرفق صورًا فقط.");
+      selected = selected.filter((file) => !file.type.startsWith("video/"));
+      if (!selected.length) return;
+    }
+    const valid = selected.filter(
+      (file) =>
+        ["image/jpeg", "image/png", "image/webp"].includes(file.type) &&
+        file.size > 0 &&
+        file.size <= 5 * 1024 * 1024,
+    );
+    const invalidCount = selected.length - valid.length;
+    const remaining = 4 - photos.filter((file) => !isSearchPhoto(file)).length;
+    const accepted = valid.slice(0, Math.max(0, remaining));
+    if (invalidCount)
+      setHint("اختر صور JPEG أو PNG أو WebP لا يتجاوز حجم كل منها 5 ميغابايت.");
+    else if (valid.length > remaining)
+      setHint("يمكن إرفاق أربع صور كحد أقصى.");
+    else setHint("");
+    if (accepted.length)
+      onPhotosChange([...photos.filter((file) => !isSearchPhoto(file)), ...accepted]);
+  };
+  const [dragging, setDragging] = useState(false);
+
   return (
     <>
     {cameraOpen && (
@@ -277,26 +309,28 @@ export function ChatComposer({
         onChange={(event) => {
           const selected = Array.from(event.currentTarget.files ?? []);
           event.currentTarget.value = "";
-          if (!selected.length) return;
-          const valid = selected.filter(
-            (file) =>
-              ["image/jpeg", "image/png", "image/webp"].includes(file.type) &&
-              file.size > 0 &&
-              file.size <= 5 * 1024 * 1024,
-          );
-          const invalidCount = selected.length - valid.length;
-          const remaining = 4 - photos.length;
-          const accepted = valid.slice(0, remaining);
-          if (invalidCount)
-            setHint("اختر صور JPEG أو PNG أو WebP لا يتجاوز حجم كل منها 5 ميغابايت.");
-          else if (valid.length > remaining)
-            setHint("يمكن إرفاق أربع صور كحد أقصى.");
-          else setHint("");
-          if (accepted.length)
-            onPhotosChange([...photos.filter((file) => !isSearchPhoto(file)), ...accepted]);
+          addFiles(selected);
         }}
       />
-      <div className="ai-composer-box" dir="ltr">
+      <div
+        className={`ai-composer-box${dragging ? " is-dragging" : ""}`}
+        dir="ltr"
+        onDragOver={(event) => {
+          if (!event.dataTransfer?.types.includes("Files")) return;
+          event.preventDefault();
+          setDragging(true);
+        }}
+        onDragLeave={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDragging(false);
+        }}
+        onDrop={(event) => {
+          const files = Array.from(event.dataTransfer?.files ?? []);
+          if (!files.length) return;
+          event.preventDefault();
+          setDragging(false);
+          if (!busy && !offline) addFiles(files);
+        }}
+      >
         <button
           type="button"
           aria-label="إرفاق صور للمحادثة"
@@ -336,6 +370,12 @@ export function ChatComposer({
           ref={input}
           value={draft}
           onChange={(event) => onDraftChange(event.target.value)}
+          onPaste={(event) => {
+            const files = Array.from(event.clipboardData?.files ?? []);
+            if (!files.length) return;
+            event.preventDefault();
+            if (!busy && !offline) addFiles(files);
+          }}
           onKeyDown={(event) => {
             if (
               event.key === "Enter" &&
@@ -357,19 +397,7 @@ export function ChatComposer({
           className="block min-h-[42px] max-h-44 min-w-0 flex-1 resize-none bg-transparent px-3 py-2 text-base leading-7 outline-none placeholder:text-muted-foreground"
         />
         <div className="flex shrink-0 items-center gap-1">
-          <select
-            aria-label="مستوى التفكير"
-            value={reasoningEffort}
-            disabled={busy || offline}
-            onChange={(event) =>
-              onReasoningEffortChange(event.target.value as ReasoningEffort)
-            }
-            className="dinar-composer-effort"
-          >
-            <option value="low">خفيف</option>
-            <option value="medium">متوسط</option>
-            <option value="high">أعمق</option>
-          </select>
+          <EffortPicker value={reasoningEffort} disabled={busy || offline} onChange={onReasoningEffortChange} />
           <button
             type="button"
             aria-label={recording ? "إيقاف التسجيل الصوتي" : transcribing ? "جارٍ تحويل التسجيل" : "بدء التسجيل الصوتي"}
