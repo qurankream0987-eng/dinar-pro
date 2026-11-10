@@ -6,6 +6,7 @@ import {
   marketAllowsCashDirect,
   marketAllowsFulfilment,
   marketProviderPolicyAllows,
+  marketProviderKey,
   resolveMarketProvider,
 } from "../src/lib/market-capability-registry";
 import type {
@@ -164,6 +165,20 @@ await test("provider selection requires market policy, matching mode, environmen
     }),
     undefined,
   );
+});
+
+await test("staging AI is open for the Jordan test market only; production and other countries stay closed", async () => {
+  assert.equal(marketProviderKey("JO", "AI_TEXT", "staging"), "configured-staging-ai");
+  assert.equal(marketProviderKey("JO", "AI_TEXT", "production"), undefined);
+  assert.equal(marketProviderKey("JO", "AI_TEXT", "development"), "configured-development-ai");
+  for (const country of ["KW", "SA", "AE", "EG"]) assert.equal(marketProviderKey(country, "AI_TEXT", "staging"), undefined, country);
+  assert.equal(marketProviderKey("JO", "PAYMENTS" as never, "staging"), undefined);
+  const ai = { proposeToolCall: async () => ({}) } as never;
+  const sandbox = { family: "AI_TEXT" as const, providerKey: "configured-staging-ai", mode: "SANDBOX" as const, environments: ["staging" as const], marketIds: ["JO"], create: () => ai };
+  const jo = { marketId: "JO", countryCode: "JO", currencyCode: "JOD" };
+  assert.strictEqual(await resolveMarketProvider({ family: "AI_TEXT", market: jo, environment: "staging", registrations: [sandbox as never] }), ai);
+  assert.equal(await resolveMarketProvider({ family: "AI_TEXT", market: jo, environment: "production", registrations: [sandbox as never] }), undefined);
+  assert.equal(await resolveMarketProvider({ family: "AI_TEXT", market: { marketId: "KW", countryCode: "KW", currencyCode: "KWD" }, environment: "staging", registrations: [sandbox as never] }), undefined);
 });
 
 await test("the readiness matrix never reports an unverified sandbox or live connection", () => {

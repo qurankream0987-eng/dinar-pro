@@ -27,6 +27,16 @@ export const MARKET_PROVIDER_POLICY_BY_COUNTRY: Readonly<
   Record<string, Partial<Record<ProviderFamily, string>>>
 > = Object.freeze({});
 
+/**
+ * Staging-only provider selections, read only when DINAR_DEPLOYMENT_ENV=staging. Owner approval
+ * (2026-11-10): the AI text provider for the Jordan test market on staging, for the owner's own
+ * trial with test data. Production and every other country stay closed; a production entry
+ * needs its own legal decision and privacy notice.
+ */
+export const STAGING_PROVIDER_POLICY_BY_COUNTRY: Readonly<
+  Record<string, Partial<Record<ProviderFamily, string>>>
+> = Object.freeze({ JO: Object.freeze({ AI_TEXT: "configured-staging-ai" }) });
+
 export const INTEGRATION_READINESS_MATRIX = [
   {
     family: "AI_TEXT",
@@ -221,6 +231,10 @@ export function marketProviderKey(
   family: ProviderFamily,
   environment: ProviderDeploymentEnvironment,
 ): string | undefined {
+  if (environment === "staging") {
+    const staged = STAGING_PROVIDER_POLICY_BY_COUNTRY[countryCode]?.[family];
+    if (staged) return staged;
+  }
   const explicit = MARKET_PROVIDER_POLICY_BY_COUNTRY[countryCode]?.[family];
   if (explicit !== undefined) return explicit || undefined;
 

@@ -561,6 +561,19 @@ const modelGatewayRegistration: ProviderRegistration<"AI_TEXT"> = {
  * explicitly enabled development gateway for the server-resolved market. Default: none,
  * so the deterministic core answers alone and no provider is contacted.
  */
+/** Staging sandbox (owner-approved for the Jordan test market only): the same configured gateway. */
+const stagingModelGatewayRegistration: ProviderRegistration<"AI_TEXT"> = {
+  family: "AI_TEXT",
+  providerKey: "configured-staging-ai",
+  mode: "SANDBOX",
+  environments: ["staging"],
+  marketIds: ["JO"],
+  create: () => {
+    sharedGateway ??= createConversationModelGateway();
+    return sharedGateway;
+  },
+};
+
 export async function modelGatewayFor(
   injected?: ConversationModelGateway,
   market?: ProviderMarketContext,
@@ -578,7 +591,7 @@ export async function modelGatewayFor(
     family: "AI_TEXT",
     market,
     environment,
-    registrations: [modelGatewayRegistration],
+    registrations: [modelGatewayRegistration, stagingModelGatewayRegistration],
   });
 }
 
