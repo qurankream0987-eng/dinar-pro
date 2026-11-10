@@ -170,7 +170,7 @@ export async function boundedItemRelaxation<T extends { title: string }>(query: 
     for (const rest of combinations(others, keep)) {
       const subset = [head!, ...rest];
       const dropped = others.filter((word) => !rest.includes(word));
-      if (dropped.some((word) => /\d/u.test(word) || cardinalWordValue(word) !== undefined) || isDescriptiveOnly(subset)) continue;
+      if (dropped.some((word) => /\d/u.test(word) || cardinalWordValue(word) !== undefined || DESCRIPTIVE.test(word)) || isDescriptiveOnly(subset)) continue;
       if (++tried > 14) return undefined;
       let listings = await run(subset.join(" "));
       if (!rest.length) listings = listings.filter((listing) => textMatchesToken(normalize(listing.title), head!));
