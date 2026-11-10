@@ -69,10 +69,37 @@ const TOOL = {
  * the operator marked image-capable with DINAR_AI_IMAGE_INPUT=true. Anything else is
  * BLOCKED_PROVIDER — the caller then answers honestly and asks the buyer to describe the item.
  */
+/**
+ * A dedicated vision slot (DINAR_AI_VISION_*), so the chat model (e.g. DeepSeek, text-only) and
+ * the photo model are configured independently. It is read through the same gateway validation as
+ * the primary slot (https only, pinned OpenRouter routing in staging/production, no free routes).
+ */
+export function visionEnv(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
+  if (!env.DINAR_AI_VISION_PROVIDER?.trim()) return env;
+  const mapped: NodeJS.ProcessEnv = {};
+  for (const [key, value] of Object.entries(env)) if (!key.startsWith("DINAR_AI_")) mapped[key] = value;
+  for (const [key, value] of Object.entries(env))
+    if (key.startsWith("DINAR_AI_VISION_")) mapped[`DINAR_AI_${key.slice("DINAR_AI_VISION_".length)}`] = value;
+  mapped.DINAR_AI_IMAGE_INPUT = "true";
+  return mapped;
+}
+
+/** The provider/model a vision call will use, for spend holds; undefined when none is configured. */
+export function visionModel(env: NodeJS.ProcessEnv = process.env): { provider: string; model: string } | undefined {
+  try {
+    const runtime = resolveAIModelRuntimeConfiguration(visionEnv(env));
+    if (!runtime.capabilities.imageInput) return undefined;
+    return { provider: runtime.primary.provider, model: runtime.primary.requestedModel };
+  } catch {
+    return undefined;
+  }
+}
+
 export function createVisualAnalyzer(
-  env: NodeJS.ProcessEnv = process.env,
+  sourceEnv: NodeJS.ProcessEnv = process.env,
   fetchImpl: typeof fetch = fetch,
 ): VisualAnalyzer {
+  const env = visionEnv(sourceEnv);
   return {
     async analyze(image, text) {
       if (env.BDINAR_BLOCK_MODEL_CALLS === "1") return { status: "BLOCKED_PROVIDER", reason: "MODEL_CALLS_BLOCKED" };

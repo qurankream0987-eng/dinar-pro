@@ -232,3 +232,29 @@ test("VS-07 match labels are deterministic from persisted listings, not model te
   assert.equal(visualSearchTerms({ ...analysis, brand: undefined, model: undefined }), "هواتف ايفون هاتف");
   assert.equal(visualFallbackTerms(analysis), "Apple ايفون");
 });
+
+test("a dedicated vision slot is configured apart from the text chat model", async () => {
+  const { visionEnv, visionModel } = await import("../src/ai/visual-search");
+  const base = { NODE_ENV: "production", DINAR_DEPLOYMENT_ENV: "staging", DINAR_AI_PROVIDER: "DEEPSEEK", DINAR_AI_MODEL: "deepseek-flash", DINAR_DEEPSEEK_API_KEY: "x" } as any;
+  // Without a vision slot the text model is used and is not image-capable.
+  assert.equal(visionModel(base), undefined);
+  const env = {
+    ...base,
+    DINAR_AI_VISION_PROVIDER: "OPENAI_COMPATIBLE",
+    DINAR_AI_VISION_BASE_URL: "https://openrouter.ai/api/v1",
+    DINAR_AI_VISION_MODEL: "google/gemini-2.5-flash-lite",
+    DINAR_AI_VISION_PROVIDER_ORDER: "google-vertex",
+    DINAR_AI_VISION_DATA_COLLECTION: "deny",
+    DINAR_AI_VISION_ZDR: "true",
+    DINAR_AI_VISION_REQUIRE_PARAMETERS: "true",
+    DINAR_AI_VISION_API_KEY: "y",
+  };
+  const mapped = visionEnv(env);
+  assert.equal(mapped.DINAR_AI_PROVIDER, "OPENAI_COMPATIBLE");
+  assert.equal(mapped.DINAR_AI_API_KEY, "y");
+  assert.equal(mapped.DINAR_AI_IMAGE_INPUT, "true");
+  assert.equal(mapped.DINAR_DEEPSEEK_API_KEY, "x", "other keys pass through unchanged");
+  assert.deepEqual(visionModel(env), { provider: "OPENAI_COMPATIBLE", model: "google/gemini-2.5-flash-lite" });
+  // Staging/production refuse an unpinned OpenRouter route for vision as for chat.
+  assert.equal(visionModel({ ...env, DINAR_AI_VISION_PROVIDER_ORDER: "" }), undefined);
+});

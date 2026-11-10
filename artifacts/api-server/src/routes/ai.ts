@@ -1,5 +1,7 @@
+import { holdPlatformAiSpend, settlePlatformAiSpend, spendRequired } from "../lib/ai-spend";
+import { getCommercialPolicy } from "../lib/commercial-policy";
 import { isVisualSearchPath, loadVisualSearchImage, MAX_VISUAL_SEARCH_IMAGES } from "../lib/visual-search-images";
-import { createVisualAnalyzer, rankVisualMatches, visualFallbackTerms, visualSearchTerms, type VisualAnalysis, type VisualAnalyzer } from "../ai/visual-search";
+import { createVisualAnalyzer, visionModel, rankVisualMatches, visualFallbackTerms, visualSearchTerms, type VisualAnalysis, type VisualAnalyzer } from "../ai/visual-search";
 import { UniversalCardsPayloadSchema } from "@workspace/api-zod/connect";
 import type { DomainSearchProvider } from "../connect/domains";
 import {
@@ -2145,7 +2147,17 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
   if (visualImage) {
     const analyzer = (req.app.locals.visualAnalyzer as VisualAnalyzer | undefined) ?? createVisualAnalyzer();
     // An analyzer that throws is an unavailable provider, never a failed turn or an invented answer.
-    const analyzed = await analyzer.analyze(visualImage, message).catch(() => ({ status: "FAILED" as const, reason: "ANALYZER_ERROR" }));
+    // A paid vision call holds money under the global AI cap first; a refused hold is an
+    // unavailable provider (honest answer), never an unmetered call. Injected test analyzers skip it.
+    const metered = !req.app.locals.visualAnalyzer && spendRequired();
+    const policy = metered ? (await getCommercialPolicy(market.id)).aiUsage : undefined;
+    const expectedModel = visionModel();
+    const hold = policy && expectedModel ? await holdPlatformAiSpend({ purpose: "PLATFORM_VISUAL_SEARCH", resource: "IMAGE_UNDERSTANDING", policy, expectedModel }) : undefined;
+    const analyzed: Awaited<ReturnType<VisualAnalyzer["analyze"]>> = metered && !hold?.ok
+      ? { status: "BLOCKED_PROVIDER", reason: "NO_IMAGE_MODEL" }
+      : await analyzer.analyze(visualImage, message).catch(() => ({ status: "FAILED" as const, reason: "ANALYZER_ERROR" }));
+    if (hold?.ok)
+      await settlePlatformAiSpend(hold.hold.id, [{ kind: "PRIMARY", outcome: analyzed.status === "ANALYZED" ? "SUCCESS" : "FAILED", provider: expectedModel!.provider, model: expectedModel!.model, imageUnits: 1 }], policy!.tokenEstimates.IMAGE_UNDERSTANDING).catch(() => undefined);
     if (analyzed.status === "ANALYZED" && analyzed.analysis.isProduct && visualSearchTerms(analyzed.analysis)) {
       visualAnalysis = analyzed.analysis;
       // «…عند الشركاء»: the same canonical Connect partner search, which honours participation modes.
