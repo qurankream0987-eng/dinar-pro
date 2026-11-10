@@ -148,7 +148,7 @@ const escape = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
  * unrelated words.
  */
 export function textMatchesToken(text: string, token: string): boolean {
-  if (/^\d+$/u.test(token)) return new RegExp(`(?:^|\\s)${escape(token)}(?=\\s|$)`, "u").test(text);
+  if (/^\d+$/u.test(token)) return new RegExp(`(?<![\\p{L}\\p{N}])(?<!\\d[.,٫])${escape(token)}(?![\\p{L}\\p{N}]|[.,٫]\\d)`, "u").test(text);
   if (text.includes(token)) return true;
   // …and end it, allowing only an inflectional ending: the stem «سيار» (from «سيارات») matches
   // «سيارة», but a stem is never the prefix of another word.
