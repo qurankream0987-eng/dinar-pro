@@ -218,3 +218,45 @@
 @media (max-width:767px), (max-height:560px) {
  .dinar-chatgpt .premium-welcome .premium-action-card { min-height:86px; }
 }
+
+/* ─── Frameless shell and the living DINAR mark (owner review, 2026-11-10) ─── */
+/* No boxed frames: the sidebar and the conversation share one continuous ground; the sidebar is
+   set apart by a soft light edge instead of a border. */
+.dinar-chatgpt .ai-history { border: 0; box-shadow: none; background: linear-gradient(180deg, rgb(var(--chat-glass) / .34), rgb(var(--chat-glass) / .12)); }
+.dinar-chatgpt .ai-history::after { content: ""; position: absolute; inset-block: 8%; inset-inline-end: 0; width: 1px; background: linear-gradient(180deg, transparent, rgb(var(--chat-line) / .28), transparent); pointer-events: none; }
+.dinar-chatgpt .ai-history { position: relative; }
+@media (min-width: 1024px) {
+  .dinar-chatgpt .ai-history { margin: 0; border-radius: 0; }
+}
+.dinar-chatgpt .dinar-chat-conversation { border: 0 !important; border-radius: 0 !important; box-shadow: none !important; }
+
+/* The mark alone at the top: a soft halo follows the pointer, the tile tilts toward it, and it
+   breathes gently at rest. Reduced motion keeps only the static glow. */
+.premium-logo {
+  --tilt-x: 0deg; --tilt-y: 0deg; --glow-x: 50%; --glow-y: 40%;
+  position: relative; display: grid; place-items: center; width: 168px; height: 168px; margin-inline: auto;
+  border: 0; border-radius: 40px; background: transparent; cursor: pointer; isolation: isolate;
+  transform: perspective(700px) rotateX(var(--tilt-x)) rotateY(var(--tilt-y));
+  transition: transform 220ms var(--premium-ease, cubic-bezier(.2,.8,.2,1));
+}
+.premium-logo .ai-welcome-logo { position: relative; z-index: 1; filter: drop-shadow(0 18px 34px rgb(0 8 24 / .45)); transition: transform 260ms var(--premium-ease, ease), filter 260ms; }
+.premium-logo-halo {
+  position: absolute; inset: -18%; border-radius: 50%; z-index: 0;
+  background: radial-gradient(circle at var(--glow-x) var(--glow-y), rgb(var(--chat-gold) / .38), rgb(var(--chat-blue) / .22) 38%, transparent 68%);
+  filter: blur(18px); opacity: .7; transition: opacity 260ms;
+}
+.premium-logo:hover .premium-logo-halo, .premium-logo:focus-visible .premium-logo-halo { opacity: 1; }
+.premium-logo:hover .ai-welcome-logo, .premium-logo:focus-visible .ai-welcome-logo { transform: scale(1.06); filter: drop-shadow(0 22px 44px rgb(var(--chat-gold) / .28)); }
+.premium-logo:active .ai-welcome-logo { transform: scale(.97); }
+@media (prefers-reduced-motion: no-preference) {
+  .premium-logo .ai-welcome-logo { animation: dinar-mark-breathe 5.5s ease-in-out infinite; }
+  .premium-logo:hover .ai-welcome-logo { animation-play-state: paused; }
+  @keyframes dinar-mark-breathe { 0%, 100% { translate: 0 0; } 50% { translate: 0 -6px; } }
+}
+@media (prefers-reduced-motion: reduce) {
+  .premium-logo { transform: none; transition: none; }
+}
+@media (max-width: 640px) {
+  .premium-logo { width: 124px; height: 124px; border-radius: 30px; }
+  .premium-logo .ai-welcome-logo { width: 84px; height: 84px; }
+}

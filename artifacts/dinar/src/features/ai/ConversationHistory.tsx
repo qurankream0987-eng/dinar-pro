@@ -1,6 +1,6 @@
 import { LazyMotion, domAnimation, m, useReducedMotion } from "framer-motion";
 import { surfaceSpring } from "@/lib/presentation-motion";
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent, type PointerEvent as ReactPointerEvent } from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import {
   ShoppingCart,
@@ -99,6 +99,44 @@ export const STARTERS: readonly WelcomeAction[] = [
     prefill: "حلّل هذا المنتج بناءً على معلوماته الفعلية: ",
   },
 ];
+
+/**
+ * The DINAR mark alone, alive: it tilts toward the pointer, glows on hover and focus, and a tap
+ * moves focus to the composer. Purely presentational; still under reduced motion.
+ */
+function InteractiveLogo() {
+  const ref = useRef<HTMLButtonElement>(null);
+  const reduceMotion = useReducedMotion();
+  const move = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    if (reduceMotion || !ref.current) return;
+    const box = ref.current.getBoundingClientRect();
+    const x = (event.clientX - box.left) / box.width - 0.5;
+    const y = (event.clientY - box.top) / box.height - 0.5;
+    ref.current.style.setProperty("--tilt-x", `${(-y * 14).toFixed(2)}deg`);
+    ref.current.style.setProperty("--tilt-y", `${(x * 14).toFixed(2)}deg`);
+    ref.current.style.setProperty("--glow-x", `${((x + 0.5) * 100).toFixed(0)}%`);
+    ref.current.style.setProperty("--glow-y", `${((y + 0.5) * 100).toFixed(0)}%`);
+  };
+  const reset = () => {
+    ref.current?.style.removeProperty("--tilt-x");
+    ref.current?.style.removeProperty("--tilt-y");
+  };
+  return (
+    <button
+      ref={ref}
+      type="button"
+      className="premium-logo"
+      aria-label="ابدأ الكتابة لدينار"
+      data-testid="welcome-logo"
+      onPointerMove={move}
+      onPointerLeave={reset}
+      onClick={() => document.querySelector<HTMLTextAreaElement>('[data-testid="input-ai-composer"]')?.focus()}
+    >
+      <span className="premium-logo-halo" aria-hidden="true" />
+      <DinarMark size={112} className="ai-welcome-logo" />
+    </button>
+  );
+}
 
 export function ConversationItem({
   conversation,
@@ -290,24 +328,7 @@ export function Welcome({
         transition={reduceMotion ? { duration: 0 } : surfaceSpring}
       >
         <div className="ai-welcome-copy">
-          <div className="premium-hero" aria-hidden="true">
-            <span className="premium-orbit" />
-            <span className="premium-symbol is-shop">
-              <Store />
-            </span>
-            <span className="premium-symbol is-cart">
-              <ShoppingCart />
-            </span>
-            <span className="premium-symbol is-chart">
-              <ChartColumn />
-            </span>
-            <span className="premium-symbol is-code">
-              <Code2 />
-            </span>
-            <span className="premium-brand-tile">
-              <DinarMark size={96} className="ai-welcome-logo" />
-            </span>
-          </div>
+          <InteractiveLogo />
           <h1>كيف أساعدك اليوم؟</h1>
           <p>مساعدك الذكي للتسوق والبيع والتخطيط والبرمجة وإدارة أعمالك.</p>
         </div>
