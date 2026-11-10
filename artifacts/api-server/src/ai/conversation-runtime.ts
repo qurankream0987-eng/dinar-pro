@@ -1,3 +1,4 @@
+import { claimsCompletedAction } from "./action-receipts";
 import { executeConnectReadTurn } from "../connect/conversation";
 import type { DomainSearchProvider } from "../connect/domains";
 import {
@@ -697,6 +698,8 @@ export async function executeAiConversationTurn(
     actorId?: string;
     modelToolContinuation?: unknown;
     imageObjectPaths?: string[];
+    /** Server-only visual interpretation after private ownership, budget and provider validation. */
+    imageUnderstanding?: { answer: string; status: "ANALYZED" | "UNAVAILABLE" };
     reasoningEffort?: "low" | "medium" | "high";
     /** Explicit one-time location submission against a delivery request (Block D). */
     location?: unknown;
@@ -718,6 +721,16 @@ export async function executeAiConversationTurn(
     modelStage?: "ONLY";
   } = {},
 ): Promise<{ tool: string; version: number; result: ToolResult; taskPlan?: TaskPlan }> {
+  if (context.imageUnderstanding) {
+    const prompt = claimsCompletedAction(context.imageUnderstanding.answer)
+      ? "أستطيع شرح محتوى الصورة فقط؛ لم أنفّذ أي إجراء أو أؤكد شراءً أو دفعًا."
+      : context.imageUnderstanding.answer;
+    return { tool: "imageUnderstanding", version: 1, result: {
+      kind: "SURFACE", surface: "ADVICE", listings: [],
+      query: { kind: "CONVERSATION", ownerId: context.actorId ?? null },
+      advice: { kind: "GROUNDED_ADVICE", scope: "CONVERSATION", authority: "MODEL", modelStatus: context.imageUnderstanding.status }, prompt,
+    } };
+  }
   if (!context.imageObjectPaths?.length && context.location === undefined) {
     const connected = await executeConnectReadTurn({ message: context.message, actorId: context.actorId, market: context.market, providers: options.domainSearchProviders, ...(options.planStep ? { deferWithoutDomain: true } : {}) });
     if (connected) { options.onToolSelected?.(connected.tool); return connected; }

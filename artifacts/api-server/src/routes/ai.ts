@@ -1,7 +1,7 @@
-import { holdPlatformAiSpend, settlePlatformAiSpend, spendRequired } from "../lib/ai-spend";
+import { type AiCallRecord, holdPlatformAiSpend, settlePlatformAiSpend, spendRequired } from "../lib/ai-spend";
 import { getCommercialPolicy } from "../lib/commercial-policy";
 import { isVisualSearchPath, loadVisualSearchImage, MAX_VISUAL_SEARCH_IMAGES } from "../lib/visual-search-images";
-import { createVisualAnalyzer, visionModel, rankVisualMatches, visualFallbackTerms, visualSearchTerms, type VisualAnalysis, type VisualAnalyzer } from "../ai/visual-search";
+import { isImageQuestion, createVisualAnalyzer, visionModel, rankVisualMatches, visualFallbackTerms, visualSearchTerms, type VisualAnalysis, type VisualAnalyzer } from "../ai/visual-search";
 import { UniversalCardsPayloadSchema } from "@workspace/api-zod/connect";
 import type { DomainSearchProvider } from "../connect/domains";
 import {
@@ -2144,21 +2144,32 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
   let runtimeMessage = message;
   let visualAnalysis: VisualAnalysis | undefined;
   let visualNotice = "";
+  let imageUnderstanding: { answer: string; status: "ANALYZED" | "UNAVAILABLE" } | undefined;
   if (visualImage) {
-    const analyzer = (req.app.locals.visualAnalyzer as VisualAnalyzer | undefined) ?? createVisualAnalyzer();
+    const visionCalls: AiCallRecord[] = [];
+    const question = isImageQuestion(message);
+    const analyzer = (req.app.locals.visualAnalyzer as VisualAnalyzer | undefined) ?? createVisualAnalyzer(process.env, fetch, (call) => visionCalls.push(call));
     // An analyzer that throws is an unavailable provider, never a failed turn or an invented answer.
     // A paid vision call holds money under the global AI cap first; a refused hold is an
     // unavailable provider (honest answer), never an unmetered call. Injected test analyzers skip it.
-    const metered = !req.app.locals.visualAnalyzer && spendRequired();
+    const metered = !req.app.locals.visualAnalyzer;
     const policy = metered ? (await getCommercialPolicy(market.id)).aiUsage : undefined;
     const expectedModel = visionModel();
-    const hold = policy && expectedModel ? await holdPlatformAiSpend({ purpose: "PLATFORM_VISUAL_SEARCH", resource: "IMAGE_UNDERSTANDING", policy, expectedModel }) : undefined;
+    const hold = policy && policy.spend.global.limitMicros !== null && expectedModel ? await holdPlatformAiSpend({ purpose: "PLATFORM_VISUAL_SEARCH", resource: "IMAGE_UNDERSTANDING", policy, expectedModel }) : undefined;
     const analyzed: Awaited<ReturnType<VisualAnalyzer["analyze"]>> = metered && !hold?.ok
       ? { status: "BLOCKED_PROVIDER", reason: "NO_IMAGE_MODEL" }
-      : await analyzer.analyze(visualImage, message).catch(() => ({ status: "FAILED" as const, reason: "ANALYZER_ERROR" }));
+      : await analyzer.analyze(visualImage, message, question ? "QUESTION" : "SEARCH").catch(() => ({ status: "FAILED" as const, reason: "ANALYZER_ERROR" }));
     if (hold?.ok)
-      await settlePlatformAiSpend(hold.hold.id, [{ kind: "PRIMARY", outcome: analyzed.status === "ANALYZED" ? "SUCCESS" : "FAILED", provider: expectedModel!.provider, model: expectedModel!.model, imageUnits: 1 }], policy!.tokenEstimates.IMAGE_UNDERSTANDING).catch(() => undefined);
-    if (analyzed.status === "ANALYZED" && analyzed.analysis.isProduct && visualSearchTerms(analyzed.analysis)) {
+      await settlePlatformAiSpend(hold.hold.id, visionCalls, policy!.tokenEstimates.IMAGE_UNDERSTANDING).catch(() => {
+        req.log.error({ event: "vision_spend_settlement_failed", holdId: hold.hold.id }, "Vision spend settlement failed; hold retained for reconciliation");
+      });
+    if (question) {
+      imageUnderstanding = analyzed.status === "ANALYZED" && analyzed.analysis.answer
+        ? { status: "ANALYZED", answer: analyzed.analysis.answer }
+        : { status: "UNAVAILABLE", answer: analyzed.status === "ANALYZED" && !analyzed.analysis.isProduct
+          ? "لا تبدو الصورة لمنتج. لم يقدم مزود الصور شرحًا كافيًا لسؤالك، فلم أفترض تفاصيل. صف ما يظهر فيها بالكلمات وسأساعدك."
+          : "تعذر تحليل الصورة الآن، فلم أستنتج منها شيئًا. صف ما يظهر فيها بالكلمات وسأساعدك." };
+    } else if (analyzed.status === "ANALYZED" && analyzed.analysis.isProduct && visualSearchTerms(analyzed.analysis)) {
       visualAnalysis = analyzed.analysis;
       // «…عند الشركاء»: the same canonical Connect partner search, which honours participation modes.
       runtimeMessage = /(?:لدى|عند)\s+الشركاء|الشركاء|connect/iu.test(message)
@@ -2182,6 +2193,7 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
         market,
           actorId: req.actor!.id,
         imageObjectPaths: visualImage ? [] : imageObjectPaths,
+        ...(imageUnderstanding ? { imageUnderstanding } : {}),
         reasoningEffort: input.reasoningEffort,
         location: input.location,
         locationRequestId: input.locationRequestId,
