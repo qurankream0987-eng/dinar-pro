@@ -1576,13 +1576,13 @@ function groundedModelProse(
   return fallback;
 }
 
-function withModelToolAnswer(result: ToolResult, answer: string, preserveResultSetId = false): ToolResult {
+function withModelToolAnswer(result: ToolResult, answer: string, preserveResultSetId = false, authority: "MODEL" | "DINAR" = "MODEL"): ToolResult {
   return {
     ...result,
     // Preserve the canonical successful read identity through the response and Card Envelope.
     query: {
       ...result.query,
-      buyer: { message: answer.slice(0, 1600), authority: "MODEL" },
+      buyer: { message: answer.slice(0, 1600), authority },
     },
   };
 }
@@ -1838,6 +1838,11 @@ export async function executeModelFallback(
       }
       if (execution) {
         const result = execution.result;
+        logger.info({ event: "dinar_canonical_read", conversationId: input.conversationId,
+          messageId: input.currentMessageId, marketId: input.market.id, tool: execution.tool,
+          resultSetId: result.resultSetId, kind: result.kind,
+          resourceIds: result.listings.map((listing) => listing.id),
+        }, "current-turn canonical read completed");
         // A later verified read answers the turn; an earlier stale refusal no longer describes it.
         lastRejectedReadCode = undefined;
         toolFeedback.push({
@@ -2099,7 +2104,7 @@ export async function executeModelFallback(
     return {
       tool: result.kind === "SEARCH" ? "searchListings" : "getResource",
       version: 1,
-      result: withModelToolAnswer(result, `${answer}${usageNote ? `\n\n${usageNote}` : ""}`, result.kind === "RESOURCE"),
+      result: withModelToolAnswer(result, `${answer}${usageNote ? `\n\n${usageNote}` : ""}`, true, "DINAR"),
     };
   }
   if (lastCapabilityRead) {

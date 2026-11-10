@@ -2486,6 +2486,9 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
     if (toolResult.kind === "SEARCH" || toolResult.kind === "RESULTS" || toolResult.kind === "RESOURCE")
       toolResult.listings = await decoratePaidCards(toolResult.listings, toolResult.query, { actorId: req.actor!.id, marketId: market.id, resultSetId });
     const resourceIds = toolResult.listings.map((listing) => listing.id);
+    req.log.info({ event: "dinar_response_source", conversationId: conversation.id, messageId: userMessageId,
+      marketId: market.id, resultSetId, resourceIds, kind: toolResult.kind,
+    }, "response and card bound to canonical result");
     const stateSource =
       toolResult.kind === "SEARCH" || toolResult.kind === "RESULTS"
         ? toolResult.query
