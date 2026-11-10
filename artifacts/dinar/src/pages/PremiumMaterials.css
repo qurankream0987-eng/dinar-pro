@@ -260,3 +260,48 @@
   .premium-logo { width: 124px; height: 124px; border-radius: 30px; }
   .premium-logo .ai-welcome-logo { width: 84px; height: 84px; }
 }
+
+/* ─── Owner review 2: one ground, no scrollbars, a living mark (2026-11-10) ─── */
+/* The collapsed rail sits on the same ground as the conversation: no edge line, no own panel. */
+.dinar-chatgpt .ai-layout .ai-desktop-rail { border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+
+/* No visible scrollbars in the chat (touch, wheel and keyboard scrolling are unchanged). */
+.dinar-chatgpt :is(.ai-thread, .ai-desktop-rail, .ai-history, .ai-history-list, .ai-home-content) { scrollbar-width: none; -ms-overflow-style: none; }
+.dinar-chatgpt :is(.ai-thread, .ai-desktop-rail, .ai-history, .ai-history-list, .ai-home-content)::-webkit-scrollbar { width: 0; height: 0; display: none; }
+
+/* The mark beside a reply: no circle around it. While DINAR thinks, it breathes and glows. */
+.dinar-chatgpt .ai-assistant-avatar, .ai-assistant-avatar { border: 0 !important; background: transparent !important; box-shadow: none !important; border-radius: 0; }
+.ai-typing-avatar { animation: none !important; }
+@media (prefers-reduced-motion: no-preference) {
+  .ai-typing .ai-typing-mark { animation: dinar-think 1.8s ease-in-out infinite !important; transform-origin: 50% 60%; }
+  .ai-typing[data-stage="searching"] .ai-typing-mark { animation-duration: 1.1s !important; }
+  @keyframes dinar-think {
+    0%, 100% { transform: scale(1) rotate(0deg); filter: drop-shadow(0 0 0 rgb(var(--chat-gold) / 0)); }
+    35% { transform: scale(1.12) rotate(-6deg); filter: drop-shadow(0 0 8px rgb(var(--chat-gold) / .55)); }
+    70% { transform: scale(.96) rotate(4deg); filter: drop-shadow(0 0 6px rgb(var(--chat-blue) / .55)); }
+  }
+}
+
+/* Rail icons: lift, glow and press; the active one carries a gold edge mark. */
+.dinar-chatgpt .ai-rail-action, .dinar-chatgpt .ai-rail-profile {
+  position: relative; border-radius: 14px; color: var(--chat-ink-2, currentColor);
+  transition: transform 180ms cubic-bezier(.2,.8,.2,1), background 180ms, color 180ms, box-shadow 180ms;
+}
+.dinar-chatgpt .ai-rail-action svg { transition: transform 220ms cubic-bezier(.2,.8,.2,1), filter 220ms; }
+.dinar-chatgpt .ai-rail-action:hover, .dinar-chatgpt .ai-rail-profile:hover {
+  background: radial-gradient(circle at 50% 40%, rgb(var(--chat-gold) / .18), rgb(var(--chat-blue) / .10) 60%, transparent 75%);
+  color: var(--chat-ink, #fff); transform: translateY(-1px);
+}
+.dinar-chatgpt .ai-rail-action:hover svg { transform: scale(1.14); filter: drop-shadow(0 0 6px rgb(var(--chat-gold) / .45)); }
+.dinar-chatgpt .ai-rail-action:active { transform: scale(.92); }
+.dinar-chatgpt .ai-rail-action[data-active="true"] { background: linear-gradient(135deg, rgb(var(--chat-blue) / .22), rgb(var(--chat-gold) / .10)); color: var(--chat-ink, #fff); }
+.dinar-chatgpt .ai-rail-action[data-active="true"]::before {
+  content: ""; position: absolute; inset-inline-start: -8px; top: 22%; bottom: 22%; width: 3px; border-radius: 3px;
+  background: linear-gradient(180deg, #ffe7a6, rgb(var(--chat-gold)));
+}
+.dinar-chatgpt .ai-rail-action:focus-visible { outline: 2px solid rgb(var(--chat-gold)); outline-offset: 2px; }
+.dinar-chatgpt .ai-rail-brand img { transition: transform 300ms cubic-bezier(.2,.8,.2,1); }
+.dinar-chatgpt .ai-rail-brand:hover img { transform: rotate(-8deg) scale(1.08); }
+@media (prefers-reduced-motion: reduce) {
+  .dinar-chatgpt :is(.ai-rail-action, .ai-rail-action svg, .ai-rail-brand img) { transition: none; transform: none !important; }
+}

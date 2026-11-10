@@ -11,5 +11,5 @@
  <path d="M45 41H76C86 41 91 47 91 57V63C91 72 85 77 76 77H54L40 88V55C40 46 42 41 45 41Z" fill="url(#bubble)" stroke="#8cdfff" stroke-width="1.2"/>
  <g fill="#a6edff"><circle cx="53" cy="58" r="3.5"/><circle cx="66" cy="58" r="3.5"/><circle cx="79" cy="58" r="3.5"/></g>
  <path d="M53 84H58L63 96H80L85 87H61" stroke="url(#gold)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="65" cy="104" r="3.5" fill="#efc766"/><circle cx="79" cy="104" r="3.5" fill="#efc766"/>
- <path d="M108 1C108 10 105 13 98 15C105 17 108 21 108 29C110 21 113 17 121 15C113 13 110 10 108 1Z" fill="url(#gold)"/>
+ 
 </svg>
