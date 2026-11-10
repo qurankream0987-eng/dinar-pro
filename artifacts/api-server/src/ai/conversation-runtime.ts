@@ -152,9 +152,10 @@ async function executeCartConversationTurn(input: {
     .replace(/ة/g, "ه")
     .trim();
   const remove = /^(?:شيل(?:ه|ها)?|احذف(?:ه|ها)?|ازل|ازيل)(?:\s|$)/u.test(text);
+  const contextualQuantity = text.match(/^(?:لا\s+)?(?:خليهم|خليهن|خليه|خليها|خلهم|خلها)\s+(.+)$/u);
   const quantityChange = text.match(
     /^(?:غير|عدل|اجعل|خله|خليها|اضبط|ضبط)\s+(?:(?:ال)?كميه\s+)?(?:(?:العنصر|المنتج)\s+)?(.+?)\s+(?:الي|ل)\s*(.+)$/u,
-  );
+  ) ?? (contextualQuantity ? [contextualQuantity[0], "", contextualQuantity[1]!] : null);
   const continueCheckout =
     /^(?:كمل|اكمل|كمل\s+(?:ال)?(?:شراء|الدفع)|اكمل\s+(?:ال)?(?:شراء|الدفع))$/u.test(text);
   // «فضي السلة», «فرغ سلتي», «امسح كل شي بالسلة»: every line, and only cart lines.
