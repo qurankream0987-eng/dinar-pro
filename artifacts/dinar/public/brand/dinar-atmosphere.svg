@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" preserveAspectRatio="none" fill="none">
+ <defs>
+  <linearGradient id="wave" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#338aff" stop-opacity=".25"/><stop offset="1" stop-color="#338aff" stop-opacity="0"/></linearGradient>
+  <linearGradient id="edge"><stop stop-color="#efc875" stop-opacity="0"/><stop offset=".6" stop-color="#efc875" stop-opacity=".65"/><stop offset="1" stop-color="#efc875" stop-opacity="0"/></linearGradient>
+ </defs>
+ <path d="M0 0H185C290 35 285 170 420 205C540 238 525 350 650 360C805 370 865 175 1050 228C1120 250 1170 285 1200 290V0Z" fill="url(#wave)"/>
+ <path d="M0 900V800C150 880 250 820 355 842C480 865 490 920 660 865C850 795 905 895 1200 770V900Z" fill="url(#wave)"/>
+ <path d="M870 0C915 120 1060 110 1200 175M0 183C100 210 115 260 210 290M440 900C700 905 1020 775 1200 835" stroke="url(#edge)" stroke-width="1.4"/>
+</svg>

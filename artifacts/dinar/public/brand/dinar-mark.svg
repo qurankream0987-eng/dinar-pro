@@ -1,35 +1,15 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" fill="none">
-  <title>DINAR AI</title>
-  <!-- DINAR AI mark: a D whose stem is royal-blue glass with fine circuit traces and whose bowl
-       is gold; inside, a conversation bubble over a small cart (conversation + commerce). -->
-  <defs>
-    <linearGradient id="dai-stem" x1="104" y1="88" x2="300" y2="424" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#7CC4FF"/>
-      <stop offset=".45" stop-color="#2E6FD8"/>
-      <stop offset="1" stop-color="#123B91"/>
-    </linearGradient>
-    <linearGradient id="dai-gold" x1="256" y1="88" x2="424" y2="424" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#F6DC94"/>
-      <stop offset=".5" stop-color="#D7AA42"/>
-      <stop offset="1" stop-color="#A97A1E"/>
-    </linearGradient>
-    <linearGradient id="dai-bubble" x1="180" y1="190" x2="350" y2="310" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#2F72DA"/>
-      <stop offset="1" stop-color="#123B91"/>
-    </linearGradient>
-  </defs>
-  <rect x="104" y="88" width="176" height="336" rx="44" fill="url(#dai-stem)"/>
-  <path d="M120 104h120" stroke="#DDF3FF" stroke-opacity=".45" stroke-width="4" stroke-linecap="round"/>
-  <g stroke="#DDF3FF" stroke-opacity=".7" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M128 132h44"/>
-    <path d="M128 158h28l14 14h22"/>
-  </g>
-  <g fill="#DDF3FF"><circle cx="180" cy="132" r="8"/><circle cx="200" cy="172" r="8"/></g>
-  <path d="M232 88h24a168 168 0 0 1 0 336h-24v-50h24a118 118 0 0 0 0-236h-24Z" fill="url(#dai-gold)"/>
-  <path d="M180 214a40 40 0 0 1 40-40h104a40 40 0 0 1 40 40v38a40 40 0 0 1-40 40h-98l-34 28 6-32a40 40 0 0 1-18-34Z" fill="url(#dai-bubble)" stroke="#DDF3FF" stroke-opacity=".55" stroke-width="4"/>
-  <g fill="#DDF3FF"><circle cx="230" cy="233" r="12"/><circle cx="272" cy="233" r="12"/><circle cx="314" cy="233" r="12"/></g>
-  <g stroke="url(#dai-gold)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M226 322h20l14 40h58l12-30h-74"/>
-  </g>
-  <g fill="#D7AA42"><circle cx="266" cy="384" r="10"/><circle cx="310" cy="384" r="10"/></g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+ <defs>
+  <linearGradient id="blue" x1="18" y1="15" x2="104" y2="116" gradientUnits="userSpaceOnUse"><stop stop-color="#9cecff"/><stop offset=".22" stop-color="#258dcc"/><stop offset=".55" stop-color="#103e68"/><stop offset="1" stop-color="#06182e"/></linearGradient>
+  <linearGradient id="gold" x1="30" y1="8" x2="113" y2="116" gradientUnits="userSpaceOnUse"><stop stop-color="#fff5ce"/><stop offset=".3" stop-color="#f3ce72"/><stop offset=".68" stop-color="#d69a30"/><stop offset=".88" stop-color="#ffe9a5"/><stop offset="1" stop-color="#b57419"/></linearGradient>
+  <linearGradient id="bubble" x1="40" y1="40" x2="88" y2="80" gradientUnits="userSpaceOnUse"><stop stop-color="#8ee9ff"/><stop offset=".3" stop-color="#297db8"/><stop offset="1" stop-color="#071d36"/></linearGradient>
+ </defs>
+ <path d="M23 13H60C92 13 113 35 113 64S91 115 60 115H23C16 115 12 110 12 103V25C12 18 16 13 23 13Z" fill="url(#blue)" stroke="#6dc3ed" stroke-width="1.2"/>
+ <path d="M35 13H62C96 13 116 35 116 64S95 115 62 115H27L46 102H61C86 102 100 86 100 64S85 25 60 25Z" fill="url(#gold)"/>
+ <path d="M14 47L28 33H48M14 34L24 24H36" stroke="#88dcff" stroke-width="2.5" stroke-linecap="round"/>
+ <circle cx="49" cy="33" r="3.5" fill="#a1eeff"/><circle cx="37" cy="24" r="3" fill="#a1eeff"/>
+ <path d="M45 41H76C86 41 91 47 91 57V63C91 72 85 77 76 77H54L40 88V55C40 46 42 41 45 41Z" fill="url(#bubble)" stroke="#8cdfff" stroke-width="1.2"/>
+ <g fill="#a6edff"><circle cx="53" cy="58" r="3.5"/><circle cx="66" cy="58" r="3.5"/><circle cx="79" cy="58" r="3.5"/></g>
+ <path d="M53 84H58L63 96H80L85 87H61" stroke="url(#gold)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="65" cy="104" r="3.5" fill="#efc766"/><circle cx="79" cy="104" r="3.5" fill="#efc766"/>
+ <path d="M108 1C108 10 105 13 98 15C105 17 108 21 108 29C110 21 113 17 121 15C113 13 110 10 108 1Z" fill="url(#gold)"/>
 </svg>

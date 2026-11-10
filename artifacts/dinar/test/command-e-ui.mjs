@@ -9,7 +9,7 @@ const users = JSON.parse(process.env.E_USERS ?? "{}");
 const conversations = JSON.parse(process.env.E_CONVERSATIONS ?? "{}");
 const out = process.env.E_OUT;
 const resultPath = process.env.E_RESULT;
-const widths = (process.env.E_WIDTHS ?? "320,360,375,390,430,768,1024,1440,1600,1920").split(",").map(Number);
+const widths = (process.env.DINAR_E_NAVIGATION_ONLY === "1" ? "320,1440" : process.env.E_WIDTHS ?? "320,360,375,390,430,768,1024,1440,1600,1920").split(",").map(Number);
 if (!webBase || !apiOrigin || !out || !resultPath) throw new Error("Missing Command E browser configuration.");
 
 const report = { runs: [], perf: {}, journeys: {}, summary: {} };
@@ -107,7 +107,7 @@ async function openConversation(page, actor, conversationId) {
 }
 
 const browser = await chromium.launch({ headless: true, executablePath: process.env.CHROMIUM_PATH ?? process.env.REPLIT_PLAYWRIGHT_CHROMIUM_EXECUTABLE });
-const only = process.env.E_SCENARIOS?.split(",");
+const only = process.env.DINAR_E_NAVIGATION_ONLY === "1" ? ["empty"] : process.env.E_SCENARIOS?.split(",");
 const scenarios = [["empty", "buyer", null], ...Object.entries(conversations).map(([name, item]) => [name, item.actor, item.id])]
   .filter(([name]) => !only || only.includes(name));
 try {
@@ -199,6 +199,12 @@ try {
     report.perf.firstAnswerVisibleMs = Date.now() - started;
     await context.close();
   }
+  const { verifyPremiumPresentation } = await import('./premium-presentation-ui.mjs');
+  const { verifyWelcomeActions, verifyCartNavigation } = await import('./welcome-actions-ui.mjs');
+  report.premium = await verifyPremiumPresentation({ browser, contextFor, openConversation, measure, out });
+  report.welcomeActions = await verifyWelcomeActions({ browser, contextFor, openConversation, measure, out });
+  report.cartNavigation = await verifyCartNavigation({ browser, contextFor, openConversation, conversations, out });
+  failures.push(...report.premium.failures, ...report.welcomeActions.failures, ...report.cartNavigation.failures);
 } finally {
   await browser.close();
 }

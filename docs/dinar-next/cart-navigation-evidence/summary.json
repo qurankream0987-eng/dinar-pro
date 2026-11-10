@@ -1,0 +1,160 @@
+{
+  "readiness": "CONDITIONALLY READY FOR CLAUDE REVIEW",
+  "applicationFixCommit": "612829030e14aaa357effa05b2621af202f74aaa",
+  "suites": {
+    "command-e-ui.test": {
+      "suite": "command-e-ui.test",
+      "exit": 0,
+      "phase": "navigation-release",
+      "status": "PASS"
+    },
+    "experience-upgrade-acceptance.test": {
+      "suite": "experience-upgrade-acceptance.test",
+      "exit": 0,
+      "phase": "navigation-experience-rerun",
+      "status": "PASS"
+    },
+    "w02u3-card-accessibility-browser-journey.test": {
+      "suite": "w02u3-card-accessibility-browser-journey.test",
+      "exit": 0,
+      "phase": "navigation-release",
+      "status": "PASS"
+    },
+    "w02u3-card-performance-browser-journey.test": {
+      "suite": "w02u3-card-performance-browser-journey.test",
+      "exit": 0,
+      "phase": "navigation-release",
+      "status": "PASS"
+    },
+    "connect-cards-browser-journey.test": {
+      "suite": "connect-cards-browser-journey.test",
+      "exit": 0,
+      "phase": "navigation-release",
+      "status": "PASS"
+    },
+    "sc03-browser-journey.test": {
+      "suite": "sc03-browser-journey.test",
+      "exit": 0,
+      "phase": "navigation-release",
+      "status": "PASS"
+    },
+    "wave03-d7-cart-browser-journey.test": {
+      "suite": "wave03-d7-cart-browser-journey.test",
+      "exit": 0,
+      "phase": "navigation-release",
+      "status": "PASS"
+    }
+  },
+  "counts": {
+    "suitePass": 7,
+    "suiteFail": 0,
+    "platformBlocked": 1,
+    "manualNotExecuted": 2
+  },
+  "platforms": {
+    "WebKit": "BLOCKED",
+    "real_iPhone_Safari": "NOT_EXECUTED",
+    "manual_screen_readers": "NOT_EXECUTED"
+  },
+  "browserSummary": {
+    "runs": 160,
+    "rtl": [
+      "rtl"
+    ],
+    "overflow": [],
+    "unnamedControls": [],
+    "smallTapTargets": [],
+    "composerHidden": [],
+    "consoleErrors": [],
+    "darkApplied": true,
+    "journeys": {
+      "sidebarDrawer390": {
+        "overflowing": [],
+        "unnamed": []
+      },
+      "drawerClosesOnEscape390": true,
+      "scrollToLatest390": {
+        "returnVisible": true,
+        "lastVisible": true
+      },
+      "composerFocusable390": true,
+      "scrollToLatest1440": {
+        "returnVisible": true,
+        "lastVisible": true
+      },
+      "composerFocusable1440": true
+    },
+    "perf": {
+      "jsFiles": 1,
+      "jsTransferKB": 292,
+      "cssTransferKB": 41,
+      "domContentLoadedMs": 173,
+      "firstAnswerVisibleMs": 840
+    },
+    "failures": []
+  },
+  "welcomeActionCases": 18,
+  "cartNavigation": {
+    "runs": [
+      {
+        "width": 320,
+        "original": "428176da-509b-437c-a099-8b831ef7875f",
+        "cartId": "a4e1076d-a156-4ad8-83a2-419843b71414",
+        "steps": [
+          {
+            "operation": "reload",
+            "url": "http://127.0.0.1:37147/ai",
+            "conversationId": "a4e1076d-a156-4ad8-83a2-419843b71414",
+            "cartUnchanged": true
+          },
+          {
+            "operation": "goBack",
+            "url": "http://127.0.0.1:37147/",
+            "conversationId": "a4e1076d-a156-4ad8-83a2-419843b71414",
+            "cartUnchanged": true
+          },
+          {
+            "operation": "goForward",
+            "url": "http://127.0.0.1:37147/ai",
+            "conversationId": "a4e1076d-a156-4ad8-83a2-419843b71414",
+            "cartUnchanged": true
+          }
+        ],
+        "pendingPreserved": true,
+        "foreignStatus": 404,
+        "forbidden": []
+      },
+      {
+        "width": 1440,
+        "original": "428176da-509b-437c-a099-8b831ef7875f",
+        "cartId": "45fe39f1-7b63-48a4-889f-1033d74cf8f2",
+        "steps": [
+          {
+            "operation": "reload",
+            "url": "http://127.0.0.1:37147/ai",
+            "conversationId": "45fe39f1-7b63-48a4-889f-1033d74cf8f2",
+            "cartUnchanged": true
+          },
+          {
+            "operation": "goBack",
+            "url": "http://127.0.0.1:37147/",
+            "conversationId": "45fe39f1-7b63-48a4-889f-1033d74cf8f2",
+            "cartUnchanged": true
+          },
+          {
+            "operation": "goForward",
+            "url": "http://127.0.0.1:37147/ai",
+            "conversationId": "45fe39f1-7b63-48a4-889f-1033d74cf8f2",
+            "cartUnchanged": true
+          }
+        ],
+        "pendingPreserved": true,
+        "foreignStatus": 404,
+        "forbidden": []
+      }
+    ],
+    "failures": []
+  },
+  "motionFailures": [],
+  "experienceRerun": "PASS; first interrupted-login attempt retained unchanged"
+}

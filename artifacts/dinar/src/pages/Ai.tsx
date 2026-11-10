@@ -1,4 +1,5 @@
 import "./AiChat.css";
+import "./PremiumMaterials.css";
 import { useStableCallback } from "@/hooks/use-stable-callback";
 import { VERIFICATION_BLOCK_MS, replyForTurn, unfinishedTurn, verificationPollInterval } from "@/features/ai/turn-recovery";
 import * as Dialog from "@radix-ui/react-dialog";
@@ -71,7 +72,7 @@ import { ErrorState, Skeleton } from "@/ui/Feedback";
 import { ConfirmDialog } from "@/ui/Sheet";
 import { MarketChip } from "@/features/MarketSelector";
 import { Avatar, SmartImage } from "@/ui/Media";
-import { DinarMark } from "@/ui/DinarMark";
+import { DinarMark, DinarWordmark } from "@/ui/DinarMark";
 import {
   Tooltip,
   TooltipContent,
@@ -1612,10 +1613,14 @@ export default function AiPage() {
     "سياق البحث";
   // Navigation entries are real conversation commands: an empty chat takes the command,
   // otherwise it opens a fresh conversation. Pending photos never ride along.
+  // A read command (cart, orders, listings) opens its surface without discarding what the user was
+  // typing: the unsent draft is put back once the command's conversation has started.
   const runCommand = (value: string) => {
     setSidebarOpen(false);
-    if (showWelcome && activeId) void sendMessage(activeId, value);
-    else void startConversation(value, []);
+    const unsent = draft;
+    const restore = () => { if (unsent.trim()) setDraft((current) => current || unsent); };
+    if (showWelcome && activeId) void sendMessage(activeId, value).finally(restore);
+    else void startConversation(value, []).finally(restore);
   };
   useEffect(() => {
     if (ordersEntryHandled.current || accountLoading || identityVerifying || !market || detail.isLoading)
@@ -2141,7 +2146,7 @@ export default function AiPage() {
               <span className="ai-sidebar-mark" aria-hidden="true">
                 <DinarMark size={30} />
               </span>
-              <span className="ai-sidebar-wordmark" dir="ltr">DINAR <span className="ai-wordmark-ai">AI</span></span>
+              <DinarWordmark className="ai-sidebar-wordmark" />
               <button
                 type="button"
                 className="ai-sidebar-collapse is-wide-only"
@@ -2390,6 +2395,11 @@ export default function AiPage() {
                           : startConversation(value)
                       }
                       onCompose={composeStarter}
+                      busy={!online || streaming || createConversation.isPending}
+                      onImage={() => {
+                        composeStarter("ابحث عن منتج مشابه للصورة المرفقة: ");
+                        document.querySelector<HTMLButtonElement>('[data-testid="button-ai-attachment-info"]')?.click();
+                      }}
                     />
                     {composerRegion}
                   </div>

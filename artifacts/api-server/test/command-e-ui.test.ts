@@ -222,6 +222,7 @@ await test("seed: real conversations for every required screen", async () => {
 });
 
 await test("browser: screenshots and layout metrics at 8 widths, light and dark", { timeout: 1_800_000 }, async () => {
+  const beforeCommerce = { orders: (await db.select({ id: orders.id }).from(orders)).length, listings: (await db.select({ id: offers.id }).from(offers)).length };
   const web = await startBuiltWeb();
   const resultPath = `${S}/report.json`;
   await mkdir(`${S}/shots`, { recursive: true });
@@ -245,6 +246,9 @@ await test("browser: screenshots and layout metrics at 8 widths, light and dark"
     web.stop();
   }
   const report = JSON.parse(await readFile(resultPath, "utf8"));
+  const afterCommerce = { orders: (await db.select({ id: orders.id }).from(orders)).length, listings: (await db.select({ id: offers.id }).from(offers)).length };
+  assert.deepEqual(afterCommerce, beforeCommerce, "welcome actions must not create orders or published listings");
+  console.log("WELCOME_COMMERCE_COUNTS", JSON.stringify({ beforeCommerce, afterCommerce }));
   console.log("E_SUMMARY", JSON.stringify(report.summary));
   if (process.env.DINAR_E_UI_MODE === "capture") return;
   assert.deepEqual(report.summary.overflow, [], "no horizontal overflow at any width");
@@ -253,6 +257,9 @@ await test("browser: screenshots and layout metrics at 8 widths, light and dark"
   assert.deepEqual(report.summary.smallTapTargets, [], "tap targets ≥ 40px on touch widths");
   assert.deepEqual(report.summary.composerHidden, [], "the composer stays visible");
   assert.deepEqual(report.summary.failures, [], "every journey step completed");
+  // The checks must have run, not merely reported no failure.
+  assert.equal(report.cartNavigation?.runs?.length, 2, "cart navigation ran at 320 and 1440");
+  assert.equal(report.welcomeActions?.runs?.length, 18, "all nine welcome actions ran for buyer and guest");
 });
 
 await new Promise((resolve) => setTimeout(resolve, 10));

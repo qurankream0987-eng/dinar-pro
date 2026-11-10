@@ -297,24 +297,19 @@ try {
           check(m.starters.length === 6, `${label}: six compact starters`, String(m.starters.length));
           for (const starter of m.starters)
             check(starter.height >= 36 && starter.height <= 44, `${label}: starter «${starter.text}» is compact and touchable`, String(starter.height));
-          if (width < 768) {
-            // Phones: one swipeable row; every starter can be brought fully into view.
-            check(m.group.height <= 48, `${label}: starters use a single row`, String(m.group.height));
-            check(m.groupScroll.overflowX === "auto", `${label}: starter row scrolls inside itself`);
-            for (const text of m.starters.map((starter) => starter.text)) {
-              const reach = await page.getByTestId(`button-prompt-${text}`).evaluate((el) => { el.scrollIntoView({ inline: "nearest", block: "nearest" }); const r = el.getBoundingClientRect(); return r.left >= 0 && r.right <= innerWidth; });
-              check(reach, `${label}: starter «${text}» reachable by swiping`);
-            }
-            await page.locator(".ai-starters").evaluate((el) => (el.scrollLeft = 0));
-          } else {
-            for (const starter of m.starters)
-              check(starter.left >= 0 && starter.right <= m.innerWidth, `${label}: starter «${starter.text}» fits the viewport`);
-            check(m.group.height <= 100, `${label}: starters take little vertical space`, String(m.group.height));
-          }
+          for (const starter of m.starters)
+            check(starter.left >= 0 && starter.right <= m.innerWidth, `${label}: wrapped starter fits the viewport`);
+          check(m.group.height <= 160, `${label}: six actions wrap within a compact region`, String(m.group.height));
+
           check(m.composer && m.composer.bottom <= m.innerHeight && m.composer.left >= 0 && m.composer.right <= m.innerWidth, `${label}: composer fully on screen`, JSON.stringify(m.composer));
           if (width <= 360)
             check(m.composerTextWidth >= 160, `${label}: composer keeps a usable text area`, `${m.composerTextWidth}px`);
-          check(m.group.bottom <= m.composer.top, `${label}: starters sit above the composer`);
+          if (width >= 768) check(m.group.bottom <= m.composer.top, `${label}: starters sit above the composer`);
+          for (const action of await page.locator('.premium-action-card, .ai-starter').all()) {
+            await action.scrollIntoViewIfNeeded();
+            const reachable = await action.evaluate(el => { const r = el.getBoundingClientRect(); const dock = document.querySelector('.ai-composer-box').getBoundingClientRect(); return r.left >= 0 && r.right <= innerWidth && r.top >= 0 && r.bottom <= dock.top; });
+            check(reachable, `${label}: each welcome action is reachable above the composer`);
+          }
           const luminance = (rgb) => { const [r, g, b] = rgb.match(/\d+/g).map(Number); return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255; };
           check(scheme === "dark" ? luminance(m.bg) < 0.25 : luminance(m.bg) > 0.75, `${label}: ${scheme} palette applied`, m.bg);
           // Approved design (4ed2b01): no phone top bar; one floating sidebar control at the
@@ -348,7 +343,7 @@ try {
     const { context, page } = await open(browser, "main", { width: 390 });
     try {
       const sidebarControl = page.getByTestId("button-toggle-conversation-history");
-      const sell = await click(page, page.getByTestId("button-prompt-أريد أن أبيع شيئًا"));
+      const sell = await click(page, page.getByTestId("welcome-sell"));
       check(/تصنيف|صف المنتج/u.test(sell.text), "seller draft started", sell.text.slice(0, 160));
       // New Chat lives in the drawer (drawer-390); the drawer control stays reachable mid-chat.
       check(await sidebarControl.isVisible(), "sidebar control stays available once the chat has messages");

@@ -3,7 +3,7 @@ import { ImageOff, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { resolveAssetUrl } from "@/asset-url";
 import { initials } from "@/lib/format";
-import { DinarMark } from "@/ui/DinarMark";
+import { DinarMark, DinarWordmark } from "@/ui/DinarMark";
 
 /**
  * The single image strategy for offers: fixed-ratio box (set by the parent),
@@ -135,7 +135,7 @@ export function Flag({
   );
 }
 
-/** Logo mark + bilingual wordmark. */
+/** Canonical DINAR AI mark and wordmark. */
 export function BrandMark({
   size = 36,
   wordmark = true,
@@ -149,12 +149,7 @@ export function BrandMark({
     <span className={cn("inline-flex items-center gap-2.5", className)}>
       <DinarMark size={size} alt={wordmark ? "" : "DINAR AI"} />
       {wordmark && (
-        <span className="flex flex-col leading-none">
-          <span className="text-lg font-bold tracking-[0.04em] text-foreground" dir="ltr">
-            DINAR <span className="text-[#8A6312] dark:text-[#E6C372]">AI</span>
-          </span>
-          <span className="mt-0.5 text-[11px] font-semibold text-muted-foreground">دينار</span>
-        </span>
+        <DinarWordmark className="text-lg" />
       )}
     </span>
   );

@@ -24,3 +24,7 @@ export function DinarMark({
     />
   );
 }
+/** Shared lockup; the mark and title never select a product mode or grant authority. */
+export function DinarWordmark({ className }: { className?: string }) {
+  return <span dir="ltr" className={cn("dinar-wordmark", className)}>DINAR <span>AI</span></span>;
+}
