@@ -11,7 +11,7 @@ import {
 } from "./listing-draft";
 import { orderContext } from "./order-context";
 import { contextualQuery, hasCategoryAlias } from "./search-context";
-import { addToCartIntent, backIntent, refusesCommercialAction, requestCore, searchTerms, stripCorrectionPrefix, surfaceIntent } from "./intent";
+import { addToCartIntent, backIntent, statedCartQuantity, refusesCommercialAction, requestCore, searchTerms, stripCorrectionPrefix, surfaceIntent } from "./intent";
 import {
   findOrdinalMention,
   findOrdinalMentions,
@@ -156,7 +156,11 @@ async function executeCartConversationTurn(input: {
   );
   const continueCheckout =
     /^(?:كمل|اكمل|كمل\s+(?:ال)?(?:شراء|الدفع)|اكمل\s+(?:ال)?(?:شراء|الدفع))$/u.test(text);
-  if ((!remove && !quantityChange && !continueCheckout) || !input.actorId) return null;
+  // «فضي السلة», «فرغ سلتي», «امسح كل شي بالسلة»: every line, and only cart lines.
+  const clearCart = /^(?:فضي|فضيلي|فرغ|افرغ|امسح|نظف|صفر)\s+(?:لي\s+)?(?:كل\s+(?:شي|شيء)\s+(?:في|ب)\s*)?(?:ال)?(?:سله|سلتي|عربه)$/u.test(text);
+  // An explicit «من السلة» names the cart whatever card was shown last.
+  const namesCart = /(?:^|\s)(?:من|في|ب)\s*(?:ال)?(?:سله|سلتي|عربه)(?:\s|$)/u.test(text);
+  if ((!remove && !quantityChange && !continueCheckout && !clearCart) || !input.actorId) return null;
 
   const [latestAssistant] = await db
     .select({ id: messages.id })
@@ -181,6 +185,7 @@ async function executeCartConversationTurn(input: {
     )
     .limit(1);
   if (
+    !clearCart && !namesCart &&
     (latestSurface?.payload as { surface?: unknown } | undefined)?.surface !==
     "CART"
   )
@@ -191,16 +196,29 @@ async function executeCartConversationTurn(input: {
     title: string;
     quantity: number;
   }>;
+  if (clearCart) {
+    if (!cart.length)
+      return { tool: "openSurface", version: 1, result: { kind: "SURFACE", surface: "CART", prompt: "سلتك فارغة أصلًا.", query: {}, listings: [] } };
+    for (const line of cart)
+      await updateMarketplaceCartLine({ userId: input.actorId, expectedMarketId: input.market.id, listingId: line.listingId, quantity: null });
+    return { tool: "openSurface", version: 1, result: { kind: "SURFACE", surface: "CART", prompt: `أفرغت السلة (${cart.length} ${cart.length === 1 ? "عنصر" : "عناصر"}). لم يُلغَ أي طلب ولم يتغير أي دفع.`, query: {}, listings: [] } };
+  }
   if (remove || quantityChange) {
     const reference = findOrdinalMention(input.message);
+    // «احذف العطر من السلة»: a title word that names exactly one line selects it.
+    const words = text.split(" ").filter((word) => word.length >= 3 && !/^(?:احذف|احذفه|احذفها|شيل|شيله|شيلها|ازل|ازيل|من|السله|سلتي|العربه|غير|عدل|الكميه)$/u.test(word)).map((word) => word.replace(/^ال/u, ""));
+    const fold = (value: string) => value.replace(/[أإآ]/g, "ا").replace(/ى/g, "ي").replace(/ة/g, "ه");
+    const byTitle = words.length ? cart.map((line, i) => [i, fold(line.title)] as const).filter(([, title]) => words.some((word) => title.includes(word))) : [];
     const index =
       reference?.kind === "LAST"
         ? cart.length - 1
         : reference?.kind === "INDEX"
           ? reference.index
-          : cart.length === 1
-            ? 0
-            : -1;
+          : byTitle.length === 1
+            ? byTitle[0]![0]
+            : cart.length === 1
+              ? 0
+              : -1;
     if (index < 0 || index >= cart.length)
       return {
         tool: "openSurface",
@@ -1786,11 +1804,15 @@ async function executeRuntime(context: RuntimeContext, incoming: RuntimeOptions)
     ) {
       return clarify("حدّد عرضًا أو أكثر بأرقام ظاهرة في آخر النتائج، أو أضف العرض الوحيد الظاهر.");
     }
+    const stated = statedCartQuantity(context.message);
+    if (stated === "INVALID") return clarify("الكمية يجب أن تكون عددًا صحيحًا من 1 فأكثر. لم يُضف شيء إلى السلة.");
+    if (stated !== undefined && resourceIds.length > 1)
+      return clarify(`ذكرت الكمية ${stated} لأكثر من عرض. حدّد عرضًا واحدًا، مثل «حط ${stated} من الأول». لم يُضف شيء.`);
     try {
       const added = await addMarketplaceCartItems({
         userId: context.actorId!,
         expectedMarketId: context.market.id,
-        items: resourceIds.map((listingId) => ({ listingId, quantity: 1 })),
+        items: resourceIds.map((listingId) => ({ listingId, quantity: stated ?? 1 })),
       });
       return {
         tool: "openSurface",
@@ -1801,7 +1823,9 @@ async function executeRuntime(context: RuntimeContext, incoming: RuntimeOptions)
           query: {},
           listings: [],
           resourceIds: added.items.map((item: { listingId: string }) => item.listingId),
-          prompt: `أُضيفت ${resourceIds.length} عروض إلى سلتك في عملية واحدة بعد التحقق من التوفر. راجع السلة قبل إكمال الطلب؛ لم يُدفع أي شيء.`,
+          prompt: stated !== undefined
+            ? `أُضيف العرض إلى سلتك بكمية ${stated} بعد التحقق من التوفر. راجع السلة قبل إكمال الطلب؛ لم يُدفع أي شيء.`
+            : `أُضيفت ${resourceIds.length} عروض إلى سلتك في عملية واحدة بعد التحقق من التوفر. راجع السلة قبل إكمال الطلب؛ لم يُدفع أي شيء.`,
         },
       };
     } catch (error) {

@@ -118,6 +118,14 @@ const rows: Row[] = [
   ["aqaba_bike", "دراجة هوائية رياضية العقبة", "مستعملة.", "رياضة", U, "90", 1, "PICKUP", 2, "PUBLISHED", "العقبة"],
 ];
 
+// Vehicles carry the structured attributes a real car listing has (make/model/year/mileage).
+const VEHICLE: Record<string, Record<string, string | number>> = {
+  camry_2019: { make: "تويوتا", model: "كامري", year: 2019, mileage: 90_000 },
+  camry_2018: { make: "تويوتا", model: "كامري", year: 2018, mileage: 120_000 },
+  corolla_2018: { make: "تويوتا", model: "كورولا", year: 2018, mileage: 110_000 },
+  kia_ev: { make: "كيا", model: "EV6", year: 2022 },
+  hyundai_hybrid: { make: "هيونداي", model: "سوناتا", year: 2020 },
+};
 const scale = 3;
 for (const [key, title, description, category, condition, price, qty, fulfilmentType, seller, status = "PUBLISHED", area = "عمّان"] of rows) {
   const sellerId = `lab_seller_${seller}`;
@@ -134,7 +142,7 @@ for (const [key, title, description, category, condition, price, qty, fulfilment
     reservedQuantity: 0,
     data: {
       id: `lab_${key}`, title, description, category, area, city: area,
-      attributes: { condition },
+      attributes: { condition, ...(VEHICLE[key] ?? {}) },
       unitPrice: price, pricingMode: key === "price_open" ? "NEGOTIABLE" : "FIXED",
       currency: "JOD", availableQuantity: qty, reservedQuantity: 0,
       inventoryMode: limited ? "LIMITED" : "UNLIMITED", fulfilmentType,

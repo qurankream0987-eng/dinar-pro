@@ -181,7 +181,9 @@ function grade(exp = {}, r, d) {
   for (const re of exp.bodyNot ?? []) if (new RegExp(re, "i").test(r.body)) fails.push(["MISLEADING_RESPONSE", `body has /${re}/`]);
   const items = r.blocks.flatMap((b) => b.items ?? []);
   for (const id of exp.itemsInclude ?? []) if (!items.includes(id)) fails.push(["WRONG_TOOL", `result lacks ${id} (got ${items.slice(0, 8)})`]);
-  for (const id of exp.itemsExclude ?? []) if (items.includes(id)) fails.push(["UNAUTHORIZED_ACTION", `result shows hidden ${id}`]);
+  const HIDDEN_IDS = new Set(["lab_draft_watch", "lab_paused_camera", "lab_archived_tablet", "lab_soldout_ipad", "lab_soldout_kettle"]);
+  for (const id of exp.itemsExclude ?? []) if (items.includes(id))
+    fails.push(HIDDEN_IDS.has(id) ? ["UNAUTHORIZED_ACTION", `result shows unpublished/sold-out ${id}`] : ["INVALID_TOOL_ARGUMENTS", `filter not applied: ${id} shown`]);
   if (exp.itemsMax !== undefined && items.length > exp.itemsMax) fails.push(["FABRICATED_DATA", `${items.length} items > ${exp.itemsMax}`]);
   if (exp.statusIn && !exp.statusIn.includes(r.httpStatus)) fails.push(["STATE_MISMATCH", `HTTP ${r.httpStatus} not in ${exp.statusIn}`]);
   if (exp.draft) for (const [k, v] of Object.entries(exp.draft)) {
@@ -227,6 +229,10 @@ for (const [index, c] of cases.entries()) {
     if (bal !== null && balanceStart !== null && balanceStart - bal >= MAX_USD) stopped = `balance drop ${(balanceStart - bal).toFixed(2)} reached ${MAX_USD}`;
     if (stopped) { for (const rest of cases.slice(index)) appendFileSync(ledger, JSON.stringify({ id: rest.id, group: rest.group, mode: args.mode, verdict: "NOT_EXECUTED", reason: stopped }) + "\n"); break; }
   }
+  // DINAR's own per-actor AI burst limiter is correct product behaviour; the lab reuses a few
+  // fixed accounts across hundreds of cases, so its buckets are cleared between cases (disposable DB).
+  await q.query("delete from auth_rate_limit_buckets").catch(() => {});
+  await q.query("delete from ai_usage_reservations where status <> 'SETTLED'").catch(() => {});
   let actor, userId = null;
   try {
     const ip = nextIp();

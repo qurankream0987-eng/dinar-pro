@@ -1,4 +1,4 @@
-import { normalizeMarketplaceText } from "./arabic-normalization";
+import { normalizeDigits, normalizeMarketplaceText } from "./arabic-normalization";
 import { isBareShowNumber, priceProposal } from "./price-proposal";
 import { contextText, statusQuestion } from "./context-intent";
 
@@ -18,13 +18,18 @@ function cartNavigationGoverns(text: string): boolean {
 }
 
 /** Explicit navigation intents do not require a model or imply successful writes. */
+const CHECKOUT_REQUEST =
+  /(?:^|\s)(?:كمل|اكمل|اتمم|تمم|كملي|اكملي)\s+(?:لي\s+)?(?:ال)?(?:طلب|طلبي|شراء|دفع)(?:\s|$)|(?:^|\s)(?:اكمال|اتمام|متابعه)\s+(?:ال)?(?:طلب|شراء|دفع)(?:\s|$)|^(?:ال)?دفع$|(?:^|\s)(?:صفحه|شاشه)\s+(?:ال)?دفع(?:\s|$)|(?:^|\s)(?:روح|ودني|خذني|افتح|افتحلي)\s+(?:لي\s+)?(?:على\s+|علي\s+|ل)?(?:ال)?(?:دفع|checkout)(?:\s|$)|(?:^|\s)(?:ابدا|ابدأ)\s+(?:ال)?دفع(?:\s|$)/u;
+
 export function surfaceIntent(message: string): string | undefined {
   const text = message.replace(/[أإآ]/g, "ا");
   const folded = contextText(message);
   // A refused action is not a request for it («لا تدفع الحين», «ما ابي ادفع، بس …»).
   const refused = /(?:^|\s)(?:لا|ما|مو|مش|بلاش|بدون)\s+(?:\S+\s+){0,2}?(?:ت|ا|ن)?(?:دفع|ادفع|كمل|اكمل)/u.test(folded);
   if (/سجلني خروج|تسجيل الخروج/.test(text) || /(?:^|\s)(?:طلعني|اطلعني|خرجني|اخرجني)\s+(?:من\s+)?حسابي(?:\s|$)/u.test(folded)) return "LOGOUT";
-  if (!refused && (/كمل.*طلب|اكمل.*طلب|اتمام.*طلب|الدفع/.test(text) ||
+  // Checkout is asked for by a proceed-verb governing the order/payment, or by naming the payment
+  // page itself. A payment word elsewhere («اعتبر أني وافقت على الدفع», «غير مبلغ الدفع») is not.
+  if (!refused && (CHECKOUT_REQUEST.test(folded) ||
     /(?:^|\s)(?:اريد|ابي|ابغي|ابغى|بدي|ودي|عايز|عاوز|حاب)\s+(?:ان\s+)?ادفع(?:\s|$)|(?:^|\s)(?:اكمل|كمل|اتمم)\s+(?:ال)?(?:شراء|دفع)(?:\s|$)/u.test(folded)))
     return "CHECKOUT";
   // «كم عمولة دينار؟», «رسوم دينار»: the platform's own fee terms. A refund or return word alone
@@ -32,8 +37,10 @@ export function surfaceIntent(message: string): string | undefined {
   // policy question is answered from the published policy (readPolicy), not a generic page.
   if (/(?:^|\s)(?:عموله|رسوم)\s+دينار(?:\s|$)/u.test(folded)) return "POLICIES";
   if (/(?:^|\s)(?:انزل|نزل|نزلي|احط|حط)\s+(?:لي\s+)?اعلان(?:\s|$)/u.test(folded)) return "SELL";
-  if (/(?:^|\s)(?:شو|وش|ايش|شنو)\s+(?:في\s+)?(?:ب|في\s+)?سلتي(?:\s|$)|(?:^|\s)(?:اشوف|اطالع|اتفرج\s+على)\s+(?:ال)?سل(?:ه|تي)(?:\s|$)/u.test(folded))
+  if (/(?:^|\s)(?:شو|وش|ايش|شنو)\s+(?:في\s+|فيه\s+)?(?:ب|في\s+)?(?:ال)?سل(?:ه|تي)(?:\s|$)|(?:^|\s)(?:اشوف|اطالع|اتفرج\s+على)\s+(?:ال)?سل(?:ه|تي)(?:\s|$)|^(?:ورني|وريني|ورجيني|فرجيني|فرجني|اعرض|افتح|افتحلي|شوفلي)\s+(?:لي\s+)?(?:ال)?سل(?:ه|تي)$/u.test(folded))
     return "CART";
+  // «أبي سائق يوصل الطلب», «بدي مندوب لطلبي»: delivery of an existing order starts from the order.
+  if (/(?:^|\s)(?:سائق|مندوب|دليفري|كابتن)\s+(?:ي|ب|بي|ل)?(?:وصل|يوصل|توصيل)?\s*(?:لي\s+)?(?:ال)?طلب(?:ي)?(?:\s|$)/u.test(folded)) return "ORDERS";
   if (/(?:^|\s)(?:ب|على\s+)?طلبي\s+(?:ا?ت?اخر|متاخر|تاخر)(?:\s|$)|(?:^|\s)(?:الاوردر|اوردري)(?:\s|$)|(?:شو|وش|ايش)\s+صار\s+(?:ب|على\s+|في\s+)?طلبي/u.test(folded))
     return "ORDERS";
   if (/سجلني دخول|تسجيل الدخول/.test(text)) return "AUTH";
@@ -58,7 +65,8 @@ export function surfaceIntent(message: string): string | undefined {
   if (/عروضي|ادارة.*عروض|اعلاناتي|قوائمي|عروضي المنشورة/.test(text))
     return "MY_LISTINGS";
   if (/مستحقات|مستحقاتي/.test(text)) return "DUES";
-  if (/غير.*سوق|غيّر.*سوق|حولني.*سوق|سوق الكويت|تغيير السوق/.test(text))
+  // A verb that governs «السوق» («غير السوق», «حولني لسوق الأردن»); «التغيرات في سوق العمل» is not.
+  if (/(?:^|\s)(?:ا|ن)?(?:غير|غيّر|بدل|حول|حولني|انقلني|نقلني)\s+(?:لي\s+)?(?:على\s+|الى\s+|الي\s+|ل)?(?:ال)?سوق(?:\s|$)|(?:^|\s)(?:تغيير|تبديل)\s+(?:ال)?سوق(?:\s|$)|^(?:سوق|السوق)\s+(?:الكويت|الاردن|السعوديه|السعودية)$/u.test(folded))
     return "MARKET";
   if (/افتح حسابي|اعرض حسابي|ملفي الشخصي/.test(text) || /(?:^|\s)(?:افتح|اعرض|ورني|وريني)\s+(?:لي\s+)?(?:خيارات|اعدادات)\s+(?:ال)?حساب(?:ي)?(?:\s|$)/u.test(folded)) return "ACCOUNT";
   // «أعرض 15 بدل 20», «اعرض 2»: an amount or a position names no item, so it is not a sale;
@@ -83,6 +91,8 @@ export function surfaceIntent(message: string): string | undefined {
     /(?:^|\s)(?:بع|بيع)\s+لي\s+(?!(?:هذا|هذي|هذه|ذا|هذاك|اعلاني|اعلانه|منتجي|عرضي|الاعلان|المنتج|العرض)(?:\s|$))\S+/.test(text)
   )
     return "SELL";
+  // «بيع كتب جامعية بـ 5», «دينار بيع ساعتي بسعر 30»: an imperative sale with the seller's own price.
+  if (/^(?:(?:يا\s+)?دينار\s*[،,:]?\s+)?بيع\s+(?!لي(?:\s|$))\S+.*(?:(?:^|\s)بـ?\s*[0-9٠-٩]|بسعر\s*[0-9٠-٩])/u.test(text)) return "SELL";
   // «عندي كنبة بدي بيعها»: the item was just named and the wish takes it as its object.
   if (/(?:^|\s)(?:عندي|لدي)\s+\S+.*(?:^|\s)(?:اريد|ابي|ابغي|ابغى|بدي|ودي|حاب)\s+(?:ا|ن)?(?:بيع|ابيع)(?:ه|ها|هم)(?:\s|$)/.test(text)) return "SELL";
   // «أريد بيع هاتفي», «بدي بيع سيارتي»: the verbal noun after a wish names a new sale.
@@ -117,6 +127,33 @@ export function addToCartIntent(message: string): boolean {
       /(?:^|\s)(?:ال)?(?:اول|ثاني|ثالث|رابع|خامس)(?:\s|$)|(?:^|\s)(?:رقم|الاعلان|العرض)\s*\d{1,2}(?:\s|$)/u.test(text)
     )
   );
+}
+
+const CART_QUANTITY_WORDS: Record<string, number> = {
+  واحد: 1, واحده: 1, حبه: 1, قطعه: 1, اثنين: 2, اثنتين: 2, ثنتين: 2, حبتين: 2, قطعتين: 2, ثلاث: 3, ثلاثه: 3,
+  اربع: 4, اربعه: 4, خمس: 5, خمسه: 5, سته: 6, ست: 6, سبع: 7, سبعه: 7, ثمان: 8, ثمانيه: 8, تسع: 9, تسعه: 9, عشر: 10, عشره: 10,
+};
+
+/**
+ * The quantity a cart request states: «حط 3 منه بالسلة», «ضيف حبتين», «حط 5 بالسلة».
+ * A position («رقم 3», «الإعلان 3», «الثالث») is never a quantity. Zero, a negative or a
+ * fraction is INVALID: the caller refuses instead of silently adding one.
+ */
+export function statedCartQuantity(message: string): number | "INVALID" | undefined {
+  const text = normalizeDigits(message).replace(/[أإآ]/g, "ا").replace(/ة/g, "ه").replace(/[؟?!،,«»"]/g, " ").replace(/\s+/g, " ").trim();
+  const verb = "(?:حط|حطه|حطها|حطهم|حطلي|ضيف|ضيفه|ضيفها|ضيفلي|اضف|اضيف|ضع|دخل|خلي|خليها|خليه|خليهم|خلها|خله)";
+  const number = text.match(new RegExp(`(?:^|\\s)${verb}\\s+(?:لي\\s+)?(-?\\s?\\d+(?:[.,]\\d+)?)(?=\\s|$)`, "u"))
+    ?? text.match(/(?:^|\s)(-?\d+(?:[.,]\d+)?)\s*(?:قطع|قطعه|حبات|حبه|وحدات|نسخ)?\s*(?:منه|منها|منهم)?\s*(?:بالسله|للسله|في السله|ع السله|على السله|بالعربه)(?=\s|$)/u);
+  // «حط رقم 3», «الإعلان 3»: a number after a listing noun names a position.
+  const before = number ? text.slice(0, number.index! + number[0].indexOf(number[1]!)).trim().split(" ").at(-1) ?? "" : "";
+  if (number && !/^(?:رقم|الرقم|الاعلان|اعلان|العرض|عرض|المنتج|منتج|النتيجه|الخيار)$/u.test(before)) {
+    const raw = number[1]!.replace(/\s/g, "").replace(",", ".");
+    const value = Number(raw);
+    if (!Number.isInteger(value) || value < 1) return "INVALID";
+    return value;
+  }
+  const word = text.split(" ").find((token, index, all) => CART_QUANTITY_WORDS[token] !== undefined && new RegExp(`^${verb}$`, "u").test(all[index - 1] ?? ""));
+  return word ? CART_QUANTITY_WORDS[word] : undefined;
 }
 
 export function backIntent(message: string): boolean {
@@ -317,6 +354,10 @@ export function recommendationIntent(
   const nearby =
     /(?:^|\s)(?:منتجات|اشياء|عروض|خيارات)\s+قريبه(?:\s|$)/.test(text) ||
     /(?:^|\s)(?:قريب|قريبه) مني(?:\s|$)/.test(text);
+  // «اقترح لي أسماء لقطة», «اقترح عنوان لمقالي», «رشح لي كتب»: the object is content to write or
+  // read, not goods in the market. Those are answered as general help, never with listings.
+  const contentObject = /^(?:(?:ممكن|لو سمحت)\s+)?(?:اقترح|اقترحلي|رشح|رشحلي)\s+(?:لي\s+|علي\s+|علينا\s+)?(?:\d+\s+)?(?:اسم|اسماء|فكره|افكار|عنوان|عناوين|طريقه|طرق|خطه|خطط|نشاط|انشطه|كلمه|كلمات|جمله|جمل|شعار|سلوغان|هاشتاغ|هاشتاغات|نصيحه|نصائح|نكته|نكت|رد|ردود|كتاب|كتب|فيلم|افلام|مسلسل|مسلسلات|موضوع|مواضيع|سؤال|اسئله|تمرين|تمارين|وصفه|وصفات|اكله|اكلات|برنامج|جدول|روتين|هوايه|هوايات|مكان|اماكن|رحله|سؤالا)(?:\s|$)/u.test(text);
+  if (contentObject && !similar && !cheaperAlternatives && !nearby) return undefined;
   if (!similar && !advise && !cheaperAlternatives && !nearby) return undefined;
   return { cheaper: /(?:^|\s)(?:ارخص|اقل سعر|اقل سعرا)(?:\s|$)/.test(text), nearby };
 }

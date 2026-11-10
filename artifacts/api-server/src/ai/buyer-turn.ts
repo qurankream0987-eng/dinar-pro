@@ -7,7 +7,7 @@
  */
 import { and, desc, eq } from "drizzle-orm";
 import { z } from "zod";
-import { aiResultSets, aiUiBlocks, db, orderFulfillments, orders } from "@workspace/db";
+import { aiResultSets, aiUiBlocks, db, offers, orderFulfillments, orders } from "@workspace/db";
 import type { SearchFilter, SearchSort } from "@workspace/api-zod/marketplace-schemas";
 import type { marketFor } from "../lib/markets";
 import type { ListingRecord } from "../lib/dinar-data";
@@ -122,6 +122,29 @@ const PREPARE_ORDER = /^(?:(?:طيب|خلاص)\s+)?(?:جهز|حضر|سوي|سو|
 const SELECT = /^(?:انا\s+)?(?:ابي|ابغي|بدي|اريد|اشتري|بشتري|اخذ|باخذ|حاب اخذ|خذ)\s+(?:اشتري\s+|اخذ\s+)?(.+)$/u;
 const CONFIRM = /^(?:(?:تمام|طيب|اوكي|خلاص)\s+)?(?:نعم|اكيد|اكد|تاكيد|موافق|تمام|اوكي|ok|yes|نفذ|اضف|اضفه|اضيفه|اكد الشراء)$/u;
 const CANCEL = /^(?:لا|كلا|الغاء|الغ|الغي|تراجع|لا شكرا)$/u;
+/**
+ * «اشتريه», «اطلبها لي», «خذه الحين», «باخذها»: an acquisition verb whose object is a pronoun.
+ * It names the listing already in view and nothing else; it is never a search query.
+ */
+const PRONOUN_PURCHASE = /^(?:(?:طيب|طب|خلاص|خلص|تمام|اوكي|يلا)\s+)?(?:اشتريه|اشتريها|اشتريهم|بشتريه|بشتريها|نشتريه|نشتريها|اطلبه|اطلبها|اطلبهم|اطلبلي اياه|اطلبلي اياها|خذه|خذها|اخذه|اخذها|باخذه|باخذها|ناخذه|ناخذها)(?:\s+(?:لي|الان|الحين|هلا|هلق|هسا|هسه|اليوم))*$/u;
+/**
+ * «كم سعر 3 قطع منه؟», «كم بكلف 3 وجبات؟», «ترجمة 7 صفحات كم؟», «10 حصص بكم؟»: the total for a
+ * stated quantity of the listing in view. Computed by the server from the persisted price in
+ * minor units — never by the model — and nothing is added or ordered.
+ */
+const QUANTITY_PRICE_LEAD = /^(?:(?:طيب|طب|و|يعني)\s+)?(?:كم|بكم|قديش|شقد|بقديش|كام|بكام)\s+(?:(?:سعر|ثمن|حق|تكلفه|يكلف|بكلف|بيكلف|تكلف|يصير|بيصير|بصير|يطلع|بيطلع)\s+)?(?:لو\s+(?:اخذت|طلبت)\s+)?(\d{1,4})(?:\s+\S+)?(?:\s+(?:منه|منها|منهم))?$/u;
+const QUANTITY_PRICE_TRAIL = /^(?:\S+\s+)?(\d{1,4})\s+\S+\s+(?:كم|بكم|قديش|بقديش|كام|بكام)$/u;
+const QUANTITY_PRICE_WORDS: Record<string, number> = { قطعتين: 2, حبتين: 2, وجبتين: 2, صفحتين: 2, حصتين: 2, زيارتين: 2, كيلوين: 2, اثنين: 2, ثنتين: 2 };
+const QUANTITY_PRICE_WORD = /^(?:(?:طيب|طب|و)\s+)?(?:كم|بكم|قديش|كام)\s+(?:(?:سعر|ثمن|يكلف|بكلف|بيكلف|يصير)\s+)?(\S+)(?:\s+(?:منه|منها))?$/u;
+
+function quantityPriceQuestion(text: string): number | undefined {
+  const lead = text.match(QUANTITY_PRICE_LEAD) ?? text.match(QUANTITY_PRICE_TRAIL);
+  // A four-digit year («كم سعر 2019») is a model year, never a quantity.
+  if (lead) return Number(lead[1]) >= 1900 && Number(lead[1]) <= 2100 ? undefined : Number(lead[1]);
+  const word = text.match(QUANTITY_PRICE_WORD);
+  return word ? QUANTITY_PRICE_WORDS[word[1]!] : undefined;
+}
+
 const WANT_FOCUSED_LISTING = /^(?:ابيه|ابيها|ابغاه|ابغاها|ابغيه|ابغيها|بديه|بديها|اريده|اريدها)$/u;
 
 const ORDINAL_TOKENS: Record<string, number> = {
@@ -673,6 +696,36 @@ export async function executeBuyerTurn(input: {
 
   const set = await latestListingSet(input.conversationId, input.market.id);
   const state = stateOf(set);
+
+  const askedQuantity = quantityPriceQuestion(text);
+  if (askedQuantity !== undefined && set) {
+    const focused = await resolveReference({ conversationId: input.conversationId, marketId: input.market.id, actorId, message: "هذا" });
+    const listingId = focused?.resourceId ?? (set.resourceIds.length === 1 ? set.resourceIds[0] : undefined);
+    if (!listingId)
+      return notice(`لأي عرض تريد حساب ${askedQuantity}؟ لديك ${set.resourceIds.length} نتائج؛ اكتب مثلًا «كم سعر ${askedQuantity} من الأول».`);
+    if (askedQuantity < 1) return notice("الكمية يجب أن تكون عددًا صحيحًا من 1 فأكثر.");
+    const snapshot = await readListingForBuyer(actorId, listingId);
+    const [row] = await db.select({ title: offers.data }).from(offers).where(eq(offers.id, listingId));
+    const title = String((row?.title as { title?: unknown } | undefined)?.title ?? "العرض");
+    if (!snapshot || snapshot.unitPriceMinor === null)
+      return notice(`«${title}» ليس له سعر معلن، فلا أستطيع حساب ${askedQuantity}. اطلب تسعيرة من البائع أو قدّم عرضًا.`);
+    const total = snapshot.unitPriceMinor * askedQuantity;
+    const stock = snapshot.available !== null && snapshot.available !== undefined && askedQuantity > snapshot.available
+      ? ` المتاح حاليًا ${snapshot.available} فقط.`
+      : "";
+    return notice(`«${title}»: ${moneyOf(snapshot.unitPriceMinor, input.market)} × ${askedQuantity} = ${moneyOf(total, input.market)} حسب السعر المحفوظ الآن، بدون التوصيل أو أي رسوم.${stock} لم يُضف شيء إلى السلة.`);
+  }
+
+  // A pronoun purchase resolves only against what is in view; an open review keeps its own flow.
+  if (PRONOUN_PURCHASE.test(text) && pending?.kind !== "ACTION") {
+    const focused = await resolveReference({ conversationId: input.conversationId, marketId: input.market.id, actorId, message: "هذا" });
+    if (focused) return purchaseReview({ conversationId: input.conversationId, market: input.market, actorId, message: "أبي هذا" });
+    if (set && set.resourceIds.length === 1)
+      return purchaseReview({ conversationId: input.conversationId, market: input.market, actorId, message: "أبي الأول" });
+    if (set && set.resourceIds.length > 1)
+      return notice(`أي عرض تقصد؟ لديك ${set.resourceIds.length} نتائج؛ اكتب مثلًا «أبي الأول» أو «الثاني». لم يُضف شيء ولم يُنشأ أي طلب.`);
+    return notice("ما العرض الذي تريد شراءه؟ لا يوجد عرض ظاهر في هذه المحادثة الآن؛ ابحث عنه أولًا. لم يُنشأ أي طلب.");
+  }
 
   // Resolve a bare ordinal against the active buyer result set before an open
   // message can fall through to general advice. An empty set is still the

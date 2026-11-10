@@ -482,7 +482,12 @@ export function parseStructuredSearch(
     normalizeSearch(normalizeDigits(stripCorrectionPrefix(message))),
   )
     // «شو في سيارات …», «في عندكم طاولة؟»: the question frame is not a city («في …») or an item.
-    .replace(/^(?:(?:شو|وش|ايش|شنو)\s+(?:في|فيه)|(?:في|فيه|هل)\s+(?:عندكم|لديكم|عندك)|عندكم|لديكم)\s+/u, "");
+    .replace(/^(?:(?:شو|وش|ايش|شنو)\s+(?:في|فيه)|(?:في|فيه|هل)\s+(?:عندكم|لديكم|عندك)|عندكم|لديكم)\s+/u, "")
+    // «أرخص من 100», «أوطى من 50»: a comparative before an amount is a ceiling, not a sort
+    // («أرخص من الثاني» names a position and is left to the result-set rules).
+    .replace(/(?:^|\s)(?:في\s+)?(?:ال)?(?:ارخص|اوطي|انزل)(?:\s+سعر)?\s+من\s+(?=\d)/gu, " اقل من ")
+    .replace(/\s+/g, " ")
+    .trim();
   const categories = configured ?? [];
   const mentionedCategory = searchCategory(normalized, categories);
   const categoryId = mentionedCategory?.id ?? previous?.categoryId;

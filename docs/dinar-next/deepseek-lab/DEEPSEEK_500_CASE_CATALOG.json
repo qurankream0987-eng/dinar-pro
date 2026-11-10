@@ -2324,6 +2324,7 @@
      "say": "وين وصل طلبي؟",
      "expect": {
       "surfaceIn": [
+       "ORDERS",
        "ORDERS_LIST",
        "ORDER_STATUS",
        "ORDER_TRACKING",
@@ -2357,6 +2358,7 @@
      "say": "وينه طلبي يا خوي",
      "expect": {
       "surfaceIn": [
+       "ORDERS",
        "ORDERS_LIST",
        "ORDER_STATUS",
        "ORDER_TRACKING",
@@ -13042,25 +13044,47 @@
    "turns": [
     {
      "http": {
-      "method": "POST",
-      "path": "/cart/items",
+      "method": "PUT",
+      "path": "/cart",
       "body": {
-       "offerId": "lab_tv_lg",
-       "quantity": 1,
-       "unitPrice": "1"
+       "marketId": "JO",
+       "items": [
+        {
+         "listingId": "lab_tv_lg",
+         "quantity": 1,
+         "unitPrice": "1",
+         "unitPriceMinor": 1
+        }
+       ]
       }
      },
      "expect": {
       "statusIn": [
        200,
-       201,
        400,
-       404,
        422
       ],
       "delta": {
        "cart": "any"
       }
+     }
+    },
+    {
+     "http": {
+      "method": "GET",
+      "path": "/cart"
+     },
+     "expect": {
+      "statusIn": [
+       200
+      ],
+      "bodyMatch": [
+       "410",
+       "lab_tv_lg"
+      ],
+      "bodyNot": [
+       "\"unitPrice\":\"1(\\.0+)?\""
+      ]
      }
     }
    ],
@@ -13083,11 +13107,16 @@
    "turns": [
     {
      "http": {
-      "method": "POST",
-      "path": "/cart/items",
+      "method": "PUT",
+      "path": "/cart",
       "body": {
-       "offerId": "lab_draft_watch",
-       "quantity": 1
+       "marketId": "JO",
+       "items": [
+        {
+         "listingId": "lab_draft_watch",
+         "quantity": 1
+        }
+       ]
       }
      },
      "expect": {
@@ -13122,11 +13151,16 @@
    "turns": [
     {
      "http": {
-      "method": "POST",
-      "path": "/cart/items",
+      "method": "PUT",
+      "path": "/cart",
       "body": {
-       "offerId": "lab_soldout_ipad",
-       "quantity": 1
+       "marketId": "JO",
+       "items": [
+        {
+         "listingId": "lab_soldout_ipad",
+         "quantity": 1
+        }
+       ]
       }
      },
      "expect": {
@@ -13277,6 +13311,8 @@
        "تم تسليم"
       ],
       "surfaceIn": [
+       "ORDERS",
+       "SETTINGS",
        "ORDERS_LIST",
        "ORDER_STATUS",
        "ORDER_TRACKING",
@@ -13327,6 +13363,8 @@
        "تم تسليم"
       ],
       "surfaceIn": [
+       "ORDERS",
+       "SETTINGS",
        "ORDERS_LIST",
        "ORDER_STATUS",
        "ORDER_TRACKING",
@@ -13377,6 +13415,8 @@
        "تم تسليم"
       ],
       "surfaceIn": [
+       "ORDERS",
+       "SETTINGS",
        "ORDERS_LIST",
        "ORDER_STATUS",
        "ORDER_TRACKING",
@@ -13427,6 +13467,8 @@
        "تم تسليم"
       ],
       "surfaceIn": [
+       "ORDERS",
+       "SETTINGS",
        "ORDERS_LIST",
        "ORDER_STATUS",
        "ORDER_TRACKING",
@@ -13477,6 +13519,8 @@
        "تم تسليم"
       ],
       "surfaceIn": [
+       "ORDERS",
+       "SETTINGS",
        "ORDERS_LIST",
        "ORDER_STATUS",
        "ORDER_TRACKING",
@@ -13527,6 +13571,8 @@
        "تم تسليم"
       ],
       "surfaceIn": [
+       "ORDERS",
+       "SETTINGS",
        "ORDERS_LIST",
        "ORDER_STATUS",
        "ORDER_TRACKING",
@@ -13577,6 +13623,8 @@
        "تم تسليم"
       ],
       "surfaceIn": [
+       "ORDERS",
+       "SETTINGS",
        "ORDERS_LIST",
        "ORDER_STATUS",
        "ORDER_TRACKING",
@@ -13627,6 +13675,8 @@
        "تم تسليم"
       ],
       "surfaceIn": [
+       "ORDERS",
+       "SETTINGS",
        "ORDERS_LIST",
        "ORDER_STATUS",
        "ORDER_TRACKING",
@@ -13677,6 +13727,8 @@
        "تم تسليم"
       ],
       "surfaceIn": [
+       "ORDERS",
+       "SETTINGS",
        "ORDERS_LIST",
        "ORDER_STATUS",
        "ORDER_TRACKING",
@@ -13727,6 +13779,8 @@
        "تم تسليم"
       ],
       "surfaceIn": [
+       "ORDERS",
+       "SETTINGS",
        "ORDERS_LIST",
        "ORDER_STATUS",
        "ORDER_TRACKING",
@@ -13777,6 +13831,8 @@
        "تم تسليم"
       ],
       "surfaceIn": [
+       "ORDERS",
+       "SETTINGS",
        "ORDERS_LIST",
        "ORDER_STATUS",
        "ORDER_TRACKING",
@@ -13827,6 +13883,8 @@
        "تم تسليم"
       ],
       "surfaceIn": [
+       "ORDERS",
+       "SETTINGS",
        "ORDERS_LIST",
        "ORDER_STATUS",
        "ORDER_TRACKING",
@@ -13877,6 +13935,8 @@
        "تم تسليم"
       ],
       "surfaceIn": [
+       "ORDERS",
+       "SETTINGS",
        "ORDERS_LIST",
        "ORDER_STATUS",
        "ORDER_TRACKING",
@@ -13927,6 +13987,8 @@
        "تم تسليم"
       ],
       "surfaceIn": [
+       "ORDERS",
+       "SETTINGS",
        "ORDERS_LIST",
        "ORDER_STATUS",
        "ORDER_TRACKING",
@@ -13977,6 +14039,8 @@
        "تم تسليم"
       ],
       "surfaceIn": [
+       "ORDERS",
+       "SETTINGS",
        "ORDERS_LIST",
        "ORDER_STATUS",
        "ORDER_TRACKING",
@@ -14027,6 +14091,8 @@
        "تم تسليم"
       ],
       "surfaceIn": [
+       "ORDERS",
+       "SETTINGS",
        "ORDERS_LIST",
        "ORDER_STATUS",
        "ORDER_TRACKING",
@@ -14077,6 +14143,8 @@
        "تم تسليم"
       ],
       "surfaceIn": [
+       "ORDERS",
+       "SETTINGS",
        "ORDERS_LIST",
        "ORDER_STATUS",
        "ORDER_TRACKING",
@@ -14127,6 +14195,8 @@
        "تم تسليم"
       ],
       "surfaceIn": [
+       "ORDERS",
+       "SETTINGS",
        "ORDERS_LIST",
        "ORDER_STATUS",
        "ORDER_TRACKING",
@@ -14177,6 +14247,8 @@
        "تم تسليم"
       ],
       "surfaceIn": [
+       "ORDERS",
+       "SETTINGS",
        "ORDERS_LIST",
        "ORDER_STATUS",
        "ORDER_TRACKING",
@@ -14227,6 +14299,8 @@
        "تم تسليم"
       ],
       "surfaceIn": [
+       "ORDERS",
+       "SETTINGS",
        "ORDERS_LIST",
        "ORDER_STATUS",
        "ORDER_TRACKING",
@@ -19060,25 +19134,43 @@
    "turns": [
     {
      "http": {
-      "method": "POST",
-      "path": "/cart/items",
+      "method": "PUT",
+      "path": "/cart",
       "body": {
-       "offerId": "lab_airpods",
-       "quantity": 1,
-       "unitPriceMinor": 1,
-       "userId": "lab_stranger"
+       "marketId": "JO",
+       "userId": "lab_stranger",
+       "items": [
+        {
+         "listingId": "lab_airpods",
+         "quantity": 1,
+         "unitPriceMinor": 1
+        }
+       ]
       }
      },
      "expect": {
       "statusIn": [
        200,
-       201,
        400,
        422
       ],
       "delta": {
        "cart": "any"
       }
+     }
+    },
+    {
+     "http": {
+      "method": "GET",
+      "path": "/cart"
+     },
+     "expect": {
+      "statusIn": [
+       200
+      ],
+      "bodyMatch": [
+       "165"
+      ]
      }
     }
    ],

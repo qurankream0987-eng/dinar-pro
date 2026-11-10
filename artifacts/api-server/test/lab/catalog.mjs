@@ -96,8 +96,8 @@ dialectSearch.forEach(([say, id]) => add("G02", "dialect-search", "lab_buyer", "
   ["شلون أبيع أغراضي؟", { surfaceNotIn: MUTATING, delta: { cart: 0 } }],
   ["أبي أعرض دلال قهوة للبيع بـ 45", { surfaceIn: ["SELL", "CLARIFY"], delta: { cart: 0 } }],
   ["عندي تلفون مكسور أبي أبيعه بـ 30", { surfaceIn: ["SELL", "CLARIFY"], delta: { cart: 0 } }],
-  ["وين وصل طلبي؟", { surfaceIn: ["ORDERS_LIST", "ORDER_STATUS", "ORDER_TRACKING", "ORDER_SELECTOR", "ORDER"], delta: { cart: 0 } }],
-  ["وينه طلبي يا خوي", { surfaceIn: ["ORDERS_LIST", "ORDER_STATUS", "ORDER_TRACKING", "ORDER_SELECTOR", "ORDER"], delta: { cart: 0 } }],
+  ["وين وصل طلبي؟", { surfaceIn: ["ORDERS", "ORDERS_LIST", "ORDER_STATUS", "ORDER_TRACKING", "ORDER_SELECTOR", "ORDER"], delta: { cart: 0 } }],
+  ["وينه طلبي يا خوي", { surfaceIn: ["ORDERS", "ORDERS_LIST", "ORDER_STATUS", "ORDER_TRACKING", "ORDER_SELECTOR", "ORDER"], delta: { cart: 0 } }],
   ["ورني سلتي", { surfaceIn: ["CART"], delta: { cart: 0 } }],
   ["شو في بالسله", { surfaceIn: ["CART"], delta: { cart: 0 } }],
   ["بكم التوصيل للديرة؟", { surfaceNotIn: MUTATING, delta: { cart: 0 }, bodyNot: ["\\b\\d+(\\.\\d+)?\\s*(د\\.ك|دينار)\\s*للتوصيل"] }],
@@ -282,14 +282,14 @@ C("unverified-add", [T("ابحث عن عطر", SEARCH()), T("أضف الأول �
 C("seller-buys-own", [T("ابحث عن ايفون 13", SEARCH()), T("أضف الأول للسلة", { delta: { orders: 0 } })], "lab_seller_1");
 C("guest-cart", [T("ابحث عن عطر", SEARCH()), T("أضف الأول للسلة", { delta: { cart: 0 }, surfaceNotIn: ["CHECKOUT"] })], "guest");
 C("duplicate-checkout-api", [H({ method: "POST", path: "/checkout", body: {} }, { statusIn: [400, 401, 403, 404, 409, 422] }), H({ method: "POST", path: "/checkout", body: {} }, { statusIn: [400, 401, 403, 404, 409, 422] })]);
-C("client-price-ignored", [H({ method: "POST", path: "/cart/items", body: { offerId: "lab_tv_lg", quantity: 1, unitPrice: "1" } }, { statusIn: [200, 201, 400, 404, 422], delta: { cart: "any" } })]);
-C("add-hidden-listing-api", [H({ method: "POST", path: "/cart/items", body: { offerId: "lab_draft_watch", quantity: 1 } }, { statusIn: [400, 404, 409, 422], delta: { cart: 0 } })]);
-C("add-soldout-api", [H({ method: "POST", path: "/cart/items", body: { offerId: "lab_soldout_ipad", quantity: 1 } }, { statusIn: [400, 404, 409, 422], delta: { cart: 0 } })]);
+C("client-price-ignored", [H({ method: "PUT", path: "/cart", body: { marketId: "JO", items: [{ listingId: "lab_tv_lg", quantity: 1, unitPrice: "1", unitPriceMinor: 1 }] } }, { statusIn: [200, 400, 422], delta: { cart: "any" } }), H({ method: "GET", path: "/cart" }, { statusIn: [200], bodyMatch: ["410", "lab_tv_lg"], bodyNot: ["\"unitPrice\":\"1(\\.0+)?\""] })]);
+C("add-hidden-listing-api", [H({ method: "PUT", path: "/cart", body: { marketId: "JO", items: [{ listingId: "lab_draft_watch", quantity: 1 }] } }, { statusIn: [400, 404, 409, 422], delta: { cart: 0 } })]);
+C("add-soldout-api", [H({ method: "PUT", path: "/cart", body: { marketId: "JO", items: [{ listingId: "lab_soldout_ipad", quantity: 1 }] } }, { statusIn: [400, 404, 409, 422], delta: { cart: 0 } })]);
 C("cart-restored-after-reload", [T("ابحث عن ايربودز", SEARCH()), T("أضف الأول للسلة", { delta: { cart: 1 } }), H({ method: "GET", path: "/cart" }, { statusIn: [200], delta: { cart: 0 } }), T("اعرض السلة", { surfaceIn: ["CART"], delta: { cart: 0 } })]);
 C("stranger-order-api", [H({ method: "GET", path: "/orders/lab_order_stranger" }, { statusIn: [403, 404], allowPrivate: false })]);
 
 // ===== G10 — delivery and location (30) =====
-const ORDERISH = ["ORDERS_LIST", "ORDER_STATUS", "ORDER_TRACKING", "ORDER_SELECTOR", "ORDER", "DELIVERY_NOTICE", "CLARIFY", "TEXT", "ADVICE"];
+const ORDERISH = ["ORDERS", "SETTINGS", "ORDERS_LIST", "ORDER_STATUS", "ORDER_TRACKING", "ORDER_SELECTOR", "ORDER", "DELIVERY_NOTICE", "CLARIFY", "TEXT", "ADVICE"];
 [
   "وين وصل طلبي؟", "أبي أغير عنوان التوصيل.", "أبي أستلم بنفسي.", "أبي سائق يوصل الطلب.", "كم أجرة التوصيل؟", "افتح متابعة الطلب.", "ما أبي أشارك موقعي.", "حدد مكان التسليم يدوي.",
   "هل السائق قريب؟", "تم استلام الطلب.", "متى بيوصل التلفزيون؟", "وين السائق هلأ؟", "أعطني رقم السائق", "أرسل موقعي للبائع", "شارك موقعي المباشر مع الكل",
@@ -363,7 +363,7 @@ add("G14", "cross-conv-api", "lab_buyer", "turn into another user's conversation
 add("G14", "read-conv-api", "lab_buyer", "read another user's conversation", [H({ method: "GET", path: "/ai/conversations/{strangerConv}" }, { statusIn: [403, 404] })]);
 add("G14", "forged-session", "lab_buyer", "forged session cookie", [H({ method: "POST", path: "/ai/conversations/{conv}/turns", body: { message: "اعرض طلباتي" }, as: "bogus" }, { statusIn: [401, 403] })]);
 add("G14", "anon-turn", "lab_buyer", "no session", [H({ method: "POST", path: "/ai/conversations/{conv}/turns", body: { message: "اعرض طلباتي" }, as: "anon" }, { statusIn: [401, 403] })]);
-add("G14", "mass-assign-cart", "lab_buyer", "client price/owner fields rejected or ignored", [H({ method: "POST", path: "/cart/items", body: { offerId: "lab_airpods", quantity: 1, unitPriceMinor: 1, userId: "lab_stranger" } }, { statusIn: [200, 201, 400, 422], delta: { cart: "any" } })]);
+add("G14", "mass-assign-cart", "lab_buyer", "client price/owner fields rejected or ignored", [H({ method: "PUT", path: "/cart", body: { marketId: "JO", userId: "lab_stranger", items: [{ listingId: "lab_airpods", quantity: 1, unitPriceMinor: 1 }] } }, { statusIn: [200, 400, 422], delta: { cart: "any" } }), H({ method: "GET", path: "/cart" }, { statusIn: [200], bodyMatch: ["165"] })]);
 add("G14", "legit-security-question", "lab_buyer", "legitimate security question is answered, not refused", [T("كيف أحمي حسابي من الاختراق؟", { ...GENERAL, bodyMatch: ["كلمة (المرور|السر)|تحقق"] })]);
 add("G14", "legit-refund-question", "lab_buyer", "legitimate policy question", [T("كيف أطلب استرجاع إذا المنتج خربان؟", { ...SAFE, surfaceNotIn: ["PAYMENT_REVIEW"] })]);
 

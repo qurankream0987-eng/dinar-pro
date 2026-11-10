@@ -82,7 +82,8 @@
     "test:google-signin": "NODE_ENV=development BDINAR_TEST_DATABASE=development node test/run.mjs google-signin.test",
     "test:order-settlement": "NODE_ENV=development BDINAR_TEST_DATABASE=development node test/run.mjs order-settlement.test",
     "test:draft-conversational-edits": "NODE_ENV=development BDINAR_TEST_DATABASE=development node test/run.mjs draft-conversational-edits.test",
-    "test:commercial-policy-cli": "NODE_ENV=development node test/run.mjs commercial-policy-cli.test"
+    "test:commercial-policy-cli": "NODE_ENV=development node test/run.mjs commercial-policy-cli.test",
+    "test:lab-defect-regressions": "NODE_ENV=development node test/run.mjs lab-defect-regressions.test"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1155.0",

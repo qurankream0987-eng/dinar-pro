@@ -45,7 +45,9 @@ export async function executePersonalMemoryTurn(input: Interaction, service = pe
   // those commands belong to their own authorities (e.g. listing archive review), never to memory.
   if (forget && !/^(?:اهتمام|تفضيل)/.test(n.replace(/^\S+\s+/, "")) && OWN_ITEM.test(forget[1])) return null;
   // «احذف كلمة … من الوصف / العنوان» edits a listing draft, never the personal memory.
-  if (forget && /من\s+(?:ال)?(?:وصف|عنوان|اعلان|مسوده|مسودة)/.test(forget[1])) return null;
+  // «احذف العطر من السلة / الطلب»: removing from a DINAR container belongs to that container's
+  // own authority (cart, draft, order), never to the personal memory.
+  if (forget && /(?:^|\s)(?:من|عن)\s+(?:ال)?(?:وصف|عنوان|اعلان|مسوده|مسودة|سله|سلة|سلتي|عربه|عربة|طلب|طلبي|مسودتي)(?:\s|$)/.test(forget[1])) return null;
   if (forget && safeMemoryText(forget[1])) {
     const topic = discoverTopics(forget[1])[0] ?? topicIdentity(forget[1]);
     await service.forgetMemory(input.userId, topic.key, input.eventId);

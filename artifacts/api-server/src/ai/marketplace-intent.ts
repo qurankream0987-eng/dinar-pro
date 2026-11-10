@@ -71,9 +71,9 @@ export function isVagueRequest(message: string): boolean {
 }
 
 export const EXPLICIT_SEARCH_ACTION =
-  /(?:^|\s)(?:ابحث(?:\s+لي)?|ابحثلي|ادور|دور(?:\s+لي)?|دورلي|فتش|شوف\s+الموجود|فرجني|وريني|ورني|ورينا|راويني|ارني|اعرض|search|find|look\s+for|show\s+me)(?=\s|$)/u;
+  /(?:^|\s)(?:ابحث(?:\s+لي)?|ابحثلي|ادور|دور(?:\s+لي)?|دورلي|دورولي|فتش|فتشلي|شوف\s+الموجود|شوفلي|شوف\s+لي|شوفي\s+لي|شوف\s+(?:اذا|ان\s+كان|لو)\s+(?:في|فيه|يوجد)|جيبلي|جيب\s+لي|هاتلي|هات\s+لي|لقيلي|لاقيلي|طالعلي|فرجني|وريني|ورني|ورينا|راويني|ارني|اعرض|search|find|look\s+for|show\s+me)(?=\s|$)/u;
 const MARKETPLACE_REQUEST_ACTION =
-  /(?:^|\s)(?:اريد|ابي|ابغي|احتاج|بدي|ودي|حاب|نفسي|ابغى|عايز|عاوز|محتاج|محتاجه|نبي|نبغى|بدنا)\s/u;
+  /(?:^|\s)(?:اريد|ابي|ابغي|ابغا|ابا|احتاج|بدي|ودي|حاب|نفسي|ابغى|عايز|عاوز|محتاج|محتاجه|نبي|نبغى|نبغي|بدنا)\s/u;
 /**
  * «في عندكم طاولة؟», «عندكم خدمة تنظيف؟», «شو في سيارات تويوتا»، «مين يصمم شعارات»: asking
  * whether the market has something is a search. Each form needs an item word after it.
@@ -92,8 +92,16 @@ const WANT_ACTIVITY =
  */
 export const NEED_QUESTION = /^(?:(?:طيب|طب|اوكي|و)\s+)?(?:كم|كيف|ليش|لماذا|متى)\s/u;
 /** A bare topic is not a search, but a concrete want/need request is. */
+/**
+ * «جيبلي فكرة مشروع», «شوفلي حل لمشكلتي», «دورلي على طريقة …»: the object of the fetch/search
+ * verb is something to think or write, not an item; the request is general help.
+ */
+const ABSTRACT_OBJECT =
+  /(?:^|\s)(?:ابحث|ابحثلي|دور|دورلي|دورولي|شوفلي|شوف|شوفي|جيبلي|جيب|هاتلي|هات|لقيلي|لاقيلي|طالعلي|فتشلي)(?:\s+لي)?(?:\s+(?:عن|على|علي))?\s+(?:ال)?(?:فكره|افكار|حل|حلول|طريقه|طرق|نصيحه|نصائح|معلومه|معلومات|جواب|اجابه|شرح|خطه|اسم|اسماء|موضوع|مواضيع|سبب|اسباب|راي|رايك|معني|تفسير|ترجمه|ملخص|مقال|قصه|نكته|شعر)(?:\s|$)/u;
+
 export function hasExplicitMarketplaceSearchIntent(message: string): boolean {
   const normalized = normalizeMarketplaceText(message);
+  if (ABSTRACT_OBJECT.test(normalized.replace(/ة/g, "ه"))) return false;
   if (EXPLICIT_SEARCH_ACTION.test(normalized)) return true;
   const correction = normalizeMarketplaceText(stripCorrectionPrefix(message));
   if (correction !== normalized)

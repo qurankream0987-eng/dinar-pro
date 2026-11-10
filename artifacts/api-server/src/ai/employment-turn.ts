@@ -491,7 +491,19 @@ function hasProfileChanges(changes: ProfileChanges): boolean {
 
 // ─── Intent detection ────────────────────────────────────────────────────────
 
+/**
+ * «كيف أكتب سيرة ذاتية؟», «شو أفضل طريقة أقدم على وظيفة؟»: asking how is not asking DINAR to
+ * do it. Such a question never creates a profile, a job draft or an application.
+ */
+const HOW_TO = /^(?:(?:طيب|بس|سؤال|ممكن)\s+)?(?:كيف|كيفيه|شلون|كيفاش|ازاي|ازاى|ليش|لماذا|ليه|ما\s+هي|ما\s+هو|شو|وش|ايش|ما)\s+(?:هي\s+|هو\s+)?(?:(?:افضل|احسن|اسهل)\s+)?(?:طريق[هة]\s+)?|^(?:طريق[هة]|نصائح|نصيحه|نصيحة|خطوات)\s+/u;
+
 function intentOf(text: string) {
+  const question = HOW_TO.test(text);
+  const base = intentOfRequest(text);
+  return question ? { ...base, cvCreate: false, jobCreate: false, apply: false, employMe: false } : base;
+}
+
+function intentOfRequest(text: string) {
   return {
     myJobs: has(text, /(?:^|\s)(?:وظائفي|الوظائف التي نشرتها|الوظائف اللي نشرتها|وظائف شركتي)(?=\s|$)/u),
     applicants: has(text, /(?:^|\s)(?:المتقدمين|المتقدمون|المتقدمات|متقدمين|طلبات التوظيف على|من تقدم)(?=\s|$)/u),
