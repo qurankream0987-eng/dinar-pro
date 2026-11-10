@@ -41,6 +41,12 @@ const LEXICON: readonly (readonly string[])[] = [
   ["شعار", "لوجو", "لوغو"],
   ["طعام", "سفره", "سفرة"],
   ["كوب", "اكواب", "كاس", "كاسات", "كاسه", "كاسة"],
+  // Brands and model words written in Arabic or Latin letters: a buyer types «ايفون», the seller
+  // titled the listing «iPhone» (and back). Transliteration only — no product facts.
+  ["ايفون", "iphone", "ايفونات"], ["سامسونج", "سامسونغ", "samsung"], ["جالاكسي", "جالكسي", "galaxy"],
+  ["الترا", "ultra"], ["ماكبوك", "macbook"], ["لينوفو", "lenovo"], ["ديل", "dell"], ["شاومي", "xiaomi"],
+  ["ريدمي", "redmi"], ["بلايستيشن", "بلاستيشن", "playstation"], ["سوني", "sony"], ["لوجيتك", "logitech"],
+  ["تويوتا", "toyota"], ["كامري", "camry"], ["كورولا", "corolla"], ["هيونداي", "hyundai"], ["ايربودز", "airpods"],
 ];
 const LEXICON_BY_WORD = new Map<string, readonly string[]>(
   LEXICON.flatMap((group) => group.map((word) => [word, group] as const)),
@@ -100,6 +106,11 @@ export function genericTokens(tokens: readonly string[]): string[] {
   const generic = tokens.filter((token) => tokenVariants(token).some((form) => GENERIC_NOUNS.has(form)));
   const specific = tokens.filter((token) => !generic.includes(token) && !DESCRIPTIVE.test(token));
   return generic.length < tokens.length && specific.length > 0 ? generic : [];
+}
+
+/** True when no word names an item: empty, or only request words («ابي», «ابحث», «عن»). */
+export function isRequestOnly(tokens: readonly string[]): boolean {
+  return tokens.every((token) => REQUEST_WORDS.has(token));
 }
 
 /** Drops words that describe the request rather than the item, unless nothing would remain. */

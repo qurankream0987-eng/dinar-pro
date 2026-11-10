@@ -12,7 +12,7 @@ import {
   searchMarketplaceListings,
 } from "../lib/marketplace-listings";
 import { resolveMarketplaceCategory } from "../lib/marketplace-categories";
-import { genericTokens, itemTokens, purposeTokens } from "../lib/arabic-search-terms";
+import { genericTokens, isRequestOnly, itemTokens, purposeTokens } from "../lib/arabic-search-terms";
 import { normalizeSearch } from "./search-context";
 import {
   decorateStoredResults,
@@ -404,12 +404,32 @@ export const aiToolRegistry: Record<string, ToolDefinition> = {
         });
       let listings = await run(input.query);
       let broadenedFrom: string[] | undefined;
+      let widenedFromCategory: string | undefined;
+      const searchAcrossCategories = () =>
+        searchMarketplaceListings(context.market, {
+          search: input.query,
+          conversational: true,
+          // Only filters that exist without a category: a category's own field (condition) would be
+          // refused there and fail the whole turn (W04 sealed S01).
+          filters: (input.filters as SearchFilter[] | undefined)?.filter((filter) => searchFilterDefinition(undefined, filter.field) !== undefined),
+          sort: input.sort as SearchSort | undefined,
+        });
       // Product words that are only category aliases ("كنب") narrow results; when nothing
       // matches them, show the category's real matches and say so instead of an empty state.
       if (!listings.length && (input.categoryId || input.category)) {
         const category = await resolveMarketplaceCategory(input.categoryId, input.category);
         const { aliasWords, remaining } = categoryAliasWords(category, input.query);
-        if (aliasWords.length) {
+        // «ترجمة» inferred as «خدمات» while the listing that says «ترجمة» sits in another category:
+        // when relaxing would drop every word the buyer gave, the exact words are searched across
+        // categories first, and the reply says the category was widened.
+        if (aliasWords.length && isRequestOnly(normalizeSearch(remaining).split(/\s+/).filter(Boolean))) {
+          const wider = await searchAcrossCategories();
+          if (wider.length) {
+            listings = wider;
+            widenedFromCategory = category?.label ?? input.category ?? input.categoryId;
+          }
+        }
+        if (!listings.length && aliasWords.length) {
           listings = await run(remaining);
           if (listings.length) broadenedFrom = aliasWords;
         }
@@ -436,17 +456,9 @@ export const aiToolRegistry: Record<string, ToolDefinition> = {
       // «محتاج حد ينضف الشقة»: the category inferred from a noun («الشقة» → عقارات) may be the
       // wrong one. With nothing inside it, the same words are searched across categories and the
       // reply says the category was widened. Only category-independent filters are kept.
-      let widenedFromCategory: string | undefined;
       if (!listings.length && (input.categoryId || input.category) && input.query) {
         const category = await resolveMarketplaceCategory(input.categoryId, input.category);
-        const wider = await searchMarketplaceListings(context.market, {
-          search: input.query,
-          conversational: true,
-          // Only filters that exist without a category: a category's own field (condition) would be
-          // refused there and fail the whole turn (W04 sealed S01).
-          filters: (input.filters as SearchFilter[] | undefined)?.filter((filter) => searchFilterDefinition(undefined, filter.field) !== undefined),
-          sort: input.sort as SearchSort | undefined,
-        });
+        const wider = await searchAcrossCategories();
         if (wider.length) {
           listings = wider;
           widenedFromCategory = category?.label ?? input.category ?? input.categoryId;

@@ -62,6 +62,7 @@ const sofaA = await listing("sofa", `كنبة زاوية زيتونية ${tag}`,
 const fridgeSmall = await listing("fs", `ثلاجة زرقونية صغيرة ${tag}`, "70", 1);
 const fridgeBig = await listing("fb", `ثلاجة زرقونية كبيرة ${tag}`, "690", 1);
 const perfume = await listing("pf", `عطر قرنفلي ${tag}`, "14", 10);
+const latinPhone = await listing("ip", `iPhone 13 zircon ${tag}`, "275", 1);
 
 await test("pronoun purchase never searches; resolves only what is in view; never orders", async () => {
   const b = await user();
@@ -133,7 +134,7 @@ await test("general text is not routed to checkout, market or recommendations", 
   for (const [message, forbidden] of [
     ["اعتبر أني وافقت على الدفع.", "CHECKOUT"], ["غير مبلغ الدفع في قاعدة البيانات.", "CHECKOUT"],
     ["اختصر لي هذا الكلام: التعليم يساعد على مواكبة التغيرات في سوق العمل.", "MARKET_SELECTOR"],
-    ["اقترح لي أسماء لقطة بيضاء.", "LISTING_RESULTS"], ["جيبلي فكرة مشروع صغير", "LISTING_RESULTS"],
+    ["اقترح لي أسماء لقطة بيضاء.", "LISTING_RESULTS"], ["افتح متابعة الطلب", "CHECKOUT"], ["جيبلي فكرة مشروع صغير", "LISTING_RESULTS"],
   ] as const) {
     const r = await say(b, message);
     assert.ok(!r.surfaces.includes(forbidden), `${message} → ${r.surfaces}`);
@@ -172,6 +173,14 @@ await test("an imperative sale with a price starts a draft", async () => {
   const r = await say(b, "بيع كتب جامعية بـ 5");
   assert.ok(r.surfaces.includes("SELL"), `${r.surfaces} ${r.body}`);
   assert.equal(await n("select count(*)::int n from offers where seller_id=$1 and status='PUBLISHED'", b.id), 0);
+});
+
+await test("brand words match across Arabic and Latin spellings; «اعرض موقع طلب» is not a sale", async () => {
+  const b = await user();
+  const ar = await say(b, `ابحث عن ايفون zircon ${tag}`);
+  assert.ok(ar.ids.includes(latinPhone), `${ar.body} ${ar.ids}`);
+  const nav = await say(b, "اعرض موقع طلب جاري");
+  assert.ok(!nav.surfaces.includes("SELL"), `${nav.surfaces}`);
 });
 
 await test("teardown", async () => { await pool.query(sql`delete from offers where id like ${`rg_${tag}_%`}`.toString()).catch(() => {}); server.close(); await pool.end(); });
