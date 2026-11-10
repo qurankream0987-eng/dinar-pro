@@ -15,6 +15,6 @@ for (const options of QUERIES) {
     golden.push({ options, result, full });
   } catch (error) { golden.push({ options, error: (error as Error).message }); }
 }
-writeFileSync("/home/user/dinar-c1/artifacts/api-server/test/fixtures/search-golden.json", JSON.stringify(golden, null, 1) + "\n");
+writeFileSync(process.env.DINAR_SEARCH_GOLDEN_OUT ?? new URL("./fixtures/search-golden.json", import.meta.url).pathname, JSON.stringify(golden, null, 1) + "\n");
 console.log("SEARCH_GOLDEN", golden.length, golden.filter((g: any) => g.error).length, "errors", golden.filter((g: any) => g.result?.some((r: any) => r[4])).length, "with sponsored");
 await pool.end();

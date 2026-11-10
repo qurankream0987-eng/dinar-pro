@@ -175,6 +175,20 @@ await test("an imperative sale with a price starts a draft", async () => {
   assert.equal(await n("select count(*)::int n from offers where seller_id=$1 and status='PUBLISHED'", b.id), 0);
 });
 
+await test("a cart add that names a different item than the card in view adds nothing", async () => {
+  const b = await user();
+  await say(b, `ابحث عن كيبل زامبو ${tag}`);
+  const wrong = await say(b, "حط الكنب بالسلة");
+  assert.equal(await cartQty(b.id), 0, wrong.body);
+  assert.match(wrong.body, /وليس/);
+  const right = await say(b, "حط الكيبل بالسلة");
+  assert.equal(await cartQty(b.id), 1, right.body);
+  const pronoun = await user();
+  await say(pronoun, `ابحث عن عطر قرنفلي ${tag}`);
+  await say(pronoun, "حطه بالسلة");
+  assert.equal(await cartQty(pronoun.id), 1);
+});
+
 await test("brand words match across Arabic and Latin spellings; «اعرض موقع طلب» is not a sale", async () => {
   const b = await user();
   const ar = await say(b, `ابحث عن ايفون zircon ${tag}`);

@@ -1834,10 +1834,14 @@ export async function executeModelFallback(
           lastResourceResult = result;
           if (lastSearchResult && result.listings[0]) {
             const refreshed = result.listings[0];
-            lastSearchResult = {
-              ...lastSearchResult,
-              listings: lastSearchResult.listings.map((listing) => listing.id === refreshed.id ? refreshed : listing),
-            };
+            // A read of a listing outside the earlier search is what this turn is about: the card
+            // must show that listing, never the unrelated search (the prose describes the read).
+            if (!lastSearchResult.listings.some((listing) => listing.id === refreshed.id)) lastSearchResult = undefined;
+            else
+              lastSearchResult = {
+                ...lastSearchResult,
+                listings: lastSearchResult.listings.map((listing) => listing.id === refreshed.id ? refreshed : listing),
+              };
           }
         }
         // F02: a prepared action is returned as the server-built review; the model never

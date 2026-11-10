@@ -49,6 +49,7 @@ import {
   listMarketplaceCategories,
 } from "../lib/marketplace-categories";
 import { normalizeSearch } from "./search-context";
+import { itemTokens, textMatchesToken } from "../lib/arabic-search-terms";
 import {
   executeSellerAdviceTurn,
   executeSellerListingManagementTurn,
@@ -1804,6 +1805,18 @@ async function executeRuntime(context: RuntimeContext, incoming: RuntimeOptions)
     ) {
       return clarify("حدّد عرضًا أو أكثر بأرقام ظاهرة في آخر النتائج، أو أضف العرض الوحيد الظاهر.");
     }
+    // «حط الكنب بالسلة»: when the request names the item, the listing it resolves to must be that
+    // item. A stale or different card in view («مكيف») is never added in its place.
+    const named = cartRequestItemWords(context.message);
+    if (named.length) {
+      const rows = await db.select({ id: offers.id, data: offers.data }).from(offers).where(inArray(offers.id, resourceIds));
+      const mismatch = rows.find((row) => {
+        const title = normalizeSearch(String((row.data as { title?: unknown }).title ?? ""));
+        return !named.some((word) => textMatchesToken(title, word));
+      });
+      if (mismatch)
+        return clarify(`العرض الظاهر الآن هو «${String((mismatch.data as { title?: unknown }).title ?? "")}»، وليس «${named.join(" ")}». ابحث عن «${named.join(" ")}» أولًا أو اختر من النتائج. لم يُضف شيء إلى السلة.`);
+    }
     const stated = statedCartQuantity(context.message);
     if (stated === "INVALID") return clarify("الكمية يجب أن تكون عددًا صحيحًا من 1 فأكثر. لم يُضف شيء إلى السلة.");
     if (stated !== undefined && resourceIds.length > 1)
@@ -2078,4 +2091,20 @@ async function executeRuntime(context: RuntimeContext, incoming: RuntimeOptions)
   if (category && !mentionedCategory && freshWords && scoped.result.listings.length === 0)
     return search(undefined);
   return scoped;
+}
+
+
+const CART_REQUEST_WORDS = new Set([
+  "حط", "حطه", "حطها", "حطهم", "حطلي", "ضيف", "ضيفه", "ضيفها", "ضيفهم", "ضيفلي", "اضف", "اضفه", "اضيف", "اضيفه", "ضع", "ضعه", "دخل", "دخله",
+  "بالسله", "للسله", "السله", "سلتي", "بالعربه", "العربه", "في", "على", "ع", "الى", "الي", "ل", "من", "منه", "منها", "منهم", "لي", "كمان", "ايضا", "بس",
+  "هذا", "هذه", "هذي", "هاد", "هاي", "اياه", "اياها", "رقم", "الاعلان", "العرض", "المنتج", "اللي", "الي", "ظاهر", "الظاهر", "و", "يا", "دينار",
+  "الاول", "الثاني", "الثالث", "الرابع", "الخامس", "الاخير", "اول", "ثاني", "ثالث", "قطعه", "قطع", "حبه", "حبات", "حبتين", "قطعتين", "واحد", "واحده",
+  "اثنين", "ثلاث", "ثلاثه", "اربع", "خمس", "لو", "سمحت", "من فضلك", "طيب", "تمام", "خلاص", "اوكي",
+]);
+
+/** The item words a cart request names («حط الكنب بالسلة» → ["الكنب"]); empty when it names none. */
+export function cartRequestItemWords(message: string): string[] {
+  const words = normalizeSearch(message.replace(/ة/g, "ه").replace(/[؟?!،,.«»"0-9٠-٩-]+/g, " ")).split(/\s+/).filter(Boolean);
+  const left = words.filter((word) => !CART_REQUEST_WORDS.has(word) && !CART_REQUEST_WORDS.has(word.replace(/^و/u, "")) && word.length >= 2);
+  return left.length ? itemTokens(left) : [];
 }

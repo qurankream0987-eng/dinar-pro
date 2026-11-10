@@ -234,6 +234,10 @@ for (const [index, c] of cases.entries()) {
   // fixed accounts across hundreds of cases, so its buckets are cleared between cases (disposable DB).
   await q.query("delete from auth_rate_limit_buckets").catch(() => {});
   await q.query("delete from ai_usage_reservations where status <> 'SETTLED'").catch(() => {});
+  // Per-plan AI token/request allowances are correct product behaviour too; the lab's shared
+  // accounts would exhaust them, so the disposable counters restart per case (spend is still
+  // bounded by the provider balance and the 2x estimate above).
+  await q.query("delete from ai_usage_counters").catch(() => {});
   let actor, userId = null;
   try {
     const ip = nextIp();
