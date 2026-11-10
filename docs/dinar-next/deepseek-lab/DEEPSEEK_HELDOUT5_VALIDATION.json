@@ -1,0 +1,847 @@
+{
+ "catalog": "held-out-5",
+ "frozenAt": "2026-11-10",
+ "total": 30,
+ "cases": [
+  {
+   "id": "H5-POS-001",
+   "group": "H5-POS",
+   "type": "search-positive",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "≥3-word request with extra details; the target must appear",
+   "turns": [
+    {
+     "say": "بدي ثلاجة صغيرة مستعملة رخيصة للمكتب",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_fridge_small"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H5-POS-002",
+   "group": "H5-POS",
+   "type": "search-positive",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "≥3-word request with extra details; the target must appear",
+   "turns": [
+    {
+     "say": "ابي مكيف شباك مستعمل للمطبخ",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_ac_window"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H5-POS-003",
+   "group": "H5-POS",
+   "type": "search-positive",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "≥3-word request with extra details; the target must appear",
+   "turns": [
+    {
+     "say": "محتاج غسالة اوتوماتيك مستعملة للعمارة",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_washer"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H5-POS-004",
+   "group": "H5-POS",
+   "type": "search-positive",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "≥3-word request with extra details; the target must appear",
+   "turns": [
+    {
+     "say": "عايز كنبة زاوية رمادية مستعملة للبيت",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_sofa_corner"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H5-POS-005",
+   "group": "H5-POS",
+   "type": "search-positive",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "≥3-word request with extra details; the target must appear",
+   "turns": [
+    {
+     "say": "ابي تلفزيون ال جي سمارت جديد للغرفة",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_tv_lg"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H5-POS-006",
+   "group": "H5-POS",
+   "type": "search-positive",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "≥3-word request with extra details; the target must appear",
+   "turns": [
+    {
+     "say": "بدي سماعات سوني مستعملة نظيفة للدراسة",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_headphones"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H5-POS-007",
+   "group": "H5-POS",
+   "type": "search-positive",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "≥3-word request with extra details; the target must appear",
+   "turns": [
+    {
+     "say": "ابي لابتوب ديل للبرمجة والشغل",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_laptop_dell"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H5-POS-008",
+   "group": "H5-POS",
+   "type": "search-positive",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "≥3-word request with extra details; the target must appear",
+   "turns": [
+    {
+     "say": "محتاج ماكينة خياطة صناعية مستعملة للورشة",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_machine_sewing"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H5-POS-009",
+   "group": "H5-POS",
+   "type": "search-positive",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "≥3-word request with extra details; the target must appear",
+   "turns": [
+    {
+     "say": "بدي منسف بلدي لشخصين بكرة",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_food_mansaf"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H5-POS-010",
+   "group": "H5-POS",
+   "type": "search-positive",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "≥3-word request with extra details; the target must appear",
+   "turns": [
+    {
+     "say": "ابي كنافة نابلسية طازجة للضيوف",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_food_kunafa"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H5-POS-011",
+   "group": "H5-POS",
+   "type": "search-positive",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "≥3-word request with extra details; the target must appear",
+   "turns": [
+    {
+     "say": "عايز صيانة كمبيوتر وتنظيف للجهاز",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_svc_pc_fix"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H5-POS-012",
+   "group": "H5-POS",
+   "type": "search-positive",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "≥3-word request with extra details; the target must appear",
+   "turns": [
+    {
+     "say": "بدي نقل عفش من بيت لبيت",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_svc_moving"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H5-POS-013",
+   "group": "H5-POS",
+   "type": "search-positive",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "≥3-word request with extra details; the target must appear",
+   "turns": [
+    {
+     "say": "ابي ترجمة عربي انجليزي لشهادات",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_svc_translation"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H5-POS-014",
+   "group": "H5-POS",
+   "type": "search-positive",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "≥3-word request with extra details; the target must appear",
+   "turns": [
+    {
+     "say": "محتاج تصميم شعار احترافي لشركتي",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_svc_design"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H5-POS-015",
+   "group": "H5-POS",
+   "type": "search-positive",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "≥3-word request with extra details; the target must appear",
+   "turns": [
+    {
+     "say": "بدي سرير مزدوج مع فرشة نظيف",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_bed"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H5-POS-016",
+   "group": "H5-POS",
+   "type": "search-positive",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "≥3-word request with extra details; the target must appear",
+   "turns": [
+    {
+     "say": "ابي طاولة سفرة مع كراسي مستعملة",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_table_dining"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H5-POS-017",
+   "group": "H5-POS",
+   "type": "search-positive",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "≥3-word request with extra details; the target must appear",
+   "turns": [
+    {
+     "say": "عايز ايفون 15 مستعمل بطارية ممتازة",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_iphone15_used"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H5-POS-018",
+   "group": "H5-POS",
+   "type": "search-positive",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "≥3-word request with extra details; the target must appear",
+   "turns": [
+    {
+     "say": "بدي سامسونج A14 للطالب رخيص",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_galaxy_a14"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H5-POS-019",
+   "group": "H5-POS",
+   "type": "search-positive",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "≥3-word request with extra details; the target must appear",
+   "turns": [
+    {
+     "say": "ابي دراجة اطفال مستعملة لابني الصغير",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_kids_bike"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H5-POS-020",
+   "group": "H5-POS",
+   "type": "search-positive",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "≥3-word request with extra details; the target must appear",
+   "turns": [
+    {
+     "say": "محتاج كوابل شحن تايب سي كثير",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_bulk_cables"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H5-NEG-001",
+   "group": "H5-NEG",
+   "type": "search-negative",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "nothing in the market matches; no listing may be shown",
+   "turns": [
+    {
+     "say": "غسيل سيارتي",
+     "expect": {
+      "delta": {
+       "cart": 0
+      },
+      "itemsMax": 0,
+      "bodyNot": [
+       "وجدت \\d+ عروض"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H5-NEG-002",
+   "group": "H5-NEG",
+   "type": "search-negative",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "nothing in the market matches; no listing may be shown",
+   "turns": [
+    {
+     "say": "بدلة عرس",
+     "expect": {
+      "delta": {
+       "cart": 0
+      },
+      "itemsMax": 0,
+      "bodyNot": [
+       "وجدت \\d+ عروض"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H5-NEG-003",
+   "group": "H5-NEG",
+   "type": "search-negative",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "nothing in the market matches; no listing may be shown",
+   "turns": [
+    {
+     "say": "شاحن ساعة",
+     "expect": {
+      "delta": {
+       "cart": 0
+      },
+      "itemsMax": 0,
+      "bodyNot": [
+       "وجدت \\d+ عروض"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H5-NEG-004",
+   "group": "H5-NEG",
+   "type": "search-negative",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "nothing in the market matches; no listing may be shown",
+   "turns": [
+    {
+     "say": "دهان جدران",
+     "expect": {
+      "delta": {
+       "cart": 0
+      },
+      "itemsMax": 0,
+      "bodyNot": [
+       "وجدت \\d+ عروض"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H5-NEG-005",
+   "group": "H5-NEG",
+   "type": "search-negative",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "nothing in the market matches; no listing may be shown",
+   "turns": [
+    {
+     "say": "كاميرا مراقبة",
+     "expect": {
+      "delta": {
+       "cart": 0
+      },
+      "itemsMax": 0,
+      "bodyNot": [
+       "وجدت \\d+ عروض"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H5-NEG-006",
+   "group": "H5-NEG",
+   "type": "search-negative",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "nothing in the market matches; no listing may be shown",
+   "turns": [
+    {
+     "say": "بدي عربية اطفال للمولود",
+     "expect": {
+      "delta": {
+       "cart": 0
+      },
+      "itemsMax": 0,
+      "bodyNot": [
+       "وجدت \\d+ عروض"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H5-NEG-007",
+   "group": "H5-NEG",
+   "type": "search-negative",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "nothing in the market matches; no listing may be shown",
+   "turns": [
+    {
+     "say": "ابي ثريا كريستال للصالون",
+     "expect": {
+      "delta": {
+       "cart": 0
+      },
+      "itemsMax": 0,
+      "bodyNot": [
+       "وجدت \\d+ عروض"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H5-NEG-008",
+   "group": "H5-NEG",
+   "type": "search-negative",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "nothing in the market matches; no listing may be shown",
+   "turns": [
+    {
+     "say": "محتاج سباك يصلح الحمام",
+     "expect": {
+      "delta": {
+       "cart": 0
+      },
+      "itemsMax": 0,
+      "bodyNot": [
+       "وجدت \\d+ عروض"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H5-NEG-009",
+   "group": "H5-NEG",
+   "type": "search-negative",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "nothing in the market matches; no listing may be shown",
+   "turns": [
+    {
+     "say": "بدي كلب حراسة للمزرعة",
+     "expect": {
+      "delta": {
+       "cart": 0
+      },
+      "itemsMax": 0,
+      "bodyNot": [
+       "وجدت \\d+ عروض"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H5-NEG-010",
+   "group": "H5-NEG",
+   "type": "search-negative",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "nothing in the market matches; no listing may be shown",
+   "turns": [
+    {
+     "say": "ابي ماكينة قهوة اسبريسو للبيت",
+     "expect": {
+      "delta": {
+       "cart": 0
+      },
+      "itemsMax": 0,
+      "bodyNot": [
+       "وجدت \\d+ عروض"
+      ]
+     }
+    }
+   ]
+  }
+ ]
+}
