@@ -13,6 +13,7 @@ import type { marketFor } from "../lib/markets";
 import type { ListingRecord } from "../lib/dinar-data";
 import { categorySchema, listMarketplaceCategories } from "../lib/marketplace-categories";
 import { publishedListingCities, searchMarketplaceListings } from "../lib/marketplace-listings";
+import { parseMinorUnits } from "../lib/market-pricing";
 import { boundedItemRelaxation } from "../lib/arabic-search-terms";
 import { storedSponsoredIds } from "../lib/recommendations";
 import { normalizeSearch } from "./search-context";
@@ -72,7 +73,8 @@ export type BuyerState = z.infer<typeof BuyerState>;
 export function normalizeBuyerText(message: string): string {
   return foldArabicLetters(normalizeDigits(message))
     .replace(/ة/g, "ه")
-    .replace(/[؟?!،,؛;:.()«»"']+/g, " ")
+    .replace(/[.](?!\d)|(?<!\d)[.]/gu," ")
+    .replace(/[؟?!،,؛;:()«»"']+/g, " ")
     .replace(/\s+/g, " ")
     .trim()
     .toLowerCase();
@@ -723,6 +725,35 @@ export async function executeBuyerTurn(input: {
       if (costs.length) return notice(`${count} × 12 شهرًا = ${yearly} في السنة. توجد عدة عروض؛ لكل عرض حساب افتراضي مستقل إذا كانت كل زيارة وحدة بالسعر الحالي:\n${costs.join("\n")}\nقبل التوصيل وأي رسوم، وليس حجزًا أو اشتراكًا أو تسعيرة نهائية. حدد العرض المقصود؛ لم يتغير شيء.`);
     }
     return notice(`${count} × 12 شهرًا = ${yearly} في السنة.${cost} لم يتغير شيء.`);
+  }
+  // Read-only arithmetic on the current canonical rows. No financing, tax, FX or
+  // delivery agreement is inferred from a listing's advertised unit price.
+  if (set && /^(?:كم بالدولار|مع التوصيل كم|هل السعر شامل الضريبه)$/u.test(text)) return notice("لا توجد في هذا السياق تسعيرة معتمدة للتوصيل أو الضريبة أو سعر صرف؛ السعر المعروض بعملة السوق فقط. اطلب التفاصيل من البائع، ولم يتغير شيء.");
+  const budgetUnits=text.match(/^(?:اذا|لو) معي (\d+(?:\.\d+)?) (?:دينار|دنانير|ريال|درهم|جنيه) كم .+ (?:بقدر|اقدر) (?:اخذ|اشتري)$/u);
+  const installments=text.match(/^لو قسطته علي (\d{1,3}) (?:شهر|شهور) كم القسط$/u);
+  if (set && (budgetUnits || installments)) {
+    const focused=await resolveReference({conversationId:input.conversationId,marketId:input.market.id,actorId,message:"هذا"});
+    const resourceId=focused?.resourceId ?? (set.resourceIds.length===1 ? set.resourceIds[0] : undefined);
+    if (!resourceId) return notice("حدد عرضًا ظاهرًا أولًا لحساب المبلغ؛ لم أفترض سعرًا من عدة عروض.");
+    const snap=await readListingForBuyer(actorId,resourceId);
+    if (!snap?.unitPriceMinor) return notice("لا يوجد سعر مسجل صالح لهذا الحساب؛ لم يتغير شيء.");
+    if (budgetUnits) { let budget:number;try {budget=parseMinorUnits(budgetUnits[1]!,input.market.currencyCode);}catch{return notice("المبلغ لا يطابق دقة عملة السوق؛ اكتب ميزانية صالحة.");} return notice(`بالسعر الحالي ${moneyOf(snap.unitPriceMinor,input.market)}: الميزانية تكفي حسابيًا ${Math.floor(budget/snap.unitPriceMinor)} وحدة قبل التوصيل والرسوم، مع ضرورة التحقق من المخزون. لم أضف أو أحجز شيئًا.`); }
+    const n=Number(installments![1]);if (!n) return notice("عدد الأشهر يجب أن يكون موجبًا.");const each=Math.floor(snap.unitPriceMinor/n),extra=snap.unitPriceMinor%n;
+    return notice(`قسمة حسابية افتراضية فقط: ${moneyOf(snap.unitPriceMinor,input.market)} على ${n} شهر = ${moneyOf(each,input.market)} لكل دفعة${extra ? ` مع ${extra} دفعات تزيد وحدة نقدية صغرى واحدة لضبط المجموع` : ""}. لا توجد موافقة تقسيط أو فوائد أو رسوم معتمدة، ولم يتغير شيء.`);
+  }
+  const sized=text.match(/^(?:شو|كم|ما) الفرق (?:بالسعر|في السعر) بين (\S+) و ?(\S+)$/u);
+  const priceChoice=text.match(/^(\S+) ولا (\S+) (?:اوفر|ارخص)$/u);
+  if (set && (sized || priceChoice)) {
+    const named=sized ?? priceChoice!;const rows=await searchMarketplaceListings(input.market,{search:"",allowedIds:set.resourceIds,conversational:true,sponsoredPlacement:false});
+    const label=(value:string)=>normalizeBuyerText(value).replace(/^ال/u,"").replace(/[هة]$/u,"");const groups=[named[1]!,named[2]!].map(term=>rows.filter(row=>normalizeBuyerText(row.title).split(" ").some(word=>label(word)===label(term))));
+    if (groups.some(group=>group.length!==1)) return notice("الوصف لا يحدد عرضًا واحدًا لكل طرف. حدد رقمَي العرضين للمقارنة.");
+    const snaps=await Promise.all(groups.map(group=>readListingForBuyer(actorId,group[0]!.id)));if(snaps.some(row=>row?.unitPriceMinor==null)) return notice("لا يوجد سعر معلن للطرفين؛ لم أفترض فرقًا.");
+    return notice(`فرق السعر المسجل ${moneyOf(Math.abs(snaps[0]!.unitPriceMinor!-snaps[1]!.unitPriceMinor!),input.market)} بين «${groups[0]![0]!.title}» و«${groups[1]![0]!.title}»، قبل التوصيل والرسوم؛ لم يتغير شيء.`);
+  }
+  if (state && /^(?:ال)?ارخص\s+\S+/u.test(text) && /مستعمل|مستخدم/u.test(text)) {
+    const result=await runBuyerSearch(input.market,{...state,condition:"مستعمل",filters:state.filters.filter(f=>f.field!=="condition"),ranking:"CHEAPEST"});
+    const first=result.listings.find(row=>row.unitPrice!==null);if(first){const buyer=(result.query as {buyer:BuyerState}).buyer;buyer.message=`${buyer.message} أرخص سعر مسجل ${first.unitPrice} ${input.market.currencyCode} لـ«${first.title}».`;}
+    return {tool:"buyerRefine",version:1,result};
   }
   const additive = text.match(/^(?:وكمان|وكذلك|وايضا|كمان|وايضًا)\s+(.+)$/u);
   if (set && additive && !/^(?:اكتب|اشرح|فسر|لخص|ترجم|خطط|قارن|اقترح|كيف|ما|ليش|لماذا)(?:\s|$)/u.test(additive[1]!)) {

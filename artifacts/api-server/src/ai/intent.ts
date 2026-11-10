@@ -213,6 +213,7 @@ export function refusesCommercialAction(message: string): boolean {
 /** Remove only a leading correction marker; keep the corrected value and its constraints. */
 export function stripCorrectionPrefix(message: string): string {
   let text = message
+    .replace(/^شوف\s+(?:إذا|اذا|لو)\s+(?:في|فيه)\s+/u,"ابحث عن ")
     .replace(/^abi\s+/iu,"ابي ").replace(/\bmosta3mal\b/giu,"مستعمل")
     .replace(/^([a-z][a-z0-9-]*(?:\s+[a-z0-9-]+){0,4})\s+b\s+(\d+(?:\.\d+)?)$/iu,"ابي $1 بسعر $2")
     .replace(/\blel\s+([a-z]+)\b/giu,"ل$1")
