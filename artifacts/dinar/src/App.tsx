@@ -137,7 +137,7 @@ function Routes() {
       <Route path="/orders">
         <Redirect to="/ai?openOrders=1" />
       </Route>
-      <Route path="/cart"><Redirect to="/ai?openSurface=cart" /></Route>
+      <Route path="/cart"><Redirect replace to="/ai?openSurface=cart" /></Route>
       <Route path="/seller/offers"><Redirect to="/ai?openSurface=listings" /></Route>
       <Route path="/seller/dues"><Redirect to="/ai?openSurface=dues" /></Route>
       <Route path="/seller"><Redirect to="/ai?sell=1" /></Route>
