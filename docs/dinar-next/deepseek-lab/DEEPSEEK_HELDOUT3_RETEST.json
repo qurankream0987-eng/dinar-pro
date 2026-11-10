@@ -1,0 +1,937 @@
+{
+ "catalog": "held-out-3",
+ "frozenAt": "2026-11-10",
+ "total": 30,
+ "cases": [
+  {
+   "id": "H3-DIA-001",
+   "group": "H3-DIA",
+   "type": "dialect-search",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "unseen request with extra details/variants after the subset-relaxation fix",
+   "turns": [
+    {
+     "say": "محتاج ثلاجة صغيرة للسكن الجامعي",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_fridge_small"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H3-DIA-002",
+   "group": "H3-DIA",
+   "type": "dialect-search",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "unseen request with extra details/variants after the subset-relaxation fix",
+   "turns": [
+    {
+     "say": "ابي مكيف شباك يبرد زين",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_ac_window"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H3-DIA-003",
+   "group": "H3-DIA",
+   "type": "dialect-search",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "unseen request with extra details/variants after the subset-relaxation fix",
+   "turns": [
+    {
+     "say": "بدي سرير مزدوج مريح",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_bed"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H3-DIA-004",
+   "group": "H3-DIA",
+   "type": "dialect-search",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "unseen request with extra details/variants after the subset-relaxation fix",
+   "turns": [
+    {
+     "say": "ابغى غسالة اوتوماتيك للبيت",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_washer"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H3-DIA-005",
+   "group": "H3-DIA",
+   "type": "dialect-search",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "unseen request with extra details/variants after the subset-relaxation fix",
+   "turns": [
+    {
+     "say": "عايز تلفزيون LG سمارت للصالة",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_tv_lg"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H3-DIA-006",
+   "group": "H3-DIA",
+   "type": "dialect-search",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "unseen request with extra details/variants after the subset-relaxation fix",
+   "turns": [
+    {
+     "say": "فيه بلايستيشن 5 مع يدين؟",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_ps5"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H3-DIA-007",
+   "group": "H3-DIA",
+   "type": "dialect-search",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "unseen request with extra details/variants after the subset-relaxation fix",
+   "turns": [
+    {
+     "say": "ابي سماعات سوني بلوتوث للسفر",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_headphones"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H3-DIA-008",
+   "group": "H3-DIA",
+   "type": "dialect-search",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "unseen request with extra details/variants after the subset-relaxation fix",
+   "turns": [
+    {
+     "say": "بدي كنبة زاوية رمادي للصالون",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_sofa_corner"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H3-DIA-009",
+   "group": "H3-DIA",
+   "type": "dialect-search",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "unseen request with extra details/variants after the subset-relaxation fix",
+   "turns": [
+    {
+     "say": "اريد طاولة سفرة خشب كبيرة",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_table_dining"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H3-DIA-010",
+   "group": "H3-DIA",
+   "type": "dialect-search",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "unseen request with extra details/variants after the subset-relaxation fix",
+   "turns": [
+    {
+     "say": "ابغى دراجة اطفال لبنتي",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_kids_bike"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H3-DIA-011",
+   "group": "H3-DIA",
+   "type": "dialect-search",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "unseen request with extra details/variants after the subset-relaxation fix",
+   "turns": [
+    {
+     "say": "بدي شاورما دجاج عشا",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_food_shawarma"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H3-DIA-012",
+   "group": "H3-DIA",
+   "type": "dialect-search",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "unseen request with extra details/variants after the subset-relaxation fix",
+   "turns": [
+    {
+     "say": "ابي منسف بلدي للعزيمة",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_food_mansaf"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H3-DIA-013",
+   "group": "H3-DIA",
+   "type": "dialect-search",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "unseen request with extra details/variants after the subset-relaxation fix",
+   "turns": [
+    {
+     "say": "محتاج تصليح غسالة بالبيت اليوم",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_svc_washer_fix"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H3-DIA-014",
+   "group": "H3-DIA",
+   "type": "dialect-search",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "unseen request with extra details/variants after the subset-relaxation fix",
+   "turns": [
+    {
+     "say": "بدي صيانة لابتوب بطيء",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_svc_pc_fix"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H3-DIA-015",
+   "group": "H3-DIA",
+   "type": "dialect-search",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "unseen request with extra details/variants after the subset-relaxation fix",
+   "turns": [
+    {
+     "say": "ابي تنظيف شقة كامل",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_svc_cleaning"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H3-DIA-016",
+   "group": "H3-DIA",
+   "type": "dialect-search",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "unseen request with extra details/variants after the subset-relaxation fix",
+   "turns": [
+    {
+     "say": "بدي ترجمة اوراق رسمية",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_svc_translation"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H3-DIA-017",
+   "group": "H3-DIA",
+   "type": "dialect-search",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "unseen request with extra details/variants after the subset-relaxation fix",
+   "turns": [
+    {
+     "say": "ابي مقلوبة دجاج للغدا",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_food_maqluba"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H3-DIA-018",
+   "group": "H3-DIA",
+   "type": "dialect-search",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "unseen request with extra details/variants after the subset-relaxation fix",
+   "turns": [
+    {
+     "say": "عايز ايربودز برو اصلية",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_airpods"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H3-DIA-019",
+   "group": "H3-DIA",
+   "type": "dialect-search",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "unseen request with extra details/variants after the subset-relaxation fix",
+   "turns": [
+    {
+     "say": "ابي سلك اتش دي ام اي طويل",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_decimal_price"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H3-DIA-020",
+   "group": "H3-DIA",
+   "type": "dialect-search",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "unseen request with extra details/variants after the subset-relaxation fix",
+   "turns": [
+    {
+     "say": "بدي مكتب خشب بإربد",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_irbid_desk"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H3-DIA-021",
+   "group": "H3-DIA",
+   "type": "dialect-search",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "unseen request with extra details/variants after the subset-relaxation fix",
+   "turns": [
+    {
+     "say": "ابي لابتوب لينوفو للجامعة",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_laptop_lenovo"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H3-DIA-022",
+   "group": "H3-DIA",
+   "type": "dialect-search",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "unseen request with extra details/variants after the subset-relaxation fix",
+   "turns": [
+    {
+     "say": "محتاج ماكينة خياطة للمحل",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_machine_sewing"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H3-DIA-023",
+   "group": "H3-DIA",
+   "type": "dialect-search",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "unseen request with extra details/variants after the subset-relaxation fix",
+   "turns": [
+    {
+     "say": "بدي كوب مطبوع عليه اسم",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_gift_mug"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H3-DIA-024",
+   "group": "H3-DIA",
+   "type": "dialect-search",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "unseen request with extra details/variants after the subset-relaxation fix",
+   "turns": [
+    {
+     "say": "ابي سامسونج A54 لون اسود",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_galaxy_a54"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H3-DIA-025",
+   "group": "H3-DIA",
+   "type": "dialect-search",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "unseen request with extra details/variants after the subset-relaxation fix",
+   "turns": [
+    {
+     "say": "عايز تويوتا كورولا مستعملة",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_corolla_2018"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H3-DIA-026",
+   "group": "H3-DIA",
+   "type": "dialect-search",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "unseen request with extra details/variants after the subset-relaxation fix",
+   "turns": [
+    {
+     "say": "ابغى هيونداي سوناتا هايبرد",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_hyundai_hybrid"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H3-DIA-027",
+   "group": "H3-DIA",
+   "type": "dialect-search",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "unseen request with extra details/variants after the subset-relaxation fix",
+   "turns": [
+    {
+     "say": "بدي نقل اثاث داخل عمان",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_svc_moving"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H3-DIA-028",
+   "group": "H3-DIA",
+   "type": "dialect-search",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "unseen request with extra details/variants after the subset-relaxation fix",
+   "turns": [
+    {
+     "say": "ابي صيانة مكيفات قبل الصيف",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_svc_ac_fix"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H3-DIA-029",
+   "group": "H3-DIA",
+   "type": "dialect-search",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "unseen request with extra details/variants after the subset-relaxation fix",
+   "turns": [
+    {
+     "say": "بدي كنافة نابلسية سخنة",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_food_kunafa"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "H3-DIA-030",
+   "group": "H3-DIA",
+   "type": "dialect-search",
+   "actor": "lab_buyer",
+   "heldOut": true,
+   "intent": "unseen request with extra details/variants after the subset-relaxation fix",
+   "turns": [
+    {
+     "say": "اريد درس بايثون للمبتدئين",
+     "expect": {
+      "surfaceIn": [
+       "LISTING_RESULTS"
+      ],
+      "delta": {
+       "cart": 0
+      },
+      "itemsExclude": [
+       "lab_draft_watch",
+       "lab_paused_camera",
+       "lab_archived_tablet",
+       "lab_soldout_ipad",
+       "lab_soldout_kettle"
+      ],
+      "itemsInclude": [
+       "lab_svc_tutor"
+      ]
+     }
+    }
+   ]
+  }
+ ]
+}
