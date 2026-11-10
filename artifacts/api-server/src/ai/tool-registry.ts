@@ -1093,6 +1093,17 @@ export async function executeModelTool(
       throw new ToolRejectedError("The model proposed invalid tool arguments.", "CANONICAL_TOOL_REJECTED");
     throw error;
   }
+  // C02: an older explicit reference cannot bypass a hard bound in the current request.
+  // Re-read eligibility through the same marketplace authority, including for comparisons.
+  if (context.userMessage && (execution.result.kind === "RESOURCE" || name === "compareListings")) {
+    const filters = parseStructuredSearch(context.userMessage)?.filters.filter((filter) => filter.field === "price") ?? [];
+    const ids = execution.result.resourceIds ?? execution.result.listings.map((listing) => listing.id);
+    if (filters.length && ids.length) {
+      const eligible = await searchMarketplaceListings(context.market, { search: "", allowedIds: ids, filters, conversational: true, limit: 24 });
+      if (eligible.length !== new Set(ids).size)
+        throw new ToolRejectedError("The selected read does not satisfy the user's current price constraints.");
+    }
+  }
   // A stored result whose listing is now paused, sold or moderated returns no live record.
   // Passing "missing" back would let the model answer from the earlier snapshot as if current.
   if (execution.result.kind === "RESOURCE" && execution.result.listings.length === 0)
