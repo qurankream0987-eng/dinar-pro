@@ -2429,8 +2429,14 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
       return;
     }
 
-    const resultSetId =
-      toolResult.kind === "SEARCH" ? randomUUID() : toolResult.resultSetId!;
+    const resultSetId = toolResult.resultSetId ?? randomUUID();
+    if (toolResult.kind === "SEARCH" && toolResult.resultSetId) {
+      const [source] = await db.select({ id: aiResultSets.id }).from(aiResultSets).where(and(
+        eq(aiResultSets.id, resultSetId), eq(aiResultSets.conversationId, conversation.id),
+        eq(aiResultSets.marketId, market.id), eq(aiResultSets.messageId, userMessageId),
+      ));
+      if (!source) throw fail(409, "تعذر التحقق من مصدر نتائج هذه الرسالة؛ أعد البحث.");
+    }
     // Monetization V3: every organic search records its need; on zero or low supply,
     // eligible «روح بع لي» campaigns may add labelled paid options after the organic list.
     let demandTrigger: string | undefined;
@@ -2594,6 +2600,10 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
           query: toolResult.query,
           resourceIds,
           expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        }).onConflictDoUpdate({
+          target: aiResultSets.id,
+          set: { query: toolResult.query, resourceIds },
+          setWhere: and(eq(aiResultSets.conversationId, conversation.id), eq(aiResultSets.marketId, market.id), eq(aiResultSets.messageId, userMessageId)),
         });
       }
       if (blocks.length) {

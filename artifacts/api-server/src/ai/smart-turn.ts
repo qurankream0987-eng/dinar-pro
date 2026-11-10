@@ -1562,7 +1562,7 @@ function groundedModelProse(
 function withModelToolAnswer(result: ToolResult, answer: string, preserveResultSetId = false): ToolResult {
   return {
     ...result,
-    ...(result.kind === "SEARCH" && !preserveResultSetId ? { resultSetId: undefined } : {}),
+    // Preserve the canonical successful read identity through the response and Card Envelope.
     query: {
       ...result.query,
       buyer: { message: answer.slice(0, 1600), authority: "MODEL" },
