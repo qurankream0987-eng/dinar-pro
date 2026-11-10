@@ -92,7 +92,7 @@ const BEST = /^(?:(?:انا\s+)?(?:ابي|اريد|بدي|ابغي|اعطني|و
  * «فقط المستعملة», «المستعمل فقط», «الحالة جديد»: a condition filter on the current list. The
  * whole message must be the refinement; product words make it a new search instead.
  */
-const CONDITION_REFINE = /^(?:(?:فقط|بس|اعرض|اعرضلي|وريني|ابي|اريد|بدي|ابغي|خليها|خلها)\s+)*(?:(?:ال)?حاله\s+)?(?:ال)?(مستعمل|مستعمله|مستخدم|مستخدمه|جديد|جديده)(?:\s+(?:فقط|بس))?$/u;
+const CONDITION_REFINE = /^(?:(?:وافضل|افضل|فقط|بس|اعرض|اعرضلي|وريني|ابي|اريد|بدي|ابغي|خليها|خلها)\s+)*(?:(?:ال)?حاله\s+)?(?:ال)?(مستعمل|مستعمله|مستخدم|مستخدمه|جديد|جديده)(?:\s+(?:فقط|بس|اذا\s+نظيف))?$/u;
 /** «حتى لو أغلى ألف»: the buyer raises their own ceiling by an amount. */
 const RAISE = /حتي\s+لو\s+(?:اغلي|ازيد)\s+(?:ب\s*)?(الف|الفين|\d+(?:\.\d+)?)/u;
 /** «رخيص» in a new search orders by price; it is never a word to match. */
@@ -117,7 +117,7 @@ const CORRECTION_LEAD = /^(?:(?:لا|لأ)\s+){0,2}(?:(?:غلطت|عفوا|سو�
  */
 const CEILING = /^(?:(?:طيب|طب|خلاص|بس|خلها|خليها|خله|خليه|خلي|يعني)\s+)*(?:(?:ما|مو|مش|لا)\s+(?:ابي|ابغي|بدي|اريد|اقدر|بقدر|ودي)\s+(?:ادفع\s+)?(?:اكثر|اكتر|ازيد|فوق)\s+(?:من\s+|عن\s+)?|(?:لين|الين|لغايه|لحد|الي|حتي|بحد\s+اقصي|ميزانيتي)\s+|(?:ما|لا)\s+(?:يزيد|يتعدي)\s+(?:عن\s+)?)(\d+(?:\.\d+)?)(?:\s*(الف|الاف))?(?:\s+(?:دينار|ريال|درهم|جنيه|بس|فقط))?$/u;
 /** «نفس الشي بس ارخص من الثاني»: the current search, priced below a listing in view. */
-const CHEAPER_THAN = /^(?:(?:نفس|زي|مثل)\s+(?:ال)?(?:شي|شيء|مواصفات|نوع|اشي)\s+)?(?:(?:بس|لكن|بس يكون|بشرط)\s+)?(?:ابي\s+)?(?:ال)?ارخص\s+من\s+(\S+)$/u;
+const CHEAPER_THAN = /^(?:(?:نفس|زي|مثل)\s+(?:ال)?(?:شي|شيء|مواصفات|نوع|اشي)\s+)?(?:(?:بس|لكن|بس يكون|بشرط)\s+)?(?:ابي\s+)?(?:ال)?ارخص\s+(?:من\s+)?(منه|منها|\S+)$/u;
 /** «جهز الطلب», «حضر لي الطلب»: a purchase review for the listing in view, never an order. */
 const PREPARE_ORDER = /^(?:(?:طيب|خلاص)\s+)?(?:جهز|حضر|سوي|سو|اعمل|اعملي|جهزلي|حضرلي)\s+(?:لي\s+)?(?:ال)?طلب(?:\s+.*)?$/u;
 const SELECT = /^(?:انا\s+)?(?:ابي|ابغي|بدي|اريد|اشتري|بشتري|اخذ|باخذ|حاب اخذ|خذ)\s+(?:اشتري\s+|اخذ\s+)?(.+)$/u;
@@ -905,15 +905,18 @@ export async function executeBuyerTurn(input: {
       const search = normalizeBuyerText(state.search).split(" ").filter((word) => !/^(?:ال)?(?:مستعمل|مستعمله|مستخدم|مستخدمه|جديد|جديده)$/u.test(word)).join(" ");
       return { tool: "buyerRefine", version: 1, result: await runBuyerSearch(input.market, { ...state, search, filters: state.filters.filter((filter) => filter.field !== "condition"), condition: value }) };
     }
+    const raisedCeiling = asked.match(/^(?:طيب\s+)?(?:ارفعها|ارفعه|زيدها|خلها)\s+(?:لـ?\s*|الي\s+)?(\d+(?:\.\d+)?)$/u);
+    if (raisedCeiling) return {tool:"buyerRefine",version:1,result:await runBuyerSearch(input.market,{...state,filters:state.filters.filter(f=>f.field!=="price"),targetPrice:undefined,maxPrice:Number(raisedCeiling[1])})};
     const ceiling = asked.match(CEILING) ?? asked.match(/^(?:خلها|خليها|خليه|خله)\s+(\d+(?:\.\d+)?)(?:\s*(الف|الاف))?$/u);
     if (ceiling) {
       const value = Number(ceiling[1]) * (ceiling[2] ? 1000 : 1);
       return { tool: "buyerRefine", version: 1, result: await runBuyerSearch(input.market, { ...state, filters: state.filters.filter((filter) => !(filter.field === "price" && ["gt", "gte"].includes(filter.operator))), maxPrice: value }) };
     }
-    const cheaper = asked.match(CHEAPER_THAN);
+    const cheaper = asked.replace(/^في\s+/u, "").match(CHEAPER_THAN);
     if (cheaper && set) {
       const position = positionsIn(cheaper[1]!)[0] ?? (/^(?:هذا|هذي|هذه)$/u.test(cheaper[1]!) && set.resourceIds.length === 1 ? 1 : undefined);
-      const anchorId = position !== undefined ? set.resourceIds[position - 1] : undefined;
+      const focused = /^(?:منه|منها)$/u.test(cheaper[1]!) ? await resolveReference({conversationId:input.conversationId,marketId:input.market.id,actorId,message:"هذا"}) : undefined;
+      const anchorId = position !== undefined ? set.resourceIds[position - 1] : focused?.resourceId;
       if (position !== undefined && !anchorId)
         return notice(`لا يوجد العرض رقم ${position} ضمن النتائج الحالية. اختر رقمًا ظاهرًا.`);
       if (anchorId) {
@@ -926,7 +929,7 @@ export async function executeBuyerTurn(input: {
           version: 1,
           result: await runBuyerSearch(input.market, {
             ...rest,
-            filters: [...state.filters.filter((filter) => filter.field !== "price"), { field: "price", operator: "lt", value: price }],
+            filters: [...state.filters, { field: "price", operator: "lt", value: price }],
             ranking: "CHEAPEST",
           }),
         };
@@ -976,7 +979,7 @@ export async function executeBuyerTurn(input: {
         search: query.search,
         ...(query.categoryId ? { categoryId: query.categoryId } : {}),
         filters: query.filters.filter((filter) => !(targetPrice !== undefined && filter.field === "price" && filter.operator === "eq")),
-        ...(targetPrice ? { targetPrice } : {}),
+        ...(targetPrice ? (/بحدود|في حدود/u.test(text) ? {maxPrice:targetPrice} : {targetPrice}) : {}),
         ...(quality ? { quality: true } : {}),
         ranking: cheap ? "CHEAPEST" : "DEFAULT",
       }),

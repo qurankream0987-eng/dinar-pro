@@ -152,6 +152,7 @@ async function executeCartConversationTurn(input: {
     .replace(/[أإآ]/g, "ا")
     .replace(/ى/g, "ي")
     .replace(/ة/g, "ه")
+    .replace(/[.؟?!]+$/u, "")
     .trim();
   const remove = /^(?:شيل(?:ه|ها)?|احذف(?:ه|ها)?|ازل|ازيل)(?:\s|$)/u.test(text);
   const contextualQuantity = text.match(/^(?:لا\s+)?(?:خليهم|خليهن|خليه|خليها|خلهم|خلها)\s+(.+)$/u);
@@ -159,7 +160,7 @@ async function executeCartConversationTurn(input: {
     /^(?:غير|عدل|اجعل|خله|خليها|اضبط|ضبط)\s+(?:(?:ال)?كميه\s+)?(?:(?:العنصر|المنتج)\s+)?(.+?)\s+(?:الي|ل)\s*(.+)$/u,
   ) ?? (contextualQuantity ? [contextualQuantity[0], "", contextualQuantity[1]!] : null);
   const continueCheckout =
-    /^(?:كمل|اكمل|كمل\s+(?:ال)?(?:شراء|الدفع)|اكمل\s+(?:ال)?(?:شراء|الدفع))$/u.test(text);
+    /^(?:كمل|اكمل|كمل\s+(?:ال)?(?:طلب|شراء|الدفع)|اكمل\s+(?:ال)?(?:طلب|شراء|الدفع))$/u.test(text);
   // «فضي السلة», «فرغ سلتي», «امسح كل شي بالسلة»: every line, and only cart lines.
   const clearCart = /^(?:فضي|فضيلي|فرغ|افرغ|امسح|نظف|صفر)\s+(?:لي\s+)?(?:كل\s+(?:شي|شيء)\s+(?:في|ب)\s*)?(?:ال)?(?:سله|سلتي|عربه)$/u.test(text);
   // An explicit «من السلة» names the cart whatever card was shown last.
@@ -188,6 +189,7 @@ async function executeCartConversationTurn(input: {
       ),
     )
     .limit(1);
+  if (continueCheckout && (latestSurface?.payload as {surface?:unknown} | undefined)?.surface !== "CART") return clarify("هل تقصد طلبًا قائمًا أم عناصر السلة؟ افتح طلباتك أو السلة وحدد المقصود؛ لم أنفّذ شيئًا.");
   if (
     !clearCart && !namesCart &&
     (latestSurface?.payload as { surface?: unknown } | undefined)?.surface !==

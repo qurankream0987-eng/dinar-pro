@@ -11,6 +11,7 @@ export function normalizeSearch(value: string): string {
   return foldAgreement(
     foldArabicLetters(normalizeDigits(value))
       .replace(/تي[\s-]*شي?رت/g, "تيشيرت")
+      .replace(/(^|\s)(?:اس|إس|ايه|بي|سي|دي)\s*(?=\d)/gu, (word, lead: string) => `${lead}${({اس:"s",إس:"s",ايه:"a",بي:"b",سي:"c",دي:"d"} as Record<string,string>)[word.trim()] ?? word.trim()}`)
       .replace(/(^|\s)ال(?=اسود|ابيض|احمر|ازرق|اخضر)/g, "$1")
       .replace(/\s+/g, " ")
       .trim(),

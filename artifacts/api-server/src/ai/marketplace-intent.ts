@@ -104,7 +104,7 @@ export function hasExplicitMarketplaceSearchIntent(message: string): boolean {
   if (ABSTRACT_OBJECT.test(normalized.replace(/ة/g, "ه")) || /^(?:ابي|اريد)\s+(?:على\s+)?(?:فكره|فكرة|حل|طريقه|طريقة)(?:\s|$)/u.test(normalized)) return false;
   if (EXPLICIT_SEARCH_ACTION.test(normalized)) return true;
   const correction = normalizeMarketplaceText(stripCorrectionPrefix(message));
-  if (correction !== normalized)
+  if (correction !== normalizeMarketplaceText(message))
     return correction.length > 0 && !isVagueRequest(correction);
   if (marketplaceComparisonSearchTerms(normalized) !== undefined && !isVagueRequest(normalized))
     return true;
