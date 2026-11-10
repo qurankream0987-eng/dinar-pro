@@ -1,0 +1,640 @@
+LOCAL_SUITE_PRELUDE exit=0 outbound=0
+(node:2504) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[17:16:06.715] [32mINFO[39m (2504): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "0c1c685d-2ca6-4111-98d1-fcba7f2583d4",
+      "method": "POST",
+      "url": "/api/auth/register"
+    }
+    [35mres[39m: {
+      "statusCode": 201
+    }
+    [35mresponseTime[39m: 462
+[17:16:06.887] [32mINFO[39m (2504): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "872ea6a6-69a5-47fd-98b7-af20e7766803",
+      "method": "POST",
+      "url": "/api/listings"
+    }
+    [35mres[39m: {
+      "statusCode": 201
+    }
+    [35mresponseTime[39m: 143
+[17:16:06.936] [32mINFO[39m (2504): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "9cb38d7e-b213-4a89-8a5d-f40f94224453",
+      "method": "POST",
+      "url": "/api/listings"
+    }
+    [35mres[39m: {
+      "statusCode": 201
+    }
+    [35mresponseTime[39m: 41
+[17:16:06.987] [32mINFO[39m (2504): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "a5568549-fc55-45f3-af9c-9c4f392b8d1a",
+      "method": "POST",
+      "url": "/api/listings"
+    }
+    [35mres[39m: {
+      "statusCode": 201
+    }
+    [35mresponseTime[39m: 46
+[17:16:07.014] [32mINFO[39m (2504): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "e6f86a3b-6b8b-4717-9214-7c0568a5ec37",
+      "method": "POST",
+      "url": "/api/listings"
+    }
+    [35mres[39m: {
+      "statusCode": 201
+    }
+    [35mresponseTime[39m: 22
+[17:16:07.038] [32mINFO[39m (2504): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "efdfd58e-caec-443f-b2b6-fe02fb2bf170",
+      "method": "POST",
+      "url": "/api/listings"
+    }
+    [35mres[39m: {
+      "statusCode": 201
+    }
+    [35mresponseTime[39m: 22
+[17:16:07.222] [32mINFO[39m (2504): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "bd0233ea-1d71-4b9c-b04a-273b0538e2f9",
+      "method": "POST",
+      "url": "/api/auth/register"
+    }
+    [35mres[39m: {
+      "statusCode": 201
+    }
+    [35mresponseTime[39m: 172
+[17:16:07.251] [32mINFO[39m (2504): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "88ed89f3-d425-40f3-96e9-3309ab7daed4",
+      "method": "POST",
+      "url": "/api/ai/conversations"
+    }
+    [35mres[39m: {
+      "statusCode": 201
+    }
+    [35mresponseTime[39m: 23
+[17:16:07.486] [32mINFO[39m (2504): [36mDINAR AI model call[39m
+    [35mevent[39m: "dinar_ai_model_call"
+    [35mprovider[39m: "injected_or_test"
+    [35mlatencyMs[39m: 1
+    [35mstatus[39m: "success"
+    [35mstructuredOutputValid[39m: true
+[17:16:07.519] [33mWARN[39m (2504): [36mAI calls without an applicable price were charged their hold[39m
+    [35mevent[39m: "dinar_ai_unpriced_calls"
+    [35mcalls[39m: 1
+    [35mpurpose[39m: "TEXT_REQUEST"
+[17:16:07.616] [32mINFO[39m (2504): [36mDINAR AI model call[39m
+    [35mevent[39m: "dinar_ai_model_call"
+    [35mprovider[39m: "injected_or_test"
+    [35mlatencyMs[39m: 5
+    [35mstatus[39m: "success"
+    [35mstructuredOutputValid[39m: true
+[17:16:07.639] [33mWARN[39m (2504): [36mAI calls without an applicable price were charged their hold[39m
+    [35mevent[39m: "dinar_ai_unpriced_calls"
+    [35mcalls[39m: 1
+    [35mpurpose[39m: "TEXT_REQUEST"
+✖ C12 prose and current read agree (650.576984ms)
+[17:16:07.693] [32mINFO[39m (2504): [36mDINAR AI turn completed[39m
+    [35mreq[39m: {
+      "id": "f02ea892-967e-4633-ae77-2be0f296986b",
+      "method": "POST",
+      "url": "/api/ai/conversations/e856857b-2f1b-4f1c-a375-10b86d98e728/turns"
+    }
+    [35mevent[39m: "dinar_ai_turn"
+    [35mconversationId[39m: "e856857b-2f1b-4f1c-a375-10b86d98e728"
+    [35mturnId[39m: "da64b4fa-cd1f-4257-837b-69a06c0cce33"
+    [35mtoolName[39m: "searchListings"
+    [35mresultCount[39m: 2
+    [35mstatus[39m: "completed"
+[17:16:07.694] [32mINFO[39m (2504): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "f02ea892-967e-4633-ae77-2be0f296986b",
+      "method": "POST",
+      "url": "/api/ai/conversations/e856857b-2f1b-4f1c-a375-10b86d98e728/turns"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 439
+[17:16:07.847] [32mINFO[39m (2504): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "3d9c40ad-96be-4df1-9993-623a24b98e34",
+      "method": "POST",
+      "url": "/api/auth/register"
+    }
+    [35mres[39m: {
+      "statusCode": 201
+    }
+    [35mresponseTime[39m: 147
+[17:16:07.923] [32mINFO[39m (2504): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "7fefee9b-2294-4bf0-8e72-1cfc22b79aa1",
+      "method": "POST",
+      "url": "/api/ai/conversations"
+    }
+    [35mres[39m: {
+      "statusCode": 201
+    }
+    [35mresponseTime[39m: 74
+[17:16:08.245] [32mINFO[39m (2504): [36mDINAR AI turn completed[39m
+    [35mreq[39m: {
+      "id": "cd45a321-f51a-4b38-8853-e38a7e0cbc15",
+      "method": "POST",
+      "url": "/api/ai/conversations/e4a938fb-5b83-4337-b73f-e48c92f6b43b/turns"
+    }
+    [35mevent[39m: "dinar_ai_turn"
+    [35mconversationId[39m: "e4a938fb-5b83-4337-b73f-e48c92f6b43b"
+    [35mturnId[39m: "00534a3b-fdff-4076-a772-afa447fd50a0"
+    [35mtoolName[39m: "searchListings"
+    [35mresultCount[39m: 2
+    [35mstatus[39m: "completed"
+[17:16:08.245] [32mINFO[39m (2504): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "cd45a321-f51a-4b38-8853-e38a7e0cbc15",
+      "method": "POST",
+      "url": "/api/ai/conversations/e4a938fb-5b83-4337-b73f-e48c92f6b43b/turns"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 317
+[17:16:08.468] [32mINFO[39m (2504): [36mDINAR AI model call[39m
+    [35mevent[39m: "dinar_ai_model_call"
+    [35mprovider[39m: "injected_or_test"
+    [35mlatencyMs[39m: 0
+    [35mstatus[39m: "success"
+    [35mstructuredOutputValid[39m: true
+[17:16:08.515] [33mWARN[39m (2504): [36mAI calls without an applicable price were charged their hold[39m
+    [35mevent[39m: "dinar_ai_unpriced_calls"
+    [35mcalls[39m: 1
+    [35mpurpose[39m: "TEXT_REQUEST"
+✖ C01 price difference (848.649914ms)
+[17:16:08.546] [32mINFO[39m (2504): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "11101c1a-6a33-4177-aea0-d4ecd1671958",
+      "method": "POST",
+      "url": "/api/ai/conversations/e4a938fb-5b83-4337-b73f-e48c92f6b43b/turns"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 299
+[17:16:08.724] [32mINFO[39m (2504): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "293555b2-8a56-411a-b060-3fb4cb897dd2",
+      "method": "POST",
+      "url": "/api/auth/register"
+    }
+    [35mres[39m: {
+      "statusCode": 201
+    }
+    [35mresponseTime[39m: 176
+[17:16:08.732] [32mINFO[39m (2504): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "ab0db1aa-9459-4669-b952-763ab00dad51",
+      "method": "POST",
+      "url": "/api/ai/conversations"
+    }
+    [35mres[39m: {
+      "statusCode": 201
+    }
+    [35mresponseTime[39m: 7
+[17:16:08.958] [32mINFO[39m (2504): [36mDINAR AI model call[39m
+    [35mevent[39m: "dinar_ai_model_call"
+    [35mprovider[39m: "injected_or_test"
+    [35mlatencyMs[39m: 0
+    [35mstatus[39m: "success"
+    [35mstructuredOutputValid[39m: true
+[17:16:08.982] [33mWARN[39m (2504): [36mAI calls without an applicable price were charged their hold[39m
+    [35mevent[39m: "dinar_ai_unpriced_calls"
+    [35mcalls[39m: 1
+    [35mpurpose[39m: "TEXT_REQUEST"
+✖ C01 recurring quantity (451.8911ms)
+[17:16:08.998] [32mINFO[39m (2504): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "650f341a-3781-458f-bbea-a8d61716474b",
+      "method": "POST",
+      "url": "/api/ai/conversations/0be9064d-2052-454f-b697-5d5929395f5d/turns"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 264
+[17:16:09.139] [32mINFO[39m (2504): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "bf77613b-6f35-4be4-85e7-eaaaaa20eced",
+      "method": "POST",
+      "url": "/api/auth/register"
+    }
+    [35mres[39m: {
+      "statusCode": 201
+    }
+    [35mresponseTime[39m: 138
+[17:16:09.145] [32mINFO[39m (2504): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "37a2019c-f3f3-445c-9b9c-b01632c52581",
+      "method": "POST",
+      "url": "/api/ai/conversations"
+    }
+    [35mres[39m: {
+      "statusCode": 201
+    }
+    [35mresponseTime[39m: 4
+✖ C02 strict user ceiling survives model omission (627.040728ms)
+[17:16:09.529] [32mINFO[39m (2504): [36mDINAR AI model call[39m
+    [35mevent[39m: "dinar_ai_model_call"
+    [35mprovider[39m: "injected_or_test"
+    [35mlatencyMs[39m: 1
+    [35mstatus[39m: "success"
+    [35mstructuredOutputValid[39m: true
+[17:16:09.540] [33mWARN[39m (2504): [36mAI calls without an applicable price were charged their hold[39m
+    [35mevent[39m: "dinar_ai_unpriced_calls"
+    [35mcalls[39m: 1
+    [35mpurpose[39m: "TEXT_REQUEST"
+[17:16:09.593] [32mINFO[39m (2504): [36mDINAR AI model call[39m
+    [35mevent[39m: "dinar_ai_model_call"
+    [35mprovider[39m: "injected_or_test"
+    [35mlatencyMs[39m: 0
+    [35mstatus[39m: "success"
+    [35mstructuredOutputValid[39m: true
+[17:16:09.609] [33mWARN[39m (2504): [36mAI calls without an applicable price were charged their hold[39m
+    [35mevent[39m: "dinar_ai_unpriced_calls"
+    [35mcalls[39m: 1
+    [35mpurpose[39m: "TEXT_REQUEST"
+[17:16:09.625] [32mINFO[39m (2504): [36mDINAR AI turn completed[39m
+    [35mreq[39m: {
+      "id": "e5889451-3468-42d8-9add-203ba51e6782",
+      "method": "POST",
+      "url": "/api/ai/conversations/cccfdc13-684f-4159-a4f6-1d077afc6448/turns"
+    }
+    [35mevent[39m: "dinar_ai_turn"
+    [35mconversationId[39m: "cccfdc13-684f-4159-a4f6-1d077afc6448"
+    [35mturnId[39m: "8f98057b-e12f-444b-8c86-753a1bba66db"
+    [35mtoolName[39m: "searchListings"
+    [35mresultCount[39m: 2
+    [35mstatus[39m: "completed"
+[17:16:09.625] [32mINFO[39m (2504): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "e5889451-3468-42d8-9add-203ba51e6782",
+      "method": "POST",
+      "url": "/api/ai/conversations/cccfdc13-684f-4159-a4f6-1d077afc6448/turns"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 478
+[17:16:09.752] [32mINFO[39m (2504): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "074bd3c7-5e22-4cea-b72e-56623a90573c",
+      "method": "POST",
+      "url": "/api/auth/register"
+    }
+    [35mres[39m: {
+      "statusCode": 201
+    }
+    [35mresponseTime[39m: 124
+[17:16:09.760] [32mINFO[39m (2504): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "8fec8eaf-d66d-4c72-988a-408617d26865",
+      "method": "POST",
+      "url": "/api/ai/conversations"
+    }
+    [35mres[39m: {
+      "statusCode": 201
+    }
+    [35mresponseTime[39m: 6
+✖ C11 filtered recall keeps hard bounds (287.871497ms)
+[17:16:09.914] [32mINFO[39m (2504): [36mDINAR AI turn completed[39m
+    [35mreq[39m: {
+      "id": "6e2567c4-507c-4a74-9839-47db15cada0e",
+      "method": "POST",
+      "url": "/api/ai/conversations/30680e94-99c4-470e-82bd-4f15471ea8a4/turns"
+    }
+    [35mevent[39m: "dinar_ai_turn"
+    [35mconversationId[39m: "30680e94-99c4-470e-82bd-4f15471ea8a4"
+    [35mturnId[39m: "17e7adea-4687-4cef-b3e5-9ac7a6606e65"
+    [35mtoolName[39m: "searchListings"
+    [35mresultCount[39m: 1
+    [35mstatus[39m: "completed"
+[17:16:09.914] [32mINFO[39m (2504): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "6e2567c4-507c-4a74-9839-47db15cada0e",
+      "method": "POST",
+      "url": "/api/ai/conversations/30680e94-99c4-470e-82bd-4f15471ea8a4/turns"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 152
+[17:16:10.036] [32mINFO[39m (2504): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "9ac1054a-d3eb-4340-a17f-d17c5246b8dd",
+      "method": "POST",
+      "url": "/api/auth/register"
+    }
+    [35mres[39m: {
+      "statusCode": 201
+    }
+    [35mresponseTime[39m: 120
+[17:16:10.047] [32mINFO[39m (2504): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "d2cafd34-5188-4bc1-998e-7d978f63de83",
+      "method": "POST",
+      "url": "/api/ai/conversations"
+    }
+    [35mres[39m: {
+      "statusCode": 201
+    }
+    [35mresponseTime[39m: 9
+[17:16:10.143] [32mINFO[39m (2504): [36mDINAR AI turn completed[39m
+    [35mreq[39m: {
+      "id": "b94b388a-73b9-40dd-83bd-59c297b518d9",
+      "method": "POST",
+      "url": "/api/ai/conversations/80c03b05-748b-4f89-b0f4-ac1b044b34fa/turns"
+    }
+    [35mevent[39m: "dinar_ai_turn"
+    [35mconversationId[39m: "80c03b05-748b-4f89-b0f4-ac1b044b34fa"
+    [35mturnId[39m: "f2f32f70-3436-441e-954c-f8c7e1f2de20"
+    [35mtoolName[39m: "searchListings"
+    [35mresultCount[39m: 1
+    [35mstatus[39m: "completed"
+[17:16:10.143] [32mINFO[39m (2504): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "b94b388a-73b9-40dd-83bd-59c297b518d9",
+      "method": "POST",
+      "url": "/api/ai/conversations/80c03b05-748b-4f89-b0f4-ac1b044b34fa/turns"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 91
+[17:16:10.200] [32mINFO[39m (2504): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "4645d2bf-213b-40a2-a0bc-4d1523e07ba6",
+      "method": "POST",
+      "url": "/api/ai/conversations/80c03b05-748b-4f89-b0f4-ac1b044b34fa/turns"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 55
+✖ C03 contextual cart quantity (405.203665ms)
+[17:16:10.293] [32mINFO[39m (2504): [36mDINAR AI model call[39m
+    [35mevent[39m: "dinar_ai_model_call"
+    [35mprovider[39m: "injected_or_test"
+    [35mlatencyMs[39m: 1
+    [35mstatus[39m: "success"
+    [35mstructuredOutputValid[39m: true
+[17:16:10.303] [33mWARN[39m (2504): [36mAI calls without an applicable price were charged their hold[39m
+    [35mevent[39m: "dinar_ai_unpriced_calls"
+    [35mcalls[39m: 1
+    [35mpurpose[39m: "TEXT_REQUEST"
+[17:16:10.312] [32mINFO[39m (2504): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "4e355648-d56d-44df-b7a7-eccca479ebc9",
+      "method": "POST",
+      "url": "/api/ai/conversations/80c03b05-748b-4f89-b0f4-ac1b044b34fa/turns"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 110
+[17:16:10.319] [32mINFO[39m (2504): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "618eae3b-2baa-4acc-ae5e-bd030068becf",
+      "method": "GET",
+      "url": "/api/cart"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 6
+[17:16:10.430] [32mINFO[39m (2504): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "f023d572-4e47-43e4-ba6a-122d34883ddd",
+      "method": "POST",
+      "url": "/api/auth/register"
+    }
+    [35mres[39m: {
+      "statusCode": 201
+    }
+    [35mresponseTime[39m: 108
+[17:16:10.439] [32mINFO[39m (2504): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "e0974400-5b82-4455-afe2-173ee7d19ca2",
+      "method": "POST",
+      "url": "/api/ai/conversations"
+    }
+    [35mres[39m: {
+      "statusCode": 201
+    }
+    [35mresponseTime[39m: 7
+[17:16:10.561] [32mINFO[39m (2504): [36mDINAR AI turn completed[39m
+    [35mreq[39m: {
+      "id": "6a95d305-bd37-4522-ad53-74604392e69c",
+      "method": "POST",
+      "url": "/api/ai/conversations/456e2a9b-8e58-47bd-af3f-43a90fd3d335/turns"
+    }
+    [35mevent[39m: "dinar_ai_turn"
+    [35mconversationId[39m: "456e2a9b-8e58-47bd-af3f-43a90fd3d335"
+    [35mturnId[39m: "c7791281-b3b6-4969-ab67-bf82df8b6776"
+    [35mtoolName[39m: "searchListings"
+    [35mresultCount[39m: 1
+    [35mstatus[39m: "completed"
+[17:16:10.561] [32mINFO[39m (2504): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "6a95d305-bd37-4522-ad53-74604392e69c",
+      "method": "POST",
+      "url": "/api/ai/conversations/456e2a9b-8e58-47bd-af3f-43a90fd3d335/turns"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 121
+✖ C04 model number words and negative (330.476317ms)
+✖ C05 bounded passive morphology (0.512165ms)
+[17:16:10.651] [32mINFO[39m (2504): [36mDINAR AI turn completed[39m
+    [35mreq[39m: {
+      "id": "c7c92b27-9dda-4006-8857-d384029a63db",
+      "method": "POST",
+      "url": "/api/ai/conversations/456e2a9b-8e58-47bd-af3f-43a90fd3d335/turns"
+    }
+    [35mevent[39m: "dinar_ai_turn"
+    [35mconversationId[39m: "456e2a9b-8e58-47bd-af3f-43a90fd3d335"
+    [35mturnId[39m: "6a6b300b-0da7-41c9-848d-19481f4d83f1"
+    [35mtoolName[39m: "searchListings"
+    [35mresultCount[39m: 1
+    [35mstatus[39m: "completed"
+[17:16:10.651] [32mINFO[39m (2504): [36mrequest completed[39m
+    [35mreq[39m: {
+      "id": "c7c92b27-9dda-4006-8857-d384029a63db",
+      "method": "POST",
+      "url": "/api/ai/conversations/456e2a9b-8e58-47bd-af3f-43a90fd3d335/turns"
+    }
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 88
+ℹ tests 8
+ℹ suites 0
+ℹ pass 0
+ℹ fail 8
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3627.517767
+
+✖ failing tests:
+
+test at .test-build/engineering-closure.test.mjs:236992:7
+✖ C12 prose and current read agree (650.576984ms)
+  AssertionError [ERR_ASSERTION]: The input was expected to not match the regular expression /الحقيبة الجلدية/. Input:
+  
+  'الحقيبة الجلدية هي النتيجة المناسبة لك'
+  
+      at TestContext.<anonymous> (file:///workspace/dinar-pro/artifacts/api-server/.test-build/engineering-closure.test.mjs:236997:11)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      at async file:///workspace/dinar-pro/artifacts/api-server/.test-build/engineering-closure.test.mjs:236992:1 {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'الحقيبة الجلدية هي النتيجة المناسبة لك',
+    expected: /الحقيبة الجلدية/,
+    operator: 'doesNotMatch',
+    diff: 'simple'
+  }
+
+test at .test-build/engineering-closure.test.mjs:237000:7
+✖ C01 price difference (848.649914ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /60\.000/. Input:
+  
+  'MODEL_REPLY'
+  
+      at TestContext.<anonymous> (file:///workspace/dinar-pro/artifacts/api-server/.test-build/engineering-closure.test.mjs:237004:11)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      at async file:///workspace/dinar-pro/artifacts/api-server/.test-build/engineering-closure.test.mjs:237000:1 {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'MODEL_REPLY',
+    expected: /60\.000/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at .test-build/engineering-closure.test.mjs:237008:7
+✖ C01 recurring quantity (451.8911ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /24/. Input:
+  
+  'MODEL_REPLY'
+  
+      at TestContext.<anonymous> (file:///workspace/dinar-pro/artifacts/api-server/.test-build/engineering-closure.test.mjs:237011:11)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      at async file:///workspace/dinar-pro/artifacts/api-server/.test-build/engineering-closure.test.mjs:237008:1 {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'MODEL_REPLY',
+    expected: /24/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at .test-build/engineering-closure.test.mjs:237014:7
+✖ C02 strict user ceiling survives model omission (627.040728ms)
+  AssertionError [ERR_ASSERTION]: strict ceiling excludes equality
+      at TestContext.<anonymous> (file:///workspace/dinar-pro/artifacts/api-server/.test-build/engineering-closure.test.mjs:237019:11)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      at async file:///workspace/dinar-pro/artifacts/api-server/.test-build/engineering-closure.test.mjs:237014:1 {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at .test-build/engineering-closure.test.mjs:237021:7
+✖ C11 filtered recall keeps hard bounds (287.871497ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /وسع|تجاهل|استبعاد|أرخيت|خففت/. Input:
+  
+  'لم أجد عروضًا تذكر «للتجربة» تحديدًا، فعرضت 1 عروض تطابق بقية طلبك.'
+  
+      at TestContext.<anonymous> (file:///workspace/dinar-pro/artifacts/api-server/.test-build/engineering-closure.test.mjs:237025:11)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      at async file:///workspace/dinar-pro/artifacts/api-server/.test-build/engineering-closure.test.mjs:237021:1 {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'لم أجد عروضًا تذكر «للتجربة» تحديدًا، فعرضت 1 عروض تطابق بقية طلبك.',
+    expected: /وسع|تجاهل|استبعاد|أرخيت|خففت/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at .test-build/engineering-closure.test.mjs:237029:7
+✖ C03 contextual cart quantity (405.203665ms)
+  AssertionError [ERR_ASSERTION]: [{"id":"64542867-229a-46f0-9833-251b458292b6","title":"جوال بكسل 7 نaadca","description":"جوال بكسل 7 نaadca بحالة جيدة","category":"إلكترونيات","categoryId":"electronics","area":"خلدا","city":"عمان","attributes":{"condition":"مستعمل"},"paymentMethods":["CASH_DIRECT"],"imageUrl":"","imageUrls":[],"fulfilmentType":"PICKUP","rating":0,"reviewCount":0,"sellerId":"3e334727-842f-4462-b9b1-c58081801dc0","sellerName":"بائع التوجيه","sellerAvatarObjectPath":null,"marketId":"JO","status":"PUBLISHED","pricingMode":"FIXED","priceRepresentation":"FIXED","inventoryMode":"LIMITED","availableQuantity":2,"reservedQuantity":0,"contactPhone":null,"negotiable":true,"unitPrice":"180.000","currency":"JOD","createdAt":"2026-11-10T17:16:06.869Z","updatedAt":"2026-11-10T17:16:06.869Z","listingId":"64542867-229a-46f0-9833-251b458292b6","quantity":2}]
+  
+  2 !== 1
+  
+      at TestContext.<anonymous> (file:///workspace/dinar-pro/artifacts/api-server/.test-build/engineering-closure.test.mjs:237035:11)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      at async file:///workspace/dinar-pro/artifacts/api-server/.test-build/engineering-closure.test.mjs:237029:1 {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at .test-build/engineering-closure.test.mjs:237039:7
+✖ C04 model number words and negative (330.476317ms)
+  AssertionError [ERR_ASSERTION]: لم أجد عروضًا تذكر «سبعين» تحديدًا، فعرضت 1 عروض تطابق بقية طلبك.
+      at TestContext.<anonymous> (file:///workspace/dinar-pro/artifacts/api-server/.test-build/engineering-closure.test.mjs:237044:11)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      at async file:///workspace/dinar-pro/artifacts/api-server/.test-build/engineering-closure.test.mjs:237039:1 {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at .test-build/engineering-closure.test.mjs:237046:7
+✖ C05 bounded passive morphology (0.512165ms)
+  AssertionError [ERR_ASSERTION]: مطبوع
+      at TestContext.<anonymous> (file:///workspace/dinar-pro/artifacts/api-server/.test-build/engineering-closure.test.mjs:237048:228)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+      at async file:///workspace/dinar-pro/artifacts/api-server/.test-build/engineering-closure.test.mjs:237046:1 {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+LOCAL_SUITE suite=engineering-closure.test db=dinar_test_local_ac595f2d22c8 exit=1 outbound=0
+LOCAL_SUITE_CHAIN suites=1 db=dinar_test_local_ac595f2d22c8 exit=1 first_failed=engineering-closure.test

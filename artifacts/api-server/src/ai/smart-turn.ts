@@ -1829,9 +1829,14 @@ export async function executeModelFallback(
         });
         if (result.kind === "SURFACE" && result.surface === "COMPARISON")
           lastComparisonResult = result;
-        if (result.kind === "SEARCH") lastSearchResult = result;
+        if (result.kind === "SEARCH") {
+          lastSearchResult = result;
+          lastResourceResult = undefined;
+          lastComparisonResult = undefined;
+        }
         if (result.kind === "RESOURCE") {
           lastResourceResult = result;
+          lastComparisonResult = undefined;
           if (lastSearchResult && result.listings[0]) {
             const refreshed = result.listings[0];
             // A read of a listing outside the earlier search is what this turn is about: the card
@@ -2032,13 +2037,13 @@ export async function executeModelFallback(
       { ownerId: input.actorId },
     );
   if (lastSearchResult || lastResourceResult) {
-    const answer = groundedModelProse(
-      outcome.replyFiltered ? GROUNDED_READ_ANSWER : outcome.turn.conversationalReply,
-      toolFeedback,
-      GROUNDED_READ_ANSWER,
-      input.conversationId,
-    );
     let result = lastSearchResult ?? lastResourceResult!;
+    // C12: a model sentence is not a proof that it describes these rows. Identity and money
+    // in the response follow exactly the canonical read that supplies the card, including
+    // empty results. General conversation remains model-authored outside listing reads.
+    const answer = result.listings.length
+      ? `هذه العروض من سجل DINAR: ${result.listings.map((listing) => `«${listing.title}» (${listing.unitPrice === null ? "السعر بالاتفاق" : `${listing.unitPrice} ${listing.currency}`})`).join("؛ ")}.`
+      : "لم أجد عروضًا مطابقة في القراءة الحالية داخل DINAR.";
     // Generative UI: the model may propose how this turn's verified results are shown. Every
     // position is resolved against the listings DINAR itself returned; anything unresolvable
     // rejects the whole proposal and the typed card stays as it was.
