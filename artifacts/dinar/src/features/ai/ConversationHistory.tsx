@@ -1,3 +1,4 @@
+import { ListingGlimpses } from "./ListingGlimpses";
 import { LazyMotion, domAnimation, m, useReducedMotion } from "framer-motion";
 import { surfaceSpring } from "@/lib/presentation-motion";
 import { useEffect, useRef, useState, type FormEvent, type PointerEvent as ReactPointerEvent } from "react";
@@ -328,6 +329,7 @@ export function Welcome({
         transition={reduceMotion ? { duration: 0 } : surfaceSpring}
       >
         <div className="ai-welcome-copy">
+          <ListingGlimpses />
           <InteractiveLogo />
           <h1>كيف أساعدك اليوم؟</h1>
           <p>مساعدك الذكي للتسوق والبيع والتخطيط والبرمجة وإدارة أعمالك.</p>
