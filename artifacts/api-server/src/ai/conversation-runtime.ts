@@ -1,3 +1,4 @@
+import { parseStructuredSearch } from "./search-query";
 import { claimsCompletedAction } from "./action-receipts";
 import { executeConnectReadTurn } from "../connect/conversation";
 import type { DomainSearchProvider } from "../connect/domains";
@@ -464,7 +465,7 @@ async function resolveConversationReference(
           JSON.stringify({
             query: stored.data.search ?? "",
             ...(stored.data.categoryId ? { categoryId: stored.data.categoryId } : {}),
-            filters: stored.data.filters ?? [],
+            filters: [...(stored.data.filters ?? []), ...(parseStructuredSearch(context.message)?.filters.filter((filter) => filter.field === "price") ?? [])],
             ...(stored.data.sort ? { sort: stored.data.sort } : {}),
           }),
           toolContext,
