@@ -85,6 +85,10 @@ export function tokenVariants(token: string): string[] {
     if (form.includes("ظ")) forms.add(form.replaceAll("ظ", "ض"));
   }
   for (const form of [...forms]) {
+    // Regular form-I passive participle مفعول ↔ imperfect يفعل. Whole-word matching below
+    // keeps unrelated longer words out; no product-specific roots or global stemming.
+    const passive = /^م([\p{Script=Arabic}])([\p{Script=Arabic}])و([\p{Script=Arabic}])$/u.exec(form);
+    if (passive) forms.add(`ي${passive[1]}${passive[2]}${passive[3]}`);
     // Form II imperfect ↔ verbal noun: «ينظف» ↔ «تنظيف», «يصمم» ↔ «تصميم», «نوصل» ↔ «توصيل»;
     // the Levantine «بـ» imperfect too: «بنظف».
     const verb = /^[يتناب](\S)(\S)(\S)$/u.exec(form);
