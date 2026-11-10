@@ -836,6 +836,14 @@ export async function executeBuyerTurn(input: {
       : BEST.test(asked)
         ? "BEST_VALUE"
         : undefined;
+  if (ranking === "CHEAPEST" && set && /^(?:اي واحد|ايهم|ايهن|مين|منو|اياهم)\s/u.test(asked)) {
+    const current = await searchMarketplaceListings(input.market, { search: "", allowedIds: set.resourceIds, conversational: true, sponsoredPlacement: false });
+    const priced = current.filter((listing) => listing.unitPrice !== null).sort((a, b) => Number(a.unitPrice) - Number(b.unitPrice));
+    if (!priced.length) return notice("لا يوجد سعر معلن للعروض الحالية؛ لا أستطيع تحديد الأرخص.");
+    const least = priced[0]!;
+    const ties = priced.filter((listing) => listing.unitPrice === least.unitPrice).map((listing) => `«${listing.title}»`).join("، ");
+    return notice(`الأرخص بين العروض الظاهرة المتاحة: ${ties} بسعر ${least.unitPrice} ${least.currency}. من سجل DINAR الحالي، بدون التوصيل أو أي رسوم. لم يتغير شيء.`);
+  }
   if (ranking && state) {
     const raise = asked.match(RAISE);
     const ceiling = state.maxPrice ?? state.filters.find((filter) => filter.field === "price" && ["lt", "lte"].includes(filter.operator))?.value;
@@ -868,7 +876,7 @@ export async function executeBuyerTurn(input: {
       const search = normalizeBuyerText(state.search).split(" ").filter((word) => !/^(?:ال)?(?:مستعمل|مستعمله|مستخدم|مستخدمه|جديد|جديده)$/u.test(word)).join(" ");
       return { tool: "buyerRefine", version: 1, result: await runBuyerSearch(input.market, { ...state, search, filters: state.filters.filter((filter) => filter.field !== "condition"), condition: value }) };
     }
-    const ceiling = asked.match(CEILING);
+    const ceiling = asked.match(CEILING) ?? asked.match(/^(?:خلها|خليها|خليه|خله)\s+(\d+(?:\.\d+)?)(?:\s*(الف|الاف))?$/u);
     if (ceiling) {
       const value = Number(ceiling[1]) * (ceiling[2] ? 1000 : 1);
       return { tool: "buyerRefine", version: 1, result: await runBuyerSearch(input.market, { ...state, filters: state.filters.filter((filter) => !(filter.field === "price" && ["gt", "gte"].includes(filter.operator))), maxPrice: value }) };

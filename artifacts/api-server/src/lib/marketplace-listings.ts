@@ -294,7 +294,14 @@ export async function searchMarketplaceListings(
               (filter.field === "area" && !schema?.attributes.area)
             ? offer.data[filter.field] ?? ""
           : offer.data.attributes?.[filter.field];
-      if (actual == null) return false;
+      if (actual == null) {
+        // Legacy descriptive brand/model fields may be omitted while the seller's title
+        // states them. This is text evidence only: never infer price, condition, numbers,
+        // certification, ownership or a negative constraint, and never override stored data.
+        if (!["make", "model", "brand", "manufacturer"].includes(filter.field) || typeof filter.value !== "string" || !["eq", "contains"].includes(filter.operator)) return false;
+        const title = normalizeSearch(String(offer.data.title ?? "")).split(/\s+/u);
+        return normalizeSearch(filter.value).split(/\s+/u).filter(Boolean).every((word) => title.some((part) => tokenVariants(word).some((form) => tokenVariants(part).includes(form))));
+      }
       if (typeof filter.value === "number") {
         const numericActual = typeof actual === "number" ? actual : Number(actual);
         if (!Number.isFinite(numericActual)) return false;
