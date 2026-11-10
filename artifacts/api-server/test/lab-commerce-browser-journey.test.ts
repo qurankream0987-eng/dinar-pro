@@ -54,7 +54,7 @@ test("lab commerce journey in a real browser: cards, review, stale tab, quantity
   try {
     await promisify(execFile)(process.execPath, [`${process.cwd()}/../dinar/test/lab-commerce-ui.mjs`], {
       cwd: `${process.cwd()}/../dinar`,
-      env: { ...process.env, LC_WEB: web.baseUrl, LC_API: origin, LC_REPORT: reportPath, LC_SHOTS: `${process.cwd()}/../../docs/dinar-next/deepseek-lab/evidence/browser`, LC_FIXTURE: JSON.stringify({ buyerA, buyerB, cable, cableQuery: `ابحث عن كيبل مختبر ${tag}` }) },
+      env: { ...process.env, LC_WEB: web.baseUrl, LC_API: origin, LC_REPORT: reportPath, LC_SHOTS: `${process.env.DINAR_BROWSER_EVIDENCE_DIR ?? `${process.cwd()}/.test-build/browser-evidence`}/lab-commerce-${randomUUID()}`, LC_FIXTURE: JSON.stringify({ buyerA, buyerB, cable, cableQuery: `ابحث عن كيبل مختبر ${tag}` }) },
       timeout: 600_000, maxBuffer: 20 * 1024 * 1024,
     });
   } catch (error) { runError = error; } finally { await web.stop(); }
