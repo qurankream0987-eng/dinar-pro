@@ -161,7 +161,7 @@ function searchCategory(
       // Identity hints (brand/model/property kind) retain their existing inference behavior;
       // other attributes require an explicit field label before they can imply a category.
       const identityHint = /^(?:make|manufacturer|brand|model|propertyType)$/iu.test(field);
-      const namedField = [field, definition.label, ...(FIELD_WORDS[field] ?? [])].some((label) => hasPhrase(normalized, label));
+      const namedField = [field, definition.label, ...(FIELD_TERMS[field] ?? [])].some((label) => hasPhrase(normalized, label));
       if (!identityHint && !namedField) return [];
       const knownPhrases = FIELD_VALUE_ALIASES
         .filter((entry) => entry.fields.test(field))
