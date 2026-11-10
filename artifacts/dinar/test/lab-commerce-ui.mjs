@@ -53,7 +53,14 @@ async function waitTurn(page, before) {
 }
 async function send(page, text) {
   const before = await assistant(page).count();
-  await page.getByTestId("input-ai-composer").fill(text);
+  // The composer may attach its handlers after it is visible: a fill before that never reaches its
+  // state, so wait for the send button to accept the draft and fill again if it did not.
+  const enabled = () => page.waitForFunction(() => document.querySelector('[data-testid="button-send-ai-message"]')?.getAttribute("data-ready") === "true", undefined, { timeout: 5_000 }).then(() => true, () => false);
+  for (let attempt = 0; attempt < 4; attempt++) {
+    await page.getByTestId("input-ai-composer").fill("");
+    await page.getByTestId("input-ai-composer").fill(text);
+    if (await enabled()) break;
+  }
   await page.getByTestId("button-send-ai-message").click();
   await waitTurn(page, before);
   return assistant(page).last();

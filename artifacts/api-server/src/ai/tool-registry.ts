@@ -12,7 +12,7 @@ import {
   searchMarketplaceListings,
 } from "../lib/marketplace-listings";
 import { resolveMarketplaceCategory } from "../lib/marketplace-categories";
-import { genericTokens, isRequestOnly, itemTokens, purposeTokens } from "../lib/arabic-search-terms";
+import { genericTokens, isDescriptiveOnly, isRequestOnly, itemTokens, purposeTokens, textMatchesToken } from "../lib/arabic-search-terms";
 import { normalizeSearch } from "./search-context";
 import {
   decorateStoredResults,
@@ -405,9 +405,9 @@ export const aiToolRegistry: Record<string, ToolDefinition> = {
       let listings = await run(input.query);
       let broadenedFrom: string[] | undefined;
       let widenedFromCategory: string | undefined;
-      const searchAcrossCategories = () =>
+      const searchAcrossCategories = (search: string = input.query) =>
         searchMarketplaceListings(context.market, {
-          search: input.query,
+          search,
           conversational: true,
           // Only filters that exist without a category: a category's own field (condition) would be
           // refused there and fail the whole turn (W04 sealed S01).
@@ -463,6 +463,35 @@ export const aiToolRegistry: Record<string, ToolDefinition> = {
           listings = wider;
           widenedFromCategory = category?.label ?? input.category ?? input.categoryId;
         }
+      }
+      // «بدي غسالة ملابس اوتوماتيك», «ابغا مكيف سبلت جديد»: one word no listing uses (an extra
+      // detail, a spelling variant) empties a request whose other words match. Fewer words are
+      // tried, largest subsets first (bounded). The first item word — the thing asked for — is
+      // never relaxed; an inferred category does not restrict these searches (a purpose or place
+      // word such as «للبيت» must not turn a washing machine into an apartment); a subset of only
+      // descriptive words never counts; and the reply names exactly the words that were relaxed.
+      if (!listings.length && !broadenedFrom && input.query) {
+        const words = itemTokens(normalizeSearch(input.query).split(/\s+/).filter(Boolean)).slice(0, 6);
+        const [head, ...others] = words;
+        let tried = 0;
+        if (head && others.length)
+          search: for (let keep = others.length - 1; keep >= 0 && keep >= others.length - 3; keep--) {
+            for (const rest of combinations(others, keep)) {
+              const subset = [head, ...rest];
+              if (isDescriptiveOnly(subset)) continue;
+              if (++tried > 14) break search;
+              let found = await searchAcrossCategories(subset.join(" "));
+              // Down to the item word alone, it must name the listing itself: «ساعة» (watch) in a
+              // request is not a lesson whose description says «حصة ساعة» (one hour).
+              if (!rest.length) found = found.filter((listing) => textMatchesToken(normalizeSearch(listing.title ?? ""), head));
+              if (found.length) {
+                listings = found;
+                broadenedFrom = others.filter((word) => !rest.includes(word));
+                widenedFromCategory = undefined;
+                break search;
+              }
+            }
+          }
       }
       const sponsoredIds = listings.filter((item) => item.isSponsored).map((item) => item.id);
       return {
@@ -1116,4 +1145,13 @@ export async function executeRegisteredTool(
   }
   const result = await tool.execute(input, context);
   return { tool: tool.name, version: tool.version, result };
+}
+
+
+/** Every subset of `size` words, keeping their order (earlier words — usually the item — first). */
+function combinations<T>(items: readonly T[], size: number): T[][] {
+  if (size === 0) return [[]];
+  if (items.length < size) return [];
+  const [head, ...rest] = items;
+  return [...combinations(rest, size - 1).map((tail) => [head!, ...tail]), ...combinations(rest, size)];
 }

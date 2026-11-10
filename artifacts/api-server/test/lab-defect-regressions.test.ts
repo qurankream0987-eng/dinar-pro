@@ -63,6 +63,9 @@ const fridgeSmall = await listing("fs", `ثلاجة زرقونية صغيرة ${
 const fridgeBig = await listing("fb", `ثلاجة زرقونية كبيرة ${tag}`, "690", 1);
 const perfume = await listing("pf", `عطر قرنفلي ${tag}`, "14", 10);
 const latinPhone = await listing("ip", `iPhone 13 zircon ${tag}`, "275", 1);
+const washer = await listing("wm", `غسالة قرطبية اوتوماتيك ${tag}`, "150", 1);
+const headOnly = `زمرد${tag.replace(/[0-9]/g, "")}يه`;
+await db.update(offers).set({ data: sql`jsonb_set(data, '{description}', to_jsonb(${`حصة مدتها ${headOnly}`}::text))` }).where(eq(offers.id, perfume));
 
 await test("pronoun purchase never searches; resolves only what is in view; never orders", async () => {
   const b = await user();
@@ -195,6 +198,18 @@ await test("brand words match across Arabic and Latin spellings; «اعرض مو
   assert.ok(ar.ids.includes(latinPhone), `${ar.body} ${ar.ids}`);
   const nav = await say(b, "اعرض موقع طلب جاري");
   assert.ok(!nav.surfaces.includes("SELL"), `${nav.surfaces}`);
+});
+
+await test("relaxed search keeps the item word, ignores purpose/place words, and a lone item word must be in the title", async () => {
+  const b = await user();
+  const relaxed = await say(b, `ابغى غسالة قرطبية اوتوماتيك ${tag} للبيت الجديد`);
+  assert.ok(relaxed.ids.includes(washer), `${relaxed.body} ${relaxed.ids}`);
+  assert.match(relaxed.body, /لم أجد عروضًا تذكر/);
+  const none = await say(b, `بدي بيانو قرطبي ${tag} للبيت`);
+  assert.deepEqual(none.ids, [], none.body);
+  // The item word appears only in another listing's description («حصة مدتها ساعة»): never shown.
+  const watch = await say(b, `بدي ${headOnly} رولكس اصلية`);
+  assert.ok(!watch.ids.includes(perfume), `${watch.body} ${watch.ids}`);
 });
 
 await test("teardown", async () => { await pool.query(sql`delete from offers where id like ${`rg_${tag}_%`}`.toString()).catch(() => {}); server.close(); await pool.end(); });

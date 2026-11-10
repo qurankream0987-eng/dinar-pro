@@ -101,6 +101,11 @@ export function tokenVariants(token: string): string[] {
  */
 const DESCRIPTIVE = /^(?:ال)?(?:جديد|جديده|جديدة|مستعمل|مستعمله|مستعملة|مستخدم|مستخدمه|مستخدمة|نظيف|نظيفه|نظيفة|كويس|كويسه|كويسة|ممتاز|ممتازه|ممتازة|مميز|مميزه|مميزة|اصلي|اصليه|اصلية|رخيص|رخيصه|رخيصة|غالي|غاليه|غالية|كبير|كبيره|كبيرة|صغير|صغيره|صغيرة|اسود|ابيض|احمر|ازرق|اخضر|اصفر|رمادي|بني|وردي|ذهبي|فضي)$/u;
 
+/** True when every word only describes (new, used, big, a colour …) and none names an item. */
+export function isDescriptiveOnly(tokens: readonly string[]): boolean {
+  return tokens.every((token) => DESCRIPTIVE.test(token) || GENERIC_NOUNS.has(token));
+}
+
 /** The generic kind-of-thing words among the item words, when a specific (naming) word remains beside them. */
 export function genericTokens(tokens: readonly string[]): string[] {
   const generic = tokens.filter((token) => tokenVariants(token).some((form) => GENERIC_NOUNS.has(form)));
