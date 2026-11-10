@@ -717,6 +717,11 @@ export async function executeBuyerTurn(input: {
     const cost = total !== undefined && Number.isSafeInteger(total)
       ? ` إذا كانت كل زيارة وحدة واحدة بالسعر المسجل الحالي ${moneyOf(snapshot!.unitPriceMinor!, input.market)}، فالحساب الافتراضي ${yearly} × ${moneyOf(snapshot!.unitPriceMinor!, input.market)} = ${moneyOf(total, input.market)} قبل التوصيل وأي رسوم، وليس تسعيرة نهائية أو حجزًا أو اشتراكًا.`
       : " هذا حساب عدد المرات فقط؛ لا يوجد سعر واحد محدد أستطيع حساب تكلفته من السياق.";
+    if (!id && set) {
+      const alternatives = await searchMarketplaceListings(input.market,{search:"",allowedIds:set.resourceIds,conversational:true,sponsoredPlacement:false});
+      const costs = alternatives.filter(row=>row.unitPrice!==null).map(row=>{const minor=Math.round(Number(row.unitPrice)*10**input.market.minorUnitScale);const amount=minor*yearly;return Number.isSafeInteger(amount) ? `«${row.title}»: ${yearly} × ${moneyOf(minor,input.market)} = ${moneyOf(amount,input.market)}` : undefined;}).filter(Boolean);
+      if (costs.length) return notice(`${count} × 12 شهرًا = ${yearly} في السنة. توجد عدة عروض؛ لكل عرض حساب افتراضي مستقل إذا كانت كل زيارة وحدة بالسعر الحالي:\n${costs.join("\n")}\nقبل التوصيل وأي رسوم، وليس حجزًا أو اشتراكًا أو تسعيرة نهائية. حدد العرض المقصود؛ لم يتغير شيء.`);
+    }
     return notice(`${count} × 12 شهرًا = ${yearly} في السنة.${cost} لم يتغير شيء.`);
   }
   const additive = text.match(/^(?:وكمان|وكذلك|وايضا|كمان|وايضًا)\s+(.+)$/u);
@@ -956,7 +961,7 @@ export async function executeBuyerTurn(input: {
     const [categories, knownCities] = await Promise.all([listMarketplaceCategories(), publishedListingCities(input.market.id)]);
     // The price phrase («بـ5», «بسعر 5») and quality words are constraints, not search words.
     // The interpreter reads the seller-facing original, so the phrases are removed there.
-    const stripped = input.message
+    const stripped = requestCore(input.message)
       .replace(/(?:بسعر|بحدود|حوالي|في حدود|بـ*)\s*[0-9٠-٩]+(?:[.,][0-9٠-٩]+)?/u, (match) => (target ? " " : match))
       .replace(/(?:مميز[ةه]?|ممتاز[ةه]?|فخم[ةه]?|أصلي|اصلي)/gu, " ")
       .replace(/(?:بسعر رخيص|رخيص[ةه]?(?:\s+السعر)?)/u, (match) => (cheap ? " " : match));

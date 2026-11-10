@@ -217,11 +217,12 @@ export function stripCorrectionPrefix(message: string): string {
     .replace(/^([a-z][a-z0-9-]*(?:\s+[a-z0-9-]+){0,4})\s+b\s+(\d+(?:\.\d+)?)$/iu,"ابي $1 بسعر $2")
     .replace(/\blel\s+([a-z]+)\b/giu,"ل$1")
     .replace(/^(?:طيب\s+)?(?:اي|أي)\s+(?:شي|شيء|اشي|إشي)\s+/u, "ابي ")
+    .replace(/^و(?=بدي|ابي|اريد|ابحث)/u, "")
     .replace(/^(?:طيب|طب)\s+و?(?=بدي|ابي|اريد|ابحث)/u, "")
-    .replace(/^(?:ترى\s+)?(?:انا\s+)?(?:اقصد|أقصد)\s+الخدم[ةه]\s+(?:مو|مش)\s+المنتج\s*[:،,]\s*/u, "")
+    .replace(/^(?:ترى\s+)?(?:[اأ]نا\s+)?(?:اقصد|أقصد)\s+الخدم[ةه]\s+(?:مو|مش)\s+المنتج\s*[:،,]\s*/u, "")
     .replace(/^(?:مش|مو)\s+هيك\s*[،,]\s*/u, "")
     .replace(/^لا\s+(?:خلص|خلاص)\s+ما\s+(?:بدي|ابي|اريد)\s+[^،,]+[،,]\s*/u, "")
-    .replace(/^(شلون|كيف)\s+(?:احصل|الاقي)\s+(?:على\s+)?/u, "ابي ");
+    .replace(/^(شلون|كيف)\s+(?:[اأ]حصل|[اأ]لاقي)\s+(?:على\s+)?/u, "ابي ");
   if (/^(?:قصدي|اقصد|أقصد)/u.test(text)) text = text.replace(/\s+(?:مش|مو|وليس)\s+\d+\s*$/u, "");
   for (let pass = 0; pass < 3; pass += 1) {
     const next = CORRECTION_PREFIXES.reduce(
@@ -244,7 +245,7 @@ export function marketplaceComparisonSearchTerms(message: string): string | unde
 export function searchTerms(message: string): string {
   // Codex: comparison-aware request extraction; Claude: a leading correction is set aside first.
   const request = stripCorrectionPrefix(message)
-    .replace(/^(?:\S+\s+)?انا\s+(?:جوعان|جائع|عطشان)\s+(?=ابي|بدي|اريد)/u, "")
+    .replace(/^(?:\S+\s+)?[اأ]نا\s+(?:جوعان|جائع|عطشان)\s+(?=ابي|بدي|اريد)/u, "")
     // «دينار ابحث لي عن …», «يا دينار دورلي على …»: the address and the search verb with its
     // «لي» and preposition are the request, not the product.
     .replace(/^\s*(?:يا\s+)?(?:دينار|dinar)(?:\s*[،,:]\s*|\s+)/iu, "");
