@@ -670,6 +670,12 @@ export async function executeBuyerTurn(input: {
   if (!input.actorId) return null;
   const actorId = input.actorId;
   const text = normalizeBuyerText(input.message);
+  // Counts only: explicit monthly recurrence, not a quote, fee or invented service price.
+  const annual = text.match(/^(?:(\d{1,3})\s+(?:زيارات|حصص|جلسات|مرات)|(?:زيارتين|حصتين|جلستين|مرتين))\s+(?:بالشهر|في الشهر|شهريا)\s+(?:كم|قديش)\s+(?:بالسنه|في السنه|سنويا)$/u);
+  if (annual) {
+    const count = annual[1] ? Number(annual[1]) : 2;
+    return notice(`${count} × 12 شهرًا = ${count * 12} في السنة. هذا حساب عدد المرات فقط، وليس سعرًا أو اشتراكًا. لم يتغير شيء.`);
+  }
 
   // Decisions on this actor's own latest purchase review, pending or already settled:
   // a repeated or concurrent decision answers deterministically and never reaches the model.
@@ -697,6 +703,15 @@ export async function executeBuyerTurn(input: {
   const set = await latestListingSet(input.conversationId, input.market.id);
   const state = stateOf(set);
 
+  // Resolve a two-listing price difference against current authorized rows, not model memory.
+  if (set && /^(?:كم|قديش|شو|ما|ايش|وش) (?:هو )?(?:ال)?فرق (?:بالسعر|في السعر|السعر)(?: بينهم| بينهما| بين الاول والثاني)?$/u.test(text)) {
+    if (set.resourceIds.length !== 2) return notice("حدّد عرضين لمقارنة فرق السعر، مثل «قارن الأول بالثاني».");
+    const snapshots = await Promise.all(set.resourceIds.map((id) => readListingForBuyer(actorId, id)));
+    if (snapshots.some((value) => !value || value.unitPriceMinor === null)) return notice("لا أستطيع حساب فرق السعر: عرض غير متاح أو سعره غير محدد. لم أفترض مبلغًا.");
+    const [a, b] = snapshots;
+    const difference = Math.abs(a!.unitPriceMinor! - b!.unitPriceMinor!);
+    return notice(`فرق السعر بين العرضين: ${moneyOf(difference, input.market)}، محسوب من السعرين الحاليين ${moneyOf(a!.unitPriceMinor!, input.market)} و${moneyOf(b!.unitPriceMinor!, input.market)}. بدون التوصيل أو أي رسوم؛ لم يتغير شيء.`);
+  }
   const askedQuantity = quantityPriceQuestion(text);
   if (askedQuantity !== undefined && set) {
     const focused = await resolveReference({ conversationId: input.conversationId, marketId: input.market.id, actorId, message: "هذا" });
