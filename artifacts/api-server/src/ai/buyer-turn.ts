@@ -681,10 +681,6 @@ export async function executeBuyerTurn(input: {
   const text = normalizeBuyerText(input.message);
   // Counts only: explicit monthly recurrence, not a quote, fee or invented service price.
   const annual = text.match(/^(?:(\d{1,3})\s+(?:زيارات|حصص|جلسات|مرات)|(?:زيارتين|حصتين|جلستين|مرتين))\s+(?:بالشهر|في الشهر|شهريا)\s+(?:كم|قديش)\s+(?:بالسنه|في السنه|سنويا)$/u);
-  if (annual) {
-    const count = annual[1] ? Number(annual[1]) : 2;
-    return notice(`${count} × 12 شهرًا = ${count * 12} في السنة. هذا حساب عدد المرات فقط، وليس سعرًا أو اشتراكًا. لم يتغير شيء.`);
-  }
 
   // Decisions on this actor's own latest purchase review, pending or already settled:
   // a repeated or concurrent decision answers deterministically and never reaches the model.
@@ -711,6 +707,18 @@ export async function executeBuyerTurn(input: {
 
   const set = await latestListingSet(input.conversationId, input.market.id);
   const state = stateOf(set);
+  if (annual) {
+    const count = annual[1] ? Number(annual[1]) : 2;
+    const yearly = count * 12;
+    const focused = set ? await resolveReference({ conversationId: input.conversationId, marketId: input.market.id, actorId, message: "هذا" }) : undefined;
+    const id = focused?.resourceId ?? (set?.resourceIds.length === 1 ? set.resourceIds[0] : undefined);
+    const snapshot = id ? await readListingForBuyer(actorId, id) : undefined;
+    const total = snapshot?.unitPriceMinor == null ? undefined : snapshot.unitPriceMinor * yearly;
+    const cost = total !== undefined && Number.isSafeInteger(total)
+      ? ` إذا كانت كل زيارة وحدة واحدة بالسعر المسجل الحالي ${moneyOf(snapshot!.unitPriceMinor!, input.market)}، فالحساب الافتراضي ${yearly} × ${moneyOf(snapshot!.unitPriceMinor!, input.market)} = ${moneyOf(total, input.market)} قبل التوصيل وأي رسوم، وليس تسعيرة نهائية أو حجزًا أو اشتراكًا.`
+      : " هذا حساب عدد المرات فقط؛ لا يوجد سعر واحد محدد أستطيع حساب تكلفته من السياق.";
+    return notice(`${count} × 12 شهرًا = ${yearly} في السنة.${cost} لم يتغير شيء.`);
+  }
   const additive = text.match(/^(?:وكمان|وكذلك|وايضا|كمان|وايضًا)\s+(.+)$/u);
   if (set && additive && !/^(?:اكتب|اشرح|فسر|لخص|ترجم|خطط|قارن|اقترح|كيف|ما|ليش|لماذا)(?:\s|$)/u.test(additive[1]!)) {
     const { executeRegisteredTool } = await import("./tool-registry");
@@ -725,10 +733,26 @@ export async function executeBuyerTurn(input: {
     const ties = priced.filter((listing) => listing.unitPrice === least.unitPrice).map((listing) => `«${listing.title}»`).join("، ");
     return notice(`الأرخص بين العروض الظاهرة المتاحة: ${ties} بسعر ${least.unitPrice} ${least.currency}. من سجل DINAR الحالي، بدون التوصيل أو أي رسوم. لم يتغير شيء.`);
   }
-  // Resolve a two-listing price difference against current authorized rows, not model memory.
+  // Resolve named current resources before calculating, including seller-stated years and
+  // conditions. Years are identifiers here, never quantities or prices invented by the model.
+  let differenceIds: string[] | undefined;
   if (set && /^(?:كم|قديش|شو|ما|ايش|وش) (?:هو )?(?:ال)?فرق (?:بالسعر|في السعر|السعر)(?: بينهم| بينهما| بين الاول والثاني)?$/u.test(text)) {
     if (set.resourceIds.length !== 2) return notice("حدّد عرضين لمقارنة فرق السعر، مثل «قارن الأول بالثاني».");
-    const snapshots = await Promise.all(set.resourceIds.map((id) => readListingForBuyer(actorId, id)));
+    differenceIds = set.resourceIds;
+  }
+  const years = text.match(/^(?:(?:كم|شو|ما)\s+)?(?:ال)?فرق بين (\d{4}) و ?(\d{4})$/u);
+  const conditionDifference = /^(?:ال)?جديد\s+(?:اغلي|ارخص)\s+(?:بكم|بقديش|قديش)\s+من\s+(?:ال)?مستعمل$/u.test(text);
+  if (set && (years || conditionDifference)) {
+    const current = await searchMarketplaceListings(input.market, { search: "", allowedIds: set.resourceIds, conversational: true, sponsoredPlacement: false });
+    const groups = years
+      ? [years[1], years[2]].map((year) => current.filter((listing) => String(listing.attributes?.year ?? "") === year))
+      : ["جديد", "مستعمل"].map((condition) => current.filter((listing) => conditionOf(listing) === condition));
+    if (groups.some((group) => group.length !== 1) || groups[0]![0]!.id === groups[1]![0]!.id)
+      return notice("حدّد عرضين ظاهرين بأرقامهما؛ الوصف لا يحدد عرضًا واحدًا لكل طرف، فلم أفترض فرقًا بالسعر.");
+    differenceIds = groups.map((group) => group[0]!.id);
+  }
+  if (differenceIds) {
+    const snapshots = await Promise.all(differenceIds.map((id) => readListingForBuyer(actorId, id)));
     if (snapshots.some((value) => !value || value.unitPriceMinor === null)) return notice("لا أستطيع حساب فرق السعر: عرض غير متاح أو سعره غير محدد. لم أفترض مبلغًا.");
     const [a, b] = snapshots;
     const difference = Math.abs(a!.unitPriceMinor! - b!.unitPriceMinor!);
