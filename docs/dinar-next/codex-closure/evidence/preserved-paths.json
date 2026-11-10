@@ -1,0 +1,10 @@
+{
+  "artifacts/dinar/src": true,
+  "lib/db": true,
+  "lib/api-spec": true,
+  "lib/api-client-react": true,
+  "lib/api-zod": true,
+  "artifacts/api-server/src/ai/card-envelope.ts": true,
+  "package.json": true,
+  "pnpm-lock.yaml": true
+}

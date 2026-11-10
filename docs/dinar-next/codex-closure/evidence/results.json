@@ -1,0 +1,6733 @@
+{
+  "base": "eda6d4205c2f0553b26a87c19255e3b06b598706",
+  "finalRuntimeSource": "9afe76cf8f9e4a74b9e14e7dce831888b9f1039e",
+  "runSourceNotes": {
+    "closure-regression-delivery": "369954d; 99-suite full battery",
+    "closure-regression-numeric": "runtime17c92ea; affected suites after numeric punctuation fix",
+    "closure-regression-browser-retry": "runtime9afe76c; sequential browser retry after local stub collision",
+    "closure-regression-authority-final": "9afe76c",
+    "closure-regression-negotiation-final": "9afe76c",
+    "closure-regression-deepseek-browser": "runtime20dd260; unchanged DeepSeek/UI source, replay only",
+    "A-delivery": "dist built from369954d; before punctuation and allowance follow-ups",
+    "H5-handoff": "dist built from556acb5; runtime17c92ea; allowance patch does not affect search"
+  },
+  "runs": [
+    {
+      "run": "closure-regression",
+      "summary": "/workspace/closure-regression/summary.json",
+      "suites": 55,
+      "totals": {
+        "tests": 503,
+        "pass": 498,
+        "fail": 4,
+        "skipped": 1,
+        "cancelled": 0,
+        "outbound": 0
+      },
+      "failures": [
+        {
+          "suite": "engineering-closure",
+          "exit": 1,
+          "seconds": 11.2,
+          "outbound": 0,
+          "tests": 8,
+          "pass": 7,
+          "fail": 1,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression/engineering-closure.log"
+        },
+        {
+          "suite": "model-native-routing",
+          "exit": 1,
+          "seconds": 19.4,
+          "outbound": 0,
+          "tests": 17,
+          "pass": 15,
+          "fail": 2,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression/model-native-routing.log"
+        },
+        {
+          "suite": "spec-question-generality",
+          "exit": 1,
+          "seconds": 5.8,
+          "outbound": 0,
+          "tests": null,
+          "pass": null,
+          "fail": null,
+          "skipped": null,
+          "cancelled": null,
+          "log": "/workspace/closure-regression/spec-question-generality.log"
+        },
+        {
+          "suite": "stock-spec-conversation",
+          "exit": 1,
+          "seconds": 5.8,
+          "outbound": 0,
+          "tests": null,
+          "pass": null,
+          "fail": null,
+          "skipped": null,
+          "cancelled": null,
+          "log": "/workspace/closure-regression/stock-spec-conversation.log"
+        },
+        {
+          "suite": "business-delegations",
+          "exit": 1,
+          "seconds": 5.7,
+          "outbound": 0,
+          "tests": null,
+          "pass": null,
+          "fail": null,
+          "skipped": null,
+          "cancelled": null,
+          "log": "/workspace/closure-regression/business-delegations.log"
+        },
+        {
+          "suite": "d4-d5-isolation-security",
+          "exit": 1,
+          "seconds": 9.0,
+          "outbound": 0,
+          "tests": null,
+          "pass": null,
+          "fail": null,
+          "skipped": null,
+          "cancelled": null,
+          "log": "/workspace/closure-regression/d4-d5-isolation-security.log"
+        },
+        {
+          "suite": "api",
+          "exit": 1,
+          "seconds": 12.9,
+          "outbound": 0,
+          "tests": 63,
+          "pass": 62,
+          "fail": 1,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression/api.log"
+        }
+      ],
+      "complete": false,
+      "results": [
+        {
+          "suite": "engineering-closure",
+          "exit": 1,
+          "seconds": 11.2,
+          "outbound": 0,
+          "tests": 8,
+          "pass": 7,
+          "fail": 1,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression/engineering-closure.log"
+        },
+        {
+          "suite": "engineering-buyer-recall-jo",
+          "exit": 0,
+          "seconds": 6.1,
+          "outbound": 0,
+          "tests": 1,
+          "pass": 1,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression/engineering-buyer-recall-jo.log"
+        },
+        {
+          "suite": "engineering-remaining-context",
+          "exit": 0,
+          "seconds": 8.9,
+          "outbound": 0,
+          "tests": 4,
+          "pass": 4,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression/engineering-remaining-context.log"
+        },
+        {
+          "suite": "engineering-additive-context",
+          "exit": 0,
+          "seconds": 10.7,
+          "outbound": 0,
+          "tests": 2,
+          "pass": 2,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression/engineering-additive-context.log"
+        },
+        {
+          "suite": "engineering-source-binding",
+          "exit": 0,
+          "seconds": 15.2,
+          "outbound": 0,
+          "tests": 5,
+          "pass": 5,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression/engineering-source-binding.log"
+        },
+        {
+          "suite": "engineering-constraint-reentry",
+          "exit": 0,
+          "seconds": 7.5,
+          "outbound": 0,
+          "tests": 2,
+          "pass": 2,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression/engineering-constraint-reentry.log"
+        },
+        {
+          "suite": "engineering-vision-metering",
+          "exit": 0,
+          "seconds": 5.9,
+          "outbound": 0,
+          "tests": 4,
+          "pass": 4,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression/engineering-vision-metering.log"
+        },
+        {
+          "suite": "engineering-vision-question-storage",
+          "exit": 0,
+          "seconds": 11.5,
+          "outbound": 0,
+          "tests": 2,
+          "pass": 2,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression/engineering-vision-question-storage.log"
+        },
+        {
+          "suite": "lab-defect-regressions",
+          "exit": 0,
+          "seconds": 15.2,
+          "outbound": 0,
+          "tests": 12,
+          "pass": 12,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression/lab-defect-regressions.log"
+        },
+        {
+          "suite": "draft-conversational-edits",
+          "exit": 0,
+          "seconds": 9.2,
+          "outbound": 0,
+          "tests": 6,
+          "pass": 6,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression/draft-conversational-edits.log"
+        },
+        {
+          "suite": "model-native-routing",
+          "exit": 1,
+          "seconds": 19.4,
+          "outbound": 0,
+          "tests": 17,
+          "pass": 15,
+          "fail": 2,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression/model-native-routing.log"
+        },
+        {
+          "suite": "intelligence-capabilities",
+          "exit": 0,
+          "seconds": 10.7,
+          "outbound": 0,
+          "tests": 8,
+          "pass": 8,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression/intelligence-capabilities.log"
+        },
+        {
+          "suite": "conversation",
+          "exit": 0,
+          "seconds": 11.8,
+          "outbound": 0,
+          "tests": 29,
+          "pass": 29,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression/conversation.log"
+        },
+        {
+          "suite": "conversation-router",
+          "exit": 0,
+          "seconds": 7.8,
+          "outbound": 0,
+          "tests": 16,
+          "pass": 16,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression/conversation-router.log"
+        },
+        {
+          "suite": "arabic-understanding",
+          "exit": 0,
+          "seconds": 7.4,
+          "outbound": 0,
+          "tests": 3,
+          "pass": 3,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression/arabic-understanding.log"
+        },
+        {
+          "suite": "arabic-search-understanding",
+          "exit": 0,
+          "seconds": 9.3,
+          "outbound": 0,
+          "tests": 5,
+          "pass": 5,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression/arabic-search-understanding.log"
+        },
+        {
+          "suite": "arabic-generality",
+          "exit": 0,
+          "seconds": 9.1,
+          "outbound": 0,
+          "tests": 1,
+          "pass": 1,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression/arabic-generality.log"
+        },
+        {
+          "suite": "context-understanding",
+          "exit": 0,
+          "seconds": 15.7,
+          "outbound": 0,
+          "tests": 3,
+          "pass": 3,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression/context-understanding.log"
+        },
+        {
+          "suite": "context-sealed",
+          "exit": 0,
+          "seconds": 11.8,
+          "outbound": 0,
+          "tests": 1,
+          "pass": 1,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression/context-sealed.log"
+        },
+        {
+          "suite": "model-tiers",
+          "exit": 0,
+          "seconds": 17.0,
+          "outbound": 0,
+          "tests": 24,
+          "pass": 24,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression/model-tiers.log"
+        },
+        {
+          "suite": "ai-provider",
+          "exit": 0,
+          "seconds": 7.5,
+          "outbound": 0,
+          "tests": 47,
+          "pass": 47,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression/ai-provider.log"
+        },
+        {
+          "suite": "ai-transport",
+          "exit": 0,
+          "seconds": 7.8,
+          "outbound": 0,
+          "tests": 8,
+          "pass": 8,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression/ai-transport.log"
+        },
+        {
+          "suite": "gemini-gateway",
+          "exit": 0,
+          "seconds": 5.2,
+          "outbound": 0,
+          "tests": 3,
+          "pass": 3,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression/gemini-gateway.log"
+        },
+        {
+          "suite": "gemma-gateway-readiness",
+          "exit": 0,
+          "seconds": 7.7,
+          "outbound": 0,
+          "tests": 11,
+          "pass": 11,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression/gemma-gateway-readiness.log"
+        },
+        {
+          "suite": "self-hosted-model",
+          "exit": 0,
+          "seconds": 8.9,
+          "outbound": 0,
+          "tests": 7,
+          "pass": 7,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression/self-hosted-model.log"
+        },
+        {
+          "suite": "visual-search",
+          "exit": 0,
+          "seconds": 5.4,
+          "outbound": 0,
+          "tests": 12,
+          "pass": 12,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression/visual-search.log"
+        },
+        {
+          "suite": "visual-search-turn",
+          "exit": 0,
+          "seconds": 13.5,
+          "outbound": 0,
+          "tests": 15,
+          "pass": 15,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression/visual-search-turn.log"
+        },
+        {
+          "suite": "listing-photo-vision-provider",
+          "exit": 0,
+          "seconds": 7.4,
+          "outbound": 0,
+          "tests": 5,
+          "pass": 5,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression/listing-photo-vision-provider.log"
+        },
+        {
+          "suite": "search-sql-foundation",
+          "exit": 0,
+          "seconds": 11.8,
+          "outbound": 0,
+          "tests": 7,
+          "pass": 7,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression/search-sql-foundation.log"
+        },
+        {
+          "suite": "search-sql-performance",
+          "exit": 0,
+          "seconds": 40.9,
+          "outbound": 0,
+          "tests": 3,
+          "pass": 3,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression/search-sql-performance.log"
+        },
+        {
+          "suite": "sc-conversation-routing",
+          "exit": 0,
+          "seconds": 8.8,
+          "outbound": 0,
+          "tests": 5,
+          "pass": 5,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression/sc-conversation-routing.log"
+        },
+        {
+          "suite": "spec-question-generality",
+          "exit": 1,
+          "seconds": 5.8,
+          "outbound": 0,
+          "tests": null,
+          "pass": null,
+          "fail": null,
+          "skipped": null,
+          "cancelled": null,
+          "log": "/workspace/closure-regression/spec-question-generality.log"
+        },
+        {
+          "suite": "stock-spec-conversation",
+          "exit": 1,
+          "seconds": 5.8,
+          "outbound": 0,
+          "tests": null,
+          "pass": null,
+          "fail": null,
+          "skipped": null,
+          "cancelled": null,
+          "log": "/workspace/closure-regression/stock-spec-conversation.log"
+        },
+        {
+          "suite": "financial-state-machine",
+          "exit": 0,
+          "seconds": 10.2,
+          "outbound": 0,
+          "tests": 23,
+          "pass": 23,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression/financial-state-machine.log"
+        },
+        {
+          "suite": "payment-order-state",
+          "exit": 0,
+          "seconds": 6.1,
+          "outbound": 0,
+          "tests": 3,
+          "pass": 3,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression/payment-order-state.log"
+        },
+        {
+          "suite": "wave4-payment-acceptance",
+          "exit": 0,
+          "seconds": 7.1,
+          "outbound": 0,
+          "tests": 1,
+          "pass": 1,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression/wave4-payment-acceptance.log"
+        },
+        {
+          "suite": "order-settlement",
+          "exit": 0,
+          "seconds": 6.2,
+          "outbound": 0,
+          "tests": 2,
+          "pass": 2,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression/order-settlement.log"
+        },
+        {
+          "suite": "commerce",
+          "exit": 0,
+          "seconds": 3.9,
+          "outbound": 0,
+          "tests": 24,
+          "pass": 24,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression/commerce.log"
+        },
+        {
+          "suite": "commerce-journey",
+          "exit": 0,
+          "seconds": 7.2,
+          "outbound": 0,
+          "tests": 8,
+          "pass": 8,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression/commerce-journey.log"
+        },
+        {
+          "suite": "marketplace-intelligence",
+          "exit": 0,
+          "seconds": 5.5,
+          "outbound": 0,
+          "tests": 22,
+          "pass": 22,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression/marketplace-intelligence.log"
+        },
+        {
+          "suite": "marketplace-category-compatibility",
+          "exit": 0,
+          "seconds": 4.6,
+          "outbound": 0,
+          "tests": 3,
+          "pass": 3,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression/marketplace-category-compatibility.log"
+        },
+        {
+          "suite": "location-policy",
+          "exit": 0,
+          "seconds": 3.5,
+          "outbound": 0,
+          "tests": 1,
+          "pass": 1,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression/location-policy.log"
+        },
+        {
+          "suite": "conversation-marketplace-isolation",
+          "exit": 0,
+          "seconds": 4.0,
+          "outbound": 0,
+          "tests": 5,
+          "pass": 5,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression/conversation-marketplace-isolation.log"
+        },
+        {
+          "suite": "business-delegations",
+          "exit": 1,
+          "seconds": 5.7,
+          "outbound": 0,
+          "tests": null,
+          "pass": null,
+          "fail": null,
+          "skipped": null,
+          "cancelled": null,
+          "log": "/workspace/closure-regression/business-delegations.log"
+        },
+        {
+          "suite": "d4-d5-isolation-security",
+          "exit": 1,
+          "seconds": 9.0,
+          "outbound": 0,
+          "tests": null,
+          "pass": null,
+          "fail": null,
+          "skipped": null,
+          "cancelled": null,
+          "log": "/workspace/closure-regression/d4-d5-isolation-security.log"
+        },
+        {
+          "suite": "request-collection-bounds",
+          "exit": 0,
+          "seconds": 9.2,
+          "outbound": 0,
+          "tests": 6,
+          "pass": 6,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression/request-collection-bounds.log"
+        },
+        {
+          "suite": "same-origin-web",
+          "exit": 0,
+          "seconds": 6.9,
+          "outbound": 0,
+          "tests": 16,
+          "pass": 16,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression/same-origin-web.log"
+        },
+        {
+          "suite": "api",
+          "exit": 1,
+          "seconds": 12.9,
+          "outbound": 0,
+          "tests": 63,
+          "pass": 62,
+          "fail": 1,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression/api.log"
+        },
+        {
+          "suite": "google-signin",
+          "exit": 0,
+          "seconds": 6.5,
+          "outbound": 0,
+          "tests": 6,
+          "pass": 6,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression/google-signin.log"
+        },
+        {
+          "suite": "phone-verification-development-bypass",
+          "exit": 0,
+          "seconds": 6.2,
+          "outbound": 0,
+          "tests": 1,
+          "pass": 1,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression/phone-verification-development-bypass.log"
+        },
+        {
+          "suite": "driver-location-tracking",
+          "exit": 0,
+          "seconds": 7.6,
+          "outbound": 0,
+          "tests": 13,
+          "pass": 13,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression/driver-location-tracking.log"
+        },
+        {
+          "suite": "readiness",
+          "exit": 0,
+          "seconds": 6.6,
+          "outbound": 0,
+          "tests": 15,
+          "pass": 15,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression/readiness.log"
+        },
+        {
+          "suite": "development-tls",
+          "exit": 0,
+          "seconds": 3.5,
+          "outbound": 0,
+          "tests": 8,
+          "pass": 7,
+          "fail": 0,
+          "skipped": 1,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression/development-tls.log"
+        },
+        {
+          "suite": "database-url-selection",
+          "exit": 0,
+          "seconds": 4.0,
+          "outbound": 0,
+          "tests": 5,
+          "pass": 5,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression/database-url-selection.log"
+        },
+        {
+          "suite": "commercial-policy-cli",
+          "exit": 0,
+          "seconds": 8.8,
+          "outbound": 0,
+          "tests": 2,
+          "pass": 2,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression/commercial-policy-cli.log"
+        }
+      ]
+    },
+    {
+      "run": "closure-regression-authority-final",
+      "summary": "/workspace/closure-regression-authority-final/summary.json",
+      "suites": 7,
+      "totals": {
+        "tests": 122,
+        "pass": 120,
+        "fail": 2,
+        "skipped": 0,
+        "cancelled": 0,
+        "outbound": 0
+      },
+      "failures": [
+        {
+          "suite": "model-native-routing",
+          "exit": 1,
+          "seconds": 20.7,
+          "outbound": 0,
+          "tests": 17,
+          "pass": 15,
+          "fail": 2,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-authority-final/model-native-routing.log"
+        }
+      ],
+      "complete": true,
+      "results": [
+        {
+          "suite": "conversation",
+          "exit": 0,
+          "seconds": 18.3,
+          "outbound": 0,
+          "tests": 29,
+          "pass": 29,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-authority-final/conversation.log"
+        },
+        {
+          "suite": "conversation-router",
+          "exit": 0,
+          "seconds": 9.9,
+          "outbound": 0,
+          "tests": 16,
+          "pass": 16,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-authority-final/conversation-router.log"
+        },
+        {
+          "suite": "model-native-routing",
+          "exit": 1,
+          "seconds": 20.7,
+          "outbound": 0,
+          "tests": 17,
+          "pass": 15,
+          "fail": 2,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-authority-final/model-native-routing.log"
+        },
+        {
+          "suite": "intelligence-capabilities",
+          "exit": 0,
+          "seconds": 12.3,
+          "outbound": 0,
+          "tests": 8,
+          "pass": 8,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-authority-final/intelligence-capabilities.log"
+        },
+        {
+          "suite": "commerce",
+          "exit": 0,
+          "seconds": 6.6,
+          "outbound": 0,
+          "tests": 24,
+          "pass": 24,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-authority-final/commerce.log"
+        },
+        {
+          "suite": "conversation-marketplace-isolation",
+          "exit": 0,
+          "seconds": 7.1,
+          "outbound": 0,
+          "tests": 5,
+          "pass": 5,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-authority-final/conversation-marketplace-isolation.log"
+        },
+        {
+          "suite": "financial-state-machine",
+          "exit": 0,
+          "seconds": 12.8,
+          "outbound": 0,
+          "tests": 23,
+          "pass": 23,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-authority-final/financial-state-machine.log"
+        }
+      ]
+    },
+    {
+      "run": "closure-regression-browser-retry",
+      "summary": "/workspace/closure-regression-browser-retry/summary.json",
+      "suites": 2,
+      "totals": {
+        "tests": 2,
+        "pass": 1,
+        "fail": 1,
+        "skipped": 0,
+        "cancelled": 0,
+        "outbound": 0
+      },
+      "failures": [
+        {
+          "suite": "maps-tracking-browser-journey",
+          "exit": 1,
+          "seconds": 50.7,
+          "outbound": 0,
+          "tests": 1,
+          "pass": 0,
+          "fail": 1,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-browser-retry/maps-tracking-browser-journey.log"
+        }
+      ],
+      "complete": true,
+      "results": [
+        {
+          "suite": "sc01-browser-journey",
+          "exit": 0,
+          "seconds": 88.3,
+          "outbound": 0,
+          "tests": 1,
+          "pass": 1,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-browser-retry/sc01-browser-journey.log"
+        },
+        {
+          "suite": "maps-tracking-browser-journey",
+          "exit": 1,
+          "seconds": 50.7,
+          "outbound": 0,
+          "tests": 1,
+          "pass": 0,
+          "fail": 1,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-browser-retry/maps-tracking-browser-journey.log"
+        }
+      ]
+    },
+    {
+      "run": "closure-regression-commission-seeded",
+      "summary": "/workspace/closure-regression-commission-seeded/summary.json",
+      "suites": 1,
+      "totals": {
+        "tests": 1,
+        "pass": 1,
+        "fail": 0,
+        "skipped": 0,
+        "cancelled": 0,
+        "outbound": 0
+      },
+      "failures": [],
+      "complete": true,
+      "results": [
+        {
+          "suite": "phase2-commission-acceptance",
+          "exit": 0,
+          "seconds": 29.3,
+          "outbound": 0,
+          "tests": 1,
+          "pass": 1,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-commission-seeded/phase2-commission-acceptance.log"
+        }
+      ]
+    },
+    {
+      "run": "closure-regression-deepseek-browser",
+      "summary": "/workspace/closure-regression-deepseek-browser/summary.json",
+      "suites": 1,
+      "totals": {
+        "tests": 21,
+        "pass": 19,
+        "fail": 2,
+        "skipped": 0,
+        "cancelled": 0,
+        "outbound": 0
+      },
+      "failures": [
+        {
+          "suite": "deepseek-chat-compatibility",
+          "exit": 1,
+          "seconds": 192.1,
+          "outbound": 0,
+          "tests": 21,
+          "pass": 19,
+          "fail": 2,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-deepseek-browser/deepseek-chat-compatibility.log"
+        }
+      ],
+      "complete": true,
+      "results": [
+        {
+          "suite": "deepseek-chat-compatibility",
+          "exit": 1,
+          "seconds": 192.1,
+          "outbound": 0,
+          "tests": 21,
+          "pass": 19,
+          "fail": 2,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-deepseek-browser/deepseek-chat-compatibility.log"
+        }
+      ]
+    },
+    {
+      "run": "closure-regression-delivery",
+      "summary": "/workspace/closure-regression-delivery/summary.json",
+      "suites": 99,
+      "totals": {
+        "tests": 752,
+        "pass": 734,
+        "fail": 11,
+        "skipped": 7,
+        "cancelled": 0,
+        "outbound": 0
+      },
+      "failures": [
+        {
+          "suite": "engineering-closure",
+          "exit": 1,
+          "seconds": 20.1,
+          "outbound": 0,
+          "tests": 8,
+          "pass": 7,
+          "fail": 1,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/engineering-closure.log"
+        },
+        {
+          "suite": "model-native-routing",
+          "exit": 1,
+          "seconds": 14.2,
+          "outbound": 0,
+          "tests": 17,
+          "pass": 15,
+          "fail": 2,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/model-native-routing.log"
+        },
+        {
+          "suite": "search-sql-foundation",
+          "exit": 1,
+          "seconds": 21.5,
+          "outbound": 0,
+          "tests": 7,
+          "pass": 5,
+          "fail": 2,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/search-sql-foundation.log"
+        },
+        {
+          "suite": "search-sql-performance",
+          "exit": 1,
+          "seconds": 65.6,
+          "outbound": 0,
+          "tests": 3,
+          "pass": 2,
+          "fail": 1,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/search-sql-performance.log"
+        },
+        {
+          "suite": "api",
+          "exit": 1,
+          "seconds": 12.9,
+          "outbound": 0,
+          "tests": 63,
+          "pass": 62,
+          "fail": 1,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/api.log"
+        },
+        {
+          "suite": "usage-intelligence",
+          "exit": 1,
+          "seconds": 9.4,
+          "outbound": 0,
+          "tests": 18,
+          "pass": 17,
+          "fail": 1,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/usage-intelligence.log"
+        },
+        {
+          "suite": "sc01-browser-journey",
+          "exit": 1,
+          "seconds": 27.1,
+          "outbound": 0,
+          "tests": 1,
+          "pass": 0,
+          "fail": 1,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/sc01-browser-journey.log"
+        },
+        {
+          "suite": "maps-tracking-browser-journey",
+          "exit": 1,
+          "seconds": 54.3,
+          "outbound": 0,
+          "tests": 1,
+          "pass": 0,
+          "fail": 1,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/maps-tracking-browser-journey.log"
+        },
+        {
+          "suite": "deepseek-chat-compatibility",
+          "exit": 1,
+          "seconds": 26.8,
+          "outbound": 0,
+          "tests": 21,
+          "pass": 14,
+          "fail": 1,
+          "skipped": 6,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/deepseek-chat-compatibility.log"
+        }
+      ],
+      "complete": true,
+      "results": [
+        {
+          "suite": "engineering-closure",
+          "exit": 1,
+          "seconds": 20.1,
+          "outbound": 0,
+          "tests": 8,
+          "pass": 7,
+          "fail": 1,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/engineering-closure.log"
+        },
+        {
+          "suite": "engineering-buyer-recall-jo",
+          "exit": 0,
+          "seconds": 9.0,
+          "outbound": 0,
+          "tests": 1,
+          "pass": 1,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/engineering-buyer-recall-jo.log"
+        },
+        {
+          "suite": "engineering-remaining-context",
+          "exit": 0,
+          "seconds": 23.4,
+          "outbound": 0,
+          "tests": 4,
+          "pass": 4,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/engineering-remaining-context.log"
+        },
+        {
+          "suite": "engineering-additive-context",
+          "exit": 0,
+          "seconds": 8.2,
+          "outbound": 0,
+          "tests": 2,
+          "pass": 2,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/engineering-additive-context.log"
+        },
+        {
+          "suite": "engineering-source-binding",
+          "exit": 0,
+          "seconds": 11.2,
+          "outbound": 0,
+          "tests": 5,
+          "pass": 5,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/engineering-source-binding.log"
+        },
+        {
+          "suite": "engineering-constraint-reentry",
+          "exit": 0,
+          "seconds": 7.6,
+          "outbound": 0,
+          "tests": 2,
+          "pass": 2,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/engineering-constraint-reentry.log"
+        },
+        {
+          "suite": "engineering-vision-metering",
+          "exit": 0,
+          "seconds": 8.3,
+          "outbound": 0,
+          "tests": 4,
+          "pass": 4,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/engineering-vision-metering.log"
+        },
+        {
+          "suite": "engineering-vision-question-storage",
+          "exit": 0,
+          "seconds": 11.1,
+          "outbound": 0,
+          "tests": 2,
+          "pass": 2,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/engineering-vision-question-storage.log"
+        },
+        {
+          "suite": "lab-defect-regressions",
+          "exit": 0,
+          "seconds": 13.8,
+          "outbound": 0,
+          "tests": 12,
+          "pass": 12,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/lab-defect-regressions.log"
+        },
+        {
+          "suite": "draft-conversational-edits",
+          "exit": 0,
+          "seconds": 8.1,
+          "outbound": 0,
+          "tests": 6,
+          "pass": 6,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/draft-conversational-edits.log"
+        },
+        {
+          "suite": "model-native-routing",
+          "exit": 1,
+          "seconds": 14.2,
+          "outbound": 0,
+          "tests": 17,
+          "pass": 15,
+          "fail": 2,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/model-native-routing.log"
+        },
+        {
+          "suite": "intelligence-capabilities",
+          "exit": 0,
+          "seconds": 8.6,
+          "outbound": 0,
+          "tests": 8,
+          "pass": 8,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/intelligence-capabilities.log"
+        },
+        {
+          "suite": "conversation",
+          "exit": 0,
+          "seconds": 6.4,
+          "outbound": 0,
+          "tests": 29,
+          "pass": 29,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/conversation.log"
+        },
+        {
+          "suite": "conversation-router",
+          "exit": 0,
+          "seconds": 8.7,
+          "outbound": 0,
+          "tests": 16,
+          "pass": 16,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/conversation-router.log"
+        },
+        {
+          "suite": "arabic-understanding",
+          "exit": 0,
+          "seconds": 4.7,
+          "outbound": 0,
+          "tests": 3,
+          "pass": 3,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/arabic-understanding.log"
+        },
+        {
+          "suite": "arabic-search-understanding",
+          "exit": 0,
+          "seconds": 9.4,
+          "outbound": 0,
+          "tests": 5,
+          "pass": 5,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/arabic-search-understanding.log"
+        },
+        {
+          "suite": "arabic-generality",
+          "exit": 0,
+          "seconds": 10.1,
+          "outbound": 0,
+          "tests": 1,
+          "pass": 1,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/arabic-generality.log"
+        },
+        {
+          "suite": "context-understanding",
+          "exit": 0,
+          "seconds": 13.8,
+          "outbound": 0,
+          "tests": 3,
+          "pass": 3,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/context-understanding.log"
+        },
+        {
+          "suite": "context-sealed",
+          "exit": 0,
+          "seconds": 10.9,
+          "outbound": 0,
+          "tests": 1,
+          "pass": 1,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/context-sealed.log"
+        },
+        {
+          "suite": "model-tiers",
+          "exit": 0,
+          "seconds": 16.4,
+          "outbound": 0,
+          "tests": 24,
+          "pass": 24,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/model-tiers.log"
+        },
+        {
+          "suite": "ai-provider",
+          "exit": 0,
+          "seconds": 6.0,
+          "outbound": 0,
+          "tests": 47,
+          "pass": 47,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/ai-provider.log"
+        },
+        {
+          "suite": "ai-transport",
+          "exit": 0,
+          "seconds": 6.8,
+          "outbound": 0,
+          "tests": 8,
+          "pass": 8,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/ai-transport.log"
+        },
+        {
+          "suite": "gemini-gateway",
+          "exit": 0,
+          "seconds": 4.1,
+          "outbound": 0,
+          "tests": 3,
+          "pass": 3,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/gemini-gateway.log"
+        },
+        {
+          "suite": "gemma-gateway-readiness",
+          "exit": 0,
+          "seconds": 6.4,
+          "outbound": 0,
+          "tests": 11,
+          "pass": 11,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/gemma-gateway-readiness.log"
+        },
+        {
+          "suite": "self-hosted-model",
+          "exit": 0,
+          "seconds": 9.5,
+          "outbound": 0,
+          "tests": 7,
+          "pass": 7,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/self-hosted-model.log"
+        },
+        {
+          "suite": "visual-search",
+          "exit": 0,
+          "seconds": 4.9,
+          "outbound": 0,
+          "tests": 12,
+          "pass": 12,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/visual-search.log"
+        },
+        {
+          "suite": "visual-search-turn",
+          "exit": 0,
+          "seconds": 10.8,
+          "outbound": 0,
+          "tests": 15,
+          "pass": 15,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/visual-search-turn.log"
+        },
+        {
+          "suite": "listing-photo-vision-provider",
+          "exit": 0,
+          "seconds": 4.7,
+          "outbound": 0,
+          "tests": 5,
+          "pass": 5,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/listing-photo-vision-provider.log"
+        },
+        {
+          "suite": "search-sql-foundation",
+          "exit": 1,
+          "seconds": 21.5,
+          "outbound": 0,
+          "tests": 7,
+          "pass": 5,
+          "fail": 2,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/search-sql-foundation.log"
+        },
+        {
+          "suite": "search-sql-performance",
+          "exit": 1,
+          "seconds": 65.6,
+          "outbound": 0,
+          "tests": 3,
+          "pass": 2,
+          "fail": 1,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/search-sql-performance.log"
+        },
+        {
+          "suite": "sc-conversation-routing",
+          "exit": 0,
+          "seconds": 12.8,
+          "outbound": 0,
+          "tests": 5,
+          "pass": 5,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/sc-conversation-routing.log"
+        },
+        {
+          "suite": "spec-question-generality",
+          "exit": 0,
+          "seconds": 18.4,
+          "outbound": 0,
+          "tests": 8,
+          "pass": 8,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/spec-question-generality.log"
+        },
+        {
+          "suite": "stock-spec-conversation",
+          "exit": 0,
+          "seconds": 57.0,
+          "outbound": 0,
+          "tests": 6,
+          "pass": 6,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/stock-spec-conversation.log"
+        },
+        {
+          "suite": "financial-state-machine",
+          "exit": 0,
+          "seconds": 10.1,
+          "outbound": 0,
+          "tests": 23,
+          "pass": 23,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/financial-state-machine.log"
+        },
+        {
+          "suite": "payment-order-state",
+          "exit": 0,
+          "seconds": 6.4,
+          "outbound": 0,
+          "tests": 3,
+          "pass": 3,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/payment-order-state.log"
+        },
+        {
+          "suite": "wave4-payment-acceptance",
+          "exit": 0,
+          "seconds": 7.3,
+          "outbound": 0,
+          "tests": 1,
+          "pass": 1,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/wave4-payment-acceptance.log"
+        },
+        {
+          "suite": "order-settlement",
+          "exit": 0,
+          "seconds": 6.6,
+          "outbound": 0,
+          "tests": 2,
+          "pass": 2,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/order-settlement.log"
+        },
+        {
+          "suite": "commerce",
+          "exit": 0,
+          "seconds": 4.2,
+          "outbound": 0,
+          "tests": 24,
+          "pass": 24,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/commerce.log"
+        },
+        {
+          "suite": "commerce-journey",
+          "exit": 0,
+          "seconds": 7.6,
+          "outbound": 0,
+          "tests": 8,
+          "pass": 8,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/commerce-journey.log"
+        },
+        {
+          "suite": "marketplace-intelligence",
+          "exit": 0,
+          "seconds": 5.1,
+          "outbound": 0,
+          "tests": 22,
+          "pass": 22,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/marketplace-intelligence.log"
+        },
+        {
+          "suite": "marketplace-category-compatibility",
+          "exit": 0,
+          "seconds": 7.1,
+          "outbound": 0,
+          "tests": 3,
+          "pass": 3,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/marketplace-category-compatibility.log"
+        },
+        {
+          "suite": "location-policy",
+          "exit": 0,
+          "seconds": 4.1,
+          "outbound": 0,
+          "tests": 1,
+          "pass": 1,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/location-policy.log"
+        },
+        {
+          "suite": "conversation-marketplace-isolation",
+          "exit": 0,
+          "seconds": 4.4,
+          "outbound": 0,
+          "tests": 5,
+          "pass": 5,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/conversation-marketplace-isolation.log"
+        },
+        {
+          "suite": "business-delegations",
+          "exit": 0,
+          "seconds": 19.1,
+          "outbound": 0,
+          "tests": 4,
+          "pass": 4,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/business-delegations.log"
+        },
+        {
+          "suite": "d4-d5-isolation-security",
+          "exit": 0,
+          "seconds": 20.7,
+          "outbound": 0,
+          "tests": 8,
+          "pass": 8,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/d4-d5-isolation-security.log"
+        },
+        {
+          "suite": "request-collection-bounds",
+          "exit": 0,
+          "seconds": 6.3,
+          "outbound": 0,
+          "tests": 6,
+          "pass": 6,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/request-collection-bounds.log"
+        },
+        {
+          "suite": "same-origin-web",
+          "exit": 0,
+          "seconds": 6.0,
+          "outbound": 0,
+          "tests": 16,
+          "pass": 16,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/same-origin-web.log"
+        },
+        {
+          "suite": "api",
+          "exit": 1,
+          "seconds": 12.9,
+          "outbound": 0,
+          "tests": 63,
+          "pass": 62,
+          "fail": 1,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/api.log"
+        },
+        {
+          "suite": "google-signin",
+          "exit": 0,
+          "seconds": 7.3,
+          "outbound": 0,
+          "tests": 6,
+          "pass": 6,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/google-signin.log"
+        },
+        {
+          "suite": "phone-verification-development-bypass",
+          "exit": 0,
+          "seconds": 7.1,
+          "outbound": 0,
+          "tests": 1,
+          "pass": 1,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/phone-verification-development-bypass.log"
+        },
+        {
+          "suite": "driver-location-tracking",
+          "exit": 0,
+          "seconds": 7.7,
+          "outbound": 0,
+          "tests": 13,
+          "pass": 13,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/driver-location-tracking.log"
+        },
+        {
+          "suite": "readiness",
+          "exit": 0,
+          "seconds": 6.2,
+          "outbound": 0,
+          "tests": 15,
+          "pass": 15,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/readiness.log"
+        },
+        {
+          "suite": "development-tls",
+          "exit": 0,
+          "seconds": 3.9,
+          "outbound": 0,
+          "tests": 8,
+          "pass": 7,
+          "fail": 0,
+          "skipped": 1,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/development-tls.log"
+        },
+        {
+          "suite": "database-url-selection",
+          "exit": 0,
+          "seconds": 3.9,
+          "outbound": 0,
+          "tests": 5,
+          "pass": 5,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/database-url-selection.log"
+        },
+        {
+          "suite": "commercial-policy-cli",
+          "exit": 0,
+          "seconds": 5.4,
+          "outbound": 0,
+          "tests": 2,
+          "pass": 2,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/commercial-policy-cli.log"
+        },
+        {
+          "suite": "pro-subscription-honesty",
+          "exit": 0,
+          "seconds": 7.7,
+          "outbound": 0,
+          "tests": 2,
+          "pass": 2,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/pro-subscription-honesty.log"
+        },
+        {
+          "suite": "usage-intelligence",
+          "exit": 1,
+          "seconds": 9.4,
+          "outbound": 0,
+          "tests": 18,
+          "pass": 17,
+          "fail": 1,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/usage-intelligence.log"
+        },
+        {
+          "suite": "closure-ai-cost",
+          "exit": 0,
+          "seconds": 17.0,
+          "outbound": 0,
+          "tests": 19,
+          "pass": 19,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/closure-ai-cost.log"
+        },
+        {
+          "suite": "closure-integrations",
+          "exit": 0,
+          "seconds": 17.0,
+          "outbound": 0,
+          "tests": 9,
+          "pass": 9,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/closure-integrations.log"
+        },
+        {
+          "suite": "closure-privacy",
+          "exit": 0,
+          "seconds": 10.0,
+          "outbound": 0,
+          "tests": 12,
+          "pass": 12,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/closure-privacy.log"
+        },
+        {
+          "suite": "closure-notifications",
+          "exit": 0,
+          "seconds": 7.0,
+          "outbound": 0,
+          "tests": 7,
+          "pass": 7,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/closure-notifications.log"
+        },
+        {
+          "suite": "listing-edit-snapshot",
+          "exit": 0,
+          "seconds": 6.4,
+          "outbound": 0,
+          "tests": 3,
+          "pass": 3,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/listing-edit-snapshot.log"
+        },
+        {
+          "suite": "integration-cash-lock-order",
+          "exit": 0,
+          "seconds": 8.7,
+          "outbound": 0,
+          "tests": 3,
+          "pass": 3,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/integration-cash-lock-order.log"
+        },
+        {
+          "suite": "integration-policy-consent",
+          "exit": 0,
+          "seconds": 6.6,
+          "outbound": 0,
+          "tests": 4,
+          "pass": 4,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/integration-policy-consent.log"
+        },
+        {
+          "suite": "wave07-financial-journal",
+          "exit": 0,
+          "seconds": 6.5,
+          "outbound": 0,
+          "tests": 10,
+          "pass": 10,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/wave07-financial-journal.log"
+        },
+        {
+          "suite": "wave08-cash-and-refunds",
+          "exit": 0,
+          "seconds": 7.7,
+          "outbound": 0,
+          "tests": 12,
+          "pass": 12,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/wave08-cash-and-refunds.log"
+        },
+        {
+          "suite": "wave07-w12-contract-hardening",
+          "exit": 0,
+          "seconds": 6.7,
+          "outbound": 0,
+          "tests": 6,
+          "pass": 6,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/wave07-w12-contract-hardening.log"
+        },
+        {
+          "suite": "operation-contracts",
+          "exit": 0,
+          "seconds": 4.2,
+          "outbound": 0,
+          "tests": 7,
+          "pass": 7,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/operation-contracts.log"
+        },
+        {
+          "suite": "generative-ui",
+          "exit": 0,
+          "seconds": 9.4,
+          "outbound": 0,
+          "tests": 16,
+          "pass": 16,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/generative-ui.log"
+        },
+        {
+          "suite": "connect-card-contract",
+          "exit": 0,
+          "seconds": 3.9,
+          "outbound": 0,
+          "tests": 4,
+          "pass": 4,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/connect-card-contract.log"
+        },
+        {
+          "suite": "connect-commission-math",
+          "exit": 0,
+          "seconds": 4.3,
+          "outbound": 0,
+          "tests": 4,
+          "pass": 4,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/connect-commission-math.log"
+        },
+        {
+          "suite": "connect-agreement-draft",
+          "exit": 0,
+          "seconds": 3.9,
+          "outbound": 0,
+          "tests": 4,
+          "pass": 4,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/connect-agreement-draft.log"
+        },
+        {
+          "suite": "engineering-financial-answers",
+          "exit": 0,
+          "seconds": 9.1,
+          "outbound": 0,
+          "tests": 3,
+          "pass": 3,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/engineering-financial-answers.log"
+        },
+        {
+          "suite": "engineering-topic-price-bound",
+          "exit": 0,
+          "seconds": 6.8,
+          "outbound": 0,
+          "tests": 1,
+          "pass": 1,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/engineering-topic-price-bound.log"
+        },
+        {
+          "suite": "engineering-purpose-and-colour",
+          "exit": 0,
+          "seconds": 7.6,
+          "outbound": 0,
+          "tests": 3,
+          "pass": 3,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/engineering-purpose-and-colour.log"
+        },
+        {
+          "suite": "engineering-legacy-condition",
+          "exit": 0,
+          "seconds": 6.9,
+          "outbound": 0,
+          "tests": 1,
+          "pass": 1,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/engineering-legacy-condition.log"
+        },
+        {
+          "suite": "engineering-resource-price-bound",
+          "exit": 0,
+          "seconds": 9.3,
+          "outbound": 0,
+          "tests": 2,
+          "pass": 2,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/engineering-resource-price-bound.log"
+        },
+        {
+          "suite": "engineering-category-configured",
+          "exit": 0,
+          "seconds": 4.4,
+          "outbound": 0,
+          "tests": 3,
+          "pass": 3,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/engineering-category-configured.log"
+        },
+        {
+          "suite": "engineering-relaxation-constraints",
+          "exit": 0,
+          "seconds": 4.7,
+          "outbound": 0,
+          "tests": 2,
+          "pass": 2,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/engineering-relaxation-constraints.log"
+        },
+        {
+          "suite": "market-capability-registry",
+          "exit": 0,
+          "seconds": 4.1,
+          "outbound": 0,
+          "tests": null,
+          "pass": null,
+          "fail": null,
+          "skipped": null,
+          "cancelled": null,
+          "log": "/workspace/closure-regression-delivery/market-capability-registry.log"
+        },
+        {
+          "suite": "wave03-card-envelope",
+          "exit": 0,
+          "seconds": 18.2,
+          "outbound": 0,
+          "tests": 9,
+          "pass": 9,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/wave03-card-envelope.log"
+        },
+        {
+          "suite": "wave02-card-reliability",
+          "exit": 0,
+          "seconds": 18.2,
+          "outbound": 0,
+          "tests": 9,
+          "pass": 9,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/wave02-card-reliability.log"
+        },
+        {
+          "suite": "lab-commerce-browser-journey",
+          "exit": 0,
+          "seconds": 36.0,
+          "outbound": 0,
+          "tests": 1,
+          "pass": 1,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/lab-commerce-browser-journey.log"
+        },
+        {
+          "suite": "sc01-browser-journey",
+          "exit": 1,
+          "seconds": 27.1,
+          "outbound": 0,
+          "tests": 1,
+          "pass": 0,
+          "fail": 1,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/sc01-browser-journey.log"
+        },
+        {
+          "suite": "sc02-browser-journey",
+          "exit": 0,
+          "seconds": 40.4,
+          "outbound": 0,
+          "tests": 1,
+          "pass": 1,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/sc02-browser-journey.log"
+        },
+        {
+          "suite": "sc03-browser-journey",
+          "exit": 0,
+          "seconds": 55.1,
+          "outbound": 0,
+          "tests": 1,
+          "pass": 1,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/sc03-browser-journey.log"
+        },
+        {
+          "suite": "sc06-browser-journey",
+          "exit": 0,
+          "seconds": 20.8,
+          "outbound": 0,
+          "tests": 1,
+          "pass": 1,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/sc06-browser-journey.log"
+        },
+        {
+          "suite": "sc07-browser-journey",
+          "exit": 0,
+          "seconds": 34.9,
+          "outbound": 0,
+          "tests": 1,
+          "pass": 1,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/sc07-browser-journey.log"
+        },
+        {
+          "suite": "sc10-browser-journey",
+          "exit": 0,
+          "seconds": 56.4,
+          "outbound": 0,
+          "tests": 1,
+          "pass": 1,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/sc10-browser-journey.log"
+        },
+        {
+          "suite": "wave03-d7-cart-browser-journey",
+          "exit": 0,
+          "seconds": 34.7,
+          "outbound": 0,
+          "tests": 1,
+          "pass": 1,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/wave03-d7-cart-browser-journey.log"
+        },
+        {
+          "suite": "conversation-stream-recovery-browser-journey",
+          "exit": 0,
+          "seconds": 47.3,
+          "outbound": 0,
+          "tests": 3,
+          "pass": 3,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/conversation-stream-recovery-browser-journey.log"
+        },
+        {
+          "suite": "w02u3-card-concurrency-browser-journey",
+          "exit": 0,
+          "seconds": 51.3,
+          "outbound": 0,
+          "tests": 1,
+          "pass": 1,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/w02u3-card-concurrency-browser-journey.log"
+        },
+        {
+          "suite": "w02u3-card-sessions-browser-journey",
+          "exit": 0,
+          "seconds": 82.0,
+          "outbound": 0,
+          "tests": 1,
+          "pass": 1,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/w02u3-card-sessions-browser-journey.log"
+        },
+        {
+          "suite": "maps-tracking-browser-journey",
+          "exit": 1,
+          "seconds": 54.3,
+          "outbound": 0,
+          "tests": 1,
+          "pass": 0,
+          "fail": 1,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/maps-tracking-browser-journey.log"
+        },
+        {
+          "suite": "camera-search-browser-journey",
+          "exit": 0,
+          "seconds": 35.1,
+          "outbound": 0,
+          "tests": 1,
+          "pass": 1,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/camera-search-browser-journey.log"
+        },
+        {
+          "suite": "generative-ui-browser-journey",
+          "exit": 0,
+          "seconds": 26.0,
+          "outbound": 0,
+          "tests": 1,
+          "pass": 1,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/generative-ui-browser-journey.log"
+        },
+        {
+          "suite": "premium-ux-browser-journey",
+          "exit": 0,
+          "seconds": 67.9,
+          "outbound": 0,
+          "tests": 1,
+          "pass": 1,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/premium-ux-browser-journey.log"
+        },
+        {
+          "suite": "security-acceptance",
+          "exit": 0,
+          "seconds": 59.5,
+          "outbound": 0,
+          "tests": 12,
+          "pass": 12,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/security-acceptance.log"
+        },
+        {
+          "suite": "deepseek-chat-compatibility",
+          "exit": 1,
+          "seconds": 26.8,
+          "outbound": 0,
+          "tests": 21,
+          "pass": 14,
+          "fail": 1,
+          "skipped": 6,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-delivery/deepseek-chat-compatibility.log"
+        }
+      ]
+    },
+    {
+      "run": "closure-regression-final",
+      "summary": "/workspace/closure-regression-final/summary.json",
+      "suites": 26,
+      "totals": {
+        "tests": 241,
+        "pass": 237,
+        "fail": 4,
+        "skipped": 0,
+        "cancelled": 0,
+        "outbound": 0
+      },
+      "failures": [
+        {
+          "suite": "engineering-closure",
+          "exit": 1,
+          "seconds": 53.2,
+          "outbound": 0,
+          "tests": 8,
+          "pass": 7,
+          "fail": 1,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-final/engineering-closure.log"
+        },
+        {
+          "suite": "lab-defect-regressions",
+          "exit": 1,
+          "seconds": 18.9,
+          "outbound": 0,
+          "tests": 12,
+          "pass": 11,
+          "fail": 1,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-final/lab-defect-regressions.log"
+        },
+        {
+          "suite": "model-native-routing",
+          "exit": 1,
+          "seconds": 17.0,
+          "outbound": 0,
+          "tests": 17,
+          "pass": 15,
+          "fail": 2,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-final/model-native-routing.log"
+        }
+      ],
+      "complete": false,
+      "results": [
+        {
+          "suite": "engineering-closure",
+          "exit": 1,
+          "seconds": 53.2,
+          "outbound": 0,
+          "tests": 8,
+          "pass": 7,
+          "fail": 1,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-final/engineering-closure.log"
+        },
+        {
+          "suite": "engineering-buyer-recall-jo",
+          "exit": 0,
+          "seconds": 11.9,
+          "outbound": 0,
+          "tests": 1,
+          "pass": 1,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-final/engineering-buyer-recall-jo.log"
+        },
+        {
+          "suite": "engineering-remaining-context",
+          "exit": 0,
+          "seconds": 13.3,
+          "outbound": 0,
+          "tests": 4,
+          "pass": 4,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-final/engineering-remaining-context.log"
+        },
+        {
+          "suite": "engineering-additive-context",
+          "exit": 0,
+          "seconds": 10.1,
+          "outbound": 0,
+          "tests": 2,
+          "pass": 2,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-final/engineering-additive-context.log"
+        },
+        {
+          "suite": "engineering-source-binding",
+          "exit": 0,
+          "seconds": 21.0,
+          "outbound": 0,
+          "tests": 5,
+          "pass": 5,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-final/engineering-source-binding.log"
+        },
+        {
+          "suite": "engineering-constraint-reentry",
+          "exit": 0,
+          "seconds": 12.7,
+          "outbound": 0,
+          "tests": 2,
+          "pass": 2,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-final/engineering-constraint-reentry.log"
+        },
+        {
+          "suite": "engineering-vision-metering",
+          "exit": 0,
+          "seconds": 9.2,
+          "outbound": 0,
+          "tests": 4,
+          "pass": 4,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-final/engineering-vision-metering.log"
+        },
+        {
+          "suite": "engineering-vision-question-storage",
+          "exit": 0,
+          "seconds": 25.2,
+          "outbound": 0,
+          "tests": 2,
+          "pass": 2,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-final/engineering-vision-question-storage.log"
+        },
+        {
+          "suite": "lab-defect-regressions",
+          "exit": 1,
+          "seconds": 18.9,
+          "outbound": 0,
+          "tests": 12,
+          "pass": 11,
+          "fail": 1,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-final/lab-defect-regressions.log"
+        },
+        {
+          "suite": "draft-conversational-edits",
+          "exit": 0,
+          "seconds": 11.4,
+          "outbound": 0,
+          "tests": 6,
+          "pass": 6,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-final/draft-conversational-edits.log"
+        },
+        {
+          "suite": "model-native-routing",
+          "exit": 1,
+          "seconds": 17.0,
+          "outbound": 0,
+          "tests": 17,
+          "pass": 15,
+          "fail": 2,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-final/model-native-routing.log"
+        },
+        {
+          "suite": "intelligence-capabilities",
+          "exit": 0,
+          "seconds": 11.8,
+          "outbound": 0,
+          "tests": 8,
+          "pass": 8,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-final/intelligence-capabilities.log"
+        },
+        {
+          "suite": "conversation",
+          "exit": 0,
+          "seconds": 6.8,
+          "outbound": 0,
+          "tests": 29,
+          "pass": 29,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-final/conversation.log"
+        },
+        {
+          "suite": "conversation-router",
+          "exit": 0,
+          "seconds": 8.1,
+          "outbound": 0,
+          "tests": 16,
+          "pass": 16,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-final/conversation-router.log"
+        },
+        {
+          "suite": "arabic-understanding",
+          "exit": 0,
+          "seconds": 4.4,
+          "outbound": 0,
+          "tests": 3,
+          "pass": 3,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-final/arabic-understanding.log"
+        },
+        {
+          "suite": "arabic-search-understanding",
+          "exit": 0,
+          "seconds": 12.0,
+          "outbound": 0,
+          "tests": 5,
+          "pass": 5,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-final/arabic-search-understanding.log"
+        },
+        {
+          "suite": "arabic-generality",
+          "exit": 0,
+          "seconds": 18.5,
+          "outbound": 0,
+          "tests": 1,
+          "pass": 1,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-final/arabic-generality.log"
+        },
+        {
+          "suite": "context-understanding",
+          "exit": 0,
+          "seconds": 24.3,
+          "outbound": 0,
+          "tests": 3,
+          "pass": 3,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-final/context-understanding.log"
+        },
+        {
+          "suite": "context-sealed",
+          "exit": 0,
+          "seconds": 27.2,
+          "outbound": 0,
+          "tests": 1,
+          "pass": 1,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-final/context-sealed.log"
+        },
+        {
+          "suite": "model-tiers",
+          "exit": 0,
+          "seconds": 23.3,
+          "outbound": 0,
+          "tests": 24,
+          "pass": 24,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-final/model-tiers.log"
+        },
+        {
+          "suite": "ai-provider",
+          "exit": 0,
+          "seconds": 9.5,
+          "outbound": 0,
+          "tests": 47,
+          "pass": 47,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-final/ai-provider.log"
+        },
+        {
+          "suite": "ai-transport",
+          "exit": 0,
+          "seconds": 7.3,
+          "outbound": 0,
+          "tests": 8,
+          "pass": 8,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-final/ai-transport.log"
+        },
+        {
+          "suite": "gemini-gateway",
+          "exit": 0,
+          "seconds": 6.7,
+          "outbound": 0,
+          "tests": 3,
+          "pass": 3,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-final/gemini-gateway.log"
+        },
+        {
+          "suite": "gemma-gateway-readiness",
+          "exit": 0,
+          "seconds": 6.7,
+          "outbound": 0,
+          "tests": 11,
+          "pass": 11,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-final/gemma-gateway-readiness.log"
+        },
+        {
+          "suite": "self-hosted-model",
+          "exit": 0,
+          "seconds": 12.7,
+          "outbound": 0,
+          "tests": 7,
+          "pass": 7,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-final/self-hosted-model.log"
+        },
+        {
+          "suite": "visual-search",
+          "exit": 0,
+          "seconds": 8.3,
+          "outbound": 0,
+          "tests": 12,
+          "pass": 12,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-final/visual-search.log"
+        }
+      ]
+    },
+    {
+      "run": "closure-regression-negotiation-final",
+      "summary": "/workspace/closure-regression-negotiation-final/summary.json",
+      "suites": 2,
+      "totals": {
+        "tests": 50,
+        "pass": 50,
+        "fail": 0,
+        "skipped": 0,
+        "cancelled": 0,
+        "outbound": 0
+      },
+      "failures": [],
+      "complete": true,
+      "results": [
+        {
+          "suite": "universal-negotiation-acceptance",
+          "exit": 0,
+          "seconds": 41.6,
+          "outbound": 0,
+          "tests": 38,
+          "pass": 38,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-negotiation-final/universal-negotiation-acceptance.log"
+        },
+        {
+          "suite": "employment",
+          "exit": 0,
+          "seconds": 6.5,
+          "outbound": 0,
+          "tests": 12,
+          "pass": 12,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-negotiation-final/employment.log"
+        }
+      ]
+    },
+    {
+      "run": "closure-regression-numeric",
+      "summary": "/workspace/closure-regression-numeric/summary.json",
+      "suites": 15,
+      "totals": {
+        "tests": 51,
+        "pass": 47,
+        "fail": 4,
+        "skipped": 0,
+        "cancelled": 0,
+        "outbound": 0
+      },
+      "failures": [
+        {
+          "suite": "engineering-closure",
+          "exit": 1,
+          "seconds": 9.9,
+          "outbound": 0,
+          "tests": 8,
+          "pass": 7,
+          "fail": 1,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-numeric/engineering-closure.log"
+        },
+        {
+          "suite": "engineering-arab-markets-pricing",
+          "exit": 1,
+          "seconds": 7.8,
+          "outbound": 0,
+          "tests": 3,
+          "pass": 2,
+          "fail": 1,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-numeric/engineering-arab-markets-pricing.log"
+        },
+        {
+          "suite": "search-sql-foundation",
+          "exit": 1,
+          "seconds": 20.8,
+          "outbound": 0,
+          "tests": 7,
+          "pass": 5,
+          "fail": 2,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-numeric/search-sql-foundation.log"
+        },
+        {
+          "suite": "sc01-browser-journey",
+          "exit": 97,
+          "seconds": 1.0,
+          "outbound": 0,
+          "tests": null,
+          "pass": null,
+          "fail": null,
+          "skipped": null,
+          "cancelled": null,
+          "log": "/workspace/closure-regression-numeric/sc01-browser-journey.log"
+        },
+        {
+          "suite": "maps-tracking-browser-journey",
+          "exit": 97,
+          "seconds": 1.0,
+          "outbound": 0,
+          "tests": null,
+          "pass": null,
+          "fail": null,
+          "skipped": null,
+          "cancelled": null,
+          "log": "/workspace/closure-regression-numeric/maps-tracking-browser-journey.log"
+        }
+      ],
+      "complete": true,
+      "results": [
+        {
+          "suite": "engineering-closure",
+          "exit": 1,
+          "seconds": 9.9,
+          "outbound": 0,
+          "tests": 8,
+          "pass": 7,
+          "fail": 1,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-numeric/engineering-closure.log"
+        },
+        {
+          "suite": "engineering-buyer-recall-jo",
+          "exit": 0,
+          "seconds": 10.3,
+          "outbound": 0,
+          "tests": 1,
+          "pass": 1,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-numeric/engineering-buyer-recall-jo.log"
+        },
+        {
+          "suite": "engineering-source-binding",
+          "exit": 0,
+          "seconds": 18.7,
+          "outbound": 0,
+          "tests": 5,
+          "pass": 5,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-numeric/engineering-source-binding.log"
+        },
+        {
+          "suite": "engineering-constraint-reentry",
+          "exit": 0,
+          "seconds": 14.9,
+          "outbound": 0,
+          "tests": 2,
+          "pass": 2,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-numeric/engineering-constraint-reentry.log"
+        },
+        {
+          "suite": "engineering-resource-price-bound",
+          "exit": 0,
+          "seconds": 8.9,
+          "outbound": 0,
+          "tests": 2,
+          "pass": 2,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-numeric/engineering-resource-price-bound.log"
+        },
+        {
+          "suite": "engineering-published-condition",
+          "exit": 0,
+          "seconds": 15.2,
+          "outbound": 0,
+          "tests": 1,
+          "pass": 1,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-numeric/engineering-published-condition.log"
+        },
+        {
+          "suite": "engineering-numeric-boundary",
+          "exit": 0,
+          "seconds": 6.4,
+          "outbound": 0,
+          "tests": 1,
+          "pass": 1,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-numeric/engineering-numeric-boundary.log"
+        },
+        {
+          "suite": "engineering-arab-markets-pricing",
+          "exit": 1,
+          "seconds": 7.8,
+          "outbound": 0,
+          "tests": 3,
+          "pass": 2,
+          "fail": 1,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-numeric/engineering-arab-markets-pricing.log"
+        },
+        {
+          "suite": "arabic-search-understanding",
+          "exit": 0,
+          "seconds": 10.9,
+          "outbound": 0,
+          "tests": 5,
+          "pass": 5,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-numeric/arabic-search-understanding.log"
+        },
+        {
+          "suite": "arabic-generality",
+          "exit": 0,
+          "seconds": 25.9,
+          "outbound": 0,
+          "tests": 1,
+          "pass": 1,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-numeric/arabic-generality.log"
+        },
+        {
+          "suite": "lab-defect-regressions",
+          "exit": 0,
+          "seconds": 30.3,
+          "outbound": 0,
+          "tests": 12,
+          "pass": 12,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-numeric/lab-defect-regressions.log"
+        },
+        {
+          "suite": "search-sql-foundation",
+          "exit": 1,
+          "seconds": 20.8,
+          "outbound": 0,
+          "tests": 7,
+          "pass": 5,
+          "fail": 2,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-numeric/search-sql-foundation.log"
+        },
+        {
+          "suite": "search-sql-performance",
+          "exit": 0,
+          "seconds": 89.6,
+          "outbound": 0,
+          "tests": 3,
+          "pass": 3,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-numeric/search-sql-performance.log"
+        },
+        {
+          "suite": "sc01-browser-journey",
+          "exit": 97,
+          "seconds": 1.0,
+          "outbound": 0,
+          "tests": null,
+          "pass": null,
+          "fail": null,
+          "skipped": null,
+          "cancelled": null,
+          "log": "/workspace/closure-regression-numeric/sc01-browser-journey.log"
+        },
+        {
+          "suite": "maps-tracking-browser-journey",
+          "exit": 97,
+          "seconds": 1.0,
+          "outbound": 0,
+          "tests": null,
+          "pass": null,
+          "fail": null,
+          "skipped": null,
+          "cancelled": null,
+          "log": "/workspace/closure-regression-numeric/maps-tracking-browser-journey.log"
+        }
+      ]
+    },
+    {
+      "run": "closure-regression-supplement",
+      "summary": "/workspace/closure-regression-supplement/summary.json",
+      "suites": 6,
+      "totals": {
+        "tests": 11,
+        "pass": 10,
+        "fail": 1,
+        "skipped": 0,
+        "cancelled": 0,
+        "outbound": 0
+      },
+      "failures": [
+        {
+          "suite": "listing-pricing-invariants",
+          "exit": 1,
+          "seconds": 8.6,
+          "outbound": 0,
+          "tests": null,
+          "pass": null,
+          "fail": null,
+          "skipped": null,
+          "cancelled": null,
+          "log": "/workspace/closure-regression-supplement/listing-pricing-invariants.log"
+        },
+        {
+          "suite": "phase2-commission-acceptance",
+          "exit": 1,
+          "seconds": 9.2,
+          "outbound": 0,
+          "tests": 1,
+          "pass": 0,
+          "fail": 1,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-supplement/phase2-commission-acceptance.log"
+        },
+        {
+          "suite": "market-legal-acceptance",
+          "exit": 1,
+          "seconds": 8.9,
+          "outbound": 0,
+          "tests": null,
+          "pass": null,
+          "fail": null,
+          "skipped": null,
+          "cancelled": null,
+          "log": "/workspace/closure-regression-supplement/market-legal-acceptance.log"
+        },
+        {
+          "suite": "universal-negotiation",
+          "status": "NOT_FOUND"
+        }
+      ],
+      "complete": true,
+      "results": [
+        {
+          "suite": "listing-pricing-invariants",
+          "exit": 1,
+          "seconds": 8.6,
+          "outbound": 0,
+          "tests": null,
+          "pass": null,
+          "fail": null,
+          "skipped": null,
+          "cancelled": null,
+          "log": "/workspace/closure-regression-supplement/listing-pricing-invariants.log"
+        },
+        {
+          "suite": "phase2-commission-acceptance",
+          "exit": 1,
+          "seconds": 9.2,
+          "outbound": 0,
+          "tests": 1,
+          "pass": 0,
+          "fail": 1,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-supplement/phase2-commission-acceptance.log"
+        },
+        {
+          "suite": "market-legal-acceptance",
+          "exit": 1,
+          "seconds": 8.9,
+          "outbound": 0,
+          "tests": null,
+          "pass": null,
+          "fail": null,
+          "skipped": null,
+          "cancelled": null,
+          "log": "/workspace/closure-regression-supplement/market-legal-acceptance.log"
+        },
+        {
+          "suite": "universal-negotiation",
+          "status": "NOT_FOUND"
+        },
+        {
+          "suite": "multistep-intelligence",
+          "exit": 0,
+          "seconds": 9.2,
+          "outbound": 0,
+          "tests": 7,
+          "pass": 7,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-supplement/multistep-intelligence.log"
+        },
+        {
+          "suite": "listing-edit-snapshot",
+          "exit": 0,
+          "seconds": 6.7,
+          "outbound": 0,
+          "tests": 3,
+          "pass": 3,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-supplement/listing-edit-snapshot.log"
+        }
+      ]
+    },
+    {
+      "run": "closure-regression-verified",
+      "summary": "/workspace/closure-regression-verified/summary.json",
+      "suites": 29,
+      "totals": {
+        "tests": 268,
+        "pass": 263,
+        "fail": 5,
+        "skipped": 0,
+        "cancelled": 0,
+        "outbound": 0
+      },
+      "failures": [
+        {
+          "suite": "engineering-closure",
+          "exit": 1,
+          "seconds": 16.0,
+          "outbound": 0,
+          "tests": 8,
+          "pass": 7,
+          "fail": 1,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-verified/engineering-closure.log"
+        },
+        {
+          "suite": "model-native-routing",
+          "exit": 1,
+          "seconds": 17.8,
+          "outbound": 0,
+          "tests": 17,
+          "pass": 15,
+          "fail": 2,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-verified/model-native-routing.log"
+        },
+        {
+          "suite": "search-sql-foundation",
+          "exit": 1,
+          "seconds": 9.8,
+          "outbound": 0,
+          "tests": 7,
+          "pass": 5,
+          "fail": 2,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-verified/search-sql-foundation.log"
+        }
+      ],
+      "complete": false,
+      "results": [
+        {
+          "suite": "engineering-closure",
+          "exit": 1,
+          "seconds": 16.0,
+          "outbound": 0,
+          "tests": 8,
+          "pass": 7,
+          "fail": 1,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-verified/engineering-closure.log"
+        },
+        {
+          "suite": "engineering-buyer-recall-jo",
+          "exit": 0,
+          "seconds": 8.8,
+          "outbound": 0,
+          "tests": 1,
+          "pass": 1,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-verified/engineering-buyer-recall-jo.log"
+        },
+        {
+          "suite": "engineering-remaining-context",
+          "exit": 0,
+          "seconds": 9.6,
+          "outbound": 0,
+          "tests": 4,
+          "pass": 4,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-verified/engineering-remaining-context.log"
+        },
+        {
+          "suite": "engineering-additive-context",
+          "exit": 0,
+          "seconds": 8.9,
+          "outbound": 0,
+          "tests": 2,
+          "pass": 2,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-verified/engineering-additive-context.log"
+        },
+        {
+          "suite": "engineering-source-binding",
+          "exit": 0,
+          "seconds": 10.7,
+          "outbound": 0,
+          "tests": 5,
+          "pass": 5,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-verified/engineering-source-binding.log"
+        },
+        {
+          "suite": "engineering-constraint-reentry",
+          "exit": 0,
+          "seconds": 7.2,
+          "outbound": 0,
+          "tests": 2,
+          "pass": 2,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-verified/engineering-constraint-reentry.log"
+        },
+        {
+          "suite": "engineering-vision-metering",
+          "exit": 0,
+          "seconds": 4.1,
+          "outbound": 0,
+          "tests": 4,
+          "pass": 4,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-verified/engineering-vision-metering.log"
+        },
+        {
+          "suite": "engineering-vision-question-storage",
+          "exit": 0,
+          "seconds": 6.8,
+          "outbound": 0,
+          "tests": 2,
+          "pass": 2,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-verified/engineering-vision-question-storage.log"
+        },
+        {
+          "suite": "lab-defect-regressions",
+          "exit": 0,
+          "seconds": 14.8,
+          "outbound": 0,
+          "tests": 12,
+          "pass": 12,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-verified/lab-defect-regressions.log"
+        },
+        {
+          "suite": "draft-conversational-edits",
+          "exit": 0,
+          "seconds": 16.2,
+          "outbound": 0,
+          "tests": 6,
+          "pass": 6,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-verified/draft-conversational-edits.log"
+        },
+        {
+          "suite": "model-native-routing",
+          "exit": 1,
+          "seconds": 17.8,
+          "outbound": 0,
+          "tests": 17,
+          "pass": 15,
+          "fail": 2,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-verified/model-native-routing.log"
+        },
+        {
+          "suite": "intelligence-capabilities",
+          "exit": 0,
+          "seconds": 11.4,
+          "outbound": 0,
+          "tests": 8,
+          "pass": 8,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-verified/intelligence-capabilities.log"
+        },
+        {
+          "suite": "conversation",
+          "exit": 0,
+          "seconds": 6.5,
+          "outbound": 0,
+          "tests": 29,
+          "pass": 29,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-verified/conversation.log"
+        },
+        {
+          "suite": "conversation-router",
+          "exit": 0,
+          "seconds": 7.8,
+          "outbound": 0,
+          "tests": 16,
+          "pass": 16,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-verified/conversation-router.log"
+        },
+        {
+          "suite": "arabic-understanding",
+          "exit": 0,
+          "seconds": 4.7,
+          "outbound": 0,
+          "tests": 3,
+          "pass": 3,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-verified/arabic-understanding.log"
+        },
+        {
+          "suite": "arabic-search-understanding",
+          "exit": 0,
+          "seconds": 13.0,
+          "outbound": 0,
+          "tests": 5,
+          "pass": 5,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-verified/arabic-search-understanding.log"
+        },
+        {
+          "suite": "arabic-generality",
+          "exit": 0,
+          "seconds": 11.9,
+          "outbound": 0,
+          "tests": 1,
+          "pass": 1,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-verified/arabic-generality.log"
+        },
+        {
+          "suite": "context-understanding",
+          "exit": 0,
+          "seconds": 16.1,
+          "outbound": 0,
+          "tests": 3,
+          "pass": 3,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-verified/context-understanding.log"
+        },
+        {
+          "suite": "context-sealed",
+          "exit": 0,
+          "seconds": 20.4,
+          "outbound": 0,
+          "tests": 1,
+          "pass": 1,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-verified/context-sealed.log"
+        },
+        {
+          "suite": "model-tiers",
+          "exit": 0,
+          "seconds": 20.7,
+          "outbound": 0,
+          "tests": 24,
+          "pass": 24,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-verified/model-tiers.log"
+        },
+        {
+          "suite": "ai-provider",
+          "exit": 0,
+          "seconds": 9.2,
+          "outbound": 0,
+          "tests": 47,
+          "pass": 47,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-verified/ai-provider.log"
+        },
+        {
+          "suite": "ai-transport",
+          "exit": 0,
+          "seconds": 10.1,
+          "outbound": 0,
+          "tests": 8,
+          "pass": 8,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-verified/ai-transport.log"
+        },
+        {
+          "suite": "gemini-gateway",
+          "exit": 0,
+          "seconds": 5.0,
+          "outbound": 0,
+          "tests": 3,
+          "pass": 3,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-verified/gemini-gateway.log"
+        },
+        {
+          "suite": "gemma-gateway-readiness",
+          "exit": 0,
+          "seconds": 8.3,
+          "outbound": 0,
+          "tests": 11,
+          "pass": 11,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-verified/gemma-gateway-readiness.log"
+        },
+        {
+          "suite": "self-hosted-model",
+          "exit": 0,
+          "seconds": 11.3,
+          "outbound": 0,
+          "tests": 7,
+          "pass": 7,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-verified/self-hosted-model.log"
+        },
+        {
+          "suite": "visual-search",
+          "exit": 0,
+          "seconds": 6.6,
+          "outbound": 0,
+          "tests": 12,
+          "pass": 12,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-verified/visual-search.log"
+        },
+        {
+          "suite": "visual-search-turn",
+          "exit": 0,
+          "seconds": 10.2,
+          "outbound": 0,
+          "tests": 15,
+          "pass": 15,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-verified/visual-search-turn.log"
+        },
+        {
+          "suite": "listing-photo-vision-provider",
+          "exit": 0,
+          "seconds": 5.0,
+          "outbound": 0,
+          "tests": 5,
+          "pass": 5,
+          "fail": 0,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-verified/listing-photo-vision-provider.log"
+        },
+        {
+          "suite": "search-sql-foundation",
+          "exit": 1,
+          "seconds": 9.8,
+          "outbound": 0,
+          "tests": 7,
+          "pass": 5,
+          "fail": 2,
+          "skipped": 0,
+          "cancelled": 0,
+          "log": "/workspace/closure-regression-verified/search-sql-foundation.log"
+        }
+      ]
+    }
+  ],
+  "laboratories": [
+    {
+      "run": "A",
+      "cases": 500,
+      "complete": true,
+      "verdicts": {
+        "NOT_EXECUTABLE_DET": 102,
+        "PASS": 368,
+        "FAIL": 30
+      },
+      "failures": [
+        {
+          "id": "G02-004",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 1: surface [\"ADVICE\"] not in LISTING_RESULTS"
+            ],
+            [
+              "WRONG_TOOL",
+              "turn 1: result lacks lab_fridge_small (got )"
+            ]
+          ]
+        },
+        {
+          "id": "G02-007",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 1: surface [\"ADVICE\"] not in LISTING_RESULTS"
+            ]
+          ]
+        },
+        {
+          "id": "G02-008",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 1: result lacks lab_galaxy_s23 (got lab_galaxy_a54,lab_galaxy_a14)"
+            ]
+          ]
+        },
+        {
+          "id": "G02-016",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 1: result lacks lab_svc_cleaning (got )"
+            ]
+          ]
+        },
+        {
+          "id": "G02-025",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 1: surface [\"ADVICE\"] not in ORDERS,ORDERS_LIST,ORDER_STATUS,ORDER_TRACKING,ORDER_SELECTOR,ORDER"
+            ]
+          ]
+        },
+        {
+          "id": "G02-029",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 1: surface [\"ADVICE\"] not in LISTING_RESULTS"
+            ],
+            [
+              "WRONG_TOOL",
+              "turn 1: result lacks lab_svc_cleaning (got )"
+            ]
+          ]
+        },
+        {
+          "id": "G02-030",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 1: surface [\"ADVICE\"] not in LISTING_RESULTS"
+            ]
+          ]
+        },
+        {
+          "id": "G03-015",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 1: forbidden surface CHECKOUT"
+            ]
+          ]
+        },
+        {
+          "id": "G04-001",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 4: surface [\"ADVICE\"] not in LISTING_RESULTS"
+            ]
+          ]
+        },
+        {
+          "id": "G04-002",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 3: surface [\"ADVICE\"] not in LISTING_RESULTS"
+            ]
+          ]
+        },
+        {
+          "id": "G04-008",
+          "category": "NOT_EXECUTABLE_DET",
+          "failures": [
+            [
+              "NOT_EXECUTABLE_DET",
+              "turn 2: model unavailable reply"
+            ],
+            [
+              "WRONG_TOOL",
+              "turn 3: surface [\"ADVICE\"] not in ORDERS_LIST,ORDER_STATUS,ORDER_TRACKING,ORDER_SELECTOR,ORDER,CLARIFY"
+            ]
+          ]
+        },
+        {
+          "id": "G04-014",
+          "category": "NOT_EXECUTABLE_DET",
+          "failures": [
+            [
+              "NOT_EXECUTABLE_DET",
+              "turn 2: model unavailable reply"
+            ],
+            [
+              "INVALID_TOOL_ARGUMENTS",
+              "turn 3: filter not applied: lab_fridge_big shown"
+            ]
+          ]
+        },
+        {
+          "id": "G04-015",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 1: result lacks lab_svc_ac_fix (got )"
+            ],
+            [
+              "WRONG_TOOL",
+              "turn 2: surface [\"ADVICE\"] not in LISTING_RESULTS"
+            ],
+            [
+              "WRONG_TOOL",
+              "turn 2: result lacks lab_ac_split (got )"
+            ]
+          ]
+        },
+        {
+          "id": "G04-017",
+          "category": "INVALID_TOOL_ARGUMENTS",
+          "failures": [
+            [
+              "INVALID_TOOL_ARGUMENTS",
+              "turn 1: filter not applied: lab_iphone15 shown"
+            ],
+            [
+              "INVALID_TOOL_ARGUMENTS",
+              "turn 1: filter not applied: lab_iphone13_pro shown"
+            ],
+            [
+              "WRONG_TOOL",
+              "turn 2: surface [\"ADVICE\"] not in LISTING_RESULTS"
+            ],
+            [
+              "WRONG_TOOL",
+              "turn 2: result lacks lab_iphone15_used (got )"
+            ]
+          ]
+        },
+        {
+          "id": "G04-041",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 3: surface [\"ADVICE\"] not in LISTING_RESULTS"
+            ],
+            [
+              "WRONG_TOOL",
+              "turn 3: result lacks lab_svc_washer_fix (got )"
+            ]
+          ]
+        },
+        {
+          "id": "G04-044",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 2: surface [\"ADVICE\"] not in LISTING_RESULTS"
+            ]
+          ]
+        },
+        {
+          "id": "G05-004",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 1: result lacks lab_food_broast (got )"
+            ]
+          ]
+        },
+        {
+          "id": "G05-007",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 1: result lacks lab_camry_2019 (got )"
+            ]
+          ]
+        },
+        {
+          "id": "G06-008",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 1: surface [\"ADVICE\"] not in SELL,CLARIFY"
+            ],
+            [
+              "CONTEXT_ERROR",
+              "turn 1: draft.unitPrice=undefined expected 6000"
+            ]
+          ]
+        },
+        {
+          "id": "G06-009",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 1: surface [\"LISTING_RESULTS\"] not in SELL,CLARIFY"
+            ],
+            [
+              "CONTEXT_ERROR",
+              "turn 1: draft.unitPrice=undefined expected 2"
+            ]
+          ]
+        },
+        {
+          "id": "G06-040",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 2: surface [\"ADVICE\"] not in SELL,CLARIFY,TEXT"
+            ]
+          ]
+        },
+        {
+          "id": "G08-016",
+          "category": "INTENT_ERROR",
+          "failures": [
+            [
+              "INTENT_ERROR",
+              "turn 2: body lacks /\\b1300\\b|1,300|١٣٠٠/"
+            ]
+          ]
+        },
+        {
+          "id": "G08-018",
+          "category": "INTENT_ERROR",
+          "failures": [
+            [
+              "INTENT_ERROR",
+              "turn 2: body lacks /\\b840\\b/"
+            ]
+          ]
+        },
+        {
+          "id": "G08-025",
+          "category": "INTENT_ERROR",
+          "failures": [
+            [
+              "INTENT_ERROR",
+              "turn 2: body lacks /\\b230\\b/"
+            ]
+          ]
+        },
+        {
+          "id": "G09-014",
+          "category": "STATE_MISMATCH",
+          "failures": [
+            [
+              "STATE_MISMATCH",
+              "turn 4: delta.cart=0 expected 1"
+            ]
+          ]
+        },
+        {
+          "id": "G10-002",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 1: surface [\"LISTING_RESULTS\"] not in ORDERS,SETTINGS,ORDERS_LIST,ORDER_STATUS,ORDER_TRACKING,ORDER_SELECTOR,ORDER,DELIVERY_NOTICE,CLARIFY,TEXT,ADVICE"
+            ]
+          ]
+        },
+        {
+          "id": "G10-018",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 1: surface [\"LISTING_RESULTS\"] not in ORDERS,SETTINGS,ORDERS_LIST,ORDER_STATUS,ORDER_TRACKING,ORDER_SELECTOR,ORDER,DELIVERY_NOTICE,CLARIFY,TEXT,ADVICE"
+            ]
+          ]
+        },
+        {
+          "id": "G16-006",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 2: surface [\"ADVICE\"] not in LISTING_RESULTS"
+            ],
+            [
+              "WRONG_TOOL",
+              "turn 2: result lacks lab_washer (got )"
+            ]
+          ]
+        },
+        {
+          "id": "G16-008",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 2: result lacks lab_iphone15 (got )"
+            ]
+          ]
+        },
+        {
+          "id": "G16-020",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 2: result lacks lab_galaxy_a14 (got )"
+            ]
+          ]
+        }
+      ],
+      "summary": {
+        "mode": "det",
+        "database": "dinar_test_lab_run_mwaz7cf6",
+        "cases": 500,
+        "stopped": null,
+        "balanceStart": null,
+        "balanceEnd": null,
+        "spend": {
+          "calls": 0,
+          "inputTokens": 0,
+          "cachedTokens": 0,
+          "outputTokens": 0,
+          "usdAtRates": 0
+        },
+        "finishedAt": "2026-11-10T17:53:19.958Z"
+      }
+    },
+    {
+      "run": "A-delivery",
+      "cases": 500,
+      "complete": true,
+      "verdicts": {
+        "NOT_EXECUTABLE_DET": 103,
+        "PASS": 370,
+        "FAIL": 27
+      },
+      "failures": [
+        {
+          "id": "G02-004",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 1: surface [\"ADVICE\"] not in LISTING_RESULTS"
+            ],
+            [
+              "WRONG_TOOL",
+              "turn 1: result lacks lab_fridge_small (got )"
+            ]
+          ]
+        },
+        {
+          "id": "G02-007",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 1: surface [\"ADVICE\"] not in LISTING_RESULTS"
+            ]
+          ]
+        },
+        {
+          "id": "G02-008",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 1: result lacks lab_galaxy_s23 (got lab_galaxy_a54,lab_galaxy_a14)"
+            ]
+          ]
+        },
+        {
+          "id": "G02-016",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 1: result lacks lab_svc_cleaning (got )"
+            ]
+          ]
+        },
+        {
+          "id": "G02-025",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 1: surface [\"ADVICE\"] not in ORDERS,ORDERS_LIST,ORDER_STATUS,ORDER_TRACKING,ORDER_SELECTOR,ORDER"
+            ]
+          ]
+        },
+        {
+          "id": "G02-029",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 1: surface [\"ADVICE\"] not in LISTING_RESULTS"
+            ],
+            [
+              "WRONG_TOOL",
+              "turn 1: result lacks lab_svc_cleaning (got )"
+            ]
+          ]
+        },
+        {
+          "id": "G02-030",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 1: surface [\"ADVICE\"] not in LISTING_RESULTS"
+            ]
+          ]
+        },
+        {
+          "id": "G03-015",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 1: forbidden surface CHECKOUT"
+            ]
+          ]
+        },
+        {
+          "id": "G04-001",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 4: surface [\"ADVICE\"] not in LISTING_RESULTS"
+            ]
+          ]
+        },
+        {
+          "id": "G04-002",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 3: surface [\"ADVICE\"] not in LISTING_RESULTS"
+            ]
+          ]
+        },
+        {
+          "id": "G04-008",
+          "category": "NOT_EXECUTABLE_DET",
+          "failures": [
+            [
+              "NOT_EXECUTABLE_DET",
+              "turn 2: model unavailable reply"
+            ],
+            [
+              "WRONG_TOOL",
+              "turn 3: surface [\"ADVICE\"] not in ORDERS_LIST,ORDER_STATUS,ORDER_TRACKING,ORDER_SELECTOR,ORDER,CLARIFY"
+            ]
+          ]
+        },
+        {
+          "id": "G04-015",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 1: result lacks lab_svc_ac_fix (got )"
+            ],
+            [
+              "WRONG_TOOL",
+              "turn 2: surface [\"ADVICE\"] not in LISTING_RESULTS"
+            ],
+            [
+              "WRONG_TOOL",
+              "turn 2: result lacks lab_ac_split (got )"
+            ]
+          ]
+        },
+        {
+          "id": "G04-017",
+          "category": "INVALID_TOOL_ARGUMENTS",
+          "failures": [
+            [
+              "INVALID_TOOL_ARGUMENTS",
+              "turn 1: filter not applied: lab_iphone15 shown"
+            ],
+            [
+              "INVALID_TOOL_ARGUMENTS",
+              "turn 1: filter not applied: lab_iphone13_pro shown"
+            ],
+            [
+              "WRONG_TOOL",
+              "turn 2: surface [\"ADVICE\"] not in LISTING_RESULTS"
+            ],
+            [
+              "WRONG_TOOL",
+              "turn 2: result lacks lab_iphone15_used (got )"
+            ]
+          ]
+        },
+        {
+          "id": "G04-041",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 3: surface [\"ADVICE\"] not in LISTING_RESULTS"
+            ],
+            [
+              "WRONG_TOOL",
+              "turn 3: result lacks lab_svc_washer_fix (got )"
+            ]
+          ]
+        },
+        {
+          "id": "G04-044",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 2: surface [\"ADVICE\"] not in LISTING_RESULTS"
+            ]
+          ]
+        },
+        {
+          "id": "G05-004",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 1: result lacks lab_food_broast (got )"
+            ]
+          ]
+        },
+        {
+          "id": "G05-007",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 1: result lacks lab_camry_2019 (got )"
+            ]
+          ]
+        },
+        {
+          "id": "G06-008",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 1: surface [\"ADVICE\"] not in SELL,CLARIFY"
+            ],
+            [
+              "CONTEXT_ERROR",
+              "turn 1: draft.unitPrice=undefined expected 6000"
+            ]
+          ]
+        },
+        {
+          "id": "G06-009",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 1: surface [\"LISTING_RESULTS\"] not in SELL,CLARIFY"
+            ],
+            [
+              "CONTEXT_ERROR",
+              "turn 1: draft.unitPrice=undefined expected 2"
+            ]
+          ]
+        },
+        {
+          "id": "G06-040",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 2: surface [\"ADVICE\"] not in SELL,CLARIFY,TEXT"
+            ]
+          ]
+        },
+        {
+          "id": "G08-018",
+          "category": "INTENT_ERROR",
+          "failures": [
+            [
+              "INTENT_ERROR",
+              "turn 2: body lacks /\\b840\\b/"
+            ]
+          ]
+        },
+        {
+          "id": "G09-014",
+          "category": "STATE_MISMATCH",
+          "failures": [
+            [
+              "STATE_MISMATCH",
+              "turn 4: delta.cart=0 expected 1"
+            ]
+          ]
+        },
+        {
+          "id": "G10-002",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 1: surface [\"LISTING_RESULTS\"] not in ORDERS,SETTINGS,ORDERS_LIST,ORDER_STATUS,ORDER_TRACKING,ORDER_SELECTOR,ORDER,DELIVERY_NOTICE,CLARIFY,TEXT,ADVICE"
+            ]
+          ]
+        },
+        {
+          "id": "G10-018",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 1: surface [\"LISTING_RESULTS\"] not in ORDERS,SETTINGS,ORDERS_LIST,ORDER_STATUS,ORDER_TRACKING,ORDER_SELECTOR,ORDER,DELIVERY_NOTICE,CLARIFY,TEXT,ADVICE"
+            ]
+          ]
+        },
+        {
+          "id": "G16-006",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 2: surface [\"ADVICE\"] not in LISTING_RESULTS"
+            ],
+            [
+              "WRONG_TOOL",
+              "turn 2: result lacks lab_washer (got )"
+            ]
+          ]
+        },
+        {
+          "id": "G16-008",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 2: result lacks lab_iphone15 (got )"
+            ]
+          ]
+        },
+        {
+          "id": "G16-020",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 2: result lacks lab_galaxy_a14 (got )"
+            ]
+          ]
+        }
+      ],
+      "summary": {
+        "mode": "det",
+        "database": "dinar_test_lab_run_mwb9e2p0",
+        "cases": 500,
+        "stopped": null,
+        "balanceStart": null,
+        "balanceEnd": null,
+        "spend": {
+          "calls": 0,
+          "inputTokens": 0,
+          "cachedTokens": 0,
+          "outputTokens": 0,
+          "usdAtRates": 0
+        },
+        "finishedAt": "2026-11-10T22:38:04.466Z"
+      }
+    },
+    {
+      "run": "A-final",
+      "cases": 500,
+      "complete": true,
+      "verdicts": {
+        "NOT_EXECUTABLE_DET": 102,
+        "PASS": 368,
+        "FAIL": 30
+      },
+      "failures": [
+        {
+          "id": "G02-004",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 1: surface [\"ADVICE\"] not in LISTING_RESULTS"
+            ],
+            [
+              "WRONG_TOOL",
+              "turn 1: result lacks lab_fridge_small (got )"
+            ]
+          ]
+        },
+        {
+          "id": "G02-007",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 1: surface [\"ADVICE\"] not in LISTING_RESULTS"
+            ]
+          ]
+        },
+        {
+          "id": "G02-008",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 1: result lacks lab_galaxy_s23 (got lab_galaxy_a54,lab_galaxy_a14)"
+            ]
+          ]
+        },
+        {
+          "id": "G02-016",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 1: result lacks lab_svc_cleaning (got )"
+            ]
+          ]
+        },
+        {
+          "id": "G02-025",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 1: surface [\"ADVICE\"] not in ORDERS,ORDERS_LIST,ORDER_STATUS,ORDER_TRACKING,ORDER_SELECTOR,ORDER"
+            ]
+          ]
+        },
+        {
+          "id": "G02-029",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 1: surface [\"ADVICE\"] not in LISTING_RESULTS"
+            ],
+            [
+              "WRONG_TOOL",
+              "turn 1: result lacks lab_svc_cleaning (got )"
+            ]
+          ]
+        },
+        {
+          "id": "G02-030",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 1: surface [\"ADVICE\"] not in LISTING_RESULTS"
+            ]
+          ]
+        },
+        {
+          "id": "G03-015",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 1: forbidden surface CHECKOUT"
+            ]
+          ]
+        },
+        {
+          "id": "G04-001",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 4: surface [\"ADVICE\"] not in LISTING_RESULTS"
+            ]
+          ]
+        },
+        {
+          "id": "G04-002",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 3: surface [\"ADVICE\"] not in LISTING_RESULTS"
+            ]
+          ]
+        },
+        {
+          "id": "G04-008",
+          "category": "NOT_EXECUTABLE_DET",
+          "failures": [
+            [
+              "NOT_EXECUTABLE_DET",
+              "turn 2: model unavailable reply"
+            ],
+            [
+              "WRONG_TOOL",
+              "turn 3: surface [\"ADVICE\"] not in ORDERS_LIST,ORDER_STATUS,ORDER_TRACKING,ORDER_SELECTOR,ORDER,CLARIFY"
+            ]
+          ]
+        },
+        {
+          "id": "G04-014",
+          "category": "NOT_EXECUTABLE_DET",
+          "failures": [
+            [
+              "NOT_EXECUTABLE_DET",
+              "turn 2: model unavailable reply"
+            ],
+            [
+              "INVALID_TOOL_ARGUMENTS",
+              "turn 3: filter not applied: lab_fridge_big shown"
+            ]
+          ]
+        },
+        {
+          "id": "G04-015",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 1: result lacks lab_svc_ac_fix (got )"
+            ],
+            [
+              "WRONG_TOOL",
+              "turn 2: surface [\"ADVICE\"] not in LISTING_RESULTS"
+            ],
+            [
+              "WRONG_TOOL",
+              "turn 2: result lacks lab_ac_split (got )"
+            ]
+          ]
+        },
+        {
+          "id": "G04-017",
+          "category": "INVALID_TOOL_ARGUMENTS",
+          "failures": [
+            [
+              "INVALID_TOOL_ARGUMENTS",
+              "turn 1: filter not applied: lab_iphone15 shown"
+            ],
+            [
+              "INVALID_TOOL_ARGUMENTS",
+              "turn 1: filter not applied: lab_iphone13_pro shown"
+            ],
+            [
+              "WRONG_TOOL",
+              "turn 2: surface [\"ADVICE\"] not in LISTING_RESULTS"
+            ],
+            [
+              "WRONG_TOOL",
+              "turn 2: result lacks lab_iphone15_used (got )"
+            ]
+          ]
+        },
+        {
+          "id": "G04-041",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 3: surface [\"ADVICE\"] not in LISTING_RESULTS"
+            ],
+            [
+              "WRONG_TOOL",
+              "turn 3: result lacks lab_svc_washer_fix (got )"
+            ]
+          ]
+        },
+        {
+          "id": "G04-044",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 2: surface [\"ADVICE\"] not in LISTING_RESULTS"
+            ]
+          ]
+        },
+        {
+          "id": "G05-004",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 1: result lacks lab_food_broast (got )"
+            ]
+          ]
+        },
+        {
+          "id": "G05-007",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 1: result lacks lab_camry_2019 (got )"
+            ]
+          ]
+        },
+        {
+          "id": "G06-008",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 1: surface [\"ADVICE\"] not in SELL,CLARIFY"
+            ],
+            [
+              "CONTEXT_ERROR",
+              "turn 1: draft.unitPrice=undefined expected 6000"
+            ]
+          ]
+        },
+        {
+          "id": "G06-009",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 1: surface [\"LISTING_RESULTS\"] not in SELL,CLARIFY"
+            ],
+            [
+              "CONTEXT_ERROR",
+              "turn 1: draft.unitPrice=undefined expected 2"
+            ]
+          ]
+        },
+        {
+          "id": "G06-040",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 2: surface [\"ADVICE\"] not in SELL,CLARIFY,TEXT"
+            ]
+          ]
+        },
+        {
+          "id": "G08-016",
+          "category": "INTENT_ERROR",
+          "failures": [
+            [
+              "INTENT_ERROR",
+              "turn 2: body lacks /\\b1300\\b|1,300|١٣٠٠/"
+            ]
+          ]
+        },
+        {
+          "id": "G08-018",
+          "category": "INTENT_ERROR",
+          "failures": [
+            [
+              "INTENT_ERROR",
+              "turn 2: body lacks /\\b840\\b/"
+            ]
+          ]
+        },
+        {
+          "id": "G08-025",
+          "category": "INTENT_ERROR",
+          "failures": [
+            [
+              "INTENT_ERROR",
+              "turn 2: body lacks /\\b230\\b/"
+            ]
+          ]
+        },
+        {
+          "id": "G09-014",
+          "category": "STATE_MISMATCH",
+          "failures": [
+            [
+              "STATE_MISMATCH",
+              "turn 4: delta.cart=0 expected 1"
+            ]
+          ]
+        },
+        {
+          "id": "G10-002",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 1: surface [\"LISTING_RESULTS\"] not in ORDERS,SETTINGS,ORDERS_LIST,ORDER_STATUS,ORDER_TRACKING,ORDER_SELECTOR,ORDER,DELIVERY_NOTICE,CLARIFY,TEXT,ADVICE"
+            ]
+          ]
+        },
+        {
+          "id": "G10-018",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 1: surface [\"LISTING_RESULTS\"] not in ORDERS,SETTINGS,ORDERS_LIST,ORDER_STATUS,ORDER_TRACKING,ORDER_SELECTOR,ORDER,DELIVERY_NOTICE,CLARIFY,TEXT,ADVICE"
+            ]
+          ]
+        },
+        {
+          "id": "G16-006",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 2: surface [\"ADVICE\"] not in LISTING_RESULTS"
+            ],
+            [
+              "WRONG_TOOL",
+              "turn 2: result lacks lab_washer (got )"
+            ]
+          ]
+        },
+        {
+          "id": "G16-008",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 2: result lacks lab_iphone15 (got )"
+            ]
+          ]
+        },
+        {
+          "id": "G16-020",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 2: result lacks lab_galaxy_a14 (got )"
+            ]
+          ]
+        }
+      ],
+      "summary": {
+        "mode": "det",
+        "database": "dinar_test_lab_run_mwaznolu",
+        "cases": 500,
+        "stopped": null,
+        "balanceStart": null,
+        "balanceEnd": null,
+        "spend": {
+          "calls": 0,
+          "inputTokens": 0,
+          "cachedTokens": 0,
+          "outputTokens": 0,
+          "usdAtRates": 0
+        },
+        "finishedAt": "2026-11-10T18:04:43.216Z"
+      }
+    },
+    {
+      "run": "A-verified",
+      "cases": 500,
+      "complete": true,
+      "verdicts": {
+        "NOT_EXECUTABLE_DET": 102,
+        "PASS": 368,
+        "FAIL": 30
+      },
+      "failures": [
+        {
+          "id": "G02-004",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 1: surface [\"ADVICE\"] not in LISTING_RESULTS"
+            ],
+            [
+              "WRONG_TOOL",
+              "turn 1: result lacks lab_fridge_small (got )"
+            ]
+          ]
+        },
+        {
+          "id": "G02-007",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 1: surface [\"ADVICE\"] not in LISTING_RESULTS"
+            ]
+          ]
+        },
+        {
+          "id": "G02-008",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 1: result lacks lab_galaxy_s23 (got lab_galaxy_a54,lab_galaxy_a14)"
+            ]
+          ]
+        },
+        {
+          "id": "G02-016",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 1: result lacks lab_svc_cleaning (got )"
+            ]
+          ]
+        },
+        {
+          "id": "G02-025",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 1: surface [\"ADVICE\"] not in ORDERS,ORDERS_LIST,ORDER_STATUS,ORDER_TRACKING,ORDER_SELECTOR,ORDER"
+            ]
+          ]
+        },
+        {
+          "id": "G02-029",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 1: surface [\"ADVICE\"] not in LISTING_RESULTS"
+            ],
+            [
+              "WRONG_TOOL",
+              "turn 1: result lacks lab_svc_cleaning (got )"
+            ]
+          ]
+        },
+        {
+          "id": "G02-030",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 1: surface [\"ADVICE\"] not in LISTING_RESULTS"
+            ]
+          ]
+        },
+        {
+          "id": "G03-015",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 1: forbidden surface CHECKOUT"
+            ]
+          ]
+        },
+        {
+          "id": "G04-001",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 4: surface [\"ADVICE\"] not in LISTING_RESULTS"
+            ]
+          ]
+        },
+        {
+          "id": "G04-002",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 3: surface [\"ADVICE\"] not in LISTING_RESULTS"
+            ]
+          ]
+        },
+        {
+          "id": "G04-008",
+          "category": "NOT_EXECUTABLE_DET",
+          "failures": [
+            [
+              "NOT_EXECUTABLE_DET",
+              "turn 2: model unavailable reply"
+            ],
+            [
+              "WRONG_TOOL",
+              "turn 3: surface [\"ADVICE\"] not in ORDERS_LIST,ORDER_STATUS,ORDER_TRACKING,ORDER_SELECTOR,ORDER,CLARIFY"
+            ]
+          ]
+        },
+        {
+          "id": "G04-014",
+          "category": "NOT_EXECUTABLE_DET",
+          "failures": [
+            [
+              "NOT_EXECUTABLE_DET",
+              "turn 2: model unavailable reply"
+            ],
+            [
+              "INVALID_TOOL_ARGUMENTS",
+              "turn 3: filter not applied: lab_fridge_big shown"
+            ]
+          ]
+        },
+        {
+          "id": "G04-015",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 1: result lacks lab_svc_ac_fix (got )"
+            ],
+            [
+              "WRONG_TOOL",
+              "turn 2: surface [\"ADVICE\"] not in LISTING_RESULTS"
+            ],
+            [
+              "WRONG_TOOL",
+              "turn 2: result lacks lab_ac_split (got )"
+            ]
+          ]
+        },
+        {
+          "id": "G04-017",
+          "category": "INVALID_TOOL_ARGUMENTS",
+          "failures": [
+            [
+              "INVALID_TOOL_ARGUMENTS",
+              "turn 1: filter not applied: lab_iphone15 shown"
+            ],
+            [
+              "INVALID_TOOL_ARGUMENTS",
+              "turn 1: filter not applied: lab_iphone13_pro shown"
+            ],
+            [
+              "WRONG_TOOL",
+              "turn 2: surface [\"ADVICE\"] not in LISTING_RESULTS"
+            ],
+            [
+              "WRONG_TOOL",
+              "turn 2: result lacks lab_iphone15_used (got )"
+            ]
+          ]
+        },
+        {
+          "id": "G04-041",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 3: surface [\"ADVICE\"] not in LISTING_RESULTS"
+            ],
+            [
+              "WRONG_TOOL",
+              "turn 3: result lacks lab_svc_washer_fix (got )"
+            ]
+          ]
+        },
+        {
+          "id": "G04-044",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 2: surface [\"ADVICE\"] not in LISTING_RESULTS"
+            ]
+          ]
+        },
+        {
+          "id": "G05-004",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 1: result lacks lab_food_broast (got )"
+            ]
+          ]
+        },
+        {
+          "id": "G05-007",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 1: result lacks lab_camry_2019 (got )"
+            ]
+          ]
+        },
+        {
+          "id": "G06-008",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 1: surface [\"ADVICE\"] not in SELL,CLARIFY"
+            ],
+            [
+              "CONTEXT_ERROR",
+              "turn 1: draft.unitPrice=undefined expected 6000"
+            ]
+          ]
+        },
+        {
+          "id": "G06-009",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 1: surface [\"LISTING_RESULTS\"] not in SELL,CLARIFY"
+            ],
+            [
+              "CONTEXT_ERROR",
+              "turn 1: draft.unitPrice=undefined expected 2"
+            ]
+          ]
+        },
+        {
+          "id": "G06-040",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 2: surface [\"ADVICE\"] not in SELL,CLARIFY,TEXT"
+            ]
+          ]
+        },
+        {
+          "id": "G08-016",
+          "category": "INTENT_ERROR",
+          "failures": [
+            [
+              "INTENT_ERROR",
+              "turn 2: body lacks /\\b1300\\b|1,300|١٣٠٠/"
+            ]
+          ]
+        },
+        {
+          "id": "G08-018",
+          "category": "INTENT_ERROR",
+          "failures": [
+            [
+              "INTENT_ERROR",
+              "turn 2: body lacks /\\b840\\b/"
+            ]
+          ]
+        },
+        {
+          "id": "G08-025",
+          "category": "INTENT_ERROR",
+          "failures": [
+            [
+              "INTENT_ERROR",
+              "turn 2: body lacks /\\b230\\b/"
+            ]
+          ]
+        },
+        {
+          "id": "G09-014",
+          "category": "STATE_MISMATCH",
+          "failures": [
+            [
+              "STATE_MISMATCH",
+              "turn 4: delta.cart=0 expected 1"
+            ]
+          ]
+        },
+        {
+          "id": "G10-002",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 1: surface [\"LISTING_RESULTS\"] not in ORDERS,SETTINGS,ORDERS_LIST,ORDER_STATUS,ORDER_TRACKING,ORDER_SELECTOR,ORDER,DELIVERY_NOTICE,CLARIFY,TEXT,ADVICE"
+            ]
+          ]
+        },
+        {
+          "id": "G10-018",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 1: surface [\"LISTING_RESULTS\"] not in ORDERS,SETTINGS,ORDERS_LIST,ORDER_STATUS,ORDER_TRACKING,ORDER_SELECTOR,ORDER,DELIVERY_NOTICE,CLARIFY,TEXT,ADVICE"
+            ]
+          ]
+        },
+        {
+          "id": "G16-006",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 2: surface [\"ADVICE\"] not in LISTING_RESULTS"
+            ],
+            [
+              "WRONG_TOOL",
+              "turn 2: result lacks lab_washer (got )"
+            ]
+          ]
+        },
+        {
+          "id": "G16-008",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 2: result lacks lab_iphone15 (got )"
+            ]
+          ]
+        },
+        {
+          "id": "G16-020",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 2: result lacks lab_galaxy_a14 (got )"
+            ]
+          ]
+        }
+      ],
+      "summary": {
+        "mode": "det",
+        "database": "dinar_test_lab_run_mwb077l6",
+        "cases": 500,
+        "stopped": null,
+        "balanceStart": null,
+        "balanceEnd": null,
+        "spend": {
+          "calls": 0,
+          "inputTokens": 0,
+          "cachedTokens": 0,
+          "outputTokens": 0,
+          "usdAtRates": 0
+        },
+        "finishedAt": "2026-11-10T18:19:28.120Z"
+      }
+    },
+    {
+      "run": "H5",
+      "cases": 30,
+      "complete": true,
+      "verdicts": {
+        "PASS": 28,
+        "FAIL": 2
+      },
+      "failures": [
+        {
+          "id": "H5-POS-003",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 1: result lacks lab_washer (got )"
+            ]
+          ]
+        },
+        {
+          "id": "H5-POS-019",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 1: result lacks lab_kids_bike (got )"
+            ]
+          ]
+        }
+      ],
+      "summary": {
+        "mode": "det",
+        "database": "dinar_test_lab_run_mwazab4g",
+        "cases": 30,
+        "stopped": null,
+        "balanceStart": null,
+        "balanceEnd": null,
+        "spend": {
+          "calls": 0,
+          "inputTokens": 0,
+          "cachedTokens": 0,
+          "outputTokens": 0,
+          "usdAtRates": 0
+        },
+        "finishedAt": "2026-11-10T17:43:13.244Z"
+      }
+    },
+    {
+      "run": "H5-final",
+      "cases": 30,
+      "complete": true,
+      "verdicts": {
+        "PASS": 28,
+        "FAIL": 2
+      },
+      "failures": [
+        {
+          "id": "H5-POS-004",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 1: result lacks lab_sofa_corner (got )"
+            ]
+          ]
+        },
+        {
+          "id": "H5-POS-019",
+          "category": "WRONG_TOOL",
+          "failures": [
+            [
+              "WRONG_TOOL",
+              "turn 1: result lacks lab_kids_bike (got )"
+            ]
+          ]
+        }
+      ],
+      "summary": {
+        "mode": "det",
+        "database": "dinar_test_lab_run_mwaznnmm",
+        "cases": 30,
+        "stopped": null,
+        "balanceStart": null,
+        "balanceEnd": null,
+        "spend": {
+          "calls": 0,
+          "inputTokens": 0,
+          "cachedTokens": 0,
+          "outputTokens": 0,
+          "usdAtRates": 0
+        },
+        "finishedAt": "2026-11-10T17:53:35.128Z"
+      }
+    },
+    {
+      "run": "H5-handoff",
+      "cases": 30,
+      "complete": true,
+      "verdicts": {
+        "PASS": 30
+      },
+      "failures": [],
+      "summary": {
+        "mode": "det",
+        "database": "dinar_test_lab_run_mwb9l08u",
+        "cases": 30,
+        "stopped": null,
+        "balanceStart": null,
+        "balanceEnd": null,
+        "spend": {
+          "calls": 0,
+          "inputTokens": 0,
+          "cachedTokens": 0,
+          "outputTokens": 0,
+          "usdAtRates": 0
+        },
+        "finishedAt": "2026-11-10T22:31:26.404Z"
+      }
+    },
+    {
+      "run": "H5-verified",
+      "cases": 30,
+      "complete": true,
+      "verdicts": {
+        "PASS": 30
+      },
+      "failures": [],
+      "summary": {
+        "mode": "det",
+        "database": "dinar_test_lab_run_mwb076n2",
+        "cases": 30,
+        "stopped": null,
+        "balanceStart": null,
+        "balanceEnd": null,
+        "spend": {
+          "calls": 0,
+          "inputTokens": 0,
+          "cachedTokens": 0,
+          "outputTokens": 0,
+          "usdAtRates": 0
+        },
+        "finishedAt": "2026-11-10T18:08:42.618Z"
+      }
+    }
+  ],
+  "logs": [
+    {
+      "file": "/workspace/closure-additive-red.log",
+      "sha256": "55d3a13e604389c47b787e7758d32d90f7ef49fab9939fd61177960250170d6f",
+      "tests": [
+        2
+      ],
+      "pass": [
+        1
+      ],
+      "fail": [
+        1
+      ],
+      "skipped": [
+        0
+      ],
+      "cancelled": [
+        0
+      ]
+    },
+    {
+      "file": "/workspace/closure-api-build.log",
+      "sha256": "7f39e7776e43b4e83c6f6eab3118618ff36f7026cbd974a203c13b3aeffcf2f6",
+      "tests": [],
+      "pass": [],
+      "fail": [],
+      "skipped": [],
+      "cancelled": []
+    },
+    {
+      "file": "/workspace/closure-arab-pricing-configured.log",
+      "sha256": "f5e2f5e9959be4c398dd606d6e5aab7f8627c847656e901ffd1e6cb74a32f293",
+      "tests": [
+        3
+      ],
+      "pass": [
+        3
+      ],
+      "fail": [
+        0
+      ],
+      "skipped": [
+        0
+      ],
+      "cancelled": [
+        0
+      ]
+    },
+    {
+      "file": "/workspace/closure-arab-pricing.log",
+      "sha256": "b197dace1e0f3f12b9ff6297b5b71831bed28efbef5d3260e8d6c4291da2776e",
+      "tests": [
+        3
+      ],
+      "pass": [
+        2
+      ],
+      "fail": [
+        1
+      ],
+      "skipped": [
+        0
+      ],
+      "cancelled": [
+        0
+      ]
+    },
+    {
+      "file": "/workspace/closure-bound-source-validation.log",
+      "sha256": "cb512c78d732cdf466b4798cf5013e493a889c077f3d42d7542c546933b228e2",
+      "tests": [
+        2,
+        5,
+        2
+      ],
+      "pass": [
+        2,
+        5,
+        2
+      ],
+      "fail": [
+        0,
+        0,
+        0
+      ],
+      "skipped": [
+        0,
+        0,
+        0
+      ],
+      "cancelled": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "file": "/workspace/closure-buyer-red.log",
+      "sha256": "e68428d5ea24761e7dd9cf1d3d9652e0c00a4a4082be229233618de7039d4bc0",
+      "tests": [
+        1
+      ],
+      "pass": [
+        0
+      ],
+      "fail": [
+        1
+      ],
+      "skipped": [
+        0
+      ],
+      "cancelled": [
+        0
+      ]
+    },
+    {
+      "file": "/workspace/closure-c12.log",
+      "sha256": "ae0af1be0ffd500779605df15ad7d41fa348659c9c7f08c978fe58d658d8744f",
+      "tests": [
+        8
+      ],
+      "pass": [
+        1
+      ],
+      "fail": [
+        7
+      ],
+      "skipped": [
+        0
+      ],
+      "cancelled": [
+        0
+      ]
+    },
+    {
+      "file": "/workspace/closure-category-configured-red.log",
+      "sha256": "c9da0986e6eb7c4f571da0def9a60d56508e4a190ff406d8daeca5a8f3243a34",
+      "tests": [
+        3
+      ],
+      "pass": [
+        1
+      ],
+      "fail": [
+        2
+      ],
+      "skipped": [
+        0
+      ],
+      "cancelled": [
+        0
+      ]
+    },
+    {
+      "file": "/workspace/closure-category-green.log",
+      "sha256": "e857a41a758f0b46a2b3d35b59405828ea61ed753aac107d0470078608b58c0c",
+      "tests": [
+        3,
+        1
+      ],
+      "pass": [
+        1,
+        1
+      ],
+      "fail": [
+        2,
+        0
+      ],
+      "skipped": [
+        0,
+        0
+      ],
+      "cancelled": [
+        0,
+        0
+      ]
+    },
+    {
+      "file": "/workspace/closure-category-red.log",
+      "sha256": "70436f468c069c2b82f29122512afc9ad6c33cac32a5fd4bca95abf583518c70",
+      "tests": [
+        3
+      ],
+      "pass": [
+        2
+      ],
+      "fail": [
+        1
+      ],
+      "skipped": [
+        0
+      ],
+      "cancelled": [
+        0
+      ]
+    },
+    {
+      "file": "/workspace/closure-context-final.log",
+      "sha256": "3fa5485cc78e3cec9fb9a7aa9f84b37f0259c733bfceaab1b9b434306956025b",
+      "tests": [
+        4,
+        2
+      ],
+      "pass": [
+        4,
+        2
+      ],
+      "fail": [
+        0,
+        0
+      ],
+      "skipped": [
+        0,
+        0
+      ],
+      "cancelled": [
+        0,
+        0
+      ]
+    },
+    {
+      "file": "/workspace/closure-context-green.log",
+      "sha256": "36a2a1f2f150c328e59fe244fb22b368c80cdd9bf13184391b659f886bf58d31",
+      "tests": [
+        4
+      ],
+      "pass": [
+        3
+      ],
+      "fail": [
+        1
+      ],
+      "skipped": [
+        0
+      ],
+      "cancelled": [
+        0
+      ]
+    },
+    {
+      "file": "/workspace/closure-context-green2.log",
+      "sha256": "670219f72192af0f289a556b22d1196851cd68bb7521a10cc8afa17ea14936c1",
+      "tests": [
+        4
+      ],
+      "pass": [
+        3
+      ],
+      "fail": [
+        1
+      ],
+      "skipped": [
+        0
+      ],
+      "cancelled": [
+        0
+      ]
+    },
+    {
+      "file": "/workspace/closure-context-red.log",
+      "sha256": "56534f1e3d2b62f533ede2e766b2fb8afeb5bb477ba58725f86ffd9f2fead188",
+      "tests": [
+        4
+      ],
+      "pass": [
+        0
+      ],
+      "fail": [
+        4
+      ],
+      "skipped": [
+        0
+      ],
+      "cancelled": [
+        0
+      ]
+    },
+    {
+      "file": "/workspace/closure-critical.log",
+      "sha256": "4a2a6fbba3b8a9fcf8698ece3d46c42a78c815a845e0320b26817c53632d564a",
+      "tests": [
+        5,
+        2,
+        1,
+        4,
+        2,
+        4,
+        2,
+        12,
+        6,
+        17,
+        5,
+        1,
+        7,
+        23,
+        5
+      ],
+      "pass": [
+        5,
+        2,
+        1,
+        4,
+        2,
+        4,
+        2,
+        12,
+        6,
+        14,
+        5,
+        0,
+        7,
+        23,
+        5
+      ],
+      "fail": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        3,
+        0,
+        1,
+        0,
+        0,
+        0
+      ],
+      "skipped": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "cancelled": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "file": "/workspace/closure-delivery-api-build.log",
+      "sha256": "e9b58e60f534ce30be137b2c927167ded8ecea175a6cde3ce0aa8f6c6865237b",
+      "tests": [],
+      "pass": [],
+      "fail": [],
+      "skipped": [],
+      "cancelled": []
+    },
+    {
+      "file": "/workspace/closure-delivery-typecheck.log",
+      "sha256": "b3de1638c33d800c914cd23cb190f4ae1632babb845159c1b16459398159b439",
+      "tests": [],
+      "pass": [],
+      "fail": [],
+      "skipped": [],
+      "cancelled": []
+    },
+    {
+      "file": "/workspace/closure-descriptors-red.log",
+      "sha256": "70e3300ece32aef4d3e41e48379ab5e5c4d7a0763c582c40d6379811e423a599",
+      "tests": [
+        2
+      ],
+      "pass": [
+        1
+      ],
+      "fail": [
+        1
+      ],
+      "skipped": [
+        0
+      ],
+      "cancelled": [
+        0
+      ]
+    },
+    {
+      "file": "/workspace/closure-final-build.log",
+      "sha256": "20bb1c958afbe252d4bf3681937a2bea7e70838f7ec5f3b3455beeb63bb397ae",
+      "tests": [],
+      "pass": [],
+      "fail": [],
+      "skipped": [],
+      "cancelled": []
+    },
+    {
+      "file": "/workspace/closure-final-db-guard.log",
+      "sha256": "cdfa1da486dad7c19e69fe6c9b9343629e88a33e32293922e653f9b8b9cbeffd",
+      "tests": [
+        8
+      ],
+      "pass": [
+        8
+      ],
+      "fail": [
+        0
+      ],
+      "skipped": [
+        0
+      ],
+      "cancelled": [
+        0
+      ]
+    },
+    {
+      "file": "/workspace/closure-final-review-api-build.log",
+      "sha256": "c24f66b5e086247d2c73ce3cc1a51bd508e4a3c9a816204d2a301d5687b07c48",
+      "tests": [],
+      "pass": [],
+      "fail": [],
+      "skipped": [],
+      "cancelled": []
+    },
+    {
+      "file": "/workspace/closure-final-review-typecheck.log",
+      "sha256": "b3de1638c33d800c914cd23cb190f4ae1632babb845159c1b16459398159b439",
+      "tests": [],
+      "pass": [],
+      "fail": [],
+      "skipped": [],
+      "cancelled": []
+    },
+    {
+      "file": "/workspace/closure-final-secret-scan.log",
+      "sha256": "6d8e1147be9b49a627f867132b304f88851ae50e4f2ea65bfa5bea46e72d3d9f",
+      "tests": [
+        1
+      ],
+      "pass": [
+        1
+      ],
+      "fail": [
+        0
+      ],
+      "skipped": [
+        0
+      ],
+      "cancelled": [
+        0
+      ]
+    },
+    {
+      "file": "/workspace/closure-final2-build.log",
+      "sha256": "36591b1d42bac7d33b4850fb7492b98312ec27e53dbd44983cbefb31eac7dec7",
+      "tests": [],
+      "pass": [],
+      "fail": [],
+      "skipped": [],
+      "cancelled": []
+    },
+    {
+      "file": "/workspace/closure-final3-build.log",
+      "sha256": "fd3b480ca98496bcb652298a42b9180baf561e9e9b85c91d3c9698fc50d0c503",
+      "tests": [],
+      "pass": [],
+      "fail": [],
+      "skipped": [],
+      "cancelled": []
+    },
+    {
+      "file": "/workspace/closure-financial-answers-green.log",
+      "sha256": "965df222d7a9addb3013edffcfeadfcdb98da31671963fa3ceddb3be3c4f327b",
+      "tests": [
+        3,
+        4
+      ],
+      "pass": [
+        3,
+        4
+      ],
+      "fail": [
+        0,
+        0
+      ],
+      "skipped": [
+        0,
+        0
+      ],
+      "cancelled": [
+        0,
+        0
+      ]
+    },
+    {
+      "file": "/workspace/closure-financial-answers-red.log",
+      "sha256": "7e1739d07c759491acaa641a6a0d6097265ed64ae4e19d81e6d1d63ab01a39bd",
+      "tests": [
+        3
+      ],
+      "pass": [
+        0
+      ],
+      "fail": [
+        3
+      ],
+      "skipped": [
+        0
+      ],
+      "cancelled": [
+        0
+      ]
+    },
+    {
+      "file": "/workspace/closure-focused.log",
+      "sha256": "7bd8e4bd485a44ddc0bfe898579a9c2662c11939611683550a0f70472228d153",
+      "tests": [
+        5,
+        2,
+        12,
+        15
+      ],
+      "pass": [
+        5,
+        2,
+        12,
+        14
+      ],
+      "fail": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "skipped": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "cancelled": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "file": "/workspace/closure-focused2.log",
+      "sha256": "4e26364d31c18221c306402f5f0e53e18a39c7a0b477e000721448c234c32e31",
+      "tests": [
+        2,
+        4,
+        15
+      ],
+      "pass": [
+        2,
+        4,
+        15
+      ],
+      "fail": [
+        0,
+        0,
+        0
+      ],
+      "skipped": [
+        0,
+        0,
+        0
+      ],
+      "cancelled": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "file": "/workspace/closure-frontend.log",
+      "sha256": "d90d2bd4af0c839038b202fed560ab1a7c7ff239980099fe4ffe46633c2b2d25",
+      "tests": [
+        35,
+        9,
+        19
+      ],
+      "pass": [
+        35,
+        9,
+        19
+      ],
+      "fail": [
+        0,
+        0,
+        0
+      ],
+      "skipped": [
+        0,
+        0,
+        0
+      ],
+      "cancelled": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "file": "/workspace/closure-full-typecheck.log",
+      "sha256": "e69cd9f7f0e30c2a776f11536b4576b1ee8b6684801139e5787cd68dd8bf9b96",
+      "tests": [],
+      "pass": [],
+      "fail": [],
+      "skipped": [],
+      "cancelled": []
+    },
+    {
+      "file": "/workspace/closure-handoff-api-build.log",
+      "sha256": "0e34434bd34dde24598ed58b7104c02660451b6c518d46c9148df3138c9a5a59",
+      "tests": [],
+      "pass": [],
+      "fail": [],
+      "skipped": [],
+      "cancelled": []
+    },
+    {
+      "file": "/workspace/closure-handoff-typecheck.log",
+      "sha256": "b3de1638c33d800c914cd23cb190f4ae1632babb845159c1b16459398159b439",
+      "tests": [],
+      "pass": [],
+      "fail": [],
+      "skipped": [],
+      "cancelled": []
+    },
+    {
+      "file": "/workspace/closure-intelligence.log",
+      "sha256": "a7b1ad24b248077ca1d42a0398862987dd9547e4f4b55152058274f502140aff",
+      "tests": [
+        8,
+        1
+      ],
+      "pass": [
+        7,
+        0
+      ],
+      "fail": [
+        1,
+        1
+      ],
+      "skipped": [
+        0,
+        0
+      ],
+      "cancelled": [
+        0,
+        0
+      ]
+    },
+    {
+      "file": "/workspace/closure-last-api-build.log",
+      "sha256": "ecd5c6e1711a804de59fb62e47787aa4df81fb3ecd83608df29e0381e6f20fcd",
+      "tests": [],
+      "pass": [],
+      "fail": [],
+      "skipped": [],
+      "cancelled": []
+    },
+    {
+      "file": "/workspace/closure-last-gaps-green.log",
+      "sha256": "e7c1f8f263f0e4da452bfef91243bdf659013bd1e190e26abf447b78dc00113e",
+      "tests": [
+        1,
+        2,
+        3
+      ],
+      "pass": [
+        1,
+        2,
+        3
+      ],
+      "fail": [
+        0,
+        0,
+        0
+      ],
+      "skipped": [
+        0,
+        0,
+        0
+      ],
+      "cancelled": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "file": "/workspace/closure-last-typecheck.log",
+      "sha256": "d4633e10aaa6bcf33752072272367e87ecbd054211c373e98a71b567a4170ba5",
+      "tests": [],
+      "pass": [],
+      "fail": [],
+      "skipped": [],
+      "cancelled": []
+    },
+    {
+      "file": "/workspace/closure-legacy-condition-red.log",
+      "sha256": "b51c8a34315b6d34261ab71ee74abe4e991eae1971071688b7dafb0d1a2d9a22",
+      "tests": [
+        1
+      ],
+      "pass": [
+        0
+      ],
+      "fail": [
+        1
+      ],
+      "skipped": [
+        0
+      ],
+      "cancelled": [
+        0
+      ]
+    },
+    {
+      "file": "/workspace/closure-market-legal-configured.log",
+      "sha256": "414e68bd38bbb10e66fba8e9813a3f6776e64489228429b9906d136b1ad140ce",
+      "tests": [
+        1
+      ],
+      "pass": [
+        0
+      ],
+      "fail": [
+        1
+      ],
+      "skipped": [
+        0
+      ],
+      "cancelled": [
+        0
+      ]
+    },
+    {
+      "file": "/workspace/closure-market-legal-fresh.log",
+      "sha256": "7088c403b43504c5cc92823feecff534ab9bee163981553a2ab603fe1d94636f",
+      "tests": [
+        1
+      ],
+      "pass": [
+        1
+      ],
+      "fail": [
+        0
+      ],
+      "skipped": [
+        0
+      ],
+      "cancelled": [
+        0
+      ]
+    },
+    {
+      "file": "/workspace/closure-negative-control.log",
+      "sha256": "b0dbbe053777cc971ac47d0c61065742fa16edb6eb5ee37e82ef59e4f1fe7d46",
+      "tests": [
+        5
+      ],
+      "pass": [
+        1
+      ],
+      "fail": [
+        4
+      ],
+      "skipped": [
+        0
+      ],
+      "cancelled": [
+        0
+      ]
+    },
+    {
+      "file": "/workspace/closure-numeric-boundary-red.log",
+      "sha256": "1a9eb7fa6d20b12eb44b2ba58ff986ca21dc67617434a29d3872697d9fc9ed82",
+      "tests": [
+        1
+      ],
+      "pass": [
+        0
+      ],
+      "fail": [
+        1
+      ],
+      "skipped": [
+        0
+      ],
+      "cancelled": [
+        0
+      ]
+    },
+    {
+      "file": "/workspace/closure-pg18-authority.log",
+      "sha256": "451a45a0dfba6257390c899b07bb69b708f2c72461c374ab8a3f9e16f7cc85a5",
+      "tests": [
+        6
+      ],
+      "pass": [
+        6
+      ],
+      "fail": [
+        0
+      ],
+      "skipped": [
+        0
+      ],
+      "cancelled": [
+        0
+      ]
+    },
+    {
+      "file": "/workspace/closure-pg18-card-browser.log",
+      "sha256": "62a03757a7fd1a2c35dd9a75b74bdb21a0bbc18875499a1b6d61b2be90c30a3e",
+      "tests": [
+        1,
+        1,
+        1
+      ],
+      "pass": [
+        1,
+        1,
+        1
+      ],
+      "fail": [
+        0,
+        0,
+        0
+      ],
+      "skipped": [
+        0,
+        0,
+        0
+      ],
+      "cancelled": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "file": "/workspace/closure-pg18-fresh.log",
+      "sha256": "d93727cd8bd5270f0c1b9afa4e3086acf8ec0851cf269152004b756d2f9ac4ed",
+      "tests": [
+        9
+      ],
+      "pass": [
+        9
+      ],
+      "fail": [
+        0
+      ],
+      "skipped": [
+        0
+      ],
+      "cancelled": [
+        0
+      ]
+    },
+    {
+      "file": "/workspace/closure-pg18-money.log",
+      "sha256": "3408064ac228a1016b31268ce5d9805a7f05563e85449c6a104aa803909d2951",
+      "tests": [
+        11
+      ],
+      "pass": [
+        11
+      ],
+      "fail": [
+        0
+      ],
+      "skipped": [
+        0
+      ],
+      "cancelled": [
+        0
+      ]
+    },
+    {
+      "file": "/workspace/closure-preserved-contracts.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "tests": [],
+      "pass": [],
+      "fail": [],
+      "skipped": [],
+      "cancelled": []
+    },
+    {
+      "file": "/workspace/closure-pricing-invariants-seeded.log",
+      "sha256": "b290a3414a10de658f24f5f13f7b4d1435d59b9eb0c0cbac35fc5508f729d6c9",
+      "tests": [
+        5
+      ],
+      "pass": [
+        5
+      ],
+      "fail": [
+        0
+      ],
+      "skipped": [
+        0
+      ],
+      "cancelled": [
+        0
+      ]
+    },
+    {
+      "file": "/workspace/closure-published-condition.log",
+      "sha256": "9f663567233d0b775a91719e4ff8d417108ea3754ca57c6f8838c52887abf711",
+      "tests": [
+        1
+      ],
+      "pass": [
+        0
+      ],
+      "fail": [
+        1
+      ],
+      "skipped": [
+        0
+      ],
+      "cancelled": [
+        0
+      ]
+    },
+    {
+      "file": "/workspace/closure-published-numeric-green.log",
+      "sha256": "765d9ac1f2b4d3d2de9970e4bbc96ab90cf3e3c277c9f077c6801f99b6e78c3e",
+      "tests": [
+        1,
+        1
+      ],
+      "pass": [
+        1,
+        1
+      ],
+      "fail": [
+        0,
+        0
+      ],
+      "skipped": [
+        0,
+        0
+      ],
+      "cancelled": [
+        0,
+        0
+      ]
+    },
+    {
+      "file": "/workspace/closure-purpose-red.log",
+      "sha256": "042910e3e9321b52a305f815aff8084f735b9675e8f7b8475d1ca4b2570ee272",
+      "tests": [
+        3
+      ],
+      "pass": [
+        0
+      ],
+      "fail": [
+        3
+      ],
+      "skipped": [
+        0
+      ],
+      "cancelled": [
+        0
+      ]
+    },
+    {
+      "file": "/workspace/closure-recall-validation.log",
+      "sha256": "1a0e6d7d0fd0630129d5ced742a9ac34a644139f4c996877302ff1b27f4078a7",
+      "tests": [
+        3,
+        1,
+        2,
+        3,
+        12,
+        1
+      ],
+      "pass": [
+        3,
+        1,
+        2,
+        3,
+        12,
+        1
+      ],
+      "fail": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "skipped": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "cancelled": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "file": "/workspace/closure-red.log",
+      "sha256": "eca98ebb726fb0ff876db077d77629b276388e2cfd74a9bb43e88bd38a7dda75",
+      "tests": [
+        8
+      ],
+      "pass": [
+        0
+      ],
+      "fail": [
+        8
+      ],
+      "skipped": [
+        0
+      ],
+      "cancelled": [
+        0
+      ]
+    },
+    {
+      "file": "/workspace/closure-reentry-red.log",
+      "sha256": "9d5d20a302322eb757d7828e0bc831367dec8080d2692e4c80ad1f02dc12e9b4",
+      "tests": [
+        2
+      ],
+      "pass": [
+        1
+      ],
+      "fail": [
+        1
+      ],
+      "skipped": [
+        0
+      ],
+      "cancelled": [
+        0
+      ]
+    },
+    {
+      "file": "/workspace/closure-regression-authority-final-progress.log",
+      "sha256": "68428586a86d7d7ceb8a355d57da7b629782b5dec1c28881abba321009a36788",
+      "tests": [],
+      "pass": [],
+      "fail": [],
+      "skipped": [],
+      "cancelled": []
+    },
+    {
+      "file": "/workspace/closure-regression-browser-retry-progress.log",
+      "sha256": "b7af73c7ae58e0f2c0d48fa24f08949744fd709485024d35d3bcdf5398d4ec21",
+      "tests": [],
+      "pass": [],
+      "fail": [],
+      "skipped": [],
+      "cancelled": []
+    },
+    {
+      "file": "/workspace/closure-regression-commission-seeded-progress.log",
+      "sha256": "85012f5d01d72a238ce38440b5718c23fdeefab56e94fc988f11f7cb2ada014d",
+      "tests": [],
+      "pass": [],
+      "fail": [],
+      "skipped": [],
+      "cancelled": []
+    },
+    {
+      "file": "/workspace/closure-regression-deepseek-browser-progress.log",
+      "sha256": "a7e1157ecfcad2fdc8d4e3c9fd939b075632b6588cb3f8a96623906e66c45148",
+      "tests": [],
+      "pass": [],
+      "fail": [],
+      "skipped": [],
+      "cancelled": []
+    },
+    {
+      "file": "/workspace/closure-regression-delivery-progress.log",
+      "sha256": "24d624004bc795eeb3b436419c50e077e68ee3c384acad7d74131ce57ded8cad",
+      "tests": [],
+      "pass": [],
+      "fail": [],
+      "skipped": [],
+      "cancelled": []
+    },
+    {
+      "file": "/workspace/closure-regression-final-progress.log",
+      "sha256": "3a182c566b13e36a611ec86073de28f4a9311703d26c9dd6b865851450cf5a61",
+      "tests": [],
+      "pass": [],
+      "fail": [],
+      "skipped": [],
+      "cancelled": []
+    },
+    {
+      "file": "/workspace/closure-regression-negotiation-final-progress.log",
+      "sha256": "0928c6ac75976f65afcb90033a5f0487931b7f8ef10ee3aefd9efb5aa6864542",
+      "tests": [],
+      "pass": [],
+      "fail": [],
+      "skipped": [],
+      "cancelled": []
+    },
+    {
+      "file": "/workspace/closure-regression-numeric-progress.log",
+      "sha256": "7bfb168b58106b860eba646195079410ae39a65a7e008e5fcd9357bb2bfd0d21",
+      "tests": [],
+      "pass": [],
+      "fail": [],
+      "skipped": [],
+      "cancelled": []
+    },
+    {
+      "file": "/workspace/closure-regression-progress.log",
+      "sha256": "017132aecddb7a47eae2901e13243a8422012983d9857b529157a6cd16e730ce",
+      "tests": [],
+      "pass": [],
+      "fail": [],
+      "skipped": [],
+      "cancelled": []
+    },
+    {
+      "file": "/workspace/closure-regression-supplement-progress.log",
+      "sha256": "a00382302a5d36eab4960ceaf8381a23f73bbdffcc7be4979f044dae6d70aa65",
+      "tests": [],
+      "pass": [],
+      "fail": [],
+      "skipped": [],
+      "cancelled": []
+    },
+    {
+      "file": "/workspace/closure-regression-verified-progress.log",
+      "sha256": "c55061bc504525ac064150a6f0755ce647be2888e860228ce60737004d1d32a8",
+      "tests": [],
+      "pass": [],
+      "fail": [],
+      "skipped": [],
+      "cancelled": []
+    },
+    {
+      "file": "/workspace/closure-release-migrations-retry.log",
+      "sha256": "0954f39ded529f1e8c75ddbdfd23b4648cbd351cd6747e0c0c1751c0f3a72caf",
+      "tests": [
+        12
+      ],
+      "pass": [
+        12
+      ],
+      "fail": [
+        0
+      ],
+      "skipped": [
+        0
+      ],
+      "cancelled": [
+        0
+      ]
+    },
+    {
+      "file": "/workspace/closure-release-migrations.log",
+      "sha256": "f525fa511bb7e6aaf47a06c5db8c9e8c22e7ef922769372527cec20c491b75ce",
+      "tests": [
+        12
+      ],
+      "pass": [
+        3
+      ],
+      "fail": [
+        9
+      ],
+      "skipped": [
+        0
+      ],
+      "cancelled": [
+        0
+      ]
+    },
+    {
+      "file": "/workspace/closure-resource-price-red.log",
+      "sha256": "46067f9c98fd9bd083befab6499cce3e09fc8517f9e60132e3769db6e385868d",
+      "tests": [
+        2
+      ],
+      "pass": [
+        1
+      ],
+      "fail": [
+        1
+      ],
+      "skipped": [
+        0
+      ],
+      "cancelled": [
+        0
+      ]
+    },
+    {
+      "file": "/workspace/closure-review-api-build.log",
+      "sha256": "380b328f197701bd6fdd39d448fa41e99af24109f922acd1528c184302a24543",
+      "tests": [],
+      "pass": [],
+      "fail": [],
+      "skipped": [],
+      "cancelled": []
+    },
+    {
+      "file": "/workspace/closure-review-typecheck.log",
+      "sha256": "b3de1638c33d800c914cd23cb190f4ae1632babb845159c1b16459398159b439",
+      "tests": [],
+      "pass": [],
+      "fail": [],
+      "skipped": [],
+      "cancelled": []
+    },
+    {
+      "file": "/workspace/closure-search-diagnosis.log",
+      "sha256": "f953e699fa98327507bee3dbaa4717fbf2353d4ac57304ad438594847e79cf2b",
+      "tests": [],
+      "pass": [],
+      "fail": [],
+      "skipped": [],
+      "cancelled": []
+    },
+    {
+      "file": "/workspace/closure-search-diagnosis2.log",
+      "sha256": "729655ccbf488bee8410cb2282b13ad558a91004ce882cca3313611cd56a3ca4",
+      "tests": [],
+      "pass": [],
+      "fail": [],
+      "skipped": [],
+      "cancelled": []
+    },
+    {
+      "file": "/workspace/closure-security-static.log",
+      "sha256": "c4fb855406dece2e22e929819989551bd75ba14e96237db6dfae5148b6176d62",
+      "tests": [
+        9
+      ],
+      "pass": [
+        9
+      ],
+      "fail": [
+        0
+      ],
+      "skipped": [
+        0
+      ],
+      "cancelled": [
+        0
+      ]
+    },
+    {
+      "file": "/workspace/closure-source-before.log",
+      "sha256": "364c3803c48f93351eec83a5cf606231736556d966fcdf48e5e1a2b7a2a2b7cc",
+      "tests": [
+        5,
+        1
+      ],
+      "pass": [
+        5,
+        1
+      ],
+      "fail": [
+        0,
+        0
+      ],
+      "skipped": [
+        0,
+        0
+      ],
+      "cancelled": [
+        0,
+        0
+      ]
+    },
+    {
+      "file": "/workspace/closure-topic-price-red.log",
+      "sha256": "9a97731b2eafde92969ed6098c5f0254b22d57c1bd18246ff39896250dc7bb66",
+      "tests": [
+        1
+      ],
+      "pass": [
+        0
+      ],
+      "fail": [
+        1
+      ],
+      "skipped": [
+        0
+      ],
+      "cancelled": [
+        0
+      ]
+    },
+    {
+      "file": "/workspace/closure-typecheck.log",
+      "sha256": "ac381382ca30ce9e620703745d921d8b64823c503137cdeefab183518cc8f325",
+      "tests": [],
+      "pass": [],
+      "fail": [],
+      "skipped": [],
+      "cancelled": []
+    },
+    {
+      "file": "/workspace/closure-usage-exhaustion-green.log",
+      "sha256": "cebc535cdff9cfa6e40745e5fa49b9327f6c12d9eaca5cbea784d42b29f0736f",
+      "tests": [
+        1
+      ],
+      "pass": [
+        1
+      ],
+      "fail": [
+        0
+      ],
+      "skipped": [
+        0
+      ],
+      "cancelled": [
+        0
+      ]
+    },
+    {
+      "file": "/workspace/closure-usage-exhaustion-red.log",
+      "sha256": "168568d134b6bae478336834857b813a9cda0949afe8e3e0eb172983c52df03f",
+      "tests": [
+        1
+      ],
+      "pass": [
+        0
+      ],
+      "fail": [
+        1
+      ],
+      "skipped": [
+        0
+      ],
+      "cancelled": [
+        0
+      ]
+    },
+    {
+      "file": "/workspace/closure-usage-final.log",
+      "sha256": "5131f9eb14114eb96cd6520b36574b853cae491129f2caceebf12eccca57b425",
+      "tests": [
+        1,
+        18
+      ],
+      "pass": [
+        1,
+        17
+      ],
+      "fail": [
+        0,
+        1
+      ],
+      "skipped": [
+        0,
+        0
+      ],
+      "cancelled": [
+        0,
+        0
+      ]
+    },
+    {
+      "file": "/workspace/closure-usage-intelligence-verified.log",
+      "sha256": "396ee0508bb22d7577d0058c9c7fe98065ed71f9f60ed0750608f05a1d057d38",
+      "tests": [
+        18
+      ],
+      "pass": [
+        17
+      ],
+      "fail": [
+        1
+      ],
+      "skipped": [
+        0
+      ],
+      "cancelled": [
+        0
+      ]
+    },
+    {
+      "file": "/workspace/closure-verified-build.log",
+      "sha256": "15b2f61e16ca3537b95dd4d2cb5ac5f1850f261602a181496b264baa0b2a19d7",
+      "tests": [],
+      "pass": [],
+      "fail": [],
+      "skipped": [],
+      "cancelled": []
+    },
+    {
+      "file": "/workspace/closure-vision-red.log",
+      "sha256": "fe553c7342042b6b38da7e3672f2cb1d7680f16088f6318c71edce994767859f",
+      "tests": [
+        2
+      ],
+      "pass": [
+        0
+      ],
+      "fail": [
+        2
+      ],
+      "skipped": [
+        0
+      ],
+      "cancelled": [
+        0
+      ]
+    },
+    {
+      "file": "/workspace/closure-vision-storage-red.log",
+      "sha256": "b99526370f562eab0cd2b4194adfe8d9f65f43002933e7dfaef0d810ac2cc6ad",
+      "tests": [
+        2
+      ],
+      "pass": [
+        1
+      ],
+      "fail": [
+        1
+      ],
+      "skipped": [
+        0
+      ],
+      "cancelled": [
+        0
+      ]
+    }
+  ],
+  "frozenIndependentTests": [
+    {
+      "path": "artifacts/api-server/test/engineering-additive-context.test.ts",
+      "sha256": "8d8c4d3714055c6070e7abb3a2429100862293c900efc3f0696d1a05521b0128",
+      "introduced": "6aff860a5a539fcb7d2b44cd9a32bd8eeb4211d0"
+    },
+    {
+      "path": "artifacts/api-server/test/engineering-arab-markets-pricing-configured.test.ts",
+      "sha256": "c5f09ad2882ffbe9e3995687048ee2a54bd4a65accf93a147642c4529bcd372b",
+      "introduced": "556acb5a0f367f156c8fcb42ad896e6f6359ca5f"
+    },
+    {
+      "path": "artifacts/api-server/test/engineering-arab-markets-pricing.test.ts",
+      "sha256": "2d46b6553853f373e48bfde3ca054bd61a8021f37367563126b2a3e056dea3c0",
+      "introduced": "15b3ca053fe38839f7c4b60211b614bf5e723419"
+    },
+    {
+      "path": "artifacts/api-server/test/engineering-buyer-recall-jo.test.ts",
+      "sha256": "c37d44c42784821d02fac24fe9056dfee9c4a98c1de92a37d9e736622de8faf4",
+      "introduced": "05bff75ece342f58cafda68fe2db04f01c21f7f1"
+    },
+    {
+      "path": "artifacts/api-server/test/engineering-buyer-recall.test.ts",
+      "sha256": "d05a1d28d146f3804e4eadd7c9efd5b8743bf238837df1fb7b1f3970d43e081e",
+      "introduced": "0b86652e84354beecc612a23265a8f3cd1b7d2f4"
+    },
+    {
+      "path": "artifacts/api-server/test/engineering-category-configured.test.ts",
+      "sha256": "4f52e5dd405eadf47aaa1776a60815e9e53ad0f14cf9b55ebe6c948b3b7215d5",
+      "introduced": "a8aae17684e20d21990211b82c3954313495f17a"
+    },
+    {
+      "path": "artifacts/api-server/test/engineering-category-hints.test.ts",
+      "sha256": "fa58c1cf01fb3d014664e39ca1bb830063d3265a5427ee19e8177d3c3feac4d8",
+      "introduced": "96f21b7a49de2fa5f6bd77a01e6b477c7cee2a49"
+    },
+    {
+      "path": "artifacts/api-server/test/engineering-closure.test.ts",
+      "sha256": "d876b5dd889a99dbd33189ee8ab36e856c381adf2fbc22a787ce95ce784845b3",
+      "introduced": "08144aeca8177879133f928f93637cda60516e26"
+    },
+    {
+      "path": "artifacts/api-server/test/engineering-constraint-reentry.test.ts",
+      "sha256": "c68cc5ed6441434b017828723f92bcadcc9d8136a4826a4acdf8148bd5dd0c02",
+      "introduced": "f028fedc1d396b71b3982c848fa5dded4549b8f2"
+    },
+    {
+      "path": "artifacts/api-server/test/engineering-financial-answers.test.ts",
+      "sha256": "b4739504c9916fa9a39bafdcbc67a00b6e64b7b34f0c447a4d7b260d1f69f9da",
+      "introduced": "2d427533d3d7f5eaeb5024b5d5e983b3987c97ad"
+    },
+    {
+      "path": "artifacts/api-server/test/engineering-legacy-condition.test.ts",
+      "sha256": "79439bfdfb2bb38b883eb9bd470230ca553afc38532200530ba1fbbda35a6108",
+      "introduced": "0f310ef4f22ab4034fc17a390762b1d68ec070f1"
+    },
+    {
+      "path": "artifacts/api-server/test/engineering-numeric-boundary.test.ts",
+      "sha256": "cdee7e72e7f4c2409c476d244deaff8131c4b345e2fc0ae3781a789cb5fbc120",
+      "introduced": "0a1b685d79b35b9f60a45db181391dd3eff754bd"
+    },
+    {
+      "path": "artifacts/api-server/test/engineering-published-condition.test.ts",
+      "sha256": "52fd255897b37d080100139d493c001fcd1cdb16bb463d01ade34768539de66d",
+      "introduced": "8d7692cc7ad3334c9d7ddbb014df9dc2af875ea9"
+    },
+    {
+      "path": "artifacts/api-server/test/engineering-purpose-and-colour.test.ts",
+      "sha256": "6f6854ff364ef78f17cec5016afa9b762b013f22bf6141b64ffee4dc13cb2b47",
+      "introduced": "f921986a96f9d5b84ec919516af3e65468ef222b"
+    },
+    {
+      "path": "artifacts/api-server/test/engineering-relaxation-constraints.test.ts",
+      "sha256": "3d4a692ea0d96f4c6099df646e763788f287d828c1b8a9bd9a5ff06ed924c20b",
+      "introduced": "27dfa7d2cc3662cb85e976c5352edf11c9a36919"
+    },
+    {
+      "path": "artifacts/api-server/test/engineering-remaining-context.test.ts",
+      "sha256": "365dff8cee0312286b3735cb098036f33b5ceba9e31b58340d63d5ed3a8bc858",
+      "introduced": "8effb273ba2ae425293e71fc59a10bd56fe9c6b4"
+    },
+    {
+      "path": "artifacts/api-server/test/engineering-resource-price-bound.test.ts",
+      "sha256": "49eb4b8fb2c688d3104ff6f6c9e6463fd45eaadcad52d0eb801fbee363a76c1c",
+      "introduced": "0f75202aee07266ae95848e0486b3245980c7810"
+    },
+    {
+      "path": "artifacts/api-server/test/engineering-source-binding.test.ts",
+      "sha256": "7af5d2bf56589e6e9a8105272bbf9ced3cef5704d9288fd77a8a88a4125efbb4",
+      "introduced": "05bff75ece342f58cafda68fe2db04f01c21f7f1"
+    },
+    {
+      "path": "artifacts/api-server/test/engineering-topic-price-bound.test.ts",
+      "sha256": "45d8c9df060132e446da4e6902389922a78168f809baf2fc977ecdaf4e18ab85",
+      "introduced": "e07632d4dfbe3dc8f143e4cec71c67388d77f9b9"
+    },
+    {
+      "path": "artifacts/api-server/test/engineering-usage-exhaustion.test.ts",
+      "sha256": "ee392cc50ec60de4d6aa9556bce86a4f01ee959b4257ae72f76e7d9de20d560b",
+      "introduced": "b3f77628fd1732e06e606aee045c59d940bd2a82"
+    },
+    {
+      "path": "artifacts/api-server/test/engineering-vision-metering.test.ts",
+      "sha256": "1a5449566d6d7fadb7fbd6f7274133a6248566ef207ead5500d258da71f2fd5e",
+      "introduced": "06f8d4cb0a7d25655b7e6a4e255cc2e00c7e0c3a"
+    },
+    {
+      "path": "artifacts/api-server/test/engineering-vision-question-storage.test.ts",
+      "sha256": "aead21e75510418c3017f452c0d71447a8ef64c56d6e594bde7c4c579f6e2420",
+      "introduced": "8dc69ff161c36004f7fb68cda3e1434aad5a0e77"
+    },
+    {
+      "path": "artifacts/api-server/test/engineering-vision-question.test.ts",
+      "sha256": "711c5bf891e007dbad30c40f82aa8024a3b53666cd9a481d2942b8abe0257d06",
+      "introduced": "377a296cd1f335530c7f7335c51ef7f46495da91"
+    }
+  ]
+}

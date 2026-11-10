@@ -7,5 +7,5 @@ No merge, push, deployment, production access or paid call authorized by this mi
 The current user request supersedes historical branch/publication and Railway restrictions for a new local branch and read-only staging inspection only.
 No AGENTS.md existed on the old export; the integrated baseline's AGENTS.md and CLAUDE.md and Qoder pack govern this work.
 Frozen lab baseline/heldout/retest evidence is preserved verbatim. New independent closure tests are engineering-closure.test.ts and are frozen before implementation. They establish local contracts, not live language quality.
-C12 proposed contract: existing typed payload remains compatible; current-turn canonical read owns the listing identities, figures and response. Presentation remains Claude-owned. Awaiting any additional owner-relayed Claude contract.
+C12 proposed contract: existing typed payload remains compatible; current-turn canonical read owns the listing identities, figures and response. Presentation remains Claude-owned. The owner-relayed canonical contract was received and is recorded in C12_CONTRACT.md.
 Original schema and commercial policy are preserved. All database work is disposable loopback only.

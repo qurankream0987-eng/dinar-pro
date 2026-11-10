@@ -10,10 +10,10 @@ The attached environment reports `RAILWAY_TOKEN` present and ready. The token va
 printed, written to the repository, or copied into instructions. The read-only metadata request
 used the existing binding. A sandbox connectivity failure was retried with the supported outer
 executor; the proxy refused `backboard.railway.com` with CONNECT HTTP 403. This is a network-policy
-block, not evidence of an invalid credential. The owner was asked to allow that hostname.
+block, not evidence of an invalid credential. The owner subsequently instructed that Railway troubleshooting be postponed. No further connectivity attempts are planned.
 
 Therefore deployed source SHA, actual staging environment/service identity, variable bindings,
-SMS/Google readiness and staging HTTP health remain UNVERIFIED. GitHub integration head is not
+SMS/Google readiness and staging HTTP health remain BLOCKED. GitHub integration head is not
 claimed as the deployment SHA. No staging database connection was attempted.
 
 ## Repository readiness and unchanged external gates
