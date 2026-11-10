@@ -105,6 +105,18 @@ type PendingGuestHandoff = {
   authIntent?: GuestAuthIntent;
 };
 
+const UNSENT_DRAFT_KEY = "dinar-unsent-draft";
+/** The draft stashed by a cart link before its navigation, removed once read. */
+function takeStashedDraft(): string {
+  try {
+    const value = sessionStorage.getItem(UNSENT_DRAFT_KEY) ?? "";
+    sessionStorage.removeItem(UNSENT_DRAFT_KEY);
+    return value;
+  } catch {
+    return "";
+  }
+}
+
 export default function AiPage() {
   const [reasoningEffort, setReasoningEffort] =
     useState<ReasoningEffort>("medium");
@@ -1613,11 +1625,16 @@ export default function AiPage() {
     "سياق البحث";
   // Navigation entries are real conversation commands: an empty chat takes the command,
   // otherwise it opens a fresh conversation. Pending photos never ride along.
+  // The cart link navigates through /cart, which remounts this page: the unsent draft is kept in
+  // this tab's sessionStorage for that one navigation and taken back by the read command.
+  const stashDraft = () => {
+    try { if (draft.trim()) sessionStorage.setItem(UNSENT_DRAFT_KEY, draft.slice(0, 4000)); } catch { /* storage unavailable */ }
+  };
   // A read command (cart, orders, listings) opens its surface without discarding what the user was
   // typing: the unsent draft is put back once the command's conversation has started.
   const runCommand = (value: string) => {
     setSidebarOpen(false);
-    const unsent = draft;
+    const unsent = draft || takeStashedDraft();
     const restore = () => { if (unsent.trim()) setDraft((current) => current || unsent); };
     if (showWelcome && activeId) void sendMessage(activeId, value).finally(restore);
     else void startConversation(value, []).finally(restore);
@@ -2018,6 +2035,7 @@ export default function AiPage() {
       </button>
       <Link
         href="/cart"
+        onClick={stashDraft}
         aria-label={unitCount ? `السلة، ${unitCount} وحدة` : "السلة"}
         data-testid="link-cart"
         className="ai-mobile-cart-trigger pressable"
@@ -2098,6 +2116,7 @@ export default function AiPage() {
                   <TooltipTrigger asChild>
                     <Link
                       href="/cart"
+        onClick={stashDraft}
                       className="ai-rail-action pressable relative"
                       aria-label={unitCount ? `السلة، ${unitCount} وحدة` : "السلة"}
                       data-testid="sidebar-cart"
@@ -2294,6 +2313,7 @@ export default function AiPage() {
               )}
               <Link
                 href="/cart"
+        onClick={stashDraft}
                 className="ai-sidebar-cart pressable"
                 data-testid="footer-cart"
                 aria-label={unitCount ? `السلة، ${unitCount} وحدة` : "السلة"}
