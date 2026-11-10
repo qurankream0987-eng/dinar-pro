@@ -19,5 +19,6 @@ export function normalizeUsageText(message: string): string {
 }
 
 export function isAiUsageQuestion(message: string): boolean {
-  return AI_USAGE_QUESTION.test(normalizeUsageText(message));
+  const text = normalizeUsageText(message);
+  return AI_USAGE_QUESTION.test(text) || /(?:خلص|انتهي|نفد)\s+(?:ال)?رصيد(?:ي)?\s+(?:من\s+)?(?:ال)?(?:رسائل|رسائلي|محادثات)(?:\s|$)/u.test(text);
 }
