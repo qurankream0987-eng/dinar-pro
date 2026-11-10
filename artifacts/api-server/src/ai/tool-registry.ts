@@ -14,6 +14,7 @@ import {
 import { resolveMarketplaceCategory } from "../lib/marketplace-categories";
 import { genericTokens, isDescriptiveOnly, isRequestOnly, itemTokens, purposeTokens, textMatchesToken } from "../lib/arabic-search-terms";
 import { normalizeSearch } from "./search-context";
+import { parseStructuredSearch } from "./search-query";
 import {
   decorateStoredResults,
   recommendListings,
@@ -53,6 +54,8 @@ export type ToolContext = {
   actorId?: string;
   /** The owning user-message row for any result set created during a model tool round. */
   currentMessageId?: string;
+  /** Original user constraint source; never a model restatement. */
+  userMessage?: string;
 };
 
 export type ToolResult = {
@@ -1080,6 +1083,14 @@ export async function executeModelTool(
       "This read-only tool is not available in the current conversation.",
       "TOOL_NOT_ALLOWED",
     );
+  }
+  // C02: model arguments may narrow a search, never erase the user's explicit price bounds.
+  if (name === "searchListings" && context.userMessage) {
+    const priceFilters = parseStructuredSearch(context.userMessage)?.filters.filter((filter) => filter.field === "price") ?? [];
+    if (priceFilters.length) {
+      const args = JSON.parse(rawArguments);
+      rawArguments = JSON.stringify({ ...args, filters: [...(Array.isArray(args.filters) ? args.filters : []), ...priceFilters] });
+    }
   }
   let execution: { tool: string; version: number; result: ToolResult };
   try {

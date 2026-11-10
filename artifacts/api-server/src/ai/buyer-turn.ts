@@ -296,7 +296,7 @@ const RANKING_TEXT: Record<BuyerRanking, string> = {
 /** Re-runs Block A search with the buyer's constraints and orders the result. */
 export async function runBuyerSearch(market: Market, state: BuyerState): Promise<ToolResult> {
   const filters: SearchFilter[] = [
-    ...state.filters.filter((filter) => !(filter.field === "price" && ["eq", "lte", "lt"].includes(filter.operator) && state.maxPrice)),
+    ...state.filters,
     ...(state.maxPrice ? [{ field: "price", operator: "lte", value: state.maxPrice } as SearchFilter] : []),
   ];
   const sponsoredView = state.ranking === "DEFAULT";

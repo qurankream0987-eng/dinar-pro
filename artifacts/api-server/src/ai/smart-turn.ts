@@ -1724,6 +1724,7 @@ export async function executeModelFallback(
       conversationId: input.conversationId,
       market: input.market,
       actorId: input.actorId,
+      userMessage: input.message,
       ...(input.currentMessageId ? { currentMessageId: input.currentMessageId } : {}),
     };
     const toolRoles =
