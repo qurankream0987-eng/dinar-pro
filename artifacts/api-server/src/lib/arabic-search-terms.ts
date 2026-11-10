@@ -1,3 +1,4 @@
+import { cardinalWordValue } from "../ai/arabic-normalization";
 /**
  * General Arabic matching for conversational search. Tokens arrive already folded by
  * normalizeSearch (hamza forms → ا, ى → ي, diacritics removed; ة is kept). Nothing here knows
@@ -58,6 +59,8 @@ const POSSESSIVES = ["كم", "هم", "ها", "نا", "ي", "ك"];
 /** Every surface form a request token may take in a listing. */
 export function tokenVariants(token: string): string[] {
   const forms = new Set<string>([token]);
+  const cardinal = cardinalWordValue(token);
+  if (cardinal !== undefined) forms.add(String(cardinal));
   for (const prefix of PROCLITICS)
     if (token.startsWith(prefix) && token.length - prefix.length >= 3) forms.add(token.slice(prefix.length));
   for (const form of [...forms]) {
@@ -141,6 +144,7 @@ const escape = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
  * unrelated words.
  */
 export function textMatchesToken(text: string, token: string): boolean {
+  if (/^\d+$/u.test(token)) return new RegExp(`(?:^|\\s)${escape(token)}(?=\\s|$)`, "u").test(text);
   if (text.includes(token)) return true;
   // …and end it, allowing only an inflectional ending: the stem «سيار» (from «سيارات») matches
   // «سيارة», but a stem is never the prefix of another word.
@@ -162,7 +166,7 @@ export async function boundedItemRelaxation<T extends { title: string }>(query: 
     for (const rest of combinations(others, keep)) {
       const subset = [head!, ...rest];
       const dropped = others.filter((word) => !rest.includes(word));
-      if (dropped.some((word) => /\d/u.test(word)) || isDescriptiveOnly(subset)) continue;
+      if (dropped.some((word) => /\d/u.test(word) || cardinalWordValue(word) !== undefined) || isDescriptiveOnly(subset)) continue;
       if (++tried > 14) return undefined;
       let listings = await run(subset.join(" "));
       if (!rest.length) listings = listings.filter((listing) => textMatchesToken(normalize(listing.title), head!));

@@ -111,7 +111,7 @@ const UNIT_NOUN =
   /^(?:بالمئه|بالمئة|بالميه|بالمية|بالمائه|بالمائة|%|٪|الف|الاف|مليون|مية|ميه|مئة|مائة|غرف|غرفة|غرفه|حمام|حمامات|دينار|دنانير|ريال|ريالات|دولار|دولارات|درهم|كم|كيلو|متر|قطع|قطعة|حبات|سنين|سنوات)$/;
 const COMPARATOR_TAIL = /(?:^|\s)(?:اقل من|اكثر من|اعلى من|فوق|تحت|دون|اقصى|بحدود|حوالي|حدود|ب|من|الى|الي|بين)$/;
 
-function cardinalWordValue(word: string): number | undefined {
+export function cardinalWordValue(word: string): number | undefined {
   return UNIT_WORDS[word] ?? TENS_WORDS[word] ?? HUNDRED_WORDS[word];
 }
 
