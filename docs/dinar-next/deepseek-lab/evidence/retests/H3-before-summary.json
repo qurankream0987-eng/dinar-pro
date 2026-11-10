@@ -1,0 +1,16 @@
+{
+ "mode": "live",
+ "database": "dinar_test_lab_run_mwacd4uf",
+ "cases": 30,
+ "stopped": null,
+ "balanceStart": 1.63,
+ "balanceEnd": 1.62,
+ "spend": {
+  "calls": 22,
+  "inputTokens": 41283,
+  "cachedTokens": 30464,
+  "outputTokens": 2230,
+  "usdAtRates": 0.006104484
+ },
+ "finishedAt": "2026-11-10T07:02:25.248Z"
+}

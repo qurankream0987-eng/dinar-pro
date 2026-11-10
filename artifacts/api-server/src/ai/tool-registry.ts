@@ -474,8 +474,11 @@ export const aiToolRegistry: Record<string, ToolDefinition> = {
         const words = itemTokens(normalizeSearch(input.query).split(/\s+/).filter(Boolean)).slice(0, 6);
         const [head, ...others] = words;
         let tried = 0;
-        if (head && others.length)
-          search: for (let keep = others.length - 1; keep >= 0 && keep >= others.length - 3; keep--) {
+        // Two-word requests stay exact («ينظف سيارتي» is not «ينظف»: the dropped word may be what
+        // defines the item). Longer requests may lose at most half their words.
+        const minimumKept = Math.ceil(words.length / 2);
+        if (head && words.length >= 3)
+          search: for (let keep = others.length - 1; keep >= 0 && keep >= others.length - 3 && keep + 1 >= minimumKept; keep--) {
             for (const rest of combinations(others, keep)) {
               const subset = [head, ...rest];
               if (isDescriptiveOnly(subset)) continue;
