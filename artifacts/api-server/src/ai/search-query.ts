@@ -156,6 +156,13 @@ function searchCategory(
         CATEGORY_NEUTRAL_HINT_FIELDS.has(field.toLowerCase())
       )
         return [];
+      // An audience, material or automatic feature applies across product families. It may
+      // filter a category the buyer named, but cannot independently choose that category.
+      // Identity hints (brand/model/property kind) retain their existing inference behavior;
+      // other attributes require an explicit field label before they can imply a category.
+      const identityHint = /^(?:make|manufacturer|brand|model|propertyType)$/iu.test(field);
+      const namedField = [field, definition.label, ...(FIELD_WORDS[field] ?? [])].some((label) => hasPhrase(normalized, label));
+      if (!identityHint && !namedField) return [];
       const knownPhrases = FIELD_VALUE_ALIASES
         .filter((entry) => entry.fields.test(field))
         .flatMap((entry) => entry.phrases);
