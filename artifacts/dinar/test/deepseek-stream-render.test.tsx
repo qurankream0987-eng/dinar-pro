@@ -189,7 +189,7 @@ await test("real R2 DeepSeek replies stream and render: capabilities list, groun
   }
   const general = render(completeOf(await replay(r2Case("r2-replay-general").sse, 7)).assistantMessage);
   assert.match(general, /<strong[^>]*>دينار<\/strong>/u);
-  assert.match(general, /<h4[^>]*class="ai-rich-subheading"><span>شو بقدر أعمل معك؟<\/span><\/h4>/u, general.slice(0, 800));
+  assert.match(general, /<h4[^>]*class="ai-rich-subheading">(?:<svg class="ai-rich-mark"[^]*?<\/svg>)<span>شو بقدر أعمل معك؟<\/span><\/h4>/u, general.slice(0, 800));
   assert.match(general, /<ul[^>]*class="ai-rich-list"><li><span>شرح مفاهيم/u);
   assert.match(general, /SIMULATION_ONLY/u);
   const advice = render(completeOf(await replay(r2Case("r2-replay-follow-up").sse, 9)).assistantMessage);

@@ -66,15 +66,25 @@ function Lines({ lines }: { lines: Inline[][] }) {
   );
 }
 
+/** DINAR's own heading mark (replaces emoji): a small gold diamond. */
+function HeadingMark() {
+  return (
+    <svg className="ai-rich-mark" viewBox="0 0 12 12" width="12" height="12" aria-hidden="true" focusable="false">
+      <path d="M6 .8 11.2 6 6 11.2.8 6Z" fill="currentColor" opacity=".22" />
+      <path d="M6 3.2 8.8 6 6 8.8 3.2 6Z" fill="currentColor" />
+    </svg>
+  );
+}
+
 function Block({ block }: { block: RichBlock }) {
   switch (block.kind) {
     case "code":
       return <CodeBlock language={block.language} code={block.code} />;
     case "heading":
       return block.level === 3 ? (
-        <h3 dir={dirOf(block.inline)} className="ai-rich-heading"><InlineText parts={block.inline} /></h3>
+        <h3 dir={dirOf(block.inline)} className="ai-rich-heading"><HeadingMark /><InlineText parts={block.inline} /></h3>
       ) : (
-        <h4 dir={dirOf(block.inline)} className="ai-rich-subheading"><InlineText parts={block.inline} /></h4>
+        <h4 dir={dirOf(block.inline)} className="ai-rich-subheading"><HeadingMark /><InlineText parts={block.inline} /></h4>
       );
     case "list": {
       // One direction for the whole list keeps every marker on the same side.

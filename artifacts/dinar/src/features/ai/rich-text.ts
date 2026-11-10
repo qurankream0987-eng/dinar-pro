@@ -59,8 +59,26 @@ const TABLE_RULE = /^\s*\|?\s*:?-{2,}:?\s*(?:\|\s*:?-{2,}:?\s*)*\|?\s*$/u;
 const cells = (line: string) =>
   line.trim().replace(/^\||\|$/gu, "").split("|").map((cell) => parseInline(cell.trim()));
 
+/**
+ * Emoji are not part of DINAR's visual language: answers use the app's own SVG marks instead.
+ * Removes pictographs, flags, keycaps, skin tones and joiners; ©, ® and ™ stay text.
+ */
+const EMOJI = /(?:[0-9#*]\uFE0F?\u20E3)|(?:[\u{1F1E6}-\u{1F1FF}]{2})|(?:(?![\u00A9\u00AE\u2122])\p{Extended_Pictographic}[\u{1F3FB}-\u{1F3FF}\uFE0F]*(?:\u200D(?:\p{Extended_Pictographic}|[\u2640\u2642])[\u{1F3FB}-\u{1F3FF}\uFE0F]*)*)/gu;
+export function stripEmoji(line: string): string {
+  if (!EMOJI.test(line)) return line;
+  EMOJI.lastIndex = 0;
+  const indent = line.match(/^[ \t]*/u)![0];
+  const rest = line.slice(indent.length).replace(EMOJI, "").replace(/\uFE0F/gu, "").replace(/[ \t]{2,}/gu, " ").trim();
+  return indent + rest;
+}
+
 export function parseRichText(body: string): RichBlock[] {
-  const lines = body.replace(/\r\n?/gu, "\n").split("\n");
+  const raw = body.replace(/\r\n?/gu, "\n").split("\n");
+  let inFence = false;
+  const lines = raw.map((line) => {
+    if (FENCE.test(line)) { inFence = !inFence; return line; }
+    return inFence ? line : stripEmoji(line);
+  });
   const blocks: RichBlock[] = [];
   let paragraph: Inline[][] = [];
   const flush = () => {

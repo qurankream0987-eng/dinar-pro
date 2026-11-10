@@ -303,3 +303,9 @@
 @media (prefers-reduced-motion: reduce) {
   .dinar-chatgpt :is(.ai-rail-action, .ai-rail-action svg, .ai-rail-brand img) { transition: none; transform: none !important; }
 }
+
+/* Answer headings carry DINAR's SVG mark instead of emoji. */
+.ai-rich-heading, .ai-rich-subheading { display: flex; align-items: center; gap: .5em; }
+.ai-rich-mark { flex: none; color: var(--dinar-gold, #c9a227); transition: transform .3s ease; }
+.ai-rich-heading:hover .ai-rich-mark, .ai-rich-subheading:hover .ai-rich-mark { transform: rotate(45deg) scale(1.15); }
+@media (prefers-reduced-motion: reduce) { .ai-rich-mark { transition: none; } }
