@@ -1,3 +1,4 @@
+import { parseStructuredSearch } from "./search-query";
 /**
  * G2 — smart conversation inside the one shared DINAR runtime.
  *
@@ -388,6 +389,22 @@ function consultationTurn(state: Consultation, prompt: string): Turn {
       prompt,
     },
   };
+}
+
+/** A model restatement is not allowed to erase an explicit original price constraint. */
+async function retainUserPriceBounds(turn: Turn, message: string, market: Market): Promise<Turn> {
+  if (turn.result.kind !== "SEARCH") return turn;
+  const hard = parseStructuredSearch(message)?.filters.filter((filter) => filter.field === "price") ?? [];
+  if (!hard.length) return turn;
+  const query = turn.result.query;
+  const buyer = (query.buyer ?? {}) as Partial<BuyerState>;
+  const result = await runBuyerSearch(market, {
+    ...buyer, search: typeof query.search === "string" ? query.search : buyer.search ?? "",
+    ...(typeof query.categoryId === "string" ? { categoryId: query.categoryId } : {}),
+    filters: [...(Array.isArray(query.filters) ? query.filters : buyer.filters ?? []), ...hard],
+    ranking: buyer.ranking ?? "DEFAULT",
+  });
+  return { ...turn, result };
 }
 
 async function consultationSearch(market: Market, state: Consultation): Promise<Turn> {
@@ -2206,7 +2223,8 @@ export async function executeModelFallback(
       "DINAR AI canonical request",
     );
     if (!problem && !conditionalPurchase && mode !== "SHADOW" && productControl) {
-      const routed = await productControl(turn.canonicalRequest);
+      const candidate = await productControl(turn.canonicalRequest);
+      const routed = candidate ? await retainUserPriceBounds(candidate, input.message, input.market) : null;
       if (routed) return { ...routed, result: { ...routed.result, modelRouted: { canonicalRequest: turn.canonicalRequest } } };
     }
   }
@@ -2239,14 +2257,14 @@ export async function executeModelFallback(
   // A general question («طيب وكم تكلف؟ وهل تناسب البيت؟») keeps its answer: the model may
   // not swap it for listings the user never asked to browse.
   if (!taskPlanProposal && (turn.suggestedAction === "SEARCH_LISTINGS" || turn.responseKind === "SEARCH_INTENT") && turn.entities?.item && !isGeneralQuestion(input.message))
-    return consultationSearch(input.market, {
+    return retainUserPriceBounds(await consultationSearch(input.market, {
       kind: "CONSULTATION",
       ownerId: input.actorId,
       goal: "BUY",
       item: turn.entities.item,
       ...(turn.entities.maxPrice ? { budget: turn.entities.maxPrice } : {}),
       preferences: [],
-    });
+    }), input.message, input.market);
   if (!taskPlanProposal && turn.suggestedAction === "CREATE_LISTING_DRAFT") {
     if (!isGroundedSellerDraftRequest(input.message, turn) || !createSellerDraft)
       return adviceTurn(
