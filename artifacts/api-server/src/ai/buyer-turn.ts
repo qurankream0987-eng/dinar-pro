@@ -712,6 +712,14 @@ export async function executeBuyerTurn(input: {
   const set = await latestListingSet(input.conversationId, input.market.id);
   const state = stateOf(set);
 
+  if (CHEAPEST.test(text) && set && /^(?:اي واحد|ايهم|ايهن|مين|منو|اياهم)\s/u.test(text)) {
+    const current = await searchMarketplaceListings(input.market, { search: "", allowedIds: set.resourceIds, conversational: true, sponsoredPlacement: false });
+    const priced = current.filter((listing) => listing.unitPrice !== null).sort((a, b) => Number(a.unitPrice) - Number(b.unitPrice));
+    if (!priced.length) return notice("لا يوجد سعر معلن للعروض الحالية؛ لا أستطيع تحديد الأرخص.");
+    const least = priced[0]!;
+    const ties = priced.filter((listing) => listing.unitPrice === least.unitPrice).map((listing) => `«${listing.title}»`).join("، ");
+    return notice(`الأرخص بين العروض الظاهرة المتاحة: ${ties} بسعر ${least.unitPrice} ${least.currency}. من سجل DINAR الحالي، بدون التوصيل أو أي رسوم. لم يتغير شيء.`);
+  }
   // Resolve a two-listing price difference against current authorized rows, not model memory.
   if (set && /^(?:كم|قديش|شو|ما|ايش|وش) (?:هو )?(?:ال)?فرق (?:بالسعر|في السعر|السعر)(?: بينهم| بينهما| بين الاول والثاني)?$/u.test(text)) {
     if (set.resourceIds.length !== 2) return notice("حدّد عرضين لمقارنة فرق السعر، مثل «قارن الأول بالثاني».");
@@ -836,14 +844,6 @@ export async function executeBuyerTurn(input: {
       : BEST.test(asked)
         ? "BEST_VALUE"
         : undefined;
-  if (ranking === "CHEAPEST" && set && /^(?:اي واحد|ايهم|ايهن|مين|منو|اياهم)\s/u.test(asked)) {
-    const current = await searchMarketplaceListings(input.market, { search: "", allowedIds: set.resourceIds, conversational: true, sponsoredPlacement: false });
-    const priced = current.filter((listing) => listing.unitPrice !== null).sort((a, b) => Number(a.unitPrice) - Number(b.unitPrice));
-    if (!priced.length) return notice("لا يوجد سعر معلن للعروض الحالية؛ لا أستطيع تحديد الأرخص.");
-    const least = priced[0]!;
-    const ties = priced.filter((listing) => listing.unitPrice === least.unitPrice).map((listing) => `«${listing.title}»`).join("، ");
-    return notice(`الأرخص بين العروض الظاهرة المتاحة: ${ties} بسعر ${least.unitPrice} ${least.currency}. من سجل DINAR الحالي، بدون التوصيل أو أي رسوم. لم يتغير شيء.`);
-  }
   if (ranking && state) {
     const raise = asked.match(RAISE);
     const ceiling = state.maxPrice ?? state.filters.find((filter) => filter.field === "price" && ["lt", "lte"].includes(filter.operator))?.value;
