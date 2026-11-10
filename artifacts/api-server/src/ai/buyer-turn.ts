@@ -13,6 +13,7 @@ import type { marketFor } from "../lib/markets";
 import type { ListingRecord } from "../lib/dinar-data";
 import { categorySchema, listMarketplaceCategories } from "../lib/marketplace-categories";
 import { publishedListingCities, searchMarketplaceListings } from "../lib/marketplace-listings";
+import { boundedItemRelaxation } from "../lib/arabic-search-terms";
 import { storedSponsoredIds } from "../lib/recommendations";
 import { normalizeSearch } from "./search-context";
 import { foldArabicLetters, normalizeDigits } from "./arabic-normalization";
@@ -300,8 +301,8 @@ export async function runBuyerSearch(market: Market, state: BuyerState): Promise
     ...(state.maxPrice ? [{ field: "price", operator: "lte", value: state.maxPrice } as SearchFilter] : []),
   ];
   const sponsoredView = state.ranking === "DEFAULT";
-  const found = await searchMarketplaceListings(market, {
-    search: state.search,
+  const search = (query: string) => searchMarketplaceListings(market, {
+    search: query,
     conversational: true,
     ...(state.categoryId ? { categoryId: state.categoryId } : {}),
     filters,
@@ -310,7 +311,7 @@ export async function runBuyerSearch(market: Market, state: BuyerState): Promise
   });
   // Colour and size are matched as whole words in the listing's own text when the
   // category has no such attribute; nothing is assumed about listings that omit them.
-  const matching = found.filter((listing) => {
+  const matchesPreferences = (found: ListingRecord[]) => found.filter((listing) => {
     const text = ` ${textOf(listing)} `;
     if (state.color && !text.includes(` ${normalizeSearch(state.color)} `)) return false;
     if (state.size && !new RegExp(`(?:\\s|مقاس|قياس|سايز)${state.size}(?:\\s)`, "u").test(text)) return false;
@@ -322,6 +323,12 @@ export async function runBuyerSearch(market: Market, state: BuyerState): Promise
     }
     return true;
   });
+  let matching = matchesPreferences(await search(state.search));
+  let broadenedFrom: string[] | undefined;
+  if (!matching.length) {
+    const relaxed = await boundedItemRelaxation(state.search, normalizeSearch, async (query) => matchesPreferences(await search(query)));
+    if (relaxed) { matching = relaxed.listings; broadenedFrom = relaxed.dropped; }
+  }
   if (!matching.length && state.relaxed?.length) {
     const relaxed = new Set(state.relaxed.map((word) => normalizeSearch(word)));
     const search = normalizeSearch(state.search).split(/\s+/u).filter((word) => !relaxed.has(word)).join(" ");
@@ -361,6 +368,7 @@ export async function runBuyerSearch(market: Market, state: BuyerState): Promise
     state.targetPrice && !state.maxPrice ? `حول ${state.targetPrice} ${market.currencyCode}` : "",
   ].filter(Boolean);
   const message = [
+    broadenedFrom?.length ? `خففت كلمات الوصف «${broadenedFrom.join("، ")}» فقط؛ بقيت شروط السعر والحالة واللون والمقاس كما طلبتها.` : "",
     listings.length
       ? `وجدت ${listings.length} ${listings.length === 1 ? "عرضًا" : "عروض"} داخل DINAR${notes.length ? ` (${notes.join("، ")})` : ""}.`
       : `لم أجد عروضًا مطابقة داخل DINAR${notes.length ? ` (${notes.join("، ")})` : ""}. جرّب إزالة أحد الشروط.`,
@@ -373,6 +381,7 @@ export async function runBuyerSearch(market: Market, state: BuyerState): Promise
   return {
     kind: "SEARCH",
     query: {
+      ...(broadenedFrom ? { broadenedFrom } : {}),
       search: state.search,
       category: null,
       categoryId: state.categoryId ?? null,

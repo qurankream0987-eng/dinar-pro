@@ -150,3 +150,24 @@ export function textMatchesToken(text: string, token: string): boolean {
       new RegExp(`(?:^|\\s)(?:و|ف|ب|ل|ك)?(?:ال)?${escape(form)}(?:ة|ه|ات|ي|يه|ية)?(?=\\s|$)`, "u").test(text),
   );
 }
+
+/** Shared bounded recall; callers retain every hard filter and eligibility check. */
+export async function boundedItemRelaxation<T extends { title: string }>(query: string, normalize: (text: string) => string, run: (query: string) => Promise<T[]>): Promise<{ listings: T[]; dropped: string[] } | undefined> {
+  const words = itemTokens(normalize(query).split(/\s+/u).filter(Boolean)).slice(0, 6);
+  if (words.length < 3) return undefined;
+  const [head, ...others] = words;
+  let tried = 0;
+  const combinations = (items: string[], count: number): string[][] => count === 0 ? [[]] : items.flatMap((item, i) => combinations(items.slice(i + 1), count - 1).map((rest) => [item, ...rest]));
+  for (let keep = others.length - 1; keep >= 0 && keep >= others.length - 3 && keep + 1 >= Math.ceil(words.length / 2); keep--) {
+    for (const rest of combinations(others, keep)) {
+      const subset = [head!, ...rest];
+      const dropped = others.filter((word) => !rest.includes(word));
+      if (dropped.some((word) => /\d/u.test(word)) || isDescriptiveOnly(subset)) continue;
+      if (++tried > 14) return undefined;
+      let listings = await run(subset.join(" "));
+      if (!rest.length) listings = listings.filter((listing) => textMatchesToken(normalize(listing.title), head!));
+      if (listings.length) return { listings, dropped };
+    }
+  }
+  return undefined;
+}
