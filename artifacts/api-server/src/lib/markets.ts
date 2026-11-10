@@ -25,12 +25,20 @@ export async function allMarkets() {
   const byId = new Map(prices.map(price => [price.marketId, price]));
   return rows.map(row => marketView(row, byId.get(row.id)));
 }
+/**
+ * Guest default market. Staging only: guests start in the owner-approved JO test market so the
+ * assistant works without a manual market choice. Production and development keep DEFAULT_MARKET.
+ */
+export function guestDefaultMarket(env: NodeJS.ProcessEnv = process.env) {
+  return env.DINAR_DEPLOYMENT_ENV === 'staging' ? 'JO' : DEFAULT_MARKET;
+}
 export async function marketFor(req: any, tx: any = db, lock = false) {
+  const guestDefault = guestDefaultMarket();
   const cookieMarketId = req.cookies?.[GUEST_MARKET_COOKIE];
   const requestedMarketId = req.actor?.activeMarketId ??
     (typeof cookieMarketId === 'string' && cookieMarketId.length <= 32
       ? cookieMarketId
-      : DEFAULT_MARKET);
+      : guestDefault);
   const findMarket = async (id: string) => {
     let query = tx.select().from(markets).where(eq(markets.id, id));
     if (lock) query = query.for('share');
@@ -40,7 +48,9 @@ export async function marketFor(req: any, tx: any = db, lock = false) {
   let row = await findMarket(requestedMarketId);
   // An invalid or stale guest cookie is not a valid selection. Keep the existing
   // configured default behavior; a valid but closed market remains selected.
-  if (!row && !req.actor && requestedMarketId !== DEFAULT_MARKET)
+  if (!row && !req.actor && requestedMarketId !== guestDefault)
+    row = await findMarket(guestDefault);
+  if (!row && !req.actor && guestDefault !== DEFAULT_MARKET)
     row = await findMarket(DEFAULT_MARKET);
   if (!row) throw marketError(400, 'السوق غير موجود');
   return resolveMarket(row, tx);

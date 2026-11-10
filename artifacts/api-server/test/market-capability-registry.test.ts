@@ -221,3 +221,13 @@ async function test(name: string, run: () => void | Promise<void>) {
     throw error;
   }
 }
+
+// Staging guests start in the owner-approved JO test market; every other environment keeps the default.
+{
+  const { guestDefaultMarket } = await import("../src/lib/markets");
+  const { DEFAULT_MARKET } = await import("@workspace/global");
+  assert.equal(guestDefaultMarket({ DINAR_DEPLOYMENT_ENV: "staging" } as any), "JO");
+  assert.equal(guestDefaultMarket({ DINAR_DEPLOYMENT_ENV: "production" } as any), DEFAULT_MARKET);
+  assert.equal(guestDefaultMarket({} as any), DEFAULT_MARKET);
+  console.log("guest default market: staging JO, others unchanged");
+}
