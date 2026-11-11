@@ -1,0 +1,154 @@
+{
+  "remainingSix": [
+    {
+      "suite": "lab-defect-regressions",
+      "testId": "general text is not routed to checkout, market or recommendations",
+      "status": "FAIL",
+      "classification": "PRESERVED_CONTRACT_CONFLICT",
+      "requirementTrace": "../contract-openrouter/CONTRACT_RECONCILIATION.md",
+      "evidence": "/workspace/advanced-ai-evidence/regression/lab-defect-regressions.log"
+    },
+    {
+      "suite": "model-native-routing",
+      "testId": "D6-AI-01 scripted read-only tool results ground the final comparison",
+      "status": "FAIL",
+      "classification": "PRESERVED_CONTRACT_CONFLICT",
+      "requirementTrace": "../contract-openrouter/CONTRACT_RECONCILIATION.md",
+      "evidence": "/workspace/advanced-ai-evidence/regression/model-native-routing.log"
+    },
+    {
+      "suite": "model-native-routing",
+      "testId": "D6-AI-01 resumes a stale read-only loop from persisted feedback",
+      "status": "FAIL",
+      "classification": "PRESERVED_CONTRACT_CONFLICT",
+      "requirementTrace": "../contract-openrouter/CONTRACT_RECONCILIATION.md",
+      "evidence": "/workspace/advanced-ai-evidence/regression/model-native-routing.log"
+    },
+    {
+      "suite": "search-sql-foundation",
+      "testId": "SF-03 with no search documents (nothing backfilled) the SQL engine equals the legacy engine exactly",
+      "status": "FAIL",
+      "classification": "PRESERVED_CONTRACT_CONFLICT",
+      "requirementTrace": "../contract-openrouter/CONTRACT_RECONCILIATION.md",
+      "evidence": "/workspace/advanced-ai-evidence/regression/search-sql-foundation.log"
+    },
+    {
+      "suite": "search-sql-foundation",
+      "testId": "SF-01 after the backfill the SQL engine still equals the legacy engine and the pre-C1 golden",
+      "status": "FAIL",
+      "classification": "PRESERVED_CONTRACT_CONFLICT",
+      "requirementTrace": "../contract-openrouter/CONTRACT_RECONCILIATION.md",
+      "evidence": "/workspace/advanced-ai-evidence/regression/search-sql-foundation.log"
+    },
+    {
+      "suite": "api",
+      "testId": "conversation seller drafts and order references remain reviewable and authorized",
+      "status": "FAIL",
+      "classification": "PRESERVED_CONTRACT_CONFLICT",
+      "requirementTrace": "../contract-openrouter/CONTRACT_RECONCILIATION.md",
+      "evidence": "/workspace/advanced-ai-evidence/standard-fixture-recheck/api.log"
+    }
+  ],
+  "initialApiFixtureFailuresRecovered": [
+    {
+      "testId": "M03 switch discovery to SA",
+      "original": "regression/api.log",
+      "recheck": "standard-fixture-recheck/api.log",
+      "cause": "Nonstandard lab-template fixtures; SA market disabled and cascade. Standard acceptance seed on disposable clone restored expected setup. No assertions/application code changed."
+    },
+    {
+      "testId": "inactive or unpriced market cannot become active",
+      "original": "regression/api.log",
+      "recheck": "standard-fixture-recheck/api.log",
+      "cause": "Nonstandard lab-template fixtures; SA market disabled and cascade. Standard acceptance seed on disposable clone restored expected setup. No assertions/application code changed."
+    },
+    {
+      "testId": "M06 new market opens independent empty cart",
+      "original": "regression/api.log",
+      "recheck": "standard-fixture-recheck/api.log",
+      "cause": "Nonstandard lab-template fixtures; SA market disabled and cascade. Standard acceptance seed on disposable clone restored expected setup. No assertions/application code changed."
+    },
+    {
+      "testId": "M08 cross-market checkout rejected",
+      "original": "regression/api.log",
+      "recheck": "standard-fixture-recheck/api.log",
+      "cause": "Nonstandard lab-template fixtures; SA market disabled and cascade. Standard acceptance seed on disposable clone restored expected setup. No assertions/application code changed."
+    },
+    {
+      "testId": "M10 crafted listing market parameter cannot bypass isolation",
+      "original": "regression/api.log",
+      "recheck": "standard-fixture-recheck/api.log",
+      "cause": "Nonstandard lab-template fixtures; SA market disabled and cascade. Standard acceptance seed on disposable clone restored expected setup. No assertions/application code changed."
+    },
+    {
+      "testId": "create SA offer with configured two-decimal currency",
+      "original": "regression/api.log",
+      "recheck": "standard-fixture-recheck/api.log",
+      "cause": "Nonstandard lab-template fixtures; SA market disabled and cascade. Standard acceptance seed on disposable clone restored expected setup. No assertions/application code changed."
+    },
+    {
+      "testId": "listing price precision follows the market currency",
+      "original": "regression/api.log",
+      "recheck": "standard-fixture-recheck/api.log",
+      "cause": "Nonstandard lab-template fixtures; SA market disabled and cascade. Standard acceptance seed on disposable clone restored expected setup. No assertions/application code changed."
+    },
+    {
+      "testId": "S06 backend ignores forged total and unit price",
+      "original": "regression/api.log",
+      "recheck": "standard-fixture-recheck/api.log",
+      "cause": "Nonstandard lab-template fixtures; SA market disabled and cascade. Standard acceptance seed on disposable clone restored expected setup. No assertions/application code changed."
+    },
+    {
+      "testId": "M09 order snapshot survives market price change",
+      "original": "regression/api.log",
+      "recheck": "standard-fixture-recheck/api.log",
+      "cause": "Nonstandard lab-template fixtures; SA market disabled and cascade. Standard acceptance seed on disposable clone restored expected setup. No assertions/application code changed."
+    },
+    {
+      "testId": "S07 inactive market rejects checkout",
+      "original": "regression/api.log",
+      "recheck": "standard-fixture-recheck/api.log",
+      "cause": "Nonstandard lab-template fixtures; SA market disabled and cascade. Standard acceptance seed on disposable clone restored expected setup. No assertions/application code changed."
+    },
+    {
+      "testId": "delivery, chat, confirmation and exact fee persist",
+      "original": "regression/api.log",
+      "recheck": "standard-fixture-recheck/api.log",
+      "cause": "Nonstandard lab-template fixtures; SA market disabled and cascade. Standard acceptance seed on disposable clone restored expected setup. No assertions/application code changed."
+    },
+    {
+      "testId": "M07 return to KW restores its cart",
+      "original": "regression/api.log",
+      "recheck": "standard-fixture-recheck/api.log",
+      "cause": "Nonstandard lab-template fixtures; SA market disabled and cascade. Standard acceptance seed on disposable clone restored expected setup. No assertions/application code changed."
+    },
+    {
+      "testId": "expired CREATED order releases its limited-stock reservation",
+      "original": "regression/api.log",
+      "recheck": "standard-fixture-recheck/api.log",
+      "cause": "Nonstandard lab-template fixtures; SA market disabled and cascade. Standard acceptance seed on disposable clone restored expected setup. No assertions/application code changed."
+    },
+    {
+      "testId": "dues restriction blocks new business but permits existing order actions",
+      "original": "regression/api.log",
+      "recheck": "standard-fixture-recheck/api.log",
+      "cause": "Nonstandard lab-template fixtures; SA market disabled and cascade. Standard acceptance seed on disposable clone restored expected setup. No assertions/application code changed."
+    },
+    {
+      "testId": "AI conversations require an owner and stay scoped to their market",
+      "original": "regression/api.log",
+      "recheck": "standard-fixture-recheck/api.log",
+      "cause": "Nonstandard lab-template fixtures; SA market disabled and cascade. Standard acceptance seed on disposable clone restored expected setup. No assertions/application code changed."
+    },
+    {
+      "testId": "AI workflow turns persist typed cards without model calls or side effects",
+      "original": "regression/api.log",
+      "recheck": "standard-fixture-recheck/api.log",
+      "cause": "Nonstandard lab-template fixtures; SA market disabled and cascade. Standard acceptance seed on disposable clone restored expected setup. No assertions/application code changed."
+    }
+  ],
+  "initialDeepseekBrowserSkips": 6,
+  "recheckedDeepseek": "21 PASS/0 FAIL/0 SKIP with explicit browser enablement",
+  "rejectedRecheckSetup": "fixture-browser-recheck: wrapper exit96, .seed argument not permitted; no tests executed; corrected by separate guarded standard fixture seed before wrapper reuse",
+  "dbReadinessProbe": "Existing start-db.sh was not executable directly; no DB state change; already-running loopback template clones succeeded."
+}
