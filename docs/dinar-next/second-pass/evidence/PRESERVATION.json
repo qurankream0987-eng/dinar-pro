@@ -1,0 +1,26 @@
+{
+  "integratedBaseline": "eda6d4205c2f0553b26a87c19255e3b06b598706",
+  "previousDelivery": "115e11850a9ce9d686fb8e6215c569775b42a378",
+  "runtime": "16f85e5a55ea360c646de56f4e42b93cf1755a1f",
+  "preservedVsIntegrated": {
+    "artifacts/dinar/src": true,
+    "lib/db": true,
+    "lib/api-spec": true,
+    "lib/api-client-react": true,
+    "lib/api-zod": true,
+    "artifacts/api-server/src/ai/card-envelope.ts": true,
+    "pnpm-lock.yaml": true,
+    "package.json": true
+  },
+  "frozenCatalogs": {
+    "docs/dinar-next/deepseek-lab/DEEPSEEK_500_CASE_CATALOG.json": {
+      "unchanged": true,
+      "sha256": "e390024e8732820adceb5f3b569d40244e4ae2650e030815540c4ac62a4e3f56"
+    },
+    "docs/dinar-next/deepseek-lab/DEEPSEEK_HELDOUT5_VALIDATION.json": {
+      "unchanged": true,
+      "sha256": "e12d8588d849d489264903378366d2c4fefc7e5c8e8837f71076844f2ed9b623"
+    }
+  },
+  "preexistingTestsChangedVsPreviousDelivery": []
+}

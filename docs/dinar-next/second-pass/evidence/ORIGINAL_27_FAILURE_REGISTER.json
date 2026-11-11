@@ -1,0 +1,1269 @@
+[
+  {
+    "testId": "G02-004",
+    "originalVerdict": "FAIL",
+    "originalFailures": [
+      [
+        "WRONG_TOOL",
+        "turn 1: surface [\"ADVICE\"] not in LISTING_RESULTS"
+      ],
+      [
+        "WRONG_TOOL",
+        "turn 1: result lacks lab_fridge_small (got )"
+      ]
+    ],
+    "rootCause": "Obtain/how request framing was not a buyer search.",
+    "affectedImplementation": [
+      "artifacts/api-server/src/ai/intent.ts"
+    ],
+    "correctiveAction": "Normalize bounded obtain/how framing to existing search intent.",
+    "baselineEvidence": "baseline-27-retry/det-results.jsonl#G02-004",
+    "finalEvidence": "verified-500/det-results.jsonl#G02-004",
+    "finalVerdict": "PASS",
+    "finalRuntimeSha": "16f85e5a55ea360c646de56f4e42b93cf1755a1f",
+    "remainingFailures": [],
+    "regressionResult": [
+      {
+        "turn": 1,
+        "surfaces": [
+          "LISTING_RESULTS"
+        ],
+        "tool": "searchListings",
+        "items": [
+          "lab_fridge_small"
+        ],
+        "failures": []
+      }
+    ]
+  },
+  {
+    "testId": "G02-007",
+    "originalVerdict": "FAIL",
+    "originalFailures": [
+      [
+        "WRONG_TOOL",
+        "turn 1: surface [\"ADVICE\"] not in LISTING_RESULTS"
+      ]
+    ],
+    "rootCause": "Bounded Arabizi request and used-condition spelling were unrecognized.",
+    "affectedImplementation": [
+      "artifacts/api-server/src/ai/intent.ts"
+    ],
+    "correctiveAction": "Normalize abi/mosta3mal before existing parser.",
+    "baselineEvidence": "baseline-27-retry/det-results.jsonl#G02-007",
+    "finalEvidence": "verified-500/det-results.jsonl#G02-007",
+    "finalVerdict": "PASS",
+    "finalRuntimeSha": "16f85e5a55ea360c646de56f4e42b93cf1755a1f",
+    "remainingFailures": [],
+    "regressionResult": [
+      {
+        "turn": 1,
+        "surfaces": [
+          "LISTING_RESULTS"
+        ],
+        "tool": "searchListings",
+        "items": [
+          "lab_iphone13_a",
+          "lab_iphone13_b",
+          "lab_iphone13_pro",
+          "lab_lookalike_1",
+          "lab_lookalike_2"
+        ],
+        "failures": []
+      }
+    ]
+  },
+  {
+    "testId": "G02-008",
+    "originalVerdict": "FAIL",
+    "originalFailures": [
+      [
+        "WRONG_TOOL",
+        "turn 1: result lacks lab_galaxy_s23 (got lab_galaxy_a54,lab_galaxy_a14)"
+      ]
+    ],
+    "rootCause": "Arabic digit/model-prefix spelling did not meet indexed title.",
+    "affectedImplementation": [
+      "artifacts/api-server/src/ai/search-context.ts",
+      "artifacts/api-server/src/lib/marketplace-search-index.ts"
+    ],
+    "correctiveAction": "Canonicalize digits and letter-model prefix; bump search text version to prevent stale index semantics.",
+    "baselineEvidence": "baseline-27-retry/det-results.jsonl#G02-008",
+    "finalEvidence": "verified-500/det-results.jsonl#G02-008",
+    "finalVerdict": "PASS",
+    "finalRuntimeSha": "16f85e5a55ea360c646de56f4e42b93cf1755a1f",
+    "remainingFailures": [],
+    "regressionResult": [
+      {
+        "turn": 1,
+        "surfaces": [
+          "LISTING_RESULTS"
+        ],
+        "tool": "searchListings",
+        "items": [
+          "lab_galaxy_s23",
+          "lab_galaxy_s23_b"
+        ],
+        "failures": []
+      }
+    ]
+  },
+  {
+    "testId": "G02-016",
+    "originalVerdict": "FAIL",
+    "originalFailures": [
+      [
+        "WRONG_TOOL",
+        "turn 1: result lacks lab_svc_cleaning (got )"
+      ]
+    ],
+    "rootCause": "Beneficiary suffix in service verb prevented lexical match.",
+    "affectedImplementation": [
+      "artifacts/api-server/src/lib/arabic-search-terms.ts"
+    ],
+    "correctiveAction": "Generate bounded beneficiary verb variants, retain service object precision.",
+    "baselineEvidence": "baseline-27-retry/det-results.jsonl#G02-016",
+    "finalEvidence": "verified-500/det-results.jsonl#G02-016",
+    "finalVerdict": "PASS",
+    "finalRuntimeSha": "16f85e5a55ea360c646de56f4e42b93cf1755a1f",
+    "remainingFailures": [],
+    "regressionResult": [
+      {
+        "turn": 1,
+        "surfaces": [
+          "LISTING_RESULTS"
+        ],
+        "tool": "searchListings",
+        "items": [
+          "JO_lst_cleaning",
+          "lab_svc_cleaning"
+        ],
+        "failures": []
+      }
+    ]
+  },
+  {
+    "testId": "G02-025",
+    "originalVerdict": "FAIL",
+    "originalFailures": [
+      [
+        "WRONG_TOOL",
+        "turn 1: surface [\"ADVICE\"] not in ORDERS,ORDERS_LIST,ORDER_STATUS,ORDER_TRACKING,ORDER_SELECTOR,ORDER"
+      ]
+    ],
+    "rootCause": "Colloquial order location framing fell through.",
+    "affectedImplementation": [
+      "artifacts/api-server/src/ai/intent.ts"
+    ],
+    "correctiveAction": "Route read-only order status through existing authorization.",
+    "baselineEvidence": "baseline-27-retry/det-results.jsonl#G02-025",
+    "finalEvidence": "verified-500/det-results.jsonl#G02-025",
+    "finalVerdict": "PASS",
+    "finalRuntimeSha": "16f85e5a55ea360c646de56f4e42b93cf1755a1f",
+    "remainingFailures": [],
+    "regressionResult": [
+      {
+        "turn": 1,
+        "surfaces": [
+          "ORDERS_LIST"
+        ],
+        "tool": null,
+        "items": [
+          "lab_order_progress",
+          "lab_order_created",
+          "lab_order_done",
+          "lab_order_cancelled"
+        ],
+        "failures": []
+      }
+    ]
+  },
+  {
+    "testId": "G02-029",
+    "originalVerdict": "FAIL",
+    "originalFailures": [
+      [
+        "WRONG_TOOL",
+        "turn 1: surface [\"ADVICE\"] not in LISTING_RESULTS"
+      ],
+      [
+        "WRONG_TOOL",
+        "turn 1: result lacks lab_svc_cleaning (got )"
+      ]
+    ],
+    "rootCause": "Explicit service-versus-product correction stayed in product terms.",
+    "affectedImplementation": [
+      "artifacts/api-server/src/ai/intent.ts"
+    ],
+    "correctiveAction": "Strip correction frame while retaining requested service.",
+    "baselineEvidence": "baseline-27-retry/det-results.jsonl#G02-029",
+    "finalEvidence": "verified-500/det-results.jsonl#G02-029",
+    "finalVerdict": "PASS",
+    "finalRuntimeSha": "16f85e5a55ea360c646de56f4e42b93cf1755a1f",
+    "remainingFailures": [],
+    "regressionResult": [
+      {
+        "turn": 1,
+        "surfaces": [
+          "LISTING_RESULTS"
+        ],
+        "tool": "searchListings",
+        "items": [
+          "lab_svc_pc_fix",
+          "lab_svc_cleaning",
+          "JO_lst_cleaning"
+        ],
+        "failures": []
+      }
+    ]
+  },
+  {
+    "testId": "G02-030",
+    "originalVerdict": "FAIL",
+    "originalFailures": [
+      [
+        "WRONG_TOOL",
+        "turn 1: surface [\"ADVICE\"] not in LISTING_RESULTS"
+      ]
+    ],
+    "rootCause": "Bounded Latin-priced request/purpose syntax was unrecognized.",
+    "affectedImplementation": [
+      "artifacts/api-server/src/ai/intent.ts",
+      "artifacts/api-server/src/lib/arabic-search-terms.ts"
+    ],
+    "correctiveAction": "Normalize request frame and allow only nonnumeric purpose relaxation with hard bounds intact.",
+    "baselineEvidence": "baseline-27-retry/det-results.jsonl#G02-030",
+    "finalEvidence": "verified-500/det-results.jsonl#G02-030",
+    "finalVerdict": "PASS",
+    "finalRuntimeSha": "16f85e5a55ea360c646de56f4e42b93cf1755a1f",
+    "remainingFailures": [],
+    "regressionResult": [
+      {
+        "turn": 1,
+        "surfaces": [
+          "LISTING_RESULTS"
+        ],
+        "tool": "searchListings",
+        "items": [],
+        "failures": []
+      }
+    ]
+  },
+  {
+    "testId": "G03-015",
+    "originalVerdict": "FAIL",
+    "originalFailures": [
+      [
+        "WRONG_TOOL",
+        "turn 1: forbidden surface CHECKOUT"
+      ]
+    ],
+    "rootCause": "Ambiguous continuation navigated checkout without visible cart context.",
+    "affectedImplementation": [
+      "artifacts/api-server/src/ai/conversation-runtime.ts"
+    ],
+    "correctiveAction": "Require visible cart for elliptical continuation; preserve explicit checkout routes.",
+    "baselineEvidence": "baseline-27-retry/det-results.jsonl#G03-015",
+    "finalEvidence": "verified-500/det-results.jsonl#G03-015",
+    "finalVerdict": "PASS",
+    "finalRuntimeSha": "16f85e5a55ea360c646de56f4e42b93cf1755a1f",
+    "remainingFailures": [],
+    "regressionResult": [
+      {
+        "turn": 1,
+        "surfaces": [
+          "CLARIFY"
+        ],
+        "tool": null,
+        "items": [],
+        "failures": []
+      }
+    ]
+  },
+  {
+    "testId": "G04-001",
+    "originalVerdict": "FAIL",
+    "originalFailures": [
+      [
+        "WRONG_TOOL",
+        "turn 4: surface [\"ADVICE\"] not in LISTING_RESULTS"
+      ]
+    ],
+    "rootCause": "Programming-purpose search lacked laptop lexicon and later contextual constraints lost scope.",
+    "affectedImplementation": [
+      "artifacts/api-server/src/lib/arabic-search-terms.ts",
+      "artifacts/api-server/src/ai/buyer-turn.ts"
+    ],
+    "correctiveAction": "Reuse category lexicon, preserve product and hard budget through refinements.",
+    "baselineEvidence": "baseline-27-retry/det-results.jsonl#G04-001",
+    "finalEvidence": "verified-500/det-results.jsonl#G04-001",
+    "finalVerdict": "PASS",
+    "finalRuntimeSha": "16f85e5a55ea360c646de56f4e42b93cf1755a1f",
+    "remainingFailures": [],
+    "regressionResult": [
+      {
+        "turn": 1,
+        "surfaces": [
+          "LISTING_RESULTS"
+        ],
+        "tool": "searchListings",
+        "items": [
+          "lab_laptop_dell",
+          "lab_laptop_lenovo"
+        ],
+        "failures": []
+      },
+      {
+        "turn": 2,
+        "surfaces": [
+          "LISTING_RESULTS"
+        ],
+        "tool": "buyerRefine",
+        "items": [
+          "lab_laptop_dell",
+          "lab_laptop_lenovo"
+        ],
+        "failures": []
+      },
+      {
+        "turn": 3,
+        "surfaces": [
+          "LISTING_RESULTS"
+        ],
+        "tool": "buyerRefine",
+        "items": [
+          "lab_laptop_lenovo"
+        ],
+        "failures": []
+      },
+      {
+        "turn": 4,
+        "surfaces": [
+          "LISTING_RESULTS"
+        ],
+        "tool": "buyerRefine",
+        "items": [
+          "lab_laptop_lenovo"
+        ],
+        "failures": []
+      }
+    ]
+  },
+  {
+    "testId": "G04-002",
+    "originalVerdict": "FAIL",
+    "originalFailures": [
+      [
+        "WRONG_TOOL",
+        "turn 3: surface [\"ADVICE\"] not in LISTING_RESULTS"
+      ]
+    ],
+    "rootCause": "Cheaper-than focused resource question was unhandled or lost existing limits.",
+    "affectedImplementation": [
+      "artifacts/api-server/src/ai/buyer-turn.ts"
+    ],
+    "correctiveAction": "Resolve focused current resource, apply strict cheaper bound together with existing filters.",
+    "baselineEvidence": "baseline-27-retry/det-results.jsonl#G04-002",
+    "finalEvidence": "verified-500/det-results.jsonl#G04-002",
+    "finalVerdict": "PASS",
+    "finalRuntimeSha": "16f85e5a55ea360c646de56f4e42b93cf1755a1f",
+    "remainingFailures": [],
+    "regressionResult": [
+      {
+        "turn": 1,
+        "surfaces": [
+          "LISTING_RESULTS"
+        ],
+        "tool": "searchListings",
+        "items": [
+          "lab_galaxy_s23",
+          "lab_galaxy_s23_b",
+          "lab_galaxy_a54",
+          "lab_galaxy_a14",
+          "lab_fridge_big"
+        ],
+        "failures": []
+      },
+      {
+        "turn": 2,
+        "surfaces": [
+          "LISTING_RESULTS"
+        ],
+        "tool": "getResource",
+        "items": [
+          "lab_galaxy_s23_b"
+        ],
+        "failures": []
+      },
+      {
+        "turn": 3,
+        "surfaces": [
+          "LISTING_RESULTS"
+        ],
+        "tool": "buyerRefine",
+        "items": [
+          "lab_galaxy_a14",
+          "lab_galaxy_a54",
+          "lab_galaxy_s23"
+        ],
+        "failures": []
+      }
+    ]
+  },
+  {
+    "testId": "G04-008",
+    "originalVerdict": "FAIL",
+    "originalFailures": [
+      [
+        "NOT_EXECUTABLE_DET",
+        "turn 2: model unavailable reply"
+      ],
+      [
+        "WRONG_TOOL",
+        "turn 3: surface [\"ADVICE\"] not in ORDERS_LIST,ORDER_STATUS,ORDER_TRACKING,ORDER_SELECTOR,ORDER,CLARIFY"
+      ]
+    ],
+    "rootCause": "Elliptical order follow-up after another topic did not safely resolve/clarify.",
+    "affectedImplementation": [
+      "artifacts/api-server/src/ai/order-context.ts"
+    ],
+    "correctiveAction": "Use existing visible authorized order context or clarify. General exercise-advice turn remains provider-blocked.",
+    "baselineEvidence": "baseline-27-retry/det-results.jsonl#G04-008",
+    "finalEvidence": "verified-500/det-results.jsonl#G04-008",
+    "finalVerdict": "BLOCKED",
+    "finalRuntimeSha": "16f85e5a55ea360c646de56f4e42b93cf1755a1f",
+    "remainingFailures": [
+      [
+        "NOT_EXECUTABLE_DET",
+        "turn 2: model unavailable reply"
+      ]
+    ],
+    "regressionResult": [
+      {
+        "turn": 1,
+        "surfaces": [
+          "ORDERS_LIST"
+        ],
+        "tool": null,
+        "items": [
+          "lab_order_progress",
+          "lab_order_created",
+          "lab_order_done",
+          "lab_order_cancelled"
+        ],
+        "failures": []
+      },
+      {
+        "turn": 2,
+        "surfaces": [
+          "ADVICE"
+        ],
+        "tool": null,
+        "items": [],
+        "failures": [
+          [
+            "NOT_EXECUTABLE_DET",
+            "turn 2: model unavailable reply"
+          ]
+        ]
+      },
+      {
+        "turn": 3,
+        "surfaces": [
+          "CLARIFY"
+        ],
+        "tool": null,
+        "items": [],
+        "failures": []
+      }
+    ]
+  },
+  {
+    "testId": "G04-015",
+    "originalVerdict": "FAIL",
+    "originalFailures": [
+      [
+        "WRONG_TOOL",
+        "turn 1: result lacks lab_svc_ac_fix (got )"
+      ],
+      [
+        "WRONG_TOOL",
+        "turn 2: surface [\"ADVICE\"] not in LISTING_RESULTS"
+      ],
+      [
+        "WRONG_TOOL",
+        "turn 2: result lacks lab_ac_split (got )"
+      ]
+    ],
+    "rootCause": "Conjunctive new-product request retained prior service scope.",
+    "affectedImplementation": [
+      "artifacts/api-server/src/ai/intent.ts",
+      "artifacts/api-server/src/ai/search-query.ts"
+    ],
+    "correctiveAction": "Recognize conjunctive wants and replace product scope, preserve only genuine attribute refinements.",
+    "baselineEvidence": "baseline-27-retry/det-results.jsonl#G04-015",
+    "finalEvidence": "verified-500/det-results.jsonl#G04-015",
+    "finalVerdict": "PASS",
+    "finalRuntimeSha": "16f85e5a55ea360c646de56f4e42b93cf1755a1f",
+    "remainingFailures": [],
+    "regressionResult": [
+      {
+        "turn": 1,
+        "surfaces": [
+          "LISTING_RESULTS"
+        ],
+        "tool": "searchListings",
+        "items": [
+          "lab_svc_ac_fix"
+        ],
+        "failures": []
+      },
+      {
+        "turn": 2,
+        "surfaces": [
+          "LISTING_RESULTS"
+        ],
+        "tool": "searchListings",
+        "items": [
+          "lab_ac_split"
+        ],
+        "failures": []
+      }
+    ]
+  },
+  {
+    "testId": "G04-017",
+    "originalVerdict": "FAIL",
+    "originalFailures": [
+      [
+        "INVALID_TOOL_ARGUMENTS",
+        "turn 1: filter not applied: lab_iphone15 shown"
+      ],
+      [
+        "INVALID_TOOL_ARGUMENTS",
+        "turn 1: filter not applied: lab_iphone13_pro shown"
+      ],
+      [
+        "WRONG_TOOL",
+        "turn 2: surface [\"ADVICE\"] not in LISTING_RESULTS"
+      ],
+      [
+        "WRONG_TOOL",
+        "turn 2: result lacks lab_iphone15_used (got )"
+      ]
+    ],
+    "rootCause": "Explicit search ceiling raise was intercepted by commercial negotiation ambiguity.",
+    "affectedImplementation": [
+      "artifacts/api-server/src/ai/conversation-runtime.ts",
+      "artifacts/api-server/src/ai/buyer-turn.ts"
+    ],
+    "correctiveAction": "Accept explicit ceiling replacement only against current search context, never as a negotiation write.",
+    "baselineEvidence": "baseline-27-retry/det-results.jsonl#G04-017",
+    "finalEvidence": "verified-500/det-results.jsonl#G04-017",
+    "finalVerdict": "PASS",
+    "finalRuntimeSha": "16f85e5a55ea360c646de56f4e42b93cf1755a1f",
+    "remainingFailures": [],
+    "regressionResult": [
+      {
+        "turn": 1,
+        "surfaces": [
+          "LISTING_RESULTS"
+        ],
+        "tool": "buyerSearch",
+        "items": [
+          "lab_lookalike_2",
+          "lab_lookalike_1",
+          "lab_phone_broken",
+          "lab_iphone13_b",
+          "lab_iphone13_a",
+          "JO_lst_phone"
+        ],
+        "failures": []
+      },
+      {
+        "turn": 2,
+        "surfaces": [
+          "LISTING_RESULTS"
+        ],
+        "tool": "buyerRefine",
+        "items": [
+          "lab_lookalike_2",
+          "lab_lookalike_1",
+          "lab_phone_broken",
+          "lab_iphone15_used",
+          "lab_iphone13_pro",
+          "lab_iphone13_b",
+          "lab_iphone13_a",
+          "JO_lst_phone"
+        ],
+        "failures": []
+      }
+    ]
+  },
+  {
+    "testId": "G04-041",
+    "originalVerdict": "FAIL",
+    "originalFailures": [
+      [
+        "WRONG_TOOL",
+        "turn 3: surface [\"ADVICE\"] not in LISTING_RESULTS"
+      ],
+      [
+        "WRONG_TOOL",
+        "turn 3: result lacks lab_svc_washer_fix (got )"
+      ]
+    ],
+    "rootCause": "Feminine possessive appliance word and repair lexicon missed service target; contextual framing polluted query. A subsequent precision repair also exposed an age adjective describing the customer target rather than the service listing.",
+    "affectedImplementation": [
+      "artifacts/api-server/src/lib/arabic-search-terms.ts",
+      "artifacts/api-server/src/ai/intent.ts",
+      "artifacts/api-server/src/ai/tool-registry.ts"
+    ],
+    "correctiveAction": "Add bounded possessive variants and repair aliases; recognize conjunctive request without dropping service object. Qualify and explicitly disclose an unmatched old-target adjective while retaining service/object terms and hard filters.",
+    "baselineEvidence": "baseline-27-retry/det-results.jsonl#G04-041",
+    "finalEvidence": "verified-500/det-results.jsonl#G04-041",
+    "finalVerdict": "PASS",
+    "finalRuntimeSha": "16f85e5a55ea360c646de56f4e42b93cf1755a1f",
+    "remainingFailures": [],
+    "regressionResult": [
+      {
+        "turn": 1,
+        "surfaces": [
+          "ADVICE"
+        ],
+        "tool": null,
+        "items": [],
+        "failures": []
+      },
+      {
+        "turn": 2,
+        "surfaces": [
+          "LISTING_RESULTS"
+        ],
+        "tool": "searchListings",
+        "items": [
+          "lab_washer",
+          "lab_svc_washer_fix"
+        ],
+        "failures": []
+      },
+      {
+        "turn": 3,
+        "surfaces": [
+          "LISTING_RESULTS"
+        ],
+        "tool": "searchListings",
+        "items": [
+          "lab_svc_washer_fix"
+        ],
+        "failures": []
+      },
+      {
+        "turn": 4,
+        "surfaces": [
+          "LISTING_RESULTS"
+        ],
+        "tool": "searchListings",
+        "items": [
+          "lab_svc_washer_fix"
+        ],
+        "failures": []
+      },
+      {
+        "turn": 5,
+        "surfaces": [
+          "ADVICE"
+        ],
+        "tool": null,
+        "items": [],
+        "failures": []
+      }
+    ]
+  },
+  {
+    "testId": "G04-044",
+    "originalVerdict": "FAIL",
+    "originalFailures": [
+      [
+        "WRONG_TOOL",
+        "turn 2: surface [\"ADVICE\"] not in LISTING_RESULTS"
+      ]
+    ],
+    "rootCause": "Broad category follow-up retained failed product context.",
+    "affectedImplementation": [
+      "artifacts/api-server/src/ai/intent.ts",
+      "artifacts/api-server/src/ai/search-query.ts"
+    ],
+    "correctiveAction": "Recognize any-item category request and replace scope with explicit hard price cap.",
+    "baselineEvidence": "baseline-27-retry/det-results.jsonl#G04-044",
+    "finalEvidence": "verified-500/det-results.jsonl#G04-044",
+    "finalVerdict": "PASS",
+    "finalRuntimeSha": "16f85e5a55ea360c646de56f4e42b93cf1755a1f",
+    "remainingFailures": [],
+    "regressionResult": [
+      {
+        "turn": 1,
+        "surfaces": [
+          "LISTING_RESULTS"
+        ],
+        "tool": "searchListings",
+        "items": [],
+        "failures": []
+      },
+      {
+        "turn": 2,
+        "surfaces": [
+          "LISTING_RESULTS"
+        ],
+        "tool": "searchListings",
+        "items": [
+          "lab_decimal_price",
+          "lab_inject_title",
+          "lab_inject_desc",
+          "lab_bulk_cables",
+          "JO_lst_phone"
+        ],
+        "failures": []
+      }
+    ]
+  },
+  {
+    "testId": "G05-004",
+    "originalVerdict": "FAIL",
+    "originalFailures": [
+      [
+        "WRONG_TOOL",
+        "turn 1: result lacks lab_food_broast (got )"
+      ]
+    ],
+    "rootCause": "Vocative/emotional preamble was retained as required product text.",
+    "affectedImplementation": [
+      "artifacts/api-server/src/ai/intent.ts"
+    ],
+    "correctiveAction": "Extract explicit following want request, handle hamza variants.",
+    "baselineEvidence": "baseline-27-retry/det-results.jsonl#G05-004",
+    "finalEvidence": "verified-500/det-results.jsonl#G05-004",
+    "finalVerdict": "PASS",
+    "finalRuntimeSha": "16f85e5a55ea360c646de56f4e42b93cf1755a1f",
+    "remainingFailures": [],
+    "regressionResult": [
+      {
+        "turn": 1,
+        "surfaces": [
+          "LISTING_RESULTS"
+        ],
+        "tool": "searchListings",
+        "items": [
+          "lab_food_broast"
+        ],
+        "failures": []
+      }
+    ]
+  },
+  {
+    "testId": "G05-007",
+    "originalVerdict": "FAIL",
+    "originalFailures": [
+      [
+        "WRONG_TOOL",
+        "turn 1: result lacks lab_camry_2019 (got )"
+      ]
+    ],
+    "rootCause": "Look-if-available frame was retained as product text.",
+    "affectedImplementation": [
+      "artifacts/api-server/src/ai/intent.ts"
+    ],
+    "correctiveAction": "Normalize bounded search frame while preserving model/year.",
+    "baselineEvidence": "baseline-27-retry/det-results.jsonl#G05-007",
+    "finalEvidence": "verified-500/det-results.jsonl#G05-007",
+    "finalVerdict": "PASS",
+    "finalRuntimeSha": "16f85e5a55ea360c646de56f4e42b93cf1755a1f",
+    "remainingFailures": [],
+    "regressionResult": [
+      {
+        "turn": 1,
+        "surfaces": [
+          "LISTING_RESULTS"
+        ],
+        "tool": "searchListings",
+        "items": [
+          "lab_camry_2019"
+        ],
+        "failures": []
+      }
+    ]
+  },
+  {
+    "testId": "G06-008",
+    "originalVerdict": "FAIL",
+    "originalFailures": [
+      [
+        "WRONG_TOOL",
+        "turn 1: surface [\"ADVICE\"] not in SELL,CLARIFY"
+      ],
+      [
+        "CONTEXT_ERROR",
+        "turn 1: draft.unitPrice=undefined expected 6000"
+      ]
+    ],
+    "rootCause": "Conversational create-ad request did not enter existing seller draft.",
+    "affectedImplementation": [
+      "artifacts/api-server/src/ai/intent.ts"
+    ],
+    "correctiveAction": "Route create-ad phrasing to established draft, never publish.",
+    "baselineEvidence": "baseline-27-retry/det-results.jsonl#G06-008",
+    "finalEvidence": "verified-500/det-results.jsonl#G06-008",
+    "finalVerdict": "PASS",
+    "finalRuntimeSha": "16f85e5a55ea360c646de56f4e42b93cf1755a1f",
+    "remainingFailures": [],
+    "regressionResult": [
+      {
+        "turn": 1,
+        "surfaces": [
+          "SELL"
+        ],
+        "tool": null,
+        "items": [],
+        "failures": []
+      }
+    ]
+  },
+  {
+    "testId": "G06-009",
+    "originalVerdict": "FAIL",
+    "originalFailures": [
+      [
+        "WRONG_TOOL",
+        "turn 1: surface [\"LISTING_RESULTS\"] not in SELL,CLARIFY"
+      ],
+      [
+        "CONTEXT_ERROR",
+        "turn 1: draft.unitPrice=undefined expected 2"
+      ]
+    ],
+    "rootCause": "Stock-with-price seller framing fell through.",
+    "affectedImplementation": [
+      "artifacts/api-server/src/ai/intent.ts"
+    ],
+    "correctiveAction": "Recognize explicit stock quantity plus stated price in seller draft flow.",
+    "baselineEvidence": "baseline-27-retry/det-results.jsonl#G06-009",
+    "finalEvidence": "verified-500/det-results.jsonl#G06-009",
+    "finalVerdict": "PASS",
+    "finalRuntimeSha": "16f85e5a55ea360c646de56f4e42b93cf1755a1f",
+    "remainingFailures": [],
+    "regressionResult": [
+      {
+        "turn": 1,
+        "surfaces": [
+          "SELL"
+        ],
+        "tool": null,
+        "items": [],
+        "failures": []
+      }
+    ]
+  },
+  {
+    "testId": "G06-040",
+    "originalVerdict": "FAIL",
+    "originalFailures": [
+      [
+        "WRONG_TOOL",
+        "turn 2: surface [\"ADVICE\"] not in SELL,CLARIFY,TEXT"
+      ]
+    ],
+    "rootCause": "Draft completeness question fell through into general conversation.",
+    "affectedImplementation": [
+      "artifacts/api-server/src/ai/draft-actions.ts"
+    ],
+    "correctiveAction": "Return existing draft review on completeness question, without duplication/publication.",
+    "baselineEvidence": "baseline-27-retry/det-results.jsonl#G06-040",
+    "finalEvidence": "verified-500/det-results.jsonl#G06-040",
+    "finalVerdict": "PASS",
+    "finalRuntimeSha": "16f85e5a55ea360c646de56f4e42b93cf1755a1f",
+    "remainingFailures": [],
+    "regressionResult": [
+      {
+        "turn": 1,
+        "surfaces": [
+          "SELL"
+        ],
+        "tool": null,
+        "items": [],
+        "failures": []
+      },
+      {
+        "turn": 2,
+        "surfaces": [
+          "SELL"
+        ],
+        "tool": null,
+        "items": [],
+        "failures": []
+      }
+    ]
+  },
+  {
+    "testId": "G08-018",
+    "originalVerdict": "FAIL",
+    "originalFailures": [
+      [
+        "INTENT_ERROR",
+        "turn 2: body lacks /\\b840\\b/"
+      ]
+    ],
+    "rootCause": "Annual service arithmetic depended on a blocked model and was not grounded deterministically.",
+    "affectedImplementation": [
+      "artifacts/api-server/src/ai/buyer-turn.ts"
+    ],
+    "correctiveAction": "Multiply authoritative per-visit minor-unit prices by requested annual visits for each selected resource, expose source-bound answer.",
+    "baselineEvidence": "baseline-27-retry/det-results.jsonl#G08-018",
+    "finalEvidence": "verified-500/det-results.jsonl#G08-018",
+    "finalVerdict": "PASS",
+    "finalRuntimeSha": "16f85e5a55ea360c646de56f4e42b93cf1755a1f",
+    "remainingFailures": [],
+    "regressionResult": [
+      {
+        "turn": 1,
+        "surfaces": [
+          "LISTING_RESULTS"
+        ],
+        "tool": "searchListings",
+        "items": [
+          "lab_svc_cleaning",
+          "JO_lst_cleaning"
+        ],
+        "failures": []
+      },
+      {
+        "turn": 2,
+        "surfaces": [
+          "CLARIFY"
+        ],
+        "tool": null,
+        "items": [],
+        "failures": []
+      }
+    ]
+  },
+  {
+    "testId": "G09-014",
+    "originalVerdict": "FAIL",
+    "originalFailures": [
+      [
+        "STATE_MISMATCH",
+        "turn 4: delta.cart=0 expected 1"
+      ]
+    ],
+    "rootCause": "Deictic conjunctive add-to-cart was not recognized.",
+    "affectedImplementation": [
+      "artifacts/api-server/src/ai/intent.ts"
+    ],
+    "correctiveAction": "Resolve explicit add against current result through existing cart handler, preserve negative-intent guard.",
+    "baselineEvidence": "baseline-27-retry/det-results.jsonl#G09-014",
+    "finalEvidence": "verified-500/det-results.jsonl#G09-014",
+    "finalVerdict": "PASS",
+    "finalRuntimeSha": "16f85e5a55ea360c646de56f4e42b93cf1755a1f",
+    "remainingFailures": [],
+    "regressionResult": [
+      {
+        "turn": 1,
+        "surfaces": [
+          "LISTING_RESULTS"
+        ],
+        "tool": "searchListings",
+        "items": [
+          "lab_gift_perfume"
+        ],
+        "failures": []
+      },
+      {
+        "turn": 2,
+        "surfaces": [
+          "CART"
+        ],
+        "tool": null,
+        "items": [
+          "lab_gift_perfume"
+        ],
+        "failures": []
+      },
+      {
+        "turn": 3,
+        "surfaces": [
+          "LISTING_RESULTS"
+        ],
+        "tool": "searchListings",
+        "items": [
+          "lab_gift_mug"
+        ],
+        "failures": []
+      },
+      {
+        "turn": 4,
+        "surfaces": [
+          "CART"
+        ],
+        "tool": null,
+        "items": [
+          "lab_gift_perfume",
+          "lab_gift_mug"
+        ],
+        "failures": []
+      },
+      {
+        "turn": 5,
+        "surfaces": [
+          "CART"
+        ],
+        "tool": null,
+        "items": [],
+        "failures": []
+      }
+    ]
+  },
+  {
+    "testId": "G10-002",
+    "originalVerdict": "FAIL",
+    "originalFailures": [
+      [
+        "WRONG_TOOL",
+        "turn 1: surface [\"LISTING_RESULTS\"] not in ORDERS,SETTINGS,ORDERS_LIST,ORDER_STATUS,ORDER_TRACKING,ORDER_SELECTOR,ORDER,DELIVERY_NOTICE,CLARIFY,TEXT,ADVICE"
+      ]
+    ],
+    "rootCause": "Address-change question could enter purchase-related routing.",
+    "affectedImplementation": [
+      "artifacts/api-server/src/ai/intent.ts"
+    ],
+    "correctiveAction": "Route to existing read-only order/location context; no implicit address mutation.",
+    "baselineEvidence": "baseline-27-retry/det-results.jsonl#G10-002",
+    "finalEvidence": "verified-500/det-results.jsonl#G10-002",
+    "finalVerdict": "PASS",
+    "finalRuntimeSha": "16f85e5a55ea360c646de56f4e42b93cf1755a1f",
+    "remainingFailures": [],
+    "regressionResult": [
+      {
+        "turn": 1,
+        "surfaces": [
+          "ORDERS_LIST"
+        ],
+        "tool": null,
+        "items": [
+          "lab_order_progress",
+          "lab_order_created",
+          "lab_order_done",
+          "lab_order_cancelled"
+        ],
+        "failures": []
+      }
+    ]
+  },
+  {
+    "testId": "G10-018",
+    "originalVerdict": "FAIL",
+    "originalFailures": [
+      [
+        "WRONG_TOOL",
+        "turn 1: surface [\"LISTING_RESULTS\"] not in ORDERS,SETTINGS,ORDERS_LIST,ORDER_STATUS,ORDER_TRACKING,ORDER_SELECTOR,ORDER,DELIVERY_NOTICE,CLARIFY,TEXT,ADVICE"
+      ]
+    ],
+    "rootCause": "Order-location query for another person fell through without a safe authorized surface.",
+    "affectedImplementation": [
+      "artifacts/api-server/src/ai/intent.ts",
+      "artifacts/api-server/src/ai/order-context.ts"
+    ],
+    "correctiveAction": "Use existing actor-filtered order reads; never expose neighbor order or location.",
+    "baselineEvidence": "baseline-27-retry/det-results.jsonl#G10-018",
+    "finalEvidence": "verified-500/det-results.jsonl#G10-018",
+    "finalVerdict": "PASS",
+    "finalRuntimeSha": "16f85e5a55ea360c646de56f4e42b93cf1755a1f",
+    "remainingFailures": [],
+    "regressionResult": [
+      {
+        "turn": 1,
+        "surfaces": [
+          "ORDERS_LIST"
+        ],
+        "tool": null,
+        "items": [
+          "lab_order_progress",
+          "lab_order_created",
+          "lab_order_done",
+          "lab_order_cancelled"
+        ],
+        "failures": []
+      }
+    ]
+  },
+  {
+    "testId": "G16-006",
+    "originalVerdict": "FAIL",
+    "originalFailures": [
+      [
+        "WRONG_TOOL",
+        "turn 2: surface [\"ADVICE\"] not in LISTING_RESULTS"
+      ],
+      [
+        "WRONG_TOOL",
+        "turn 2: result lacks lab_washer (got )"
+      ]
+    ],
+    "rootCause": "Rejected product text remained in replacement request.",
+    "affectedImplementation": [
+      "artifacts/api-server/src/ai/intent.ts",
+      "artifacts/api-server/src/ai/search-query.ts"
+    ],
+    "correctiveAction": "Strip explicit retraction prefix, search affirmative replacement in fresh product scope.",
+    "baselineEvidence": "baseline-27-retry/det-results.jsonl#G16-006",
+    "finalEvidence": "verified-500/det-results.jsonl#G16-006",
+    "finalVerdict": "PASS",
+    "finalRuntimeSha": "16f85e5a55ea360c646de56f4e42b93cf1755a1f",
+    "remainingFailures": [],
+    "regressionResult": [
+      {
+        "turn": 1,
+        "surfaces": [
+          "LISTING_RESULTS"
+        ],
+        "tool": "searchListings",
+        "items": [
+          "lab_fridge_small",
+          "lab_fridge_big",
+          "lab_zarqa_fridge"
+        ],
+        "failures": []
+      },
+      {
+        "turn": 2,
+        "surfaces": [
+          "LISTING_RESULTS"
+        ],
+        "tool": "searchListings",
+        "items": [
+          "lab_washer",
+          "lab_svc_washer_fix"
+        ],
+        "failures": []
+      }
+    ]
+  },
+  {
+    "testId": "G16-008",
+    "originalVerdict": "FAIL",
+    "originalFailures": [
+      [
+        "WRONG_TOOL",
+        "turn 2: result lacks lab_iphone15 (got )"
+      ]
+    ],
+    "rootCause": "Old negated numeric model remained mandatory in corrected product query.",
+    "affectedImplementation": [
+      "artifacts/api-server/src/ai/intent.ts"
+    ],
+    "correctiveAction": "Remove explicit old numeric correction tail while retaining affirmative model and constraints.",
+    "baselineEvidence": "baseline-27-retry/det-results.jsonl#G16-008",
+    "finalEvidence": "verified-500/det-results.jsonl#G16-008",
+    "finalVerdict": "PASS",
+    "finalRuntimeSha": "16f85e5a55ea360c646de56f4e42b93cf1755a1f",
+    "remainingFailures": [],
+    "regressionResult": [
+      {
+        "turn": 1,
+        "surfaces": [
+          "LISTING_RESULTS"
+        ],
+        "tool": "searchListings",
+        "items": [
+          "lab_lookalike_2",
+          "lab_lookalike_1",
+          "lab_iphone13_pro",
+          "lab_iphone13_b",
+          "lab_iphone13_a"
+        ],
+        "failures": []
+      },
+      {
+        "turn": 2,
+        "surfaces": [
+          "LISTING_RESULTS"
+        ],
+        "tool": "searchListings",
+        "items": [
+          "lab_iphone15_used",
+          "lab_iphone15"
+        ],
+        "failures": []
+      }
+    ]
+  },
+  {
+    "testId": "G16-020",
+    "originalVerdict": "FAIL",
+    "originalFailures": [
+      [
+        "WRONG_TOOL",
+        "turn 2: result lacks lab_galaxy_a14 (got )"
+      ]
+    ],
+    "rootCause": "Colloquial correction and generic phone alias blocked valid differently titled phone listings.",
+    "affectedImplementation": [
+      "artifacts/api-server/src/ai/intent.ts",
+      "artifacts/api-server/src/ai/buyer-turn.ts"
+    ],
+    "correctiveAction": "Recognize correction; explicitly disclose bounded category-alias widening while keeping condition and price filters.",
+    "baselineEvidence": "baseline-27-retry/det-results.jsonl#G16-020",
+    "finalEvidence": "verified-500/det-results.jsonl#G16-020",
+    "finalVerdict": "PASS",
+    "finalRuntimeSha": "16f85e5a55ea360c646de56f4e42b93cf1755a1f",
+    "remainingFailures": [],
+    "regressionResult": [
+      {
+        "turn": 1,
+        "surfaces": [
+          "LISTING_RESULTS"
+        ],
+        "tool": "searchListings",
+        "items": [
+          "lab_decimal_price",
+          "lab_mixed_lang",
+          "lab_lookalike_2",
+          "lab_lookalike_1",
+          "lab_inject_title",
+          "lab_inject_desc",
+          "lab_bulk_cables",
+          "lab_tv_lg",
+          "lab_ps5",
+          "lab_airpods",
+          "lab_headphones",
+          "lab_laptop_cheap",
+          "lab_laptop_hp_new",
+          "lab_laptop_mac_air",
+          "lab_laptop_lenovo",
+          "lab_laptop_dell",
+          "lab_phone_broken",
+          "lab_redmi_note",
+          "lab_galaxy_a14",
+          "lab_galaxy_a54",
+          "lab_galaxy_s23_b",
+          "lab_galaxy_s23",
+          "lab_iphone15_used",
+          "lab_iphone15"
+        ],
+        "failures": []
+      },
+      {
+        "turn": 2,
+        "surfaces": [
+          "LISTING_RESULTS"
+        ],
+        "tool": "buyerSearch",
+        "items": [
+          "lab_mixed_lang",
+          "lab_phone_broken",
+          "lab_galaxy_a14"
+        ],
+        "failures": []
+      }
+    ]
+  }
+]

@@ -1,0 +1,9 @@
+{
+  "filesContainingProtectedValues": [],
+  "scanScopes": [
+    "/workspace/second-pass",
+    "docs/dinar-next/second-pass"
+  ],
+  "credentialsPrintedByScan": false,
+  "setupFilesAndDatabaseDataExcluded": true
+}

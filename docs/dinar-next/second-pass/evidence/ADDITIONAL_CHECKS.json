@@ -1,0 +1,50 @@
+[
+  {
+    "evidence": "frontend-surfaces-final.log",
+    "tests": 35,
+    "pass": 35,
+    "fail": 0,
+    "skipped": 0,
+    "cancelled": 0
+  },
+  {
+    "evidence": "frontend-handoff-final.log",
+    "tests": 9,
+    "pass": 9,
+    "fail": 0,
+    "skipped": 0,
+    "cancelled": 0
+  },
+  {
+    "evidence": "frontend-stream-final.log",
+    "tests": 19,
+    "pass": 19,
+    "fail": 0,
+    "skipped": 0,
+    "cancelled": 0
+  },
+  {
+    "evidence": "db-guard-final.log",
+    "tests": 8,
+    "pass": 8,
+    "fail": 0,
+    "skipped": 0,
+    "cancelled": 0
+  },
+  {
+    "evidence": "secret-scan-delivery.log",
+    "tests": 1,
+    "pass": 1,
+    "fail": 0,
+    "skipped": 0,
+    "cancelled": 0
+  },
+  {
+    "evidence": "pg18-release-migrations.log",
+    "tests": 12,
+    "pass": 12,
+    "fail": 0,
+    "skipped": 0,
+    "cancelled": 0
+  }
+]
