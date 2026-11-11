@@ -510,3 +510,15 @@ export function normalizeMarketplaceText(message: string): string {
     ),
   );
 }
+
+/** Explicit, bounded arithmetic only; no commercial action or model reasoning is inferred. */
+export function explicitReadOnlyCalculation(message: string): string | undefined {
+  const text=foldArabicLetters(normalizeDigits(message)).replace(/ة/g,"ه").replace(/[.](?!\d)|(?<!\d)[.]/gu," ").replace(/[؟?!،,]/gu," ").replace(/\s+/gu," ").trim();
+  const pct=text.match(/^احسب(?:لي| لي)? (\d{1,16}(?:\.\d{1,6})?)[%٪] من (\d{1,16}(?:\.\d{1,6})?)$/u);
+  if(pct){const [a,b]=[pct[1]!,pct[2]!];const scale=(a.split('.')[1]?.length??0)+(b.split('.')[1]?.length??0)+2;let digits=(BigInt(a.replace('.',''))*BigInt(b.replace('.',''))).toString().padStart(scale+1,'0');const result=`${digits.slice(0,-scale)}.${digits.slice(-scale)}`.replace(/\.?0+$/u,'');return `${a}% × ${b} = ${result || '0'}. هذا حساب فقط؛ لم يتغير شيء.`;}
+  const temperature=text.match(/^حول (-?\d{1,6}(?:\.\d{1,4})?) درجه فهرنهايت (?:ل|الي )مئويه$/u);
+  if(temperature){const value=(Number(temperature[1])-32)*5/9;return `${temperature[1]} فهرنهايت = ${Number(value.toFixed(3))} درجة مئوية تقريبًا.`;}
+  const budget=text.match(/^احسب ميزانيه حمله(?: مقترحه)? بـ?\s*(\d{1,10}(?:\.\d{1,4})?) (?:دينار|دولار|ريال|درهم|جنيه) علي (اسبوعين|\d{1,3} اسابيع|\d{1,3} يوم(?:ا)?) كم باليوم$/u);
+  if(budget){const period=budget[2]!,n=period==='اسبوعين'?14:Number(period.split(' ')[0])*(period.includes('اسابيع')?7:1);if(!n)return undefined;return `توزيع افتراضي: ${budget[1]} ÷ ${n} يوم = ${Number((Number(budget[1])/n).toFixed(6))} من الوحدة المذكورة يوميًا تقريبًا. لم أفعّل حملة أو أدفع شيئًا.`;}
+  return undefined;
+}

@@ -15,6 +15,7 @@ import { orderContext } from "./order-context";
 import { contextualQuery, hasCategoryAlias } from "./search-context";
 import { addToCartIntent, backIntent, statedCartQuantity, refusesCommercialAction, requestCore, searchTerms, stripCorrectionPrefix, surfaceIntent } from "./intent";
 import {
+  explicitReadOnlyCalculation,
   findOrdinalMention,
   findOrdinalMentions,
   foldArabicLetters,
@@ -55,6 +56,7 @@ import { itemTokens, textMatchesToken } from "../lib/arabic-search-terms";
 import {
   executeSellerAdviceTurn,
   executeSellerListingManagementTurn,
+  explicitMarketingTruthRefusal,
   isMarketingRequest,
   isSellerBusinessQuestion,
   isBareRemainingQuestion,
@@ -1205,6 +1207,10 @@ async function executeRuntime(context: RuntimeContext, incoming: RuntimeOptions)
     if (turn) options.onToolSelected?.(turn.tool);
     return turn;
   };
+  if (!context.imageObjectPaths?.length && context.location===undefined) {
+    const explicitReply=explicitReadOnlyCalculation(context.message) ?? explicitMarketingTruthRefusal(context.message);
+    if(explicitReply){options.onToolSelected?.("dinarConversationTurn");return {tool:"dinarConversationTurn",version:1,result:{kind:"SURFACE",surface:"ADVICE",query:{},listings:[],advice:{kind:"GROUNDED_ADVICE",scope:"CONVERSATION",authority:"DINAR"},prompt:explicitReply}};}
+  }
   // A turn that died mid read resumes the same bounded model loop: its signatures and
   // verified feedback belong to that loop, not to a fresh deterministic reading.
   if (!options.noModel && !options.planStep && context.modelToolContinuation) {

@@ -1638,3 +1638,12 @@ export async function executeSellerAdviceTurn(input: {
   result.result.sellerInsight = { kind: "LISTING_FACTORS", listingId: row.id, factors, comparables: stats, source: "DINAR_ONLY" };
   return result;
 }
+
+/** Refuse an explicitly fabricated public claim without asking a provider to generate it. */
+export function explicitMarketingTruthRefusal(message: string): string | undefined {
+  const text=message.replace(/[أإآ]/gu,'ا').replace(/ة/gu,'ه').replace(/\s+/gu,' ').trim();
+  if(!/^(?:اكتب|اعمل|انشئ|صمم)(?:لي)?\s/u.test(text))return undefined;
+  if(/(?:تقييمات|تعليقات)\s+(?:عملاء|زبائن|زباين)\s+(?:وهميه|مختلقه|مزيفه)/u.test(text))return 'لا أقدّم تقييمات مختلقة على أنها آراء عملاء حقيقية. أستطيع مساعدتك في طلب تقييمات صادقة؛ لم أنشر شيئًا.';
+  if(/خصم\s+\d+[%٪]/u.test(text)&&/(?:ما\s+عندنا|ليس\s+لدينا|لا\s+يوجد)\s+خصم/u.test(text))return 'لا أكتب خصمًا على أنه حقيقي بينما ذكرت أنه غير موجود. يمكن إعداد نص صادق دون هذه الدعوى؛ لم أنشر شيئًا.';
+  return undefined;
+}
