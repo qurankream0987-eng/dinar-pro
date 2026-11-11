@@ -14,7 +14,7 @@ import type { ListingRecord } from "../lib/dinar-data";
 import { categorySchema, listMarketplaceCategories } from "../lib/marketplace-categories";
 import { publishedListingCities, searchMarketplaceListings } from "../lib/marketplace-listings";
 import { parseMinorUnits } from "../lib/market-pricing";
-import { boundedItemRelaxation } from "../lib/arabic-search-terms";
+import { boundedItemRelaxation, itemTokens, textMatchesToken } from "../lib/arabic-search-terms";
 import { storedSponsoredIds } from "../lib/recommendations";
 import { normalizeSearch } from "./search-context";
 import { foldArabicLetters, normalizeDigits } from "./arabic-normalization";
@@ -331,6 +331,16 @@ export async function runBuyerSearch(market: Market, state: BuyerState): Promise
     const relaxed = await boundedItemRelaxation(state.search, normalizeSearch, async (query) => matchesPreferences(await search(query)));
     if (relaxed) { matching = relaxed.listings; broadenedFrom = relaxed.dropped; }
   }
+  let widenedCategory:string|undefined;
+  if (!matching.length && state.categoryId) {
+    const category=(await listMarketplaceCategories()).find(row=>row.id===state.categoryId);
+    const words=itemTokens(normalizeSearch(state.search).split(/\s+/u));
+    const aliases=(category?.aliases??[]).map(normalizeSearch);
+    if(words.length===1 && aliases.includes(words[0]!)) {
+      matching=matchesPreferences(await search(""));
+      if(matching.length){broadenedFrom=words;widenedCategory=category!.label;}
+    }
+  }
   if (!matching.length && state.relaxed?.length) {
     const relaxed = new Set(state.relaxed.map((word) => normalizeSearch(word)));
     const search = normalizeSearch(state.search).split(/\s+/u).filter((word) => !relaxed.has(word)).join(" ");
@@ -370,7 +380,7 @@ export async function runBuyerSearch(market: Market, state: BuyerState): Promise
     state.targetPrice && !state.maxPrice ? `حول ${state.targetPrice} ${market.currencyCode}` : "",
   ].filter(Boolean);
   const message = [
-    broadenedFrom?.length ? `خففت كلمات الوصف «${broadenedFrom.join("، ")}» فقط؛ بقيت شروط السعر والحالة واللون والمقاس كما طلبتها.` : "",
+    widenedCategory ? `لم أجد اسم «${state.search}» في النص؛ هذه عروض فئة «${widenedCategory}» التي تطابق الشروط، وقد تتضمن أنواعًا أخرى. ` : broadenedFrom?.length ? `خففت كلمات الوصف «${broadenedFrom.join("، ")}» فقط؛ بقيت شروط السعر والحالة واللون والمقاس كما طلبتها.` : "",
     listings.length
       ? `وجدت ${listings.length} ${listings.length === 1 ? "عرضًا" : "عروض"} داخل DINAR${notes.length ? ` (${notes.join("، ")})` : ""}.`
       : `لم أجد عروضًا مطابقة داخل DINAR${notes.length ? ` (${notes.join("، ")})` : ""}. جرّب إزالة أحد الشروط.`,
@@ -721,7 +731,7 @@ export async function executeBuyerTurn(input: {
       : " هذا حساب عدد المرات فقط؛ لا يوجد سعر واحد محدد أستطيع حساب تكلفته من السياق.";
     if (!id && set) {
       const alternatives = await searchMarketplaceListings(input.market,{search:"",allowedIds:set.resourceIds,conversational:true,sponsoredPlacement:false});
-      const costs = alternatives.filter(row=>row.unitPrice!==null).map(row=>{const minor=Math.round(Number(row.unitPrice)*10**input.market.minorUnitScale);const amount=minor*yearly;return Number.isSafeInteger(amount) ? `«${row.title}»: ${yearly} × ${moneyOf(minor,input.market)} = ${moneyOf(amount,input.market)}` : undefined;}).filter(Boolean);
+      const costs = alternatives.filter(row=>row.unitPrice!==null).map(row=>{const minor=parseMinorUnits(row.unitPrice!,input.market.currencyCode);const amount=minor*yearly;return Number.isSafeInteger(amount) ? `«${row.title}»: ${yearly} × ${moneyOf(minor,input.market)} = ${moneyOf(amount,input.market)}` : undefined;}).filter(Boolean);
       if (costs.length) return notice(`${count} × 12 شهرًا = ${yearly} في السنة. توجد عدة عروض؛ لكل عرض حساب افتراضي مستقل إذا كانت كل زيارة وحدة بالسعر الحالي:\n${costs.join("\n")}\nقبل التوصيل وأي رسوم، وليس حجزًا أو اشتراكًا أو تسعيرة نهائية. حدد العرض المقصود؛ لم يتغير شيء.`);
     }
     return notice(`${count} × 12 شهرًا = ${yearly} في السنة.${cost} لم يتغير شيء.`);
@@ -735,11 +745,15 @@ export async function executeBuyerTurn(input: {
     const focused=await resolveReference({conversationId:input.conversationId,marketId:input.market.id,actorId,message:"هذا"});
     const resourceId=focused?.resourceId ?? (set.resourceIds.length===1 ? set.resourceIds[0] : undefined);
     if (!resourceId) return notice("حدد عرضًا ظاهرًا أولًا لحساب المبلغ؛ لم أفترض سعرًا من عدة عروض.");
-    const snap=await readListingForBuyer(actorId,resourceId);
-    if (!snap?.unitPriceMinor) return notice("لا يوجد سعر مسجل صالح لهذا الحساب؛ لم يتغير شيء.");
-    if (budgetUnits) { let budget:number;try {budget=parseMinorUnits(budgetUnits[1]!,input.market.currencyCode);}catch{return notice("المبلغ لا يطابق دقة عملة السوق؛ اكتب ميزانية صالحة.");} return notice(`بالسعر الحالي ${moneyOf(snap.unitPriceMinor,input.market)}: الميزانية تكفي حسابيًا ${Math.floor(budget/snap.unitPriceMinor)} وحدة قبل التوصيل والرسوم، مع ضرورة التحقق من المخزون. لم أضف أو أحجز شيئًا.`); }
+    const {executeRegisteredTool}=await import("./tool-registry");
+    const read=await executeRegisteredTool("getResource",JSON.stringify({resultSetId:focused?.resultSetId??set.id,resourceId}),{conversationId:input.conversationId,market:input.market,actorId});
+    const row=read.result.listings.find(row=>row.id===resourceId);
+    if (read.result.kind!=="RESOURCE" || row?.unitPrice==null) return notice("لا يوجد سعر مسجل صالح لهذا الحساب؛ لم يتغير شيء.");
+    const snap={unitPriceMinor:parseMinorUnits(row.unitPrice,input.market.currencyCode)};
+    const answer=(body:string):Turn=>({...read,result:{...read.result,prompt:body}});
+    if (budgetUnits) { let budget:number;try {budget=parseMinorUnits(budgetUnits[1]!,input.market.currencyCode);}catch{return notice("المبلغ لا يطابق دقة عملة السوق؛ اكتب ميزانية صالحة.");} return answer(`بالسعر الحالي ${moneyOf(snap.unitPriceMinor,input.market)}: الميزانية تكفي حسابيًا ${Math.floor(budget/snap.unitPriceMinor)} وحدة قبل التوصيل والرسوم، مع ضرورة التحقق من المخزون. لم أضف أو أحجز شيئًا.`); }
     const n=Number(installments![1]);if (!n) return notice("عدد الأشهر يجب أن يكون موجبًا.");const each=Math.floor(snap.unitPriceMinor/n),extra=snap.unitPriceMinor%n;
-    return notice(`قسمة حسابية افتراضية فقط: ${moneyOf(snap.unitPriceMinor,input.market)} على ${n} شهر = ${moneyOf(each,input.market)} لكل دفعة${extra ? ` مع ${extra} دفعات تزيد وحدة نقدية صغرى واحدة لضبط المجموع` : ""}. لا توجد موافقة تقسيط أو فوائد أو رسوم معتمدة، ولم يتغير شيء.`);
+    return answer(`قسمة حسابية افتراضية فقط: ${moneyOf(snap.unitPriceMinor,input.market)} على ${n} شهر = ${moneyOf(each,input.market)} لكل دفعة${extra ? ` مع ${extra} دفعات تزيد وحدة نقدية صغرى واحدة لضبط المجموع` : ""}. لا توجد موافقة تقسيط أو فوائد أو رسوم معتمدة، ولم يتغير شيء.`);
   }
   const sized=text.match(/^(?:شو|كم|ما) الفرق (?:بالسعر|في السعر) بين (\S+) و ?(\S+)$/u);
   const priceChoice=text.match(/^(\S+) ولا (\S+) (?:اوفر|ارخص)$/u);
@@ -751,6 +765,8 @@ export async function executeBuyerTurn(input: {
     return notice(`فرق السعر المسجل ${moneyOf(Math.abs(snaps[0]!.unitPriceMinor!-snaps[1]!.unitPriceMinor!),input.market)} بين «${groups[0]![0]!.title}» و«${groups[1]![0]!.title}»، قبل التوصيل والرسوم؛ لم يتغير شيء.`);
   }
   if (state && /^(?:ال)?ارخص\s+\S+/u.test(text) && /مستعمل|مستخدم/u.test(text)) {
+    const productWords=itemTokens(normalizeSearch(text).replace(/^(?:ال)?ارخص\s+/u,"").split(/\s+/u)).filter(word=>!/^(?:ال)?(?:مستعمل[هة]?|مستخدم[هة]?)$/u.test(word));
+    if (productWords.some(word=>!textMatchesToken(normalizeSearch(state.search),word))) return null;
     const result=await runBuyerSearch(input.market,{...state,condition:"مستعمل",filters:state.filters.filter(f=>f.field!=="condition"),ranking:"CHEAPEST"});
     const first=result.listings.find(row=>row.unitPrice!==null);if(first){const buyer=(result.query as {buyer:BuyerState}).buyer;buyer.message=`${buyer.message} أرخص سعر مسجل ${first.unitPrice} ${input.market.currencyCode} لـ«${first.title}».`;}
     return {tool:"buyerRefine",version:1,result};

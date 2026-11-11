@@ -1,3 +1,4 @@
+import { currencyScale } from "@workspace/global";
 import { createHash } from "node:crypto";
 import { and, desc, eq, isNull, lte, or, sql } from "drizzle-orm";
 import { commissionPolicies } from "@workspace/db";
@@ -231,6 +232,7 @@ export function previewTieredCommission(rule: TieredCommissionRule, input: {
   const blocked = (reason: string): TieredCommissionPreview => ({status:"BLOCKED",reason,activationEnabled:false});
   if (rule.policyKey !== COMMISSION_POLICY_KEY || !Number.isSafeInteger(rule.version) || rule.version < 1) return blocked("INVALID_VERSION");
   if (rule.marketId !== input.marketId || rule.currencyCode !== input.currencyCode || rule.minorUnitScale !== input.minorUnitScale) return blocked("MARKET_CURRENCY_MISMATCH");
+  try {if(currencyScale(input.currencyCode)!==input.minorUnitScale) return blocked("INVALID_CURRENCY_SCALE");}catch{return blocked("INVALID_CURRENCY");}
   if (!Number.isInteger(rule.minorUnitScale) || rule.minorUnitScale < 0 || rule.minorUnitScale > 3) return blocked("INVALID_CURRENCY_SCALE");
   if (!Number.isSafeInteger(rule.thresholdMinor) || rule.thresholdMinor! < 0) return blocked("THRESHOLD_NOT_CONFIGURED");
   if (!Number.isSafeInteger(input.eligibleSubtotalMinor) || input.eligibleSubtotalMinor < 0) return blocked("INVALID_ELIGIBLE_SUBTOTAL");

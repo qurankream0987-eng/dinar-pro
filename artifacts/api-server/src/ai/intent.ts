@@ -246,7 +246,7 @@ export function marketplaceComparisonSearchTerms(message: string): string | unde
 export function searchTerms(message: string): string {
   // Codex: comparison-aware request extraction; Claude: a leading correction is set aside first.
   const request = stripCorrectionPrefix(message)
-    .replace(/^(?:\S+\s+)?[اأ]نا\s+(?:جوعان|جائع|عطشان)\s+(?=ابي|بدي|اريد)/u, "")
+    .replace(/^(?:\S+\s+)?[اأ]نا\s+(?:جوعان|جائع|عطشان)\s+(?=[اأ]بي|بدي|[اأ]ريد)/u, "")
     // «دينار ابحث لي عن …», «يا دينار دورلي على …»: the address and the search verb with its
     // «لي» and preposition are the request, not the product.
     .replace(/^\s*(?:يا\s+)?(?:دينار|dinar)(?:\s*[،,:]\s*|\s+)/iu, "");

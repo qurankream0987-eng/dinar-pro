@@ -61,6 +61,7 @@ const POSSESSIVES = ["كم", "هم", "ها", "نا", "ي", "ك"];
 /** Every surface form a request token may take in a listing. */
 export function tokenVariants(token: string): string[] {
   const forms = new Set<string>([token]);
+  if (token.endsWith("تي") && token.length>=5) forms.add(`${token.slice(0,-2)}ة`).add(`${token.slice(0,-2)}ه`);
   const beneficiary = /^([يتنب][\p{Script=Arabic}]{3,5})لي$/u.exec(token);
   if (beneficiary) for (const form of tokenVariants(beneficiary[1]!)) forms.add(form);
   const cardinal = cardinalWordValue(token);
