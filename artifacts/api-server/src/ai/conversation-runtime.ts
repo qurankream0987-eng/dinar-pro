@@ -161,8 +161,8 @@ async function executeCartConversationTurn(input: {
   const quantityChange = text.match(
     /^(?:غير|عدل|اجعل|خله|خليها|اضبط|ضبط)\s+(?:(?:ال)?كميه\s+)?(?:(?:العنصر|المنتج)\s+)?(.+?)\s+(?:الي|ل)\s*(.+)$/u,
   ) ?? (contextualQuantity ? [contextualQuantity[0], "", contextualQuantity[1]!] : null);
-  const continueCheckout =
-    /^(?:كمل|اكمل|كمل\s+(?:ال)?(?:طلب|شراء|الدفع)|اكمل\s+(?:ال)?(?:طلب|شراء|الدفع))$/u.test(text);
+  const ambiguousOrderContinuation=/^(?:كمل|اكمل)\s+(?:ال)?(?:طلب|طلبي)$/u.test(text);
+  const continueCheckout=/^(?:كمل|اكمل)$/u.test(text) || ambiguousOrderContinuation;
   // «فضي السلة», «فرغ سلتي», «امسح كل شي بالسلة»: every line, and only cart lines.
   const clearCart = /^(?:فضي|فضيلي|فرغ|افرغ|امسح|نظف|صفر)\s+(?:لي\s+)?(?:كل\s+(?:شي|شيء)\s+(?:في|ب)\s*)?(?:ال)?(?:سله|سلتي|عربه)$/u.test(text);
   // An explicit «من السلة» names the cart whatever card was shown last.
@@ -180,7 +180,7 @@ async function executeCartConversationTurn(input: {
     )
     .orderBy(desc(messages.createdAt))
     .limit(1);
-  if (!latestAssistant) return continueCheckout ? clarify("لا توجد مراجعة سلة حالية. افتح السلة أو طلباتك وحدد ما تريد متابعته؛ لم أنفّذ شيئًا.") : null;
+  if (!latestAssistant) return ambiguousOrderContinuation ? clarify("لا توجد مراجعة سلة حالية. افتح السلة أو طلباتك وحدد ما تريد متابعته؛ لم أنفّذ شيئًا.") : null;
   const [latestSurface] = await db
     .select({ payload: aiUiBlocks.payload })
     .from(aiUiBlocks)
@@ -191,7 +191,8 @@ async function executeCartConversationTurn(input: {
       ),
     )
     .limit(1);
-  if (continueCheckout && (latestSurface?.payload as {surface?:unknown} | undefined)?.surface !== "CART") return clarify("هل تقصد طلبًا قائمًا أم عناصر السلة؟ افتح طلباتك أو السلة وحدد المقصود؛ لم أنفّذ شيئًا.");
+  if (ambiguousOrderContinuation && (latestSurface?.payload as {surface?:unknown} | undefined)?.surface !== "CART") return clarify("هل تقصد طلبًا قائمًا أم عناصر السلة؟ افتح طلباتك أو السلة وحدد المقصود؛ لم أنفّذ شيئًا.");
+  if (ambiguousOrderContinuation) return null; // Visible cart: use the ordinary checkout review navigation.
   if (
     !clearCart && !namesCart &&
     (latestSurface?.payload as { surface?: unknown } | undefined)?.surface !==

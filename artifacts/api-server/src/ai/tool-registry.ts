@@ -12,7 +12,7 @@ import {
   searchMarketplaceListings,
 } from "../lib/marketplace-listings";
 import { resolveMarketplaceCategory } from "../lib/marketplace-categories";
-import { boundedItemRelaxation, genericTokens, isDescriptiveOnly, isRequestOnly, itemTokens, purposeTokens, textMatchesToken } from "../lib/arabic-search-terms";
+import { hasServiceMeaning, boundedItemRelaxation, genericTokens, isDescriptiveOnly, isRequestOnly, itemTokens, purposeTokens, textMatchesToken } from "../lib/arabic-search-terms";
 import { normalizeSearch } from "./search-context";
 import { parseStructuredSearch } from "./search-query";
 import {
@@ -408,7 +408,9 @@ export const aiToolRegistry: Record<string, ToolDefinition> = {
       let listings = await run(input.query);
       let broadenedFrom: string[] | undefined;
       let widenedFromCategory: string | undefined;
-      const searchAcrossCategories = (search: string = input.query) =>
+      const serviceQuery=hasServiceMeaning(itemTokens(normalizeSearch(input.query??"").split(/\s+/u)));
+      const specificFilters=(input.filters as SearchFilter[]|undefined)?.some(filter=>searchFilterDefinition(undefined,filter.field)===undefined);
+      const searchAcrossCategories = async (search: string = input.query) => specificFilters ? [] :
         searchMarketplaceListings(context.market, {
           search,
           conversational: true,
@@ -432,13 +434,13 @@ export const aiToolRegistry: Record<string, ToolDefinition> = {
             widenedFromCategory = category?.label ?? input.category ?? input.categoryId;
           }
         }
-        if (!listings.length && aliasWords.length) {
+        if (!listings.length && aliasWords.length && !serviceQuery && !aliasWords.some(word=>/[\d٠-٩۰-۹]/u.test(word) || tokenVariants(word).some(form=>/^\d+$/u.test(form)))) {
           listings = await run(remaining);
           if (listings.length) broadenedFrom = aliasWords;
         }
       }
       // «شعار لمقهى»: a purpose word no listing mentions is relaxed, and reported.
-      if (!listings.length && !broadenedFrom && input.query) {
+      if (!listings.length && !broadenedFrom && input.query && !serviceQuery) {
         const words = itemTokens(normalizeSearch(input.query).split(/\s+/).filter(Boolean));
         const purpose = purposeTokens(words);
         const remaining = words.filter((word) => !purpose.includes(word));
@@ -448,7 +450,7 @@ export const aiToolRegistry: Record<string, ToolDefinition> = {
         }
       }
       // «موبايل ايفون»: a generic kind-of-thing word beside a specific one may be relaxed, and reported.
-      if (!listings.length && !broadenedFrom && input.query) {
+      if (!listings.length && !broadenedFrom && input.query && !serviceQuery) {
         const words = itemTokens(normalizeSearch(input.query).split(/\s+/).filter(Boolean));
         const generic = genericTokens(words);
         if (generic.length) {
@@ -458,7 +460,7 @@ export const aiToolRegistry: Record<string, ToolDefinition> = {
       }
       // «محتاج حد ينضف الشقة»: the category inferred from a noun («الشقة» → عقارات) may be the
       // wrong one. With nothing inside it, the same words are searched across categories and the
-      // reply says the category was widened. Only category-independent filters are kept.
+      // reply says the category was widened. A category-specific hard filter prevents widening.
       if (!listings.length && (input.categoryId || input.category) && input.query) {
         const category = await resolveMarketplaceCategory(input.categoryId, input.category);
         const wider = await searchAcrossCategories();
@@ -473,7 +475,7 @@ export const aiToolRegistry: Record<string, ToolDefinition> = {
       // never relaxed; an inferred category does not restrict these searches (a purpose or place
       // word such as «للبيت» must not turn a washing machine into an apartment); a subset of only
       // descriptive words never counts; and the reply names exactly the words that were relaxed.
-      if (!listings.length && !broadenedFrom && input.query) {
+      if (!listings.length && !broadenedFrom && input.query && !serviceQuery) {
         const relaxed = await boundedItemRelaxation(input.query, normalizeSearch, searchAcrossCategories);
         if (relaxed) {
           listings = relaxed.listings;

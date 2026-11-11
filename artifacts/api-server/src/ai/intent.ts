@@ -169,7 +169,7 @@ const CORRECTION_PREFIXES = [
   // «لا خليها، أريد …», «بلاها، …»: drop the previous request; what follows is a new one.
   /^\s*(?:(?:لا|لأ)\s*[,،]?\s*)?(?:خليها|خلها|خليه|خله|بلاها|بلاش|انسى|انساها|انسي)\s*[,،]\s*/iu,
   /^\s*(?:لا|لأ)\s*[,،]?\s*(?:مو|مش)\s+(?:هذا|هذه|هذي|ذلك)\s*[,،]?\s*/iu,
-  /^\s*(?:(?:لا|لأ)\s*[,،]?\s*)?(?:أقصد|اقصد|قصدي|أعني|اعني|كنت\s+أقصد|كنت\s+اقصد)(?:\s*[,،:]\s*|\s+)/iu,
+  /^\s*(?:(?:لا|لأ)\s*[,،]?\s*)?(?:أقصد|اقصد|قصدي|قصدت|أعني|اعني|كنت\s+أقصد|كنت\s+اقصد)(?:\s*[,،:]\s*|\s+)/iu,
   /^\s*(?:مو|مش|ليس)\s+(?:هذا|هذه|هذي|ذلك)\s*[,،]?\s*/iu,
   // «هذا مو اللي أقصده، …», «هذي مش اللي بدي ياه»: the shown item is rejected; what follows is meant.
   /^\s*(?:هذا|هذه|هذي|هاد|هادا|هيدا)\s+(?:مو|مش|ليس|مهو|ماهو)\s+(?:اللي|الي|يلي|الذي|التي)\s+[^،,]{1,20}?\s*[,،]\s*/iu,
@@ -212,7 +212,7 @@ export function refusesCommercialAction(message: string): boolean {
 
 /** Remove only a leading correction marker; keep the corrected value and its constraints. */
 export function stripCorrectionPrefix(message: string): string {
-  let text = message
+  let text = message.replace(/[ً-ٰٟ]/gu, "")
     .replace(/^شوف\s+(?:إذا|اذا|لو)\s+(?:في|فيه)\s+/u,"ابحث عن ")
     .replace(/^abi\s+/iu,"ابي ").replace(/\bmosta3mal\b/giu,"مستعمل")
     .replace(/^([a-z][a-z0-9-]*(?:\s+[a-z0-9-]+){0,4})\s+b\s+(\d+(?:\.\d+)?)$/iu,"ابي $1 بسعر $2")

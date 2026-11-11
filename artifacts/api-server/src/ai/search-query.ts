@@ -7,6 +7,7 @@ import {
   type SearchQuery,
   type SearchSort,
 } from "@workspace/api-zod/marketplace-schemas";
+import { tokenVariants } from "../lib/arabic-search-terms";
 import { searchTerms, stripCorrectionPrefix } from "./intent";
 import {
   hasCategoryAlias,
@@ -525,8 +526,10 @@ export function parseStructuredSearch(
     sort,
   );
   // Without a category, new product words start a new search; bare constraints refine the last one.
+  const attributeWords=nextFilters.filter(filter=>!["price"].includes(filter.field)).flatMap(filter=>normalizeSearch(String(filter.value)).split(/\s+/u));
+  const attributeOnly=Boolean(extractedSearch) && extractedSearch.split(/\s+/u).every(word=>attributeWords.some(value=>tokenVariants(word).some(form=>tokenVariants(value).includes(form))));
   const refinesPrevious = schema
-    ? previous?.categoryId === categoryId && (!extractedSearch || normalizeSearch(extractedSearch) === normalizeSearch(previous?.search ?? ""))
+    ? previous?.categoryId === categoryId && (!extractedSearch || attributeOnly || normalizeSearch(extractedSearch) === normalizeSearch(previous?.search ?? ""))
     : previous !== undefined && !previous.categoryId && !extractedSearch;
   const previousFilters = refinesPrevious ? previous?.filters ?? [] : [];
   const filters = clearFilters

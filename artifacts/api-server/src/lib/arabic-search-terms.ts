@@ -144,7 +144,7 @@ export function itemTokens(tokens: readonly string[]): string[] {
  * them (`broadenedFrom`). The first item word is never relaxed.
  */
 export function purposeTokens(tokens: readonly string[]): string[] {
-  return tokens.slice(1).filter((token) => /^ل(?!ل|ا)/u.test(token) && token.length >= 4);
+  return tokens.slice(1).filter((token) => /^ل(?!ل|ا)/u.test(token) && token.length >= 4 && !/[\d٠-٩۰-۹]/u.test(token) && !tokenVariants(token).some(form=>/^\d+$/u.test(form)));
 }
 
 const escape = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -193,4 +193,10 @@ export async function boundedItemRelaxation<T extends { title: string }>(query: 
     }
   }
   return undefined;
+}
+
+/** A service's target noun must not be discarded to find a different service. */
+export function hasServiceMeaning(tokens: readonly string[]): boolean {
+  const nouns=new Set(["تنظيف","تصليح","اصلاح","صيانة","صيانه","تصميم","طباعه","طباعة","تركيب","غسيل","تبريد","دهان"]);
+  return tokens.some(token=>/^(?:ي|ت|ن|ب|بي|بن)(?:نظف|صلح|غسل|صمم|طبع|ركب|برد|دهن|رسم)(?:لي)?$/u.test(token) || tokenVariants(token).some(form=>nouns.has(form)));
 }

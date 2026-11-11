@@ -1,4 +1,4 @@
-import { type AiCallRecord, holdPlatformAiSpend, settlePlatformAiSpend, spendRequired } from "../lib/ai-spend";
+import { type AiCallRecord } from "../lib/ai-spend";
 import { getCommercialPolicy } from "../lib/commercial-policy";
 import { isVisualSearchPath, loadVisualSearchImage, MAX_VISUAL_SEARCH_IMAGES } from "../lib/visual-search-images";
 import { isImageQuestion, createVisualAnalyzer, visionModel, rankVisualMatches, visualFallbackTerms, visualSearchTerms, type VisualAnalysis, type VisualAnalyzer } from "../ai/visual-search";
@@ -2155,14 +2155,17 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
     const metered = !req.app.locals.visualAnalyzer;
     const policy = metered ? (await getCommercialPolicy(market.id)).aiUsage : undefined;
     const expectedModel = visionModel();
-    const hold = policy && policy.spend.global.limitMicros !== null && expectedModel ? await holdPlatformAiSpend({ purpose: "PLATFORM_VISUAL_SEARCH", resource: "IMAGE_UNDERSTANDING", policy, expectedModel }) : undefined;
-    const analyzed: Awaited<ReturnType<VisualAnalyzer["analyze"]>> = metered && !hold?.ok
+    const reserved = policy && policy.spend.global.limitMicros !== null && expectedModel
+      ? await reserveAiUsage({owner:{kind:"USER",userId:req.actor!.id,market},resource:"IMAGE_UNDERSTANDING",idempotencyKey:`vision:${conversation.id}:${userMessageId}`,expectedModel}) : undefined;
+    const analyzed: Awaited<ReturnType<VisualAnalyzer["analyze"]>> = metered && !reserved?.ok
       ? { status: "BLOCKED_PROVIDER", reason: "NO_IMAGE_MODEL" }
       : await analyzer.analyze(visualImage, message, question ? "QUESTION" : "SEARCH").catch(() => ({ status: "FAILED" as const, reason: "ANALYZER_ERROR" }));
-    if (hold?.ok)
-      await settlePlatformAiSpend(hold.hold.id, visionCalls, policy!.tokenEstimates.IMAGE_UNDERSTANDING).catch(() => {
-        req.log.error({ event: "vision_spend_settlement_failed", holdId: hold.hold.id }, "Vision spend settlement failed; hold retained for reconciliation");
+    if (reserved?.ok) {
+      const reported=visionCalls.length>0 && visionCalls.every(call=>Number.isInteger(call.inputTokens)&&Number.isInteger(call.outputTokens));
+      await settleAiUsage(reserved.reservation.id,{outcome:analyzed.status==="ANALYZED" && (!question||Boolean(analyzed.analysis.answer)) ? "SUCCESS" : "PROVIDER_FAILED",providerCalls:visionCalls.length,calls:visionCalls,...(reported?{inputTokens:visionCalls.reduce((n,c)=>n+c.inputTokens!,0),outputTokens:visionCalls.reduce((n,c)=>n+c.outputTokens!,0)}:{})}).catch(()=>{
+        req.log.error({event:"vision_usage_settlement_failed",reservationId:reserved.reservation.id},"Vision usage settlement failed; reservation retained for reconciliation");
       });
+    }
     if (question) {
       imageUnderstanding = analyzed.status === "ANALYZED" && analyzed.analysis.answer
         ? { status: "ANALYZED", answer: analyzed.analysis.answer }
