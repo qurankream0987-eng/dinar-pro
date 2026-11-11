@@ -149,15 +149,19 @@ export function renderMemoryContext(memory: ConversationMemoryContext | null | u
   if (memory.current) {
     parts.push(`CURRENT_SUMMARY (derived, through ${stamp(memory.current.when)}): ${memory.current.summary}`);
   }
+  for (const hit of memory.matches) {
+    parts.push(`EARLIER_MESSAGE (${stamp(hit.when)}; ${hit.actor === "ASSISTANT" ? "ASSISTANT_UNVERIFIED" : hit.actor === "USER" ? "USER_QUOTE" : "UNVERIFIED_QUOTE"}): ${hit.body}`);
+  }
   for (const item of memory.historical) {
     parts.push(`EARLIER_CONVERSATION (derived, through ${stamp(item.when)}): ${item.summary}`);
   }
-  for (const hit of memory.matches) {
-    parts.push(`EARLIER_MESSAGE (${stamp(hit.when)}): ${hit.body}`);
-  }
   if (!parts.length) return "";
-  const body = parts
-    .map((part) => redactForModel(part).replace(/\s+/g, " ").trim())
+  // Fair excerpt allocation: a long derived summary must not consume every direct quote.
+  // Bound section count before allocating; the existing whole-block ceiling still applies.
+  const sections = parts.slice(0, 6);
+  const sectionBudget = Math.floor((MAX_MEMORY_CONTEXT_CHARS - MEMORY_PREFIX.length - 120) / sections.length);
+  const body = sections
+    .map((part) => redactForModel(part).replace(/\s+/g, " ").trim().slice(0, sectionBudget))
     .join("\n")
     .slice(0, MAX_MEMORY_CONTEXT_CHARS);
   // JSON escaping can expand the body; trim it until the whole block, prefix included, fits.

@@ -1,3 +1,4 @@
+import {resolveModelProfile, type AIModelProfile} from "./model-profiles";
 import OpenAI from "openai";
 import { toFile } from "openai/uploads";
 
@@ -56,6 +57,7 @@ export type AIReasoningEffort = (typeof AI_REASONING_EFFORTS)[number];
 export type AIProviderConfiguration = {
   provider: AIProvider;
   requestedModel: string;
+  profile?: AIModelProfile;
   /** Provider-specific transport and tool policy; free-only Gemma uses Chat Completions with AUTO. */
   transport?: AITransport;
   toolChoice?: AIToolChoice;
@@ -349,15 +351,20 @@ export type AIModelRuntimeConfiguration = {
 
 export function resolveAIModelRuntimeConfiguration(env: NodeJS.ProcessEnv = process.env): AIModelRuntimeConfiguration {
   const primary = resolveAIProviderConfiguration(env);
+  primary.profile = resolveModelProfile(env, "PRIMARY", primary);
+  if (env.DINAR_AI_IMAGE_INPUT === "true" && primary.profile && !primary.profile.capabilities.imageInput) throw new Error("Primary profile does not support configured image input.");
   let fallback: AIProviderConfiguration | undefined;
   if (env.DINAR_AI_FALLBACK_PROVIDER?.trim()) {
     const candidate = resolveAIProviderConfiguration(env, "FALLBACK");
+    candidate.profile = resolveModelProfile(env, "FALLBACK", candidate);
+    if (primary.profile?.capabilities.imageInput && !candidate.profile?.capabilities.imageInput) throw new Error("Fallback profile does not preserve image capability.");
     // A fallback identical to the primary would only repeat the same failure at extra cost.
     if (candidate.provider !== primary.provider || candidate.requestedModel !== primary.requestedModel) fallback = candidate;
   }
   let heavy: AIProviderConfiguration | undefined;
   if (env.DINAR_AI_HEAVY_PROVIDER?.trim()) {
     const candidate = resolveAIProviderConfiguration(env, "HEAVY");
+    candidate.profile = resolveModelProfile(env, "HEAVY", candidate);
     // A heavy tier identical to the primary is the primary at high effort (model-tier.ts), not a second model.
     if (candidate.provider !== primary.provider || candidate.requestedModel !== primary.requestedModel) heavy = candidate;
   }
@@ -397,6 +404,7 @@ export function describeAIModelReadiness(env: NodeJS.ProcessEnv = process.env) {
     provider: configuration.provider,
     model: configuration.requestedModel || null,
     endpointHost: configuration.baseURL ? new URL(configuration.baseURL).host : configuration.provider === "OPENAI" ? "api.openai.com" : null,
+    ...(configuration.profile ? { profile: configuration.profile } : {}),
     credentialName: configuration.credentialName,
     credentialPresent: Boolean(env[configuration.credentialName]),
     transport: configuration.transport ?? "CHAT_COMPLETIONS",
@@ -535,6 +543,7 @@ export interface ConversationModelGateway {
   readonly providerInfo?: {
     provider: AIProvider;
     requestedModel: string;
+    profile?: AIModelProfile;
   };
   proposeToolCall(
     messages: ModelMessage[],
@@ -587,6 +596,10 @@ export function proposeThroughGateway(
     return gateway.proposeToolCall(messages, tools, options);
   }
   const model = gateway.providerInfo?.requestedModel ?? "UNKNOWN";
+  const profile = gateway.providerInfo?.profile;
+  // Include tool schemas: they consume context too. Refuse before dispatch, not a billed attempt.
+  if (profile && JSON.stringify({messages, tools}).length > profile.capabilities.maxInputChars)
+    return Promise.reject(unsupportedOption(provider, model));
   // Owner switch (environment, read on every call): the request is never sent.
   if (isProviderDisabled(provider, model)) return Promise.reject(refusedLocally(provider, model, "NOT_CONFIGURED", "DISABLED"));
   const threshold = breakerThreshold();
@@ -941,7 +954,7 @@ function unusableResponse(
 class OpenAIResponsesGateway implements ConversationModelGateway {
   constructor(
     private readonly client: OpenAI,
-    readonly providerInfo: { provider: AIProvider; requestedModel: string },
+    readonly providerInfo: { provider: AIProvider; requestedModel: string; profile?: AIModelProfile },
     readonly fallback: ConversationModelGateway | undefined,
     private readonly maxOutputTokens: number,
     private readonly policy: { toolChoice?: AIToolChoice; reasoningEffort?: AIReasoningEffort },
@@ -1026,7 +1039,7 @@ function geminiSchema(value: unknown): unknown {
 
 class GeminiGenerateContentGateway implements ConversationModelGateway {
   constructor(
-    readonly providerInfo: { provider: AIProvider; requestedModel: string },
+    readonly providerInfo: { provider: AIProvider; requestedModel: string; profile?: AIModelProfile },
     private readonly apiKey: string,
     private readonly maxOutputTokens: number,
     private readonly requestTimeoutMs: number,
@@ -1155,7 +1168,7 @@ function chatGateway(configuration: AIProviderConfiguration, env: NodeJS.Process
     apiKey: env[configuration.credentialName]!,
     ...(configuration.baseURL ? { baseURL: configuration.baseURL } : {}),
   });
-  const providerInfo = { provider: configuration.provider, requestedModel: configuration.requestedModel };
+  const providerInfo = { provider: configuration.provider, requestedModel: configuration.requestedModel, ...(configuration.profile ? {profile: configuration.profile} : {}) };
   // The SDK deadline follows DINAR_MODEL_TIMEOUT_MS (default 25 s, as before), so a longer
   // configured turn is not cut short by a fixed client timeout.
   const { maxOutputTokens, timeoutMs } = resolveAIModelRuntimeConfiguration(env);
@@ -1187,7 +1200,7 @@ export async function createConversationModelGateway(
       throw new Error("The Gemini free-only benchmark requires no fallback and zero retries.");
     const { maxOutputTokens, timeoutMs } = runtime;
     return new GeminiGenerateContentGateway(
-      { provider: "GEMINI", requestedModel: runtime.primary.requestedModel },
+      { provider: "GEMINI", requestedModel: runtime.primary.requestedModel, ...(runtime.primary.profile ? {profile: runtime.primary.profile} : {}) },
       env[runtime.primary.credentialName]!,
       maxOutputTokens,
       timeoutMs,
