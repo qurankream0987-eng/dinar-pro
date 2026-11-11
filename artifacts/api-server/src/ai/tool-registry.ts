@@ -12,7 +12,7 @@ import {
   searchMarketplaceListings,
 } from "../lib/marketplace-listings";
 import { resolveMarketplaceCategory } from "../lib/marketplace-categories";
-import { hasServiceMeaning, boundedItemRelaxation, genericTokens, isDescriptiveOnly, isRequestOnly, itemTokens, purposeTokens, textMatchesToken } from "../lib/arabic-search-terms";
+import { tokenVariants, hasServiceMeaning, boundedItemRelaxation, genericTokens, isDescriptiveOnly, isRequestOnly, itemTokens, purposeTokens, textMatchesToken } from "../lib/arabic-search-terms";
 import { normalizeSearch } from "./search-context";
 import { parseStructuredSearch } from "./search-query";
 import {
