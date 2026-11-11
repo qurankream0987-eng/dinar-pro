@@ -15,7 +15,7 @@ import { test, after } from "node:test";
 import assert from "node:assert/strict";
 import { createHash, randomUUID } from "node:crypto";
 import { and, eq } from "drizzle-orm";
-import { aiResultSets, cartItems, carts, db, messages, orders, policyAcceptances, pool } from "@workspace/db";
+import { offers, aiResultSets, cartItems, carts, db, messages, orders, policyAcceptances, pool } from "@workspace/db";
 import app from "../src/app";
 import { AIProviderError, type ConversationModelGateway } from "../src/ai/model-gateway";
 import { CANONICAL_REQUEST_INSTRUCTION } from "../src/ai/routing-mode";
