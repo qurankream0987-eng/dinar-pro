@@ -1,3 +1,4 @@
+import { COMPOSE_EVENT } from "@/features/ai/AnswerCards";
 import "./AiChat.css";
 import "./PremiumMaterials.css";
 import { useStableCallback } from "@/hooks/use-stable-callback";
@@ -1632,6 +1633,17 @@ export default function AiPage() {
   };
   // A read command (cart, orders, listings) opens its surface without discarding what the user was
   // typing: the unsent draft is put back once the command's conversation has started.
+  // An answer card's choice is sent as the user's next message in the open conversation.
+  useEffect(() => {
+    const onCompose = (event: Event) => {
+      const text = String((event as CustomEvent).detail ?? "").trim().slice(0, 200);
+      if (!text) return;
+      if (activeId) void sendMessage(activeId, text);
+      else void startConversation(text, []);
+    };
+    window.addEventListener(COMPOSE_EVENT, onCompose);
+    return () => window.removeEventListener(COMPOSE_EVENT, onCompose);
+  });
   const runCommand = (value: string) => {
     setSidebarOpen(false);
     const unsent = draft || takeStashedDraft();

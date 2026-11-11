@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Check, Copy } from "lucide-react";
+import { AnswerCard, isAnswerCardLanguage } from "./AnswerCards";
 import { inlineText, parseRichText, textDirection, type Inline, type RichBlock } from "./rich-text";
 
 function InlineText({ parts }: { parts: Inline[] }) {
@@ -79,6 +80,7 @@ function HeadingMark() {
 function Block({ block }: { block: RichBlock }) {
   switch (block.kind) {
     case "code":
+      if (isAnswerCardLanguage(block.language)) return <AnswerCard language={block.language} code={block.code} />;
       return <CodeBlock language={block.language} code={block.code} />;
     case "heading":
       return block.level === 3 ? (
