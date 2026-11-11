@@ -2533,7 +2533,7 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
           : toolResult.listings.length && typeof toolResult.query.widenedFromCategory === "string"
             ? `لم أجد عروضًا مطابقة في تصنيف «${toolResult.query.widenedFromCategory}»، فعرضت ${toolResult.listings.length} عروض من تصنيفات أخرى تطابق كلماتك.`
           : toolResult.listings.length && Array.isArray(toolResult.query.broadenedFrom)
-            ? `لم أجد عروضًا تذكر «${toolResult.query.broadenedFrom.join(" ")}» تحديدًا، فعرضت ${toolResult.listings.length} عروض تطابق بقية طلبك.`
+            ? `لم أجد عروضًا تذكر «${toolResult.query.broadenedFrom.join(" ")}» تحديدًا، فوسعت البحث باستبعاد هذا الوصف فقط وعرضت ${toolResult.listings.length} عروض تطابق بقية طلبك.`
           : toolResult.listings.length
             ? `وجدت ${toolResult.listings.length} عروض منشورة تطابق طلبك. راجع التفاصيل الحالية من بطاقات العرض.`
             : searchState?.filters.length

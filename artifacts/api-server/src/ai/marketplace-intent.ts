@@ -186,7 +186,7 @@ export function interpretMarketplaceTurn(
     stripCorrectionPrefix(message),
   );
   if (
-    correctionValue !== normalized &&
+    correctionValue !== normalizeMarketplaceText(message) &&
     (!correctionValue || isVagueRequest(correctionValue))
   )
     return {

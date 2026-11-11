@@ -348,7 +348,7 @@ export async function runBuyerSearch(market: Market, state: BuyerState): Promise
       const wider = await runBuyerSearch(market, { ...state, search, relaxed: undefined });
       if (wider.listings.length) {
         const buyer = (wider.query as { buyer?: BuyerState }).buyer;
-        const note = `لم أجد عروضًا تذكر «${state.relaxed.join(" ")}» تحديدًا، فعرضت ما يطابق بقية طلبك.`;
+        const note = `لم أجد عروضًا تذكر «${state.relaxed.join(" ")}» تحديدًا، فوسعت البحث باستبعاد هذا الوصف فقط وعرضت ما يطابق بقية طلبك.`;
         return { ...wider, query: { ...wider.query, broadenedFrom: state.relaxed, buyer: { ...buyer!, search: state.search, relaxed: state.relaxed, message: `${note} ${buyer?.message ?? ""}`.trim() } } };
       }
     }
