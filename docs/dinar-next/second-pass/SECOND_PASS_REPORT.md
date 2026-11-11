@@ -1,5 +1,7 @@
 # DINAR NEXT — second-pass engineering audit
 
+> Follow-up update (11 November 2026): see [final evidence and review readiness](follow-up/FOLLOW_UP_REPORT.md). New runtime `28f26779fbc4b23c6269795656a0d42db7aff9ef`; the original run counts below remain historical. The follow-up corrects the SQL exclusion count to eight, investigates all nine failures, and marks the source ready for independent review with declared limitations.
+
 This is a new audit of the previous Codex delivery, not a release authorization or a handoff to Claude. Work remains on `codex/remaining-engineering-closure`; nothing was pushed, merged, deployed, restarted remotely, or sent to Claude. No production or staging data was modified. No paid provider request was made.
 
 ## Trace and scope

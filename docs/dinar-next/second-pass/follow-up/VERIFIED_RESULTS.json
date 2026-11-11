@@ -1,0 +1,69 @@
+{
+  "independent-reproduction": {
+    "executions": 7,
+    "tests": 126,
+    "PASS": 119,
+    "FAIL": 7,
+    "SKIP": 0,
+    "evidence": "independent-reproduction/summary.json"
+  },
+  "controlled-load": {
+    "executions": 13,
+    "tests": 341,
+    "PASS": 328,
+    "FAIL": 13,
+    "SKIP": 0,
+    "evidence": "controlled-load/summary.json"
+  },
+  "final-validation": {
+    "executions": 13,
+    "tests": 182,
+    "PASS": 178,
+    "FAIL": 4,
+    "SKIP": 0,
+    "evidence": "final-validation/summary.json"
+  },
+  "sql-condition-trace": {
+    "executions": 1,
+    "tests": 1,
+    "PASS": 1,
+    "FAIL": 0,
+    "SKIP": 0,
+    "evidence": "sql-condition-trace/summary.json"
+  },
+  "late-render-diagnostic": {
+    "executions": 1,
+    "tests": 3,
+    "PASS": 0,
+    "FAIL": 3,
+    "SKIP": 0,
+    "evidence": "late-render-diagnostic/summary.json"
+  },
+  "late-render-full-diagnostic": {
+    "executions": 1,
+    "tests": 21,
+    "PASS": 21,
+    "FAIL": 0,
+    "SKIP": 0,
+    "evidence": "late-render-full-diagnostic/summary.json"
+  },
+  "final-nine-recheck": {
+    "executions": 7,
+    "tests": 126,
+    "PASS": 120,
+    "FAIL": 6,
+    "SKIP": 0,
+    "evidence": "final-nine-recheck/summary.json"
+  },
+  "note": "Runs overlap and include deliberate diagnostic load and an invalid selected-case fixture attempt; do not sum as unique acceptance cases. The original 126-suite battery was NOT rerun or relabeled.",
+  "runtimeSha": "28f26779fbc4b23c6269795656a0d42db7aff9ef",
+  "blocked91": {
+    "PASS": 0,
+    "FAIL": 0,
+    "BLOCKED": 91,
+    "providerCalls": 0,
+    "spend": 0
+  },
+  "reviewReadiness": "YES_WITH_DISCLOSED_ACCEPTANCE_CONFLICTS_AND_FLAKINESS",
+  "releaseReadiness": "NOT_READY"
+}
