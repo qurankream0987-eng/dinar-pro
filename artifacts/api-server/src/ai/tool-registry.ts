@@ -446,6 +446,10 @@ export const aiToolRegistry: Record<string, ToolDefinition> = {
         const remaining = words.filter((word) => !purpose.includes(word));
         if (purpose.length && remaining.length && (!serviceQuery || remaining.some(word=>!hasServiceMeaning([word]) && !["فني","معلم","عامل","حرفي","ورشة","ورشه","جهة","جهه","شركة","شركه"].includes(word)))) {
           listings = await run(remaining.join(" "));
+          // A service target (e.g. computer) can infer a product category. Search the same
+          // retained service and object across categories; never discard a service target or
+          // a category-specific hard filter to improve recall.
+          if (!listings.length && serviceQuery) listings = await searchAcrossCategories(remaining.join(" "));
           if (listings.length) broadenedFrom = purpose;
         }
       }
