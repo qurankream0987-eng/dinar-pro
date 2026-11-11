@@ -750,7 +750,7 @@ export async function executeBuyerTurn(input: {
     const row=read.result.listings.find(row=>row.id===resourceId);
     if (read.result.kind!=="RESOURCE" || row?.unitPrice==null) return notice("لا يوجد سعر مسجل صالح لهذا الحساب؛ لم يتغير شيء.");
     const snap={unitPriceMinor:parseMinorUnits(row.unitPrice,input.market.currencyCode)};
-    const answer=(body:string):Turn=>({...read,result:{...read.result,prompt:body}});
+    const answer=(body:string):Turn=>({...read,result:{...read.result,prompt:body,query:{...read.result.query,buyer:{message:body,authority:"DINAR"}}}});
     if (budgetUnits) { let budget:number;try {budget=parseMinorUnits(budgetUnits[1]!,input.market.currencyCode);}catch{return notice("المبلغ لا يطابق دقة عملة السوق؛ اكتب ميزانية صالحة.");} return answer(`بالسعر الحالي ${moneyOf(snap.unitPriceMinor,input.market)}: الميزانية تكفي حسابيًا ${Math.floor(budget/snap.unitPriceMinor)} وحدة قبل التوصيل والرسوم، مع ضرورة التحقق من المخزون. لم أضف أو أحجز شيئًا.`); }
     const n=Number(installments![1]);if (!n) return notice("عدد الأشهر يجب أن يكون موجبًا.");const each=Math.floor(snap.unitPriceMinor/n),extra=snap.unitPriceMinor%n;
     return answer(`قسمة حسابية افتراضية فقط: ${moneyOf(snap.unitPriceMinor,input.market)} على ${n} شهر = ${moneyOf(each,input.market)} لكل دفعة${extra ? ` مع ${extra} دفعات تزيد وحدة نقدية صغرى واحدة لضبط المجموع` : ""}. لا توجد موافقة تقسيط أو فوائد أو رسوم معتمدة، ولم يتغير شيء.`);
