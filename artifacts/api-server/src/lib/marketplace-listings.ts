@@ -310,11 +310,15 @@ export async function searchMarketplaceListings(
           : offer.data.attributes?.[filter.field];
       if (actual == null) {
         // Legacy descriptive brand/model fields may be omitted while the seller's title
-        // states them. This is text evidence only: never infer price, condition, numbers,
+        // states them. This is positive text evidence only: never infer price or numbers,
         // certification, ownership or a negative constraint, and never override stored data.
         if (!["make", "model", "brand", "manufacturer", "color", "colour", "condition", "audience"].includes(filter.field) || typeof filter.value !== "string" || !["eq", "contains"].includes(filter.operator)) return false;
         const title = normalizeSearch(String(offer.data.title ?? "")).split(/\s+/u);
-        return normalizeSearch(filter.value).split(/\s+/u).filter(Boolean).every((word) => title.some((part) => tokenVariants(word).some((form) => tokenVariants(part).includes(form))));
+        return normalizeSearch(filter.value).split(/\s+/u).filter(Boolean).every((word) => title.some((part,index) => {
+          const before=title.slice(Math.max(0,index-2),index).join(" ");
+          if (/(?:^|\s)(?:و|ف)?(?:ليس|ليست|غير|مو|مش|لا|بدون)(?:\s+(?:هو|هي))?$/u.test(before)) return false;
+          return tokenVariants(word).some((form) => tokenVariants(part).includes(form));
+        }));
       }
       if (typeof filter.value === "number") {
         const numericActual = typeof actual === "number" ? actual : Number(actual);
