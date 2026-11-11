@@ -1,0 +1,3490 @@
+{
+  "population": 91,
+  "sourceEvaluationSha": "16f85e5a55ea360c646de56f4e42b93cf1755a1f",
+  "mutuallyExclusivePrimaryGroups": {
+    "Live AI provider dependency": 91,
+    "Vision provider dependency": 0,
+    "External network restriction alone": 0,
+    "Environment or credentials alone": 0,
+    "Other execution prerequisites alone": 0
+  },
+  "overlappingSharedPrerequisites": {
+    "paidExecutionAuthorized": false,
+    "protectedTextKeyPresenceOnly": {
+      "DINAR_AI_API_KEY": false,
+      "DINAR_DEEPSEEK_API_KEY": false,
+      "OPENROUTER_API_KEY": false,
+      "OPENAI_API_KEY": false,
+      "GROQ_API_KEY": false,
+      "AI_INTEGRATIONS_OPENAI_API_KEY": false
+    },
+    "providerValidityVerified": false,
+    "localGeneralModelConfigured": false,
+    "deterministicHarnessBlocksModelCalls": true,
+    "externalTextEndpointPermission": "Selected provider must be permitted; current preset excludes DeepSeek/OpenRouter. No provider connection attempted."
+  },
+  "newlyExecutableCases": 0,
+  "cases": [
+    {
+      "testId": "G01-001",
+      "scenarioType": "general",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G01-001",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "مرحبا، شو بتقدر تساعدني فيه؟",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G01-001",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G01-002",
+      "scenarioType": "general",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G01-002",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "اشرح لي الذكاء الاصطناعي كأني طفل.",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G01-002",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G01-003",
+      "scenarioType": "general",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G01-003",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "شو الفرق بين الادخار والاستثمار؟",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G01-003",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G01-004",
+      "scenarioType": "general",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G01-004",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "اكتبلي رسالة اعتذار محترمة لمديري لأني تأخرت.",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G01-004",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G01-005",
+      "scenarioType": "general",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G01-005",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "فسرلي ليش البطارية بتخلص بسرعة بالجوال.",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G01-005",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G01-006",
+      "scenarioType": "general",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G01-006",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "اعمل لي جدول دراسة أسبوعي لطالب توجيهي.",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G01-006",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G01-007",
+      "scenarioType": "general",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G01-007",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "عطني فكرة مشروع بسيطة برأس مال قليل.",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G01-007",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G01-008",
+      "scenarioType": "general",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G01-008",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "اسألني أسئلة عشان تعرف شو أحتاج.",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G01-008",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G01-009",
+      "scenarioType": "general",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G01-009",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "ما فهمت، اشرحها بطريقة ثانية: شو يعني تضخم؟",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G01-009",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G01-010",
+      "scenarioType": "general",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G01-010",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "كيف أكتب سيرة ذاتية قوية لأول وظيفة؟",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G01-010",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G01-011",
+      "scenarioType": "general",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G01-011",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "لخص لي فوائد المشي اليومي بثلاث نقاط.",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G01-011",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G01-012",
+      "scenarioType": "general",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G01-012",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "شو معنى كلمة «استدامة»؟",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G01-012",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G01-013",
+      "scenarioType": "general",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G01-013",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "ترجم للإنجليزي: أنا سعيد بلقائك.",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G01-013",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G01-014",
+      "scenarioType": "general",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G01-014",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "عندي مقابلة عمل بكرة، شو أهم النصائح؟",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G01-014",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G01-016",
+      "scenarioType": "general",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G01-016",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "كم يوم في السنة الكبيسة؟",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G01-016",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G01-017",
+      "scenarioType": "general",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G01-017",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "اكتب لي تهنئة بالعيد لأهلي.",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G01-017",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G01-018",
+      "scenarioType": "general",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G01-018",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "شو الفرق بين الفيروس والبكتيريا؟",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G01-018",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G01-019",
+      "scenarioType": "general",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G01-019",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "كيف أنظم مصروفي الشهري؟",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G01-019",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G01-020",
+      "scenarioType": "general",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G01-020",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "اقترح لي أسماء لقطة بيضاء.",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G01-020",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G01-021",
+      "scenarioType": "general",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G01-021",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "اكتب بيت شعر عن الصداقة.",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G01-021",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G01-022",
+      "scenarioType": "general",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G01-022",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "ليش السماء زرقاء؟",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G01-022",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G01-023",
+      "scenarioType": "general",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G01-023",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "عطني وصفة سهلة للعدس.",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G01-023",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G01-024",
+      "scenarioType": "general",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G01-024",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "كيف أتعلم البرمجة من الصفر؟",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G01-024",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G01-025",
+      "scenarioType": "general",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G01-025",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "شو هي الطاقة المتجددة؟",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G01-025",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G01-026",
+      "scenarioType": "general",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G01-026",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "ساعدني أكتب رسالة شكر لمعلمتي.",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G01-026",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G01-027",
+      "scenarioType": "general",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G01-027",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "اشرح لي يعني شو API ببساطة.",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G01-027",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G01-028",
+      "scenarioType": "general",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G01-028",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "قول لي نكتة نظيفة.",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G01-028",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G01-029",
+      "scenarioType": "general",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G01-029",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "كيف أحافظ على تركيزي وقت الدراسة؟",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G01-029",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G01-030",
+      "scenarioType": "general",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G01-030",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "شو الفرق بين الهايبرد والكهرباء بالسيارات؟",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G01-030",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G01-031",
+      "scenarioType": "general",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G01-031",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "اختصر لي هذا الكلام بسطرين: التعليم المستمر يساعد الإنسان على مواكبة التغيرات في سوق العمل ويزيد فرصه في الترقي ويطور مهاراته الشخصية والمهنية.",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G01-031",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G01-032",
+      "scenarioType": "general",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G01-032",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "أنا متضايق اليوم، احكي معي شوي.",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G01-032",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G01-033",
+      "scenarioType": "general",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G01-033",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "كيف أعرف إذا الخبر إشاعة؟",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G01-033",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G01-034",
+      "scenarioType": "general",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G01-034",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "شو أفضل وقت للنوم؟",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G01-034",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G01-035",
+      "scenarioType": "general",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G01-035",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "اكتب لي خطة لياقة لمبتدئ ثلاث أيام بالأسبوع.",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G01-035",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G02-034",
+      "scenarioType": "dialect-other",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G02-034",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "كيف حالك يا دينار، شخبارك؟",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G02-034",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G02-035",
+      "scenarioType": "dialect-other",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G02-035",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "هلا والله، وش تقدر تسوي؟",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G02-035",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G04-004",
+      "scenarioType": "sell-interrupt-resume",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G04-004",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 2: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 2,
+          "prompt": "بالمناسبة اشرح لي الفرق بين الهايبرد والكهرباء.",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G04-004",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 2: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G04-008",
+      "scenarioType": "delivery-interrupt",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G04-008",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 2: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 2,
+          "prompt": "شو أحسن وقت للرياضة؟",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G04-008",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 2: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G04-009",
+      "scenarioType": "ad-revise-no-publish",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G04-009",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ],
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 2: model unavailable reply"
+        ],
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 3: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "اكتب إعلان لمطعمي مطبخ أم خالد",
+          "requiresGeneratedAnswer": true
+        },
+        {
+          "turn": 2,
+          "prompt": "لا ما عجبني، خليه رسمي أكثر",
+          "requiresGeneratedAnswer": true
+        },
+        {
+          "turn": 3,
+          "prompt": "اختصره",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G04-009",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ],
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 2: model unavailable reply"
+        ],
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 3: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G04-014",
+      "scenarioType": "search-then-new-topic-then-back",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G04-014",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 2: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 2,
+          "prompt": "احكيلي نكتة",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G04-014",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 2: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G04-033",
+      "scenarioType": "general-to-search",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G04-033",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "شو أفضل مواصفات لابتوب للبرمجة؟",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G04-033",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G11-001",
+      "scenarioType": "business",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G11-001",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "اكتب إعلان لمطعمي.",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G11-001",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G11-002",
+      "scenarioType": "business",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G11-002",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "حسن وصف متجري.",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G11-002",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G11-004",
+      "scenarioType": "business",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G11-004",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "اقترح عنوان جذاب لمنتجي ايفون 13 مستعمل.",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G11-004",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G11-005",
+      "scenarioType": "business",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G11-005",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "صمم لي حملة ترويجية لرمضان.",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G11-005",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G11-006",
+      "scenarioType": "business",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G11-006",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "اكتب إعلان بالعامية الكويتية لمحل عطور.",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G11-006",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G11-007",
+      "scenarioType": "business",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G11-007",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "خل الإعلان رسمي: محل صيانة جوالات.",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G11-007",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G11-008",
+      "scenarioType": "business",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G11-008",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "اختصر النص: نحن متجر متخصص ببيع الإلكترونيات الحديثة بأسعار مناسبة وخدمة ممتازة.",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G11-008",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G11-009",
+      "scenarioType": "business",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G11-009",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "عدل الإعلان بدون ما تنشره: خصم على الشاورما.",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G11-009",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G11-011",
+      "scenarioType": "business",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G11-011",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "اكتب منشور انستغرام لمخبز.",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G11-011",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G11-012",
+      "scenarioType": "business",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G11-012",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "اقترح 5 هاشتاغات لمحل ملابس.",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G11-012",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G11-013",
+      "scenarioType": "business",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G11-013",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "كيف أزيد مبيعات متجري على دينار؟",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G11-013",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G11-014",
+      "scenarioType": "business",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G11-014",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "اكتب رد مهذب على زبون زعلان.",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G11-014",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G11-015",
+      "scenarioType": "business",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G11-015",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "اكتب وصف لخدمة تنظيف منازل.",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G11-015",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G11-016",
+      "scenarioType": "business",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G11-016",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "اكتب إعلان لسيارتي كورولا 2018 بدون مبالغة.",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G11-016",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G11-022",
+      "scenarioType": "business",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G11-022",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "اكتب سلوغان لمحل قهوة.",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G11-022",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G11-023",
+      "scenarioType": "business",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G11-023",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "حلل منافسيني بالسوق.",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G11-023",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G11-024",
+      "scenarioType": "business",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G11-024",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "اكتب رسالة واتساب ترويجية.",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G11-024",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G11-025",
+      "scenarioType": "business",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G11-025",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "ترجم إعلاني للإنجليزي: كنافة طازجة يوميًا.",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G11-025",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G12-001",
+      "scenarioType": "assistant",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G12-001",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "اكتب دالة بايثون ترجع مجموع الأرقام الزوجية في قائمة.",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G12-001",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G12-002",
+      "scenarioType": "assistant",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G12-002",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "صحح هذا الكود: const x = [1,2,3]; x.forEach(i => console.log(i)",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G12-002",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G12-003",
+      "scenarioType": "assistant",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G12-003",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "اشرح هذا الاستعلام: SELECT name FROM users WHERE age > 30 ORDER BY name;",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G12-003",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G12-004",
+      "scenarioType": "assistant",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G12-004",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "قارن بين React و Vue.",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G12-004",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G12-005",
+      "scenarioType": "assistant",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G12-005",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "اكتب إيميل رسمي أطلب فيه إجازة يومين.",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G12-005",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G12-006",
+      "scenarioType": "assistant",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G12-006",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "ترجم: The meeting was postponed until next week.",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G12-006",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G12-007",
+      "scenarioType": "assistant",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G12-007",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "شو يعني REST API؟",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G12-007",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G12-008",
+      "scenarioType": "assistant",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G12-008",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "ساعدني أخطط لمشروع كشك قهوة صغير.",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G12-008",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G12-009",
+      "scenarioType": "assistant",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G12-009",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "اكتب كود JavaScript يحول نص لحروف كبيرة.",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G12-009",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G12-010",
+      "scenarioType": "assistant",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G12-010",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "شو الفرق بين let و const؟",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G12-010",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G12-011",
+      "scenarioType": "assistant",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G12-011",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "اكتب regex يتحقق من إيميل.",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G12-011",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G12-012",
+      "scenarioType": "assistant",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G12-012",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "اشرح Big O ببساطة.",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G12-012",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G12-013",
+      "scenarioType": "assistant",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G12-013",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "اكتب SQL يجيب أعلى 5 رواتب.",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G12-013",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G12-014",
+      "scenarioType": "assistant",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G12-014",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "ليش الكود هذا بطلع undefined: function f(){ console.log(a); var a = 1 } f()",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G12-014",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G12-015",
+      "scenarioType": "assistant",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G12-015",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "لخص لي: الذكاء الاصطناعي يغير طريقة العمل في الشركات عبر أتمتة المهام وتحليل البيانات.",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G12-015",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G12-016",
+      "scenarioType": "assistant",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G12-016",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "اكتب خطة دراسة لتعلم بايثون في شهر.",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G12-016",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G12-017",
+      "scenarioType": "assistant",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G12-017",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "شو هو Git ولماذا نستخدمه؟",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G12-017",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G12-018",
+      "scenarioType": "assistant",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G12-018",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "اكتب دالة تحسب العاملي factorial.",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G12-018",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G12-019",
+      "scenarioType": "assistant",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G12-019",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "اشرح الفرق بين HTTP و HTTPS.",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G12-019",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G12-021",
+      "scenarioType": "assistant",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G12-021",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "اكتب رسالة شكر لعميل بالإنجليزي.",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G12-021",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G12-022",
+      "scenarioType": "assistant",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G12-022",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "أعطني فكرة تطبيق موبايل مفيد.",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G12-022",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G12-023",
+      "scenarioType": "assistant",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G12-023",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "كيف أعمل جدول في إكسل يحسب المجموع؟",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G12-023",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G12-024",
+      "scenarioType": "assistant",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G12-024",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "اشرح لي يعني شو Docker.",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G12-024",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G12-025",
+      "scenarioType": "assistant",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G12-025",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "ما هي عاصمة دولة اسمها زيرولاند؟",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G12-025",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G14-044",
+      "scenarioType": "legit-security-question",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G14-044",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "كيف أحمي حسابي من الاختراق؟",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G14-044",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G15-019",
+      "scenarioType": "model-required-graceful",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G15-019",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "اكتب قصيدة طويلة عن البحر",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G15-019",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G16-001",
+      "scenarioType": "shorter",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G16-001",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ],
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 2: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "اشرح لي التضخم",
+          "requiresGeneratedAnswer": true
+        },
+        {
+          "turn": 2,
+          "prompt": "أقصر من هيك",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G16-001",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ],
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 2: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G16-002",
+      "scenarioType": "longer",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G16-002",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ],
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 2: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "شو هو الادخار؟",
+          "requiresGeneratedAnswer": true
+        },
+        {
+          "turn": 2,
+          "prompt": "فصل أكثر",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G16-002",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ],
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 2: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G16-003",
+      "scenarioType": "english",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G16-003",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "from now on reply in English: what is inflation?",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G16-003",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G16-004",
+      "scenarioType": "back-to-arabic",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G16-004",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ],
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 2: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "reply in English please",
+          "requiresGeneratedAnswer": true
+        },
+        {
+          "turn": 2,
+          "prompt": "لا خلص ارجع عربي، شو هو الاستثمار؟",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G16-004",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ],
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 2: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G16-005",
+      "scenarioType": "correct-assistant",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G16-005",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ],
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 2: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 1,
+          "prompt": "كم عاصمة الأردن؟",
+          "requiresGeneratedAnswer": true
+        },
+        {
+          "turn": 2,
+          "prompt": "لا غلطان، العاصمة إربد",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G16-005",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 1: model unavailable reply"
+        ],
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 2: model unavailable reply"
+        ]
+      ]
+    },
+    {
+      "testId": "G16-013",
+      "scenarioType": "resume-old-topic",
+      "status": "BLOCKED",
+      "primaryDependency": "LIVE_AI_PROVIDER",
+      "visionInputRequired": false,
+      "originalEvidence": "original-evidence/16f85e5-frozen500-det-results.jsonl#G16-013",
+      "originalFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 2: model unavailable reply"
+        ]
+      ],
+      "blockedTurns": [
+        {
+          "turn": 2,
+          "prompt": "شو الفرق بين SSD و HDD؟",
+          "requiresGeneratedAnswer": true
+        }
+      ],
+      "sharedPrerequisites": [
+        "authorized_text_model_endpoint",
+        "valid_protected_provider_credential",
+        "explicit_paid_test_budget_or_authorized_free_local_model",
+        "network_permission_for_selected_endpoint",
+        "live_mode_explicitly_authorized"
+      ],
+      "safeLocalPortions": "Existing deterministic safety/commerce assertions were run; an unavailable-model answer is not quality evidence.",
+      "recheckStatus": "BLOCKED",
+      "recheckEvidence": "blocked-91-recheck/det-results.jsonl#G16-013",
+      "recheckFailures": [
+        [
+          "NOT_EXECUTABLE_DET",
+          "turn 2: model unavailable reply"
+        ]
+      ]
+    }
+  ],
+  "note": "Primary groups sum to 91. Credentials, budget, live mode and network are shared prerequisites, not additional distinct blocked cases. Vision/staging checks outside this 500-case catalog are separately blocked and must not inflate the 91.",
+  "followupRecheck": {
+    "runtimeSha": "28f26779fbc4b23c6269795656a0d42db7aff9ef",
+    "cases": 91,
+    "PASS": 0,
+    "FAIL": 0,
+    "BLOCKED": 91,
+    "evidence": "blocked-91-recheck/det-results.jsonl",
+    "spend": {
+      "calls": 0,
+      "inputTokens": 0,
+      "cachedTokens": 0,
+      "outputTokens": 0,
+      "usdAtRates": 0
+    }
+  }
+}
