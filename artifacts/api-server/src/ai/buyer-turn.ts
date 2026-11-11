@@ -953,6 +953,8 @@ export async function executeBuyerTurn(input: {
       // Stored listings say «مستعمل» or «جديد»; one condition at a time replaces the previous one,
       // including a condition the original search parsed as a filter.
       const value = /^(?:مستعمل|مستخدم)/u.test(condition[1]!) ? "مستعمل" : "جديد";
+      const rejected=asked.match(/(?:مو|مش|ليس)\s+((?:ال)?(?:مستعمل[هة]?|مستخدم[هة]?|جديد[هة]?))$/u);
+      if(rejected && (/^(?:ال)?(?:مستعمل|مستخدم)/u.test(rejected[1]!) ? "مستعمل" : "جديد")===value) return notice("الحالة متعارضة: ذكرتها ونفيتها في الطلب نفسه. حدد الحالة التي تريدها؛ لم يتغير شيء.");
       // The replaced condition also leaves the search words («لابتوب جديد» → «لابتوب»).
       const search = normalizeBuyerText(state.search).split(" ").filter((word) => !/^(?:ال)?(?:مستعمل|مستعمله|مستخدم|مستخدمه|جديد|جديده)$/u.test(word)).join(" ");
       return { tool: "buyerRefine", version: 1, result: await runBuyerSearch(input.market, { ...state, search, filters: state.filters.filter((filter) => filter.field !== "condition"), condition: value }) };
