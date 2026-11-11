@@ -440,11 +440,11 @@ export const aiToolRegistry: Record<string, ToolDefinition> = {
         }
       }
       // «شعار لمقهى»: a purpose word no listing mentions is relaxed, and reported.
-      if (!listings.length && !broadenedFrom && input.query && !serviceQuery) {
+      if (!listings.length && !broadenedFrom && input.query) {
         const words = itemTokens(normalizeSearch(input.query).split(/\s+/).filter(Boolean));
         const purpose = purposeTokens(words);
         const remaining = words.filter((word) => !purpose.includes(word));
-        if (purpose.length && remaining.length) {
+        if (purpose.length && remaining.length && (!serviceQuery || remaining.some(word=>!hasServiceMeaning([word]) && !["فني","معلم","عامل","حرفي","ورشة","ورشه","جهة","جهه","شركة","شركه"].includes(word)))) {
           listings = await run(remaining.join(" "));
           if (listings.length) broadenedFrom = purpose;
         }

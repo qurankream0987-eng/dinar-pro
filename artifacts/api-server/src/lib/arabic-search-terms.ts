@@ -144,7 +144,7 @@ export function itemTokens(tokens: readonly string[]): string[] {
  * them (`broadenedFrom`). The first item word is never relaxed.
  */
 export function purposeTokens(tokens: readonly string[]): string[] {
-  return tokens.slice(1).filter((token) => /^ل(?!ل|ا)/u.test(token) && token.length >= 4 && !/[\d٠-٩۰-۹]/u.test(token) && !tokenVariants(token).some(form=>/^\d+$/u.test(form)));
+  return tokens.slice(1).filter((token) => /^ل(?!ا)/u.test(token) && token.length >= 4 && !/[\d٠-٩۰-۹]/u.test(token) && !tokenVariants(token).some(form=>/^\d+$/u.test(form)));
 }
 
 const escape = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");

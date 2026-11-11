@@ -62,7 +62,7 @@ import {
   isBareRemainingQuestion,
 } from "./seller-management";
 import { executeEmploymentTurn, isEmploymentQuery } from "./employment-turn";
-import { executeDeliveryTurn, isDeliveryQuery } from "./delivery-turn";
+import { deliveryIntent, normalizeDeliveryText, executeDeliveryTurn, isDeliveryQuery } from "./delivery-turn";
 import { executePromotionTurn, explainSponsoredPlacement, isPromotionQuery } from "./promotion-turn";
 import { executeBuyerTurn, executePurchaseTurn, executeOrderContactRequest, reviewQuantity } from "./buyer-turn";
 import { executeListingFactQuestion } from "./listing-fact-question";
@@ -1433,7 +1433,7 @@ async function executeRuntime(context: RuntimeContext, incoming: RuntimeOptions)
           context.conversationId,
           context.market.id,
           context.message,
-          surface,
+          deliveryIntent(normalizeDeliveryText(context.message)) === "CHOOSE_COURIER" ? undefined : surface,
           context.actorId,
         );
   if (orderResult) {

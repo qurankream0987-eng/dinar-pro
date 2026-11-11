@@ -177,7 +177,7 @@ const CORRECTION_PREFIXES = [
   /^\s*بدل(?:ها|ه|هذا|هذه|هذي|ذلك)\s*(?:بـ?|ل)?\s*/iu,
   /^\s*(?:no\s*[,،]?\s*i\s+meant|actually\s+make\s+it)\s+/iu,
   /^\s*i\s+(?:mean|meant)\s+/iu,
-  /^\s*(?:آسف|اسف|معذرة)\s*[,،]?\s*/iu,
+  /^\s*(?:آسف|اسف|معذرة|عفوا|عفوًا)\s*[,،]?\s*/iu,
   /^\s*actually\s*[,،:]?\s*/iu,
   // «لا تضيف شي للسلة، بس ورني …», «ما أبي أشتري، فقط …»: a refused action followed by the real request.
   /^\s*(?:لا|ما|مو)\s+[^،,.؟?!]{1,40}?\s*[,،]?\s*(?:بس|فقط|بل|لكن)\s+/iu,
