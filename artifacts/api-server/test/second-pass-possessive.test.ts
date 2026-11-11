@@ -1,0 +1,2 @@
+import {test,after} from 'node:test';import assert from 'node:assert/strict';import {pool} from '@workspace/db';import {textMatchesToken} from '../src/lib/arabic-search-terms';
+test('feminine possessive nouns retain their singular and sound plural without unrelated stems',()=>{assert.ok(textMatchesToken('تصليح غسالات','غسالتي'));assert.ok(textMatchesToken('طاولة خشب','طاولتي'));assert.equal(textMatchesToken('غسان يعمل','غسالتي'),false)});after(()=>pool.end());
