@@ -526,7 +526,7 @@ export function parseStructuredSearch(
   );
   // Without a category, new product words start a new search; bare constraints refine the last one.
   const refinesPrevious = schema
-    ? previous?.categoryId === categoryId
+    ? previous?.categoryId === categoryId && (!extractedSearch || normalizeSearch(extractedSearch) === normalizeSearch(previous?.search ?? ""))
     : previous !== undefined && !previous.categoryId && !extractedSearch;
   const previousFilters = refinesPrevious ? previous?.filters ?? [] : [];
   const filters = clearFilters
