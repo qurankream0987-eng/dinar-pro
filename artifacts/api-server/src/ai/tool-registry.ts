@@ -453,6 +453,19 @@ export const aiToolRegistry: Record<string, ToolDefinition> = {
           if (listings.length) broadenedFrom = purpose;
         }
       }
+      // In a service request, old/new describes the customer's target, not the service's
+      // inventory condition. Qualify only this contextual adjective; retain every service
+      // verb, target noun, numeric constraint and category-specific filter.
+      if (!listings.length && !broadenedFrom && input.query && serviceQuery) {
+        const words = itemTokens(normalizeSearch(input.query).split(/\s+/u).filter(Boolean));
+        const modifiers = words.filter(word => /^(?:ال)?قديم[ةه]?$/u.test(word));
+        const retained = words.filter(word => !modifiers.includes(word));
+        if (modifiers.length && retained.some(word => !hasServiceMeaning([word]) && !["فني", "معلم", "عامل", "شركة", "شركه", "ورشة", "ورشه"].includes(word))) {
+          listings = await run(retained.join(" "));
+          if (!listings.length) listings = await searchAcrossCategories(retained.join(" "));
+          if (listings.length) broadenedFrom = modifiers;
+        }
+      }
       // «موبايل ايفون»: a generic kind-of-thing word beside a specific one may be relaxed, and reported.
       if (!listings.length && !broadenedFrom && input.query && !serviceQuery) {
         const words = itemTokens(normalizeSearch(input.query).split(/\s+/).filter(Boolean));

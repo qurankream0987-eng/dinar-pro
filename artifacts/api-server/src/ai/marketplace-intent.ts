@@ -101,6 +101,7 @@ const ABSTRACT_OBJECT =
 
 export function hasExplicitMarketplaceSearchIntent(message: string): boolean {
   const normalized = normalizeMarketplaceText(stripCorrectionPrefix(message));
+  if (/(?:رصيد(?:ي|\s+حسابي)|(?:باقي|متبقي)\s+(?:ب|في\s+)?حسابي)/u.test(normalized)) return false;
   if (ABSTRACT_OBJECT.test(normalized.replace(/ة/g, "ه")) || /^(?:ابي|اريد)\s+(?:على\s+)?(?:فكره|فكرة|حل|طريقه|طريقة)(?:\s|$)/u.test(normalized)) return false;
   if (EXPLICIT_SEARCH_ACTION.test(normalized)) return true;
   const correction = normalizeMarketplaceText(stripCorrectionPrefix(message));
