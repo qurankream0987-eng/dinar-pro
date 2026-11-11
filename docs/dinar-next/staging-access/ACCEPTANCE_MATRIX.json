@@ -1,0 +1,72 @@
+{
+  "dateRiyadh": "2026-11-11",
+  "localRuntimeSha": "28f26779fbc4b23c6269795656a0d42db7aff9ef",
+  "startingDeliverySha": "8d178c557bc30fd5bbdcd875d029d9d7a577057f",
+  "deployedSha": null,
+  "successfulLiveStagingTests": 0,
+  "rows": [
+    {
+      "integration": "RAILWAY_MANAGEMENT_ACCESS",
+      "status": "BLOCKED",
+      "evidence": "management.json: read-only projectToken scope query; protected RAILWAY_TOKEN present, URLError: Tunnel connection failed: 403 Forbidden. Scope/authentication not reached.",
+      "blocker": "backboard.railway.com excluded by enforced revision-3 policy. Token presence does not verify validity or staging scope.",
+      "verifiedDeployedSourceSha": null
+    },
+    {
+      "integration": "STAGING_APPLICATION_HTTP_ACCESS",
+      "status": "BLOCKED",
+      "evidence": "healthz.json, readyz.json, public.json: curl exit 56, httpCode 000, CONNECT tunnel failed response 403; proxy headers server envoy. No application response body.",
+      "blocker": "Application hostname excluded by enforced policy. Database/migrations/configuration/SMS readiness UNKNOWN, not FAIL.",
+      "verifiedDeployedSourceSha": null
+    },
+    {
+      "integration": "STAGING_BROWSER_ACCESS",
+      "status": "BLOCKED",
+      "evidence": "browser.json: fresh Chromium navigation failed net::ERR_TUNNEL_CONNECTION_FAILED; zero blocked writes; screenshot public-page.png is browser error evidence, not a loaded DINAR page.",
+      "blocker": "Same proxy host denial; no application DOM or successful browser acceptance.",
+      "verifiedDeployedSourceSha": null
+    },
+    {
+      "integration": "STAGING_AUTHENTICATED_TESTING",
+      "status": "NOT_TESTED",
+      "evidence": "No staging login, account creation, session, SMS, purchase or authenticated endpoint executed.",
+      "blocker": "Public application unreachable; no approved staged test-account/session workflow established. Live writes require a separately approved test scope.",
+      "verifiedDeployedSourceSha": null
+    },
+    {
+      "integration": "DEPLOYED_SHA_VERIFIED",
+      "status": "BLOCKED",
+      "evidence": "No deployment metadata obtained; health endpoints blocked. Current local delivery 8d178c557bc30fd5bbdcd875d029d9d7a577057f; application runtime 28f26779fbc4b23c6269795656a0d42db7aff9ef.",
+      "blocker": "Cannot read Railway deployment metadata or trustworthy application version. Local SHAs are not evidence of deployed SHA or deployed/local equivalence.",
+      "verifiedDeployedSourceSha": null
+    },
+    {
+      "integration": "OPENROUTER_LIVE_INTEGRATION",
+      "status": "BLOCKED",
+      "evidence": "Existing local/mocked 174-pass targeted package; 91 live text scenarios still BLOCKED. Zero real provider requests in this verification.",
+      "blocker": "openrouter.ai not permitted; no owner-approved paid-test budget; protected model credentials/configuration on staging unobserved. Exact model/provider and approved spend policy required.",
+      "verifiedDeployedSourceSha": null
+    },
+    {
+      "integration": "SMS_PROVIDER_INTEGRATION",
+      "status": "BLOCKED",
+      "evidence": "Source phone-verification.ts registers no vendor in src; only development adapter supplied. Staging requires an explicit registered SANDBOX adapter. No real SMS sent.",
+      "blocker": "Vendor selection/adapter registration outstanding in inspected local source; vendor credential names cannot be inferred. Staging configuration itself unobserved.",
+      "verifiedDeployedSourceSha": null
+    },
+    {
+      "integration": "GOOGLE_OAUTH_INTEGRATION",
+      "status": "BLOCKED",
+      "evidence": "Source google-identity.ts implements Google ID-token signature/audience/issuer verification and auth.ts login/link routes. No real Google sign-in/JWKS request executed here.",
+      "blocker": "Local implementation exists; actual client IDs, authorized staging origin, reachable GIS/JWKS and live staging behavior unverified. New account linking also depends on SMS.",
+      "verifiedDeployedSourceSha": null
+    },
+    {
+      "integration": "MAPS_AND_DRIVER_TRACKING_INTEGRATION",
+      "status": "BLOCKED",
+      "evidence": "Source map-style.ts supports configured HTTPS style; driver-location.ts supports permission-gated sharing and explicitly returns route:null, eta:null. Prior map/driver evidence is synthetic/local.",
+      "blocker": "Live map style/vendor permissions and staging flag unknown; browser GPS permission/live staging behavior untested. No routing/geocoding provider integration established.",
+      "verifiedDeployedSourceSha": null
+    }
+  ]
+}

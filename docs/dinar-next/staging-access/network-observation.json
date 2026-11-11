@@ -1,0 +1,25 @@
+{
+  "observedAtUTC": "2026-11-11T20:05:52Z",
+  "environment_id": "ccarenv_b64_Y2NhcmVudl9jYjllNjAyMzE0OWM4MTkxYjdiMzkxY2E0Mjg2ZDFjZQ",
+  "spec_revision": "3",
+  "observed_spec_revision": "3",
+  "observations_current": true,
+  "network_policy": {
+    "state": "enforced",
+    "mode": "restricted",
+    "allowed_hosts": [],
+    "presets": [
+      "package_managers"
+    ],
+    "stagingHostPermitted": false,
+    "managementHostPermitted": false,
+    "openRouterHostPermitted": false
+  },
+  "runtime_variables": [
+    {
+      "environment_variable": "RAILWAY_TOKEN",
+      "optional": false,
+      "state": "ready"
+    }
+  ]
+}

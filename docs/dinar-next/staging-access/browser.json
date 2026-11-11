@@ -1,0 +1,14 @@
+{
+  "utc": "2026-11-11T20:05:36.633Z",
+  "url": "https://dinar-staging-app-staging.up.railway.app/",
+  "mode": "READ_ONLY",
+  "requestFailures": [
+    {
+      "url": "https://dinar-staging-app-staging.up.railway.app/",
+      "error": "net::ERR_TUNNEL_CONNECTION_FAILED"
+    }
+  ],
+  "blockedWrites": [],
+  "pageErrors": [],
+  "navigationError": "Error: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://dinar-staging-app-staging.up.railway.app/\nCall log:\n\u001b[2m  - navigating to \"https://dinar-staging-app-staging.up.railway.app/\", waiting until \"domcontentloaded\"\u001b[22m\n"
+}
