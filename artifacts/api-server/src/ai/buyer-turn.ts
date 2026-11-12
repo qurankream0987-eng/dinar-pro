@@ -785,6 +785,21 @@ export async function executeBuyerTurn(input: {
     const ties = priced.filter((listing) => listing.unitPrice === least.unitPrice).map((listing) => `«${listing.title}»`).join("، ");
     return notice(`الأرخص بين العروض الظاهرة المتاحة: ${ties} بسعر ${least.unitPrice} ${least.currency}. من سجل DINAR الحالي، بدون التوصيل أو أي رسوم. لم يتغير شيء.`);
   }
+  // «الفرق بينه وبين العادي 290؟»: the stated number is an amount to compare with the listing in
+  // view, never a budget or a price ceiling. Computed from the stored price in minor units.
+  const versusStated=text.match(/^(?:(?:كم|شو|ما|وش|ايش)\s+)?(?:هو\s+)?(?:ال)?فرق\s+بين(?:ه|ها)\s+(?:و\s*بين|و)\s+(?:\S+\s+){0,3}?(\d+(?:\.\d+)?)(?:\s+(?:دينار|دنانير|ريال|درهم|جنيه))?$/u);
+  if (set && versusStated) {
+    const focused=await resolveReference({conversationId:input.conversationId,marketId:input.market.id,actorId,message:"هذا"});
+    const resourceId=focused?.resourceId ?? (set.resourceIds.length===1 ? set.resourceIds[0] : undefined);
+    if (!resourceId) return notice("حدد العرض الذي تقصده أولًا؛ لم أفترض سعرًا من عدة عروض.");
+    const {executeRegisteredTool}=await import("./tool-registry");
+    const read=await executeRegisteredTool("getResource",JSON.stringify({resultSetId:focused?.resultSetId??set.id,resourceId}),{conversationId:input.conversationId,market:input.market,actorId});
+    const row=read.result.listings.find(row=>row.id===resourceId);
+    if (read.result.kind!=="RESOURCE" || row?.unitPrice==null) return notice("لا يوجد سعر مسجل صالح لهذا الحساب؛ لم يتغير شيء.");
+    const listed=parseMinorUnits(row.unitPrice,input.market.currencyCode);
+    const stated=parseMinorUnits(versusStated[1]!,input.market.currencyCode);
+    return notice(`سعر «${row.title}» المسجل ${moneyOf(listed,input.market)}، والفرق عن ${moneyOf(stated,input.market)} هو ${moneyOf(Math.abs(listed-stated),input.market)} (${listed>=stated?"أغلى":"أرخص"}). المبلغ الآخر هو ما ذكرته أنت، ولم يتغير شيء.`);
+  }
   // Resolve named current resources before calculating, including seller-stated years and
   // conditions. Years are identifiers here, never quantities or prices invented by the model.
   let differenceIds: string[] | undefined;

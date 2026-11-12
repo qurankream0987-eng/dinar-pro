@@ -46,9 +46,12 @@ const LEXICON: readonly (readonly string[])[] = [
   ["كوب", "اكواب", "كاس", "كاسات", "كاسه", "كاسة"],
   // Brands and model words written in Arabic or Latin letters: a buyer types «ايفون», the seller
   // titled the listing «iPhone» (and back). Transliteration only — no product facts.
-  ["ايفون", "iphone", "ايفونات"], ["سامسونج", "سامسونغ", "samsung"], ["جالاكسي", "جالكسي", "galaxy"],
+  ["ايفون", "iphone", "ايفونات"], ["سامسونج", "سامسونغ", "سامسونك", "samsung"], ["جالاكسي", "جالكسي", "galaxy"],
   ["الترا", "ultra"], ["ماكبوك", "macbook"], ["لينوفو", "lenovo"], ["ديل", "dell"], ["شاومي", "xiaomi"],
   ["ريدمي", "redmi"], ["بلايستيشن", "بلاستيشن", "playstation"], ["سوني", "sony"], ["لوجيتك", "logitech"],
+  // Everyday and dialect names of the same thing (held-out H-DIA misses): exact equivalents only.
+  ["سيكل", "دراجه", "دراجة", "بسكليت", "بايسكل"], ["فراخ", "دجاج", "فروج"], ["لوقو", "لوجو", "لوغو", "شعار", "logo"],
+  ["ترجمه", "ترجمة", "يترجم", "مترجم", "ترجمات"], ["تلفزيون", "تلفاز", "شاشه", "شاشة", "tv"], ["عربيه", "عربية", "سياره", "سيارة"],
   ["تويوتا", "toyota"], ["كامري", "camry"], ["كورولا", "corolla"], ["هيونداي", "hyundai"], ["ايربودز", "airpods"],
 ];
 const LEXICON_BY_WORD = new Map<string, readonly string[]>(

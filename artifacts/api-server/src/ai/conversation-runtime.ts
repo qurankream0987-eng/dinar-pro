@@ -1256,6 +1256,15 @@ async function executeRuntime(context: RuntimeContext, incoming: RuntimeOptions)
       }
     }
   }
+  // «دينار اعرض لي مكتبة كتب بسعر 55»: «اعرض لي» is "list it for me" in Gulf usage and "show me"
+  // elsewhere. With one exact price and no comparison it is genuinely ambiguous: ask once, change
+  // nothing. A comparison («أقل من 55», «حتى 55») stays an ordinary search.
+  if (!context.imageObjectPaths?.length && context.location === undefined) {
+    const offerOrShow = contextText(context.message).replace(/^(?:(?:يا\s+)?دينار\s*[،,:]?\s+)/u, "")
+      .match(/^اعرض\s+(?:لي\s+)?((?:\S+\s+){0,5}?\S+)\s+(?:ب|بسعر|سعره|سعرها)\s*([0-9]+(?:\.[0-9]+)?)(?:\s+(?:دينار|دنانير|ريال|درهم|جنيه))?$/u);
+    if (offerOrShow && !/(?:^|\s)(?:اقل|ارخص|اغلي|حتي|تحت|فوق|اكثر|حدود|من)(?:\s|$)/u.test(offerOrShow[1]!))
+      return clarify(`تقصد تعرض «${offerOrShow[1]}» للبيع بسعر ${offerOrShow[2]}، ولا تبحث عن «${offerOrShow[1]}» بهذا السعر؟ قل «بيعها» أو «ابحث عنها». لم يتغير شيء.`);
+  }
   const hintedAction = actionHint(context.message);
   const routeDecision = resolveConversationRoute({
     message: context.message,
