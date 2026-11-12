@@ -163,7 +163,8 @@ function extractInitialUnitPrice(
 
 function extractInitialQuantity(message: string): number | undefined {
   const normalized = normalizeSearchNumberText(message);
-  const match = /(?:عندي|لدي|كمية|الكمية)\s*(\d{1,7})/.exec(normalized);
+  // «عندي منها اربع حبات» (H-MT-004): the object pronoun may sit between the verb and the number.
+  const match = /(?:عندي|لدي|كمية|الكمية)\s*(?:(?:منه|منها|منهم|منهن)\s+)?(\d{1,7})/u.exec(normalized);
   // «عندي جهاز واحد», «قطعة وحدة»: one unit written as a word.
   if (!match && /(?:(?:عندي|لدي)\s+\S+|(?:^|\s)(?:قطعه|قطعة|حبه|حبة))\s+(?:واحد|واحده|واحدة|وحده|وحدة|1)(?=\s|$|[،,.])/u.test(normalized))
     return 1;
