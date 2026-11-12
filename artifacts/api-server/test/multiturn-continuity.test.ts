@@ -256,3 +256,17 @@ test("MT-11 a guest gets an explicit GUEST state and no account data", async () 
   assert.deepEqual([status.signedIn, status.state], [false, "GUEST"]);
   assert.equal(status.subscription, undefined);
 });
+
+test("MT-12 opt-in by default: a user who made no choice gets no other conversation, and the model is told why", async () => {
+  const u = await fresh();
+  script.push({ key: "خطة حديقة السطح", reply: "خطة السطح: 12 حوضًا بطول 80 سم. ROOF_PLAN_MARKER" });
+  await say(u, "ساعدني في خطة حديقة السطح");
+  const second = { cookie: u.cookie, conv: (await request("/ai/conversations", "POST", {}, u.cookie)).data.id as string };
+  const recall = await say(second, "تذكر خطة حديقة السطح اللي سويناها؟");
+  const seen = inputText(recall);
+  assert.ok(!seen.includes("ROOF_PLAN_MARKER") && !seen.includes("12 حوضًا"), "no other conversation without an explicit opt-in");
+  assert.ok(seen.includes("CROSS_CONVERSATION_MEMORY: OFF"), "the model knows the switch is off, so it can explain instead of denying");
+  // The same conversation's own history is unaffected by the switch.
+  const same = await say(u, "كم حوض قلت؟");
+  assert.ok(inputText(same).includes("12 حوضًا"));
+});

@@ -73,6 +73,8 @@ export type ConversationMemoryContext = {
   current: ConversationMemorySummaryView | null;
   historical: ConversationMemorySummaryView[];
   matches: ConversationMemoryHit[];
+  /** The user's cross-conversation switch at read time (absent in older callers = not stated). */
+  crossConversation?: boolean;
 };
 
 const STOPWORDS = new Set([
@@ -155,6 +157,9 @@ export function renderMemoryContext(memory: ConversationMemoryContext | null | u
   for (const item of memory.historical) {
     parts.push(`EARLIER_CONVERSATION (derived, through ${stamp(item.when)}): ${item.summary}`);
   }
+  // Last, so it never displaces a quote: lets the model explain the switch instead of «I don't remember».
+  if (memory.crossConversation === false)
+    parts.push("CROSS_CONVERSATION_MEMORY: OFF by the user's setting; if asked about another conversation, say so and that «فعّل تذكر المحادثات» turns it on.");
   if (!parts.length) return "";
   // Fair excerpt allocation: a long derived summary must not consume every direct quote.
   // Bound section count before allocating; the existing whole-block ceiling still applies.
@@ -377,14 +382,16 @@ export async function rebuildSummary(actorId: string, conversationId: string): P
  */
 /**
  * The user's switch for reading OTHER conversations (summaries and matches). Stored in the existing
- * personal_memory_controls table; absent means enabled (the behaviour before the switch existed).
+ * personal_memory_controls table; absent means OFF (opt-in, owner decision).
  * The current conversation's own history is always available to its own turns.
  */
 export const CROSS_CONVERSATION_CONTROL = "CROSS_CONVERSATION";
 export async function crossConversationMemoryEnabled(userId: string): Promise<boolean> {
   const [row] = await db.select({ enabled: personalMemoryControls.enabled }).from(personalMemoryControls)
     .where(and(eq(personalMemoryControls.userId, userId), eq(personalMemoryControls.control, CROSS_CONVERSATION_CONTROL)));
-  return row?.enabled ?? true;
+  // Opt-in: with no explicit choice the switch is off, for new and existing users alike, so no
+  // consent is assumed. The current conversation's own memory is unaffected.
+  return row?.enabled ?? false;
 }
 export async function setCrossConversationMemory(userId: string, enabled: boolean) {
   await db.insert(personalMemoryControls).values({ userId, control: CROSS_CONVERSATION_CONTROL, enabled, updatedAt: new Date() })
@@ -429,7 +436,7 @@ export async function conversationMemoryContext(input: {
       .filter((row) => row.conversationId !== input.conversationId)
       .slice(0, historicalLimit)
       .map((row) => viewOf(row, 0));
-    return { current, historical, matches };
+    return { current, historical, matches, crossConversation };
   } catch {
     return null;
   }
