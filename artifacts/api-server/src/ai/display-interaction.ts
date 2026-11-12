@@ -179,8 +179,9 @@ const ORDINAL_WORDS = ["الأول", "الثاني", "الثالث", "الراب
  * there is no active product display or no priced item.
  */
 export async function superlativeAsOrdinal(context: Context, normalized: string): Promise<string | undefined> {
-  const match = normalized.match(/^((?:افتح|ورني|وريني|اعرض|ضيف|اضف|حط|اختار|اختر|خذ|ابي|بدي|ابغي|عايز))(?:\s+لي)?\s+(?:ال)?(ارخص|اغلي)(?:\s+(?:واحد|وحده|منهم|فيهم|بينهم))?((?:\s+\S+){0,3})$/u);
-  if (!match || !context.actorId) return undefined;
+  const match = normalized.match(/^((?:افتح|ضيف|اضف|حط|اختار|اختر|خذ))(?:\s+لي)?\s+(?:ال)?(ارخص|اغلي)(?:\s+(?:واحد|وحده|منهم|فيهم|بينهم))?((?:\s+\S+){0,3})$/u);
+  // «أبي الأرخص فقط» is a ranking preference (buyer-turn), not an action on one item.
+  if (!match || !context.actorId || /(?:^|\s)(?:فقط|بس)(?=\s|$)/u.test(match[3] ?? "")) return undefined;
   const active = await activeDisplay(context.conversationId);
   if (active?.kind !== "LISTINGS") return undefined;
   const [stored] = await db.select({ ids: aiResultSets.resourceIds }).from(aiResultSets).where(and(eq(aiResultSets.id, active.resultSetId), eq(aiResultSets.conversationId, context.conversationId)));
