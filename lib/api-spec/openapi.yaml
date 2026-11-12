@@ -5590,7 +5590,7 @@ components:
               additionalProperties: false
               properties:
                 source: { type: string, enum: [MODEL_PROPOSAL] }
-                layout: { type: string, enum: [GRID, CAROUSEL, LIST] }
+                layout: { type: string, enum: [GRID, CAROUSEL, LIST, TABLE] }
                 highlightId: { type: string, minLength: 1, maxLength: 200 }
             photoSuggestionStatus:
               type: string
@@ -5639,6 +5639,13 @@ components:
                 Allowlisted driver view (profile, review, coarse work cards, assignments),
                 rebuilt from server state on every read. Never contains contacts or coordinates.
             universalCards: { $ref: "#/components/schemas/ConnectUniversalCardsPayload" }
+            displaySurface:
+              type: object
+              additionalProperties: true
+              description: >
+                Phase 2 model-driven display. A server-composed card (ComposedSurface) of the
+                actor's own verified figures in the form the model chose; built from server
+                records only and validated again by the client before rendering.
             provider:
               type: object
               additionalProperties: true

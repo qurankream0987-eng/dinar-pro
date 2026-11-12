@@ -1186,6 +1186,49 @@ await focused("P1-INSIGHTS", "the monthly insights series is the business's own 
   assert.deepEqual(await businessAnalytics(await businessOf(otherBusinessId), JO.id), otherBefore);
 });
 
+await focused("P2-BUSINESS", "the model chooses the form of business figures; the server draws only its own records, per owner", async () => {
+  const { composeBusinessDisplay, NOT_PROFIT_NOTE } = await import("../src/ai/display-composer");
+  const { readBusinessOverview } = await import("../src/ai/model-read-capabilities");
+  const context = { actorId: verified.id, conversationId: verifiedConv, currentMessageId: randomUUID(), market: JO } as any;
+  const overview = (await readBusinessOverview(context)).businessOverview!;
+  const analytics = [...overview.businesses].filter((entry) => entry.analytics?.monthly).sort((a, b) => b.analytics!.completedOrders - a.analytics!.completedOrders)[0]!.analytics!;
+  assert.ok(analytics.monthly!.some((row) => row.completedOrders > 0), "P1-INSIGHTS left recorded sales in this window");
+  const sections = (outcome: ReturnType<typeof composeBusinessDisplay>) => outcome.surface?.sections ?? [];
+  // LINE: the drawn points are the server's monthly integers, in major units, nothing else.
+  const line = composeBusinessDisplay({ version: 1, format: "LINE", scope: "THIS_TURN" }, overview);
+  assert.equal(line.applied, "LINE");
+  const series = sections(line).find((section) => section.type === "series") as any;
+  assert.deepEqual(series.points.map((point: any) => point.value), analytics.monthly!.map((row) => row.revenueMinor / 1000));
+  assert.ok(sections(line).some((section) => section.type === "text" && section.text === NOT_PROFIT_NOTE), "revenue is never presented as profit");
+  // TABLE: the same months as exact rows.
+  const table = sections(composeBusinessDisplay({ version: 1, format: "TABLE", scope: "THIS_TURN" }, overview)).find((section) => section.type === "table") as any;
+  assert.equal(table.rows.length, analytics.monthly!.length);
+  // METRIC: one key figure from the same read.
+  const metric = sections(composeBusinessDisplay({ version: 1, format: "METRIC", scope: "THIS_TURN" }, overview)).find((section) => section.type === "metrics") as any;
+  assert.equal(metric.items.find((item: any) => item.key === "d-revenue").value, `${(analytics.completedRevenueMinor! / 1000).toFixed(3)} JOD`);
+  // DONUT: shares only when the records hold 2-6 categories with sales; otherwise an honest notice.
+  const donut = composeBusinessDisplay({ version: 1, format: "DONUT", scope: "THIS_TURN" }, overview);
+  const categories = analytics.byCategory!.filter((row) => row.revenueMinor > 0);
+  if (categories.length >= 2 && categories.length <= 6) {
+    const parts = sections(donut).find((section) => section.type === "series") as any;
+    const total = categories.reduce((sum, row) => sum + row.revenueMinor, 0);
+    assert.deepEqual(parts.points.map((point: any) => point.display.split("%")[0]), categories.map((row) => ((row.revenueMinor / total) * 100).toFixed(1)));
+  } else {
+    assert.equal(donut.applied, "METRIC");
+    assert.match(donut.notice ?? "", /تصنيف|ستة/u, "no invented distribution");
+  }
+  // TEXT: no card at all.
+  assert.equal(composeBusinessDisplay({ version: 1, format: "TEXT", scope: "THIS_TURN" }, overview).surface, undefined);
+  // No business read or no analytics permission: nothing is drawn.
+  assert.equal(composeBusinessDisplay({ version: 1, format: "LINE", scope: "THIS_TURN" }, { businesses: [] }).surface, undefined);
+  // Another owner reads only their own figures: never this owner's monthly series.
+  const otherOverview = (await readBusinessOverview({ ...context, actorId: other.id })).businessOverview!;
+  assert.ok(otherOverview.businesses.every((entry) => entry.businessId !== verifiedBusinessId));
+  // HTTP end-to-end through the model loop is NOT exercised here: this owner holds two businesses,
+  // and DINAR's business gate (D3A-41) asks which one before any model turn. Recorded as BLOCKED
+  // in the Phase 2 report; the composer and the read above run against the same database rows.
+});
+
 await test("summary", async () => {
   const ids = Object.keys(results).sort();
   console.log("D3A_SUMMARY", JSON.stringify({

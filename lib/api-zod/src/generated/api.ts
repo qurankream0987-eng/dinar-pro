@@ -3193,7 +3193,7 @@ export const PreviewAiConversationResponse = zod.object({
   "presentation": zod.enum(['RESULTS', 'DETAILS']).optional().describe('DETAILS marks one result opened from the conversation\'s current result set.'),
   "composition": zod.object({
   "source": zod.enum(['MODEL_PROPOSAL']),
-  "layout": zod.enum(['GRID', 'CAROUSEL', 'LIST']),
+  "layout": zod.enum(['GRID', 'CAROUSEL', 'LIST', 'TABLE']),
   "highlightId": zod.string().min(1).max(previewAiConversationResponseBlocksItemPayloadCompositionHighlightIdMax).optional()
 }).optional().describe('Generative UI. The server-resolved layout of a listing block, proposed by the model and validated against this block\'s own verified result set; a highlight is a labelled suggestion and never a sponsored listing.'),
   "photoSuggestionStatus": zod.enum(['UNAVAILABLE', 'FAILED', 'NO_SUGGESTIONS', 'SUGGESTIONS']).optional(),
@@ -3297,6 +3297,7 @@ export const PreviewAiConversationResponse = zod.object({
   "note": zod.string().max(previewAiConversationResponseBlocksItemPayloadUniversalCardsNoteMax),
   "comparisonNote": zod.string().max(previewAiConversationResponseBlocksItemPayloadUniversalCardsComparisonNoteMax).optional()
 }).optional(),
+  "displaySurface": zod.record(zod.string(), zod.unknown()).optional().describe('Phase 2 model-driven display. A server-composed card (ComposedSurface) of the actor\'s own verified figures in the form the model chose; built from server records only and validated again by the client before rendering.\n'),
   "provider": zod.record(zod.string(), zod.unknown()).optional().describe('Allowlisted provider connection view (review, status, safe key prefix). Never contains a key, secret or credential hash.\n'),
   "business": zod.record(zod.string(), zod.unknown()).optional().describe('Allowlisted D3-A business view (setup, profile, catalog, orders, insights), refreshed from the owner\'s live D2 identity and D3 operating rows on every read.\n'),
   "policyReview": zod.record(zod.string(), zod.unknown()).optional().describe('Policy review card (W02-ULTRA B10): the current version, effective date, legal-review status and reading path of each policy that requires acceptance, whether this user accepted it, and the review id whose exact versions an acceptance records. Contract acceptance only; optional privacy consents are unaffected.\n'),
@@ -3683,7 +3684,7 @@ export const CreateAiGuestHandoffResponse = zod.object({
   "presentation": zod.enum(['RESULTS', 'DETAILS']).optional().describe('DETAILS marks one result opened from the conversation\'s current result set.'),
   "composition": zod.object({
   "source": zod.enum(['MODEL_PROPOSAL']),
-  "layout": zod.enum(['GRID', 'CAROUSEL', 'LIST']),
+  "layout": zod.enum(['GRID', 'CAROUSEL', 'LIST', 'TABLE']),
   "highlightId": zod.string().min(1).max(createAiGuestHandoffResponseMessagesItemBlocksItemPayloadCompositionHighlightIdMax).optional()
 }).optional().describe('Generative UI. The server-resolved layout of a listing block, proposed by the model and validated against this block\'s own verified result set; a highlight is a labelled suggestion and never a sponsored listing.'),
   "photoSuggestionStatus": zod.enum(['UNAVAILABLE', 'FAILED', 'NO_SUGGESTIONS', 'SUGGESTIONS']).optional(),
@@ -3787,6 +3788,7 @@ export const CreateAiGuestHandoffResponse = zod.object({
   "note": zod.string().max(createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsNoteMax),
   "comparisonNote": zod.string().max(createAiGuestHandoffResponseMessagesItemBlocksItemPayloadUniversalCardsComparisonNoteMax).optional()
 }).optional(),
+  "displaySurface": zod.record(zod.string(), zod.unknown()).optional().describe('Phase 2 model-driven display. A server-composed card (ComposedSurface) of the actor\'s own verified figures in the form the model chose; built from server records only and validated again by the client before rendering.\n'),
   "provider": zod.record(zod.string(), zod.unknown()).optional().describe('Allowlisted provider connection view (review, status, safe key prefix). Never contains a key, secret or credential hash.\n'),
   "business": zod.record(zod.string(), zod.unknown()).optional().describe('Allowlisted D3-A business view (setup, profile, catalog, orders, insights), refreshed from the owner\'s live D2 identity and D3 operating rows on every read.\n'),
   "policyReview": zod.record(zod.string(), zod.unknown()).optional().describe('Policy review card (W02-ULTRA B10): the current version, effective date, legal-review status and reading path of each policy that requires acceptance, whether this user accepted it, and the review id whose exact versions an acceptance records. Contract acceptance only; optional privacy consents are unaffected.\n'),
@@ -4077,7 +4079,7 @@ export const GetAiConversationResponse = zod.object({
   "presentation": zod.enum(['RESULTS', 'DETAILS']).optional().describe('DETAILS marks one result opened from the conversation\'s current result set.'),
   "composition": zod.object({
   "source": zod.enum(['MODEL_PROPOSAL']),
-  "layout": zod.enum(['GRID', 'CAROUSEL', 'LIST']),
+  "layout": zod.enum(['GRID', 'CAROUSEL', 'LIST', 'TABLE']),
   "highlightId": zod.string().min(1).max(getAiConversationResponseMessagesItemBlocksItemPayloadCompositionHighlightIdMax).optional()
 }).optional().describe('Generative UI. The server-resolved layout of a listing block, proposed by the model and validated against this block\'s own verified result set; a highlight is a labelled suggestion and never a sponsored listing.'),
   "photoSuggestionStatus": zod.enum(['UNAVAILABLE', 'FAILED', 'NO_SUGGESTIONS', 'SUGGESTIONS']).optional(),
@@ -4181,6 +4183,7 @@ export const GetAiConversationResponse = zod.object({
   "note": zod.string().max(getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsNoteMax),
   "comparisonNote": zod.string().max(getAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsComparisonNoteMax).optional()
 }).optional(),
+  "displaySurface": zod.record(zod.string(), zod.unknown()).optional().describe('Phase 2 model-driven display. A server-composed card (ComposedSurface) of the actor\'s own verified figures in the form the model chose; built from server records only and validated again by the client before rendering.\n'),
   "provider": zod.record(zod.string(), zod.unknown()).optional().describe('Allowlisted provider connection view (review, status, safe key prefix). Never contains a key, secret or credential hash.\n'),
   "business": zod.record(zod.string(), zod.unknown()).optional().describe('Allowlisted D3-A business view (setup, profile, catalog, orders, insights), refreshed from the owner\'s live D2 identity and D3 operating rows on every read.\n'),
   "policyReview": zod.record(zod.string(), zod.unknown()).optional().describe('Policy review card (W02-ULTRA B10): the current version, effective date, legal-review status and reading path of each policy that requires acceptance, whether this user accepted it, and the review id whose exact versions an acceptance records. Contract acceptance only; optional privacy consents are unaffected.\n'),
@@ -4509,7 +4512,7 @@ export const CopyAiConversationResponse = zod.object({
   "presentation": zod.enum(['RESULTS', 'DETAILS']).optional().describe('DETAILS marks one result opened from the conversation\'s current result set.'),
   "composition": zod.object({
   "source": zod.enum(['MODEL_PROPOSAL']),
-  "layout": zod.enum(['GRID', 'CAROUSEL', 'LIST']),
+  "layout": zod.enum(['GRID', 'CAROUSEL', 'LIST', 'TABLE']),
   "highlightId": zod.string().min(1).max(copyAiConversationResponseMessagesItemBlocksItemPayloadCompositionHighlightIdMax).optional()
 }).optional().describe('Generative UI. The server-resolved layout of a listing block, proposed by the model and validated against this block\'s own verified result set; a highlight is a labelled suggestion and never a sponsored listing.'),
   "photoSuggestionStatus": zod.enum(['UNAVAILABLE', 'FAILED', 'NO_SUGGESTIONS', 'SUGGESTIONS']).optional(),
@@ -4613,6 +4616,7 @@ export const CopyAiConversationResponse = zod.object({
   "note": zod.string().max(copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsNoteMax),
   "comparisonNote": zod.string().max(copyAiConversationResponseMessagesItemBlocksItemPayloadUniversalCardsComparisonNoteMax).optional()
 }).optional(),
+  "displaySurface": zod.record(zod.string(), zod.unknown()).optional().describe('Phase 2 model-driven display. A server-composed card (ComposedSurface) of the actor\'s own verified figures in the form the model chose; built from server records only and validated again by the client before rendering.\n'),
   "provider": zod.record(zod.string(), zod.unknown()).optional().describe('Allowlisted provider connection view (review, status, safe key prefix). Never contains a key, secret or credential hash.\n'),
   "business": zod.record(zod.string(), zod.unknown()).optional().describe('Allowlisted D3-A business view (setup, profile, catalog, orders, insights), refreshed from the owner\'s live D2 identity and D3 operating rows on every read.\n'),
   "policyReview": zod.record(zod.string(), zod.unknown()).optional().describe('Policy review card (W02-ULTRA B10): the current version, effective date, legal-review status and reading path of each policy that requires acceptance, whether this user accepted it, and the review id whose exact versions an acceptance records. Contract acceptance only; optional privacy consents are unaffected.\n'),
@@ -4955,7 +4959,7 @@ export const AddAiListingToCartResponse = zod.object({
   "presentation": zod.enum(['RESULTS', 'DETAILS']).optional().describe('DETAILS marks one result opened from the conversation\'s current result set.'),
   "composition": zod.object({
   "source": zod.enum(['MODEL_PROPOSAL']),
-  "layout": zod.enum(['GRID', 'CAROUSEL', 'LIST']),
+  "layout": zod.enum(['GRID', 'CAROUSEL', 'LIST', 'TABLE']),
   "highlightId": zod.string().min(1).max(addAiListingToCartResponseAssistantMessageBlocksItemPayloadCompositionHighlightIdMax).optional()
 }).optional().describe('Generative UI. The server-resolved layout of a listing block, proposed by the model and validated against this block\'s own verified result set; a highlight is a labelled suggestion and never a sponsored listing.'),
   "photoSuggestionStatus": zod.enum(['UNAVAILABLE', 'FAILED', 'NO_SUGGESTIONS', 'SUGGESTIONS']).optional(),
@@ -5059,6 +5063,7 @@ export const AddAiListingToCartResponse = zod.object({
   "note": zod.string().max(addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsNoteMax),
   "comparisonNote": zod.string().max(addAiListingToCartResponseAssistantMessageBlocksItemPayloadUniversalCardsComparisonNoteMax).optional()
 }).optional(),
+  "displaySurface": zod.record(zod.string(), zod.unknown()).optional().describe('Phase 2 model-driven display. A server-composed card (ComposedSurface) of the actor\'s own verified figures in the form the model chose; built from server records only and validated again by the client before rendering.\n'),
   "provider": zod.record(zod.string(), zod.unknown()).optional().describe('Allowlisted provider connection view (review, status, safe key prefix). Never contains a key, secret or credential hash.\n'),
   "business": zod.record(zod.string(), zod.unknown()).optional().describe('Allowlisted D3-A business view (setup, profile, catalog, orders, insights), refreshed from the owner\'s live D2 identity and D3 operating rows on every read.\n'),
   "policyReview": zod.record(zod.string(), zod.unknown()).optional().describe('Policy review card (W02-ULTRA B10): the current version, effective date, legal-review status and reading path of each policy that requires acceptance, whether this user accepted it, and the review id whose exact versions an acceptance records. Contract acceptance only; optional privacy consents are unaffected.\n'),

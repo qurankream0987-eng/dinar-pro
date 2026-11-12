@@ -77,6 +77,8 @@ export type ToolResult = {
   memory?: import("./personal-memory-turn").MemorySummary;
   /** Generative UI: the server-resolved layout of a listing block (model proposal, validated). */
   composition?: import("@workspace/api-zod/surface-composition").ResultComposition;
+  /** Phase 2: a server-composed display of this read's own figures (validated ComposedSurface). */
+  displaySurface?: import("@workspace/api-zod/surface-composition").ComposedSurface;
   /** RESULTS restores an existing result set exactly; it never creates a new one. */
   kind: "SEARCH" | "RESOURCE" | "RESULTS" | "SURFACE";
   surface?: string;

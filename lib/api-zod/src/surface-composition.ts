@@ -434,7 +434,7 @@ export function applyCardEnvelope(surface: ComposedSurface, envelope: CardEnvelo
  * does not resolve; the typed card is then shown unchanged. A proposal authorizes nothing.
  */
 export const PRESENTATION_PROPOSAL_VERSION = 1 as const;
-export const PRESENTATION_LAYOUTS = ["GRID", "CAROUSEL", "LIST", "COMPARISON"] as const;
+export const PRESENTATION_LAYOUTS = ["GRID", "CAROUSEL", "LIST", "COMPARISON", "TABLE"] as const;
 export type PresentationLayout = (typeof PRESENTATION_LAYOUTS)[number];
 export const PRESENTATION_DIMENSIONS = ["PRICE", "CONDITION", "CITY", "AVAILABILITY", "DELIVERY", "SELLER"] as const;
 export const PRESENTATION_MAX_ITEMS = 6;
@@ -453,7 +453,8 @@ export type PresentationProposal = z.infer<typeof PresentationProposalSchema>;
 /** The server's resolved layout for a listing block, stored with the block and restored on reload. */
 export const ResultCompositionSchema = z.object({
   source: z.literal("MODEL_PROPOSAL"),
-  layout: z.enum(["GRID", "CAROUSEL", "LIST"]),
+  /** TABLE shows the block's own live listings as a table (Phase 2); the cards stay below it. */
+  layout: z.enum(["GRID", "CAROUSEL", "LIST", "TABLE"]),
   /** A listing id from the block's own result set; never a sponsored listing. */
   highlightId: z.string().min(1).max(200).optional(),
 }).strict();
@@ -503,4 +504,42 @@ export function resolvePresentationProposal(
     order,
     composition: { source: "MODEL_PROPOSAL", layout: proposal.layout, ...(highlightId ? { highlightId } : {}) },
   };
+}
+
+
+// ─── Model display directive (Phase 2) ──────────────────────────────────────
+
+/**
+ * What the model may say about the *form* of an answer, never its content: a format from a closed
+ * list and which verified data it applies to. The server decides whether that data exists and
+ * fits the format (a trend needs a time series, a share needs a part-to-whole), builds the card
+ * from its own records, and otherwise keeps the canonical card with a short honest notice.
+ * A directive carries no number, identifier, label, URL or action and authorizes nothing.
+ */
+export const DISPLAY_DIRECTIVE_VERSION = 1 as const;
+export const DISPLAY_FORMATS = ["AUTO", "TEXT", "CARDS", "TABLE", "COMPARISON", "LINE", "BAR", "DONUT", "METRIC"] as const;
+export type DisplayFormat = (typeof DISPLAY_FORMATS)[number];
+/** THIS_TURN: data read in this turn. LATEST_RESULTS: the conversation's latest result set, re-read live, never searched again. */
+export const DISPLAY_SCOPES = ["THIS_TURN", "LATEST_RESULTS"] as const;
+
+export const DisplayDirectiveSchema = z.object({
+  version: z.literal(DISPLAY_DIRECTIVE_VERSION),
+  format: z.enum(DISPLAY_FORMATS),
+  /** Omitted means THIS_TURN. */
+  scope: z.enum(DISPLAY_SCOPES).optional(),
+  /** For COMPARISON on result sets: 1-based positions, as in PresentationProposal. */
+  positions: z.array(z.number().int().min(1).max(24)).min(2).max(4).optional(),
+}).strict();
+export type DisplayDirective = z.infer<typeof DisplayDirectiveSchema>;
+
+/** A malformed directive is ignored as a whole (the turn and its verified reads are kept). */
+export function parseDisplayDirective(value: unknown): DisplayDirective | undefined {
+  if (value === undefined || value === null) return undefined;
+  const parsed = DisplayDirectiveSchema.safeParse(value);
+  return parsed.success ? parsed.data : undefined;
+}
+
+/** Listing results can be shown as cards, a table or a comparison; anything else does not fit them. */
+export function listingFormatFits(format: DisplayFormat): boolean {
+  return format === "AUTO" || format === "CARDS" || format === "TABLE" || format === "COMPARISON" || format === "TEXT";
 }

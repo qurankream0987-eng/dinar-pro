@@ -80,6 +80,7 @@ export * from './aiUiBlockPayloadCompositionLayout';
 export * from './aiUiBlockPayloadCompositionSource';
 export * from './aiUiBlockPayloadControl';
 export * from './aiUiBlockPayloadDelivery';
+export * from './aiUiBlockPayloadDisplaySurface';
 export * from './aiUiBlockPayloadDraft';
 export * from './aiUiBlockPayloadDraftReview';
 export * from './aiUiBlockPayloadDriver';

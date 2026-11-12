@@ -15,9 +15,10 @@ import { parseStructuredSearch } from "./search-query";
  */
 import { aiRoutingMode, canonicalRequestProblem } from "./routing-mode";
 import { randomUUID } from "node:crypto";
-import { and, desc, eq, gte } from "drizzle-orm";
+import { and, desc, eq, gte, sql } from "drizzle-orm";
 import { CONVERSATION_SURFACE_FAMILIES, capabilityUtterance, type ProductCapabilityId } from "@workspace/api-zod/conversation-runtime";
-import { resolvePresentationProposal } from "@workspace/api-zod/surface-composition";
+import { listingFormatFits, parseDisplayDirective, resolvePresentationProposal, type DisplayDirective } from "@workspace/api-zod/surface-composition";
+import { composeBusinessDisplay, withoutVisualFences } from "./display-composer";
 import { countryByCode } from "@workspace/global";
 import { aiResultSets, aiUiBlocks, candidateProfiles, db, messages, offers } from "@workspace/db";
 import { isMarketAvailable, type marketFor } from "../lib/markets";
@@ -1654,6 +1655,67 @@ function withModelToolNote(result: ToolResult, note: string): ToolResult {
   return { ...result, prompt };
 }
 
+/** A display directive as a presentation proposal for listing results (same resolver, same checks). */
+function proposalFromDirective(directive: DisplayDirective | undefined): unknown {
+  if (!directive) return undefined;
+  if (directive.format === "TABLE") return { version: 1, layout: "TABLE" };
+  if (directive.format === "COMPARISON") return { version: 1, layout: "COMPARISON", ...(directive.positions ? { positions: directive.positions } : {}) };
+  return undefined;
+}
+
+/** A form that listing results cannot honestly take (a trend, a share, one figure) is explained, not drawn. */
+function displayMisfitNote(directive: DisplayDirective | undefined): string | undefined {
+  if (!directive || listingFormatFits(directive.format)) return undefined;
+  return "هذه نتائج عروض وليست أرقامًا عبر الزمن أو نسبًا من كل، فعرضتها كبطاقات من سجل DINAR بدل رسم بياني. يمكنني عرضها كجدول أو مقارنتها.";
+}
+
+/**
+ * Re-shows the conversation's latest result set in another form: the stored ids are re-read live
+ * through the internal restore tool (sold or paused listings drop out), so nothing is searched
+ * again and nothing the model wrote becomes a fact. Returns null when there is nothing to re-show.
+ */
+export async function redisplayLatestResults(input: Input, directive: DisplayDirective, reply: string, replyFiltered: boolean): Promise<Turn | null> {
+  const recent = await db
+    .select({ id: aiResultSets.id, resourceIds: aiResultSets.resourceIds, expiresAt: aiResultSets.expiresAt })
+    .from(aiResultSets)
+    .where(and(
+      eq(aiResultSets.conversationId, input.conversationId),
+      eq(aiResultSets.marketId, input.market.id),
+      sql`coalesce(${aiResultSets.query} ->> 'kind', 'SEARCH') = 'SEARCH'`,
+    ))
+    .orderBy(desc(aiResultSets.createdAt))
+    .limit(8);
+  // The latest set that still names listings; an expired one is never re-shown as current.
+  const latest = recent.find((row) => (row.resourceIds?.length ?? 0) > 0);
+  if (!latest || (latest.expiresAt && latest.expiresAt.getTime() <= Date.now())) return null;
+  const { executeRegisteredTool } = await import("./tool-registry");
+  const context = { conversationId: input.conversationId, market: input.market };
+  let restored: ToolResult;
+  try {
+    restored = (await executeRegisteredTool("restoreResults", JSON.stringify({ resultSetId: latest.id }), context)).result;
+  } catch {
+    return null;
+  }
+  const misfit = displayMisfitNote(directive);
+  const prose = replyFiltered ? "" : withoutVisualFences(reply);
+  const note = [prose, misfit].filter(Boolean).join("\n\n") || "هذه نتائجك السابقة نفسها بالشكل الذي طلبته، دون بحث جديد.";
+  if (directive.format === "COMPARISON") {
+    const resolution = resolvePresentationProposal(proposalFromDirective(directive), restored.listings);
+    if (resolution.status === "COMPARE")
+      try {
+        const compared = await executeRegisteredTool("compareListings", JSON.stringify({ resultSetId: latest.id, positions: resolution.positions }), context);
+        return { tool: "compareListings", version: 1, result: withModelToolNote(compared.result, note) };
+      } catch {
+        // A compared listing went away: the restored results are shown as they are.
+      }
+  }
+  const composition = directive.format === "TABLE" ? { source: "MODEL_PROPOSAL" as const, layout: "TABLE" as const } : undefined;
+  const answered = withModelToolAnswer({ ...restored, ...(composition ? { composition } : {}) }, note, true, "DINAR");
+  // Marks the note as this re-display's own wording, so the route shows it instead of the generic restore line.
+  const buyer = answered.query.buyer as Record<string, unknown> | undefined;
+  return { tool: "restoreResults", version: 1, result: { ...answered, query: { ...answered.query, buyer: { ...buyer, display: true } } } };
+}
+
 function readResultTool(result: ToolResult): "searchListings" | "getResource" | "compareListings" {
   if (result.kind === "SURFACE" && result.surface === "COMPARISON") return "compareListings";
   return result.kind === "SEARCH" ? "searchListings" : "getResource";
@@ -2115,6 +2177,19 @@ export async function executeModelFallback(
       { kind: "CLARIFICATION_REQUIRED", scope: "DINAR_INTERNAL", topic: "MODEL_READ_UNVERIFIED" },
       { ownerId: input.actorId },
     );
+  // Phase 2: the model's chosen form. Malformed directives are ignored whole; nothing in one is a figure.
+  const directive: DisplayDirective | undefined = parseDisplayDirective(outcome.turn.display);
+  if (directive?.format === "TEXT")
+    outcome.turn.conversationalReply = withoutVisualFences(outcome.turn.conversationalReply) || outcome.turn.conversationalReply;
+  // «حولها لجدول», «قارن الأول والثاني», «رجّع البطاقات»: the latest results in another form,
+  // re-read live from the stored result set (never searched again; same ids, same order).
+  if (
+    !lastSearchResult && !lastResourceResult && !lastCapabilityRead && directive?.scope === "LATEST_RESULTS" &&
+    directive.format !== "TEXT" && directive.format !== "AUTO"
+  ) {
+    const redisplayed = await redisplayLatestResults(input, directive, outcome.turn.conversationalReply, outcome.replyFiltered);
+    if (redisplayed) return redisplayed;
+  }
   if (lastSearchResult || lastResourceResult) {
     let result = lastSearchResult ?? lastResourceResult!;
     // C12: a model sentence is not a proof that it describes these rows. Identity and money
@@ -2130,12 +2205,15 @@ export async function executeModelFallback(
       : undefined;
     if (!bound && outcome.turn.conversationalReply && result.listings.length)
       logger.info({ event: "dinar_model_prose_unbound", conversationId: input.conversationId }, "model prose replaced by card facts");
-    const answer = bound ?? facts;
+    let answer = bound ?? facts;
     // Generative UI: the model may propose how this turn's verified results are shown. Every
     // position is resolved against the listings DINAR itself returned; anything unresolvable
     // rejects the whole proposal and the typed card stays as it was.
     if (result.kind === "SEARCH") {
-      const resolution = resolvePresentationProposal(outcome.turn.presentation, result.listings);
+      // An explicit presentation wins; otherwise a display directive maps onto the same resolver.
+      const resolution = resolvePresentationProposal(outcome.turn.presentation ?? proposalFromDirective(directive), result.listings);
+      const misfit = displayMisfitNote(directive);
+      if (misfit) answer = `${answer}\n\n${misfit}`;
       if (resolution.status === "REJECTED")
         logger.info({ conversationId: input.conversationId, reason: resolution.reason }, "presentation proposal rejected");
       if (resolution.status === "COMPARE" && result.resultSetId) {
@@ -2179,10 +2257,19 @@ export async function executeModelFallback(
       GROUNDED_CAPABILITY_ANSWER,
       input.conversationId,
     );
+    // Phase 2: business figures in the form the model chose, built from this read's own rows.
+    let read = lastCapabilityRead;
+    let note = answer;
+    if (lastCapabilityRead.businessOverview) {
+      const display = composeBusinessDisplay(directive, lastCapabilityRead.businessOverview);
+      if (display.surface) read = { ...lastCapabilityRead, displaySurface: display.surface };
+      if (display.notice) note = `${note}\n\n${display.notice}`;
+      logger.info({ event: "dinar_model_display", conversationId: input.conversationId, requested: directive?.format ?? "NONE", applied: display.applied }, "model display resolved");
+    }
     return {
       tool: lastCapabilityReadTool ?? "dinarConversationTurn",
       version: 1,
-      result: withModelToolNote(lastCapabilityRead, `${answer}${usageNote ? `\n\n${usageNote}` : ""}`),
+      result: withModelToolNote(read, `${note}${usageNote ? `\n\n${usageNote}` : ""}`),
     };
   }
   const turn = outcome.turn;

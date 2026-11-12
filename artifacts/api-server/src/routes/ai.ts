@@ -14,7 +14,7 @@ import {
 import { refreshNegotiationPayload } from "../ai/negotiation-turn";
 import { refreshInquiryPayload } from "../ai/inquiry-turn";
 import { buildCardEnvelope } from "../ai/card-envelope";
-import { CardEnvelopeSchema, ResultCompositionSchema } from "@workspace/api-zod/surface-composition";
+import { CardEnvelopeSchema, ComposedSurfaceSchema, ResultCompositionSchema } from "@workspace/api-zod/surface-composition";
 import { acknowledgeClientAction, refreshControlPayload } from "../ai/product-control-turn";
 import { guestUsageKey, reserveAiUsage, settleAiUsage, type AiUsageMeasurement, type AiUsageOwner } from "../lib/ai-usage";
 import { usageLimitMessage } from "../ai/usage-turn";
@@ -284,6 +284,8 @@ const SurfaceBlock = z.object({
     draftReview: z.record(z.string(), z.unknown()).optional(),
     sellerInsight: z.record(z.string(), z.unknown()).optional(),
     universalCards: UniversalCardsPayloadSchema.optional(),
+    // Phase 2: server-composed figures in the model's chosen form; re-validated on every read.
+    displaySurface: ComposedSurfaceSchema.optional(),
     comparison: z.record(z.string(), z.unknown()).optional(),
     purchaseReview: z.record(z.string(), z.unknown()).optional(),
     // AI-F02: capability reads and prepare reviews; every list is server-built and party-scoped.
@@ -2279,6 +2281,7 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
         draftReview: toolResult.draftReview,
         sellerInsight: toolResult.sellerInsight,
         universalCards: toolResult.universalCards,
+        displaySurface: toolResult.displaySurface,
         comparison: toolResult.comparison,
         purchaseReview: toolResult.purchaseReview,
         inventory: toolResult.inventory,
@@ -2536,7 +2539,12 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
             : "لم يعد هذا العرض متاحًا في سوقك الحالي. يمكنك متابعة البحث من جديد."
         : toolResult.kind === "RESULTS"
           ? toolResult.listings.length
-            ? `عدت إلى نتائجك السابقة (${toolResult.listings.length}) بالترتيب نفسه.`
+            // Phase 2: a re-display in another form carries its grounded note (no new search).
+            ? toolResult.composition && typeof (toolResult.query.buyer as { message?: unknown } | undefined)?.message === "string"
+              ? String((toolResult.query.buyer as { message: string }).message)
+              : typeof (toolResult.query.buyer as { message?: unknown } | undefined)?.message === "string" && (toolResult.query.buyer as { display?: unknown }).display === true
+                ? String((toolResult.query.buyer as { message: string }).message)
+                : `عدت إلى نتائجك السابقة (${toolResult.listings.length}) بالترتيب نفسه.`
             : "لا توجد عروض متاحة الآن من نتائجك السابقة. يمكنك البحث من جديد."
           : toolResult.query.recommendation
             ? recommendationText(toolResult.query, toolResult.listings.length)
@@ -2565,7 +2573,7 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
     const messageCreatedAt = new Date();
     const presentation = toolResult.kind === "RESOURCE" ? "DETAILS" : "RESULTS";
     // A highlight must name a listing this block actually shows; otherwise the layout alone stays.
-    const composition = toolResult.kind === "SEARCH" && toolResult.composition
+    const composition = (toolResult.kind === "SEARCH" || toolResult.kind === "RESULTS") && toolResult.composition
       ? toolResult.composition.highlightId && !resourceIds.includes(toolResult.composition.highlightId)
         ? { source: toolResult.composition.source, layout: toolResult.composition.layout }
         : toolResult.composition

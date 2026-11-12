@@ -2267,6 +2267,7 @@ export const AiUiBlockPayloadCompositionLayout = {
   GRID: 'GRID',
   CAROUSEL: 'CAROUSEL',
   LIST: 'LIST',
+  TABLE: 'TABLE',
 } as const;
 
 export type AiUiBlockPayloadPhotoSuggestionStatus = typeof AiUiBlockPayloadPhotoSuggestionStatus[keyof typeof AiUiBlockPayloadPhotoSuggestionStatus];
@@ -2859,6 +2860,11 @@ export type AiUiBlockPayloadPromotion = { [key: string]: unknown };
 export type AiUiBlockPayloadDriver = { [key: string]: unknown };
 
 /**
+ * Phase 2 model-driven display. A server-composed card (ComposedSurface) of the actor's own verified figures in the form the model chose; built from server records only and validated again by the client before rendering.
+ */
+export type AiUiBlockPayloadDisplaySurface = { [key: string]: unknown };
+
+/**
  * Allowlisted provider connection view (review, status, safe key prefix). Never contains a key, secret or credential hash.
  */
 export type AiUiBlockPayloadProvider = { [key: string]: unknown };
@@ -2964,6 +2970,8 @@ export type AiUiBlockPayload = {
   /** Allowlisted driver view (profile, review, coarse work cards, assignments), rebuilt from server state on every read. Never contains contacts or coordinates. */
   driver?: AiUiBlockPayloadDriver;
   universalCards?: ConnectUniversalCardsPayload;
+  /** Phase 2 model-driven display. A server-composed card (ComposedSurface) of the actor's own verified figures in the form the model chose; built from server records only and validated again by the client before rendering. */
+  displaySurface?: AiUiBlockPayloadDisplaySurface;
   /** Allowlisted provider connection view (review, status, safe key prefix). Never contains a key, secret or credential hash. */
   provider?: AiUiBlockPayloadProvider;
   /** Allowlisted D3-A business view (setup, profile, catalog, orders, insights), refreshed from the owner's live D2 identity and D3 operating rows on every read. */

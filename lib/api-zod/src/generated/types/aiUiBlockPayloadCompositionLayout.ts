@@ -13,4 +13,5 @@ export const AiUiBlockPayloadCompositionLayout = {
   GRID: 'GRID',
   CAROUSEL: 'CAROUSEL',
   LIST: 'LIST',
+  TABLE: 'TABLE',
 } as const;

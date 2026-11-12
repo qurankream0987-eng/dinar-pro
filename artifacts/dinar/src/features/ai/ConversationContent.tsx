@@ -39,6 +39,8 @@ import { Flag, SmartImage } from "@/ui/Media";
 import type { AiMessage, AiUiBlock } from "./ai-api";
 import { animateListingToBasket } from "./cart-basket-animation";
 import { ListingManagementPreviewCard } from "./ListingManagementPreviewCard";
+import { ListingTable } from "./surface/ListingTable";
+import { ComposedSurfaceView } from "./surface/ComposedSurface";
 import { DraftReviewPanel, draftPhotos, isDraftReview, isSellerInsight, SellerInsightPanel } from "./SellerDraftInsight";
 import { BusinessSummaryPanel, isBusinessInsight } from "./BusinessSummaryPanel";
 import { RichText } from "./RichText";
@@ -1104,6 +1106,10 @@ function ResultBlock({
         {isAdvice(block.payload.advice) && block.payload.advice.options && (
           <ClarificationOptions options={block.payload.advice.options} active={Boolean(activeWorkflow)} onSend={onSend} />
         )}
+        {block.payload.displaySurface && (
+          // Phase 2: the server's own figures in the form the model chose (validated again here).
+          <ComposedSurfaceView surface={block.payload.displaySurface} active={false} />
+        )}
         {isBusinessInsight(block.payload.sellerInsight) && (
           <BusinessSummaryPanel insight={block.payload.sellerInsight} active={Boolean(activeWorkflow)} onSend={onSend} />
         )}
@@ -1160,7 +1166,9 @@ function ResultBlock({
           <span>يمكنك تعديل طلبك أو تجربة بحث أوسع.</span>
         </div>
       ) : (
-      <ResultLayout resultSetId={block.payload.resultSetId} layout={block.payload.composition?.layout}>
+      <>
+      {block.payload.composition?.layout === "TABLE" && <ListingTable listings={listings} />}
+      <ResultLayout resultSetId={block.payload.resultSetId} layout={block.payload.composition?.layout === "TABLE" ? undefined : block.payload.composition?.layout}>
         {listings.map((listing, index) => {
           const storedIndex = resourceIds.indexOf(listing.id);
           const resultIndex = storedIndex >= 0 ? storedIndex : index;
@@ -1296,6 +1304,7 @@ function ResultBlock({
           );
         })}
       </ResultLayout>
+      </>
       )}
       {selected && (
         <div>

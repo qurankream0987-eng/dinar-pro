@@ -411,7 +411,7 @@ export async function businessAnalytics(business: BusinessProfile, marketId: str
     .from(offers)
     .where(and(eq(offers.businessProfileId, business.d2BusinessId), eq(offers.marketId, marketId)));
   if (!listingIds.length)
-    return { listings: Number(listingCounts?.total ?? 0), published: 0, paused: 0, completedOrders: 0, completedRevenueMinor: 0, monthly: [] as { month: string; completedOrders: number; revenueMinor: number }[] };
+    return { listings: Number(listingCounts?.total ?? 0), published: 0, paused: 0, completedOrders: 0, completedRevenueMinor: 0, monthly: [] as { month: string; completedOrders: number; revenueMinor: number }[], byCategory: [] as { category: string; completedOrders: number; revenueMinor: number }[] };
   const [orderStats] = await db
     .select({
       completedOrders: sql<number>`count(distinct ${orders.id}) filter (where ${orders.status} = 'COMPLETED')::int`,
@@ -448,6 +448,26 @@ export async function businessAnalytics(business: BusinessProfile, marketId: str
       gte(orders.createdAt, monthStarts[0]!),
     ))
     .groupBy(sql`1`);
+  // Completed revenue per listing category (all time), from the same ownership-scoped rows.
+  const categoryRows = await db
+    .select({
+      category: sql<string>`coalesce(nullif(${offers.data} ->> 'category', ''), 'أخرى')`,
+      completedOrders: sql<number>`count(distinct ${orders.id})::int`,
+      revenueMinor: sql<number>`coalesce(sum(${orderItems.subtotalMinor}), 0)::int`,
+    })
+    .from(orderItems)
+    .innerJoin(orders, eq(orders.id, orderItems.orderId))
+    .innerJoin(offers, eq(offers.id, orderItems.offerId))
+    .where(and(
+      eq(orders.sellerId, business.ownerUserId),
+      eq(orders.marketId, marketId),
+      inArray(orderItems.offerId, listingIds),
+      eq(orders.status, "COMPLETED"),
+    ))
+    .groupBy(sql`1`)
+    .orderBy(sql`3 desc`)
+    .limit(12);
+  const byCategory = categoryRows.map((row) => ({ category: String(row.category).slice(0, 40), completedOrders: Number(row.completedOrders), revenueMinor: Number(row.revenueMinor) }));
   const byMonth = new Map(monthRows.map((row) => [row.month, row]));
   const monthly = monthStarts.map((start) => {
     const month = start.toISOString().slice(0, 7);
@@ -461,6 +481,7 @@ export async function businessAnalytics(business: BusinessProfile, marketId: str
     completedOrders: Number(orderStats?.completedOrders ?? 0),
     completedRevenueMinor: Number(orderStats?.completedRevenueMinor ?? 0),
     monthly,
+    byCategory,
   };
 }
 

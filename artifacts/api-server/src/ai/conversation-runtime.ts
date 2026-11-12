@@ -53,6 +53,7 @@ import {
 } from "../lib/marketplace-categories";
 import { normalizeSearch } from "./search-context";
 import { itemTokens, textMatchesToken } from "../lib/arabic-search-terms";
+import { displayPreference } from "./display-preference";
 import {
   executeSellerAdviceTurn,
   executeSellerListingManagementTurn,
@@ -1109,6 +1110,8 @@ function isSoftMiss(turn: RuntimeTurn): boolean {
   return turn.tool === "openSurface" && turn.result.kind === "SURFACE" && turn.result.surface === "CLARIFY" && !turn.result.policyReview;
 }
 const isModelAnswer = (turn: RuntimeTurn) => turn.tool === "smartConversation";
+/** Phase 2: a server-composed display of a verified read is DINAR's own data, not model text. */
+const hasGroundedDisplay = (turn: RuntimeTurn) => Boolean((turn.result as { displaySurface?: unknown } | undefined)?.displaySurface);
 
 /**
  * The routing modes of routing-mode.ts around the one runtime. Re-entries (plan steps, model
@@ -1152,7 +1155,7 @@ async function executeWithRoutingMode(context: RuntimeContext, options: RuntimeO
     // DINAR's own path runs (model disabled: no second paid call), and the model's answer is kept
     // only when DINAR had nothing. A capability DINAR handles is never lost to model text.
     const first = await executeRuntime(context, { ...options, modelStage: "ONLY" });
-    if (first !== NO_MODEL_RESULT && !isModelAnswer(first)) return first;
+    if (first !== NO_MODEL_RESULT && (!isModelAnswer(first) || hasGroundedDisplay(first))) return first;
     const own = await executeRuntime(context, first === NO_MODEL_RESULT ? options : { ...options, noModel: true });
     return first !== NO_MODEL_RESULT && isSoftMiss(own) ? first : own;
   }
@@ -1229,6 +1232,27 @@ async function executeRuntime(context: RuntimeContext, incoming: RuntimeOptions)
   if (!options.noModel && !options.planStep && context.modelToolContinuation) {
     const resumed = await modelFallback();
     if (resumed) return resumed;
+  }
+  // Phase 2: a short, explicit request to change only the *form* of the latest results («اعرضها
+  // كجدول», «رجّعها بطاقات») is neither a sale nor a purchase: it is applied to the stored result set
+  // without a model call. Comparisons keep the existing compare handlers; every other phrasing
+  // reaches the model, which chooses the form through its display directive.
+  if (!options.planStep && context.actorId && !context.imageObjectPaths?.length && context.location === undefined) {
+    const preference = displayPreference(context.message);
+    if (preference) {
+      // An explicit form word is low-risk and deterministic: no model call is needed for it.
+      const { redisplayLatestResults } = await import("./smart-turn");
+      const own = await redisplayLatestResults(
+        { conversationId: context.conversationId, currentMessageId: context.currentMessageId, message: context.message, market: context.market, actorId: context.actorId } as Parameters<typeof redisplayLatestResults>[0],
+        preference,
+        "",
+        false,
+      );
+      if (own) {
+        options.onToolSelected?.(own.tool);
+        return own;
+      }
+    }
   }
   if (
     !options.planStep &&

@@ -1,4 +1,4 @@
-import { PresentationProposalSchema } from "@workspace/api-zod/surface-composition";
+import { DisplayDirectiveSchema, PresentationProposalSchema } from "@workspace/api-zod/surface-composition";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
@@ -344,9 +344,12 @@ function zodMirrorIssues(schema: any, json: any, path: string): string[] {
     case "unknown":
       // Generative UI: `presentation` is opaque in ModelTurnOutput so a bad proposal never drops
       // the turn; the server enforces PresentationProposalSchema, which the tool must mirror.
+      // Phase 2: `display` is opaque for the same reason; the tool mirrors DisplayDirectiveSchema.
       return path === ".presentation"
         ? zodMirrorIssues(PresentationProposalSchema, json, path)
-        : [`${at}: unhandled unknown`];
+        : path === ".display"
+          ? zodMirrorIssues(DisplayDirectiveSchema, json, path)
+          : [`${at}: unhandled unknown`];
     default:
       return [`${at}: unhandled ${def.type}`];
   }

@@ -17,6 +17,7 @@ import type { AiUiBlockPayloadComparison } from './aiUiBlockPayloadComparison';
 import type { AiUiBlockPayloadComposition } from './aiUiBlockPayloadComposition';
 import type { AiUiBlockPayloadControl } from './aiUiBlockPayloadControl';
 import type { AiUiBlockPayloadDelivery } from './aiUiBlockPayloadDelivery';
+import type { AiUiBlockPayloadDisplaySurface } from './aiUiBlockPayloadDisplaySurface';
 import type { AiUiBlockPayloadDraft } from './aiUiBlockPayloadDraft';
 import type { AiUiBlockPayloadDraftReview } from './aiUiBlockPayloadDraftReview';
 import type { AiUiBlockPayloadDriver } from './aiUiBlockPayloadDriver';
@@ -77,6 +78,8 @@ export type AiUiBlockPayload = {
   /** Allowlisted driver view (profile, review, coarse work cards, assignments), rebuilt from server state on every read. Never contains contacts or coordinates. */
   driver?: AiUiBlockPayloadDriver;
   universalCards?: ConnectUniversalCardsPayload;
+  /** Phase 2 model-driven display. A server-composed card (ComposedSurface) of the actor's own verified figures in the form the model chose; built from server records only and validated again by the client before rendering. */
+  displaySurface?: AiUiBlockPayloadDisplaySurface;
   /** Allowlisted provider connection view (review, status, safe key prefix). Never contains a key, secret or credential hash. */
   provider?: AiUiBlockPayloadProvider;
   /** Allowlisted D3-A business view (setup, profile, catalog, orders, insights), refreshed from the owner's live D2 identity and D3 operating rows on every read. */

@@ -106,7 +106,7 @@ test("D oversized payloads are refused whole by the composed surface byte limit"
   const long = "ب".repeat(120);
   const rows = Array.from({ length: 30 }, (_, index) => ({ key: `r${index}`, cells: Array.from({ length: 8 }, () => ({ display: long })) }));
   const columns = Array.from({ length: 8 }, (_, index) => ({ key: `c${index}`, label: `c${index}` }));
-  const surface = { version: 1, label: "كبير", size: "LARGE", sections: [{ type: "table", label: "كبير", columns, rows }] };
+  const surface = { version: 1, label: "كبير", size: "WIDE", sections: [{ type: "table", label: "كبير", columns, rows }] };
   assert.equal(parseComposedSurface(surface), null);
 });
 

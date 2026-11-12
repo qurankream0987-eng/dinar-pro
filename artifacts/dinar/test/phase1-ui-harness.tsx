@@ -7,6 +7,9 @@ import { createRoot } from "react-dom/client";
 import { ComposedSurfaceView } from "@/features/ai/surface/ComposedSurface";
 import { businessSurface } from "@/features/ai/surface/business-adapters";
 import { AnswerCard } from "@/features/ai/AnswerCards";
+import { ListingTable } from "@/features/ai/surface/ListingTable";
+// Phase 2: the real server composer (pure module), rendered by the real client renderer.
+import { composeBusinessDisplay } from "../../api-server/src/ai/display-composer";
 
 // Synthetic fixture: a business's last six months as the server would send them.
 const insightsPayload: any = {
@@ -40,6 +43,20 @@ const comparison = JSON.stringify({
 const line = JSON.stringify({ title: "سعر الذهب التقريبي", unit: "USD", period: "2026", items: [{ label: "يناير", value: 2310 }, { label: "فبراير", value: -15 }, { label: "مارس", value: 0 }, { label: "أبريل", value: 2405.75 }] });
 const donut = JSON.stringify({ title: "المبيعات حسب القسم", unit: "%", items: [{ label: "إلكترونيات", value: 55 }, { label: "أثاث Furniture", value: 30 }, { label: "طعام", value: 15 }] });
 
+// Synthetic listings (labelled): a fixed price, a negotiable price, and a missing condition.
+const listings: any[] = [
+  { id: "l1", title: "Samsung Galaxy S23 Ultra", unitPrice: "520.000", currency: "JOD", pricingMode: "FIXED", priceRepresentation: "FIXED", attributes: { condition: "مستعمل" }, city: "عمان", area: "خلدا", inventoryMode: "LIMITED", availableQuantity: 2, reservedQuantity: 0 },
+  { id: "l2", title: "آيفون 13", unitPrice: null, currency: "JOD", pricingMode: "NEGOTIABLE", attributes: { condition: "جديد" }, city: "الزرقاء", area: "", inventoryMode: "UNLIMITED", availableQuantity: null, reservedQuantity: 0 },
+  { id: "l3", title: "Redmi Note 12", unitPrice: "149.990", currency: "JOD", pricingMode: "FIXED", priceRepresentation: "FIXED", attributes: {}, city: "إربد", area: "", inventoryMode: "LIMITED", availableQuantity: 1, reservedQuantity: 0 },
+];
+const overview: any = { businesses: [{ businessId: "b", name: "متجر الاختبار", status: "ACTIVE", verified: true, publishable: true, withheld: [], analytics: {
+  completedOrders: 41, completedRevenue: "1234.500", currency: "JOD", completedRevenueMinor: 1_234_500, minorUnitScale: 3,
+  monthly: insightsPayload.insights.monthly,
+  byCategory: [{ category: "إلكترونيات", completedOrders: 30, revenueMinor: 900_000 }, { category: "أثاث", completedOrders: 8, revenueMinor: 250_000 }, { category: "طعام", completedOrders: 3, revenueMinor: 84_500 }],
+} }] };
+const businessAuto = composeBusinessDisplay({ version: 1, format: "AUTO", scope: "THIS_TURN" }, overview).surface;
+const businessDonut = composeBusinessDisplay({ version: 1, format: "DONUT", scope: "THIS_TURN" }, overview).surface;
+
 function App() {
   return (
     <div className="dinar-chatgpt" dir="rtl" style={{ height: "auto", padding: 16, display: "grid", gap: 16 }}>
@@ -48,6 +65,9 @@ function App() {
       <section data-testid="h-line"><AnswerCard language="dinar-line" code={line} /></section>
       <section data-testid="h-donut"><AnswerCard language="dinar-donut" code={donut} /></section>
       <section data-testid="h-invalid"><AnswerCard language="dinar-line" code={'{"items":[{"label":"a","value":"x"}]}'} /></section>
+      <section data-testid="h-p2-listings"><ListingTable listings={listings} /></section>
+      <section data-testid="h-p2-business"><ComposedSurfaceView surface={businessAuto} active={false} /></section>
+      <section data-testid="h-p2-donut"><ComposedSurfaceView surface={businessDonut} active={false} /></section>
       <section data-testid="h-invalid-surface"><ComposedSurfaceView surface={{ version: 1, label: "x", size: "MEDIUM", sections: [{ type: "html", html: "<script>window.__pwned=1</script>" }] }} active /></section>
     </div>
   );

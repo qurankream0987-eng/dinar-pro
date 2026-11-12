@@ -88,6 +88,8 @@ export type AiUiBlock = {
   payload: {
     memory?: import("./MemorySummary").MemoryPayload;
     policyReview?: unknown;
+    /** Phase 2: server-composed figures in the model-chosen form; validated by ComposedSurfaceView. */
+    displaySurface?: unknown;
     commerce?: CommercialPayload;
     tutorial?: TutorialPayload;
     surface?: ConversationSurfaceToken;

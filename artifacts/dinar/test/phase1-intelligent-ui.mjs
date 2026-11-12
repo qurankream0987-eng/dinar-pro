@@ -49,6 +49,7 @@ async function open(width, height, options = {}) {
   await page.goto(url);
   await page.waitForSelector("[data-testid=ds-series-line] svg .recharts-line-curve", { timeout: 15_000 });
   await page.waitForSelector("[data-testid=ds-series-donut] svg .recharts-pie-sector", { timeout: 15_000 });
+  await page.waitForFunction(() => document.querySelectorAll("[data-testid=ds-series-donut] svg .recharts-pie-sector").length >= 6, null, { timeout: 15_000 });
   // Recharts adds the dots when the draw-in animation ends (immediately under reduced motion).
   await page.waitForFunction(() => document.querySelectorAll("[data-testid=ds-series-line] .recharts-line-dots").length >= 2, null, { timeout: 15_000 });
   return page;
@@ -146,6 +147,24 @@ await check("D19/D20", "an unknown section or malformed card fails safely and ex
 });
 await check("C16", "charts and tables render no action controls", async () => {
   assert(await page.locator(".ds-series button, .ds-table td button, .ds-table tbody th button").count() === 0, "action inside data");
+});
+await check("P2-LISTINGS", "the model-chosen table of listings shows the live records: a negotiable price is not zero, a missing condition is unavailable", async () => {
+  const table = page.locator("[data-testid=h-p2-listings] [data-testid=ds-table]");
+  assert(await table.locator("tbody tr").count() === 3, "three rows");
+  const prices = await table.locator("tbody td[data-kind=MONEY]").allInnerTexts();
+  assert(JSON.stringify(prices) === JSON.stringify(["520.000 JOD", "بالاتفاق", "149.990 JOD"]), JSON.stringify(prices));
+  assert((await table.locator("tbody tr").nth(2).innerText()).includes("غير متوفر"), "missing condition");
+  assert(await page.locator("[data-testid=h-p2-listings] button:not(.ds-table-sort)").count() === 0, "no action in the table");
+});
+await check("P2-BUSINESS", "the server-composed business display renders: totals, monthly line, exact table and the not-profit note", async () => {
+  const card = page.locator("[data-testid=h-p2-business] [data-testid=model-display]");
+  assert(await card.locator(".ds-metric").count() === 2, "two totals");
+  assert(await card.locator("[data-testid=ds-series-line] .recharts-line-dots circle").count() === 6, "six months");
+  assert((await card.innerText()).includes("وليست ربحًا"), "revenue is not profit");
+  const donut = page.locator("[data-testid=h-p2-donut] [data-testid=ds-series-donut]");
+  assert(await donut.locator(".recharts-pie-sector").count() === 3, "three category shares");
+  const shares = (await donut.locator(".ds-legend li").allInnerTexts()).map((text) => text.match(/(\d+\.\d)%/u)?.[1]);
+  assert(JSON.stringify(shares) === JSON.stringify(["72.9", "20.3", "6.8"]), JSON.stringify(shares));
 });
 await page.close();
 

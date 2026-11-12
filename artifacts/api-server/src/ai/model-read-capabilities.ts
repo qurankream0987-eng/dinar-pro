@@ -17,7 +17,16 @@ export type BusinessOverview = {
     verified: boolean;
     publishable: boolean;
     catalog?: { total: number; published: number; paused: number; outOfStock: number };
-    analytics?: { completedOrders: number; completedRevenue: string; currency: string };
+    analytics?: {
+      completedOrders: number;
+      completedRevenue: string;
+      currency: string;
+      /** Phase 2: the server's own series for display; minor units plus the market's scale. */
+      completedRevenueMinor?: number;
+      minorUnitScale?: number;
+      monthly?: { month: string; completedOrders: number; revenueMinor: number }[];
+      byCategory?: { category: string; completedOrders: number; revenueMinor: number }[];
+    };
     withheld: string[];
   }[];
 };
@@ -65,6 +74,10 @@ export async function readBusinessOverview(context: ToolContext): Promise<ToolRe
         completedOrders: Number(stats.completedOrders ?? 0),
         completedRevenue: money(Number(stats.completedRevenueMinor ?? 0), scale),
         currency: context.market.currencyCode,
+        completedRevenueMinor: Number(stats.completedRevenueMinor ?? 0),
+        minorUnitScale: scale,
+        monthly: stats.monthly,
+        byCategory: stats.byCategory,
       };
     } else withheld.push("analytics: permission not granted or identity pending");
     businesses.push(entry);
