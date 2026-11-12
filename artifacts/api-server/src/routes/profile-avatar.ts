@@ -140,7 +140,9 @@ router.get("/storage/objects/*objectKey", async (req, res) => {
   const isListingPhoto = objectKey.startsWith("listing-photos/");
   // A buyer's search photo is shown to its owner only; it is never public.
   const isVisualSearch = objectKey.startsWith("visual-search/");
-  if (!isAvatar && !isListingPhoto && !isVisualSearch) {
+  // A chat video is likewise private to the account that attached it.
+  const isChatVideo = objectKey.startsWith("chat-video/");
+  if (!isAvatar && !isListingPhoto && !isVisualSearch && !isChatVideo) {
     res.status(404).json({ error: "الصورة غير موجودة" });
     return;
   }
@@ -158,8 +160,8 @@ router.get("/storage/objects/*objectKey", async (req, res) => {
       objectKey.startsWith(`listing-photos/${req.actor!.id}/`);
     const publishedListingPhoto =
       isListingPhoto && (await isPublishedListingPhoto(`/objects/${objectKey}`));
-    const authorized = isVisualSearch
-      ? Boolean(req.actor?.id) && objectKey.startsWith(`visual-search/${req.actor!.id}/`) && canRead
+    const authorized = isVisualSearch || isChatVideo
+      ? Boolean(req.actor?.id) && objectKey.startsWith(`${isChatVideo ? "chat-video" : "visual-search"}/${req.actor!.id}/`) && canRead
       : isListingPhoto
       ? ownerPath
         ? canRead

@@ -21,7 +21,7 @@ import type {
 } from "@/features/ai/conversation-storage";
 import { ChatComposer, type ReasoningEffort } from "@/features/ai/ChatComposer";
 import { publishCardSync, useCardSync } from "@/features/ai/card-sync";
-import { uploadListingPhoto, uploadVisualSearchPhoto } from "@/features/listing-photo-upload";
+import { isChatVideoFile, uploadChatVideo, uploadListingPhoto, uploadVisualSearchPhoto } from "@/features/listing-photo-upload";
 import { DEFAULT_PHOTO_SEARCH_MESSAGE, isSearchPhoto } from "@/features/ai/visual-search-photo";
 import {
   MessageBubble,
@@ -1206,7 +1206,7 @@ export default function AiPage() {
         for (const file of photos) {
           let objectPath = uploadedPhotoPaths.current.get(file);
           if (!objectPath) {
-            objectPath = await (isSearchPhoto(file) ? uploadVisualSearchPhoto(file) : uploadListingPhoto(file));
+            objectPath = await (isChatVideoFile(file) ? uploadChatVideo(file) : isSearchPhoto(file) ? uploadVisualSearchPhoto(file) : uploadListingPhoto(file));
             uploadedPhotoPaths.current.set(file, objectPath);
           }
           imageObjectPaths.push(objectPath);
@@ -1385,7 +1385,7 @@ export default function AiPage() {
   const submit = async () => {
     const value =
       draft.trim() ||
-      (selectedPhotos.some(isSearchPhoto) ? DEFAULT_PHOTO_SEARCH_MESSAGE : selectedPhotos.length ? "أريد انشر إعلان" : "");
+      (selectedPhotos.some(isChatVideoFile) ? "أرفقت فيديو" : selectedPhotos.some(isSearchPhoto) ? DEFAULT_PHOTO_SEARCH_MESSAGE : selectedPhotos.length ? "أريد انشر إعلان" : "");
     if (!value || streaming || createConversation.isPending || sending.current)
       return;
     if (!activeId) {

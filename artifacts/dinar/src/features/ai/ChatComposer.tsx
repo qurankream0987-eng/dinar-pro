@@ -5,6 +5,7 @@ import { ArrowUp, Camera, LoaderCircle, Mic, MicOff, Plus, Square, X } from "luc
 const CameraCapture = lazy(() => import("./CameraCapture").then((module) => ({ default: module.CameraCapture })));
 import { isSearchPhoto, markSearchPhoto } from "./visual-search-photo";
 import { textDirection } from "./rich-text";
+import { CHAT_VIDEO_TYPES, isChatVideoFile } from "@/features/listing-photo-upload";
 import { transcribeAiVoiceRecording } from "./ai-api";
 import { EffortPicker } from "./EffortPicker";
 
@@ -211,11 +212,20 @@ export function ChatComposer({
       setHint("سجّل الدخول لإرفاق صور في المحادثة.");
       return;
     }
-    if (selected.some((file) => file.type.startsWith("video/"))) {
-      setHint("إرفاق الفيديو غير متاح بعد؛ أرفق صورًا فقط.");
-      selected = selected.filter((file) => !file.type.startsWith("video/"));
-      if (!selected.length) return;
+    // One video per message, on its own: MP4, WebM or MOV up to 25 MB (the server re-checks).
+    const videos = selected.filter(isChatVideoFile);
+    if (videos.length) {
+      const video = videos[0]!;
+      if (videos.length > 1 || selected.length > 1) { setHint("أرسل فيديو واحدًا في كل رسالة، من دون صور."); return; }
+      if (!CHAT_VIDEO_TYPES.has(video.type) || video.size < 1 || video.size > 25 * 1024 * 1024) {
+        setHint("اختر فيديو MP4 أو WebM أو MOV بحجم لا يتجاوز 25 ميغابايت.");
+        return;
+      }
+      setHint("سيُحفظ الفيديو في محادثتك بشكل خاص. فهم محتوى الفيديو غير مفعّل بعد.");
+      onPhotosChange([video]);
+      return;
     }
+    if (photos.some(isChatVideoFile)) photos = [];
     const valid = selected.filter(
       (file) =>
         ["image/jpeg", "image/png", "image/webp"].includes(file.type) &&
@@ -275,11 +285,23 @@ export function ChatComposer({
               key={`${file.name}-${file.lastModified}-${index}`}
               className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border border-border bg-muted"
             >
-              <img
-                src={url}
-                alt={searching ? "صورة المنتج الذي تبحث عنه" : `معاينة صورة الإعلان ${index + 1}`}
-                className="h-full w-full object-cover"
-              />
+              {isChatVideoFile(file) ? (
+                <video
+                  src={url}
+                  muted
+                  playsInline
+                  preload="metadata"
+                  aria-label="معاينة الفيديو المرفق"
+                  data-testid="composer-video-preview"
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <img
+                  src={url}
+                  alt={searching ? "صورة المنتج الذي تبحث عنه" : `معاينة صورة الإعلان ${index + 1}`}
+                  className="h-full w-full object-cover"
+                />
+              )}
               <button
                 type="button"
                 aria-label={`إزالة الصورة ${index + 1}`}
@@ -301,7 +323,7 @@ export function ChatComposer({
       <input
         ref={fileInput}
         type="file"
-        accept="image/jpeg,image/png,image/webp"
+        accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime"
         multiple
         tabIndex={-1}
         aria-hidden="true"
