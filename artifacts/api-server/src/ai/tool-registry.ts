@@ -980,6 +980,25 @@ export const aiToolRegistry: Record<string, ToolDefinition> = {
       (await import("./model-read-capabilities")).readAiUsage(input, context),
   },
 
+  readMyAccountStatus: {
+    name: "readMyAccountStatus",
+    version: 1,
+    description: "Read the signed-in user's own account status from server records: signed in or guest, phone verification, account state, role, market, subscription status and billing mode, AI allowance. Read only.",
+    permissions: ["marketplace.read"],
+    riskLevel: "LOW",
+    idempotency: "READ_ONLY",
+    auditPolicy: "REDACTED_TURN_METADATA",
+    exposedToModel: true,
+    inputSchema: z.object({}).strict(),
+    modelDefinition: {
+      name: "readMyAccountStatus",
+      description: "Use when the user asks about their own account: am I signed in or a guest, am I subscribed and to which plan, is my account verified or restricted, which market am I in, why a feature is unavailable to me. Answer only from the returned fields; NOT_CONFIGURED or UNKNOWN must be stated as such, never guessed. Never infer a subscription from the conversation.",
+      parameters: { type: "object", properties: {}, required: [], additionalProperties: false },
+    },
+    execute: async (input: Record<string, never>, context) =>
+      (await import("./model-read-capabilities")).readMyAccountStatus(input, context),
+  },
+
   readConnectPartnerStatus: {
     name: "readConnectPartnerStatus",
     version: 1,
@@ -1029,6 +1048,7 @@ export const MODEL_LOOP_TOOL_ALLOWLIST = [
   "readOrderIssues",
   "readSellerDues",
   "readAiUsage",
+  "readMyAccountStatus",
   "readConnectPartnerStatus",
   "readPolicy",
 ] as const;

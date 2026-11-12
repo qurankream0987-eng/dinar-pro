@@ -6,7 +6,7 @@
  * labelled as derived and carrying the id list and watermark they were built from.
  */
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
-import { conversationSummaries, conversations, db, messages } from "@workspace/db";
+import { conversationSummaries, conversations, db, messages, personalMemoryControls } from "@workspace/db";
 import { redactForModel } from "./model-turn";
 
 /** A summary is regenerated once this many messages arrived after its watermark. */
@@ -375,6 +375,22 @@ export async function rebuildSummary(actorId: string, conversationId: string): P
  * summaries in the same market, and lexical matches for the current message. Fails closed to
  * null so an unavailable memory layer never blocks or widens a turn.
  */
+/**
+ * The user's switch for reading OTHER conversations (summaries and matches). Stored in the existing
+ * personal_memory_controls table; absent means enabled (the behaviour before the switch existed).
+ * The current conversation's own history is always available to its own turns.
+ */
+export const CROSS_CONVERSATION_CONTROL = "CROSS_CONVERSATION";
+export async function crossConversationMemoryEnabled(userId: string): Promise<boolean> {
+  const [row] = await db.select({ enabled: personalMemoryControls.enabled }).from(personalMemoryControls)
+    .where(and(eq(personalMemoryControls.userId, userId), eq(personalMemoryControls.control, CROSS_CONVERSATION_CONTROL)));
+  return row?.enabled ?? true;
+}
+export async function setCrossConversationMemory(userId: string, enabled: boolean) {
+  await db.insert(personalMemoryControls).values({ userId, control: CROSS_CONVERSATION_CONTROL, enabled, updatedAt: new Date() })
+    .onConflictDoUpdate({ target: [personalMemoryControls.userId, personalMemoryControls.control], set: { enabled, updatedAt: new Date() } });
+}
+
 export async function conversationMemoryContext(input: {
   actorId: string;
   conversationId: string;
@@ -384,6 +400,9 @@ export async function conversationMemoryContext(input: {
   historicalLimit?: number;
 }): Promise<ConversationMemoryContext | null> {
   try {
+    // With cross-conversation memory off, matches come only from this conversation and no other
+    // conversation's summary is read.
+    const crossConversation = await crossConversationMemoryEnabled(input.actorId);
     const [current, matches] = await Promise.all([
       currentConversationMemory(input.actorId, input.conversationId),
       searchConversationMemory({
@@ -391,9 +410,10 @@ export async function conversationMemoryContext(input: {
         query: input.query,
         limit: 4,
         excludeMessageId: input.excludeMessageId ?? null,
+        ...(crossConversation ? {} : { conversationId: input.conversationId }),
       }),
     ]);
-    const historicalLimit = Math.min(4, Math.max(0, Math.trunc(input.historicalLimit ?? 2)));
+    const historicalLimit = crossConversation ? Math.min(4, Math.max(0, Math.trunc(input.historicalLimit ?? 2))) : 0;
     const rows = historicalLimit
       ? await db
           .select()

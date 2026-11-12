@@ -248,3 +248,61 @@ export async function readPolicy(input: { key?: string }, context: ToolContext):
     prompt: one ? `هذه سياسة «${one.titleAr}» المنشورة حاليًا.` : "هذه سياسات DINAR المنشورة حاليًا.",
   };
 }
+
+/**
+ * The signed-in user's own account status, from server records only: display name, phone
+ * verification, account state, role, country and active market, the current subscription as the
+ * subscription ledger resolves it, whether a live billing provider exists, and the AI allowance.
+ * Nothing the client or the conversation says can change any field. No phone number, credential
+ * or payment detail is returned. Guests get an explicit GUEST state and nothing else.
+ */
+export async function readMyAccountStatus(_input: Record<string, never>, context: ToolContext): Promise<ToolResult> {
+  const base = { kind: "SURFACE" as const, surface: "ACCOUNT_STATUS", query: {}, listings: [] };
+  if (!context.actorId)
+    return { ...base, accountStatus: { signedIn: false, state: "GUEST", note: "الزائر غير مسجّل الدخول؛ لا توجد بيانات حساب أو اشتراك." } } as never;
+  const [{ db, users }, { eq }, { accessPlanFor }, { subscriptionBillingStatus }, { aiUsageSummary }, { getCommercialPolicy }] = await Promise.all([
+    import("@workspace/db"), import("drizzle-orm"), import("../lib/business"), import("../lib/subscription-billing"), import("../lib/ai-usage"), import("../lib/commercial-policy"),
+  ]);
+  const [user] = await db.select({
+    displayName: users.displayName, phoneVerified: users.phoneVerified, status: users.status, role: users.role,
+    accountCountry: users.accountCountry, activeMarketId: users.activeMarketId,
+  }).from(users).where(eq(users.id, context.actorId));
+  if (!user) return { ...base, accountStatus: { signedIn: false, state: "UNKNOWN" } } as never;
+  const market = context.market as never as { id: string };
+  let subscription: Record<string, unknown>;
+  try {
+    const policy = (await getCommercialPolicy(market.id)).subscriptionPlans;
+    if (!policy) subscription = { status: "NOT_CONFIGURED" };
+    else {
+      const access = await accessPlanFor(context.actorId, market);
+      subscription = access.plan === "FREE"
+        ? { status: "NOT_SUBSCRIBED", plan: "FREE" }
+        : { status: "ACTIVE", plan: access.plan, periodEnd: access.periodEnd };
+    }
+  } catch {
+    subscription = { status: "UNKNOWN", reason: "TEMPORARY_READ_FAILURE" };
+  }
+  const billing = subscriptionBillingStatus();
+  let usage: Record<string, unknown> | undefined;
+  try {
+    const summary = await aiUsageSummary({ kind: "USER", userId: context.actorId, market: context.market as never });
+    usage = { tier: summary.tierLabel, renewsAt: summary.period.renewsAt, resources: summary.resources.map((item) => ({ resource: item.resource, used: item.used, limit: item.limit, remaining: item.remaining })) };
+  } catch {
+    usage = { status: "UNAVAILABLE" };
+  }
+  return {
+    ...base,
+    accountStatus: {
+      signedIn: true,
+      state: user.status,
+      displayName: user.displayName,
+      phoneVerified: user.phoneVerified,
+      role: user.role,
+      accountCountry: user.accountCountry,
+      activeMarketId: user.activeMarketId,
+      subscription: { ...subscription, billing: billing.mode === "REGISTERED_ADAPTER" ? "LIVE_PROVIDER" : "SIMULATION_NO_LIVE_BILLING" },
+      aiUsage: usage,
+      source: "DINAR_SERVER_RECORDS",
+    },
+  } as never;
+}

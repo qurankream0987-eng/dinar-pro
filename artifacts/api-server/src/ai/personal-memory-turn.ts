@@ -1,3 +1,4 @@
+import { setCrossConversationMemory } from "./conversation-memory";
 import { personalContext, type Interaction } from "./personal-context-service";
 import { discoverTopics, extractDeterministic, normalizeTopic, safeMemoryText, topicIdentity } from "./personal-memory-policy";
 import type { ToolResult } from "./tool-registry";
@@ -11,7 +12,17 @@ function response(view: MemorySurface, prompt: string, groups: MemorySummary["gr
 /** The user's own marketplace items (normalized: hamza folded, no diacritics), optionally with a pronoun or ordinal. */
 const OWN_ITEM = /^(?:ال)?(?:اعلان|اعلانات|عرض|عروض|مسوده|مسودة|طلب|طلبات|وظيفه|وظيفة|سله|سلة|صوره|صورة|صور|منشور)(?:ي|ه|ها|اتي)?(?:\s|$)/;
 export async function executePersonalMemoryTurn(input: Interaction, service = personalContext) {
-  const n = normalizeTopic(input.text).replace(/^دينار\s+/, "");
+  const n = normalizeTopic(input.text).replace(/^(?:دينار|جاسم)\s+/, "");
+  // The user's switch for reading their other conversations. An explicit instruction, stored on
+  // the server; it never deletes messages (deleting a conversation is a separate action).
+  if (/(?:^|\s)(?:لا|ما)\s+(?:\S+\s+){0,2}?(?:تستخدم|تستعمل|تقرا|تقرأ|تشوف|ترجع\s+(?:ل|الي))\s*(?:ال)?محادثات(?:ي)?\s+(?:ال)?(?:اخري|اخرى|ثانيه|ثانية|سابقه|سابقة|قديمه|قديمة)|(?:اوقف|أوقف|وقف|عطل|عطّل)\s+(?:ال)?(?:تذكر|ذاكره|ذاكرة)\s+(?:ال)?محادثات|don.t use (?:my )?other (?:chats|conversations)/iu.test(n)) {
+    await setCrossConversationMemory(input.userId, false);
+    return response("MEMORY_UPDATED", "تمام، لن أستخدم محادثاتك الأخرى عند الإجابة. سأعتمد على هذه المحادثة فقط، ورسائلك السابقة باقية كما هي. لإعادة التفعيل قل: «فعّل تذكر المحادثات».");
+  }
+  if (/(?:فعل|فعّل|شغل|شغّل)\s+(?:ال)?(?:تذكر|ذاكره|ذاكرة)\s+(?:ال)?محادثات|(?:اسمح\s+لك\s+(?:ب)?(?:تستخدم|استخدام)|استخدم)\s+محادثاتي\s+(?:ال)?(?:اخري|اخرى|سابقه|سابقة|قديمه|قديمة)|use my other (?:chats|conversations)/iu.test(n)) {
+    await setCrossConversationMemory(input.userId, true);
+    return response("MEMORY_UPDATED", "تم، يمكنني الرجوع إلى محادثاتك السابقة عندما تكون مفيدة لسؤالك. لإيقافه قل: «لا تستخدم المحادثات الأخرى».");
+  }
   // «نكمل الإعلان / المسودة» resumes the user's own DINAR item, which its authority handles.
   const namesOwnItem = n.split(/\s+/).some((word) => OWN_ITEM.test(word.replace(/^(?:لل|ل|بال|ب)(?=ال|ا)/, "")));
   if (/نكمل|كنا نتكلم|المرة الماضية|continue|last time/i.test(n) && !namesOwnItem) {

@@ -27,14 +27,14 @@ test("the model sees the three F01 reads plus every F02 prepare/read, and no dir
     "compareListings", "describeDinarCapabilities", "getResource", "openSurface",
     "prepareBusinessListingAction", "prepareCartChange", "prepareInquiryMessage", "prepareListingDraft", "prepareNegotiationProposal",
     "readAiUsage", "readBusinessInquiries", "readBusinessOverview", "readCart", "readConnectPartnerStatus", "readFulfillment",
-    "readInventory", "readNegotiationStatus", "readOrderIssues", "readOrders", "readPolicy", "readSellerDues",
+    "readInventory", "readMyAccountStatus", "readNegotiationStatus", "readOrderIssues", "readOrders", "readPolicy", "readSellerDues",
     "requestPublicationReview", "reviewCheckout", "searchDomains", "searchListings", "searchPartnerOffers",
   ]);
   // The bounded loop advertises the F01 marketplace reads plus the intelligence reads; every one
   // is a registered read-only tool with read permission only (asserted for all tools below).
   assert.deepEqual([...MODEL_LOOP_TOOL_ALLOWLIST].sort(), [
     "compareListings", "describeDinarCapabilities", "getResource", "readAiUsage", "readBusinessOverview",
-    "readConnectPartnerStatus", "readOrderIssues", "readPolicy", "readSellerDues", "searchDomains", "searchListings", "searchPartnerOffers",
+    "readConnectPartnerStatus", "readMyAccountStatus", "readOrderIssues", "readPolicy", "readSellerDues", "searchDomains", "searchListings", "searchPartnerOffers",
   ]);
   for (const name of MODEL_LOOP_TOOL_ALLOWLIST) {
     assert.equal(aiToolRegistry[name]?.idempotency, "READ_ONLY", `${name} in the loop is read-only`);

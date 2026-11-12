@@ -208,3 +208,51 @@ test("MT-08 returning to a topic after many unrelated turns: the earlier answer 
   console.log("MT08_TRACE", JSON.stringify({ missing, modelCalled: back.modelCalled }));
   assert.deepEqual(missing, [], "the earlier answer about the named topic is retrieved");
 });
+
+test("MT-09 cross-conversation memory: off keeps other chats out of the model input; on brings them back", async () => {
+  const u = await fresh();
+  script.push({ key: "مشروع الطاقة الشمسية للمزرعة", reply: "خطة المزرعة: 24 لوحًا بقدرة 550 واط وبطارية 15 كيلوواط ساعة. FARM_PLAN_MARKER" });
+  await say(u, "ساعدني في مشروع الطاقة الشمسية للمزرعة");
+  const second = { cookie: u.cookie, conv: (await request("/ai/conversations", "POST", {}, u.cookie)).data.id as string };
+  const off = await say(second, "لا تستخدم المحادثات الأخرى عند الإجابة");
+  assert.equal(off.modelCalled, false, "the switch is a server command, not a model turn");
+  const recallOff = await say(second, "تذكر مشروع الطاقة الشمسية للمزرعة؟");
+  assert.ok(!inputText(recallOff).includes("FARM_PLAN_MARKER") && !inputText(recallOff).includes("550 واط"), "no other conversation reaches the model while off");
+  await say(second, "فعّل تذكر المحادثات");
+  const recallOn = await say(second, "تذكر مشروع الطاقة الشمسية للمزرعة؟");
+  assert.ok(inputText(recallOn).includes("550"), "the earlier conversation is retrieved again when on");
+  // The switch is per account: another user's recall is unaffected and never sees this user's chats.
+  const other = await fresh();
+  const otherRecall = await say(other, "تذكر مشروع الطاقة الشمسية للمزرعة؟");
+  assert.ok(!inputText(otherRecall).includes("FARM_PLAN_MARKER"));
+});
+
+test("MT-10 account status is read from server records; no phone, no forged identity", async () => {
+  const { executeRegisteredTool } = await import("../src/ai/tool-registry");
+  const { marketFor } = await import("../src/lib/markets");
+  const u = await fresh();
+  const me = await request("/auth/me", "GET", undefined, u.cookie);
+  const actorId = (me.data?.user?.id ?? me.data?.id) as string;
+  const market = await marketFor({ actor: { activeMarketId: "JO" } } as any);
+  const read = await executeRegisteredTool("readMyAccountStatus", "{}", { conversationId: u.conv, market, actorId });
+  const status = (read.result as any).accountStatus;
+  assert.equal(status.signedIn, true);
+  assert.equal(status.source, "DINAR_SERVER_RECORDS");
+  assert.ok(["NOT_SUBSCRIBED", "NOT_CONFIGURED", "ACTIVE", "UNKNOWN"].includes(status.subscription.status), JSON.stringify(status.subscription));
+  assert.notEqual(status.subscription.status, "ACTIVE", "a fresh account has no paid plan");
+  assert.match(status.subscription.billing, /SIMULATION_NO_LIVE_BILLING|LIVE_PROVIDER/);
+  const json = JSON.stringify(read.result);
+  assert.ok(!/\+?962|79\d{7}|password|passwordHash/i.test(json), "no phone number or credential");
+  // A forged target is refused by the strict schema; identity comes only from the session.
+  await assert.rejects(executeRegisteredTool("readMyAccountStatus", JSON.stringify({ actorId: "someone-else" }), { conversationId: u.conv, market, actorId }));
+});
+
+test("MT-11 a guest gets an explicit GUEST state and no account data", async () => {
+  const { executeRegisteredTool } = await import("../src/ai/tool-registry");
+  const { marketFor } = await import("../src/lib/markets");
+  const market = await marketFor({ actor: { activeMarketId: "JO" } } as any);
+  const read = await executeRegisteredTool("readMyAccountStatus", "{}", { conversationId: randomUUID(), market });
+  const status = (read.result as any).accountStatus;
+  assert.deepEqual([status.signedIn, status.state], [false, "GUEST"]);
+  assert.equal(status.subscription, undefined);
+});
