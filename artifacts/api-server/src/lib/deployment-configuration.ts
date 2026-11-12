@@ -29,7 +29,31 @@ export function deploymentConfigurationProblems(env: NodeJS.ProcessEnv = process
     }
     if (!valid) problems.push("APP_ORIGIN");
   }
+  if (env.APP_ADDITIONAL_ORIGINS !== undefined && additionalAppOrigins(env) === undefined) problems.push("APP_ADDITIONAL_ORIGINS");
   if (env.DINAR_WEB_DIST !== undefined && !existsSync(path.join(env.DINAR_WEB_DIST, "index.html")))
     problems.push("DINAR_WEB_DIST");
   return problems;
+}
+
+/**
+ * Extra exact origins that may send state-changing requests, besides APP_ORIGIN (for example a
+ * custom domain alongside the platform URL during a domain move). HTTPS only, exact origins, at
+ * most five; any malformed entry makes the whole setting invalid (undefined) rather than partly used.
+ */
+export function additionalAppOrigins(env: NodeJS.ProcessEnv = process.env): string[] | undefined {
+  const raw = env.APP_ADDITIONAL_ORIGINS;
+  if (raw === undefined || raw.trim() === "") return [];
+  const entries = raw.split(",").map((entry) => entry.trim()).filter(Boolean);
+  if (entries.length > 5) return undefined;
+  const origins: string[] = [];
+  for (const entry of entries) {
+    try {
+      const url = new URL(entry);
+      if (url.protocol !== "https:" || url.origin !== entry.replace(/\/$/, "") || !/^[a-z0-9.-]+$/.test(url.hostname)) return undefined;
+      origins.push(url.origin);
+    } catch {
+      return undefined;
+    }
+  }
+  return origins;
 }

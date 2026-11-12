@@ -1,3 +1,4 @@
+import { additionalAppOrigins } from "./lib/deployment-configuration";
 import express, { type Express, type Request } from "express";
 import cookieParser from "cookie-parser";
 import { randomUUID } from "node:crypto";
@@ -204,6 +205,7 @@ app.use((req, res, next) => {
     const expected = expectedRequestOrigin(req);
     const allowedOrigins = new Set(replitOrigins());
     if (expected) allowedOrigins.add(expected);
+    for (const extra of additionalAppOrigins() ?? []) allowedOrigins.add(extra);
     const contentType = req.get("content-type")?.split(";")[0]?.trim().toLowerCase();
     const voiceTranscriptionUpload =
       req.path === "/api/ai/voice-transcription" &&
