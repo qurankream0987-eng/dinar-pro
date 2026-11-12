@@ -11,6 +11,9 @@ export function normalizeSearch(value: string): string {
   return foldAgreement(
     foldArabicLetters(normalizeDigits(value))
       .replace(/تي[\s-]*شي?رت/g, "تيشيرت")
+      // Letter-by-letter spellings of one product word: «اتش دي ام اي» → hdmi, «بلاي ستيشن».
+      .replace(/(^|\s)اتش\s*دي\s*ام\s*اي(?=\s|$)/gu, "$1hdmi")
+      .replace(/بلاي\s+ستيشن/gu, "بلايستيشن")
       .replace(/(^|\s)(?:اس|إس|ايه|بي|سي|دي)\s*(?=\d)/gu, (word, lead: string) => `${lead}${({اس:"s",إس:"s",ايه:"a",بي:"b",سي:"c",دي:"d"} as Record<string,string>)[word.trim()] ?? word.trim()}`)
       .replace(/(^|\s)ال(?=اسود|ابيض|احمر|ازرق|اخضر)/g, "$1")
       .replace(/\s+/g, " ")

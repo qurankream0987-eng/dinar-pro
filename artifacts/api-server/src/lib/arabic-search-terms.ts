@@ -24,13 +24,15 @@ const REQUEST_WORDS = new Set([
   "يسوي", "يسويلي", "يعمل", "يعملي", "خدمه", "خدمة", "خدمات",
   // A negation particle left beside a value («… مو جديد») never names the item (W04).
   "مو", "مش", "ليس", "ليست",
+  // «سامسونج ابو الالترا» (the one with…), «موديل ٢٠١٩»: framing words, never the item.
+  "ابو", "موديل", "موديله", "موديلها",
 ]);
 
 /**
  * Generic nouns for a kind of thing («موبايل ايفون», «سيارة برادو»). When nothing matches the
  * whole request, the specific words alone may be searched; the reply names what was relaxed.
  */
-const GENERIC_NOUNS = new Set(["هاتف", "جوال", "موبايل", "تلفون", "تليفون", "سياره", "سيارة", "عربيه", "عربية", "جهاز"]);
+const GENERIC_NOUNS = new Set(["هاتف", "جوال", "موبايل", "تلفون", "تليفون", "سياره", "سيارة", "عربيه", "عربية", "جهاز", "كمبيوتر", "حاسوب", "كونسول"]);
 
 /** Everyday synonyms; a token matches if the listing text contains any member of its group. */
 const LEXICON: readonly (readonly string[])[] = [
@@ -52,7 +54,11 @@ const LEXICON: readonly (readonly string[])[] = [
   // Everyday and dialect names of the same thing (held-out H-DIA misses): exact equivalents only.
   ["سيكل", "دراجه", "دراجة", "بسكليت", "بايسكل"], ["فراخ", "دجاج", "فروج"], ["لوقو", "لوجو", "لوغو", "شعار", "logo"],
   ["ترجمه", "ترجمة", "يترجم", "مترجم", "ترجمات"], ["تلفزيون", "تلفاز", "شاشه", "شاشة", "tv"], ["عربيه", "عربية", "سياره", "سيارة"],
-  ["تويوتا", "toyota"], ["كامري", "camry"], ["كورولا", "corolla"], ["هيونداي", "hyundai"], ["ايربودز", "airpods"],
+  ["تويوتا", "toyota"],
+  ["كيبل", "كيبلات", "كابل", "كابلات", "سلك", "اسلاك", "cable"], ["اكله", "اكلة", "وجبه", "وجبة"],
+  ["محمول", "لابتوب", "laptop"], ["ثينك", "think", "thinkpad"], ["سمارت", "ذكي", "smart"],
+  ["تبريد", "مكيف", "تكييف", "مكيفات"], ["كونسول", "console", "بلايستيشن", "playstation", "اكسبوكس", "xbox"],
+  ["اوراق", "ورق", "مستند", "مستندات", "وثائق", "صفحه", "صفحة"], ["كامري", "camry"], ["كورولا", "corolla"], ["هيونداي", "hyundai"], ["ايربودز", "airpods"],
 ];
 const LEXICON_BY_WORD = new Map<string, readonly string[]>(
   LEXICON.flatMap((group) => group.map((word) => [word, group] as const)),

@@ -47,3 +47,20 @@ test("H-MT-014 «ضيف الأول» adds the first result; H-MATH-005 a stated 
     console.log("PROBE", m, "→", JSON.stringify((done?.assistantMessage?.blocks ?? []).map((x: any) => x.payload?.surface ?? x.type)), String(done?.assistantMessage?.body ?? "").slice(0, 90));
   }
 });
+test("H-DIA vocabulary: dialect and spelled-out product words reach the listing text", async () => {
+  const { normalizeSearch } = await import("../src/ai/search-context");
+  const { itemTokens, textMatchesToken } = await import("../src/lib/arabic-search-terms");
+  const matches = (query: string, listing: string) => {
+    const text = normalizeSearch(listing.toLocaleLowerCase("ar"));
+    return itemTokens(normalizeSearch(query.toLocaleLowerCase("ar")).split(" ")).every((word) => textMatchesToken(text, word));
+  };
+  assert.ok(matches("سامسونك ابو الالترا", "Samsung Galaxy S23 Ultra"));
+  assert.ok(matches("كونسول ٥", "بلايستيشن 5 مع يدين"));
+  assert.ok(matches("كيبل اتش دي ام اي", "سلك HDMI 2 متر"));
+  assert.ok(matches("اكلة شاورما فراخ", "شاورما دجاج وجبة"));
+  assert.ok(matches("محمول ثينك باد", "لابتوب لينوفو ثينك باد T14"));
+  assert.ok(matches("بلاي ستيشن", "بلايستيشن 5"));
+  // Negative: the lexicon never turns a different item into a match.
+  assert.ok(!matches("كيبل اتش دي ام اي", "شاحن ايفون"));
+  assert.ok(!matches("اكلة شاورما", "كنافة نابلسية"));
+});
