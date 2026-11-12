@@ -1,3 +1,4 @@
+import { normalizeMarketplaceText } from "./arabic-normalization";
 import { parseStructuredSearch } from "./search-query";
 /**
  * G2 — smart conversation inside the one shared DINAR runtime.
@@ -1576,6 +1577,61 @@ function groundedModelProse(
   return fallback;
 }
 
+/** Listing titles found anywhere in this turn's successful reads. */
+function readListingTitles(node: unknown, titles: Set<string>, depth = 0): void {
+  if (depth > 5 || !node || typeof node !== "object") return;
+  if (Array.isArray(node)) { for (const entry of node) readListingTitles(entry, titles, depth + 1); return; }
+  const record = node as Record<string, unknown>;
+  if (typeof record.title === "string" && ("unitPrice" in record || "id" in record)) titles.add(record.title);
+  for (const entry of Object.values(record)) if (entry && typeof entry === "object") readListingTitles(entry, titles, depth + 1);
+}
+
+/** Distinctive words of a text: normalized, without the article, at least three letters. */
+const proseTokens = (text: string) =>
+  new Set(
+    normalizeMarketplaceText(text)
+      .split(/[^\p{L}\p{N}]+/u)
+      .map((word) => word.replace(/^(?:وال|بال|لل|ال)(?=\p{L}{3})/u, ""))
+      .filter((word) => word.length >= 3),
+  );
+
+/**
+ * C-12 with the model's voice kept: the model's explanation stays only while it is bound to the
+ * card it ships with. It must name at least one listing in that card; it may not use a word that
+ * distinguishes a listing read this turn but absent from the card; every money amount must be a
+ * price of a listing in the card; and it may not claim a completed action. Otherwise DINAR's own
+ * facts line replaces it.
+ */
+export function cardBoundModelProse(
+  text: string | undefined,
+  feedback: NonNullable<ModelContext["toolFeedback"]>,
+  card: readonly { title: string; unitPrice: string | null }[] | readonly object[],
+): string | undefined {
+  const prose = text?.trim();
+  if (!prose || prose === GROUNDED_READ_ANSWER || claimsCompletedAction(prose)) return undefined;
+  // Every number must come from the card's own listing data (price, title, recorded attributes):
+  // a derived difference, a total or an invented price is DINAR's calculator's job, not prose.
+  const known = new Set<number>();
+  const collect = (node: unknown, depth = 0): void => {
+    if (depth > 4 || node === null || node === undefined) return;
+    if (typeof node === "number") { if (Number.isFinite(node)) known.add(node); return; }
+    if (typeof node === "string") { for (const m of foldCurrencyDigits(node).matchAll(/\d+(?:[.,]\d+)?/gu)) known.add(Number(m[0].replace(",", "."))); return; }
+    if (typeof node === "object") for (const value of Object.values(node as Record<string, unknown>)) collect(value, depth + 1);
+  };
+  for (const listing of card) collect(listing);
+  for (const m of foldCurrencyDigits(prose).replace(/(\d),(\d{3})(?!\d)/gu, "$1$2").matchAll(/\d+(?:[.,]\d+)?/gu))
+    if (!known.has(Number(m[0].replace(",", ".")))) return undefined;
+  const said = proseTokens(prose);
+  const cardTokens = new Set((card as { title?: unknown }[]).flatMap((listing) => typeof listing.title === "string" ? [...proseTokens(listing.title)] : []));
+  // It must be about this card: at least one word that names a listing in it.
+  if (![...cardTokens].some((token) => said.has(token))) return undefined;
+  const read = new Set<string>();
+  for (const item of feedback) if (item.status === "SUCCEEDED") readListingTitles(item.result, read);
+  for (const title of read)
+    for (const token of proseTokens(title)) if (!cardTokens.has(token) && said.has(token)) return undefined;
+  return prose.slice(0, 1600);
+}
+
 function withModelToolAnswer(result: ToolResult, answer: string, preserveResultSetId = false, authority: "MODEL" | "DINAR" = "MODEL"): ToolResult {
   return {
     ...result,
@@ -2064,9 +2120,17 @@ export async function executeModelFallback(
     // C12: a model sentence is not a proof that it describes these rows. Identity and money
     // in the response follow exactly the canonical read that supplies the card, including
     // empty results. General conversation remains model-authored outside listing reads.
-    const answer = result.listings.length
+    const facts = result.listings.length
       ? `هذه العروض من سجل DINAR: ${result.listings.map((listing) => `«${listing.title}» (${listing.unitPrice === null ? "السعر بالاتفاق" : `${listing.unitPrice} ${listing.currency}`})`).join("؛ ")}.`
       : "لم أجد عروضًا مطابقة في القراءة الحالية داخل DINAR.";
+    // The model's explanation is kept when it is bound to this card (see cardBoundModelProse);
+    // the card itself always carries DINAR's facts.
+    const bound = result.listings.length && !outcome.replyFiltered
+      ? cardBoundModelProse(outcome.turn.conversationalReply, toolFeedback, result.listings)
+      : undefined;
+    if (!bound && outcome.turn.conversationalReply && result.listings.length)
+      logger.info({ event: "dinar_model_prose_unbound", conversationId: input.conversationId }, "model prose replaced by card facts");
+    const answer = bound ?? facts;
     // Generative UI: the model may propose how this turn's verified results are shown. Every
     // position is resolved against the listings DINAR itself returned; anything unresolvable
     // rejects the whole proposal and the typed card stays as it was.
