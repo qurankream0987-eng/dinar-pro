@@ -50,3 +50,25 @@ async function uploadPhoto(file: File, kind: "listing-photos" | "visual-search")
     throw new Error("تعذر التحقق من الصورة المرفوعة.");
   return completed.objectPath;
 }
+const MAX_VIDEO_BYTES = 25 * 1024 * 1024;
+export const CHAT_VIDEO_TYPES = new Set(["video/mp4", "video/webm", "video/quicktime"]);
+export const isChatVideoFile = (file: File) => file.type.startsWith("video/");
+
+/** A video attached to the user's own conversation: private, verified by the server, not analysed. */
+export async function uploadChatVideo(file: File): Promise<string> {
+  if (!CHAT_VIDEO_TYPES.has(file.type) || file.size < 1 || file.size > MAX_VIDEO_BYTES)
+    throw new Error("اختر فيديو MP4 أو WebM أو MOV بحجم لا يتجاوز 25 ميغابايت.");
+  const ticket = await api("/account/chat-video/upload-url", "POST", { size: file.size, contentType: file.type });
+  if (typeof ticket?.uploadURL !== "string" || typeof ticket?.objectPath !== "string") throw new Error("تعذر تجهيز رفع الفيديو.");
+  let response: Response;
+  try {
+    response = await fetch(ticket.uploadURL, { method: "PUT", headers: { "Content-Type": file.type }, body: file, credentials: "omit" });
+  } catch {
+    throw new Error("تعذر رفع الفيديو. تحقق من الاتصال وحاول مرة أخرى.");
+  }
+  if (!response.ok) throw new Error("تعذر رفع الفيديو. حاول مرة أخرى.");
+  const completed = await api("/account/chat-video/complete", "POST", { objectPath: ticket.objectPath });
+  if (typeof completed?.objectPath !== "string" || !completed.objectPath.startsWith("/objects/chat-video/"))
+    throw new Error("تعذر التحقق من الفيديو المرفوع.");
+  return completed.objectPath;
+}

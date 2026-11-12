@@ -8,6 +8,7 @@ import { settleAbandonedExecutions } from "./ai/action-recovery";
 import { expireStalePromotions } from "./lib/promotions";
 import { validateObjectStorageConfiguration } from "./lib/objectStorage";
 import { startVisualSearchExpirySweep } from "./lib/visual-search-images";
+import { expireChatVideos } from "./lib/chat-video";
 import { deploymentConfigurationProblems } from "./lib/deployment-configuration";
 import { installGracefulShutdown } from "./server-lifecycle";
 import { sweepDriverLocationShares } from "./lib/driver-location";
@@ -54,6 +55,14 @@ const stopVisualSearchExpirySweep = startVisualSearchExpirySweep({
   onDeleted: (count) => logger.info({ count }, "Expired visual-search photos removed"),
   onError: (err) => logger.error({ err }, "Failed to expire visual-search photos; the next sweep will retry"),
 });
+
+// Chat videos are kept for seven days, then removed (lib/chat-video.ts).
+const chatVideoSweep = setInterval(() => {
+  void expireChatVideos()
+    .then((count) => { if (count) logger.info({ count }, "Expired chat videos removed"); })
+    .catch((err) => logger.error({ err }, "Failed to expire chat videos; the next sweep will retry"));
+}, 60 * 60 * 1000);
+chatVideoSweep.unref();
 
 const sweepExpiredReservations = () => {
   // Unconfirmed location previews never outlive their confirmation window.

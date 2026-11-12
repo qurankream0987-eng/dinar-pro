@@ -1,3 +1,4 @@
+import { isChatVideoPath, MAX_CHAT_VIDEOS, verifyChatVideo } from "../lib/chat-video";
 import { type AiCallRecord } from "../lib/ai-spend";
 import { getCommercialPolicy } from "../lib/commercial-policy";
 import { isVisualSearchPath, loadVisualSearchImage, MAX_VISUAL_SEARCH_IMAGES } from "../lib/visual-search-images";
@@ -2049,7 +2050,15 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
   const input = requestData(SendAiConversationTurnBody, req.body);
   const message = input.message.trim();
   if (!message) throw fail(400, "أدخل رسالة قبل الإرسال");
-  const imageObjectPaths = input.imageObjectPaths ?? [];
+  const attachedPaths = input.imageObjectPaths ?? [];
+  // A chat video travels in the same attachment list; its own prefix decides. One per message,
+  // never mixed with photos, owner and content verified; it is stored, not sent to any model.
+  const videoObjectPaths = attachedPaths.filter(isChatVideoPath);
+  if (videoObjectPaths.length > MAX_CHAT_VIDEOS) throw fail(400, "أرسل فيديو واحدًا في كل رسالة.");
+  if (videoObjectPaths.length && videoObjectPaths.length !== attachedPaths.length)
+    throw fail(400, "لا يمكن إرسال فيديو مع صور في الرسالة نفسها.");
+  for (const path of videoObjectPaths) await verifyChatVideo(path, req.actor!.id);
+  const imageObjectPaths = videoObjectPaths.length ? [] : attachedPaths;
   // A buyer's private search photo and a seller's listing photo are different things: the path
   // prefix decides, and one message never mixes them.
   const visualPaths = imageObjectPaths.filter(isVisualSearchPath);
@@ -2066,7 +2075,8 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
   const locationDigest = input.location
     ? createHmac("sha256", LOCATION_DIGEST_KEY).update(JSON.stringify([input.locationRequestId, input.location])).digest("hex")
     : undefined;
-  const turnMetadata = { imageObjectPaths, ...(locationDigest ? { locationDigest } : {}) };
+  if (input.location && videoObjectPaths.length) throw fail(400, "لا يمكن إرسال فيديو مع الموقع في الرسالة نفسها");
+  const turnMetadata = { imageObjectPaths, ...(videoObjectPaths.length ? { videoObjectPaths } : {}), ...(locationDigest ? { locationDigest } : {}) };
   const turnId = randomUUID();
   const userMessageId = input.clientMessageId ?? randomUUID();
   let createdAt = new Date();
@@ -2143,7 +2153,9 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
   // computed from those persisted listings. No model text becomes an offer.
   let runtimeMessage = message;
   let visualAnalysis: VisualAnalysis | undefined;
-  let visualNotice = "";
+  let visualNotice = videoObjectPaths.length
+    ? "أرفقتُ الفيديو بالمحادثة وهو محفوظ لك بشكل خاص. فهم محتوى الفيديو غير مفعّل بعد، فلم أستنتج منه شيئًا؛ صف لي ما فيه إن أردت."
+    : "";
   let imageUnderstanding: { answer: string; status: "ANALYZED" | "UNAVAILABLE" } | undefined;
   if (visualImage) {
     const visionCalls: AiCallRecord[] = [];

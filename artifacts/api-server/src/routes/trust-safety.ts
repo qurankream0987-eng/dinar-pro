@@ -39,6 +39,7 @@ import {
 import { PLATFORM_FEE_BASIS_POINTS } from "../lib/market-pricing";
 import { ObjectStorageService } from "../lib/objectStorage";
 import { deleteVisualSearchImagesForOwner } from "../lib/visual-search-images";
+import { deleteChatVideosForOwner } from "../lib/chat-video";
 import { logger } from "../lib/logger";
 import { recordPrivacyRequest } from "../lib/privacy-rights";
 import { notifyUserAfterDecision } from "../lib/notifications";
@@ -361,6 +362,13 @@ router.post("/account/deletion", requireAuth, deletionLimit, async (req, res) =>
   } catch (error) {
     // Account closure remains committed; the scheduled expiry sweep retries failed private-photo cleanup.
     logger.warn({ err: error }, "Closed account visual-search photos could not all be removed");
+  }
+  try {
+    const removedVideos = await deleteChatVideosForOwner(req.actor!.id);
+    if (removedVideos > 0) logger.info({ count: removedVideos }, "Closed account chat videos removed");
+  } catch (error) {
+    // The seven-day expiry sweep removes any video this cleanup missed.
+    logger.warn({ err: error }, "Closed account chat videos could not all be removed");
   }
   if (previousAvatarObjectPath) {
     try {
