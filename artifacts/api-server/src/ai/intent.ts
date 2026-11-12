@@ -24,6 +24,8 @@ const CHECKOUT_REQUEST =
 export function surfaceIntent(message: string): string | undefined {
   const text = message.replace(/[أإآ]/g, "ا");
   const folded = contextText(message);
+  if (/^(?:وينه|اينه)\s+طلبي(?:\s|$)|(?:غير|اغير|عدل|اعدل)\s+عنوان\s+التوصيل|(?:اعرض|وريني)\s+موقع\s+طلب\s+(?:جاري|حالي)/u.test(folded)) return "ORDERS";
+  if (/^(?:سو|سوي|اعمل|جهز)\s+اعلان\s+ل\S+|^(?:عندي|لدي)\s+\d+\s+(?:قطعه|حبه|وحده)\s+.*(?:بسعر|بـ?)\s*\d/u.test(folded)) return "SELL";
   // A refused action is not a request for it («لا تدفع الحين», «ما ابي ادفع، بس …»).
   const refused = /(?:^|\s)(?:لا|ما|مو|مش|بلاش|بدون)\s+(?:\S+\s+){0,2}?(?:ت|ا|ن)?(?:دفع|ادفع|كمل|اكمل)/u.test(folded);
   if (/سجلني خروج|تسجيل الخروج/.test(text) || /(?:^|\s)(?:طلعني|اطلعني|خرجني|اخرجني)\s+(?:من\s+)?حسابي(?:\s|$)/u.test(folded)) return "LOGOUT";
@@ -124,7 +126,7 @@ export function addToCartIntent(message: string): boolean {
     /اضف|اضيف|اضافة|ضيف|حط|ضع|ادخل|دخل/.test(text) &&
     (
       /سلة|سله|عربة/.test(text) ||
-      /(?:^|\s)(?:ال)?(?:اول|ثاني|ثالث|رابع|خامس)(?:\s|$)|(?:^|\s)(?:رقم|الاعلان|العرض)\s*\d{1,2}(?:\s|$)/u.test(text)
+      /(?:^|\s)(?:هذا|هذه|هذي)(?:\s|$)|(?:^|\s)(?:ال)?(?:اول|ثاني|ثالث|رابع|خامس)(?:\s|$)|(?:^|\s)(?:رقم|الاعلان|العرض)\s*\d{1,2}(?:\s|$)/u.test(text)
     )
   );
 }
@@ -167,7 +169,7 @@ const CORRECTION_PREFIXES = [
   // «لا خليها، أريد …», «بلاها، …»: drop the previous request; what follows is a new one.
   /^\s*(?:(?:لا|لأ)\s*[,،]?\s*)?(?:خليها|خلها|خليه|خله|بلاها|بلاش|انسى|انساها|انسي)\s*[,،]\s*/iu,
   /^\s*(?:لا|لأ)\s*[,،]?\s*(?:مو|مش)\s+(?:هذا|هذه|هذي|ذلك)\s*[,،]?\s*/iu,
-  /^\s*(?:(?:لا|لأ)\s*[,،]?\s*)?(?:أقصد|اقصد|قصدي|أعني|اعني|كنت\s+أقصد|كنت\s+اقصد)(?:\s*[,،:]\s*|\s+)/iu,
+  /^\s*(?:(?:لا|لأ)\s*[,،]?\s*)?(?:أقصد|اقصد|قصدي|قصدت|أعني|اعني|كنت\s+أقصد|كنت\s+اقصد)(?:\s*[,،:]\s*|\s+)/iu,
   /^\s*(?:مو|مش|ليس)\s+(?:هذا|هذه|هذي|ذلك)\s*[,،]?\s*/iu,
   // «هذا مو اللي أقصده، …», «هذي مش اللي بدي ياه»: the shown item is rejected; what follows is meant.
   /^\s*(?:هذا|هذه|هذي|هاد|هادا|هيدا)\s+(?:مو|مش|ليس|مهو|ماهو)\s+(?:اللي|الي|يلي|الذي|التي)\s+[^،,]{1,20}?\s*[,،]\s*/iu,
@@ -175,7 +177,7 @@ const CORRECTION_PREFIXES = [
   /^\s*بدل(?:ها|ه|هذا|هذه|هذي|ذلك)\s*(?:بـ?|ل)?\s*/iu,
   /^\s*(?:no\s*[,،]?\s*i\s+meant|actually\s+make\s+it)\s+/iu,
   /^\s*i\s+(?:mean|meant)\s+/iu,
-  /^\s*(?:آسف|اسف|معذرة)\s*[,،]?\s*/iu,
+  /^\s*(?:آسف|اسف|معذرة|عفوا|عفوًا)\s*[,،]?\s*/iu,
   /^\s*actually\s*[,،:]?\s*/iu,
   // «لا تضيف شي للسلة، بس ورني …», «ما أبي أشتري، فقط …»: a refused action followed by the real request.
   /^\s*(?:لا|ما|مو)\s+[^،,.؟?!]{1,40}?\s*[,،]?\s*(?:بس|فقط|بل|لكن)\s+/iu,
@@ -210,7 +212,19 @@ export function refusesCommercialAction(message: string): boolean {
 
 /** Remove only a leading correction marker; keep the corrected value and its constraints. */
 export function stripCorrectionPrefix(message: string): string {
-  let text = message;
+  let text = message.replace(/[ً-ٰٟ]/gu, "")
+    .replace(/^شوف\s+(?:إذا|اذا|لو)\s+(?:في|فيه)\s+/u,"ابحث عن ")
+    .replace(/^abi\s+/iu,"ابي ").replace(/\bmosta3mal\b/giu,"مستعمل")
+    .replace(/^([a-z][a-z0-9-]*(?:\s+[a-z0-9-]+){0,4})\s+b\s+(\d+(?:\.\d+)?)$/iu,"ابي $1 بسعر $2")
+    .replace(/\blel\s+([a-z]+)\b/giu,"ل$1")
+    .replace(/^(?:طيب\s+)?(?:اي|أي)\s+(?:شي|شيء|اشي|إشي)\s+/u, "ابي ")
+    .replace(/^و(?=بدي|ابي|اريد|ابحث)/u, "")
+    .replace(/^(?:طيب|طب)\s+و?(?=بدي|ابي|اريد|ابحث)/u, "")
+    .replace(/^(?:ترى\s+)?(?:[اأ]نا\s+)?(?:اقصد|أقصد)\s+الخدم[ةه]\s+(?:مو|مش)\s+المنتج\s*[:،,]\s*/u, "")
+    .replace(/^(?:مش|مو)\s+هيك\s*[،,]\s*/u, "")
+    .replace(/^لا\s+(?:خلص|خلاص)\s+ما\s+(?:بدي|ابي|اريد)\s+[^،,]+[،,]\s*/u, "")
+    .replace(/^(شلون|كيف)\s+(?:[اأ]حصل|[اأ]لاقي)\s+(?:على\s+)?/u, "ابي ");
+  if (/^(?:قصدي|اقصد|أقصد)/u.test(text)) text = text.replace(/\s+(?:مش|مو|وليس)\s+\d+\s*$/u, "");
   for (let pass = 0; pass < 3; pass += 1) {
     const next = CORRECTION_PREFIXES.reduce(
       (value, prefix) => value.replace(prefix, ""),
@@ -232,6 +246,7 @@ export function marketplaceComparisonSearchTerms(message: string): string | unde
 export function searchTerms(message: string): string {
   // Codex: comparison-aware request extraction; Claude: a leading correction is set aside first.
   const request = stripCorrectionPrefix(message)
+    .replace(/^(?:\S+\s+)?[اأ]نا\s+(?:جوعان|جائع|عطشان)\s+(?=[اأ]بي|بدي|[اأ]ريد)/u, "")
     // «دينار ابحث لي عن …», «يا دينار دورلي على …»: the address and the search verb with its
     // «لي» and preposition are the request, not the product.
     .replace(/^\s*(?:يا\s+)?(?:دينار|dinar)(?:\s*[،,:]\s*|\s+)/iu, "");
@@ -252,6 +267,8 @@ export function searchTerms(message: string): string {
     .replace(/[؟?]+\s*$/u, "")
     .trim();
   return stripCorrectionPrefix(terms)
+    .replace(/^(?:إذا|اذا|لو)\s+(?:في|فيه|يوجد)\s+/u, "")
+    .replace(/[.!؟?]+\s*$/u, "")
     .replace(/\s+/g, " ");
 }
 

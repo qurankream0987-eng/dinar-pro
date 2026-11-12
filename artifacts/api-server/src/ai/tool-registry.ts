@@ -12,8 +12,9 @@ import {
   searchMarketplaceListings,
 } from "../lib/marketplace-listings";
 import { resolveMarketplaceCategory } from "../lib/marketplace-categories";
-import { genericTokens, isDescriptiveOnly, isRequestOnly, itemTokens, purposeTokens, textMatchesToken } from "../lib/arabic-search-terms";
+import { tokenVariants, hasServiceMeaning, boundedItemRelaxation, genericTokens, isDescriptiveOnly, isRequestOnly, itemTokens, purposeTokens, textMatchesToken } from "../lib/arabic-search-terms";
 import { normalizeSearch } from "./search-context";
+import { parseStructuredSearch } from "./search-query";
 import {
   decorateStoredResults,
   recommendListings,
@@ -53,6 +54,8 @@ export type ToolContext = {
   actorId?: string;
   /** The owning user-message row for any result set created during a model tool round. */
   currentMessageId?: string;
+  /** Original user constraint source; never a model restatement. */
+  userMessage?: string;
 };
 
 export type ToolResult = {
@@ -405,7 +408,9 @@ export const aiToolRegistry: Record<string, ToolDefinition> = {
       let listings = await run(input.query);
       let broadenedFrom: string[] | undefined;
       let widenedFromCategory: string | undefined;
-      const searchAcrossCategories = (search: string = input.query) =>
+      const serviceQuery=hasServiceMeaning(itemTokens(normalizeSearch(input.query??"").split(/\s+/u)));
+      const specificFilters=(input.filters as SearchFilter[]|undefined)?.some(filter=>searchFilterDefinition(undefined,filter.field)===undefined);
+      const searchAcrossCategories = async (search: string = input.query) => specificFilters ? [] :
         searchMarketplaceListings(context.market, {
           search,
           conversational: true,
@@ -429,7 +434,7 @@ export const aiToolRegistry: Record<string, ToolDefinition> = {
             widenedFromCategory = category?.label ?? input.category ?? input.categoryId;
           }
         }
-        if (!listings.length && aliasWords.length) {
+        if (!listings.length && aliasWords.length && !serviceQuery && !aliasWords.some(word=>/[\d٠-٩۰-۹]/u.test(word) || tokenVariants(word).some(form=>/^\d+$/u.test(form)))) {
           listings = await run(remaining);
           if (listings.length) broadenedFrom = aliasWords;
         }
@@ -439,13 +444,30 @@ export const aiToolRegistry: Record<string, ToolDefinition> = {
         const words = itemTokens(normalizeSearch(input.query).split(/\s+/).filter(Boolean));
         const purpose = purposeTokens(words);
         const remaining = words.filter((word) => !purpose.includes(word));
-        if (purpose.length && remaining.length) {
+        if (purpose.length && remaining.length && (!serviceQuery || remaining.some(word=>!hasServiceMeaning([word]) && !["فني","معلم","عامل","حرفي","ورشة","ورشه","جهة","جهه","شركة","شركه"].includes(word)))) {
           listings = await run(remaining.join(" "));
+          // A service target (e.g. computer) can infer a product category. Search the same
+          // retained service and object across categories; never discard a service target or
+          // a category-specific hard filter to improve recall.
+          if (!listings.length && serviceQuery) listings = await searchAcrossCategories(remaining.join(" "));
           if (listings.length) broadenedFrom = purpose;
         }
       }
+      // In a service request, old/new describes the customer's target, not the service's
+      // inventory condition. Qualify only this contextual adjective; retain every service
+      // verb, target noun, numeric constraint and category-specific filter.
+      if (!listings.length && !broadenedFrom && input.query && serviceQuery) {
+        const words = itemTokens(normalizeSearch(input.query).split(/\s+/u).filter(Boolean));
+        const modifiers = words.filter(word => /^(?:ال)?قديم[ةه]?$/u.test(word));
+        const retained = words.filter(word => !modifiers.includes(word));
+        if (modifiers.length && retained.some(word => !hasServiceMeaning([word]) && !["فني", "معلم", "عامل", "شركة", "شركه", "ورشة", "ورشه"].includes(word))) {
+          listings = await run(retained.join(" "));
+          if (!listings.length) listings = await searchAcrossCategories(retained.join(" "));
+          if (listings.length) broadenedFrom = modifiers;
+        }
+      }
       // «موبايل ايفون»: a generic kind-of-thing word beside a specific one may be relaxed, and reported.
-      if (!listings.length && !broadenedFrom && input.query) {
+      if (!listings.length && !broadenedFrom && input.query && !serviceQuery) {
         const words = itemTokens(normalizeSearch(input.query).split(/\s+/).filter(Boolean));
         const generic = genericTokens(words);
         if (generic.length) {
@@ -455,7 +477,7 @@ export const aiToolRegistry: Record<string, ToolDefinition> = {
       }
       // «محتاج حد ينضف الشقة»: the category inferred from a noun («الشقة» → عقارات) may be the
       // wrong one. With nothing inside it, the same words are searched across categories and the
-      // reply says the category was widened. Only category-independent filters are kept.
+      // reply says the category was widened. A category-specific hard filter prevents widening.
       if (!listings.length && (input.categoryId || input.category) && input.query) {
         const category = await resolveMarketplaceCategory(input.categoryId, input.category);
         const wider = await searchAcrossCategories();
@@ -470,31 +492,13 @@ export const aiToolRegistry: Record<string, ToolDefinition> = {
       // never relaxed; an inferred category does not restrict these searches (a purpose or place
       // word such as «للبيت» must not turn a washing machine into an apartment); a subset of only
       // descriptive words never counts; and the reply names exactly the words that were relaxed.
-      if (!listings.length && !broadenedFrom && input.query) {
-        const words = itemTokens(normalizeSearch(input.query).split(/\s+/).filter(Boolean)).slice(0, 6);
-        const [head, ...others] = words;
-        let tried = 0;
-        // Two-word requests stay exact («ينظف سيارتي» is not «ينظف»: the dropped word may be what
-        // defines the item). Longer requests may lose at most half their words.
-        const minimumKept = Math.ceil(words.length / 2);
-        if (head && words.length >= 3)
-          search: for (let keep = others.length - 1; keep >= 0 && keep >= others.length - 3 && keep + 1 >= minimumKept; keep--) {
-            for (const rest of combinations(others, keep)) {
-              const subset = [head, ...rest];
-              if (isDescriptiveOnly(subset)) continue;
-              if (++tried > 14) break search;
-              let found = await searchAcrossCategories(subset.join(" "));
-              // Down to the item word alone, it must name the listing itself: «ساعة» (watch) in a
-              // request is not a lesson whose description says «حصة ساعة» (one hour).
-              if (!rest.length) found = found.filter((listing) => textMatchesToken(normalizeSearch(listing.title ?? ""), head));
-              if (found.length) {
-                listings = found;
-                broadenedFrom = others.filter((word) => !rest.includes(word));
-                widenedFromCategory = undefined;
-                break search;
-              }
-            }
-          }
+      if (!listings.length && !broadenedFrom && input.query && !serviceQuery) {
+        const relaxed = await boundedItemRelaxation(input.query, normalizeSearch, searchAcrossCategories);
+        if (relaxed) {
+          listings = relaxed.listings;
+          broadenedFrom = relaxed.dropped;
+          widenedFromCategory = undefined;
+        }
       }
       const sponsoredIds = listings.filter((item) => item.isSponsored).map((item) => item.id);
       return {
@@ -1081,6 +1085,14 @@ export async function executeModelTool(
       "TOOL_NOT_ALLOWED",
     );
   }
+  // C02: model arguments may narrow a search, never erase the user's explicit price bounds.
+  if (name === "searchListings" && context.userMessage) {
+    const priceFilters = parseStructuredSearch(context.userMessage)?.filters.filter((filter) => filter.field === "price") ?? [];
+    if (priceFilters.length) {
+      const args = JSON.parse(rawArguments);
+      rawArguments = JSON.stringify({ ...args, filters: [...(Array.isArray(args.filters) ? args.filters : []), ...priceFilters] });
+    }
+  }
   let execution: { tool: string; version: number; result: ToolResult };
   try {
     execution = capabilityTool
@@ -1099,6 +1111,17 @@ export async function executeModelTool(
     if (error instanceof z.ZodError)
       throw new ToolRejectedError("The model proposed invalid tool arguments.", "CANONICAL_TOOL_REJECTED");
     throw error;
+  }
+  // C02: an older explicit reference cannot bypass a hard bound in the current request.
+  // Re-read eligibility through the same marketplace authority, including for comparisons.
+  if (context.userMessage && (execution.result.kind === "RESOURCE" || name === "compareListings")) {
+    const filters = parseStructuredSearch(context.userMessage)?.filters.filter((filter) => filter.field === "price") ?? [];
+    const ids = execution.result.resourceIds ?? execution.result.listings.map((listing) => listing.id);
+    if (filters.length && ids.length) {
+      const eligible = await searchMarketplaceListings(context.market, { search: "", allowedIds: ids, filters, conversational: true, limit: 24 });
+      if (eligible.length !== new Set(ids).size)
+        throw new ToolRejectedError("The selected read does not satisfy the user's current price constraints.");
+    }
   }
   // A stored result whose listing is now paused, sold or moderated returns no live record.
   // Passing "missing" back would let the model answer from the earlier snapshot as if current.

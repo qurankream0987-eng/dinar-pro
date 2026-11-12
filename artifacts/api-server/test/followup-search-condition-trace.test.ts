@@ -1,0 +1,23 @@
+import {test,after} from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {pool} from '@workspace/db';
+import {marketFor} from '../src/lib/markets';
+import {searchMarketplaceListings} from '../src/lib/marketplace-listings';
+import {LISTINGS,listingId,seedSearchFixture} from './search-fixture';
+import {requireSafeReplitDevelopmentDatabase} from './safe-development-database';
+requireSafeReplitDevelopmentDatabase('BDINAR_TEST_DATABASE');
+await seedSearchFixture();
+const m=await marketFor({actor:{activeMarketId:'JO'}});
+await test('historical used-phone golden differences are exactly rows whose authoritative condition says new',async()=>{
+ const golden=JSON.parse(readFileSync(new URL('./fixtures/search-golden.json',import.meta.url.replace('/.test-build/','/test/')),'utf8'));
+ const q=golden.find((r:any)=>r.options.search==='أبي هاتف مستعمل'&&r.options.conversational===true);assert.ok(q);
+ const actual=await searchMarketplaceListings(m,{...q.options,limit:100000});const ids=new Set(actual.map(r=>r.id));
+ const expectedIds=q.full.map((r:any[])=>String(r[0]));const removed=expectedIds.filter((id:string)=>!ids.has(id));
+ assert.ok(removed.length>0,'the historical contradiction must be exercised');
+ const trace=removed.map((id:string)=>{const i=LISTINGS.findIndex((_,i)=>listingId(i)===id);assert.ok(i>=0);const row=LISTINGS[i]!;assert.equal(row.attributes?.condition,'جديد');return {id,title:row.title,condition:row.attributes?.condition}});
+ for(const r of actual)assert.notEqual(r.attributes?.condition,'جديد','a used-only request cannot include an authoritative new condition');
+ assert.ok(actual.every(r=>expectedIds.includes(r.id)),'this semantic change adds no invented resource');
+ console.log('FOLLOWUP_SQL_CONDITION_TRACE',JSON.stringify({query:q.options,removed:trace,removedCount:removed.length,actualCount:actual.length}));
+});
+after(async()=>{await pool.end()});

@@ -1038,6 +1038,8 @@ async function employmentTurn(input: EmploymentTurnInput): Promise<Turn | null> 
   const actorId = input.actorId;
   const { market, message } = input;
   const text = normalizeEmploymentText(message);
+  // A career how-to is ordinary advice, not even an implicit job/candidate search.
+  if (HOW_TO.test(text) && /سير[ةه]|وظيف|تقديم|توظيف|cv/iu.test(text)) return null;
   const intent = intentOf(text);
 
   const [sets, blockSurface] = await Promise.all([

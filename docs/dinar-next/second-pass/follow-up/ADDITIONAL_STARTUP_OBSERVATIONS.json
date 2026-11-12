@@ -1,0 +1,24 @@
+{
+  "runtimeSha": "28f26779fbc4b23c6269795656a0d42db7aff9ef",
+  "observations": [
+    {
+      "test": "DS-13b orders entry: repeated natural attempts render every answer",
+      "observedFailure": "One of 40 attempts missed the original 8-second assistant-render deadline; initial DOM was not initialized, then a user bubble appeared.",
+      "failureEvidence": "final-validation/deepseek-chat-compatibility.log",
+      "initializationTimeline": "startup-network-extract.json",
+      "subsequentOriginalUnchangedTest": "PASS:40/40 in final-nine-recheck",
+      "diagnosticFullSuite": "PASS:21/21; no late-wait branch used",
+      "classification": "INTERMITTENT_STARTUP_DEADLINE; no proof of permanent answer loss",
+      "fixed": false
+    },
+    {
+      "test": "DS-15 conversation start and resume: fresh, resume, slow history, reload, switch, 320px",
+      "observedFailure": "8-second orders-entry deadline; one user bubble and typing indicator still active.",
+      "failureEvidence": "final-validation/deepseek-chat-compatibility.log",
+      "subsequentOriginalUnchangedTest": "PASS in final-nine-recheck",
+      "classification": "INTERMITTENT_STARTUP_DEADLINE; exact cause unresolved",
+      "fixed": false
+    }
+  ],
+  "limits": "UI source unchanged. Clean repetitions do not establish a functional race fix or erase deadline failures. Diagnostic observation would retain FAIL even if a reply appeared after the deadline. The first selected-case diagnostic failed synthetic policy prerequisites; it is setup evidence, not a product regression."
+}

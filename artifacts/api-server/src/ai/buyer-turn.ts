@@ -13,6 +13,8 @@ import type { marketFor } from "../lib/markets";
 import type { ListingRecord } from "../lib/dinar-data";
 import { categorySchema, listMarketplaceCategories } from "../lib/marketplace-categories";
 import { publishedListingCities, searchMarketplaceListings } from "../lib/marketplace-listings";
+import { parseMinorUnits } from "../lib/market-pricing";
+import { boundedItemRelaxation, itemTokens, textMatchesToken } from "../lib/arabic-search-terms";
 import { storedSponsoredIds } from "../lib/recommendations";
 import { normalizeSearch } from "./search-context";
 import { foldArabicLetters, normalizeDigits } from "./arabic-normalization";
@@ -71,7 +73,8 @@ export type BuyerState = z.infer<typeof BuyerState>;
 export function normalizeBuyerText(message: string): string {
   return foldArabicLetters(normalizeDigits(message))
     .replace(/ة/g, "ه")
-    .replace(/[؟?!،,؛;:.()«»"']+/g, " ")
+    .replace(/[.](?!\d)|(?<!\d)[.]/gu," ")
+    .replace(/[؟?!،,؛;:()«»"']+/g, " ")
     .replace(/\s+/g, " ")
     .trim()
     .toLowerCase();
@@ -91,7 +94,7 @@ const BEST = /^(?:(?:انا\s+)?(?:ابي|اريد|بدي|ابغي|اعطني|و
  * «فقط المستعملة», «المستعمل فقط», «الحالة جديد»: a condition filter on the current list. The
  * whole message must be the refinement; product words make it a new search instead.
  */
-const CONDITION_REFINE = /^(?:(?:فقط|بس|اعرض|اعرضلي|وريني|ابي|اريد|بدي|ابغي|خليها|خلها)\s+)*(?:(?:ال)?حاله\s+)?(?:ال)?(مستعمل|مستعمله|مستخدم|مستخدمه|جديد|جديده)(?:\s+(?:فقط|بس))?$/u;
+const CONDITION_REFINE = /^(?:(?:وافضل|افضل|فقط|بس|اعرض|اعرضلي|وريني|ابي|ابيه|ابيها|بديه|بديها|اريد|بدي|ابغي|خليها|خلها)\s+)*(?:(?:ال)?حاله\s+)?(?:ال)?(مستعمل|مستعمله|مستخدم|مستخدمه|جديد|جديده)(?:\s+(?:فقط|بس|اذا\s+نظيف|(?:مو|مش|ليس)\s+(?:مستعمل[هة]?|مستخدم[هة]?|جديد[هة]?)))?$/u;
 /** «حتى لو أغلى ألف»: the buyer raises their own ceiling by an amount. */
 const RAISE = /حتي\s+لو\s+(?:اغلي|ازيد)\s+(?:ب\s*)?(الف|الفين|\d+(?:\.\d+)?)/u;
 /** «رخيص» in a new search orders by price; it is never a word to match. */
@@ -116,7 +119,7 @@ const CORRECTION_LEAD = /^(?:(?:لا|لأ)\s+){0,2}(?:(?:غلطت|عفوا|سو�
  */
 const CEILING = /^(?:(?:طيب|طب|خلاص|بس|خلها|خليها|خله|خليه|خلي|يعني)\s+)*(?:(?:ما|مو|مش|لا)\s+(?:ابي|ابغي|بدي|اريد|اقدر|بقدر|ودي)\s+(?:ادفع\s+)?(?:اكثر|اكتر|ازيد|فوق)\s+(?:من\s+|عن\s+)?|(?:لين|الين|لغايه|لحد|الي|حتي|بحد\s+اقصي|ميزانيتي)\s+|(?:ما|لا)\s+(?:يزيد|يتعدي)\s+(?:عن\s+)?)(\d+(?:\.\d+)?)(?:\s*(الف|الاف))?(?:\s+(?:دينار|ريال|درهم|جنيه|بس|فقط))?$/u;
 /** «نفس الشي بس ارخص من الثاني»: the current search, priced below a listing in view. */
-const CHEAPER_THAN = /^(?:(?:نفس|زي|مثل)\s+(?:ال)?(?:شي|شيء|مواصفات|نوع|اشي)\s+)?(?:(?:بس|لكن|بس يكون|بشرط)\s+)?(?:ابي\s+)?(?:ال)?ارخص\s+من\s+(\S+)$/u;
+const CHEAPER_THAN = /^(?:(?:نفس|زي|مثل)\s+(?:ال)?(?:شي|شيء|مواصفات|نوع|اشي)\s+)?(?:(?:بس|لكن|بس يكون|بشرط)\s+)?(?:ابي\s+)?(?:ال)?ارخص\s+(?:من\s+)?(منه|منها|\S+)$/u;
 /** «جهز الطلب», «حضر لي الطلب»: a purchase review for the listing in view, never an order. */
 const PREPARE_ORDER = /^(?:(?:طيب|خلاص)\s+)?(?:جهز|حضر|سوي|سو|اعمل|اعملي|جهزلي|حضرلي)\s+(?:لي\s+)?(?:ال)?طلب(?:\s+.*)?$/u;
 const SELECT = /^(?:انا\s+)?(?:ابي|ابغي|بدي|اريد|اشتري|بشتري|اخذ|باخذ|حاب اخذ|خذ)\s+(?:اشتري\s+|اخذ\s+)?(.+)$/u;
@@ -296,12 +299,12 @@ const RANKING_TEXT: Record<BuyerRanking, string> = {
 /** Re-runs Block A search with the buyer's constraints and orders the result. */
 export async function runBuyerSearch(market: Market, state: BuyerState): Promise<ToolResult> {
   const filters: SearchFilter[] = [
-    ...state.filters.filter((filter) => !(filter.field === "price" && ["eq", "lte", "lt"].includes(filter.operator) && state.maxPrice)),
+    ...state.filters,
     ...(state.maxPrice ? [{ field: "price", operator: "lte", value: state.maxPrice } as SearchFilter] : []),
   ];
   const sponsoredView = state.ranking === "DEFAULT";
-  const found = await searchMarketplaceListings(market, {
-    search: state.search,
+  const search = (query: string) => searchMarketplaceListings(market, {
+    search: query,
     conversational: true,
     ...(state.categoryId ? { categoryId: state.categoryId } : {}),
     filters,
@@ -310,7 +313,7 @@ export async function runBuyerSearch(market: Market, state: BuyerState): Promise
   });
   // Colour and size are matched as whole words in the listing's own text when the
   // category has no such attribute; nothing is assumed about listings that omit them.
-  const matching = found.filter((listing) => {
+  const matchesPreferences = (found: ListingRecord[]) => found.filter((listing) => {
     const text = ` ${textOf(listing)} `;
     if (state.color && !text.includes(` ${normalizeSearch(state.color)} `)) return false;
     if (state.size && !new RegExp(`(?:\\s|مقاس|قياس|سايز)${state.size}(?:\\s)`, "u").test(text)) return false;
@@ -322,6 +325,22 @@ export async function runBuyerSearch(market: Market, state: BuyerState): Promise
     }
     return true;
   });
+  let matching = matchesPreferences(await search(state.search));
+  let broadenedFrom: string[] | undefined;
+  if (!matching.length) {
+    const relaxed = await boundedItemRelaxation(state.search, normalizeSearch, async (query) => matchesPreferences(await search(query)));
+    if (relaxed) { matching = relaxed.listings; broadenedFrom = relaxed.dropped; }
+  }
+  let widenedCategory:string|undefined;
+  if (!matching.length && state.categoryId) {
+    const category=(await listMarketplaceCategories()).find(row=>row.id===state.categoryId);
+    const words=itemTokens(normalizeSearch(state.search).split(/\s+/u));
+    const aliases=(category?.aliases??[]).map(normalizeSearch);
+    if(words.length===1 && aliases.includes(words[0]!)) {
+      matching=matchesPreferences(await search(""));
+      if(matching.length){broadenedFrom=words;widenedCategory=category!.label;}
+    }
+  }
   if (!matching.length && state.relaxed?.length) {
     const relaxed = new Set(state.relaxed.map((word) => normalizeSearch(word)));
     const search = normalizeSearch(state.search).split(/\s+/u).filter((word) => !relaxed.has(word)).join(" ");
@@ -329,7 +348,7 @@ export async function runBuyerSearch(market: Market, state: BuyerState): Promise
       const wider = await runBuyerSearch(market, { ...state, search, relaxed: undefined });
       if (wider.listings.length) {
         const buyer = (wider.query as { buyer?: BuyerState }).buyer;
-        const note = `لم أجد عروضًا تذكر «${state.relaxed.join(" ")}» تحديدًا، فعرضت ما يطابق بقية طلبك.`;
+        const note = `لم أجد عروضًا تذكر «${state.relaxed.join(" ")}» تحديدًا، فوسعت البحث باستبعاد هذا الوصف فقط وعرضت ما يطابق بقية طلبك.`;
         return { ...wider, query: { ...wider.query, broadenedFrom: state.relaxed, buyer: { ...buyer!, search: state.search, relaxed: state.relaxed, message: `${note} ${buyer?.message ?? ""}`.trim() } } };
       }
     }
@@ -361,6 +380,7 @@ export async function runBuyerSearch(market: Market, state: BuyerState): Promise
     state.targetPrice && !state.maxPrice ? `حول ${state.targetPrice} ${market.currencyCode}` : "",
   ].filter(Boolean);
   const message = [
+    widenedCategory ? `لم أجد اسم «${state.search}» في النص؛ هذه عروض فئة «${widenedCategory}» التي تطابق الشروط، وقد تتضمن أنواعًا أخرى. ` : broadenedFrom?.length ? `خففت كلمات الوصف «${broadenedFrom.join("، ")}» فقط؛ بقيت شروط السعر والحالة واللون والمقاس كما طلبتها.` : "",
     listings.length
       ? `وجدت ${listings.length} ${listings.length === 1 ? "عرضًا" : "عروض"} داخل DINAR${notes.length ? ` (${notes.join("، ")})` : ""}.`
       : `لم أجد عروضًا مطابقة داخل DINAR${notes.length ? ` (${notes.join("، ")})` : ""}. جرّب إزالة أحد الشروط.`,
@@ -373,6 +393,7 @@ export async function runBuyerSearch(market: Market, state: BuyerState): Promise
   return {
     kind: "SEARCH",
     query: {
+      ...(broadenedFrom ? { broadenedFrom } : {}),
       search: state.search,
       category: null,
       categoryId: state.categoryId ?? null,
@@ -670,6 +691,8 @@ export async function executeBuyerTurn(input: {
   if (!input.actorId) return null;
   const actorId = input.actorId;
   const text = normalizeBuyerText(input.message);
+  // Counts only: explicit monthly recurrence, not a quote, fee or invented service price.
+  const annual = text.match(/^(?:(\d{1,3})\s+(?:زيارات|حصص|جلسات|مرات)|(?:زيارتين|حصتين|جلستين|مرتين))\s+(?:بالشهر|في الشهر|شهريا)\s+(?:كم|قديش)\s+(?:بالسنه|في السنه|سنويا)$/u);
 
   // Decisions on this actor's own latest purchase review, pending or already settled:
   // a repeated or concurrent decision answers deterministically and never reaches the model.
@@ -696,7 +719,97 @@ export async function executeBuyerTurn(input: {
 
   const set = await latestListingSet(input.conversationId, input.market.id);
   const state = stateOf(set);
+  if (annual) {
+    const count = annual[1] ? Number(annual[1]) : 2;
+    const yearly = count * 12;
+    const focused = set ? await resolveReference({ conversationId: input.conversationId, marketId: input.market.id, actorId, message: "هذا" }) : undefined;
+    const id = focused?.resourceId ?? (set?.resourceIds.length === 1 ? set.resourceIds[0] : undefined);
+    const snapshot = id ? await readListingForBuyer(actorId, id) : undefined;
+    const total = snapshot?.unitPriceMinor == null ? undefined : snapshot.unitPriceMinor * yearly;
+    const cost = total !== undefined && Number.isSafeInteger(total)
+      ? ` إذا كانت كل زيارة وحدة واحدة بالسعر المسجل الحالي ${moneyOf(snapshot!.unitPriceMinor!, input.market)}، فالحساب الافتراضي ${yearly} × ${moneyOf(snapshot!.unitPriceMinor!, input.market)} = ${moneyOf(total, input.market)} قبل التوصيل وأي رسوم، وليس تسعيرة نهائية أو حجزًا أو اشتراكًا.`
+      : " هذا حساب عدد المرات فقط؛ لا يوجد سعر واحد محدد أستطيع حساب تكلفته من السياق.";
+    if (!id && set) {
+      const alternatives = await searchMarketplaceListings(input.market,{search:"",allowedIds:set.resourceIds,conversational:true,sponsoredPlacement:false});
+      const costs = alternatives.filter(row=>row.unitPrice!==null).map(row=>{const minor=parseMinorUnits(row.unitPrice!,input.market.currencyCode);const amount=minor*yearly;return Number.isSafeInteger(amount) ? `«${row.title}»: ${yearly} × ${moneyOf(minor,input.market)} = ${moneyOf(amount,input.market)}` : undefined;}).filter(Boolean);
+      if (costs.length) return notice(`${count} × 12 شهرًا = ${yearly} في السنة. توجد عدة عروض؛ لكل عرض حساب افتراضي مستقل إذا كانت كل زيارة وحدة بالسعر الحالي:\n${costs.join("\n")}\nقبل التوصيل وأي رسوم، وليس حجزًا أو اشتراكًا أو تسعيرة نهائية. حدد العرض المقصود؛ لم يتغير شيء.`);
+    }
+    return notice(`${count} × 12 شهرًا = ${yearly} في السنة.${cost} لم يتغير شيء.`);
+  }
+  // Read-only arithmetic on the current canonical rows. No financing, tax, FX or
+  // delivery agreement is inferred from a listing's advertised unit price.
+  if (set && /^(?:كم بالدولار|مع التوصيل كم|هل السعر شامل الضريبه)$/u.test(text)) return notice("لا توجد في هذا السياق تسعيرة معتمدة للتوصيل أو الضريبة أو سعر صرف؛ السعر المعروض بعملة السوق فقط. اطلب التفاصيل من البائع، ولم يتغير شيء.");
+  const budgetUnits=text.match(/^(?:اذا|لو) معي (\d+(?:\.\d+)?) (?:دينار|دنانير|ريال|درهم|جنيه) كم .+ (?:بقدر|اقدر) (?:اخذ|اشتري)$/u);
+  const installments=text.match(/^لو قسطته علي (\d{1,3}) (?:شهر|شهور) كم القسط$/u);
+  if (set && (budgetUnits || installments)) {
+    const focused=await resolveReference({conversationId:input.conversationId,marketId:input.market.id,actorId,message:"هذا"});
+    const resourceId=focused?.resourceId ?? (set.resourceIds.length===1 ? set.resourceIds[0] : undefined);
+    if (!resourceId) return notice("حدد عرضًا ظاهرًا أولًا لحساب المبلغ؛ لم أفترض سعرًا من عدة عروض.");
+    const {executeRegisteredTool}=await import("./tool-registry");
+    const read=await executeRegisteredTool("getResource",JSON.stringify({resultSetId:focused?.resultSetId??set.id,resourceId}),{conversationId:input.conversationId,market:input.market,actorId});
+    const row=read.result.listings.find(row=>row.id===resourceId);
+    if (read.result.kind!=="RESOURCE" || row?.unitPrice==null) return notice("لا يوجد سعر مسجل صالح لهذا الحساب؛ لم يتغير شيء.");
+    const snap={unitPriceMinor:parseMinorUnits(row.unitPrice,input.market.currencyCode)};
+    const answer=(body:string):Turn=>({...read,result:{...read.result,prompt:body,query:{...read.result.query,buyer:{message:body,authority:"DINAR"}}}});
+    if (budgetUnits) { let budget:number;try {budget=parseMinorUnits(budgetUnits[1]!,input.market.currencyCode);}catch{return notice("المبلغ لا يطابق دقة عملة السوق؛ اكتب ميزانية صالحة.");} return answer(`بالسعر الحالي ${moneyOf(snap.unitPriceMinor,input.market)}: الميزانية تكفي حسابيًا ${Math.floor(budget/snap.unitPriceMinor)} وحدة قبل التوصيل والرسوم، مع ضرورة التحقق من المخزون. لم أضف أو أحجز شيئًا.`); }
+    const n=Number(installments![1]);if (!n) return notice("عدد الأشهر يجب أن يكون موجبًا.");const each=Math.floor(snap.unitPriceMinor/n),extra=snap.unitPriceMinor%n;
+    return answer(`قسمة حسابية افتراضية فقط: ${moneyOf(snap.unitPriceMinor,input.market)} على ${n} شهر = ${moneyOf(each,input.market)} لكل دفعة${extra ? ` مع ${extra} دفعات تزيد وحدة نقدية صغرى واحدة لضبط المجموع` : ""}. لا توجد موافقة تقسيط أو فوائد أو رسوم معتمدة، ولم يتغير شيء.`);
+  }
+  const sized=text.match(/^(?:شو|كم|ما) الفرق (?:بالسعر|في السعر) بين (\S+) و ?(\S+)$/u);
+  const priceChoice=text.match(/^(\S+) ولا (\S+) (?:اوفر|ارخص)$/u);
+  if (set && (sized || priceChoice)) {
+    const named=sized ?? priceChoice!;const rows=await searchMarketplaceListings(input.market,{search:"",allowedIds:set.resourceIds,conversational:true,sponsoredPlacement:false});
+    const label=(value:string)=>normalizeBuyerText(value).replace(/^ال/u,"").replace(/[هة]$/u,"");const groups=[named[1]!,named[2]!].map(term=>rows.filter(row=>normalizeBuyerText(row.title).split(" ").some(word=>label(word)===label(term))));
+    if (groups.some(group=>group.length!==1)) return notice("الوصف لا يحدد عرضًا واحدًا لكل طرف. حدد رقمَي العرضين للمقارنة.");
+    const snaps=await Promise.all(groups.map(group=>readListingForBuyer(actorId,group[0]!.id)));if(snaps.some(row=>row?.unitPriceMinor==null)) return notice("لا يوجد سعر معلن للطرفين؛ لم أفترض فرقًا.");
+    return notice(`فرق السعر المسجل ${moneyOf(Math.abs(snaps[0]!.unitPriceMinor!-snaps[1]!.unitPriceMinor!),input.market)} بين «${groups[0]![0]!.title}» و«${groups[1]![0]!.title}»، قبل التوصيل والرسوم؛ لم يتغير شيء.`);
+  }
+  if (state && /^(?:ال)?ارخص\s+\S+/u.test(text) && /مستعمل|مستخدم/u.test(text)) {
+    const productWords=itemTokens(normalizeSearch(text).replace(/^(?:ال)?ارخص\s+/u,"").split(/\s+/u)).filter(word=>!/^(?:ال)?(?:مستعمل[هة]?|مستخدم[هة]?)$/u.test(word));
+    if (productWords.some(word=>!textMatchesToken(normalizeSearch(state.search),word))) return null;
+    const result=await runBuyerSearch(input.market,{...state,condition:"مستعمل",filters:state.filters.filter(f=>f.field!=="condition"),ranking:"CHEAPEST"});
+    const first=result.listings.find(row=>row.unitPrice!==null);if(first){const buyer=(result.query as {buyer:BuyerState}).buyer;buyer.message=`${buyer.message} أرخص سعر مسجل ${first.unitPrice} ${input.market.currencyCode} لـ«${first.title}».`;}
+    return {tool:"buyerRefine",version:1,result};
+  }
+  const additive = text.match(/^(?:وكمان|وكذلك|وايضا|كمان|وايضًا)\s+(.+)$/u);
+  if (set && additive && !/^(?:اكتب|اشرح|فسر|لخص|ترجم|خطط|قارن|اقترح|كيف|ما|ليش|لماذا)(?:\s|$)/u.test(additive[1]!)) {
+    const { executeRegisteredTool } = await import("./tool-registry");
+    return executeRegisteredTool("searchListings", JSON.stringify({ query: additive[1] }), { conversationId: input.conversationId, market: input.market, actorId });
+  }
 
+  if (CHEAPEST.test(text) && set && /^(?:اي واحد|ايهم|ايهن|مين|منو|اياهم)\s/u.test(text)) {
+    const current = await searchMarketplaceListings(input.market, { search: "", allowedIds: set.resourceIds, conversational: true, sponsoredPlacement: false });
+    const priced = current.filter((listing) => listing.unitPrice !== null).sort((a, b) => Number(a.unitPrice) - Number(b.unitPrice));
+    if (!priced.length) return notice("لا يوجد سعر معلن للعروض الحالية؛ لا أستطيع تحديد الأرخص.");
+    const least = priced[0]!;
+    const ties = priced.filter((listing) => listing.unitPrice === least.unitPrice).map((listing) => `«${listing.title}»`).join("، ");
+    return notice(`الأرخص بين العروض الظاهرة المتاحة: ${ties} بسعر ${least.unitPrice} ${least.currency}. من سجل DINAR الحالي، بدون التوصيل أو أي رسوم. لم يتغير شيء.`);
+  }
+  // Resolve named current resources before calculating, including seller-stated years and
+  // conditions. Years are identifiers here, never quantities or prices invented by the model.
+  let differenceIds: string[] | undefined;
+  if (set && /^(?:كم|قديش|شو|ما|ايش|وش) (?:هو )?(?:ال)?فرق (?:بالسعر|في السعر|السعر)(?: بينهم| بينهما| بين الاول والثاني)?$/u.test(text)) {
+    if (set.resourceIds.length !== 2) return notice("حدّد عرضين لمقارنة فرق السعر، مثل «قارن الأول بالثاني».");
+    differenceIds = set.resourceIds;
+  }
+  const years = text.match(/^(?:(?:كم|شو|ما)\s+)?(?:ال)?فرق بين (\d{4}) و ?(\d{4})$/u);
+  const conditionDifference = /^(?:ال)?جديد\s+(?:اغلي|ارخص)\s+(?:بكم|بقديش|قديش)\s+من\s+(?:ال)?مستعمل$/u.test(text);
+  if (set && (years || conditionDifference)) {
+    const current = await searchMarketplaceListings(input.market, { search: "", allowedIds: set.resourceIds, conversational: true, sponsoredPlacement: false });
+    const groups = years
+      ? [years[1], years[2]].map((year) => current.filter((listing) => String(listing.attributes?.year ?? "") === year))
+      : ["جديد", "مستعمل"].map((condition) => current.filter((listing) => conditionOf(listing) === condition));
+    if (groups.some((group) => group.length !== 1) || groups[0]![0]!.id === groups[1]![0]!.id)
+      return notice("حدّد عرضين ظاهرين بأرقامهما؛ الوصف لا يحدد عرضًا واحدًا لكل طرف، فلم أفترض فرقًا بالسعر.");
+    differenceIds = groups.map((group) => group[0]!.id);
+  }
+  if (differenceIds) {
+    const snapshots = await Promise.all(differenceIds.map((id) => readListingForBuyer(actorId, id)));
+    if (snapshots.some((value) => !value || value.unitPriceMinor === null)) return notice("لا أستطيع حساب فرق السعر: عرض غير متاح أو سعره غير محدد. لم أفترض مبلغًا.");
+    const [a, b] = snapshots;
+    const difference = Math.abs(a!.unitPriceMinor! - b!.unitPriceMinor!);
+    return notice(`فرق السعر بين العرضين: ${moneyOf(difference, input.market)}، محسوب من السعرين الحاليين ${moneyOf(a!.unitPriceMinor!, input.market)} و${moneyOf(b!.unitPriceMinor!, input.market)}. بدون التوصيل أو أي رسوم؛ لم يتغير شيء.`);
+  }
   const askedQuantity = quantityPriceQuestion(text);
   if (askedQuantity !== undefined && set) {
     const focused = await resolveReference({ conversationId: input.conversationId, marketId: input.market.id, actorId, message: "هذا" });
@@ -840,19 +953,24 @@ export async function executeBuyerTurn(input: {
       // Stored listings say «مستعمل» or «جديد»; one condition at a time replaces the previous one,
       // including a condition the original search parsed as a filter.
       const value = /^(?:مستعمل|مستخدم)/u.test(condition[1]!) ? "مستعمل" : "جديد";
+      const rejected=asked.match(/(?:مو|مش|ليس)\s+((?:ال)?(?:مستعمل[هة]?|مستخدم[هة]?|جديد[هة]?))$/u);
+      if(rejected && (/^(?:ال)?(?:مستعمل|مستخدم)/u.test(rejected[1]!) ? "مستعمل" : "جديد")===value) return notice("الحالة متعارضة: ذكرتها ونفيتها في الطلب نفسه. حدد الحالة التي تريدها؛ لم يتغير شيء.");
       // The replaced condition also leaves the search words («لابتوب جديد» → «لابتوب»).
       const search = normalizeBuyerText(state.search).split(" ").filter((word) => !/^(?:ال)?(?:مستعمل|مستعمله|مستخدم|مستخدمه|جديد|جديده)$/u.test(word)).join(" ");
       return { tool: "buyerRefine", version: 1, result: await runBuyerSearch(input.market, { ...state, search, filters: state.filters.filter((filter) => filter.field !== "condition"), condition: value }) };
     }
-    const ceiling = asked.match(CEILING);
+    const raisedCeiling = asked.match(/^(?:طيب\s+)?(?:ارفعها|ارفعه|زيدها|خلها)\s+(?:لـ?\s*|الي\s+)?(\d+(?:\.\d+)?)$/u);
+    if (raisedCeiling) return {tool:"buyerRefine",version:1,result:await runBuyerSearch(input.market,{...state,filters:state.filters.filter(f=>f.field!=="price"),targetPrice:undefined,maxPrice:Number(raisedCeiling[1])})};
+    const ceiling = asked.match(CEILING) ?? asked.match(/^(?:خلها|خليها|خليه|خله)\s+(\d+(?:\.\d+)?)(?:\s*(الف|الاف))?$/u);
     if (ceiling) {
       const value = Number(ceiling[1]) * (ceiling[2] ? 1000 : 1);
       return { tool: "buyerRefine", version: 1, result: await runBuyerSearch(input.market, { ...state, filters: state.filters.filter((filter) => !(filter.field === "price" && ["gt", "gte"].includes(filter.operator))), maxPrice: value }) };
     }
-    const cheaper = asked.match(CHEAPER_THAN);
+    const cheaper = asked.replace(/^في\s+/u, "").match(CHEAPER_THAN);
     if (cheaper && set) {
       const position = positionsIn(cheaper[1]!)[0] ?? (/^(?:هذا|هذي|هذه)$/u.test(cheaper[1]!) && set.resourceIds.length === 1 ? 1 : undefined);
-      const anchorId = position !== undefined ? set.resourceIds[position - 1] : undefined;
+      const focused = /^(?:منه|منها)$/u.test(cheaper[1]!) ? await resolveReference({conversationId:input.conversationId,marketId:input.market.id,actorId,message:"هذا"}) : undefined;
+      const anchorId = position !== undefined ? set.resourceIds[position - 1] : focused?.resourceId;
       if (position !== undefined && !anchorId)
         return notice(`لا يوجد العرض رقم ${position} ضمن النتائج الحالية. اختر رقمًا ظاهرًا.`);
       if (anchorId) {
@@ -865,7 +983,7 @@ export async function executeBuyerTurn(input: {
           version: 1,
           result: await runBuyerSearch(input.market, {
             ...rest,
-            filters: [...state.filters.filter((filter) => filter.field !== "price"), { field: "price", operator: "lt", value: price }],
+            filters: [...state.filters, { field: "price", operator: "lt", value: price }],
             ranking: "CHEAPEST",
           }),
         };
@@ -892,7 +1010,7 @@ export async function executeBuyerTurn(input: {
     const [categories, knownCities] = await Promise.all([listMarketplaceCategories(), publishedListingCities(input.market.id)]);
     // The price phrase («بـ5», «بسعر 5») and quality words are constraints, not search words.
     // The interpreter reads the seller-facing original, so the phrases are removed there.
-    const stripped = input.message
+    const stripped = requestCore(input.message)
       .replace(/(?:بسعر|بحدود|حوالي|في حدود|بـ*)\s*[0-9٠-٩]+(?:[.,][0-9٠-٩]+)?/u, (match) => (target ? " " : match))
       .replace(/(?:مميز[ةه]?|ممتاز[ةه]?|فخم[ةه]?|أصلي|اصلي)/gu, " ")
       .replace(/(?:بسعر رخيص|رخيص[ةه]?(?:\s+السعر)?)/u, (match) => (cheap ? " " : match));
@@ -915,7 +1033,7 @@ export async function executeBuyerTurn(input: {
         search: query.search,
         ...(query.categoryId ? { categoryId: query.categoryId } : {}),
         filters: query.filters.filter((filter) => !(targetPrice !== undefined && filter.field === "price" && filter.operator === "eq")),
-        ...(targetPrice ? { targetPrice } : {}),
+        ...(targetPrice ? (/بحدود|في حدود/u.test(text) ? {maxPrice:targetPrice} : {targetPrice}) : {}),
         ...(quality ? { quality: true } : {}),
         ranking: cheap ? "CHEAPEST" : "DEFAULT",
       }),

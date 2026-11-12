@@ -1,7 +1,7 @@
-import { holdPlatformAiSpend, settlePlatformAiSpend, spendRequired } from "../lib/ai-spend";
+import { type AiCallRecord } from "../lib/ai-spend";
 import { getCommercialPolicy } from "../lib/commercial-policy";
 import { isVisualSearchPath, loadVisualSearchImage, MAX_VISUAL_SEARCH_IMAGES } from "../lib/visual-search-images";
-import { createVisualAnalyzer, visionModel, rankVisualMatches, visualFallbackTerms, visualSearchTerms, type VisualAnalysis, type VisualAnalyzer } from "../ai/visual-search";
+import { isImageQuestion, createVisualAnalyzer, visionModel, rankVisualMatches, visualFallbackTerms, visualSearchTerms, type VisualAnalysis, type VisualAnalyzer } from "../ai/visual-search";
 import { UniversalCardsPayloadSchema } from "@workspace/api-zod/connect";
 import type { DomainSearchProvider } from "../connect/domains";
 import {
@@ -2144,21 +2144,35 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
   let runtimeMessage = message;
   let visualAnalysis: VisualAnalysis | undefined;
   let visualNotice = "";
+  let imageUnderstanding: { answer: string; status: "ANALYZED" | "UNAVAILABLE" } | undefined;
   if (visualImage) {
-    const analyzer = (req.app.locals.visualAnalyzer as VisualAnalyzer | undefined) ?? createVisualAnalyzer();
+    const visionCalls: AiCallRecord[] = [];
+    const question = isImageQuestion(message);
+    const analyzer = (req.app.locals.visualAnalyzer as VisualAnalyzer | undefined) ?? createVisualAnalyzer(process.env, fetch, (call) => visionCalls.push(call));
     // An analyzer that throws is an unavailable provider, never a failed turn or an invented answer.
     // A paid vision call holds money under the global AI cap first; a refused hold is an
     // unavailable provider (honest answer), never an unmetered call. Injected test analyzers skip it.
-    const metered = !req.app.locals.visualAnalyzer && spendRequired();
+    const metered = !req.app.locals.visualAnalyzer;
     const policy = metered ? (await getCommercialPolicy(market.id)).aiUsage : undefined;
     const expectedModel = visionModel();
-    const hold = policy && expectedModel ? await holdPlatformAiSpend({ purpose: "PLATFORM_VISUAL_SEARCH", resource: "IMAGE_UNDERSTANDING", policy, expectedModel }) : undefined;
-    const analyzed: Awaited<ReturnType<VisualAnalyzer["analyze"]>> = metered && !hold?.ok
+    const reserved = policy && policy.spend.global.limitMicros !== null && expectedModel
+      ? await reserveAiUsage({owner:{kind:"USER",userId:req.actor!.id,market},resource:"IMAGE_UNDERSTANDING",idempotencyKey:`vision:${conversation.id}:${userMessageId}`,expectedModel}) : undefined;
+    const analyzed: Awaited<ReturnType<VisualAnalyzer["analyze"]>> = metered && !reserved?.ok
       ? { status: "BLOCKED_PROVIDER", reason: "NO_IMAGE_MODEL" }
-      : await analyzer.analyze(visualImage, message).catch(() => ({ status: "FAILED" as const, reason: "ANALYZER_ERROR" }));
-    if (hold?.ok)
-      await settlePlatformAiSpend(hold.hold.id, [{ kind: "PRIMARY", outcome: analyzed.status === "ANALYZED" ? "SUCCESS" : "FAILED", provider: expectedModel!.provider, model: expectedModel!.model, imageUnits: 1 }], policy!.tokenEstimates.IMAGE_UNDERSTANDING).catch(() => undefined);
-    if (analyzed.status === "ANALYZED" && analyzed.analysis.isProduct && visualSearchTerms(analyzed.analysis)) {
+      : await analyzer.analyze(visualImage, message, question ? "QUESTION" : "SEARCH").catch(() => ({ status: "FAILED" as const, reason: "ANALYZER_ERROR" }));
+    if (reserved?.ok) {
+      const reported=visionCalls.length>0 && visionCalls.every(call=>Number.isInteger(call.inputTokens)&&Number.isInteger(call.outputTokens));
+      await settleAiUsage(reserved.reservation.id,{outcome:analyzed.status==="ANALYZED" && (!question||Boolean(analyzed.analysis.answer)) ? "SUCCESS" : "PROVIDER_FAILED",providerCalls:visionCalls.length,calls:visionCalls,...(reported?{inputTokens:visionCalls.reduce((n,c)=>n+c.inputTokens!,0),outputTokens:visionCalls.reduce((n,c)=>n+c.outputTokens!,0)}:{})}).catch(()=>{
+        req.log.error({event:"vision_usage_settlement_failed",reservationId:reserved.reservation.id},"Vision usage settlement failed; reservation retained for reconciliation");
+      });
+    }
+    if (question) {
+      imageUnderstanding = analyzed.status === "ANALYZED" && analyzed.analysis.answer
+        ? { status: "ANALYZED", answer: analyzed.analysis.answer }
+        : { status: "UNAVAILABLE", answer: analyzed.status === "ANALYZED" && !analyzed.analysis.isProduct
+          ? "لا تبدو الصورة لمنتج. لم يقدم مزود الصور شرحًا كافيًا لسؤالك، فلم أفترض تفاصيل. صف ما يظهر فيها بالكلمات وسأساعدك."
+          : "تعذر تحليل الصورة الآن، فلم أستنتج منها شيئًا. صف ما يظهر فيها بالكلمات وسأساعدك." };
+    } else if (analyzed.status === "ANALYZED" && analyzed.analysis.isProduct && visualSearchTerms(analyzed.analysis)) {
       visualAnalysis = analyzed.analysis;
       // «…عند الشركاء»: the same canonical Connect partner search, which honours participation modes.
       runtimeMessage = /(?:لدى|عند)\s+الشركاء|الشركاء|connect/iu.test(message)
@@ -2182,6 +2196,7 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
         market,
           actorId: req.actor!.id,
         imageObjectPaths: visualImage ? [] : imageObjectPaths,
+        ...(imageUnderstanding ? { imageUnderstanding } : {}),
         reasoningEffort: input.reasoningEffort,
         location: input.location,
         locationRequestId: input.locationRequestId,
@@ -2429,8 +2444,14 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
       return;
     }
 
-    const resultSetId =
-      toolResult.kind === "SEARCH" ? randomUUID() : toolResult.resultSetId!;
+    const resultSetId = toolResult.resultSetId ?? randomUUID();
+    if (toolResult.kind === "SEARCH" && toolResult.resultSetId) {
+      const [source] = await db.select({ id: aiResultSets.id }).from(aiResultSets).where(and(
+        eq(aiResultSets.id, resultSetId), eq(aiResultSets.conversationId, conversation.id),
+        eq(aiResultSets.marketId, market.id), eq(aiResultSets.messageId, userMessageId),
+      ));
+      if (!source) throw fail(409, "تعذر التحقق من مصدر نتائج هذه الرسالة؛ أعد البحث.");
+    }
     // Monetization V3: every organic search records its need; on zero or low supply,
     // eligible «روح بع لي» campaigns may add labelled paid options after the organic list.
     let demandTrigger: string | undefined;
@@ -2468,6 +2489,9 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
     if (toolResult.kind === "SEARCH" || toolResult.kind === "RESULTS" || toolResult.kind === "RESOURCE")
       toolResult.listings = await decoratePaidCards(toolResult.listings, toolResult.query, { actorId: req.actor!.id, marketId: market.id, resultSetId });
     const resourceIds = toolResult.listings.map((listing) => listing.id);
+    req.log.info({ event: "dinar_response_source", conversationId: conversation.id, messageId: userMessageId,
+      marketId: market.id, resultSetId, resourceIds, kind: toolResult.kind,
+    }, "response and card bound to canonical result");
     const stateSource =
       toolResult.kind === "SEARCH" || toolResult.kind === "RESULTS"
         ? toolResult.query
@@ -2509,7 +2533,7 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
           : toolResult.listings.length && typeof toolResult.query.widenedFromCategory === "string"
             ? `لم أجد عروضًا مطابقة في تصنيف «${toolResult.query.widenedFromCategory}»، فعرضت ${toolResult.listings.length} عروض من تصنيفات أخرى تطابق كلماتك.`
           : toolResult.listings.length && Array.isArray(toolResult.query.broadenedFrom)
-            ? `لم أجد عروضًا تذكر «${toolResult.query.broadenedFrom.join(" ")}» تحديدًا، فعرضت ${toolResult.listings.length} عروض تطابق بقية طلبك.`
+            ? `لم أجد عروضًا تذكر «${toolResult.query.broadenedFrom.join(" ")}» تحديدًا، فوسعت البحث باستبعاد هذا الوصف فقط وعرضت ${toolResult.listings.length} عروض تطابق بقية طلبك.`
           : toolResult.listings.length
             ? `وجدت ${toolResult.listings.length} عروض منشورة تطابق طلبك. راجع التفاصيل الحالية من بطاقات العرض.`
             : searchState?.filters.length
@@ -2594,6 +2618,10 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
           query: toolResult.query,
           resourceIds,
           expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        }).onConflictDoUpdate({
+          target: aiResultSets.id,
+          set: { query: toolResult.query, resourceIds },
+          setWhere: and(eq(aiResultSets.conversationId, conversation.id), eq(aiResultSets.marketId, market.id), eq(aiResultSets.messageId, userMessageId)),
         });
       }
       if (blocks.length) {

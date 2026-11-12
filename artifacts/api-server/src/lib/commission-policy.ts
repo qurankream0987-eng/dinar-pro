@@ -1,3 +1,4 @@
+import { currencyScale } from "@workspace/global";
 import { createHash } from "node:crypto";
 import { and, desc, eq, isNull, lte, or, sql } from "drizzle-orm";
 import { commissionPolicies } from "@workspace/db";
@@ -194,4 +195,50 @@ export function commissionReversalForRefund(input: {
     calculatePlatformFeeMinor(after, rateBasisPoints) -
     calculatePlatformFeeMinor(before, rateBasisPoints);
   return Math.max(0, reversal);
+}
+
+/** The approved tier direction is prepared for review only. No checkout caller enables it. */
+export const COMMISSION_TIER_ACTIVATION_ENABLED = false as const;
+export type TieredCommissionRule = {
+  policyKey: string;
+  version: number;
+  marketId: string;
+  currencyCode: string;
+  minorUnitScale: number;
+  thresholdMinor: number | null;
+  effectiveFrom: string;
+  effectiveTo: string | null;
+  approved: boolean;
+};
+export type TieredCommissionPreview =
+  | { status: "BLOCKED"; reason: string; activationEnabled: false }
+  | { status: "READY_FOR_REVIEW"; activationEnabled: false; approved: boolean; rateBasisPoints: number; feeMinor: number; snapshot: {
+      policyKey: string; version: number; marketId: string; currencyCode: string;
+      thresholdMinor: number; eligibleSubtotalMinor: number; rateBasisPoints: number;
+      basis: "GROSS_ITEM_SUBTOTAL"; roundingMode: "HALF_UP"; effectiveFrom: string; effectiveTo: string | null;
+    } };
+
+/**
+ * Side-effect-free preview of a versioned market rule. Thresholds are local-currency minor
+ * units, never FX-derived. This cannot publish policy or alter an order. Shipping/tax are
+ * separately recorded values and are deliberately absent from the eligible item subtotal.
+ * At the threshold, 5% applies to the WHOLE subtotal; above it, 10% applies to the WHOLE subtotal.
+ * Historical orders continue using commissionRateForOrder and their immutable fee snapshot.
+ */
+export function previewTieredCommission(rule: TieredCommissionRule, input: {
+  marketId: string; currencyCode: string; minorUnitScale: number;
+  eligibleSubtotalMinor: number; at: Date;
+}): TieredCommissionPreview {
+  const blocked = (reason: string): TieredCommissionPreview => ({status:"BLOCKED",reason,activationEnabled:false});
+  if (rule.policyKey !== COMMISSION_POLICY_KEY || !Number.isSafeInteger(rule.version) || rule.version < 1) return blocked("INVALID_VERSION");
+  if (rule.marketId !== input.marketId || rule.currencyCode !== input.currencyCode || rule.minorUnitScale !== input.minorUnitScale) return blocked("MARKET_CURRENCY_MISMATCH");
+  try {if(currencyScale(input.currencyCode)!==input.minorUnitScale) return blocked("INVALID_CURRENCY_SCALE");}catch{return blocked("INVALID_CURRENCY");}
+  if (!Number.isInteger(rule.minorUnitScale) || rule.minorUnitScale < 0 || rule.minorUnitScale > 3) return blocked("INVALID_CURRENCY_SCALE");
+  if (!Number.isSafeInteger(rule.thresholdMinor) || rule.thresholdMinor! < 0) return blocked("THRESHOLD_NOT_CONFIGURED");
+  if (!Number.isSafeInteger(input.eligibleSubtotalMinor) || input.eligibleSubtotalMinor < 0) return blocked("INVALID_ELIGIBLE_SUBTOTAL");
+  const from=Date.parse(rule.effectiveFrom),to=rule.effectiveTo===null ? Infinity : Date.parse(rule.effectiveTo),at=input.at.getTime();
+  if (!Number.isFinite(from) || !(Number.isFinite(to)||to===Infinity) || to<=from || !Number.isFinite(at) || at<from || at>=to) return blocked("NOT_EFFECTIVE");
+  const rateBasisPoints=input.eligibleSubtotalMinor<=rule.thresholdMinor! ? 500 : 1000;
+  let feeMinor:number;try {feeMinor=calculatePlatformFeeMinor(input.eligibleSubtotalMinor,rateBasisPoints);} catch {return blocked("AMOUNT_OUT_OF_RANGE");}
+  return {status:"READY_FOR_REVIEW",activationEnabled:false,approved:rule.approved,rateBasisPoints,feeMinor,snapshot:{policyKey:rule.policyKey,version:rule.version,marketId:rule.marketId,currencyCode:rule.currencyCode,thresholdMinor:rule.thresholdMinor!,eligibleSubtotalMinor:input.eligibleSubtotalMinor,rateBasisPoints,basis:"GROSS_ITEM_SUBTOTAL",roundingMode:"HALF_UP",effectiveFrom:rule.effectiveFrom,effectiveTo:rule.effectiveTo}};
 }

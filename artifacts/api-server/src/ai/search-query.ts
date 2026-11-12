@@ -7,6 +7,7 @@ import {
   type SearchQuery,
   type SearchSort,
 } from "@workspace/api-zod/marketplace-schemas";
+import { itemTokens, tokenVariants } from "../lib/arabic-search-terms";
 import { searchTerms, stripCorrectionPrefix } from "./intent";
 import {
   hasCategoryAlias,
@@ -156,6 +157,13 @@ function searchCategory(
         CATEGORY_NEUTRAL_HINT_FIELDS.has(field.toLowerCase())
       )
         return [];
+      // An audience, material or automatic feature applies across product families. It may
+      // filter a category the buyer named, but cannot independently choose that category.
+      // Identity hints (brand/model/property kind) retain their existing inference behavior;
+      // other attributes require an explicit field label before they can imply a category.
+      const identityHint = /^(?:make|manufacturer|brand|model|propertyType)$/iu.test(field);
+      const namedField = [field, definition.label, ...(FIELD_TERMS[field] ?? [])].some((label) => hasPhrase(normalized, label));
+      if (!identityHint && !namedField) return [];
       const knownPhrases = FIELD_VALUE_ALIASES
         .filter((entry) => entry.fields.test(field))
         .flatMap((entry) => entry.phrases);
@@ -518,8 +526,11 @@ export function parseStructuredSearch(
     sort,
   );
   // Without a category, new product words start a new search; bare constraints refine the last one.
+  const attributeWords=nextFilters.filter(filter=>!["price"].includes(filter.field)).flatMap(filter=>normalizeSearch(String(filter.value)).split(/\s+/u));
+  const scopeWords=itemTokens(extractedSearch.split(/\s+/u)).filter(word=>word && !["لا","مو","مش","ليس","ليست"].includes(word));
+  const attributeOnly=Boolean(extractedSearch) && scopeWords.every(word=>attributeWords.some(value=>tokenVariants(word).some(form=>tokenVariants(value).includes(form))));
   const refinesPrevious = schema
-    ? previous?.categoryId === categoryId
+    ? previous?.categoryId === categoryId && (!extractedSearch || attributeOnly || normalizeSearch(extractedSearch) === normalizeSearch(previous?.search ?? ""))
     : previous !== undefined && !previous.categoryId && !extractedSearch;
   const previousFilters = refinesPrevious ? previous?.filters ?? [] : [];
   const filters = clearFilters

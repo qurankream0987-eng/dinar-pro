@@ -1,0 +1,94 @@
+{
+  "runtimeSha": "16f85e5a55ea360c646de56f4e42b93cf1755a1f",
+  "previous": {
+    "PASS": 370,
+    "FAIL": 27,
+    "BLOCKED": 103,
+    "historicalBlockedLabel": "NOT_EXECUTABLE_DET"
+  },
+  "frozen500": {
+    "PASS": 409,
+    "FAIL": 0,
+    "BLOCKED": 91
+  },
+  "heldout5": {
+    "PASS": 30,
+    "FAIL": 0,
+    "BLOCKED": 0
+  },
+  "laboratorySpend": {
+    "calls": 0,
+    "inputTokens": 0,
+    "cachedTokens": 0,
+    "outputTokens": 0,
+    "usdAtRates": 0
+  },
+  "regression": {
+    "suites": 126,
+    "tests": 853,
+    "PASS": 843,
+    "FAIL": 9,
+    "SKIP": 1,
+    "CANCELLED": 0,
+    "outbound": 0,
+    "nonzeroSuites": [
+      "lab-defect-regressions",
+      "model-native-routing",
+      "sc01-browser-journey",
+      "search-sql-foundation",
+      "sc-conversation-routing",
+      "api",
+      "deepseek-chat-compatibility"
+    ]
+  },
+  "note": "Populations overlap. Never sum laboratory, broad-battery and repeated-run counts as unique cases. SKIP is retained as SKIP, never PASS.",
+  "supplementalRuns": {
+    "independent-search-and-http-retry": [
+      {
+        "suite": "second-pass-search-equivalence",
+        "exit": 0,
+        "seconds": 13.8,
+        "outbound": 0,
+        "tests": 1,
+        "pass": 1,
+        "fail": 0,
+        "skipped": 0,
+        "cancelled": 0,
+        "log": "/workspace/second-pass/independent-search-and-http-retry/second-pass-search-equivalence.log"
+      },
+      {
+        "suite": "sc-conversation-routing",
+        "exit": 0,
+        "seconds": 12.9,
+        "outbound": 0,
+        "tests": 5,
+        "pass": 5,
+        "fail": 0,
+        "skipped": 0,
+        "cancelled": 0,
+        "log": "/workspace/second-pass/independent-search-and-http-retry/sc-conversation-routing.log"
+      }
+    ],
+    "browser-isolated-retry": [
+      {
+        "suite": "sc01-browser-journey",
+        "exit": 0,
+        "seconds": 68.2,
+        "outbound": 0,
+        "tests": 1,
+        "pass": 1,
+        "fail": 0,
+        "skipped": 0,
+        "cancelled": 0,
+        "log": "/workspace/second-pass/browser-isolated-retry/sc01-browser-journey.log"
+      }
+    ]
+  },
+  "skipExplanation": {
+    "suite": "development-tls",
+    "case": "live TLS validates chain and service identity, rejecting wrong identity and CA",
+    "status": "SKIP",
+    "reason": "DINAR_TLS_ACCEPTANCE is not 1; no verified TLS database fixture configured for this isolated loopback run.",
+    "evidence": "regression-verified/development-tls.log"
+  }
+}

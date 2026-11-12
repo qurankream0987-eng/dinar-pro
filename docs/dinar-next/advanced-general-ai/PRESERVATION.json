@@ -1,0 +1,17 @@
+{
+  "protectedPathsUnchanged": [
+    "lib/db",
+    "artifacts/dinar",
+    "artifacts/api-server/src/ai/card-envelope.ts",
+    "artifacts/api-server/src/lib/ai-spend.ts",
+    "artifacts/api-server/src/lib/ai-usage.ts",
+    "artifacts/api-server/test/lab",
+    "artifacts/api-server/test/fixtures",
+    "docs/dinar-next/second-pass",
+    "docs/dinar-next/contract-openrouter"
+  ],
+  "baseline": "217ac4840d15a03c64e895092396fda17f2f3663",
+  "priorArtifactsHashVerified": true,
+  "blocked91Sha256": "2782d60a3d42b41712e7e91aa9532c92d23056d0d2c469cc9cdc18d1465bde40",
+  "allFrozenTestsUnchanged": true
+}

@@ -1,3 +1,5 @@
+import { parseStructuredSearch } from "./search-query";
+import { claimsCompletedAction } from "./action-receipts";
 import { executeConnectReadTurn } from "../connect/conversation";
 import type { DomainSearchProvider } from "../connect/domains";
 import {
@@ -13,6 +15,7 @@ import { orderContext } from "./order-context";
 import { contextualQuery, hasCategoryAlias } from "./search-context";
 import { addToCartIntent, backIntent, statedCartQuantity, refusesCommercialAction, requestCore, searchTerms, stripCorrectionPrefix, surfaceIntent } from "./intent";
 import {
+  explicitReadOnlyCalculation,
   findOrdinalMention,
   findOrdinalMentions,
   foldArabicLetters,
@@ -53,12 +56,13 @@ import { itemTokens, textMatchesToken } from "../lib/arabic-search-terms";
 import {
   executeSellerAdviceTurn,
   executeSellerListingManagementTurn,
+  explicitMarketingTruthRefusal,
   isMarketingRequest,
   isSellerBusinessQuestion,
   isBareRemainingQuestion,
 } from "./seller-management";
 import { executeEmploymentTurn, isEmploymentQuery } from "./employment-turn";
-import { executeDeliveryTurn, isDeliveryQuery } from "./delivery-turn";
+import { deliveryIntent, normalizeDeliveryText, executeDeliveryTurn, isDeliveryQuery } from "./delivery-turn";
 import { executePromotionTurn, explainSponsoredPlacement, isPromotionQuery } from "./promotion-turn";
 import { executeBuyerTurn, executePurchaseTurn, executeOrderContactRequest, reviewQuantity } from "./buyer-turn";
 import { executeListingFactQuestion } from "./listing-fact-question";
@@ -150,13 +154,15 @@ async function executeCartConversationTurn(input: {
     .replace(/[أإآ]/g, "ا")
     .replace(/ى/g, "ي")
     .replace(/ة/g, "ه")
+    .replace(/[.؟?!]+$/u, "")
     .trim();
   const remove = /^(?:شيل(?:ه|ها)?|احذف(?:ه|ها)?|ازل|ازيل)(?:\s|$)/u.test(text);
+  const contextualQuantity = text.match(/^(?:لا\s+)?(?:خليهم|خليهن|خليه|خليها|خلهم|خلها)\s+(.+)$/u);
   const quantityChange = text.match(
     /^(?:غير|عدل|اجعل|خله|خليها|اضبط|ضبط)\s+(?:(?:ال)?كميه\s+)?(?:(?:العنصر|المنتج)\s+)?(.+?)\s+(?:الي|ل)\s*(.+)$/u,
-  );
-  const continueCheckout =
-    /^(?:كمل|اكمل|كمل\s+(?:ال)?(?:شراء|الدفع)|اكمل\s+(?:ال)?(?:شراء|الدفع))$/u.test(text);
+  ) ?? (contextualQuantity ? [contextualQuantity[0], "", contextualQuantity[1]!] : null);
+  const ambiguousOrderContinuation=/^(?:كمل|اكمل)\s+(?:ال)?(?:طلب|طلبي)$/u.test(text);
+  const continueCheckout=/^(?:كمل|اكمل)$/u.test(text) || ambiguousOrderContinuation;
   // «فضي السلة», «فرغ سلتي», «امسح كل شي بالسلة»: every line, and only cart lines.
   const clearCart = /^(?:فضي|فضيلي|فرغ|افرغ|امسح|نظف|صفر)\s+(?:لي\s+)?(?:كل\s+(?:شي|شيء)\s+(?:في|ب)\s*)?(?:ال)?(?:سله|سلتي|عربه)$/u.test(text);
   // An explicit «من السلة» names the cart whatever card was shown last.
@@ -174,7 +180,7 @@ async function executeCartConversationTurn(input: {
     )
     .orderBy(desc(messages.createdAt))
     .limit(1);
-  if (!latestAssistant) return null;
+  if (!latestAssistant) return ambiguousOrderContinuation ? clarify("لا توجد مراجعة سلة حالية. افتح السلة أو طلباتك وحدد ما تريد متابعته؛ لم أنفّذ شيئًا.") : null;
   const [latestSurface] = await db
     .select({ payload: aiUiBlocks.payload })
     .from(aiUiBlocks)
@@ -185,6 +191,8 @@ async function executeCartConversationTurn(input: {
       ),
     )
     .limit(1);
+  if (ambiguousOrderContinuation && (latestSurface?.payload as {surface?:unknown} | undefined)?.surface !== "CART") return clarify("هل تقصد طلبًا قائمًا أم عناصر السلة؟ افتح طلباتك أو السلة وحدد المقصود؛ لم أنفّذ شيئًا.");
+  if (ambiguousOrderContinuation) return null; // Visible cart: use the ordinary checkout review navigation.
   if (
     !clearCart && !namesCart &&
     (latestSurface?.payload as { surface?: unknown } | undefined)?.surface !==
@@ -462,7 +470,7 @@ async function resolveConversationReference(
           JSON.stringify({
             query: stored.data.search ?? "",
             ...(stored.data.categoryId ? { categoryId: stored.data.categoryId } : {}),
-            filters: stored.data.filters ?? [],
+            filters: [...(stored.data.filters ?? []), ...(parseStructuredSearch(context.message)?.filters.filter((filter) => filter.field === "price") ?? [])],
             ...(stored.data.sort ? { sort: stored.data.sort } : {}),
           }),
           toolContext,
@@ -484,16 +492,17 @@ async function resolveConversationReference(
     return open(index);
   }
   if (reference?.kind === "CHEAPEST" || reference?.kind === "PRICIEST") {
-    const rows = await db
-      .select({ id: offers.id, price: offers.unitPriceMinor })
-      .from(offers)
-      .where(and(inArray(offers.id, latest.resourceIds), eq(offers.marketId, context.market.id)));
-    const priced = rows.filter((row) => row.price !== null && row.price !== undefined);
-    if (!priced.length) return undefined;
+    const rows = await searchMarketplaceListings(context.market, { search: "", allowedIds: latest.resourceIds, conversational: true, sponsoredPlacement: false });
+    const priced = rows.filter((row) => row.unitPrice !== null);
+    if (!priced.length) return clarify("لا توجد أسعار معلنة للعروض المتاحة الآن.");
     const pick = priced.reduce((best, row) =>
-      (reference.kind === "CHEAPEST" ? Number(row.price) < Number(best.price) : Number(row.price) > Number(best.price)) ? row : best);
+      (reference.kind === "CHEAPEST" ? Number(row.unitPrice) < Number(best.unitPrice) : Number(row.unitPrice) > Number(best.unitPrice)) ? row : best);
     const index = latest.resourceIds.indexOf(pick.id);
-    return index >= 0 ? open(index) : undefined;
+    if (index < 0) return undefined;
+    const selected = await open(index);
+    const current = selected.result.listings[0];
+    if (current) selected.result.query = { ...selected.result.query, buyer: { authority: "DINAR", message: `${reference.kind === "CHEAPEST" ? "الأرخص" : "الأغلى"} بين العروض الظاهرة المتاحة: «${current.title}» بسعر ${current.unitPrice} ${current.currency}. من سجل DINAR الحالي، بدون التوصيل أو أي رسوم. لم يتغير شيء.` } };
+    return selected;
   }
   // «لا، أقصد الثالث، ولا تضيفه للسلة»: once the correction and the refusal are set aside, what
   // remains is a plain reference. It is only opened (read-only), whatever the message refused.
@@ -696,6 +705,8 @@ export async function executeAiConversationTurn(
     actorId?: string;
     modelToolContinuation?: unknown;
     imageObjectPaths?: string[];
+    /** Server-only visual interpretation after private ownership, budget and provider validation. */
+    imageUnderstanding?: { answer: string; status: "ANALYZED" | "UNAVAILABLE" };
     reasoningEffort?: "low" | "medium" | "high";
     /** Explicit one-time location submission against a delivery request (Block D). */
     location?: unknown;
@@ -717,6 +728,16 @@ export async function executeAiConversationTurn(
     modelStage?: "ONLY";
   } = {},
 ): Promise<{ tool: string; version: number; result: ToolResult; taskPlan?: TaskPlan }> {
+  if (context.imageUnderstanding) {
+    const prompt = claimsCompletedAction(context.imageUnderstanding.answer)
+      ? "أستطيع شرح محتوى الصورة فقط؛ لم أنفّذ أي إجراء أو أؤكد شراءً أو دفعًا."
+      : context.imageUnderstanding.answer;
+    return { tool: "imageUnderstanding", version: 1, result: {
+      kind: "SURFACE", surface: "ADVICE", listings: [],
+      query: { kind: "CONVERSATION", ownerId: context.actorId ?? null },
+      advice: { kind: "GROUNDED_ADVICE", scope: "CONVERSATION", authority: "MODEL", modelStatus: context.imageUnderstanding.status }, prompt,
+    } };
+  }
   if (!context.imageObjectPaths?.length && context.location === undefined) {
     const connected = await executeConnectReadTurn({ message: context.message, actorId: context.actorId, market: context.market, providers: options.domainSearchProviders, ...(options.planStep ? { deferWithoutDomain: true } : {}) });
     if (connected) { options.onToolSelected?.(connected.tool); return connected; }
@@ -1187,6 +1208,10 @@ async function executeRuntime(context: RuntimeContext, incoming: RuntimeOptions)
     if (turn) options.onToolSelected?.(turn.tool);
     return turn;
   };
+  if (!context.imageObjectPaths?.length && context.location===undefined) {
+    const explicitReply=explicitReadOnlyCalculation(context.message) ?? explicitMarketingTruthRefusal(context.message);
+    if(explicitReply){options.onToolSelected?.("dinarConversationTurn");return {tool:"dinarConversationTurn",version:1,result:{kind:"SURFACE",surface:"ADVICE",query:{},listings:[],advice:{kind:"GROUNDED_ADVICE",scope:"CONVERSATION",authority:"DINAR"},prompt:explicitReply}};}
+  }
   // A turn that died mid read resumes the same bounded model loop: its signatures and
   // verified feedback belong to that loop, not to a fresh deterministic reading.
   if (!options.noModel && !options.planStep && context.modelToolContinuation) {
@@ -1408,7 +1433,7 @@ async function executeRuntime(context: RuntimeContext, incoming: RuntimeOptions)
           context.conversationId,
           context.market.id,
           context.message,
-          surface,
+          deliveryIntent(normalizeDeliveryText(context.message)) === "CHOOSE_COURIER" ? undefined : surface,
           context.actorId,
         );
   if (orderResult) {
@@ -1429,6 +1454,12 @@ async function executeRuntime(context: RuntimeContext, incoming: RuntimeOptions)
   // the inactive-market gate; every other marketplace action remains behind it.
   if (!isMarketAvailable(context.market))
     return (await modelFallback()) ?? clarify();
+  // An explicit ceiling increase while a search is in view is a search refinement,
+  // not a counter-offer/quantity edit on one of the search rows.
+  if (/^(?:طيب\s+)?(?:ارفعها|ارفعه|زيدها)\s+/u.test(normalizeSearch(context.message))) {
+    const [last] = await db.select().from(aiResultSets).where(and(eq(aiResultSets.conversationId,context.conversationId),eq(aiResultSets.marketId,context.market.id))).orderBy(desc(aiResultSets.createdAt)).limit(1);
+    if (last && !(last.query as {kind?:unknown}).kind) { const refined = await executeBuyerTurn(context); if (refined) return refined; }
+  }
   // Best-price requests are explicit negotiation actions; do not let generic
   // commerce routing reinterpret them as a search or discussion.
   if (!addToCart && !hasListingPhotos && isBestPriceRequest(context.message)) {

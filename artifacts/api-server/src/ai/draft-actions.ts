@@ -333,7 +333,7 @@ export async function executeDraftActionTurn(input: {
   }
 
   // ── «كمل الإعلان»: bring back an unfinished draft; several mean a choice, never a guess.
-  const reviewRequest = REVIEW.test(said);
+  const reviewRequest = REVIEW.test(said) || /^(?:شو|وش|ايش|ما)\s+(?:ناقص|الناقص)(?:\s+(?:للاعلان|بالمسوده))?$/u.test(said);
   if (RESUME.test(said) || reviewRequest) {
     const drafts = open(await conversationDrafts(input.conversationId));
     // «اعرض الإعلان» without a draft is not about a draft; other handlers keep it.

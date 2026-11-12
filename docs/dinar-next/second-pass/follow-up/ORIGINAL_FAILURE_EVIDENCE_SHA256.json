@@ -1,0 +1,30 @@
+[
+  {
+    "path": "/workspace/second-pass/regression-verified/lab-defect-regressions.log",
+    "sha256": "64a6fd8d6c66b9fee10d58a3aa247be8bc2efde70f344c7b98caa8f6397eeef8"
+  },
+  {
+    "path": "/workspace/second-pass/regression-verified/model-native-routing.log",
+    "sha256": "0155eb76b5de0e280f6a6534ec34c3eb66ca5e6321a0599ff65d9faf56f47b47"
+  },
+  {
+    "path": "/workspace/second-pass/regression-verified/sc01-browser-journey.log",
+    "sha256": "636c447bc397defbc4d15ce336af2ff7a1611d2662e80c2ce7ba9473af55fea4"
+  },
+  {
+    "path": "/workspace/second-pass/regression-verified/search-sql-foundation.log",
+    "sha256": "8b980d4d0b647f0ad831d732be8b9f9d807a38b6023f49441e7efea2d14240ea"
+  },
+  {
+    "path": "/workspace/second-pass/regression-verified/sc-conversation-routing.log",
+    "sha256": "c2b4010c1b1a86ff4c8529e364744cee4b44b9e440c9059196f4784ea525da9f"
+  },
+  {
+    "path": "/workspace/second-pass/regression-verified/api.log",
+    "sha256": "e5d8f2f9c486e518fd2d29417e615be1e831bab7577bf196463d5c3c7748fce7"
+  },
+  {
+    "path": "/workspace/second-pass/regression-verified/deepseek-chat-compatibility.log",
+    "sha256": "ac353a83b92cff31c729ad069756b02fe011bb2d5ef02aa52142eef7fad1b01a"
+  }
+]

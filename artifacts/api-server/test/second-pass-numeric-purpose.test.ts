@@ -1,0 +1,2 @@
+import {test,after} from 'node:test';import assert from 'node:assert/strict';import {pool} from '@workspace/db';import {purposeTokens} from '../src/lib/arabic-search-terms';
+test('a purpose-looking phrase containing a model number is never relaxed',()=>{assert.deepEqual(purposeTokens(['قطعة','لموديل37']),[]);assert.deepEqual(purposeTokens(['قطعة','لنسخة٣٧']),[]);assert.deepEqual(purposeTokens(['قطعة','للمكتب']),['للمكتب'])});after(()=>pool.end());

@@ -1,0 +1,2 @@
+import {test,after} from 'node:test';import assert from 'node:assert/strict';import {pool} from '@workspace/db';import {normalizeBuyerText} from '../src/ai/buyer-turn';
+test('buyer price normalization retains decimals across two and three decimal currencies',()=>{assert.match(normalizeBuyerText('ميزانيتي 7.50 دينار.'),/7\.50/);assert.match(normalizeBuyerText('تحت 0.125؟'),/0\.125/)});after(()=>pool.end());

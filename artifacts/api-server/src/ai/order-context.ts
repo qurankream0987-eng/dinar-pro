@@ -54,7 +54,7 @@ function requestFor(message: string, surface?: string): OrderPurpose | "HIDE_MAP
 }
 
 function isOrderFollowup(message: string) {
-  return /كلم البائع|اكد الاستلام|وينه|وينها|حالتها|حالته|وضعه|وضعها|متى يوصل|متى يصل/u.test(
+  return /كلم البائع|اكد الاستلام|(?:طيب\s+)?وين\s+وصل|وينه|وينها|حالتها|حالته|وضعه|وضعها|متى يوصل|متى يصل/u.test(
     normalized(message),
   );
 }
@@ -186,7 +186,7 @@ export async function orderContext(
   const latest = await latestOrderState(conversationId, marketId, ownerId);
   // Relative selections belong to the currently displayed domain; do not consume listing,
   // draft, or other conversation ordinals as order references.
-  if (!request && !latest) return undefined;
+  if (!request && !latest) return /^(?:طيب\s+)?وين\s+وصل[؟?!.]*$/u.test(message.trim()) ? {kind:"SURFACE",surface:"CLARIFY",query:{},listings:[],prompt:"أي طلب تقصد؟ افتح طلباتك وحدد الطلب لعرض حالته الحالية؛ لم يتغير شيء."} : undefined;
   if (request === "HIDE_MAP" || request === "SHOW_MAP") {
     if (!latest || latest.surface !== "ORDER_TRACKING") return undefined;
     const orderId =

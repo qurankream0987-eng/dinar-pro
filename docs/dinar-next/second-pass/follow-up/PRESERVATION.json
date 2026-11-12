@@ -1,0 +1,16 @@
+{
+  "startingRuntimeSha": "16f85e5a55ea360c646de56f4e42b93cf1755a1f",
+  "newRuntimeSha": "28f26779fbc4b23c6269795656a0d42db7aff9ef",
+  "unchangedProductionBoundaries": {
+    "lib/db": true,
+    "lib/api-spec": true,
+    "lib/api-client-react": true,
+    "lib/api-zod": true,
+    "artifacts/dinar/src": true,
+    "artifacts/api-server/src/ai/card-envelope.ts": true,
+    "artifacts/api-server/src/lib/commission-policy.ts": true,
+    "pnpm-lock.yaml": true
+  },
+  "changedPreexistingTestFiles": [],
+  "productionDiff": "artifacts/api-server/src/ai/model-turn.ts | 2 +-\n 1 file changed, 1 insertion(+), 1 deletion(-)"
+}

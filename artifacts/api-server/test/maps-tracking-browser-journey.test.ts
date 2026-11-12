@@ -142,7 +142,7 @@ await test("MAPS browser: location picker, methods, honest timeline, synthetic l
 
   const web = await startDinarBrowserTestWeb(origin);
   const reportPath = `/tmp/dinar-maps-${randomUUID()}.json`;
-  const shots = `${process.cwd()}/../../docs/dinar-next/evidence/maps-tracking`;
+  const shots = `${process.env.DINAR_BROWSER_EVIDENCE_DIR ?? `${process.cwd()}/.test-build/browser-evidence`}/maps-tracking-${randomUUID()}`;
   await mkdir(shots, { recursive: true });
   let runError: unknown;
   try {

@@ -1,3 +1,4 @@
+import { parseStructuredSearch } from "./search-query";
 /**
  * G2 — smart conversation inside the one shared DINAR runtime.
  *
@@ -388,6 +389,22 @@ function consultationTurn(state: Consultation, prompt: string): Turn {
       prompt,
     },
   };
+}
+
+/** A model restatement is not allowed to erase an explicit original price constraint. */
+async function retainUserPriceBounds(turn: Turn, message: string, market: Market): Promise<Turn> {
+  if (turn.result.kind !== "SEARCH") return turn;
+  const hard = parseStructuredSearch(message)?.filters.filter((filter) => filter.field === "price") ?? [];
+  if (!hard.length) return turn;
+  const query = turn.result.query;
+  const buyer = (query.buyer ?? {}) as Partial<BuyerState>;
+  const result = await runBuyerSearch(market, {
+    ...buyer, search: typeof query.search === "string" ? query.search : buyer.search ?? "",
+    ...(typeof query.categoryId === "string" ? { categoryId: query.categoryId } : {}),
+    filters: [...(Array.isArray(query.filters) ? query.filters : buyer.filters ?? []), ...hard],
+    ranking: buyer.ranking ?? "DEFAULT",
+  });
+  return { ...turn, result };
 }
 
 async function consultationSearch(market: Market, state: Consultation): Promise<Turn> {
@@ -1559,13 +1576,13 @@ function groundedModelProse(
   return fallback;
 }
 
-function withModelToolAnswer(result: ToolResult, answer: string, preserveResultSetId = false): ToolResult {
+function withModelToolAnswer(result: ToolResult, answer: string, preserveResultSetId = false, authority: "MODEL" | "DINAR" = "MODEL"): ToolResult {
   return {
     ...result,
-    ...(result.kind === "SEARCH" && !preserveResultSetId ? { resultSetId: undefined } : {}),
+    // Preserve the canonical successful read identity through the response and Card Envelope.
     query: {
       ...result.query,
-      buyer: { message: answer.slice(0, 1600), authority: "MODEL" },
+      buyer: { message: answer.slice(0, 1600), authority },
     },
   };
 }
@@ -1724,6 +1741,7 @@ export async function executeModelFallback(
       conversationId: input.conversationId,
       market: input.market,
       actorId: input.actorId,
+      userMessage: input.message,
       ...(input.currentMessageId ? { currentMessageId: input.currentMessageId } : {}),
     };
     const toolRoles =
@@ -1820,6 +1838,11 @@ export async function executeModelFallback(
       }
       if (execution) {
         const result = execution.result;
+        logger.info({ event: "dinar_canonical_read", conversationId: input.conversationId,
+          messageId: input.currentMessageId, marketId: input.market.id, tool: execution.tool,
+          resultSetId: result.resultSetId, kind: result.kind,
+          resourceIds: result.listings.map((listing) => listing.id),
+        }, "current-turn canonical read completed");
         // A later verified read answers the turn; an earlier stale refusal no longer describes it.
         lastRejectedReadCode = undefined;
         toolFeedback.push({
@@ -1829,9 +1852,14 @@ export async function executeModelFallback(
         });
         if (result.kind === "SURFACE" && result.surface === "COMPARISON")
           lastComparisonResult = result;
-        if (result.kind === "SEARCH") lastSearchResult = result;
+        if (result.kind === "SEARCH") {
+          lastSearchResult = result;
+          lastResourceResult = undefined;
+          lastComparisonResult = undefined;
+        }
         if (result.kind === "RESOURCE") {
           lastResourceResult = result;
+          lastComparisonResult = undefined;
           if (lastSearchResult && result.listings[0]) {
             const refreshed = result.listings[0];
             // A read of a listing outside the earlier search is what this turn is about: the card
@@ -2032,13 +2060,13 @@ export async function executeModelFallback(
       { ownerId: input.actorId },
     );
   if (lastSearchResult || lastResourceResult) {
-    const answer = groundedModelProse(
-      outcome.replyFiltered ? GROUNDED_READ_ANSWER : outcome.turn.conversationalReply,
-      toolFeedback,
-      GROUNDED_READ_ANSWER,
-      input.conversationId,
-    );
     let result = lastSearchResult ?? lastResourceResult!;
+    // C12: a model sentence is not a proof that it describes these rows. Identity and money
+    // in the response follow exactly the canonical read that supplies the card, including
+    // empty results. General conversation remains model-authored outside listing reads.
+    const answer = result.listings.length
+      ? `هذه العروض من سجل DINAR: ${result.listings.map((listing) => `«${listing.title}» (${listing.unitPrice === null ? "السعر بالاتفاق" : `${listing.unitPrice} ${listing.currency}`})`).join("؛ ")}.`
+      : "لم أجد عروضًا مطابقة في القراءة الحالية داخل DINAR.";
     // Generative UI: the model may propose how this turn's verified results are shown. Every
     // position is resolved against the listings DINAR itself returned; anything unresolvable
     // rejects the whole proposal and the typed card stays as it was.
@@ -2076,7 +2104,7 @@ export async function executeModelFallback(
     return {
       tool: result.kind === "SEARCH" ? "searchListings" : "getResource",
       version: 1,
-      result: withModelToolAnswer(result, `${answer}${usageNote ? `\n\n${usageNote}` : ""}`, result.kind === "RESOURCE"),
+      result: withModelToolAnswer(result, `${answer}${usageNote ? `\n\n${usageNote}` : ""}`, true, "DINAR"),
     };
   }
   if (lastCapabilityRead) {
@@ -2200,7 +2228,8 @@ export async function executeModelFallback(
       "DINAR AI canonical request",
     );
     if (!problem && !conditionalPurchase && mode !== "SHADOW" && productControl) {
-      const routed = await productControl(turn.canonicalRequest);
+      const candidate = await productControl(turn.canonicalRequest);
+      const routed = candidate ? await retainUserPriceBounds(candidate, input.message, input.market) : null;
       if (routed) return { ...routed, result: { ...routed.result, modelRouted: { canonicalRequest: turn.canonicalRequest } } };
     }
   }
@@ -2233,14 +2262,14 @@ export async function executeModelFallback(
   // A general question («طيب وكم تكلف؟ وهل تناسب البيت؟») keeps its answer: the model may
   // not swap it for listings the user never asked to browse.
   if (!taskPlanProposal && (turn.suggestedAction === "SEARCH_LISTINGS" || turn.responseKind === "SEARCH_INTENT") && turn.entities?.item && !isGeneralQuestion(input.message))
-    return consultationSearch(input.market, {
+    return retainUserPriceBounds(await consultationSearch(input.market, {
       kind: "CONSULTATION",
       ownerId: input.actorId,
       goal: "BUY",
       item: turn.entities.item,
       ...(turn.entities.maxPrice ? { budget: turn.entities.maxPrice } : {}),
       preferences: [],
-    });
+    }), input.message, input.market);
   if (!taskPlanProposal && turn.suggestedAction === "CREATE_LISTING_DRAFT") {
     if (!isGroundedSellerDraftRequest(input.message, turn) || !createSellerDraft)
       return adviceTurn(

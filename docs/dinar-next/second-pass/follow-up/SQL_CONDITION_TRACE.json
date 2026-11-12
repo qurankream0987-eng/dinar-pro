@@ -1,0 +1,50 @@
+{
+  "query": {
+    "search": "أبي هاتف مستعمل",
+    "conversational": true
+  },
+  "removed": [
+    {
+      "id": "sf-0043",
+      "title": "هاتف مستعمل رقم 1",
+      "condition": "جديد"
+    },
+    {
+      "id": "sf-0047",
+      "title": "هاتف مستعمل رقم 5",
+      "condition": "جديد"
+    },
+    {
+      "id": "sf-0051",
+      "title": "هاتف مستعمل رقم 9",
+      "condition": "جديد"
+    },
+    {
+      "id": "sf-0055",
+      "title": "هاتف مستعمل رقم 13",
+      "condition": "جديد"
+    },
+    {
+      "id": "sf-0059",
+      "title": "هاتف مستعمل رقم 17",
+      "condition": "جديد"
+    },
+    {
+      "id": "sf-0063",
+      "title": "هاتف مستعمل رقم 21",
+      "condition": "جديد"
+    },
+    {
+      "id": "sf-0067",
+      "title": "هاتف مستعمل رقم 25",
+      "condition": "جديد"
+    },
+    {
+      "id": "sf-0071",
+      "title": "هاتف مستعمل رقم 29",
+      "condition": "جديد"
+    }
+  ],
+  "removedCount": 8,
+  "actualCount": 25
+}

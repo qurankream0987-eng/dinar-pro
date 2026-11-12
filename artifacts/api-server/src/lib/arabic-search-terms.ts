@@ -1,3 +1,4 @@
+import { cardinalWordValue } from "../ai/arabic-normalization";
 /**
  * General Arabic matching for conversational search. Tokens arrive already folded by
  * normalizeSearch (hamza forms → ا, ى → ي, diacritics removed; ة is kept). Nothing here knows
@@ -40,6 +41,8 @@ const LEXICON: readonly (readonly string[])[] = [
   ["مقهي", "كافيه", "كوفي"],
   ["شعار", "لوجو", "لوغو"],
   ["طعام", "سفره", "سفرة"],
+  ["تصليح", "اصلاح", "صيانه", "صيانة"],
+  ["لابتوب", "laptop"],
   ["كوب", "اكواب", "كاس", "كاسات", "كاسه", "كاسة"],
   // Brands and model words written in Arabic or Latin letters: a buyer types «ايفون», the seller
   // titled the listing «iPhone» (and back). Transliteration only — no product facts.
@@ -58,6 +61,11 @@ const POSSESSIVES = ["كم", "هم", "ها", "نا", "ي", "ك"];
 /** Every surface form a request token may take in a listing. */
 export function tokenVariants(token: string): string[] {
   const forms = new Set<string>([token]);
+  if (token.endsWith("تي") && token.length>=5) forms.add(`${token.slice(0,-2)}ة`).add(`${token.slice(0,-2)}ه`);
+  const beneficiary = /^([يتنب][\p{Script=Arabic}]{3,5})لي$/u.exec(token);
+  if (beneficiary) for (const form of tokenVariants(beneficiary[1]!)) forms.add(form);
+  const cardinal = cardinalWordValue(token);
+  if (cardinal !== undefined) forms.add(String(cardinal));
   for (const prefix of PROCLITICS)
     if (token.startsWith(prefix) && token.length - prefix.length >= 3) forms.add(token.slice(prefix.length));
   for (const form of [...forms]) {
@@ -71,6 +79,7 @@ export function tokenVariants(token: string): string[] {
       forms.add(`${stem}ة`).add(`${stem}ه`).add(stem);
     }
     // Final «ه» written for «ة» and back: «طاوله» ↔ «طاولة».
+    if (token.endsWith("تي") && form.endsWith("ت") && form.length >= 4) forms.add(`${form.slice(0,-1)}ة`).add(`${form.slice(0,-1)}ه`);
     if (form.length >= 3 && form.endsWith("ه")) forms.add(`${form.slice(0, -1)}ة`);
     if (form.length >= 3 && form.endsWith("ة")) forms.add(`${form.slice(0, -1)}ه`);
     // A singular in ة names one of a collective noun: «كنبة» ↔ «كنب», «شجرة» ↔ «شجر» (W04).
@@ -82,6 +91,10 @@ export function tokenVariants(token: string): string[] {
     if (form.includes("ظ")) forms.add(form.replaceAll("ظ", "ض"));
   }
   for (const form of [...forms]) {
+    // Regular form-I passive participle مفعول ↔ imperfect يفعل. Whole-word matching below
+    // keeps unrelated longer words out; no product-specific roots or global stemming.
+    const passive = /^م([\p{Script=Arabic}])([\p{Script=Arabic}])و([\p{Script=Arabic}])$/u.exec(form);
+    if (passive) forms.add(`ي${passive[1]}${passive[2]}${passive[3]}`);
     // Form II imperfect ↔ verbal noun: «ينظف» ↔ «تنظيف», «يصمم» ↔ «تصميم», «نوصل» ↔ «توصيل»;
     // the Levantine «بـ» imperfect too: «بنظف».
     const verb = /^[يتناب](\S)(\S)(\S)$/u.exec(form);
@@ -91,6 +104,7 @@ export function tokenVariants(token: string): string[] {
     const agent = LEXICON_BY_WORD.has(form) ? null : /^م(\S)(\S)(\S)$/u.exec(form);
     if (agent) forms.add(`ت${agent[1]}${agent[2]}ي${agent[3]}`);
   }
+  for (const form of [...forms]) for (const synonym of LEXICON_BY_WORD.get(form) ?? []) forms.add(synonym);
   for (const form of [...forms]) for (const synonym of LEXICON_BY_WORD.get(form) ?? []) forms.add(synonym);
   return [...forms];
 }
@@ -130,7 +144,7 @@ export function itemTokens(tokens: readonly string[]): string[] {
  * them (`broadenedFrom`). The first item word is never relaxed.
  */
 export function purposeTokens(tokens: readonly string[]): string[] {
-  return tokens.slice(1).filter((token) => /^ل(?!ل|ا)/u.test(token) && token.length >= 4);
+  return tokens.slice(1).filter((token) => /^ل(?!ا)/u.test(token) && token.length >= 4 && !/[\d٠-٩۰-۹]/u.test(token) && !tokenVariants(token).some(form=>/^\d+$/u.test(form)));
 }
 
 const escape = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -141,6 +155,7 @@ const escape = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
  * unrelated words.
  */
 export function textMatchesToken(text: string, token: string): boolean {
+  if (/^\d+$/u.test(token)) return new RegExp(`(?<![\\p{L}\\p{N}])(?<!\\d[.,٫])${escape(token)}(?![\\p{L}\\p{N}]|[.,٫]\\d)`, "u").test(text);
   if (text.includes(token)) return true;
   // …and end it, allowing only an inflectional ending: the stem «سيار» (from «سيارات») matches
   // «سيارة», but a stem is never the prefix of another word.
@@ -149,4 +164,39 @@ export function textMatchesToken(text: string, token: string): boolean {
       form !== token &&
       new RegExp(`(?:^|\\s)(?:و|ف|ب|ل|ك)?(?:ال)?${escape(form)}(?:ة|ه|ات|ي|يه|ية)?(?=\\s|$)`, "u").test(text),
   );
+}
+
+/** Shared bounded recall; callers retain every hard filter and eligibility check. */
+export async function boundedItemRelaxation<T extends { title: string }>(query: string, normalize: (text: string) => string, run: (query: string) => Promise<T[]>): Promise<{ listings: T[]; dropped: string[] } | undefined> {
+  const words = itemTokens(normalize(query).split(/\s+/u).filter(Boolean)).slice(0, 6);
+  if (words.length < 3) return undefined;
+  const [head, ...others] = words;
+  // A definite adjective after a purpose/recipient phrase describes that destination,
+  // not the item: do not turn «للمنزل الجديد» into a hard new-item constraint.
+  const purposeAdjectives = new Set<number>();
+  for (let i = 1; i < words.length - 1; i++) {
+    if (!/^ل\S{2,}$/u.test(words[i]!)) continue;
+    for (let j = i + 1; j < Math.min(words.length, i + 3) && /^ال/u.test(words[j]!) && DESCRIPTIVE.test(words[j]!); j++) purposeAdjectives.add(j);
+  }
+  const hardDescriptors = new Set(words.filter((word, index) => DESCRIPTIVE.test(word) && !purposeAdjectives.has(index)));
+  let tried = 0;
+  const combinations = (items: string[], count: number): string[][] => count === 0 ? [[]] : items.flatMap((item, i) => combinations(items.slice(i + 1), count - 1).map((rest) => [item, ...rest]));
+  for (let keep = others.length - 1; keep >= 0 && keep >= others.length - 3 && keep + 1 >= Math.ceil(words.length / 2); keep--) {
+    for (const rest of combinations(others, keep)) {
+      const subset = [head!, ...rest];
+      const dropped = others.filter((word) => !rest.includes(word));
+      if (dropped.some((word) => /\d/u.test(word) || cardinalWordValue(word) !== undefined || hardDescriptors.has(word)) || isDescriptiveOnly(subset)) continue;
+      if (++tried > 14) return undefined;
+      let listings = await run(subset.join(" "));
+      if (!rest.length) listings = listings.filter((listing) => textMatchesToken(normalize(listing.title), head!));
+      if (listings.length) return { listings, dropped };
+    }
+  }
+  return undefined;
+}
+
+/** A service's target noun must not be discarded to find a different service. */
+export function hasServiceMeaning(tokens: readonly string[]): boolean {
+  const nouns=new Set(["تنظيف","تصليح","اصلاح","صيانة","صيانه","تصميم","طباعه","طباعة","تركيب","غسيل","تبريد","دهان"]);
+  return tokens.some(token=>/^(?:ي|ت|ن|ب|بي|بن)(?:نظف|صلح|غسل|صمم|طبع|ركب|برد|دهن|رسم)(?:لي)?$/u.test(token) || tokenVariants(token).some(form=>nouns.has(form)));
 }

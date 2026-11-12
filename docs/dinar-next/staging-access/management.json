@@ -1,0 +1,9 @@
+{
+  "utc": "2026-11-11T20:05:52.376185+00:00",
+  "url": "https://backboard.railway.com/graphql/v2",
+  "operation": "query { projectToken { projectId environmentId } }",
+  "credentialPresent": true,
+  "purpose": "Read-only scope metadata, no deployments or infrastructure changes",
+  "errorType": "URLError",
+  "error": "<urlopen error Tunnel connection failed: 403 Forbidden>"
+}
