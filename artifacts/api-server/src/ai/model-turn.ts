@@ -283,6 +283,8 @@ export const MAX_TOOL_FEEDBACK_CHARS = 12000;
 const TOOL_FEEDBACK_FRAMING = "\n<dinar_tool_results></dinar_tool_results>".length;
 const HISTORY_TURNS = 10;
 const HISTORY_ENTRY_CHARS = 1200;
+/** The most recent assistant answer, kept (structure first) for follow-up transformations. */
+const LATEST_ANSWER_CHARS = 6000;
 /** Older user messages kept as topic hints beyond the recent window (smart-turn reads this many rows). */
 export const HISTORY_SCAN_ROWS = 40;
 const EARLIER_TOPICS = 6;
@@ -456,11 +458,40 @@ function contextMessage(message: string, context: ModelContext, earlierUserTopic
  * الطاقة الشمسية» still finds a subject that several commerce turns pushed out of it.
  */
 /** Preserve both task setup and late corrections/errors, within the existing per-entry budget. */
-function boundedHistoryExcerpt(text: string): string {
-  if (text.length <= HISTORY_ENTRY_CHARS) return text;
-  const marker = "\n[earlier content omitted]\n";
-  const head = 500;
-  return text.slice(0, head) + marker + text.slice(-(HISTORY_ENTRY_CHARS - head - marker.length));
+/**
+ * Context policy v2 for one history entry over its budget. Structure first, not position: the
+ * lines a follow-up is most likely to refer to (headings, table rows, list items, lines with
+ * numbers) are kept in their original order before plain prose, so «ارسمها», «النقطة الثانية» or
+ * «حوّلها لجدول» still see the data. The omission is marked, never silent.
+ */
+export function boundedHistoryExcerpt(text: string, budget = HISTORY_ENTRY_CHARS): string {
+  if (text.length <= budget) return text;
+  const marker = "[earlier content omitted]";
+  const lines = text.split("\n");
+  const structural = (line: string) =>
+    /^\s*(?:#{1,6}\s|\||[-*•]\s|\d+[.)]\s|```)/u.test(line) || /\d/u.test(line);
+  const keep = new Array<boolean>(lines.length).fill(false);
+  let used = marker.length + 1;
+  // Pass 0: the first line (the task) and the last two non-empty lines (latest corrections, the
+  // final error); pass 1: structural lines; pass 2: prose — each in order, while budget remains.
+  const nonEmpty = lines.map((line, i) => (line.trim() ? i : -1)).filter((i) => i >= 0);
+  const anchors = new Set([nonEmpty[0], ...nonEmpty.slice(-2)].filter((i): i is number => i !== undefined));
+  for (const pass of ["anchor", true, false] as const)
+    for (let i = 0; i < lines.length; i++) {
+      if (keep[i] || (pass === "anchor" ? !anchors.has(i) : anchors.has(i) || structural(lines[i]!) !== pass)) continue;
+      const cost = lines[i]!.length + 1;
+      if (used + cost > budget) continue;
+      keep[i] = true;
+      used += cost;
+    }
+  const out: string[] = [];
+  let skipped = false;
+  for (let i = 0; i < lines.length; i++) {
+    if (keep[i]) { if (skipped) out.push(marker); skipped = false; out.push(lines[i]!); }
+    else skipped = true;
+  }
+  if (skipped) out.push(marker);
+  return out.join("\n").slice(0, budget);
 }
 
 export function conversationHistory(context: ModelContext): { recent: ModelMessage[]; earlierUserTopics: string[] } {
@@ -471,7 +502,14 @@ export function conversationHistory(context: ModelContext): { recent: ModelMessa
       content: redactForModel(item.body),
     }))
     .filter((item) => item.content.trim());
-  const recent = turns.slice(-HISTORY_TURNS).map((item) => ({ ...item, content: boundedHistoryExcerpt(String(item.content)) }));
+  // The latest assistant answer is what a follow-up most often transforms («ارسمها», «اختصرها»,
+  // «ترجم ردك»): it gets its own larger budget; every other entry keeps the per-entry budget.
+  const window = turns.slice(-HISTORY_TURNS);
+  const latestAnswer = window.map((item) => item.role).lastIndexOf("assistant");
+  const recent = window.map((item, index) => ({
+    ...item,
+    content: boundedHistoryExcerpt(String(item.content), index === latestAnswer ? LATEST_ANSWER_CHARS : HISTORY_ENTRY_CHARS),
+  }));
   let total = recent.reduce((sum, item) => sum + item.content.length, 0);
   while (total > MAX_HISTORY_CHARS && recent.length) total -= recent.shift()!.content.length;
   // Client-supplied hints are untrusted text: redacted, bounded and counted like stored ones.
