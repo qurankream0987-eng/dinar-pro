@@ -178,7 +178,7 @@ const cartLines = async (userId: string) => {
 
 await test("C11 direct buyer adapter keeps condition and budget through bounded relaxation",async()=>{
  const {runBuyerSearch}=await import("../src/ai/buyer-turn"); const {marketFor}=await import("../src/lib/markets");
- const market=await marketFor({marketId:"JO"} as any);
+ const market=await marketFor({actor:{activeMarketId:"JO"}} as any);
  const state={search:`جوال بكسل تجريبي ${run}`,filters:[],condition:"مستعمل" as const,maxPrice:190,ranking:"CHEAPEST" as const};
  const r=await runBuyerSearch(market,state);assert.ok(r.listings.some(x=>x.id===ids.pixel));
  assert.ok((r.query.broadenedFrom as string[])?.includes("تجريبي"));
