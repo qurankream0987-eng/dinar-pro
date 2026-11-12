@@ -191,6 +191,10 @@ async function executeCartConversationTurn(input: {
       ),
     )
     .limit(1);
+  // «كمل الطلب» with items in the cart is the checkout review (a review only; nothing executes
+  // before the buyer confirms). With an empty cart it can only mean an existing order: ask.
+  if (ambiguousOrderContinuation && (latestSurface?.payload as {surface?:unknown} | undefined)?.surface !== "CART" &&
+    ((await getMarketplaceCart(input.actorId, input.market)) as unknown[]).length) return null;
   if (ambiguousOrderContinuation && (latestSurface?.payload as {surface?:unknown} | undefined)?.surface !== "CART") return clarify("هل تقصد طلبًا قائمًا أم عناصر السلة؟ افتح طلباتك أو السلة وحدد المقصود؛ لم أنفّذ شيئًا.");
   if (ambiguousOrderContinuation) return null; // Visible cart: use the ordinary checkout review navigation.
   if (

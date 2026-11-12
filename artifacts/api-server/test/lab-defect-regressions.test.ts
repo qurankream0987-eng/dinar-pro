@@ -142,8 +142,15 @@ await test("general text is not routed to checkout, market or recommendations", 
     const r = await say(b, message);
     assert.ok(!r.surfaces.includes(forbidden), `${message} → ${r.surfaces}`);
   }
+  // With an empty cart «كمل الطلب» can only mean an existing order: DINAR asks, opens no checkout.
+  const empty = await say(b, "كمل الطلب");
+  assert.ok(!empty.surfaces.includes("CHECKOUT"), `empty cart → ${empty.surfaces}`);
+  // With items in the cart it is the checkout review (a review; nothing executes before confirmation).
+  const put = await req("/cart", "PUT", { marketId: "JO", items: [{ listingId: cable, quantity: 1 }] }, b.cookie);
+  assert.equal(put.status, 200, put.raw);
   const ok = await say(b, "كمل الطلب");
   assert.ok(ok.surfaces.includes("CHECKOUT"), "a real checkout request still opens checkout");
+  assert.equal(await orders(b.id), 0, "the review creates no order");
 });
 
 await test("dialect verbs, ة/ه spellings and «أرخص من N» search correctly", async () => {
