@@ -935,7 +935,14 @@ export async function executeBuyerTurn(input: {
       result: await runBuyerSearch(input.market, {
         ...state,
         ranking,
-        ...(raisedBy && typeof ceiling === "number" ? { maxPrice: ceiling + raisedBy } : {}),
+        // The buyer's own explicit raise replaces their earlier upper bound; every other constraint
+        // (year, condition, a lower price bound) stays. runBuyerSearch keeps intersecting the rest.
+        ...(raisedBy && typeof ceiling === "number"
+          ? {
+              maxPrice: ceiling + raisedBy,
+              filters: state.filters.filter((filter) => !(filter.field === "price" && ["eq", "lt", "lte"].includes(filter.operator))),
+            }
+          : {}),
       }),
     };
   }
@@ -960,7 +967,7 @@ export async function executeBuyerTurn(input: {
       return { tool: "buyerRefine", version: 1, result: await runBuyerSearch(input.market, { ...state, search, filters: state.filters.filter((filter) => filter.field !== "condition"), condition: value }) };
     }
     const raisedCeiling = asked.match(/^(?:طيب\s+)?(?:ارفعها|ارفعه|زيدها|خلها)\s+(?:لـ?\s*|الي\s+)?(\d+(?:\.\d+)?)$/u);
-    if (raisedCeiling) return {tool:"buyerRefine",version:1,result:await runBuyerSearch(input.market,{...state,filters:state.filters.filter(f=>f.field!=="price"),targetPrice:undefined,maxPrice:Number(raisedCeiling[1])})};
+    if (raisedCeiling) return {tool:"buyerRefine",version:1,result:await runBuyerSearch(input.market,{...state,filters:state.filters.filter(f=>!(f.field==="price"&&["eq","lt","lte"].includes(f.operator))),targetPrice:undefined,maxPrice:Number(raisedCeiling[1])})};
     const ceiling = asked.match(CEILING) ?? asked.match(/^(?:خلها|خليها|خليه|خله)\s+(\d+(?:\.\d+)?)(?:\s*(الف|الاف))?$/u);
     if (ceiling) {
       const value = Number(ceiling[1]) * (ceiling[2] ? 1000 : 1);
