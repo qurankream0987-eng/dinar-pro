@@ -11,6 +11,9 @@ import { startVisualSearchExpirySweep } from "./lib/visual-search-images";
 import { deploymentConfigurationProblems } from "./lib/deployment-configuration";
 import { installGracefulShutdown } from "./server-lifecycle";
 import { sweepDriverLocationShares } from "./lib/driver-location";
+import { registerPhoneVerificationProvider } from "./lib/phone-verification";
+import { providerDeploymentEnvironment } from "./lib/market-capability-registry";
+import { TWILIO_MESSAGING_PROVIDER_KEY, twilioMessagingRegistration } from "./lib/sms/twilio-messaging";
 
 // Alerting: a provider/model circuit opening is a warning; closing is info. No prompt, user or key.
 onProviderBreakerTransition((event) =>
@@ -18,6 +21,14 @@ onProviderBreakerTransition((event) =>
     ? logger.warn({ event: "dinar_ai_provider_circuit_open", ...event }, "AI provider circuit opened")
     : logger.info({ event: "dinar_ai_provider_circuit_closed", ...event }, "AI provider circuit closed"),
 );
+
+// SMS delivery is registered only when this deployment selects the Twilio adapter; otherwise
+// phone verification stays not_configured. Setting names (never values) are logged.
+if (process.env.DINAR_PHONE_VERIFICATION_PROVIDER === TWILIO_MESSAGING_PROVIDER_KEY) {
+  const twilio = twilioMessagingRegistration(process.env, providerDeploymentEnvironment());
+  if ("registration" in twilio) registerPhoneVerificationProvider(twilio.registration);
+  else logger.warn({ settings: twilio.problems }, "Twilio SMS adapter is not configured; phone verification stays not_configured");
+}
 
 validateObjectStorageConfiguration();
 // /readyz stays not_ready while any of these remain; the names (never values) help the operator.
