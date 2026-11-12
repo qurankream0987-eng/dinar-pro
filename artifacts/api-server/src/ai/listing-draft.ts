@@ -1,3 +1,4 @@
+import { cardinalWordValue, foldArabicLetters } from "./arabic-normalization";
 import {
   validateCategoryAttributesAgainstSchema,
   type MarketplaceCategorySchema,
@@ -165,6 +166,10 @@ function extractInitialQuantity(message: string): number | undefined {
   const normalized = normalizeSearchNumberText(message);
   // «عندي منها اربع حبات» (H-MT-004): the object pronoun may sit between the verb and the number.
   const match = /(?:عندي|لدي|كمية|الكمية)\s*(?:(?:منه|منها|منهم|منهن)\s+)?(\d{1,7})/u.exec(normalized);
+  // A count written as a word before a unit noun («اربع حبات», «عشر قطع»).
+  const worded = !match ? /(?:عندي|لدي)\s*(?:(?:منه|منها|منهم|منهن)\s+)?(\S+)\s+(?:حبات|حبه|حبة|قطع|قطعه|قطعة|وحدات|نسخ|اجهزه|أجهزة|اجهزة)(?=\s|$|[،,.])/u.exec(normalized) : null;
+  const wordValue = worded ? cardinalWordValue(foldArabicLetters(worded[1]!).replace(/ة/g, "ه")) ?? cardinalWordValue(worded[1]!) : undefined;
+  if (!match && wordValue !== undefined && wordValue > 0) return wordValue;
   // «عندي جهاز واحد», «قطعة وحدة»: one unit written as a word.
   if (!match && /(?:(?:عندي|لدي)\s+\S+|(?:^|\s)(?:قطعه|قطعة|حبه|حبة))\s+(?:واحد|واحده|واحدة|وحده|وحدة|1)(?=\s|$|[،,.])/u.test(normalized))
     return 1;
@@ -2018,6 +2023,13 @@ export async function listingDraft(
       !isCategoryOnlySelection(text, categorySelection)
     )
       consumeDraftAnswer(draft, "title", text, configured);
+    // «عندي منها اربع حبات» while the category is still being chosen (H-MT-004): keep the stated
+    // quantity exactly as the first sale message would (pendingQuantity); the category's inventory
+    // rules still validate it before review and publication.
+    if (step === "category" && draft.availableQuantity === undefined) {
+      const stated = extractInitialQuantity(text);
+      if (stated !== undefined) draft.availableQuantity = String(stated);
+    }
     // «ب300 وقابل للتفاوض، عندي جهاز واحد»: a price answer may also state the quantity.
     if (step === "price" && stepAnswerConsumed && draft.availableQuantity === undefined) {
       const stated = extractInitialQuantity(text);
