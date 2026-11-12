@@ -119,8 +119,20 @@ export function composeBusinessDisplay(directive: DisplayDirective | undefined, 
     items: categories.slice(0, 8).map((row, index) => ({ label: clip(row.category, 120), value: row.revenueMinor, display: clip(amount(row.revenueMinor, scale, currency), 80), testId: `d-cat-${index}` })),
   };
   const note = { type: "text" as const, muted: true, text: NOT_PROFIT_NOTE };
+  // Phase 3: a few next steps, only when there are monthly sales to work with. Each is an ordinary
+  // utterance that re-enters the conversation (display-interaction.ts); none changes any record.
+  const next = hasMonthlySales
+    ? [{
+        type: "actions" as const,
+        items: [
+          { kind: "SEND" as const, label: "الأرقام بالتفصيل", message: "ورني الأرقام بالتفصيل", emphasis: "QUIET" as const, testId: "display-next-table" },
+          { kind: "SEND" as const, label: "الشهر الأعلى", message: "أي شهر كان الأعلى؟", emphasis: "QUIET" as const, testId: "display-next-max" },
+          { kind: "SEND" as const, label: "هذا الشهر مقابل السابق", message: "قارن الشهر الحالي بالشهر اللي قبله", emphasis: "QUIET" as const, testId: "display-next-compare" },
+        ],
+      }]
+    : [];
   const card = (sections: ComposedSurfaceInput["sections"], label: string): ComposedSurface | undefined =>
-    validated({ version: 1, label, size: "WIDE", testId: "model-display", sections: [header, ...sections, note] });
+    validated({ version: 1, label, size: "WIDE", testId: "model-display", sections: [header, ...sections, note, ...next] });
 
   const noSales = "لا توجد طلبات مكتملة في الأشهر الستة الأخيرة، فلا يوجد اتجاه أرسمه؛ هذه الأرقام الإجمالية من السجلات.";
   switch (format) {

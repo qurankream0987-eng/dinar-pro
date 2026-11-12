@@ -1108,7 +1108,7 @@ function ResultBlock({
         )}
         {block.payload.displaySurface && (
           // Phase 2: the server's own figures in the form the model chose (validated again here).
-          <ComposedSurfaceView surface={block.payload.displaySurface} active={false} />
+          <ComposedSurfaceView surface={block.payload.displaySurface} active={Boolean(activeWorkflow)} onSend={onSend} />
         )}
         {isBusinessInsight(block.payload.sellerInsight) && (
           <BusinessSummaryPanel insight={block.payload.sellerInsight} active={Boolean(activeWorkflow)} onSend={onSend} />

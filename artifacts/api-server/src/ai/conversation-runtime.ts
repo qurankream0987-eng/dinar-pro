@@ -53,7 +53,7 @@ import {
 } from "../lib/marketplace-categories";
 import { normalizeSearch } from "./search-context";
 import { itemTokens, textMatchesToken } from "../lib/arabic-search-terms";
-import { displayPreference } from "./display-preference";
+import { displayInteraction } from "./display-preference";
 import {
   executeSellerAdviceTurn,
   executeSellerListingManagementTurn,
@@ -1233,26 +1233,33 @@ async function executeRuntime(context: RuntimeContext, incoming: RuntimeOptions)
     const resumed = await modelFallback();
     if (resumed) return resumed;
   }
-  // Phase 2: a short, explicit request to change only the *form* of the latest results («اعرضها
-  // كجدول», «رجّعها بطاقات») is neither a sale nor a purchase: it is applied to the stored result set
-  // without a model call. Comparisons keep the existing compare handlers; every other phrasing
-  // reaches the model, which chooses the form through its display directive.
+  // Phase 2/3: a short request to work with what is on screen («اعرضها كجدول», «رتبهم من الأغلى»,
+  // «خلني أشوف المتوفر بس», «أي شهر الأعلى؟», «خلها أعمدة») is neither a sale nor a purchase. It is
+  // applied to the conversation's latest display, re-read under the actor's authority, without a
+  // model call. Comparisons keep the existing compare handlers; other phrasings reach the model.
   if (!options.planStep && context.actorId && !context.imageObjectPaths?.length && context.location === undefined) {
-    const preference = displayPreference(context.message);
-    if (preference) {
-      // An explicit form word is low-risk and deterministic: no model call is needed for it.
-      const { redisplayLatestResults } = await import("./smart-turn");
-      const own = await redisplayLatestResults(
-        { conversationId: context.conversationId, currentMessageId: context.currentMessageId, message: context.message, market: context.market, actorId: context.actorId } as Parameters<typeof redisplayLatestResults>[0],
-        preference,
-        "",
-        false,
-      );
+    const interaction = displayInteraction(context.message);
+    if (interaction) {
+      const { applyDisplayInteraction } = await import("./display-interaction");
+      const ctx = { conversationId: context.conversationId, currentMessageId: context.currentMessageId, message: context.message, market: context.market, actorId: context.actorId };
+      let own: unknown = await applyDisplayInteraction(ctx as Parameters<typeof applyDisplayInteraction>[0], interaction);
+      if (!own && interaction.kind === "FORMAT") {
+        const { redisplayLatestResults } = await import("./smart-turn");
+        own = await redisplayLatestResults(ctx as Parameters<typeof redisplayLatestResults>[0], interaction.directive, "", false);
+      }
       if (own) {
-        options.onToolSelected?.(own.tool);
-        return own;
+        options.onToolSelected?.((own as RuntimeTurn).tool);
+        return own as RuntimeTurn;
       }
     }
+    // «ضيف الأرخص للسلة»: the superlative is resolved over the active display, then the ordinary
+    // open/add path (with its own review) runs on that position.
+    const { superlativeAsOrdinal } = await import("./display-interaction");
+    const rewritten = await superlativeAsOrdinal(
+      { conversationId: context.conversationId, currentMessageId: context.currentMessageId, message: context.message, market: context.market, actorId: context.actorId } as Parameters<typeof superlativeAsOrdinal>[0],
+      normalizeSearch(context.message).replace(/[؟?!.،,]/gu, " ").replace(/\s+/gu, " ").trim(),
+    );
+    if (rewritten) context = { ...context, message: rewritten };
   }
   if (
     !options.planStep &&

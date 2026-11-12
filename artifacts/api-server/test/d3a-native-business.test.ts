@@ -1229,6 +1229,50 @@ await focused("P2-BUSINESS", "the model chooses the form of business figures; th
   // in the Phase 2 report; the composer and the read above run against the same database rows.
 });
 
+await focused("P3-BUSINESS", "follow-ups on a business display are computed from the owner's own records, without a model call", async () => {
+  const { readBusinessOverview } = await import("../src/ai/model-read-capabilities");
+  const { composeBusinessDisplay } = await import("../src/ai/display-composer");
+  const { monthAnalysis } = await import("../src/ai/display-interaction");
+  const { messages, aiUiBlocks } = await import("@workspace/db");
+  const { getModelGatewayCallCount } = await import("../src/ai/model-gateway");
+  // Test state: the conversation already shows this owner's business display (as Phase 2 renders it).
+  const showDisplay = async (actor: Actor) => {
+    const conv = await conversation(actor);
+    const read = await readBusinessOverview({ actorId: actor.id, conversationId: conv, currentMessageId: randomUUID(), market: JO } as any);
+    const surface = composeBusinessDisplay({ version: 1, format: "LINE" }, read.businessOverview).surface;
+    const messageId = randomUUID();
+    await db.insert(messages).values({ id: messageId, conversationId: conv, actor: "ASSISTANT", body: "مبيعاتك الشهرية.", contentType: "TEXT", metadata: {} });
+    await db.insert(aiUiBlocks).values({ id: randomUUID(), conversationId: conv, messageId, blockType: "SURFACE", version: 1, ordinal: 0, payload: { resultSetId: randomUUID(), listings: [], surface: "BUSINESS_INSIGHTS", ...(surface ? { displaySurface: surface } : { displaySurface: { version: 1, label: "x", size: "WIDE", sections: [{ type: "text", text: "x" }] } }) } });
+    return { conv, overview: read.businessOverview! };
+  };
+  const { conv, overview } = await showDisplay(verified);
+  const analytics = [...overview.businesses].filter((entry) => entry.analytics?.monthly).sort((a, b) => b.analytics!.completedOrders - a.analytics!.completedOrders)[0]!.analytics!;
+  const calls = getModelGatewayCallCount();
+  const max = await turn(verified, conv, "أي شهر كان الأعلى؟");
+  const body = async () => {
+    const reloaded = await request(`/ai/conversations/${conv}`, "GET", undefined, verified.cookie);
+    return String((reloaded.data.messages as any[]).at(-1)?.body ?? "");
+  };
+  assert.equal(await body(), `${monthAnalysis("MAX", analytics.monthly!, 3, "JOD")}\n\nهذه إيرادات طلبات مكتملة وليست ربحًا: لا يسجّل DINAR تكاليفك أو مصاريفك.`, JSON.stringify(max).slice(0, 300));
+  await turn(verified, conv, "قارن الشهر الحالي بالشهر اللي قبله");
+  assert.match(await body(), /مقابل|لا يوجد شهر سابق|لا توجد طلبات/u);
+  assert.match(await body(), /أسباب التغير لا تظهر فيها|لا توجد طلبات/u, "a change is never given an invented cause");
+  const bars = await turn(verified, conv, "خلها أعمدة");
+  assert.ok(JSON.stringify(bars.displaySurface ?? {}).includes('"bars"'), JSON.stringify(bars).slice(0, 300));
+  const exact = await turn(verified, conv, "ورني الأرقام بالتفصيل");
+  assert.ok(JSON.stringify(exact.displaySurface ?? {}).includes('"table"'));
+  assert.equal(getModelGatewayCallCount(), calls, "no model call for these follow-ups");
+  // Another owner asking the same in their own conversation reads only their own figures.
+  const theirs = await showDisplay(other);
+  await turn(other, theirs.conv, "أي شهر كان الأعلى؟");
+  const reloaded = await request(`/ai/conversations/${theirs.conv}`, "GET", undefined, other.cookie);
+  const otherBody = String((reloaded.data.messages as any[]).at(-1)?.body ?? "");
+  const own = theirs.overview.businesses.find((entry) => entry.analytics?.monthly)?.analytics;
+  if (own?.monthly?.some((row) => row.completedOrders > 0)) assert.ok(otherBody.startsWith(monthAnalysis("MAX", own.monthly!, 3, "JOD")));
+  else assert.match(otherBody, /لا توجد|لا تتوفر/u, otherBody);
+  assert.ok(!otherBody.includes(monthAnalysis("MAX", analytics.monthly!, 3, "JOD")), "never this owner's figures");
+});
+
 await test("summary", async () => {
   const ids = Object.keys(results).sort();
   console.log("D3A_SUMMARY", JSON.stringify({

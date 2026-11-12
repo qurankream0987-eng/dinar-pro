@@ -166,6 +166,18 @@ await check("P2-BUSINESS", "the server-composed business display renders: totals
   const shares = (await donut.locator(".ds-legend li").allInnerTexts()).map((text) => text.match(/(\d+\.\d)%/u)?.[1]);
   assert(JSON.stringify(shares) === JSON.stringify(["72.9", "20.3", "6.8"]), JSON.stringify(shares));
 });
+await check("P3-ACTIONS", "suggested next steps: few, labelled, keyboard-usable, touch-sized, and they only send an utterance", async () => {
+  const actions = page.locator("[data-testid=h-p2-business] [data-testid^=display-next-]");
+  assert(await actions.count() === 3, "three next steps");
+  for (const button of await actions.all()) {
+    const box = await button.boundingBox();
+    assert(box && box.height >= 32, `touch target ${box?.height}`);
+  }
+  await page.locator("[data-testid=display-next-max]").focus();
+  await page.keyboard.press("Enter");
+  const sent = await page.evaluate(() => window.__sent ?? []);
+  assert(JSON.stringify(sent) === JSON.stringify(["أي شهر كان الأعلى؟"]), JSON.stringify(sent));
+});
 await page.close();
 
 await check("F37", "reduced motion: charts draw without animation", async () => {

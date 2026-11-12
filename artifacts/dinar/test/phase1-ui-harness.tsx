@@ -66,7 +66,7 @@ function App() {
       <section data-testid="h-donut"><AnswerCard language="dinar-donut" code={donut} /></section>
       <section data-testid="h-invalid"><AnswerCard language="dinar-line" code={'{"items":[{"label":"a","value":"x"}]}'} /></section>
       <section data-testid="h-p2-listings"><ListingTable listings={listings} /></section>
-      <section data-testid="h-p2-business"><ComposedSurfaceView surface={businessAuto} active={false} /></section>
+      <section data-testid="h-p2-business"><ComposedSurfaceView surface={businessAuto} active onSend={(text) => { (window as any).__sent = [...((window as any).__sent ?? []), text]; }} /></section>
       <section data-testid="h-p2-donut"><ComposedSurfaceView surface={businessDonut} active={false} /></section>
       <section data-testid="h-invalid-surface"><ComposedSurfaceView surface={{ version: 1, label: "x", size: "MEDIUM", sections: [{ type: "html", html: "<script>window.__pwned=1</script>" }] }} active /></section>
     </div>
