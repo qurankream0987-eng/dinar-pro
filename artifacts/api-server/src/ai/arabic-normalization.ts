@@ -516,6 +516,21 @@ export function explicitReadOnlyCalculation(message: string): string | undefined
   const text=foldArabicLetters(normalizeDigits(message)).replace(/ة/g,"ه").replace(/[.](?!\d)|(?<!\d)[.]/gu," ").replace(/[؟?!،,]/gu," ").replace(/\s+/gu," ").trim();
   const pct=text.match(/^احسب(?:لي| لي)? (\d{1,16}(?:\.\d{1,6})?)[%٪] من (\d{1,16}(?:\.\d{1,6})?)$/u);
   if(pct){const [a,b]=[pct[1]!,pct[2]!];const scale=(a.split('.')[1]?.length??0)+(b.split('.')[1]?.length??0)+2;let digits=(BigInt(a.replace('.',''))*BigInt(b.replace('.',''))).toString().padStart(scale+1,'0');const result=`${digits.slice(0,-scale)}.${digits.slice(-scale)}`.replace(/\.?0+$/u,'');return `${a}% × ${b} = ${result || '0'}. هذا حساب فقط؛ لم يتغير شيء.`;}
+  // Two numbers and one basic operation, said in words or symbols («احسب 12 ضرب 17», «كم 250 على 4»).
+  // Exact decimal arithmetic for + − ×; division to at most 6 decimals. Anything longer goes to the model.
+  const binary=text.match(/^(?:احسب(?:لي| لي)?|كم(?: يساوي| يطلع| ناتج| حاصل)?|ما (?:ناتج|حاصل)|ناتج) (-?\d{1,12}(?:\.\d{1,6})?) ?(ضرب|في|×|x|\*|زائد|\+|ناقص|−|-|علي|على|÷|\/|تقسيم|مقسوم علي) ?(-?\d{1,12}(?:\.\d{1,6})?)(?: كم| يساوي كم)?$/u);
+  if(binary){
+    const [,a,op,b]=binary as unknown as [string,string,string,string];
+    const scaleOf=(v:string)=>v.split('.')[1]?.length??0;
+    const big=(v:string,scale:number)=>BigInt(v.replace('.','')+'0'.repeat(scale-scaleOf(v)));
+    const show=(v:bigint,scale:number)=>{const neg=v<0n;let d=(neg?-v:v).toString().padStart(scale+1,'0');const r=scale?`${d.slice(0,-scale)}.${d.slice(-scale)}`.replace(/\.?0+$/,''):d;return (neg?'-':'')+r;};
+    const symbol=/ضرب|في|×|x|\*/u.test(op)?'×':/زائد|\+/u.test(op)?'+':/ناقص|−|-/u.test(op)?'−':'÷';
+    let result:string;
+    if(symbol==='×'){const s1=scaleOf(a),s2=scaleOf(b);result=show(big(a,s1)*big(b,s2),s1+s2);}
+    else if(symbol==='+'||symbol==='−'){const sc=Math.max(scaleOf(a),scaleOf(b));result=show(symbol==='+'?big(a,sc)+big(b,sc):big(a,sc)-big(b,sc),sc);}
+    else{if(Number(b)===0)return "لا يمكن القسمة على صفر.";result=String(Number((Number(a)/Number(b)).toFixed(6)));}
+    return `${a} ${symbol} ${b} = ${result}. هذا حساب فقط؛ لم يتغير شيء.`;
+  }
   const temperature=text.match(/^حول (-?\d{1,6}(?:\.\d{1,4})?) درجه فهرنهايت (?:ل|الي )مئويه$/u);
   if(temperature){const value=(Number(temperature[1])-32)*5/9;return `${temperature[1]} فهرنهايت = ${Number(value.toFixed(3))} درجة مئوية تقريبًا.`;}
   const budget=text.match(/^احسب ميزانيه حمله(?: مقترحه)? بـ?\s*(\d{1,10}(?:\.\d{1,4})?) (?:دينار|دولار|ريال|درهم|جنيه) علي (اسبوعين|\d{1,3} اسابيع|\d{1,3} يوم(?:ا)?) كم باليوم$/u);

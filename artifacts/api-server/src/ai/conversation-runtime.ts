@@ -561,6 +561,9 @@ const REFERENCE_WANT = /^(?:انا\s+)?(?:ابي|ابغي|بدي|اريد|خذ|�
  * Only applies when the latest card is that list or review; draft choices are untouched.
  */
 async function resultReferenceCorrection(conversationId: string, message: string): Promise<string | undefined> {
+  // «ضيف الأول», «حط الثاني»: the verb is the request. Rewriting to the bare ordinal would drop it
+  // and open the listing instead; the cart path resolves the position with its own checks.
+  if (addToCartIntent(message)) return undefined;
   const stripped = stripCorrectionPrefix(message);
   const corrected = stripped !== message.trim();
   const reference = findOrdinalMention(stripped);
