@@ -19,6 +19,7 @@ import {
   db,
   markets,
   offers,
+  orderItems,
   orders,
   pool,
   users,
@@ -41,7 +42,7 @@ import {
   BUSINESS_CAPABILITIES,
   type BusinessCapability,
 } from "../src/lib/business-capabilities";
-import { businessOrders, publishBusinessDraft, updateBusinessListing } from "../src/lib/business-catalog";
+import { businessAnalytics, businessOrders, publishBusinessDraft, updateBusinessListing } from "../src/lib/business-catalog";
 
 requireSafeReplitDevelopmentDatabase("BDINAR_D3A_ACCEPTANCE");
 process.env.BDINAR_BLOCK_MODEL_CALLS = "1";
@@ -1138,6 +1139,51 @@ await focused("D3A-45", "catalog acknowledgement failure preserves the committed
     await turn(owner, conv, "أكد");
     assert.equal((await offerOf(juiceId)).updatedAt.toISOString(), changed.updatedAt.toISOString(), "a settled uncertain action never calls the writer again");
   } finally { await restoreConfirmationWrites(); }
+});
+
+await focused("P1-INSIGHTS", "the monthly insights series is the business's own completed orders, by order month, nothing invented", async () => {
+  const business = await businessOf(verifiedBusinessId);
+  const before = await businessAnalytics(business, JO.id);
+  const otherBefore = await businessAnalytics(await businessOf(otherBusinessId), JO.id);
+  const [listing] = await linkedOffers(verifiedBusinessId);
+  assert.ok(listing, "the verified business has a linked listing");
+  const now = new Date();
+  const monthStart = (back: number) => new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - back, 2, 12));
+  const place = async (status: string, createdAt: Date, subtotal: number, sellerId = verified.id, offerId = listing!.id) => {
+    const id = `p1-${randomUUID()}`;
+    await db.transaction(async (tx) => {
+      await tx.insert(orders).values({
+        id, buyerId: buyer.id, sellerId, marketId: JO.id, countryCode: "JO", currencyCode: "JOD", minorUnitScale: 3,
+        unitPriceMinor: subtotal, quantity: 1, subtotalMinor: subtotal, platformFeeMinor: 0, sellerAmountMinor: subtotal,
+        status, data: { items: [], syntheticPhase1Fixture: true }, createdAt, updatedAt: createdAt,
+      });
+      await tx.insert(orderItems).values({ id: `${id}-item`, orderId: id, offerId, quantity: 1, unitPriceMinor: subtotal, subtotalMinor: subtotal, data: {} });
+    });
+  };
+  // Synthetic fixtures, labelled in the order data: two completed this month, one two months ago,
+  // one cancelled (never revenue), one outside the six-month window, one on another seller's row.
+  await place("COMPLETED", monthStart(0), 2_500);
+  await place("COMPLETED", monthStart(0), 1_250);
+  await place("COMPLETED", monthStart(2), 4_000);
+  await place("CANCELLED", monthStart(0), 9_999);
+  await place("COMPLETED", monthStart(8), 7_777);
+  const after = await businessAnalytics(business, JO.id);
+  assert.equal(after.monthly.length, 6, "exactly the six reporting months");
+  const months = after.monthly.map((row) => row.month);
+  assert.equal(months.at(-1), now.toISOString().slice(0, 7));
+  assert.deepEqual([...months].sort(), months, "oldest first, no duplicates");
+  const delta = (index: number, key: "completedOrders" | "revenueMinor") => after.monthly[index]![key] - (before.monthly[index]?.[key] ?? 0);
+  assert.equal(delta(5, "completedOrders"), 2);
+  assert.equal(delta(5, "revenueMinor"), 3_750, "the cancelled order is not revenue");
+  assert.equal(delta(3, "completedOrders"), 1);
+  assert.equal(delta(3, "revenueMinor"), 4_000);
+  for (const index of [0, 1, 2, 4]) assert.equal(delta(index, "revenueMinor"), 0, "no figure appears in a month without an order");
+  // The six months add up to at most the all-time completed revenue (the 8-month-old order is outside).
+  const windowRevenue = after.monthly.reduce((sum, row) => sum + row.revenueMinor, 0);
+  assert.ok(windowRevenue <= after.completedRevenueMinor);
+  assert.equal(after.completedRevenueMinor - before.completedRevenueMinor, 3_750 + 4_000 + 7_777);
+  // Another account's business never sees these orders.
+  assert.deepEqual(await businessAnalytics(await businessOf(otherBusinessId), JO.id), otherBefore);
 });
 
 await test("summary", async () => {

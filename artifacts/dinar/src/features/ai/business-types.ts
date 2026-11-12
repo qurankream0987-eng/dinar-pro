@@ -49,6 +49,10 @@ export type BusinessInsights = {
   completedOrders: number;
   completedRevenueMinor: number;
   completedRevenue?: string;
+  /** Completed orders by order month (server-computed, last six months, display amounts priced server-side). */
+  monthly?: { month: string; completedOrders: number; revenueMinor: number; revenue?: string }[];
+  currencyCode?: string;
+  minorUnitScale?: number;
 };
 
 export type BusinessSelection = {

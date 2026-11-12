@@ -21,6 +21,8 @@ export const SURFACE_PRIMITIVES = [
   "money",
   "timeline",
   "bars",
+  "table",
+  "series",
   "options",
   "notice",
   "actions",
@@ -129,6 +131,10 @@ export const SurfaceActionSchema = z.discriminatedUnion("kind", [
 ]);
 export type SurfaceAction = z.infer<typeof SurfaceActionSchema>;
 
+export const TABLE_MAX_COLUMNS = 8;
+export const TABLE_MAX_ROWS = 30;
+export const SERIES_MAX_POINTS = 24;
+
 /** A value shown as-is; `ltr` isolates codes, identifiers and amounts in Arabic text. */
 const value = z.string().trim().min(1).max(120);
 
@@ -193,6 +199,56 @@ export const SurfaceSectionSchema = z.discriminatedUnion("type", [
       testId: testId.optional(),
     }).strict()).min(1).max(8),
   }).strict(),
+  /**
+   * A data table: typed columns, rows of display values. A missing value is `null` and reads
+   * «غير متوفر», never zero. `sort` is the number a column sorts by; sorting in the browser
+   * reorders a copy and never changes the values. No cell carries markup, a link or an action.
+   */
+  z.object({
+    type: z.literal("table"),
+    label: short,
+    caption: line.optional(),
+    columns: z.array(z.object({
+      key: testId,
+      label: short,
+      kind: z.enum(["TEXT", "NUMBER", "MONEY"]).default("TEXT"),
+      sortable: z.boolean().optional(),
+    }).strict()).min(1).max(TABLE_MAX_COLUMNS),
+    rows: z.array(z.object({
+      key: testId,
+      cells: z.array(z.object({
+        display: value.nullable(),
+        sort: z.number().finite().optional(),
+      }).strict()).min(1).max(TABLE_MAX_COLUMNS),
+    }).strict()).max(TABLE_MAX_ROWS),
+    source: short.optional(),
+  }).strict().superRefine((table, context) => {
+    const keys = new Set(table.columns.map((column) => column.key));
+    if (keys.size !== table.columns.length) context.addIssue({ code: z.ZodIssueCode.custom, message: "duplicate column key" });
+    if (new Set(table.rows.map((row) => row.key)).size !== table.rows.length) context.addIssue({ code: z.ZodIssueCode.custom, message: "duplicate row key" });
+    if (table.rows.some((row) => row.cells.length !== table.columns.length)) context.addIssue({ code: z.ZodIssueCode.custom, message: "every row has one cell per column" });
+  }),
+  /**
+   * A chart of recorded points. LINE: an ordered series over time; only the points given are
+   * drawn (a gap is never filled). DONUT: shares of one whole, 2-6 non-negative parts. `display`
+   * is the exact figure as text; `period` and `source` say what the numbers are and where from.
+   */
+  z.object({
+    type: z.literal("series"),
+    kind: z.enum(["LINE", "DONUT"]),
+    label: short,
+    unit: z.string().trim().min(1).max(16).optional(),
+    period: short.optional(),
+    source: short.optional(),
+    points: z.array(z.object({
+      label: z.string().trim().min(1).max(40),
+      value: z.number().finite(),
+      display: short,
+    }).strict()).min(2).max(SERIES_MAX_POINTS),
+  }).strict().superRefine((series, context) => {
+    if (series.kind === "DONUT" && (series.points.length > 6 || series.points.some((point) => point.value < 0) || series.points.every((point) => point.value === 0)))
+      context.addIssue({ code: z.ZodIssueCode.custom, message: "a donut is 2-6 non-negative parts of a non-empty whole" });
+  }),
   z.object({
     type: z.literal("options"),
     label: short,

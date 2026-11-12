@@ -59,3 +59,21 @@ test("adversarial card input stays inert", async () => {
   // Non-finite, negative and string numbers never draw bars.
   assert.equal(parseAnswerCard("dinar-chart", '{"items":[{"label":"a","value":"9"},{"label":"b","value":1e999},{"label":"c","value":-2}]}'), undefined);
 });
+
+test("Phase 1: model tables and charts use the shared contract and are labelled as the assistant's own figures", () => {
+  const table = parseAnswerCard("dinar-table", JSON.stringify({ title: "مقارنة", columns: ["الهاتف", "السعر", "الذاكرة"], rows: [["Galaxy S23", 520, "8GB"], ["آيفون 13", 420, null]] })) as any;
+  assert.equal(table.type, "table");
+  assert.equal(table.rows[1].cells[2].display, null, "a missing value stays missing, never zero");
+  assert.equal(table.rows[0].cells[1].display, "520");
+  assert.match(table.source, /تقدير من المساعد/u);
+  const line = parseAnswerCard("dinar-line", JSON.stringify({ title: "سعر الذهب", unit: "USD", items: [{ label: "يناير", value: -2 }, { label: "فبراير", value: 0 }, { label: "مارس", value: 3.5 }] })) as any;
+  assert.deepEqual(line.points.map((p: any) => p.value), [-2, 0, 3.5], "zero and negative values pass exactly; no point is added");
+  assert.equal(line.kind, "LINE");
+  assert.equal(parseAnswerCard("dinar-donut", JSON.stringify({ items: [{ label: "a", value: 1 }, { label: "b", value: -1 }] })), undefined, "a negative share is refused");
+  assert.equal(parseAnswerCard("dinar-line", JSON.stringify({ items: [{ label: "a", value: 1 }, { label: "b", value: "2" }] })), undefined, "one point left is not a line");
+  const objectCell = parseAnswerCard("dinar-table", JSON.stringify({ columns: ["a"], rows: [[{ __html: "<b>x</b>" }]] })) as any;
+  assert.equal(objectCell.rows[0].cells[0].display, null, "an object cell is not text: it reads as unavailable, never as markup");
+  assert.equal(parseAnswerCard("dinar-table", "x".repeat(12_001)), undefined, "oversized card refused before parsing");
+  assert.equal(parseAnswerCard("dinar-table", '{"columns":["a"],"rows":[["x"]],"__proto__":{"polluted":true}}') !== undefined, true, "unknown keys are dropped by the mapper");
+  assert.equal(({} as any).polluted, undefined, "nothing reaches Object.prototype");
+});

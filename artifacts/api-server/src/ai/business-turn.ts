@@ -730,6 +730,13 @@ async function insightsTurn(input: {
       insights: {
         ...insights,
         completedRevenue: `${(insights.completedRevenueMinor / 10 ** input.market.minorUnitScale).toFixed(input.market.minorUnitScale)} ${input.market.currencyCode}`,
+        // Server-priced display strings for the monthly series; the card never formats money itself.
+        monthly: insights.monthly.map((month) => ({
+          ...month,
+          revenue: `${(month.revenueMinor / 10 ** input.market.minorUnitScale).toFixed(input.market.minorUnitScale)} ${input.market.currencyCode}`,
+        })),
+        currencyCode: input.market.currencyCode,
+        minorUnitScale: input.market.minorUnitScale,
       },
       allowedActions: [],
     },

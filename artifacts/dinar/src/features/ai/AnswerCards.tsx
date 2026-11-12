@@ -6,9 +6,11 @@
  * choice only sends its label as the user's next message, which the server judges as usual.
  */
 import { useState } from "react";
+import { SurfaceSectionSchema, type SurfaceSection } from "@workspace/api-zod/surface-composition";
 import { textDirection } from "./rich-text";
+import { DataTable, SeriesChart } from "./surface/DataPrimitives";
 
-export const ANSWER_CARD_LANGUAGES = ["dinar-chart", "dinar-options", "dinar-price", "dinar-choice"] as const;
+export const ANSWER_CARD_LANGUAGES = ["dinar-chart", "dinar-options", "dinar-price", "dinar-choice", "dinar-table", "dinar-line", "dinar-donut"] as const;
 export type AnswerCardLanguage = (typeof ANSWER_CARD_LANGUAGES)[number];
 export const isAnswerCardLanguage = (language: string): language is AnswerCardLanguage =>
   (ANSWER_CARD_LANGUAGES as readonly string[]).includes(language);
@@ -25,12 +27,66 @@ type Chart = { title?: string; unit?: string; items: { label: string; value: num
 type Options = { title?: string; items: { name: string; badge?: string; summary?: string; pros: string[]; cons: string[] }[] };
 type Price = { title?: string; note?: string; items: { label: string; amount: string; note?: string }[] };
 type Choice = { question: string; options: string[] };
+type TableCard = Extract<SurfaceSection, { type: "table" }>;
+type SeriesCard = Extract<SurfaceSection, { type: "series" }>;
+/** Model cards are bounded before parsing; the shared schema then bounds every field. */
+const MAX_CARD_CHARS = 12_000;
+const display = (value: number) => new Intl.NumberFormat("en", { maximumFractionDigits: 2 }).format(value);
 
-export function parseAnswerCard(language: AnswerCardLanguage, code: string): Chart | Options | Price | Choice | undefined {
+/**
+ * A model table or chart is read with the same contract as a server card, then shown with the
+ * same primitives. It is the assistant's own figures: the caption says so and it never sorts,
+ * links or acts. Shapes the model writes simply ({columns:[…], rows:[[…]]}) are mapped first.
+ */
+function modelSection(language: "dinar-table" | "dinar-line" | "dinar-donut", raw: any): TableCard | SeriesCard | undefined {
+  const source = "تقدير من المساعد، ليس من سجلات دينار";
+  if (language === "dinar-table") {
+    const labels = list(raw.columns, 8, (column: any) => str(typeof column === "string" ? column : column?.label, 80));
+    const rows = list(raw.rows, 30, (row: any) => (Array.isArray(row) ? row : undefined));
+    const candidate = {
+      type: "table",
+      label: str(raw.title, 80) ?? "جدول",
+      columns: labels.map((label, index) => ({ key: `c${index}`, label, kind: "TEXT" })),
+      rows: rows.map((row, index) => ({
+        key: `r${index}`,
+        cells: labels.map((_, column) => {
+          const cell = row[column];
+          const text = typeof cell === "number" && Number.isFinite(cell) ? display(cell) : str(cell, 120);
+          return { display: text ?? null };
+        }),
+      })),
+      source,
+    };
+    const parsed = SurfaceSectionSchema.safeParse(candidate);
+    return parsed.success && parsed.data.type === "table" && parsed.data.rows.length ? parsed.data : undefined;
+  }
+  const points = list(raw.items ?? raw.points, 24, (item: any) => {
+    const label = str(item?.label, 40);
+    const value = typeof item?.value === "number" && Number.isFinite(item.value) ? item.value : undefined;
+    return label && value !== undefined ? { label, value, display: `${display(value)}${str(raw.unit, 16) ? ` ${str(raw.unit, 16)}` : ""}`.slice(0, 80) } : undefined;
+  });
+  const parsed = SurfaceSectionSchema.safeParse({
+    type: "series",
+    kind: language === "dinar-line" ? "LINE" : "DONUT",
+    label: str(raw.title, 80) ?? "رسم بياني",
+    unit: str(raw.unit, 16),
+    period: str(raw.period, 80),
+    source,
+    points,
+  });
+  return parsed.success && parsed.data.type === "series" ? parsed.data : undefined;
+}
+
+export function parseAnswerCard(language: AnswerCardLanguage, code: string): Chart | Options | Price | Choice | TableCard | SeriesCard | undefined {
+  if (code.length > MAX_CARD_CHARS) return undefined;
   let raw: any;
   try { raw = JSON.parse(code); } catch { return undefined; }
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return undefined;
   switch (language) {
+    case "dinar-table":
+    case "dinar-line":
+    case "dinar-donut":
+      return modelSection(language, raw);
     case "dinar-chart": {
       const items = list(raw.items, 12, (item: any) => {
         const label = str(item?.label, 40);
@@ -181,5 +237,14 @@ export function AnswerCard({ language, code }: { language: AnswerCardLanguage; c
     case "dinar-options": return <OptionsCard card={card as Options} />;
     case "dinar-price": return <PriceCard card={card as Price} />;
     case "dinar-choice": return <ChoiceCard card={card as Choice} />;
+    case "dinar-table": {
+      const table = card as TableCard;
+      return <div className="answer-card answer-data" data-testid="answer-table" dir="rtl"><DataTable label={table.label} caption={table.label} columns={table.columns} rows={table.rows} source={table.source} /></div>;
+    }
+    case "dinar-line":
+    case "dinar-donut": {
+      const series = card as SeriesCard;
+      return <div className="answer-card answer-data" data-testid={`answer-${language.slice(6)}`} dir="rtl"><SeriesChart kind={series.kind} label={series.label} unit={series.unit} period={series.period} source={series.source} points={series.points} /></div>;
+    }
   }
 }

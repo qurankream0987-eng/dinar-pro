@@ -22,6 +22,7 @@ import {
   Timeline,
   UsageMeter,
 } from "./primitives";
+import { DataTable, SeriesChart } from "./DataPrimitives";
 
 /** States that are told plainly; the card never offers actions it can no longer honour. */
 const STATE_NOTICE: Partial<Record<ComposedSurface["state"], { tone: "INFO" | "SUCCESS" | "WARNING" | "DANGER" }>> = {
@@ -77,6 +78,10 @@ function Section({ section, onSend }: { section: SurfaceSection; onSend?: (text:
       return <Timeline label={section.label} steps={section.steps} />;
     case "bars":
       return <BarList label={section.label} items={section.items} />;
+    case "table":
+      return <DataTable label={section.label} caption={section.caption} columns={section.columns} rows={section.rows} source={section.source} />;
+    case "series":
+      return <SeriesChart kind={section.kind} label={section.label} unit={section.unit} period={section.period} source={section.source} points={section.points} />;
     case "options":
       return <OptionList label={section.label} layout={section.layout} items={section.items} onSend={onSend} />;
     case "notice":

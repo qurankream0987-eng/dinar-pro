@@ -395,9 +395,59 @@ function insightsSurface(payload: BusinessPayload): ComposedSurfaceInput {
             ].slice(0, 8),
           }]
         : []),
+      ...monthlySections(insights),
       { type: "text", muted: true, text: "أرقام من سجلات DINAR لهذا النشاط فقط؛ لا تُعرض بيانات نشاط آخر." },
     ],
   };
+}
+
+const MONTH = new Intl.DateTimeFormat("ar", { month: "short", year: "numeric", timeZone: "UTC" });
+const monthLabel = (month: string) => {
+  const date = new Date(`${month}-01T00:00:00Z`);
+  return Number.isNaN(date.getTime()) ? month : MONTH.format(date);
+};
+
+/**
+ * The server's monthly figures as a line chart and the same figures as a table. Shown only when
+ * at least one month has a completed order: a flat line of zeros explains nothing. The amounts
+ * are the server's own display strings; the chart's height uses the minor-unit integers.
+ */
+function monthlySections(insights: BusinessPayload["insights"]) {
+  const months = (insights?.monthly ?? []).filter((month) => /^\d{4}-\d{2}$/.test(month.month)).slice(-12);
+  if (months.length < 2 || !months.some((month) => month.completedOrders > 0)) return [];
+  const currency = insights?.currencyCode ? ` (${insights.currencyCode})` : "";
+  // The chart's scale is in the currency's major unit, like the labels; without a known scale
+  // the drawing is skipped and only the server's figures table is shown.
+  const scale = insights?.minorUnitScale;
+  const drawable = Number.isInteger(scale) && scale! >= 0 && scale! <= 4;
+  const period = `${monthLabel(months[0]!.month)} – ${monthLabel(months.at(-1)!.month)}`;
+  return [
+    ...(drawable ? [{
+      type: "series" as const,
+      kind: "LINE" as const,
+      label: clip(`الإيراد المكتمل شهريًا${currency}`, 80),
+      period: clip(period, 80),
+      source: "طلبات مكتملة في DINAR حسب شهر الطلب",
+      points: months.map((month) => ({ label: monthLabel(month.month), value: month.revenueMinor / 10 ** scale!, display: clip(month.revenue ?? number(month.revenueMinor), 80) })),
+    }] : []),
+    {
+      type: "table" as const,
+      label: "الطلبات المكتملة حسب الشهر",
+      columns: [
+        { key: "month", label: "الشهر", kind: "TEXT" as const },
+        { key: "orders", label: "طلبات مكتملة", kind: "NUMBER" as const, sortable: true },
+        { key: "revenue", label: "الإيراد", kind: "MONEY" as const, sortable: true },
+      ],
+      rows: months.map((month) => ({
+        key: `m-${month.month}`,
+        cells: [
+          { display: monthLabel(month.month) },
+          { display: number(month.completedOrders), sort: month.completedOrders },
+          { display: month.revenue ? clip(month.revenue, 120) : null, sort: month.revenueMinor },
+        ],
+      })),
+    },
+  ];
 }
 
 /** One composition per business view; an unknown view renders nothing. */

@@ -6,7 +6,7 @@
  * `changeOwnedListingStatus` and `archiveOwnedListing`. This module only adds the business
  * scope, capability rechecks, association and audit — it never writes listings itself.
  */
-import { and, count, desc, eq, inArray, ne, sql } from "drizzle-orm";
+import { and, count, desc, eq, gte, inArray, ne, sql } from "drizzle-orm";
 import type { z } from "zod";
 import type { UpdateListingBody } from "@workspace/api-zod";
 import {
@@ -411,7 +411,7 @@ export async function businessAnalytics(business: BusinessProfile, marketId: str
     .from(offers)
     .where(and(eq(offers.businessProfileId, business.d2BusinessId), eq(offers.marketId, marketId)));
   if (!listingIds.length)
-    return { listings: Number(listingCounts?.total ?? 0), published: 0, paused: 0, completedOrders: 0, completedRevenueMinor: 0 };
+    return { listings: Number(listingCounts?.total ?? 0), published: 0, paused: 0, completedOrders: 0, completedRevenueMinor: 0, monthly: [] as { month: string; completedOrders: number; revenueMinor: number }[] };
   const [orderStats] = await db
     .select({
       completedOrders: sql<number>`count(distinct ${orders.id}) filter (where ${orders.status} = 'COMPLETED')::int`,
@@ -425,12 +425,42 @@ export async function businessAnalytics(business: BusinessProfile, marketId: str
       inArray(orderItems.offerId, listingIds),
       ne(orders.status, "CANCELLED"),
     ));
+  // Completed orders per calendar month (UTC) of the order's creation, last six months including
+  // the current one. Orders carry no separate completion time, so the month is the order month;
+  // the card says so. A month with no completed order is a recorded zero from the same query.
+  const monthStarts = Array.from({ length: 6 }, (_, index) => {
+    const now = new Date();
+    return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - (5 - index), 1));
+  });
+  const monthRows = await db
+    .select({
+      month: sql<string>`to_char(date_trunc('month', ${orders.createdAt} at time zone 'UTC'), 'YYYY-MM')`,
+      completedOrders: sql<number>`count(distinct ${orders.id})::int`,
+      revenueMinor: sql<number>`coalesce(sum(${orderItems.subtotalMinor}), 0)::int`,
+    })
+    .from(orderItems)
+    .innerJoin(orders, eq(orders.id, orderItems.orderId))
+    .where(and(
+      eq(orders.sellerId, business.ownerUserId),
+      eq(orders.marketId, marketId),
+      inArray(orderItems.offerId, listingIds),
+      eq(orders.status, "COMPLETED"),
+      gte(orders.createdAt, monthStarts[0]!),
+    ))
+    .groupBy(sql`1`);
+  const byMonth = new Map(monthRows.map((row) => [row.month, row]));
+  const monthly = monthStarts.map((start) => {
+    const month = start.toISOString().slice(0, 7);
+    const row = byMonth.get(month);
+    return { month, completedOrders: Number(row?.completedOrders ?? 0), revenueMinor: Number(row?.revenueMinor ?? 0) };
+  });
   return {
     listings: Number(listingCounts?.total ?? 0),
     published: Number(listingCounts?.published ?? 0),
     paused: Number(listingCounts?.paused ?? 0),
     completedOrders: Number(orderStats?.completedOrders ?? 0),
     completedRevenueMinor: Number(orderStats?.completedRevenueMinor ?? 0),
+    monthly,
   };
 }
 
