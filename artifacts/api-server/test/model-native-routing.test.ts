@@ -485,7 +485,10 @@ await test("D6-AI-01 scripted read-only tool results ground the final comparison
     assert.equal(calls, 3, "search, a canonical live result lookup, then a final answer");
     assert.equal(sawToolFeedback, true, "the second and final model calls receive canonical tool results");
     assert.equal(sawUntrustedToolFeedbackRule, true, "listing text is explicitly framed as untrusted");
-    assert.match(reply.body, /SCRIPTED_GROUNDED_COMPARISON/u);
+    // Contract (C-12): listing prose is server-authored from the canonical read, never the model's
+    // text. The read listing appears with its exact persisted title and price, and model prose is dropped.
+    assert.doesNotMatch(reply.body, /SCRIPTED_GROUNDED_COMPARISON/u, "model prose about listings is not shown");
+    assert.ok(reply.body.includes(`«جوال بكسل 7 ${run}» (180.000 JOD)`), reply.body);
     assert.ok(reply.listingIds.includes(ids.pixel!));
     assert.ok(reply.listingIds.includes(ids.redmi!));
     const resultSets = await db.select().from(aiResultSets).where(eq(aiResultSets.conversationId, user.conv));
@@ -589,7 +592,9 @@ await test("D6-AI-01 resumes a stale read-only loop from persisted feedback", as
     calls = 0;
     const resumed = await say(user.cookie, user.conv, text, clientMessageId);
     assert.equal(calls, 2, "the resumed turn uses prior search feedback instead of repeating the search");
-    assert.match(resumed.body, /RESUMED_FROM_PERSISTED_RESULTS/u);
+    // Contract (C-12): the resumed answer is built from the persisted canonical results.
+    assert.doesNotMatch(resumed.body, /RESUMED_FROM_PERSISTED_RESULTS/u, "model prose about listings is not shown");
+    assert.ok(resumed.body.includes(`«جوال بكسل 7 ${run}» (180.000 JOD)`), resumed.body);
     assert.ok(resumed.listingIds.includes(ids.pixel!));
     assert.equal((await db.select().from(aiResultSets).where(eq(aiResultSets.messageId, clientMessageId))).length, 1);
   });

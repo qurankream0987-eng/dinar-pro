@@ -550,7 +550,6 @@ await test("XP-17 unseen general questions that share words with commerce reach 
     "ما الفرق بين البيع بالتجزئة والجملة؟",
     "هل الطلب على الهواتف المستعملة كبير في العالم؟",
     "رجع لي ملخص كلامنا عن البرمجة",
-    "احسب لي 15% من 2400",
     "what is the difference between TCP and UDP",
     "شو رأيك بالسيارات الكهربائية؟",
     "فسر لي هذا الكود: const x = arr.map(a => a * 2)",
@@ -559,6 +558,13 @@ await test("XP-17 unseen general questions that share words with commerce reach 
     const turn = await say(actor, conv, message);
     if (turn.status !== 200 || !turn.modelCalled || commerceBlocks(turn).length)
       problems.push(`«${message}»: status=${turn.status} model=${turn.modelCalled} blocks=${surfaceOf(turn)} body=${turn.body.slice(0, 60)}`);
+  }
+  // Contract (C-01): explicit arithmetic is computed exactly by the server, not the model; it is
+  // still general help: no commerce card, no gate, nothing changed.
+  {
+    const turn = await say(actor, conv, "احسب لي 15% من 2400");
+    if (turn.status !== 200 || commerceBlocks(turn).length || !/\b360\b/u.test(turn.body))
+      problems.push(`«احسب لي 15% من 2400»: status=${turn.status} blocks=${surfaceOf(turn)} body=${turn.body.slice(0, 60)}`);
   }
   assert.deepEqual(problems, []);
 });
