@@ -455,7 +455,7 @@ function TopBar({ location, minimal }: { location: string; minimal: boolean }) {
               )}
             >
               <Bot size={17} aria-hidden />
-              <span className="hidden sm:inline">DINAR AI</span>
+              <span className="hidden sm:inline">JassimAI</span>
             </Link>
           )}
           {!minimal && location !== "/" && location !== "/ai" && (
@@ -573,7 +573,7 @@ function Footer() {
           <Link href="/settings" className="hover:text-foreground">
             الإعدادات
           </Link>
-          <span>© {new Date().getFullYear()} DINAR AI</span>
+          <span>© {new Date().getFullYear()} JassimAI</span>
         </nav>
       </div>
     </footer>

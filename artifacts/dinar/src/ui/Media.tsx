@@ -147,7 +147,7 @@ export function BrandMark({
 }) {
   return (
     <span className={cn("inline-flex items-center gap-2.5", className)}>
-      <DinarMark size={size} alt={wordmark ? "" : "DINAR AI"} />
+      <DinarMark size={size} alt={wordmark ? "" : "JassimAI"} />
       {wordmark && (
         <DinarWordmark className="text-lg" />
       )}

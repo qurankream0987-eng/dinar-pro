@@ -168,7 +168,7 @@ async function reservationsOf(userId: string) {
   return db.select().from(aiUsageReservations).where(eq(aiUsageReservations.userId, userId)).orderBy(aiUsageReservations.createdAt);
 }
 
-const SYSTEM_PROMPT_MARKER = "You are DINAR (دينار)";
+const SYSTEM_PROMPT_MARKER = "You are Jassim (جاسم)";
 let admin: Actor;
 let buyer: Actor;
 /** KW holds the synthetic used-car inventory (phase-one fixtures). */

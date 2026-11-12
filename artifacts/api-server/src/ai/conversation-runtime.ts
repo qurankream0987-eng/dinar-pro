@@ -732,6 +732,11 @@ export async function executeAiConversationTurn(
     modelStage?: "ONLY";
   } = {},
 ): Promise<{ tool: string; version: number; result: ToolResult; taskPlan?: TaskPlan }> {
+  // The assistant's name «جاسم» (JassimAI, formerly DINAR) at the start of a message is a form of
+  // address, like «دينار» before it: removed before any routing so «جاسم ابحث عن جوال» searches for
+  // a phone, not for «جاسم». The stored message is unchanged.
+  const addressed = context.message.replace(/^\s*(?:يا\s+)?جاسم\s*[،,:!]?\s+(?=\S)/u, "");
+  if (addressed !== context.message) context = { ...context, message: addressed };
   if (context.imageUnderstanding) {
     const prompt = claimsCompletedAction(context.imageUnderstanding.answer)
       ? "أستطيع شرح محتوى الصورة فقط؛ لم أنفّذ أي إجراء أو أؤكد شراءً أو دفعًا."
