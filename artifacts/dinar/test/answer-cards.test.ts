@@ -24,3 +24,11 @@ test("malformed, partial or unknown input is refused", () => {
   assert.equal(isAnswerCardLanguage("dinar-checkout"), false);
   assert.equal(isAnswerCardLanguage("js"), false);
 });
+
+test("a card fenced as json is recognised only by its schema", async () => {
+  const { detectAnswerCardLanguage } = await import("../src/features/ai/AnswerCards");
+  assert.equal(detectAnswerCardLanguage("json", JSON.stringify({ question: "أي واحد؟", options: ["أ", "ب"] })), "dinar-choice");
+  assert.equal(detectAnswerCardLanguage("", JSON.stringify({ items: [{ label: "a", value: 1 }, { label: "b", value: 2 }] })), "dinar-chart");
+  assert.equal(detectAnswerCardLanguage("json", JSON.stringify({ name: "package", version: "1.0.0" })), undefined, "ordinary JSON stays code");
+  assert.equal(detectAnswerCardLanguage("js", JSON.stringify({ question: "q", options: ["a", "b"] })), undefined, "other languages stay code");
+});

@@ -152,6 +152,26 @@ function ChoiceCard({ card }: { card: Choice }) {
   );
 }
 
+/**
+ * A card the model fenced as ```json (or unlabelled) instead of ```dinar-…: recognised only when
+ * the JSON fits exactly one card schema by its distinctive keys; otherwise it stays a code block.
+ */
+export function detectAnswerCardLanguage(language: string, code: string): AnswerCardLanguage | undefined {
+  if (isAnswerCardLanguage(language)) return language;
+  if (language && language !== "json") return undefined;
+  let raw: any;
+  try { raw = JSON.parse(code); } catch { return undefined; }
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return undefined;
+  const first = Array.isArray(raw.items) ? raw.items[0] : undefined;
+  const guess: AnswerCardLanguage | undefined =
+    typeof raw.question === "string" && Array.isArray(raw.options) ? "dinar-choice"
+      : first && typeof first.value === "number" && "label" in first ? "dinar-chart"
+        : first && typeof first.amount === "string" && "label" in first ? "dinar-price"
+          : first && typeof first.name === "string" ? "dinar-options"
+            : undefined;
+  return guess && parseAnswerCard(guess, code) ? guess : undefined;
+}
+
 export function AnswerCard({ language, code }: { language: AnswerCardLanguage; code: string }) {
   const card = parseAnswerCard(language, code);
   // A card still streaming (or malformed) shows a quiet placeholder, never raw JSON.
