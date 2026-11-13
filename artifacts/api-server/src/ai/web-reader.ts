@@ -18,6 +18,8 @@ export const webReadEnabled = (env: NodeJS.ProcessEnv = process.env) => env.DINA
 
 const MAX_BYTES = 1_500_000;
 const TIMEOUT_MS = 8_000;
+/** Whole read, across redirects: a slowly dripping server cannot hold the turn open. */
+const TOTAL_MS = 12_000;
 const MAX_REDIRECTS = 3;
 const CHUNK = 1_900;
 const MAX_CHUNKS = 4;
@@ -58,14 +60,25 @@ export function checkUrl(raw: string): { ok: true; url: URL } | { ok: false; rea
   return { ok: true, url };
 }
 
-export type WebTransport = (url: URL, lookup: LookupFunction) => Promise<{ status: number; headers: Record<string, string | undefined>; body: Buffer }>;
+/** The socket's own lookup: always the pre-checked address, and refuses a blocked one even if called directly. */
+export function pinnedLookup(addresses: readonly string[]): LookupFunction {
+  return (_host, options, callback) => {
+    const address = addresses[0];
+    if (!address || blockedAddress(address)) return (callback as (e: Error) => void)(new Error("BLOCKED_ADDRESS"));
+    if ((options as { all?: boolean })?.all) return (callback as (e: null, a: { address: string; family: number }[]) => void)(null, [{ address, family: isIP(address) }]);
+    return (callback as (e: null, a: string, f: number) => void)(null, address, isIP(address));
+  };
+}
+
+export type WebTransport = (url: URL, lookup: LookupFunction, signal?: AbortSignal) => Promise<{ status: number; headers: Record<string, string | undefined>; body: Buffer }>;
 export type WebResolver = (host: string) => Promise<string[]>;
 
 const defaultResolver: WebResolver = async (host) => (await dnsLookup(host, { all: true, verbatim: true })).map((entry) => entry.address);
 
 /** Native HTTPS with a pinned lookup: the address actually connected to is checked, not only the one resolved earlier. */
-const defaultTransport: WebTransport = (url, lookup) => new Promise((resolve, reject) => {
-  const req = httpsRequest(url, { method: "GET", lookup, timeout: TIMEOUT_MS, headers: { "user-agent": "JassimAI-Reader/1.0 (+https://jassimai.com)", accept: "text/html,text/plain;q=0.9", "accept-encoding": "identity" } }, (res) => {
+export const nativeTransport: WebTransport = (url, lookup, signal) => new Promise((resolve, reject) => {
+  // TLS certificate verification stays on (Node default); no proxy: the pinned socket is the boundary.
+  const req = httpsRequest(url, { method: "GET", lookup, timeout: TIMEOUT_MS, ...(signal ? { signal } : {}), headers: { "user-agent": "JassimAI-Reader/1.0 (+https://jassimai.com)", accept: "text/html,text/plain;q=0.9", "accept-encoding": "identity" } }, (res) => {
     const parts: Buffer[] = [];
     let size = 0;
     res.on("data", (part: Buffer) => {
@@ -81,7 +94,7 @@ const defaultTransport: WebTransport = (url, lookup) => new Promise((resolve, re
   req.end();
 });
 
-let transport: WebTransport = defaultTransport;
+let transport: WebTransport = nativeTransport;
 let resolver: WebResolver = defaultResolver;
 /** Test seam (like useCatalogGatewayFactory): returns the previous pair. */
 export function useWebReaderDependencies(next: { transport?: WebTransport; resolver?: WebResolver }) {
@@ -109,6 +122,8 @@ export function pageText(html: string): { title: string; text: string } {
 /** Fetch, validate and bind one page to this turn's scope. Never throws for a remote failure. */
 export async function readWebPage(raw: string, scope: ResearchScope, now = new Date()): Promise<{ ok: true; page: WebPage } | { ok: false; reason: WebReadFailure }> {
   let checked = checkUrl(raw);
+  const total = Number(process.env.DINAR_WEB_READ_TOTAL_MS);
+  const deadline = Date.now() + (Number.isInteger(total) && total >= 50 && total <= TOTAL_MS ? total : TOTAL_MS);
   for (let hop = 0; ; hop += 1) {
     if (!checked.ok) return checked;
     const url = checked.url;
@@ -116,23 +131,27 @@ export async function readWebPage(raw: string, scope: ResearchScope, now = new D
     try { addresses = await resolver(url.hostname); } catch { return { ok: false, reason: "DNS_FAILED" }; }
     if (!addresses.length) return { ok: false, reason: "DNS_FAILED" };
     if (addresses.some(blockedAddress)) return { ok: false, reason: "BLOCKED_ADDRESS" };
-    const pinned: LookupFunction = (_host, options, callback) => {
-      const address = addresses[0]!;
-      if (blockedAddress(address)) return (callback as (e: Error) => void)(new Error("BLOCKED_ADDRESS"));
-      if ((options as { all?: boolean })?.all) return (callback as (e: null, a: { address: string; family: number }[]) => void)(null, [{ address, family: isIP(address) }]);
-      return (callback as (e: null, a: string, f: number) => void)(null, address, isIP(address));
-    };
+    const pinned = pinnedLookup(addresses);
+    if (Date.now() > deadline) return { ok: false, reason: "TIMEOUT" };
     let response: Awaited<ReturnType<WebTransport>>;
-    try { response = await transport(url, pinned); } catch (error) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(new Error("TIMEOUT")), Math.max(1, deadline - Date.now()));
+    try { response = await transport(url, pinned, controller.signal); } catch (error) {
+      clearTimeout(timer);
+      if (controller.signal.aborted) return { ok: false, reason: "TIMEOUT" };
       const message = (error as Error)?.message;
       return { ok: false, reason: message === "TOO_LARGE" ? "TOO_LARGE" : message === "TIMEOUT" ? "TIMEOUT" : message === "BLOCKED_ADDRESS" ? "BLOCKED_ADDRESS" : "FETCH_FAILED" };
     }
+    clearTimeout(timer);
     if (response.status >= 300 && response.status < 400 && response.headers.location) {
       if (hop >= MAX_REDIRECTS) return { ok: false, reason: "TOO_MANY_REDIRECTS" };
       checked = checkUrl(new URL(response.headers.location, url).toString());
       continue;
     }
     if (response.status < 200 || response.status >= 300) return { ok: false, reason: "HTTP_ERROR" };
+    // Identity encoding was requested; a compressed body is refused rather than inflated (no decompression bombs).
+    const encoding = (response.headers["content-encoding"] ?? "identity").toLowerCase().trim();
+    if (encoding && encoding !== "identity") return { ok: false, reason: "UNSUPPORTED_CONTENT" };
     const type = (response.headers["content-type"] ?? "").toLowerCase();
     if (!/^(text\/html|application\/xhtml\+xml|text\/plain)/u.test(type)) return { ok: false, reason: "UNSUPPORTED_CONTENT" };
     if (response.body.length > MAX_BYTES) return { ok: false, reason: "TOO_LARGE" };

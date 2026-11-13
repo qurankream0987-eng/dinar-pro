@@ -2275,7 +2275,9 @@ export async function executeModelFallback(
         ? await modelRolesForActor(input.actorId, input.market.id)
         : [];
     const availableTools =
-      !premiumTrialSelected && !input.sellerEmployeeMode && input.currentMessageId
+      // Structural injection defence: a turn that carries web page text offers the model no tools,
+      // so nothing written in a page can lead to a read, a cart change or any other action.
+      !premiumTrialSelected && !input.sellerEmployeeMode && input.currentMessageId && !webPage
         ? modelToolDefinitions(toolContext, toolRoles)
         : [];
     const loopContext: ModelContext = {
