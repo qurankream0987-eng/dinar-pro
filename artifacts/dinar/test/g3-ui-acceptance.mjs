@@ -635,7 +635,7 @@ try {
         for (const text of texts) if (!window.__g3Seen.statuses.includes(text)) window.__g3Seen.statuses.push(text);
         const status = texts.find((text) => /أجهز ردك|أبحث داخل جاسم/.test(text));
         if (status) window.__g3Seen.status = status;
-        if (document.querySelector('[data-testid="button-send-ai-message"][aria-label="دينار يعمل الآن"]')) window.__g3Seen.busy = true;
+        if (document.querySelector('[data-testid="button-send-ai-message"][aria-label="جاسم يعمل الآن"]')) window.__g3Seen.busy = true;
       });
       observer.observe(document.body, { subtree: true, childList: true, characterData: true, attributes: true });
       window.__g3Observer = observer;

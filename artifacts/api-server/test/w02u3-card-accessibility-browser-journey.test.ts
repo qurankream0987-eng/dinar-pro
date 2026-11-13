@@ -181,7 +181,7 @@ await test("W02U3 accessibility real browser: keyboard, announcements, focus and
   assert.ok(Array.isArray(report.at?.manualChecklist) && report.at.manualChecklist.length >= 3, "the manual AT checklist is present");
   assert.equal(report.observations?.keyboard?.escapeRestoresFocus, true);
   assert.equal(report.observations?.keyboard?.selectionRestoresFocus, true);
-  assert.equal(report.observations?.card?.busyLabel, "دينار يعمل الآن");
+  assert.equal(report.observations?.card?.busyLabel, "جاسم يعمل الآن");
   assert.equal(report.observations?.small?.documentOverflow, 0);
   assert.equal(report.observations?.small?.cardInside, true);
   assert.ok(report.checks.length >= 5, `expected the full accessibility journey, got ${report.checks.length} checks`);

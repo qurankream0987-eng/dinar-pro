@@ -42,7 +42,7 @@ const at = {
     "NVDA + Firefox on Windows: drawer opens/closes, conversation is announced, the review card's label and lifecycle are spoken, and «تأكيد الإضافة إلى السلة» is reachable.",
     "VoiceOver + Safari on iOS: the card and its buttons are spoken in Arabic RTL order, and the success state is announced once.",
     "TalkBack + Chrome on Android: the composer, send button and card confirmation are reachable by swipe and activated by double-tap.",
-    "Announcement review: the busy state («دينار يعمل الآن») and the settled card are announced without duplicate live-region chatter.",
+    "Announcement review: the busy state («جاسم يعمل الآن») and the settled card are announced without duplicate live-region chatter.",
   ],
 };
 let failure;
@@ -165,7 +165,7 @@ try {
   ]);
   await page.waitForFunction(() => document.querySelector('[data-testid="button-send-ai-message"]')?.getAttribute("aria-busy") === "true", null, { timeout: 10_000 });
   const busy = await page.getByTestId("button-send-ai-message").evaluate((node) => ({ label: node.getAttribute("aria-label"), disabled: node.disabled }));
-  assert.equal(busy.label, "دينار يعمل الآن", "the busy send button announces its state");
+  assert.equal(busy.label, "جاسم يعمل الآن", "the busy send button announces its state");
   assert.equal(busy.disabled, true, "the busy send button is disabled");
   const typing = page.locator('[data-testid="ai-typing"]');
   assert.equal(await typing.getAttribute("role"), "status", "progress is announced through a status region");

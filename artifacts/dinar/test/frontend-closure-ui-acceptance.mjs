@@ -255,7 +255,7 @@ try {
   await fixture([memory()]);
   await sentBy(()=>page.getByRole('button',{name:'لا تستخدم كرة القدم في الاقتراحات',exact:true}).click(),'لا تقترح لي كرة القدم');
   await fixture([memory()]);
-  await sentBy(()=>page.getByTestId('memory-view').click(),'دينار ماذا تعرف عن اهتماماتي؟');
+  await sentBy(()=>page.getByTestId('memory-view').click(),'جاسم، ماذا تعرف عن اهتماماتي؟');
   for(const view of ['MY_INTERESTS','MEMORY_SUMMARY','MEMORY_UPDATED','MEMORY_CONFIRMATION','MEMORY_REMOVED']) {
     await fixture([memory(view,[])]); await page.getByTestId('personal-memory').waitFor();
     assert.ok((await page.getByTestId('personal-memory').innerText()).length>20,'no blank confirmation/empty surface');

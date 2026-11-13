@@ -57,12 +57,12 @@ try {
   checks.push("the restored block renders the model-proposed GRID with the server-resolved cards in order");
 
   const badge = page.getByTestId(`result-highlight-${highlightId}`);
-  assert.equal(await badge.innerText(), "اقتراح دينار");
+  assert.equal(await badge.innerText(), "اقتراح جاسم");
   const highlighted = grid.locator(`[data-resource-id="${highlightId}"]`);
   assert.equal(await highlighted.getAttribute("data-highlighted"), "true");
-  assert.match(await highlighted.getAttribute("aria-label"), /اقتراح دينار/u, "screen readers hear the suggestion label");
+  assert.match(await highlighted.getAttribute("aria-label"), /اقتراح جاسم/u, "screen readers hear the suggestion label");
   assert.equal(await grid.locator('[data-highlighted="true"]').count(), 1, "exactly one suggestion");
-  checks.push("one highlighted card carries a visible and an accessible «اقتراح دينار» label");
+  checks.push("one highlighted card carries a visible and an accessible «اقتراح جاسم» label");
 
   assert.equal(await grid.getAttribute("role"), "list");
   assert.equal(await grid.locator('[role="listitem"]').count(), gridIds.length);
