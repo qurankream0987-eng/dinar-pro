@@ -777,7 +777,7 @@ export async function executeNegotiationTurn(input: {
       // As in the buyer's list: a seller counter awaiting this buyer opens its acceptance review.
       const row = await negotiationForParty(actorId, found.negotiationId);
       if (row && roleOf(row, actorId) === "BUYER" && effectiveStatus(row) === "COUNTERED") return decisionReview(context, row.id, "ACCEPT_NEGOTIATION");
-      return statusTurn(found.negotiationId, actorId, "هذه حالة العرض كما يسجلها دينار الآن.");
+      return statusTurn(found.negotiationId, actorId, "هذه حالة العرض كما يسجلها جاسم الآن.");
     }
     if (found.kind === "MANY") {
       const listed = await listTurn(context, found.role);

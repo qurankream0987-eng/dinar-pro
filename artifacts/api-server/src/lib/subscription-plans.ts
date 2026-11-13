@@ -112,8 +112,8 @@ export const DEFAULT_SUBSCRIPTION_PLANS_POLICY: SubscriptionPlansPolicy = {
   businessIncludesProCapacity: false,
   plans: {
     DINAR_GO: {
-      nameAr: "دينار جو",
-      nameEn: "DINAR Go",
+      nameAr: "جاسم جو",
+      nameEn: "Jassim Go",
       descriptionAr: "للأفراد: سعة أكبر للمساعد الذكي وأدوات إنتاجية، دون سجل تجاري.",
       referencePrice: usd(1_000),
       priceVersion: 1,
@@ -125,8 +125,8 @@ export const DEFAULT_SUBSCRIPTION_PLANS_POLICY: SubscriptionPlansPolicy = {
       featuresAr: ["سعة أكبر للمحادثات الذكية", "كتابة إعلانات ونصوص تسويقية أكثر", "فهم صور ورسائل صوتية أكثر"],
     },
     DINAR_PRO: {
-      nameAr: "دينار برو",
-      nameEn: "DINAR Pro",
+      nameAr: "جاسم برو",
+      nameEn: "Jassim Pro",
       descriptionAr: "للأفراد والمحترفين: أعلى سعة للمساعد ومهام ذكية متقدمة متعددة الخطوات.",
       referencePrice: usd(2_000),
       priceVersion: 1,
@@ -139,7 +139,7 @@ export const DEFAULT_SUBSCRIPTION_PLANS_POLICY: SubscriptionPlansPolicy = {
     },
     DINAR_BUSINESS: {
       nameAr: "جاسم بزنس",
-      nameEn: "DINAR Business",
+      nameEn: "Jassim Business",
       descriptionAr: "للأنشطة التجارية الموثّقة: أدوات النشاط وتقاريره ومخزونه. يتطلب نشاطًا موثّقًا من مراجع جاسم.",
       referencePrice: usd(4_900),
       priceVersion: 1,
@@ -213,10 +213,10 @@ export function namedPlanCodes(text: string): PlanCode[] {
   ];
 }
 
-/** «دينار برو», «برو», «pro» … → plan code. Folded Arabic expected (ة→ه). */
+/** «جاسم برو», «دينار برو» (old name, still understood), «برو», «pro» … → plan code. Folded Arabic expected (ة→ه). */
 export function namedPlanCode(text: string): PlanCode | undefined {
-  if (/(?:^|\s)(?:دينار\s+)?(?:بزنس|بيزنس|business)(?:\s|$)/u.test(text)) return "DINAR_BUSINESS";
-  if (/(?:^|\s)(?:دينار\s+)?(?:pro|برو)(?:\s|$)/u.test(text)) return "DINAR_PRO";
-  if (/(?:^|\s)(?:دينار\s+)?(?:go|جو)(?:\s|$)/u.test(text)) return "DINAR_GO";
+  if (/(?:^|\s)(?:(?:جاسم|دينار)\s+)?(?:بزنس|بيزنس|business)(?:\s|$)/u.test(text)) return "DINAR_BUSINESS";
+  if (/(?:^|\s)(?:(?:جاسم|دينار)\s+)?(?:pro|برو)(?:\s|$)/u.test(text)) return "DINAR_PRO";
+  if (/(?:^|\s)(?:(?:جاسم|دينار)\s+)?(?:go|جو)(?:\s|$)/u.test(text)) return "DINAR_GO";
   return undefined;
 }

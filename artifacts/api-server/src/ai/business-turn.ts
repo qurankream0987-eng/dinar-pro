@@ -421,7 +421,7 @@ async function startSetup(input: {
 /** «سجل متجري في دينار كونكت»: Connect builds on this same D2 identity, so the draft is step one. */
 const CONNECT_MENTION = /(?:كونكت|كونيكت|connect)/iu;
 const CONNECT_NEXT_STEP =
-  "جاسم Connect يُبنى على هذا النشاط نفسه: بعد إكمال بياناته وتوثيقه، سجّله مجانًا من بوابة الشركاء (/connect) واختر طريقة المشاركة: البيع داخل دينار، أو العرض في جاسم والشراء من موقعك، أو الاثنين معًا. لم يُسجَّل أي شيء في Connect بعد.";
+  "جاسم Connect يُبنى على هذا النشاط نفسه: بعد إكمال بياناته وتوثيقه، سجّله مجانًا من بوابة الشركاء (/connect) واختر طريقة المشاركة: البيع داخل جاسم، أو العرض في جاسم والشراء من موقعك، أو الاثنين معًا. لم يُسجَّل أي شيء في Connect بعد.";
 
 /** §C: one business resumes directly; several are offered, never guessed, never another account's. */
 async function resumeTurn(input: {

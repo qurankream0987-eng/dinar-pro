@@ -863,8 +863,8 @@ await test("J-01 the shared D1+D2 journey (13 steps) through the unified convers
   assert.equal((await aiPlanFor(journey.id, kw)).tier, "FREE");
   const compare = await turn(journey, conv, "دينار، ما الفرق بين جو وبرو؟");
   assert.equal(compare.payload.surface, "AI_PLANS");
-  assert.match(compare.payload.prompt, /دينار جو/u);
-  assert.match(compare.payload.prompt, /دينار برو/u);
+  assert.match(compare.payload.prompt, /جاسم جو/u);
+  assert.match(compare.payload.prompt, /جاسم برو/u);
   assert.match(compare.payload.prompt, /لا يحتاج سجلًا تجاريًا/u);
   const usage = await turn(journey, conv, "كم بقي من استخدامي؟");
   assert.equal(usage.payload.surface, "AI_USAGE", usage.raw);

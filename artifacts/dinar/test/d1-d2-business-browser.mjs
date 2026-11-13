@@ -137,7 +137,7 @@ try {
     const card = reply.getByTestId("business-card");
     await card.waitFor();
     const text = await textOf(card);
-    assert.match(text, /DINAR BUSINESS/);
+    assert.match(text, /JASSIM BUSINESS/);
     assert.match(text, /سمراء للمشاوي/u);
     assert.match(text, /الكويت/u);
     assert.match(text, /مطعم ومشاوي/u);
@@ -196,8 +196,8 @@ try {
     report["card-1280"] = await measure(1280, latestCard());
     const compare = await sendTurn("دينار، ما الفرق بين جو وبرو؟");
     const text = await textOf(compare);
-    assert.match(text, /دينار جو/u);
-    assert.match(text, /دينار برو/u);
+    assert.match(text, /جاسم جو/u);
+    assert.match(text, /جاسم برو/u);
     assert.match(text, /سعر مرجعي مقترح/u);
     const plans = compare.locator('[data-testid="dinar-plan"]');
     assert.equal(await plans.count(), 3, "Go, Pro and Business cards");

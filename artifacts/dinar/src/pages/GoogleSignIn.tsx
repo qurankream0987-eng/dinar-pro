@@ -104,7 +104,11 @@ export function GoogleSignIn({ onSignedIn }: { onSignedIn: () => Promise<void> |
       // Google's own dark rendering sits on the app's dark surface; the width follows the form
       // (Google accepts 200-400 px) so the button lines up with the phone field on every screen.
       const width = Math.max(200, Math.min(400, Math.round(button.current.parentElement?.clientWidth ?? 320)));
-      accounts.id.renderButton(button.current, { type: "standard", theme: "filled_black", size: "large", text: "continue_with", shape: "pill", logo_alignment: "left", locale: "ar", width });
+      // Google's own button and logo (branding rules), themed to the app: on the light card the
+      // outline style matches the form fields; in dark mode the black pill sits in a rounded,
+      // clipped frame so no white iframe corners or halo show around it.
+      const dark = document.documentElement.classList.contains("dark");
+      accounts.id.renderButton(button.current, { type: "standard", theme: dark ? "filled_black" : "outline", size: "large", text: "continue_with", shape: "pill", logo_alignment: "left", locale: "ar", width });
     }, () => setUnavailable(true));
     return () => {
       cancelled = true;

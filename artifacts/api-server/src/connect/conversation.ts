@@ -196,7 +196,7 @@ export async function connectDomainSearchTurn(input: {
       surface: "CONNECT_RESULTS",
       resultSetId: randomUUID(),
       universalCards: payload,
-      prompt: `هذه خيارات البحث عن ${domain}. لن أشتري أو أسجّل النطاق تلقائيًا؛ الروابط تفتح البحث لدى المزوّد خارج DINAR.`,
+      prompt: `هذه خيارات البحث عن ${domain}. لن أشتري أو أسجّل النطاق تلقائيًا؛ الروابط تفتح البحث لدى المزوّد خارج جاسم.`,
       query: { kind: "CONNECT", universalCards: payload },
       listings: [],
     },

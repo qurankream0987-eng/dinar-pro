@@ -1368,7 +1368,7 @@ async function employmentTurn(input: EmploymentTurnInput): Promise<Turn | null> 
     const traits = protectedTraitsRequested(message);
     const query = parseCandidateSearch(withoutProtectedWords(message));
     if (!query.terms.length && !query.skills.length && query.minExperienceYears === undefined && !query.city)
-      return say(`${traits.length ? `لا يبحث DINAR حسب ${traits.join(" أو ")}. ` : ""}اذكر المعايير المهنية: المسمى، المهارات، الخبرة أو المدينة.`, traits.length ? { ignoredCriteria: traits } : {});
+      return say(`${traits.length ? `لا يبحث جاسم حسب ${traits.join(" أو ")}. ` : ""}اذكر المعايير المهنية: المسمى، المهارات، الخبرة أو المدينة.`, traits.length ? { ignoredCriteria: traits } : {});
     return turn(await renderCandidates(actorId, market, query, traits));
   }
 

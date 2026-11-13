@@ -187,9 +187,9 @@ await test("G1-01 plans and prices: unconfigured before an admin creates plans; 
   assert.match(plans.body, /الفرق في سعة الاستخدام فقط/u);
   assert.equal(card.aiPlans.billing.status, "NOT_CONNECTED");
   const price = await say(free, conv, "كم سعر برو؟");
-  assert.match(price.body, /لم يُعتمد سعر Business Pro بعد/u, price.body);
+  assert.match(price.body, /لم يُعتمد سعر جاسم برو بعد/u, price.body);
   const upgrade = await say(free, conv, "أريد ترقية حسابي إلى برو");
-  assert.match(upgrade.body, /لم يُعتمد سعر Business Pro بعد.*لم يتغير شيء/su, upgrade.body);
+  assert.match(upgrade.body, /لم يُعتمد سعر جاسم برو بعد.*لم يتغير شيء/su, upgrade.body);
   assert.equal((await db.select().from(businessSubscriptions).where(eq(businessSubscriptions.userId, free.id))).length, 0);
   // Ad bundles keep their own phrase.
   assert.notEqual(commerceOf(await say(free, conv, "باقات الاعلانات"))?.view, "AI_PLANS");
@@ -214,7 +214,7 @@ await test("G1-02 admin configures Go/Pro (prices are test configuration, not ap
   assert.equal(g.priceConfigured && p.priceConfigured, true);
   for (const index of g.allowances.keys()) assert.ok(p.allowances[index].value >= g.allowances[index].value && g.allowances[index].value >= f.allowances[index].value);
   assert.ok(p.tokens > g.tokens && g.tokens > f.tokens);
-  assert.match((await say(free, conv, "كم سعر برو؟")).body, /سعر Business Pro: 15\.000 JOD لكل 30 يومًا/u);
+  assert.match((await say(free, conv, "كم سعر برو؟")).body, /سعر جاسم برو: 15\.000 JOD لكل 30 يومًا/u);
 });
 
 await test("G1-03 Free allowance is enforced server-side and the model is not called once exhausted", async () => {
@@ -304,7 +304,7 @@ await test("G1-06 Go and Pro (server-side subscription snapshot) raise the allow
   const goRows = await db.select().from(aiUsageReservations).where(eq(aiUsageReservations.userId, go.id));
   assert.ok(goRows.every((row) => row.planTier === "BUSINESS_GO" && row.entitlementSource.startsWith("subscription:")));
   const card = commerceOf(await say(pro, proConv, "كم نسبة استهلاكي"));
-  assert.equal(card.usage.tierLabel, "Business Pro");
+  assert.equal(card.usage.tierLabel, "جاسم برو");
 });
 
 await test("G1-07 forged tier: the client cannot declare a plan or remaining usage", async () => {
@@ -449,7 +449,7 @@ await test("G1-14 upgrade mid-period adds headroom; expiry returns to FREE witho
   assert.match((await say(actor, conv, `اشرح لي موضوعًا بعد الترقية 2 ${runId}`)).body, /إجابة عامة/u);
   assert.equal(adviceOf(await say(actor, conv, `اشرح لي موضوعًا بعد الترقية 3 ${runId}`))?.modelStatus, "USAGE_LIMIT", "5 in total for Go this period");
   // Same tier again and a lower tier are refused without changing anything.
-  assert.match((await say(actor, conv, "اشترك في Go")).body, /باقتك الحالية هي Business Go بالفعل/u);
+  assert.match((await say(actor, conv, "اشترك في Go")).body, /باقتك الحالية هي جاسم جو بالفعل/u);
   // Expiry (period end passed): back to FREE, and 5 used > 3 stays exhausted.
   await db.update(businessSubscriptions).set({ currentPeriodStart: new Date(Date.now() - 2 * 86_400_000), currentPeriodEnd: new Date(Date.now() - 1000) }).where(eq(businessSubscriptions.userId, actor.id));
   const summary = await aiUsageSummary({ kind: "USER", userId: actor.id, market: { id: "JO" } });
