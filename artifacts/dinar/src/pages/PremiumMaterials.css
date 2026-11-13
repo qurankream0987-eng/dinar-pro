@@ -436,3 +436,73 @@
 .answer-choice-option[aria-checked="true"] .answer-choice-dot { box-shadow: inset 0 0 0 5px var(--dinar-gold); opacity: 1; }
 .answer-choice:disabled .answer-choice-option:not([aria-checked="true"]) { opacity: .45; cursor: default; }
 @media (prefers-reduced-motion: reduce) { .answer-card, .answer-chart-bar, .answer-card-pending { animation: none; } }
+
+/* ── Responsive app shell (owner mission, 2026-11-13) ─────────────────────────────────────────
+   The conversation column is one bounded flex column: the content (welcome or history) is the
+   only part that scrolls, the composer never shrinks and is always on screen on first load.
+   Heights come from the existing grid (dvh-based shell), not from fixed pixel heights. */
+.dinar-chatgpt .dinar-chat-conversation {
+  display: flex !important;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+}
+.dinar-chatgpt .dinar-chat-conversation > .ai-home-scroll,
+.dinar-chatgpt .dinar-chat-conversation > .ai-thread-region,
+.dinar-chatgpt .dinar-chat-conversation > .ai-state-region { flex: 1 1 auto; min-height: 0; }
+.dinar-chatgpt .dinar-chat-conversation > .dinar-chat-dock {
+  flex: none;
+  padding-bottom: max(8px, env(safe-area-inset-bottom, 0px));
+}
+.dinar-chatgpt .dinar-chat-conversation > .ai-context-launch { flex: none; }
+
+/* Welcome: an assistant greeting, not a promotional hero. */
+.dinar-chatgpt .ai-home-stack {
+  justify-content: safe center;
+  gap: clamp(10px, 2.2dvh, 18px);
+  padding: clamp(10px, 2.5dvh, 28px) 16px 8px;
+}
+.premium-welcome { gap: clamp(10px, 2dvh, 16px); }
+.premium-welcome .ai-welcome-copy { gap: 6px; }
+.premium-welcome .ai-welcome-logo.ai-welcome-mark { width: 40px; height: 40px; filter: none; }
+.dinar-chatgpt .ai-welcome h1 { font-size: clamp(20px, 2.3vw, 25px); line-height: 1.3; }
+.dinar-chatgpt .ai-welcome p { font-size: 13.5px; line-height: 1.6; color: var(--chat-ink-3); }
+.premium-primary-actions { gap: 10px; max-width: 760px; }
+.premium-action-card {
+  min-height: 0;
+  padding: 12px 14px;
+  gap: 12px;
+  border-radius: 16px;
+  box-shadow: 0 1px 2px rgb(var(--chat-shadow) / .08);
+}
+.premium-action-card .premium-action-icon { width: 36px; height: 36px; flex: none; }
+.premium-action-card .premium-action-copy strong { font-size: 14.5px; }
+.premium-action-card .premium-action-copy span { font-size: 12.5px; line-height: 1.5; }
+.premium-welcome .ai-starters { gap: 8px; padding: 0; }
+.premium-welcome .ai-starter { min-height: 38px; padding-inline: 12px; font-size: 13px; }
+@media (max-width: 767px) {
+  /* Phones: three compact rows of actions and one swipeable row of starters above the composer. */
+  .premium-primary-actions { grid-template-columns: 1fr; gap: 8px; }
+  .premium-action-card { padding: 10px 12px; }
+  .premium-action-card .premium-action-copy span { display: none; }
+  .premium-welcome .ai-starters { flex-wrap: nowrap; justify-content: flex-start; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+  .premium-welcome .ai-starter { flex: none; }
+}
+@media (max-height: 620px) {
+  /* Short screens (and an open phone keyboard): the greeting yields its space to the conversation. */
+  .dinar-chatgpt .ai-welcome p, .premium-welcome .ai-starters, .premium-welcome .ai-welcome-logo { display: none; }
+}
+
+/* One discreet legal line under the composer for visitors. */
+.ai-composer-legal {
+  margin: 4px auto 0;
+  max-width: 760px;
+  padding-inline: 12px;
+  text-align: center;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--chat-ink-3);
+}
+.ai-composer-legal a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+.ai-composer-legal a:hover, .ai-composer-legal a:focus-visible { color: var(--chat-ink); }

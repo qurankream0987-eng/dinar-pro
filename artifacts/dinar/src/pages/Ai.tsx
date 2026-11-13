@@ -1998,6 +1998,14 @@ export default function AiPage() {
         </p>
       )}
       {chatComposer}
+          {/* Public legal notice for visitors: one discreet line under the composer instead of a block
+          in the conversation (Google OAuth branding reads these links on the home page). Signed-in
+          users find the documents, versions and data controls in Settings. */}
+      {!user && (
+        <p className="ai-composer-legal" data-testid="welcome-legal-links">
+          باستخدامك جاسم توافق على <Link href="/terms">شروط الاستخدام</Link> وتقرّ باطلاعك على <Link href="/privacy">سياسة الخصوصية</Link>.
+        </p>
+      )}
     </div>
   );
 
@@ -2433,7 +2441,6 @@ export default function AiPage() {
                         document.querySelector<HTMLButtonElement>('[data-testid="button-ai-attachment-info"]')?.click();
                       }}
                     />
-                    {composerRegion}
                   </div>
                 </div>
               </>
@@ -2570,7 +2577,9 @@ export default function AiPage() {
               </div>
             )}
 
-            {!showWelcome && composerRegion}
+            {/* One pinned composer for the empty and the active conversation: the content above it
+                scrolls inside its own region, so the input is always on screen on first load. */}
+            {composerRegion}
           </section>
           {searchContext && (
             <aside

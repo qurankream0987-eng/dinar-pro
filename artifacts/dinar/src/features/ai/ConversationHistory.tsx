@@ -1,4 +1,3 @@
-import { ListingGlimpses } from "./ListingGlimpses";
 import { Link } from "wouter";
 import { LazyMotion, domAnimation, m, useReducedMotion } from "framer-motion";
 import { surfaceSpring } from "@/lib/presentation-motion";
@@ -106,39 +105,6 @@ export const STARTERS: readonly WelcomeAction[] = [
  * The DINAR mark alone, alive: it tilts toward the pointer, glows on hover and focus, and a tap
  * moves focus to the composer. Purely presentational; still under reduced motion.
  */
-function InteractiveLogo() {
-  const ref = useRef<HTMLButtonElement>(null);
-  const reduceMotion = useReducedMotion();
-  const move = (event: ReactPointerEvent<HTMLButtonElement>) => {
-    if (reduceMotion || !ref.current) return;
-    const box = ref.current.getBoundingClientRect();
-    const x = (event.clientX - box.left) / box.width - 0.5;
-    const y = (event.clientY - box.top) / box.height - 0.5;
-    ref.current.style.setProperty("--tilt-x", `${(-y * 14).toFixed(2)}deg`);
-    ref.current.style.setProperty("--tilt-y", `${(x * 14).toFixed(2)}deg`);
-    ref.current.style.setProperty("--glow-x", `${((x + 0.5) * 100).toFixed(0)}%`);
-    ref.current.style.setProperty("--glow-y", `${((y + 0.5) * 100).toFixed(0)}%`);
-  };
-  const reset = () => {
-    ref.current?.style.removeProperty("--tilt-x");
-    ref.current?.style.removeProperty("--tilt-y");
-  };
-  return (
-    <button
-      ref={ref}
-      type="button"
-      className="premium-logo"
-      aria-label="ابدأ الكتابة لجاسم"
-      data-testid="welcome-logo"
-      onPointerMove={move}
-      onPointerLeave={reset}
-      onClick={() => document.querySelector<HTMLTextAreaElement>('[data-testid="input-ai-composer"]')?.focus()}
-    >
-      <span className="premium-logo-halo" aria-hidden="true" />
-      <DinarMark size={112} className="ai-welcome-logo" />
-    </button>
-  );
-}
 
 export function ConversationItem({
   conversation,
@@ -330,10 +296,10 @@ export function Welcome({
         transition={reduceMotion ? { duration: 0 } : surfaceSpring}
       >
         <div className="ai-welcome-copy">
-          <ListingGlimpses />
-          <InteractiveLogo />
+          {/* The approved emblem at a calm, header-like size: no tilt, glow or decorative strip. */}
+          <DinarMark size={40} className="ai-welcome-logo ai-welcome-mark" />
           <h1>كيف أساعدك اليوم؟</h1>
-          <p>مساعدك الذكي للتسوق والبيع والتخطيط والبرمجة وإدارة أعمالك.</p>
+          <p>اسأل عن أي شيء، أو اشترِ وبِع بالمحادثة.</p>
         </div>
         <div
           className="premium-primary-actions"
@@ -385,14 +351,6 @@ export function Welcome({
             </button>
           ))}
         </div>
-        {/* Public legal links on the home page (Google OAuth branding review reads them here). */}
-        <nav className="ai-welcome-legal" aria-label="روابط قانونية" data-testid="welcome-legal-links">
-          <Link href="/privacy">سياسة الخصوصية</Link>
-          <span aria-hidden="true">·</span>
-          <Link href="/terms">شروط الاستخدام</Link>
-          <span aria-hidden="true">·</span>
-          <Link href="/policies">كل السياسات</Link>
-        </nav>
       </m.div>
     </LazyMotion>
   );
