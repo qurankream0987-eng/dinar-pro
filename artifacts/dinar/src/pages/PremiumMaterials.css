@@ -482,12 +482,12 @@
 .premium-welcome .ai-starters { gap: 8px; padding: 0; }
 .premium-welcome .ai-starter { min-height: 38px; padding-inline: 12px; font-size: 13px; }
 @media (max-width: 767px) {
-  /* Phones: three compact rows of actions and one swipeable row of starters above the composer. */
+  /* Phones: three compact rows of actions and wrapped compact starters above the composer. */
   .premium-primary-actions { grid-template-columns: 1fr; gap: 8px; }
   .premium-action-card { padding: 10px 12px; }
   .premium-action-card .premium-action-copy span { display: none; }
-  .premium-welcome .ai-starters { flex-wrap: nowrap; justify-content: flex-start; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
-  .premium-welcome .ai-starter { flex: none; }
+  /* Starters wrap (all six stay on screen, the accepted contract); they are compact, not hidden. */
+  .premium-welcome .ai-starters { flex-wrap: wrap; justify-content: center; gap: 6px; }
 }
 @media (max-height: 620px) {
   /* Short screens (and an open phone keyboard): the greeting yields its space to the conversation. */
