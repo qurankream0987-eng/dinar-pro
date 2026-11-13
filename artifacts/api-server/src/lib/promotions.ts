@@ -890,7 +890,7 @@ const PURCHASE_ENTRY_TYPE: Record<string, string> = {
   PROMOTION_BUNDLE: "BUNDLE_PURCHASE",
   STANDARD_PROMOTION: "PROMOTION_PURCHASE",
 };
-export const DEMAND_CAPTURE_PITCH = "خلّ دينار يعرض إعلانك كخيار ممول عندما يوجد طلب حقيقي مناسب.";
+export const DEMAND_CAPTURE_PITCH = "خلّ جاسم يعرض إعلانك كخيار ممول عندما يوجد طلب حقيقي مناسب.";
 export const DEMAND_PRIVACY_NOTE = "لن ترى هوية أي مشترٍ أو رسائله أو موقعه؛ تصلك أرقام مجمّعة فقط. لا يضمن الظهور أي بيع.";
 
 function productIsEffective(product: ProductRow, now = new Date()) {

@@ -281,7 +281,7 @@ async function workTurn(ctx: Context, filter: { city?: string; near?: boolean },
     "DELIVERY_WORK_RESULTS",
     `${lead}${
       work.cards.length
-        ? `وجدت ${work.cards.length} ${work.cards.length === 1 ? "مهمة توصيل" : "مهام توصيل"} داخل DINAR ${where}. تظهر المناطق التقريبية فقط؛ تفاصيل التسليم تظهر بعد قبول المهمة. قل «أقبل الأول» مثلًا.`
+        ? `وجدت ${work.cards.length} ${work.cards.length === 1 ? "مهمة توصيل" : "مهام توصيل"} داخل جاسم ${where}. تظهر المناطق التقريبية فقط؛ تفاصيل التسليم تظهر بعد قبول المهمة. قل «أقبل الأول» مثلًا.`
         : `لا توجد مهام توصيل متاحة الآن ${where}.`
     }`.trim(),
     { work: work.cards, city: city ?? null, serviceCity: work.serviceCity ?? null },

@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useState, type ReactNode } from "react";
+import { TermsAcknowledgementText } from "@/features/legal/TermsAcknowledgement";
 import { Link, useLocation, useSearch } from "wouter";
 import { toast } from "sonner";
 import { Eye, EyeOff, MessageCircle, ShieldCheck, Store, ShoppingBag } from "lucide-react";
@@ -349,14 +350,7 @@ export function AuthPage({ register = false, next, embedded = false }: { registe
               </Field>
               <div>
                 <Checkbox name="acceptTerms">
-                  أوافق على{" "}
-                  <Link href="/policies/terms" className="font-semibold text-primary underline-offset-2 hover:underline">
-                    شروط الاستخدام
-                  </Link>{" "}
-                  و
-                  <Link href="/policies/privacy" className="font-semibold text-primary underline-offset-2 hover:underline">
-                    سياسة الخصوصية
-                  </Link>
+                  <TermsAcknowledgementText />
                 </Checkbox>
                 {fieldErrors.acceptTerms && <p className="mt-1 text-xs font-medium text-destructive">{fieldErrors.acceptTerms}</p>}
               </div>
@@ -364,7 +358,8 @@ export function AuthPage({ register = false, next, embedded = false }: { registe
           )}
 
           {register && phoneVerificationEnabled && challengeId && !verificationToken && (
-            <div className="grid gap-3 rounded-lg border border-border bg-muted/40 p-3">
+            // A step inside the one auth card, separated by a hairline — not a second bordered card.
+            <div className="grid gap-3 border-t border-border pt-4">
               <p className="text-sm text-muted-foreground" data-testid="status-phone-verification">
                 أدخل الرمز المرسل إلى رقم الهاتف نفسه.
               </p>
@@ -402,14 +397,16 @@ export function AuthPage({ register = false, next, embedded = false }: { registe
           )}
 
           {!register && phoneVerificationEnabled && (
-            <div className="grid gap-3 rounded-lg border border-border bg-muted/40 p-3">
+            // Secondary path for numbers never verified: a quiet row, not a nested card competing with sign-in.
+            <div className="grid gap-2 border-t border-border pt-4">
               <p className="text-sm text-muted-foreground">
                 إذا لم يسبق لك التحقق من رقمك، يمكنك إثبات ملكيته هنا ثم تسجيل الدخول.
               </p>
               {!challengeId && (
                 <Button
                   type="button"
-                  variant="secondary"
+                  variant="ghost"
+                  className="!text-primary"
                   disabled={busy}
                   onClick={(event) => {
                     const form = event.currentTarget.form;

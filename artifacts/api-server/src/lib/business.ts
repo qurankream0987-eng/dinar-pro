@@ -31,8 +31,8 @@ export const BUSINESS_ENTITLEMENT_LABELS: Record<string, string> = {
   CAMPAIGN_ANALYTICS_ADVANCED: "تحليلات الحملات المفصلة",
   BUSINESS_REPORTING: "تقارير تجارية مجمعة",
   INVENTORY_INSIGHTS: "رؤى المخزون",
-  AI_USAGE_BUSINESS_GO: "سعة استخدام أكبر للذكاء الاصطناعي (Business Go)",
-  AI_USAGE_BUSINESS_PRO: "أعلى سعة استخدام للذكاء الاصطناعي (Business Pro)",
+  AI_USAGE_BUSINESS_GO: "سعة استخدام أكبر للذكاء الاصطناعي (جاسم جو)",
+  AI_USAGE_BUSINESS_PRO: "أعلى سعة استخدام للذكاء الاصطناعي (جاسم برو)",
   BUSINESS_PROFILE_TOOLS: "أدوات النشاط التجاري الموثّق",
 };
 export const BUSINESS_RANK_NOTE = "الاشتراك يضيف أدوات فقط؛ لا يغيّر ترتيب نتائج البحث العادية ولا شروط الظهور.";

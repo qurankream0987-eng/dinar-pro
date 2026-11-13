@@ -857,7 +857,7 @@ await test("DS-14 browser: receipt cards follow the ledger through review, confi
     for (const question of ["هل وصل عرضي؟", "أقصد عرض الشراء"]) {
       const answered = await send(question);
       const shown = await answered.innerText();
-      assert.match(shown, /هذه حالة العرض كما يسجلها دينار الآن[\s\S]*بانتظار رد البائع/u, `${question}: ${shown.slice(0, 200)}`);
+      assert.match(shown, /هذه حالة العرض كما يسجلها جاسم الآن[\s\S]*بانتظار رد البائع/u, `${question}: ${shown.slice(0, 200)}`);
       assert.doesNotMatch(shown, /لم أجد عروضًا|معلومة عامة/u, question);
     }
     // After a reload every card is re-read from the ledger: the review now shows the sent offer.

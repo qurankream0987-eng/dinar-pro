@@ -49,7 +49,7 @@ export async function subscriptionPlansOverview(actorId: string, market: Market)
       requiresVerifiedBusiness: code === "DINAR_BUSINESS",
       requiresDocuments: code === "DINAR_BUSINESS",
       eligible,
-      eligibilityNote: code === "DINAR_BUSINESS" ? (eligible ? "لديك نشاط موثّق يمكن ربط الاشتراك به." : "يتطلب نشاطًا تجاريًا موثّقًا من مراجع دينار؛ الدفع لا يوثّق النشاط.") : "يكفي حساب دينار؛ لا يحتاج سجلًا تجاريًا.",
+      eligibilityNote: code === "DINAR_BUSINESS" ? (eligible ? "لديك نشاط موثّق يمكن ربط الاشتراك به." : "يتطلب نشاطًا تجاريًا موثّقًا من مراجع جاسم؛ الدفع لا يوثّق النشاط.") : "يكفي حساب جاسم؛ لا يحتاج سجلًا تجاريًا.",
       aiTier: tier,
       allowances: allowances(tier),
       tokens: commercial.aiUsage.tiers[tier].tokens,

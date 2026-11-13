@@ -7,7 +7,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { generateKeyPairSync, randomUUID, sign } from "node:crypto";
 import { and, eq } from "drizzle-orm";
-import { accountIdentities, db, policyAcceptances, pool, users } from "@workspace/db";
+import { accountIdentities, db, policyAcceptances, policyConsentEvents, pool, users } from "@workspace/db";
 import { requireSafeReplitDevelopmentDatabase } from "./safe-development-database";
 requireSafeReplitDevelopmentDatabase("BDINAR_TEST_DATABASE");
 
@@ -124,6 +124,14 @@ await test("a new Google user cannot get an account without SMS phone verificati
   const tampered = new Map(first.jar);
   tampered.set("bdinar_google_pending", first.jar.get("bdinar_google_pending")!.replace(/.$/, (c) => (c === "A" ? "B" : "A")));
   assert.equal((await request("/auth/google/complete", { phoneCountryCode: "+965", phoneNumber, accountCountry: "KW", acceptTerms: true, verificationToken: await smsToken(phoneNumber) }, tampered)).status, 401, "a tampered ticket is refused");
+  // Google authentication is not acceptance of JassimAI's terms: without the explicit
+  // acknowledgement nothing is created, whatever the Google token says.
+  const usersBeforeNoTerms = (await db.select({ id: users.id }).from(users)).length;
+  const noTerms = await request("/auth/google/complete", { phoneCountryCode: "+965", phoneNumber, accountCountry: "KW", verificationToken: await smsToken(phoneNumber) }, first.jar);
+  assert.equal(noTerms.status, 400, "completion without acceptTerms is refused");
+  const falseTerms = await request("/auth/google/complete", { phoneCountryCode: "+965", phoneNumber, accountCountry: "KW", acceptTerms: false, verificationToken: await smsToken(phoneNumber) }, first.jar);
+  assert.equal(falseTerms.status, 400, "acceptTerms:false is refused");
+  assert.equal((await db.select({ id: users.id }).from(users)).length, usersBeforeNoTerms, "no account without acknowledgement");
   const created = await request("/auth/google/complete", { phoneCountryCode: "+965", phoneNumber, accountCountry: "KW", acceptTerms: true, verificationToken: await smsToken(phoneNumber) }, first.jar);
   assert.equal(created.status, 201, created.raw);
   assert.equal(created.data.status, "CREATED");
@@ -135,6 +143,8 @@ await test("a new Google user cannot get an account without SMS phone verificati
   assert.equal(user!.phoneVerified, true);
   assert.equal(user!.displayName, "مستخدم جوجل");
   assert.ok((await db.select().from(policyAcceptances).where(eq(policyAcceptances.userId, user!.id))).length > 0, "terms acceptance recorded");
+  const googleEvents = await db.select().from(policyConsentEvents).where(eq(policyConsentEvents.userId, user!.id));
+  assert.ok(googleEvents.length > 0 && googleEvents.every((event) => event.idempotencyKey.startsWith("signup:google:") && event.source === "SIGNUP" && event.decision === "ACCEPTED" && /^[0-9a-f]{64}$/u.test(event.contentSha256)), "the record names the Google channel, the version and the content hash");
   // Later: Google alone signs the linked account in.
   const again = await request("/auth/google", { idToken: token({ sub, email: "new.user@example.com" }) });
   assert.equal(again.data.status, "SIGNED_IN");
@@ -150,12 +160,16 @@ await test("an existing phone account is linked only after SMS proof, and only o
   const registered = await request("/auth/register", { displayName: "حساب قديم", phoneCountryCode: "+965", phoneNumber, accountCountry: "KW", password, confirmPassword: password, acceptTerms: true, verificationToken: await smsToken(phoneNumber) });
   assert.equal(registered.status, 201, registered.raw);
   const existingId = registered.data.user.id;
+  const phoneEvents = async () => db.select().from(policyConsentEvents).where(eq(policyConsentEvents.userId, existingId));
+  const beforeLink = await phoneEvents();
+  assert.ok(beforeLink.length > 0 && beforeLink.every((event) => event.idempotencyKey.startsWith("signup:phone:")), "a phone signup records the phone channel");
   const subA = `g-${randomUUID()}`;
   const pendingA = await request("/auth/google", { idToken: token({ sub: subA, email: "owner@example.com" }) });
   const linked = await request("/auth/google/complete", { phoneCountryCode: "+965", phoneNumber, accountCountry: "KW", acceptTerms: true, verificationToken: await smsToken(phoneNumber) }, pendingA.jar);
   assert.equal(linked.status, 200, linked.raw);
   assert.equal(linked.data.status, "LINKED");
   assert.equal(linked.data.user.id, existingId, "same account, nothing duplicated");
+  assert.deepEqual((await phoneEvents()).map((event) => event.id).sort(), beforeLink.map((event) => event.id).sort(), "linking Google never records a new consent for an existing user");
   const subB = `g-${randomUUID()}`;
   const pendingB = await request("/auth/google", { idToken: token({ sub: subB, email: "someone@example.com" }) });
   const second = await request("/auth/google/complete", { phoneCountryCode: "+965", phoneNumber, accountCountry: "KW", acceptTerms: true, verificationToken: await smsToken(phoneNumber) }, pendingB.jar);

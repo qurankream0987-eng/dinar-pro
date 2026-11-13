@@ -168,8 +168,8 @@ export const AI_RESOURCE_LABELS: Record<AiUsageResource, string> = {
 export const AI_TIER_LABELS: Record<AiPlanTier, string> = {
   GUEST: "زائر",
   FREE: "المجاني",
-  BUSINESS_GO: "Business Go",
-  BUSINESS_PRO: "Business Pro",
+  BUSINESS_GO: "جاسم جو",
+  BUSINESS_PRO: "جاسم برو",
 };
 
 /** Offset of `timeZone` from UTC at `at`, in milliseconds. */

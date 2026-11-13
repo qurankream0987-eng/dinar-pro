@@ -701,3 +701,8 @@ body[data-private-session-check="true"] > #dinar-private-session-check { display
 .dinar-wordmark { font-family: system-ui, sans-serif; white-space: nowrap; font-weight: 800; letter-spacing: .005em; color: hsl(var(--foreground)); }
 .dinar-wordmark > span { color: #90600d; }
 .dark .dinar-wordmark > span { color: #f3cb70; }
+
+/* Google's rendered button: clip its iframe to the pill so no square white corners or halo show
+   on the app's surfaces (the button and logo themselves are Google's, unchanged). */
+.google-sign-in-button { display: flex; justify-content: center; width: 100%; }
+.google-sign-in-button > div, .google-sign-in-button iframe { border-radius: 999px !important; overflow: hidden; color-scheme: normal; }

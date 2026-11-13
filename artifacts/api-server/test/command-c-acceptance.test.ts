@@ -302,7 +302,7 @@ await test("C6 applying improved copy needs the seller's review; the wording is 
 });
 
 test("C7 no subscription, quota or upgrade pressure appears in seller assistance", () => {
-  for (const call of calls) assert.doesNotMatch(String(call.at(-1)?.content ?? ""), /Business Go|Business Pro|ترقية الاشتراك/u);
+  for (const call of calls) assert.doesNotMatch(String(call.at(-1)?.content ?? ""), /Business Go|Business Pro|جاسم جو|جاسم برو|ترقية الاشتراك/u);
 });
 
 await new Promise((resolve) => setTimeout(resolve, 10));

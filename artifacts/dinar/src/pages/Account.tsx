@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { useGetDashboard } from "@workspace/api-client-react";
 import { api, useAccount } from "@/account/Account";
+import { usePolicyIndex } from "@/pages/Policies";
 import {ConnectAttributionPrivacy} from "@/features/ConnectAttributionPrivacy";
 import { friendlyError } from "@/lib/errors";
 import { longDate } from "@/lib/format";
@@ -476,15 +477,9 @@ export function SettingsPage() {
         />
       </ListGroup>
 
-      <ListGroup title="الشروط">
+      <LegalSettings />
+      <ListGroup title="الشركاء">
         <ListRow href="/connect" icon={<FileText size={19} />} title="جاسم Connect — الشركاء" description="تسجيل مجاني وربط كتالوج خارجي بصلاحيات مراجعة" testId="link-settings-connect" />
-        <ListRow
-          href="/policies"
-          icon={<FileText size={19} />}
-          title="الشروط والسياسات"
-          description="الشروط، الخصوصية، قواعد السوق، الرسوم، النزاعات، والحذف"
-          testId="link-settings-policies"
-        />
       </ListGroup>
 
       <div className="mb-5 flex flex-col items-center gap-2 py-4 text-center">
@@ -799,5 +794,36 @@ function AccountEditor() {
       {error && <InlineAlert tone="danger">{error}</InlineAlert>}
       {success && <InlineAlert tone="success">{success}</InlineAlert>}
     </section>
+  );
+}
+
+
+/**
+ * Legal and data settings: the current documents with the version and effective date the server
+ * publishes (the same registry used for signup acceptance), the marketplace rules, account deletion
+ * and support. The public URLs /privacy and /terms stay reachable without signing in.
+ */
+function LegalSettings() {
+  const index = usePolicyIndex();
+  const find = (key: string) => index.data?.policies.find((policy) => policy.key === key);
+  const versionLine = (key: string, fallback: string) => {
+    const policy = find(key);
+    // The version stays the exact registry string; the date is shown in words so it never breaks mid-line in RTL.
+    return policy ? `النسخة ${policy.version} · سارية من ${longDate(policy.effectiveDate)}` : fallback;
+  };
+  return (
+    <ListGroup title="القانونية والبيانات">
+      <ListRow href="/terms" icon={<FileText size={19} />} title="شروط الاستخدام" description={versionLine("terms", "شروط استخدام جاسم")} testId="link-settings-terms" />
+      <ListRow href="/privacy" icon={<ShieldCheck size={19} />} title="سياسة الخصوصية" description={versionLine("privacy", "كيف نجمع بياناتك ونستخدمها")} testId="link-settings-privacy" />
+      <ListRow
+        href="/policies"
+        icon={<FileText size={19} />}
+        title="كل السياسات"
+        description="قواعد السوق والبائعين، الرسوم، النزاعات، وحذف الحساب"
+        testId="link-settings-policies"
+      />
+      <ListRow href="/policies/account-deletion" icon={<Info size={19} />} title="بياناتك وحذف الحساب" description="ما نحفظه، وكيف تطلب نسخة منه أو حذفه. الذاكرة بين المحادثات معطّلة ما لم تفعّلها." testId="link-settings-data" />
+      <ListRow href="/orders" icon={<LifeBuoy size={19} />} title="الدعم والشكاوى" description="للطلبات: افتح الطلب واستخدم «الإبلاغ عن مشكلة». بريد التواصل الرسمي للخصوصية يُضاف بعد اعتماد الجهة القانونية." testId="link-settings-support" />
+    </ListGroup>
   );
 }

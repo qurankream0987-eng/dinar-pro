@@ -274,7 +274,7 @@ export function connectParticipationCapabilities(input: {
           path: "DINAR_LISTINGS",
           requirements: [
             ...blockers,
-            "تُنشر المنتجات داخل جاسم كإعلانات دينار عادية، بأسعارها ومخزونها في جاسم.",
+            "تُنشر المنتجات داخل جاسم كإعلانات جاسم عادية، بأسعارها ومخزونها في جاسم.",
           ],
         }
       : { included: false, enabled: false, path: "DINAR_LISTINGS", requirements: ["وضعك الحالي لا يشمل البيع داخل جاسم."] },

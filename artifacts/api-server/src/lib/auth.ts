@@ -534,7 +534,7 @@ router.post("/auth/register", registrationLimit, async (req, res) => {
     await grantPremiumTrialAtSignup(tx, created.id, now);
     // acceptTerms covers every policy version that requires acceptance; the append-only
     // consent ledger records the same explicit signup decision with its content hash.
-    const consentRows = await signupConsentRows(created.id, tx);
+    const consentRows = await signupConsentRows(created.id, tx, "PHONE");
     await tx.insert(policyAcceptances).values(
       consentRows.map((row) => ({
         userId: created.id,
@@ -668,7 +668,7 @@ router.post("/auth/google/complete", registrationLimit, async (req, res): Promis
         .returning();
       if (!created) return { kind: "duplicate" as const };
       await grantPremiumTrialAtSignup(tx, created.id, now);
-      const consentRows = await signupConsentRows(created.id, tx);
+      const consentRows = await signupConsentRows(created.id, tx, "GOOGLE");
       await tx.insert(policyAcceptances).values(consentRows.map((row) => ({ userId: created.id, policyKey: row.policyKey, policyVersion: row.policyVersion })));
       await tx.insert(policyConsentEvents).values(consentRows);
       user = created;

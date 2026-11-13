@@ -77,7 +77,7 @@ const prompts: Record<string, string> = {
     "كيف تحب المشتري يتواصل معك؟ اختر محادثة جاسم فقط، أرسل رقمًا مخصصًا لهذا الإعلان، أو قل «استخدم رقم حسابي المسجل» للموافقة صراحةً على مشاركته.",
   contact_account_confirmation:
     "تقصد رقم الدخول المسجل في حسابك؟ لن أشاركه إلا بعد موافقتك الصريحة. قل «نعم» لاستخدامه، أو أرسل رقمًا آخر، أو اختر محادثة جاسم فقط.",
-  payment_methods: "وبالنسبة للدفع، تفضل كاش، فيزا داخل دينار، أو الاثنين؟",
+  payment_methods: "وبالنسبة للدفع، تفضل كاش، فيزا داخل جاسم، أو الاثنين؟",
   category: "اختر تصنيفًا نشطًا من سجل التصنيفات.",
   review: "راجع بيانات المسودة في البطاقة. لن يُنشر العرض إلا عند ضغطك زر «نشر العرض» ومراجعة التأكيد.",
 };
@@ -1963,7 +1963,7 @@ export async function listingDraft(
     } else if (fieldEdit?.field === "contactChatOnly") {
       delete draft.contactPhone;
       draft.contactPreference = "CHAT_ONLY";
-      editAck = "سيكون التواصل عبر محادثة دينار فقط.";
+      editAck = "سيكون التواصل عبر محادثة جاسم فقط.";
     } else if (fieldEdit) {
       const outcome = applyDraftFieldEdit(draft, fieldEdit, categoryForDraft(draft, configured)?.rules.inventory);
       editAck = outcome.ok ? outcome.ack : outcome.reason;
