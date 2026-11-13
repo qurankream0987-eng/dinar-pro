@@ -358,7 +358,7 @@ await test("DS-08 recorded R2 DeepSeek replies (replay, not live) pass the canon
   const recommended = await say(buyer, followConv, followUp, "r2-replay-follow-up");
   assert.deepEqual(fixtureMisses, []);
   assert.equal(recommended.body, advice.args.conversationalReply.trim());
-  assert.match(recommended.body, /\| السعر \(من سجل جاسم\) \| 10,000 دينار \| 12,000 دينار \|/u, "the markdown comparison table survives intact");
+  assert.match(recommended.body, /\| السعر \(من سجل DINAR\) \| 10,000 دينار \| 12,000 دينار \|/u, "the markdown comparison table survives intact");
   const history = (deepseekRequests.at(-1)!.body.messages as { role: string; content: string }[]).slice(1, -1);
   assert.ok(history.some((item) => item.role === "user" && item.content.includes("كورولا 2015")));
 
