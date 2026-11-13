@@ -5,6 +5,7 @@
  * DINAR general marketplace API with seller-defined listing prices
  * OpenAPI spec version: 0.1.0
  */
+import type { AiTurnInputModelPreference } from './aiTurnInputModelPreference';
 import type { AiTurnInputReasoningEffort } from './aiTurnInputReasoningEffort';
 import type { TransactionLocationInput } from './transactionLocationInput';
 
@@ -16,6 +17,8 @@ export interface AiTurnInput {
   message: string;
   /** Reasoning effort for the server-selected GPT-OSS model. */
   reasoningEffort?: AiTurnInputReasoningEffort;
+  /** Use the free default model or one available premium trial message. */
+  modelPreference?: AiTurnInputModelPreference;
   /** Stable identifier for safe turn retries. */
   clientMessageId?: string;
   /**

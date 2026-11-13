@@ -96,8 +96,13 @@ const SAFE_NAME = /^[A-Za-z0-9._:/-]{1,120}$/;
 const safeName = (value: string | undefined, fallback = "UNKNOWN") => (value && SAFE_NAME.test(value) ? value : fallback);
 const count = (value: number | undefined) => (Number.isInteger(value) && value! > 0 ? Math.min(value!, 2_000_000_000) : 0);
 
-/** The applicable price version for a model at `at`, or undefined (never a guess). */
-export async function applicablePrice(provider: string, models: readonly (string | undefined)[], at: Date, tx: Tx | typeof db = db): Promise<Price | undefined> {
+async function applicablePriceFrom(
+  provider: string,
+  models: readonly (string | undefined)[],
+  at: Date,
+  tx: Tx | typeof db,
+  allowTestPlaceholders: boolean,
+): Promise<Price | undefined> {
   for (const model of [...new Set(models.filter((item): item is string => Boolean(item && SAFE_NAME.test(item))))]) {
     const [row] = await tx
       .select()
@@ -108,7 +113,7 @@ export async function applicablePrice(provider: string, models: readonly (string
           eq(aiModelPrices.model, model),
           lte(aiModelPrices.effectiveFrom, at),
           or(isNull(aiModelPrices.effectiveTo), gte(aiModelPrices.effectiveTo, at)),
-          ...(placeholderPricesAllowed() ? [] : [ne(aiModelPrices.source, "TEST_PLACEHOLDER")]),
+          ...(!allowTestPlaceholders ? [ne(aiModelPrices.source, "TEST_PLACEHOLDER")] : []),
         ),
       )
       .orderBy(desc(aiModelPrices.version))
@@ -116,6 +121,30 @@ export async function applicablePrice(provider: string, models: readonly (string
     if (row) return row;
   }
   return undefined;
+}
+
+/** The applicable price version for a model at `at`, or undefined (never a guess). */
+export function applicablePrice(provider: string, models: readonly (string | undefined)[], at: Date, tx: Tx | typeof db = db): Promise<Price | undefined> {
+  return applicablePriceFrom(provider, models, at, tx, placeholderPricesAllowed());
+}
+
+/** A provider-published or contract price only; development placeholders never authorize a guest call. */
+export function applicableApprovedPrice(provider: string, models: readonly (string | undefined)[], at: Date, tx: Tx | typeof db = db): Promise<Price | undefined> {
+  return applicablePriceFrom(provider, models, at, tx, false);
+}
+
+/** True only when every text-generation charge in an approved price row is explicitly zero. */
+export function isZeroCostTextPrice(price: Price | undefined): boolean {
+  return Boolean(
+    price &&
+      price.source !== "TEST_PLACEHOLDER" &&
+      price.inputPerMillionMicros === 0 &&
+      price.outputPerMillionMicros === 0 &&
+      (price.cachedInputPerMillionMicros ?? 0) === 0 &&
+      (price.cacheWriteInputPerMillionMicros ?? 0) === 0 &&
+      (price.cacheWrite12hInputPerMillionMicros ?? 0) === 0 &&
+      (price.requestMicros ?? 0) === 0,
+  );
 }
 
 /** Upper bound for any single rate: $1,000,000 per million tokens / per unit, in micros. */
@@ -312,14 +341,27 @@ async function moveSpend(
  * their cache-write rates. The usage hold checks the expected model; the conversation checks every
  * other model a turn could reach (a separate HEAVY model, a provider fallback) the same way.
  */
-export async function modelPricingAcceptable(policy: AiUsagePolicy, model: { provider: string; model: string }, now = new Date(), tx: Tx | typeof db = db): Promise<boolean> {
+export async function modelPricingAcceptable(
+  policy: AiUsagePolicy,
+  model: { provider: string; model: string },
+  now = new Date(),
+  tx: Tx | typeof db = db,
+  options: { requireApprovedPrice?: boolean } = {},
+): Promise<boolean> {
   const spend = policy.spend;
-  const price = await applicablePrice(model.provider, [model.model], now, tx);
+  const price = options.requireApprovedPrice
+    ? await applicableApprovedPrice(model.provider, [model.model], now, tx)
+    : await applicablePrice(model.provider, [model.model], now, tx);
   const missingRequiredOpenAiCacheRates =
-    spendRequired() &&
+    (spendRequired() || options.requireApprovedPrice) &&
     ["OPENAI", "OPENAI_COMPATIBLE"].includes(model.provider) &&
     (!price || price.cacheWriteInputPerMillionMicros === null || price.cacheWrite12hInputPerMillionMicros === null);
-  return !(missingRequiredOpenAiCacheRates || (spend.unpricedModel === "REFUSE" && (!price || price.currencyCode !== spend.currencyCode)));
+  const requiresPrice = options.requireApprovedPrice || spend.unpricedModel === "REFUSE";
+  return !(
+    missingRequiredOpenAiCacheRates ||
+    (options.requireApprovedPrice && (!price || !price.sourceReference?.trim())) ||
+    (requiresPrice && (!price || price.currencyCode !== spend.currencyCode))
+  );
 }
 
 export async function holdAiSpend(
@@ -332,12 +374,19 @@ export async function holdAiSpend(
     policy: AiUsagePolicy;
     usageReservationId?: string;
     expectedModel?: { provider: string; model: string };
+    expectedModels?: readonly { provider: string; model: string }[];
+    requireApprovedModels?: boolean;
     now: Date;
   },
 ): Promise<Hold> {
   const spend = input.policy.spend;
   if (spendRequired() && spend.global.limitMicros === null) throw new SpendRefused("SPEND_BUDGET_UNCONFIGURED");
-  if (input.expectedModel && !(await modelPricingAcceptable(input.policy, input.expectedModel, input.now, tx))) throw new SpendRefused("MODEL_UNPRICED");
+  const expectedModels = new Map<string, { provider: string; model: string }>();
+  for (const model of [input.expectedModel, ...(input.expectedModels ?? [])])
+    if (model) expectedModels.set(`${model.provider}\u0000${model.model}`, model);
+  for (const model of expectedModels.values())
+    if (!(await modelPricingAcceptable(input.policy, model, input.now, tx, { requireApprovedPrice: input.requireApprovedModels })))
+      throw new SpendRefused("MODEL_UNPRICED");
   const amount = spend.holdMicros[input.resource];
   const scopes = scopesFor(input.policy, input.ownerKey, input.tier, input.now);
   // Fixed order (global → plan → account) so two holds never deadlock.

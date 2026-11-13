@@ -659,6 +659,7 @@ export async function sendAiConversationTurn(
   imageObjectPaths?: string[],
   location?: LocationSubmission,
   reasoningEffort?: "low" | "medium" | "high",
+  modelPreference: "DEFAULT" | "PREMIUM_TRIAL" = "DEFAULT",
 ) {
   // No transport was attempted in this case, so it is not an unknown delivery.
   signal?.throwIfAborted();
@@ -674,7 +675,7 @@ export async function sendAiConversationTurn(
           Accept: "text/event-stream",
         },
         // An explicit location travels only in the POST body, never in a URL.
-        body: JSON.stringify({ message, clientMessageId, imageObjectPaths, reasoningEffort, ...(location ?? {}) }),
+        body: JSON.stringify({ message, clientMessageId, imageObjectPaths, reasoningEffort, modelPreference, ...(location ?? {}) }),
         signal,
       },
     );

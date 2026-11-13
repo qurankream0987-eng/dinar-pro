@@ -11,5 +11,8 @@ import type { SubscriptionPlansOverviewBillingStatus } from './subscriptionPlans
 export type SubscriptionPlansOverviewBilling = {
   status: SubscriptionPlansOverviewBillingStatus;
   activation: SubscriptionPlansOverviewBillingActivation;
+  simulationAvailable: boolean;
+  canActivate: boolean;
+  note: string;
   [key: string]: unknown;
  };

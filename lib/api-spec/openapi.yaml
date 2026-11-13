@@ -4006,13 +4006,69 @@ components:
         planId: { type: string, maxLength: 80 }
         idempotencyKey: { type: string, pattern: "^[A-Za-z0-9._:-]{8,128}$" }
         businessId: { type: string, format: uuid }
+    SubscriptionUsageResource:
+      type: object
+      additionalProperties: false
+      required: [resource, label, limit, used, inProgress, remaining, percent, included]
+      properties:
+        resource: { type: string, enum: [TEXT_REQUEST, MARKETING_GENERATION, BUSINESS_ANALYTICS, IMAGE_UNDERSTANDING, AGENT_MULTI_STEP, AUDIO_TRANSCRIPTION] }
+        label: { type: string }
+        limit: { type: integer, minimum: 0 }
+        used: { type: integer, minimum: 0 }
+        inProgress: { type: integer, minimum: 0 }
+        remaining: { type: integer, minimum: 0 }
+        percent: { type: [integer, "null"], minimum: 0, maximum: 100 }
+        included: { type: boolean }
+    SubscriptionUsageTokens:
+      type: object
+      additionalProperties: false
+      required: [limit, used, remaining, percent]
+      properties:
+        limit: { type: integer, minimum: 0 }
+        used: { type: integer, minimum: 0 }
+        remaining: { type: integer, minimum: 0 }
+        percent: { type: [integer, "null"], minimum: 0, maximum: 100 }
+    SubscriptionUsage:
+      type: object
+      additionalProperties: false
+      required: [tier, renewsAt, timeZone, resources, tokens]
+      properties:
+        tier: { type: string, enum: [GUEST, FREE, BUSINESS_GO, BUSINESS_PRO] }
+        renewsAt: { type: string, format: date-time }
+        timeZone: { type: string, minLength: 1, maxLength: 64 }
+        resources:
+          type: array
+          maxItems: 6
+          items: { $ref: "#/components/schemas/SubscriptionUsageResource" }
+        tokens: { $ref: "#/components/schemas/SubscriptionUsageTokens" }
+        premiumTrial:
+          type: object
+          additionalProperties: false
+          required: [eligible, enabled, limit, used, inProgress, remaining, status]
+          properties:
+            eligible: { type: boolean }
+            enabled: { type: boolean }
+            limit: { type: integer, minimum: 0, maximum: 15 }
+            used: { type: integer, minimum: 0, maximum: 15 }
+            inProgress: { type: integer, minimum: 0, maximum: 15 }
+            remaining: { type: integer, minimum: 0, maximum: 15 }
+            status: { type: string, enum: [NOT_ELIGIBLE, DISABLED, AVAILABLE, EXHAUSTED] }
+    SubscriptionPlanApprovals:
+      type: object
+      additionalProperties: false
+      required: [plansApproved, allowancesApproved, note]
+      properties:
+        plansApproved: { type: boolean }
+        allowancesApproved: { type: boolean }
+        note: { type: ["string", "null"] }
     SubscriptionPlansOverview:
       type: object
       additionalProperties: true
-      required: [marketId, currentPlan, plans, billing]
+      required: [marketId, currentPlan, currentPlanLabel, plans, usage, approvals, billing]
       properties:
         marketId: { type: string }
         currentPlan: { type: string, enum: [FREE, DINAR_GO, DINAR_PRO, DINAR_BUSINESS] }
+        currentPlanLabel: { type: string }
         plans:
           type: array
           maxItems: 3
@@ -4027,13 +4083,18 @@ components:
               requiresVerifiedBusiness: { type: boolean }
               eligible: { type: boolean }
               current: { type: boolean }
+        usage: { $ref: "#/components/schemas/SubscriptionUsage" }
+        approvals: { $ref: "#/components/schemas/SubscriptionPlanApprovals" }
         billing:
           type: object
           additionalProperties: true
-          required: [status, activation]
+          required: [status, activation, simulationAvailable, canActivate, note]
           properties:
             status: { type: string, enum: [CONNECTED, NOT_CONNECTED] }
             activation: { type: string, enum: [DISABLED] }
+            simulationAvailable: { type: boolean }
+            canActivate: { type: boolean }
+            note: { type: string }
     BusinessDraftRequest:
       type: object
       additionalProperties: false
@@ -4881,6 +4942,7 @@ components:
       properties:
         message: { type: string, minLength: 1, maxLength: 4000 }
         reasoningEffort: { type: string, enum: [low, medium, high], description: Reasoning effort for the server-selected GPT-OSS model. }
+        modelPreference: { type: string, enum: [DEFAULT, PREMIUM_TRIAL], description: Use the free default model or one available premium trial message. }
         clientMessageId: { type: string, format: uuid, description: Stable identifier for safe turn retries. }
         imageObjectPaths:
           type: array

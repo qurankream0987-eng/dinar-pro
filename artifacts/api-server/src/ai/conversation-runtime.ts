@@ -716,6 +716,7 @@ export async function executeAiConversationTurn(
     /** Server-only visual interpretation after private ownership, budget and provider validation. */
     imageUnderstanding?: { answer: string; status: "ANALYZED" | "UNAVAILABLE" };
     reasoningEffort?: "low" | "medium" | "high";
+    modelPreference?: "DEFAULT" | "PREMIUM_TRIAL";
     /** Explicit one-time location submission against a delivery request (Block D). */
     location?: unknown;
     locationRequestId?: string;
@@ -765,6 +766,7 @@ export async function executeAiConversationTurn(
         actorId: context.actorId,
         requestKey: `turn:${context.currentMessageId}`,
         reasoningEffort: context.reasoningEffort,
+        modelPreference: context.modelPreference,
       },
       options.modelGateway,
       {
@@ -1189,6 +1191,7 @@ async function executeRuntime(context: RuntimeContext, incoming: RuntimeOptions)
         onModelToolProgress: options.onModelToolProgress,
         requestKey: `turn:${context.currentMessageId}`,
         reasoningEffort: context.reasoningEffort,
+        modelPreference: context.modelPreference,
         allowTaskPlanning: !options.planStep && aiRoutingMode() !== "SHADOW",
       },
       options.modelGateway,

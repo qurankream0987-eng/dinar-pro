@@ -13,7 +13,7 @@ export type AIProviderErrorCode =
 /** Why a provider answered without a usable DINAR turn (a model outcome, not a transport fault). */
 /** INCOMPLETE: the provider ended generation for a reason that leaves the call unfinished (DeepSeek `aborted`). */
 /** DISABLED, CIRCUIT_OPEN and UNSUPPORTED_OPTION are local refusals: nothing was sent to the provider. */
-export type AIResponseDetail = "OUTPUT_LIMIT" | "REFUSAL" | "NO_TOOL_CALL" | "INCOMPLETE" | "DISABLED" | "CIRCUIT_OPEN" | "UNSUPPORTED_OPTION";
+export type AIResponseDetail = "OUTPUT_LIMIT" | "REFUSAL" | "NO_TOOL_CALL" | "INCOMPLETE" | "DISABLED" | "CIRCUIT_OPEN" | "UNSUPPORTED_OPTION" | "MODEL_IDENTITY_MISMATCH";
 export const LOCAL_REFUSAL_DETAILS: readonly AIResponseDetail[] = ["DISABLED", "CIRCUIT_OPEN", "UNSUPPORTED_OPTION"];
 /** An option this model cannot take (a per-call reasoning effort), refused before any request. */
 function unsupportedOption(provider: AIProvider, model: string): AIProviderError {

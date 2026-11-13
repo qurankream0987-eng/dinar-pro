@@ -70,12 +70,18 @@ import {
 } from "../lib/business-delegations";
 import { escalatesAfterLight, gatewayForTier, heavyTurnLimit, modelTieringEnabled, selectModelTier, type ModelTier, type TierDecision, type TierReason, type TierRoute } from "./model-tier";
 import { aiUsagePolicyFor, aiUsageSummary, reserveAiUsage, settleAiUsage, type AiUsageOutcome, type AiUsageOwner, type AiUsageRefusal } from "../lib/ai-usage";
-import { modelPricingAcceptable } from "../lib/ai-spend";
+import { premiumTrialDeploymentAuthorized } from "../lib/ai-premium-trial";
+import { isApprovedFreeOpenRouterModel } from "./free-model-policy";
+import {
+  applicableApprovedPrice,
+  isZeroCostTextPrice,
+  modelPricingAcceptable,
+  type AiCallRecord,
+} from "../lib/ai-spend";
 import { businessPlans, planAiTier } from "../lib/business";
 import { nearLimitNote, PLAN_HINT_MARKER, usageLimitMessage, usageResourceFor } from "./usage-turn";
 import { createHash } from "node:crypto";
 import { logger } from "../lib/logger";
-import type { AiCallRecord } from "../lib/ai-spend";
 import { normalizeSearch } from "./search-context";
 import { isMarketingRequest, sellerListingFacts, unsupportedCopyClaims } from "./seller-management";
 import { executeModelTool, modelToolDefinitions, ToolRejectedError, type ToolResult } from "./tool-registry";
@@ -105,6 +111,7 @@ type Input = {
   onModelToolProgress?: (state: ModelToolContinuation) => Promise<void>;
   requestKey?: string;
   reasoningEffort?: ReasoningEffort;
+  modelPreference?: "DEFAULT" | "PREMIUM_TRIAL";
   allowTaskPlanning?: boolean;
   sellerEmployeeMode?: boolean;
   sellerEmployeeSnapshot?: DelegatedSellerSnapshot;
@@ -1015,6 +1022,207 @@ export async function modelContext(input: Input): Promise<ModelContext> {
   };
 }
 
+export type GuestModelPreflight =
+  | {
+      kind: "READY";
+      gateway: ConversationModelGateway;
+      expectedModels: { provider: string; model: string }[];
+    }
+  | { kind: "PAID_MODEL_REFUSED" }
+  | { kind: "FREE_MODEL_REFUSED" }
+  | { kind: "DISABLED" }
+  | { kind: "FAILED"; outcome: ModelResult };
+
+function guestProviderFailure(error: AIProviderError): ModelResult {
+  const reason: ModelFailure =
+    error.code === "QUOTA_LIMITED"
+      ? "QUOTA_LIMITED"
+      : error.code === "NOT_CONFIGURED"
+        ? "NOT_CONFIGURED"
+        : "UNAVAILABLE";
+  return {
+    ok: false,
+    reason,
+    modelCall: {
+      provider: error.provider,
+      requestedModel: error.requestedModel,
+      actualModel: error.actualModel,
+      latencyMs: error.latencyMs,
+      providerCalls: error.usage ? 1 : 0,
+      ...(error.usage ? { usage: error.usage } : {}),
+    },
+  };
+}
+
+function exactModelIdentityGateway(
+  gateway: ConversationModelGateway,
+  fallback?: ConversationModelGateway,
+): ConversationModelGateway {
+  const providerInfo = gateway.providerInfo;
+  return {
+    providerInfo,
+    ...(gateway.perCallReasoningEffort !== undefined
+      ? { perCallReasoningEffort: gateway.perCallReasoningEffort }
+      : {}),
+    ...(fallback ? { fallback } : {}),
+    async proposeToolCall(messages, tools, options) {
+      const call = await gateway.proposeToolCall(messages, tools, options);
+      if (providerInfo && call.actualModel !== providerInfo.requestedModel) {
+        const error = new AIProviderError(
+          providerInfo.provider,
+          "INVALID_RESPONSE",
+          providerInfo.requestedModel,
+          call.latencyMs ?? 0,
+          undefined,
+          call.actualModel ?? "UNKNOWN",
+        );
+        error.detail = "MODEL_IDENTITY_MISMATCH";
+        if (call.usage) error.usage = call.usage;
+        throw error;
+      }
+      return call;
+    },
+  };
+}
+
+type ApprovedFreeGatewaySelection = {
+  gateway: ConversationModelGateway;
+  expectedModels: { provider: string; model: string }[];
+};
+
+/**
+ * Select at most two explicitly allowlisted, approved zero-price OpenRouter models.
+ * Paid, aliased, unpriced, and unlisted routes are never eligible for free accounts.
+ */
+async function approvedFreeGatewaySelection(
+  gateway: ConversationModelGateway,
+  market: Market,
+): Promise<ApprovedFreeGatewaySelection | undefined> {
+  const policy = await aiUsagePolicyFor({ id: market.id });
+  const now = new Date();
+  const candidates: ConversationModelGateway[] = [];
+  for (const candidate of [gateway, gateway.fallback]) {
+    const info = candidate?.providerInfo;
+    if (!candidate || !info?.requestedModel) continue;
+    if (candidates.some((other) =>
+      other.providerInfo?.provider === info.provider &&
+      other.providerInfo?.requestedModel === info.requestedModel,
+    ))
+      continue;
+    candidates.push(candidate);
+  }
+  const approved: ConversationModelGateway[] = [];
+  for (const candidate of candidates) {
+    const info = candidate.providerInfo!;
+    if (!isApprovedFreeOpenRouterModel(info.provider, info.requestedModel)) continue;
+    const price = await applicableApprovedPrice(info.provider, [info.requestedModel], now);
+    if (!isZeroCostTextPrice(price)) continue;
+    if (!(await modelPricingAcceptable(
+      policy,
+      { provider: info.provider, model: info.requestedModel },
+      now,
+      undefined,
+      { requireApprovedPrice: true },
+    )))
+      continue;
+    approved.push(candidate);
+    if (approved.length === 2) break;
+  }
+  const [primary, fallback] = approved;
+  if (!primary) return undefined;
+  const { fallback: _fallback, heavy: _heavy, ...primaryOnly } = primary;
+  const permittedFallback = fallback
+    ? exactModelIdentityGateway(fallback)
+    : undefined;
+  const expectedModels = approved.map((candidate) => ({
+    provider: candidate.providerInfo!.provider,
+    model: candidate.providerInfo!.requestedModel,
+  }));
+  return {
+    gateway: exactModelIdentityGateway(primaryOnly, permittedFallback),
+    expectedModels,
+  };
+}
+
+/**
+ * Resolve and price-check every guest model before usage is reserved or a provider is called.
+ * Guests are limited to exact, allowlisted OpenRouter free models. A paid or unpriced fallback
+ * is removed; every retained model passes a transactional approved-price check before dispatch.
+ */
+export async function prepareGuestModelTurn(
+  input: { market: Market },
+  injected?: ConversationModelGateway,
+): Promise<GuestModelPreflight> {
+  try {
+    const gateway = await modelGatewayFor(injected, {
+      marketId: input.market.id,
+      countryCode: input.market.countryCode,
+      currencyCode: input.market.currencyCode,
+    });
+    if (!gateway) return { kind: "DISABLED" };
+    const primary = gateway.providerInfo;
+    if (!primary?.requestedModel) {
+      return {
+        kind: "FAILED",
+        outcome: {
+          ok: false,
+          reason: "UNAVAILABLE",
+          modelCall: { latencyMs: 0, providerCalls: 0 },
+        },
+      };
+    }
+    if (!isApprovedFreeOpenRouterModel(primary.provider, primary.requestedModel))
+      return { kind: "FREE_MODEL_REFUSED" };
+    const policy = await aiUsagePolicyFor({ id: input.market.id });
+    const primaryPrice = await applicableApprovedPrice(primary.provider, [primary.requestedModel], new Date());
+    if (primaryPrice && !isZeroCostTextPrice(primaryPrice)) return { kind: "PAID_MODEL_REFUSED" };
+
+    const expectedModels = [{ provider: primary.provider, model: primary.requestedModel }];
+    let permittedFallback: ConversationModelGateway | undefined;
+    const fallback = gateway.fallback;
+    if (fallback?.providerInfo?.requestedModel) {
+      const now = new Date();
+      const fallbackInfo = fallback.providerInfo;
+      if (!isApprovedFreeOpenRouterModel(fallbackInfo.provider, fallbackInfo.requestedModel))
+        return {
+          kind: "READY",
+          gateway: exactModelIdentityGateway(gateway),
+          expectedModels,
+        };
+      const fallbackIsPriced = await modelPricingAcceptable(
+        policy,
+        { provider: fallbackInfo.provider, model: fallbackInfo.requestedModel },
+        now,
+        undefined,
+        { requireApprovedPrice: true },
+      );
+      const fallbackPrice = fallbackIsPriced
+        ? await applicableApprovedPrice(fallbackInfo.provider, [fallbackInfo.requestedModel], now)
+        : undefined;
+      const paidFallbackFromZeroCostPrimary =
+        isZeroCostTextPrice(primaryPrice) && !isZeroCostTextPrice(fallbackPrice);
+      if (
+        fallbackIsPriced &&
+        fallbackPrice &&
+        isZeroCostTextPrice(fallbackPrice) &&
+        !paidFallbackFromZeroCostPrimary
+      ) {
+        expectedModels.push({ provider: fallbackInfo.provider, model: fallbackInfo.requestedModel });
+        permittedFallback = exactModelIdentityGateway(fallback);
+      }
+    }
+    return {
+      kind: "READY",
+      gateway: exactModelIdentityGateway(gateway, permittedFallback),
+      expectedModels,
+    };
+  } catch (error) {
+    if (error instanceof AIProviderError)
+      return { kind: "FAILED", outcome: guestProviderFailure(error) };
+    throw error;
+  }
+}
+
 /** Guest turns share the same model contract and server-authored locale/capability context. */
 export async function executeGuestModelTurn(
   input: {
@@ -1024,36 +1232,12 @@ export async function executeGuestModelTurn(
     earlierUserTopics?: string[];
     reasoningEffort?: ReasoningEffort;
   },
-  injected?: ConversationModelGateway,
+  prepared: GuestModelPreflight,
 ): Promise<ModelResult | null> {
+  if (prepared.kind === "DISABLED" || prepared.kind === "PAID_MODEL_REFUSED" || prepared.kind === "FREE_MODEL_REFUSED") return null;
+  if (prepared.kind === "FAILED") return prepared.outcome;
   const marketAvailable = isMarketAvailable(input.market);
-  let gateway: ConversationModelGateway | undefined;
-  try {
-    gateway = await modelGatewayFor(injected, {
-      marketId: input.market.id,
-      countryCode: input.market.countryCode,
-      currencyCode: input.market.currencyCode,
-    });
-  } catch (error) {
-    if (!(error instanceof AIProviderError)) throw error;
-    const reason: ModelFailure =
-      error.code === "QUOTA_LIMITED"
-        ? "QUOTA_LIMITED"
-        : error.code === "NOT_CONFIGURED"
-          ? "NOT_CONFIGURED"
-          : "UNAVAILABLE";
-    return {
-      ok: false,
-      reason,
-      modelCall: {
-        provider: error.provider,
-        requestedModel: error.requestedModel,
-        latencyMs: error.latencyMs,
-      },
-    };
-  }
-  if (!gateway) return null;
-  return interpretWithModel(gateway, input.message, {
+  return interpretWithModel(prepared.gateway, input.message, {
     reasoningEffort: input.reasoningEffort,
     marketAvailable,
     history: input.history ?? [],
@@ -1818,11 +2002,99 @@ export async function executeModelFallback(
       );
     sellerEmployeeSnapshot = current;
   }
-  const reserved = await reserveAiUsage({ owner, resource, idempotencyKey: requestKey, ...(gateway.providerInfo ? { expectedModel: { provider: gateway.providerInfo.provider, model: gateway.providerInfo.requestedModel } } : {}) });
+  const configuredGateway = gateway;
+  const usageSummary = await aiUsageSummary(owner);
+  const freeRouteRequired = usageSummary.tier === "FREE" || input.modelPreference === "PREMIUM_TRIAL";
+  const freeSelection = freeRouteRequired
+    ? await approvedFreeGatewaySelection(configuredGateway, input.market)
+    : undefined;
+  if (freeRouteRequired && !freeSelection)
+    return adviceTurn(
+      "لا يوجد نموذج مجاني OpenRouter معتمد لهذا الحساب حاليًا؛ لم أرسل طلبًا إلى نموذج مدفوع.",
+      { kind: "CLARIFICATION_REQUIRED", scope: "CONVERSATION", modelStatus: "NOT_CONFIGURED" },
+      { ownerId: input.actorId },
+    );
+
+  let premiumTrialSelected = false;
+  let premiumTrialFallbackNote: string | undefined;
+  let freeGatewayForTrial: ConversationModelGateway | undefined = freeSelection?.gateway;
+  let expectedModelsForReservation: readonly { provider: string; model: string }[] | undefined;
+  let requireApprovedModelsForReservation = false;
+  if (freeSelection && usageSummary.tier === "FREE") {
+    gateway = freeSelection.gateway;
+    expectedModelsForReservation = freeSelection.expectedModels;
+    requireApprovedModelsForReservation = true;
+  }
+  if (input.modelPreference === "PREMIUM_TRIAL") {
+    const policy = await aiUsagePolicyFor(input.market);
+    const premium = configuredGateway.heavy;
+    const premiumInfo = premium?.providerInfo;
+    const premiumModel = premiumInfo?.requestedModel
+      ? { provider: premiumInfo.provider, model: premiumInfo.requestedModel }
+      : undefined;
+    const premiumPrice = premiumModel
+      ? await applicableApprovedPrice(premiumModel.provider, [premiumModel.model], new Date())
+      : undefined;
+    if (
+      usageSummary.tier === "FREE" &&
+      usageSummary.premiumTrial.status === "AVAILABLE" &&
+      premiumModel &&
+      premiumTrialDeploymentAuthorized(process.env, policy, premiumModel) &&
+      premiumPrice &&
+      !isZeroCostTextPrice(premiumPrice)
+    ) {
+      const { fallback: _fallback, heavy: _heavy, ...selected } = premium!;
+      gateway = exactModelIdentityGateway(selected);
+      premiumTrialSelected = true;
+      expectedModelsForReservation = undefined;
+      requireApprovedModelsForReservation = true;
+    } else {
+      gateway = freeSelection!.gateway;
+      expectedModelsForReservation = freeSelection!.expectedModels;
+      requireApprovedModelsForReservation = true;
+      premiumTrialFallbackNote = usageSummary.premiumTrial.status === "EXHAUSTED"
+        ? "انتهت رسائل التجربة المميزة؛ استخدمت النموذج المجاني المعتمد."
+        : "التجربة المميزة غير مفعّلة حاليًا؛ استخدمت النموذج المجاني المعتمد.";
+    }
+  }
+  const expectedModel = gateway.providerInfo
+    ? { provider: gateway.providerInfo.provider, model: gateway.providerInfo.requestedModel }
+    : undefined;
+  let reserved = await reserveAiUsage({
+    owner,
+    resource,
+    idempotencyKey: requestKey,
+    ...(expectedModel ? { expectedModel } : {}),
+    ...(expectedModelsForReservation ? { expectedModels: expectedModelsForReservation } : {}),
+    ...(premiumTrialSelected ? { premiumTrial: true, requireApprovedModels: true } : {}),
+    ...(requireApprovedModelsForReservation ? { requireApprovedModels: true } : {}),
+  });
+  if (
+    !reserved.ok &&
+    premiumTrialSelected &&
+    freeGatewayForTrial &&
+    reserved.reason !== "DUPLICATE_IN_FLIGHT" &&
+    reserved.reason !== "ALREADY_PROCESSED"
+  ) {
+    premiumTrialFallbackNote = reserved.reason === "PREMIUM_TRIAL_EXHAUSTED"
+      ? "انتهت رسائل التجربة المميزة؛ استخدمت النموذج المجاني المعتمد."
+      : "تعذر استخدام التجربة المميزة الآن؛ استخدمت النموذج المجاني المعتمد.";
+    gateway = freeGatewayForTrial;
+    premiumTrialSelected = false;
+    expectedModelsForReservation = freeSelection!.expectedModels;
+    reserved = await reserveAiUsage({
+      owner,
+      resource,
+      idempotencyKey: requestKey,
+      ...(gateway.providerInfo ? { expectedModel: { provider: gateway.providerInfo.provider, model: gateway.providerInfo.requestedModel } } : {}),
+      expectedModels: expectedModelsForReservation,
+      requireApprovedModels: true,
+    });
+  }
   if (!reserved.ok) return usageRefusalTurn(reserved, owner, input.conversationId, input.market, input.actorId);
   let drafted: Awaited<ReturnType<typeof draftWithClaimGuard>> | undefined;
   let context: ModelContext;
-  let usageNote: string | undefined;
+  let usageNote: string | undefined = premiumTrialFallbackNote;
   let lastSearchResult: ToolResult | undefined;
   let lastResourceResult: ToolResult | undefined;
   let lastComparisonResult: ToolResult | undefined;
@@ -1867,7 +2139,7 @@ export async function executeModelFallback(
         ? await modelRolesForActor(input.actorId, input.market.id)
         : [];
     const availableTools =
-      !input.sellerEmployeeMode && input.currentMessageId
+      !premiumTrialSelected && !input.sellerEmployeeMode && input.currentMessageId
         ? modelToolDefinitions(toolContext, toolRoles)
         : [];
     const loopContext: ModelContext = {

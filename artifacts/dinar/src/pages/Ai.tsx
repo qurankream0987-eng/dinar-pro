@@ -5,6 +5,7 @@ import { useStableCallback } from "@/hooks/use-stable-callback";
 import { VERIFICATION_BLOCK_MS, replyForTurn, unfinishedTurn, verificationPollInterval } from "@/features/ai/turn-recovery";
 import * as Dialog from "@radix-ui/react-dialog";
 import { ConversationSidebar } from "@/features/ai/ConversationSidebar";
+import { UsageSidebarCard } from "@/features/ai/UsageSidebarCard";
 import {
   clearGuestHandoff,
   decideGuestHandoff,
@@ -121,6 +122,8 @@ function takeStashedDraft(): string {
 export default function AiPage() {
   const [reasoningEffort, setReasoningEffort] =
     useState<ReasoningEffort>("medium");
+  const [modelPreference, setModelPreference] =
+    useState<"DEFAULT" | "PREMIUM_TRIAL">("DEFAULT");
   const {
     user,
     market,
@@ -252,6 +255,9 @@ export default function AiPage() {
   const deleteConversation = useDeleteAiConversation();
   const renameConversation = useRenameAiConversation();
   const [keyboardOpen, setKeyboardOpen] = useState(false);
+  useEffect(() => {
+    setModelPreference("DEFAULT");
+  }, [user?.id, market?.id]);
 
   const conversationList = useMemo(
     () => conversations.data ?? [],
@@ -1250,6 +1256,7 @@ export default function AiPage() {
             refreshConversationData(conversationId);
             setStage(null);
             setVerifyingTurn(null);
+            setModelPreference("DEFAULT");
             if (user && market)
               publishCardSync(user.id, market.id, conversationId);
             if (photos.length) {
@@ -1287,6 +1294,7 @@ export default function AiPage() {
         imageObjectPaths,
         location,
         reasoningEffort,
+        modelPreference,
       );
     } catch (cause) {
       if (epoch !== requestEpoch.current) return;
@@ -2212,6 +2220,15 @@ export default function AiPage() {
               <span>محادثة جديدة</span>
               <kbd dir="ltr" className="max-[1023px]:hidden">Ctrl ⇧ O</kbd>
             </button>
+            <UsageSidebarCard
+              disabled={streaming}
+              premiumTrialSelected={modelPreference === "PREMIUM_TRIAL"}
+              onUsePremiumTrial={() => setModelPreference("PREMIUM_TRIAL")}
+              onOpenInChat={() => {
+                setSidebarOpen(false);
+                runCommand("كم استهلكت؟");
+              }}
+            />
             <label className="ai-history-search">
               <Search size={16} aria-hidden />
               <input

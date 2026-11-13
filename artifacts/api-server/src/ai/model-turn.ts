@@ -838,12 +838,12 @@ export async function interpretWithModel(
           : "UNAVAILABLE";
       const budgetLeft = deadline - Date.now() > MIN_RETRY_BUDGET_MS;
       // The same request would hit the same output ceiling, refusal or abort again: never re-billed.
-      const repeatable = !notSent && !(error instanceof AIProviderError && (error.detail === "OUTPUT_LIMIT" || error.detail === "REFUSAL" || error.detail === "INCOMPLETE"));
+      const repeatable = !notSent && !(error instanceof AIProviderError && (error.detail === "OUTPUT_LIMIT" || error.detail === "REFUSAL" || error.detail === "INCOMPLETE" || error.detail === "MODEL_IDENTITY_MISMATCH"));
       if (reason === "UNAVAILABLE" && repeatable && retriesLeft > 0 && budgetLeft) {
         retriesLeft -= 1;
         continue;
       }
-      if (!onFallback && active.fallback && budgetLeft) {
+      if (!onFallback && active.fallback && budgetLeft && !(error instanceof AIProviderError && error.detail === "MODEL_IDENTITY_MISMATCH")) {
         active = active.fallback;
         onFallback = true;
         retriesLeft = 0;

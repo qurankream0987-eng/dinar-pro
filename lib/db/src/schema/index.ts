@@ -2403,6 +2403,8 @@ export const aiUsageReservations = pgTable(
     idempotencyKey: text("idempotency_key").notNull(),
     status: text("status").default("RESERVED").notNull(),
     outcome: text("outcome"),
+    /** One trial message is held for this paid-model operation, then settled on dispatch. */
+    premiumTrial: boolean("premium_trial").default(false).notNull(),
     reservedRequests: integer("reserved_requests").notNull(),
     reservedTokens: integer("reserved_tokens").notNull(),
     chargedRequests: integer("charged_requests").default(0).notNull(),

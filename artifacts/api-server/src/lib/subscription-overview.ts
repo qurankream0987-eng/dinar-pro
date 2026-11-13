@@ -74,8 +74,10 @@ export async function subscriptionPlansOverview(actorId: string, market: Market)
     usage: {
       tier: usage.tier,
       renewsAt: usage.period.renewsAt,
+      timeZone: usage.period.timeZone,
       resources: usage.resources,
       tokens: usage.tokens,
+      premiumTrial: usage.premiumTrial,
     },
     approvals: {
       plansApproved: policy.approved,

@@ -15,7 +15,7 @@ import { test, after } from "node:test";
 import assert from "node:assert/strict";
 import { createHash, randomUUID } from "node:crypto";
 import { and, eq } from "drizzle-orm";
-import { aiResultSets, cartItems, carts, db, messages, orders, policyAcceptances, pool } from "@workspace/db";
+import { aiModelPrices, aiResultSets, cartItems, carts, db, messages, orders, policyAcceptances, pool } from "@workspace/db";
 import app from "../src/app";
 import { AIProviderError, type ConversationModelGateway } from "../src/ai/model-gateway";
 import { CANONICAL_REQUEST_INSTRUCTION } from "../src/ai/routing-mode";
@@ -33,6 +33,21 @@ import { requireSafeReplitDevelopmentDatabase } from "./safe-development-databas
 
 requireSafeReplitDevelopmentDatabase("BDINAR_TEST_DATABASE");
 const run = `ن${randomUUID().replaceAll("-", "").replace(/\d/g, "").slice(0, 5)}`;
+const FREE_MODEL_PROVIDER = "OPENROUTER";
+const FREE_MODEL = `fixture/model-native-free-${randomUUID().replaceAll("-", "").slice(0, 8)}`;
+process.env.DINAR_APPROVED_FREE_OPENROUTER_MODELS = FREE_MODEL;
+await db.insert(aiModelPrices).values({
+  id: randomUUID(),
+  provider: FREE_MODEL_PROVIDER,
+  model: FREE_MODEL,
+  version: 1,
+  currencyCode: "USD",
+  inputPerMillionMicros: 0,
+  outputPerMillionMicros: 0,
+  source: "CONTRACT",
+  sourceReference: "scripted test fixture; no provider call",
+  effectiveFrom: new Date(Date.now() - 60_000),
+});
 
 /** What the scripted «model» answers for a message containing the key. */
 const script: Array<{
@@ -51,10 +66,11 @@ let observedToolNames: string[] = [];
 let matchedScriptKey = "";
 let unavailable = false;
 const gateway: ConversationModelGateway = {
+  providerInfo: { provider: FREE_MODEL_PROVIDER, requestedModel: FREE_MODEL },
   async proposeToolCall(messages, tools) {
     calls++;
     observedToolNames = tools.map((tool) => tool.name);
-    if (unavailable) throw new AIProviderError("OPENAI", "UNAVAILABLE", "scripted");
+    if (unavailable) throw new AIProviderError(FREE_MODEL_PROVIDER, "UNAVAILABLE", FREE_MODEL);
     sawInstruction = messages.some((message) => message.role === "system" && String(message.content).includes(CANONICAL_REQUEST_INSTRUCTION));
     const user = [...messages].reverse().find((message) => message.role === "user");
     const text = String(user?.content ?? "");
@@ -81,7 +97,14 @@ const gateway: ConversationModelGateway = {
           if (priorSearch?.resultSetId && first?.id)
             args = { resultSetId: priorSearch.resultSetId, resourceId: first.id };
         }
-        return { id: "scripted-tool", name: step.name, arguments: JSON.stringify(args) };
+        return {
+          id: "scripted-tool",
+          name: step.name,
+          arguments: JSON.stringify(args),
+          provider: FREE_MODEL_PROVIDER,
+          requestedModel: FREE_MODEL,
+          actualModel: FREE_MODEL,
+        };
       }
     }
     return {
@@ -94,6 +117,9 @@ const gateway: ConversationModelGateway = {
         ...(entry?.canonical ? { canonicalRequest: entry.canonical } : {}),
         ...(entry?.plannedSteps ? { plannedSteps: entry.plannedSteps } : {}),
       }),
+      provider: FREE_MODEL_PROVIDER,
+      requestedModel: FREE_MODEL,
+      actualModel: FREE_MODEL,
     };
   },
 };

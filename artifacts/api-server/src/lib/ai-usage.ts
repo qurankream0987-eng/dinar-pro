@@ -28,7 +28,20 @@ import {
   type AiUsageResource,
 } from "./ai-usage-policy";
 import { logger } from "./logger";
-import { holdAiSpend, isSpendRefusal, settleAiSpend, type AiCallRecord, type AiSpendRefusalReason } from "./ai-spend";
+import {
+  applicableApprovedPrice,
+  holdAiSpend,
+  isSpendRefusal,
+  isZeroCostTextPrice,
+  settleAiSpend,
+  type AiCallRecord,
+  type AiSpendRefusalReason,
+} from "./ai-spend";
+import {
+  PREMIUM_TRIAL_MESSAGE_LIMIT,
+  PREMIUM_TRIAL_PERIOD_START,
+  premiumTrialDeploymentAuthorized,
+} from "./ai-premium-trial";
 
 type MarketRef = { id: string };
 export type AiUsageOwner =
@@ -43,6 +56,8 @@ export type AiUsageRefusalReason =
   | "GLOBAL_BUDGET_EXHAUSTED"
   | "DUPLICATE_IN_FLIGHT"
   | "ALREADY_PROCESSED"
+  | "PREMIUM_TRIAL_NOT_AVAILABLE"
+  | "PREMIUM_TRIAL_EXHAUSTED"
   | AiSpendRefusalReason;
 export type AiUsageReservation = { ok: true; reservation: Reservation; policy: AiUsagePolicy };
 export type AiUsageRefusal = { ok: false; reason: AiUsageRefusalReason; resource: AiUsageResource; tier: AiPlanTier; renewsAt: Date };
@@ -134,6 +149,12 @@ export async function reserveAiUsage(input: {
   now?: Date;
   /** The model about to be called, so an unpriced model can be refused before it costs anything. */
   expectedModel?: { provider: string; model: string };
+  /** Every additional model reachable by this operation (for example an explicit fallback). */
+  expectedModels?: readonly { provider: string; model: string }[];
+  /** Guest inference requires a real provider/contract price even in development. */
+  requireApprovedModels?: boolean;
+  /** Internal-only: reserve one of the account's one-time premium trial messages. */
+  premiumTrial?: boolean;
 }): Promise<AiUsageReservation | AiUsageRefusal> {
   const now = input.now ?? new Date();
   const ownerKey = ownerKeyOf(input.owner);
@@ -157,7 +178,16 @@ export async function reserveAiUsage(input: {
   await reconcileAbandonedAiReservations({ ownerKey, now });
   const allowance = policy.tiers[tier];
   const requestLimit = allowance.requests[input.resource];
-  if (requestLimit <= 0) return refusal("NOT_INCLUDED");
+  if (requestLimit <= 0 && !input.premiumTrial) return refusal("NOT_INCLUDED");
+  if (
+    input.premiumTrial &&
+    (input.owner.kind !== "USER" ||
+      tier !== "FREE" ||
+      input.resource !== "TEXT_REQUEST" ||
+      !input.expectedModel ||
+      !premiumTrialDeploymentAuthorized(process.env, policy, input.expectedModel))
+  )
+    return refusal("PREMIUM_TRIAL_NOT_AVAILABLE");
   const estimate = policy.tokenEstimates[input.resource];
   const globalPeriod = usagePeriod(policy.globalGuard.period, now);
   try {
@@ -170,7 +200,32 @@ export async function reserveAiUsage(input: {
       if (existing?.status === "RESERVED") throw new Refused("DUPLICATE_IN_FLIGHT");
       if (existing?.status === "SETTLED") throw new Refused("ALREADY_PROCESSED");
       // Reserve in a fixed order (resource → owner budget → global) so no two requests deadlock.
-      await moveCounter(tx, { ownerKey, periodStart: period.start, resource: input.resource }, { reservedRequests: 1 }, { requests: requestLimit });
+      if (input.premiumTrial) {
+        const [grant] = await tx
+          .select({ ownerKey: aiUsageCounters.ownerKey })
+          .from(aiUsageCounters)
+          .where(
+            and(
+              eq(aiUsageCounters.ownerKey, ownerKey),
+              eq(aiUsageCounters.periodStart, PREMIUM_TRIAL_PERIOD_START),
+              eq(aiUsageCounters.resource, "ALL"),
+            ),
+          )
+          .for("update");
+        if (!grant) throw new Refused("PREMIUM_TRIAL_NOT_AVAILABLE");
+        await moveCounter(
+          tx,
+          { ownerKey, periodStart: PREMIUM_TRIAL_PERIOD_START, resource: "ALL" },
+          { reservedRequests: 1 },
+          { requests: PREMIUM_TRIAL_MESSAGE_LIMIT },
+          "PREMIUM_TRIAL_EXHAUSTED",
+        );
+        const price = await applicableApprovedPrice(input.expectedModel!.provider, [input.expectedModel!.model], now, tx);
+        if (!price || isZeroCostTextPrice(price)) throw new Refused("PREMIUM_TRIAL_NOT_AVAILABLE");
+      } else {
+        if (requestLimit <= 0) throw new Refused("NOT_INCLUDED");
+        await moveCounter(tx, { ownerKey, periodStart: period.start, resource: input.resource }, { reservedRequests: 1 }, { requests: requestLimit });
+      }
       await moveCounter(tx, { ownerKey, periodStart: period.start, resource: "ALL" }, { reservedTokens: estimate }, { tokens: allowance.tokens }, "TOKEN_ALLOWANCE_EXHAUSTED");
       if (policy.globalGuard.enabled)
         await moveCounter(
@@ -194,6 +249,7 @@ export async function reserveAiUsage(input: {
         globalGuarded: policy.globalGuard.enabled,
         status: "RESERVED",
         outcome: null,
+        premiumTrial: input.premiumTrial === true,
         reservedRequests: 1,
         reservedTokens: estimate,
         chargedRequests: 0,
@@ -218,7 +274,18 @@ export async function reserveAiUsage(input: {
             .values({ id: randomUUID(), idempotencyKey: input.idempotencyKey, createdAt: now, ...values })
             .returning();
       // Money is held in the same transaction: a refused hold rolls the allowance back too.
-      await holdAiSpend(tx, { ownerKey, tier, purpose: input.resource, resource: input.resource, policy, usageReservationId: row!.id, expectedModel: input.expectedModel, now });
+      await holdAiSpend(tx, {
+        ownerKey,
+        tier,
+        purpose: input.resource,
+        resource: input.resource,
+        policy,
+        usageReservationId: row!.id,
+        expectedModel: input.expectedModel,
+        expectedModels: input.expectedModels,
+        requireApprovedModels: input.premiumTrial === true || input.requireApprovedModels,
+        now,
+      });
       return row!;
     });
     return { ok: true, reservation, policy };
@@ -282,7 +349,18 @@ export async function settleAiUsage(reservationId: string, measurement: AiUsageM
     if (reservation.status !== "RESERVED") return { duplicate: true as const, reservation };
     const charged = charges(reservation, measurement);
     const ownerRow = { ownerKey: reservation.ownerKey, periodStart: reservation.periodStart };
-    await moveCounter(tx, { ...ownerRow, resource: reservation.resource }, { reservedRequests: -reservation.reservedRequests, consumedRequests: charged.user.requests });
+    if (reservation.premiumTrial) {
+      await moveCounter(
+        tx,
+        { ownerKey: reservation.ownerKey, periodStart: PREMIUM_TRIAL_PERIOD_START, resource: "ALL" },
+        {
+          reservedRequests: -1,
+          consumedRequests: charged.calls > 0 ? 1 : 0,
+        },
+      );
+    } else {
+      await moveCounter(tx, { ...ownerRow, resource: reservation.resource }, { reservedRequests: -reservation.reservedRequests, consumedRequests: charged.user.requests });
+    }
     await moveCounter(tx, { ...ownerRow, resource: "ALL" }, { reservedTokens: -reservation.reservedTokens, consumedTokens: charged.user.tokens, consumedRequests: charged.user.requests });
     if (reservation.globalGuarded)
       await moveCounter(
@@ -357,6 +435,19 @@ export async function aiUsageSummary(owner: AiUsageOwner, now = new Date()) {
     .from(aiUsageCounters)
     .where(and(eq(aiUsageCounters.ownerKey, ownerKey), eq(aiUsageCounters.periodStart, period.start)));
   const byResource = new Map(rows.map((row) => [row.resource, row]));
+  const [trialCounter] = owner.kind === "USER"
+    ? await db
+        .select()
+        .from(aiUsageCounters)
+        .where(
+          and(
+            eq(aiUsageCounters.ownerKey, ownerKey),
+            eq(aiUsageCounters.periodStart, PREMIUM_TRIAL_PERIOD_START),
+            eq(aiUsageCounters.resource, "ALL"),
+          ),
+        )
+        .limit(1)
+    : [];
   const allowance = policy.tiers[tier];
   const percent = (used: number, limit: number) => (limit > 0 ? Math.min(100, Math.round((used / limit) * 100)) : null);
   const resources = AI_USAGE_RESOURCES.map((resource) => {
@@ -369,6 +460,40 @@ export async function aiUsageSummary(owner: AiUsageOwner, now = new Date()) {
   const all = byResource.get("ALL");
   const tokensUsed = all?.consumedTokens ?? 0;
   const tokens = { limit: allowance.tokens, used: tokensUsed, remaining: Math.max(0, allowance.tokens - tokensUsed - (all?.reservedTokens ?? 0)), percent: percent(tokensUsed, allowance.tokens) };
+  const trialModel = {
+    provider: process.env.DINAR_PREMIUM_TRIAL_PROVIDER ?? "",
+    model: process.env.DINAR_PREMIUM_TRIAL_MODEL ?? "",
+  };
+  const trialPrice = trialCounter && trialModel.provider && trialModel.model
+    ? await applicableApprovedPrice(trialModel.provider, [trialModel.model], now)
+    : undefined;
+  const trialReady = Boolean(
+    trialCounter &&
+      tier === "FREE" &&
+      premiumTrialDeploymentAuthorized(process.env, policy, trialModel) &&
+      trialPrice &&
+      !isZeroCostTextPrice(trialPrice),
+  );
+  const trialUsed = trialCounter?.consumedRequests ?? 0;
+  const trialInProgress = trialCounter?.reservedRequests ?? 0;
+  const trialRemaining = trialCounter
+    ? Math.max(0, PREMIUM_TRIAL_MESSAGE_LIMIT - trialUsed - trialInProgress)
+    : 0;
+  const premiumTrial = {
+    eligible: Boolean(trialCounter),
+    enabled: trialReady && trialRemaining > 0,
+    limit: trialCounter ? PREMIUM_TRIAL_MESSAGE_LIMIT : 0,
+    used: trialUsed,
+    inProgress: trialInProgress,
+    remaining: trialRemaining,
+    status: !trialCounter
+      ? ("NOT_ELIGIBLE" as const)
+      : trialRemaining === 0
+        ? ("EXHAUSTED" as const)
+        : trialReady
+          ? ("AVAILABLE" as const)
+          : ("DISABLED" as const),
+  };
   return {
     tier,
     tierLabel: AI_TIER_LABELS[tier],
@@ -377,6 +502,7 @@ export async function aiUsageSummary(owner: AiUsageOwner, now = new Date()) {
     period: { kind: policy.period.kind, timeZone: policy.period.timeZone, start: period.start.toISOString(), renewsAt: period.end.toISOString() },
     resources,
     tokens,
+    premiumTrial,
     nearLimitRatio: policy.nearLimitRatio,
     exhausted: resources.filter((item) => item.included && item.remaining === 0).map((item) => item.resource),
   };
