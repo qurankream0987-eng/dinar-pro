@@ -262,7 +262,8 @@ await test("the legacy acceptance endpoint now writes an audited consent event",
   const response = await request(
     "/account/policy-acceptances",
     "POST",
-    { key: "privacy", version: "2026-10-02" },
+    // The current privacy version (a newer privacy notice supersedes 2026-10-02 for new acceptances).
+    { key: "privacy", version: currentPolicy("privacy")!.version },
     stranger,
   );
   assert.equal(response.status, 201, response.text);

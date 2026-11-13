@@ -38,6 +38,9 @@ const PoliciesIndexPage = lazy(() =>
 const PolicyPage = lazy(() =>
   import("./pages/Policies").then((m) => ({ default: m.PolicyPage })),
 );
+const FixedPolicyPage = lazy(() =>
+  import("./pages/Policies").then((m) => ({ default: m.FixedPolicyPage })),
+);
 const ProfilePage = lazy(() =>
   import("./pages/Account").then((m) => ({ default: m.ProfilePage })),
 );
@@ -93,7 +96,7 @@ const CHAT_ONLY_ACCOUNT_ROUTES = new Set([
 ]);
 // Policy surfaces stay reachable in chat-only mode (also linked from the chat).
 const isPolicyRoute = (location: string) =>
-  location === "/terms" || location === "/policies" || location.startsWith("/policies/");
+  location === "/privacy" || location === "/terms" || location === "/policies" || location.startsWith("/policies/");
 // D3-A: a business's public storefront is a DINAR-hosted page, reachable from the conversation.
 const isBusinessRoute = (location: string) => /^\/business\/[A-Za-z0-9_-]{1,64}$/u.test(location);
 function PageFallback() {
@@ -156,7 +159,8 @@ function Routes() {
       <Route path="/admin/disputes">{guard(<AdminDisputesPage />)}</Route>
       <Route path="/admin/trust-safety">{guard(<AdminTrustSafetyPage />)}</Route>
       <Route path="/admin/legal-readiness">{guard(<AdminLegalReadinessPage />)}</Route>
-      <Route path="/terms" component={PoliciesIndexPage} />
+      <Route path="/privacy"><FixedPolicyPage policyKey="privacy" /></Route>
+      <Route path="/terms"><FixedPolicyPage policyKey="terms" /></Route>
       <Route path="/policies" component={PoliciesIndexPage} />
       <Route path="/policies/:key" component={PolicyPage} />
       <Route path="/business/:id" component={PublicBusinessPage} />
@@ -174,7 +178,8 @@ function Routes() {
       <Route path="/register">
         <AuthPage register />
       </Route>
-      <Route path="/terms" component={PoliciesIndexPage} />
+      <Route path="/privacy"><FixedPolicyPage policyKey="privacy" /></Route>
+      <Route path="/terms"><FixedPolicyPage policyKey="terms" /></Route>
       <Route path="/policies" component={PoliciesIndexPage} />
       <Route path="/policies/:key" component={PolicyPage} />
       <Route path="/listings/:id">

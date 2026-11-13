@@ -1,4 +1,5 @@
 import { ListingGlimpses } from "./ListingGlimpses";
+import { Link } from "wouter";
 import { LazyMotion, domAnimation, m, useReducedMotion } from "framer-motion";
 import { surfaceSpring } from "@/lib/presentation-motion";
 import { useEffect, useRef, useState, type FormEvent, type PointerEvent as ReactPointerEvent } from "react";
@@ -384,6 +385,14 @@ export function Welcome({
             </button>
           ))}
         </div>
+        {/* Public legal links on the home page (Google OAuth branding review reads them here). */}
+        <nav className="ai-welcome-legal" aria-label="روابط قانونية" data-testid="welcome-legal-links">
+          <Link href="/privacy">سياسة الخصوصية</Link>
+          <span aria-hidden="true">·</span>
+          <Link href="/terms">شروط الاستخدام</Link>
+          <span aria-hidden="true">·</span>
+          <Link href="/policies">كل السياسات</Link>
+        </nav>
       </m.div>
     </LazyMotion>
   );

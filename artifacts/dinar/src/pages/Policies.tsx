@@ -86,7 +86,16 @@ export function PoliciesIndexPage() {
 
 export function PolicyPage() {
   const params = useParams<{ key: string }>();
-  const key = params.key;
+  return <PolicyDocument policyKey={params.key} />;
+}
+
+/** A fixed public URL (/privacy, /terms) showing the same published document as /policies/:key. */
+export function FixedPolicyPage({ policyKey }: { policyKey: "privacy" | "terms" }) {
+  return <PolicyDocument policyKey={policyKey} />;
+}
+
+function PolicyDocument({ policyKey }: { policyKey: string }) {
+  const key = policyKey;
   const policy = useQuery<PolicyDocument>({
     queryKey: ["policy", key],
     queryFn: async () => (await api(`/policies/${encodeURIComponent(key)}`)) as PolicyDocument,

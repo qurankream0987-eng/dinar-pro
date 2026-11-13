@@ -1905,6 +1905,9 @@ body:has(.dinar-chatgpt) {
 }
 .ai-welcome { display: grid; justify-items: center; gap: clamp(14px, 2.4dvh, 20px); text-align: center; }
 .ai-welcome-copy { display: grid; max-width: 560px; justify-items: center; gap: 8px; }
+.ai-welcome-legal { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 10px; margin-top: 18px; font-size: 12.5px; color: var(--chat-ink-3); }
+.ai-welcome-legal a { color: inherit; text-decoration: underline; text-underline-offset: 3px; min-height: 32px; display: inline-flex; align-items: center; }
+.ai-welcome-legal a:hover, .ai-welcome-legal a:focus-visible { color: var(--chat-ink); }
 .ai-welcome-logo { width: 36px; height: 36px; }
 .ai-welcome h1 { color: var(--chat-ink); font-size: clamp(24px, 3vw, 30px); font-weight: 700; line-height: 1.35; }
 .ai-welcome p { max-width: 46ch; color: var(--chat-ink-2); font-size: 14.5px; line-height: 1.8; }
