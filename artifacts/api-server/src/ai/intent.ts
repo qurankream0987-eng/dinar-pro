@@ -34,10 +34,10 @@ export function surfaceIntent(message: string): string | undefined {
   if (!refused && (CHECKOUT_REQUEST.test(folded) ||
     /(?:^|\s)(?:اريد|ابي|ابغي|ابغى|بدي|ودي|عايز|عاوز|حاب)\s+(?:ان\s+)?ادفع(?:\s|$)|(?:^|\s)(?:اكمل|كمل|اتمم)\s+(?:ال)?(?:شراء|دفع)(?:\s|$)/u.test(folded)))
     return "CHECKOUT";
-  // «كم عمولة دينار؟», «رسوم دينار»: the platform's own fee terms. A refund or return word alone
+  // «كم عمولة جاسم؟», «رسوم جاسم» (and the historical «دينار»): the platform's own fee terms. A refund or return word alone
   // is not routed here: «وين وصل استرجاع فلوسي» asks about the user's own refund, and a precise
   // policy question is answered from the published policy (readPolicy), not a generic page.
-  if (/(?:^|\s)(?:عموله|رسوم)\s+دينار(?:\s|$)/u.test(folded)) return "POLICIES";
+  if (/(?:^|\s)(?:عموله|رسوم)\s+(?:دينار|جاسم)(?:\s|$)/u.test(folded)) return "POLICIES";
   if (/(?:^|\s)(?:انزل|نزل|نزلي|احط|حط)\s+(?:لي\s+)?اعلان(?:\s|$)/u.test(folded)) return "SELL";
   if (/(?:^|\s)(?:شو|وش|ايش|شنو)\s+(?:في\s+|فيه\s+)?(?:ب|في\s+)?(?:ال)?سل(?:ه|تي)(?:\s|$)|(?:^|\s)(?:اشوف|اطالع|اتفرج\s+على)\s+(?:ال)?سل(?:ه|تي)(?:\s|$)|^(?:ورني|وريني|ورجيني|فرجيني|فرجني|اعرض|افتح|افتحلي|شوفلي)\s+(?:لي\s+)?(?:ال)?سل(?:ه|تي)$/u.test(folded))
     return "CART";
@@ -47,7 +47,7 @@ export function surfaceIntent(message: string): string | undefined {
     return "ORDERS";
   if (/سجلني دخول|تسجيل الدخول/.test(text)) return "AUTH";
   if (
-    /الشروط|سياسة الخصوصية|سياسه الخصوصيه|قواعد السوق|المنتجات المحظورة|الممنوعات|سياسة الاسترداد|حذف حسابي|حذف الحساب|العمولة|عمولة بدينار|رسوم بدينار/.test(
+    /الشروط|سياسة الخصوصية|سياسه الخصوصيه|قواعد السوق|المنتجات المحظورة|الممنوعات|سياسة الاسترداد|حذف حسابي|حذف الحساب|العمولة|عمولة بدينار|رسوم بدينار|عمولة بجاسم|رسوم بجاسم/.test(
       text,
     )
   )
