@@ -39,6 +39,11 @@ RUN \
 # while making the runtime user their owner; do not rely on a world-readable clone.
 COPY --chown=node:node . .
 
+# Public, build-time web settings (not secrets): Railway passes a service variable to the build
+# only when it is declared here. The Google client id is a public identifier.
+ARG VITE_GOOGLE_CLIENT_ID=""
+ENV VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID
+
 RUN pnpm --filter @workspace/dinar run build \
   && pnpm --filter @workspace/api-server run build
 
