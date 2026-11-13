@@ -33,6 +33,7 @@ export const BillingWebhookEventSchema = z.discriminatedUnion("type", [
 ]);
 export type BillingWebhookEvent = z.infer<typeof BillingWebhookEventSchema>;
 
+const TERMINAL: readonly SubscriptionStatus[] = ["PAYMENT_FAILED", "CANCELLED", "EXPIRED"];
 type Transition = { to: SubscriptionStatus; setPeriod?: boolean; cancelled?: boolean } | { ignored: string };
 
 /**
@@ -43,7 +44,9 @@ type Transition = { to: SubscriptionStatus; setPeriod?: boolean; cancelled?: boo
 export function subscriptionTransition(from: SubscriptionStatus, event: BillingWebhookEvent["type"]): Transition {
   switch (event) {
     case "SUBSCRIPTION_ACTIVATED":
-      return from === "PENDING" || from === "PAYMENT_FAILED" ? { to: "ACTIVE", setPeriod: true } : { ignored: "NOT_PENDING" };
+      // PAYMENT_FAILED, CANCELLED and EXPIRED are final in the database (integrity trigger): a
+      // retry after a failed first payment is a new checkout, never a revived row.
+      return from === "PENDING" ? { to: "ACTIVE", setPeriod: true } : { ignored: TERMINAL.includes(from) ? "TERMINAL_STATUS" : "NOT_PENDING" };
     case "SUBSCRIPTION_RENEWED":
       return from === "ACTIVE" || from === "PAST_DUE" ? { to: "ACTIVE", setPeriod: true } : { ignored: from === "CANCEL_AT_PERIOD_END" ? "RENEWAL_AFTER_CANCELLATION" : "NOT_RENEWABLE" };
     case "PAYMENT_FAILED":
@@ -53,7 +56,8 @@ export function subscriptionTransition(from: SubscriptionStatus, event: BillingW
     case "SUBSCRIPTION_ENDED":
       return ["ACTIVE", "PAST_DUE", "CANCEL_AT_PERIOD_END"].includes(from) ? { to: "EXPIRED" } : { ignored: "NOT_LIVE" };
     case "REFUNDED":
-      return ["ACTIVE", "PAST_DUE", "CANCEL_AT_PERIOD_END", "EXPIRED"].includes(from) ? { to: "CANCELLED", cancelled: true } : { ignored: "NOTHING_TO_REFUND" };
+      // An EXPIRED subscription grants nothing already and its status is final: the refund is recorded only.
+      return ["ACTIVE", "PAST_DUE", "CANCEL_AT_PERIOD_END"].includes(from) ? { to: "CANCELLED", cancelled: true } : { ignored: from === "EXPIRED" ? "TERMINAL_STATUS" : "NOTHING_TO_REFUND" };
   }
 }
 
@@ -113,7 +117,7 @@ export function subscriptionBillingStatus() {
 }
 
 /** Digest of the event with keys sorted, so a replay with the same content is recognised. */
-function eventDigest(event: BillingWebhookEvent): string {
+export function eventDigest(event: BillingWebhookEvent): string {
   const sorted = Object.fromEntries(Object.entries(event).sort(([a], [b]) => a.localeCompare(b)));
   return createHash("sha256").update(JSON.stringify(sorted)).digest("hex");
 }
@@ -138,7 +142,16 @@ export async function receiveBillingWebhook(providerKey: string, raw: unknown) {
     await db.insert(billingWebhookEvents).values({ id: randomUUID(), providerKey, providerEventId: body.event.id, eventType: body.event.type, payloadDigest: digest, status: "REJECTED", failureCode: "INVALID_SIGNATURE", processedAt: new Date() }).onConflictDoNothing();
     throw fail(401, "توقيع غير صالح", "INVALID_SIGNATURE");
   }
-  const event = body.event;
+  return applyBillingEvent(providerKey, body.event, digest);
+}
+
+/**
+ * Applies one verified canonical event inside a transaction: unknown subscription, amount or
+ * currency mismatch and impossible periods are recorded as REJECTED; transitions the lifecycle
+ * does not allow are IGNORED. Shared by the canonical intake and provider adapters (Whop) that
+ * verify their own signed transport first. The (provider, event id) record makes it idempotent.
+ */
+export async function applyBillingEvent(providerKey: string, event: BillingWebhookEvent, digest = eventDigest(event), expectedUserId?: string) {
   return db.transaction(async (tx) => {
     const record = async (status: "APPLIED" | "IGNORED" | "REJECTED", failureCode: string | null, subscriptionId: string | null) => {
       const [row] = await tx
@@ -150,6 +163,11 @@ export async function receiveBillingWebhook(providerKey: string, raw: unknown) {
     };
     const [subscription] = await tx.select().from(businessSubscriptions).where(eq(businessSubscriptions.id, event.subscriptionId)).for("update");
     if (!subscription) return record("REJECTED", "UNKNOWN_SUBSCRIPTION", null);
+    // A concurrent delivery of the same event waited on the row lock: answer it from the record.
+    const [already] = await tx.select().from(billingWebhookEvents).where(and(eq(billingWebhookEvents.providerKey, providerKey), eq(billingWebhookEvents.providerEventId, event.id)));
+    if (already) return { duplicate: true, status: already.status as "APPLIED" | "IGNORED" | "REJECTED", failureCode: already.failureCode };
+    // The provider names the account the payment was made for; it must be the subscription's owner.
+    if (expectedUserId !== undefined && expectedUserId !== subscription.userId) return record("REJECTED", "ACCOUNT_MISMATCH", subscription.id);
     if ("amountMinor" in event && (event.amountMinor !== subscription.priceMinorSnapshot || event.currencyCode !== subscription.currencyCodeSnapshot))
       return record("REJECTED", "AMOUNT_MISMATCH", subscription.id);
     const transition = subscriptionTransition(subscription.status as SubscriptionStatus, event.type);

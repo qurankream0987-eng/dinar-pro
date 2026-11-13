@@ -1,5 +1,6 @@
 import { additionalAppOrigins } from "./lib/deployment-configuration";
 import express, { type Express, type Request } from "express";
+import { installWhopBillingFromEnv, whopWebhookHandler } from "./lib/billing/whop";
 import cookieParser from "cookie-parser";
 import { randomUUID } from "node:crypto";
 import { sessionMiddleware } from "./lib/auth";
@@ -222,6 +223,9 @@ app.use((req, res, next) => {
   }
   next();
 });
+// Whop signs the exact bytes it sends, so its webhook keeps a raw body (same 128 KB bound).
+app.post("/api/billing/whop/webhook", express.raw({ type: "application/json", limit: "128kb" }), whopWebhookHandler);
+installWhopBillingFromEnv();
 app.use(express.json({ limit: "128kb" }));
 app.use(express.urlencoded({ extended: true }));
 // Zod 3 records one issue per failing array element (GHSA-mrhx-c7xc-m3w5): 128 KB of JSON can

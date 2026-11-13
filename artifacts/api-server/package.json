@@ -8,6 +8,7 @@
     "test:db-guard": "node --test test/acceptance-database-guard.test.mjs",
     "test:secrets": "node --test test/secret-scan.test.mjs",
     "test:storage-portability": "mkdir -p .test-build && esbuild test/storage-portability.test.ts --bundle --packages=external --platform=node --format=esm --outfile=.test-build/storage-portability.test.mjs && node --test .test-build/storage-portability.test.mjs",
+    "test:whop-billing": "env -u AI_INTEGRATIONS_OPENAI_API_KEY -u AI_INTEGRATIONS_OPENAI_BASE_URL -u OPENAI_API_KEY -u OPENROUTER_API_KEY -u GROQ_API_KEY NODE_ENV=development BDINAR_WHOP_BILLING=development BDINAR_PROMOTIONS_ENABLED=true node test/run.mjs whop-billing.test",
     "test:d1d2": "env -u AI_INTEGRATIONS_OPENAI_API_KEY -u AI_INTEGRATIONS_OPENAI_BASE_URL -u OPENAI_API_KEY -u OPENROUTER_API_KEY -u GROQ_API_KEY NODE_ENV=development BDINAR_D1D2_ACCEPTANCE=development BDINAR_PROMOTIONS_ENABLED=true sh -c 'node test/run.mjs d1-d2-business-foundation.test && node test/run.mjs d1-d2-business-browser.test'",
     "test:closure": "env -u AI_INTEGRATIONS_OPENAI_API_KEY -u AI_INTEGRATIONS_OPENAI_BASE_URL -u OPENAI_API_KEY -u OPENROUTER_API_KEY -u GROQ_API_KEY NODE_ENV=development BDINAR_CLOSURE_ACCEPTANCE=development BDINAR_PROMOTIONS_ENABLED=true BDINAR_WAVE4_ACCEPTANCE=development sh -c 'node test/run.mjs closure-ai-cost.test && node test/run.mjs closure-privacy.test && node test/run.mjs closure-integrations.test && node test/run.mjs closure-notifications.test'",
     "dev": "export NODE_ENV=development && pnpm run build && pnpm run start",

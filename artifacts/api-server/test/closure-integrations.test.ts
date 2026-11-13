@@ -128,6 +128,10 @@ await test("C4-02 lifecycle state machine: every event has one defined outcome",
     ["CANCEL_AT_PERIOD_END", "SUBSCRIPTION_ENDED", "EXPIRED"],
     ["ACTIVE", "REFUNDED", "CANCELLED"],
     ["CANCELLED", "REFUNDED", "ignored:NOTHING_TO_REFUND"],
+    // The database integrity trigger makes these statuses final; the machine must agree.
+    ["PAYMENT_FAILED", "SUBSCRIPTION_ACTIVATED", "ignored:TERMINAL_STATUS"],
+    ["EXPIRED", "REFUNDED", "ignored:TERMINAL_STATUS"],
+    ["EXPIRED", "SUBSCRIPTION_ACTIVATED", "ignored:TERMINAL_STATUS"],
   ];
   for (const [from, event, expected] of cases) {
     const result = subscriptionTransition(from as never, event);
