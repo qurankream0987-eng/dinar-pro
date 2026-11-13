@@ -17,7 +17,7 @@ export interface AiTurnInput {
   message: string;
   /** Reasoning effort for the server-selected GPT-OSS model. */
   reasoningEffort?: AiTurnInputReasoningEffort;
-  /** Use the free default model or one available premium trial message. */
+  /** Model class the user asks for. DEFAULT and AUTO let Jassim choose the best authorized model; ECONOMY, CORE and ADVANCED are honoured only when the account is eligible; PREMIUM_TRIAL uses one complimentary premium message when available. */
   modelPreference?: AiTurnInputModelPreference;
   /** Stable identifier for safe turn retries. */
   clientMessageId?: string;

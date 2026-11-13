@@ -716,7 +716,7 @@ export async function executeAiConversationTurn(
     /** Server-only visual interpretation after private ownership, budget and provider validation. */
     imageUnderstanding?: { answer: string; status: "ANALYZED" | "UNAVAILABLE" };
     reasoningEffort?: "low" | "medium" | "high";
-    modelPreference?: "DEFAULT" | "PREMIUM_TRIAL";
+    modelPreference?: "DEFAULT" | "PREMIUM_TRIAL" | "AUTO" | "ECONOMY" | "CORE" | "ADVANCED";
     /** Explicit one-time location submission against a delivery request (Block D). */
     location?: unknown;
     locationRequestId?: string;

@@ -4942,7 +4942,7 @@ components:
       properties:
         message: { type: string, minLength: 1, maxLength: 4000 }
         reasoningEffort: { type: string, enum: [low, medium, high], description: Reasoning effort for the server-selected GPT-OSS model. }
-        modelPreference: { type: string, enum: [DEFAULT, PREMIUM_TRIAL], description: Use the free default model or one available premium trial message. }
+        modelPreference: { type: string, enum: [DEFAULT, PREMIUM_TRIAL, AUTO, ECONOMY, CORE, ADVANCED], description: "Model class the user asks for. DEFAULT and AUTO let Jassim choose the best authorized model; ECONOMY, CORE and ADVANCED are honoured only when the account is eligible; PREMIUM_TRIAL uses one complimentary premium message when available." }
         clientMessageId: { type: string, format: uuid, description: Stable identifier for safe turn retries. }
         imageObjectPaths:
           type: array

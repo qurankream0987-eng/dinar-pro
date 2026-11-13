@@ -4730,7 +4730,7 @@ export const sendAiConversationTurnBodyLocationNoteMax = 300;
 export const SendAiConversationTurnBody = zod.object({
   "message": zod.string().min(1).max(sendAiConversationTurnBodyMessageMax),
   "reasoningEffort": zod.enum(['low', 'medium', 'high']).optional().describe('Reasoning effort for the server-selected GPT-OSS model.'),
-  "modelPreference": zod.enum(['DEFAULT', 'PREMIUM_TRIAL']).optional().describe('Use the free default model or one available premium trial message.'),
+  "modelPreference": zod.enum(['DEFAULT', 'PREMIUM_TRIAL', 'AUTO', 'ECONOMY', 'CORE', 'ADVANCED']).optional().describe('Model class the user asks for. DEFAULT and AUTO let Jassim choose the best authorized model; ECONOMY, CORE and ADVANCED are honoured only when the account is eligible; PREMIUM_TRIAL uses one complimentary premium message when available.'),
   "clientMessageId": zod.uuid().optional().describe('Stable identifier for safe turn retries.'),
   "imageObjectPaths": zod.array(zod.string().min(1).max(sendAiConversationTurnBodyImageObjectPathsItemMax)).max(sendAiConversationTurnBodyImageObjectPathsMax).optional(),
   "locationRequestId": zod.uuid().optional().describe('The delivery location request or preview this explicit submission answers.'),

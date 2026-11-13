@@ -72,6 +72,9 @@ import { escalatesAfterLight, gatewayForTier, heavyTurnLimit, modelTieringEnable
 import { aiUsagePolicyFor, aiUsageSummary, reserveAiUsage, settleAiUsage, type AiUsageOutcome, type AiUsageOwner, type AiUsageRefusal } from "../lib/ai-usage";
 import { premiumTrialDeploymentAuthorized } from "../lib/ai-premium-trial";
 import { freeRoutingEnforced, isApprovedFreeOpenRouterModel } from "./free-model-policy";
+import { NO_CAPACITY_MESSAGE, paidFallbackKilled, planModelRoute, type ModelPreference, type RoutePlan } from "./model-routing";
+import { catalogModelGateway, gatewayLocallyAvailable } from "./model-gateway";
+import type { AiPlanTier, AiUsagePolicy } from "../lib/ai-usage-policy";
 import {
   applicableApprovedPrice,
   isZeroCostTextPrice,
@@ -111,7 +114,7 @@ type Input = {
   onModelToolProgress?: (state: ModelToolContinuation) => Promise<void>;
   requestKey?: string;
   reasoningEffort?: ReasoningEffort;
-  modelPreference?: "DEFAULT" | "PREMIUM_TRIAL";
+  modelPreference?: "DEFAULT" | "PREMIUM_TRIAL" | "AUTO" | "ECONOMY" | "CORE" | "ADVANCED";
   allowTaskPlanning?: boolean;
   sellerEmployeeMode?: boolean;
   sellerEmployeeSnapshot?: DelegatedSellerSnapshot;
@@ -1032,6 +1035,7 @@ export type GuestModelPreflight =
     }
   | { kind: "PAID_MODEL_REFUSED" }
   | { kind: "FREE_MODEL_REFUSED" }
+  | { kind: "NO_CAPACITY" }
   | { kind: "DISABLED" }
   | { kind: "FAILED"; outcome: ModelResult };
 
@@ -1146,13 +1150,66 @@ async function approvedFreeGatewaySelection(
   };
 }
 
+type CatalogRoute =
+  | { kind: "ROUTE"; gateway: ConversationModelGateway; expectedModels: { provider: string; model: string }[]; plan: RoutePlan }
+  | { kind: "NO_CAPACITY"; plan: RoutePlan };
+
+const toPreference = (value: string | undefined): ModelPreference =>
+  value === "ECONOMY" || value === "CORE" || value === "ADVANCED" ? value : "AUTO";
+
+/**
+ * Owner policy 2026-11-13: plan a bounded route over the owner's catalog (model-routing.ts) and
+ * build its gateways through the shared gateway factory. Every model is identity-checked; the
+ * reservation then holds money for every model the route could reach.
+ */
+async function catalogRoute(policy: AiUsagePolicy, tier: AiPlanTier, preference: ModelPreference, message: string, effort?: ReasoningEffort): Promise<CatalogRoute> {
+  const routing = policy.routing;
+  const now = new Date();
+  const prices = new Map<string, Awaited<ReturnType<typeof applicableApprovedPrice>>>();
+  for (const entry of routing.models)
+    prices.set(`${entry.provider}\u0000${entry.model}`, await applicableApprovedPrice(entry.provider, [entry.model], now));
+  const difficulty = selectModelTier(message, { ...process.env, DINAR_AI_TIERING: "on" }, { requestedEffort: effort }).tier;
+  const plan = planModelRoute({
+    policy: routing,
+    tier,
+    preference,
+    difficulty,
+    needs: { tools: true, structuredOutput: false, contextTokens: routing.projection.inputTokens },
+    prices,
+    spendCurrency: policy.spend.currencyCode,
+    available: (entry) => gatewayLocallyAvailable({ providerInfo: { provider: entry.provider as never, requestedModel: entry.model } } as unknown as ConversationModelGateway),
+    freeAllowlisted: (entry) => (entry.provider === "OPENROUTER" || entry.provider === "OPENAI_COMPATIBLE") && isApprovedFreeOpenRouterModel("OPENROUTER", entry.model),
+    paidKilled: paidFallbackKilled(),
+  });
+  // Privacy-safe diagnostics: classes, model ids and reasons only — no message, user or key.
+  logger.info({
+    event: "jassim_model_route",
+    tier,
+    preference,
+    difficulty,
+    outcome: plan.kind,
+    attempts: plan.kind === "ROUTE" ? plan.attempts.map((item) => ({ cls: item.class, model: item.model, paid: item.paid, projectedMicros: item.projectedMicros })) : [],
+    excluded: plan.excluded,
+  }, "model route");
+  if (plan.kind === "NO_CAPACITY") return { kind: "NO_CAPACITY", plan };
+  try {
+    const [first, second] = plan.attempts;
+    const failover = second ? exactModelIdentityGateway(catalogModelGateway(second)) : undefined;
+    const gateway = exactModelIdentityGateway(catalogModelGateway(first!), failover);
+    return { kind: "ROUTE", gateway, expectedModels: plan.attempts.map(({ provider, model }) => ({ provider, model })), plan };
+  } catch (error) {
+    if (error instanceof AIProviderError) return { kind: "NO_CAPACITY", plan: { kind: "NO_CAPACITY", order: plan.order, excluded: plan.excluded } };
+    throw error;
+  }
+}
+
 /**
  * Resolve and price-check every guest model before usage is reserved or a provider is called.
  * Guests are limited to exact, allowlisted OpenRouter free models. A paid or unpriced fallback
  * is removed; every retained model passes a transactional approved-price check before dispatch.
  */
 export async function prepareGuestModelTurn(
-  input: { market: Market },
+  input: { market: Market; message?: string },
   injected?: ConversationModelGateway,
 ): Promise<GuestModelPreflight> {
   try {
@@ -1162,6 +1219,16 @@ export async function prepareGuestModelTurn(
       currencyCode: input.market.currencyCode,
     });
     if (!gateway) return { kind: "DISABLED" };
+    // Owner policy 2026-11-13: an enabled routing policy routes guests over the catalog under the
+    // GUEST audience (its own classes, paid-fallback switch and per-turn ceiling); usage and spend
+    // caps (per guest key, per tier per day, global) are then held by the reservation.
+    const routingPolicy = await aiUsagePolicyFor({ id: input.market.id });
+    if (routingPolicy.routing.enabled) {
+      const route = await catalogRoute(routingPolicy, "GUEST", "AUTO", input.message ?? "");
+      return route.kind === "ROUTE"
+        ? { kind: "READY", gateway: route.gateway, expectedModels: route.expectedModels, enforced: true }
+        : { kind: "NO_CAPACITY" };
+    }
     // Option A: until the versioned policy is active, a guest keeps the existing route; the usage
     // reservation and global spend hold still apply exactly as before this integration.
     if (!freeRoutingEnforced()) return { kind: "READY", gateway, expectedModels: [], enforced: false };
@@ -1241,7 +1308,7 @@ export async function executeGuestModelTurn(
   },
   prepared: GuestModelPreflight,
 ): Promise<ModelResult | null> {
-  if (prepared.kind === "DISABLED" || prepared.kind === "PAID_MODEL_REFUSED" || prepared.kind === "FREE_MODEL_REFUSED") return null;
+  if (prepared.kind === "DISABLED" || prepared.kind === "PAID_MODEL_REFUSED" || prepared.kind === "FREE_MODEL_REFUSED" || prepared.kind === "NO_CAPACITY") return null;
   if (prepared.kind === "FAILED") return prepared.outcome;
   const marketAvailable = isMarketAvailable(input.market);
   return interpretWithModel(prepared.gateway, input.message, {
@@ -2014,7 +2081,17 @@ export async function executeModelFallback(
   // Option A: the free-model restriction applies only once the versioned policy is active. Before
   // that, a FREE account keeps the existing route, which still passes the usage reservation, the
   // model price check and the spend hold below; no new paid path is opened.
-  const enforceFreeRouting = freeRoutingEnforced();
+  // Owner policy 2026-11-13: when the market's routing policy is enabled, the bounded catalog route
+  // decides (FREE → ECONOMY → CORE, or CORE/ADVANCED directly). The premium trial keeps its own path.
+  const routingPolicy = await aiUsagePolicyFor(input.market);
+  // A premium-trial request plans the account's normal (AUTO) route too: it is the route used when
+  // the trial is unavailable or exhausted, so the conversation never stops at the end of the trial.
+  const catalog = routingPolicy.routing.enabled
+    ? await catalogRoute(routingPolicy, usageSummary.tier, toPreference(input.modelPreference), input.message, input.reasoningEffort)
+    : undefined;
+  if (catalog?.kind === "NO_CAPACITY" && input.modelPreference !== "PREMIUM_TRIAL")
+    return adviceTurn(NO_CAPACITY_MESSAGE, { kind: "CLARIFICATION_REQUIRED", scope: "CONVERSATION", modelStatus: "NOT_CONFIGURED" }, { ownerId: input.actorId });
+  const enforceFreeRouting = !catalog && freeRoutingEnforced();
   const freeRouteRequired = enforceFreeRouting && (usageSummary.tier === "FREE" || input.modelPreference === "PREMIUM_TRIAL");
   const freeSelection = freeRouteRequired
     ? await approvedFreeGatewaySelection(configuredGateway, input.market)
@@ -2031,7 +2108,11 @@ export async function executeModelFallback(
   let freeGatewayForTrial: ConversationModelGateway | undefined = freeSelection?.gateway;
   let expectedModelsForReservation: readonly { provider: string; model: string }[] | undefined;
   let requireApprovedModelsForReservation = false;
-  if (freeSelection && usageSummary.tier === "FREE") {
+  if (catalog?.kind === "ROUTE") {
+    gateway = catalog.gateway;
+    expectedModelsForReservation = catalog.expectedModels;
+    requireApprovedModelsForReservation = true;
+  } else if (freeSelection && usageSummary.tier === "FREE") {
     gateway = freeSelection.gateway;
     expectedModelsForReservation = freeSelection.expectedModels;
     requireApprovedModelsForReservation = true;
@@ -2066,6 +2147,15 @@ export async function executeModelFallback(
       premiumTrialFallbackNote = usageSummary.premiumTrial.status === "EXHAUSTED"
         ? "انتهت رسائل التجربة المميزة؛ استخدمت النموذج المجاني المعتمد."
         : "التجربة المميزة غير مفعّلة حاليًا؛ استخدمت النموذج المجاني المعتمد.";
+    } else if (catalog?.kind === "ROUTE") {
+      gateway = catalog.gateway;
+      expectedModelsForReservation = catalog.expectedModels;
+      requireApprovedModelsForReservation = true;
+      premiumTrialFallbackNote = usageSummary.premiumTrial.status === "EXHAUSTED"
+        ? "انتهت رسائل التجربة المميزة؛ تابعت بالنموذج المتاح لحسابك."
+        : "التجربة المميزة غير مفعّلة حاليًا؛ تابعت بالنموذج المتاح لحسابك.";
+    } else if (catalog?.kind === "NO_CAPACITY") {
+      return adviceTurn(NO_CAPACITY_MESSAGE, { kind: "CLARIFICATION_REQUIRED", scope: "CONVERSATION", modelStatus: "NOT_CONFIGURED" }, { ownerId: input.actorId });
     } else {
       // Enforcement inactive: the configured route stays, under its existing usage and spend checks.
       premiumTrialFallbackNote = usageSummary.premiumTrial.status === "EXHAUSTED"
@@ -2091,20 +2181,22 @@ export async function executeModelFallback(
     reserved.reason !== "DUPLICATE_IN_FLIGHT" &&
     reserved.reason !== "ALREADY_PROCESSED"
   ) {
-    const usedRoute = freeGatewayForTrial ? "النموذج المجاني المعتمد" : "النموذج المعتاد";
+    const usedRoute = catalog?.kind === "ROUTE" ? "النموذج المتاح لحسابك" : freeGatewayForTrial ? "النموذج المجاني المعتمد" : "النموذج المعتاد";
     premiumTrialFallbackNote = reserved.reason === "PREMIUM_TRIAL_EXHAUSTED"
       ? `انتهت رسائل التجربة المميزة؛ استخدمت ${usedRoute}.`
       : `تعذر استخدام التجربة المميزة الآن؛ استخدمت ${usedRoute}.`;
     // Enforced: the approved free route. Inactive: the configured route under its existing checks.
-    gateway = freeGatewayForTrial ?? configuredGateway;
+    if (catalog?.kind === "NO_CAPACITY")
+      return adviceTurn(NO_CAPACITY_MESSAGE, { kind: "CLARIFICATION_REQUIRED", scope: "CONVERSATION", modelStatus: "NOT_CONFIGURED" }, { ownerId: input.actorId });
+    gateway = catalog?.kind === "ROUTE" ? catalog.gateway : freeGatewayForTrial ?? configuredGateway;
     premiumTrialSelected = false;
-    expectedModelsForReservation = freeSelection?.expectedModels;
+    expectedModelsForReservation = catalog?.kind === "ROUTE" ? catalog.expectedModels : freeSelection?.expectedModels;
     reserved = await reserveAiUsage({
       owner,
       resource,
       idempotencyKey: requestKey,
       ...(gateway.providerInfo ? { expectedModel: { provider: gateway.providerInfo.provider, model: gateway.providerInfo.requestedModel } } : {}),
-      ...(freeSelection ? { expectedModels: expectedModelsForReservation, requireApprovedModels: true } : {}),
+      ...(catalog?.kind === "ROUTE" || freeSelection ? { expectedModels: expectedModelsForReservation, requireApprovedModels: true } : {}),
     });
   }
   if (!reserved.ok) return usageRefusalTurn(reserved, owner, input.conversationId, input.market, input.actorId);

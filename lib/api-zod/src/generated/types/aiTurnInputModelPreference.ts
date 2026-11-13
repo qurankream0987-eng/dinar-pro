@@ -7,7 +7,7 @@
  */
 
 /**
- * Use the free default model or one available premium trial message.
+ * Model class the user asks for. DEFAULT and AUTO let Jassim choose the best authorized model; ECONOMY, CORE and ADVANCED are honoured only when the account is eligible; PREMIUM_TRIAL uses one complimentary premium message when available.
  */
 export type AiTurnInputModelPreference = typeof AiTurnInputModelPreference[keyof typeof AiTurnInputModelPreference];
 
@@ -15,4 +15,8 @@ export type AiTurnInputModelPreference = typeof AiTurnInputModelPreference[keyof
 export const AiTurnInputModelPreference = {
   DEFAULT: 'DEFAULT',
   PREMIUM_TRIAL: 'PREMIUM_TRIAL',
+  AUTO: 'AUTO',
+  ECONOMY: 'ECONOMY',
+  CORE: 'CORE',
+  ADVANCED: 'ADVANCED',
 } as const;

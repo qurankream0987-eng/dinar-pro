@@ -1,6 +1,7 @@
 import { isChatVideoPath, MAX_CHAT_VIDEOS, verifyChatVideo } from "../lib/chat-video";
 import { type AiCallRecord } from "../lib/ai-spend";
 import { getCommercialPolicy } from "../lib/commercial-policy";
+import { NO_CAPACITY_MESSAGE } from "../ai/model-routing";
 import { isVisualSearchPath, loadVisualSearchImage, MAX_VISUAL_SEARCH_IMAGES } from "../lib/visual-search-images";
 import { isImageQuestion, createVisualAnalyzer, visionModel, rankVisualMatches, visualFallbackTerms, visualSearchTerms, type VisualAnalysis, type VisualAnalyzer } from "../ai/visual-search";
 import { UniversalCardsPayloadSchema } from "@workspace/api-zod/connect";
@@ -1100,7 +1101,7 @@ router.post("/ai/preview", async (req, res) => {
     // never merged into an account after sign-in (the account starts its own FREE allowance).
     const guestOwner = { kind: "GUEST" as const, guestKey: guestUsageKey(normalizeClientIp(req.ip || req.socket.remoteAddress || "")), market };
     const prepared = await prepareGuestModelTurn(
-      { market },
+      { market, message },
       (req.app.locals as { conversationModelGateway?: ConversationModelGateway })
         .conversationModelGateway,
     );
@@ -1109,6 +1110,8 @@ router.post("/ai/preview", async (req, res) => {
         body: "في وضع الضيف تتوفر النماذج المجانية فقط. لم أرسل طلبًا إلى نموذج مدفوع ولم يُخصم شيء.",
         blocks: [],
       });
+    if (prepared.kind === "NO_CAPACITY")
+      return sendGuestPreview(res, { body: NO_CAPACITY_MESSAGE, blocks: [] });
     if (prepared.kind === "FREE_MODEL_REFUSED")
       return sendGuestPreview(res, {
         body: "لم يُعتمد نموذج مجاني ثابت من OpenRouter لهذا الطلب؛ لم أرسل أي طلب إلى مزود آخر.",

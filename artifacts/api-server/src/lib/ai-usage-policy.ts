@@ -76,6 +76,8 @@ export const AiUsagePolicySchema = z
       .strict(),
     /** Monetary spending limits (see `ai-spend.ts`). Older rows without it get the unconfigured default. */
     spend: z.lazy(() => AiSpendPolicySchema).default(() => DEFAULT_AI_SPEND_POLICY),
+    /** Multi-tier model routing (model-routing.ts). Older rows without it keep the legacy route. */
+    routing: z.lazy(() => ModelRoutingPolicySchema).default(() => DEFAULT_MODEL_ROUTING_POLICY),
   })
   .strict()
   // A higher tier may never get less than a lower one for any metered resource.
@@ -151,6 +153,7 @@ export const DEFAULT_AI_USAGE_POLICY: AiUsagePolicy = {
   nearLimitRatio: 0.8,
   globalGuard: { enabled: true, period: { kind: "CALENDAR_DAY", timeZone: "UTC" }, requests: 200_000, tokens: 400_000_000 },
   spend: DEFAULT_AI_SPEND_POLICY,
+  routing: undefined as unknown as ModelRoutingPolicy, // set below (declared after the schema)
 };
 
 export const AI_RESOURCE_LABELS: Record<AiUsageResource, string> = {
@@ -207,3 +210,67 @@ export function isValidTimeZone(timeZone: string): boolean {
     return false;
   }
 }
+
+/**
+ * Model classes (owner policy 2026-11-13). FREE: approved zero-price models. ECONOMY: approved
+ * low-cost paid models. CORE: JassimAI's primary models. ADVANCED: hardest tasks, restricted.
+ */
+export const MODEL_CLASSES = ["FREE", "ECONOMY", "CORE", "ADVANCED"] as const;
+export type ModelClass = (typeof MODEL_CLASSES)[number];
+const ModelId = z.string().regex(/^[A-Za-z0-9._:/-]{1,120}$/);
+
+export const CatalogModelSchema = z
+  .object({
+    /** Gateway provider exactly as model-gateway.ts names it (OpenRouter in staging/production is OPENAI_COMPATIBLE). */
+    provider: z.enum(["OPENROUTER", "OPENAI_COMPATIBLE", "DEEPSEEK", "OPENAI", "GROQ", "GEMINI"]),
+    model: ModelId.refine((value) => value.toLowerCase() !== "openrouter/free", "dynamic aliases are not exact models"),
+    class: z.enum(MODEL_CLASSES),
+    /** Owner-recorded qualification; a model without it is never routed to. */
+    qualified: z.object({ arabic: z.boolean(), tools: z.boolean(), structuredOutput: z.boolean() }).strict(),
+    contextWindow: z.number().int().min(4_096).max(10_000_000),
+    /** Ceiling for one turn on this model, in spend micros; the router refuses a projection above it. */
+    maxTurnMicros: Micros,
+  })
+  .strict();
+export type CatalogModel = z.infer<typeof CatalogModelSchema>;
+
+const AudienceRoutingSchema = z
+  .object({
+    /** Classes this audience may be routed to at all. */
+    classes: z.array(z.enum(MODEL_CLASSES)).max(4),
+    /** Platform-funded paid fallback (ECONOMY, and CORE where listed) for this audience. */
+    paidFallback: z.boolean(),
+    /** Projected cost ceiling of one turn, in spend micros. */
+    perTurnMaxMicros: Micros,
+  })
+  .strict();
+
+export const ModelRoutingPolicySchema = z
+  .object({
+    /** false = legacy route (the configured gateway under the existing usage and spend checks). */
+    enabled: z.boolean(),
+    /** Emergency switch for every paid fallback; DINAR_PAID_FALLBACK_KILL=1 also forces it off. */
+    paidFallbackEnabled: z.boolean(),
+    models: z.array(CatalogModelSchema).max(24),
+    audiences: perTier(AudienceRoutingSchema),
+    /** Tokens assumed for the cost projection of one turn (input, output). */
+    projection: z.object({ inputTokens: z.number().int().min(1).max(500_000), outputTokens: z.number().int().min(1).max(100_000) }).strict(),
+  })
+  .strict()
+  .refine((policy) => new Set(policy.models.map((m) => `${m.provider}\u0000${m.model}`)).size === policy.models.length, { message: "duplicate catalog model" });
+export type ModelRoutingPolicy = z.infer<typeof ModelRoutingPolicySchema>;
+
+/** Off: no catalog, no paid fallback. The owner enables it per market through commercial_policies. */
+export const DEFAULT_MODEL_ROUTING_POLICY: ModelRoutingPolicy = {
+  enabled: false,
+  paidFallbackEnabled: false,
+  models: [],
+  audiences: {
+    GUEST: { classes: ["FREE", "ECONOMY"], paidFallback: false, perTurnMaxMicros: 2_000 },
+    FREE: { classes: ["FREE", "ECONOMY", "CORE"], paidFallback: false, perTurnMaxMicros: 5_000 },
+    BUSINESS_GO: { classes: ["FREE", "ECONOMY", "CORE"], paidFallback: true, perTurnMaxMicros: 20_000 },
+    BUSINESS_PRO: { classes: ["FREE", "ECONOMY", "CORE", "ADVANCED"], paidFallback: true, perTurnMaxMicros: 60_000 },
+  },
+  projection: { inputTokens: 6_000, outputTokens: 800 },
+};
+DEFAULT_AI_USAGE_POLICY.routing = DEFAULT_MODEL_ROUTING_POLICY;

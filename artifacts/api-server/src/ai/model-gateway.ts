@@ -1284,3 +1284,27 @@ export async function transcribeVoiceRecording(
     );
   }
 }
+
+/**
+ * A gateway for one owner-approved catalog model (model-routing.ts), built through the same
+ * provider resolution and gateway classes as the configured route: the provider's own credential,
+ * base URL and deployment safety rules apply unchanged. Routing chooses; this never widens access.
+ */
+export type CatalogGatewayFactory = (entry: { provider: string; model: string }, fallback?: ConversationModelGateway) => ConversationModelGateway;
+let catalogFactory: CatalogGatewayFactory = (entry, fallback) => {
+  if (process.env.BDINAR_BLOCK_MODEL_CALLS === "1") return new BlockedTestModelGateway();
+  const scoped: NodeJS.ProcessEnv = { ...process.env, DINAR_AI_PROVIDER: entry.provider, DINAR_AI_MODEL: entry.model };
+  const configuration = resolveAIProviderConfiguration(scoped, "PRIMARY");
+  if (configuration.requestedModel !== entry.model)
+    throw new AIProviderError(configuration.provider, "NOT_CONFIGURED", entry.model);
+  return chatGateway(configuration, scoped, fallback);
+};
+export function catalogModelGateway(entry: { provider: string; model: string }, fallback?: ConversationModelGateway): ConversationModelGateway {
+  return catalogFactory(entry, fallback);
+}
+/** Test seam (like onProviderBreakerTransition): scripted catalog gateways; returns the previous factory. */
+export function useCatalogGatewayFactory(factory: CatalogGatewayFactory): CatalogGatewayFactory {
+  const previous = catalogFactory;
+  catalogFactory = factory;
+  return previous;
+}
