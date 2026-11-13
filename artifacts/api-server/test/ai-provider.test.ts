@@ -558,6 +558,34 @@ await test("Gemma free-only mode accepts only exact free IDs and the isolated be
   );
 });
 
+await test("Gemma free-only quota is surfaced once and paid fallback configuration is refused", async () => {
+  const model = "google/gemma-4-31b-it:free";
+  const gateway: ConversationModelGateway = {
+    providerInfo: { provider: "OPENROUTER", requestedModel: model },
+    async proposeToolCall() {
+      throw normalizeAIProviderError("OPENROUTER", model, { status: 429, message: "private quota response" }, 18);
+    },
+  };
+  const result = await interpretWithModel(gateway, "سؤال عربي اصطناعي", {}, 1000);
+  assert.equal(result.ok, false);
+  assert.equal(result.reason, "QUOTA_LIMITED");
+  assert.equal(result.modelCall.providerCalls, 1, "quota exhaustion is not retried");
+
+  assert.throws(
+    () =>
+      resolveAIModelRuntimeConfiguration({
+        NODE_ENV: "development",
+        DINAR_AI_PROVIDER: "OPENROUTER",
+        DINAR_GEMMA_FREE_ONLY: "true",
+        DINAR_AI_MODEL: model,
+        DINAR_AI_FALLBACK_PROVIDER: "OPENAI",
+        DINAR_AI_FALLBACK_MODEL: "gpt-4.1-mini",
+      }),
+    /fallback/i,
+    "free-only quota exhaustion must not be routed to a paid model",
+  );
+});
+
 await test("invalid provider configuration fails explicitly", () => {
   assert.throws(
     () => resolveAIProviderConfiguration({ DINAR_AI_PROVIDER: "UNKNOWN" }),
