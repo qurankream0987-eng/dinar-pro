@@ -4726,6 +4726,7 @@ export const sendAiConversationTurnBodyLocationNoteMax = 300;
 export const SendAiConversationTurnBody = zod.object({
   "message": zod.string().min(1).max(sendAiConversationTurnBodyMessageMax),
   "reasoningEffort": zod.enum(['low', 'medium', 'high']).optional().describe('Reasoning effort for the server-selected GPT-OSS model.'),
+  "modelPreference": zod.enum(['DEFAULT', 'PREMIUM_TRIAL']).optional().describe('Use the free default model or one available premium trial message.'),
   "clientMessageId": zod.uuid().optional().describe('Stable identifier for safe turn retries.'),
   "imageObjectPaths": zod.array(zod.string().min(1).max(sendAiConversationTurnBodyImageObjectPathsItemMax)).max(sendAiConversationTurnBodyImageObjectPathsMax).optional(),
   "locationRequestId": zod.uuid().optional().describe('The delivery location request or preview this explicit submission answers.'),
@@ -5887,11 +5888,48 @@ export const GetAdminCommercialSummaryResponse = zod.record(zod.string(), zod.un
  */
 export const getSubscriptionPlansResponsePlansMax = 3;
 
+export const getSubscriptionPlansResponseUsageTimeZoneMax = 64;
+
+export const getSubscriptionPlansResponseUsageResourcesItemLimitMin = 0;
+
+export const getSubscriptionPlansResponseUsageResourcesItemUsedMin = 0;
+
+export const getSubscriptionPlansResponseUsageResourcesItemInProgressMin = 0;
+
+export const getSubscriptionPlansResponseUsageResourcesItemRemainingMin = 0;
+
+export const getSubscriptionPlansResponseUsageResourcesItemPercentMin = 0;
+export const getSubscriptionPlansResponseUsageResourcesItemPercentMax = 100;
+
+export const getSubscriptionPlansResponseUsageResourcesMax = 6;
+
+export const getSubscriptionPlansResponseUsageTokensLimitMin = 0;
+
+export const getSubscriptionPlansResponseUsageTokensUsedMin = 0;
+
+export const getSubscriptionPlansResponseUsageTokensRemainingMin = 0;
+
+export const getSubscriptionPlansResponseUsageTokensPercentMin = 0;
+export const getSubscriptionPlansResponseUsageTokensPercentMax = 100;
+
+export const getSubscriptionPlansResponseUsagePremiumTrialLimitMin = 0;
+export const getSubscriptionPlansResponseUsagePremiumTrialLimitMax = 15;
+
+export const getSubscriptionPlansResponseUsagePremiumTrialUsedMin = 0;
+export const getSubscriptionPlansResponseUsagePremiumTrialUsedMax = 15;
+
+export const getSubscriptionPlansResponseUsagePremiumTrialInProgressMin = 0;
+export const getSubscriptionPlansResponseUsagePremiumTrialInProgressMax = 15;
+
+export const getSubscriptionPlansResponseUsagePremiumTrialRemainingMin = 0;
+export const getSubscriptionPlansResponseUsagePremiumTrialRemainingMax = 15;
+
 
 
 export const GetSubscriptionPlansResponse = zod.looseObject({
   "marketId": zod.string(),
   "currentPlan": zod.enum(['FREE', 'DINAR_GO', 'DINAR_PRO', 'DINAR_BUSINESS']),
+  "currentPlanLabel": zod.string(),
   "plans": zod.array(zod.looseObject({
   "planCode": zod.enum(['DINAR_GO', 'DINAR_PRO', 'DINAR_BUSINESS']),
   "name": zod.string(),
@@ -5900,9 +5938,47 @@ export const GetSubscriptionPlansResponse = zod.looseObject({
   "eligible": zod.boolean(),
   "current": zod.boolean()
 })).max(getSubscriptionPlansResponsePlansMax),
+  "usage": zod.object({
+  "tier": zod.enum(['GUEST', 'FREE', 'BUSINESS_GO', 'BUSINESS_PRO']),
+  "renewsAt": zod.coerce.date(),
+  "timeZone": zod.string().min(1).max(getSubscriptionPlansResponseUsageTimeZoneMax),
+  "resources": zod.array(zod.object({
+  "resource": zod.enum(['TEXT_REQUEST', 'MARKETING_GENERATION', 'BUSINESS_ANALYTICS', 'IMAGE_UNDERSTANDING', 'AGENT_MULTI_STEP', 'AUDIO_TRANSCRIPTION']),
+  "label": zod.string(),
+  "limit": zod.int().min(getSubscriptionPlansResponseUsageResourcesItemLimitMin),
+  "used": zod.int().min(getSubscriptionPlansResponseUsageResourcesItemUsedMin),
+  "inProgress": zod.int().min(getSubscriptionPlansResponseUsageResourcesItemInProgressMin),
+  "remaining": zod.int().min(getSubscriptionPlansResponseUsageResourcesItemRemainingMin),
+  "percent": zod.int().min(getSubscriptionPlansResponseUsageResourcesItemPercentMin).max(getSubscriptionPlansResponseUsageResourcesItemPercentMax).nullable(),
+  "included": zod.boolean()
+})).max(getSubscriptionPlansResponseUsageResourcesMax),
+  "tokens": zod.object({
+  "limit": zod.int().min(getSubscriptionPlansResponseUsageTokensLimitMin),
+  "used": zod.int().min(getSubscriptionPlansResponseUsageTokensUsedMin),
+  "remaining": zod.int().min(getSubscriptionPlansResponseUsageTokensRemainingMin),
+  "percent": zod.int().min(getSubscriptionPlansResponseUsageTokensPercentMin).max(getSubscriptionPlansResponseUsageTokensPercentMax).nullable()
+}),
+  "premiumTrial": zod.object({
+  "eligible": zod.boolean(),
+  "enabled": zod.boolean(),
+  "limit": zod.int().min(getSubscriptionPlansResponseUsagePremiumTrialLimitMin).max(getSubscriptionPlansResponseUsagePremiumTrialLimitMax),
+  "used": zod.int().min(getSubscriptionPlansResponseUsagePremiumTrialUsedMin).max(getSubscriptionPlansResponseUsagePremiumTrialUsedMax),
+  "inProgress": zod.int().min(getSubscriptionPlansResponseUsagePremiumTrialInProgressMin).max(getSubscriptionPlansResponseUsagePremiumTrialInProgressMax),
+  "remaining": zod.int().min(getSubscriptionPlansResponseUsagePremiumTrialRemainingMin).max(getSubscriptionPlansResponseUsagePremiumTrialRemainingMax),
+  "status": zod.enum(['NOT_ELIGIBLE', 'DISABLED', 'AVAILABLE', 'EXHAUSTED'])
+}).optional()
+}),
+  "approvals": zod.object({
+  "plansApproved": zod.boolean(),
+  "allowancesApproved": zod.boolean(),
+  "note": zod.string().nullable()
+}),
   "billing": zod.looseObject({
   "status": zod.enum(['CONNECTED', 'NOT_CONNECTED']),
-  "activation": zod.enum(['DISABLED'])
+  "activation": zod.enum(['DISABLED']),
+  "simulationAvailable": zod.boolean(),
+  "canActivate": zod.boolean(),
+  "note": zod.string()
 })
 })
 

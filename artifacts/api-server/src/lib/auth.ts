@@ -26,6 +26,7 @@ import {
   VerifyPhoneVerificationChallengeResponse,
 } from "@workspace/api-zod";
 import { canHoldSession, SESSION_STATUSES } from "./account-status";
+import { grantPremiumTrialAtSignup } from "./ai-premium-trial";
 import { signupConsentRows } from "./policy-lifecycle";
 import { and, eq, gt, inArray, isNotNull, isNull, lte } from "drizzle-orm";
 import { parsePhoneNumberFromString } from "libphonenumber-js/max";
@@ -530,6 +531,7 @@ router.post("/auth/register", registrationLimit, async (req, res) => {
       .onConflictDoNothing({ target: users.normalizedPhone })
       .returning();
     if (!created) return { kind: "duplicate" as const };
+    await grantPremiumTrialAtSignup(tx, created.id, now);
     // acceptTerms covers every policy version that requires acceptance; the append-only
     // consent ledger records the same explicit signup decision with its content hash.
     const consentRows = await signupConsentRows(created.id, tx);
@@ -665,6 +667,7 @@ router.post("/auth/google/complete", registrationLimit, async (req, res): Promis
         .onConflictDoNothing({ target: users.normalizedPhone })
         .returning();
       if (!created) return { kind: "duplicate" as const };
+      await grantPremiumTrialAtSignup(tx, created.id, now);
       const consentRows = await signupConsentRows(created.id, tx);
       await tx.insert(policyAcceptances).values(consentRows.map((row) => ({ userId: created.id, policyKey: row.policyKey, policyVersion: row.policyVersion })));
       await tx.insert(policyConsentEvents).values(consentRows);

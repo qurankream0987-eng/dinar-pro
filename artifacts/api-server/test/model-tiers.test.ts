@@ -14,7 +14,7 @@ import { test, after, beforeEach } from "node:test";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { desc, eq } from "drizzle-orm";
-import { aiCostEvents, aiModelPrices, aiSpendHolds, aiUsageReservations, carts, commercialPolicies, db, orders, pool } from "@workspace/db";
+import { aiCostEvents, aiModelPrices, aiSpendHolds, aiUsageReservations, businessSubscriptions, carts, commercialPolicies, db, orders, pool, promotionProducts } from "@workspace/db";
 import { DEFAULT_AI_USAGE_POLICY, type AiUsagePolicy } from "../src/lib/ai-usage-policy";
 import app from "../src/app";
 import { AIProviderError, createConversationModelGateway, describeAIModelReadiness, providerHealth, resetProviderBreakers, type ConversationModelGateway, type ModelCallOptions } from "../src/ai/model-gateway";
@@ -22,8 +22,32 @@ import { selectModelTier } from "../src/ai/model-tier";
 import { interpretWithModel } from "../src/ai/model-turn";
 import { HELD_OUT_CASES, ROUTING_CASES } from "./fixtures/tier-routing-corpus";
 import { requireSafeReplitDevelopmentDatabase } from "./safe-development-database";
+import { validateAcceptanceDatabase } from "./acceptance-database-guard.mjs";
 
 requireSafeReplitDevelopmentDatabase("BDINAR_TEST_DATABASE");
+if (process.env.BDINAR_DISPOSABLE_TEST_DATABASE !== "1") {
+  throw new Error("Model-tier paid-model acceptance requires a disposable test database.");
+}
+validateAcceptanceDatabase();
+
+// Tier-routing tests use paid scripted models. Free accounts are intentionally restricted to
+// approved zero-price OpenRouter routes, so give these actors a disposable Business Pro snapshot.
+// This fixture does not create a payment or commercial-ledger entry.
+const tierTestPlanId = randomUUID();
+await db.insert(promotionProducts).values({
+  id: tierTestPlanId,
+  marketId: "JO",
+  name: "Model tier acceptance plan",
+  placement: "NONE",
+  productType: "DINAR_BUSINESS",
+  chargingMode: "SUBSCRIPTION",
+  businessEntitlements: ["AI_USAGE_BUSINESS_PRO"],
+  planCode: "DINAR_PRO",
+  priceMinor: 15_000,
+  currencyCode: "JOD",
+  durationDays: 30,
+  enabled: true,
+});
 
 type Behaviour = "OK" | "MALFORMED" | "OUTAGE" | "UNKNOWN_ACTION" | "LOW_CONFIDENCE" | "QUOTA" | "HANG" | "PROPOSE_PURCHASE";
 function scripted(provider: "OPENAI" | "DEEPSEEK" | "GROQ", model: string, reply: string) {
@@ -90,6 +114,7 @@ async function fresh() {
     return { ...account, conv };
   }
   const created = await registerAccount();
+  await provisionBusinessProForTest(created.id);
   accounts.push({ cookie: created.cookie, id: created.id });
   const conv = (await request("/ai/conversations", "POST", {}, created.cookie)).data.id as string;
   return { cookie: created.cookie, id: created.id, conv };
@@ -100,6 +125,27 @@ async function registerAccount() {
   const created = await request("/auth/register", "POST", { displayName: `مستخدم ${phone}`, phoneCountryCode: "+962", phoneNumber: number, accountCountry: "JO", password, confirmPassword: password, acceptTerms: true });
   assert.equal(created.status, 201, created.text);
   return { cookie: created.cookie, id: created.data.user.id as string };
+}
+async function provisionBusinessProForTest(userId: string) {
+  const start = new Date();
+  await db.insert(businessSubscriptions).values({
+    id: randomUUID(),
+    userId,
+    marketId: "JO",
+    planId: tierTestPlanId,
+    planNameSnapshot: "Model tier acceptance plan",
+    priceMinorSnapshot: 15_000,
+    currencyCodeSnapshot: "JOD",
+    periodDaysSnapshot: 30,
+    pricingVersionSnapshot: 1,
+    entitlementsSnapshot: ["AI_USAGE_BUSINESS_PRO"],
+    planCodeSnapshot: "DINAR_PRO",
+    status: "ACTIVE",
+    autoRenew: false,
+    idempotencyKey: `model-tier-test-${randomUUID()}`,
+    currentPeriodStart: start,
+    currentPeriodEnd: new Date(start.getTime() + 30 * 24 * 60 * 60 * 1000),
+  });
 }
 async function say(user: { cookie: string; conv: string }, message: string, extra: Record<string, unknown> = {}) {
   const response = await fetch(`${origin}/api/ai/conversations/${user.conv}/turns`, { method: "POST", headers: { "content-type": "application/json", cookie: user.cookie, origin }, body: JSON.stringify({ message, clientMessageId: randomUUID(), ...extra }) });

@@ -231,6 +231,120 @@ export interface SubscriptionCheckoutRequest {
   businessId?: string;
 }
 
+export type SubscriptionUsageResourceResource = typeof SubscriptionUsageResourceResource[keyof typeof SubscriptionUsageResourceResource];
+
+
+export const SubscriptionUsageResourceResource = {
+  TEXT_REQUEST: 'TEXT_REQUEST',
+  MARKETING_GENERATION: 'MARKETING_GENERATION',
+  BUSINESS_ANALYTICS: 'BUSINESS_ANALYTICS',
+  IMAGE_UNDERSTANDING: 'IMAGE_UNDERSTANDING',
+  AGENT_MULTI_STEP: 'AGENT_MULTI_STEP',
+  AUDIO_TRANSCRIPTION: 'AUDIO_TRANSCRIPTION',
+} as const;
+
+export interface SubscriptionUsageResource {
+  resource: SubscriptionUsageResourceResource;
+  label: string;
+  /** @minimum 0 */
+  limit: number;
+  /** @minimum 0 */
+  used: number;
+  /** @minimum 0 */
+  inProgress: number;
+  /** @minimum 0 */
+  remaining: number;
+  /**
+     * @minimum 0
+     * @maximum 100
+     * @nullable
+     */
+  percent: number | null;
+  included: boolean;
+}
+
+export interface SubscriptionUsageTokens {
+  /** @minimum 0 */
+  limit: number;
+  /** @minimum 0 */
+  used: number;
+  /** @minimum 0 */
+  remaining: number;
+  /**
+     * @minimum 0
+     * @maximum 100
+     * @nullable
+     */
+  percent: number | null;
+}
+
+export type SubscriptionUsageTier = typeof SubscriptionUsageTier[keyof typeof SubscriptionUsageTier];
+
+
+export const SubscriptionUsageTier = {
+  GUEST: 'GUEST',
+  FREE: 'FREE',
+  BUSINESS_GO: 'BUSINESS_GO',
+  BUSINESS_PRO: 'BUSINESS_PRO',
+} as const;
+
+export type SubscriptionUsagePremiumTrialStatus = typeof SubscriptionUsagePremiumTrialStatus[keyof typeof SubscriptionUsagePremiumTrialStatus];
+
+
+export const SubscriptionUsagePremiumTrialStatus = {
+  NOT_ELIGIBLE: 'NOT_ELIGIBLE',
+  DISABLED: 'DISABLED',
+  AVAILABLE: 'AVAILABLE',
+  EXHAUSTED: 'EXHAUSTED',
+} as const;
+
+export type SubscriptionUsagePremiumTrial = {
+  eligible: boolean;
+  enabled: boolean;
+  /**
+     * @minimum 0
+     * @maximum 15
+     */
+  limit: number;
+  /**
+     * @minimum 0
+     * @maximum 15
+     */
+  used: number;
+  /**
+     * @minimum 0
+     * @maximum 15
+     */
+  inProgress: number;
+  /**
+     * @minimum 0
+     * @maximum 15
+     */
+  remaining: number;
+  status: SubscriptionUsagePremiumTrialStatus;
+};
+
+export interface SubscriptionUsage {
+  tier: SubscriptionUsageTier;
+  renewsAt: string;
+  /**
+     * @minLength 1
+     * @maxLength 64
+     */
+  timeZone: string;
+  /** @maxItems 6 */
+  resources: SubscriptionUsageResource[];
+  tokens: SubscriptionUsageTokens;
+  premiumTrial?: SubscriptionUsagePremiumTrial;
+}
+
+export interface SubscriptionPlanApprovals {
+  plansApproved: boolean;
+  allowancesApproved: boolean;
+  /** @nullable */
+  note: string | null;
+}
+
 export type SubscriptionPlansOverviewCurrentPlan = typeof SubscriptionPlansOverviewCurrentPlan[keyof typeof SubscriptionPlansOverviewCurrentPlan];
 
 
@@ -278,14 +392,20 @@ export const SubscriptionPlansOverviewBillingActivation = {
 export type SubscriptionPlansOverviewBilling = {
   status: SubscriptionPlansOverviewBillingStatus;
   activation: SubscriptionPlansOverviewBillingActivation;
+  simulationAvailable: boolean;
+  canActivate: boolean;
+  note: string;
   [key: string]: unknown;
  };
 
 export interface SubscriptionPlansOverview {
   marketId: string;
   currentPlan: SubscriptionPlansOverviewCurrentPlan;
+  currentPlanLabel: string;
   /** @maxItems 3 */
   plans: SubscriptionPlansOverviewPlansItem[];
+  usage: SubscriptionUsage;
+  approvals: SubscriptionPlanApprovals;
   billing: SubscriptionPlansOverviewBilling;
   [key: string]: unknown;
  }
@@ -2048,6 +2168,17 @@ export const AiTurnInputReasoningEffort = {
   high: 'high',
 } as const;
 
+/**
+ * Use the free default model or one available premium trial message.
+ */
+export type AiTurnInputModelPreference = typeof AiTurnInputModelPreference[keyof typeof AiTurnInputModelPreference];
+
+
+export const AiTurnInputModelPreference = {
+  DEFAULT: 'DEFAULT',
+  PREMIUM_TRIAL: 'PREMIUM_TRIAL',
+} as const;
+
 export type TransactionLocationInputSource = typeof TransactionLocationInputSource[keyof typeof TransactionLocationInputSource];
 
 
@@ -2092,6 +2223,8 @@ export interface AiTurnInput {
   message: string;
   /** Reasoning effort for the server-selected GPT-OSS model. */
   reasoningEffort?: AiTurnInputReasoningEffort;
+  /** Use the free default model or one available premium trial message. */
+  modelPreference?: AiTurnInputModelPreference;
   /** Stable identifier for safe turn retries. */
   clientMessageId?: string;
   /**

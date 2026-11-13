@@ -9,6 +9,7 @@ import {
   executeGuestModelTurn,
   isGroundedSellerDraftRequest,
   modelFailureMessage,
+  prepareGuestModelTurn,
 } from "../ai/smart-turn";
 import { refreshNegotiationPayload } from "../ai/negotiation-turn";
 import { refreshInquiryPayload } from "../ai/inquiry-turn";
@@ -1095,7 +1096,29 @@ router.post("/ai/preview", async (req, res) => {
     // G1: guests have their own small allowance keyed by an HMAC of the client address; it is
     // never merged into an account after sign-in (the account starts its own FREE allowance).
     const guestOwner = { kind: "GUEST" as const, guestKey: guestUsageKey(normalizeClientIp(req.ip || req.socket.remoteAddress || "")), market };
-    const reserved = await reserveAiUsage({ owner: guestOwner, resource: "TEXT_REQUEST", idempotencyKey: `guest:${randomUUID()}` });
+    const prepared = await prepareGuestModelTurn(
+      { market },
+      (req.app.locals as { conversationModelGateway?: ConversationModelGateway })
+        .conversationModelGateway,
+    );
+    if (prepared.kind === "PAID_MODEL_REFUSED")
+      return sendGuestPreview(res, {
+        body: "في وضع الضيف تتوفر النماذج المجانية فقط. لم أرسل طلبًا إلى نموذج مدفوع ولم يُخصم شيء.",
+        blocks: [],
+      });
+    if (prepared.kind === "FREE_MODEL_REFUSED")
+      return sendGuestPreview(res, {
+        body: "لم يُعتمد نموذج مجاني ثابت من OpenRouter لهذا الطلب؛ لم أرسل أي طلب إلى مزود آخر.",
+        blocks: [],
+      });
+    const reserved = await reserveAiUsage({
+      owner: guestOwner,
+      resource: "TEXT_REQUEST",
+      idempotencyKey: `guest:${randomUUID()}`,
+      ...(prepared.kind === "READY"
+        ? { expectedModels: prepared.expectedModels, requireApprovedModels: true }
+        : {}),
+    });
     if (!reserved.ok)
       return sendGuestPreview(res, {
         body: usageLimitMessage(reserved, undefined, { plansConfigured: false, planHintAlreadyShown: true }),
@@ -1105,8 +1128,7 @@ router.post("/ai/preview", async (req, res) => {
     try {
       outcome = await executeGuestModelTurn(
         { market, message, history, earlierUserTopics, reasoningEffort },
-        (req.app.locals as { conversationModelGateway?: ConversationModelGateway })
-          .conversationModelGateway,
+        prepared,
       );
     } catch (error) {
       await settleAiUsage(reserved.reservation.id, { outcome: "PROVIDER_FAILED", providerCalls: 1 }).catch(() => undefined);
@@ -2066,7 +2088,8 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
   const locationDigest = input.location
     ? createHmac("sha256", LOCATION_DIGEST_KEY).update(JSON.stringify([input.locationRequestId, input.location])).digest("hex")
     : undefined;
-  const turnMetadata = { imageObjectPaths, ...(locationDigest ? { locationDigest } : {}) };
+  const modelPreference = input.modelPreference ?? "DEFAULT";
+  const turnMetadata = { imageObjectPaths, modelPreference, ...(locationDigest ? { locationDigest } : {}) };
   const turnId = randomUUID();
   const userMessageId = input.clientMessageId ?? randomUUID();
   let createdAt = new Date();
@@ -2095,6 +2118,8 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
         throw fail(409, "لا يمكن تغيير الصور عند إعادة المحاولة. حدّث المحادثة ثم أرسل رسالة جديدة.");
       if (existing.metadata.locationDigest !== locationDigest)
         throw fail(409, "لا يمكن تغيير الموقع عند إعادة المحاولة. شارك الموقع من جديد.");
+      if ((existing.metadata.modelPreference ?? "DEFAULT") !== modelPreference)
+        throw fail(409, "لا يمكن تغيير اختيار النموذج عند إعادة المحاولة. أعد إرسال رسالة جديدة.");
       const [latest] = await tx.select({ id: messages.id }).from(messages).where(eq(messages.conversationId, conversation.id)).orderBy(desc(messages.createdAt)).limit(1);
       const rawContinuation = existing.metadata.modelToolContinuation;
       const hasContinuation = Boolean(rawContinuation && typeof rawContinuation === "object" && !Array.isArray(rawContinuation));
@@ -2198,6 +2223,7 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
         imageObjectPaths: visualImage ? [] : imageObjectPaths,
         ...(imageUnderstanding ? { imageUnderstanding } : {}),
         reasoningEffort: input.reasoningEffort,
+        modelPreference,
         location: input.location,
         locationRequestId: input.locationRequestId,
       },

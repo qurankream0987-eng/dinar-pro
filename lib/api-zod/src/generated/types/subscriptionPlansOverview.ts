@@ -5,15 +5,20 @@
  * DINAR general marketplace API with seller-defined listing prices
  * OpenAPI spec version: 0.1.0
  */
+import type { SubscriptionPlanApprovals } from './subscriptionPlanApprovals';
 import type { SubscriptionPlansOverviewBilling } from './subscriptionPlansOverviewBilling';
 import type { SubscriptionPlansOverviewCurrentPlan } from './subscriptionPlansOverviewCurrentPlan';
 import type { SubscriptionPlansOverviewPlansItem } from './subscriptionPlansOverviewPlansItem';
+import type { SubscriptionUsage } from './subscriptionUsage';
 
 export interface SubscriptionPlansOverview {
   marketId: string;
   currentPlan: SubscriptionPlansOverviewCurrentPlan;
+  currentPlanLabel: string;
   /** @maxItems 3 */
   plans: SubscriptionPlansOverviewPlansItem[];
+  usage: SubscriptionUsage;
+  approvals: SubscriptionPlanApprovals;
   billing: SubscriptionPlansOverviewBilling;
   [key: string]: unknown;
  }

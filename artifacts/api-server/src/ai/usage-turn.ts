@@ -119,6 +119,7 @@ export async function usageCardView(actorId: string, market: CardMarket) {
     periodLabel: summary.period.kind === "CALENDAR_MONTH" ? "شهر تقويمي" : "يوم تقويمي",
     resources: summary.resources.map((item) => ({ key: item.resource, label: item.label, used: item.used, limit: item.limit, remaining: item.remaining, percent: item.percent, included: item.included, inProgress: item.inProgress })),
     tokens: summary.tokens,
+    premiumTrial: summary.premiumTrial,
     exhaustedLabels: summary.exhausted.map((resource) => AI_RESOURCE_LABELS[resource]),
     platformPaused: !guardOpen,
     providerStatus: provider,
@@ -134,6 +135,9 @@ export function usageCardPrompt(view: UsageCardView, question: "SUMMARY" | "RENE
   const lines = [
     `باقتك: ${view.tierLabel}${view.provisional ? " (الحدود الحالية مؤقتة وغير معتمدة نهائيًا)" : ""}.`,
     `${text.label}: استخدمت ${text.used} من ${text.limit}${text.percent !== null ? ` (${text.percent}%)` : ""}، والمتبقي ${text.remaining}.`,
+    ...(view.premiumTrial.eligible
+      ? [`التجربة المميزة: متبقٍ ${view.premiumTrial.remaining} من ${view.premiumTrial.limit} رسالة${view.premiumTrial.inProgress ? ` (${view.premiumTrial.inProgress} قيد المعالجة)` : ""}${view.premiumTrial.status === "DISABLED" ? "؛ غير مفعّلة حاليًا." : view.premiumTrial.status === "EXHAUSTED" ? "؛ انتهت." : "."}`]
+      : []),
     `معالجة الذكاء (الرموز): ${view.tokens.used.toLocaleString("en-US")} من ${view.tokens.limit.toLocaleString("en-US")}${view.tokens.percent !== null ? ` (${view.tokens.percent}%)` : ""}.`,
     `تتجدد الحصة في ${view.renewsAtLabel}.`,
   ];
