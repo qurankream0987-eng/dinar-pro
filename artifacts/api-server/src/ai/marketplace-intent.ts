@@ -97,11 +97,13 @@ export const NEED_QUESTION = /^(?:(?:طيب|طب|اوكي|و)\s+)?(?:كم|كيف
  * verb is something to think or write, not an item; the request is general help.
  */
 const ABSTRACT_OBJECT =
-  /(?:^|\s)(?:ابحث|ابحثلي|دور|دورلي|دورولي|شوفلي|شوف|شوفي|جيبلي|جيب|هاتلي|هات|لقيلي|لاقيلي|طالعلي|فتشلي)(?:\s+لي)?(?:\s+(?:عن|على|علي))?\s+(?:ال)?(?:فكره|افكار|حل|حلول|طريقه|طرق|نصيحه|نصائح|معلومه|معلومات|جواب|اجابه|شرح|خطه|اسم|اسماء|موضوع|مواضيع|سبب|اسباب|راي|رايك|معني|تفسير|ترجمه|ملخص|مقال|قصه|نكته|شعر)(?:\s|$)/u;
+  /(?:^|\s)(?:ابحث|ابحثلي|دور|دورلي|دورولي|شوفلي|شوف|شوفي|جيبلي|جيب|هاتلي|هات|لقيلي|لاقيلي|طالعلي|فتشلي)(?:\s+لي)?(?:\s+(?:عن|على|علي))?\s+(?:(?:احدث|اخر|اهم|افضل)\s+)?(?:ال)?(?:فكره|افكار|حل|حلول|طريقه|طرق|نصيحه|نصائح|معلومه|معلومات|جواب|اجابه|شرح|خطه|اسم|اسماء|موضوع|مواضيع|سبب|اسباب|راي|رايك|معني|تفسير|ترجمه|ملخص|مقال|مقالات|قصه|نكته|شعر|دراسه|دراسات|بحث|ابحاث|بحوث|اخبار|خبر|مصادر|مصدر|مراجع|مرجع)(?:\s|$)/u;
 
 export function hasExplicitMarketplaceSearchIntent(message: string): boolean {
   const normalized = normalizeMarketplaceText(stripCorrectionPrefix(message));
   if (/(?:رصيد(?:ي|\s+حسابي)|(?:باقي|متبقي)\s+(?:ب|في\s+)?حسابي)/u.test(normalized)) return false;
+  // «ابحث في الإنترنت / في جوجل …»: a web request, never a marketplace search.
+  if (/(?:^|\s)(?:في|على|علي|ب|من)\s*(?:ال)?(?:انترنت|نت|ويب|قوقل|جوجل|google|web|internet)(?:\s|$)/iu.test(normalized)) return false;
   if (ABSTRACT_OBJECT.test(normalized.replace(/ة/g, "ه")) || /^(?:ابي|اريد)\s+(?:على\s+)?(?:فكره|فكرة|حل|طريقه|طريقة)(?:\s|$)/u.test(normalized)) return false;
   if (EXPLICIT_SEARCH_ACTION.test(normalized)) return true;
   const correction = normalizeMarketplaceText(stripCorrectionPrefix(message));

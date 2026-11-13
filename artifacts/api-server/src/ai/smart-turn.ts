@@ -72,6 +72,7 @@ import { escalatesAfterLight, gatewayForTier, heavyTurnLimit, modelTieringEnable
 import { aiUsagePolicyFor, aiUsageSummary, reserveAiUsage, settleAiUsage, type AiUsageOutcome, type AiUsageOwner, type AiUsageRefusal } from "../lib/ai-usage";
 import { premiumTrialDeploymentAuthorized } from "../lib/ai-premium-trial";
 import { freeRoutingEnforced, isApprovedFreeOpenRouterModel } from "./free-model-policy";
+import { researchFeedback, researchSourcesLine, runWebResearch, SEARCH_WEB_TOOL, webSearchEnabled } from "./web-research";
 import { linkedUrl, readWebPage, webReadEnabled, WEB_READ_FAILURE_TEXT, type WebPage } from "./web-reader";
 import { NO_CAPACITY_MESSAGE, paidFallbackKilled, planModelRoute, type ModelPreference, type RoutePlan } from "./model-routing";
 import { catalogModelGateway, gatewayLocallyAvailable } from "./model-gateway";
@@ -2081,6 +2082,7 @@ export async function executeModelFallback(
   // General agent (G3): a page the user linked is read server-side before any usage is reserved,
   // so a refused or failed read costs nothing and reaches no model. The text is untrusted evidence.
   let webPage: WebPage | undefined;
+  let researchPages: WebPage[] = [];
   const link = webReadEnabled() && input.actorId ? linkedUrl(input.message) : undefined;
   if (link) {
     const read = await readWebPage(link, { actorId: input.actorId!, conversationId: input.conversationId, marketId: input.market.id, turnId: input.currentMessageId ?? randomUUID() });
@@ -2278,7 +2280,7 @@ export async function executeModelFallback(
       // Structural injection defence: a turn that carries web page text offers the model no tools,
       // so nothing written in a page can lead to a read, a cart change or any other action.
       !premiumTrialSelected && !input.sellerEmployeeMode && input.currentMessageId && !webPage
-        ? modelToolDefinitions(toolContext, toolRoles)
+        ? [...modelToolDefinitions(toolContext, toolRoles), ...(webSearchEnabled() && input.actorId ? [SEARCH_WEB_TOOL] : [])]
         : [];
     const loopContext: ModelContext = {
       ...context,
@@ -2325,6 +2327,19 @@ export async function executeModelFallback(
       }
       seenToolCalls.add(signature);
       toolCallCount += 1;
+      // General web research: same call limit, deadline and per-round metering as every read. After
+      // it, the model is offered no further tools, so nothing in a result page can lead to an action.
+      if (request.name === SEARCH_WEB_TOOL.name && webSearchEnabled() && input.actorId) {
+        input.onToolSelected?.(request.name);
+        const outcome = await runWebResearch(args, { actorId: input.actorId, conversationId: input.conversationId, marketId: input.market.id, turnId: input.currentMessageId ?? randomUUID() }, deadlineAt);
+        logger.info({ event: "jassim_web_research", status: outcome.status, ...(outcome.status === "SUCCEEDED" ? { pages: outcome.pages.length, snippets: outcome.snippets.length } : { code: outcome.code }) }, "web research");
+        if (outcome.status === "SUCCEEDED") {
+          researchPages = outcome.pages;
+          toolFeedback.push({ tool: SEARCH_WEB_TOOL.name, status: "SUCCEEDED", result: researchFeedback(outcome) });
+        } else toolFeedback.push({ tool: SEARCH_WEB_TOOL.name, status: outcome.status, code: outcome.code });
+        loopContext.modelTools = [];
+        continue;
+      }
 
       let toolTimer: NodeJS.Timeout | undefined;
       let execution: Awaited<ReturnType<typeof executeModelTool>> | undefined;
@@ -2590,6 +2605,8 @@ export async function executeModelFallback(
   // The citation is server-authored: the model cannot invent or drop the page it was given.
   if (webPage && outcome.turn.conversationalReply && !lastSearchResult && !lastResourceResult)
     outcome.turn.conversationalReply = `${outcome.turn.conversationalReply}\n\nالمصدر: ${webPage.title} — ${webPage.url}`;
+  if (researchPages.length && outcome.turn.conversationalReply && !lastSearchResult && !lastResourceResult)
+    outcome.turn.conversationalReply = `${outcome.turn.conversationalReply}\n\n${researchSourcesLine(researchPages)}`;
   // Phase 2: the model's chosen form. Malformed directives are ignored whole; nothing in one is a figure.
   const directive: DisplayDirective | undefined = parseDisplayDirective(outcome.turn.display);
   if (directive?.format === "TEXT")
