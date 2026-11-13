@@ -128,7 +128,7 @@ function InteractiveLogo() {
       ref={ref}
       type="button"
       className="premium-logo"
-      aria-label="ابدأ الكتابة لدينار"
+      aria-label="ابدأ الكتابة لجاسم"
       data-testid="welcome-logo"
       onPointerMove={move}
       onPointerLeave={reset}

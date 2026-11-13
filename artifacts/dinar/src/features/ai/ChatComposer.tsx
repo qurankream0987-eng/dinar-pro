@@ -413,7 +413,7 @@ export function ChatComposer({
           rows={1}
           maxLength={4000}
           dir={textDirection(draft) ?? "rtl"}
-          placeholder="اسأل دينار..."
+          placeholder="اسأل جاسم..."
           aria-label="رسالتك إلى JassimAI"
           data-testid="input-ai-composer"
           className="block min-h-[42px] max-h-44 min-w-0 flex-1 resize-none bg-transparent px-3 py-2 text-base leading-7 outline-none placeholder:text-muted-foreground"
@@ -441,7 +441,7 @@ export function ChatComposer({
           <button
             type="submit"
             disabled={(!draft.trim() && photos.length === 0) || busy || offline}
-            aria-label={busy ? "دينار يعمل الآن" : "إرسال الرسالة"}
+            aria-label={busy ? "جاسم يعمل الآن" : "إرسال الرسالة"}
             data-testid="button-send-ai-message"
             aria-busy={busy || undefined}
             data-ready={Boolean((draft.trim() || photos.length) && !busy && !offline)}

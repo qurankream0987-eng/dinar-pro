@@ -1339,6 +1339,17 @@ router.post("/ai/conversations/:id/copies", requireAuth, async (req, res): Promi
       res.status(400).json({ error: "يمكن تعديل رسائلك أنت فقط." });
       return;
     }
+    // An edit re-sends text only. A message that carried photos, a video or a location cannot be
+    // re-sent faithfully as text, so it is not editable (the original stays as it is).
+    const anchorMeta = copyableRows[anchorIndex]!.metadata;
+    if (
+      (Array.isArray(anchorMeta.imageObjectPaths) && anchorMeta.imageObjectPaths.length) ||
+      (Array.isArray(anchorMeta.videoObjectPaths) && anchorMeta.videoObjectPaths.length) ||
+      anchorMeta.locationDigest
+    ) {
+      res.status(400).json({ error: "لا يمكن تعديل رسالة فيها صور أو فيديو أو موقع. أرسل رسالة جديدة بدلًا منها." });
+      return;
+    }
     rowsToCopy = copyableRows.slice(0, anchorIndex);
   }
 
@@ -1370,7 +1381,12 @@ router.post("/ai/conversations/:id/copies", requireAuth, async (req, res): Promi
             body: row.body,
             actor: row.actor,
             contentType: "TEXT",
-            metadata: {},
+            // Lineage only: the source message this row restates and, for an edit, the message the
+            // edit replaces. No turn status, receipt or cart key is carried, so nothing replays.
+            metadata: {
+              copiedFrom: { conversationId: source.id, messageId: row.id },
+              ...(input.beforeMessageId ? { editOf: input.beforeMessageId } : {}),
+            },
             createdAt: new Date(baseTime + index),
           })))
           .returning()

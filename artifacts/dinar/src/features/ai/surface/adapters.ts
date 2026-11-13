@@ -202,7 +202,7 @@ export function plansSurface(plans: Plans): ComposedSurfaceInput {
       // D1: the three public plans as one facts list (the tier grid above stays the only options grid).
       ...(plans.publicPlans?.length
         ? [
-            { type: "text" as const, text: "خطط جاسم: جو وبرو لحساب دينار، وبزنس لنشاط تجاري موثّق." },
+            { type: "text" as const, text: "خطط جاسم: جو وبرو لحسابك الشخصي، وبزنس لنشاط تجاري موثّق." },
             {
               type: "facts" as const,
               rows: plans.publicPlans.map((plan) => ({

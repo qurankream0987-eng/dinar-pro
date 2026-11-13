@@ -642,7 +642,7 @@ export default function AdminLegalReadinessPage() {
     <main className="container-app max-w-5xl space-y-6 py-6" dir="rtl">
       <PageHeader back="/profile" title="الجاهزية القانونية والأمنية" />
       <InlineAlert tone="warning" title="حالة داخلية وليست موافقة قانونية">
-        لا يعني تفعيل الصلاحية أن دينار حصل على موافقة حكومية أو ترخيص. لا تُفعّل أي دولة أو
+        لا يعني تفعيل الصلاحية أن جاسم حصل على موافقة حكومية أو ترخيص. لا تُفعّل أي دولة أو
         خدمة قبل مراجعة مستشار مختص وقرار المالك. المراجع هنا يسجل مراجع للقرار فقط، ولا تُرفع
         مستندات قانونية أو بيانات شخصية.
       </InlineAlert>

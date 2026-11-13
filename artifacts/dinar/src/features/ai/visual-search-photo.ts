@@ -13,4 +13,4 @@ export function isSearchPhoto(file: File): boolean {
   return searchPhotos.has(file);
 }
 
-export const DEFAULT_PHOTO_SEARCH_MESSAGE = "دينار، أريد هذا المنتج";
+export const DEFAULT_PHOTO_SEARCH_MESSAGE = "جاسم، أريد هذا المنتج";

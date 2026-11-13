@@ -471,7 +471,7 @@ export function SettingsPage() {
         />
         <ListRow
           icon={<HelpCircle size={19} />}
-          title="كيف يعمل بدينار؟"
+          title="كيف يعمل جاسم؟"
           description="لكل عرض سعر يحدده البائع. تختار الكمية، ويُنشأ طلب لكل بائع."
         />
       </ListGroup>

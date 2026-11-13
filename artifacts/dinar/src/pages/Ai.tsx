@@ -1660,7 +1660,7 @@ export default function AiPage() {
     const readCommands = new Map([
       ["cart", "اعرض السلة"],
       ["listings", "اعرض إعلاناتي"],
-      ["sales", "دينار أعطني إحصائيات مبيعاتي"],
+      ["sales", "جاسم، أعطني إحصائيات مبيعاتي"],
       ["dues", "اعرض مستحقاتي"],
     ]);
     const command = params.get("openOrders") === "1"
@@ -1755,10 +1755,10 @@ export default function AiPage() {
         تعديل البحث
       </button>
       {contextListings.length > 0 && (
-        <section className="ai-context-card" aria-label="نصائح من دينار">
+        <section className="ai-context-card" aria-label="نصائح من جاسم">
           <h3>
             <span className="ai-context-card-icon is-gold" aria-hidden><Lightbulb size={18} /></span>
-            نصائح من دينار
+            نصائح من جاسم
           </h3>
           <p>رأي مبني على نتائج هذا البحث داخل جاسم فقط، مع ذكر ما لا نعرفه.</p>
           <button type="button" className="ai-context-link" disabled={streaming} onClick={() => sendQuickReply("وش تنصحني؟")} data-testid="button-context-advice">

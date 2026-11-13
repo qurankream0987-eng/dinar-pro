@@ -89,7 +89,7 @@ export default function PublicBusinessPage() {
             </Badge>
           ) : (
             <Badge tone="neutral" icon={<Store size={13} aria-hidden />} testId="badge-business-hosted">
-              على دينار
+              على جاسم
             </Badge>
           )
         }
@@ -110,7 +110,7 @@ export default function PublicBusinessPage() {
             data-testid="link-business-chat"
           >
             <MessagesSquare size={16} aria-hidden />
-            اسأل دينار عن هذا النشاط
+            اسأل جاسم عن هذا النشاط
           </a>
         </Card>
 

@@ -14,7 +14,7 @@ const STATE_COPY: Record<SharingState["kind"], string> = {
   IDLE: "مشاركة الموقع متوقفة.",
   WAITING_FOR_FIX: "بانتظار أول قراءة من جهازك…",
   SHARING: "مشاركة الموقع مفعّلة لهذا الطلب فقط.",
-  PAUSED_HIDDEN: "المشاركة متوقفة مؤقتًا لأن الصفحة غير ظاهرة. افتح دينار لاستئنافها؛ المتصفح لا يشارك الموقع في الخلفية.",
+  PAUSED_HIDDEN: "المشاركة متوقفة مؤقتًا لأن الصفحة غير ظاهرة. افتح جاسم لاستئنافها؛ المتصفح لا يشارك الموقع في الخلفية.",
   PERMISSION_DENIED: "لم يُسمح بالوصول إلى الموقع؛ توقفت المشاركة. يمكنك متابعة التوصيل وتحديث الحالة يدويًا.",
   UNAVAILABLE: "هذا الجهاز لا يوفر تحديد الموقع.",
   REJECTED: "رُفضت قراءة غير دقيقة أو غير منطقية؛ ستُرسل القراءة التالية.",
@@ -83,7 +83,7 @@ export function DriverLocationSharingControl({ orderId, enabled }: { orderId: st
           <p id={`sharing-consent-${orderId}`} className="font-medium text-foreground">مشاركة موقعك أثناء هذا التوصيل؟</p>
           <ul className="mt-2 list-disc space-y-1 ps-5 text-sm text-muted-foreground">
             <li>يرى مشتري هذا الطلب فقط آخر موقع لك، ولا يُحفظ مسار تحركاتك.</li>
-            <li>تعمل المشاركة وصفحة دينار مفتوحة فقط، وتتوقف عند الإيقاف أو انتهاء التوصيل.</li>
+            <li>تعمل المشاركة وصفحة جاسم مفتوحة فقط، وتتوقف عند الإيقاف أو انتهاء التوصيل.</li>
             <li>يمكنك الإيقاف في أي وقت، ويُحذف الموقع المحفوظ فورًا.</li>
           </ul>
           <div className="mt-3 flex flex-wrap gap-2">

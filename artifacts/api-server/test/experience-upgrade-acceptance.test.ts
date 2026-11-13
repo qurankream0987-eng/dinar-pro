@@ -289,6 +289,11 @@ await test("XP-05 seller analytics, inventory, plans and usage come from جاس�
   const metric = (key: string) => insight.metrics.find((item: any) => item.key === key)?.raw;
   assert.deepEqual([metric("orders"), metric("completed"), metric("gross"), metric("paid")], [1, 1, 6_000, 0], "one real order of 2 × 3 JOD, cash");
   assert.equal(stats.modelCalled, false);
+  // The app's own quick action now addresses the assistant by its new name; same records, no model.
+  const named = await say(seller, conv, "جاسم، أعطني إحصائيات مبيعاتي");
+  assert.equal(payloadOf(named).sellerInsight?.topic, "SALES", named.body);
+  assert.equal(payloadOf(named).sellerInsight.metrics.find((item: any) => item.key === "orders")?.raw, 1);
+  assert.equal(named.modelCalled, false);
   const inventory = await say(seller, conv, "دينار أرني مخزوني");
   assert.match(inventory.body, new RegExp(`ألواح شمسية ${TOKEN}`, "u"));
   assert.match(inventory.body, /18/u, "20 published − 2 sold");
@@ -803,6 +808,38 @@ await test("XP-07 copy and edit branches are owner-scoped and copy text without 
     { beforeMessageId: assistantMessage.id },
     owner.cookie,
   )).status, 400);
+
+  // Lineage: each copied row names its source row and, for an edit, the message it replaces.
+  const branchRows = await db.select().from(messages).where(eq(messages.conversationId, branch.data.conversation.id));
+  assert.ok(branchRows.length > 0);
+  const sourceIds = new Set(source.data.messages.map((message: any) => message.id));
+  for (const row of branchRows) {
+    const lineage = row.metadata.copiedFrom as { conversationId?: string; messageId?: string } | undefined;
+    assert.equal(lineage?.conversationId, sourceId);
+    assert.ok(sourceIds.has(lineage?.messageId), "lineage points at a real source message");
+    assert.equal(row.metadata.editOf, editedMessage.id);
+    assert.equal(row.metadata.turnStatus, undefined, "no turn state is carried into the copy");
+    assert.equal(row.metadata.actionReceipts, undefined);
+    assert.equal(row.metadata.cardAddKey, undefined);
+  }
+  // The edit never rewrites the original: same ids, same bodies, same order.
+  const after = await request(`/ai/conversations/${sourceId}`, "GET", undefined, owner.cookie);
+  assert.deepEqual(
+    after.data.messages.map((message: any) => [message.id, message.actor, message.body]),
+    source.data.messages.map((message: any) => [message.id, message.actor, message.body]),
+  );
+  // A stranger cannot read the branch, branch it, or edit inside the owner's conversation.
+  assert.equal((await request(`/ai/conversations/${branch.data.conversation.id}`, "GET", undefined, intruder.cookie)).status, 404);
+  assert.equal((await request(`/ai/conversations/${branch.data.conversation.id}/copies`, "POST", { beforeMessageId: branchRows[0]!.id }, intruder.cookie)).status, 404);
+  assert.equal((await request(`/ai/conversations/${sourceId}/copies`, "POST", { beforeMessageId: editedMessage.id }, intruder.cookie)).status, 404);
+
+  // A message that carried a location (or photos/video) is not editable as text.
+  const located = await say(owner, sourceId, "هذه رسالة مع موقع");
+  assert.equal(located.status, 200);
+  const [locatedRow] = await db.select().from(messages).where(and(eq(messages.conversationId, sourceId), eq(messages.body, "هذه رسالة مع موقع")));
+  await db.update(messages).set({ metadata: { ...locatedRow!.metadata, locationDigest: "x".repeat(64) } }).where(eq(messages.id, locatedRow!.id));
+  const refused = await request(`/ai/conversations/${sourceId}/copies`, "POST", { beforeMessageId: locatedRow!.id }, owner.cookie);
+  assert.equal(refused.status, 400, refused.raw);
 });
 
 await test("XP-08 wrong actor and wrong market are rejected; a conversation keeps its own market", async () => {

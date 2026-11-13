@@ -83,7 +83,7 @@ const truncate = <T,>(items: T[] | undefined, max: number) => (items ?? []).slic
 function setupSurface(payload: BusinessPayload): ComposedSurfaceInput {
   return {
     version: 1,
-    label: "إعداد نشاطك على دينار",
+    label: "إعداد نشاطك على جاسم",
     size: "MEDIUM",
     state: "READY",
     tone: "INFO",
@@ -91,7 +91,7 @@ function setupSurface(payload: BusinessPayload): ComposedSurfaceInput {
     sections: [
       {
         type: "header",
-        title: clip(payload.name || "نشاطك على دينار", 120),
+        title: clip(payload.name || "نشاطك على جاسم", 120),
         subtitle: "التسجيل داخل جاسم دون موقع أو متجر خارجي.",
         icon: "TAG",
       },
@@ -141,7 +141,7 @@ function profileSurface(payload: BusinessPayload): ComposedSurfaceInput {
       tone: "INFO",
       testId: "business-selection",
       sections: [
-        { type: "header", title: "أنشطتك على دينار", subtitle: "اختر النشاط الذي تريد إدارته. لا يُعرض نشاط حساب آخر.", icon: "TAG" },
+        { type: "header", title: "أنشطتك على جاسم", subtitle: "اختر النشاط الذي تريد إدارته. لا يُعرض نشاط حساب آخر.", icon: "TAG" },
         {
           type: "options",
           label: "الأنشطة",

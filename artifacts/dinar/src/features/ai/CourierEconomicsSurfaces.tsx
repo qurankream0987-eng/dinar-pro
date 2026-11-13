@@ -245,7 +245,7 @@ export function CourierCommissionPanel({ active, activeMarketId }: { active: boo
       aria-label="عمولات مندوب جاسم"
       data-testid="courier-commission-account"
     >
-      <h3 className="font-semibold">مستحقات دينار</h3>
+      <h3 className="font-semibold">مستحقات جاسم</h3>
       <p className="mt-2 font-medium" data-testid="courier-unsettled-count">
         التوصيلات غير المسددة: <bdi className="num whitespace-nowrap" dir="ltr">{account.outstandingDeliveryCount} / {account.holdThreshold}</bdi>
       </p>

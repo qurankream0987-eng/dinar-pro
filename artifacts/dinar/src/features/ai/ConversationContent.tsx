@@ -1189,7 +1189,7 @@ function ResultBlock({
               data-result-index={resultIndex}
               data-resource-id={listing.id}
               aria-roledescription="بطاقة نتيجة"
-              aria-label={`النتيجة ${resultIndex + 1}: ${listing.title}${listing.id === block.payload.composition?.highlightId ? " — اقتراح دينار" : ""}`}
+              aria-label={`النتيجة ${resultIndex + 1}: ${listing.title}${listing.id === block.payload.composition?.highlightId ? " — اقتراح جاسم" : ""}`}
               role={block.payload.composition?.layout === "GRID" || block.payload.composition?.layout === "LIST" ? "listitem" : "group"}
               data-highlighted={listing.id === block.payload.composition?.highlightId ? "true" : undefined}
               className={
@@ -1201,7 +1201,7 @@ function ResultBlock({
               {listing.id === block.payload.composition?.highlightId && (
                 // A model suggestion over DINAR's own verified facts, labelled as such; never sponsored.
                 <span className="absolute end-2.5 top-2.5 z-10 rounded-full bg-primary px-2 py-0.5 text-[11px] font-semibold text-primary-foreground" data-testid={`result-highlight-${listing.id}`}>
-                  اقتراح دينار
+                  اقتراح جاسم
                 </span>
               )}
               <span
@@ -1377,7 +1377,7 @@ function MessageTurn({
       await onEdit(message.id, next);
       setEditing(false);
     } catch {
-      setEditError("تعذر إنشاء نسخة معدّلة. حاول مجددًا.");
+      setEditError("تعذر التعديل. الرسالة التي فيها صور أو فيديو أو موقع لا تُعدَّل؛ أرسل رسالة جديدة، أو حاول مجددًا.");
     } finally {
       setEditPending(false);
     }
@@ -1532,6 +1532,9 @@ function MessageTurn({
               إلغاء
             </button>
             {editError && <span role="alert" className="ai-message-action-status">{editError}</span>}
+            <span className="ai-message-action-status" data-testid={`message-edit-note-${message.id}`}>
+              يُنشئ التعديل نسخة جديدة من المحادثة؛ تبقى المحادثة الأصلية وكل ما نُفّذ فيها كما هو.
+            </span>
           </div>
         )}
       </div>
