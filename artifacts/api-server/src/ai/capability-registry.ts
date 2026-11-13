@@ -476,7 +476,7 @@ export const CAPABILITY_REGISTRY: Record<CapabilityName, CapabilityDefinition> =
   searchExternalDomains: capability({
     name: "searchExternalDomains",
     toolName: "searchDomains",
-    purpose: "Check domain availability and registration offers with DINAR Connect providers (external referral; never registers or pays).",
+    purpose: "Check domain availability and registration offers with Jassim Connect providers (external referral; never registers or pays).",
     inputSchema: z.object({ domain: z.string().optional(), name: z.string().optional() }).strict(),
     outputSchema: z.object({ kind: z.literal("SURFACE"), surface: z.literal("CONNECT_RESULTS") }).passthrough(),
     actors: ["BUYER", "SELLER"],
@@ -494,7 +494,7 @@ export const CAPABILITY_REGISTRY: Record<CapabilityName, CapabilityDefinition> =
   searchConnectPartners: capability({
     name: "searchConnectPartners",
     toolName: "searchPartnerOffers",
-    purpose: "Search reviewed DINAR Connect partner catalogs for external products and services (referral only; no internal order).",
+    purpose: "Search reviewed Jassim Connect partner catalogs for external products and services (referral only; no internal order).",
     inputSchema: z.object({ query: z.string() }).strict(),
     outputSchema: z.object({ kind: z.literal("SURFACE"), surface: z.literal("CONNECT_RESULTS") }).passthrough(),
     actors: ["BUYER", "SELLER"],
@@ -638,7 +638,7 @@ export const CAPABILITY_REGISTRY: Record<CapabilityName, CapabilityDefinition> =
   readOwnConnectPartnership: capability({
     name: "readOwnConnectPartnership",
     toolName: "readConnectPartnerStatus",
-    purpose: "Read the user's own DINAR Connect partnerships and agreement status/terms, through Connect's own access checks (read only).",
+    purpose: "Read the user's own Jassim Connect partnerships and agreement status/terms, through Connect's own access checks (read only).",
     inputSchema: empty,
     outputSchema: z.object({ kind: z.literal("SURFACE"), surface: z.literal("CONNECT_RESULTS") }).passthrough(),
     actors: ["BUYER", "SELLER"],

@@ -70,7 +70,7 @@ export type ToolResult = {
   sellerDues?: { dues: Record<string, unknown>[]; note: string };
   /** The actor's own DINAR AI allowance and an optional projection (read only). */
   aiUsage?: Record<string, unknown>;
-  /** The actor's own DINAR Connect partnerships and agreements (read only). */
+  /** The actor's own Jassim Connect partnerships and agreements (read only). */
   connectStatus?: Record<string, unknown>;
   /** Published policy summaries (read only). */
   policies?: Record<string, unknown>[];
@@ -802,7 +802,7 @@ export const aiToolRegistry: Record<string, ToolDefinition> = {
     name: "searchDomains",
     version: 1,
     description:
-      "Check domain-name availability and registration offers with DINAR Connect providers. External referral only; never registers or pays.",
+      "Check domain-name availability and registration offers with Jassim Connect providers. External referral only; never registers or pays.",
     permissions: ["marketplace.read"],
     riskLevel: "LOW",
     idempotency: "READ_ONLY",
@@ -847,7 +847,7 @@ export const aiToolRegistry: Record<string, ToolDefinition> = {
     name: "searchPartnerOffers",
     version: 1,
     description:
-      "Search reviewed DINAR Connect partner catalogs (external businesses) for products or services. External referral only.",
+      "Search reviewed Jassim Connect partner catalogs (external businesses) for products or services. External referral only.",
     permissions: ["marketplace.read"],
     riskLevel: "LOW",
     idempotency: "READ_ONLY",
@@ -857,7 +857,7 @@ export const aiToolRegistry: Record<string, ToolDefinition> = {
     modelDefinition: {
       name: "searchPartnerOffers",
       description:
-        "Search approved external partner businesses connected through DINAR Connect (services such as design, maintenance, booking providers, software, stores) when the user needs something DINAR's own marketplace may not sell, or asks for a company/provider. Only reviewed partners are returned; prices and availability are the partner's, purchase happens outside DINAR, and no internal order is created.",
+        "Search approved external partner businesses connected through Jassim Connect (services such as design, maintenance, booking providers, software, stores) when the user needs something DINAR's own marketplace may not sell, or asks for a company/provider. Only reviewed partners are returned; prices and availability are the partner's, purchase happens outside DINAR, and no internal order is created.",
       parameters: {
         type: "object",
         properties: { query: { type: "string", description: "What to look for, in the user's language" } },
@@ -1006,7 +1006,7 @@ export const aiToolRegistry: Record<string, ToolDefinition> = {
   readConnectPartnerStatus: {
     name: "readConnectPartnerStatus",
     version: 1,
-    description: "Read the signed-in user's own DINAR Connect partnerships: partner status and agreement status/terms. Read only.",
+    description: "Read the signed-in user's own Jassim Connect partnerships: partner status and agreement status/terms. Read only.",
     permissions: ["marketplace.read"],
     riskLevel: "LOW",
     idempotency: "READ_ONLY",
@@ -1015,7 +1015,7 @@ export const aiToolRegistry: Record<string, ToolDefinition> = {
     inputSchema: z.object({}).strict(),
     modelDefinition: {
       name: "readConnectPartnerStatus",
-      description: "Use when a business owner or their team asks about their company's DINAR Connect partnership: is it approved, what agreement or commission terms apply. Returns only partnerships the user may access. Never treat a click or referral as earned commission.",
+      description: "Use when a business owner or their team asks about their company's Jassim Connect partnership: is it approved, what agreement or commission terms apply. Returns only partnerships the user may access. Never treat a click or referral as earned commission.",
       parameters: { type: "object", properties: {}, required: [], additionalProperties: false },
     },
     execute: async (_input, context) => (await import("./model-read-capabilities")).readConnectPartnerStatus(context),
