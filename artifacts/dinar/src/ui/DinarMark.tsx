@@ -15,7 +15,7 @@ export function DinarMark({
 }: DinarMarkProps) {
   return (
     <img
-      src={resolveAssetUrl("/brand/jassimai-mark.svg")}
+      src={resolveAssetUrl("/brand/jassimai-mark.png")}
       width={size}
       height={size}
       alt={alt}
