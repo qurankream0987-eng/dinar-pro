@@ -15,7 +15,7 @@ export type SellerInsight = {
 const SOURCE_LABELS: Record<string, string> = {
   USER_DECLARED: "منك",
   IMAGE_INFERRED: "من الصورة — يحتاج تأكيدك",
-  DINAR_DERIVED: "اقتراح DINAR",
+  DINAR_DERIVED: "اقتراح جاسم",
   SERVER_FACT: "من بيانات السوق",
   UNKNOWN: "غير معروف",
 };

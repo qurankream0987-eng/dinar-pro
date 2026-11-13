@@ -52,7 +52,7 @@ export function salesSurface(insight: SellerSalesInsight): ComposedSurfaceInput 
     testId: "sales-summary",
     state: insight.metrics.some((metric) => metric.raw) || insight.previous?.metrics.some((metric) => metric.raw) ? "READY" : "EMPTY",
     sections: [
-      { type: "header", title: "مبيعاتك", source: "من سجل DINAR", badge: { label: insight.currencyCode, tone: "GOLD" }, icon: "CHART" },
+      { type: "header", title: "مبيعاتك", source: "من سجل جاسم", badge: { label: insight.currencyCode, tone: "GOLD" }, icon: "CHART" },
       {
         type: "text",
         muted: true,
@@ -98,7 +98,7 @@ const BUSINESS_TITLES: Record<SellerBusinessInsight["topic"], string> = {
 
 export function businessSurface(insight: SellerBusinessInsight): ComposedSurfaceInput {
   const title = BUSINESS_TITLES[insight.topic];
-  const header = { type: "header" as const, title, source: "من سجل DINAR", icon: insight.topic === "INVENTORY" ? ("TAG" as const) : ("CHART" as const) };
+  const header = { type: "header" as const, title, source: "من سجل جاسم", icon: insight.topic === "INVENTORY" ? ("TAG" as const) : ("CHART" as const) };
   const base = { version: 1 as const, label: title, testId: "business-summary" };
   if (insight.topic === "ORDERS")
     return {
@@ -194,15 +194,15 @@ export function usageSurface(usage: Usage): ComposedSurfaceInput {
 export function plansSurface(plans: Plans): ComposedSurfaceInput {
   return {
     version: 1,
-    label: "باقات DINAR",
+    label: "باقات جاسم",
     size: "WIDE",
     testId: "ai-plans",
     sections: [
-      { type: "header", title: "باقات DINAR", subtitle: "القدرات نفسها في كل الباقات؛ الفرق في سعة الاستخدام.", icon: "SPARKLE" },
+      { type: "header", title: "باقات جاسم", subtitle: "القدرات نفسها في كل الباقات؛ الفرق في سعة الاستخدام.", icon: "SPARKLE" },
       // D1: the three public plans as one facts list (the tier grid above stays the only options grid).
       ...(plans.publicPlans?.length
         ? [
-            { type: "text" as const, text: "خطط دينار: جو وبرو لحساب دينار، وبزنس لنشاط تجاري موثّق." },
+            { type: "text" as const, text: "خطط جاسم: جو وبرو لحساب دينار، وبزنس لنشاط تجاري موثّق." },
             {
               type: "facts" as const,
               rows: plans.publicPlans.map((plan) => ({

@@ -18,7 +18,7 @@ export function ConnectOAuthControls({ integrationId, revision, endpoint }: { in
         const url = new URL(result.authorizationUrl);
         if (url.protocol !== "https:" || url.hostname !== new URL(endpoint).hostname) throw new Error("تعذر التحقق من وجهة تفويض المزوّد");
         setAuthorizationUrl(url.href); setMessage("تابع لدى المزوّد للموافقة على القراءة فقط؛ لم يُفوّض الحساب بعد.");
-      } else setMessage(action === "refresh" ? "جدد الخادم تفويض القراءة وفق رد المزوّد." : "أوقف DINAR استخدام التفويض محليًا. لإلغائه لدى المزوّد، استخدم إعدادات حسابك هناك.");
+      } else setMessage(action === "refresh" ? "جدد الخادم تفويض القراءة وفق رد المزوّد." : "أوقف جاسم استخدام التفويض محليًا. لإلغائه لدى المزوّد، استخدم إعدادات حسابك هناك.");
       setReview(null); await load();
     } catch (e) { setError(e instanceof Error ? e.message : "تعذر إتمام ربط الحساب"); }
     finally { setBusy(false); }
@@ -30,7 +30,7 @@ export function ConnectOAuthControls({ integrationId, revision, endpoint }: { in
     {!status && !error && <p role="status">جارٍ التحقق من التفويض…</p>}
     {error && <p role="alert">{error}</p>}{message && <p role="status">{message}</p>}
     <div className="flex flex-wrap gap-2"><Button disabled={busy} onClick={() => setReview("start")}>مراجعة تفويض القراءة لدى المزوّد</Button><Button variant="secondary" disabled={busy || !status?.canRefresh} onClick={() => setReview("refresh")}>مراجعة تجديد التفويض</Button><Button variant="danger-soft" disabled={busy} onClick={() => setReview("disconnect")}>مراجعة إيقاف التفويض محليًا</Button></div>
-    {review && <div className="space-y-2 rounded-lg border p-3"><p>{review === "start" ? "سيبدأ طلب تفويض جديد للقراءة فقط، ويتوقف التفويض المحلي السابق. الموافقة النهائية تكون لدى المزوّد." : review === "refresh" ? "سيطلب DINAR تجديد تفويض القراءة. قد يلزم إعادة الربط إذا رفض المزوّد التجديد." : "سيتوقف استخدام الرموز داخل DINAR. لا يعني ذلك إلغاء إذن الحساب لدى المزوّد، ولا يمحو سجلات العقود أو المحاسبة."}</p><Button disabled={busy} onClick={() => void confirm()}>تأكيد {review === "start" ? "بدء تفويض القراءة" : review === "refresh" ? "تجديد تفويض القراءة" : "إيقاف التفويض محليًا"}</Button><Button variant="secondary" disabled={busy} onClick={() => setReview(null)}>تراجع عن التفويض</Button></div>}
+    {review && <div className="space-y-2 rounded-lg border p-3"><p>{review === "start" ? "سيبدأ طلب تفويض جديد للقراءة فقط، ويتوقف التفويض المحلي السابق. الموافقة النهائية تكون لدى المزوّد." : review === "refresh" ? "سيطلب جاسم تجديد تفويض القراءة. قد يلزم إعادة الربط إذا رفض المزوّد التجديد." : "سيتوقف استخدام الرموز داخل جاسم. لا يعني ذلك إلغاء إذن الحساب لدى المزوّد، ولا يمحو سجلات العقود أو المحاسبة."}</p><Button disabled={busy} onClick={() => void confirm()}>تأكيد {review === "start" ? "بدء تفويض القراءة" : review === "refresh" ? "تجديد تفويض القراءة" : "إيقاف التفويض محليًا"}</Button><Button variant="secondary" disabled={busy} onClick={() => setReview(null)}>تراجع عن التفويض</Button></div>}
     {authorizationUrl && <a className="inline-flex min-h-11 items-center rounded-lg border p-2 underline focus-visible:outline-2" href={authorizationUrl} target="_blank" rel="noopener noreferrer">المتابعة لدى المزوّد — {new URL(authorizationUrl).hostname}</a>}
     <Button variant="secondary" disabled={busy} onClick={() => { setError(""); void load().catch(e => setError(e.message)); }}>التحقق من حالة تفويض الحساب</Button>
   </section>;

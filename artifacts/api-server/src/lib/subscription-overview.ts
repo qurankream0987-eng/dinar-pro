@@ -65,7 +65,7 @@ export async function subscriptionPlansOverview(actorId: string, market: Market)
     subscription: status,
     free: {
       name: "الحساب المجاني",
-      features: ["البيع والشراء والتفاوض في دينار", "المساعد الذكي الأساسي", "الإعلانات المدفوعة متاحة بشكل منفصل"],
+      features: ["البيع والشراء والتفاوض في جاسم", "المساعد الذكي الأساسي", "الإعلانات المدفوعة متاحة بشكل منفصل"],
       allowances: allowances("FREE"),
       tokens: commercial.aiUsage.tiers.FREE.tokens,
       current: access.plan === "FREE",

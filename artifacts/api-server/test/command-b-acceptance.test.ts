@@ -148,7 +148,7 @@ await test("B2 no-price listing: offered options are understood, absent price is
     [/كيف تريد التسعير/u, "قدّم عرضك"],
     [/الكمية/u, "1"],
     [/المنطقة/u, "خلدا"],
-    [/تواصل/u, "محادثة DINAR فقط"],
+    [/تواصل/u, "محادثة جاسم فقط"],
     [/دفع/u, "كاش"],
   ];
   const seen: string[] = [];

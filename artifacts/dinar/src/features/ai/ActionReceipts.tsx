@@ -30,7 +30,7 @@ const PAYMENT_STATE: Record<NonNullable<AiActionReceipt["paymentState"]>, string
 export function ActionReceiptList({ receipts }: { receipts: AiActionReceipt[] }) {
   if (!receipts.length) return null;
   return (
-    <section className="ai-surface mt-3 max-w-xl space-y-2" aria-label="حالة الإجراءات في سجل دينار" data-testid="action-receipts">
+    <section className="ai-surface mt-3 max-w-xl space-y-2" aria-label="حالة الإجراءات في سجل جاسم" data-testid="action-receipts">
       {receipts.map((receipt, index) => {
         const status = STATUS[receipt.lifecycle];
         return (
@@ -45,7 +45,7 @@ export function ActionReceiptList({ receipts }: { receipts: AiActionReceipt[] })
             <p className={`flex items-center gap-1.5 text-xs font-semibold ${status.tone}`}>
               <status.Icon className="h-3.5 w-3.5 shrink-0" aria-hidden />
               {status.label}
-              <span className="font-normal text-muted-foreground">· سجل دينار</span>
+              <span className="font-normal text-muted-foreground">· سجل جاسم</span>
             </p>
             <p className="mt-1 break-words font-semibold">{receipt.title}</p>
             {receipt.resource && <p className="mt-0.5 break-words text-muted-foreground">{receipt.resource}</p>}

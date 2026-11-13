@@ -668,13 +668,13 @@ export const aiToolRegistry: Record<string, ToolDefinition> = {
           unknownLabel: "لم يذكر البائع",
           notApplicableLabel: "لا ينطبق",
           sourceLabels: {
-            RECORD: "من سجل DINAR",
+            RECORD: "من سجل جاسم",
             SELLER: "كما ذكره البائع",
             DERIVED: "محسوب من القيم أعلاه",
           },
         },
         prompt:
-          "قارنت البيانات الحالية من DINAR فقط. ما لم يذكره البائع يظهر «لم يذكر البائع» ولم أفترض قيمته، وما لا يخص فئة العرض يظهر «لا ينطبق».",
+          "قارنت البيانات الحالية من جاسم فقط. ما لم يذكره البائع يظهر «لم يذكر البائع» ولم أفترض قيمته، وما لا يخص فئة العرض يظهر «لا ينطبق».",
       };
     },
   },
@@ -953,7 +953,7 @@ export const aiToolRegistry: Record<string, ToolDefinition> = {
   readAiUsage: {
     name: "readAiUsage",
     version: 1,
-    description: "Read the signed-in user's own DINAR AI allowance: recorded use, limits, renewal and an optional projection. Read only.",
+    description: "Read the signed-in user's own JassimAI allowance: recorded use, limits, renewal and an optional projection. Read only.",
     permissions: ["marketplace.read"],
     riskLevel: "LOW",
     idempotency: "READ_ONLY",

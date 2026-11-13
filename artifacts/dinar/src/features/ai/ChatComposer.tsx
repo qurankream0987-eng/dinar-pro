@@ -97,7 +97,7 @@ export function ChatComposer({
       return;
     }
     try {
-      setHint("سيُرسل التسجيل إلى Groq لتحويله إلى نص؛ لا يحفظ DINAR ملف الصوت.");
+      setHint("سيُرسل التسجيل إلى Groq لتحويله إلى نص؛ لا يحفظ جاسم ملف الصوت.");
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       mediaStream.current = stream;
       const supportedTypes = [
@@ -145,7 +145,7 @@ export function ChatComposer({
           onDraftChange(
             [voiceBase.current, transcript].filter(Boolean).join(voiceBase.current ? " " : ""),
           );
-          setHint("راجع النص المحوّل، ثم أرسله إلى DINAR.");
+          setHint("راجع النص المحوّل، ثم أرسله إلى جاسم.");
         } catch (error) {
           setHint(error instanceof Error ? error.message : "تعذر تحويل التسجيل إلى نص.");
         } finally {
@@ -259,7 +259,7 @@ export function ChatComposer({
           setCameraOpen(false);
           // One search photo per message; it replaces listing photos rather than mixing with them.
           onPhotosChange([markSearchPhoto(file)]);
-          setHint("أضف وصفًا إن شئت، ثم أرسل الصورة إلى DINAR.");
+          setHint("أضف وصفًا إن شئت، ثم أرسل الصورة إلى جاسم.");
           input.current?.focus();
         }}
       />
@@ -316,7 +316,7 @@ export function ChatComposer({
           <p className="min-w-32 text-xs leading-5 text-muted-foreground">
             {searching
               ? "سأبحث عن هذا المنتج في العروض المنشورة. صورتك خاصة بك ولا تُنشر."
-              : "يمكن لـDINAR اقتراح عنوان ووصف ومواصفات مرئية من الصور. راجع كل اقتراح قبل استخدامه."}
+              : "يمكن لجاسم اقتراح عنوان ووصف ومواصفات مرئية من الصور. راجع كل اقتراح قبل استخدامه."}
           </p>
         </div>
       )}
@@ -414,7 +414,7 @@ export function ChatComposer({
           maxLength={4000}
           dir={textDirection(draft) ?? "rtl"}
           placeholder="اسأل دينار..."
-          aria-label="رسالتك إلى DINAR AI"
+          aria-label="رسالتك إلى JassimAI"
           data-testid="input-ai-composer"
           className="block min-h-[42px] max-h-44 min-w-0 flex-1 resize-none bg-transparent px-3 py-2 text-base leading-7 outline-none placeholder:text-muted-foreground"
         />
@@ -433,7 +433,7 @@ export function ChatComposer({
           </button>
           {onStop && busy && (
             <button type="button" onClick={onStop} aria-label="إيقاف عرض الرد"
-              title="يوقف عرض الرد فقط؛ يتحقق DINAR من نتيجة الطلب على الخادم."
+              title="يوقف عرض الرد فقط؛ يتحقق جاسم من نتيجة الطلب على الخادم."
               data-testid="button-stop-ai-response" className={iconButtonClass("outline")}>
               <Square size={18} aria-hidden />
             </button>

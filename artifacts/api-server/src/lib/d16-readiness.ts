@@ -370,7 +370,7 @@ export async function enableMarketCapability(input: {
 }) {
   const env = input.env ?? process.env;
   if (!configuredActorIds(env.DINAR_LEGAL_OWNER_IDS).has(input.actorId))
-    reject(403, "DESIGNATED_LEGAL_OWNER_REQUIRED", "الموافق غير معيّن لموافقة مالك دينار");
+    reject(403, "DESIGNATED_LEGAL_OWNER_REQUIRED", "الموافق غير معيّن لموافقة مالك جاسم");
   const reference = requireReference(input.reference, "مرجع موافقة المالك");
   return db.transaction(async (tx) => {
     await assertAdminActor(input.actorId, tx);

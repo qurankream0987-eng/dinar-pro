@@ -16,7 +16,7 @@ const errors = [];
 const checks = [];
 page.on("pageerror", (e) => errors.push(e.message));
 async function turn(text) {
-  await page.getByRole("textbox", { name: "رسالتك إلى DINAR AI" }).fill(text);
+  await page.getByRole("textbox", { name: "رسالتك إلى JassimAI" }).fill(text);
   await page
     .getByRole("button", { name: "إرسال الرسالة", exact: true })
     .click();

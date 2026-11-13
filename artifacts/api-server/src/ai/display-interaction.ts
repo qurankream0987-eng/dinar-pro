@@ -135,7 +135,7 @@ async function businessInteraction(context: Context, interaction: DisplayInterac
   if (interaction.kind === "FORMAT") {
     const directive: DisplayDirective = { ...interaction.directive, scope: "THIS_TURN" };
     const display = composeBusinessDisplay(directive, overview);
-    return { tool: "readBusinessOverview", version: 1, result: { ...read, ...(display.surface ? { displaySurface: display.surface } : {}), prompt: display.notice ?? "هذه أرقامك نفسها من سجلات DINAR بالشكل الذي طلبته." } as ToolResult };
+    return { tool: "readBusinessOverview", version: 1, result: { ...read, ...(display.surface ? { displaySurface: display.surface } : {}), prompt: display.notice ?? "هذه أرقامك نفسها من سجلات جاسم بالشكل الذي طلبته." } as ToolResult };
   }
   const business = [...(overview?.businesses ?? [])].filter((entry) => entry.analytics?.monthly).sort((a, b) => (b.analytics!.completedOrders ?? 0) - (a.analytics!.completedOrders ?? 0))[0];
   const analytics = business?.analytics;

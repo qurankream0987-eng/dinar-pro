@@ -358,7 +358,7 @@ async function decisionReview(
     WITHDRAW_NEGOTIATION: `سحب عرضك النشط على «${view.title}»؟ اكتب «نعم» للتأكيد أو «إلغاء».`,
   };
   const terms = unrecordedTerms
-    ? ` الشرط «${unrecordedTerms}» لا يُسجَّل في عرض السعر (يحفظ DINAR المبلغ فقط)؛ اكتبه للطرف الآخر في رسالة الطلب إن أردت.`
+    ? ` الشرط «${unrecordedTerms}» لا يُسجَّل في عرض السعر (يحفظ جاسم المبلغ فقط)؛ اكتبه للطرف الآخر في رسالة الطلب إن أردت.`
     : "";
   return reviewTurn(review, { ...view }, `${prompts[action]}${terms}`, action);
 }
@@ -712,7 +712,7 @@ export async function executeNegotiationTurn(input: {
       const actorRole = confirmedRow ? roleOf(confirmedRow, actorId) : undefined;
       const prompts: Record<NegotiationAction, string> = {
         SEND_NEGOTIATION_OFFER: "أُرسل عرضك للبائع. السعر المعلن لم يتغير، وسأعرض لك رده عندما تسأل «وش صار على عرضي؟».",
-        REQUEST_BEST_PRICE: "أُرسل طلب معرفة أفضل سعر للبائع. لم يحدد DINAR سعرًا نيابةً عنه.",
+        REQUEST_BEST_PRICE: "أُرسل طلب معرفة أفضل سعر للبائع. لم يحدد جاسم سعرًا نيابةً عنه.",
         COUNTER_NEGOTIATION:
           actorRole === "BUYER"
             ? "أُرسل عرضك المضاد للبائع. لم يتغير السعر المعلن للإعلان."

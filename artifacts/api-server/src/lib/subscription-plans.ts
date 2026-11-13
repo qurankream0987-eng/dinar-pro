@@ -138,9 +138,9 @@ export const DEFAULT_SUBSCRIPTION_PLANS_POLICY: SubscriptionPlansPolicy = {
       featuresAr: ["أعلى سعة للمحادثات الذكية", "مهام ذكية متعددة الخطوات أكثر", "نبض السوق المتقدم وتحليلات الحملات"],
     },
     DINAR_BUSINESS: {
-      nameAr: "دينار بزنس",
+      nameAr: "جاسم بزنس",
       nameEn: "DINAR Business",
-      descriptionAr: "للأنشطة التجارية الموثّقة: أدوات النشاط وتقاريره ومخزونه. يتطلب نشاطًا موثّقًا من مراجع دينار.",
+      descriptionAr: "للأنشطة التجارية الموثّقة: أدوات النشاط وتقاريره ومخزونه. يتطلب نشاطًا موثّقًا من مراجع جاسم.",
       referencePrice: usd(4_900),
       priceVersion: 1,
       status: "PROPOSED",
@@ -148,7 +148,7 @@ export const DEFAULT_SUBSCRIPTION_PLANS_POLICY: SubscriptionPlansPolicy = {
       eligibility: "VERIFIED_BUSINESS",
       aiTierEntitlement: null,
       allowedEntitlements: ["BUSINESS_PROFILE_TOOLS", "BUSINESS_REPORTING", "INVENTORY_INSIGHTS", "MARKET_PULSE_ADVANCED", "CAMPAIGN_ANALYTICS_ADVANCED", "AI_USAGE_BUSINESS_GO", "AI_USAGE_BUSINESS_PRO"],
-      featuresAr: ["ملف نشاط تجاري موثّق في دينار", "تقارير النشاط ورؤى المخزون", "نبض السوق المتقدم وتحليلات الحملات"],
+      featuresAr: ["ملف نشاط تجاري موثّق في جاسم", "تقارير النشاط ورؤى المخزون", "نبض السوق المتقدم وتحليلات الحملات"],
     },
   },
 };
@@ -169,7 +169,7 @@ export function planCodeOfSubscription(row: { planCodeSnapshot?: string | null; 
 
 /** Admin validation of a DINAR_BUSINESS catalog product against its plan definition. */
 export function validateCatalogProductForPlan(policy: SubscriptionPlansPolicy, planCode: PlanCode | null, entitlements: readonly string[]): string | null {
-  if (!planCode) return entitlements.some((key) => BUSINESS_ONLY_ENTITLEMENTS.has(key)) ? "مزايا النشاط الموثّق تخص خطة دينار بزنس فقط" : null;
+  if (!planCode) return entitlements.some((key) => BUSINESS_ONLY_ENTITLEMENTS.has(key)) ? "مزايا النشاط الموثّق تخص خطة جاسم بزنس فقط" : null;
   const plan = policy.plans[planCode];
   const outside = entitlements.filter((key) => !(plan.allowedEntitlements as readonly string[]).includes(key));
   if (outside.length) return `مزايا غير مسموحة لخطة ${plan.nameAr}: ${outside.join(", ")}`;

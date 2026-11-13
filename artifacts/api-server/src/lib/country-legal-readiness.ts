@@ -792,7 +792,7 @@ export async function attemptCountryOwnerApproval(input: {
 }) {
   const env = input.env ?? process.env;
   if (!configuredIds(env.DINAR_LEGAL_OWNER_IDS).has(input.actorId))
-    reject(403, "DESIGNATED_LEGAL_OWNER_REQUIRED", "الموافق غير معيّن لموافقة مالك دينار");
+    reject(403, "DESIGNATED_LEGAL_OWNER_REQUIRED", "الموافق غير معيّن لموافقة مالك جاسم");
   const referenceCode = cleanReference(input.referenceCode, "مرجع موافقة المالك");
   const result = await db.transaction(async (tx) => {
     await assertAdminActor(input.actorId, tx);

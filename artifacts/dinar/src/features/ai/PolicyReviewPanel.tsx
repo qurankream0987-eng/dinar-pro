@@ -42,7 +42,7 @@ export function policyReviewSurface(review: PolicyReview): ComposedSurfaceInput 
     testId: "policy-review",
     status: review.view,
     sections: [
-      { type: "header", title: HEADLINE[review.view], icon: "INFO", source: "سياسات DINAR" },
+      { type: "header", title: HEADLINE[review.view], icon: "INFO", source: "سياسات جاسم" },
       {
         type: "options",
         label: "السياسات",

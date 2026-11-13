@@ -149,8 +149,8 @@ const prices = (block: any) => (block?.payload?.listings ?? []).filter((listing:
 
 const searchPhones: Step = { name: "searchListings", arguments: { query: `جوال ${run}`, filters: [] } };
 const searchServices: Step = { name: "searchListings", arguments: { query: `تصميم ${run}`, filters: [] } };
-script.push({ key: `ورني الجوالات المتوفرة ${run}`, reply: "هذه جوالات من عروض DINAR.", tools: [searchPhones] });
-script.push({ key: `أبي خدمات تصميم ${run}`, reply: "هذه خدمات تصميم من عروض DINAR.", tools: [searchServices] });
+script.push({ key: `ورني الجوالات المتوفرة ${run}`, reply: "هذه جوالات من عروض جاسم.", tools: [searchPhones] });
+script.push({ key: `أبي خدمات تصميم ${run}`, reply: "هذه خدمات تصميم من عروض جاسم.", tools: [searchServices] });
 
 const conv = await newConversation(buyer.cookie);
 let phonesSet = "";

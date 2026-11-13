@@ -365,7 +365,7 @@ export default function CreateOffer({
                     label: "التواصل",
                     value:
                       form.contactPreference === "CHAT_ONLY"
-                        ? "محادثة DINAR فقط"
+                        ? "محادثة جاسم فقط"
                         : form.contactPhone || "رقم مخصص لهذا الإعلان",
                   },
                 ]}
@@ -374,7 +374,7 @@ export default function CreateOffer({
                 يُنشر العرض في سوق {market?.countryNameAr} ولا يمكن نقله لسوق
                 آخر. السعر الذي اخترته يطبق على الوحدة الواحدة.{" "}
                 <span data-testid="text-commission-disclosure">
-                  رسوم بدينار{" "}
+                  رسوم جاسم{" "}
                   {commissionPercentLabel(policies.data?.fees.commissionRateBps)}{" "}
                   من قيمة كل طلب مكتمل يتحملها البائع، ولا تُضاف على المشتري.
                 </span>{" "}

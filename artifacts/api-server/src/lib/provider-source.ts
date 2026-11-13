@@ -47,8 +47,8 @@ export async function listingSource(listingId: string, tx: any = db): Promise<Li
 
 export function sourceControlledMessage(fields: readonly string[]): string {
   if (fields.includes("unitPrice") || fields.includes("pricingMode"))
-    return "هذا السعر متزامن من نظامك المتصل بدينار. عدّله من المصدر؛ لم يتم حفظ أي تغيير.";
+    return "هذا السعر متزامن من نظامك المتصل جاسم. عدّله من المصدر؛ لم يتم حفظ أي تغيير.";
   if (fields.includes("availableQuantity") || fields.includes("inventoryMode"))
-    return "هذه الكمية متزامنة من نظامك المتصل بدينار. عدّلها من المصدر؛ لم يتم حفظ أي تغيير.";
-  return "بيانات هذا العرض متزامنة من نظامك المتصل بدينار. عدّلها من المصدر؛ لم يتم حفظ أي تغيير.";
+    return "هذه الكمية متزامنة من نظامك المتصل جاسم. عدّلها من المصدر؛ لم يتم حفظ أي تغيير.";
+  return "بيانات هذا العرض متزامنة من نظامك المتصل جاسم. عدّلها من المصدر؛ لم يتم حفظ أي تغيير.";
 }

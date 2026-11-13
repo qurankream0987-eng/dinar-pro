@@ -135,7 +135,7 @@ export function Flag({
   );
 }
 
-/** Canonical DINAR AI mark and wordmark. */
+/** Canonical JassimAI mark and wordmark. */
 export function BrandMark({
   size = 36,
   wordmark = true,

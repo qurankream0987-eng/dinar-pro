@@ -384,7 +384,7 @@ test("UCC-E account settings: name change reviewed then confirmed; invalid names
   assert.equal(payloadOf(review).surface, "PROFILE_REVIEW");
   assert.equal(controlOf(review).after, "سارة التجريبية");
   const [{ displayName: unchanged }] = await db.select({ displayName: users.displayName }).from(users).where(eq(users.id, user.id));
-  assert.equal(unchanged, "DINAR UCC حساب");
+  assert.equal(unchanged, "جاسم UCC حساب");
   const done = await say(user, conv, "نعم");
   assert.equal(controlOf(done).status, "SUCCEEDED", done.body);
   const [{ displayName }] = await db.select({ displayName: users.displayName }).from(users).where(eq(users.id, user.id));

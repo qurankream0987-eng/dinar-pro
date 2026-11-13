@@ -570,7 +570,7 @@ await test("invalid provider configuration fails explicitly", () => {
 
 await test("an exhausted prepaid balance (HTTP 402) is a configuration fault, never retried as an outage", () => {
   const error = normalizeAIProviderError("DEEPSEEK", "deepseek-flash", Object.assign(new Error("Insufficient Balance"), { status: 402 }), 12);
-  assert.deepEqual([error.code, error.httpStatus, error.message], ["NOT_CONFIGURED", 402, "DINAR AI provider request failed."]);
+  assert.deepEqual([error.code, error.httpStatus, error.message], ["NOT_CONFIGURED", 402, "JassimAI provider request failed."]);
 });
 
 await test("429 errors are normalized without exposing the upstream message", () => {

@@ -235,7 +235,7 @@ async function marketTurn(input: Input & { actorId: string }, request: { intent:
   const current = input.market;
   if (request.intent === "RESIDENCE")
     return notice("بلد الحساب لا يتغير من المحادثة", [
-      "بلد حسابك وإقامتك وبياناتك القانونية ليست إعداد تصفح، ولا يغيّرها DINAR بناءً على طلب في المحادثة.",
+      "بلد حسابك وإقامتك وبياناتك القانونية ليست إعداد تصفح، ولا يغيّرها جاسم بناءً على طلب في المحادثة.",
       "يمكنك تغيير السوق الذي تتصفحه فقط، مثل «حوّل سوقي إلى الكويت».",
     ], "REFUSED");
   const code = request.countries.filter((value) => value !== current.id).at(-1) ?? request.countries.at(-1)!;
@@ -244,8 +244,8 @@ async function marketTurn(input: Input & { actorId: string }, request: { intent:
   const resolved = row ? (await allMarkets()).find((item) => item.id === row.id) : undefined;
   if (!resolved || !isMarketAvailable(resolved)) {
     const options = await availableMarketOptions(current.id);
-    return notice(`سوق ${country.countryNameAr} غير متاح في DINAR حاليًا`, [
-      resolved ? "هذا السوق غير مفعّل للتصفح بعد." : "لا يوجد سوق DINAR لهذه الدولة حتى الآن.",
+    return notice(`سوق ${country.countryNameAr} غير متاح في جاسم حاليًا`, [
+      resolved ? "هذا السوق غير مفعّل للتصفح بعد." : "لا يوجد سوق جاسم لهذه الدولة حتى الآن.",
       "لم يتغير سوقك ولا أسعارك.",
     ], "UNAVAILABLE", options);
   }
@@ -305,7 +305,7 @@ async function sellerEligibilityTurn(input: Input & { actorId: string }, target:
     ? notice(`أنت مؤهل للبيع في سوق ${target.countryNameAr}`, ["أهليتك معتمدة لهذا السوق. لم يتغير شيء بعد."], "INFO", switchOption)
     : notice(`البيع في سوق ${target.countryNameAr} يتطلب موافقة على أهلية البائع`, [
         "لا يمكن النشر أو استقبال الطلبات هناك قبل اعتماد أهليتك من إدارة السوق.",
-        "يمكنك التصفح في هذا السوق، لكن DINAR لا يمنح أهلية البيع من المحادثة. لم يتغير شيء.",
+        "يمكنك التصفح في هذا السوق، لكن جاسم لا يمنح أهلية البيع من المحادثة. لم يتغير شيء.",
       ], "REFUSED", switchOption);
 }
 
@@ -349,7 +349,7 @@ async function displayNameTurn(input: Input & { actorId: string }): Promise<Turn
 async function locationTurn(input: Input & { actorId: string }, route: LocationRoute): Promise<Turn | null> {
   if (route === "HOME_TO_CUSTOMER")
     return notice("لن أرسل عنوان سكنك لعميل", [
-      "عنوان المنزل خاص؛ لا يرسله DINAR للعملاء عبر الرسائل.",
+      "عنوان المنزل خاص؛ لا يرسله جاسم للعملاء عبر الرسائل.",
       "لاستلام طلب مؤكد يمكنك تحديد نقطة استلام عامة داخل الطلب نفسه. لم يُشارك أي موقع.",
     ], "REFUSED");
   if (route === "DRIVER") return shareLocationWithAssignedDriver(input);
@@ -439,8 +439,8 @@ export async function executeProductControlTurn(input: Input): Promise<Turn | nu
 
   if (NAME_CHANGE.test(text)) return displayNameTurn(actor);
   if (BUSINESS_PROFILE.test(text))
-    return notice("بيانات نشاطك في بطاقة دينار بزنس", [
-      "وصف نشاطك وساعات عمله وعنوانه تُعدّل من بطاقة دينار بزنس؛ وصف كل إعلان يُعدّل من الإعلان نفسه.",
+    return notice("بيانات نشاطك في بطاقة جاسم بزنس", [
+      "وصف نشاطك وساعات عمله وعنوانه تُعدّل من بطاقة جاسم بزنس؛ وصف كل إعلان يُعدّل من الإعلان نفسه.",
       "لم يتغير شيء.",
     ], "UNAVAILABLE", [{ label: "اعرض نشاطي", message: "اعرض نشاطي" }, { label: "اعرض إعلاناتي", message: "اعرض إعلاناتي" }]);
   if (ACCOUNT_VIEW.test(text)) {

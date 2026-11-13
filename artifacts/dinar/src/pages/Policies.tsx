@@ -52,7 +52,7 @@ export function PoliciesIndexPage() {
       <PageHeader
         back
         title="الشروط والسياسات"
-        subtitle="كل ما يحكم استخدام بدينار في مكان واحد"
+        subtitle="كل ما يحكم استخدام جاسم في مكان واحد"
       />
       {policies.isLoading ? (
         <Skeleton className="h-64 w-full rounded-xl" />

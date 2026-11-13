@@ -134,7 +134,7 @@ async function measured(name: string, cookie: string, conversation: string, mess
 // 1. A simple question stays text.
 script.push({ key: `كيف أكتب إعلانًا جيدًا ${run}`, reply: "اكتب عنوانًا واضحًا، ثم الحالة والسعر والصور.", display: { version: 1, format: "TEXT" } });
 // 2. A search the model shows as cards (its default).
-script.push({ key: `ساعدني ألاقي جوال مناسب للتصوير ${run}`, reply: "هذه خيارات من عروض DINAR.", tools: [searchStep], display: { version: 1, format: "CARDS" } });
+script.push({ key: `ساعدني ألاقي جوال مناسب للتصوير ${run}`, reply: "هذه خيارات من عروض جاسم.", tools: [searchStep], display: { version: 1, format: "CARDS" } });
 // 3/4/10. Re-display of the same results in other forms, across dialects (the model's choice is scripted).
 const tablePhrases = [
   `لا، أبيها بجدول ${run}`, // Gulf

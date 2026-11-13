@@ -195,7 +195,7 @@ await test("P2-08 conversation: view, export card (no password in chat), prefere
   const view = await say(bob, conversation, "ما البيانات التي تحتفظون بها عني؟");
   const card = controlOf(view);
   assert.equal(card?.view, "CONTROL_NOTICE", view.body);
-  assert.equal(card.title, "بياناتك في DINAR");
+  assert.equal(card.title, "بياناتك في جاسم");
   assert.ok(card.lines.some((line: string) => line.includes(bob.phone)));
   assert.ok(!JSON.stringify(view).includes(alice.phone));
 
@@ -233,7 +233,7 @@ await test("P2-08 conversation: view, export card (no password in chat), prefere
   assert.ok(controlOf(list)?.lines.some((line: string) => line.includes("اعتراض على معالجة")));
   // The conversation stays general-purpose: an ordinary question is not captured by privacy control.
   const general = await say(bob, conversation, "ما عاصمة اليابان؟");
-  assert.notEqual(controlOf(general)?.title, "بياناتك في DINAR");
+  assert.notEqual(controlOf(general)?.title, "بياناتك في جاسم");
 });
 
 await test("P2-09 account deletion is tracked and keeps required records", async () => {

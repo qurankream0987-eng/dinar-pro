@@ -38,7 +38,7 @@ const BARE_ROUTES = [/^\/login$/, /^\/register$/];
 const NAV = [
   {
     href: "/",
-    label: "DINAR AI",
+    label: "JassimAI",
     icon: Bot,
     match: (p: string) => p === "/" || p === "/ai",
   },
@@ -129,7 +129,7 @@ function SiteSidebar({ location }: { location: string }) {
   const { user } = useAccount();
   return (
     <aside
-      aria-label="التنقل في DINAR AI"
+      aria-label="التنقل في JassimAI"
       data-testid="site-sidebar"
       className="site-nav-dark site-sidebar fixed inset-y-0 start-0 z-[var(--z-sidebar)] hidden w-[var(--site-sidebar-width)] flex-col items-center border-e border-accent/30 px-3 py-4 lg:flex"
     >
@@ -190,7 +190,7 @@ function SiteSidebar({ location }: { location: string }) {
       <Link
         href="/"
         data-testid="link-brand-sidebar"
-        aria-label="DINAR AI — الرئيسية"
+        aria-label="JassimAI — الرئيسية"
         className="site-sidebar-brand flex h-24 w-full items-center justify-center rounded-xl"
       >
         <DinarMark size={84} className="site-sidebar-logo" />
@@ -404,7 +404,7 @@ function TopBar({ location, minimal }: { location: string; minimal: boolean }) {
         <Link
           href="/"
           data-testid="link-brand"
-          aria-label="DINAR AI — الرئيسية"
+          aria-label="JassimAI — الرئيسية"
           className="shrink-0 rounded-md lg:hidden"
         >
           <BrandMark
@@ -446,7 +446,7 @@ function TopBar({ location, minimal }: { location: string; minimal: boolean }) {
             <Link
               href="/"
               aria-current={location === "/ai" ? "page" : undefined}
-              aria-label="DINAR AI"
+              aria-label="JassimAI"
               className={cn(
                 "pressable me-1 inline-flex h-10 items-center gap-1.5 rounded-full border px-3 text-sm font-bold lg:hidden",
                 location === "/ai"

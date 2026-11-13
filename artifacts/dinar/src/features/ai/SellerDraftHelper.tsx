@@ -44,7 +44,7 @@ export function SellerDraftHelper({
         : draftStep === "contact"
           ? [
               { label: "رقم حسابي المسجل", message: "استخدم رقم حسابي المسجل" },
-              { label: "محادثة DINAR فقط", message: "محادثة فقط" },
+              { label: "محادثة جاسم فقط", message: "محادثة فقط" },
             ]
           : draftStep === "contact_account_confirmation"
             ? [

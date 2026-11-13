@@ -602,7 +602,7 @@ export const CAPABILITY_REGISTRY: Record<CapabilityName, CapabilityDefinition> =
   readOwnAiUsage: capability({
     name: "readOwnAiUsage",
     toolName: "readAiUsage",
-    purpose: "Read the user's own DINAR AI allowance (recorded use, limits, renewal, provisional flag) with an optional server-computed projection.",
+    purpose: "Read the user's own JassimAI allowance (recorded use, limits, renewal, provisional flag) with an optional server-computed projection.",
     inputSchema: z.object({ question: z.string().optional(), horizonDays: z.number().optional() }).strict(),
     outputSchema: z.object({ kind: z.literal("SURFACE"), surface: z.literal("AI_USAGE") }).passthrough(),
     actors: ["BUYER", "SELLER"],

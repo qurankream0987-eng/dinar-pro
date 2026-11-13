@@ -198,7 +198,7 @@ router.get("/market-pulse", requireAuth, async (req, res) => {
   const policy = await getCommercialPolicy(market.id);
   const business = (await businessEntitlements(req.actor!.id, market)).has("MARKET_PULSE_ADVANCED");
   if (!(business ? policy.businessPulseWindows : policy.freePulseWindows).includes(query.window))
-    throw fail(402, "هذه الفترة من مزايا دينار بزنس", "SUBSCRIPTION_REQUIRED");
+    throw fail(402, "هذه الفترة من مزايا جاسم بزنس", "SUBSCRIPTION_REQUIRED");
   const result = await marketPulse({
     market,
     window: query.window,
@@ -299,13 +299,13 @@ router.post("/admin/markets/:marketId/commercial-products", requireAuth, require
     if (!(await resolveMarketplaceCategory(body.categoryId, undefined))) throw fail(404, "التصنيف غير موجود");
   } else if (body.categoryId) throw fail(400, "هذا المنتج لا يرتبط بتصنيف");
   if (body.productType === "PROMOTION_BUNDLE" && !body.bundleItems.length) throw fail(400, "حدّد محتوى الباقة");
-  if (body.planCode && body.productType !== "DINAR_BUSINESS") throw refuse(400, "رمز الخطة يخص منتجات دينار بزنس فقط", "PLAN_CODE_INVALID");
+  if (body.planCode && body.productType !== "DINAR_BUSINESS") throw refuse(400, "رمز الخطة يخص منتجات جاسم بزنس فقط", "PLAN_CODE_INVALID");
   if (body.productType === "DINAR_BUSINESS") {
     const invalid = validateCatalogProductForPlan((await getCommercialPolicy(market.id)).subscriptionPlans, body.planCode ?? null, body.businessEntitlements);
     if (invalid) throw refuse(400, invalid, "PLAN_ENTITLEMENTS_INVALID");
-  } else if (body.businessEntitlements.length) throw refuse(400, "المزايا التجارية تخص منتجات دينار بزنس فقط", "PLAN_ENTITLEMENTS_INVALID");
+  } else if (body.businessEntitlements.length) throw refuse(400, "المزايا التجارية تخص منتجات جاسم بزنس فقط", "PLAN_ENTITLEMENTS_INVALID");
   if ((body.productType === "EXTRA_LISTING_QUOTA" || body.productType === "SPONSORED_SURFACE") && body.enabled)
-    throw fail(409, "هذا المنتج مُعدّ ولم يُفعّل بعد (لا يوجد حد للإعلانات في دينار حاليًا)", "PREPARED_NOT_ENABLED");
+    throw fail(409, "هذا المنتج مُعدّ ولم يُفعّل بعد (لا يوجد حد للإعلانات في جاسم حاليًا)", "PREPARED_NOT_ENABLED");
   try {
     const [row] = await db
       .insert(promotionProducts)

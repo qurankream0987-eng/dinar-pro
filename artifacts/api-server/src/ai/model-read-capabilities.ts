@@ -89,7 +89,7 @@ export async function readBusinessOverview(context: ToolContext): Promise<ToolRe
     listings: [],
     businessOverview: { businesses },
     prompt: businesses.length
-      ? "هذه أنشطتك في سوقك الحالي من سجلات DINAR."
+      ? "هذه أنشطتك في سوقك الحالي من سجلات جاسم."
       : "لا يوجد نشاط تجاري مسجل لك في هذا السوق.",
   };
 }
@@ -129,7 +129,7 @@ export async function readOrderIssues(context: ToolContext): Promise<ToolResult>
       orders: view,
       note: "Read only. A refund is paid only after a provider-confirmed REFUND_SUCCEEDED; an open obligation is not money received.",
     },
-    prompt: view.length ? "هذه طلباتك التي عليها نزاع أو استرداد، من سجلات DINAR." : "لا توجد نزاعات أو استردادات مفتوحة على طلباتك في هذا السوق.",
+    prompt: view.length ? "هذه طلباتك التي عليها نزاع أو استرداد، من سجلات جاسم." : "لا توجد نزاعات أو استردادات مفتوحة على طلباتك في هذا السوق.",
   };
 }
 
@@ -146,7 +146,7 @@ export async function readSellerDues(context: ToolContext): Promise<ToolResult> 
       dues: dues.map((row) => ({ orderId: row.orderId, listingTitle: String(row.listingTitle ?? "").slice(0, 120), amount: row.amount, currency: row.currency, status: row.status, dueAt: row.dueAt })),
       note: "Commission dues from the order's immutable policy snapshot, net of recorded reversals. There is no electronic payment of dues; never say a due was paid unless its status says so.",
     },
-    prompt: dues.length ? "هذه مستحقات عمولة DINAR على طلباتك المكتملة." : "لا توجد مستحقات عمولة عليك في هذا السوق.",
+    prompt: dues.length ? "هذه مستحقات عمولة جاسم على طلباتك المكتملة." : "لا توجد مستحقات عمولة عليك في هذا السوق.",
   };
 }
 
@@ -233,7 +233,7 @@ export async function readConnectPartnerStatus(context: ToolContext): Promise<To
       partners: view,
       note: "Free onboarding: no registration, display or basic referral fee. Commission exists only under an accepted agreement and only on provider-confirmed conversions; a click is not revenue.",
     },
-    prompt: view.length ? "هذه حالة شراكاتك في DINAR Connect من سجلات DINAR." : "لا توجد لديك شراكة في DINAR Connect في هذا السوق.",
+    prompt: view.length ? "هذه حالة شراكاتك في جاسم Connect من سجلات جاسم." : "لا توجد لديك شراكة في جاسم Connect في هذا السوق.",
   };
 }
 
@@ -258,7 +258,7 @@ export async function readPolicy(input: { key?: string }, context: ToolContext):
       legalReviewStatus: document.legalReviewStatus,
       ...(one ? { sections: document.sections.slice(0, 12).map((section) => JSON.stringify(section).slice(0, 600)) } : {}),
     })),
-    prompt: one ? `هذه سياسة «${one.titleAr}» المنشورة حاليًا.` : "هذه سياسات DINAR المنشورة حاليًا.",
+    prompt: one ? `هذه سياسة «${one.titleAr}» المنشورة حاليًا.` : "هذه سياسات جاسم المنشورة حاليًا.",
   };
 }
 

@@ -38,22 +38,22 @@ export function isAdvice(value: unknown): value is Advice {
 }
 
 const SCOPE_LABEL: Record<string, string> = {
-  DINAR_INTERNAL: "من عروض DINAR الحالية",
-  GENERAL_KNOWLEDGE: "معلومة عامة وليست من بيانات DINAR",
-  DINAR_CAPABILITY: "عن خدمات DINAR",
+  DINAR_INTERNAL: "من عروض جاسم الحالية",
+  GENERAL_KNOWLEDGE: "معلومة عامة وليست من بيانات جاسم",
+  DINAR_CAPABILITY: "عن خدمات جاسم",
   // R3E: model narration in a commercial turn, and the server's restatement of its ledger.
-  ASSISTANT_TEXT: "ردّ المساعد — ليس تأكيدًا لأي إجراء؛ الحالة المؤكدة في «سجل دينار» فقط",
-  DINAR_LEDGER: "من سجل دينار",
+  ASSISTANT_TEXT: "ردّ المساعد — ليس تأكيدًا لأي إجراء؛ الحالة المؤكدة في «سجل جاسم» فقط",
+  DINAR_LEDGER: "من سجل جاسم",
 };
 
 function Grounding({ stats }: { stats: NonNullable<Advice["stats"]> }) {
   // Minor units and the market scale come from the server; trailing zeros are trimmed.
   const scale = stats.minorUnitScale ?? 3;
   const amount = (minor: number) => String(Number((minor / 10 ** scale).toFixed(scale)));
-  if (!stats.count) return <p className="mt-1 text-xs text-muted-foreground">لا توجد عروض مشابهة كافية داخل DINAR للمقارنة.</p>;
+  if (!stats.count) return <p className="mt-1 text-xs text-muted-foreground">لا توجد عروض مشابهة كافية داخل جاسم للمقارنة.</p>;
   return (
     <p className="mt-1 text-xs text-muted-foreground" data-testid="advice-grounding">
-      اعتمدت على <span className="num">{stats.count}</span> {stats.count === 1 ? "عرض مشابه" : "عروض مشابهة"} داخل DINAR
+      اعتمدت على <span className="num">{stats.count}</span> {stats.count === 1 ? "عرض مشابه" : "عروض مشابهة"} داخل جاسم
       {stats.minMinor != null && stats.maxMinor != null && (
         <>
           {" · "}النطاق <span className="num" dir="ltr">{amount(stats.minMinor)}–{amount(stats.maxMinor)}</span>
@@ -83,7 +83,7 @@ export function ClarificationOptions({ options, active, onSend }: { options: Opt
 }
 
 const adviceScope = (advice: Advice) =>
-  advice.topic === "MARKETING_COPY" ? "مبني على بيانات إعلانك في DINAR" : advice.scope ? SCOPE_LABEL[advice.scope] : undefined;
+  advice.topic === "MARKETING_COPY" ? "مبني على بيانات إعلانك في جاسم" : advice.scope ? SCOPE_LABEL[advice.scope] : undefined;
 
 /** The provenance label when that is all the advice says; the message shows it with its actions. */
 export function adviceChipLabel(value: unknown): string | undefined {

@@ -67,7 +67,7 @@ function identityRows(payload: BusinessPayload) {
     ...(payload.identityStatus
       ? [{ label: "الهوية التجارية", value: clip(IDENTITY_LABEL[payload.identityStatus] ?? payload.identityStatus, 120) }]
       : []),
-    { label: "التشغيل", value: payload.operatingMode === "INTERNAL_DINAR" ? "داخل دينار فقط" : clip(payload.operatingMode ?? "—", 80) },
+    { label: "التشغيل", value: payload.operatingMode === "INTERNAL_DINAR" ? "داخل جاسم فقط" : clip(payload.operatingMode ?? "—", 80) },
   ];
 }
 
@@ -92,7 +92,7 @@ function setupSurface(payload: BusinessPayload): ComposedSurfaceInput {
       {
         type: "header",
         title: clip(payload.name || "نشاطك على دينار", 120),
-        subtitle: "التسجيل داخل DINAR دون موقع أو متجر خارجي.",
+        subtitle: "التسجيل داخل جاسم دون موقع أو متجر خارجي.",
         icon: "TAG",
       },
       { type: "facts", rows: identityRows(payload) },
@@ -174,7 +174,7 @@ function profileSurface(payload: BusinessPayload): ComposedSurfaceInput {
       {
         type: "header",
         title: clip(payload.name || "نشاطك", 120),
-        subtitle: "تعمل داخل DINAR",
+        subtitle: "تعمل داخل جاسم",
         icon: "TAG",
         badge: { label: statusLabel(payload.status), tone: payload.status === "ACTIVE" ? "SUCCESS" : "NEUTRAL" },
       },
@@ -396,7 +396,7 @@ function insightsSurface(payload: BusinessPayload): ComposedSurfaceInput {
           }]
         : []),
       ...monthlySections(insights),
-      { type: "text", muted: true, text: "أرقام من سجلات DINAR لهذا النشاط فقط؛ لا تُعرض بيانات نشاط آخر." },
+      { type: "text", muted: true, text: "أرقام من سجلات جاسم لهذا النشاط فقط؛ لا تُعرض بيانات نشاط آخر." },
     ],
   };
 }
@@ -427,7 +427,7 @@ function monthlySections(insights: BusinessPayload["insights"]) {
       kind: "LINE" as const,
       label: clip(`الإيراد المكتمل شهريًا${currency}`, 80),
       period: clip(period, 80),
-      source: "طلبات مكتملة في DINAR حسب شهر الطلب",
+      source: "طلبات مكتملة في جاسم حسب شهر الطلب",
       points: months.map((month) => ({ label: monthLabel(month.month), value: month.revenueMinor / 10 ** scale!, display: clip(month.revenue ?? number(month.revenueMinor), 80) })),
     }] : []),
     {

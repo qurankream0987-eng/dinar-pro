@@ -36,7 +36,7 @@ export function ListingTable({ listings }: { listings: Listing[] }) {
     <div className="ai-listing-table" data-testid="ai-results-table">
       <DataTable
         label="جدول النتائج"
-        caption="النتائج نفسها كجدول — أسعار وحالة من سجل DINAR"
+        caption="النتائج نفسها كجدول — أسعار وحالة من سجل جاسم"
         columns={[
           { key: "title", label: "العرض", kind: "TEXT" },
           { key: "price", label: "السعر", kind: "MONEY", sortable: true },

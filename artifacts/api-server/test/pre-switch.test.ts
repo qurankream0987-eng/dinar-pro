@@ -116,7 +116,7 @@ try {
   assert.match(result,/FEATURED_REVIEW/);
   const restored = await request(`/ai/conversations/${conversationId}`);
   assert.match(restored,/FEATURED_REVIEW/);
-  for (const [message,surface] of [["رصيدي","COMMERCIAL_BALANCE"],["نبض السوق","MARKET_PULSE"],["دينار بزنس","BUSINESS"]]) {
+  for (const [message,surface] of [["رصيدي","COMMERCIAL_BALANCE"],["نبض السوق","MARKET_PULSE"],["جاسم بزنس","BUSINESS"]]) {
     const reply = await request(`/ai/conversations/${conversationId}/turns`,{message});
     assert.match(reply,/"type":"complete"/);
     assert.ok(reply.includes(surface),reply);

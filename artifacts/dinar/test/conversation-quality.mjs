@@ -56,12 +56,12 @@ try {
   await page.setViewportSize({width:390,height:844});
   await page.reload(); await page.getByRole('log').waitFor();
   assert.ok(await page.getByText('أريد تصميم',{exact:true}).count());
-  const filterResponse = page.waitForResponse(response=>response.url().endsWith('/api/ai/preview') && response.request().postDataJSON()?.message==='بدينار فقط');
-  await turn('بدينار فقط');
+  const filterResponse = page.waitForResponse(response=>response.url().endsWith('/api/ai/preview') && response.request().postDataJSON()?.message==='جاسم فقط');
+  await turn('جاسم فقط');
   assert.equal((await filterResponse).request().postDataJSON().query,payload.query);
   checks.push('guest refresh restores messages and contextual query');
   await page.getByTestId('button-new-conversation-header').click();
-  await turn('أريد تيشيرت'); await turn('الأسود فقط'); await turn('بدينار فقط'); await turn('الثاني');
+  await turn('أريد تيشيرت'); await turn('الأسود فقط'); await turn('جاسم فقط'); await turn('الثاني');
   checks.push('requested shirt/filter/reference sequence executed against real data');
   await screenshot('requested-search-sequence-390');
   await context.setOffline(true);
@@ -81,7 +81,7 @@ try {
   await page.getByTestId('button-new-conversation-header').click();
   // Text-only restored-history fixture exercises long dynamic-height chat without fabricated commerce.
   await page.evaluate(() => {
-    const messages=Array.from({length:90},(_,index)=>({id:`long-${index}`,role:index%2?'ASSISTANT':'USER',body:index%2?'هذه إجابة عربية طويلة توضّح الخيارات المتاحة وتترك القرار لك. '.repeat(5):`السؤال ${index} عن DINAR، السعر KWD 1.000، والرابط https://example.com/${'long'.repeat(15)}`,createdAt:new Date().toISOString(),blocks:[]}));
+    const messages=Array.from({length:90},(_,index)=>({id:`long-${index}`,role:index%2?'ASSISTANT':'USER',body:index%2?'هذه إجابة عربية طويلة توضّح الخيارات المتاحة وتترك القرار لك. '.repeat(5):`السؤال ${index} عن جاسم، السعر KWD 1.000، والرابط https://example.com/${'long'.repeat(15)}`,createdAt:new Date().toISOString(),blocks:[]}));
     sessionStorage.setItem('dinar-guest-handoff',JSON.stringify({marketId:'KW',messages,context:{}}));
   });
   await page.reload(); await page.getByRole('log').waitFor();

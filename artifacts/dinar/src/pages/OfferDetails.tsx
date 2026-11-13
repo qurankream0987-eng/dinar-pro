@@ -550,7 +550,7 @@ function OfferView({
                 {!!offer.paymentMethods?.length && (
                   <p className="mt-1 text-xs text-muted-foreground">
                     الدفع المتاح: {offer.paymentMethods.map((method) =>
-                      method === "CASH_DIRECT" ? "كاش" : "فيزا داخل DINAR",
+                      method === "CASH_DIRECT" ? "كاش" : "فيزا داخل جاسم",
                     ).join("، ")}
                   </p>
                 )}

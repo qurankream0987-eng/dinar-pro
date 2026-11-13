@@ -2333,12 +2333,12 @@ await journey("D", "provider listing «خله 8» is blocked by the G1 source po
   assert.equal((await offerOf(L.provider!)).unitPriceMinor, 11000);
 });
 
-await journey("E", "«أبي وظيفة سائق» → employment; «لا أقصد … داخل دينار» → F4", async () => {
+await journey("E", "«أبي وظيفة سائق» → employment; «لا أقصد … داخل جاسم» → F4", async () => {
   const actor = await register("Journey E");
   const job = await deterministicTurn(actor, "أبي وظيفة سائق");
   assert.ok(!String(job.surface).startsWith("DRIVER_"), `${job.surface}: ${job.body}`);
   assert.match(String(job.surface), /^(?:JOB_|EMPLOYMENT_|CV_)/, `${job.surface}: ${job.body}`);
-  const driver = await deterministicTurn(actor, "لا أقصد أبي أشتغل سائق داخل دينار");
+  const driver = await deterministicTurn(actor, "لا أقصد أبي أشتغل سائق داخل جاسم");
   assert.match(String(driver.surface), /^DRIVER_/, `${driver.surface}: ${driver.body}`);
 });
 

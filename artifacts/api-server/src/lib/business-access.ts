@@ -210,7 +210,7 @@ export function assertPublishable(access: BusinessAccess) {
   if (access.verificationStatus === "PENDING_D2")
     throw fail(
       409,
-      "نشر منتجات النشاط ينتظر اعتماد هوية النشاط التجاري في DINAR. يمكنك إعداد المسودات الآن؛ لن يُنشر شيء قبل الاعتماد.",
+      "نشر منتجات النشاط ينتظر اعتماد هوية النشاط التجاري في جاسم. يمكنك إعداد المسودات الآن؛ لن يُنشر شيء قبل الاعتماد.",
       "BUSINESS_IDENTITY_PENDING_D2",
     );
   if (access.verificationStatus !== "VERIFIED")

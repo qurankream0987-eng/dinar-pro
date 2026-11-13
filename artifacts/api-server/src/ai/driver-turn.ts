@@ -143,7 +143,7 @@ function profileView(profile: DriverProfileRow | undefined, phoneVerified: boole
   const remaining = [
     ...missing.map((field) => DRIVER_FIELD_LABELS[field]!),
     ...(!phoneVerified ? ["توثيق رقم هاتف الحساب"] : []),
-    ...(["DRAFT", "PENDING_VERIFICATION"].includes(profile.status) ? ["مراجعة إدارة DINAR"] : []),
+    ...(["DRAFT", "PENDING_VERIFICATION"].includes(profile.status) ? ["مراجعة إدارة جاسم"] : []),
   ];
   return {
     id: profile.id,
@@ -197,7 +197,7 @@ async function statusTurn(ctx: Context, lead = ""): Promise<Turn> {
     profile.status === "APPROVED"
       ? `أنت ${profile.availability === "AVAILABLE" ? "متاح" : "غير متاح"} حاليًا${active.length ? `، ولديك ${active.length} مهمة توصيل نشطة` : ""}.`
       : profile.status === "PENDING_VERIFICATION"
-        ? "طلبك بانتظار مراجعة إدارة DINAR؛ لا يُعتمد تلقائيًا."
+        ? "طلبك بانتظار مراجعة إدارة جاسم؛ لا يُعتمد تلقائيًا."
         : profile.status === "SUSPENDED"
           ? "لا يمكنك استلام مهام توصيل حاليًا."
           : `بقي: ${view.remaining.join("، ")}.`;
@@ -232,7 +232,7 @@ async function onboardingStep(ctx: Context, text: string, lead = ""): Promise<Tu
         : `في أي مدينة ستعمل؟${known.length ? ` مثل: ${known.slice(0, 4).join("، ")}.` : ""}`;
     return turn(
       "DRIVER_ONBOARDING",
-      `${lead}بدأنا تسجيلك كسائق توصيل في DINAR (الحالة: قيد الإعداد). ${ask}`.trim(),
+      `${lead}بدأنا تسجيلك كسائق توصيل في جاسم (الحالة: قيد الإعداد). ${ask}`.trim(),
       { profile: profileView(profile, verified, ctx.market), ask: missing },
       { query: { kind: "DRIVER", ownerId: ctx.actorId, view: "DRIVER_ONBOARDING" }, resourceIds: [profile.id] },
     );
@@ -245,7 +245,7 @@ function reviewTurn(ctx: Context, profile: DriverProfileRow, verified: boolean, 
   const view = profileView(profile, verified, ctx.market)!;
   return turn(
     "DRIVER_ONBOARDING_REVIEW",
-    `${lead}راجع تسجيلك كسائق: ${view.vehicleLabel}، مدينة العمل ${view.serviceCity}، السوق ${ctx.market.id}، الهاتف ${verified ? "موثق" : "غير موثق"}. بعد الإرسال يراجعه فريق DINAR ولا يُعتمد تلقائيًا. اكتب «نعم» للإرسال، أو عدّل المركبة أو المدينة، أو «إلغاء».`.trim(),
+    `${lead}راجع تسجيلك كسائق: ${view.vehicleLabel}، مدينة العمل ${view.serviceCity}، السوق ${ctx.market.id}، الهاتف ${verified ? "موثق" : "غير موثق"}. بعد الإرسال يراجعه فريق جاسم ولا يُعتمد تلقائيًا. اكتب «نعم» للإرسال، أو عدّل المركبة أو المدينة، أو «إلغاء».`.trim(),
     { profile: view, actionId: review.actionId, status: "PENDING", actions: ["SUBMIT", "EDIT", "CANCEL"], expiresAt: review.expiresAt },
     undefined,
     review.actionId,
@@ -259,7 +259,7 @@ async function availabilityTurn(ctx: Context, availability: "AVAILABLE" | "UNAVA
     return turn(
       "DRIVER_AVAILABILITY",
       availability === "AVAILABLE"
-        ? `أنت متاح الآن لاستلام مهام التوصيل في ${profile.serviceCity}. لا يستخدم DINAR موقعك؛ تظهر لك المهام حسب مدينة عملك. قل «اعرض لي طلبات توصيل».`
+        ? `أنت متاح الآن لاستلام مهام التوصيل في ${profile.serviceCity}. لا يستخدم جاسم موقعك؛ تظهر لك المهام حسب مدينة عملك. قل «اعرض لي طلبات توصيل».`
         : "أنت غير متاح الآن؛ لن تظهر لك مهام جديدة. مهامك المقبولة تبقى كما هي.",
       { profile: view },
     );
@@ -486,13 +486,13 @@ export async function executeDriverTurn(input: { conversationId: string; message
       if (!row) return activeChoice(ctx, "ألغ المهمة");
       const selectedOrderId = row.orderId;
       if (row.status !== "ACCEPTED")
-        return notice("المهمة في حالة «خرج للتوصيل»؛ لا يمكن إعادة إسنادها قبل حلّ حيازة الطرد يدويًا مع دعم DINAR. لم يتغير شيء.", "DRIVER_ASSIGNMENT_STATUS");
+        return notice("المهمة في حالة «خرج للتوصيل»؛ لا يمكن إعادة إسنادها قبل حلّ حيازة الطرد يدويًا مع دعم جاسم. لم يتغير شيء.", "DRIVER_ASSIGNMENT_STATUS");
       const [pickup] = await db.select({ id: deliveryProgressEvents.id }).from(deliveryProgressEvents).where(and(
         eq(deliveryProgressEvents.orderId, selectedOrderId),
         eq(deliveryProgressEvents.type, "PICKED_UP"),
       ));
       if (pickup)
-        return notice("استلمت الطرد بالفعل؛ لا يمكن إعادة المهمة ذاتيًا. تواصل مع دعم DINAR لحل الحيازة بأمان. لم يتغير شيء.", "DRIVER_ASSIGNMENT_STATUS");
+        return notice("استلمت الطرد بالفعل؛ لا يمكن إعادة المهمة ذاتيًا. تواصل مع دعم جاسم لحل الحيازة بأمان. لم يتغير شيء.", "DRIVER_ASSIGNMENT_STATUS");
       try {
         await db.transaction((tx) =>
           transitionDelivery(
@@ -506,7 +506,7 @@ export async function executeDriverTurn(input: { conversationId: string; message
       }
     }
     if (isAtPickup)
-      return notice("لا يسجّل DINAR حالة «وصلت لمكان الاستلام»؛ لم يتغير شيء. عند استلامك الطلب من البائع قل «استلمت الطلب».", "DRIVER_ASSIGNMENT_STATUS");
+      return notice("لا يسجّل جاسم حالة «وصلت لمكان الاستلام»؛ لم يتغير شيء. عند استلامك الطلب من البائع قل «استلمت الطلب».", "DRIVER_ASSIGNMENT_STATUS");
     const listSet = sets.find((set) => driverState(set, ctx.actorId, "DRIVER_ASSIGNMENT_STATUS"));
     const named = parseCommandNumbers(input.message);
     const orderId =

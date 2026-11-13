@@ -219,7 +219,7 @@ await test("G2-07/19 the buyer gets the attributed reply in the original convers
   assert.match(answer.body, /لا يعني تغييرًا في المخزون أو طلب شراء/u);
   const view = inquiryOf(answer).inquiry;
   assert.deepEqual(view.messages.map((message: any) => [message.authorRole, message.provenance]), [["BUYER", "DINAR_DRAFT_APPROVED"], ["SELLER", "SELLER_AUTHORED"]]);
-  assert.equal(view.listing.availableLabel, "20 متاح الآن في سجل DINAR", "structured fact shown separately from the seller's statement");
+  assert.equal(view.listing.availableLabel, "20 متاح الآن في سجل جاسم", "structured fact shown separately from the seller's statement");
   const again = await reload(buyer, buyerConv);
   const drafts = inquiryBlocks(again).filter((item) => item.payload.surface === "INQUIRY_DRAFT");
   assert.equal(drafts.at(-1)!.payload.inquiry.status, "CONFIRMED", "the draft card shows its real outcome after reload");

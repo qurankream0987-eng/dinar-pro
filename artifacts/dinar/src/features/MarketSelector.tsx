@@ -148,7 +148,7 @@ function MarketSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (v: 
               </p>
             </div>
           </div>
-          {!isMarketAvailable(selected) && <InlineAlert>{marketAvailabilityLabel(selected)} — لم يبدأ بدينار استقبال العروض والطلبات في هذا السوق. اختر سوقًا متاحًا.</InlineAlert>}
+          {!isMarketAvailable(selected) && <InlineAlert>{marketAvailabilityLabel(selected)} — لم يبدأ جاسم استقبال العروض والطلبات في هذا السوق. اختر سوقًا متاحًا.</InlineAlert>}
           <ul className="space-y-3 text-base text-text-secondary">
             <li className="flex gap-3">
               <Check size={18} className="mt-0.5 shrink-0 text-success" aria-hidden />

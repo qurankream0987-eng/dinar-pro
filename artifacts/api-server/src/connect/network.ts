@@ -312,7 +312,7 @@ export class ConnectNetwork {
       throw connectError(
         503,
         "PINNED_EGRESS_REQUIRED",
-        "يلزم مسار خروج معتمد يدعم تثبيت عناوين DNS؛ تبقى التغذية المرسلة إلى DINAR متاحة",
+        "يلزم مسار خروج معتمد يدعم تثبيت عناوين DNS؛ تبقى التغذية المرسلة إلى جاسم متاحة",
       );
     const requestBody = request.body
       ? Buffer.from(await request.arrayBuffer())

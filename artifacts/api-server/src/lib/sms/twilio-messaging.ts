@@ -72,7 +72,7 @@ export function readTwilioMessagingConfiguration(
 }
 
 export function verificationMessage(code: string) {
-  return `رمز التحقق في دينار: ${code}\nلا تشاركه مع أي أحد. صالح 10 دقائق.`;
+  return `رمز التحقق في جاسم: ${code}\nلا تشاركه مع أي أحد. صالح 10 دقائق.`;
 }
 
 export function createTwilioMessagingProvider(

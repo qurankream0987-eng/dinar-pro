@@ -365,7 +365,7 @@ export default function AdminPromotionsPage() {
             الخطة متاحة للبائعين
           </label>
           <p className="text-xs leading-5 text-muted-foreground">
-            الموضع الحالي ثابت: نتائج البحث ومحادثة DINAR. تعديل الخطة لا يغيّر
+            الموضع الحالي ثابت: نتائج البحث ومحادثة جاسم. تعديل الخطة لا يغيّر
             سعر أو مدة حملة سابقة.
           </p>
           <div className="flex flex-wrap gap-2">

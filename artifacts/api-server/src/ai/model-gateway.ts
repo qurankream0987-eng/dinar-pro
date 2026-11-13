@@ -42,7 +42,7 @@ export class AIProviderError extends Error {
     readonly actualModel?: string,
   ) {
     // Never retain or expose the SDK's raw message or request details.
-    super("DINAR AI provider request failed.");
+    super("JassimAI provider request failed.");
     this.name = "AIProviderError";
   }
 }

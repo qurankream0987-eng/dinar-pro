@@ -243,7 +243,7 @@ try {
   assert.match(stockText, /المتاح الآن[^]*\b1\b/u, "the buyer sees the recorded remaining quantity");
   assert.match(stockText, /سجل الإعلان/u, "the answer is attributed to the record, not the seller");
   await widths("SC01 stock answer", latestAssistant());
-  checks.push("buyer asked «كم المتبقي؟»; DINAR answered from the record and reserved nothing");
+  checks.push("buyer asked «كم المتبقي؟»; جاسم answered from the record and reserved nothing");
 
   // The seller said «قابل للتفاوض»: buying needs an agreed price first (the scenario's
   // «شراء أو قدّم عرضًا بحسب النمط»). Offer → seller accepts in their chat → buy at the agreement.

@@ -9,9 +9,9 @@ import { ConnectMoney } from "./connect";
 export const CONNECT_PARTICIPATION_MODES = ["SELL_INSIDE_DINAR", "BUY_ON_MERCHANT_WEBSITE", "HYBRID"] as const;
 export type ConnectParticipationMode = (typeof CONNECT_PARTICIPATION_MODES)[number];
 export const CONNECT_PARTICIPATION_MODE_LABELS: Record<ConnectParticipationMode, string> = {
-  SELL_INSIDE_DINAR: "بيع منتجات موقعي داخل دينار",
-  BUY_ON_MERCHANT_WEBSITE: "عرض منتجاتي في دينار والشراء من موقعي",
-  HYBRID: "البيع داخل دينار ومن موقعي معًا",
+  SELL_INSIDE_DINAR: "بيع منتجات موقعي داخل جاسم",
+  BUY_ON_MERCHANT_WEBSITE: "عرض منتجاتي في جاسم والشراء من موقعي",
+  HYBRID: "البيع داخل جاسم ومن موقعي معًا",
 };
 /** Modes in which a buyer may be sent to the merchant's own website. */
 export const CONNECT_EXTERNAL_PURCHASE_MODES: readonly ConnectParticipationMode[] = ["BUY_ON_MERCHANT_WEBSITE", "HYBRID"];

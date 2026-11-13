@@ -478,7 +478,7 @@ export function ledgerStatement(ledger: readonly LedgerEntry[]): string | undefi
   const waiting = [...new Set(ledger.filter((entry) => entry.lifecycle === "REQUIRES_CONFIRMATION").map((entry) => entry.action))];
   if (!done.length && !waiting.length) return undefined;
   return [
-    done.length ? `حسب سجل دينار في هذه المحادثة، بعد تأكيدك: ${done.join("، ")}.` : "",
+    done.length ? `حسب سجل جاسم في هذه المحادثة، بعد تأكيدك: ${done.join("، ")}.` : "",
     waiting.length ? "وهناك إجراء ينتظر تأكيدك ولم يُنفَّذ بعد." : "",
     "لا يوجد في السجل غير ذلك.",
   ].filter(Boolean).join(" ");

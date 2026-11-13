@@ -360,8 +360,8 @@ await test("MS-04 policy questions are answered from the published policy, not m
 });
 
 await test("MS-05 DINAR Connect status: a non-partner gets an honest empty answer; no identity can be passed", async () => {
-  const outcome = await probe(0, "وش وضع شراكة شركتي في دينار كونكت؟", [{ name: "readConnectPartnerStatus", arguments: {} }]);
-  record("MS-05", "وش وضع شراكة شركتي في دينار كونكت؟", outcome);
+  const outcome = await probe(0, "وش وضع شراكة شركتي في جاسم كونكت؟", [{ name: "readConnectPartnerStatus", arguments: {} }]);
+  record("MS-05", "وش وضع شراكة شركتي في جاسم كونكت؟", outcome);
   const read = outcome.feedback.find((item) => item.tool === "readConnectPartnerStatus");
   assert.equal(read?.status, "SUCCEEDED");
   assert.deepEqual(read.result.partners, []);

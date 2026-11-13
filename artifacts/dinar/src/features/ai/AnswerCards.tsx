@@ -39,7 +39,7 @@ const display = (value: number) => new Intl.NumberFormat("en", { maximumFraction
  * links or acts. Shapes the model writes simply ({columns:[…], rows:[[…]]}) are mapped first.
  */
 function modelSection(language: "dinar-table" | "dinar-line" | "dinar-donut", raw: any): TableCard | SeriesCard | undefined {
-  const source = "تقدير من المساعد، ليس من سجلات دينار";
+  const source = "تقدير من المساعد، ليس من سجلات جاسم";
   if (language === "dinar-table") {
     const labels = list(raw.columns, 8, (column: any) => str(typeof column === "string" ? column : column?.label, 80));
     const rows = list(raw.rows, 30, (row: any) => (Array.isArray(row) ? row : undefined));
@@ -178,7 +178,7 @@ function PriceCard({ card }: { card: Price }) {
           </div>
         ))}
       </div>
-      <p className="answer-price-foot">{card.note ? `${card.note} · ` : ""}أسعار تقديرية من المساعد، ليست عرضًا في دينار.</p>
+      <p className="answer-price-foot">{card.note ? `${card.note} · ` : ""}أسعار تقديرية من المساعد، ليست عرضًا في جاسم.</p>
     </section>
   );
 }

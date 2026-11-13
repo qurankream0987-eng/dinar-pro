@@ -83,7 +83,7 @@ async function metrics(sellerId: string, market: Market, range: { start: Date | 
     { key: "gross" as const, label: "قيمة الطلبات (غير الملغاة)", value: money(row.gross), raw: row.gross },
     { key: "paid" as const, label: "مدفوع إلكترونيًا (محاكاة)", value: money(row.paid), raw: row.paid },
     { key: "refunded" as const, label: "مسترد", value: money(row.refunded), raw: row.refunded },
-    { key: "recognized" as const, label: "صافي المكتمل بعد عمولة DINAR", value: money(row.recognized), raw: row.recognized },
+    { key: "recognized" as const, label: "صافي المكتمل بعد عمولة جاسم", value: money(row.recognized), raw: row.recognized },
   ];
 }
 
@@ -116,8 +116,8 @@ export async function sellerSalesInsight(sellerId: string, market: Market, text:
     ...(previous ? { previous: { period: { key: previous.key, label: periodLabel(previous, true), start: previous.start.toISOString(), end: previous.end.toISOString(), timeZone: TIME_ZONE }, metrics: await metrics(sellerId, market, previous) } } : {}),
     topProducts: await topProducts(sellerId, market, range),
     notes: [
-      "الأرقام من سجل طلبات DINAR لإعلاناتك في هذا السوق فقط.",
-      "الطلبات النقدية لا يسجّل DINAR استلام مالها، فلا تُحتسب «مدفوعة»؛ والدفع الإلكتروني في هذه البيئة محاكاة دون أموال حقيقية.",
+      "الأرقام من سجل طلبات جاسم لإعلاناتك في هذا السوق فقط.",
+      "الطلبات النقدية لا يسجّل جاسم استلام مالها، فلا تُحتسب «مدفوعة»؛ والدفع الإلكتروني في هذه البيئة محاكاة دون أموال حقيقية.",
       "«صافي المكتمل» هو حصتك من الطلبات المكتملة بعد العمولة كما سُجّلت، وليس مبلغًا مستلمًا بالضرورة.",
     ],
   });

@@ -65,7 +65,7 @@ export type CounterpartContact = {
   notice: string;
 };
 
-const NOTICE = "الدفع يتم مباشرة بينكما خارج دينار. لا يحتفظ دينار بالمال ولا يؤكد الدفع؛ لا تدفع قبل التأكد من المنتج والبائع.";
+const NOTICE = "الدفع يتم مباشرة بينكما خارج جاسم. لا يحتفظ دينار بالمال ولا يؤكد الدفع؛ لا تدفع قبل التأكد من المنتج والبائع.";
 
 export async function counterpartContact(input: { actorId: string; orderId: string; marketId: string; countryCode: string }): Promise<CounterpartContact> {
   const [order] = await db.select().from(orders).where(eq(orders.id, input.orderId)).limit(1);

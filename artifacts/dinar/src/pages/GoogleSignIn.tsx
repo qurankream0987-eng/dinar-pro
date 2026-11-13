@@ -100,7 +100,10 @@ export function GoogleSignIn({ onSignedIn }: { onSignedIn: () => Promise<void> |
           }
         },
       });
-      accounts.id.renderButton(button.current, { type: "standard", theme: "outline", size: "large", text: "continue_with", shape: "pill", locale: "ar", width: 320 });
+      // Google's own dark rendering sits on the app's dark surface; the width follows the form
+      // (Google accepts 200-400 px) so the button lines up with the phone field on every screen.
+      const width = Math.max(200, Math.min(400, Math.round(button.current.parentElement?.clientWidth ?? 320)));
+      accounts.id.renderButton(button.current, { type: "standard", theme: "filled_black", size: "large", text: "continue_with", shape: "pill", logo_alignment: "left", locale: "ar", width });
     }, () => setUnavailable(true));
     return () => {
       cancelled = true;
@@ -111,8 +114,8 @@ export function GoogleSignIn({ onSignedIn }: { onSignedIn: () => Promise<void> |
 
   if (!pending)
     return (
-      <div className="grid justify-items-center gap-2" data-testid="google-sign-in">
-        <div ref={button} aria-label="المتابعة بحساب Google" />
+      <div className="google-sign-in grid w-full justify-items-center gap-2" data-testid="google-sign-in">
+        <div ref={button} className="google-sign-in-button" aria-label="المتابعة بحساب Google" />
         {unavailable && <p className="text-xs text-muted-foreground">تعذر تحميل زر Google الآن. يمكنك المتابعة برقم الهاتف.</p>}
         {error && <InlineAlert tone="danger">{error}</InlineAlert>}
       </div>

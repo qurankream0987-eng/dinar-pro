@@ -177,7 +177,7 @@ await test("A8-03 Arabic dialect and formal requests are general conversation, n
     assert.ok(isGeneralAnswer(view), `${message}: ${view.raw.slice(0, 200)}`);
   }
   // The model may not turn a knowledge question into a search when the user did not ask.
-  assert.match(systemPrompt(), /not by itself a request to search DINAR listings/u);
+  assert.match(systemPrompt(), /not by itself a request to search جاسم listings/u);
 });
 
 await test("A8-04 multi-turn follow-up: prior turns, including long answers, are in the model context", async () => {
@@ -457,7 +457,7 @@ await test("A8-15 unknown real-time information: the contract forbids inventing 
   behaviour = replyWith({ conversationalReply: "لا أستطيع معرفة سعر الذهب الآن؛ ليس لدي اتصال بمصادر لحظية." });
   const view = await say(buyer, conv, "ما سعر الذهب اليوم؟");
   assert.ok(isGeneralAnswer(view));
-  assert.equal(view.block.payload.advice.label, "معلومة عامة وليست من بيانات DINAR");
+  assert.equal(view.block.payload.advice.label, "معلومة عامة وليست من بيانات جاسم");
   assert.match(systemPrompt(), /no live internet or real-time data/u);
   assert.match(systemPrompt(), /do not invent a figure/u);
 });
@@ -501,10 +501,10 @@ await test("A7c a model search suggestion never replaces the answer to a general
   assert.ok(isGeneralAnswer(general), general.raw.slice(0, 300));
   assert.equal(general.body, "التكلفة تعتمد على المساحة والنوع.");
   // Asking about inventory is a marketplace request even as a question.
-  // Since Claude 03 «عندكم …؟» is recognised by DINAR itself (no model suggestion needed), so the
+  // Since Claude 03 «عندكم …؟» is recognised by جاسم itself (no model suggestion needed), so the
   // reply is the ordinary search reply; it must still be a search, never a general answer.
   const inventory = await say(buyer, conv, `عندكم كرسي ${TOKEN}؟`);
-  assert.match(inventory.body, /بحثت داخل DINAR|وجدت \d+ عروض منشورة/u);
+  assert.match(inventory.body, /بحثت داخل جاسم|وجدت \d+ عروض منشورة/u);
   assert.ok(!isGeneralAnswer(inventory));
   behaviour = replyWith({});
 });

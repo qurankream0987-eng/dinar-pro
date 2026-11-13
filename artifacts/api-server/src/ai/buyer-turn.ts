@@ -384,8 +384,8 @@ export async function runBuyerSearch(market: Market, state: BuyerState): Promise
   const message = [
     widenedCategory ? `لم أجد اسم «${state.search}» في النص؛ هذه عروض فئة «${widenedCategory}» التي تطابق الشروط، وقد تتضمن أنواعًا أخرى. ` : broadenedFrom?.length ? `خففت كلمات الوصف «${broadenedFrom.join("، ")}» فقط؛ بقيت شروط السعر والحالة واللون والمقاس كما طلبتها.` : "",
     listings.length
-      ? `وجدت ${listings.length} ${listings.length === 1 ? "عرضًا" : "عروض"} داخل DINAR${notes.length ? ` (${notes.join("، ")})` : ""}.`
-      : `لم أجد عروضًا مطابقة داخل DINAR${notes.length ? ` (${notes.join("، ")})` : ""}. جرّب إزالة أحد الشروط.`,
+      ? `وجدت ${listings.length} ${listings.length === 1 ? "عرضًا" : "عروض"} داخل جاسم${notes.length ? ` (${notes.join("، ")})` : ""}.`
+      : `لم أجد عروضًا مطابقة داخل جاسم${notes.length ? ` (${notes.join("، ")})` : ""}. جرّب إزالة أحد الشروط.`,
     RANKING_TEXT[state.ranking],
     state.ranking !== "DEFAULT" ? "العروض الممولة لا تحصل على أي أفضلية في هذا الترتيب." : "",
     state.quality ? "«مميز» تفضيل شخصي لا أستطيع التحقق منه؛ اعتمدت على الحالة والسعر واكتمال الإعلان." : "",
@@ -515,9 +515,9 @@ async function comparison(set: StoredSet, positions: number[], market: Market): 
         highlights,
         unknownLabel: "لم يذكر البائع",
         notApplicableLabel: "لا ينطبق",
-        sourceLabels: { RECORD: "من سجل DINAR", SELLER: "كما ذكره البائع", DERIVED: "محسوب من القيم أعلاه" },
+        sourceLabels: { RECORD: "من سجل جاسم", SELLER: "كما ذكره البائع", DERIVED: "محسوب من القيم أعلاه" },
       },
-      prompt: "قارنت البيانات الحالية من DINAR فقط. ما لم يذكره البائع يظهر «لم يذكر البائع» ولم أفترض قيمته، وما لا يخص فئة العرض يظهر «لا ينطبق».",
+      prompt: "قارنت البيانات الحالية من جاسم فقط. ما لم يذكره البائع يظهر «لم يذكر البائع» ولم أفترض قيمته، وما لا يخص فئة العرض يظهر «لا ينطبق».",
     },
   };
 }
@@ -568,7 +568,7 @@ async function whichQuestion(set: StoredSet, text: string, market: Market): Prom
   if (presence) {
     const stated = row.values.map((value, index) => ({ value, index })).filter((entry) => entry.value !== null);
     const lines = stated.map((entry) => `${titleOf(entry.index)}: ${entry.value}`);
-    return notice(`${lines.length ? `ما سجّله البائعون عن ${row.label}: ${lines.join("؛ ")}.` : `لم يذكر أي بائع ${row.label}.`}${unknownText} هذه أقوال البائعين كما كتبوها، ولم يتحقق منها DINAR.`);
+    return notice(`${lines.length ? `ما سجّله البائعون عن ${row.label}: ${lines.join("؛ ")}.` : `لم يذكر أي بائع ${row.label}.`}${unknownText} هذه أقوال البائعين كما كتبوها، ولم يتحقق منها جاسم.`);
   }
   const values = (row.key === "price" ? listings.map((listing) => numeric(listing.unitPrice)) : row.values.map(numeric));
   const known = values.map((value, index) => ({ value, index })).filter((entry): entry is { value: number; index: number } => entry.value !== undefined);
@@ -576,7 +576,7 @@ async function whichQuestion(set: StoredSet, text: string, market: Market): Prom
     return notice(`لا يكفي المسجّل للمقارنة في ${row.label}: ${known.length ? `${titleOf(known[0]!.index)} فقط يذكره` : "لم يذكره أي بائع"}.${unknownText}`);
   const target = direction === "min" ? Math.min(...known.map((entry) => entry.value)) : Math.max(...known.map((entry) => entry.value));
   const winners = known.filter((entry) => entry.value === target).map((entry) => titleOf(entry.index));
-  return notice(`${direction === "min" ? "الأقل" : "الأعلى"} في ${row.label} بين العروض الظاهرة: ${winners.join("، ")} (${row.values[known.find((entry) => entry.value === target)!.index] ?? target}). ${row.source === "SELLER" ? "القيمة كما ذكرها البائع." : "من سجل DINAR."}${unknownText}`);
+  return notice(`${direction === "min" ? "الأقل" : "الأعلى"} في ${row.label} بين العروض الظاهرة: ${winners.join("، ")} (${row.values[known.find((entry) => entry.value === target)!.index] ?? target}). ${row.source === "SELLER" ? "القيمة كما ذكرها البائع." : "من سجل جاسم."}${unknownText}`);
 }
 
 export function notice(prompt: string): Turn {
@@ -636,7 +636,7 @@ export async function purchaseReviewTurn(
     stage === "ADD_TO_CART"
       ? `راجع اختيارك: «${listing?.title ?? ""}» × ${quantity}. لن يُضاف إلى السلة ولن يُدفع أي شيء قبل تأكيدك؛ اكتب «نعم» أو «إلغاء»، أو «اطلبه الآن» لمراجعة الطلب مباشرة.`
       : `مراجعة الطلب: «${listing?.title ?? ""}» × ${quantity}. ${
-          fulfilment ? `التسليم: ${METHOD_LABELS[fulfilment]}.` : options.length ? `طرق التسليم المتاحة: ${options.map((option) => option.label).join("، ")}؛ تختارها الآن أو بعد إنشاء الطلب.` : "لا توجد طريقة تسليم داخل DINAR لهذا العرض."
+          fulfilment ? `التسليم: ${METHOD_LABELS[fulfilment]}.` : options.length ? `طرق التسليم المتاحة: ${options.map((option) => option.label).join("، ")}؛ تختارها الآن أو بعد إنشاء الطلب.` : "لا توجد طريقة تسليم داخل جاسم لهذا العرض."
         } لن يُنشأ الطلب ولن يُدفع أي شيء قبل تأكيدك؛ اكتب «نعم» أو «إلغاء».`;
   return {
     tool: "buyerSelect",
@@ -785,7 +785,7 @@ export async function executeBuyerTurn(input: {
     if (!priced.length) return notice("لا يوجد سعر معلن للعروض الحالية؛ لا أستطيع تحديد الأرخص.");
     const least = priced[0]!;
     const ties = priced.filter((listing) => listing.unitPrice === least.unitPrice).map((listing) => `«${listing.title}»`).join("، ");
-    return notice(`الأرخص بين العروض الظاهرة المتاحة: ${ties} بسعر ${least.unitPrice} ${least.currency}. من سجل DINAR الحالي، بدون التوصيل أو أي رسوم. لم يتغير شيء.`);
+    return notice(`الأرخص بين العروض الظاهرة المتاحة: ${ties} بسعر ${least.unitPrice} ${least.currency}. من سجل جاسم الحالي، بدون التوصيل أو أي رسوم. لم يتغير شيء.`);
   }
   // «الفرق بينه وبين العادي 290؟»: the stated number is an amount to compare with the listing in
   // view, never a budget or a price ceiling. Computed from the stored price in minor units.
@@ -897,9 +897,9 @@ export async function executeBuyerTurn(input: {
   }
 
   if (NEED_ONLY.test(text))
-    return notice("ماذا تريد أن تأكل أو تشرب؟ اكتب اسم الوجبة أو المنتج، مثل «بروستد» أو «برجر»، وسأبحث في عروض DINAR.");
+    return notice("ماذا تريد أن تأكل أو تشرب؟ اكتب اسم الوجبة أو المنتج، مثل «بروستد» أو «برجر»، وسأبحث في عروض جاسم.");
   if (VAGUE_PURCHASE.test(text))
-    return notice("ماذا تريد أن تشتري؟ اكتب اسم المنتج أو الخدمة، وإن أردت الميزانية والمدينة، مثل «هاتف سامسونج بأقل من 200» — وسأبحث في عروض DINAR المنشورة في سوقك.");
+    return notice("ماذا تريد أن تشتري؟ اكتب اسم المنتج أو الخدمة، وإن أردت الميزانية والمدينة، مثل «هاتف سامسونج بأقل من 200» — وسأبحث في عروض جاسم المنشورة في سوقك.");
 
   // «الأول، أبي اثنين»: a position and a quantity in one message, each read for itself.
   const pickWithQuantity = text.match(/^(\S+)\s+(?:ابي|اريد|بدي|ابغي|خذ)\s+(.+)$/u);
@@ -1345,7 +1345,7 @@ async function placedOrderTurn(input: { market: Market; actorId: string }, resul
       ? `لم تُحدد طريقة التسليم: ${result.fulfilmentError}`
       : options.length
         ? `اختر طريقة التسليم: ${options.map((option) => option.label).join("، ")}.`
-        : "لا توجد طريقة تسليم داخل DINAR لهذا الطلب؛ تواصل مع البائع داخل الطلب.";
+        : "لا توجد طريقة تسليم داخل جاسم لهذا الطلب؛ تواصل مع البائع داخل الطلب.";
   return orderTurn(
     orderId,
     `تم إنشاء الطلب ${orderReference(orderId)} وحجز الكمية بعد التحقق من السعر والتوفر الحاليين${order ? ` (${moneyOf(order.subtotalMinor, input.market)})` : ""}. لم يُدفع أي شيء. ${next} اكتب «ادفع» لمراجعة الدفع التجريبي.`,
@@ -1503,7 +1503,7 @@ export async function executePurchaseTurn(input: {
     const options = listingFulfilmentOptions(now?.fulfilmentType, input.market);
     if (wanted && options.some((option) => option.method === wanted))
       return restage(context, { setId, pending }, { action: "PLACE_ORDER", quantity, fulfilment: wanted });
-    const offered = options.length ? `المتاح لهذا العرض: ${options.map((option) => option.label).join("، ")}.` : "لا توجد طريقة تسليم داخل DINAR لهذا العرض.";
+    const offered = options.length ? `المتاح لهذا العرض: ${options.map((option) => option.label).join("، ")}.` : "لا توجد طريقة تسليم داخل جاسم لهذا العرض.";
     const lead = wanted ? `${wanted === "PICKUP" ? "البائع لا يعرض الاستلام الشخصي لهذا العرض." : "البائع لا يوصل هذا العرض."} ${offered}` : offered;
     return restage(context, { setId, pending }, { action: "PLACE_ORDER", quantity, fulfilment: chosen }, lead);
   }

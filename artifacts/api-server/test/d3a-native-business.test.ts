@@ -1253,7 +1253,7 @@ await focused("P3-BUSINESS", "follow-ups on a business display are computed from
     const reloaded = await request(`/ai/conversations/${conv}`, "GET", undefined, verified.cookie);
     return String((reloaded.data.messages as any[]).at(-1)?.body ?? "");
   };
-  assert.equal(await body(), `${monthAnalysis("MAX", analytics.monthly!, 3, "JOD")}\n\nهذه إيرادات طلبات مكتملة وليست ربحًا: لا يسجّل DINAR تكاليفك أو مصاريفك.`, JSON.stringify(max).slice(0, 300));
+  assert.equal(await body(), `${monthAnalysis("MAX", analytics.monthly!, 3, "JOD")}\n\nهذه إيرادات طلبات مكتملة وليست ربحًا: لا يسجّل جاسم تكاليفك أو مصاريفك.`, JSON.stringify(max).slice(0, 300));
   await turn(verified, conv, "قارن الشهر الحالي بالشهر اللي قبله");
   assert.match(await body(), /مقابل|لا يوجد شهر سابق|لا توجد طلبات/u);
   assert.match(await body(), /أسباب التغير لا تظهر فيها|لا توجد طلبات/u, "a change is never given an invented cause");

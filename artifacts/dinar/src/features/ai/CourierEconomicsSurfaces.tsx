@@ -164,7 +164,7 @@ export function CourierFareCard({
           </p>
           {role === "COURIER" ? (
             <p className="mt-1 text-sm">
-              عمولة DINAR المتوقعة عليك عند التسليم الناجح:{" "}
+              عمولة جاسم المتوقعة عليك عند التسليم الناجح:{" "}
               <strong className="num" dir="ltr">
                 {agreement.estimatedCommission} {agreement.currencyCode}
               </strong>{" "}
@@ -242,7 +242,7 @@ export function CourierCommissionPanel({ active, activeMarketId }: { active: boo
     <section
       className="mt-3 min-w-0 rounded-xl border border-border bg-card p-3.5 text-sm [overflow-wrap:anywhere]"
       dir="rtl"
-      aria-label="عمولات مندوب DINAR"
+      aria-label="عمولات مندوب جاسم"
       data-testid="courier-commission-account"
     >
       <h3 className="font-semibold">مستحقات دينار</h3>
@@ -340,7 +340,7 @@ export function CourierCommissionPanel({ active, activeMarketId }: { active: boo
                 <dl className="mt-2 grid grid-cols-[1fr_auto] gap-x-3 gap-y-1">
                   <dt>الأجرة المتفق عليها</dt>
                   <dd className="num" dir="ltr">{earning.agreedFare} {earning.currencyCode}</dd>
-                  <dt>عمولة DINAR (10%)</dt>
+                  <dt>عمولة جاسم (10%)</dt>
                   <dd className="num" dir="ltr">{earning.commission} {earning.currencyCode}</dd>
                   <dt>الحصة المحاسبية للمندوب</dt>
                   <dd className="num font-semibold" dir="ltr">{earning.courierShare} {earning.currencyCode}</dd>

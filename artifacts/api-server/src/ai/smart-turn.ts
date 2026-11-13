@@ -255,10 +255,10 @@ async function textComparables(market: Market, item: string, excludeSellerId?: s
 }
 
 function statsSentence(stats: InternalStats, market: Market, subject = "إعلانات مشابهة"): string {
-  if (!stats.count) return `لا توجد ${subject} كافية داخل DINAR للمقارنة.`;
+  if (!stats.count) return `لا توجد ${subject} كافية داخل جاسم للمقارنة.`;
   const range = stats.count > 1 ? `بين ${formatMinor(stats.minMinor!, market)} و${formatMinor(stats.maxMinor!, market)} ${market.currencyCode}` : `بسعر ${formatMinor(stats.minMinor!, market)} ${market.currencyCode}`;
   const median = stats.medianMinor !== null ? `، الوسيط ${formatMinor(stats.medianMinor, market)}` : "";
-  return `بناءً على ${stats.count} ${stats.count === 1 ? "إعلان مشابه" : subject} داخل DINAR: ${range}${median}.`;
+  return `بناءً على ${stats.count} ${stats.count === 1 ? "إعلان مشابه" : subject} داخل جاسم: ${range}${median}.`;
 }
 
 function relation(valueMinor: number, stats: InternalStats, market: Market): string {
@@ -424,7 +424,7 @@ async function consultationSearch(market: Market, state: Consultation): Promise<
     goal: "BUY",
   } as BuyerState);
   const buyer = result.query.buyer as { message?: string };
-  buyer.message = `بحثت داخل DINAR فقط${state.budget ? ` بحد ${state.budget} ${market.currencyCode}` : ""}. ${buyer.message ?? ""}${result.listings.length ? " اسألني «وش تنصحني؟» وأشرح لك أي واحد يناسب ما يهمك." : ""}`.trim();
+  buyer.message = `بحثت داخل جاسم فقط${state.budget ? ` بحد ${state.budget} ${market.currencyCode}` : ""}. ${buyer.message ?? ""}${result.listings.length ? " اسألني «وش تنصحني؟» وأشرح لك أي واحد يناسب ما يهمك." : ""}`.trim();
   return { tool: "buyerSearch", version: 1, result };
 }
 
@@ -455,7 +455,7 @@ async function adviseOnResults(input: Input & { actorId: string }): Promise<Turn
     .filter((key) => !preferencesIn(attributeText).includes(key))
     .map((key) => PREFERENCE_LABEL[key]!);
   const prompt = [
-    `من نتائجك الحالية داخل DINAR أنصحك بالعرض رقم ${position}: «${best.title}» بسعر ${best.unitPrice ?? "بالاتفاق"} ${best.currency}.`,
+    `من نتائجك الحالية داخل جاسم أنصحك بالعرض رقم ${position}: «${best.title}» بسعر ${best.unitPrice ?? "بالاتفاق"} ${best.currency}.`,
     why.length ? `السبب: ${why.join("، ")}.` : "",
     unknowns.length ? `${unknowns.join(" و")} غير مذكورة في الإعلان، فلم أفترض قيمتها؛ اسأل البائع عنها.` : "",
     "هذا ترتيب تقديري من بيانات الإعلانات نفسها، وليس ضمانًا.",
@@ -530,7 +530,7 @@ async function adviseOnPending(input: Input & { actorId: string }, pending: NonN
     line = `${statsSentence(stats, input.market)}${proposedMinor ? relation(proposedMinor, stats, input.market) : ""}`;
   }
   const prompt = [
-    line || "لا توجد بيانات داخل DINAR كافية لتقييم هذا الإجراء.",
+    line || "لا توجد بيانات داخل جاسم كافية لتقييم هذا الإجراء.",
     "هذه مقارنة بالإعلانات الحالية فقط ولا تضمن البيع أو توقيته.",
     "الإجراء ما زال بانتظار تأكيدك ولم يُنفذ شيء؛ اكتب «نفذ» للتأكيد أو «إلغاء».",
   ].join(" ");
@@ -538,11 +538,11 @@ async function adviseOnPending(input: Input & { actorId: string }, pending: NonN
 }
 
 const PROVIDER_EXPLANATION = [
-  "في DINAR طريقتان، وكلتاهما تنتج إعلانات DINAR عادية في السجل نفسه:",
+  "في جاسم طريقتان، وكلتاهما تنتج إعلانات جاسم عادية في السجل نفسه:",
   "• الإضافة هنا (SELF_SERVICE): تنشئ الإعلان بالمحادثة أو بالنموذج وتديره أنت مباشرة.",
-  "• ربط متجرك (PROVIDER): نظامك يرسل المنتجات أو الخدمات بأسعارها ومخزونها عبر واجهة DINAR بمفتاح ربط خاص بك؛ السعر والمخزون المتزامنان يُعدّلان من نظامك وليس من المحادثة.",
-  "في الحالتين يبقى البحث والطلبات والدفع والترويج والتوصيل عند DINAR نفسه، ويمكنك إيقاف الربط أو تبديل المفتاح في أي وقت.",
-  "لا توجد حاليًا تكاملات جاهزة مفعّلة مع منصات بعينها؛ الربط عام عبر واجهة DINAR. لإنشاء ربط قل «اربط متجري».",
+  "• ربط متجرك (PROVIDER): نظامك يرسل المنتجات أو الخدمات بأسعارها ومخزونها عبر واجهة جاسم بمفتاح ربط خاص بك؛ السعر والمخزون المتزامنان يُعدّلان من نظامك وليس من المحادثة.",
+  "في الحالتين يبقى البحث والطلبات والدفع والترويج والتوصيل عند جاسم نفسه، ويمكنك إيقاف الربط أو تبديل المفتاح في أي وقت.",
+  "لا توجد حاليًا تكاملات جاهزة مفعّلة مع منصات بعينها؛ الربط عام عبر واجهة جاسم. لإنشاء ربط قل «اربط متجري».",
 ].join("\n");
 
 /** The seller's draft in focus, if the latest block is one. */
@@ -581,7 +581,7 @@ export async function executeSmartTurn(input: Input): Promise<Turn | null> {
 
   if (AUTONOMOUS.test(text))
     return adviceTurn(
-      "لا أفاوض نيابةً عنك ولا أرسل أسعارًا تلقائيًا. أستطيع أن أشرح لك الأسعار المشابهة داخل DINAR وأجهّز لك عرضًا، لكن كل مبلغ يُرسل فقط بعد مراجعتك وتأكيدك. اكتب مثلًا «أعطيه 7» لأجهّز المراجعة.",
+      "لا أفاوض نيابةً عنك ولا أرسل أسعارًا تلقائيًا. أستطيع أن أشرح لك الأسعار المشابهة داخل جاسم وأجهّز لك عرضًا، لكن كل مبلغ يُرسل فقط بعد مراجعتك وتأكيدك. اكتب مثلًا «أعطيه 7» لأجهّز المراجعة.",
       { kind: "CONVERSATIONAL_RESPONSE", scope: "POLICY", autonomousNegotiation: false },
       { ownerId: actor.actorId },
     );
@@ -714,7 +714,7 @@ export async function executeSmartTurn(input: Input): Promise<Turn | null> {
     if (draft || !item) return executeSellerAdviceTurn({ ...input, message: "كم أحط سعر" });
     const stats = await textComparables(input.market, item, actor.actorId);
     return adviceTurn(
-      `${statsSentence(stats, input.market)} هذه أسعار معروضة داخل DINAR فقط، لا تمثل الأسعار خارجه ولا تعني ضمان البيع بها.`,
+      `${statsSentence(stats, input.market)} هذه أسعار معروضة داخل جاسم فقط، لا تمثل الأسعار خارجه ولا تعني ضمان البيع بها.`,
       { kind: "GROUNDED_ADVICE", scope: "DINAR_INTERNAL", stats: statsView(stats, input.market), subject: stats.item },
       { ownerId: actor.actorId },
     );
@@ -781,7 +781,7 @@ export async function executeSmartTurn(input: Input): Promise<Turn | null> {
         next.preferences.length ? `ويهمك ${next.preferences.map((key) => PREFERENCE_LABEL[key] ?? key).join(" و")}` : "",
         next.budget ? `وحدك ${next.budget} ${input.market.currencyCode}` : "",
       ].filter(Boolean).join(" ");
-      const question = next.budget ? "أعرض لك الموجود داخل DINAR؟ قل «شوف الموجود»." : "كم ميزانيتك تقريبًا؟";
+      const question = next.budget ? "أعرض لك الموجود داخل جاسم؟ قل «شوف الموجود»." : "كم ميزانيتك تقريبًا؟";
       return consultationTurn(next, `${understood}. ${question}`);
     }
   }
@@ -1559,8 +1559,8 @@ function unrecordedAmounts(text: string, recorded: Set<number>): number[] {
  * The model's own words, kept only while this turn's verified reads back the amounts in them and
  * the text claims no completed action. Otherwise DINAR's grounded fallback describes the read.
  */
-const GROUNDED_READ_ANSWER = "هذه نتائج القراءة الحالية من DINAR. راجع تفاصيل العروض وبطاقاتها؛ لم أنفّذ أي إجراء.";
-const GROUNDED_CAPABILITY_ANSWER = "هذه بيانات DINAR الحالية. لم أنفّذ أي إجراء.";
+const GROUNDED_READ_ANSWER = "هذه نتائج القراءة الحالية من جاسم. راجع تفاصيل العروض وبطاقاتها؛ لم أنفّذ أي إجراء.";
+const GROUNDED_CAPABILITY_ANSWER = "هذه بيانات جاسم الحالية. لم أنفّذ أي إجراء.";
 
 function groundedModelProse(
   text: string,
@@ -1666,7 +1666,7 @@ function proposalFromDirective(directive: DisplayDirective | undefined): unknown
 /** A form that listing results cannot honestly take (a trend, a share, one figure) is explained, not drawn. */
 function displayMisfitNote(directive: DisplayDirective | undefined): string | undefined {
   if (!directive || listingFormatFits(directive.format)) return undefined;
-  return "هذه نتائج عروض وليست أرقامًا عبر الزمن أو نسبًا من كل، فعرضتها كبطاقات من سجل DINAR بدل رسم بياني. يمكنني عرضها كجدول أو مقارنتها.";
+  return "هذه نتائج عروض وليست أرقامًا عبر الزمن أو نسبًا من كل، فعرضتها كبطاقات من سجل جاسم بدل رسم بياني. يمكنني عرضها كجدول أو مقارنتها.";
 }
 
 /**
@@ -1761,7 +1761,7 @@ export async function executeModelFallback(
         structuredOutputValid: false,
         failureCode: reason,
       },
-      "DINAR AI provider unavailable",
+      "JassimAI provider unavailable",
     );
     return adviceTurn(
       modelFailureMessage(reason),
@@ -2080,8 +2080,8 @@ export async function executeModelFallback(
     // A provider outage after a prepared review must not discard the server-built action card.
     if (lastPreparedResult) {
       const note = outcome.reason === "TIMEOUT"
-        ? "انتهى وقت الرد قبل اكتماله؛ هذه مراجعة الإجراء التي أنشأها DINAR، ولم يُنفّذ شيء بعد."
-        : `${modelFailureMessage(outcome.reason)} هذه مراجعة الإجراء التي أنشأها DINAR، ولم يُنفّذ شيء بعد.`;
+        ? "انتهى وقت الرد قبل اكتماله؛ هذه مراجعة الإجراء التي أنشأها جاسم، ولم يُنفّذ شيء بعد."
+        : `${modelFailureMessage(outcome.reason)} هذه مراجعة الإجراء التي أنشأها جاسم، ولم يُنفّذ شيء بعد.`;
       return {
         tool: lastPreparedTool ?? "dinarConversationTurn",
         version: 1,
@@ -2109,7 +2109,7 @@ export async function executeModelFallback(
   if (outcome.toolRequest) {
     if (lastPreparedResult) {
       const note = toolLoopStopReason === "PREPARED"
-        ? "هذه مراجعة الإجراء التي أنشأها DINAR؛ لم يُنفّذ شيء بعد."
+        ? "هذه مراجعة الإجراء التي أنشأها جاسم؛ لم يُنفّذ شيء بعد."
         : "توقفت بعد إنشاء مراجعة الإجراء، ولم أنفّذ أي تغيير.";
       return {
         tool: lastPreparedTool ?? "dinarConversationTurn",
@@ -2173,7 +2173,7 @@ export async function executeModelFallback(
   // this turn, so its prose is withheld rather than shown as if it had read anything.
   if (toolFeedback.length && !toolFeedback.some((item) => item.status === "SUCCEEDED"))
     return adviceTurn(
-      "لم أستطع التحقق من البيانات المطلوبة داخل DINAR، فلم أعرض أي معلومات ولم أعتمد على تخمين. لم يتغير شيء؛ أعد صياغة طلبك أو ابدأ بحثًا جديدًا.",
+      "لم أستطع التحقق من البيانات المطلوبة داخل جاسم، فلم أعرض أي معلومات ولم أعتمد على تخمين. لم يتغير شيء؛ أعد صياغة طلبك أو ابدأ بحثًا جديدًا.",
       { kind: "CLARIFICATION_REQUIRED", scope: "DINAR_INTERNAL", topic: "MODEL_READ_UNVERIFIED" },
       { ownerId: input.actorId },
     );
@@ -2196,8 +2196,8 @@ export async function executeModelFallback(
     // in the response follow exactly the canonical read that supplies the card, including
     // empty results. General conversation remains model-authored outside listing reads.
     const facts = result.listings.length
-      ? `هذه العروض من سجل DINAR: ${result.listings.map((listing) => `«${listing.title}» (${listing.unitPrice === null ? "السعر بالاتفاق" : `${listing.unitPrice} ${listing.currency}`})`).join("؛ ")}.`
-      : "لم أجد عروضًا مطابقة في القراءة الحالية داخل DINAR.";
+      ? `هذه العروض من سجل جاسم: ${result.listings.map((listing) => `«${listing.title}» (${listing.unitPrice === null ? "السعر بالاتفاق" : `${listing.unitPrice} ${listing.currency}`})`).join("؛ ")}.`
+      : "لم أجد عروضًا مطابقة في القراءة الحالية داخل جاسم.";
     // The model's explanation is kept when it is bound to this card (see cardBoundModelProse);
     // the card itself always carries DINAR's facts.
     const bound = result.listings.length && !outcome.replyFiltered
@@ -2376,7 +2376,7 @@ export async function executeModelFallback(
         ...((problem || conditionalPurchase) ? { problem: conditionalPurchase ? "CONDITIONAL_ACTION" : problem } : {}),
         chars: turn.canonicalRequest.length,
       },
-      "DINAR AI canonical request",
+      "JassimAI canonical request",
     );
     if (!problem && !conditionalPurchase && mode !== "SHADOW" && productControl) {
       const candidate = await productControl(turn.canonicalRequest);
@@ -2399,7 +2399,7 @@ export async function executeModelFallback(
       turn.responseKind === "SEARCH_INTENT" ||
       turn.suggestedAction === "SEARCH_LISTINGS" ||
       hasExplicitMarketplaceSearchIntent(input.message)
-        ? "لا أستطيع البحث داخل عروض DINAR لهذا السوق الآن؛ لم أجرِ أي بحث."
+        ? "لا أستطيع البحث داخل عروض جاسم لهذا السوق الآن؛ لم أجرِ أي بحث."
         : "تنفيذ هذا الطلب السوقي غير متاح الآن؛ لم أنفّذ أي إجراء.";
     return adviceTurn(
       [conversationalPart, unavailableMessage].filter(Boolean).join(" "),
@@ -2451,7 +2451,7 @@ export async function executeModelFallback(
   const commercialTurn =
     requestsMarketAction || turn.goal === "BUY" || turn.goal === "SELL" || turn.goal === "NEGOTIATE" || Boolean(taskPlanProposal);
   const answer = outcome.replyFiltered
-    ? "لا أملك بيانات داخل DINAR تؤكد حجم الطلب أو تضمن البيع. أستطيع مقارنة الأسعار المعروضة داخل DINAR إن أردت."
+    ? "لا أملك بيانات داخل جاسم تؤكد حجم الطلب أو تضمن البيع. أستطيع مقارنة الأسعار المعروضة داخل جاسم إن أردت."
     : turn.conversationalReply;
   // Copy drafted from the seller's own listing record is grounded in DINAR data, not general knowledge.
   const groundedCopy = Boolean(context.sellerListing) && !outcome.replyFiltered;
@@ -2460,11 +2460,11 @@ export async function executeModelFallback(
     {
       kind: turn.responseKind === "CLARIFICATION_REQUIRED" ? "CLARIFICATION_REQUIRED" : "CONVERSATIONAL_RESPONSE",
       ...(groundedCopy
-        ? { scope: "DINAR_INTERNAL", topic: "MARKETING_COPY", label: "مبني على بيانات إعلانك في DINAR" }
+        ? { scope: "DINAR_INTERNAL", topic: "MARKETING_COPY", label: "مبني على بيانات إعلانك في جاسم" }
         : commercialTurn
           // In a commercial turn the text is narration: the status is in the ledger's cards.
           ? { scope: "ASSISTANT_TEXT", label: "ردّ المساعد — ليس تأكيدًا لأي إجراء" }
-          : { scope: "GENERAL_KNOWLEDGE", label: "معلومة عامة وليست من بيانات DINAR" }),
+          : { scope: "GENERAL_KNOWLEDGE", label: "معلومة عامة وليست من بيانات جاسم" }),
       ...(turn.missingFacts?.length ? { missingFacts: turn.missingFacts } : {}),
       authority: "MODEL",
       commercial: commercialTurn && !groundedCopy,

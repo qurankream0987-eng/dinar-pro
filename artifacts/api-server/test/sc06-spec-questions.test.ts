@@ -135,7 +135,7 @@ await focused("SC06-1", "the machines are found, then narrowed to 220 volts", as
   assert.deepEqual(listingIds(filtered.payload), [machine220.id], `only the 220V machine stays: ${filtered.body}`);
 });
 
-await focused("SC06-2", "«هل تعمل 8 ساعات متواصلة؟» is a DINAR answer and an unsent inquiry review", async () => {
+await focused("SC06-2", "«هل تعمل 8 ساعات متواصلة؟» is a جاسم answer and an unsent inquiry review", async () => {
   const question = await turn(buyer, conv, "هل تعمل 8 ساعات متواصلة؟");
   assert.match(question.body, /لم يذكر البائع ساعات التشغيل/u, `a deterministic answer, not the model: ${question.body}`);
   const draft = question.payload ?? {};

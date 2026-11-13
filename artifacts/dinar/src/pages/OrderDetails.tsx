@@ -194,7 +194,7 @@ function CompletedBuyerReceipt({
         ]}
       />
       <p className="mt-3 text-xs text-muted-foreground">
-        الأجرة منفصلة عن إجمالي مشترياتك، ولا تُضاف عمولة DINAR إلى فاتورتك. هذا الإيصال لا يثبت تحصيلًا أو تحويلًا ماليًا.
+        الأجرة منفصلة عن إجمالي مشترياتك، ولا تُضاف عمولة جاسم إلى فاتورتك. هذا الإيصال لا يثبت تحصيلًا أو تحويلًا ماليًا.
       </p>
     </Card>
   );
@@ -360,7 +360,7 @@ function OrderView({ order }: { order: Detail }) {
           {unitsLabel(order.quantity)} بإجمالي{" "}
           <b className="num">{money(order.total, order.currency)}</b>.{" "}
           <span data-testid="text-accept-fee-disclosure">
-            عند اكتمال الطلب تُسجل عليك رسوم بدينار{" "}
+            عند اكتمال الطلب تُسجل عليك رسوم جاسم{" "}
             {((order.commissionRateBps ?? 1_000) / 100).toLocaleString("ar")}٪ (
             <b className="num">
               {money(
@@ -597,8 +597,8 @@ function OrderView({ order }: { order: Detail }) {
       >
         <p>
           {role === "buyer"
-            ? "أكدت الاستلام. شكرًا لتسوقك من بدينار."
-            : "أكد المشتري الاستلام. سُجّلت رسوم بدينار ضمن مستحقاتك."}
+            ? "أكدت الاستلام. شكرًا لتسوقك من جاسم."
+            : "أكد المشتري الاستلام. سُجّلت رسوم جاسم ضمن مستحقاتك."}
         </p>
       </ActionCard>
     );
@@ -710,7 +710,7 @@ function OrderView({ order }: { order: Detail }) {
                 ...(fee
                   ? [
                       {
-                        label: `رسوم بدينار (${commissionPercent}%)`,
+                        label: `رسوم جاسم (${commissionPercent}%)`,
                         value: (
                           <span className="num text-muted-foreground">
                             − {money(fee.fee, order.currency)}

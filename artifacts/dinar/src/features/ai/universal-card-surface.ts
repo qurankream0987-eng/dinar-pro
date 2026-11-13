@@ -19,13 +19,13 @@ export function universalCardSurface(card: UniversalCard, resultSetId: string): 
     { label: "آخر فحص", value: card.checkedAt ? new Date(card.checkedAt).toLocaleString("ar") : "لم يحدث فحص مباشر" },
   ];
   const sections: SurfaceSection[] = [
-    { type: "header", title: card.title.slice(0,120), ...(description && description.length <= 240 ? { subtitle: description } : {}), source: card.sourceLabel.slice(0,80), badge: { label: "خارج DINAR", tone: "INFO" }, icon: "INFO" },
+    { type: "header", title: card.title.slice(0,120), ...(description && description.length <= 240 ? { subtitle: description } : {}), source: card.sourceLabel.slice(0,80), badge: { label: "خارج جاسم", tone: "INFO" }, icon: "INFO" },
     ...(description.length > 240 ? [{ type: "text" as const, text: description }] : []),
     { type: "facts", rows },
     ...longFacts.map(fact => ({ type: "text" as const, text: `${fact.label}: ${fact.value}` })),
     ...(domain && domain.providerMode === "SANDBOX" ? [{ type: "notice" as const, tone: "WARNING" as const, text: "بيانات بيئة اختبار للمزوّد (Sandbox)، وليست عرض تسجيل حيًا." }] : []),
     ...(domain && ["RATE_LIMITED", "TIMEOUT", "UNAVAILABLE", "UNAUTHORIZED", "INVALID_RESPONSE"].includes(domain.status) ? [{ type: "notice" as const, tone: "WARNING" as const, text: domain.status === "RATE_LIMITED" ? "وصل المزوّد إلى حد الطلبات؛ لم نخمّن التوفر أو السعر." : "لم يكتمل التحقق من المزوّد؛ البيانات غير المتحققة تبقى غير معروفة." }] : []),
-    { type: "notice", tone: "INFO", text: card.disclosure ?? "الشراء لدى المزوّد خارج DINAR." },
+    { type: "notice", tone: "INFO", text: card.disclosure ?? "الشراء لدى المزوّد خارج جاسم." },
     { type: "actions", items: card.externalActions.map((action,index) => ({ kind: "EXTERNAL_LINK", label: action.label.slice(0,80), providerId: action.providerId, resultSetId, cardId: card.id, actionId: "EXTERNAL_LINK", emphasis: "SECONDARY", testId: `connect-external-${card.providerId}-${index}` })) },
   ];
   return { version: 1, label: "عرض مزوّد خارجي", size: "MEDIUM", state: "READY", testId: `connect-card-${card.providerId}`, sections };

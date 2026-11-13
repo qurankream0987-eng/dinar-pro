@@ -454,7 +454,7 @@ await test("D2-01 Arabic and Gulf business-registration intent (and what is not 
     ["دينار أنا صاحب مطعم سمراء للمشاوي بالكويت.", "GRILL_RESTAURANT", "سمراء للمشاوي", "KW"],
     ["انا مالك مقهى اسمه نسمة الصباح", "CAFE", "نسمة الصباح", undefined],
     ["عندي محل اسمه بيت العطور وأبي أسجله", "RETAIL", "بيت العطور", undefined],
-    ["أبي أسجل مطعمي في دينار", "RESTAURANT", undefined, undefined],
+    ["أبي أسجل مطعمي في جاسم", "RESTAURANT", undefined, undefined],
     ["احنا نملك مخبز", "OTHER", undefined, undefined],
     ["أنا صاحبة صالون اسمه لمسة", "BEAUTY", "لمسة", undefined],
     ["بدي سجل محلي عندكم", "RETAIL", undefined, undefined],

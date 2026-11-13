@@ -208,7 +208,7 @@ await test("setup: DeepSeek price version from the official page (peak rates; te
 
 await test("DS-01 general Arabic: canonical request reaches DeepSeek and the validated reply reaches the UI stream", async () => {
   const message = "من أنت وماذا تستطيع أن تفعل؟";
-  const reply = "أنا **دينار**، مساعد ذكي عربي.\n\n- أجيب عن الأسئلة العامة والبرمجة والتخطيط.\n- أساعدك في البحث عن العروض في سوق دينار ومقارنتها.\n- أجهّز مسودة إعلان لما تريد بيعه، ولا يُنشر شيء دون مراجعتك وتأكيدك.";
+  const reply = "أنا **دينار**، مساعد ذكي عربي.\n\n- أجيب عن الأسئلة العامة والبرمجة والتخطيط.\n- أساعدك في البحث عن العروض في سوق جاسم ومقارنتها.\n- أجهّز مسودة إعلان لما تريد بيعه، ولا يُنشر شيء دون مراجعتك وتأكيدك.";
   script(message, { body: turn({ responseKind: "CONVERSATIONAL_RESPONSE", goal: "GENERAL", confidence: 0.92, conversationalReply: reply }) });
   const conv = await conversation(buyer);
   const calls = getModelGatewayCallCount();
@@ -288,7 +288,7 @@ await test("DS-02 Levantine seller intent: the canonical seller flow opens a dra
 
 await test("DS-03 marketplace search: the canonical read-only search finds the synthetic used cars to compare", async () => {
   const message = "دور لي على سيارة مستعملة وقارن الخيارات.";
-  script(message, { body: turn({ responseKind: "SEARCH_INTENT", goal: "BUY", intent: "search_used_car", entities: { item: "سيارة مستعملة" }, suggestedAction: "SEARCH_LISTINGS", confidence: 0.9, conversationalReply: "رح دور لك على سيارات مستعملة بسوق دينار وأقارن بينها بالسعر والحالة." }) });
+  script(message, { body: turn({ responseKind: "SEARCH_INTENT", goal: "BUY", intent: "search_used_car", entities: { item: "سيارة مستعملة" }, suggestedAction: "SEARCH_LISTINGS", confidence: 0.9, conversationalReply: "رح دور لك على سيارات مستعملة بسوق جاسم وأقارن بينها بالسعر والحالة." }) });
   const conv = await conversation(kwBuyer);
   const before = { requests: deepseekRequests.length, rows: await marketplaceRows(kwBuyer.id) };
   const result = await say(kwBuyer, conv, message, "search-compare");
@@ -631,7 +631,7 @@ await test("DS-07 browser: the built chat UI sends a turn and renders the DeepSe
   const { chromium } = await import(pathToFileURL(resolve(playwright)).href);
   const origin = base.replace(/\/api$/, "");
   const message = "عرّف بنفسك باختصار: من أنت وماذا تستطيع أن تفعل؟";
-  const reply = "أنا **دينار**، مساعدك العربي.\n\n1. أجيب عن أسئلتك العامة.\n2. أبحث لك في عروض سوق دينار وأقارنها.\n3. أجهّز مسودة إعلان، ولا أنشر شيئًا دون تأكيدك.";
+  const reply = "أنا **دينار**، مساعدك العربي.\n\n1. أجيب عن أسئلتك العامة.\n2. أبحث لك في عروض سوق جاسم وأقارنها.\n3. أجهّز مسودة إعلان، ولا أنشر شيئًا دون تأكيدك.";
   script(message, { body: turn({ responseKind: "CONVERSATIONAL_RESPONSE", goal: "GENERAL", confidence: 0.9, conversationalReply: reply }) });
   const browser = await chromium.launch({ executablePath: process.env.REPLIT_PLAYWRIGHT_CHROMIUM_EXECUTABLE, args: ["--no-sandbox"] });
   const blocked: string[] = [];
@@ -657,7 +657,7 @@ await test("DS-07 browser: the built chat UI sends a turn and renders the DeepSe
     const anyAnswer = page.locator('[data-testid^="message-assistant-"]').last();
     await anyAnswer.waitFor({ state: "visible", timeout: 20_000 });
     await page.waitForFunction(() => !document.querySelector('[data-testid="ai-typing"]'), undefined, { timeout: 20_000 });
-    const answer = page.locator('[data-testid^="message-assistant-"]').filter({ hasText: "أبحث لك في عروض سوق دينار" });
+    const answer = page.locator('[data-testid^="message-assistant-"]').filter({ hasText: "أبحث لك في عروض سوق جاسم" });
     assert.equal(await answer.count(), 1, `rendered: ${(await anyAnswer.innerText()).slice(0, 300)} | misses: ${JSON.stringify(fixtureMisses).slice(0, 400)}`);
     assert.equal(deepseekRequests.length - before, 1, "one DeepSeek request for the browser turn");
     assert.equal(await answer.locator("strong", { hasText: "دينار" }).count(), 1, "Markdown rendered in the bubble");

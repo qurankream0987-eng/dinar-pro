@@ -188,8 +188,8 @@ export function ProfilePage() {
             {avatarBusy
               ? "جارٍ رفع الصورة…"
               : user.avatarObjectPath
-                ? "صورتك ظاهرة لمستخدمي بدينار · اضغط على الكاميرا لتغييرها"
-                : "اضغط على أيقونة الكاميرا لإضافة صورة يراها مستخدمو بدينار"}
+                ? "صورتك ظاهرة لمستخدمي جاسم · اضغط على الكاميرا لتغييرها"
+                : "اضغط على أيقونة الكاميرا لإضافة صورة يراها مستخدمو جاسم"}
           </p>
           <div className="mt-2 flex flex-wrap gap-1.5">
             <Badge
@@ -477,7 +477,7 @@ export function SettingsPage() {
       </ListGroup>
 
       <ListGroup title="الشروط">
-        <ListRow href="/connect" icon={<FileText size={19} />} title="DINAR Connect — الشركاء" description="تسجيل مجاني وربط كتالوج خارجي بصلاحيات مراجعة" testId="link-settings-connect" />
+        <ListRow href="/connect" icon={<FileText size={19} />} title="جاسم Connect — الشركاء" description="تسجيل مجاني وربط كتالوج خارجي بصلاحيات مراجعة" testId="link-settings-connect" />
         <ListRow
           href="/policies"
           icon={<FileText size={19} />}

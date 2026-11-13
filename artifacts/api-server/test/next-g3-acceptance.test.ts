@@ -196,7 +196,7 @@ await test("G3-02/04 Free exhausts AI: truthful limit, usage still readable, inq
   const draft = await say(free, conv, "دينار اسأل البائع هل عنده 50 قطعة.");
   assert.equal(payloadOf(draft).surface, "INQUIRY_DRAFT", draft.body);
   const cupsStock = (await db.select().from(offers).where(eq(offers.id, L.cups!)))[0]!;
-  assert.match(draft.body, new RegExp(`المتاح في سجل DINAR الآن ${(cupsStock.availableQuantity ?? 0) - cupsStock.reservedQuantity} فقط`, "u"));
+  assert.match(draft.body, new RegExp(`المتاح في سجل جاسم الآن ${(cupsStock.availableQuantity ?? 0) - cupsStock.reservedQuantity} فقط`, "u"));
   const sent = await say(free, conv, "نعم، أرسل.");
   assert.match(sent.body, /أُرسلت رسالتك ووصلت إلى محادثة البائع داخل DINAR/u, sent.body);
   assert.equal(modelCalls, before, "mediated communication needs no AI allowance");
@@ -211,7 +211,7 @@ await test("G3-02/04 Free exhausts AI: truthful limit, usage still readable, inq
 
 await test("G3-03 the authenticated two-party scenario, with continuity, attribution and no invented effects", async () => {
   const stock = (await db.select().from(offers).where(eq(offers.id, L.cups)))[0]!.availableQuantity;
-  const inbox = ((await request("/ai/conversations", "GET", undefined, seller.cookie)).data as any[]).find((row) => row.title === "رسائل البيع والشراء في DINAR");
+  const inbox = ((await request("/ai/conversations", "GET", undefined, seller.cookie)).data as any[]).find((row) => row.title === "رسائل البيع والشراء في جاسم");
   assert.ok(inbox);
   const reply = await say(seller, inbox.id, "عندي 60 قطعة، ويمكن توفيرها خلال يومين.");
   assert.equal(payloadOf(reply).surface, "INQUIRY_DRAFT", reply.body);

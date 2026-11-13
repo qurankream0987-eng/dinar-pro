@@ -384,8 +384,8 @@ function recommendationText(query: Record<string, unknown>, count: number) {
     ? " لا أستخدم موقعك؛ اختر عرضًا أو مدينة لأقترح ما هو قريب منها."
     : "";
   if (!count)
-    return `${anchor ? `لم أجد بدائل مناسبة لـ${anchor}` : "لم أجد اقتراحات مناسبة"}${stored.cheaper ? " بسعر أقل" : ""} في عروض DINAR الحالية.${location}`;
-  return `${anchor ? `اقتراحات مشابهة لـ${anchor}` : "اقتراحات من عروض DINAR"}${stored.cheaper ? " بسعر أقل" : ""} (${count}). سبب كل اقتراح ظاهر على بطاقته، والعروض الممولة تحمل شارة «إعلان ممول».${location}`;
+    return `${anchor ? `لم أجد بدائل مناسبة لـ${anchor}` : "لم أجد اقتراحات مناسبة"}${stored.cheaper ? " بسعر أقل" : ""} في عروض جاسم الحالية.${location}`;
+  return `${anchor ? `اقتراحات مشابهة لـ${anchor}` : "اقتراحات من عروض جاسم"}${stored.cheaper ? " بسعر أقل" : ""} (${count}). سبب كل اقتراح ظاهر على بطاقته، والعروض الممولة تحمل شارة «إعلان ممول».${location}`;
 }
 const NEW_CONVERSATION_TITLE = "محادثة جديدة";
 
@@ -1148,7 +1148,7 @@ router.post("/ai/preview", async (req, res) => {
         turn.confidence < 0.65
       )
         return sendGuestPreview(res, {
-          body: "ما المنتج الذي تريد البحث عنه داخل عروض DINAR؟",
+          body: "ما المنتج الذي تريد البحث عنه داخل عروض جاسم؟",
           blocks: [],
         });
       modelSearchQuery = item;
@@ -2564,7 +2564,7 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
     const paidDemandCount = toolResult.listings.length - organicCount;
     const demandText =
       demandTrigger === "ZERO_RESULTS"
-        ? `لم أجد عروضًا عادية مطابقة لطلبك. ${paidDemandCount === 1 ? "هذا خيار ممول يطابق" : "هذه خيارات ممولة تطابق"} شروطك (شارة «ممول»؛ ليست توصية من دينار).`
+        ? `لم أجد عروضًا عادية مطابقة لطلبك. ${paidDemandCount === 1 ? "هذا خيار ممول يطابق" : "هذه خيارات ممولة تطابق"} شروطك (شارة «ممول»؛ ليست توصية من جاسم).`
         : demandTrigger === "LOW_SUPPLY"
           ? `وجدت ${organicCount} ${organicCount === 1 ? "عرضًا عاديًا" : "عروض عادية"} مطابقة، وبعدها ${paidDemandCount === 1 ? "خيار ممول يطابق" : "خيارات ممولة تطابق"} شروطك (شارة «ممول»).`
           : undefined;
@@ -2702,7 +2702,7 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
         resultCount: resourceIds.length,
         status: "completed",
       },
-      "DINAR AI turn completed",
+      "JassimAI turn completed",
     );
     res.end();
   } catch (error) {
@@ -2733,7 +2733,7 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
         code,
         ...safeTurnFailureMetadata(error),
       },
-      "DINAR AI turn failed",
+      "JassimAI turn failed",
     );
     send(res, {
       type: "error",

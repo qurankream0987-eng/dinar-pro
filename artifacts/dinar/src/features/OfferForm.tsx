@@ -679,7 +679,7 @@ export function FulfilmentFields({ form, set, errors }: Props) {
             set("contactPhone", "");
           }}
           icon={<ShieldCheck size={19} aria-hidden />}
-          title="محادثة DINAR فقط"
+          title="محادثة جاسم فقط"
           description="لن يظهر رقم هاتف على الإعلان."
           testId="button-contact-chat-only"
         />

@@ -29,7 +29,7 @@ export function ConversationSidebar({
     return (
       <aside
         id="ai-conversation-history"
-        aria-label="التنقل في DINAR والمحادثات"
+        aria-label="التنقل في جاسم والمحادثات"
         data-collapsed={collapsed}
         className="dinar-chat-sidebar ai-history flex min-h-0 flex-col"
       >
@@ -59,7 +59,7 @@ export function ConversationSidebar({
         >
           <Dialog.Title className="sr-only">سجل المحادثات</Dialog.Title>
           <Dialog.Description className="sr-only">
-            انتقل بين أقسام DINAR، وابحث في محادثاتك، أو ابدأ محادثة جديدة.
+            انتقل بين أقسام جاسم، وابحث في محادثاتك، أو ابدأ محادثة جديدة.
           </Dialog.Description>
           {children}
         </Dialog.Content>

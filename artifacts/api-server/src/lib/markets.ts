@@ -65,7 +65,7 @@ export function isMarketAvailable(market: Awaited<ReturnType<typeof marketFor>>)
 }
 export function assertMarketActive(market: Awaited<ReturnType<typeof marketFor>>) {
   if (!isMarketAvailable(market))
-    throw marketError(409, 'بدينار لم يبدأ استقبال العروض والطلبات في هذا السوق بعد.');
+    throw marketError(409, 'جاسم لم يبدأ استقبال العروض والطلبات في هذا السوق بعد.');
 }
 export async function assertMarketPolicy(market: Awaited<ReturnType<typeof marketFor>>, sellerId: string, category: string, fulfilment: string, tx: any = db, categoryId?: string) {
   assertMarketActive(market);

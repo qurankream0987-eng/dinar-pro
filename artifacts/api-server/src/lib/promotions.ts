@@ -871,9 +871,9 @@ export const PRODUCT_TYPE_LABELS: Record<string, string> = {
   REFRESH_LISTING: "تجديد الإعلان",
   SPONSORED_SEARCH: "ظهور ممول في البحث",
   SPONSORED_RECOMMENDATION: "اقتراح ممول",
-  DEMAND_CAPTURE: "دينار — روح بِع لي",
+  DEMAND_CAPTURE: "جاسم — روح بِع لي",
   PROMOTION_BUNDLE: "باقة إعلانات",
-  DINAR_BUSINESS: "دينار بزنس",
+  DINAR_BUSINESS: "جاسم بزنس",
 };
 export const REFUND_POLICY_LABELS: Record<string, string> = {
   NON_REFUNDABLE_ON_ACTIVATION: "يُستهلك عند التفعيل ولا يُسترد",
@@ -1050,7 +1050,7 @@ type PurchaseInput = {
 
 async function preparePurchase(input: PurchaseInput, tx: any = db, lock = false) {
   const product = await effectiveProduct(input.market, input.productId, tx);
-  if (product.productType === "DINAR_BUSINESS") throw fail(400, "اشتراك دينار بزنس له مراجعة خاصة", "WRONG_FLOW");
+  if (product.productType === "DINAR_BUSINESS") throw fail(400, "اشتراك جاسم بزنس له مراجعة خاصة", "WRONG_FLOW");
   const isListingProduct = (LISTING_PRODUCT_TYPES as readonly string[]).includes(product.productType);
   let listing: { offer: OfferRowData; sellerStatus: string } | undefined;
   if (isListingProduct) {

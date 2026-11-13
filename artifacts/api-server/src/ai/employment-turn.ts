@@ -685,8 +685,8 @@ async function renderJobResults(actorId: string, market: Market, state: JobSearc
   return {
     surface: "JOB_SEARCH_RESULTS",
     prompt: rows.length
-      ? `وجدت ${rows.length} وظائف منشورة في DINAR تطابق طلبك.`
-      : "لم أجد وظائف منشورة في DINAR تطابق طلبك حاليًا. جرّب إزالة أحد الشروط.",
+      ? `وجدت ${rows.length} وظائف منشورة في جاسم تطابق طلبك.`
+      : "لم أجد وظائف منشورة في جاسم تطابق طلبك حاليًا. جرّب إزالة أحد الشروط.",
     query: { kind: "EMPLOYMENT", ownerId: actorId, view: "JOB_SEARCH", jobSearch: state, ...(parentResultSetId ? { parentResultSetId } : {}) },
     resourceIds: rows.map((row) => row.id),
     employment: { jobs: jobsView, filters },
@@ -746,7 +746,7 @@ function renderProfile(actorId: string, profile: NonNullable<Awaited<ReturnType<
       : "";
   return {
     surface: "CV_PROFILE",
-    prompt: `${lead}${lead ? " " : ""}هذا ملفك الوظيفي. ${profile.visibility === "PRIVATE" ? "الملف خاص ولا يظهر لأصحاب العمل في البحث." : "الملف ظاهر لأصحاب العمل في البحث داخل DINAR."}${missing}`.trim(),
+    prompt: `${lead}${lead ? " " : ""}هذا ملفك الوظيفي. ${profile.visibility === "PRIVATE" ? "الملف خاص ولا يظهر لأصحاب العمل في البحث." : "الملف ظاهر لأصحاب العمل في البحث داخل جاسم."}${missing}`.trim(),
     query: { kind: "EMPLOYMENT", ownerId: actorId, view: "PROFILE" },
     resourceIds: [profile.id],
     employment: { profile: ownProfileView(profile) },
@@ -756,7 +756,7 @@ function renderProfile(actorId: string, profile: NonNullable<Awaited<ReturnType<
 async function renderCandidates(actorId: string, market: Market, state: CandidateSearchState, ignoredTraits: string[], parentResultSetId?: string, allowedIds?: string[]): Promise<Rendered> {
   const rows = await searchCandidates(market, actorId, state, allowedIds ? { allowedIds } : {});
   const ignored = ignoredTraits.length
-    ? ` لا يبحث DINAR ولا يرتّب المرشحين حسب ${ignoredTraits.join(" أو ")}؛ استخدمت المعايير المهنية فقط.`
+    ? ` لا يبحث جاسم ولا يرتّب المرشحين حسب ${ignoredTraits.join(" أو ")}؛ استخدمت المعايير المهنية فقط.`
     : "";
   return {
     surface: "CANDIDATE_SEARCH_RESULTS",
@@ -874,7 +874,7 @@ export async function applyEmploymentAction(input: {
     switch (action.type) {
       case "PUBLISH_JOB": {
         const { job, created } = await publishJobDraft({ actorId: input.actorId, market: input.market, draft: action.draft });
-        return finish("CONFIRMED", created ? `نُشرت وظيفة «${job.title}» في DINAR.` : `وظيفة «${job.title}» منشورة بالفعل؛ لم تُنشأ نسخة ثانية.`, { jobId: job.id });
+        return finish("CONFIRMED", created ? `نُشرت وظيفة «${job.title}» في جاسم.` : `وظيفة «${job.title}» منشورة بالفعل؛ لم تُنشأ نسخة ثانية.`, { jobId: job.id });
       }
       case "UPDATE_JOB": {
         const job = await updateOwnedJob({ jobId: action.jobId, actorId: input.actorId, market: input.market, changes: action.changes, expectedVersion: action.expectedVersion }, tx);
@@ -1093,7 +1093,7 @@ async function employmentTurn(input: EmploymentTurnInput): Promise<Turn | null> 
   if (automaticDecisionRequested(message) && (contextActive || /متقدم|مرشح/u.test(text)))
     return notice(
       actorId,
-      "لا يتخذ DINAR قرارات توظيف تلقائية: لا قبول ولا رفض ولا قائمة مختصرة بالذكاء الاصطناعي. أعرض لك المؤشرات المهنية المعلنة، والقرار لك لكل متقدم على حدة.",
+      "لا يتخذ جاسم قرارات توظيف تلقائية: لا قبول ولا رفض ولا قائمة مختصرة بالذكاء الاصطناعي. أعرض لك المؤشرات المهنية المعلنة، والقرار لك لكل متقدم على حدة.",
     );
 
   // Job draft: answers, corrections, cancel.
@@ -1140,8 +1140,8 @@ async function employmentTurn(input: EmploymentTurnInput): Promise<Turn | null> 
       : await ensureOwnProfile(actorId, market);
     const lead = intent.employMe
       ? profile.professionalTitle
-        ? `ملفك الوظيفي جاهز («${profile.professionalTitle}»). قل «ابحث لي عن وظيفة» لأعرض وظائف DINAR المناسبة؛ لا يُقدَّم على أي وظيفة دون تأكيدك.`
-        : "لأبحث لك عن وظائف داخل DINAR أحتاج ملفك الوظيفي: أخبرني بمسماك المهني وسنوات خبرتك، مثل «أنا محاسب وعندي خبرة 3 سنوات». الملف خاص افتراضيًا."
+        ? `ملفك الوظيفي جاهز («${profile.professionalTitle}»). قل «ابحث لي عن وظيفة» لأعرض وظائف جاسم المناسبة؛ لا يُقدَّم على أي وظيفة دون تأكيدك.`
+        : "لأبحث لك عن وظائف داخل جاسم أحتاج ملفك الوظيفي: أخبرني بمسماك المهني وسنوات خبرتك، مثل «أنا محاسب وعندي خبرة 3 سنوات». الملف خاص افتراضيًا."
       : intent.cvCreate
         ? "أنشأت ملفك الوظيفي وهو خاص افتراضيًا."
         : "";
@@ -1324,7 +1324,7 @@ async function employmentTurn(input: EmploymentTurnInput): Promise<Turn | null> 
         if (!row) return say("لم يعد هذا الملف ظاهرًا للبحث.");
         return turn({
           surface: "CANDIDATE_DETAILS",
-          prompt: "الملف المهني كما نشره صاحبه. لا يعرض DINAR أي بيانات شخصية أو حساسة.",
+          prompt: "الملف المهني كما نشره صاحبه. لا يعرض جاسم أي بيانات شخصية أو حساسة.",
           query: { kind: "EMPLOYMENT", ownerId: actorId, view: "CANDIDATE", parentResultSetId: stateSet.id },
           resourceIds: [row.id],
           employment: { candidate: candidateCardView(row) },

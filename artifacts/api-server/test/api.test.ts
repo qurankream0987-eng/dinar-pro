@@ -2242,7 +2242,7 @@ await test("AI refinements preserve product and size while replacing only explic
   );
   assert.equal(contextualQuery("الأرخص", "تيشيرت أسود XL"), "تيشيرت أسود XL");
   assert.equal(
-    contextualQuery("بدينار فقط", "تيشيرت أسود XL"),
+    contextualQuery("جاسم فقط", "تيشيرت أسود XL"),
     "تيشيرت أسود XL",
   );
   assert.equal(normalizeSearch("تي شيرت الأسود XL"), "تيشيرت اسود xl");

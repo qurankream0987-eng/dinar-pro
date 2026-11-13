@@ -228,7 +228,7 @@ await test("LD-01 grow the synthetic market the load runs against", async () => 
            (5 + (g * 37) % 4000) * 1000, 'FIXED', 'LIMITED', 500, 0,
            jsonb_build_object(
              'title', (ARRAY['هاتف','لابتوب','سيارة','كنب','غسالة','تيشيرت','فستان','صيانة مكيفات'])[1 + g % 8] || ' قياس ' || g,
-             'description', 'عرض صناعي لقياس الحمل في DINAR — بحالة جيدة وسعر واضح',
+             'description', 'عرض صناعي لقياس الحمل في جاسم — بحالة جيدة وسعر واضح',
              'category', 'أزياء', 'categoryId', 'fashion', 'city', 'عمان', 'area', 'الاباء',
              'attributes', jsonb_build_object('condition', 'جديد'),
              'fulfilmentType', 'PICKUP',

@@ -643,14 +643,14 @@ await journey("J08", "food: «أريد شاورما» → «الثاني» (ordi
 
 // ─── 9. Employment vs DINAR driver ──────────────────────────────────────────
 
-await journey("J09", "«أبي وظيفة سائق» → employment; «أبي أشتغل سائق داخل دينار» → F4 DriverProfile", async () => {
+await journey("J09", "«أبي وظيفة سائق» → employment; «أبي أشتغل سائق داخل جاسم» → F4 DriverProfile", async () => {
   const actor = await register("Employment or driver");
   const job = await say(actor, "أبي وظيفة سائق");
   assert.match(String(job.surface), /^(?:JOB_|EMPLOYMENT_|CV_)/, `${job.surface}: ${job.body}`);
-  const driver = await say(actor, "أبي أشتغل سائق داخل دينار", await conversation(actor));
+  const driver = await say(actor, "أبي أشتغل سائق داخل جاسم", await conversation(actor));
   assert.match(String(driver.surface), /^DRIVER_/, `${driver.surface}: ${driver.body}`);
   // And in the same conversation, no mode switch.
-  const same = await say(actor, "أبي أشتغل سائق داخل دينار");
+  const same = await say(actor, "أبي أشتغل سائق داخل جاسم");
   assert.match(String(same.surface), /^DRIVER_/, `${same.surface}: ${same.body}`);
 });
 
@@ -792,7 +792,7 @@ await journey("J13", "one account, one chat: draft → search → resume → man
   const promo = await step("روجه");
   assert.match(String(promo.surface), /^PROMOTION_/, `${promo.surface}: ${promo.body}`);
   await step("إلغاء");
-  assert.match(String((await step("أبي أشتغل سائق داخل دينار")).surface), /^DRIVER_/);
+  assert.match(String((await step("أبي أشتغل سائق داخل جاسم")).surface), /^DRIVER_/);
   await step("إلغاء");
   assert.match(String((await step("أبي وظيفة سائق")).surface), /^(?:JOB_|EMPLOYMENT_|CV_)/);
   assert.match(String((await step("اعرض روابط الربط")).surface), /^PROVIDER_/);

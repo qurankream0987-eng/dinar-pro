@@ -245,7 +245,7 @@ await test("XP-03 general questions reach the model; marketplace, account and us
   const actor = await register("Routing");
   const cases: Array<[string, (turn: Turn) => void]> = [
     ["كم لوح شمسي يحتاج بيتي؟", (t) => { assert.equal(t.modelCalled, true); assert.ok(!t.blocks.some((b) => b.type === "LISTING_RESULTS")); }],
-    [`ابحث عن ألواح شمسية ${TOKEN} معروضة في دينار`, (t) => { assert.equal(t.modelCalled, false); assert.ok(t.blocks.some((b) => b.type === "LISTING_RESULTS")); }],
+    [`ابحث عن ألواح شمسية ${TOKEN} معروضة في جاسم`, (t) => { assert.equal(t.modelCalled, false); assert.ok(t.blocks.some((b) => b.type === "LISTING_RESULTS")); }],
     ["ساعدني أفهم TypeScript", (t) => { assert.equal(t.modelCalled, true); assert.match(t.body, /```|React Hooks/u); }],
     ["حل المعادلة 2x + 6 = 14", (t) => assert.equal(t.modelCalled, true)],
     ["اكتب لي رسالة اعتذار عن تأخير التسليم", (t) => assert.equal(t.modelCalled, true)],
@@ -281,7 +281,7 @@ await test("XP-04 a mixed request is a bounded plan: the account part first, the
   assert.doesNotMatch(one.body, /الخطوة التالية/u);
 });
 
-await test("XP-05 seller analytics, inventory, plans and usage come from DINAR records only", async () => {
+await test("XP-05 seller analytics, inventory, plans and usage come from جاسم records only", async () => {
   const conv = await conversation(seller);
   const stats = await say(seller, conv, "دينار أعطني إحصائيات مبيعاتي");
   const insight = payloadOf(stats).sellerInsight;
@@ -499,7 +499,7 @@ await test("XP-15 «ماذا لو كان السعر أقل بـ10%؟» is arithm
 });
 
 const modelInput = () => calls.at(-1)!.map((message) => String(message.content)).join("\n");
-// A model answer arrives in the ADVICE surface; every other block is a DINAR card.
+// A model answer arrives in the ADVICE surface; every other block is a جاسم card.
 const commerceBlocks = (turn: Turn) => turn.blocks.filter((block) => !(block.type === "SURFACE" && block.payload.surface === "ADVICE"));
 
 await test("XP-16 one conversation: a topic survives commerce, account and market turns and can be resumed by name", async () => {
@@ -514,7 +514,7 @@ await test("XP-16 one conversation: a topic survives commerce, account and marke
   expect(cost.modelCalled && !commerceBlocks(cost).length, `cost follow-up is general knowledge: model=${cost.modelCalled} blocks=${surfaceOf(cost)}`);
   expect(/الطاقة الشمسية/u.test(modelInput()), "the cost follow-up is read with the solar turn in context");
 
-  // Commerce, account and market turns are DINAR's own deterministic authorities.
+  // Commerce, account and market turns are جاسم's own deterministic authorities.
   for (const [message, surface] of [
     ["دينار أريد بيع هاتفي", "SELL"],
     ["ابحث لي عن سيارة", undefined],
@@ -670,10 +670,10 @@ await test("XP-19 hybrid routing: each request finds its class — general, DINA
     "أبي أتعلم كيف أصور منتجات احترافية", "شنو أحسن لغة برمجة أتعلمها؟", "Explain recursion with a JS example",
     "عندي error في الـ useEffect يعيد التحميل للأبد", "سوي لي خطة غذائية أسبوعية",
   ]) await check(message, general, "is a general question for the model");
-  await check("هل الطلب على الذهب عالي هالأيام في سوق دينار؟", dinar("MARKET_OPPORTUNITY"), "uses DINAR's authoritative insufficient-data market card only when the user scopes the question to DINAR");
+  await check("هل الطلب على الذهب عالي هالأيام في سوق دينار؟", dinar("MARKET_OPPORTUNITY"), "uses جاسم's authoritative insufficient-data market card only when the user scopes the question to جاسم");
 
-  // DINAR's own features, phrased differently each time, stay deterministic.
-  for (const message of ["كيف أبيع هاتفي في دينار؟", "كيف أبيع؟", "شلون أبيع هنا؟"]) await check(message, dinar("TUTORIAL_VIDEO_CARD"), "is DINAR's selling tutorial");
+  // جاسم's own features, phrased differently each time, stay deterministic.
+  for (const message of ["كيف أبيع هاتفي في دينار؟", "كيف أبيع؟", "شلون أبيع هنا؟"]) await check(message, dinar("TUTORIAL_VIDEO_CARD"), "is جاسم's selling tutorial");
 
   // Context-dependent commerce: search, compare, open, hypothetical, offer review.
   const negotiationCount = async () => (await db.select({ id: negotiations.id }).from(negotiations).where(eq(negotiations.buyerId, actor.id))).length;
@@ -702,7 +702,7 @@ await test("XP-19 hybrid routing: each request finds its class — general, DINA
   const own = await say(seller, sellerConv, "قارن أول إعلانين عندي");
   if (own.modelCalled || /لديك 0/u.test(own.body) || !own.blocks.length) problems.push(`own-listing comparison: blocks=${surfaceOf(own)} body=${own.body.slice(0, 60)}`);
 
-  // Services DINAR has not connected: the model is told so, in full.
+  // Services جاسم has not connected: the model is told so, in full.
   for (const message of ["اشحن لي الطلب مع أرامكس", "ادفع الآن بالبطاقة"]) {
     await check(message, general, "is answered by the model");
     const context = modelUserTurn().match(/SERVER_CONVERSATION_CONTEXT: (.*)\n/u)?.[1] ?? "";
@@ -715,7 +715,7 @@ await test("XP-19 hybrid routing: each request finds its class — general, DINA
   // Account changes are reviews; nothing changes before confirmation.
   await check("غير اسمي إلى سامي", dinar("PROFILE_REVIEW"), "is a profile review");
   const me = await request("/auth/me", "GET", undefined, actor.cookie);
-  if (me.data.user.displayName !== "DINAR XP Hybrid routing") problems.push("the name changed without confirmation");
+  if (me.data.user.displayName !== "جاسم XP Hybrid routing") problems.push("the name changed without confirmation");
 
   // A guest cannot send offers or read private records, whatever the phrasing.
   const cookie = (await request("/account/market", "PATCH", { marketId: "JO" })).cookie;

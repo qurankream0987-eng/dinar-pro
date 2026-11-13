@@ -137,7 +137,7 @@ export function ExternalLinkAction({
         variant="secondary"
         disabled={busy}
         aria-busy={busy}
-        aria-label={`${action.label} — يفتح خارج DINAR في نافذة جديدة`}
+        aria-label={`${action.label} — يفتح خارج جاسم في نافذة جديدة`}
         onClick={() => void open()}
         data-testid={action.testId}
       >

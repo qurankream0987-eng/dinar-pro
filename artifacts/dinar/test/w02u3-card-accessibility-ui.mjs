@@ -121,7 +121,7 @@ try {
   const doc = await page.evaluate(() => ({ dir: document.documentElement.dir, lang: document.documentElement.lang }));
   assert.equal(doc.dir, "rtl", "the document is RTL");
   assert.equal(doc.lang, "ar", "the document is declared Arabic");
-  assert.equal(await page.getByRole("textbox", { name: "رسالتك إلى DINAR AI" }).count(), 1, "the composer has its accessible name");
+  assert.equal(await page.getByRole("textbox", { name: "رسالتك إلى JassimAI" }).count(), 1, "the composer has its accessible name");
   assert.equal(await page.getByRole("button", { name: "إرسال الرسالة" }).count(), 1, "the send button has its accessible name");
   assert.equal(await page.getByRole("button", { name: "تأكيد الإضافة إلى السلة" }).count(), 1, "the card confirmation has its accessible name");
   assert.equal(await page.getByRole("log").count(), 1, "the thread is a log region");

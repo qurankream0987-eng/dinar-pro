@@ -739,7 +739,7 @@ await acceptance("U-27", "completion is what the action ledger records: receipts
   assert.deepEqual([asked.surface, asked.calls], ["NEGOTIATION_STATUS", 0], asked.body);
   // A commercial message that does reach the model: it sees the server's receipt, not the
   // assistant's words, as evidence, and its true claim is restated from the ledger.
-  scriptedTurns.set("طمني على الصفقة", { responseKind: "CONVERSATIONAL_RESPONSE", goal: "NEGOTIATE", confidence: 0.8, conversationalReply: "حسب سجل دينار أُرسل عرضك، والقرار للبائع." });
+  scriptedTurns.set("طمني على الصفقة", { responseKind: "CONVERSATIONAL_RESPONSE", goal: "NEGOTIATE", confidence: 0.8, conversationalReply: "حسب سجل جاسم أُرسل عرضك، والقرار للبائع." });
   const reassured = await turn(buyerThree, conv, "طمني على الصفقة");
   assert.equal(reassured.calls, 1);
   assert.match(lastModelMessages.at(-1)?.content ?? "", /SERVER_ACTION_RECEIPTS: \[[^\]]*"action":"SEND_NEGOTIATION_OFFER","lifecycle":"SUCCEEDED"/u);

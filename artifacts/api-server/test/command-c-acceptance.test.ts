@@ -199,7 +199,7 @@ await test("C3 server guard: unsupported claims in drafted copy get one correcti
   const refused = await say(seller, conv, "اكتب أن عليه ضمان خمس سنوات");
   assert.match(refused.body, /لم أستطع صياغة نص تسويقي دون ادعاءات لا تدعمها بيانات إعلانك \(ضمان\)/u);
   assert.doesNotMatch(refused.body, /5 سنوات/u, "the unsupported draft is never shown");
-  replies = ["لا يمكن كتابة «باقي قطعة واحدة» لأن سجل DINAR يظهر 4 قطع متاحة. اقتراح: مكيف جديد، متوفر 4 قطع. [اذكر الضمان إن وُجدت وثيقة]"];
+  replies = ["لا يمكن كتابة «باقي قطعة واحدة» لأن سجل جاسم يظهر 4 قطع متاحة. اقتراح: مكيف جديد، متوفر 4 قطع. [اذكر الضمان إن وُجدت وثيقة]"];
   const quoted = await say(seller, conv, "اكتب إعلان وقل إن باقي قطعة واحدة");
   assert.match(quoted.body, /متوفر 4 قطع/u, "naming a refused claim in quotes, or a [placeholder], is not a claim");
   replies = [];

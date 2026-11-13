@@ -233,7 +233,7 @@ let scenario = 0;
 /** One model-routed turn: the scripted model searches, then answers with the given presentation. */
 async function proposed(user: { cookie: string; conv: string }, presentation: unknown) {
   const key = `ساعدني أختار جوال مناسب للتصوير رقم${++scenario} ${run}`;
-  const entry: (typeof script)[number] = { key, reply: "هذه خيارات من عروض DINAR.", toolSequence: [searchStep] };
+  const entry: (typeof script)[number] = { key, reply: "هذه خيارات من عروض جاسم.", toolSequence: [searchStep] };
   if (presentation !== undefined) entry.presentation = presentation;
   script.unshift(entry);
   return say(user.cookie, user.conv, key);

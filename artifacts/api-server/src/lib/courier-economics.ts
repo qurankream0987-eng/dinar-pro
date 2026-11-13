@@ -93,7 +93,7 @@ async function loadOrderAndActors(
   )
     throw fail(409, "الطلب ليس في سوق التسليم النشط.", "MARKET_MISMATCH");
   if (fulfillment.method !== "COURIER")
-    throw fail(409, "التفاوض على الأجرة متاح فقط لمهام مندوب DINAR.", "COURIER_REQUIRED");
+    throw fail(409, "التفاوض على الأجرة متاح فقط لمهام مندوب جاسم.", "COURIER_REQUIRED");
 
   let assignmentQuery = tx
     .select()
@@ -161,7 +161,7 @@ export async function getCourierFareView(input: {
   )
     throw fail(409, "الطلب ليس في سوق التسليم النشط.", "MARKET_MISMATCH");
   if (fulfillment?.method !== "COURIER")
-    throw fail(409, "هذا الطلب لا يستخدم مندوب DINAR.", "COURIER_REQUIRED");
+    throw fail(409, "هذا الطلب لا يستخدم مندوب جاسم.", "COURIER_REQUIRED");
 
   const [assignment] = await tx
     .select()
@@ -669,7 +669,7 @@ export async function settleCourierCommissionSimulation(input: {
   if (!receivables.length || amountMinor <= 0)
     throw fail(409, "لا يوجد رصيد مستحق قابل للتسوية في هذا السوق.", "NO_OUTSTANDING_COMMISSION");
   if (!Number.isSafeInteger(amountMinor) || amountMinor > MAX_MINOR_UNITS)
-    throw fail(409, "تجاوز الرصيد الحد الآمن للتسوية في هذا السوق؛ تواصل مع دعم DINAR.", "SETTLEMENT_AMOUNT_LIMIT");
+    throw fail(409, "تجاوز الرصيد الحد الآمن للتسوية في هذا السوق؛ تواصل مع دعم جاسم.", "SETTLEMENT_AMOUNT_LIMIT");
   if (
     receivables.some(
       (row) =>
@@ -677,7 +677,7 @@ export async function settleCourierCommissionSimulation(input: {
         row.minorUnitScale !== input.market.minorUnitScale,
     )
   )
-    throw fail(409, "تختلف دقة العملة المسجلة؛ راجع دعم DINAR.", "CURRENCY_SNAPSHOT_MISMATCH");
+    throw fail(409, "تختلف دقة العملة المسجلة؛ راجع دعم جاسم.", "CURRENCY_SNAPSHOT_MISMATCH");
 
   const now = new Date();
   const [settlement] = await tx

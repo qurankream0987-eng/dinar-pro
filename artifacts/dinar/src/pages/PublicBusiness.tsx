@@ -56,7 +56,7 @@ export default function PublicBusinessPage() {
       <div className="container-app max-w-2xl">
         <ErrorState
           title="النشاط غير متاح"
-          body="قد يكون النشاط موقوفًا أو غير منشور في دينار."
+          body="قد يكون النشاط موقوفًا أو غير منشور في جاسم."
           onRetry={() => business.refetch()}
         />
       </div>
@@ -101,8 +101,8 @@ export default function PublicBusinessPage() {
             <p className="text-base leading-7 text-text-secondary">{data.description}</p>
           ) : null}
           {facts.length > 0 && <Summary rows={facts} />}
-          <InlineAlert tone="info" title="الشراء يتم عبر دينار">
-            كل المنتجات هنا من كتالوج النشاط نفسه في سوق دينار. اختر منتجًا للتعرّف عليه، أو اسأل دينار في المحادثة.
+          <InlineAlert tone="info" title="الشراء يتم عبر جاسم">
+            كل المنتجات هنا من كتالوج النشاط نفسه في سوق جاسم. اختر منتجًا للتعرّف عليه، أو اسأل دينار في المحادثة.
           </InlineAlert>
           <a
             href="/#chat"

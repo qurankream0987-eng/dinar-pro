@@ -170,14 +170,14 @@ export async function assertPlanEligibility(input: { actorId: string; market: Ma
     if (input.businessId) throw refuse(400, "هذه الخطة لا ترتبط بنشاط تجاري", "BUSINESS_NOT_APPLICABLE");
     return null;
   }
-  if (!input.businessId) throw refuse(409, "دينار بزنس يتطلب نشاطًا تجاريًا موثّقًا؛ أضف نشاطك أولًا وانتظر توثيقه", "BUSINESS_REQUIRED");
+  if (!input.businessId) throw refuse(409, "جاسم بزنس يتطلب نشاطًا تجاريًا موثّقًا؛ أضف نشاطك أولًا وانتظر توثيقه", "BUSINESS_REQUIRED");
   return (await verifiedBusinessForSubscription(input.actorId, input.market, input.businessId)).id;
 }
 
 export async function reviewBusinessSubscription(input: { actorId: string; market: Market; planId: string; businessId?: string }) {
   assertPromotionsAvailable();
   const plan = (await businessPlans(input.market)).find((item) => item.id === input.planId);
-  if (!plan) throw fail(404, "خطة دينار بزنس غير متاحة في سوقك", "PRODUCT_DISABLED");
+  if (!plan) throw fail(404, "خطة جاسم بزنس غير متاحة في سوقك", "PRODUCT_DISABLED");
   await assertPlanEligibility({ actorId: input.actorId, market: input.market, planCode: plan.planCode, businessId: input.businessId });
   const balance = await getCommercialBalance(input.actorId, input.market);
   const sufficient = balance.availableMinor >= plan.priceMinor;
@@ -201,7 +201,7 @@ export async function subscribeBusiness(input: { actorId: string; market: Market
   if (!/^[A-Za-z0-9._:-]{8,128}$/.test(input.idempotencyKey)) throw fail(400, "مفتاح عدم التكرار غير صالح");
   const [plan] = await db.select().from(promotionProducts).where(and(eq(promotionProducts.id, input.planId), eq(promotionProducts.marketId, input.market.id)));
   if (!plan || plan.productType !== "DINAR_BUSINESS" || !(await businessPlans(input.market)).some((item) => item.id === plan.id))
-    throw fail(404, "خطة دينار بزنس غير متاحة في سوقك", "PRODUCT_DISABLED");
+    throw fail(404, "خطة جاسم بزنس غير متاحة في سوقك", "PRODUCT_DISABLED");
   const planCode = planCodeOfProduct(plan);
   const businessProfileId = await assertPlanEligibility({ actorId: input.actorId, market: input.market, planCode, businessId: input.businessId });
   await settle(input.actorId, input.market.id);

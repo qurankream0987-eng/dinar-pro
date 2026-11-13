@@ -290,9 +290,9 @@ import { adviceChipLabel } from "../src/features/ai/SmartSurfaces";
 await test("R3E: commercial model text is marked non-authoritative; the ledger statement is marked as the record", () => {
   const text = adviceChipLabel({ kind: "CONVERSATIONAL_RESPONSE", scope: "ASSISTANT_TEXT" });
   assert.match(String(text), /ليس تأكيدًا لأي إجراء/u);
-  assert.match(String(text), /سجل دينار/u);
-  assert.match(String(adviceChipLabel({ kind: "CONVERSATIONAL_RESPONSE", scope: "DINAR_LEDGER" })), /من سجل دينار/u);
-  assert.equal(adviceChipLabel({ kind: "CONVERSATIONAL_RESPONSE", scope: "GENERAL_KNOWLEDGE" }), "معلومة عامة وليست من بيانات DINAR");
+  assert.match(String(text), /سجل جاسم/u);
+  assert.match(String(adviceChipLabel({ kind: "CONVERSATIONAL_RESPONSE", scope: "DINAR_LEDGER" })), /من سجل جاسم/u);
+  assert.equal(adviceChipLabel({ kind: "CONVERSATIONAL_RESPONSE", scope: "GENERAL_KNOWLEDGE" }), "معلومة عامة وليست من بيانات جاسم");
 });
 
 await test("verification has a bounded read budget without converting an unknown turn into a retry", () => {

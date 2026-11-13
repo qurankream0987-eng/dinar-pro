@@ -281,7 +281,7 @@ const TUTORIALS: Record<TutorialPayload["id"], TutorialPayload> = {
   },
   DEMAND_CAPTURE_EXPLAINER: {
     id: "DEMAND_CAPTURE_EXPLAINER",
-    title: "دينار — روح بِع لي",
+    title: "جاسم — روح بِع لي",
     caption: "يساعد الترويج على الوصول إلى مهتمين وفق إعدادات الحملة، من دون انتحال شخصيتك أو مراسلة الناس نيابةً عنك.",
     animation: "LOCAL_STEP_SEQUENCE",
     steps: [
@@ -729,7 +729,7 @@ export async function applyCommerceAction(input: { actionId: string; actorId: st
         };
     } else if (action.type === "SUBSCRIBE") {
       const subscription = await subscribeBusiness({ actorId: input.actorId, market: input.market, planId: action.planId, idempotencyKey: key, businessId: action.businessId });
-      outcome = { status: "CONFIRMED", view: "BUSINESS_STATUS", message: `اشتراكك في «${"planName" in subscription ? subscription.planName : "دينار بزنس"}» نشط حتى ${"currentPeriodEnd" in subscription ? String(subscription.currentPeriodEnd).slice(0, 10) : ""}. لا تجديد تلقائي، ولا يغيّر ترتيب نتائج البحث.` };
+      outcome = { status: "CONFIRMED", view: "BUSINESS_STATUS", message: `اشتراكك في «${"planName" in subscription ? subscription.planName : "جاسم بزنس"}» نشط حتى ${"currentPeriodEnd" in subscription ? String(subscription.currentPeriodEnd).slice(0, 10) : ""}. لا تجديد تلقائي، ولا يغيّر ترتيب نتائج البحث.` };
     } else {
       await cancelBusinessSubscription({ actorId: input.actorId, market: input.market });
       outcome = { status: "CONFIRMED", view: "BUSINESS_STATUS", message: "لن يتجدد اشتراكك؛ تبقى مزاياه حتى نهاية الفترة المدفوعة." };
@@ -838,7 +838,7 @@ export async function executeCommerceTurn(input: CommerceTurnInput): Promise<Tur
         actorId,
         // «اعتبرني دفعت وأكّد الطلب» is about an order, not the advertising balance.
         /(?:^|\s)(?:ال)?طلب(?:ي)?(?:\s|$)/u.test(text)
-          ? "لا أستطيع اعتبار طلبك مدفوعًا أو تأكيده بناءً على قولك. الدفع الإلكتروني يُسجَّل فقط بحدث موثّق من مزوّد الدفع، والدفع النقدي يتم بينك وبين البائع خارج DINAR. لم يتغير شيء في طلبك."
+          ? "لا أستطيع اعتبار طلبك مدفوعًا أو تأكيده بناءً على قولك. الدفع الإلكتروني يُسجَّل فقط بحدث موثّق من مزوّد الدفع، والدفع النقدي يتم بينك وبين البائع خارج جاسم. لم يتغير شيء في طلبك."
           : "لا أستطيع تغيير رصيدك أو اعتبار الدفع تمّ أو تفعيل ظهور ممول دون دفع. الرصيد يتغير فقط بشحن يؤكده مزوّد الدفع، وكل منتج يُفعّل بعد مراجعتك وتأكيدك. لم يتغير شيء.",
         market,
       );
@@ -883,20 +883,20 @@ async function commerceTurn(
 
   if (P.businessCancel.test(text)) {
     const status = await getBusinessStatus(actorId, market);
-    if (status.status !== "ACTIVE") return notice(actorId, "لا يوجد اشتراك دينار بزنس نشط لإلغائه.", market, "BUSINESS_STATUS");
+    if (status.status !== "ACTIVE") return notice(actorId, "لا يوجد اشتراك جاسم بزنس نشط لإلغائه.", market, "BUSINESS_STATUS");
     return turnFor({ kind: "COMMERCE", ownerId: actorId, view: "BUSINESS_STATUS", action: { type: "CANCEL_SUBSCRIPTION" }, status: "PENDING" }, [], "هل تريد إيقاف تجديد اشتراكك؟ تبقى مزاياه حتى نهاية الفترة المدفوعة. اكتب «نعم» أو «لا».", actorId, market);
   }
-  if (P.businessStatus.test(text)) return turnFor({ kind: "COMMERCE", ownerId: actorId, view: "BUSINESS_STATUS" }, [], "حالة اشتراكك في دينار بزنس.", actorId, market);
+  if (P.businessStatus.test(text)) return turnFor({ kind: "COMMERCE", ownerId: actorId, view: "BUSINESS_STATUS" }, [], "حالة اشتراكك في جاسم بزنس.", actorId, market);
   if (P.business.test(text)) return businessReview(actorId, market);
 
-  if (P.history.test(text)) return turnFor({ kind: "COMMERCE", ownerId: actorId, view: "COMMERCIAL_LEDGER_SUMMARY" }, [], "سجل مدفوعاتك لخدمات دينار التجارية (تجريبي، دون أموال حقيقية).", actorId, market);
+  if (P.history.test(text)) return turnFor({ kind: "COMMERCE", ownerId: actorId, view: "COMMERCIAL_LEDGER_SUMMARY" }, [], "سجل مدفوعاتك لخدمات جاسم التجارية (تجريبي، دون أموال حقيقية).", actorId, market);
   if (P.balance.test(text)) {
     const balance = await getCommercialBalance(actorId, market);
     return turnFor({ kind: "COMMERCE", ownerId: actorId, view: "COMMERCIAL_BALANCE" }, [], `رصيدك التجاري المتاح ${balance.availableLabel}${balance.reservedMinor ? `، ومحجوز للحملات ${balance.reservedLabel}` : ""}. ${balance.statement}`, actorId, market);
   }
   const topup = text.match(P.topup);
   if (topup) {
-    if (!topup[1]) return notice(actorId, "كم تريد أن تشحن؟ مثل «اشحن 20 دينار». الرصيد للاستخدام في خدمات دينار التجارية فقط.", market);
+    if (!topup[1]) return notice(actorId, "كم تريد أن تشحن؟ مثل «اشحن 20 دينار». الرصيد للاستخدام في خدمات جاسم التجارية فقط.", market);
     const amountMinor = await topupAmountMinor(market, Number(topup[1]));
     return turnFor(
       { kind: "COMMERCE", ownerId: actorId, view: "COMMERCIAL_TOPUP_REVIEW", action: { type: "TOPUP", amountMinor }, status: "PENDING" },
@@ -1040,7 +1040,7 @@ async function unsatisfied(set: StoredSet, actorId: string, market: Market): Pro
         demandRescue: "USER_UNSATISFIED",
         buyer: {
           message: rescue.listings.length
-            ? `فهمت أن النتائج لم تناسبك. لا توجد نتائج عادية أخرى بالشروط نفسها، وهذه ${rescue.listings.length === 1 ? "خيار ممول" : "خيارات ممولة"} تطابق طلبك (شارة «ممول»؛ ليست توصية من دينار).`
+            ? `فهمت أن النتائج لم تناسبك. لا توجد نتائج عادية أخرى بالشروط نفسها، وهذه ${rescue.listings.length === 1 ? "خيار ممول" : "خيارات ممولة"} تطابق طلبك (شارة «ممول»؛ ليست توصية من جاسم).`
             : "فهمت أن النتائج لم تناسبك. لا توجد خيارات أخرى مطابقة حاليًا؛ يمكنك تعديل الشروط أو توسيع البحث.",
         },
       },
@@ -1093,7 +1093,7 @@ async function chooseProduct(productType: string, listingId: string | undefined,
   const owned = (await promotableListings(actorId, market)).find((item) => item.id === listingId);
   if (!owned) return notice(actorId, "هذا الإعلان غير مؤهل أو ليس لك. لم يتغير شيء.", market);
   const products = await commercialProducts(market, { productTypes: [productType], categoryId: owned.categoryId });
-  const label = { FEATURED_LISTING: "الإعلان المميز", VIP_LISTING: "VIP", REFRESH_LISTING: "تجديد الإعلان", DEMAND_CAPTURE: "دينار — روح بِع لي", SPONSORED_SEARCH: "الظهور الممول في البحث", SPONSORED_RECOMMENDATION: "الاقتراح الممول" }[productType] ?? productType;
+  const label = { FEATURED_LISTING: "الإعلان المميز", VIP_LISTING: "VIP", REFRESH_LISTING: "تجديد الإعلان", DEMAND_CAPTURE: "جاسم — روح بِع لي", SPONSORED_SEARCH: "الظهور الممول في البحث", SPONSORED_RECOMMENDATION: "الاقتراح الممول" }[productType] ?? productType;
   if (!products.length) return notice(actorId, `لا يوجد منتج «${label}» مفعّل لفئة «${owned.title}» في سوقك حاليًا.`, market);
   if (products.length > 1)
     return turnFor({ kind: "COMMERCE", ownerId: actorId, view: "COMMERCIAL_PRODUCTS", productType, listingId }, products.map((item) => item.id), `اختر خيار «${label}» لإعلان «${owned.title}» (مثل «الأول»).`, actorId, market);
@@ -1143,8 +1143,8 @@ async function businessReview(actorId: string, market: Market, planId?: string, 
   const plans = await businessPlans(market);
   const status = await getBusinessStatus(actorId, market);
   if (status.status === "ACTIVE" || status.status === "CANCEL_AT_PERIOD_END")
-    return turnFor({ kind: "COMMERCE", ownerId: actorId, view: "BUSINESS_STATUS" }, [], planId ? "لديك اشتراك دينار بزنس قائم. تغيير الباقة أثناء الفترة غير متاح بعد لأنه لا توجد قواعد احتساب تناسبي معتمدة؛ يمكنك الاشتراك في الباقة الأخرى بعد انتهاء فترتك. لم يتغير شيء." : "لديك اشتراك دينار بزنس قائم.", actorId, market);
-  if (!plans.length) return notice(actorId, "لا توجد خطة دينار بزنس مفعّلة في سوقك حاليًا. الحساب المجاني يكفي للبيع والشراء وشراء الإعلانات.", market, "BUSINESS_STATUS");
+    return turnFor({ kind: "COMMERCE", ownerId: actorId, view: "BUSINESS_STATUS" }, [], planId ? "لديك اشتراك جاسم بزنس قائم. تغيير الباقة أثناء الفترة غير متاح بعد لأنه لا توجد قواعد احتساب تناسبي معتمدة؛ يمكنك الاشتراك في الباقة الأخرى بعد انتهاء فترتك. لم يتغير شيء." : "لديك اشتراك جاسم بزنس قائم.", actorId, market);
+  if (!plans.length) return notice(actorId, "لا توجد خطة جاسم بزنس مفعّلة في سوقك حاليًا. الحساب المجاني يكفي للبيع والشراء وشراء الإعلانات.", market, "BUSINESS_STATUS");
   const plan = plans.find((item) => item.id === planId) ?? plans[0]!;
   const review = await reviewBusinessSubscription({ actorId, market, planId: plan.id });
   if (!review.sufficient)
@@ -1254,7 +1254,7 @@ const BUSINESS_ACTION_LABELS: Record<string, { label: string; message?: string; 
   SUBMIT_FOR_REVIEW: { label: "أرسل الطلب للتحقق", message: "أرسل طلب التوثيق", kind: "SEND" },
   VIEW_STATUS: { label: "حالة التحقق", message: "حالة توثيق نشاطي", kind: "SEND" },
   ADD_CATALOG: { label: "أضف قائمة أو منتجات", message: "أريد أن أبيع", kind: "SEND" },
-  REVIEW_PLANS: { label: "خطط دينار", message: "ما الفرق بين جو وبرو وبزنس", kind: "SEND" },
+  REVIEW_PLANS: { label: "خطط جاسم", message: "ما الفرق بين جو وبرو وبزنس", kind: "SEND" },
   PUBLISH: { label: "انشر صفحة النشاط", kind: "PUBLISH" },
   UNPUBLISH: { label: "أوقف نشر الصفحة", kind: "PUBLISH" },
   CONNECT_SYSTEM: { label: "ربط نظامك الحالي", message: "أريد ربط مطعمي بنظامي الحالي", kind: "SEND" },
@@ -1284,11 +1284,11 @@ function businessCard(view: BusinessOwnerView, focus: NonNullable<CommerceQuery[
     documents: view.documents.map((doc) => ({ id: doc.id, kindLabel: doc.kindLabel, status: doc.status, scanStatus: doc.scanStatus, scanLabel: doc.scanStatus === "CLEAN" ? "فُحص وسليم" : doc.scanStatus === "INFECTED" ? "رُفض لأسباب أمنية" : "في الحجر حتى يُفحص" })),
     actions: view.actions.map((key) => ({ key, ...BUSINESS_ACTION_LABELS[key]! })),
     listingCount: view.listingCount,
-    salesNote: view.listingCount ? `لديك ${view.listingCount} إعلان في هذا السوق.` : "لا توجد مبيعات أو إعلانات سابقة لهذا النشاط في دينار بعد.",
+    salesNote: view.listingCount ? `لديك ${view.listingCount} إعلان في هذا السوق.` : "لا توجد مبيعات أو إعلانات سابقة لهذا النشاط في جاسم بعد.",
     lastDecisionReason: view.lastDecisionReason ?? null,
     readiness: view.verification,
     ...(focus === "CONNECT" ? { integrations: view.integrations } : {}),
-    privacyNote: "مستندات التحقق خاصة: لا تظهر في الإعلانات ولا للمشترين ولا تُرسل إلى نموذج الذكاء الاصطناعي؛ يراها مراجع دينار فقط بعد فحصها.",
+    privacyNote: "مستندات التحقق خاصة: لا تظهر في الإعلانات ولا للمشترين ولا تُرسل إلى نموذج الذكاء الاصطناعي؛ يراها مراجع جاسم فقط بعد فحصها.",
     honestyNote: view.verified ? null : "هذه بيانات قدّمتها أنت ولم يوثّقها دينار بعد.",
   };
 }
@@ -1305,9 +1305,9 @@ function businessStatusPrompt(view: BusinessOwnerView): string {
       return `${name} بانتظار مستنداتك${unmet.length ? `: ينقص ${unmet.join("، ")}` : ""}${view.missingInfo.length ? `، وأحتاج ${view.missingInfo.join(" و")}` : ""}. ${!unmet.length && !view.missingInfo.length ? "كل المطلوب موجود؛ قل «أرسل طلب التوثيق»." : ""}`.trim();
     }
     case "PENDING_REVIEW":
-      return `طلب توثيق ${name} بانتظار مراجع دينار. لم يُوثَّق بعد.${view.verification.scanner === "NOT_CONNECTED" ? " تنبيه: فحص المستندات غير موصول بعد، لذلك لا يمكن إكمال التوثيق الآن؛ طلبك محفوظ." : ""}`;
+      return `طلب توثيق ${name} بانتظار مراجع جاسم. لم يُوثَّق بعد.${view.verification.scanner === "NOT_CONNECTED" ? " تنبيه: فحص المستندات غير موصول بعد، لذلك لا يمكن إكمال التوثيق الآن؛ طلبك محفوظ." : ""}`;
     case "VERIFIED":
-      return `${name} نشاط موثّق من مراجع دينار.${view.publicationStatus === "PUBLISHED" ? " صفحته منشورة." : " صفحته غير منشورة بعد."}`;
+      return `${name} نشاط موثّق من مراجع جاسم.${view.publicationStatus === "PUBLISHED" ? " صفحته منشورة." : " صفحته غير منشورة بعد."}`;
     case "REJECTED":
       return `طلب ${name} مرفوض${view.lastDecisionReason ? `: ${view.lastDecisionReason}` : ""}. يمكنك تقديم طلب جديد بالبيانات الصحيحة.`;
     case "SUSPENDED":
@@ -1332,7 +1332,7 @@ async function businessInFocus(actorId: string, market: Market, latest: Commerce
   return own.length ? "AMBIGUOUS" : undefined;
 }
 
-const NO_BUSINESS = "لا يوجد لديك نشاط تجاري في دينار في سوقك الحالي. قل مثلًا: «أنا صاحب مطعم اسمه …» مع اسم نشاطك، وأجهّز لك مسودة.";
+const NO_BUSINESS = "لا يوجد لديك نشاط تجاري في جاسم في سوقك الحالي. قل مثلًا: «أنا صاحب مطعم اسمه …» مع اسم نشاطك، وأجهّز لك مسودة.";
 const AMBIGUOUS_BUSINESS = "لديك أكثر من نشاط؛ افتح بطاقة النشاط المقصود أولًا بقول «اعرض نشاطي» ثم أعد الطلب.";
 
 function errorText(error: unknown): string | undefined {
@@ -1391,7 +1391,7 @@ export async function executeBusinessOnboardingTurn(input: CommerceTurnInput): P
           market,
           view,
           "UPLOAD",
-          `ارفع ${label} من زر «ارفع المستند» في البطاقة (PDF أو صورة JPEG/PNG حتى 10 ميغابايت). يُحفظ بشكل خاص لمراجع دينار فقط، ولا يظهر في الإعلانات ولا يُرسل إلى نموذج الذكاء.${view.missingInfo.length ? ` وأحتاج أيضًا: ${view.missingInfo.join(" و")}.` : ""}`,
+          `ارفع ${label} من زر «ارفع المستند» في البطاقة (PDF أو صورة JPEG/PNG حتى 10 ميغابايت). يُحفظ بشكل خاص لمراجع جاسم فقط، ولا يظهر في الإعلانات ولا يُرسل إلى نموذج الذكاء.${view.missingInfo.length ? ` وأحتاج أيضًا: ${view.missingInfo.join(" و")}.` : ""}`,
         );
       }
       case "INFO": {
@@ -1414,8 +1414,8 @@ export async function executeBusinessOnboardingTurn(input: CommerceTurnInput): P
           focused,
           "CONNECT",
           focused.verified
-            ? "يمكنك تسجيل طلب ربط بقراءة فقط (القائمة أو المخزون أو الطلبات) من البطاقة. لا يوجد موصّل جاهز لأي نظام حاليًا، ولم يُربط شيء. مفتاح مزوّد دينار يسمح لنظامك بالإرسال إلى دينار فقط، ولا يمنح دينار دخولًا إلى نظامك."
-            : "ربط نظامك متاح بعد توثيق النشاط. يمكنك الآن إضافة قائمتك أو منتجاتك داخل دينار مباشرة دون أي نظام خارجي. لم يُربط شيء.",
+            ? "يمكنك تسجيل طلب ربط بقراءة فقط (القائمة أو المخزون أو الطلبات) من البطاقة. لا يوجد موصّل جاهز لأي نظام حاليًا، ولم يُربط شيء. مفتاح مزوّد جاسم يسمح لنظامك بالإرسال إلى دينار فقط، ولا يمنح دينار دخولًا إلى نظامك."
+            : "ربط نظامك متاح بعد توثيق النشاط. يمكنك الآن إضافة قائمتك أو منتجاتك داخل جاسم مباشرة دون أي نظام خارجي. لم يُربط شيء.",
         );
     }
   } catch (error) {
@@ -1454,8 +1454,8 @@ async function publicPlansTurn(text: string, actorId: string, market: Market): P
   const verification = verified.length
     ? `نشاطك «${verified[0]!.displayName}» موثّق ويمكن ربط الاشتراك به.`
     : pending.length
-      ? `نشاطك «${pending[0]!.displayName}» حالته «${pending[0]!.statusLabel}»؛ دينار بزنس يحتاج نشاطًا موثّقًا أولًا، والدفع لا يوثّق النشاط.`
-      : "دينار بزنس يحتاج نشاطًا تجاريًا موثّقًا من مراجع دينار. قل «أنا صاحب مطعم اسمه …» لنبدأ.";
+      ? `نشاطك «${pending[0]!.displayName}» حالته «${pending[0]!.statusLabel}»؛ جاسم بزنس يحتاج نشاطًا موثّقًا أولًا، والدفع لا يوثّق النشاط.`
+      : "جاسم بزنس يحتاج نشاطًا تجاريًا موثّقًا من مراجع جاسم. قل «أنا صاحب مطعم اسمه …» لنبدأ.";
   const subscription = overview.subscription.status === "FREE" ? "أنت الآن على الحساب المجاني." : `اشتراكك الحالي: ${overview.currentPlanLabel} (${overview.subscription.statusLabel}).`;
   const billing = subscriptionBillingStatus().connected ? "الدفع يتم عبر مزوّد الفوترة بعد تأكيدك، ولا تُفعّل الخطة قبل تأكيد موثّق منه." : "تفعيل الاشتراك المدفوع غير متاح الآن لأن الفوترة غير موصولة؛ لم يُنشأ اشتراك ولم يُخصم شيء.";
   const prompt = `${item.name}: ${item.referencePriceLabel}${item.marketPrice ? `، وسعره في سوقك ${item.marketPrice.label}` : "؛ سعره بعملة سوقك غير معتمد بعد"}. ${item.description} ${verification} ${subscription} ${billing}`;
@@ -1492,9 +1492,9 @@ async function pulse(text: string, message: string, actorId: string, market: Mar
     // Server entitlement, not the client, decides; the free tier keeps its basic pulse.
     const plans = await businessPlans(market);
     return turnFor(
-      { kind: "COMMERCE", ownerId: actorId, view: "BUSINESS_PLAN_REVIEW", upsell: true, notice: "هذه الفترة أو المقارنة من مزايا دينار بزنس." },
+      { kind: "COMMERCE", ownerId: actorId, view: "BUSINESS_PLAN_REVIEW", upsell: true, notice: "هذه الفترة أو المقارنة من مزايا جاسم بزنس." },
       plans.map((plan) => plan.id),
-      `${compare ? "مقارنة الفترات" : `نبض السوق لفترة ${window}`} متاح ضمن دينار بزنس. يمكنك رؤية النبض الأساسي (${policy.freePulseWindows.join("، ")}) مجانًا، أو قول «أبي دينار بزنس».`,
+      `${compare ? "مقارنة الفترات" : `نبض السوق لفترة ${window}`} متاح ضمن جاسم بزنس. يمكنك رؤية النبض الأساسي (${policy.freePulseWindows.join("، ")}) مجانًا، أو قول «أبي جاسم بزنس».`,
       actorId,
       market,
     );

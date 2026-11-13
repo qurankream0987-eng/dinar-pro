@@ -544,15 +544,15 @@ async function askSeller(input: Input & { actorId: string }, question: string, c
   const wantsConfirmation = CONFIRM_WANTED.test(normalized);
   if (Number.isInteger(quantity) && quantity > 0) {
     if (facts.available === null && !wantsConfirmation)
-      return notice(`حسب سجل DINAR، «${facts.title}» معروض بكمية غير محدودة يحددها البائع، فطلب ${quantity} قطعة لا يتعارض مع الإعلان. هذه معلومة من سجل الإعلان وليست تأكيدًا من البائع. لم أرسل شيئًا؛ إن أردت تأكيدًا منه قل «اسأله للتأكيد هل عنده ${quantity} قطعة».`, { fact: { kind: "INVENTORY", source: "DINAR_RECORD", text: "كمية غير محدودة" } }, listingId);
+      return notice(`حسب سجل جاسم، «${facts.title}» معروض بكمية غير محدودة يحددها البائع، فطلب ${quantity} قطعة لا يتعارض مع الإعلان. هذه معلومة من سجل الإعلان وليست تأكيدًا من البائع. لم أرسل شيئًا؛ إن أردت تأكيدًا منه قل «اسأله للتأكيد هل عنده ${quantity} قطعة».`, { fact: { kind: "INVENTORY", source: "DINAR_RECORD", text: "كمية غير محدودة" } }, listingId);
     if (facts.available !== null && facts.available >= quantity && !wantsConfirmation)
-      return notice(`سجل DINAR يُظهر توفر ${facts.available} قطعة الآن من «${facts.title}»، فالكمية التي تريدها (${quantity}) متاحة حسب السجل. هذه معلومة من سجل الإعلان، لا وعد من البائع. لم أرسل شيئًا للبائع؛ إن أردت تأكيدًا منه قل «اسأله للتأكيد هل عنده ${quantity} قطعة».`, { fact: { kind: "INVENTORY", source: "DINAR_RECORD", text: `${facts.available} متاح الآن` } }, listingId);
+      return notice(`سجل جاسم يُظهر توفر ${facts.available} قطعة الآن من «${facts.title}»، فالكمية التي تريدها (${quantity}) متاحة حسب السجل. هذه معلومة من سجل الإعلان، لا وعد من البائع. لم أرسل شيئًا للبائع؛ إن أردت تأكيدًا منه قل «اسأله للتأكيد هل عنده ${quantity} قطعة».`, { fact: { kind: "INVENTORY", source: "DINAR_RECORD", text: `${facts.available} متاح الآن` } }, listingId);
     const short = facts.available !== null && facts.available < quantity;
     const body = short
       ? `هل يمكن توفير ${quantity} قطعة من «${facts.title}»؟ المعروض حاليًا ${facts.available}. وإن أمكن، متى تكون جاهزة؟`
       : `هل تتوفر لديكم كمية ${quantity} قطعة من «${facts.title}»؟ وإذا كانت متاحة، ما موعد التجهيز أو التسليم؟`;
     return draft(input, target, body, "DINAR_DRAFT_APPROVED", short
-      ? `المتاح في سجل DINAR الآن ${facts.available} فقط، فلا أستطيع وعدك بـ${quantity}. جهّزت استفسارًا لبائع «${facts.title}» عن إمكانية توفيرها:`
+      ? `المتاح في سجل جاسم الآن ${facts.available} فقط، فلا أستطيع وعدك بـ${quantity}. جهّزت استفسارًا لبائع «${facts.title}» عن إمكانية توفيرها:`
       : `جهّزت استفسارًا لبائع «${facts.title}» ليؤكد الكمية بنفسه:`, short ? { fact: { kind: "INVENTORY", source: "DINAR_RECORD", text: `${facts.available} متاح الآن` } } : {});
   }
   const body = asQuestion(rawTail(input.message, question) || question);
@@ -568,7 +568,7 @@ async function sellerTarget(input: Input & { actorId: string }): Promise<{ targe
   }
   const candidates = await sellerRelationships(input.actorId, input.market);
   if (!candidates.length)
-    return { turn: notice("لا يمكنني مراسلة مشترٍ ليس بينك وبينه استفسار أو عرض سعر أو طلب. DINAR لا يرسل رسائل لمشترين عشوائيين. لم يُرسل شيء.", { failure: "NO_RELATIONSHIP" }) };
+    return { turn: notice("لا يمكنني مراسلة مشترٍ ليس بينك وبينه استفسار أو عرض سعر أو طلب. جاسم لا يرسل رسائل لمشترين عشوائيين. لم يُرسل شيء.", { failure: "NO_RELATIONSHIP" }) };
   if (candidates.length === 1) return { target: candidates[0]!.target };
   return { turn: await stateTurn(input.actorId, input.market, "LIST", undefined, "لديك أكثر من مشترٍ تتواصل معه. افتح رسالة المشتري المقصود من القائمة ثم اطلب مني سؤاله. لم يُرسل شيء.") };
 }
@@ -646,7 +646,7 @@ export async function executeInquiryTurn(input: Input & { employeeInquiryId?: st
       const counterpart = view?.sellerId === input.actorId ? "المشتري" : "البائع";
       return stateTurn(input.actorId, input.market, "STATUS", inquiryId, outcome.result.duplicate
         ? "أُرسلت هذه الرسالة من قبل؛ لم أكررها."
-        : `أُرسلت رسالتك ووصلت إلى محادثة ${counterpart} داخل DINAR. لا توجد إشعارات خارجية مفعّلة، فسيراها عند فتح DINAR. سيظهر الرد هنا عند كتابته، ويمكنك أن تسأل «ماذا رد ${counterpart}؟» في أي وقت.`);
+        : `أُرسلت رسالتك ووصلت إلى محادثة ${counterpart} داخل جاسم. لا توجد إشعارات خارجية مفعّلة، فسيراها عند فتح جاسم. سيظهر الرد هنا عند كتابته، ويمكنك أن تسأل «ماذا رد ${counterpart}؟» في أي وقت.`);
     }
   }
 
@@ -673,7 +673,7 @@ export async function executeInquiryTurn(input: Input & { employeeInquiryId?: st
     const block = BLOCK.test(text);
     const changed = await closeInquiry(inquiry, input.actorId, block);
     return stateTurn(input.actorId, input.market, "STATUS", inquiry.id, changed
-      ? block ? "أوقفت المراسلة مع هذا الطرف؛ لن تصلك منه رسائل جديدة عبر DINAR." : "أُغلق الاستفسار. يمكن بدء استفسار جديد من الإعلان عند الحاجة."
+      ? block ? "أوقفت المراسلة مع هذا الطرف؛ لن تصلك منه رسائل جديدة عبر جاسم." : "أُغلق الاستفسار. يمكن بدء استفسار جديد من الإعلان عند الحاجة."
       : "هذا الاستفسار مغلق بالفعل.");
   }
 
@@ -756,12 +756,12 @@ async function statusTurn(input: Input & { actorId: string }, sets: Awaited<Retu
   const counterpart = view.counterpartLabel;
   let prompt: string;
   if (answers.length) {
-    prompt = [`ردّ ${counterpart} بخصوص «${view.listing.title}» (${answers.length === 1 ? "رسالة واحدة" : `${answers.length} رسائل`}):`, ...answers.map((message) => `«${message.body}» — ${message.provenanceLabel}`), "هذا كلامه كما كتبه؛ لم يغيّره DINAR، ولا يعني تغييرًا في المخزون أو طلب شراء."].join("\n");
+    prompt = [`ردّ ${counterpart} بخصوص «${view.listing.title}» (${answers.length === 1 ? "رسالة واحدة" : `${answers.length} رسائل`}):`, ...answers.map((message) => `«${message.body}» — ${message.provenanceLabel}`), "هذا كلامه كما كتبه؛ لم يغيّره جاسم، ولا يعني تغييرًا في المخزون أو طلب شراء."].join("\n");
   } else if (lastMine >= 0) {
     const sent = view.messages[lastMine]!;
     prompt = [
       `لم يرد ${counterpart} بعد على رسالتك بخصوص «${view.listing.title}».`,
-      `أُرسلت ${sent.submittedAt ? "ووصلت إلى محادثته داخل DINAR" : ""}${sent.readAt ? "، وقد فتحها" : "، ولم يفتحها بعد"}.`,
+      `أُرسلت ${sent.submittedAt ? "ووصلت إلى محادثته داخل جاسم" : ""}${sent.readAt ? "، وقد فتحها" : "، ولم يفتحها بعد"}.`,
       view.notification.label,
     ].join("\n");
   } else prompt = `لا توجد رسائل جديدة من ${counterpart}.`;
@@ -825,6 +825,6 @@ export async function draftPublicBusinessLocation(input: Input & { actorId: stri
   const place = [listing?.data.area, listing?.data.city].filter((value): value is string => typeof value === "string" && value.trim().length > 0);
   if (!place.length)
     return notice("لا يوجد موقع عام مسجل في إعلانك لأشاركه. أضف المدينة والمنطقة إلى الإعلان، أو شارك نقطة الاستلام ضمن طلب مؤكد. لم يُرسل شيء.", { failure: "NO_PUBLIC_LOCATION" });
-  const body = `موقعنا العام: ${place.join("، ")}. العنوان الدقيق يُشارك داخل DINAR ضمن طلب استلام مؤكد فقط.`;
+  const body = `موقعنا العام: ${place.join("، ")}. العنوان الدقيق يُشارك داخل جاسم ضمن طلب استلام مؤكد فقط.`;
   return draft(input, target, body, "DINAR_DRAFT_APPROVED", "سأرسل للعميل الموقع العام لنشاطك كما يظهر في إعلانك (المنطقة والمدينة فقط، دون عنوان دقيق):");
 }

@@ -49,7 +49,7 @@ const deliveryNoTracking: ComposedSurfaceInput = {
       { label: "التسليم", state: "PENDING" },
     ] },
     { type: "facts", rows: [{ label: "رقم الطلب", value: "ORD-7Q2-19", ltr: true }, { label: "طريقة الاستلام", value: "استلام من البائع" }] },
-    { type: "notice", tone: "INFO", text: "لا يوجد مزود تتبع مباشر لهذا الطلب؛ تظهر هنا الحالة المسجلة في DINAR فقط." },
+    { type: "notice", tone: "INFO", text: "لا يوجد مزود تتبع مباشر لهذا الطلب؛ تظهر هنا الحالة المسجلة في جاسم فقط." },
   ],
 };
 const paymentReview: ComposedSurfaceInput = {

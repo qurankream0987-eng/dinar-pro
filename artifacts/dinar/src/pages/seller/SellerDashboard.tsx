@@ -111,7 +111,7 @@ export default function SellerDashboard() {
           <EmptyState
             icon={Tag}
             title="ابدأ البيع في دقائق"
-            body="أنت تحدد سعر الوحدة وما تشمله والكمية وطريقة التسليم — وبدينار يتولى الباقي."
+            body="أنت تحدد سعر الوحدة وما تشمله والكمية وطريقة التسليم — وجاسم يتولى الباقي."
             action={
               <ButtonLink href="/ai?sell=1" icon={<Plus size={18} />} data-testid="link-empty-new-listing">
                 أضف أول عرض
@@ -127,7 +127,7 @@ export default function SellerDashboard() {
             <Stat icon={CircleCheckBig} label="مبيعات مكتملة" value={d.completedOrders} href="/orders?role=seller" testId="stat-completed" />
             <Stat
               icon={Coins}
-              label="مستحقات بدينار"
+              label="مستحقات جاسم"
               value={<span className="text-xl">{money(d.pendingDuesAmount, market?.currencyCode)}</span>}
               href="/seller/dues"
               testId="stat-dues"

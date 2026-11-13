@@ -48,7 +48,7 @@ export function usageLimitMessage(
     case "ALREADY_PROCESSED":
       return "عولج هذا الطلب نفسه من قبل؛ لم أكرره ولم يُحتسب مرة أخرى.";
     case "GLOBAL_BUDGET_EXHAUSTED":
-      return `المساعد الذكي متوقف مؤقتًا على مستوى DINAR لضبط تكلفة التشغيل حتى ${renewalLabel(refusal.renewsAt)}. لم يُخصم شيء من حصتك. ${ESSENTIALS_STILL_AVAILABLE}`;
+      return `المساعد الذكي متوقف مؤقتًا على مستوى جاسم لضبط تكلفة التشغيل حتى ${renewalLabel(refusal.renewsAt)}. لم يُخصم شيء من حصتك. ${ESSENTIALS_STILL_AVAILABLE}`;
     case "SPEND_BUDGET_UNCONFIGURED":
     case "MODEL_UNPRICED":
       return `المساعد الذكي غير مفعّل في هذه البيئة بعد: لم يُعتمد حد إنفاق أو سعر للنموذج، فلا أرسل أي طلب مدفوع. لم يُخصم شيء من حصتك. ${ESSENTIALS_STILL_AVAILABLE}`;
@@ -178,7 +178,7 @@ export async function plansCardView(actorId: string, market: CardMarket) {
     currentTier: summary.tier,
     provisional: !policy.approved,
     tiers,
-    sameCapabilities: "كل الباقات تعطي قدرات DINAR الذكية نفسها؛ الفرق في سعة الاستخدام فقط، ولا تمنح أي باقة وصولًا لبيانات بائعين أو مشترين آخرين.",
+    sameCapabilities: "كل الباقات تعطي قدرات جاسم الذكية نفسها؛ الفرق في سعة الاستخدام فقط، ولا تمنح أي باقة وصولًا لبيانات بائعين أو مشترين آخرين.",
     billing: {
       status: "NOT_CONNECTED" as const,
       simulationAvailable: simulation,

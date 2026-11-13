@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { UniversalCardSchema } from "@workspace/api-zod/connect";
 import { parseComposedSurface } from "@workspace/api-zod/surface-composition";
 import { universalCardSurface } from "../../dinar/src/features/ai/universal-card-surface";
-const card = UniversalCardSchema.parse({version:1,id:"stored-offer",kind:"EXTERNAL_PRODUCT",commerceMode:"EXTERNAL_REFERRAL",title:"منتج موثق",description:"",providerId:"approved-partner",sourceLabel:"بيانات الصفحة",facts:[],availability:"UNKNOWN",price:null,checkedAt:new Date().toISOString(),externalActions:[{kind:"EXTERNAL_LINK",providerId:"approved-partner",targetId:"stored-offer",intent:"VIEW_ON_PROVIDER",label:"افتح لدى المزوّد"}],disclosure:"الشراء خارج DINAR"});
+const card = UniversalCardSchema.parse({version:1,id:"stored-offer",kind:"EXTERNAL_PRODUCT",commerceMode:"EXTERNAL_REFERRAL",title:"منتج موثق",description:"",providerId:"approved-partner",sourceLabel:"بيانات الصفحة",facts:[],availability:"UNKNOWN",price:null,checkedAt:new Date().toISOString(),externalActions:[{kind:"EXTERNAL_LINK",providerId:"approved-partner",targetId:"stored-offer",intent:"VIEW_ON_PROVIDER",label:"افتح لدى المزوّد"}],disclosure:"الشراء خارج جاسم"});
 await test("an external card without a description renders without inventing a subtitle",()=>{
  const surface=universalCardSurface(card,"aaf95aba-fb91-4e7d-974c-e2d1a384438a");assert.ok(parseComposedSurface(surface));
  assert.equal(Object.hasOwn(surface.sections[0],"subtitle"),false);

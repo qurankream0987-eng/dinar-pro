@@ -429,7 +429,7 @@ await test("D5 owner approves one model-drafted G2 reply grounded in the assigne
             quantity: "1",
             area: "عمان خلدا",
             fulfilment: "استلام",
-            contact: "محادثة DINAR فقط",
+            contact: "محادثة جاسم فقط",
             payment_methods: "كاش",
             "attribute:make": "تويوتا",
             "attribute:model": "كورولا",
@@ -444,7 +444,7 @@ await test("D5 owner approves one model-drafted G2 reply grounded in the assigne
             quantity: "1",
             area: "عمان خلدا",
             fulfilment: "خدمة داخل عمان",
-            contact: "محادثة DINAR فقط",
+            contact: "محادثة جاسم فقط",
             payment_methods: "كاش",
           };
       for (let attempt = 0; attempt < 16; attempt += 1) {
@@ -532,7 +532,7 @@ await test("D5 owner approves one model-drafted G2 reply grounded in the assigne
     quantity: "1",
     area: "عمان خلدا",
     fulfilment: "استلام",
-    contact: "محادثة DINAR فقط",
+    contact: "محادثة جاسم فقط",
     payment_methods: "كاش",
   };
   let completedDraftPayload = correctedDraftPayload;
@@ -936,7 +936,7 @@ await test("D5 tool failure, retry, and revoked publication review stay safe", a
     quantity: "1",
     area: "عمان خلدا",
     fulfilment: "استلام",
-    contact: "محادثة DINAR فقط",
+    contact: "محادثة جاسم فقط",
     payment_methods: "كاش",
   };
   for (let attempt = 0; attempt < 16; attempt += 1) {

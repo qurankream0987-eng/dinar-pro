@@ -135,7 +135,7 @@ try {
   const buyer = await actor("buyer", { width: 390, height: 844 });
   await registerAndLogin("buyer", buyer);
   await buyer.page.goto(`${BASE}/`, { waitUntil: "networkidle" });
-  const box = buyer.page.getByLabel("رسالتك إلى DINAR AI");
+  const box = buyer.page.getByLabel("رسالتك إلى JassimAI");
   await box.fill(`ابحث عن هاتف تجريبي ${run}`);
   await box.press("Enter");
   const card = buyer.page.getByText(title).first();

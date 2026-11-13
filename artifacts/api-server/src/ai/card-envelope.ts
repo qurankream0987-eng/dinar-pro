@@ -56,7 +56,7 @@ const LABELS: Record<string, string> = {
   PERSONAL_INTELLIGENCE: "معلوماتك الشخصية",
   MARKET_SELECTOR_CARD: "اختيار السوق",
   MARKET_PULSE_CARD: "حركة السوق",
-  DINAR_BUSINESS_CARD: "أعمال دينار",
+  DINAR_BUSINESS_CARD: "أعمال جاسم",
   AI_USAGE_CARD: "استخدام الذكاء",
   AI_PLANS_CARD: "خطط الذكاء",
   LISTING_DRAFT_CARD: "مسودة الإعلان",

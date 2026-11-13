@@ -34,11 +34,11 @@ export const DEFAULT_PROVIDER_SCOPES: ProviderScope[] = ["listings:read", "listi
 /** Conservative admission cap: existing connections are not revoked by this policy. */
 export const MAX_ACTIVE_PROVIDER_CONNECTIONS = 2;
 export const PROVIDER_SCOPE_LABELS: Record<ProviderScope, string> = {
-  "connect:catalog:write": "تحديث كتالوج خارجي معتمد فقط؛ لا يضيف عروضًا لسلة DINAR",
+  "connect:catalog:write": "تحديث كتالوج خارجي معتمد فقط؛ لا يضيف عروضًا لسلة جاسم",
   "connect:events:write": "تقديم أحداث شريك موثقة؛ لا ينشئ دفعًا أو تسوية حقيقية",
   "listings:read": "قراءة العروض المتزامنة",
   "listings:write": "إنشاء وتحديث العروض والأسعار والمخزون",
-  "drivers:link": "ربط سائقين لديهم حساب DINAR ووافقوا على الربط",
+  "drivers:link": "ربط سائقين لديهم حساب جاسم ووافقوا على الربط",
 };
 /** What a connection can never do, whatever its scopes. */
 export const PROVIDER_LIMITS = [

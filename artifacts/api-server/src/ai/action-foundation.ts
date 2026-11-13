@@ -495,7 +495,7 @@ export const ACTION_REGISTRY: Record<string, ActionDefinition> = {
           })()]
         : []),
       `الرسالة كما ستصل: «${String(input.body)}»`,
-      input.provenance === "DINAR_DRAFT_APPROVED" ? "صاغ DINAR هذه الرسالة؛ لن تُرسل إلا بموافقتك" : "بكلماتك كما كتبتها",
+      input.provenance === "DINAR_DRAFT_APPROVED" ? "صاغ جاسم هذه الرسالة؛ لن تُرسل إلا بموافقتك" : "بكلماتك كما كتبتها",
       "استفسار وليس عرض سعر ولا طلب شراء، ولا يغيّر المخزون",
       "لا يُشارك رقم هاتفك أو عنوانك",
     ],
@@ -652,7 +652,7 @@ export const ACTION_REGISTRY: Record<string, ActionDefinition> = {
           : snapshot.resourceStatus !== "DRAFT"
             ? `طلب التسجيل ${DRIVER_STATUS_LABELS[snapshot.resourceStatus] ?? ""} بالفعل`
             : undefined,
-    reviewLines: () => ["يُرسل الطلب لمراجعة إدارة DINAR؛ لا يُعتمد تلقائيًا"],
+    reviewLines: () => ["يُرسل الطلب لمراجعة إدارة جاسم؛ لا يُعتمد تلقائيًا"],
     execute: async ({ actorId, market, resourceId }) => {
       const profile = await submitDriverProfile({ userId: actorId, market, profileId: resourceId });
       return { driverProfileId: profile.id, status: profile.status };
@@ -742,7 +742,7 @@ export const ACTION_REGISTRY: Record<string, ActionDefinition> = {
       snapshot.priceRepresentation === "QUOTE_REQUIRED" || snapshot.priceRepresentation === "STARTING_FROM"
         ? "طلب تسعيرة من البائع؛ ليس عرضًا ملزمًا"
         : "طلب معرفة أفضل سعر من البائع",
-      "لن يرسل DINAR سعرًا نيابةً عن البائع",
+      "لن يرسل جاسم سعرًا نيابةً عن البائع",
       "تصلك تسعيرة البائع لتقبلها أو تفاوض عليها",
       "لن يتغير السعر المعلن",
     ],
@@ -866,7 +866,7 @@ export const ACTION_REGISTRY: Record<string, ActionDefinition> = {
     allowed: (snapshot, actorId) =>
       snapshot.ownerId !== actorId ? "الربط غير موجود" : snapshot.resourceStatus !== "ACTIVE" ? "هذا الربط موقوف بالفعل" : undefined,
     reviewLines: () => [
-      "يتوقف مفتاح الربط ولا يقبل DINAR أي مزامنة جديدة منه",
+      "يتوقف مفتاح الربط ولا يقبل جاسم أي مزامنة جديدة منه",
       "تتوقف العروض المنشورة من هذا الربط مؤقتًا وتبقى لك لإدارتها",
       "تبقى الطلبات والمدفوعات والسجلات كما هي",
     ],

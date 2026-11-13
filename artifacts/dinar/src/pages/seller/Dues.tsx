@@ -34,7 +34,7 @@ export default function DuesPage() {
 
   return (
     <div className="container-app max-w-3xl">
-      <PageHeader back="/seller" title="المستحقات" subtitle="رسوم بدينار على طلباتك المكتملة" />
+      <PageHeader back="/seller" title="المستحقات" subtitle="رسوم جاسم على طلباتك المكتملة" />
       {dues.isLoading ? (
         <div className="space-y-3">
           <Skeleton className="h-36 w-full rounded-xl" />
@@ -61,8 +61,8 @@ export default function DuesPage() {
             <div className="mt-4 flex gap-2.5 rounded-md bg-muted p-3 text-sm leading-6 text-text-secondary">
               <Info size={17} className="mt-0.5 shrink-0 text-info" aria-hidden />
               <p>
-                عندما يكتمل طلب ويدفع لك المشتري مباشرة، تُسجَّل رسوم بدينار (15% من قيمة الطلب) هنا. هذه ليست محفظة أو رصيدًا — إنها
-                المبلغ المستحق لبدينار. السداد الإلكتروني غير متاح حاليًا.
+                عندما يكتمل طلب ويدفع لك المشتري مباشرة، تُسجَّل رسوم جاسم (15% من قيمة الطلب) هنا. هذه ليست محفظة أو رصيدًا — إنها
+                المبلغ المستحق لجاسم. السداد الإلكتروني غير متاح حاليًا.
               </p>
             </div>
           </section>

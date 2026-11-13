@@ -653,7 +653,7 @@ export default function AiPage() {
       setLocalMessages(activeConversation.messages);
       setVerifyingTurn(null);
       setFailedTurn(null);
-      setError("لم يكتمل الرد المحفوظ في DINAR. لم نُعِد إرسال طلبك. راجع سجل الإجراءات قبل إرسال طلب جديد.");
+      setError("لم يكتمل الرد المحفوظ في جاسم. لم نُعِد إرسال طلبك. راجع سجل الإجراءات قبل إرسال طلب جديد.");
       return;
     }
     if (verifyingTurn?.conversationId === activeId && replyForTurn(activeConversation.messages, verifyingTurn.messageId)) {
@@ -665,10 +665,10 @@ export default function AiPage() {
     }
     if (pending && pending.id !== verifyingTurn?.messageId) {
       setVerifyingTurn({ text: pending.body, messageId: pending.id, conversationId: activeId, startedAt: Date.now() });
-      setError("طلبك محفوظ في DINAR ونتحقق من نتيجته. لا حاجة لإعادة الإرسال.");
+      setError("طلبك محفوظ في جاسم ونتحقق من نتيجته. لا حاجة لإعادة الإرسال.");
     }
     if (pending?.turnStatus === "uncertain") {
-      setError("نتيجة التنفيذ غير مؤكدة في سجل DINAR. لم نُعِد إرسال طلبك؛ راجع سجل الإجراءات والطلبات قبل أي محاولة جديدة.");
+      setError("نتيجة التنفيذ غير مؤكدة في سجل جاسم. لم نُعِد إرسال طلبك؛ راجع سجل الإجراءات والطلبات قبل أي محاولة جديدة.");
     }
   }, [activeConversation, activeId, streaming, verifyingTurn?.messageId]);
 
@@ -1116,21 +1116,21 @@ export default function AiPage() {
         setFailedTurn(null);
         if (restored.messages[index]?.turnStatus === "failed") {
           setVerifyingTurn(null);
-          setError("لم يكتمل الرد المحفوظ في DINAR. لم نُعِد إرسال طلبك. راجع سجل الإجراءات قبل إرسال طلب جديد.");
+          setError("لم يكتمل الرد المحفوظ في جاسم. لم نُعِد إرسال طلبك. راجع سجل الإجراءات قبل إرسال طلب جديد.");
           return true;
         }
         setVerifyingTurn({ text, messageId, conversationId, startedAt: Date.now() });
         setError(
           restored.messages[index]?.turnStatus === "uncertain"
-            ? "نتيجة التنفيذ غير مؤكدة في سجل DINAR. لم نُعِد إرسال طلبك؛ راجع سجل الإجراءات والطلبات قبل أي محاولة جديدة."
-            : "وصل طلبك إلى DINAR، لكن تأكيد الرد لم يكتمل بعد. نتحقق من السجل — لا حاجة لإعادة الإرسال.",
+            ? "نتيجة التنفيذ غير مؤكدة في سجل جاسم. لم نُعِد إرسال طلبك؛ راجع سجل الإجراءات والطلبات قبل أي محاولة جديدة."
+            : "وصل طلبك إلى جاسم، لكن تأكيد الرد لم يكتمل بعد. نتحقق من السجل — لا حاجة لإعادة الإرسال.",
         );
         return true;
       }
       setVerifyingTurn(null);
       setDraft((current) => current || text);
       setFailedTurn({ text, messageId, conversationId });
-      setError("لم يصل طلبك إلى DINAR. أعد المحاولة بأمان.");
+      setError("لم يصل طلبك إلى جاسم. أعد المحاولة بأمان.");
       return true;
     } catch {
       return false;
@@ -1760,7 +1760,7 @@ export default function AiPage() {
             <span className="ai-context-card-icon is-gold" aria-hidden><Lightbulb size={18} /></span>
             نصائح من دينار
           </h3>
-          <p>رأي مبني على نتائج هذا البحث داخل دينار فقط، مع ذكر ما لا نعرفه.</p>
+          <p>رأي مبني على نتائج هذا البحث داخل جاسم فقط، مع ذكر ما لا نعرفه.</p>
           <button type="button" className="ai-context-link" disabled={streaming} onClick={() => sendQuickReply("وش تنصحني؟")} data-testid="button-context-advice">
             اطلب نصيحة دينار
             <ChevronLeft size={16} aria-hidden />
@@ -2031,7 +2031,7 @@ export default function AiPage() {
         // Back from another tab: nothing private shows or can be used until the server confirms
         // who is signed in now.
         <p className="ai-identity-check" role="status" data-testid="identity-verifying">
-          يتحقق DINAR من الحساب…
+          يتحقق جاسم من الحساب…
         </p>
       )}
       <button
@@ -2071,7 +2071,7 @@ export default function AiPage() {
           data-has-context={Boolean(searchContext)}
           data-context-open={contextOpen}
         >
-          <nav className="ai-desktop-rail" aria-label="أدوات DINAR">
+          <nav className="ai-desktop-rail" aria-label="أدوات جاسم">
             <TooltipProvider delayDuration={300} skipDelayDuration={100}>
               <span className="ai-rail-brand" aria-hidden="true">
                 <DinarMark size={30} />
@@ -2307,7 +2307,7 @@ export default function AiPage() {
             </div>
             <div className="ai-sidebar-footer">
               {navItems.length > 0 && (
-                <nav className="ai-sidebar-management" aria-label="إدارة دينار">
+                <nav className="ai-sidebar-management" aria-label="إدارة جاسم">
                   {navItems.map(({ label, icon: Icon, testId, onSelect }) => (
                     <button
                       key={testId}
@@ -2385,7 +2385,7 @@ export default function AiPage() {
               showWelcome && "dinar-chat-empty",
             )}
             data-has-context={Boolean(searchContext && !showWelcome)}
-            aria-label="محادثة DINAR"
+            aria-label="محادثة جاسم"
           >
             {searchContext && !showWelcome && (
               <button
@@ -2545,7 +2545,7 @@ export default function AiPage() {
                             ? "أرفع الصور…"
                             : stage === "understanding"
                               ? "أجهز ردك…"
-                              : "أبحث داخل DINAR…"}
+                              : "أبحث داخل جاسم…"}
                         </span>
                       </div>
                     )}

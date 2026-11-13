@@ -31,7 +31,7 @@ try {
   await choice.waitFor({ state: "visible", timeout: 45_000 });
   assert.equal(await choice.locator('input[type="radio"]').count(), 3);
   const text = await choice.innerText();
-  for (const label of ["بيع منتجات موقعي داخل دينار", "عرض منتجاتي في دينار والشراء من موقعي", "البيع داخل دينار ومن موقعي معًا"])
+  for (const label of ["بيع منتجات موقعي داخل جاسم", "عرض منتجاتي في جاسم والشراء من موقعي", "البيع داخل جاسم ومن موقعي معًا"])
     assert.ok(text.includes(label), label);
   assert.equal(await page.getByTestId("connect-mode-BUY_ON_MERCHANT_WEBSITE").first().isChecked(), true, "default keeps the existing referral mode");
   checks.push("registration offers exactly the three modes with Arabic labels and explanations");

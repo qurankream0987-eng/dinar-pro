@@ -198,7 +198,7 @@ function accessPayload(access: BusinessAccess) {
 function publicationNotice(access: BusinessAccess): string | undefined {
   if (access.publishable) return undefined;
   if (access.verificationStatus !== "VERIFIED")
-    return `نشر المنتجات ينتظر مراجعة DINAR لهوية النشاط (${access.verificationStatus}). يمكنك تجهيز المسودات الآن؛ لن يُنشر شيء تلقائيًا.`;
+    return `نشر المنتجات ينتظر مراجعة جاسم لهوية النشاط (${access.verificationStatus}). يمكنك تجهيز المسودات الآن؛ لن يُنشر شيء تلقائيًا.`;
   if (access.publicationEligibility !== "ELIGIBLE")
     return "نشر هذا النشاط موقوف من جهة اعتماد الهوية التجارية.";
   return "النشاط غير نشط حاليًا؛ لا يمكن نشر منتجات جديدة.";
@@ -308,7 +308,7 @@ async function updateCanonicalBusinessDraft(
   },
 ) {
   if (!business.d2Revision)
-    throw Object.assign(new Error("تعذر قراءة نسخة هوية النشاط من DINAR؛ لم يتغير شيء."), { status: 409 });
+    throw Object.assign(new Error("تعذر قراءة نسخة هوية النشاط من جاسم؛ لم يتغير شيء."), { status: 409 });
   return updateBusinessProfile(
     business.ownerUserId,
     { id: business.marketId },
@@ -414,14 +414,14 @@ async function startSetup(input: {
     setupPayload(linked, access, {
       ...(step === "name" ? {} : {}),
     }),
-    `أنشأنا مسودة نشاطك داخل DINAR. ${SETUP_PROMPTS[step]}${CONNECT_MENTION.test(input.text) ? `\n\n${CONNECT_NEXT_STEP}` : ""}`,
+    `أنشأنا مسودة نشاطك داخل جاسم. ${SETUP_PROMPTS[step]}${CONNECT_MENTION.test(input.text) ? `\n\n${CONNECT_NEXT_STEP}` : ""}`,
   );
 }
 
 /** «سجل متجري في دينار كونكت»: Connect builds on this same D2 identity, so the draft is step one. */
 const CONNECT_MENTION = /(?:كونكت|كونيكت|connect)/iu;
 const CONNECT_NEXT_STEP =
-  "DINAR Connect يُبنى على هذا النشاط نفسه: بعد إكمال بياناته وتوثيقه، سجّله مجانًا من بوابة الشركاء (/connect) واختر طريقة المشاركة: البيع داخل دينار، أو العرض في دينار والشراء من موقعك، أو الاثنين معًا. لم يُسجَّل أي شيء في Connect بعد.";
+  "جاسم Connect يُبنى على هذا النشاط نفسه: بعد إكمال بياناته وتوثيقه، سجّله مجانًا من بوابة الشركاء (/connect) واختر طريقة المشاركة: البيع داخل دينار، أو العرض في جاسم والشراء من موقعك، أو الاثنين معًا. لم يُسجَّل أي شيء في Connect بعد.";
 
 /** §C: one business resumes directly; several are offered, never guessed, never another account's. */
 async function resumeTurn(input: {
@@ -607,7 +607,7 @@ async function reviewSetup(input: {
         `النوع: ${TYPE_LABELS[business.businessType] ?? "نشاط"}`,
         `الوصف: ${business.description || "بدون وصف"}`,
         `المنطقة: ${typeof state.area === "string" ? state.area : "غير محددة"}`,
-        "التشغيل داخل DINAR فقط (بدون موقع خارجي أو متجر منفصل)",
+        "التشغيل داخل جاسم فقط (بدون موقع خارجي أو متجر منفصل)",
         "هوية النشاط التجاري تبقى قيد الاعتماد؛ النشر للجمهور يحتاج اعتمادًا مستقلًا",
       ],
       pendingActionId: reviewId,
@@ -1116,7 +1116,7 @@ function draftDescription(title: string, businessName: string): string {
   // The canonical listing body requires a real description; the item's own name alone can be
   // shorter than the minimum, so the seller's business name (never an invented claim) completes it.
   const base = `${title} — ${businessName}`.trim();
-  return (base.length >= 10 ? base : `${base} — متاح عبر DINAR`).slice(0, 240);
+  return (base.length >= 10 ? base : `${base} — متاح عبر جاسم`).slice(0, 240);
 }
 
 async function prepareDrafts(input: {
@@ -1459,7 +1459,7 @@ async function activateBusiness(input: {
         publicPath: `/business/${updated.id}`,
         allowedActions: refreshed.capabilities.has("business.catalog.read") ? ["CATALOG", "ORDERS", "INSIGHTS"] : [],
       },
-      `تم تشغيل «${updated.displayName}» داخل DINAR. ${notice ?? "يمكنك الآن إدارة منتجاتك وطلباتك من المحادثة."}`,
+      `تم تشغيل «${updated.displayName}» داخل جاسم. ${notice ?? "يمكنك الآن إدارة منتجاتك وطلباتك من المحادثة."}`,
     );
   } catch (error) {
     const status = (error as { status?: unknown } | null)?.status;

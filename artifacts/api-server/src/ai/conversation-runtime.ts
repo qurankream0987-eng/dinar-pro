@@ -506,7 +506,7 @@ async function resolveConversationReference(
     if (index < 0) return undefined;
     const selected = await open(index);
     const current = selected.result.listings[0];
-    if (current) selected.result.query = { ...selected.result.query, buyer: { authority: "DINAR", message: `${reference.kind === "CHEAPEST" ? "الأرخص" : "الأغلى"} بين العروض الظاهرة المتاحة: «${current.title}» بسعر ${current.unitPrice} ${current.currency}. من سجل DINAR الحالي، بدون التوصيل أو أي رسوم. لم يتغير شيء.` } };
+    if (current) selected.result.query = { ...selected.result.query, buyer: { authority: "DINAR", message: `${reference.kind === "CHEAPEST" ? "الأرخص" : "الأغلى"} بين العروض الظاهرة المتاحة: «${current.title}» بسعر ${current.unitPrice} ${current.currency}. من سجل جاسم الحالي، بدون التوصيل أو أي رسوم. لم يتغير شيء.` } };
     return selected;
   }
   // «لا، أقصد الثالث، ولا تضيفه للسلة»: once the correction and the refusal are set aside, what

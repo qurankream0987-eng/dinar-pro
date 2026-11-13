@@ -16,7 +16,7 @@ let privacyExports = [], privacyExportFailure = false;
 let orderFixtures = [], orderFailure = false, orderDelay = 0, fareFixture, commissionFixture, apiFailure = false, trackingFixture = {orderId:'order-ui',orderStatus:'PENDING',delivery:null,tracking:{state:'UNAVAILABLE',reason:'NO_PROVIDER'},progress:[{type:'PICKED_UP',occurredAt:'2026-10-14T10:00:00.000Z',actorRole:'COURIER'}]};
 const memory = (view='MY_INTERESTS', groups=[{label:'تفضيلات صرحت بها',items:[{topic:'camping',label:'التخييم',reason:'قلت إنك تفضله'}]},{label:'اهتمامات متكررة',items:[{topic:'engineering',label:'الهندسة',reason:'تكررت في محادثاتك ويمكنك تصحيحها'}]},{label:'أشياء لا تفضلها',items:[{topic:'football',label:'كرة القدم',reason:'طلبت عدم اقتراحها'}]}]) => surface(view,{memory:{view,groups}});
 const commerce = (view, fields={}) => surface(view,{commerce:{view,paymentMode:'TEST_NO_TRANSFER',autoRenew:false,...fields}});
-const balance = {availableLabel:'25.00 USD',promoLabel:'0.00 USD',reservedLabel:'5.00 USD',spentLabel:'2.00 USD',statement:'رصيد لخدمات دينار التجارية فقط؛ لا يمكن سحبه أو تحويله.'};
+const balance = {availableLabel:'25.00 USD',promoLabel:'0.00 USD',reservedLabel:'5.00 USD',spentLabel:'2.00 USD',statement:'رصيد لخدمات جاسم التجارية فقط؛ لا يمكن سحبه أو تحويله.'};
 const product = (name,priceLabel,durationDays,productTypeLabel=name) => ({name,priceLabel,durationDays,productTypeLabel,currencyCode:'USD',bundleItems:[]});
 const summary = {id:'fixture-conversation',title:'محادثة اختبار',marketId:'KW',createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()};
 const listings = ['listing-first','listing-second'].map((id,index)=>({id,title:index?'Samsung S24 سامسونج':'iPhone 15 آيفون',description:'عرض تجريبي للواجهة فقط',category:'إلكترونيات',categoryId:'electronics',attributes:{},price:'100',unitPrice:'100',currencyCode:'KWD',currency:'KWD',sellerName:'بائع تجريبي',pricingMode:'FIXED',status:'PUBLISHED',fulfilmentType:'PICKUP',inventoryMode:'LIMITED',availableQuantity:2,reservedQuantity:0,condition:'USED',imageUrl:null,seller:{id:'fixture-user',displayName:'بائع تجريبي',avatarObjectPath:null},sellerId:'fixture-user',city:'الكويت',area:'السالمية',isSponsored:false,reviewCount:0,rating:0}));
@@ -225,7 +225,7 @@ try {
       safeArabic: friendlyError({data:{error:'تعذر إكمال الطلب الآن.'}}),
       secretError:friendlyError({data:{error:'خطأ API key sk-fixture-secret'}}),
       transcript:privateTranscript('موقعي 29.123456, 48.654321 API key sk-fixture-private OTP 123456 4111111111111111'),
-      money:privateTranscript('الأجرة 3.000 KWD؛ اشتراك دينار 20.00 USD'),
+      money:privateTranscript('الأجرة 3.000 KWD؛ اشتراك جاسم 20.00 USD'),
     };
   });
   assert.equal(units.memoryRendererDirection,'rtl');assert.equal(units.malformedMemory,null);assert.equal(units.inventedMoneyMode,null);
@@ -301,8 +301,8 @@ try {
     ['CAMPAIGN_ANALYTICS',{campaigns:[{listingTitle:'معدات تخييم',effectiveStatus:'ACTIVE',qualifiedImpressions:20,qualifiedEngagements:2,ordersAttributed:1,conversionRate:'50%',spentLabel:'1.00 USD'}],privacyNote:'أرقام مجمعة فقط؛ لا تعرض معلومات المشترين.'}],
     ['MARKET_PULSE',{pulse:{status:'AVAILABLE',message:'إشارات مجمعة من بحث المستخدمين',windowLabel:'آخر 7 أيام',disclaimer:'ليست وعدًا بربح أو بيع.',insights:[{title:'معدات تخييم',demandLabel:'حوالي 20 باحثًا',unmetLabel:'50% لم يجدوا المناسب',supplyLabel:'5 عروض',ratioLabel:'4 باحثين لكل عرض',priceRangeLabel:'حتى 50.00 USD',trendLabel:'صاعد',canActivateDemandCapture:true}]}}],
     ['MARKET_OPPORTUNITY',{pulse:{status:'INSUFFICIENT_DATA',message:'لا تكفي البيانات',windowLabel:'آخر 24 ساعة',disclaimer:'إشارات مجمعة فقط.',insights:[]}}],
-    ['BUSINESS_PLAN_REVIEW',{review:{plan:product('دينار بزنس','20.00 USD',30),sufficient:true,renewalNote:'لا تجديد تلقائي'},action:{type:'SUBSCRIBE',status:'PENDING',statusLabel:'بانتظار تأكيدك'}}],
-    ['BUSINESS_STATUS',{status:{status:'ACTIVE',statusLabel:'نشط',planName:'دينار بزنس',priceLabel:'20.00 USD',currentPeriodEnd:'2026-11-08T00:00:00Z',entitlementLabels:['إشارات سوق متقدمة'],renewalNote:'لا تجديد تلقائي'}}],
+    ['BUSINESS_PLAN_REVIEW',{review:{plan:product('جاسم بزنس','20.00 USD',30),sufficient:true,renewalNote:'لا تجديد تلقائي'},action:{type:'SUBSCRIBE',status:'PENDING',statusLabel:'بانتظار تأكيدك'}}],
+    ['BUSINESS_STATUS',{status:{status:'ACTIVE',statusLabel:'نشط',planName:'جاسم بزنس',priceLabel:'20.00 USD',currentPeriodEnd:'2026-11-08T00:00:00Z',entitlementLabels:['إشارات سوق متقدمة'],renewalNote:'لا تجديد تلقائي'}}],
     ['COMMERCE_NOTICE',{notice:'الخدمة غير متاحة في سوقك حاليًا.'}],
   ];
   for(const [view,fields] of commercialCases) {
@@ -438,7 +438,7 @@ try {
   const longHistory=Array.from({length:90},(_,i)=>({
     id:`history-${i}`,
     role:i%2?'ASSISTANT':'USER',
-    body:`DINAR ${i} — نص عربي للمراجعة `.repeat(10),
+    body:`جاسم ${i} — نص عربي للمراجعة `.repeat(10),
     createdAt:new Date().toISOString(),
     blocks:[],
   }));
@@ -550,13 +550,13 @@ try {
       ['مراجعة الشراء','مراجعة طلبك','إجمالي الطلب','CART'],
       ['مراجعة الدفع','طريقة الدفع المتاحة','لا تُحوّل أموالًا','RECEIPT'],
       ['التوصيل','تفاصيل الاستلام والتوصيل','الحالة الحالية','TRUCK'],
-      ['التتبع','آخر تحديث للتسليم','معلومات داخل DINAR','PIN'],
+      ['التتبع','آخر تحديث للتسليم','معلومات داخل جاسم','PIN'],
       ['عمليات السائق','طلبات التوصيل المتاحة','تأكيد قبل التنفيذ','USER'],
       ['خدمات المزود','حالة اتصال المزود','بيانات محمية','INFO'],
       ['الاستفسارات','طلب تواصل مع البائع','بانتظار الرد','SEND'],
       ['الترويج','خطة الترويج','السعر غير معتمد بعد','MEGAPHONE'],
       ['التوظيف','تقديم وظيفي','راجع التفاصيل','BRIEFCASE'],
-      ['تحليلات البائع','ملخص المبيعات','من سجل DINAR','CHART'],
+      ['تحليلات البائع','ملخص المبيعات','من سجل جاسم','CHART'],
       ['الباقات','خطط الاستخدام','السعر غير معتمد بعد','GAUGE'],
       ['استهلاك AI','استهلاكك الحالي','تجدد الحصة حسب السياسة','SPARKLE'],
       ['إعدادات الحساب','إدارة التفضيلات','تستطيع تعديلها لاحقًا','USER'],
@@ -568,7 +568,7 @@ try {
     root.render(React.createElement('div',{style:{maxWidth:960,margin:'0 auto',display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(280px,1fr))',gap:12}},
       ...families.map(([family,title,subtitle,icon],index)=>React.createElement('div',{'data-family':family,key:family},
         React.createElement(SurfaceCard,{label:family,testId:`header-card-${index}`},
-          React.createElement(SurfaceHeader,{title:index===15?'إعدادات الحساب والتفضيلات والخصوصية في مساحة واحدة':title,subtitle,icon,badge:index%3===0?{label:'حالة واضحة',tone:'INFO'}:undefined,source:index%4===0?'من DINAR':undefined})
+          React.createElement(SurfaceHeader,{title:index===15?'إعدادات الحساب والتفضيلات والخصوصية في مساحة واحدة':title,subtitle,icon,badge:index%3===0?{label:'حالة واضحة',tone:'INFO'}:undefined,source:index%4===0?'من جاسم':undefined})
         )
       ))
     ));

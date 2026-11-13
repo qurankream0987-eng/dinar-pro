@@ -358,7 +358,7 @@ function LogoutAction() {
     );
   return (
     <div className="mt-3 rounded-xl border border-border bg-background p-4">
-      <p className="text-sm">هل تريد تسجيل الخروج من حساب DINAR؟</p>
+      <p className="text-sm">هل تريد تسجيل الخروج من حساب جاسم؟</p>
       {error && (
         <p role="alert" className="mt-2 text-sm text-destructive">
           {error}
@@ -1147,7 +1147,7 @@ function ResultBlock({
             : block.payload.presentation === "DETAILS"
               ? "العرض الذي اخترته"
               : listings.some((listing) => listing.recommendationReasons?.length)
-                ? "اقتراحات من عروض DINAR"
+                ? "اقتراحات من عروض جاسم"
                 : "وجدت لك هذه الخيارات"}
         </p>
         <span className="num text-xs text-muted-foreground">
@@ -1405,7 +1405,7 @@ function MessageTurn({
           assistant ? "ai-assistant-content w-full text-foreground" : "ai-user-content",
         )}
       >
-        {assistant && <span className="sr-only">DINAR AI</span>}
+        {assistant && <span className="sr-only">JassimAI</span>}
         {message.body &&
           !(assistant && controlOnly(message.blocks)) &&
           (assistant ? (

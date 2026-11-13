@@ -137,7 +137,7 @@ try {
     await layout(buyerSide.page, "buyer-inquiry");
     await buyerSide.page.screenshot({ path: `${out}/shots/g3-inquiry-buyer-sent-390.png` });
 
-    const inbox = (await api("seller", "/api/ai/conversations")).find((row) => row.title === "رسائل البيع والشراء في DINAR");
+    const inbox = (await api("seller", "/api/ai/conversations")).find((row) => row.title === "رسائل البيع والشراء في جاسم");
     if (!inbox) throw new Error("seller inbox not created");
     const sellerSide = await open(browser, "seller", inbox.id, 390);
     await sellerSide.page.getByTestId("inquiry-surface").last().waitFor();

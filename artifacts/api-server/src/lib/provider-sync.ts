@@ -164,7 +164,7 @@ async function canonicalBody(context: ProviderContext, raw: unknown) {
   if (!category) throw providerError(400, "INVALID_PAYLOAD", "لا يوجد تصنيف عام نشط", ["category"]);
   const images = input.images ?? [];
   if (images.some((path) => !isOwnedListingPhotoPath(path, context.owner.id)))
-    throw providerError(400, "INVALID_PAYLOAD", "الصور تُرفع إلى تخزين DINAR أولًا؛ لا تُقبل روابط خارجية", ["images"]);
+    throw providerError(400, "INVALID_PAYLOAD", "الصور تُرفع إلى تخزين جاسم أولًا؛ لا تُقبل روابط خارجية", ["images"]);
   const body = {
     title: input.title,
     description: input.description,
@@ -352,7 +352,7 @@ export async function createDriverLinkCode(input: { userId: string }) {
     .select()
     .from(driverProfiles)
     .where(and(eq(driverProfiles.userId, user.id), eq(driverProfiles.marketId, user.activeMarketId)));
-  if (!profile) throw Object.assign(new Error("سجّل كسائق في DINAR أولًا، ثم أنشئ رمز الربط."), { status: 409 });
+  if (!profile) throw Object.assign(new Error("سجّل كسائق في جاسم أولًا، ثم أنشئ رمز الربط."), { status: 409 });
   const expiresAt = Date.now() + DRIVER_LINK_CODE_TTL_MS;
   const payload = Buffer.from(`${profile.id}|${profile.marketId}|${expiresAt}|${randomBytes(6).toString("hex")}`).toString("base64url");
   return { linkCode: `dlk_${payload}.${linkSignature(payload)}`, expiresAt: new Date(expiresAt).toISOString() };

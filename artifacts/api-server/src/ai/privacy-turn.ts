@@ -69,7 +69,7 @@ async function summaryTurn(actorId: string): Promise<Turn> {
   const held = summary.categories.filter((item) => item.count > 0).slice(0, 4).map((item) => `${item.label}: ${item.count}`);
   const marketing = summary.preferences.communications.marketing;
   const anyMarketing = marketing.inApp || marketing.email || marketing.sms || marketing.push;
-  return notice("بياناتك في DINAR", [
+  return notice("بياناتك في جاسم", [
     `الحساب: ${summary.profile.displayName} · ${summary.profile.phone}${summary.profile.city ? ` · ${summary.profile.city}` : ""}.`,
     held.length ? `${held.join("، ")}.` : "لا توجد سجلات أخرى مرتبطة بحسابك بعد.",
     `الرسائل التسويقية: ${anyMarketing ? "مفعّلة لبعض القنوات" : "متوقفة"} · مشاركة موقع الجهاز: ${summary.preferences.location.deviceLocationSharing === "DISABLED" ? "متوقفة" : "بإذنك في كل مرة"}.`,
@@ -118,7 +118,7 @@ async function fileTurn(input: Input, kind: "OBJECTION" | "INQUIRY" | "CORRECTIO
     const days = privacyResponseDays();
     return notice(`استلمنا طلبك: ${PRIVACY_KIND_LABELS[kind]}`, [
       `رقم الطلب ${request.id.slice(0, 8)} — الحالة: ${request.statusLabel}.`,
-      days ? `يراجعه فريق DINAR، والمدة المستهدفة للرد ${days} يومًا.` : "يراجعه فريق DINAR؛ مدة الرد الرسمية لم تُعتمد بعد.",
+      days ? `يراجعه فريق جاسم، والمدة المستهدفة للرد ${days} يومًا.` : "يراجعه فريق جاسم؛ مدة الرد الرسمية لم تُعتمد بعد.",
       "لم يتغير شيء في بياناتك حتى يُقرر الطلب، وسيظهر القرار وسببه في «طلبات الخصوصية».",
     ], "INFO", [{ label: "طلبات الخصوصية", message: "طلبات الخصوصية" }]);
   } catch (error) {

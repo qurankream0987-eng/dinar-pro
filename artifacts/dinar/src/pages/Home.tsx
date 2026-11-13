@@ -35,7 +35,7 @@ function AiLauncher() {
       <span className="flex h-8 w-8 items-center justify-center rounded-full bg-accent text-accent-foreground">
         <Bot size={16} aria-hidden />
       </span>
-      <span className="min-w-0 flex-1 truncate">خلّ DINAR AI يساعدك في البحث</span>
+      <span className="min-w-0 flex-1 truncate">خلّ JassimAI يساعدك في البحث</span>
       <ArrowLeft size={16} className="shrink-0 text-accent" aria-hidden />
     </Link>
   );
@@ -65,7 +65,7 @@ function AdsInfo() {
 function UnitPriceStrip() {
   const { market } = useAccount();
   const { open } = useMarketSheet();
-  if (market && !market.isActive) return <InlineAlert title={`سوق ${market.countryNameAr} — قريبًا`}>بدينار لم يبدأ استقبال العروض والطلبات في هذا السوق بعد. يمكنك تغيير السوق من الشريط العلوي.</InlineAlert>;
+  if (market && !market.isActive) return <InlineAlert title={`سوق ${market.countryNameAr} — قريبًا`}>جاسم لم يبدأ استقبال العروض والطلبات في هذا السوق بعد. يمكنك تغيير السوق من الشريط العلوي.</InlineAlert>;
   return (
     <section
       aria-label="أسعار العروض في السوق"

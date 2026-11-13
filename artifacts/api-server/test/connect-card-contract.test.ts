@@ -27,7 +27,7 @@ const base = {
       label: "افتح لدى المزوّد",
     },
   ],
-  disclosure: "الشراء خارج DINAR؛ لا يوجد طلب أو دفع داخلي.",
+  disclosure: "الشراء خارج جاسم؛ لا يوجد طلب أو دفع داخلي.",
 };
 await test("external cards cannot acquire internal order/cart identities or arbitrary URLs", () => {
   assert.equal(UniversalCardSchema.safeParse(base).success, true);

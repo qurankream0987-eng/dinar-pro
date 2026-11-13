@@ -33,9 +33,9 @@ const amount = (minor: number, scale: number, currency: string) => `${(minor / 1
 const count = (value: number) => new Intl.NumberFormat("en").format(value);
 const clip = (value: string, max: number) => value.slice(0, max);
 
-export const NOT_PROFIT_NOTE = "هذه إيرادات طلبات مكتملة وليست ربحًا: لا يسجّل DINAR تكاليفك أو مصاريفك.";
-const SOURCE_MONTHS = "طلبات مكتملة في DINAR حسب شهر الطلب";
-const SOURCE_CATEGORIES = "طلبات مكتملة في DINAR حسب تصنيف المنتج";
+export const NOT_PROFIT_NOTE = "هذه إيرادات طلبات مكتملة وليست ربحًا: لا يسجّل جاسم تكاليفك أو مصاريفك.";
+const SOURCE_MONTHS = "طلبات مكتملة في جاسم حسب شهر الطلب";
+const SOURCE_CATEGORIES = "طلبات مكتملة في جاسم حسب تصنيف المنتج";
 
 function validated(input: ComposedSurfaceInput): ComposedSurface | undefined {
   const parsed = ComposedSurfaceSchema.safeParse(input);
@@ -68,7 +68,7 @@ export function composeBusinessDisplay(directive: DisplayDirective | undefined, 
   const categories = (analytics.byCategory ?? []).filter((row) => row.revenueMinor >= 0);
   const hasMonthlySales = months.length >= 2 && months.some((row) => row.completedOrders > 0);
   const period = months.length ? `${monthLabel(months[0]!.month)} – ${monthLabel(months.at(-1)!.month)}` : undefined;
-  const header = { type: "header" as const, title: clip(business.name, 120) || "نشاطك", subtitle: "أرقام من سجلات DINAR", icon: "CHART" as const };
+  const header = { type: "header" as const, title: clip(business.name, 120) || "نشاطك", subtitle: "أرقام من سجلات جاسم", icon: "CHART" as const };
   const metric = {
     type: "metrics" as const,
     label: "الإجمالي",

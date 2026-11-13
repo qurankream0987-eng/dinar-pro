@@ -257,7 +257,7 @@ export function connectParticipationCapabilities(input: {
   const external = CONNECT_EXTERNAL_PURCHASE_MODES.includes(input.mode);
   const internal = CONNECT_INTERNAL_SALE_MODES.includes(input.mode);
   const blockers: string[] = [];
-  if (input.partnerStatus !== "APPROVED") blockers.push("يجب أن يعتمد فريق DINAR حسابك بعد المراجعة.");
+  if (input.partnerStatus !== "APPROVED") blockers.push("يجب أن يعتمد فريق جاسم حسابك بعد المراجعة.");
   if (input.businessVerificationStatus !== "VERIFIED") blockers.push("يجب توثيق نشاطك التجاري.");
   const externalBlockers = [...blockers];
   if (!input.verifiedSite) externalBlockers.push("أثبت ملكية موقعك (سجل DNS) قبل توجيه المشترين إليه.");
@@ -274,14 +274,14 @@ export function connectParticipationCapabilities(input: {
           path: "DINAR_LISTINGS",
           requirements: [
             ...blockers,
-            "تُنشر المنتجات داخل دينار كإعلانات دينار عادية، بأسعارها ومخزونها في دينار.",
+            "تُنشر المنتجات داخل جاسم كإعلانات دينار عادية، بأسعارها ومخزونها في جاسم.",
           ],
         }
-      : { included: false, enabled: false, path: "DINAR_LISTINGS", requirements: ["وضعك الحالي لا يشمل البيع داخل دينار."] },
+      : { included: false, enabled: false, path: "DINAR_LISTINGS", requirements: ["وضعك الحالي لا يشمل البيع داخل جاسم."] },
     // Never derived from the mode: importing a website catalog into DINAR's checkout does not exist.
     nativeCatalogCheckout: {
       enabled: false,
-      requirements: ["تحويل كتالوج موقعك إلى بيع داخل دينار غير متاح بعد؛ اختيار الوضع لا يفعّل الدفع داخل دينار."],
+      requirements: ["تحويل كتالوج موقعك إلى بيع داخل جاسم غير متاح بعد؛ اختيار الوضع لا يفعّل الدفع داخل جاسم."],
     },
   };
 }
@@ -657,7 +657,7 @@ export async function submitConnectPartner(
       throw connectError(
         409,
         "BUSINESS_NOT_VERIFIED",
-        "أكمل توثيق النشاط في DINAR أولًا",
+        "أكمل توثيق النشاط في جاسم أولًا",
       );
     const sites = await tx
       .select()
@@ -1257,7 +1257,7 @@ export async function issueConnectCredential(
       scopes,
       rotated: issued.rotated,
       warning:
-        "احفظ المفتاح الآن؛ لن يظهر مجددًا. لا يمنح صلاحية لطلبات DINAR الداخلية أو تسوية مال حقيقي.",
+        "احفظ المفتاح الآن؛ لن يظهر مجددًا. لا يمنح صلاحية لطلبات جاسم الداخلية أو تسوية مال حقيقي.",
     };
   });
 }
@@ -1635,13 +1635,13 @@ export async function discoverConnectCatalog(
           label: `افتح ${row.offer.title.slice(0, 40)} لدى ${row.business.displayName.slice(0, 30)}`,
         },
       ],
-      disclosure: `الشراء والدفع خارج DINAR. ${row.integration.mode === "SIMULATION_ONLY" ? "هذا تكامل اختبار وليس عملية شراء أو عمولة حقيقية. " : ""}لا تُستحق عمولة من مجرد فتح الرابط؛ يلزم اتفاق مقبول وتحويل موثّق.`,
+      disclosure: `الشراء والدفع خارج جاسم. ${row.integration.mode === "SIMULATION_ONLY" ? "هذا تكامل اختبار وليس عملية شراء أو عمولة حقيقية. " : ""}لا تُستحق عمولة من مجرد فتح الرابط؛ يلزم اتفاق مقبول وتحويل موثّق.`,
     });
   }
   return UniversalCardsPayloadSchema.parse({
     version: 1,
     cards,
-    note: "هذه بيانات شركاء معتمدين بمصدر ووقت فحص؛ القيم المجهولة ليست أسعارًا أو توفرًا مؤكدًا. لا تدخل هذه العروض سلة DINAR الداخلية.",
+    note: "هذه بيانات شركاء معتمدين بمصدر ووقت فحص؛ القيم المجهولة ليست أسعارًا أو توفرًا مؤكدًا. لا تدخل هذه العروض سلة جاسم الداخلية.",
   });
 }
 export async function approvedConnectOffer(

@@ -625,8 +625,8 @@ async function createListingPreview(
       beforeValue =
         typeof row.data.contactPhone === "string"
           ? row.data.contactPhone
-          : "محادثة DINAR فقط";
-      afterValue = normalizedPhone ?? "محادثة DINAR فقط";
+          : "محادثة جاسم فقط";
+      afterValue = normalizedPhone ?? "محادثة جاسم فقط";
       body.contactPhone = normalizedPhone;
     }
     updateBody = body;
@@ -1165,10 +1165,10 @@ function formatPrice(value: number | null, market: Market) {
 }
 
 function priceAdviceText(stats: Awaited<ReturnType<typeof comparablePrices>>, market: Market) {
-  if (!stats.count) return "لم أجد عروضًا مشابهة كافية داخل DINAR لاقتراح سعر. لم أغيّر السعر.";
+  if (!stats.count) return "لم أجد عروضًا مشابهة كافية داخل جاسم لاقتراح سعر. لم أغيّر السعر.";
   if (stats.count < 3)
-    return `وجدت ${stats.count} ${stats.count === 1 ? "عرضًا مشابهًا" : "عرضين مشابهين"} فقط داخل DINAR (${formatPrice(stats.min, market)}${stats.count > 1 ? `–${formatPrice(stats.max, market)}` : ""} ${market.currencyCode})؛ البيانات قليلة لاقتراح سعر. لم أغيّر السعر.`;
-  return `وجدت ${stats.count} عروض مشابهة داخل DINAR. النطاق ${formatPrice(stats.min, market)}–${formatPrice(stats.max, market)} ${market.currencyCode}. الوسيط ${formatPrice(stats.median, market)}. هذه معلومة للاسترشاد فقط؛ لا تضمن البيع، ولم أغيّر السعر.`;
+    return `وجدت ${stats.count} ${stats.count === 1 ? "عرضًا مشابهًا" : "عرضين مشابهين"} فقط داخل جاسم (${formatPrice(stats.min, market)}${stats.count > 1 ? `–${formatPrice(stats.max, market)}` : ""} ${market.currencyCode})؛ البيانات قليلة لاقتراح سعر. لم أغيّر السعر.`;
+  return `وجدت ${stats.count} عروض مشابهة داخل جاسم. النطاق ${formatPrice(stats.min, market)}–${formatPrice(stats.max, market)} ${market.currencyCode}. الوسيط ${formatPrice(stats.median, market)}. هذه معلومة للاسترشاد فقط؛ لا تضمن البيع، ولم أغيّر السعر.`;
 }
 
 async function adviceTarget(input: { conversationId: string; message: string; market: Market; actorId: string }) {
@@ -1279,7 +1279,7 @@ function checkClaims(message: string, record: SellerListingFacts["dinarRecord"],
     }
     if (claim === "WARRANTY" || claim === "CERTIFICATION")
       return pattern.test(sellerText)
-        ? { claim, status: "SELLER_CLAIM_ONLY" as const, basis: "مذكور في وصف البائع ولم يتحقق منه DINAR" }
+        ? { claim, status: "SELLER_CLAIM_ONLY" as const, basis: "مذكور في وصف البائع ولم يتحقق منه جاسم" }
         : { claim, status: "UNSUPPORTED" as const, basis: "غير مذكور في بيانات الإعلان" };
     return { claim, status: "UNSUPPORTED" as const, basis: claim === "DISCOUNT" ? "لا يوجد سعر سابق أو خصم مسجل" : claim === "URGENCY" ? "لا توجد مدة عرض مسجلة" : "لا توجد تقييمات أو أرقام مبيعات مسجلة" };
   });
@@ -1406,7 +1406,7 @@ async function inventoryTurn(input: { conversationId: string; message: string; m
   const prompt = !rows.length
     ? "لا توجد لديك إعلانات في هذا السوق بعد. قل «أبي أبيع …» لتبدأ إعلانًا."
     : target
-      ? `«${String(target.data.title ?? "")}»: ${availableText(target)}. الحالة: ${STATUS_TEXT[target.status] ?? target.status}. الكمية من سجل DINAR؛ لتعديلها قل «عندي 5 قطع».`
+      ? `«${String(target.data.title ?? "")}»: ${availableText(target)}. الحالة: ${STATUS_TEXT[target.status] ?? target.status}. الكمية من سجل جاسم؛ لتعديلها قل «عندي 5 قطع».`
       : asksOne && rows.length > 1
         ? `أي منتج تقصد؟ هذه كميات إعلاناتك:\n${rows.map((row, index) => `${index + 1}. «${String(row.data.title ?? "")}» — ${availableText(row)}`).join("\n")}`
         : `بضاعتك في هذا السوق (${rows.length}):\n${rows.map((row, index) => `${index + 1}. «${String(row.data.title ?? "")}» — ${availableText(row)} — ${STATUS_TEXT[row.status] ?? row.status}`).join("\n")}`;
@@ -1433,7 +1433,7 @@ async function ordersTurn(input: { conversationId: string; market: Market; actor
   const all = sum(() => true);
   const active = all - completed - closed;
   const prompt = all
-    ? `طلبات على إعلاناتك في هذا السوق: ${all}. قيد التنفيذ ${active}، مكتملة ${completed}، ملغاة أو مغلقة ${closed}. الأرقام من سجل طلبات DINAR فقط.`
+    ? `طلبات على إعلاناتك في هذا السوق: ${all}. قيد التنفيذ ${active}، مكتملة ${completed}، ملغاة أو مغلقة ${closed}. الأرقام من سجل طلبات جاسم فقط.`
     : "لا توجد طلبات على إعلاناتك في هذا السوق بعد.";
   const result = await makeSellerContextResult(context, [], prompt);
   result.result.sellerInsight = SellerBusinessInsight.parse({
@@ -1495,9 +1495,9 @@ async function performanceTurn(input: { conversationId: string; market: Market; 
     `${index + 1}. «${item.label}» — طلبات ${item.orders}، عروض أسعار ${item.priceOffers}${"campaignImpressions" in item ? `، ظهور مموّل مؤهل ${item.campaignImpressions}` : ""}`,
   );
   const prompt = [
-    "أداء إعلاناتك من سجل DINAR:",
+    "أداء إعلاناتك من سجل جاسم:",
     ...lines,
-    "لا يسجّل DINAR مشاهدات الإعلانات العادية، لذلك لا أستطيع إعطاء أرقام مشاهدات.",
+    "لا يسجّل جاسم مشاهدات الإعلانات العادية، لذلك لا أستطيع إعطاء أرقام مشاهدات.",
     ...(campaignsAvailable ? [] : ["إحصاءات الترويج غير متاحة الآن."]),
   ].join("\n");
   const listings = await resolveCurrentOwnedListings(input.market, input.actorId, ids);
@@ -1603,11 +1603,11 @@ export async function executeSellerAdviceTurn(input: {
     factors.push({
       key: "price",
       kind: "POSSIBLE_FACTOR",
-      text: `قد يكون أحد العوامل: سعرك ${formatPrice(price, input.market)} أعلى من الوسيط ${formatPrice(stats.median, input.market)} لـ${stats.count} عروض مشابهة داخل DINAR.`,
+      text: `قد يكون أحد العوامل: سعرك ${formatPrice(price, input.market)} أعلى من الوسيط ${formatPrice(stats.median, input.market)} لـ${stats.count} عروض مشابهة داخل جاسم.`,
     });
   else if (stats.median !== null)
-    factors.push({ key: "price", kind: "FACT", text: `سعرك ضمن نطاق ${stats.count} عروض مشابهة داخل DINAR (${formatPrice(stats.min, input.market)}–${formatPrice(stats.max, input.market)}).` });
-  else factors.push({ key: "price", kind: "FACT", text: "لا توجد عروض مشابهة كافية داخل DINAR للمقارنة بالسعر." });
+    factors.push({ key: "price", kind: "FACT", text: `سعرك ضمن نطاق ${stats.count} عروض مشابهة داخل جاسم (${formatPrice(stats.min, input.market)}–${formatPrice(stats.max, input.market)}).` });
+  else factors.push({ key: "price", kind: "FACT", text: "لا توجد عروض مشابهة كافية داخل جاسم للمقارنة بالسعر." });
   const images = [row.data.imageUrl, ...(Array.isArray(row.data.imageUrls) ? row.data.imageUrls : [])].filter(Boolean);
   if (!images.length) factors.push({ key: "photos", kind: "POSSIBLE_FACTOR", text: "قد يكون أحد العوامل: لا توجد صور للإعلان." });
   const description = String(row.data.description ?? "");
@@ -1628,7 +1628,7 @@ export async function executeSellerAdviceTurn(input: {
     listings,
     [
       wantsImprove
-        ? `اقتراحات لتحسين «${title}» من بيانات DINAR فقط (لن أغيّر شيئًا دون مراجعتك):`
+        ? `اقتراحات لتحسين «${title}» من بيانات جاسم فقط (لن أغيّر شيئًا دون مراجعتك):`
         : `لا يمكنني تأكيد سبب عدم البيع، لكن هذه عوامل قد تؤثر في «${title}»:`,
       ...factors.map((factor) => `• ${factor.text}`),
       ...(wantsImprove ? ["لصياغة وصف أفضل قل «اكتب وصفًا أفضل»، ولتطبيقه قل «غيّر الوصف إلى …» ثم أكّد."] : []),

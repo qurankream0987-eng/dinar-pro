@@ -151,7 +151,7 @@ export async function publishDraft(input: { actionId: string; actorId: string; d
     (!actor.phoneVerified || !actor.normalizedPhone)
   )
     throw Object.assign(
-      new Error("لا يمكن استخدام رقم الحساب قبل التحقق منه. أرسل رقمًا آخر أو اختر محادثة DINAR فقط."),
+      new Error("لا يمكن استخدام رقم الحساب قبل التحقق منه. أرسل رقمًا آخر أو اختر محادثة جاسم فقط."),
       { status: 409 },
     );
   // The reviewed action id is the publish idempotency key: a retry returns the same listing.

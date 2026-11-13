@@ -109,7 +109,7 @@ test("untrusted blocks are dropped while safe text and logout surfaces restore",
 test("conversation titles are concise and useful without a model", () => {
   assert.equal(conversationTitle("أريد سيارة برادو مستعملة"), "البحث عن سيارة برادو مستعملة");
   assert.equal(conversationTitle("أريد أبيع آيفون 15"), "بيع آيفون 15");
-  assert.equal(conversationTitle("  مرحباً\n DINAR  "), "مرحباً DINAR");
+  assert.equal(conversationTitle("  مرحباً\n جاسم  "), "مرحباً جاسم");
   assert.equal(conversationTitle(""), "محادثة جديدة");
   assert.ok(conversationTitle("أريد " + "ع".repeat(200)).length <= 72);
 });

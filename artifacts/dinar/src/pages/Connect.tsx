@@ -42,16 +42,16 @@ type Capability = { included?: boolean; enabled: boolean; requirements: string[]
 /** What each mode means, in the merchant's words; the server decides what is actually enabled. */
 const MODE_EXPLANATIONS: Record<ConnectParticipationMode, string> = {
   SELL_INSIDE_DINAR:
-    "تعرض منتجاتك كإعلانات دينار، ويتم الطلب والدفع داخل دينار (الدفع حاليًا محاكاة). يتطلب توثيق النشاط واعتماد الحساب.",
+    "تعرض منتجاتك كإعلانات دينار، ويتم الطلب والدفع داخل جاسم (الدفع حاليًا محاكاة). يتطلب توثيق النشاط واعتماد الحساب.",
   BUY_ON_MERCHANT_WEBSITE:
     "تظهر منتجات موقعك في دينار، ويُكمل المشتري الشراء في موقعك. يتطلب إثبات ملكية الموقع وموصل كتالوج معتمد. النقرة ليست بيعًا ولا تُحتسب عمولة إلا باتفاق مقبول وتحويل موثّق.",
   HYBRID:
-    "تجمع الطريقتين: إعلانات داخل دينار وعروض تُشترى من موقعك. لكل طريقة متطلباتها، وتُفعّل كل واحدة وحدها عند استيفائها.",
+    "تجمع الطريقتين: إعلانات داخل جاسم وعروض تُشترى من موقعك. لكل طريقة متطلباتها، وتُفعّل كل واحدة وحدها عند استيفائها.",
 };
 function ModeChoice({ value, onChange, name }: { value: ConnectParticipationMode; onChange: (mode: ConnectParticipationMode) => void; name: string }) {
   return (
     <fieldset className="space-y-2" data-testid={`connect-mode-choice-${name}`}>
-      <legend className="font-semibold">طريقة المشاركة في DINAR Connect</legend>
+      <legend className="font-semibold">طريقة المشاركة في جاسم Connect</legend>
       {CONNECT_PARTICIPATION_MODES.map((mode) => (
         <label key={mode} className="flex min-h-11 cursor-pointer items-start gap-3 rounded-lg border p-3 has-[:checked]:border-primary">
           <input
@@ -161,9 +161,9 @@ export default function ConnectPage() {
       className="container-app max-w-3xl space-y-5 py-6"
       data-testid="connect-portal"
     >
-      <h1 className="text-2xl font-bold">DINAR Connect — بوابة الشركاء</h1>
+      <h1 className="text-2xl font-bold">جاسم Connect — بوابة الشركاء</h1>
       <p>
-        التسجيل والعرض العضوي والإحالة الأساسية مجانية؛ لا يلزم اشتراك DINAR
+        التسجيل والعرض العضوي والإحالة الأساسية مجانية؛ لا يلزم اشتراك جاسم
         Business. أي عمولة تتطلب اتفاقًا منفصلًا مقبولًا وتحويلًا موثّقًا. الربط
         لا يمنح إذنًا للشراء أو التسوية.
       </p>
@@ -255,8 +255,8 @@ export default function ConnectPage() {
             {partner.participation && (
               <ul className="space-y-2" aria-label="ما يتيحه وضعك الآن">
                 <CapabilityLine label="الشراء من موقعك" capability={partner.participation.externalPurchase} testId="connect-cap-external" />
-                <CapabilityLine label="البيع داخل دينار" capability={partner.participation.internalSale} testId="connect-cap-internal" />
-                <CapabilityLine label="الدفع داخل دينار لمنتجات موقعك" capability={partner.participation.nativeCatalogCheckout} testId="connect-cap-native" />
+                <CapabilityLine label="البيع داخل جاسم" capability={partner.participation.internalSale} testId="connect-cap-internal" />
+                <CapabilityLine label="الدفع داخل جاسم لمنتجات موقعك" capability={partner.participation.nativeCatalogCheckout} testId="connect-cap-native" />
               </ul>
             )}
             {["SUSPENDED", "REVOKED", "REJECTED"].includes(partner.status) ? (
@@ -435,9 +435,9 @@ export default function ConnectPage() {
               </label>
               <label className="block">نوع المصدر<select className={field} value={integrationKind} onChange={e => setIntegrationKind(e.target.value as "API" | "FEED" | "OAUTH" | "MCP" | "WEBSITE")}><option value="API">API — إرسال أو قراءة JSON</option><option value="FEED">تغذية JSON للقراءة</option><option value="OAUTH">حساب OAuth عام للقراءة — PKCE</option><option value="MCP">MCP — لقطة كتالوج مراجعة للقراءة</option><option value="WEBSITE">صفحة موقع — بيانات منتجات وخدمات منظمة</option></select></label>
               <label className="block">{integrationKind === "WEBSITE" ? "عنوان صفحة HTML للفحص" : integrationKind === "MCP" ? "عنوان خادم MCP للقراءة" : "عنوان JSON للقراءة (اختياري عند إرسال API)"}<input className={field} type="url" dir="ltr" value={endpoint} required={integrationKind !== "API"} maxLength={500} placeholder="https://shop.example.com/catalog.json" onChange={e => setEndpoint(e.target.value)} /></label>
-              {integrationKind === "WEBSITE" && <fieldset className="space-y-3 rounded-lg border p-3"><legend>فهرسة صفحة مصرح بها</legend><p>يقرأ DINAR صفحة واحدة من موقعك وبيانات Product/Service المنظمة فقط؛ لا ينفذ JavaScript ولا يتبع الروابط. اختر التصنيف صراحةً. تخفى عناصر هذا المصدر التي لا يعود الفحص يثبتها، مع حفظ تاريخها.</p><label className="block">تصنيف عناصر الصفحة<select className={field} required value={websiteCategoryId} onChange={e => setWebsiteCategoryId(e.target.value)}><option value="">اختر تصنيفًا للمراجعة</option>{categories.map(category => <option key={category.id} value={category.id}>{category.label}</option>)}</select></label></fieldset>}
-              {integrationKind === "MCP" && <fieldset className="space-y-2 rounded-lg border p-3"><legend>كتالوج MCP للقراءة فقط</legend><p>يلزم دعم العملية catalog.read_snapshot دون مدخلات، مع بيانات كتالوج منظمة ومراجعة مستقلة. لا يستورد DINAR تعليمات المزوّد أو أدوات الشراء والدفع.</p><label className="flex min-h-11 items-center gap-2"><input type="checkbox" checked={mcpOAuth} onChange={e => setMcpOAuth(e.target.checked)} />هذا المصدر يتطلب تفويض حساب قراءة عبر OAuth</label></fieldset>}
-              {useOAuth && <fieldset className="space-y-3 rounded-lg border p-3"><legend>إعدادات عميل عام للقراءة فقط</legend><p>يلزم أن تدعم الشركة نطاق catalog.read وPKCE. هذه المرحلة لا تدعم أسرار العملاء أو صلاحيات الدفع. يجب تسجيل رابط عودة DINAR المعتمد لدى المزوّد.</p><label className="block">معرّف العميل العام<input className={field} required maxLength={200} dir="ltr" value={oauthClientId} onChange={e => setOAuthClientId(e.target.value)} /></label><label className="block">عنوان التفويض HTTPS<input className={field} type="url" required dir="ltr" value={oauthAuthorize} onChange={e => setOAuthAuthorize(e.target.value)} /></label><label className="block">عنوان تبادل رمز القراءة HTTPS<input className={field} type="url" required dir="ltr" value={oauthToken} onChange={e => setOAuthToken(e.target.value)} /></label></fieldset>}
+              {integrationKind === "WEBSITE" && <fieldset className="space-y-3 rounded-lg border p-3"><legend>فهرسة صفحة مصرح بها</legend><p>يقرأ جاسم صفحة واحدة من موقعك وبيانات Product/Service المنظمة فقط؛ لا ينفذ JavaScript ولا يتبع الروابط. اختر التصنيف صراحةً. تخفى عناصر هذا المصدر التي لا يعود الفحص يثبتها، مع حفظ تاريخها.</p><label className="block">تصنيف عناصر الصفحة<select className={field} required value={websiteCategoryId} onChange={e => setWebsiteCategoryId(e.target.value)}><option value="">اختر تصنيفًا للمراجعة</option>{categories.map(category => <option key={category.id} value={category.id}>{category.label}</option>)}</select></label></fieldset>}
+              {integrationKind === "MCP" && <fieldset className="space-y-2 rounded-lg border p-3"><legend>كتالوج MCP للقراءة فقط</legend><p>يلزم دعم العملية catalog.read_snapshot دون مدخلات، مع بيانات كتالوج منظمة ومراجعة مستقلة. لا يستورد جاسم تعليمات المزوّد أو أدوات الشراء والدفع.</p><label className="flex min-h-11 items-center gap-2"><input type="checkbox" checked={mcpOAuth} onChange={e => setMcpOAuth(e.target.checked)} />هذا المصدر يتطلب تفويض حساب قراءة عبر OAuth</label></fieldset>}
+              {useOAuth && <fieldset className="space-y-3 rounded-lg border p-3"><legend>إعدادات عميل عام للقراءة فقط</legend><p>يلزم أن تدعم الشركة نطاق catalog.read وPKCE. هذه المرحلة لا تدعم أسرار العملاء أو صلاحيات الدفع. يجب تسجيل رابط عودة جاسم المعتمد لدى المزوّد.</p><label className="block">معرّف العميل العام<input className={field} required maxLength={200} dir="ltr" value={oauthClientId} onChange={e => setOAuthClientId(e.target.value)} /></label><label className="block">عنوان التفويض HTTPS<input className={field} type="url" required dir="ltr" value={oauthAuthorize} onChange={e => setOAuthAuthorize(e.target.value)} /></label><label className="block">عنوان تبادل رمز القراءة HTTPS<input className={field} type="url" required dir="ltr" value={oauthToken} onChange={e => setOAuthToken(e.target.value)} /></label></fieldset>}
               <label className="block">
                 اسم الربط
                 <input
@@ -509,7 +509,7 @@ export default function ConnectPage() {
                   )}
                   {i.status === "APPROVED" && ["FEED", "API", "OAUTH", "MCP", "WEBSITE"].includes(i.kind) && i.endpointUrl && <>
                     <Button variant="secondary" disabled={busy} aria-label={`مزامنة كتالوج ${i.name}`} onClick={() => setSyncReview(i.id)}>مراجعة مزامنة الكتالوج</Button>
-                    {syncReview === i.id && <div className="w-full space-y-2 rounded-lg border p-3"><p>سيقرأ DINAR المصدر المعتمد ويحدّث الكتالوج بعد فحص الصلاحيات والبيانات. فهرسة الموقع تفحص صفحة واحدة وتخفي عناصر المصدر الغائبة دون محو تاريخها. لا ينفذ شراءً ولا يتبع روابط أخرى.</p><Button disabled={busy} onClick={() => void run(async () => {
+                    {syncReview === i.id && <div className="w-full space-y-2 rounded-lg border p-3"><p>سيقرأ جاسم المصدر المعتمد ويحدّث الكتالوج بعد فحص الصلاحيات والبيانات. فهرسة الموقع تفحص صفحة واحدة وتخفي عناصر المصدر الغائبة دون محو تاريخها. لا ينفذ شراءً ولا يتبع روابط أخرى.</p><Button disabled={busy} onClick={() => void run(async () => {
                       const receipt = ConnectCatalogReceiptSchema.parse(await api(`/connect/integrations/${i.id}/sync`, "POST", { confirm: true, expectedRevision: i.revision })); setSyncReview(null); return receipt;
                     }, receipt => receipt.websiteStatus === "NO_VERIFIABLE_DATA" ? "لم يعثر هذا الفحص على بيانات قابلة للتحقق؛ أُخفي العرض السابق لهذا المصدر مع حفظ تاريخه." : "اكتملت مزامنة الدفعة من المصدر المعتمد.")}>تأكيد قراءة الكتالوج ومزامنته</Button><Button variant="secondary" disabled={busy} onClick={() => setSyncReview(null)}>تراجع عن المزامنة</Button></div>}
                   </>}

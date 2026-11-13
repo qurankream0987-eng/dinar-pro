@@ -383,7 +383,7 @@ export async function getOwnBusiness(actorId: string, market: MarketRef, busines
 export async function verifiedBusinessForSubscription(actorId: string, market: MarketRef, businessId: string) {
   const profile = await ownedProfile(actorId, market, businessId);
   if (profile.verificationStatus !== "VERIFIED")
-    throw fail(409, "دينار بزنس يتطلب نشاطًا تجاريًا موثّقًا من مراجع دينار؛ الدفع لا يوثّق النشاط", "BUSINESS_NOT_VERIFIED");
+    throw fail(409, "جاسم بزنس يتطلب نشاطًا تجاريًا موثّقًا من مراجع دينار؛ الدفع لا يوثّق النشاط", "BUSINESS_NOT_VERIFIED");
   return profile;
 }
 
@@ -649,7 +649,7 @@ export async function submitBusinessForReview(actorId: string, market: MarketRef
       return row!;
     } catch (error) {
       if ((error as { code?: string; cause?: { code?: string } }).code === "23505" || (error as { cause?: { code?: string } }).cause?.code === "23505")
-        throw fail(409, "رقم السجل هذا مرتبط بنشاط آخر قيد المراجعة أو موثّق في هذا السوق؛ تواصل مع دعم دينار", "REGISTRATION_ALREADY_CLAIMED");
+        throw fail(409, "رقم السجل هذا مرتبط بنشاط آخر قيد المراجعة أو موثّق في هذا السوق؛ تواصل مع دعم جاسم", "REGISTRATION_ALREADY_CLAIMED");
       throw error;
     }
   });
@@ -859,7 +859,7 @@ function integrationView(profile: Profile) {
   return {
     adaptersAvailable: [] as string[],
     requests: requests.map((item) => ({ ...item, kindLabel: INTEGRATION_KIND_LABELS[item.kind as (typeof INTEGRATION_KINDS)[number]] ?? item.kind, statusLabel: "لا يوجد موصّل جاهز لهذا النظام بعد" })),
-    note: "مفتاح مزوّد دينار يسمح لنظامك بإرسال إعلاناته إلى دينار فقط، ولا يمنح دينار وصولًا إلى نظامك. الربط بنظامك يحتاج موصّلًا معتمدًا وصلاحيات قراءة فقط تمنحها أنت.",
+    note: "مفتاح مزوّد جاسم يسمح لنظامك بإرسال إعلاناته إلى دينار فقط، ولا يمنح دينار وصولًا إلى نظامك. الربط بنظامك يحتاج موصّلًا معتمدًا وصلاحيات قراءة فقط تمنحها أنت.",
   };
 }
 

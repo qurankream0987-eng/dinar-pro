@@ -25,7 +25,7 @@ function Chip({ children, tone = "muted" }: { children: string; tone?: "muted" |
 
 export function InquirySurface({ inquiry, active, onSend }: { inquiry: InquiryPayload; active: boolean; onSend?: (text: string) => void }) {
   const send = active ? onSend : undefined;
-  const title = inquiry.view === "DRAFT" ? "مراجعة الرسالة قبل الإرسال" : inquiry.view === "LIST" ? "رسائل البيع والشراء" : inquiry.view === "INCOMING" ? "رسالة وصلتك عبر DINAR" : inquiry.view === "STATUS" ? "محادثة الاستفسار" : "استفسار";
+  const title = inquiry.view === "DRAFT" ? "مراجعة الرسالة قبل الإرسال" : inquiry.view === "LIST" ? "رسائل البيع والشراء" : inquiry.view === "INCOMING" ? "رسالة وصلتك عبر جاسم" : inquiry.view === "STATUS" ? "محادثة الاستفسار" : "استفسار";
   return (
     <section dir="rtl" aria-label={title} data-testid="inquiry-surface" data-view={inquiry.view} className="ai-surface mt-3 min-w-0 max-w-xl space-y-3 rounded-xl border border-border bg-card p-4 text-sm [overflow-wrap:anywhere]">
       <h3 className="flex flex-wrap items-center justify-between gap-2 font-semibold">
@@ -34,7 +34,7 @@ export function InquirySurface({ inquiry, active, onSend }: { inquiry: InquiryPa
       </h3>
       {inquiry.fact && (
         <p className="rounded-lg border border-border bg-background p-2 text-xs" data-testid="inquiry-fact">
-          <Chip tone="primary">معلومة من سجل DINAR</Chip> <bdi>{inquiry.fact.text}</bdi>
+          <Chip tone="primary">معلومة من سجل جاسم</Chip> <bdi>{inquiry.fact.text}</bdi>
         </p>
       )}
       {inquiry.notice && <p role="status">{inquiry.notice}</p>}
@@ -58,7 +58,7 @@ export function InquirySurface({ inquiry, active, onSend }: { inquiry: InquiryPa
             <li key={message.id} data-testid="inquiry-message" data-author={message.authorRole} data-provenance={message.provenance} className={`space-y-1 rounded-lg p-3 ${message.mine ? "bg-primary/5" : "border border-border bg-background"}`}>
               <p className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground"><b className="text-foreground">{message.authorLabel}</b><Chip>{message.provenanceLabel}</Chip><span>{clock(message.createdAt)}</span></p>
               <p className="leading-7" dir="auto">{message.body}</p>
-              {message.mine && <p className="text-[11px] text-muted-foreground">{message.readAt ? "قرأها الطرف الآخر" : message.deliveredAt ? "وصلت إلى محادثته في DINAR ولم تُفتح بعد" : "أُرسلت"}</p>}
+              {message.mine && <p className="text-[11px] text-muted-foreground">{message.readAt ? "قرأها الطرف الآخر" : message.deliveredAt ? "وصلت إلى محادثته في جاسم ولم تُفتح بعد" : "أُرسلت"}</p>}
             </li>
           ))}
         </ol>

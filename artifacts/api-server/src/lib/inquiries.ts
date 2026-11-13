@@ -42,7 +42,7 @@ export type InquiryTarget =
   | { kind: "NEGOTIATION"; negotiationId: string }
   | { kind: "ORDER"; orderId: string };
 
-export const INQUIRY_INBOX_TITLE = "رسائل البيع والشراء في DINAR";
+export const INQUIRY_INBOX_TITLE = "رسائل البيع والشراء في جاسم";
 export const MAX_UNANSWERED_MESSAGES = 3;
 const INQUIRIES_PER_HOUR = 12;
 const DUPLICATE_WINDOW_MS = 24 * 60 * 60 * 1000;
@@ -51,7 +51,7 @@ export const NOTIFICATION_STATUS = "NOT_CONFIGURED" as const;
 export const PROVENANCE_LABELS: Record<InquiryProvenance, string> = {
   BUYER_AUTHORED: "كتبه المشتري",
   SELLER_AUTHORED: "كتبه البائع",
-  DINAR_DRAFT_APPROVED: "صاغه DINAR ووافق عليه المرسل قبل الإرسال",
+  DINAR_DRAFT_APPROVED: "صاغه جاسم ووافق عليه المرسل قبل الإرسال",
 };
 export const ROLE_LABELS: Record<InquiryRole, string> = { BUYER: "المشتري", SELLER: "البائع" };
 
@@ -395,7 +395,7 @@ export async function submitInquiryMessage(input: {
       id: deliveredMessageId,
       conversationId: recipientConversation,
       actor: "ASSISTANT",
-      body: `${lead}\n«${input.body.trim()}»\n— ${PROVENANCE_LABELS[input.provenance]}؛ نُقل كما هو دون تعديل من DINAR.`,
+      body: `${lead}\n«${input.body.trim()}»\n— ${PROVENANCE_LABELS[input.provenance]}؛ نُقل كما هو دون تعديل من جاسم.`,
       contentType: "TEXT",
       // Delivered text is the other party's words: never fed back to the model as history.
       metadata: { inquiryDelivery: true, inquiryId: inquiry.id },
@@ -489,7 +489,7 @@ export async function inquiryView(inquiry: InquiryRow, actorId: string, market: 
       id: inquiry.listingId,
       title: typeof listing?.data.title === "string" ? listing.data.title : "الإعلان",
       // A structured DINAR fact, labelled as such; never a promise.
-      availableLabel: !listing ? null : available === null ? "كمية غير محدودة في سجل DINAR" : `${available} متاح الآن في سجل DINAR`,
+      availableLabel: !listing ? null : available === null ? "كمية غير محدودة في سجل جاسم" : `${available} متاح الآن في سجل جاسم`,
     },
     messages: thread.map((row) => {
       const authorRole = (row.metadata.authorRole === "SELLER" ? "SELLER" : "BUYER") as InquiryRole;
@@ -509,7 +509,7 @@ export async function inquiryView(inquiry: InquiryRow, actorId: string, market: 
         readAt: at(row.id, "INQUIRY_READ"),
       };
     }),
-    notification: { status: NOTIFICATION_STATUS, label: "لا توجد إشعارات خارجية (رسائل SMS أو بريد أو إشعار هاتف) مفعّلة؛ تصل الرسالة إلى محادثة الطرف الآخر داخل DINAR ويراها عند فتحه." },
+    notification: { status: NOTIFICATION_STATUS, label: "لا توجد إشعارات خارجية (رسائل SMS أو بريد أو إشعار هاتف) مفعّلة؛ تصل الرسالة إلى محادثة الطرف الآخر داخل جاسم ويراها عند فتحه." },
     privacyNote: "لا تُشارك أرقام الهواتف أو العناوين عبر الاستفسار. الاستفسار ليس عرض سعر ولا طلب شراء ولا يغيّر المخزون.",
     currencyCode: market.currencyCode,
   };

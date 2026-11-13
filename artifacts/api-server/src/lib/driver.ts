@@ -327,7 +327,7 @@ export async function listDeliveryWork(input: { userId: string; market: Market; 
   if (commissionAccount.hold)
     return {
       cards: [],
-      blocked: "لديك 10 مهام توصيل مكتملة وعمولة DINAR مستحقة؛ سوِّ الرصيد المستحق قبل قبول مهمة جديدة.",
+      blocked: "لديك 10 مهام توصيل مكتملة وعمولة جاسم مستحقة؛ سوِّ الرصيد المستحق قبل قبول مهمة جديدة.",
       serviceCity: profile?.serviceCity ?? null,
     };
   const rows = (await workRows(db, input.market.id)).filter(
@@ -409,7 +409,7 @@ export async function deliveryWorkState(actorId: string, orderId: string, tx: an
     code,
     ...(code === "DRIVER_BLOCKED" ? { reason: blocked } : {}),
     ...(code === "COMMISSION_HOLD"
-      ? { reason: "لديك 10 مهام توصيل مكتملة وعمولة DINAR مستحقة؛ سوِّ الرصيد قبل قبول مهمة جديدة." }
+      ? { reason: "لديك 10 مهام توصيل مكتملة وعمولة جاسم مستحقة؛ سوِّ الرصيد قبل قبول مهمة جديدة." }
       : {}),
     version: `${fulfillment?.version ?? 0}|${fulfillment?.status ?? ""}|${profile?.version ?? 0}|${assignedTo ?? ""}|${commissionHold ? "HOLD" : "CLEAR"}`,
   };
@@ -418,7 +418,7 @@ export async function deliveryWorkState(actorId: string, orderId: string, tx: an
 export const WORK_STATE_MESSAGES: Record<Exclude<WorkState["code"], "OPEN" | "DRIVER_BLOCKED">, string> = {
   OWN_ORDER: "لا يمكنك توصيل طلب أنت طرف فيه",
   NO_PROFILE: "لست مسجلًا كسائق في هذا السوق",
-  COMMISSION_HOLD: "لديك 10 مهام توصيل مكتملة وعمولة DINAR مستحقة؛ سوِّ الرصيد قبل قبول مهمة جديدة.",
+  COMMISSION_HOLD: "لديك 10 مهام توصيل مكتملة وعمولة جاسم مستحقة؛ سوِّ الرصيد قبل قبول مهمة جديدة.",
   TAKEN: "تم أخذ مهمة التوصيل بالفعل",
   ASSIGNED_TO_YOU: "هذه المهمة مسندة إليك بالفعل",
   NOT_OPEN: "مهمة التوصيل هذه لم تعد متاحة",
@@ -550,7 +550,7 @@ export async function revokeCourierAssignment(input: {
     await tx.insert(messages).values({
       id: randomUUID(),
       conversationId: order.id,
-      body: "ألغت إدارة DINAR إسناد المندوب قبل استلام الطلب. لم يُلغَ الطلب؛ على المشتري إعادة ترتيب التوصيل.",
+      body: "ألغت إدارة جاسم إسناد المندوب قبل استلام الطلب. لم يُلغَ الطلب؛ على المشتري إعادة ترتيب التوصيل.",
     });
     return { orderId: order.id, assignmentId: assignment.id, fulfillmentStatus: "FAILED" as const, idempotent: false };
   });

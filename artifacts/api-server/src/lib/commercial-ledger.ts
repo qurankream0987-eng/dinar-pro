@@ -39,7 +39,7 @@ type Market = { id: string; currencyCode: string; minorUnitScale: number };
 type Account = typeof commercialAccounts.$inferSelect;
 type LedgerEntry = typeof commercialLedger.$inferSelect;
 
-export const COMMERCIAL_BALANCE_STATEMENT = "رصيد للاستخدام في خدمات دينار التجارية فقط — لا يُسحب ولا يُحوّل، وليس أموال مشترين أو مستحقات بيع.";
+export const COMMERCIAL_BALANCE_STATEMENT = "رصيد للاستخدام في خدمات جاسم التجارية فقط — لا يُسحب ولا يُحوّل، وليس أموال مشترين أو مستحقات بيع.";
 
 export const fail = (status: number, message: string, code?: string) =>
   Object.assign(new Error(message), { status, ...(code ? { code } : {}) });
@@ -283,7 +283,7 @@ const ENTRY_LABELS: Record<string, string> = {
   VIP_PURCHASE: "VIP",
   REFRESH_PURCHASE: "تجديد الإعلان",
   BUNDLE_PURCHASE: "باقة إعلانات",
-  SUBSCRIPTION_CHARGE: "اشتراك دينار بزنس",
+  SUBSCRIPTION_CHARGE: "اشتراك جاسم بزنس",
   PROMOTION_PURCHASE: "ترويج",
   ENTITLEMENT_CONSUMED: "استخدام وحدة من باقة",
   REFUND: "استرداد إلى الرصيد",

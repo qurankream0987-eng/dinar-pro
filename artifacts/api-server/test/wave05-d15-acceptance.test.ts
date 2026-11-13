@@ -121,7 +121,7 @@ const gateway: ConversationModelGateway = {
     const entry = scripted.find((item) => item.key.length > 0 && text.includes(item.key));
     const turn = entry
       ? { responseKind: "CONVERSATIONAL_RESPONSE", confidence: 0.8, suggestedAction: "NONE", ...entry.body, conversationalReply: entry.reply }
-      : { responseKind: "CONVERSATIONAL_RESPONSE", confidence: 0.8, suggestedAction: "NONE", conversationalReply: "أقرأ لك ما هو مسجّل في دينار وأجيبك من السجل فقط." };
+      : { responseKind: "CONVERSATIONAL_RESPONSE", confidence: 0.8, suggestedAction: "NONE", conversationalReply: "أقرأ لك ما هو مسجّل في جاسم وأجيبك من السجل فقط." };
     return {
       id: "scripted",
       name: MODEL_TOOL.name,
@@ -321,7 +321,7 @@ test("A15-03 ASSISTANT — grounded advice, no invented price, and listing text 
 
   const buyerConversation = await conversation(buyer);
   script(
-    "أرشّح لك من سجل دينار فقط، وأراجع الإعلان معك قبل أي شراء.",
+    "أرشّح لك من سجل جاسم فقط، وأراجع الإعلان معك قبل أي شراء.",
     { suggestedAction: "NONE", goal: "BUY" },
     "هدية للاستخدام اليومي",
   );

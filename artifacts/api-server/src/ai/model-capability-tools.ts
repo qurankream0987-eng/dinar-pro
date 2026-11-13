@@ -341,7 +341,7 @@ async function readInventory(context: ToolContext): Promise<ToolResult> {
   return surface(
     "SELLER_INVENTORY",
     inventory.length
-      ? `هذا مخزونك الحالي في سوقك: ${inventory.length} عرضًا. الأرقام من سجل DINAR.`
+      ? `هذا مخزونك الحالي في سوقك: ${inventory.length} عرضًا. الأرقام من سجل جاسم.`
       : "لا توجد عروض لك في هذا السوق بعد.",
     { inventory },
   );
@@ -406,7 +406,7 @@ async function readFulfillment(input: { orderId: string }, context: ToolContext)
       throw new ModelCapabilityRejected("هذا الطلب ليس لك أو لم يعد موجودًا.", "TARGET_UNAVAILABLE");
     throw error;
   }
-  return surface("ORDER_TRACKING", "هذه حالة التسليم الحالية لهذا الطلب من سجل DINAR.", {
+  return surface("ORDER_TRACKING", "هذه حالة التسليم الحالية لهذا الطلب من سجل جاسم.", {
     fulfillment: view as unknown as Record<string, unknown>,
   });
 }
@@ -423,7 +423,7 @@ async function readCart(context: ToolContext): Promise<ToolResult> {
     availableQuantity: line.availableQuantity,
     ...("agreedPrice" in line && line.agreedPrice ? { agreedPrice: true } : {}),
   }));
-  return surface("CART", cart.length ? `سلتك تحتوي ${cart.length} سطرًا من سجل DINAR.` : "سلتك فارغة.", { cart });
+  return surface("CART", cart.length ? `سلتك تحتوي ${cart.length} سطرًا من سجل جاسم.` : "سلتك فارغة.", { cart });
 }
 
 async function reviewCheckout(context: ToolContext): Promise<ToolResult> {
@@ -622,7 +622,7 @@ async function readNegotiationStatus(input: { negotiationId: string }, context: 
     counterAmount: row.counterAmountMinor === null ? null : money(row.counterAmountMinor, context.market),
     currency: row.currencyCode,
   };
-  return surface("NEGOTIATION_STATUS", "هذه حالة التفاوض الحالية من سجل DINAR.", { negotiation });
+  return surface("NEGOTIATION_STATUS", "هذه حالة التفاوض الحالية من سجل جاسم.", { negotiation });
 }
 
 async function prepareNegotiationProposal(input: z.infer<typeof ProposalArgs>, context: ToolContext): Promise<ToolResult> {

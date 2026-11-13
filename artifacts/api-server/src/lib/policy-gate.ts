@@ -26,7 +26,7 @@ export async function pendingPolicyAcceptances(userId: string, tx: Tx = db): Pro
 }
 
 export const POLICY_REACCEPTANCE_MESSAGE =
-  "حُدّثت شروط DINAR أو سياسة الخصوصية. راجع النسخة الحالية ووافق عليها قبل النشر أو الشراء؛ يمكنك متابعة المحادثة العامة.";
+  "حُدّثت شروط جاسم أو سياسة الخصوصية. راجع النسخة الحالية ووافق عليها قبل النشر أو الشراء؛ يمكنك متابعة المحادثة العامة.";
 
 /** Refuses a contract action while a required current version is unaccepted (exposed 409). */
 export async function assertPoliciesAccepted(userId: string, tx: Tx = db): Promise<void> {

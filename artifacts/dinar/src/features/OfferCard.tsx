@@ -181,7 +181,7 @@ export function OfferCard({
         </span>
         {isBDinar && (
           <span className="absolute end-2 top-2 inline-flex h-7 items-center rounded-full bg-accent px-2.5 text-xs font-bold text-accent-foreground shadow-sm">
-            بدينار
+            جاسم
           </span>
         )}
         {out && (

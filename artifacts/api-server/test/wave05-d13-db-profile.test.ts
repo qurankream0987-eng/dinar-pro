@@ -138,7 +138,7 @@ await test("PF-01 grow a market big enough that a plan choice is a fact, not a c
            (7 + (g * 41) % 3000) * 1000, 'FIXED', 'LIMITED', 500, 0,
            jsonb_build_object(
              'title', (ARRAY['هاتف','لابتوب','سيارة','كنب','غسالة','تيشيرت','فستان','عطر'])[1 + g % 8] || ' ملفات ' || g,
-             'description', 'عرض صناعي لقياس خطط الاستعلام في DINAR — وصف واضح وسعر ثابت',
+             'description', 'عرض صناعي لقياس خطط الاستعلام في جاسم — وصف واضح وسعر ثابت',
              'category', 'أزياء', 'categoryId', 'fashion',
              'city', CASE WHEN g % 3 = 0 THEN 'الزرقاء' ELSE 'عمان' END,
              'area', 'الاباء',

@@ -280,7 +280,7 @@ export default function CheckoutPage() {
                 <p className="text-base font-semibold">الدفع للبائع مباشرة</p>
                 <p className="text-sm text-muted-foreground">
                   تدفع للبائع عند الاستلام أو التنفيذ. لا يوجد دفع إلكتروني داخل
-                  بدينار حاليًا.
+                  جاسم حاليًا.
                 </p>
               </div>
             </div>
@@ -300,7 +300,7 @@ export default function CheckoutPage() {
                   label: "الطلبات",
                   value: <span className="num">{groups.length}</span>,
                 },
-                { label: "رسوم بدينار على المشتري", value: "لا يوجد" },
+                { label: "رسوم جاسم على المشتري", value: "لا يوجد" },
                 {
                   label: "الإجمالي",
                   value: (

@@ -89,7 +89,7 @@ router.get("/business/plan-change-preview", requireAuth, async (req, res) => {
   const planId = z.string().min(1).max(80).parse(req.query.planId);
   const market = await marketFor(req);
   const plan = (await businessPlans(market)).find((item) => item.id === planId);
-  if (!plan) throw fail(404, "خطة دينار بزنس غير متاحة في سوقك", "PRODUCT_DISABLED");
+  if (!plan) throw fail(404, "خطة جاسم بزنس غير متاحة في سوقك", "PRODUCT_DISABLED");
   const current = await aiPlanFor(req.actor!.id, market);
   const access = await accessPlanFor(req.actor!.id, market);
   const policy = await aiUsagePolicyFor(market);
@@ -115,13 +115,13 @@ router.post("/business/subscription-checkout", requireAuth, async (req, res) => 
   const provider = getSubscriptionBillingProvider();
   const market = await marketFor(req);
   const [plan] = await db.select().from(promotionProducts).where(and(eq(promotionProducts.id, body.planId), eq(promotionProducts.marketId, market.id)));
-  if (!plan || plan.productType !== "DINAR_BUSINESS" || !(await businessPlans(market)).some((item) => item.id === plan.id)) throw fail(404, "خطة دينار بزنس غير متاحة في سوقك", "PRODUCT_DISABLED");
+  if (!plan || plan.productType !== "DINAR_BUSINESS" || !(await businessPlans(market)).some((item) => item.id === plan.id)) throw fail(404, "خطة جاسم بزنس غير متاحة في سوقك", "PRODUCT_DISABLED");
   // Eligibility is the server's: Business needs the actor's own VERIFIED business; payment never verifies.
   const planCode = planCodeOfProduct(plan);
   const businessProfileId = await assertPlanEligibility({ actorId: req.actor!.id, market, planCode, businessId: body.businessId });
   const [prior] = await db.select().from(businessSubscriptions).where(and(eq(businessSubscriptions.userId, req.actor!.id), eq(businessSubscriptions.idempotencyKey, body.idempotencyKey)));
   const [live] = prior ? [] : await db.select({ id: businessSubscriptions.id }).from(businessSubscriptions).where(and(eq(businessSubscriptions.userId, req.actor!.id), eq(businessSubscriptions.marketId, market.id), inArray(businessSubscriptions.status, ["PENDING", "ACTIVE", "PAST_DUE", "CANCEL_AT_PERIOD_END"])));
-  if (live) throw fail(409, "لديك اشتراك دينار بزنس قائم أو قيد الدفع", "ALREADY_SUBSCRIBED");
+  if (live) throw fail(409, "لديك اشتراك جاسم بزنس قائم أو قيد الدفع", "ALREADY_SUBSCRIBED");
   const subscriptionId = prior?.id ?? randomUUID();
   if (!prior)
     await db.insert(businessSubscriptions).values({

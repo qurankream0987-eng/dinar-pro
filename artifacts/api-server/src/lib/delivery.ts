@@ -388,13 +388,13 @@ export type DeliveryView = {
 };
 
 export const DELIVERY_FEE_NOTE =
-  "الاستلام الشخصي وتوصيل البائع بلا عمولة توصيل من DINAR.";
+  "الاستلام الشخصي وتوصيل البائع بلا عمولة توصيل من جاسم.";
 
 function deliveryFeeNote(method?: DeliveryMethod): string {
   if (method === "COURIER")
-    return "يتفق المشتري ومندوب DINAR على الأجرة ويؤكدانها. عمولة DINAR هي 10% من المندوب بعد التسليم الناجح فقط؛ التسوية الحالية محاكاة ولا تنقل أموالًا.";
+    return "يتفق المشتري ومندوب جاسم على الأجرة ويؤكدانها. عمولة جاسم هي 10% من المندوب بعد التسليم الناجح فقط؛ التسوية الحالية محاكاة ولا تنقل أموالًا.";
   if (method === "EXTERNAL_PROVIDER")
-    return "توصيل الشركات الخارجية غير مفعّل؛ أي إيراد لـ DINAR يتطلب اتفاقًا موثقًا مع المزود.";
+    return "توصيل الشركات الخارجية غير مفعّل؛ أي إيراد لـ جاسم يتطلب اتفاقًا موثقًا مع المزود.";
   return DELIVERY_FEE_NOTE;
 }
 
@@ -717,7 +717,7 @@ function transitionRule(
     case "CANCELLED":
       if (!["REQUESTED", "ACCEPTED", "READY_FOR_PICKUP"].includes(from)) return notAllowed();
       // Releasing an accepted delivery goes through DINAR support, not the driver alone.
-      if (role === "DRIVER") return fail(403, "لا يمكن لمندوب التوصيل إلغاء مهمة مقبولة؛ تواصل مع دعم DINAR لإعادة إسنادها.", "ROLE_FORBIDDEN");
+      if (role === "DRIVER") return fail(403, "لا يمكن لمندوب التوصيل إلغاء مهمة مقبولة؛ تواصل مع دعم جاسم لإعادة إسنادها.", "ROLE_FORBIDDEN");
       if (!ARRANGEABLE_ORDER.includes(orderStatus)) return fail(409, "لا يمكن تغيير التسليم في حالة الطلب الحالية.", "ORDER_LOCKED");
       return null;
     case "FAILED":

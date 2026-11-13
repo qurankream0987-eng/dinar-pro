@@ -312,7 +312,7 @@ export default function CartPage() {
                     </span>
                   ),
                 },
-                { label: "رسوم بدينار على المشتري", value: "لا يوجد" },
+                { label: "رسوم جاسم على المشتري", value: "لا يوجد" },
                 ...(agreementIssue
                   ? [{ label: "غير محتسب في الإجمالي", value: <span data-testid="text-cart-unpriced">عرض بانتظار الاتفاق على السعر</span> }]
                   : []),

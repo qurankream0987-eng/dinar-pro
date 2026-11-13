@@ -95,7 +95,7 @@ export async function connectPartnerSearchTurn(
         resultSetId: randomUUID(),
         universalCards: payload,
         prompt: payload.cards.length
-          ? "هذه عروض الشركاء المتاحة. الشراء والدفع خارج DINAR."
+          ? "هذه عروض الشركاء المتاحة. الشراء والدفع خارج جاسم."
           : "لا توجد عروض شركاء معتمدة مطابقة حاليًا؛ لم أختلق عروضًا أو أسعارًا.",
         query: { kind: "CONNECT", universalCards: payload },
         listings: [],
@@ -129,7 +129,7 @@ export async function connectDomainSearchTurn(input: {
   });
   if (!raw)
     return clarify(
-      "اكتب اسم النطاق الذي تريد التحقق منه، مثل myshop.com. البحث لا يسجّل نطاقًا ولا ينشئ طلبًا في DINAR.",
+      "اكتب اسم النطاق الذي تريد التحقق منه، مثل myshop.com. البحث لا يسجّل نطاقًا ولا ينشئ طلبًا في جاسم.",
     );
   let domain: string;
   try {
@@ -179,7 +179,7 @@ export async function connectDomainSearchTurn(input: {
     domain: offer,
     externalActions: [offer.action],
     disclosure:
-      "التسجيل والدفع خارج DINAR. لا توجد علاقة عمولة مُعلنة مع هذا المزوّد، ولا يُنشأ طلب داخلي من هذا الرابط.",
+      "التسجيل والدفع خارج جاسم. لا توجد علاقة عمولة مُعلنة مع هذا المزوّد، ولا يُنشأ طلب داخلي من هذا الرابط.",
   }));
   const payload = UniversalCardsPayloadSchema.parse({
     version: 1,
