@@ -1,3 +1,4 @@
+import { IllustrationSchema } from "../src/ai/card-presentation";
 import { DisplayDirectiveSchema, PresentationProposalSchema } from "@workspace/api-zod/surface-composition";
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -349,7 +350,10 @@ function zodMirrorIssues(schema: any, json: any, path: string): string[] {
         ? zodMirrorIssues(PresentationProposalSchema, json, path)
         : path === ".display"
           ? zodMirrorIssues(DisplayDirectiveSchema, json, path)
-          : [`${at}: unhandled unknown`];
+          // Flexible cards: `illustration` is opaque for the same reason; the tool mirrors IllustrationSchema.
+          : path === ".illustration"
+            ? zodMirrorIssues(IllustrationSchema, json, path)
+            : [`${at}: unhandled unknown`];
     default:
       return [`${at}: unhandled ${def.type}`];
   }

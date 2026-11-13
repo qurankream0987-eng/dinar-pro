@@ -11,7 +11,7 @@
 import { z } from "zod";
 import { ComposedSurfaceSchema, type ComposedSurface } from "@workspace/api-zod/surface-composition";
 
-const IllustrationSchema = z.object({
+export const IllustrationSchema = z.object({
   title: z.string().trim().min(1).max(120),
   subtitle: z.string().trim().min(1).max(200).optional(),
   fields: z.array(z.object({ label: z.string().trim().min(1).max(60), value: z.string().trim().min(1).max(100) }).strict()).max(8).optional(),
