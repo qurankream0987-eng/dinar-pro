@@ -10,6 +10,7 @@ import { reportServerError } from "./lib/monitoring";
 import { createDevelopmentListingPhotoSuggestionProvider } from "./ai/groq-listing-photo-provider";
 import { ListingImagePolicyReviewError } from "./ai/listing-image-policy-review";
 import { createWebFrontend } from "./lib/web-frontend";
+import { receiveWhopWebhook } from "./lib/whop/webhooks";
 
 const app: Express = express();
 const listingPhotoSuggestionProvider =
@@ -116,11 +117,14 @@ app.use((req, res, next) => {
     const voiceTranscriptionUpload =
       req.path === "/api/ai/voice-transcription" &&
       ["audio/webm", "audio/mp4", "audio/ogg", "audio/wav"].includes(contentType ?? "");
+    // A provider webhook is authenticated by its signature, not by a browser origin or
+    // cookie; its raw bytes must still reach the verifier unparsed.
+    const signedWebhook = req.path === "/api/whop/webhooks";
     if (
       (origin &&
         (!normalizedOrigin || !allowedOrigins.has(normalizedOrigin))) ||
       req.headers["sec-fetch-site"] === "cross-site" ||
-      (!req.is("application/json") && !voiceTranscriptionUpload)
+      (!req.is("application/json") && !voiceTranscriptionUpload && !signedWebhook)
     ) {
       res.status(403).json({ error: "طلب غير مسموح" });
       return;
@@ -128,6 +132,20 @@ app.use((req, res, next) => {
   }
   next();
 });
+// Before the JSON parser: the signature covers the exact bytes and a re-serialized body fails.
+app.post(
+  "/api/whop/webhooks",
+  express.raw({ type: "*/*", limit: "256kb" }),
+  async (req, res, next) => {
+    try {
+      const raw = Buffer.isBuffer(req.body) ? req.body : Buffer.from("");
+      const result = await receiveWhopWebhook(raw, req.headers);
+      res.status(result.status).json(result.body);
+    } catch (error) {
+      next(error);
+    }
+  },
+);
 app.use(express.json({ limit: "128kb" }));
 app.use(express.urlencoded({ extended: true }));
 // Zod 3 records one issue per failing array element (GHSA-mrhx-c7xc-m3w5): 128 KB of JSON can

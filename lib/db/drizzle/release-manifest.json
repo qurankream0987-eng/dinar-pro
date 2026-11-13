@@ -202,5 +202,9 @@
   {
     "tag": "0050_normal_nico_minoru",
     "sha256": "50cc9e7ca9ec351d26df4ca0e8e0fc5d7c19d1c9e724b0735b91d0908bb121ac"
+  },
+  {
+    "tag": "0051_whop_platforms",
+    "sha256": "6d7ef241130093589f1dbac44f3608a0a04ca01e69f9abbaa37b53174ca7a1d2"
   }
 ]

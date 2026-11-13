@@ -56,6 +56,7 @@ import {
   OrderTimeline,
   parseIssue,
 } from "@/features/OrderParts";
+import { WhopPaymentPanel } from "@/features/WhopPayment";
 
 type Detail = OrderView & {
   deliveryInstructions?: string | null;
@@ -645,6 +646,7 @@ function OrderView({ order }: { order: Detail }) {
       <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-6">
         <div className="min-w-0 space-y-4">
           {action}
+          <WhopPaymentPanel orderId={order.id} orderStatus={order.status} role={role} />
           {error && <InlineAlert tone="danger">{error}</InlineAlert>}
           <OrderChat
             orderId={order.id}

@@ -26,6 +26,7 @@ import {
 } from "@workspace/api-zod";
 import { canHoldSession, SESSION_STATUSES } from "./account-status";
 import { signupConsentRows } from "./policy-lifecycle";
+import { isCountryBlocked } from "./whop/countries";
 import { and, eq, gt, inArray, isNotNull, isNull, lte } from "drizzle-orm";
 import { parsePhoneNumberFromString } from "libphonenumber-js/max";
 import { countries, countryByCode } from "@workspace/global";
@@ -435,6 +436,10 @@ router.post("/auth/register", registrationLimit, async (req, res) => {
   }
   const country = countryByCode.get(b.accountCountry);
   if (!country?.isSelectable) { res.status(400).json({ error: "الدولة غير متاحة للتسجيل" }); return; }
+  if (isCountryBlocked(country.countryCode)) {
+    res.status(403).json({ error: "هذه الدولة غير مدعومة في دينار" });
+    return;
+  }
   const [market] = await db
     .select()
     .from(markets)

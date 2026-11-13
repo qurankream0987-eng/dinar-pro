@@ -51,6 +51,9 @@ export const REVIEWED_PENDING_MIGRATIONS: ReadonlyArray<{ tag: string; sha256: s
   { tag: "0049_d4_business_delegations", sha256: "74cabd4bd6ce17220af24c783d0522cf0c87901f91b5263503595799c2d37591" },
   // D5 adds revocable persisted employee sessions and an explicit bounded capability set.
   { tag: "0050_normal_nico_minoru", sha256: "50cc9e7ca9ec351d26df4ca0e8e0fc5d7c19d1c9e724b0735b91d0908bb121ac" },
+  // Whop platform money lives in five additive tables beside the simulation ledger; the
+  // simulation-only payment tables are untouched, and every checkout is keyed to one order.
+  { tag: "0051_whop_platforms", sha256: "6d7ef241130093589f1dbac44f3608a0a04ca01e69f9abbaa37b53174ca7a1d2" },
 ];
 export const EXPECTED_JOURNAL_ENTRIES =
   EXPECTED_BASELINE_MIGRATIONS + REVIEWED_PENDING_MIGRATIONS.length;

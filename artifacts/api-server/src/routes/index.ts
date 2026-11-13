@@ -23,6 +23,7 @@ import businessProfiles from "./business-profiles";
 import businessDelegations from "./business-delegations";
 import businesses from "./businesses";
 import cash from "./cash";
+import whop from "./whop";
 const router: IRouter = Router();
 router.use(adminMarkets);
 router.use(adminDisputes);
@@ -44,6 +45,8 @@ router.use(integrations);
 router.use(businessProfiles);
 router.use(businessDelegations);
 router.use(businesses);
+// Whop routes stay ahead of the payments router's simulation gate.
+router.use(whop);
 // Before payments: its router-wide simulation gate would hide every later route.
 router.use(provider);
 router.use(trustSafety);

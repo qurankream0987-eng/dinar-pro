@@ -119,6 +119,7 @@ const OrderInlineSurface = lazy(() =>
   })),
 );
 const OrderHistorySurface = lazy(() => import("@/pages/Orders"));
+const PayoutsSurface = lazy(() => import("@/pages/seller/Payouts"));
 const SettingsSurface = lazy(() =>
   import("@/pages/Account").then((m) => ({ default: m.SettingsPage })),
 );
@@ -323,6 +324,7 @@ function Workflow({
                     component={EditOfferSurface}
                   />
                   <Route path="/seller/dues" component={DuesSurface} />
+                  <Route path="/seller/payouts" component={PayoutsSurface} />
                   <Route path="/listings/:id">
                     <ListingSurface onBack={onBack} onSend={onSend} />
                   </Route>

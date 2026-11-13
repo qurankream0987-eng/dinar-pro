@@ -24,10 +24,12 @@ const SellerOffers = lazy(() => import("./pages/seller/SellerOffers"));
 const CreateOffer = lazy(() => import("./pages/seller/CreateOffer"));
 const EditOffer = lazy(() => import("./pages/seller/EditOffer"));
 const DuesPage = lazy(() => import("./pages/seller/Dues"));
+const PayoutsPage = lazy(() => import("./pages/seller/Payouts"));
 const AdminMarketsPage = lazy(() => import("./pages/admin/AdminMarkets"));
 const AdminCategoriesPage = lazy(() => import("./pages/admin/AdminCategories"));
 const AdminPromotionsPage = lazy(() => import("./pages/admin/AdminPromotions"));
 const AdminDisputesPage = lazy(() => import("./pages/admin/AdminDisputes"));
+const AdminRefundsPage = lazy(() => import("./pages/admin/AdminRefunds"));
 const AdminTrustSafetyPage = lazy(() => import("./pages/admin/AdminTrustSafety"));
 const PoliciesIndexPage = lazy(() =>
   import("./pages/Policies").then((m) => ({ default: m.PoliciesIndexPage })),
@@ -68,8 +70,10 @@ const CHAT_ONLY_ADMIN_ROUTES = new Set([
   "/admin/categories",
   "/admin/promotions",
   "/admin/disputes",
+  "/admin/refunds",
   "/admin/trust-safety",
 ]);
+const CHAT_ONLY_SELLER_ROUTES = new Set(["/seller/payouts"]);
 const CHAT_ONLY_ACCOUNT_ROUTES = new Set([
   "/login",
   "/register",
@@ -106,6 +110,7 @@ function Routes() {
       location !== "/ai" &&
       location !== "/orders" &&
       !CHAT_ONLY_ADMIN_ROUTES.has(location) &&
+      !CHAT_ONLY_SELLER_ROUTES.has(location) &&
       !CHAT_ONLY_ACCOUNT_ROUTES.has(location) &&
       !isPolicyRoute(location) &&
       !isBusinessRoute(location)
@@ -130,6 +135,8 @@ function Routes() {
       <Route path="/admin/promotions">{guard(<AdminPromotionsPage />)}</Route>
       <Route path="/admin/disputes">{guard(<AdminDisputesPage />)}</Route>
       <Route path="/admin/trust-safety">{guard(<AdminTrustSafetyPage />)}</Route>
+      <Route path="/admin/refunds">{guard(<AdminRefundsPage />)}</Route>
+      <Route path="/seller/payouts">{guard(<PayoutsPage />)}</Route>
       <Route path="/terms" component={PoliciesIndexPage} />
       <Route path="/policies" component={PoliciesIndexPage} />
       <Route path="/policies/:key" component={PolicyPage} />
@@ -169,11 +176,13 @@ function Routes() {
       <Route path="/seller/offers">{guard(<SellerOffers />)}</Route>
       <Route path="/seller/offers/:id/edit">{guard(<EditOffer />)}</Route>
       <Route path="/seller/dues">{guard(<DuesPage />)}</Route>
+      <Route path="/seller/payouts">{guard(<PayoutsPage />)}</Route>
       <Route path="/admin/markets">{guard(<AdminMarketsPage />)}</Route>
       <Route path="/admin/categories">{guard(<AdminCategoriesPage />)}</Route>
       <Route path="/admin/promotions">{guard(<AdminPromotionsPage />)}</Route>
       <Route path="/admin/disputes">{guard(<AdminDisputesPage />)}</Route>
       <Route path="/admin/trust-safety">{guard(<AdminTrustSafetyPage />)}</Route>
+      <Route path="/admin/refunds">{guard(<AdminRefundsPage />)}</Route>
       <Route component={NotFoundPage} />
     </Switch>
   );
