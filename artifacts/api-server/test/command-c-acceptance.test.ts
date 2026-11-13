@@ -233,7 +233,7 @@ await test("C5 authorized inventory, orders and performance from real rows; anot
   assert.match(orders1.body, /طلبات على إعلاناتك في هذا السوق: 1\. قيد التنفيذ 1/u);
   const perf = await say(seller, conv, "كيف أداء عروضي؟");
   assert.match(perf.body, new RegExp(`«مكيف سبليت ${TOKEN}» — طلبات 1`, "u"));
-  assert.match(perf.body, /لا يسجّل DINAR مشاهدات/u, "absent analytics are stated, not invented");
+  assert.match(perf.body, /لا يسجّل جاسم مشاهدات/u, "absent analytics are stated, not invented");
   const improve = await say(seller, conv, "اقترح كيف أحسن الإعلان الأول");
   assert.match(improve.body, /اقتراحات لتحسين/u);
   assert.match(improve.body, /لا توجد صور/u);

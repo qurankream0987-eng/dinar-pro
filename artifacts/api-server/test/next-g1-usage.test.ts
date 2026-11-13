@@ -490,7 +490,7 @@ await test("G1-17 global spending guard stops AI for everyone without charging u
   await setPolicy(strict, 9_002);
   const actor = await register("Guarded");
   const reply = await say(actor, await conversation(actor), `اشرح لي موضوعًا ${runId}`);
-  assert.match(reply.body, /متوقف مؤقتًا على مستوى DINAR/u, reply.body);
+  assert.match(reply.body, /متوقف مؤقتًا على مستوى جاسم/u, reply.body);
   assert.doesNotMatch(reply.body, /الباقات/u);
   assert.equal((await counter(`user:${actor.id}`, "TEXT_REQUEST"))?.consumedRequests ?? 0, 0);
   const why = await say(actor, await conversation(actor), "ليش وقف الذكاء عندي");

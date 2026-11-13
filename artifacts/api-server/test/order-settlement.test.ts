@@ -74,7 +74,7 @@ await test("contact appears only after the seller accepts; payment preference is
   assert.equal(forBuyer.data.counterpart.role, "SELLER");
   assert.equal(forBuyer.data.counterpart.phone, "+962790000123", "the listing's contact number wins");
   assert.equal(forBuyer.data.settlementPreference.method, "CLIQ");
-  assert.match(forBuyer.data.notice, /خارج دينار/);
+  assert.match(forBuyer.data.notice, /خارج جاسم/);
   const forSeller = await request(`/orders/${orderId}/counterpart-contact`, "GET", undefined, seller.cookie);
   assert.equal(forSeller.data.counterpart.role, "BUYER");
   assert.equal(forSeller.data.counterpart.phone, buyer.phone);

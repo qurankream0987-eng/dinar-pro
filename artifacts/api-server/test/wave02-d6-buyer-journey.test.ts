@@ -253,7 +253,7 @@ await test("W02-D6: three actual offers are compared, one is selected, and histo
   const priceRow = comparison.rows.find((row: any) => row.label === "السعر");
   const rows = await Promise.all([first!, second!, third!].map(listingOf));
   assert.deepEqual(priceRow.values, rows.map((row) => money(row.unitPriceMinor!, JO.minorUnitScale)), "prices come from the stored offers");
-  assert.match(compared.body, /DINAR فقط/u);
+  assert.match(compared.body, /جاسم فقط/u);
 
   // Selection by position resolves against the stored set, never against a client claim.
   const selected = await turn(buyer, conv, "أبي الأول");

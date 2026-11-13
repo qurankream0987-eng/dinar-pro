@@ -443,7 +443,7 @@ await acceptance("G2-06", "seller comparable-price consultation: deterministic i
   const stats = estimate.payload.advice.stats;
   // Other sellers' 8, 9, 12 and 15 (the asking seller's own 10 is excluded): median (9+12)/2.
   assert.deepEqual([stats.count, stats.minMinor, stats.maxMinor, stats.medianMinor], [4, 8000, 15000, 10500]);
-  assert.match(estimate.body, /داخل DINAR/);
+  assert.match(estimate.body, /داخل جاسم/);
   assert.match(estimate.body, /الوسيط 10\.5/);
 });
 
@@ -2271,7 +2271,7 @@ await journey("A", "sell with comparables → publish → buyer search → back 
   assert.doesNotMatch(start.body, /ماذا تريد أن تعرض|اكتب عنوانًا/);
   const advice = await deterministicTurn(actor, "وش تحس سعر مناسب؟");
   assert.equal(advice.payload.sellerInsight?.kind, "PRICE_SUGGESTION", advice.body);
-  assert.match(advice.body, /داخل DINAR/);
+  assert.match(advice.body, /داخل جاسم/);
   const priced = await deterministicTurn(actor, "خلنا نحطه 500");
   assert.equal(priced.payload.draft?.unitPrice, "500", priced.body);
   for (let index = 0; index < 6; index++) {

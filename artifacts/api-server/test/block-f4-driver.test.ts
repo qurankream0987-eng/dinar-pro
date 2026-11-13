@@ -1076,7 +1076,7 @@ await focused("R5-03", "ten unpaid completed deliveries stop new work but preser
   );
   const work = await listDeliveryWork({ userId: d1.id, market: JO, city: CITY });
   assert.deepEqual(work.cards, []);
-  assert.match(work.blocked ?? "", /عمولة DINAR مستحقة/);
+  assert.match(work.blocked ?? "", /عمولة جاسم مستحقة/);
   assert.equal((await assignmentsFor(activeTrip)).length, 1, "the already accepted trip remains assigned");
 
   const d2Profile = (await profileOf(d2))!;

@@ -43,7 +43,7 @@ try {
   await card.waitFor();
   const text = (await card.innerText()).replace(/\s+/g, " ");
   assert.match(text, /كما ذكره البائع/u, "seller-provided rows are labelled");
-  assert.match(text, /من سجل DINAR/u, "record rows are labelled");
+  assert.match(text, /من سجل جاسم/u, "record rows are labelled");
   assert.match(text, /لا ينطبق/u, "a characteristic the other category lacks reads «لا ينطبق»");
   assert.match(text, /لم يذكر البائع/u, "an empty characteristic reads «لم يذكر البائع»");
   const highlights = card.getByTestId("comparison-highlights");

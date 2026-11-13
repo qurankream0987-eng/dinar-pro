@@ -102,7 +102,7 @@ export default function PublicBusinessPage() {
           ) : null}
           {facts.length > 0 && <Summary rows={facts} />}
           <InlineAlert tone="info" title="الشراء يتم عبر جاسم">
-            كل المنتجات هنا من كتالوج النشاط نفسه في سوق جاسم. اختر منتجًا للتعرّف عليه، أو اسأل دينار في المحادثة.
+            كل المنتجات هنا من كتالوج النشاط نفسه في سوق جاسم. اختر منتجًا للتعرّف عليه، أو اسأل جاسم في المحادثة.
           </InlineAlert>
           <a
             href="/#chat"

@@ -62,7 +62,7 @@ try {
   await see(located.getByTestId("business-setup"), "business-setup");
   const fulfilled = await owner.say("استلام وتوصيل");
   const reviewCard = await see(fulfilled.getByTestId("business-profile-review"), "business-profile-review");
-  assert.match(await reviewCard.innerText(), /التشغيل داخل DINAR/u, "the review states DINAR-only operation");
+  assert.match(await reviewCard.innerText(), /التشغيل داخل جاسم/u, "the review states DINAR-only operation");
   recorder.checks.push("three answered questions build the activation review, nothing activated yet");
 
   const activated = await owner.click(reviewCard.getByTestId("business-activate"));

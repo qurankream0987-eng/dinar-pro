@@ -715,7 +715,7 @@ await test("XP-19 hybrid routing: each request finds its class — general, DINA
   // Account changes are reviews; nothing changes before confirmation.
   await check("غير اسمي إلى سامي", dinar("PROFILE_REVIEW"), "is a profile review");
   const me = await request("/auth/me", "GET", undefined, actor.cookie);
-  if (me.data.user.displayName !== "جاسم XP Hybrid routing") problems.push("the name changed without confirmation");
+  if (me.data.user.displayName !== "DINAR XP Hybrid routing") problems.push("the name changed without confirmation");
 
   // A guest cannot send offers or read private records, whatever the phrasing.
   const cookie = (await request("/account/market", "PATCH", { marketId: "JO" })).cookie;
@@ -889,7 +889,7 @@ await test("XP-11 global AI budget guard stops the model for everyone without ch
     const actor = await register("Guarded");
     const turn = await say(actor, await conversation(actor), "اشرح لي التضخم");
     assert.equal(turn.modelCalled, false);
-    assert.match(turn.body, /متوقف مؤقتًا على مستوى DINAR/u, turn.body);
+    assert.match(turn.body, /متوقف مؤقتًا على مستوى جاسم/u, turn.body);
     assert.doesNotMatch(turn.body, /الباقات/u);
     assert.equal(await textUsed(actor), 0);
   } finally {

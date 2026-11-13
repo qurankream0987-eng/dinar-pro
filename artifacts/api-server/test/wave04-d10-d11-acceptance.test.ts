@@ -400,7 +400,7 @@ test("W04-10-03 follow-ups and corrections read the live record; the model's inv
     assert.ok(correctedSearch && correctedRead, `the follow-up ran the production loop too: ${corrected.body}`);
     assert.equal(correctedRead!.result.listings[0].id, correctedSearch[0].id, "and it read the first listing");
     assert.doesNotMatch(corrected.body, /973\s*دنانير/u, "an amount no read recorded never reaches the user");
-    assert.match(corrected.body, /هذه نتائج القراءة الحالية من DINAR/u, "the unrecorded amount is replaced by DINAR's own words");
+    assert.match(corrected.body, /هذه نتائج القراءة الحالية من جاسم/u, "the unrecorded amount is replaced by DINAR's own words");
     assert.equal(sawUntrustedDataRule, true, "tool results are framed to the model as untrusted data");
 
     const quoted = Number(String(correctedRead!.result.listings[0].unitPrice));

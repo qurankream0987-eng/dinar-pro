@@ -316,7 +316,7 @@ await focused("D3A-05", "a review exists before anything is activated and the bu
   assert.ok(reviewPayload.business.pendingActionId);
   assert.ok(reviewPayload.business.expiresAt);
   assert.deepEqual(reviewPayload.business.allowedActions, ["ACTIVATE", "CANCEL"]);
-  assert.ok(reviewPayload.business.reviewLines.some((line: string) => line.includes("DINAR")));
+  assert.ok(reviewPayload.business.reviewLines.some((line: string) => line.includes("جاسم")));
   assert.equal(reviewPayload.card.status.lifecycle, "PENDING_REVIEW");
   assert.equal(reviewPayload.card.pendingReviewId, reviewPayload.business.pendingActionId);
   const [row] = await db.select().from(businessOperatingProfiles).where(eq(businessOperatingProfiles.id, applicantBusinessId));

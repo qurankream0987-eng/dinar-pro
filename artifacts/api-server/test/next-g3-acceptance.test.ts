@@ -198,7 +198,7 @@ await test("G3-02/04 Free exhausts AI: truthful limit, usage still readable, inq
   const cupsStock = (await db.select().from(offers).where(eq(offers.id, L.cups!)))[0]!;
   assert.match(draft.body, new RegExp(`المتاح في سجل جاسم الآن ${(cupsStock.availableQuantity ?? 0) - cupsStock.reservedQuantity} فقط`, "u"));
   const sent = await say(free, conv, "نعم، أرسل.");
-  assert.match(sent.body, /أُرسلت رسالتك ووصلت إلى محادثة البائع داخل DINAR/u, sent.body);
+  assert.match(sent.body, /أُرسلت رسالتك ووصلت إلى محادثة البائع داخل جاسم/u, sent.body);
   assert.equal(modelCalls, before, "mediated communication needs no AI allowance");
   // Negotiation records are created and kept independently of the AI allowance.
   await open(free, conv, `دفاتر رسم ${TOKEN}`, L.rugs!);
@@ -274,7 +274,7 @@ await test("CF-7/8/9 seller statistics: explicit period, separated money figures
   assert.equal(metric("gross").raw, 3 * 10_000 + 2 * 10_000 + 3_000);
   assert.equal(metric("paid").raw, 0, "cash orders are never shown as money received");
   assert.equal(metric("recognized").raw, Math.round((53_000 * (10_000 - PLATFORM_FEE_BASIS_POINTS)) / 10_000), "net after the unchanged 10% commission");
-  assert.match(stats.body, /لا يسجّل DINAR استلام مالها/u);
+  assert.match(stats.body, /لا يسجّل جاسم استلام مالها/u);
   assert.match((await say(seller, conv, "كم بعت هذا الشهر؟")).body, /هذا الشهر \(\d{4}-\d{2}-01/u);
   const compare = payloadOf(await say(seller, conv, "قارن مبيعات الشهر الحالي بالشهر السابق")).sellerInsight;
   assert.equal(compare.previous.period.key, "LAST_MONTH");

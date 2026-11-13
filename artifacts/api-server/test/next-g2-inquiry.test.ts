@@ -136,7 +136,7 @@ await test("G2-02 inventory already answers: no message is sent, the fact is lab
   const conv = await conversation(buyer);
   await say(buyer, conv, `ابحث عن صحون فخار ${TOKEN}`);
   const answered = await say(buyer, conv, "دينار اسأل البائع هل عنده 50 قطعة");
-  assert.match(answered.body, /سجل DINAR يُظهر توفر 60 قطعة/u, answered.body);
+  assert.match(answered.body, /سجل جاسم يُظهر توفر 60 قطعة/u, answered.body);
   assert.match(answered.body, /لم أرسل شيئًا للبائع/u);
   assert.equal(inquiryOf(answered).inquiry.fact.source, "DINAR_RECORD");
   assert.equal((await db.select().from(marketplaceInquiries).where(eq(marketplaceInquiries.listingId, plates))).length, 0);
@@ -152,12 +152,12 @@ await test("G2-04 short stock: no promise of 50; a DINAR draft is shown and sent
   const draft = await say(buyer, buyerConv, "دينار اسأل البائع هل عنده 50 قطعة");
   const payload = inquiryOf(draft);
   assert.equal(payload?.surface, "INQUIRY_DRAFT", draft.body);
-  assert.match(draft.body, /المتاح في سجل DINAR الآن 20 فقط، فلا أستطيع وعدك بـ50/u);
+  assert.match(draft.body, /المتاح في سجل جاسم الآن 20 فقط، فلا أستطيع وعدك بـ50/u);
   assert.equal(payload.inquiry.provenance, "DINAR_DRAFT_APPROVED");
   assert.equal(payload.inquiry.status, "PENDING");
   assert.equal((await db.select().from(marketplaceInquiries).where(eq(marketplaceInquiries.listingId, cups))).length, 0, "nothing sent before approval");
   const sent = await say(buyer, buyerConv, "أرسل");
-  assert.match(sent.body, /أُرسلت رسالتك ووصلت إلى محادثة البائع داخل DINAR/u, sent.body);
+  assert.match(sent.body, /أُرسلت رسالتك ووصلت إلى محادثة البائع داخل جاسم/u, sent.body);
   assert.match(sent.body, /لا توجد إشعارات خارجية مفعّلة/u);
   const status = inquiryOf(sent);
   assert.equal(status?.surface, "INQUIRY_STATUS");
@@ -181,7 +181,7 @@ await test("G2-05/09/20 the seller receives the real inquiry asynchronously in D
   const rows = await reload(seller, sellerInbox);
   const incoming = inquiryBlocks(rows).find((item) => item.payload.surface === "INQUIRY_INCOMING")!;
   assert.match(incoming.body, /وصلتك رسالة من المشتري بخصوص «أكواب سيراميك/u);
-  assert.match(incoming.body, /صاغه DINAR ووافق عليه المرسل قبل الإرسال/u);
+  assert.match(incoming.body, /صاغه جاسم ووافق عليه المرسل قبل الإرسال/u);
   assert.equal(incoming.payload.inquiry.role, "SELLER");
   assert.equal(incoming.payload.inquiry.messages[0].provenance, "DINAR_DRAFT_APPROVED");
   assert.equal(incoming.payload.inquiry.notification.status, "NOT_CONFIGURED");
@@ -212,7 +212,7 @@ await test("G2-07/19 the buyer gets the attributed reply in the original convers
   const delivered = rows.filter((row) => /ردّ البائع على رسالتك/u.test(row.body));
   assert.equal(delivered.length, 1);
   assert.match(delivered[0].body, /«عندي 60 قطعة، ويمكن توفيرها خلال يومين\.»/u);
-  assert.match(delivered[0].body, /كتبه البائع؛ نُقل كما هو دون تعديل من DINAR/u);
+  assert.match(delivered[0].body, /كتبه البائع؛ نُقل كما هو دون تعديل من جاسم/u);
   const answer = await say(buyer, buyerConv, "دينار ماذا قال البائع؟");
   assert.match(answer.body, /ردّ البائع بخصوص «أكواب سيراميك/u);
   assert.match(answer.body, /«عندي 60 قطعة، ويمكن توفيرها خلال يومين\.» — كتبه البائع/u);
@@ -237,7 +237,7 @@ await test("G2-08 the seller asks the buyer an authorized question inside the ex
   assert.match(tell.body, /«التجهيز يحتاج يومين\.»/u, tell.body);
   assert.match((await say(seller, sellerInbox, "نعم")).body, /أُرسلت رسالتك/u);
   const rows = await reload(buyer, buyerConv);
-  assert.ok(rows.some((row) => /«كم قطعة تريد؟»/u.test(row.body) && /صاغه DINAR ووافق عليه المرسل/u.test(row.body)));
+  assert.ok(rows.some((row) => /«كم قطعة تريد؟»/u.test(row.body) && /صاغه جاسم ووافق عليه المرسل/u.test(row.body)));
   const status = await say(buyer, buyerConv, "ماذا رد البائع");
   assert.match(status.body, /3 رسائل/u, status.body);
   // A bare «نعم» under a delivered yes/no question is an answer, reviewed before sending.

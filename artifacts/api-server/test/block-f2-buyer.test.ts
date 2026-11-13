@@ -210,7 +210,7 @@ await focused("F2-06", "comparison shows current server facts side by side", asy
   const price = comparison.rows.find((row: any) => row.label === "السعر");
   const rows = await Promise.all([set.resourceIds[0], set.resourceIds[2]].map(async (id) => (await db.select().from((await import("@workspace/db")).offers).where(eq((await import("@workspace/db")).offers.id, id!)))[0]!));
   assert.deepEqual(price.values, rows.map((row) => `${(row.unitPriceMinor! / 1000).toFixed(3)} JOD`));
-  assert.match(compared.body, /DINAR فقط/);
+  assert.match(compared.body, /جاسم فقط/);
 });
 
 await focused("F2-07", "an unknown field stays unknown; nothing is invented", async () => {

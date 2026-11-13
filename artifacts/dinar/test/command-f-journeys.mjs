@@ -111,7 +111,7 @@ try {
     const first = await send(page, "دينار اشرح لي الطاقة الشمسية باختصار");
     expectText(first, /تحوّل الألواح ضوء الشمس إلى كهرباء/u, "general answer");
     await first.locator.getByRole("heading", { name: "الطاقة الشمسية" }).waitFor();
-    expectText(first, /معلومة عامة وليست من بيانات DINAR/u, "general provenance");
+    expectText(first, /معلومة عامة وليست من بيانات جاسم/u, "general provenance");
     const followUp = await send(page, "طيب كم لوح أحتاج لبيت صغير؟");
     expectText(followUp, /6 إلى 8 ألواح/u, "follow-up answer");
     await noOverflow(page, "general");
@@ -134,8 +134,8 @@ try {
     const { context, page } = await open(browser, "seller", conversations.marketing);
     const copy = await send(page, "دينار اكتب إعلانًا مقنعًا");
     expectText(copy, /متوفر 4 قطع/u, "grounded copy");
-    expectText(copy, /مبني على بيانات إعلانك في DINAR/u, "grounded copy provenance");
-    expectNoText(copy, /معلومة عامة وليست من بيانات DINAR/u, "grounded copy is not general knowledge");
+    expectText(copy, /مبني على بيانات إعلانك في جاسم/u, "grounded copy provenance");
+    expectNoText(copy, /معلومة عامة وليست من بيانات جاسم/u, "grounded copy is not general knowledge");
     const refused = await send(page, "اكتب أن عليه ضمان خمس سنوات");
     expectText(refused, /لم أستطع صياغة نص تسويقي دون ادعاءات لا تدعمها بيانات إعلانك/u, "unsupported claim refused");
     expectNoText(refused, /5 سنوات/u, "the unsupported draft is never shown");

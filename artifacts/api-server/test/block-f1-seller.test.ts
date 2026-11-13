@@ -190,7 +190,7 @@ await focused("F1-02", "complete input is not asked again; «اعرض هذا ب�
     [advice.payload.sellerInsight.count, advice.payload.sellerInsight.min, advice.payload.sellerInsight.max, advice.payload.sellerInsight.median, advice.payload.sellerInsight.source],
     [3, 250, 280, 270, "DINAR_ONLY"],
   );
-  assert.match(advice.body, /وجدت 3 عروض مشابهة داخل DINAR\. النطاق 250–280 JOD\. الوسيط 270/);
+  assert.match(advice.body, /وجدت 3 عروض مشابهة داخل جاسم\. النطاق 250–280 JOD\. الوسيط 270/);
   assert.match(advice.body, /لم أغيّر السعر/);
   assert.equal(edited.payload.draftReview.actions.includes("PUBLISH"), edited.payload.draftReview.missingFields.length === 0);
 });

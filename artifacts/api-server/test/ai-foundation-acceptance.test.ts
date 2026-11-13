@@ -327,7 +327,7 @@ test("AI-F02 search then compare renders DINAR's own side-by-side surface and pe
   assert.equal(titles.length, 2);
   assert.ok(titles.every((title: string) => title.includes(run)));
   assert.doesNotMatch(reply.body, /MODEL_COMPARISON_PROSE_MUST_NOT_BE_THE_BODY/u, "model prose never replaces the server surface body");
-  assert.match(reply.body, /البيانات الحالية من DINAR/u);
+  assert.match(reply.body, /البيانات الحالية من جاسم/u);
   const sets = await resultSetsFor(clientMessageId);
   assert.equal(sets.length, 1, "only the intermediate search is persisted");
   assert.equal(await cartLines(user.id), 0);

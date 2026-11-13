@@ -382,7 +382,7 @@ await journey("J01", "individual seller: image → correction → missing facts 
   );
   assert.match(titled.body, /صف العرض أو الخدمة/, "asks conversationally for the next missing fact");
   const advice = await say(seller, "وش تحس سعر مناسب؟");
-  assert.match(advice.body, /داخل DINAR/, advice.body);
+  assert.match(advice.body, /داخل جاسم/, advice.body);
   const priced = await say(seller, "خلنا نحطه 20");
   assert.equal(priced.payload.draft?.unitPrice, "20", priced.body);
   const listingsBefore = (await db.select().from(offers).where(eq(offers.sellerId, seller.id))).length;

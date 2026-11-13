@@ -176,7 +176,7 @@ try {
     const card = reply.getByTestId("business-card");
     await card.waitFor();
     assert.equal(await card.getAttribute("data-status"), "PENDING_REVIEW");
-    assert.match(await textOf(reply), /بانتظار مراجع دينار/u);
+    assert.match(await textOf(reply), /بانتظار مراجع جاسم/u);
     if (FALSE_BUSINESS.test(await textOf(reply))) counters.falseBusinessSuccess++;
   });
 

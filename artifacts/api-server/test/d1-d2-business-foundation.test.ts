@@ -847,14 +847,14 @@ await test("J-01 the shared D1+D2 journey (13 steps) through the unified convers
     const submitted = await turn(journey, conv, "أرسل طلب التوثيق");
     assert.equal(submitted.payload.commerce.business.status, "PENDING_REVIEW", submitted.raw);
     const waiting = await turn(journey, conv, "وين وصل طلبي؟");
-    assert.match(waiting.payload.prompt, /بانتظار مراجع دينار/u);
+    assert.match(waiting.payload.prompt, /بانتظار مراجع جاسم/u);
     const decision = await decide(card.id, "VERIFY");                                                // 8–9
     assert.equal(decision.status, 200, decision.raw);
   } finally {
     unregisterBusinessDocumentScanner();
   }
   const verified = await turn(journey, conv, "وين وصل طلبي؟");
-  assert.match(verified.payload.prompt, /موثّق من مراجع دينار/u);
+  assert.match(verified.payload.prompt, /موثّق من مراجع جاسم/u);
   const business = await turn(journey, conv, "أبي أشترك في بزنس");                                     // 10–12
   assert.match(business.payload.prompt, /49 دولار/u);
   assert.match(business.payload.prompt, /غير متاح الآن|الفوترة غير موصولة/u);

@@ -745,7 +745,7 @@ await acceptance("U-27", "completion is what the action ledger records: receipts
   assert.match(lastModelMessages.at(-1)?.content ?? "", /SERVER_ACTION_RECEIPTS: \[[^\]]*"action":"SEND_NEGOTIATION_OFFER","lifecycle":"SUCCEEDED"/u);
   // Even a true report is the server's to make: the model's sentence is replaced by the ledger.
   assert.equal(reassured.payload.advice?.authority, "SERVER_LEDGER", reassured.body);
-  assert.match(reassured.body, /حسب سجل دينار.*أُرسل عرض سعرك للبائع/u);
+  assert.match(reassured.body, /حسب سجل جاسم.*أُرسل عرض سعرك للبائع/u);
   assert.doesNotMatch(reassured.body, /لم يتغير شيء/u, "a sent offer is never denied");
 
   // A model that claims an action, under injection or not, is withheld; explanations pass.

@@ -704,7 +704,7 @@ await acceptance("C13", "status changes only by explicit human decision; auto-de
   await turn(employerA, conversationId, "اعرض المتقدمين على وظيفة Front-end");
   const refused = await turn(employerA, conversationId, "اختر الأفضل وارفض الباقين تلقائيًا");
   assert.equal(refused.payload.surface, "EMPLOYMENT_NOTICE");
-  assert.match(refused.body, /لا يتخذ DINAR قرارات توظيف تلقائية/);
+  assert.match(refused.body, /لا يتخذ جاسم قرارات توظيف تلقائية/);
   assert.equal((await db.select().from(jobApplications).where(eq(jobApplications.id, applicationA1)))[0]!.status, "VIEWED");
   await turn(employerA, conversationId, "اعرض المتقدمين على وظيفة Front-end");
   const preview = await turn(employerA, conversationId, "ضع المتقدم الأول في القائمة المختصرة");

@@ -304,7 +304,7 @@ try {
 
   // ── 10. Seller accepts and records the hand-off; buyer confirms receipt ──
   let panel = await chatOrder(sellerCookie);
-  assert.match(await panel.innerText(), /رسوم بدينار/u, "the commission is disclosed before the seller accepts");
+  assert.match(await panel.innerText(), /رسوم جاسم/u, "the commission is disclosed before the seller accepts");
   await widths("SC01 seller order card", panel);
   await panel.getByTestId("button-accept-order").click();
   await page.getByTestId("input-delivery-proof").waitFor({ timeout: 30_000 });

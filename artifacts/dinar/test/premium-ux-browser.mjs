@@ -177,7 +177,7 @@ try {
   await step("UX16 «أبي أسجل متجري في جاسم كونكت» leads to Connect without a mutation", async () => {
     const reply = await user.say("أبي أسجل متجري في جاسم كونكت", { allowFallback: true });
     perf.ux16Reply = (await reply.innerText()).replace(/\s+/g, " ").slice(0, 600);
-    if (phase === "after") assert.match(perf.ux16Reply, /DINAR Connect.*\/connect.*لم يُسجَّل أي شيء في Connect بعد/u);
+    if (phase === "after") assert.match(perf.ux16Reply, /جاسم Connect.*\/connect.*لم يُسجَّل أي شيء في Connect بعد/u);
   });
 
   // ── Visual matrix ───────────────────────────────────────────────────────────

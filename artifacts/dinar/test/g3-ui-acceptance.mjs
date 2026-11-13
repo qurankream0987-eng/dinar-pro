@@ -633,7 +633,7 @@ try {
       const observer = new MutationObserver(() => {
         const texts = [...document.querySelectorAll('[role="status"]')].map((node) => node.textContent ?? "").filter(Boolean);
         for (const text of texts) if (!window.__g3Seen.statuses.includes(text)) window.__g3Seen.statuses.push(text);
-        const status = texts.find((text) => /أجهز ردك|أبحث داخل DINAR/.test(text));
+        const status = texts.find((text) => /أجهز ردك|أبحث داخل جاسم/.test(text));
         if (status) window.__g3Seen.status = status;
         if (document.querySelector('[data-testid="button-send-ai-message"][aria-label="دينار يعمل الآن"]')) window.__g3Seen.busy = true;
       });
@@ -646,7 +646,7 @@ try {
       return window.__g3Seen;
     });
     assert.ok(seen.busy, "the send button showed a busy state");
-    assert.match(seen.status, /أجهز ردك|أبحث داخل DINAR/, `a neutral processing status was shown; saw ${JSON.stringify(seen.statuses)}`);
+    assert.match(seen.status, /أجهز ردك|أبحث داخل جاسم/, `a neutral processing status was shown; saw ${JSON.stringify(seen.statuses)}`);
     // Every status shown while processing stays neutral, not only the one that matched.
     for (const status of seen.statuses) assert.doesNotMatch(status, /الذكاء|أفكر|يفكّ?ر|AI/, "no claimed AI reasoning");
     // A failed turn: friendly Arabic, no internals, retryable, not duplicated.
@@ -809,7 +809,7 @@ try {
       await sendTurn(answerFor(await textOf(missing)));
     }
     const advice = await sendTurn("كم أحط سعر؟");
-    assert.match(await textOf(advice), /داخل DINAR/);
+    assert.match(await textOf(advice), /داخل جاسم/);
     let edited = await sendTurn("خلنا نحطه 11");
     assert.match(await textOf(edited.getByTestId("draft-field-unitPrice")), /11/);
     for (let index = 0; index < 5; index++) {
@@ -1088,7 +1088,7 @@ try {
     const estimate = await sendTurn(`كم تتوقع سعر جاكيت ${TOKEN}؟`);
     const grounding = estimate.getByTestId("advice-grounding");
     await grounding.waitFor();
-    assert.match(await textOf(grounding), /اعتمدت على 2 عروض مشابهة داخل DINAR/);
+    assert.match(await textOf(grounding), /اعتمدت على 2 عروض مشابهة داخل جاسم/);
     assert.match(await textOf(grounding), /النطاق 9–12/);
     assert.doesNotMatch(await textOf(estimate), /SQL|resultSet|minor|query/i);
     await mobile("grounded advice (estimate)", estimate.getByTestId("advice"));

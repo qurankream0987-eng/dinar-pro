@@ -61,7 +61,7 @@ export function contextualQuery(message: string, previous = ""): string {
   const text = normalizeSearch(searchTerms(message));
   const colorText = text.replace(/^(?:ال)?لون\s+/, "").trim();
   if (
-    /^(الارخص|ارخص|غالية\.?|غالي\.?|بدينار(?: فقط)?|فقط)$/.test(
+    /^(الارخص|ارخص|غالية\.?|غالي\.?|جاسم(?: فقط)?|فقط)$/.test(
       normalizeSearch(message),
     ) &&
     previous

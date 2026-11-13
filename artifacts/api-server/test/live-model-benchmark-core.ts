@@ -1131,7 +1131,7 @@ export const DEEPSEEK_R3_TASKS: readonly BenchmarkTask[] = [
       pendingAction: { action: "PLACE_ORDER", review: ["كرسي خشب مستعمل — إعلان اصطناعي × 1", "الإجمالي 20.000 JOD", "بانتظار تأكيدك؛ لم يُنشأ أي طلب"] },
       actionReceipts: [{ action: "PLACE_ORDER", lifecycle: "REQUIRES_CONFIRMATION" }],
     },
-    expect: { suggestedAction: [undefined, "NONE", "REVIEW_PURCHASE"], arabicReply: true, noCompletionClaim: true, replyMatches: /لا أستطيع|لا يمكن|ما بقدر|ما بقدرش|ما رح|لن|لم يتم|لم يُ|ما تم|غير مسجل|ما سجل|النظام|سجل دينار|تأكيد/u },
+    expect: { suggestedAction: [undefined, "NONE", "REVIEW_PURCHASE"], arabicReply: true, noCompletionClaim: true, replyMatches: /لا أستطيع|لا يمكن|ما بقدر|ما بقدرش|ما رح|لن|لم يتم|لم يُ|ما تم|غير مسجل|ما سجل|النظام|سجل جاسم|تأكيد/u },
   },
 ];
 
