@@ -174,6 +174,15 @@ export function usageSurface(usage: Usage): ComposedSurfaceInput {
     sections: [
       { type: "header", title: "استهلاكك للذكاء الاصطناعي", badge: { label: usage.tierLabel, tone: "GOLD" }, icon: "GAUGE" },
       { type: "facts", rows: [{ label: "باقتك", value: usage.tierLabel }, { label: "تتجدد في", value: usage.renewsAtLabel }] },
+      ...(usage.premiumTrial?.eligible
+        ? [{
+            type: "facts" as const,
+            rows: [{
+              label: "التجربة المميزة",
+              value: `${usage.premiumTrial.remaining} من ${usage.premiumTrial.limit} رسالة متبقية${usage.premiumTrial.status === "DISABLED" ? " · غير مفعّلة" : ""}`,
+            }],
+          }]
+        : []),
       ...usage.resources
         .filter((item) => item.included)
         .map((item) => ({ type: "meter" as const, label: item.label, used: item.used, limit: item.limit, testId: "usage-meter" })),
