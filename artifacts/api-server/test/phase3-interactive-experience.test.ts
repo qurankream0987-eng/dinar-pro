@@ -291,3 +291,32 @@ test("P3-UNIT the interaction floor: dialects, suggested-action messages, and wh
   assert.doesNotMatch(monthAnalysis("LAST_VS_PREVIOUS", months, 3, "JOD"), /٪/u, "no percentage over a zero base");
   assert.match(monthAnalysis("MAX", [{ month: "2026-11", completedOrders: 0, revenueMinor: 0 }], 3, "JOD"), /لا توجد طلبات/u);
 });
+
+test("FIX-1 «أبي مقارنة … الأول والثاني» compares the two results; it never opens a purchase", async () => {
+  const fix = await newConversation(buyer.cookie);
+  await say(buyer.cookie, fix, `ورني الجوالات المتوفرة ${run}`);
+  const cartBefore = cartLines((await request("/cart", "GET", undefined, buyer.cookie)).data).length;
+  for (const message of ["أبي مقارنة مرتبة بين الأول والثاني", "بدي مقارنة بين الأول والثالث"]) {
+    const reply = await say(buyer.cookie, fix, message);
+    assert.equal(reply.surfaceBlock?.payload?.surface, "COMPARISON", `${message}: ${reply.body}`);
+    assert.notEqual(reply.surfaceBlock?.payload?.surface, "PURCHASE_REVIEW");
+  }
+  assert.equal(cartLines((await request("/cart", "GET", undefined, buyer.cookie)).data).length, cartBefore, "no cart change");
+  assert.equal(await ordersOf(buyer.id), 0);
+  // The purchase reading of a plain wish for a position is unchanged.
+  const purchase = await say(buyer.cookie, fix, "أبي الأول");
+  assert.match(purchase.body, /راجع اختيارك|نعم/u, purchase.body);
+});
+
+test("FIX-2 «اعرضها مع …» on results never opens a sale draft; real sale phrasings still do", async () => {
+  const fix = await newConversation(buyer.cookie);
+  await say(buyer.cookie, fix, `ورني الجوالات المتوفرة ${run}`);
+  const reply = await say(buyer.cookie, fix, "اعرضها مع الأسعار");
+  assert.notEqual(reply.surfaceBlock?.payload?.surface, "SELL", reply.body);
+  assert.doesNotMatch(reply.body, /اختر تصنيف العرض/u);
+  const { surfaceIntent: detectIntent } = await import("../src/ai/intent") as any;
+  if (typeof detectIntent === "function") {
+    for (const sale of ["عندي كنبة اعرضها", "اعرضها بـ500", "اعرض كنبتي للبيع", "ابيع سيارتي"]) assert.equal(detectIntent(sale), "SELL", sale);
+    for (const show of ["اعرضها مع الأسعار", "طب اعرضهم كجدول"]) assert.notEqual(detectIntent(show), "SELL", show);
+  }
+});

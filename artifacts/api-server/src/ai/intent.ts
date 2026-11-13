@@ -79,7 +79,14 @@ export function surfaceIntent(message: string): string | undefined {
   const offerText = text
     .replace(/(?:^|\s)اعرض\s+(?:لي|لنا)(?=\s|$)/gu, " ")
     .replace(/(?:^|\s)(?:اللي|التي|الي|الذي)\s+(?:ا|ن)?عرض\S*/gu, " ");
+  // «اعرضها مع الصور», «طب اعرضهم كجدول»: a leading show verb with an attached pronoun points at
+  // what is already on screen. A price, a number or «للبيع» keeps it a sale («اعرضها بـ500»), and
+  // a pronoun after a named item («عندي كنبة اعرضها») is never at the start of the message.
+  const showsWhatIsOnScreen =
+    /^(?:(?:طب|طيب|لا|بس|و|يا\s+جاسم|جاسم)\s+)*اعرض(?:ها|هم|هن)(?:\s|$)/u.test(text) &&
+    !/[0-9٠-٩]|للبيع|(?:^|\s)(?:بسعر|سعرها|سعرهم)(?:\s|$)/u.test(text);
   if (
+    !showsWhatIsOnScreen &&
     // «اعرض المستعمل فقط», «اعرض الأرخص»: showing the current results, not offering something.
     /ابيع|للبيع|انشر.*عرض|اعرض(?!\s+(?:لي\s+)?(?:ال)?(?:مستعمل[ةه]?|مستخدم[ةه]?|جديد[ةه]?|ارخص|أرخص|اغلى|اغلي|أغلى|نتائج|الكل|كل\s+النتائج|موقع|طلب|طلبي|طلباتي|حال[ةه]|سل[ةه]|سلتي|تفاصيل|معلومات|فاتور[ةه]|مسار|تتبع|متابع[ةه])(?:\s|$))|(?:عندي|لدي|املك).*(?:للايجار|للاجار)|(?:^|\s)(?:اريد\s+)?(?:اقدم|اوفر)\s+(?:خدمة|خدمتي)(?=\s|$)/.test(
       offerText,
