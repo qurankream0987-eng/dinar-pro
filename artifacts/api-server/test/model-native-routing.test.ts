@@ -11,6 +11,7 @@
  *  - Decision turns never go to the model first; an unavailable model falls back to LEGACY.
  *  - SHADOW serves LEGACY and executes nothing the model read.
  */
+import { FREE_ROUTING_POLICY_VERSION } from "../src/ai/free-model-policy";
 import { test, after } from "node:test";
 import assert from "node:assert/strict";
 import { createHash, randomUUID } from "node:crypto";
@@ -36,6 +37,9 @@ const run = `ن${randomUUID().replaceAll("-", "").replace(/\d/g, "").slice(0, 5)
 const FREE_MODEL_PROVIDER = "OPENROUTER";
 const FREE_MODEL = `fixture/model-native-free-${randomUUID().replaceAll("-", "").slice(0, 8)}`;
 process.env.DINAR_APPROVED_FREE_OPENROUTER_MODELS = FREE_MODEL;
+// These suites test strict free-model routing (policy B), so they activate the versioned policy
+// for this process only; COMPAT (policy A) is covered in free-routing-activation.test.ts.
+process.env.DINAR_FREE_ROUTING_POLICY = `${FREE_ROUTING_POLICY_VERSION}:enforce:${process.env.DINAR_DEPLOYMENT_ENV?.trim().toLowerCase() || "development"}`;
 await db.insert(aiModelPrices).values({
   id: randomUUID(),
   provider: FREE_MODEL_PROVIDER,

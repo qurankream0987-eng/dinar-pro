@@ -71,7 +71,7 @@ import {
 import { escalatesAfterLight, gatewayForTier, heavyTurnLimit, modelTieringEnabled, selectModelTier, type ModelTier, type TierDecision, type TierReason, type TierRoute } from "./model-tier";
 import { aiUsagePolicyFor, aiUsageSummary, reserveAiUsage, settleAiUsage, type AiUsageOutcome, type AiUsageOwner, type AiUsageRefusal } from "../lib/ai-usage";
 import { premiumTrialDeploymentAuthorized } from "../lib/ai-premium-trial";
-import { isApprovedFreeOpenRouterModel } from "./free-model-policy";
+import { freeRoutingEnforced, isApprovedFreeOpenRouterModel } from "./free-model-policy";
 import {
   applicableApprovedPrice,
   isZeroCostTextPrice,
@@ -1027,6 +1027,8 @@ export type GuestModelPreflight =
       kind: "READY";
       gateway: ConversationModelGateway;
       expectedModels: { provider: string; model: string }[];
+      /** False while free-model enforcement is inactive: the guest keeps the existing route. */
+      enforced: boolean;
     }
   | { kind: "PAID_MODEL_REFUSED" }
   | { kind: "FREE_MODEL_REFUSED" }
@@ -1160,6 +1162,9 @@ export async function prepareGuestModelTurn(
       currencyCode: input.market.currencyCode,
     });
     if (!gateway) return { kind: "DISABLED" };
+    // Option A: until the versioned policy is active, a guest keeps the existing route; the usage
+    // reservation and global spend hold still apply exactly as before this integration.
+    if (!freeRoutingEnforced()) return { kind: "READY", gateway, expectedModels: [], enforced: false };
     const primary = gateway.providerInfo;
     if (!primary?.requestedModel) {
       return {
@@ -1188,6 +1193,7 @@ export async function prepareGuestModelTurn(
           kind: "READY",
           gateway: exactModelIdentityGateway(gateway),
           expectedModels,
+          enforced: true,
         };
       const fallbackIsPriced = await modelPricingAcceptable(
         policy,
@@ -1215,6 +1221,7 @@ export async function prepareGuestModelTurn(
       kind: "READY",
       gateway: exactModelIdentityGateway(gateway, permittedFallback),
       expectedModels,
+      enforced: true,
     };
   } catch (error) {
     if (error instanceof AIProviderError)
@@ -2004,7 +2011,11 @@ export async function executeModelFallback(
   }
   const configuredGateway = gateway;
   const usageSummary = await aiUsageSummary(owner);
-  const freeRouteRequired = usageSummary.tier === "FREE" || input.modelPreference === "PREMIUM_TRIAL";
+  // Option A: the free-model restriction applies only once the versioned policy is active. Before
+  // that, a FREE account keeps the existing route, which still passes the usage reservation, the
+  // model price check and the spend hold below; no new paid path is opened.
+  const enforceFreeRouting = freeRoutingEnforced();
+  const freeRouteRequired = enforceFreeRouting && (usageSummary.tier === "FREE" || input.modelPreference === "PREMIUM_TRIAL");
   const freeSelection = freeRouteRequired
     ? await approvedFreeGatewaySelection(configuredGateway, input.market)
     : undefined;
@@ -2048,13 +2059,18 @@ export async function executeModelFallback(
       premiumTrialSelected = true;
       expectedModelsForReservation = undefined;
       requireApprovedModelsForReservation = true;
-    } else {
-      gateway = freeSelection!.gateway;
-      expectedModelsForReservation = freeSelection!.expectedModels;
+    } else if (freeSelection) {
+      gateway = freeSelection.gateway;
+      expectedModelsForReservation = freeSelection.expectedModels;
       requireApprovedModelsForReservation = true;
       premiumTrialFallbackNote = usageSummary.premiumTrial.status === "EXHAUSTED"
         ? "انتهت رسائل التجربة المميزة؛ استخدمت النموذج المجاني المعتمد."
         : "التجربة المميزة غير مفعّلة حاليًا؛ استخدمت النموذج المجاني المعتمد.";
+    } else {
+      // Enforcement inactive: the configured route stays, under its existing usage and spend checks.
+      premiumTrialFallbackNote = usageSummary.premiumTrial.status === "EXHAUSTED"
+        ? "انتهت رسائل التجربة المميزة؛ استخدمت النموذج المعتاد."
+        : "التجربة المميزة غير مفعّلة حاليًا؛ استخدمت النموذج المعتاد.";
     }
   }
   const expectedModel = gateway.providerInfo
@@ -2072,23 +2088,23 @@ export async function executeModelFallback(
   if (
     !reserved.ok &&
     premiumTrialSelected &&
-    freeGatewayForTrial &&
     reserved.reason !== "DUPLICATE_IN_FLIGHT" &&
     reserved.reason !== "ALREADY_PROCESSED"
   ) {
+    const usedRoute = freeGatewayForTrial ? "النموذج المجاني المعتمد" : "النموذج المعتاد";
     premiumTrialFallbackNote = reserved.reason === "PREMIUM_TRIAL_EXHAUSTED"
-      ? "انتهت رسائل التجربة المميزة؛ استخدمت النموذج المجاني المعتمد."
-      : "تعذر استخدام التجربة المميزة الآن؛ استخدمت النموذج المجاني المعتمد.";
-    gateway = freeGatewayForTrial;
+      ? `انتهت رسائل التجربة المميزة؛ استخدمت ${usedRoute}.`
+      : `تعذر استخدام التجربة المميزة الآن؛ استخدمت ${usedRoute}.`;
+    // Enforced: the approved free route. Inactive: the configured route under its existing checks.
+    gateway = freeGatewayForTrial ?? configuredGateway;
     premiumTrialSelected = false;
-    expectedModelsForReservation = freeSelection!.expectedModels;
+    expectedModelsForReservation = freeSelection?.expectedModels;
     reserved = await reserveAiUsage({
       owner,
       resource,
       idempotencyKey: requestKey,
       ...(gateway.providerInfo ? { expectedModel: { provider: gateway.providerInfo.provider, model: gateway.providerInfo.requestedModel } } : {}),
-      expectedModels: expectedModelsForReservation,
-      requireApprovedModels: true,
+      ...(freeSelection ? { expectedModels: expectedModelsForReservation, requireApprovedModels: true } : {}),
     });
   }
   if (!reserved.ok) return usageRefusalTurn(reserved, owner, input.conversationId, input.market, input.actorId);

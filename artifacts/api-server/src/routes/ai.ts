@@ -1118,7 +1118,7 @@ router.post("/ai/preview", async (req, res) => {
       owner: guestOwner,
       resource: "TEXT_REQUEST",
       idempotencyKey: `guest:${randomUUID()}`,
-      ...(prepared.kind === "READY"
+      ...(prepared.kind === "READY" && prepared.enforced
         ? { expectedModels: prepared.expectedModels, requireApprovedModels: true }
         : {}),
     });

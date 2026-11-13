@@ -4,6 +4,7 @@
  * The model is a scripted gateway that reports token usage like a provider; no provider
  * is contacted. Allowances are a small test policy written to `commercial_policies`.
  */
+import { FREE_ROUTING_POLICY_VERSION } from "../src/ai/free-model-policy";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
@@ -130,6 +131,9 @@ const guestFreeGateway: ConversationModelGateway = {
 
 defaultTestGateway = { ...gateway, fallback: guestFreeGateway };
 app.locals.conversationModelGateway = defaultTestGateway;
+// These suites test strict free-model routing (policy B), so they activate the versioned policy
+// for this process only; COMPAT (policy A) is covered in free-routing-activation.test.ts.
+process.env.DINAR_FREE_ROUTING_POLICY = `${FREE_ROUTING_POLICY_VERSION}:enforce:${process.env.DINAR_DEPLOYMENT_ENV?.trim().toLowerCase() || "development"}`;
 process.env.DINAR_APPROVED_FREE_OPENROUTER_MODELS = [
   ...new Set([
     ...(process.env.DINAR_APPROVED_FREE_OPENROUTER_MODELS ?? "").split(",").map((item) => item.trim()).filter(Boolean),
