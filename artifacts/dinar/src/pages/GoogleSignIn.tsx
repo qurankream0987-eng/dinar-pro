@@ -4,6 +4,7 @@
  * Google proves the email identity only. A linked account signs in directly; otherwise the user
  * must still verify their phone by SMS here before DINAR links or creates the account.
  */
+import { TermsAcknowledgementText } from "@/features/legal/TermsAcknowledgement";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "wouter";
 import { toast } from "sonner";
@@ -189,7 +190,7 @@ export function GoogleSignIn({ onSignedIn }: { onSignedIn: () => Promise<void> |
             <Input value={code} onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 6))} inputMode="numeric" autoComplete="one-time-code" dir="ltr" />
           </Field>
           <Checkbox checked={accepted} onChange={(value: boolean) => setAccepted(value)}>
-            أوافق على <Link href="/policies/terms" className="font-semibold text-primary underline-offset-2 hover:underline">شروط الاستخدام</Link> و<Link href="/policies/privacy" className="font-semibold text-primary underline-offset-2 hover:underline">سياسة الخصوصية</Link>
+            <TermsAcknowledgementText />
           </Checkbox>
           <Button type="button" loading={busy} onClick={() => void finish()} data-testid="google-complete">
             تأكيد ومتابعة

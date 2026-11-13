@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useState, type ReactNode } from "react";
+import { TermsAcknowledgementText } from "@/features/legal/TermsAcknowledgement";
 import { Link, useLocation, useSearch } from "wouter";
 import { toast } from "sonner";
 import { Eye, EyeOff, MessageCircle, ShieldCheck, Store, ShoppingBag } from "lucide-react";
@@ -349,14 +350,7 @@ export function AuthPage({ register = false, next, embedded = false }: { registe
               </Field>
               <div>
                 <Checkbox name="acceptTerms">
-                  أوافق على{" "}
-                  <Link href="/policies/terms" className="font-semibold text-primary underline-offset-2 hover:underline">
-                    شروط الاستخدام
-                  </Link>{" "}
-                  و
-                  <Link href="/policies/privacy" className="font-semibold text-primary underline-offset-2 hover:underline">
-                    سياسة الخصوصية
-                  </Link>
+                  <TermsAcknowledgementText />
                 </Checkbox>
                 {fieldErrors.acceptTerms && <p className="mt-1 text-xs font-medium text-destructive">{fieldErrors.acceptTerms}</p>}
               </div>

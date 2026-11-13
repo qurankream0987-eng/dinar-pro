@@ -532,7 +532,7 @@ router.post("/auth/register", registrationLimit, async (req, res) => {
     if (!created) return { kind: "duplicate" as const };
     // acceptTerms covers every policy version that requires acceptance; the append-only
     // consent ledger records the same explicit signup decision with its content hash.
-    const consentRows = await signupConsentRows(created.id, tx);
+    const consentRows = await signupConsentRows(created.id, tx, "PHONE");
     await tx.insert(policyAcceptances).values(
       consentRows.map((row) => ({
         userId: created.id,
@@ -665,7 +665,7 @@ router.post("/auth/google/complete", registrationLimit, async (req, res): Promis
         .onConflictDoNothing({ target: users.normalizedPhone })
         .returning();
       if (!created) return { kind: "duplicate" as const };
-      const consentRows = await signupConsentRows(created.id, tx);
+      const consentRows = await signupConsentRows(created.id, tx, "GOOGLE");
       await tx.insert(policyAcceptances).values(consentRows.map((row) => ({ userId: created.id, policyKey: row.policyKey, policyVersion: row.policyVersion })));
       await tx.insert(policyConsentEvents).values(consentRows);
       user = created;

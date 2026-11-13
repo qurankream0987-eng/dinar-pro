@@ -519,7 +519,13 @@ export async function listPolicyConsentEvents(userId: string, limit = 200) {
 }
 
 /** Signup rows are built from the same document and resolved version the API would accept. */
-export async function signupConsentRows(userId: string, tx: any = db) {
+/**
+ * The canonical signup acknowledgement for every registration method. The channel is part of the
+ * append-only record (in its idempotency key, unique per user) so an audit can tell a phone signup
+ * from a Google one without trusting any client field; timestamps are the database's own.
+ */
+export type SignupChannel = "PHONE" | "GOOGLE";
+export async function signupConsentRows(userId: string, tx: any = db, channel: SignupChannel = "PHONE") {
   const rows: Array<typeof policyConsentEvents.$inferInsert> = [];
   for (const document of currentPolicies()) {
     if (!document.requiresAcceptance) continue;
@@ -532,7 +538,7 @@ export async function signupConsentRows(userId: string, tx: any = db) {
       contentSha256: policyContentSha256(document),
       decision: "ACCEPTED" as const,
       source: "SIGNUP" as const,
-      idempotencyKey: `signup:${document.key}:${version}`,
+      idempotencyKey: `signup:${channel.toLowerCase()}:${document.key}:${version}`,
     });
   }
   return rows;
