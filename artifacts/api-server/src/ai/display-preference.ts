@@ -82,9 +82,10 @@ export function displayInteraction(message: string): DisplayInteraction | undefi
     if (/(?:^|\s)(?:من\s+)?(?:ال)?(?:ارخص|رخيص|اقل)(?=\s|$)/u.test(text)) return { kind: "SORT", by: "PRICE", direction: "ASC" };
   }
   // «أبي اللي بعمّان فقط», «بس اللي في الزرقاء»: narrow the results on screen to one city.
-  const city = text.match(/(?:^|\s)(?:اللي|الي|يلي|الموجوده|الموجودة)\s+(?:ب|في\s+)((?:ال)?[^\s\d]{2,24})(?:\s+(?:فقط|بس|بالذات|تحديدا))?$/u)
+  const city = text.match(/(?:^|\s)(?:اللي|الي|يلي|الموجوده|الموجودة)\s+(?:ب|في\s+)((?:ال)?[^\s\d]{2,24})\s+(?:فقط|بس|بالذات|تحديدا)$/u)
     ?? text.match(/(?:^|\s)(?:فقط|بس)\s+(?:اللي\s+|الي\s+)?(?:ب|في\s+)((?:ال)?[^\s\d]{2,24})$/u);
-  if (city && /(?:^|\s)(?:فقط|بس|اللي|الي|يلي)(?=\s|$)/u.test(text)) return { kind: "FILTER", city: city[1]! };
+  // «اللي بعده / قبله» are positions, never a city.
+  if (city && !/^(?:عد|عده|عدها|عدهم|عدين)$/u.test(city[1]!)) return { kind: "FILTER", city: city[1]! };
   if (/(?:^|\s)(?:ال)?(?:متوفر|متوفره|متوفرة|المتاح|متاح)(?=\s|$)/u.test(text) && /(?:^|\s)(?:بس|فقط|خلني|ورني|وريني|اعرض|خل|خلي)(?=\s|$)/u.test(text))
     return { kind: "FILTER", available: true };
 
