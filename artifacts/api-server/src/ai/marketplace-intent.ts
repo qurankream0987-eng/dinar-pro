@@ -1,3 +1,4 @@
+import { EXAMPLE_CARD_REQUEST } from "@workspace/api-zod/conversation-runtime";
 import type {
   MarketplaceCategorySchema,
   SearchQuery,
@@ -104,6 +105,11 @@ export function hasExplicitMarketplaceSearchIntent(message: string): boolean {
   if (/(?:رصيد(?:ي|\s+حسابي)|(?:باقي|متبقي)\s+(?:ب|في\s+)?حسابي)/u.test(normalized)) return false;
   // «ابحث في الإنترنت / في جوجل …»: a web request, never a marketplace search.
   if (/(?:^|\s)(?:في|على|علي|ب|من)\s*(?:ال)?(?:انترنت|نت|ويب|قوقل|جوجل|google|web|internet)(?:\s|$)/iu.test(normalized)) return false;
+  // «لا قصدي للكويت تحديدًا», «في عمّان بالذات»: a place qualifying what was just discussed, not an
+  // item to search for (results on screen are narrowed by the display floor; otherwise the model answers).
+  if (/^(?:لل|ل|في\s+|ب)(?:ال)?[^\s\d]{2,24}(?:\s+(?:تحديدا|بالذات|فقط|بس|خصوصا))?$/u.test(normalized.replace(/[ًٌٍَُِّْ]/gu, ""))) return false;
+  // «ورني مثال لبطاقة إعلان سيارة»: an example card (illustrative), not a search of real listings.
+  if (EXAMPLE_CARD_REQUEST.test(normalized.replace(/ة/g, "ه"))) return false;
   if (ABSTRACT_OBJECT.test(normalized.replace(/ة/g, "ه")) || /^(?:ابي|اريد)\s+(?:على\s+)?(?:فكره|فكرة|حل|طريقه|طريقة)(?:\s|$)/u.test(normalized)) return false;
   if (EXPLICIT_SEARCH_ACTION.test(normalized)) return true;
   const correction = normalizeMarketplaceText(stripCorrectionPrefix(message));

@@ -19,6 +19,7 @@ import { and, desc, eq, gte, sql } from "drizzle-orm";
 import { CONVERSATION_SURFACE_FAMILIES, capabilityUtterance, type ProductCapabilityId } from "@workspace/api-zod/conversation-runtime";
 import { listingFormatFits, parseDisplayDirective, resolvePresentationProposal, type DisplayDirective } from "@workspace/api-zod/surface-composition";
 import { composeBusinessDisplay, withoutVisualFences } from "./display-composer";
+import { illustrationSurface } from "./card-presentation";
 import { countryByCode } from "@workspace/global";
 import { aiResultSets, aiUiBlocks, candidateProfiles, db, messages, offers } from "@workspace/db";
 import { isMarketAvailable, type marketFor } from "../lib/markets";
@@ -2611,6 +2612,15 @@ export async function executeModelFallback(
   const directive: DisplayDirective | undefined = parseDisplayDirective(outcome.turn.display);
   if (directive?.format === "TEXT")
     outcome.turn.conversationalReply = withoutVisualFences(outcome.turn.conversationalReply) || outcome.turn.conversationalReply;
+  // «كبّر الصورة», «حط السعر فوق»: the model asked to rearrange the latest cards (results or draft).
+  if (!lastSearchResult && !lastResourceResult && !lastCapabilityRead && directive?.presentation && input.actorId) {
+    const { applyDisplayInteraction } = await import("./display-interaction");
+    const arranged = await applyDisplayInteraction(
+      { conversationId: input.conversationId, currentMessageId: input.currentMessageId ?? "", message: input.message, market: input.market, actorId: input.actorId } as Parameters<typeof applyDisplayInteraction>[0],
+      { kind: "PRESENT", presentation: directive.presentation },
+    );
+    if (arranged) return arranged;
+  }
   // «حولها لجدول», «قارن الأول والثاني», «رجّع البطاقات»: the latest results in another form,
   // re-read live from the stored result set (never searched again; same ids, same order).
   if (
@@ -2903,9 +2913,12 @@ export async function executeModelFallback(
     { ownerId: input.actorId },
   );
   const enforced = enforceModelAuthority(advised.result as typeof advised.result & { advice?: Record<string, unknown> }, context.actionReceipts ?? []);
+  // Flexible cards: an example the user asked for, always labelled illustrative and actionless.
+  // Never in a commercial turn: a mockup must not sit next to a real purchase or listing.
+  const illustration = !commercialTurn && !outcome.replyFiltered ? illustrationSurface(turn.illustration) : undefined;
   return {
     ...advised,
-    result: { ...enforced, prompt: usageNote ? `${enforced.prompt}\n\n${usageNote}` : enforced.prompt },
+    result: { ...enforced, ...(illustration ? { displaySurface: illustration } : {}), prompt: usageNote ? `${enforced.prompt}\n\n${usageNote}` : enforced.prompt },
     ...(taskPlanProposal ? { taskPlanProposal } : {}),
   };
 }

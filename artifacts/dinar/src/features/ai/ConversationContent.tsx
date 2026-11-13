@@ -41,7 +41,7 @@ import { animateListingToBasket } from "./cart-basket-animation";
 import { ListingManagementPreviewCard } from "./ListingManagementPreviewCard";
 import { ListingTable } from "./surface/ListingTable";
 import { ComposedSurfaceView } from "./surface/ComposedSurface";
-import { DraftReviewPanel, draftPhotos, isDraftReview, isSellerInsight, SellerInsightPanel } from "./SellerDraftInsight";
+import { DraftReviewPanel, type DraftPresentation, draftPhotos, isDraftReview, isSellerInsight, SellerInsightPanel } from "./SellerDraftInsight";
 import { BusinessSummaryPanel, isBusinessInsight } from "./BusinessSummaryPanel";
 import { RichText } from "./RichText";
 import { textDirection } from "./rich-text";
@@ -1055,7 +1055,15 @@ function ResultBlock({
   if (block.type === "SURFACE" && isPolicyReview(block.payload.policyReview))
     return <PolicyReviewPanel review={block.payload.policyReview} active={Boolean(activeWorkflow)} onSend={onSend} />;
   if (block.type === "SURFACE" && block.payload.surface === "ADVICE")
-    return isAdvice(block.payload.advice) ? <AdvicePanel advice={block.payload.advice} active={Boolean(activeWorkflow)} onSend={onSend} /> : null;
+    return (
+      <>
+        {isAdvice(block.payload.advice) && <AdvicePanel advice={block.payload.advice} active={Boolean(activeWorkflow)} onSend={onSend} />}
+        {block.payload.displaySurface !== undefined && (
+          // An example the user asked for («مثال توضيحي»), validated again by ComposedSurfaceView.
+          <ComposedSurfaceView surface={block.payload.displaySurface} active={false} />
+        )}
+      </>
+    );
   if (block.type === "SURFACE" && block.payload.surface === "COMPARISON")
     return isComparison(block.payload.comparison) ? <ComparisonPanel comparison={block.payload.comparison} /> : null;
   if (block.type === "SURFACE" && (block.payload.surface === "PURCHASE_REVIEW" || block.payload.surface === "PAYMENT_REVIEW"))
@@ -1101,7 +1109,7 @@ function ResultBlock({
           />
         )}
         {block.payload.surface === "SELL" && isDraftReview(block.payload.draftReview) && (
-          <DraftReviewPanel review={block.payload.draftReview} step={block.payload.draftStep} active={Boolean(activeWorkflow)} onSend={onSend} photos={draftPhotos(block.payload.draft)} />
+          <DraftReviewPanel review={block.payload.draftReview} step={block.payload.draftStep} active={Boolean(activeWorkflow)} onSend={onSend} photos={draftPhotos(block.payload.draft)} presentation={block.payload.cardPresentation as DraftPresentation | undefined} />
         )}
         {isAdvice(block.payload.advice) && block.payload.advice.options && (
           <ClarificationOptions options={block.payload.advice.options} active={Boolean(activeWorkflow)} onSend={onSend} />
@@ -1192,6 +1200,10 @@ function ResultBlock({
               aria-label={`النتيجة ${resultIndex + 1}: ${listing.title}${listing.id === block.payload.composition?.highlightId ? " — اقتراح جاسم" : ""}`}
               role={block.payload.composition?.layout === "GRID" || block.payload.composition?.layout === "LIST" ? "listitem" : "group"}
               data-highlighted={listing.id === block.payload.composition?.highlightId ? "true" : undefined}
+              data-image={block.payload.composition?.presentation?.image}
+              data-density={block.payload.composition?.presentation?.density}
+              data-price={block.payload.composition?.presentation?.price}
+              data-details={block.payload.composition?.presentation?.details}
               className={
                 block.payload.composition?.layout === "GRID" || block.payload.composition?.layout === "LIST"
                   ? `ai-result-item relative min-w-0${listing.id === block.payload.composition?.highlightId ? " ring-2 ring-primary rounded-2xl" : ""}`
@@ -1359,7 +1371,9 @@ function MessageTurn({
 }) {
   const assistant = message.role === "ASSISTANT";
   // A provenance-only advice block («معلومة عامة…») is shown beside the copy action, not as a card.
-  const chipIndex = assistant ? (message.blocks ?? []).findIndex((block) => block.type === "SURFACE" && block.payload?.surface === "ADVICE" && adviceChipLabel(block.payload.advice)) : -1;
+  // An advice answer shown only as its provenance chip; one that carries an illustrative example
+  // still renders its block (the example card).
+  const chipIndex = assistant ? (message.blocks ?? []).findIndex((block) => block.type === "SURFACE" && block.payload?.surface === "ADVICE" && adviceChipLabel(block.payload.advice) && block.payload.displaySurface === undefined) : -1;
   const chipAdvice = chipIndex >= 0 ? (message.blocks[chipIndex]!.payload.advice as { scope?: string; kind?: string }) : undefined;
   const chip = chipAdvice ? adviceChipLabel(chipAdvice) : undefined;
   const [copied, setCopied] = useState(false);

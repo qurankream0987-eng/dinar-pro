@@ -129,6 +129,12 @@ export const ModelTurnOutput = z
      * server resolves it against verified data only; it carries no figure and authorizes nothing.
      */
     display: z.unknown().optional(),
+    /**
+     * Flexible cards (optional): an explicit illustrative example the user asked for («ورني مثال
+     * لبطاقة إعلان»). Opaque here; validated by illustrationSurface, always shown labelled
+     * «مثال توضيحي», with no capability, link, image or verified figure. Never a real record.
+     */
+    illustration: z.unknown().optional(),
   })
   .strict();
 export type ModelTurn = z.infer<typeof ModelTurnOutput>;
@@ -223,8 +229,37 @@ export const MODEL_TOOL: ModelToolDefinition = {
           format: { type: "string", enum: ["AUTO", "TEXT", "CARDS", "TABLE", "COMPARISON", "LINE", "BAR", "DONUT", "METRIC"] },
           scope: { type: "string", enum: ["THIS_TURN", "LATEST_RESULTS"] },
           positions: { type: "array", items: { type: "integer", minimum: 1, maximum: 24 }, minItems: 2, maxItems: 4 },
+          presentation: {
+            type: "object",
+            description:
+              "Optional arrangement of the latest cards (results or the seller's draft) when the user asks to change how they look: image LARGE/MEDIUM/SMALL/HIDDEN («كبر الصورة», «بدون صور»), price TOP («حط السعر فوق»), density COMPACT/FULL («اختصر», «خل البطاقة أبسط», «كل التفاصيل»), details BELOW («التفاصيل تحت الصورة»). Use with scope LATEST_RESULTS. It only rearranges DINAR's own fields; it never adds a value.",
+            properties: {
+              image: { type: "string", enum: ["LARGE", "MEDIUM", "SMALL", "HIDDEN"] },
+              price: { type: "string", enum: ["TOP", "INLINE"] },
+              density: { type: "string", enum: ["FULL", "COMPACT"] },
+              details: { type: "string", enum: ["BESIDE", "BELOW"] },
+            },
+            additionalProperties: false,
+          },
         },
         required: ["version", "format"],
+        additionalProperties: false,
+      },
+      illustration: {
+        type: "object",
+        description:
+          "Only when the user explicitly asks for an example, mockup or preview of a card that is not a real record («ورني مثال لإعلان سيارة», «كيف ممكن تكون بطاقة الخدمة؟»). JassimAI shows it labelled as an illustrative example with no buttons, links, images or purchase. Never use it for real marketplace results, prices, the user's own listings, orders or figures; never present it as real.",
+        properties: {
+          title: { type: "string", minLength: 1, maxLength: 120 },
+          subtitle: { type: "string", minLength: 1, maxLength: 200 },
+          fields: {
+            type: "array",
+            maxItems: 8,
+            items: { type: "object", properties: { label: { type: "string", minLength: 1, maxLength: 60 }, value: { type: "string", minLength: 1, maxLength: 100 } }, required: ["label", "value"], additionalProperties: false },
+          },
+          body: { type: "string", minLength: 1, maxLength: 500 },
+        },
+        required: ["title"],
         additionalProperties: false,
       },
       conversationalReply: {
@@ -249,7 +284,7 @@ const SYSTEM_PROMPT = [
   "Help fully with any everyday or expert topic: general knowledge, programming and debugging, mathematics and reasoning, science and renewable energy, education, writing and editing, planning and business management. Commerce is one of your capabilities, not your only subject.",
   "Each message is judged on its own intent in context: an earlier marketplace task (a sale draft, a search, a negotiation) never turns an unrelated new question into a marketplace request. Answer the new question; the earlier task stays available for the user to resume.",
   "Always answer by calling dinarConversationTurn exactly once.",
-  "Choose the form of each answer with display. Most answers are TEXT: never add a table or chart just because you can. Use a structured form only when it serves the user's goal with data that exists: results to browse as CARDS, exact details side by side as TABLE, a decision between a few results as COMPARISON, a change over time as LINE, amounts across categories as BAR, parts of one whole as DONUT, one key number as METRIC. An explicit wish in any dialect («بجدول», «سوها رسم», «خلني أشوف الأرقام», «اشرحها بالكلام») decides the format. To re-show the latest results in another form («حولها لجدول», «رجّع الرسم», «قارن الأول والثاني») set scope LATEST_RESULTS and do not search again. For the user's own business figures (sales, revenue, months, categories) call readBusinessOverview and set display; جاسم draws only its recorded figures, says when a format does not fit them, and revenue is never profit because costs are not recorded.",
+  "Choose the form of each answer with display. Most answers are TEXT: never add a table or chart just because you can. Use a structured form only when it serves the user's goal with data that exists: results to browse as CARDS, exact details side by side as TABLE, a decision between a few results as COMPARISON, a change over time as LINE, amounts across categories as BAR, parts of one whole as DONUT, one key number as METRIC. An explicit wish in any dialect («بجدول», «سوها رسم», «خلني أشوف الأرقام», «اشرحها بالكلام») decides the format. To re-show the latest results in another form («حولها لجدول», «رجّع الرسم», «قارن الأول والثاني») set scope LATEST_RESULTS and do not search again. For the user's own business figures (sales, revenue, months, categories) call readBusinessOverview and set display; جاسم draws only its recorded figures, says when a format does not fit them, and revenue is never profit because costs are not recorded. To change how the latest cards look («كبر الصورة», «حط السعر فوق», «خل البطاقة أبسط», «التفاصيل تحت الصورة») set display.presentation with scope LATEST_RESULTS; it rearranges جاسم's own fields only. Use illustration only for an example the user explicitly asks for; it is always labelled as an example and never a real listing.",
   "After searchListings succeeds you may add presentation to choose how its verified results are shown: COMPARISON when the user wants to compare or decide between a few, CAROUSEL or GRID to browse, LIST for a short ranked answer, with positions you picked and an optional highlight for the best fit with a one-sentence reason in your reply. Use only positions from the results you received; the server shows its own facts and rejects anything else.",
   "You understand and suggest; DINAR's server decides and executes. You never create a published listing, pay, approve, promote, accept or publish anything, and you never output identifiers.",
   "Ordinary open-domain conversation is a valid default, regardless of marketplace categories, search results, or market availability.",

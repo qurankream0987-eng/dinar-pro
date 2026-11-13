@@ -506,3 +506,131 @@
 }
 .ai-composer-legal a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
 .ai-composer-legal a:hover, .ai-composer-legal a:focus-visible { color: var(--chat-ink); }
+
+/* ── Flexible cards (premium evolution) ─────────────────────────────────────────────────────────
+   One material for the seller's draft and for result arrangements. Values are the server's;
+   these rules only arrange them (data-image / data-density / data-price / data-details). */
+.dinar-chatgpt .draft-card {
+  display: grid;
+  overflow: hidden;
+  border: 1px solid rgb(var(--chat-line) / .16);
+  border-radius: 20px;
+  background: var(--chat-surface);
+  box-shadow: 0 1px 2px rgb(var(--chat-shadow) / calc(.06 * var(--chat-shadow-k))), 0 8px 24px -12px rgb(var(--chat-shadow) / calc(.14 * var(--chat-shadow-k)));
+  max-width: 560px;
+  animation: draft-card-in .32s cubic-bezier(.2, .8, .2, 1) both;
+}
+@keyframes draft-card-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.dinar-chatgpt .draft-card-media { position: relative; background: var(--chat-surface-2); }
+.dinar-chatgpt .draft-card-media > :first-child { display: block; width: 100%; aspect-ratio: 16 / 10; object-fit: cover; }
+.dinar-chatgpt .draft-card[data-image="LARGE"] .draft-card-media > :first-child { aspect-ratio: 4 / 3; }
+.dinar-chatgpt .draft-card[data-image="SMALL"] .draft-card-media > :first-child { aspect-ratio: 1; }
+.dinar-chatgpt .draft-card-thumbs { position: absolute; inset-inline-start: 10px; bottom: 10px; display: flex; gap: 6px; }
+.dinar-chatgpt .draft-card-thumb { width: 44px; height: 44px; overflow: hidden; border: 2px solid var(--chat-surface); border-radius: 10px; box-shadow: 0 2px 8px rgb(0 0 0 / .18); }
+.dinar-chatgpt .draft-card-noimage { display: grid; place-items: center; gap: 6px; aspect-ratio: 16 / 7; color: var(--chat-ink-3); font-size: 13px; text-align: center; }
+.dinar-chatgpt .draft-card[data-image="LARGE"] .draft-card-noimage { aspect-ratio: 16 / 10; }
+.dinar-chatgpt .draft-card-body { display: grid; gap: 8px; min-width: 0; padding: 16px 18px 16px; }
+.dinar-chatgpt .draft-card-status { display: flex; }
+.dinar-chatgpt .draft-card-badge {
+  display: inline-flex; align-items: center; height: 24px; padding: 0 10px; border-radius: 999px;
+  background: rgb(var(--chat-gold) / .13); color: var(--chat-gold-ink); font-size: 12px; font-weight: 600;
+}
+.dinar-chatgpt .draft-card[data-preview="true"] .draft-card-badge { background: rgb(var(--chat-blue) / .12); color: rgb(var(--chat-blue)); }
+.dinar-chatgpt .draft-card-title { margin: 0; color: var(--chat-ink); font-size: 19px; font-weight: 700; line-height: 1.45; overflow-wrap: anywhere; }
+.dinar-chatgpt .draft-card-price { display: flex; align-items: baseline; gap: 8px; margin: 0; color: var(--chat-gold-ink); font-size: 22px; font-weight: 700; }
+.dinar-chatgpt .draft-card-source { margin-inline-start: 6px; color: var(--chat-ink-3); font-size: 11.5px; font-weight: 500; }
+.dinar-chatgpt .draft-card-facts { display: grid; margin: 4px 0 0; border-top: 1px solid rgb(var(--chat-line) / .12); }
+.dinar-chatgpt .draft-card-fact { display: grid; grid-template-columns: minmax(96px, 38%) 1fr; gap: 12px; padding: 9px 0; border-bottom: 1px solid rgb(var(--chat-line) / .1); }
+.dinar-chatgpt .draft-card-fact:last-child { border-bottom: 0; }
+.dinar-chatgpt .draft-card-fact dt { color: var(--chat-ink-3); font-size: 13px; }
+.dinar-chatgpt .draft-card-fact dd { min-width: 0; margin: 0; color: var(--chat-ink); font-size: 14px; font-weight: 500; overflow-wrap: anywhere; }
+.dinar-chatgpt .draft-card[data-density="COMPACT"] .draft-card-fact { padding: 6px 0; }
+.dinar-chatgpt .draft-card-more, .dinar-chatgpt .draft-card-note { margin: 0; color: var(--chat-ink-3); font-size: 12.5px; }
+.dinar-chatgpt .draft-card-missing { margin: 0; color: var(--chat-err); font-size: 12.5px; }
+.dinar-chatgpt .draft-card-actions { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 4px; }
+/* Beside on wide screens when the photo is not the hero; stacked on phones and when asked «تحت الصورة». */
+@media (min-width: 640px) {
+  .dinar-chatgpt .draft-card[data-details="BESIDE"]:is([data-image="SMALL"], [data-image="MEDIUM"]) { grid-template-columns: minmax(180px, 40%) 1fr; max-width: 680px; }
+  .dinar-chatgpt .draft-card[data-details="BESIDE"]:is([data-image="SMALL"], [data-image="MEDIUM"]) .draft-card-media > :first-child { height: 100%; aspect-ratio: auto; min-height: 200px; }
+  .dinar-chatgpt .draft-card[data-details="BESIDE"][data-image="SMALL"] { grid-template-columns: 140px 1fr; }
+}
+
+/* Result cards arranged on request. */
+.dinar-chatgpt .ai-result-item[data-image="LARGE"] { width: min(88vw, 360px); max-width: 360px; }
+.dinar-chatgpt .ai-result-item[data-image="LARGE"] .ai-result-card-media { aspect-ratio: 4 / 3.4; }
+.dinar-chatgpt .ai-result-item[data-image="SMALL"] .ai-result-card-media { aspect-ratio: 16 / 7; }
+.dinar-chatgpt .ai-result-item[data-image="HIDDEN"] .ai-result-card-media { display: none; }
+.dinar-chatgpt .ai-result-item[data-price="TOP"] .ai-result-card-body { display: flex; flex-direction: column; }
+.dinar-chatgpt .ai-result-item[data-price="TOP"] .ai-result-price-row { order: -1; }
+.dinar-chatgpt .ai-result-item[data-density="COMPACT"] :is(.ai-result-card-meta, .ai-result-reasons) { display: none; }
+.dinar-chatgpt .ai-result-item[data-density="COMPACT"] .ai-result-card-body { padding: 11px 13px; gap: 4px; }
+
+/* Illustrative examples: labelled on the card itself, always. */
+.dinar-chatgpt .ds-size[data-illustrative="true"] > .ds-card { border-style: dashed; }
+.dinar-chatgpt .ds-illustrative-label {
+  display: inline-flex; margin: 0 0 6px; padding: 2px 10px; border-radius: 999px;
+  background: rgb(var(--chat-blue) / .1); color: rgb(var(--chat-blue)); font-size: 12px; font-weight: 600;
+}
+@media (prefers-reduced-motion: reduce) { .dinar-chatgpt .draft-card { animation: none; } }
+
+/* ── Refinement layer (premium evolution) ───────────────────────────────────────────────────────
+   Calm, precise surfaces: solid materials instead of gradients, hairline edges, one soft shadow,
+   a consistent radius scale (20 cards · 14 controls · pill chips), gold kept for accents and verified
+   amounts only, a smaller mark, visible keyboard focus, and motion that respects reduce-motion. */
+.dinar-chatgpt, .ai-history-drawer {
+  --premium-radius: 20px;
+  --premium-edge: rgb(var(--chat-line) / .15);
+  --premium-material: var(--chat-surface);
+  --premium-depth: 0 1px 1px rgb(var(--chat-shadow) / .04), 0 8px 24px -14px rgb(var(--chat-shadow) / .22);
+}
+.dark .dinar-chatgpt, .dark .ai-history-drawer {
+  --premium-edge: rgb(var(--chat-line) / .17);
+  --premium-depth: inset 0 1px 0 rgb(255 255 255 / .035), 0 12px 32px -16px rgb(0 0 0 / .7);
+}
+.dinar-chatgpt .ai-layout, .dinar-chatgpt .ai-layout[data-history-open="true"] {
+  background: linear-gradient(180deg, rgb(var(--chat-blue) / .045), transparent 240px), var(--chat-ground);
+}
+.dinar-chatgpt .dinar-chat-conversation { background: none; }
+.dinar-chatgpt .ai-history, .ai-history-drawer { background: var(--chat-panel); box-shadow: none; }
+.ai-sidebar-new {
+  border: 1px solid var(--premium-edge); background: var(--chat-surface); color: var(--chat-ink);
+  box-shadow: 0 1px 2px rgb(var(--chat-shadow) / .06); font-weight: 650;
+}
+.ai-sidebar-new svg { color: var(--chat-gold-ink); }
+.ai-sidebar-new:hover { background: var(--chat-surface-2); filter: none; }
+.ai-history-search { background: var(--chat-surface); box-shadow: none; border-radius: 14px; }
+.ai-history-item { border-radius: 12px; }
+.ai-history-item[data-active="true"] { background: rgb(var(--chat-blue) / .10); box-shadow: none; }
+.ai-sidebar-market { background: var(--chat-surface); border-radius: 14px; }
+.ai-welcome-logo { width: 64px; height: 64px; filter: none; }
+.ai-welcome h1 { letter-spacing: -.015em; font-weight: 700; }
+.ai-starter { background: var(--chat-surface); box-shadow: none; border-radius: 999px; transition: background-color var(--premium-fast), border-color var(--premium-fast); }
+.ai-starter:hover { background: var(--chat-surface-2); border-color: rgb(var(--chat-line) / .28); }
+.dinar-chatgpt .ai-composer-box { background: var(--chat-surface); backdrop-filter: none; border-radius: 24px; }
+.dinar-chatgpt .ai-composer-box:focus-within { border-color: rgb(var(--chat-blue) / .55); box-shadow: var(--premium-depth), 0 0 0 3px rgb(var(--chat-blue) / .12); }
+.dinar-chatgpt .dinar-composer-send:not(:disabled):not([aria-busy="true"]) {
+  color: #fff; background: rgb(var(--chat-blue)); border: 0; box-shadow: 0 2px 8px rgb(var(--chat-blue) / .3);
+}
+.dark .dinar-chatgpt .dinar-composer-send:not(:disabled):not([aria-busy="true"]) { color: #06131f; }
+.ai-user-bubble { border: 0; border-radius: 20px 6px 20px 20px; background: rgb(var(--chat-blue) / .10); box-shadow: none; }
+.dinar-chatgpt .ai-result-card, .dinar-chatgpt .ai-surface, .dinar-chatgpt .ds-card, .dinar-chatgpt .ai-context-card { background: var(--chat-surface); }
+.dinar-chatgpt .ai-result-card-media { background: var(--chat-surface-2); }
+/* Keyboard focus is always visible; pointer focus stays quiet. */
+.dinar-chatgpt :is(a, button, [role="button"], input, textarea, select, summary):focus-visible,
+.ai-history-drawer :is(a, button, input):focus-visible { outline: 2px solid rgb(var(--chat-blue)); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+  .dinar-chatgpt *, .dinar-chatgpt *::before, .dinar-chatgpt *::after, .ai-history-drawer * { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+}
+/* The search-context launcher is a compact chip on its own row, also in the flex-column shell. */
+@media (max-width: 1349px) {
+  .dinar-chatgpt .dinar-chat-conversation[data-has-context="true"] .ai-context-launch { align-self: flex-end; width: auto; max-width: calc(100% - 36px); min-height: 40px; padding-inline: 14px; border-radius: 999px; box-shadow: none; }
+}
+/* Dark mode: one quiet light source instead of a decorative atmosphere. */
+.dark .dinar-chatgpt .ai-layout,
+.dark .dinar-chatgpt .ai-layout[data-history-open="true"],
+.dark .dinar-chatgpt .ai-home-content {
+  background-image: radial-gradient(ellipse 80% 50% at 50% -10%, rgb(var(--chat-blue) / .10), transparent 70%);
+  background-size: auto; background-color: var(--chat-ground);
+}
+.premium-action-card, .dark .premium-action-card { background: var(--chat-surface); border-color: var(--premium-edge); box-shadow: var(--premium-depth); }
+.premium-action-card[data-action="sell"], .dark .premium-action-card[data-action="sell"] { background: var(--chat-surface); border-color: rgb(var(--chat-gold) / .35); }

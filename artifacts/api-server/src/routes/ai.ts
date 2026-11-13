@@ -16,7 +16,7 @@ import {
 import { refreshNegotiationPayload } from "../ai/negotiation-turn";
 import { refreshInquiryPayload } from "../ai/inquiry-turn";
 import { buildCardEnvelope } from "../ai/card-envelope";
-import { CardEnvelopeSchema, ComposedSurfaceSchema, ResultCompositionSchema } from "@workspace/api-zod/surface-composition";
+import { CardEnvelopeSchema, CardPresentationSchema, ComposedSurfaceSchema, ResultCompositionSchema } from "@workspace/api-zod/surface-composition";
 import { acknowledgeClientAction, refreshControlPayload } from "../ai/product-control-turn";
 import { guestUsageKey, reserveAiUsage, settleAiUsage, type AiUsageMeasurement, type AiUsageOwner } from "../lib/ai-usage";
 import { usageLimitMessage } from "../ai/usage-turn";
@@ -284,6 +284,7 @@ const SurfaceBlock = z.object({
     draft: ConversationDraft.optional(),
     draftStep: z.string().optional(),
     draftReview: z.record(z.string(), z.unknown()).optional(),
+    cardPresentation: CardPresentationSchema.optional(),
     sellerInsight: z.record(z.string(), z.unknown()).optional(),
     universalCards: UniversalCardsPayloadSchema.optional(),
     // Phase 2: server-composed figures in the model's chosen form; re-validated on every read.
@@ -2324,6 +2325,7 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
         draft: toolResult.draft,
         draftStep: toolResult.draftStep,
         draftReview: toolResult.draftReview,
+        cardPresentation: toolResult.cardPresentation,
         sellerInsight: toolResult.sellerInsight,
         universalCards: toolResult.universalCards,
         displaySurface: toolResult.displaySurface,

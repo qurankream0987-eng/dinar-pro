@@ -121,7 +121,13 @@ export function ComposedSurfaceView({
   const explainsState = view.sections.some((section) => section.type === "notice");
   const send = active && surfaceAllowsActions(view.state) ? onSend : undefined;
   return (
-    <div className="ds-size" data-size={view.size}>
+    <div className="ds-size" data-size={view.size} data-illustrative={view.illustrative ? "true" : undefined}>
+      {view.illustrative && (
+        // A permanent label: an example is never mistaken for a marketplace record.
+        <p className="ds-illustrative-label" data-testid="illustrative-label">
+          مثال توضيحي — ليس إعلانًا حقيقيًا
+        </p>
+      )}
       <SurfaceCard
         label={view.label}
         tone={view.tone}

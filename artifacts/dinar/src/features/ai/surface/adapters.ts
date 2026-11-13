@@ -243,7 +243,7 @@ export function plansSurface(plans: Plans): ComposedSurfaceInput {
           highlighted: tier.current,
           facts: [
             ...tier.allowances.filter((item) => item.value > 0).map((item) => ({ label: item.label, value: number(item.value), ltr: true })),
-            { label: "الرموز", value: number(tier.tokens), ltr: true },
+            { label: "سعة المعالجة (رموز)", value: number(tier.tokens), ltr: true },
           ].slice(0, 8),
           actions:
             !tier.current && tier.tier !== "FREE" && tier.priceConfigured

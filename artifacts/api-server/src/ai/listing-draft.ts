@@ -1,3 +1,4 @@
+import { PROHIBITED_ITEM_REFUSAL, publishedProhibitedItem } from "../lib/publication-policy";
 import { cardinalWordValue, foldArabicLetters } from "./arabic-normalization";
 import {
   validateCategoryAttributesAgainstSchema,
@@ -29,7 +30,7 @@ import {
 import { priceProposal } from "./price-proposal";
 import { priceEdit } from "./context-intent";
 
-import { applyDraftFieldEdit, draftFieldEdit, statedQuantity } from "./draft-field-edit";
+import { titleCorrection as correctedDraftTitle, applyDraftFieldEdit, draftFieldEdit, statedQuantity } from "./draft-field-edit";
 
 export const ConversationDraft = z.object({
   draftId: z.string().uuid().optional(),
@@ -1889,7 +1890,9 @@ export async function listingDraft(
   // «أعرض 15» / «بعرض 15 بدل 20» name an amount and no item: in a draft, its asking price.
   const proposedPrice = priceProposal(message)?.amount;
   // «عدّل السعر», «خليه 15», «بدي أنزلها من 20 إلى 15», «خلّي البداية من 30»: the draft's price (R3E).
-  const draftEdit = previous?.draft && !imageObjectPaths.length && !draftFieldEdit(message) ? priceEdit(message) : undefined;
+  // «لا، خله 14 برو»: a correction of the title's model or number, before any price reading.
+  const titleFix = previous?.draft && !imageObjectPaths.length ? correctedDraftTitle(message, (previous.draft as { title?: string }).title) : undefined;
+  const draftEdit = previous?.draft && !imageObjectPaths.length && !draftFieldEdit(message) && !titleFix ? priceEdit(message) : undefined;
   if (
     !imageObjectPaths.length &&
     surface !== "SELL" &&
@@ -1920,11 +1923,17 @@ export async function listingDraft(
   }
   // "اعرض هذا بـ10" / "بيعه بـ10" names no new item: it edits the draft in progress;
   // so does «خلنا نحطه 500» (G2).
-  const explicitEdit = previous?.draft && !imageObjectPaths.length ? draftFieldEdit(message) : undefined;
+  const explicitEdit = previous?.draft && !imageObjectPaths.length ? draftFieldEdit(message) ?? (titleFix ? { field: "title" as const, value: titleFix } : undefined) : undefined;
   const deicticPrice = previous?.draft && !imageObjectPaths.length && !explicitEdit
     ? (draftEdit?.amount !== undefined ? { value: draftEdit.amount } : undefined) ?? (!cleanTitle(message) ? extractInitialUnitPrice(message) : undefined) ?? draftPricePhrase(message) ?? (proposedPrice !== undefined ? { value: proposedPrice } : undefined)
     : undefined;
+  // «عندي آيفون 13 برو، مستعمل، أبي أبيعه» while the draft is still at its first questions: the
+  // seller restated the item fully, so the draft is rebuilt from it rather than taken as one field.
+  const restatesItem =
+    Boolean(previous?.draft) && ["title", "category"].includes(String(previous?.draftStep ?? "")) &&
+    /^(?:عندي|معي|لدي|عندنا)\s+\S+.*(?:ابيعه|ابيعها|ابيعهم|للبيع)/u.test(normalizeSearch(message));
   const startsAnotherSale =
+    restatesItem ||
     surface === "SELL" &&
     // «بدي أبيعه ب300»: the attached pronoun is the item of the draft in progress.
     /^(?:(?:ابي|ابغى|اريد|بدي)\s+(?:ان\s+)?(?:ابيع|اعرض|اقدم|اوفر)(?!ه|ها|هم)|(?:ابيع|اعرض|انشر)\b)/u.test(
@@ -1932,14 +1941,22 @@ export async function listingDraft(
     );
   const startNewDraft =
     !deicticPrice && (!previous?.draft || startsAnotherSale);
+  if (startNewDraft && publishedProhibitedItem(message)) {
+    // Refused before any draft exists: nothing to publish, nothing stored as a sale.
+    return { kind: "SURFACE", surface: "SELL", query: {}, listings: [], draftStep: "cancelled", prompt: PROHIBITED_ITEM_REFUSAL } as ToolResult;
+  }
   if (startNewDraft) {
     const initial = createInitialSaleDraft(
-      message,
+      // «جاسم روح بيع لي تلفوني»: the item is what follows the request, not the request itself.
+      message.replace(/^\s*(?:(?:جاسم|دينار)\s+)?روح\s+بيع(?:ه|ها)?\s*لي\s+/u, "أبي أبيع "),
       configured,
       imageObjectPaths,
     );
     draft = initial.draft;
     step = initial.step;
+    // A restatement refines the same sale: it keeps the draft's identity instead of opening a second one.
+    const previousId = (previous?.draft as { draftId?: string } | undefined)?.draftId;
+    if (restatesItem && previousId) draft = { ...draft, draftId: previousId };
   } else {
     const text = message.trim();
     const before = structuredClone(draft);

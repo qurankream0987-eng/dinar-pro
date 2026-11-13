@@ -90,6 +90,8 @@ export type AiUiBlock = {
     policyReview?: unknown;
     /** Phase 2: server-composed figures in the model-chosen form; validated by ComposedSurfaceView. */
     displaySurface?: unknown;
+    /** Flexible cards: the arrangement of the seller's draft card (server-validated). */
+    cardPresentation?: unknown;
     commerce?: CommercialPayload;
     tutorial?: TutorialPayload;
     surface?: ConversationSurfaceToken;

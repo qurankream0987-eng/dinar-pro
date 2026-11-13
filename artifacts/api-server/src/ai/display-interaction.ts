@@ -6,10 +6,11 @@
  * cart, order, listing or payment. A request that does not fit the active display is not applied.
  */
 import { and, desc, eq } from "drizzle-orm";
-import { aiResultSets, aiUiBlocks, db } from "@workspace/db";
-import type { DisplayDirective } from "@workspace/api-zod/surface-composition";
+import { aiResultSets, aiUiBlocks, conversations, db } from "@workspace/db";
+import { mergePresentation, type CardPresentation, type DisplayDirective } from "@workspace/api-zod/surface-composition";
 import { composeBusinessDisplay, NOT_PROFIT_NOTE } from "./display-composer";
 import type { DisplayInteraction } from "./display-preference";
+import { normalizeSearch } from "./search-context";
 import type { ToolResult } from "./tool-registry";
 
 type Context = {
@@ -23,8 +24,9 @@ type Turn = { tool: string; version: 1; result: ToolResult };
 
 /** The latest display in this conversation: products (with their block layout) or business figures. */
 export async function activeDisplay(conversationId: string): Promise<
-  | { kind: "LISTINGS"; resultSetId: string; layout?: string }
+  | { kind: "LISTINGS"; resultSetId: string; layout?: string; presentation?: CardPresentation }
   | { kind: "BUSINESS" }
+  | { kind: "DRAFT"; payload: Record<string, any>; presentation?: CardPresentation }
   | undefined
 > {
   const [latest] = await db
@@ -36,7 +38,10 @@ export async function activeDisplay(conversationId: string): Promise<
   if (!latest) return undefined;
   const payload = latest.payload as Record<string, any>;
   if (latest.blockType === "LISTING_RESULTS" && typeof payload.resultSetId === "string" && Array.isArray(payload.resourceIds) && payload.resourceIds.length)
-    return { kind: "LISTINGS", resultSetId: payload.resultSetId, layout: payload.composition?.layout };
+    return { kind: "LISTINGS", resultSetId: payload.resultSetId, layout: payload.composition?.layout, presentation: payload.composition?.presentation };
+  // The seller's open draft card (not yet published or cancelled): only its arrangement can change here.
+  if (latest.blockType === "SURFACE" && payload.surface === "SELL" && payload.draft && payload.draftReview && !["published", "cancelled"].includes(String(payload.draftStep ?? "")))
+    return { kind: "DRAFT", payload, presentation: payload.cardPresentation };
   if (latest.blockType === "SURFACE" && payload.displaySurface && payload.surface === "BUSINESS_INSIGHTS")
     return { kind: "BUSINESS" };
   return undefined;
@@ -58,10 +63,38 @@ export async function applyDisplayInteraction(context: Context, interaction: Dis
   const active = await activeDisplay(context.conversationId);
   if (!active) return null;
   if (active.kind === "LISTINGS") return listingInteraction(context, interaction, active);
+  if (active.kind === "DRAFT") return draftInteraction(context, interaction, active);
+  if (interaction.kind === "PRESENT") return null;
   return businessInteraction(context, interaction);
 }
 
-async function listingInteraction(context: Context, interaction: DisplayInteraction, active: { resultSetId: string; layout?: string }): Promise<Turn | null> {
+/**
+ * «كبّر الصورة» on the seller's draft: the same draft card, re-shown with the new arrangement. The
+ * conversation must be the actor's own; the draft, its review and its photos are the stored ones.
+ */
+async function draftInteraction(context: Context, interaction: DisplayInteraction, active: { payload: Record<string, any>; presentation?: CardPresentation }): Promise<Turn | null> {
+  if (interaction.kind !== "PRESENT") return null;
+  const [owner] = await db.select({ id: conversations.ownerUserId }).from(conversations).where(eq(conversations.id, context.conversationId));
+  if (!owner || owner.id !== context.actorId) return null;
+  const { payload } = active;
+  return {
+    tool: "openSurface",
+    version: 1,
+    result: {
+      kind: "SURFACE",
+      surface: "SELL",
+      query: {},
+      listings: [],
+      draft: payload.draft,
+      draftStep: payload.draftStep,
+      draftReview: payload.draftReview,
+      cardPresentation: mergePresentation(active.presentation, interaction.presentation),
+      prompt: "هذه مسودتك نفسها بالترتيب الذي طلبته؛ لم يتغير أي حقل ولم يُنشر شيء.",
+    } as ToolResult,
+  };
+}
+
+async function listingInteraction(context: Context, interaction: DisplayInteraction, active: { resultSetId: string; layout?: string; presentation?: CardPresentation }): Promise<Turn | null> {
   if (interaction.kind === "ANALYZE") return null;
   const { executeRegisteredTool } = await import("./tool-registry");
   const tools = { conversationId: context.conversationId, market: context.market };
@@ -71,7 +104,16 @@ async function listingInteraction(context: Context, interaction: DisplayInteract
   } catch {
     return null;
   }
-  const keepLayout = active.layout === "TABLE" ? { composition: { source: "MODEL_PROPOSAL" as const, layout: "TABLE" as const } } : {};
+  const presentation = interaction.kind === "PRESENT" ? mergePresentation(active.presentation, interaction.presentation) : active.presentation;
+  const keepLayout = active.layout === "TABLE" || presentation
+    ? { composition: { source: "MODEL_PROPOSAL" as const, layout: (active.layout === "TABLE" ? "TABLE" : active.layout ?? "CAROUSEL") as "TABLE" | "GRID" | "CAROUSEL" | "LIST", ...(presentation ? { presentation } : {}) } }
+    : {};
+  if (interaction.kind === "PRESENT")
+    return {
+      tool: "restoreResults",
+      version: 1,
+      result: { ...restored, ...keepLayout, query: { ...restored.query, buyer: { message: "هذه البطاقات نفسها بالترتيب الذي طلبته، دون بحث جديد ودون تغيير أي سعر أو تفصيل.", authority: "DINAR", display: true } } },
+    };
   if (interaction.kind === "FORMAT") {
     const format = interaction.directive.format;
     if (format === "TABLE" || format === "CARDS")
@@ -80,7 +122,7 @@ async function listingInteraction(context: Context, interaction: DisplayInteract
         version: 1,
         result: {
           ...restored,
-          ...(format === "TABLE" ? { composition: { source: "MODEL_PROPOSAL", layout: "TABLE" } } : { composition: undefined }),
+          ...(format === "TABLE" ? { composition: { source: "MODEL_PROPOSAL", layout: "TABLE", ...(presentation ? { presentation } : {}) } } : { composition: presentation ? { source: "MODEL_PROPOSAL", layout: "CAROUSEL", presentation } : undefined }),
           query: { ...restored.query, buyer: { message: format === "TABLE" ? "هذه النتائج نفسها كجدول، دون بحث جديد." : "رجعت النتائج نفسها كبطاقات.", authority: "DINAR", display: true } },
         },
       };
@@ -106,6 +148,15 @@ async function listingInteraction(context: Context, interaction: DisplayInteract
     });
     const unpriced = listings.filter((listing) => listing.unitPrice === null).length;
     note = `رتبت النتائج نفسها ${interaction.direction === "ASC" ? "من الأرخص إلى الأغلى" : "من الأغلى إلى الأرخص"}${unpriced ? `؛ ${unpriced === 1 ? "عرض سعره بالاتفاق في آخر القائمة" : "العروض التي سعرها بالاتفاق في آخر القائمة"}` : ""}. «الأول» و«الثاني» تعني الآن هذا الترتيب.`;
+  } else if ("city" in interaction) {
+    // City names are compared after the same Arabic folding as search («عمّان» = «عمان», «الزرقاء» = «زرقاء»).
+    const fold = (value: string) => normalizeSearch(value).replace(/^ال/u, "");
+    const wanted = fold(interaction.city);
+    const before = listings.length;
+    listings = listings.filter((listing) => fold(String(listing.city ?? "")) === wanted);
+    if (!listings.length)
+      return { tool: "restoreResults", version: 1, result: { ...restored, ...keepLayout, query: { ...restored.query, buyer: { message: `لا يوجد بين النتائج الحالية عرض في «${interaction.city}». أبقيت النتائج كما هي؛ يمكنك طلب بحث جديد في هذه المدينة.`, authority: "DINAR", display: true } } } };
+    note = `أبقيت ${listings.length} من ${before} عروض في «${interaction.city}»، دون بحث جديد.`;
   } else {
     const available = (listing: (typeof listings)[number]) =>
       listing.inventoryMode === "UNLIMITED" || (listing.availableQuantity ?? 0) - (listing.reservedQuantity ?? 0) > 0;
@@ -119,7 +170,7 @@ async function listingInteraction(context: Context, interaction: DisplayInteract
     version: 1,
     result: {
       kind: "SEARCH",
-      query: { ...restored.query, derivedFrom: active.resultSetId, displayOperation: interaction.kind === "SORT" ? `SORT_PRICE_${interaction.direction}` : "FILTER_AVAILABLE", buyer: { message: note, authority: "DINAR", display: true } },
+      query: { ...restored.query, derivedFrom: active.resultSetId, displayOperation: interaction.kind === "SORT" ? `SORT_PRICE_${interaction.direction}` : "city" in interaction ? "FILTER_CITY" : "FILTER_AVAILABLE", buyer: { message: note, authority: "DINAR", display: true } },
       listings,
       ...keepLayout,
     },
@@ -127,7 +178,7 @@ async function listingInteraction(context: Context, interaction: DisplayInteract
 }
 
 async function businessInteraction(context: Context, interaction: DisplayInteraction): Promise<Turn | null> {
-  if (interaction.kind === "SORT" || interaction.kind === "FILTER") return null;
+  if (interaction.kind === "SORT" || interaction.kind === "FILTER" || interaction.kind === "PRESENT") return null;
   const { readBusinessOverview } = await import("./model-read-capabilities");
   // A fresh read under this actor's own authority: figures are never carried over from the old card.
   const read = await readBusinessOverview({ conversationId: context.conversationId, currentMessageId: context.currentMessageId, market: context.market, actorId: context.actorId } as any);

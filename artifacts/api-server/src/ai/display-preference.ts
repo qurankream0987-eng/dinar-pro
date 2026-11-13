@@ -1,4 +1,4 @@
-import type { DisplayDirective } from "@workspace/api-zod/surface-composition";
+import type { CardPresentation, DisplayDirective } from "@workspace/api-zod/surface-composition";
 import { normalizeSearch } from "./search-context";
 
 /**
@@ -13,11 +13,33 @@ export type DisplayInteraction =
   | { kind: "FORMAT"; directive: DisplayDirective }
   | { kind: "SORT"; by: "PRICE"; direction: "ASC" | "DESC" }
   | { kind: "FILTER"; available: true }
-  | { kind: "ANALYZE"; op: "MAX" | "MIN" | "MAX_VS_MIN" | "LAST_VS_PREVIOUS" };
+  | { kind: "FILTER"; city: string }
+  | { kind: "ANALYZE"; op: "MAX" | "MIN" | "MAX_VS_MIN" | "LAST_VS_PREVIOUS" }
+  | { kind: "PRESENT"; presentation: CardPresentation };
+
+const IMAGE = "(?:ال)?(?:صوره|صورة|صور|الصور)";
+const CARD = "(?:ال)?(?:بطاقه|بطاقة|بطاقات|كرت|كروت|معلومات|نتائج)";
+/**
+ * The arrangement of the cards on screen, never their content: image size, price position,
+ * density and where details sit. Read before the sale/purchase guard because «حط السعر فوق»
+ * places the server's own price; it names no amount and changes no record.
+ */
+export function cardPresentationOf(text: string): CardPresentation | undefined {
+  const presentation: CardPresentation = {};
+  if (new RegExp(`(?:^|\\s)(?:كبر|كبري|كبرلي|كبرها|كبرهم|وسع|وسعلي)\\s+(?:لي\\s+)?${IMAGE}(?=\\s|$)|${IMAGE}\\s+(?:اكبر|كبيره|كبيرة|بالكبير)(?=\\s|$)`, "u").test(text)) presentation.image = "LARGE";
+  else if (new RegExp(`(?:^|\\s)(?:صغر|صغري|صغرلي)\\s+(?:لي\\s+)?${IMAGE}(?=\\s|$)|${IMAGE}\\s+(?:اصغر|صغيره|صغيرة)(?=\\s|$)`, "u").test(text)) presentation.image = "SMALL";
+  else if (new RegExp(`(?:^|\\s)(?:بدون|بلا|شيل|اخفي|اخف|احذف|ما\\s+ابي)\\s+${IMAGE}(?=\\s|$)`, "u").test(text)) presentation.image = "HIDDEN";
+  else if (new RegExp(`(?:^|\\s)(?:رجع|رجعلي|ارجع)\\s+${IMAGE}(?=\\s|$)`, "u").test(text)) presentation.image = "MEDIUM";
+  if (/(?:^|\s)(?:ال)?سعر\s+(?:فوق|اول|بالاول|في\s+الاول|بالبدايه|في\s+البدايه|اعلي|بالاعلي)(?=\s|$)/u.test(text)) presentation.price = "TOP";
+  if (new RegExp(`(?:^|\\s)(?:ال)?تفاصيل\\s+(?:تحت|اسفل|بعد)\\s+${IMAGE}(?=\\s|$)`, "u").test(text)) presentation.details = "BELOW";
+  if (new RegExp(`(?:^|\\s)(?:اختصر|اختصرلي|قلل|خفف)\\s+(?:لي\\s+)?${CARD}(?=\\s|$)|${CARD}\\s+(?:ابسط|مختصره|مختصرة|مختصر|اخف)(?=\\s|$)|(?:^|\\s)(?:بسط|بسطها|بسطلي)\\s+${CARD}(?=\\s|$)`, "u").test(text)) presentation.density = "COMPACT";
+  else if (/(?:^|\s)(?:كل|بكل)\s+(?:ال)?تفاصيل(?=\s|$)|(?:^|\s)تفاصيل\s+اكثر(?=\s|$)/u.test(text)) presentation.density = "FULL";
+  return Object.keys(presentation).length ? presentation : undefined;
+}
 
 const FORMAT_WORDS: Array<[RegExp, DisplayDirective["format"]]> = [
-  [/(?:^|\s)(?:ب|ك|في|على\s+شكل\s+)?(?:جدول|الجدول|table)(?=\s|$)/u, "TABLE"],
-  [/(?:^|\s)(?:ب|ك)?(?:بطاقات|البطاقات|كروت|الكروت|cards)(?=\s|$)/u, "CARDS"],
+  [/(?:^|\s)(?:ب|ك|ل|لل|في|على\s+شكل\s+)?(?:جدول|الجدول|table)(?=\s|$)/u, "TABLE"],
+  [/(?:^|\s)(?:ب|ك|ل|لل)?(?:بطاقات|البطاقات|كروت|الكروت|cards)(?=\s|$)/u, "CARDS"],
   [/(?:^|\s)(?:رسم|الرسم)\s+(?:خطي|الخطي)(?=\s|$)|(?:^|\s)(?:خط|خطي|منحني)(?=\s|$)/u, "LINE"],
   [/(?:^|\s)(?:ب|ك)?(?:اعمده|الاعمده|اعمدة|الاعمدة|bars?)(?=\s|$)/u, "BAR"],
   [/(?:^|\s)(?:رسم\s+)?(?:دائري|الدائري|دائره|دائرة|كعكه|كعكة)(?=\s|$)/u, "DONUT"],
@@ -38,8 +60,11 @@ export function displayInteraction(message: string): DisplayInteraction | undefi
   const text = normalizeSearch(message).replace(/[؟?!.،,]/gu, " ").replace(/\s+/gu, " ").trim();
   const words = text.split(" ").filter(Boolean);
   if (!words.length || words.length > 9) return undefined;
-  // A number, a sale or a purchase verb means this is not only about what is on screen.
-  if (/\d/u.test(text) || SALE_OR_PURCHASE.test(text)) return undefined;
+  if (/\d/u.test(text)) return undefined;
+  const presentation = cardPresentationOf(text);
+  if (presentation) return { kind: "PRESENT", presentation };
+  // A sale or a purchase verb means this is not only about what is on screen.
+  if (SALE_OR_PURCHASE.test(text)) return undefined;
 
   // Questions about the figures on screen.
   if (/(?:^|\s)(?:ب|و|مع\s+)?(?:ال)?(?:اعلي|اكثر|اكبر)(?=\s|$)/u.test(text) && /(?:^|\s)(?:ب|و|مع\s+)?(?:ال)?(?:اقل|اصغر|ادني)(?=\s|$)/u.test(text))
@@ -56,6 +81,10 @@ export function displayInteraction(message: string): DisplayInteraction | undefi
     if (/(?:^|\s)(?:من\s+)?(?:ال)?(?:اغلي|غالي)(?=\s|$)/u.test(text)) return { kind: "SORT", by: "PRICE", direction: "DESC" };
     if (/(?:^|\s)(?:من\s+)?(?:ال)?(?:ارخص|رخيص|اقل)(?=\s|$)/u.test(text)) return { kind: "SORT", by: "PRICE", direction: "ASC" };
   }
+  // «أبي اللي بعمّان فقط», «بس اللي في الزرقاء»: narrow the results on screen to one city.
+  const city = text.match(/(?:^|\s)(?:اللي|الي|يلي|الموجوده|الموجودة)\s+(?:ب|في\s+)((?:ال)?[^\s\d]{2,24})(?:\s+(?:فقط|بس|بالذات|تحديدا))?$/u)
+    ?? text.match(/(?:^|\s)(?:فقط|بس)\s+(?:اللي\s+|الي\s+)?(?:ب|في\s+)((?:ال)?[^\s\d]{2,24})$/u);
+  if (city && /(?:^|\s)(?:فقط|بس|اللي|الي|يلي)(?=\s|$)/u.test(text)) return { kind: "FILTER", city: city[1]! };
   if (/(?:^|\s)(?:ال)?(?:متوفر|متوفره|متوفرة|المتاح|متاح)(?=\s|$)/u.test(text) && /(?:^|\s)(?:بس|فقط|خلني|ورني|وريني|اعرض|خل|خلي)(?=\s|$)/u.test(text))
     return { kind: "FILTER", available: true };
 

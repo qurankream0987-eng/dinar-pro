@@ -1838,7 +1838,7 @@ async function executeRuntime(context: RuntimeContext, incoming: RuntimeOptions)
     knownCities = cities;
     marketplaceContextLoaded = true;
   };
-  const [latestListingBlock] = addToCart
+  const recentListingBlocks = addToCart
     ? await db
         .select({ payload: aiUiBlocks.payload })
         .from(aiUiBlocks)
@@ -1850,11 +1850,14 @@ async function executeRuntime(context: RuntimeContext, incoming: RuntimeOptions)
           ),
         )
         .orderBy(desc(messages.createdAt))
-        .limit(1)
+        .limit(4)
     : [];
-  const listingBlockReference = ListingBlockReference.safeParse(
-    latestListingBlock?.payload,
-  );
+  // «ورني تفاصيل الثاني» then «ضيف الثاني للسلة»: an ordinal is never resolved against a one-item
+  // details view; it means the list the user was looking at just before (never older than that).
+  const wantedIndex = Math.max(-1, ...findOrdinalMentions(context.message).map((reference) => (reference.kind === "LAST" ? -1 : reference.index)));
+  const parsedBlocks = recentListingBlocks.map((block) => ListingBlockReference.safeParse(block.payload));
+  const skipDetail = wantedIndex >= 1 && parsedBlocks[0]?.success && parsedBlocks[0].data.resourceIds.length === 1;
+  const listingBlockReference = (skipDetail ? parsedBlocks.find((parsed) => parsed.success && parsed.data.resourceIds.length > wantedIndex) : undefined) ?? parsedBlocks[0] ?? ListingBlockReference.safeParse(undefined);
 
   if (addToCart) {
     const reference_ = listingBlockReference.success

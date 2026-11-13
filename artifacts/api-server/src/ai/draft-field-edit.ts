@@ -130,3 +130,32 @@ export function applyDraftFieldEdit(
       return { ok: true, ack: "" };
   }
 }
+
+/**
+ * «لا، خله 14 برو» on a draft titled «آيفون 13 برو»: a correction of the model or number in the
+ * title, recognised only when it shares a word with the current title and names no currency (so
+ * «خليه 15» stays a price edit). Returns the corrected title, or undefined.
+ */
+const foldLetters = (value: string) => value.replace(/[أإآ]/gu, "ا").replace(/ة/gu, "ه").replace(/ى/gu, "ي").toLowerCase();
+export function titleCorrection(message: string, title: string | undefined): string | undefined {
+  if (!title) return undefined;
+  let text = message.trim().replace(/[.!؟?]+$/u, "");
+  const negated = /^(?:لا|لأ|لاء|مو|مش)[،,\s]+/u.test(text);
+  text = text.replace(/^(?:لا|لأ|لاء|مو|مش)[،,\s]+/u, "");
+  const verb = /^(?:قصدي|اقصد|أقصد|بل|خله|خليه|خلها|خليها|خلي|خل|غيره|غيرها|صححه|صححها|صحح)\s+/u;
+  if (!negated && !verb.test(text)) return undefined;
+  const rest = text.replace(verb, "").trim();
+  if (rest.length < 3 || rest.length > 40 || !/\d/u.test(rest) || !/[^\d\s]{2,}/u.test(rest)) return undefined;
+  if (/(?:دينار|دنانير|jod|kwd|ريال|درهم|ليره|ليرة|سعر|بسعر|بـ?\s*\d)/iu.test(rest)) return undefined;
+  const foldedTitle = foldLetters(title);
+  const restWords = foldLetters(rest).split(/\s+/u).filter((word) => /[^\d]/u.test(word) && word.length >= 2);
+  for (const word of restWords) {
+    const escaped = word.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
+    // «13 برو» → «14 برو» (number before the shared word) or «ايفون 13» → «ايفون 14» (after it).
+    for (const pattern of [new RegExp(`\\S*\\d\\S*\\s+${escaped}(?=\\s|$)`, "u"), new RegExp(`${escaped}\\s+\\S*\\d\\S*`, "u")]) {
+      const match = pattern.exec(foldedTitle);
+      if (match) return `${title.slice(0, match.index)}${rest}${title.slice(match.index + match[0].length)}`.replace(/\s+/gu, " ").trim();
+    }
+  }
+  return undefined;
+}

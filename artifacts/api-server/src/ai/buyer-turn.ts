@@ -158,7 +158,12 @@ const ORDINAL_TOKENS: Record<string, number> = {
 };
 
 /** Every position named in "قارن الأول والثالث" / "قارن الأول بالثاني" / "قارن 1 و 3", in order. */
+/** «أول اثنين», «اول ثلاثة», «الأولين»: the first N results on screen. */
+const FIRST_N = /(?:^|\s)(?:ال)?(?:اول|اولى|اولي)\s+(اثنين|ثنين|اثنان|ثنتين|2|ثلاث|ثلاثه|ثلاثة|3|اربع|اربعه|اربعة|4)(?=\s|$)|(?:^|\s)(?:ال)?اولين(?=\s|$)/u;
+const FIRST_N_COUNT: Record<string, number> = { اثنين: 2, ثنين: 2, اثنان: 2, ثنتين: 2, "2": 2, ثلاث: 3, ثلاثه: 3, ثلاثة: 3, "3": 3, اربع: 4, اربعه: 4, اربعة: 4, "4": 4 };
 function positionsIn(text: string): number[] {
+  const first = text.match(FIRST_N);
+  if (first) return Array.from({ length: first[1] ? FIRST_N_COUNT[first[1]] ?? 2 : 2 }, (_, index) => index + 1);
   const positions: number[] = [];
   for (const raw of text.split(/\s+/)) {
     const word = raw.replace(/^(?:و|ب)(?=ال|\d)/u, "");
@@ -168,7 +173,9 @@ function positionsIn(text: string): number[] {
   return positions;
 }
 
-const ORDINAL_REFERENCE_ACTIONS = new Set(["افتح", "اعرض", "وريني", "ارني", "شوف", "شوفي", "تفاصيل", "معلومات", "مواصفات"]);
+const ORDINAL_REFERENCE_ACTIONS = new Set(["افتح", "اعرض", "وريني", "ورني", "ارني", "شوف", "شوفي", "شوفلي", "تفاصيل", "معلومات", "مواصفات"]);
+/** «ورني تفاصيل الثاني», «اعرض معلومات رقم 2»: a verb, then the details noun, then one position. */
+const DETAIL_NOUNS = new Set(["تفاصيل", "معلومات", "مواصفات"]);
 function isOrdinalReference(text: string): boolean {
   const words = text.split(/\s+/u);
   if (positionsIn(text).length !== 1) return false;
@@ -178,7 +185,8 @@ function isOrdinalReference(text: string): boolean {
       (ORDINAL_REFERENCE_ACTIONS.has(words[0]!) && isPosition(words[1]!)) ||
       (words[0] === "رقم" && isPosition(words[1]!))
     )) ||
-    (words.length === 3 && ORDINAL_REFERENCE_ACTIONS.has(words[0]!) && words[1] === "رقم" && isPosition(words[2]!));
+    (words.length === 3 && ORDINAL_REFERENCE_ACTIONS.has(words[0]!) && (words[1] === "رقم" || DETAIL_NOUNS.has(words[1]!)) && isPosition(words[2]!)) ||
+    (words.length === 4 && ORDINAL_REFERENCE_ACTIONS.has(words[0]!) && DETAIL_NOUNS.has(words[1]!) && words[2] === "رقم" && isPosition(words[3]!));
 }
 
 // ─── State ───────────────────────────────────────────────────────────────────

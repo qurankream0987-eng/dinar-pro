@@ -274,6 +274,25 @@ export const SurfaceSectionSchema = z.discriminatedUnion("type", [
 ]);
 export type SurfaceSection = z.infer<typeof SurfaceSectionSchema>;
 
+/**
+ * How a card arranges what it already shows — never what it shows. Chosen by the model or by the
+ * user's words («كبّر الصورة», «حط السعر فوق», «خل البطاقة أبسط», «التفاصيل تحت الصورة»); applied
+ * by the renderer to server-supplied fields only. It carries no value, label, URL or action.
+ */
+export const CARD_IMAGE_SIZES = ["LARGE", "MEDIUM", "SMALL", "HIDDEN"] as const;
+export const CardPresentationSchema = z.object({
+  image: z.enum(CARD_IMAGE_SIZES).optional(),
+  price: z.enum(["TOP", "INLINE"]).optional(),
+  density: z.enum(["FULL", "COMPACT"]).optional(),
+  details: z.enum(["BESIDE", "BELOW"]).optional(),
+}).strict();
+export type CardPresentation = z.infer<typeof CardPresentationSchema>;
+/** Later wishes override earlier ones field by field («كبر الصورة» then «حط السعر فوق» keeps both). */
+export function mergePresentation(base: CardPresentation | undefined, next: CardPresentation | undefined): CardPresentation | undefined {
+  const merged = { ...(base ?? {}), ...(next ?? {}) };
+  return Object.keys(merged).length ? merged : undefined;
+}
+
 /** UTF-8 length without TextEncoder: this package targets neither DOM nor Node typings. */
 function utf8Bytes(text: string): number {
   let bytes = 0;
@@ -294,6 +313,12 @@ export const ComposedSurfaceSchema = z.object({
   testId: testId.optional(),
   /** Machine state of the underlying resource (e.g. COUNTERED), exposed as data-status. */
   status: z.string().regex(/^[A-Z][A-Z_]{0,39}$/).optional(),
+  /**
+   * An explicit example the user asked for («ورني مثال لإعلان»): rendered with a permanent
+   * «مثال توضيحي» label, never as a marketplace record. It may carry no executable capability,
+   * no external link and no verified total, so a mockup can never be bought, published or paid.
+   */
+  illustrative: z.boolean().optional(),
   sections: z.array(SurfaceSectionSchema).min(1).max(16),
 }).strict().superRefine((surface, context) => {
   if (utf8Bytes(JSON.stringify(surface)) > COMPOSED_SURFACE_MAX_BYTES)
@@ -305,6 +330,12 @@ export const ComposedSurfaceSchema = z.object({
     context.addIssue({ code: z.ZodIssueCode.custom, message: "one primary action per surface" });
   if (!surfaceAllowsActions(surface.state) && actions.some((action) => action.kind !== "NAVIGATE"))
     context.addIssue({ code: z.ZodIssueCode.custom, message: "a terminal surface must not offer a send action" });
+  if (surface.illustrative) {
+    if (actions.some((action) => action.kind === "EXTERNAL_LINK" || action.actionId !== undefined || action.emphasis === "PRIMARY"))
+      context.addIssue({ code: z.ZodIssueCode.custom, message: "an illustrative surface offers no capability" });
+    if (surface.sections.some((section) => section.type === "money" && section.total?.verified))
+      context.addIssue({ code: z.ZodIssueCode.custom, message: "an illustrative surface has no verified total" });
+  }
 });
 export type ComposedSurface = z.infer<typeof ComposedSurfaceSchema>;
 export type ComposedSurfaceInput = z.input<typeof ComposedSurfaceSchema>;
@@ -457,6 +488,7 @@ export const ResultCompositionSchema = z.object({
   layout: z.enum(["GRID", "CAROUSEL", "LIST", "TABLE"]),
   /** A listing id from the block's own result set; never a sponsored listing. */
   highlightId: z.string().min(1).max(200).optional(),
+  presentation: CardPresentationSchema.optional(),
 }).strict();
 export type ResultComposition = z.infer<typeof ResultCompositionSchema>;
 
@@ -529,6 +561,8 @@ export const DisplayDirectiveSchema = z.object({
   scope: z.enum(DISPLAY_SCOPES).optional(),
   /** For COMPARISON on result sets: 1-based positions, as in PresentationProposal. */
   positions: z.array(z.number().int().min(1).max(24)).min(2).max(4).optional(),
+  /** Arrangement of the latest cards (results or the seller's draft); applies to their own fields only. */
+  presentation: CardPresentationSchema.optional(),
 }).strict();
 export type DisplayDirective = z.infer<typeof DisplayDirectiveSchema>;
 

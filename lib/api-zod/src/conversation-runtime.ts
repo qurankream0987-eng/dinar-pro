@@ -1047,9 +1047,14 @@ const DINAR_ANCHOR = /دينار|dinar|(?:^|\s)(?:هنا|هون|هني|التط�
  * «كيف أبيع فكرتي للمستثمرين؟» or «كيف تعمل الصور الرقمية؟» are general questions for the model.
  * Selling counts only with no object, or anchored to DINAR; photos only in a selling context.
  */
+/** «ورني مثال لبطاقة إعلان», «نموذج لكرت خدمة»: a request to see an example card, not a record or a how-to. */
+export const EXAMPLE_CARD_REQUEST = /(?:^|\s)(?:مثال|نموذج|موك\s*اب|mockup)\s+(?:ل|عن\s+|على\s+)?(?:ال)?(?:بطاق|كرت|تصميم|شكل)/u;
+
 export function isDinarTutorialQuestion(message: string): boolean {
   const text = normalizeActionText(message);
   if (!HOW_TO.test(text)) return false;
+  // «ورني مثال لبطاقة إعلان كيف ممكن تكون» asks to see an example card, not how to post one.
+  if (EXAMPLE_CARD_REQUEST.test(text)) return false;
   if (DINAR_FEATURE.test(text)) return true;
   const sell = SELL_VERB.test(text);
   const photo = PHOTO_WORD.test(text);

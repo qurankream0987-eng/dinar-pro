@@ -39,6 +39,9 @@ export function surfaceIntent(message: string): string | undefined {
   // policy question is answered from the published policy (readPolicy), not a generic page.
   if (/(?:^|\s)(?:عموله|رسوم)\s+(?:دينار|جاسم)(?:\s|$)/u.test(folded)) return "POLICIES";
   if (/(?:^|\s)(?:انزل|نزل|نزلي|احط|حط)\s+(?:لي\s+)?اعلان(?:\s|$)/u.test(folded)) return "SELL";
+  // «جاسم روح بيع لي تلفوني»: a named item to sell. With a published listing and a pronoun
+  // («روح بيع لي هذا») the commerce turn answers first with the paid promotion; this is the rest.
+  if (/(?:^|\s)روح\s+بيع(?:ه|ها)?\s*لي\s+(?!هذا|هذي|هذه|هاد|اياه|اياها)\S{2,}/u.test(folded)) return "SELL";
   if (/(?:^|\s)(?:شو|وش|ايش|شنو)\s+(?:في\s+|فيه\s+)?(?:ب|في\s+)?(?:ال)?سل(?:ه|تي)(?:\s|$)|(?:^|\s)(?:اشوف|اطالع|اتفرج\s+على)\s+(?:ال)?سل(?:ه|تي)(?:\s|$)|^(?:ورني|وريني|ورجيني|فرجيني|فرجني|اعرض|افتح|افتحلي|شوفلي)\s+(?:لي\s+)?(?:ال)?سل(?:ه|تي)$/u.test(folded))
     return "CART";
   // «أبي سائق يوصل الطلب», «بدي مندوب لطلبي»: delivery of an existing order starts from the order.
@@ -229,6 +232,8 @@ export function stripCorrectionPrefix(message: string): string {
     .replace(/^(?:طيب|طب)\s+و?(?=بدي|ابي|اريد|ابحث)/u, "")
     .replace(/^(?:ترى\s+)?(?:[اأ]نا\s+)?(?:اقصد|أقصد)\s+الخدم[ةه]\s+(?:مو|مش)\s+المنتج\s*[:،,]\s*/u, "")
     .replace(/^(?:مش|مو)\s+هيك\s*[،,]\s*/u, "")
+    // «خلاص نرجع للتسوق، أبي سماعة», «طيب خلنا نرجع للسوق، ابحث عن …»: a topic switch back to shopping.
+    .replace(/^(?:طيب\s+|اوكي\s+|تمام\s+)?(?:خلاص\s+|خلص\s+)?(?:خلنا\s+|خلينا\s+|يلا\s+)?(?:نرجع|ارجع|رجعنا|نعود|نروح)\s+(?:لل|ال|الى\s+ال|على\s+ال)(?:تسوق|سوق|شراء|بحث)\s*[،,]\s*(?=بدي|ابي|أبي|اريد|أريد|ابغى|ابحث|أبحث|دورلي|ودي)/u, "")
     .replace(/^لا\s+(?:خلص|خلاص)\s+ما\s+(?:بدي|ابي|اريد)\s+[^،,]+[،,]\s*/u, "")
     .replace(/^(شلون|كيف)\s+(?:[اأ]حصل|[اأ]لاقي)\s+(?:على\s+)?/u, "ابي ");
   if (/^(?:قصدي|اقصد|أقصد)/u.test(text)) text = text.replace(/\s+(?:مش|مو|وليس)\s+\d+\s*$/u, "");

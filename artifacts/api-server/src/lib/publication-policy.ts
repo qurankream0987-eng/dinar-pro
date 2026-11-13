@@ -36,6 +36,19 @@ export async function activePolicyRules(
     );
 }
 
+/**
+ * The unambiguous core of the published prohibited-items policy («الأسلحة والذخائر، المخدرات
+ * والمواد الخاضعة للرقابة … محظور في كل الأسواق»), applied even when an admin has configured no
+ * TERM rule. Deliberately narrow: «مسدس ماء», «مسدس سيليكون» or «مسدس حراري» are tools and toys, so
+ * only wording that names a real firearm, live ammunition or a narcotic is refused here; everything
+ * uncertain is left to the configured rules, reports and moderation.
+ */
+const PUBLISHED_PROHIBITED = /(?:^|\s)(?:مسدس\s+(?:حقيقي|ناري|حربي|عيار)|سلاح\s+(?:ناري|حي|حربي)|اسلحه\s+(?:ناريه|حيه)|بندقيه\s+(?:حربيه|اليه)|رشاش|كلاشن\S*|ذخيره(?:\s+حيه)?|رصاص\s+حي|طلقات\s+(?:حيه|نار\S*)|حشيش|كوكايين|هيروين|كبتاجون|كريستال\s+ميث|مخدرات)(?=\s|$)/u;
+export function publishedProhibitedItem(text: string): boolean {
+  return PUBLISHED_PROHIBITED.test(normalizeSearch(text).replace(/ة/gu, "ه"));
+}
+export const PROHIBITED_ITEM_REFUSAL = "لا يمكن عرض هذا في جاسم: سياسة المنتجات المحظورة تمنع الأسلحة والذخائر والمخدرات في كل الأسواق. لم أُنشئ أي مسودة ولم يُنشر شيء.";
+
 export type PolicySubject = {
   categoryId?: string;
   categoryLabel?: string;
@@ -120,7 +133,7 @@ export async function assertListingPublicationPolicy(
     fulfilmentType: input.fulfilmentType,
     text: listingPolicyText(input.data),
   });
-  if (rule)
+  if (rule || publishedProhibitedItem(listingPolicyText(input.data)))
     throw Object.assign(new Error(POLICY_BLOCK_MESSAGE), {
       status: 409,
       code: "POLICY_RESTRICTED",

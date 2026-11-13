@@ -100,6 +100,8 @@ export type ToolResult = {
   draftStep?: string;
   /** Block F typed draft review: values with provenance and every missing field. */
   draftReview?: Record<string, unknown>;
+  /** Flexible cards: the arrangement of the seller's draft card (never its content). */
+  cardPresentation?: import("@workspace/api-zod/surface-composition").CardPresentation;
   /** Block F seller insight (price comparables, listing factors); facts only. */
   sellerInsight?: Record<string, unknown>;
   /** Block F2 server facts side by side; unknown values stay null. */

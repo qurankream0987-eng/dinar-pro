@@ -203,7 +203,7 @@ const P = {
   // G1: AI usage and plans. Questions about the user's own AI allowance, never ad bundles.
   aiUsage: AI_USAGE_QUESTION,
   // «كم سعر برو؟», «اشترك في Go»: a tier name only counts next to a plan word, so «ايفون pro» stays a search.
-  aiPlanTier: /^(?=.*(?:باقه|باقات|اشتراك|اشترك|ترقي|ارقي|بزنس|بيزنس|business|الفرق|خطه))(?=.*(?:^|\s)(?:go|pro|جو|برو)(?:\s|$)).*$|(?:سعر|تكلفه|كلفه|بكم)\s+(?:باقه\s+)?(?:go|pro|جو|برو)(?:\s|$)|^(?:اريد|ابي|ابغي|ابغى|بدي|ودي|حاب)\s+(?:باقه\s+)?(?:go|pro|جو|برو)$/u,
+  aiPlanTier: /^(?=.*(?:باقه|باقات|اشتراك|اشترك|ترقي|ارقي|بزنس|بيزنس|business|الفرق|خطه))(?=.*(?:^|\s)(?:go|pro|جو|برو)(?:\s|$)).*$|(?:سعر|تكلفه|كلفه|بكم)\s+(?:باقه\s+|خطه\s+)?(?:(?:جاسم|دينار|jassim)\s+)?(?:go|pro|جو|برو)(?:\s|$)|^(?:اريد|ابي|ابغي|ابغى|بدي|ودي|حاب)\s+(?:باقه\s+)?(?:go|pro|جو|برو)$/u,
   aiPlans: /^(?:(?:اعرض|وريني|شوف|ما\s+هي|شو|وش|ايش)\s+)?(?:ال)?باقات(?:ك|كم)?(?:\s+(?:الاشتراك|الاشتراكات|دينار|جاسم|المتاحه))?$|(?:الفرق|فرق)\s+بين\s+(?:ال)?(?:مجاني|باقات)|^(?:اريد|ابي|ابغي|ابغى|بدي|ودي|حاب)\s+(?:ان\s+)?(?:اشترك|(?:ال)?اشتراك)(?:\s+(?:في|ب)?\s*(?:دينار|الباقات|باقه))?$|(?:ترقيه|ترقيت|ارقي|رقي|رق)\s+(?:حسابي|باقتي|اشتراكي)|(?:ترقيه|اشتراك)\s+(?:ال)?حساب|(?:^|\s)(?:ادفع|دفع|سداد|اسدد|اجدد|تجديد)\s+(?:ال)?اشتراك(?:ي)?(?:\s|$)|(?:^|\s)(?:غير|حول|بدل)\s+(?:اشتراكي|باقتي|خطتي)(?:\s|$)/u,
   sellForNeed: /بع\s+لهذا\s+الطلب|بيع\s+لهذا\s+الطلب/u,
   unsatisfied: /ما\s+عجبني|ولا\s+(?:واحد|وحده|شي|شيء)\s+(?:عجبني|مناسب|ينفع)|في\s+غيرهم|فيه\s+غيرهم|في\s+غيرها|ما\s+لقيت\s+(?:اللي|الي|شي)|ابي\s+خيار\s+ثاني|اريد\s+خيارات\s+(?:ثانيه|اخري|غيرها)|خيارات\s+ثانيه|غير\s+هذول|ولا\s+واحد/u,
@@ -1051,8 +1051,14 @@ async function unsatisfied(set: StoredSet, actorId: string, market: Market): Pro
 
 // ─── Seller product flows ────────────────────────────────────────────────────
 
-async function startProduct(productType: string, message: string, actorId: string, market: Market, sets: StoredSet[], needTitle?: string): Promise<Turn> {
+async function startProduct(productType: string, message: string, actorId: string, market: Market, sets: StoredSet[], needTitle?: string): Promise<Turn | null> {
   const listings = (await promotableListings(actorId, market));
+  // «جاسم روح بيع لي تلفوني» from a seller with nothing published yet names a new item: that is a
+  // sale to start (the listing draft takes it), not the paid «روح بيع لي» product, which needs a listing.
+  if (!listings.length && productType === "DEMAND_CAPTURE" && !needTitle) {
+    const named = normalize(message).replace(P.demand, " ").replace(/(?:^|\s)(?:جاسم|دينار|لي|هذا|هذي|هذه|هاد|اياه|اياها|الحين|الان|بسرعه)(?=\s|$)/gu, " ").trim();
+    if (named.length >= 2) return null;
+  }
   if (!listings.length) return notice(actorId, "لا توجد لديك إعلانات منشورة مؤهلة في سوقك الحالي. أنشئ إعلانًا أولًا (مثل «أريد أبيع …»).", market);
   const text = normalize(message);
   const index = ordinalIn(text.replace(/\d+(?:\.\d+)?\s*(?:دينار|دنانير|jod|kwd)/u, ""));
