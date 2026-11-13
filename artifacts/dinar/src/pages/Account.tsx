@@ -808,7 +808,8 @@ function LegalSettings() {
   const find = (key: string) => index.data?.policies.find((policy) => policy.key === key);
   const versionLine = (key: string, fallback: string) => {
     const policy = find(key);
-    return policy ? `النسخة ${policy.version} · سارية من ${policy.effectiveDate}` : fallback;
+    // The version stays the exact registry string; the date is shown in words so it never breaks mid-line in RTL.
+    return policy ? `النسخة ${policy.version} · سارية من ${longDate(policy.effectiveDate)}` : fallback;
   };
   return (
     <ListGroup title="القانونية والبيانات">
