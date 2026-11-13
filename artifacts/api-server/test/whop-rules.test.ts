@@ -78,7 +78,7 @@ await test("commission is positive, below the total, and integer", () => {
     feeMinor: 2_500,
     sellerMinor: 47_500,
   });
-  for (const total of [1, 3, 9, 10, 99, 2_500]) {
+  for (const total of [10, 19, 99, 2_500]) {
     const { feeMinor, sellerMinor } = computeCommission(total, rule);
     assert.ok(Number.isInteger(feeMinor) && feeMinor > 0);
     assert.ok(feeMinor < total);
@@ -87,6 +87,9 @@ await test("commission is positive, below the total, and integer", () => {
 });
 
 await test("a fee that rounds to zero is refused instead of silently collected", () => {
+  for (const total of [1, 3, 9]) {
+    assert.throws(() => computeCommission(total, rule), WhopRuleError);
+  }
   assert.throws(() => computeCommission(5, { ...rule, feePercent: 5 }), WhopRuleError);
   assert.throws(() => computeCommission(0, rule), WhopRuleError);
   assert.throws(
@@ -113,10 +116,11 @@ await test("the country gate blocks Iraq by default and refuses unknown codes", 
 });
 
 await test("the environment can add countries but cannot remove the defaults", () => {
-  const blocked = parseBlockedCountries("iq, ru,ZZ");
+  const blocked = parseBlockedCountries("iq, ru,ZZ,x1");
   assert.ok(blocked.includes("IQ"));
   assert.ok(blocked.includes("RU"));
-  assert.ok(!blocked.includes("ZZ"));
+  assert.ok(blocked.includes("ZZ"));
+  assert.ok(!blocked.includes("X1"));
   assert.deepEqual(blocked, [...new Set(blocked)]);
 });
 
