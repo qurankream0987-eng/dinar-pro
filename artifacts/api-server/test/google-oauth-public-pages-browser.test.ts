@@ -106,3 +106,26 @@ test("G7-G12 browser: links on the home page, policy pages render, RTL, no horiz
     await browser.close();
   }
 });
+
+test("SEO robots.txt and sitemap.xml: only the canonical host is indexable, and only its public pages", async () => {
+  const as = async (pathname: string, host: string) => {
+    const response = await fetch(`${origin}${pathname}`, { headers: { "x-forwarded-host": host } });
+    return { status: response.status, type: response.headers.get("content-type") ?? "", text: await response.text() };
+  };
+  const robots = await as("/robots.txt", "jassimai.com");
+  assert.equal(robots.status, 200);
+  assert.match(robots.type, /text\/plain/u);
+  for (const line of ["Allow: /$", "Allow: /privacy$", "Allow: /terms$", "Allow: /assets/", "Disallow: /", "Sitemap: https://jassimai.com/sitemap.xml"]) assert.ok(robots.text.includes(line), line);
+  const sitemap = await as("/sitemap.xml", "jassimai.com");
+  assert.equal(sitemap.status, 200);
+  assert.match(sitemap.type, /application\/xml/u);
+  const locs = [...sitemap.text.matchAll(/<loc>([^<]+)<\/loc>/gu)].map((match) => match[1]);
+  assert.deepEqual(locs, ["https://jassimai.com/", "https://jassimai.com/privacy", "https://jassimai.com/terms", "https://jassimai.com/policies"]);
+  assert.doesNotMatch(sitemap.text, /listings|business|account|\/api/u, "no test data or private page is listed");
+  // Staging and the Railway default domain never compete with the real site.
+  for (const host of ["staging.jassimai.com", "dinar-staging-app-staging.up.railway.app"]) {
+    const blocked = await as("/robots.txt", host);
+    assert.equal(blocked.text, "User-agent: *\nDisallow: /\n", host);
+    assert.equal((await as("/sitemap.xml", host)).status, 404, host);
+  }
+});

@@ -36,6 +36,50 @@ export function createWebFrontend(directory: string): Router {
   // inside #root. The app replaces it on mount (createRoot), so the signed-in experience is
   // unchanged; the policy text comes from the same versioned registry as /policies/:key.
   const shellHtml = readFileSync(shell, "utf8");
+  // Search engines: only the canonical public host is indexable, and only its public pages for
+  // now (listings and storefronts still run on test data). Every other host (staging, the
+  // Railway default domain) answers «Disallow: /» so it never competes with the real site.
+  router.get("/robots.txt", (req, res) => {
+    res.type("text/plain").setHeader("Cache-Control", "public, max-age=3600");
+    if (req.hostname !== CANONICAL_HOST) {
+      res.send("User-agent: *\nDisallow: /\n");
+      return;
+    }
+    res.send(
+      [
+        "User-agent: *",
+        "Allow: /$",
+        "Allow: /privacy$",
+        "Allow: /terms$",
+        "Allow: /policies",
+        "Allow: /assets/",
+        "Allow: /brand/",
+        "Disallow: /",
+        "",
+        `Sitemap: https://${CANONICAL_HOST}/sitemap.xml`,
+        "",
+      ].join("\n"),
+    );
+  });
+  router.get("/sitemap.xml", (req, res) => {
+    if (req.hostname !== CANONICAL_HOST) {
+      res.status(404).type("text/plain").send("Not found");
+      return;
+    }
+    const updated = currentPolicy("privacy")?.effectiveDate;
+    const urls = [
+      { path: "/", priority: "1.0" },
+      { path: "/privacy", priority: "0.5", lastmod: updated },
+      { path: "/terms", priority: "0.5", lastmod: currentPolicy("terms")?.effectiveDate },
+      { path: "/policies", priority: "0.3" },
+    ];
+    res.type("application/xml").setHeader("Cache-Control", "public, max-age=3600");
+    res.send(
+      `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls
+        .map((url) => `  <url><loc>https://${CANONICAL_HOST}${url.path}</loc>${url.lastmod ? `<lastmod>${url.lastmod}</lastmod>` : ""}<priority>${url.priority}</priority></url>`)
+        .join("\n")}\n</urlset>\n`,
+    );
+  });
   router.get(["/", "/privacy", "/terms"], (req, res) => {
     const page = publicPage(req.path);
     res.setHeader("Cache-Control", "no-cache");
@@ -54,6 +98,9 @@ export function createWebFrontend(directory: string): Router {
   });
   return router;
 }
+
+/** The public production hostname; anything else (staging, *.up.railway.app) is not indexed. */
+const CANONICAL_HOST = (process.env.PUBLIC_CANONICAL_HOST ?? "jassimai.com").trim().toLowerCase();
 
 const escapeHtml = (value: string) =>
   value.replace(/[&<>"']/gu, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]!);
