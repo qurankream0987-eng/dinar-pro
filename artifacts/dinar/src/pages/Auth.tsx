@@ -51,9 +51,9 @@ function PasswordInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
 function AuthFrame({ children }: { children: ReactNode }) {
   return (
     <div className="container-app py-6 md:py-12">
-      <div className="mx-auto grid max-w-[1000px] overflow-hidden rounded-2xl md:border md:border-border md:bg-card md:shadow-sm lg:grid-cols-[1fr_440px]">
-        <div className="md:p-10">{children}</div>
-        <aside className="relative hidden overflow-hidden bg-ink p-10 text-ink-foreground lg:flex lg:flex-col lg:justify-between">
+      <div className="mx-auto grid max-w-[860px] overflow-hidden rounded-2xl md:border md:border-border md:bg-card md:shadow-sm lg:grid-cols-[1fr_360px]">
+        <div className="md:p-7">{children}</div>
+        <aside className="relative hidden overflow-hidden bg-ink p-7 text-ink-foreground lg:flex lg:flex-col lg:justify-between">
           <span aria-hidden className="absolute -end-24 -top-24 h-72 w-72 rounded-full border-[36px] border-accent/15" />
           <span aria-hidden className="absolute -bottom-20 -start-16 h-56 w-56 rounded-full border-[28px] border-white/5" />
           <BrandMark size={48} wordmark={false} className="relative z-10" />
@@ -266,7 +266,7 @@ export function AuthPage({ register = false, next, embedded = false }: { registe
 
   return (
     <AuthFrame>
-      <div className="mx-auto max-w-[420px]">
+      <div className="mx-auto max-w-[380px]">
         <div className="mb-7 text-center lg:text-start">
           <div className="mb-5 flex justify-center lg:hidden">
             <BrandMark size={56} wordmark={false} />
