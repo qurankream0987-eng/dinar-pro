@@ -67,7 +67,7 @@ await test("sends one form POST through the messaging service with an API key", 
   assert.equal(form.get("MessagingServiceSid"), MG);
   assert.equal(form.get("ValidityPeriod"), "600");
   assert.equal(form.get("From"), null);
-  assert.match(form.get("Body")!, /دينار: 123456/);
+  assert.match(form.get("Body")!, /رمز التحقق في جاسم: 123456/);
 });
 
 await test("staging refuses numbers outside the allowlist and countries outside the prefixes", async () => {
