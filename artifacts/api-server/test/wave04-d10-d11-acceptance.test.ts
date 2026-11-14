@@ -415,7 +415,7 @@ test("W04-10-03 follow-ups and corrections read the live record; the model's inv
     });
     const restated = await say(user.cookie, user.conv, `كم سعره مرة ثانية من جوالات ${run}؟`);
     assert.equal(restated.status, 200, restated.body);
-    assert.match(restated.body, new RegExp(`${quoted} دينار`, "u"), "a recorded amount still reaches the user in the model's words");
+    assert.match(restated.body, new RegExp(`${quoted} (?:دينار|JOD)`, "u"), "a recorded amount still reaches the user (model words or the grounded summary)");
   });
 });
 
