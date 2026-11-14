@@ -740,7 +740,9 @@ export async function executeAiConversationTurn(
   // The assistant's name «جاسم» (JassimAI, formerly DINAR) at the start of a message is a form of
   // address, like «دينار» before it: removed before any routing so «جاسم ابحث عن جوال» searches for
   // a phone, not for «جاسم». The stored message is unchanged.
-  const addressed = context.message.replace(/^\s*(?:يا\s+)?جاسم\s*[،,:!]?\s+(?=\S)/u, "");
+  // Product names keep their name: «جاسم بزنس», «جاسم جو», «جاسم برو», «جاسم كونكت» are plans and
+  // services, not an address followed by a request.
+  const addressed = context.message.replace(/^\s*(?:يا\s+)?جاسم\s*[،,:!]?\s+(?=\S)(?!(?:بزنس|بيزنس|business|جو|go|برو|pro|كونكت|كونيكت|connect)(?:\s|[؟?!.،,]|$))/iu, "");
   if (addressed !== context.message) context = { ...context, message: addressed };
   if (context.imageUnderstanding) {
     const prompt = claimsCompletedAction(context.imageUnderstanding.answer)
