@@ -460,11 +460,18 @@ async function resolveConversationReference(
   const back = folded.match(RETURN_TO_TOPIC);
   if (back) {
     const wanted = back[1]!.replace(TOPIC_FILLER, " ").split(/\s+/u).map(topicStem).filter((word) => word.length >= 3);
+    // A search for a category alone («ابحث عن سيارة بأقل من 5000») is stored as its category with
+    // no search words; its topic is then the category's own names, from the category registry.
+    const categoryNames = new Map<string, string>();
+    if (recent.some((set) => StoredSearchQuery.safeParse(set.query ?? {}).data?.categoryId))
+      for (const category of await listMarketplaceCategories())
+        categoryNames.set(category.id, [category.label, ...(category.aliases ?? [])].join(" "));
     const earlier = recent.find((set) => {
       // The topic may be the current one («خلينا نرجع للجوالات» after a side question): re-running it is still right.
       if (set.expiresAt && set.expiresAt.getTime() <= Date.now()) return false;
       const stored = StoredSearchQuery.safeParse(set.query ?? {});
-      const words = contextText(stored.success ? stored.data.search ?? "" : "").replace(/ى/g, "ي").split(/\s+/u).map(topicStem).filter((word) => word.length >= 3);
+      const topic = stored.success ? `${stored.data.search ?? ""} ${stored.data.categoryId ? categoryNames.get(stored.data.categoryId) ?? "" : ""}` : "";
+      const words = contextText(topic).replace(/ى/g, "ي").split(/\s+/u).map(topicStem).filter((word) => word.length >= 3);
       return wanted.some((want) => words.some((word) => word.startsWith(want) || want.startsWith(word)));
     });
     if (earlier) {

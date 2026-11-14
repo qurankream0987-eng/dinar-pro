@@ -511,6 +511,32 @@ test("J15 a full eligible model cycle preserves car references and buyer price c
   assert.equal((await reservationsOf(buyer.id)).filter((row) => row.resource === "TEXT_REQUEST").length, transitions.length + 1);
 });
 
+test("J15b returning to a category-only search after a model turn re-runs that search, not the model", async () => {
+  // J15's marker is random hex; when it is all digits the search keeps only its category (cars)
+  // and no search words. The return must then match the category's own names.
+  reset(); await setRouting({});
+  const buyer = await account();
+  const seller = await account();
+  const digits = String(100_000 + Math.floor(Math.random() * 899_999));
+  const ids = [await publishCar(seller, `تويوتا كورولا ${digits}`, "3100"), await publishCar(seller, `هيونداي النترا ${digits}`, "4200")];
+  const conversation = await request("/ai/conversations", "POST", {}, buyer.cookie);
+  const conversationId = conversation.data.id as string;
+  const searched = await turn(buyer.cookie, `ابحث عن سيارة ${digits} بأقل من 5000`, {}, conversationId);
+  const first = searched.blocks.find((block: any) => block.type === "LISTING_RESULTS");
+  assert.ok(first, searched.body);
+  assert.ok(ids.every((id) => first.payload.resourceIds.includes(id)), searched.body);
+  const side = await turn(buyer.cookie, "ما عاصمة الأردن؟", { modelPreference: "AUTO" }, conversationId);
+  assert.equal(side.status, 200, side.body);
+  const modelCalls = calls.length;
+  for (const message of [`طيب ارجع لسيارة ${digits}`, "طيب ارجع للسيارات"]) {
+    const restored = await turn(buyer.cookie, message, {}, conversationId);
+    const results = restored.blocks.find((block: any) => block.type === "LISTING_RESULTS");
+    assert.ok(results, `${message}: ${restored.body}`);
+    assert.ok(ids.every((id) => results.payload.resourceIds.includes(id)), `${message} restores the earlier cars`);
+  }
+  assert.equal(calls.length, modelCalls, "the return is resolved by the server, never sent to a model");
+});
+
 test("J13 the assembled request and output reserve are checked against each routed model before dispatch", async () => {
   reset();
   await setRouting({ models: [{ ...FREE_A, contextWindow: 12_000 }] });
