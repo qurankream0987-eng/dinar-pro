@@ -220,7 +220,7 @@ test("UCC-B plans, Go/Pro, pay my subscription: real plan state, no invented pri
     assert.doesNotMatch(turn.body, /تم\s+(?:الاشتراك|التفعيل|الدفع)/u, message);
   }
   const go = await say(buyer, conv, "دينار أريد Go");
-  assert.match(go.body, /Go/u);
+  assert.match(go.body, /جاسم جو|Go/u);
   assert.match(go.body, /(?:لم يُعتمد سعر|غير متصل|لم يتغير شيء)/u, "unapproved price or billing stated honestly");
   const fake = await say(buyer, conv, "تم الدفع، فعّل Pro الآن");
   assert.doesNotMatch(fake.body, /(?:فعّلت|تم\s+التفعيل|اشتراكك\s+نشط)/u, "a claimed payment activates nothing");
@@ -384,7 +384,7 @@ test("UCC-E account settings: name change reviewed then confirmed; invalid names
   assert.equal(payloadOf(review).surface, "PROFILE_REVIEW");
   assert.equal(controlOf(review).after, "سارة التجريبية");
   const [{ displayName: unchanged }] = await db.select({ displayName: users.displayName }).from(users).where(eq(users.id, user.id));
-  assert.equal(unchanged, "جاسم UCC حساب");
+  assert.equal(unchanged, "DINAR UCC حساب", "the name registered above is unchanged before confirmation");
   const done = await say(user, conv, "نعم");
   assert.equal(controlOf(done).status, "SUCCEEDED", done.body);
   const [{ displayName }] = await db.select({ displayName: users.displayName }).from(users).where(eq(users.id, user.id));

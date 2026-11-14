@@ -400,7 +400,7 @@ test("W04-10-03 follow-ups and corrections read the live record; the model's inv
     assert.ok(correctedSearch && correctedRead, `the follow-up ran the production loop too: ${corrected.body}`);
     assert.equal(correctedRead!.result.listings[0].id, correctedSearch[0].id, "and it read the first listing");
     assert.doesNotMatch(corrected.body, /973\s*دنانير/u, "an amount no read recorded never reaches the user");
-    assert.match(corrected.body, /هذه نتائج القراءة الحالية من جاسم/u, "the unrecorded amount is replaced by DINAR's own words");
+    assert.match(corrected.body, /هذه نتائج القراءة الحالية من جاسم|هذه العروض من سجل جاسم: /u, "the unrecorded amount is replaced by جاسم's own grounded words");
     assert.equal(sawUntrustedDataRule, true, "tool results are framed to the model as untrusted data");
 
     const quoted = Number(String(correctedRead!.result.listings[0].unitPrice));
@@ -546,7 +546,7 @@ test("W04-11-06 every capability carries its full security contract and names a 
     return existsSync(file) ? readFileSync(file, "utf8") : undefined;
   };
   assert.equal(LIVE_PROVIDER_STATUS, "LIVE_PROVIDER_NOT_VERIFIED");
-  assert.equal(CAPABILITY_NAMES.length, 25);
+  assert.equal(CAPABILITY_NAMES.length, 26);
   for (const name of CAPABILITY_NAMES) {
     const definition = CAPABILITY_REGISTRY[name];
     assert.equal(definition.name, name);

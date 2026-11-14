@@ -246,9 +246,9 @@ const stableJson = (value: unknown): string => {
 const signatureOf = (tool: string, args: unknown) =>
   `${tool}:${createHash("sha256").update(stableJson(args)).digest("hex")}`;
 
-test("AI-F02 the capability registry names all twenty-five capabilities (15 F01/F02 + 9 intelligence reads + 1 business prepare) and advertises them under one tool each", async () => {
-  assert.equal(CAPABILITY_NAMES.length, 25);
-  assert.equal(new Set(CAPABILITY_NAMES).size, 25);
+test("AI-F02 the capability registry names all twenty-six capabilities (15 F01/F02 + 10 intelligence reads incl. own account status + 1 business prepare) and advertises them under one tool each", async () => {
+  assert.equal(CAPABILITY_NAMES.length, 26);
+  assert.equal(new Set(CAPABILITY_NAMES).size, 26);
   for (const name of CAPABILITY_NAMES) {
     const definition = CAPABILITY_REGISTRY[name];
     assert.equal(definition.name, name);
@@ -274,7 +274,7 @@ test("AI-F02 the capability registry names all twenty-five capabilities (15 F01/
   }
   assert.deepEqual([...MODEL_TOOL_CAPABILITIES].sort(), [...CAPABILITY_NAMES].sort());
   const toolNames = MODEL_TOOL_CAPABILITIES.map((name) => CAPABILITY_REGISTRY[name].toolName);
-  assert.equal(new Set(toolNames).size, 25, "every capability owns one distinct model tool name");
+  assert.equal(new Set(toolNames).size, 26, "every capability owns one distinct model tool name");
   assert.deepEqual(
     [...toolNames].filter((name) => (MODEL_LOOP_TOOL_ALLOWLIST as readonly string[]).includes(name)).sort(),
     [...MODEL_LOOP_TOOL_ALLOWLIST].sort(),
