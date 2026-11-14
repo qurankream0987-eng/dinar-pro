@@ -68,15 +68,22 @@ Known remaining: «السعر 280 دينار والكمية 0» (two fields in o
 «أي منتج عندي أكثر مبيعًا؟» goes to the model (no product-level ranking read); marketing quality
 and general answers need a real model (not measured here: no paid calls).
 
-LAB_RESULTS_PLACEHOLDER
+Frozen labs (deterministic, no model): 500-case 409/0/91 → 409/0/91 (identical); held-out 68/13/26 →
+69/12/26 (one case better, no regression); H5 30/30 → 30/30.
 
 ## E. Commerce journeys
 
-COMMERCE_TABLE_PLACEHOLDER
+PASS: S01–S04, S08–S10, S12, B01–B07, B11–B13, M6, M8 (premium-journeys 5/5 with assertions);
+B09/B10/B14/B15 via existing suites (wave02-card-reliability, next-g3-acceptance, wave4-payment-acceptance,
+maps-tracking-browser-journey). PARTIAL: S07 (two fields in one sentence → model). PASS (route only):
+S05, M1–M5 (model receives the real listing facts; copy quality not measured). NOT EXECUTED
+deterministically: M7 (no product-level ranking read).
 
 ## F. Subscription simulation
 
-SUBSCRIPTION_PLACEHOLDER
+Real subscription is refused truthfully (prices not approved). Full lifecycle evidence with a mock
+provider: whop-billing 11/11, closure-integrations 9/9, d1-d2-business-foundation 25/25,
+next-g1-usage 36/36, pro-subscription-honesty 2/2.
 
 ## G. Whop
 
@@ -84,8 +91,13 @@ See `WHOP_READINESS_2026-11-13.md`.
 
 ## H. Regression
 
-REGRESSION_PLACEHOLDER
+Full battery at `b9a7da5` (116 suites, local-suite.sh, disposable loopback DBs): 1,172 passed,
+18 failed. 16 are the known baseline (was 19; block-f4-driver's 3 now pass). The 2 new ones
+(ai-provider R3 after adding the illustration field; multiturn-context H07 from the city filter)
+were fixed in `d7988cd` / `7c36c6b` and re-run green (48/48, 1/1).
 
 ## I–L
 
-FINAL_PLACEHOLDER
+Security, accessibility, launch verdicts and owner decisions: see the shared report
+(Claude Doc «تقرير جاسم: تطوير المنتج المتميز») and `WHOP_READINESS_2026-11-13.md`. Evidence screenshots:
+`premium-evidence/` (60 before + 60 after were captured; 7 kept in the repository).
