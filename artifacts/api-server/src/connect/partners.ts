@@ -278,10 +278,12 @@ export function connectParticipationCapabilities(input: {
           ],
         }
       : { included: false, enabled: false, path: "DINAR_LISTINGS", requirements: ["وضعك الحالي لا يشمل البيع داخل جاسم."] },
-    // Never derived from the mode: importing a website catalog into DINAR's checkout does not exist.
+    // Never derived from the mode: the merchant website's own checkout never runs inside DINAR.
+    // Selling a catalog item inside DINAR is a separate, owner-confirmed import into a normal
+    // DINAR listing (connect/catalog-import.ts), gated by internalSale above.
     nativeCatalogCheckout: {
       enabled: false,
-      requirements: ["تحويل كتالوج موقعك إلى بيع داخل جاسم غير متاح بعد؛ اختيار الوضع لا يفعّل الدفع داخل جاسم."],
+      requirements: ["الدفع في موقعك لا يعمل من داخل جاسم. لبيع منتج من كتالوجك داخل جاسم استورده كإعلان جاسم عادي (يتطلب وضع «البيع داخل جاسم» أو «المختلط»)."],
     },
   };
 }

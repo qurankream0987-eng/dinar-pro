@@ -1247,6 +1247,12 @@ async function executeRuntime(context: RuntimeContext, incoming: RuntimeOptions)
       const alert = await executeDemandAlertTurn({ conversationId: context.conversationId, actorId: context.actorId, market: context.market, message: context.message });
       if (alert) return alert as never;
     }
+    // Jassim Connect: a merchant's own-store requests («استورد منتجات موقعي», «خل الشراء من موقعي»).
+    {
+      const { executeConnectMerchantTurn } = await import("./connect-merchant-turn");
+      const connect = await executeConnectMerchantTurn({ actorId: context.actorId, market: context.market, message: context.message });
+      if (connect) return connect as never;
+    }
     const interaction = displayInteraction(context.message);
     if (interaction) {
       const { applyDisplayInteraction } = await import("./display-interaction");

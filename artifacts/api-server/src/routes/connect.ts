@@ -24,6 +24,7 @@ import * as partners from "../connect/partners";
 import * as agreements from "../connect/agreements";
 import { ConnectFinancialReceiptSchema } from "@workspace/api-zod/connect-platform";
 import { connectDiagnostics } from "../connect/diagnostics";
+import { importConnectOffer, previewConnectImport } from "../connect/catalog-import";
 import { connectPartnerReport } from "../connect/reports";
 import {
   receiveConnectEvent,
@@ -49,6 +50,11 @@ router.delete("/connect/partners/:id/team/:delegationId", requireAuth, async (re
   res.set("Cache-Control", "no-store").json(await team.removeConnectTeam(req.actor!.id, await marketFor(req), idParam(req.params.id), idParam(req.params.delegationId), req.body)));
 router.get("/connect/partners/:id/catalog", requireAuth, async (req, res) =>
   res.set("Cache-Control", "no-store").json(await team.connectTeamCatalog(req.actor!.id, await marketFor(req), idParam(req.params.id))));
+// Mode A: owner-confirmed move of one Connect catalog offer into a normal DINAR listing (free).
+router.get("/connect/partners/:id/offers/:offerId/import", requireAuth, async (req, res) =>
+  res.set("Cache-Control", "no-store").json(await previewConnectImport({ actorId: req.actor!.id, market: await marketFor(req), partnerId: idParam(req.params.id), offerId: idParam(req.params.offerId) })));
+router.post("/connect/partners/:id/offers/:offerId/import", requireAuth, async (req, res) =>
+  res.set("Cache-Control", "no-store").json(await importConnectOffer({ actorId: req.actor!.id, market: await marketFor(req), partnerId: idParam(req.params.id), offerId: idParam(req.params.offerId), body: req.body })));
 router.get("/connect/partners/:id/report", requireAuth, async (req, res) =>
   res
     .set("Cache-Control", "no-store")
