@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { S3Client } from "@aws-sdk/client-s3";
+import { CopyObjectCommand, DeleteObjectCommand, GetObjectCommand, HeadObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { S3CompatibleObjectStorageService } from "../src/lib/s3ObjectStorage";
 import { ObjectNotFoundError, validateObjectStorageConfiguration } from "../src/lib/objectStorage";
 import { ObjectPermission } from "../src/lib/objectAcl";
@@ -25,7 +25,14 @@ function memoryTransport() {
     const { Bucket, Key } = command.input;
     const id = `${Bucket}/${Key}`;
     const row = rows.get(id);
-    switch (command.constructor.name) {
+    // By class identity, not constructor.name: a bundler may rename classes (PutObjectCommand2).
+    const kind = command instanceof HeadObjectCommand ? "HeadObjectCommand"
+      : command instanceof PutObjectCommand ? "PutObjectCommand"
+      : command instanceof GetObjectCommand ? "GetObjectCommand"
+      : command instanceof CopyObjectCommand ? "CopyObjectCommand"
+      : command instanceof DeleteObjectCommand ? "DeleteObjectCommand"
+      : command.constructor.name;
+    switch (kind) {
       case "HeadObjectCommand":
         if (!row) throw Object.assign(new Error("missing"), { name: "NotFound", $metadata: { httpStatusCode: 404 } });
         return { ContentLength: row.bytes.length, ContentType: row.contentType, Metadata: row.metadata };

@@ -26,6 +26,26 @@ net.Socket.prototype.connect = function connect(...args) {
   const options = typeof first === "object" && first !== null && !Array.isArray(first) ? first : undefined;
   const host = options ? options.host : typeof args[1] === "string" ? args[1] : undefined;
   const isPipe = options ? typeof options.path === "string" : typeof first === "string" && Number.isNaN(Number(first));
+  // A hostname that the in-process resolver (the guarded dns.lookup below, or a test's own
+  // loopback hook) maps to loopback is allowed: the socket then connects only to the addresses
+  // checked here. Any non-loopback answer is refused and recorded, exactly as before.
+  if (!isPipe && options && typeof host === "string" && !isLoopback(host) && !net.isIP(host) && !options.lookup) {
+    const socket = this;
+    const guardedLookup = (hostname, lookupOptions, callback) => {
+      dns.lookup(hostname, lookupOptions, (error, address, family) => {
+        if (error) return callback(error);
+        const addresses = Array.isArray(address) ? address.map((entry) => entry.address) : [address];
+        if (addresses.length === 0 || !addresses.every((value) => isLoopback(value))) {
+          const refused = record("tcp", `${hostname}:${options.port}`);
+          process.nextTick(() => socket.destroy(refused));
+          return callback(refused);
+        }
+        callback(null, address, family);
+      });
+    };
+    options.lookup = guardedLookup;
+    return originalConnect.apply(this, args);
+  }
   if (!isPipe && !isLoopback(host)) {
     const error = record("tcp", `${host}:${options ? options.port : first}`);
     process.nextTick(() => this.destroy(error));

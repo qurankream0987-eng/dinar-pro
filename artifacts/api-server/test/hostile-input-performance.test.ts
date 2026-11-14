@@ -14,7 +14,8 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { HOSTILE_INPUTS, LEGITIMATE_INPUTS } from "./hostile-input-corpus";
-import { deterministicReading, goldenEntry, goldenKey } from "./hostile-input-shared";
+import { deterministicReading, goldenKey } from "./hostile-input-shared";
+import { createHash } from "node:crypto";
 
 // 3–8× below the pre-fix medians (450–790 ms); HIP-02 separately forbids quadratic growth.
 const BUDGET_MS = 250;
@@ -54,21 +55,55 @@ await test("HIP-02 cost grows near-linearly with message length", () => {
 
 await test("HIP-03 readings are unchanged for hostile and ordinary inputs (golden from before the fix)", () => {
   const golden = JSON.parse(readFileSync(new URL("./fixtures/hostile-input-golden.json", import.meta.url.replace("/.test-build/", "/test/")), "utf8")) as Record<string, any>;
+  // The golden predates two documented changes. First (8d9732f, 2026-11-09): a new sale draft
+  // defaults to chat contact and direct payment, both marked as DINAR-derived. Those four fields
+  // must hold exactly those values; they are then removed, as they did not exist before that decision, so every
+  // other field is still compared byte for byte with the historical golden (kept unchanged).
+  const beforeDraftDefaults = (reading: any) => {
+    const draft = reading?.draft?.draft;
+    if (!draft) return reading;
+    // Only a value the server derived is a default; one the user stated is compared as is.
+    if (draft.sources?.contactPreference === "DINAR_DERIVED") {
+      assert.equal(draft.contactPreference, "CHAT_ONLY");
+      delete draft.contactPreference; delete draft.sources.contactPreference;
+    }
+    if (draft.sources?.paymentMethods === "DINAR_DERIVED") {
+      assert.deepEqual(draft.paymentMethods, ["CASH_DIRECT"]);
+      delete draft.paymentMethods; delete draft.sources.paymentMethods;
+    }
+    return reading;
+  };
+  const sha256 = (value: unknown) => createHash("sha256").update(JSON.stringify(value)).digest("hex");
   for (const raw of Object.values(HOSTILE_INPUTS)) {
     const message = raw.slice(0, 2000);
-    assert.deepEqual(goldenEntry(message, false), golden[goldenKey(message)], `hostile reading changed: ${JSON.stringify(message.slice(0, 30))}`);
+    assert.deepEqual({ sha256: sha256(beforeDraftDefaults(deterministicReading(message))) }, golden[goldenKey(message)], `hostile reading changed: ${JSON.stringify(message.slice(0, 30))}`);
   }
+  // Second documented change after the golden (9e1af1c, 2026-11-11): after an earlier search,
+  // new product words start a new search instead of refining the old one with empty search text.
+  // Where the follow-up differs, it must be exactly that: a SEARCH whose words all come from
+  // the message itself. Only then is the earlier reading restored for comparison.
+  const beforeNewProductSearch = (message: string, reading: any, expected: any) => {
+    const now = reading.followUp, then = expected.followUp;
+    if (now?.intent === then?.intent) return reading;
+    assert.equal(then?.intent, "REFINE_SEARCH");
+    assert.equal(then?.query?.search, "");
+    assert.equal(now?.intent, "SEARCH");
+    assert.ok(now?.query?.search, "a new search carries the new product words");
+    const own = normalizeSearch(message).replace(/\s+/gu, "");
+    assert.ok(now.query.search.split(/\s+/u).every((word: string) => own.includes(word)), `the words come from the message itself: ${now.query.search}`);
+    return { ...reading, followUp: { ...now, intent: "REFINE_SEARCH", query: { ...now.query, search: "" } } };
+  };
   for (const message of LEGITIMATE_INPUTS) {
     const { message: stored, ...expected } = golden[goldenKey(message)];
     assert.equal(stored, message);
-    assert.deepEqual(goldenEntry(message, true), expected, `reading changed: ${message}`);
+    assert.deepEqual(beforeNewProductSearch(message, beforeDraftDefaults(deterministicReading(message)), expected), expected, `reading changed: ${message}`);
   }
 });
 
 import * as before from "./fixtures/pre-fix/arabic-normalization";
 import * as beforeContext from "./fixtures/pre-fix/search-context";
 import { normalizeNumberWords } from "../src/ai/arabic-normalization";
-import { hasCategoryAlias } from "../src/ai/search-context";
+import { hasCategoryAlias, normalizeSearch } from "../src/ai/search-context";
 import { INITIAL_PRICE_AMOUNT } from "../src/ai/listing-draft";
 import { TEST_MARKETPLACE_CATEGORY_SCHEMAS } from "./fixtures/marketplace-categories";
 
