@@ -254,5 +254,9 @@
   {
     "tag": "0063_volatile_xorn",
     "sha256": "d12c0cee16ec8444814c6f0a1ff8e17f9d47cb2b2eb192e226c0f1043911ed11"
+  },
+  {
+    "tag": "0064_welcome_ads_demand_requests",
+    "sha256": "0460fd3750b97249d26102fda4543210d114977a00e6fafb09b533baa85cb23a"
   }
 ]

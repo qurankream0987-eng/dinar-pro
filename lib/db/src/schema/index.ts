@@ -4070,3 +4070,4 @@ export const securityIncidentEvents = pgTable(
 );
 
 export * from "./connect";
+export * from "./advertising";

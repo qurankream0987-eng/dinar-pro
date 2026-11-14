@@ -33,6 +33,7 @@ import {
   ConversationItem,
   Welcome,
 } from "@/features/ai/ConversationHistory";
+import { WelcomeSponsored, retireWelcomeKey } from "@/features/ai/WelcomeSponsored";
 import {
   useCallback,
   useEffect,
@@ -1016,6 +1017,8 @@ export default function AiPage() {
       sending.current
     )
       return;
+    // The first real message ends this welcome screen: its sponsored cards never come back.
+    if (firstMessage) retireWelcomeKey();
     if (!firstMessage) {
       setDraft("");
       setFailedTurn(null);
@@ -2457,6 +2460,7 @@ export default function AiPage() {
                         composeStarter("ابحث عن منتج مشابه للصورة المرفقة: ");
                         document.querySelector<HTMLButtonElement>('[data-testid="button-ai-attachment-info"]')?.click();
                       }}
+                      footer={user ? <WelcomeSponsored key={activeId ?? "new"} conversationId={activeId} /> : undefined}
                     />
                   </div>
                 </div>

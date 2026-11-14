@@ -634,3 +634,31 @@
 }
 .premium-action-card, .dark .premium-action-card { background: var(--chat-surface); border-color: var(--premium-edge); box-shadow: var(--premium-depth); }
 .premium-action-card[data-action="sell"], .dark .premium-action-card[data-action="sell"] { background: var(--chat-surface); border-color: rgb(var(--chat-gold) / .35); }
+
+/* ── Welcome sponsored cards (Sponsored Conversation, WELCOME placement) ───────────────────────
+   Secondary to the assistant: small, quiet, clearly labelled, never more than two. */
+.dinar-chatgpt .welcome-sponsored { width: min(100%, 640px); margin: 14px auto 0; display: grid; gap: 6px; }
+.dinar-chatgpt .welcome-sponsored-head { display: flex; align-items: center; justify-content: space-between; color: var(--chat-ink-3); font-size: 11.5px; font-weight: 600; padding-inline: 4px; }
+.dinar-chatgpt .welcome-sponsored-close { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 999px; color: var(--chat-ink-3); }
+.dinar-chatgpt .welcome-sponsored-close:hover { background: var(--chat-surface-2); color: var(--chat-ink); }
+.dinar-chatgpt .welcome-sponsored-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px; }
+.dinar-chatgpt .welcome-sponsored-card {
+  display: grid; grid-template-columns: 52px 1fr; gap: 10px; align-items: center; min-width: 0; padding: 8px;
+  border: 1px solid var(--premium-edge); border-radius: 14px; background: var(--chat-surface); color: var(--chat-ink);
+  text-decoration: none; transition: background-color var(--premium-fast);
+}
+.dinar-chatgpt .welcome-sponsored-card:hover { background: var(--chat-surface-2); }
+.dinar-chatgpt .welcome-sponsored-media { width: 52px; height: 52px; overflow: hidden; border-radius: 10px; background: var(--chat-surface-2); }
+.dinar-chatgpt .welcome-sponsored-media > * { width: 100%; height: 100%; object-fit: cover; }
+.dinar-chatgpt .welcome-sponsored-placeholder { display: block; width: 100%; height: 100%; }
+.dinar-chatgpt .welcome-sponsored-copy { display: grid; gap: 1px; min-width: 0; }
+.dinar-chatgpt .welcome-sponsored-copy strong { overflow: hidden; font-size: 13.5px; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
+.dinar-chatgpt .welcome-sponsored-label { width: fit-content; padding: 0 6px; border-radius: 999px; background: rgb(var(--chat-gold) / .12); color: var(--chat-gold-ink); font-size: 10.5px; font-weight: 650; }
+.dinar-chatgpt .welcome-sponsored-meta { overflow: hidden; color: var(--chat-ink-3); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+/* Short screens keep the composer and starters; the sponsored row is the first thing to go. */
+@media (max-height: 620px) { .dinar-chatgpt .welcome-sponsored { display: none; } }
+@media (max-width: 420px) {
+  .dinar-chatgpt .welcome-sponsored-row { grid-template-columns: 1fr; gap: 6px; }
+  .dinar-chatgpt .welcome-sponsored-card { grid-template-columns: 40px 1fr; padding: 6px 8px; border-radius: 12px; }
+  .dinar-chatgpt .welcome-sponsored-media { width: 40px; height: 40px; border-radius: 8px; }
+}

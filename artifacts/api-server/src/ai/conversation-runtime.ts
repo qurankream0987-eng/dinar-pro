@@ -1241,6 +1241,12 @@ async function executeRuntime(context: RuntimeContext, incoming: RuntimeOptions)
   // applied to the conversation's latest display, re-read under the actor's authority, without a
   // model call. Comparisons keep the existing compare handlers; other phrasings reach the model.
   if (!options.planStep && context.actorId && !context.imageObjectPaths?.length && context.location === undefined) {
+    // «نبّهني إذا توفر»: save the latest search as a buyer-authorised request (two explicit steps).
+    {
+      const { executeDemandAlertTurn } = await import("./demand-alert-turn");
+      const alert = await executeDemandAlertTurn({ conversationId: context.conversationId, actorId: context.actorId, market: context.market, message: context.message });
+      if (alert) return alert as never;
+    }
     const interaction = displayInteraction(context.message);
     if (interaction) {
       const { applyDisplayInteraction } = await import("./display-interaction");

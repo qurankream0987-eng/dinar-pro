@@ -281,7 +281,7 @@ const TUTORIALS: Record<TutorialPayload["id"], TutorialPayload> = {
   },
   DEMAND_CAPTURE_EXPLAINER: {
     id: "DEMAND_CAPTURE_EXPLAINER",
-    title: "جاسم — روح بِع لي",
+    title: "جاسم روح بيع لي",
     caption: "يساعد الترويج على الوصول إلى مهتمين وفق إعدادات الحملة، من دون انتحال شخصيتك أو مراسلة الناس نيابةً عنك.",
     animation: "LOCAL_STEP_SEQUENCE",
     steps: [
@@ -1099,7 +1099,7 @@ async function chooseProduct(productType: string, listingId: string | undefined,
   const owned = (await promotableListings(actorId, market)).find((item) => item.id === listingId);
   if (!owned) return notice(actorId, "هذا الإعلان غير مؤهل أو ليس لك. لم يتغير شيء.", market);
   const products = await commercialProducts(market, { productTypes: [productType], categoryId: owned.categoryId });
-  const label = { FEATURED_LISTING: "الإعلان المميز", VIP_LISTING: "VIP", REFRESH_LISTING: "تجديد الإعلان", DEMAND_CAPTURE: "جاسم — روح بِع لي", SPONSORED_SEARCH: "الظهور الممول في البحث", SPONSORED_RECOMMENDATION: "الاقتراح الممول" }[productType] ?? productType;
+  const label = { FEATURED_LISTING: "الإعلان المميز", VIP_LISTING: "VIP", REFRESH_LISTING: "تجديد الإعلان", DEMAND_CAPTURE: "جاسم روح بيع لي", SPONSORED_SEARCH: "الظهور الممول في البحث", SPONSORED_RECOMMENDATION: "الاقتراح الممول" }[productType] ?? productType;
   if (!products.length) return notice(actorId, `لا يوجد منتج «${label}» مفعّل لفئة «${owned.title}» في سوقك حاليًا.`, market);
   if (products.length > 1)
     return turnFor({ kind: "COMMERCE", ownerId: actorId, view: "COMMERCIAL_PRODUCTS", productType, listingId }, products.map((item) => item.id), `اختر خيار «${label}» لإعلان «${owned.title}» (مثل «الأول»).`, actorId, market);

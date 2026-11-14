@@ -869,9 +869,9 @@ export const PRODUCT_TYPE_LABELS: Record<string, string> = {
   FEATURED_LISTING: "إعلان مميز",
   VIP_LISTING: "VIP",
   REFRESH_LISTING: "تجديد الإعلان",
-  SPONSORED_SEARCH: "ظهور ممول في البحث",
-  SPONSORED_RECOMMENDATION: "اقتراح ممول",
-  DEMAND_CAPTURE: "جاسم — روح بِع لي",
+  SPONSORED_SEARCH: "تمييز في نتائج البحث",
+  SPONSORED_RECOMMENDATION: "إعلان داخل المحادثة",
+  DEMAND_CAPTURE: "جاسم روح بيع لي",
   PROMOTION_BUNDLE: "باقة إعلانات",
   DINAR_BUSINESS: "جاسم بزنس",
 };
@@ -955,6 +955,7 @@ export function commercialProductView(product: ProductRow, market: Market): Comm
 }
 
 /** Effective products in the market's currency; listing products narrowed to a category. */
+const LISTING_AD_TYPES = new Set(["SPONSORED_RECOMMENDATION", "DEMAND_CAPTURE", "SPONSORED_SEARCH", "FEATURED_LISTING", "VIP_LISTING", "REFRESH_LISTING", "PROMOTION_BUNDLE"]);
 export async function commercialProducts(
   market: Market,
   filter: { productTypes?: readonly string[]; categoryId?: string } = {},
@@ -965,11 +966,14 @@ export async function commercialProducts(
     .from(promotionProducts)
     .where(and(eq(promotionProducts.marketId, market.id), eq(promotionProducts.enabled, true)))
     .orderBy(asc(promotionProducts.priceMinor), asc(promotionProducts.durationDays), asc(promotionProducts.id));
+  // A product type the current policy no longer sells is not offered (existing campaigns keep running).
+  const allowedAds = (await getCommercialPolicy(market.id)).advertisingProducts as readonly string[] | undefined;
   return rows.filter(
     (row) =>
       productIsEffective(row) &&
       row.currencyCode === market.currencyCode &&
       row.productType !== "STANDARD_PROMOTION" &&
+      (!allowedAds || row.productType === "DINAR_BUSINESS" || !LISTING_AD_TYPES.has(row.productType) || allowedAds.includes(row.productType)) &&
       (!filter.productTypes || filter.productTypes.includes(row.productType)) &&
       (filter.categoryId === undefined || row.categoryId === null || row.categoryId === filter.categoryId),
   );
@@ -1313,6 +1317,11 @@ export async function purchaseCommercialProduct(input: PurchaseInput & { idempot
   const balance = balanceView(outcome.account, input.market);
   if (outcome.promotionId) {
     const [row] = await db.select().from(listingPromotions).where(eq(listingPromotions.id, outcome.promotionId));
+    // «جاسم روح بيع لي»: match buyer-authorised saved requests as soon as the campaign serves.
+    if (outcome.created && row?.placementSnapshot === "DEMAND") {
+      const { matchDemandCampaign } = await import("./demand-requests");
+      await matchDemandCampaign(row.id, input.market).catch((error) => logger.warn({ event: "demand_match_failed", err: error }, "demand match failed"));
+    }
     return { created: outcome.created, promotion: (await promotionViews([row as PromotionRow], input.market))[0]!, balance: await getCommercialBalance(input.actorId, input.market) };
   }
   const entitlements = await db.select().from(commercialEntitlements).where(eq(commercialEntitlements.sourceEntryId, outcome.bundleEntryId!));

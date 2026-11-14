@@ -105,6 +105,8 @@ export async function recordAttributionEvent(input: {
   promotionId: string;
   listingId: string;
   placement: string;
+  /** A distinct placement of the same product (e.g. WELCOME of SPONSORED_RECOMMENDATION), recorded as such. */
+  recordedPlacement?: string;
   resultSetId?: string;
   market: Market;
   viewerUserId: string;
@@ -117,8 +119,9 @@ export async function recordAttributionEvent(input: {
   const bucket = input.eventType === "IMPRESSION"
     ? Math.floor(now / (policy.impressionDedupMinutes * 60_000))
     : Math.floor(now / (policy.engagementDedupHours * 60 * 60_000));
+  const surface = input.recordedPlacement ? `:${input.recordedPlacement}` : "";
   const dedupKey = input.eventType === "IMPRESSION"
-    ? `imp:${input.promotionId}:${viewerKey}:${bucket}`
+    ? `imp:${input.promotionId}:${viewerKey}:${bucket}${surface}`
     : `eng:${input.promotionId}:${viewerKey}:${input.kind}:${bucket}`;
   return db.transaction(async (tx) => {
     const [campaign] = await tx.select().from(listingPromotions).where(eq(listingPromotions.id, input.promotionId));
@@ -134,7 +137,7 @@ export async function recordAttributionEvent(input: {
         listingId: campaign.listingId,
         sellerId: campaign.sellerId,
         marketId: campaign.marketId,
-        placement: campaign.placementSnapshot,
+        placement: input.recordedPlacement ?? campaign.placementSnapshot,
         resultSetId: input.resultSetId ?? null,
         viewerKey,
         eventType: input.eventType,

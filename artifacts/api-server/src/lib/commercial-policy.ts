@@ -56,6 +56,19 @@ export const CommercialPolicySchema = z
     businessPulseInsightLimit: z.number().int().min(1).max(50),
     rawEventRetentionDays: z.number().int().min(1).max(365),
     demandSignalRetentionDays: z.number().int().min(1).max(365),
+    /** Sponsored Conversation, WELCOME placement: cards on an empty new conversation (never more than 2). */
+    welcomeSponsoredSlots: z.number().int().min(0).max(2),
+    /** Newly created conversations per viewer per 24 h that may show welcome cards at all. */
+    welcomeSponsoredDailyConversations: z.number().int().min(0).max(20),
+    /** How long a buyer's saved, authorised request («نبّهني إذا توفر») stays matchable. */
+    demandRequestRetentionDays: z.number().int().min(1).max(90),
+    /**
+     * The paid advertising products a market may sell. Unset (v0) keeps every legacy type for
+     * compatibility; the owner's proposal sets exactly the three: Sponsored Conversation
+     * (SPONSORED_RECOMMENDATION, placements WELCOME + in-chat), «جاسم روح بيع لي» (DEMAND_CAPTURE)
+     * and Sponsored Search (SPONSORED_SEARCH).
+     */
+    advertisingProducts: z.array(z.enum(["SPONSORED_RECOMMENDATION", "DEMAND_CAPTURE", "SPONSORED_SEARCH", "FEATURED_LISTING", "VIP_LISTING", "REFRESH_LISTING", "PROMOTION_BUNDLE"])).min(1).max(7).optional(),
     /** G1: AI usage allowances per plan tier and the global AI spending guard. */
     aiUsage: AiUsagePolicySchema,
     /** D1: the public Go / Pro / Business plan definitions (proposed until the owner approves). */
@@ -89,6 +102,9 @@ export const DEFAULT_COMMERCIAL_POLICY: CommercialPolicy = {
   businessPulseInsightLimit: 10,
   rawEventRetentionDays: 90,
   demandSignalRetentionDays: 90,
+  welcomeSponsoredSlots: 2,
+  welcomeSponsoredDailyConversations: 3,
+  demandRequestRetentionDays: 30,
   aiUsage: DEFAULT_AI_USAGE_POLICY,
   subscriptionPlans: DEFAULT_SUBSCRIPTION_PLANS_POLICY,
 };

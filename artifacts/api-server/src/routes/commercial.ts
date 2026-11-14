@@ -275,6 +275,7 @@ const ProductBody = z
     enabled: z.boolean().default(true),
   })
   .strict();
+const AD_PRODUCT_TYPES: readonly string[] = ["SPONSORED_RECOMMENDATION", "DEMAND_CAPTURE", "SPONSORED_SEARCH", "FEATURED_LISTING", "VIP_LISTING", "REFRESH_LISTING", "PROMOTION_BUNDLE"];
 const PLACEMENT_FOR: Record<string, string> = {
   FEATURED_LISTING: "FEATURED",
   VIP_LISTING: "VIP",
@@ -298,6 +299,10 @@ router.post("/admin/markets/:marketId/commercial-products", requireAuth, require
     if (!body.categoryId) throw fail(400, "منتجات الإعلانات تحتاج إلى تصنيف");
     if (!(await resolveMarketplaceCategory(body.categoryId, undefined))) throw fail(404, "التصنيف غير موجود");
   } else if (body.categoryId) throw fail(400, "هذا المنتج لا يرتبط بتصنيف");
+  // The owner's product list is the versioned policy's: a retired ad type is never created again.
+  const allowedAds = (await getCommercialPolicy(market.id)).advertisingProducts;
+  if (allowedAds && AD_PRODUCT_TYPES.includes(body.productType) && !(allowedAds as readonly string[]).includes(body.productType))
+    throw refuse(409, "هذا النوع من الإعلانات غير مدرج في سياسة الإعلانات الحالية", "AD_PRODUCT_NOT_IN_POLICY");
   if (body.productType === "PROMOTION_BUNDLE" && !body.bundleItems.length) throw fail(400, "حدّد محتوى الباقة");
   if (body.planCode && body.productType !== "DINAR_BUSINESS") throw refuse(400, "رمز الخطة يخص منتجات جاسم بزنس فقط", "PLAN_CODE_INVALID");
   if (body.productType === "DINAR_BUSINESS") {

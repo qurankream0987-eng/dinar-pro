@@ -1,3 +1,4 @@
+import type React from "react";
 import { Link } from "wouter";
 import { LazyMotion, domAnimation, m, useReducedMotion } from "framer-motion";
 import { surfaceSpring } from "@/lib/presentation-motion";
@@ -274,11 +275,14 @@ export function Welcome({
   onCompose,
   onImage,
   busy = false,
+  footer,
 }: {
   onStarter: (value: string) => void;
   onCompose: (prefill: string) => void;
   onImage: () => void;
   busy?: boolean;
+  /** Secondary content after the starters (the sponsored row); scrolls with the welcome, never above the composer. */
+  footer?: React.ReactNode;
 }) {
   const reduceMotion = useReducedMotion();
   const activate = (action: WelcomeAction) => {
@@ -351,6 +355,7 @@ export function Welcome({
             </button>
           ))}
         </div>
+        {footer}
       </m.div>
     </LazyMotion>
   );
