@@ -1044,11 +1044,13 @@ export type GuestModelPreflight =
 
 function guestProviderFailure(error: AIProviderError): ModelResult {
   const reason: ModelFailure =
-    error.code === "QUOTA_LIMITED"
-      ? "QUOTA_LIMITED"
-      : error.code === "NOT_CONFIGURED"
-        ? "NOT_CONFIGURED"
-        : "UNAVAILABLE";
+    error.detail === "CONTEXT_TOO_LARGE"
+      ? "CONTEXT_TOO_LARGE"
+      : error.code === "QUOTA_LIMITED"
+        ? "QUOTA_LIMITED"
+        : error.code === "NOT_CONFIGURED"
+          ? "NOT_CONFIGURED"
+          : "UNAVAILABLE";
   return {
     ok: false,
     reason,
@@ -1380,7 +1382,7 @@ export async function draftWithClaimGuard(
         outcome = await interpretWithModel(chosen.gateway, message, { ...context, reasoningEffort: chosen.reasoningEffort }, deadlineLeft());
         outcomes.push(outcome);
       }
-    } else if (chosen.heavyKind === "SEPARATE_MODEL" && (outcome.reason === "UNAVAILABLE" || outcome.reason === "QUOTA_LIMITED" || outcome.reason === "NOT_CONFIGURED")) {
+    } else if (chosen.heavyKind === "SEPARATE_MODEL" && (outcome.reason === "UNAVAILABLE" || outcome.reason === "QUOTA_LIMITED" || outcome.reason === "NOT_CONFIGURED" || outcome.reason === "CONTEXT_TOO_LARGE")) {
       // The separate HEAVY model could not answer (its own fallback included): LIGHT answers once.
       reason = "HEAVY_UNAVAILABLE";
       chosen = gatewayForTier(gateway, "LIGHT", context.reasoningEffort);
@@ -3157,6 +3159,8 @@ async function nearLimitFor(owner: AiUsageOwner, resource: ReturnType<typeof usa
 }
 
 export function modelFailureMessage(reason: ModelFailure): string {
+  if (reason === "CONTEXT_TOO_LARGE")
+    return "المحتوى المطلوب أطول من سعة النموذج المتاحة؛ لم أرسل هذه المحاولة ولم أغيّر شيئًا. يمكنك اختصار السياق أو بدء محادثة جديدة، وسيبقى السجل الحالي محفوظًا.";
   if (reason === "QUOTA_LIMITED")
     return "وصل مزود المساعد الذكي إلى حد الاستخدام المتاح مؤقتًا. لم يُنفّذ أي إجراء. يمكنك متابعة البحث يدويًا أو المحاولة لاحقًا.";
   if (reason === "NOT_CONFIGURED")

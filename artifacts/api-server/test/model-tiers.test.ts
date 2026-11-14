@@ -292,7 +292,7 @@ await test("DT-10 configuration: a HEAVY slot builds a second gateway; identical
   assert.equal(same.heavy, undefined, "a heavy identical to the primary is not a second model");
   const tiered = { ...base, DINAR_AI_TIERING: "on", DINAR_AI_HEAVY_PROVIDER: "GROQ", DINAR_AI_HEAVY_MODEL: "heavy-groq-test" } as NodeJS.ProcessEnv;
   const two = await createConversationModelGateway(tiered);
-  assert.deepEqual(two.heavy?.providerInfo, { provider: "GROQ", requestedModel: "heavy-groq-test" });
+  assert.deepEqual(two.heavy?.providerInfo, { provider: "GROQ", requestedModel: "heavy-groq-test", maxOutputTokens: 8192 });
   assert.deepEqual(two.providerInfo, single.providerInfo, "LIGHT is still the primary");
   const readiness = describeAIModelReadiness(tiered) as any;
   assert.equal(readiness.tiering.enabled, true);
@@ -339,6 +339,25 @@ await test("DT-14 an open HEAVY breaker routes straight to LIGHT; a HEAVY outage
   assert.equal(reservation?.providerCalls, 2, "both sent requests are costed");
   assert.match(await say(user, `${ANALYSIS} ثانية`), /LIGHT_REPLY/u);
   assert.deepEqual([light.state.calls, heavy.state.calls], [2, 1], "an open breaker is not even tried");
+});
+
+await test("DT-14b a HEAVY context refusal falls back to LIGHT without dispatching or billing HEAVY", async () => {
+  const info = heavy.gateway.providerInfo!;
+  const priorContextWindow = info.contextWindow;
+  const priorOutputLimit = info.maxOutputTokens;
+  try {
+    info.contextWindow = 4_096;
+    info.maxOutputTokens = 8_192;
+    const user = await fresh();
+    assert.match(await say(user, ANALYSIS), /LIGHT_REPLY/u);
+    assert.deepEqual([light.state.calls, heavy.state.calls], [1, 0]);
+    assert.equal((await lastReservation(user.id))?.providerCalls, 1, "only the dispatched LIGHT request is billed");
+  } finally {
+    if (priorContextWindow === undefined) delete info.contextWindow;
+    else info.contextWindow = priorContextWindow;
+    if (priorOutputLimit === undefined) delete info.maxOutputTokens;
+    else info.maxOutputTokens = priorOutputLimit;
+  }
 });
 
 await test("DT-15 the user's own depth preference: high asks HEAVY, low keeps LIGHT", async () => {

@@ -392,7 +392,8 @@ export type ModelFailure =
   | "MALFORMED"
   | "UNKNOWN_ACTION"
   | "QUOTA_LIMITED"
-  | "NOT_CONFIGURED";
+  | "NOT_CONFIGURED"
+  | "CONTEXT_TOO_LARGE";
 export type ModelCallMetadata = {
   provider?: AIProvider;
   requestedModel?: string;
@@ -866,11 +867,13 @@ export async function interpretWithModel(
       });
       const reason: ModelFailure =
         error instanceof AIProviderError
-          ? error.code === "QUOTA_LIMITED"
-            ? "QUOTA_LIMITED"
-            : error.code === "NOT_CONFIGURED"
-              ? "NOT_CONFIGURED"
-              : "UNAVAILABLE"
+          ? error.detail === "CONTEXT_TOO_LARGE"
+            ? "CONTEXT_TOO_LARGE"
+            : error.code === "QUOTA_LIMITED"
+              ? "QUOTA_LIMITED"
+              : error.code === "NOT_CONFIGURED"
+                ? "NOT_CONFIGURED"
+                : "UNAVAILABLE"
           : "UNAVAILABLE";
       const budgetLeft = deadline - Date.now() > MIN_RETRY_BUDGET_MS;
       // The same request would hit the same output ceiling, refusal or abort again: never re-billed.

@@ -350,3 +350,34 @@ test("J12 changing model classes keeps one persisted conversation and its prior 
   assert.ok(promptText(2).includes(marker) && promptText(2).includes(`جواب من ${ECO.model}`), "CORE receives prior context after the ECONOMY turn");
   assert.ok(promptText(3).includes(marker) && promptText(3).includes(`جواب من ${CORE.model}`), "the downgrade to FREE retains the same context");
 });
+
+test("J13 the assembled request and output reserve are checked against each routed model before dispatch", async () => {
+  reset();
+  await setRouting({ models: [{ ...FREE_A, contextWindow: 12_000 }] });
+  const user = await account();
+  const reply = await turn(user.cookie, "اشرح لي كيف تعمل الطاقة الشمسية", { modelPreference: "AUTO" });
+  assert.match(reply.body, /أطول من سعة النموذج المتاحة/u);
+  assert.deepEqual(calls, [], "the scripted gateway is not dispatched when its declared context window cannot fit the prompt and output reserve");
+  const [reservation] = await reservationsOf(user.id);
+  assert.equal(reservation?.status, "RELEASED");
+  assert.equal(reservation?.providerCalls, 0);
+  assert.equal(reservation?.chargedRequests, 0, "a local context refusal consumes no request allowance");
+});
+
+test("J14 a guest's over-context request stays free-only and returns the safe Arabic refusal", async () => {
+  reset();
+  await setRouting({
+    models: [{ ...FREE_A, contextWindow: 12_000 }],
+    audiences: { ...routing().audiences, GUEST: { classes: ["FREE"], paidFallback: false, perTurnMaxMicros: 2_000 } },
+  });
+  const reply = await request(
+    "/ai/preview",
+    "POST",
+    { message: "اشرح لي كيف تعمل الطاقة الشمسية", marketId: "JO" },
+    "bdinar_guest_market=JO",
+    "198.18.0.11",
+  );
+  assert.equal(reply.status, 200, reply.raw);
+  assert.match(reply.raw, /أطول من سعة النموذج المتاحة/u);
+  assert.deepEqual(calls, [], "guest context refusal never reaches a provider or paid fallback");
+});

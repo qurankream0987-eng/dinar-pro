@@ -82,7 +82,7 @@ const gateway = await createConversationModelGateway({
   DINAR_AI_MAX_OUTPUT_TOKENS: "1200",
   DINAR_MODEL_TIMEOUT_MS: "10000",
 });
-assert.deepEqual(gateway.providerInfo, { provider: "DEEPSEEK", requestedModel: "deepseek-flash" });
+assert.deepEqual(gateway.providerInfo, { provider: "DEEPSEEK", requestedModel: "deepseek-flash", maxOutputTokens: 1200 });
 app.locals.conversationModelGateway = gateway;
 
 // Browser suites (DS-07, DS-13…DS-17) share the built UI, served the way production serves it
