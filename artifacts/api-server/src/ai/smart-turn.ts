@@ -2403,7 +2403,11 @@ export async function executeModelFallback(
         }
         if (result.kind === "RESOURCE") {
           lastResourceResult = result;
-          lastComparisonResult = undefined;
+          // Same rule as the search below: re-reading one of the compared listings does not change
+          // the question the comparison answers; only a read outside the compared set replaces it.
+          const read = result.listings[0]?.id;
+          const compared = (lastComparisonResult?.resourceIds ?? []) as readonly string[];
+          if (!read || !compared.includes(read)) lastComparisonResult = undefined;
           if (lastSearchResult && result.listings[0]) {
             const refreshed = result.listings[0];
             // A read of a listing outside the earlier search is what this turn is about: the card

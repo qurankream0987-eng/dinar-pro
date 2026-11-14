@@ -95,7 +95,7 @@ const gateway: ConversationModelGateway = {
           if (priorSearch?.resultSetId)
             args = step.name === "compareListings"
               ? { resultSetId: priorSearch.resultSetId, positions: args.positions }
-              : { resultSetId: priorSearch.resultSetId, resourceId: args.resourceId ?? priorSearch.listings?.[0]?.id };
+              : { resultSetId: priorSearch.resultSetId, resourceId: args.resourceId === "__THIRD__" ? priorSearch.listings?.[2]?.id : args.resourceId ?? priorSearch.listings?.[0]?.id };
         }
         return { id: "scripted-tool", name: step.name, arguments: JSON.stringify(args) };
       }
@@ -503,6 +503,29 @@ test("AI-F07 the call limit stops a fourth read and returns the verified compari
   assert.match(reply.body, /الحد الآمن/u);
   assert.equal(reply.payload.surface, "COMPARISON", reply.body);
   assert.equal((await resultSetsFor(clientMessageId)).length, 1, "the refused fourth call created no result set");
+});
+
+test("AI-F07b a read outside the compared listings replaces the comparison (same rule as search)", async () => {
+  const user = await fresh();
+  const tag = `تابلت ${run}`;
+  await publish("tab-a", `${tag} أ`, "90");
+  await publish("tab-b", `${tag} ب`, "95");
+  await publish("tab-c", `${tag} ج`, "99");
+  const text = `أي ${tag} أنسب للقراءة؟`;
+  const clientMessageId = randomUUID();
+  script.unshift({
+    key: text,
+    toolSequence: [
+      { name: "searchListings", arguments: { query: tag } },
+      { name: "compareListings", arguments: { fromLatestSearch: true, positions: [1, 2] } },
+      { name: "getResource", arguments: { fromLatestSearch: true, resourceId: "__THIRD__" } }, // search position 3: outside the compared 1 and 2
+      { name: "searchListings", arguments: { query: tag } },
+    ],
+  });
+  toolSequenceCalls.delete(text);
+  const reply = await say(user.cookie, user.conv, text, clientMessageId);
+  assert.match(reply.body, /الحد الآمن/u);
+  assert.notEqual(reply.payload.surface, "COMPARISON", "a listing outside the comparison is what the turn ended on");
 });
 
 test("AI-F08 a model timeout after a verified read returns the partial read, never the model's unfinished text", async () => {
