@@ -33,6 +33,7 @@ export type RouteCandidate = {
   provider: string;
   model: string;
   class: ModelClass;
+  contextWindow: number;
   paid: boolean;
   projectedMicros: number;
 };
@@ -102,7 +103,7 @@ export function planModelRoute(input: {
       const projected = projectedTurnMicros(price, input.policy.projection);
       if (projected > audience.perTurnMaxMicros || projected > entry.maxTurnMicros) { reject("OVER_TURN_CEILING"); continue; }
       if (!input.available(entry)) { reject("UNAVAILABLE"); continue; }
-      attempts.push({ provider: entry.provider, model: entry.model, class: cls, paid: !free, projectedMicros: projected });
+      attempts.push({ provider: entry.provider, model: entry.model, class: cls, contextWindow: entry.contextWindow, paid: !free, projectedMicros: projected });
     }
   }
   // Bounded: one primary and one failover. The failover prefers the next class (FREE → ECONOMY), so a

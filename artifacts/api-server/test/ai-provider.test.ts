@@ -51,7 +51,7 @@ await test("Groq free-only benchmark accepts only the exact model and dedicated 
   assert.equal(config.transport, "CHAT_COMPLETIONS");
   assert.equal(config.toolChoice, "AUTO");
   const gateway = await createConversationModelGateway({ ...env, DINAR_BENCH_GROQ_API_KEY: "test-only-groq-key" });
-  assert.deepEqual(gateway.providerInfo, { provider: "GROQ", requestedModel: "openai/gpt-oss-120b" });
+  assert.deepEqual(gateway.providerInfo, { provider: "GROQ", requestedModel: "openai/gpt-oss-120b", maxOutputTokens: 8192 });
   assert.throws(
     () => resolveAIProviderConfiguration({ ...env, DINAR_AI_MODEL: "openai/gpt-oss-20b" }),
     /exact approved Groq benchmark model ID/,
@@ -76,7 +76,7 @@ await test("DeepSeek benchmark and conversation modes are model-pinned and never
   const policy = { provider: "DEEPSEEK", requestedModel: "deepseek-flash", baseURL: "https://api.deepseek.com", transport: "CHAT_COMPLETIONS", toolChoice: "REQUIRED", reasoningEffort: "none" };
   assert.deepEqual(resolveAIProviderConfiguration(env), { ...policy, credentialName: "DINAR_BENCH_DEEPSEEK_API_KEY" });
   const gateway = await createConversationModelGateway({ ...env, DINAR_BENCH_DEEPSEEK_API_KEY: "test-only-deepseek-key" });
-  assert.deepEqual(gateway.providerInfo, { provider: "DEEPSEEK", requestedModel: "deepseek-flash" });
+  assert.deepEqual(gateway.providerInfo, { provider: "DEEPSEEK", requestedModel: "deepseek-flash", maxOutputTokens: 8192 });
   for (const patch of [
     { NODE_ENV: "production" },
     { DINAR_AI_MODEL: "deepseek-v4-pro" },
@@ -496,6 +496,7 @@ await test("OpenAI adapter remains explicitly selectable", async () => {
   assert.deepEqual(gateway.providerInfo, {
     provider: "OPENAI",
     requestedModel: "gpt-5.6-terra",
+    maxOutputTokens: 8192,
   });
 });
 
@@ -516,7 +517,7 @@ await test("Replit AI Integrations adapter is explicit and needs both its key an
     AI_INTEGRATIONS_OPENAI_API_KEY: "test-replit-key",
     AI_INTEGRATIONS_OPENAI_BASE_URL: "http://127.0.0.1:1106/openai",
   });
-  assert.deepEqual(gateway.providerInfo, { provider: "REPLIT_OPENAI", requestedModel: "gpt-5-mini" });
+  assert.deepEqual(gateway.providerInfo, { provider: "REPLIT_OPENAI", requestedModel: "gpt-5-mini", maxOutputTokens: 8192 });
   for (const env of [
     { DINAR_AI_PROVIDER: "REPLIT_OPENAI", AI_INTEGRATIONS_OPENAI_API_KEY: "test-replit-key" },
     { DINAR_AI_PROVIDER: "REPLIT_OPENAI", AI_INTEGRATIONS_OPENAI_BASE_URL: "http://127.0.0.1:1106/openai", OPENAI_API_KEY: "test-openai-key" },

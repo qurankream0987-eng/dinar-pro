@@ -12,9 +12,9 @@ export type AIProviderErrorCode =
 
 /** Why a provider answered without a usable DINAR turn (a model outcome, not a transport fault). */
 /** INCOMPLETE: the provider ended generation for a reason that leaves the call unfinished (DeepSeek `aborted`). */
-/** DISABLED, CIRCUIT_OPEN and UNSUPPORTED_OPTION are local refusals: nothing was sent to the provider. */
-export type AIResponseDetail = "OUTPUT_LIMIT" | "REFUSAL" | "NO_TOOL_CALL" | "INCOMPLETE" | "DISABLED" | "CIRCUIT_OPEN" | "UNSUPPORTED_OPTION" | "MODEL_IDENTITY_MISMATCH";
-export const LOCAL_REFUSAL_DETAILS: readonly AIResponseDetail[] = ["DISABLED", "CIRCUIT_OPEN", "UNSUPPORTED_OPTION"];
+/** Disabled, unsupported, and over-context requests are local refusals: nothing was sent to the provider. */
+export type AIResponseDetail = "OUTPUT_LIMIT" | "REFUSAL" | "NO_TOOL_CALL" | "INCOMPLETE" | "DISABLED" | "CIRCUIT_OPEN" | "UNSUPPORTED_OPTION" | "MODEL_IDENTITY_MISMATCH" | "CONTEXT_TOO_LARGE";
+export const LOCAL_REFUSAL_DETAILS: readonly AIResponseDetail[] = ["DISABLED", "CIRCUIT_OPEN", "UNSUPPORTED_OPTION", "CONTEXT_TOO_LARGE"];
 /** An option this model cannot take (a per-call reasoning effort), refused before any request. */
 function unsupportedOption(provider: AIProvider, model: string): AIProviderError {
   const error = new AIProviderError(provider, "UNAVAILABLE", model);
@@ -107,6 +107,8 @@ export const GEMMA_FREE_MODELS = [
 ] as const;
 export const GEMINI_FREE_MODELS = ["gemini-3.5-flash-lite", "gemini-3.8-flash"] as const;
 const OPENROUTER_API_BASE_URL = "https://openrouter.ai/api/v1";
+/** Hard maximum request output ceiling across the supported text gateways. */
+export const MAX_OUTPUT_TOKENS = 8192;
 
 function deploymentRequiresProviderSafety(env: NodeJS.ProcessEnv) {
   const label = env.DINAR_DEPLOYMENT_ENV?.trim().toLowerCase();
@@ -512,6 +514,37 @@ export type ModelToolDefinition = {
   };
 };
 
+export type ModelGatewayProviderInfo = {
+  provider: AIProvider;
+  requestedModel: string;
+  profile?: AIModelProfile;
+  /** Catalog-declared total context window, when the owner has configured one. */
+  contextWindow?: number;
+  /** Exact output cap configured on the gateway. */
+  maxOutputTokens?: number;
+};
+
+export type ModelRequestTokenEstimate = {
+  estimatedInputTokens: number;
+  method: "CONSERVATIVE_UTF8_BYTES_PLUS_FRAMING";
+};
+
+/**
+ * A conservative pre-dispatch estimate over the exact messages and tool schemas passed to a
+ * gateway. No provider tokenizer is available here, so this is an estimate, not an exact count.
+ */
+export function estimateModelRequestInputTokens(
+  messages: ModelMessage[],
+  tools: ModelToolDefinition[],
+): ModelRequestTokenEstimate {
+  const serializedBytes = Buffer.byteLength(JSON.stringify({ messages, tools }), "utf8");
+  const framingAllowance = 64 + messages.length * 16 + tools.length * 32;
+  return {
+    estimatedInputTokens: serializedBytes + framingAllowance,
+    method: "CONSERVATIVE_UTF8_BYTES_PLUS_FRAMING",
+  };
+}
+
 export type ProposedToolCall = {
   id: string;
   name: string;
@@ -540,11 +573,7 @@ export type ProposedToolCall = {
 };
 
 export interface ConversationModelGateway {
-  readonly providerInfo?: {
-    provider: AIProvider;
-    requestedModel: string;
-    profile?: AIModelProfile;
-  };
+  readonly providerInfo?: ModelGatewayProviderInfo;
   proposeToolCall(
     messages: ModelMessage[],
     tools: ModelToolDefinition[],
@@ -600,6 +629,13 @@ export function proposeThroughGateway(
   // Include tool schemas: they consume context too. Refuse before dispatch, not a billed attempt.
   if (profile && JSON.stringify({messages, tools}).length > profile.capabilities.maxInputChars)
     return Promise.reject(unsupportedOption(provider, model));
+  const contextWindow = gateway.providerInfo?.contextWindow;
+  if (contextWindow !== undefined) {
+    const estimate = estimateModelRequestInputTokens(messages, tools);
+    const outputReservation = gateway.providerInfo?.maxOutputTokens ?? MAX_OUTPUT_TOKENS;
+    if (estimate.estimatedInputTokens + outputReservation > contextWindow)
+      return Promise.reject(contextWindowExceeded(provider, model));
+  }
   // Owner switch (environment, read on every call): the request is never sent.
   if (isProviderDisabled(provider, model)) return Promise.reject(refusedLocally(provider, model, "NOT_CONFIGURED", "DISABLED"));
   const threshold = breakerThreshold();
@@ -737,7 +773,12 @@ const REASONING_EFFORT: Partial<Record<AIProvider, "low">> = {
   REPLIT_OPENAI: "low",
 };
 
-const MAX_OUTPUT_TOKENS = 8192;
+function contextWindowExceeded(provider: AIProvider, model: string): AIProviderError {
+  const error = new AIProviderError(provider, "UNAVAILABLE", model);
+  error.detail = "CONTEXT_TOO_LARGE";
+  return error;
+}
+
 /** Per-request SDK deadline when none is configured; the turn's own deadline still applies. */
 const REQUEST_TIMEOUT_MS = 25000;
 
@@ -756,10 +797,7 @@ function cacheWriteUsage(details: unknown): { cacheWriteInputTokens?: number; ca
 class OpenAICompatibleChatGateway implements ConversationModelGateway {
   constructor(
     private readonly client: OpenAI,
-    readonly providerInfo: {
-      provider: AIProvider;
-      requestedModel: string;
-    },
+    readonly providerInfo: ModelGatewayProviderInfo,
     readonly fallback?: ConversationModelGateway,
     private readonly maxOutputTokens = MAX_OUTPUT_TOKENS,
     private readonly policy: { toolChoice?: AIToolChoice; reasoningEffort?: AIReasoningEffort } = {},
@@ -954,7 +992,7 @@ function unusableResponse(
 class OpenAIResponsesGateway implements ConversationModelGateway {
   constructor(
     private readonly client: OpenAI,
-    readonly providerInfo: { provider: AIProvider; requestedModel: string; profile?: AIModelProfile },
+    readonly providerInfo: ModelGatewayProviderInfo,
     readonly fallback: ConversationModelGateway | undefined,
     private readonly maxOutputTokens: number,
     private readonly policy: { toolChoice?: AIToolChoice; reasoningEffort?: AIReasoningEffort },
@@ -1039,7 +1077,7 @@ function geminiSchema(value: unknown): unknown {
 
 class GeminiGenerateContentGateway implements ConversationModelGateway {
   constructor(
-    readonly providerInfo: { provider: AIProvider; requestedModel: string; profile?: AIModelProfile },
+    readonly providerInfo: ModelGatewayProviderInfo,
     private readonly apiKey: string,
     private readonly maxOutputTokens: number,
     private readonly requestTimeoutMs: number,
@@ -1168,10 +1206,15 @@ function chatGateway(configuration: AIProviderConfiguration, env: NodeJS.Process
     apiKey: env[configuration.credentialName]!,
     ...(configuration.baseURL ? { baseURL: configuration.baseURL } : {}),
   });
-  const providerInfo = { provider: configuration.provider, requestedModel: configuration.requestedModel, ...(configuration.profile ? {profile: configuration.profile} : {}) };
   // The SDK deadline follows DINAR_MODEL_TIMEOUT_MS (default 25 s, as before), so a longer
   // configured turn is not cut short by a fixed client timeout.
   const { maxOutputTokens, timeoutMs } = resolveAIModelRuntimeConfiguration(env);
+  const providerInfo: ModelGatewayProviderInfo = {
+    provider: configuration.provider,
+    requestedModel: configuration.requestedModel,
+    maxOutputTokens,
+    ...(configuration.profile ? {profile: configuration.profile} : {}),
+  };
   if (env.DINAR_GEMMA_FREE_ONLY === "true" && env.DINAR_AI_FALLBACK_PROVIDER?.trim())
     throw new Error("DINAR_GEMMA_FREE_ONLY does not permit any provider fallback.");
   const policy = {
@@ -1200,7 +1243,7 @@ export async function createConversationModelGateway(
       throw new Error("The Gemini free-only benchmark requires no fallback and zero retries.");
     const { maxOutputTokens, timeoutMs } = runtime;
     return new GeminiGenerateContentGateway(
-      { provider: "GEMINI", requestedModel: runtime.primary.requestedModel, ...(runtime.primary.profile ? {profile: runtime.primary.profile} : {}) },
+      { provider: "GEMINI", requestedModel: runtime.primary.requestedModel, maxOutputTokens, ...(runtime.primary.profile ? {profile: runtime.primary.profile} : {}) },
       env[runtime.primary.credentialName]!,
       maxOutputTokens,
       timeoutMs,
@@ -1290,7 +1333,8 @@ export async function transcribeVoiceRecording(
  * provider resolution and gateway classes as the configured route: the provider's own credential,
  * base URL and deployment safety rules apply unchanged. Routing chooses; this never widens access.
  */
-export type CatalogGatewayFactory = (entry: { provider: string; model: string }, fallback?: ConversationModelGateway) => ConversationModelGateway;
+type CatalogGatewayEntry = { provider: string; model: string; contextWindow?: number };
+export type CatalogGatewayFactory = (entry: CatalogGatewayEntry, fallback?: ConversationModelGateway) => ConversationModelGateway;
 let catalogFactory: CatalogGatewayFactory = (entry, fallback) => {
   if (process.env.BDINAR_BLOCK_MODEL_CALLS === "1") return new BlockedTestModelGateway();
   const scoped: NodeJS.ProcessEnv = { ...process.env, DINAR_AI_PROVIDER: entry.provider, DINAR_AI_MODEL: entry.model };
@@ -1299,8 +1343,17 @@ let catalogFactory: CatalogGatewayFactory = (entry, fallback) => {
     throw new AIProviderError(configuration.provider, "NOT_CONFIGURED", entry.model);
   return chatGateway(configuration, scoped, fallback);
 };
-export function catalogModelGateway(entry: { provider: string; model: string }, fallback?: ConversationModelGateway): ConversationModelGateway {
-  return catalogFactory(entry, fallback);
+export function catalogModelGateway(entry: CatalogGatewayEntry, fallback?: ConversationModelGateway): ConversationModelGateway {
+  const gateway = catalogFactory(entry, fallback);
+  if (entry.contextWindow === undefined || !gateway.providerInfo) return gateway;
+  return {
+    providerInfo: { ...gateway.providerInfo, contextWindow: entry.contextWindow },
+    ...(gateway.fallback ? { fallback: gateway.fallback } : {}),
+    ...(gateway.perCallReasoningEffort !== undefined
+      ? { perCallReasoningEffort: gateway.perCallReasoningEffort }
+      : {}),
+    proposeToolCall: (messages, tools, options) => gateway.proposeToolCall(messages, tools, options),
+  };
 }
 /** Test seam (like onProviderBreakerTransition): scripted catalog gateways; returns the previous factory. */
 export function useCatalogGatewayFactory(factory: CatalogGatewayFactory): CatalogGatewayFactory {

@@ -3,3 +3,6 @@
 
 # No need to store the pnpm store twice.
 .local
+
+# Local verification logs and generated test evidence.
+/generated-artifacts/
