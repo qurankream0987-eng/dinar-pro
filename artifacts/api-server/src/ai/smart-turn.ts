@@ -1177,7 +1177,7 @@ async function catalogRoute(policy: AiUsagePolicy, tier: AiPlanTier, preference:
     tier,
     preference,
     difficulty,
-    needs: { tools: true, structuredOutput: false, contextTokens: routing.projection.inputTokens },
+    needs: { tools: true, structuredOutput: true, contextTokens: routing.projection.inputTokens },
     prices,
     spendCurrency: policy.spend.currencyCode,
     available: (entry) => gatewayLocallyAvailable({ providerInfo: { provider: entry.provider as never, requestedModel: entry.model } } as unknown as ConversationModelGateway),

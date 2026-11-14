@@ -10,7 +10,7 @@ import { randomUUID } from "node:crypto";
 import { and, eq } from "drizzle-orm";
 import { aiModelPrices, aiCostEvents, aiUsageReservations, commercialPolicies, db, pool } from "@workspace/db";
 import app from "../src/app";
-import { AIProviderError, useCatalogGatewayFactory, type ConversationModelGateway } from "../src/ai/model-gateway";
+import { AIProviderError, useCatalogGatewayFactory, type ConversationModelGateway, type ModelMessage } from "../src/ai/model-gateway";
 import { classOrder, planModelRoute, NO_CAPACITY_MESSAGE, type ModelPreference } from "../src/ai/model-routing";
 import { CatalogModelSchema, DEFAULT_MODEL_ROUTING_POLICY, ModelRoutingPolicySchema, type CatalogModel, type ModelRoutingPolicy } from "../src/lib/ai-usage-policy";
 import { aiUsagePolicyFor } from "../src/lib/ai-usage";
@@ -52,7 +52,7 @@ const routing = (over: Partial<ModelRoutingPolicy> = {}): ModelRoutingPolicy => 
 const plan = (opts: { policy?: ModelRoutingPolicy; tier?: "GUEST" | "FREE" | "BUSINESS_GO" | "BUSINESS_PRO"; preference?: ModelPreference; difficulty?: "LIGHT" | "HEAVY"; down?: string[]; prices?: Map<string, any>; killed?: boolean; allow?: string[] } = {}) =>
   planModelRoute({
     policy: opts.policy ?? routing(), tier: opts.tier ?? "FREE", preference: opts.preference ?? "AUTO", difficulty: opts.difficulty ?? "LIGHT",
-    needs: { tools: true, structuredOutput: false, contextTokens: 6_000 }, prices: opts.prices ?? PRICES, spendCurrency: "USD",
+    needs: { tools: true, structuredOutput: true, contextTokens: 6_000 }, prices: opts.prices ?? PRICES, spendCurrency: "USD",
     available: (e) => !(opts.down ?? []).includes(e.model), freeAllowlisted: (e) => (opts.allow ?? [FREE_A.model, FREE_B.model]).includes(e.model), paidKilled: opts.killed ?? false,
   });
 const models = (p: ReturnType<typeof plan>) => (p.kind === "ROUTE" ? p.attempts.map((a) => a.model) : []);
@@ -116,10 +116,14 @@ test("R9 no approved price, placeholder price, currency mismatch, non-zero FREE,
   assert.equal(reasons[FREE_A.model], "FREE_NOT_ALLOWLISTED");
   assert.equal(p.kind, "NO_CAPACITY");
 });
-test("R10 unsupported tool calling or a too-small context is excluded", () => {
-  const p = plan({ policy: routing({ models: [entry(`fx/notools-${s}:free`, "FREE", { qualified: { arabic: true, tools: false, structuredOutput: false } }), entry(`fx/tiny-${s}:free`, "FREE", { contextWindow: 4_096 })] }), allow: [`fx/notools-${s}:free`, `fx/tiny-${s}:free`] });
+test("R10 unsupported tool calling, structured output, or a too-small context is excluded", () => {
+  const p = plan({ policy: routing({ models: [
+    entry(`fx/notools-${s}:free`, "FREE", { qualified: { arabic: true, tools: false, structuredOutput: true } }),
+    entry(`fx/nostructured-${s}:free`, "FREE", { qualified: { arabic: true, tools: true, structuredOutput: false } }),
+    entry(`fx/tiny-${s}:free`, "FREE", { contextWindow: 4_096 }),
+  ] }), allow: [`fx/notools-${s}:free`, `fx/nostructured-${s}:free`, `fx/tiny-${s}:free`] });
   assert.equal(p.kind, "NO_CAPACITY");
-  assert.deepEqual(p.excluded.map((x) => x.reason).sort(), ["CONTEXT_TOO_SMALL", "NOT_QUALIFIED"]);
+  assert.deepEqual(p.excluded.map((x) => x.reason).sort(), ["CONTEXT_TOO_SMALL", "NOT_QUALIFIED", "NOT_QUALIFIED"]);
 });
 test("R11 the catalog refuses dynamic aliases and duplicate models; routing is off by default", () => {
   assert.equal(CatalogModelSchema.safeParse(entry("openrouter/free", "FREE")).success, false);
@@ -137,11 +141,13 @@ process.env.DINAR_APPROVED_FREE_OPENROUTER_MODELS = [FREE_A.model, FREE_B.model]
 type Behaviour = "OK" | "QUOTA" | "DOWN" | "WRONG_IDENTITY";
 const behaviour = new Map<string, Behaviour>();
 const calls: string[] = [];
+const prompts: Array<{ model: string; messages: ModelMessage[] }> = [];
 const scripted = (e: { provider: string; model: string }, fallback?: ConversationModelGateway): ConversationModelGateway => ({
   providerInfo: { provider: e.provider as never, requestedModel: e.model },
   ...(fallback ? { fallback } : {}),
-  async proposeToolCall() {
+  async proposeToolCall(messages) {
     calls.push(e.model);
+    prompts.push({ model: e.model, messages: messages.map(({ role, content }) => ({ role, content })) });
     const mode = behaviour.get(e.model) ?? "OK";
     if (mode === "QUOTA") throw new AIProviderError(e.provider as never, "QUOTA_LIMITED", e.model, 5, 429);
     if (mode === "DOWN") throw new AIProviderError(e.provider as never, "UNAVAILABLE", e.model, 5, 503);
@@ -199,7 +205,7 @@ async function turn(cookie: string, message: string, extra: Record<string, unkno
   return { status: response.status, body: String(complete?.assistantMessage?.body ?? events.find((e) => e.type === "error")?.message ?? raw), conversationId: id as string };
 }
 const reservationsOf = (userId: string) => db.select().from(aiUsageReservations).where(eq(aiUsageReservations.ownerKey, `user:${userId}`));
-const reset = () => { behaviour.clear(); calls.length = 0; };
+const reset = () => { behaviour.clear(); calls.length = 0; prompts.length = 0; };
 
 test("J1 free model available: a FREE account is answered by the free model only; usage is reserved and settled", async () => {
   reset(); await setRouting({});
@@ -308,4 +314,39 @@ test("J10 routing disabled (default): the configured route is used exactly as be
   const reply = await turn(user.cookie, "ما هو الطقس عادة في الكويت صيفًا؟");
   assert.match(reply.body, /جواب من fx\/legacy-/u);
   assert.deepEqual(calls, [`fx/legacy-${s}`]);
+});
+
+test("J11 a catalog model without DINAR's required structured-output capability is refused", async () => {
+  reset();
+  const incompatible = {
+    ...ECO,
+    qualified: { ...ECO.qualified, structuredOutput: false },
+  };
+  await setRouting({ models: [incompatible] });
+  const user = await account();
+  const reply = await turn(user.cookie, "ما الفرق بين القهوة العربية والتركية؟", { modelPreference: "ECONOMY" });
+  assert.equal(reply.body, NO_CAPACITY_MESSAGE, "no compatible structured-turn model is available");
+  assert.deepEqual(calls, [], "an incompatible model is never dispatched");
+});
+
+test("J12 changing model classes keeps one persisted conversation and its prior turns in every prompt", async () => {
+  reset(); await setRouting({});
+  const user = await account();
+  const marker = `continuity-${s}`;
+  const first = await turn(user.cookie, `ما الفرق بين القهوة العربية والتركية؟ تذكر الرمز ${marker}`, { modelPreference: "AUTO" });
+  const second = await turn(user.cookie, "اشرح الفرق في جملة واحدة", { modelPreference: "ECONOMY" }, first.conversationId);
+  const third = await turn(user.cookie, "وسّع الشرح بمثال", { modelPreference: "CORE" }, first.conversationId);
+  const fourth = await turn(user.cookie, "اختصره", { modelPreference: "AUTO" }, first.conversationId);
+
+  assert.deepEqual(calls, [FREE_A.model, ECO.model, CORE.model, FREE_A.model]);
+  assert.deepEqual(
+    [second.conversationId, third.conversationId, fourth.conversationId],
+    [first.conversationId, first.conversationId, first.conversationId],
+    "model changes never create a new conversation identity",
+  );
+  const promptText = (index: number) => prompts[index]!.messages.map((message) => message.content).join("\n");
+  assert.ok(promptText(1).includes(marker), "ECONOMY receives the original user fact");
+  assert.ok(promptText(1).includes(`جواب من ${FREE_A.model}`), "ECONOMY receives the prior FREE answer");
+  assert.ok(promptText(2).includes(marker) && promptText(2).includes(`جواب من ${ECO.model}`), "CORE receives prior context after the ECONOMY turn");
+  assert.ok(promptText(3).includes(marker) && promptText(3).includes(`جواب من ${CORE.model}`), "the downgrade to FREE retains the same context");
 });
