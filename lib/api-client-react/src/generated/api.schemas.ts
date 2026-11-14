@@ -3493,6 +3493,7 @@ export type CourierFareAgreementCommissionRateBps = typeof CourierFareAgreementC
 
 
 export const CourierFareAgreementCommissionRateBps = {
+  NUMBER_0: 0,
   NUMBER_1000: 1000,
 } as const;
 
@@ -3597,6 +3598,7 @@ export type CourierCommissionEarningCommissionRateBps = typeof CourierCommission
 
 
 export const CourierCommissionEarningCommissionRateBps = {
+  NUMBER_0: 0,
   NUMBER_1000: 1000,
 } as const;
 
@@ -3606,6 +3608,7 @@ export type CourierCommissionEarningReceivableStatus = typeof CourierCommissionE
 export const CourierCommissionEarningReceivableStatus = {
   OUTSTANDING: 'OUTSTANDING',
   SIMULATION_CLEARED: 'SIMULATION_CLEARED',
+  NO_COMMISSION: 'NO_COMMISSION',
 } as const;
 
 /**

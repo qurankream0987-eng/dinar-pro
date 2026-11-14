@@ -258,5 +258,9 @@
   {
     "tag": "0064_welcome_ads_demand_requests",
     "sha256": "0460fd3750b97249d26102fda4543210d114977a00e6fafb09b533baa85cb23a"
+  },
+  {
+    "tag": "0065_courier_commission_phase_one_zero",
+    "sha256": "1f489637f10c73b71c35dc54c6fed93bf3ab7ab92b0d011895a5cc6b0c2aea1d"
   }
 ]

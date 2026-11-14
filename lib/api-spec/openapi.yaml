@@ -5195,7 +5195,7 @@ components:
         currencyCode: { type: string, pattern: "^[A-Z]{3}$" }
         minorUnitScale: { type: integer, minimum: 0, maximum: 3 }
         amount: { type: string }
-        commissionRateBps: { type: integer, enum: [1000] }
+        commissionRateBps: { type: integer, enum: [0, 1000] }
         estimatedCommissionMinor: { type: integer, minimum: 0 }
         estimatedCommission: { type: string }
         agreedAt: { type: string, format: date-time }
@@ -5298,14 +5298,14 @@ components:
         marketId: { type: string }
         agreedFareMinor: { type: integer, minimum: 1 }
         agreedFare: { type: string }
-        commissionRateBps: { type: integer, enum: [1000] }
+        commissionRateBps: { type: integer, enum: [0, 1000] }
         commissionMinor: { type: integer, minimum: 0 }
         commission: { type: string }
         courierShareMinor: { type: integer, minimum: 0 }
         courierShare: { type: string }
         currencyCode: { type: string, pattern: "^[A-Z]{3}$" }
         minorUnitScale: { type: integer, minimum: 0, maximum: 3 }
-        receivableStatus: { type: string, enum: [OUTSTANDING, SIMULATION_CLEARED] }
+        receivableStatus: { type: string, enum: [OUTSTANDING, SIMULATION_CLEARED, NO_COMMISSION] }
         simulationClearedAt: { type: ["string", "null"], format: date-time }
         settlementMode: { type: ["string", "null"], enum: [SIMULATION_ONLY, null] }
         realPaymentVerified: { type: boolean, enum: [false] }

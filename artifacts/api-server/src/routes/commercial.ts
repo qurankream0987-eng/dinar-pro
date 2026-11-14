@@ -303,6 +303,15 @@ router.post("/admin/markets/:marketId/commercial-products", requireAuth, require
   const allowedAds = (await getCommercialPolicy(market.id)).advertisingProducts;
   if (allowedAds && AD_PRODUCT_TYPES.includes(body.productType) && !(allowedAds as readonly string[]).includes(body.productType))
     throw refuse(409, "هذا النوع من الإعلانات غير مدرج في سياسة الإعلانات الحالية", "AD_PRODUCT_NOT_IN_POLICY");
+  // Owner reference tariffs: the duration is fixed per product; the price is fixed where the
+  // market already uses the tariff currency (no conversion is ever computed here).
+  const tariff = (await getCommercialPolicy(market.id)).advertisingTariffs.find((item) => item.productType === body.productType);
+  if (tariff) {
+    if (body.durationDays !== tariff.durationDays)
+      throw refuse(409, `مدة هذا المنتج في التعرفة المعتمدة ${tariff.durationDays} أيام`, "AD_DURATION_NOT_IN_TARIFF");
+    if (market.currencyCode === tariff.referencePrice.currencyCode && market.minorUnitScale === tariff.referencePrice.minorUnitScale && body.priceMinor !== tariff.referencePrice.amountMinor)
+      throw refuse(409, "سعر هذا المنتج في هذه العملة محدد بالتعرفة المعتمدة", "AD_PRICE_NOT_IN_TARIFF");
+  }
   if (body.productType === "PROMOTION_BUNDLE" && !body.bundleItems.length) throw fail(400, "حدّد محتوى الباقة");
   if (body.planCode && body.productType !== "DINAR_BUSINESS") throw refuse(400, "رمز الخطة يخص منتجات جاسم بزنس فقط", "PLAN_CODE_INVALID");
   if (body.productType === "DINAR_BUSINESS") {

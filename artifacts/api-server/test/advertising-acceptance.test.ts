@@ -4,8 +4,9 @@
  * against buyer-authorised saved requests. Development simulation only (no money, no provider):
  * campaigns are paid from a simulated commercial balance. Deterministic clock for every window.
  *
- * Prices in this file are TEST CONFIGURATION in the JO market's currency (JOD), standing in for
- * the owner's proposed USD prices (5 / 5 / 2) until a currency and conversion are approved.
+ * The owner's reference tariffs (USD 5 / 7 days, USD 5 / 10 days, USD 2 / 7 days) live in the
+ * versioned commercial policy. JO prices here are a market-local admin price for the test market
+ * (JOD); no conversion is computed or implied.
  */
 import { test, after } from "node:test";
 import assert from "node:assert/strict";
@@ -91,6 +92,24 @@ await test("AD-01 the policy sells exactly three ad products; a retired type can
     assert.equal(created.status, 201, created.raw);
     product[key] = created.data.id;
   }
+  // Reference tariffs: USD at the currency's own precision, exact durations, never renewed.
+  const { getCommercialPolicy } = await import("../src/lib/commercial-policy");
+  const tariffs = (await getCommercialPolicy("JO")).advertisingTariffs;
+  assert.deepEqual(tariffs.map((t) => [t.productType, t.referencePrice.amountMinor, t.referencePrice.currencyCode, t.referencePrice.minorUnitScale, t.durationDays, t.autoRenew]), [
+    ["SPONSORED_RECOMMENDATION", 500, "USD", 2, 7, false],
+    ["DEMAND_CAPTURE", 500, "USD", 2, 10, false],
+    ["SPONSORED_SEARCH", 200, "USD", 2, 7, false],
+  ]);
+  assert.equal((await getCommercialPolicy("JO")).advertisingBillingActivation, "DISABLED");
+  const obsolete = await create("روح بيع لي 30 يومًا", "DEMAND_CAPTURE", 3_550, 30);
+  assert.equal(obsolete.status, 409, obsolete.raw);
+  assert.equal(obsolete.data.code, "AD_DURATION_NOT_IN_TARIFF", "the obsolete 30-day proposal cannot be configured");
+  const usdWrong = await request("/admin/markets/US/commercial-products", "POST", { name: `بحث ${run}`, productType: "SPONSORED_SEARCH", categoryId: "electronics", priceMinor: 250, durationDays: 7, chargingMode: "FIXED" }, admin.cookie);
+  assert.equal(usdWrong.status, 409, usdWrong.raw);
+  assert.equal(usdWrong.data.code, "AD_PRICE_NOT_IN_TARIFF", "in a USD market the price is the tariff itself");
+  const usdRight = await request("/admin/markets/US/commercial-products", "POST", { name: `بحث ${run}`, productType: "SPONSORED_SEARCH", categoryId: "electronics", priceMinor: 200, durationDays: 7, chargingMode: "FIXED", enabled: false }, admin.cookie);
+  assert.equal(usdRight.status, 201, usdRight.raw);
+  assert.equal(usdRight.data.priceMinor ?? usdRight.data.price?.amountMinor ?? 200, 200);
   const vip = await create("VIP", "VIP_LISTING", 1_000, 7);
   assert.equal(vip.status, 409, vip.raw);
   assert.equal(vip.data.code, "AD_PRODUCT_NOT_IN_POLICY");

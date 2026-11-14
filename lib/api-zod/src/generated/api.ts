@@ -2154,7 +2154,7 @@ export const GetCourierFareResponse = zod.object({
   "currencyCode": zod.string().regex(getCourierFareResponseAgreementOneCurrencyCodeRegExp),
   "minorUnitScale": zod.int().min(getCourierFareResponseAgreementOneMinorUnitScaleMin).max(getCourierFareResponseAgreementOneMinorUnitScaleMax),
   "amount": zod.string(),
-  "commissionRateBps": zod.literal(1000),
+  "commissionRateBps": zod.union([zod.literal(0),zod.literal(1000)]),
   "estimatedCommissionMinor": zod.int().min(getCourierFareResponseAgreementOneEstimatedCommissionMinorMin),
   "estimatedCommission": zod.string(),
   "agreedAt": zod.coerce.date()
@@ -2216,7 +2216,7 @@ export const ProposeCourierFareResponse = zod.object({
   "currencyCode": zod.string().regex(proposeCourierFareResponseAgreementOneCurrencyCodeRegExp),
   "minorUnitScale": zod.int().min(proposeCourierFareResponseAgreementOneMinorUnitScaleMin).max(proposeCourierFareResponseAgreementOneMinorUnitScaleMax),
   "amount": zod.string(),
-  "commissionRateBps": zod.literal(1000),
+  "commissionRateBps": zod.union([zod.literal(0),zod.literal(1000)]),
   "estimatedCommissionMinor": zod.int().min(proposeCourierFareResponseAgreementOneEstimatedCommissionMinorMin),
   "estimatedCommission": zod.string(),
   "agreedAt": zod.coerce.date()
@@ -2271,7 +2271,7 @@ export const ConfirmCourierFareResponse = zod.object({
   "currencyCode": zod.string().regex(confirmCourierFareResponseAgreementOneCurrencyCodeRegExp),
   "minorUnitScale": zod.int().min(confirmCourierFareResponseAgreementOneMinorUnitScaleMin).max(confirmCourierFareResponseAgreementOneMinorUnitScaleMax),
   "amount": zod.string(),
-  "commissionRateBps": zod.literal(1000),
+  "commissionRateBps": zod.union([zod.literal(0),zod.literal(1000)]),
   "estimatedCommissionMinor": zod.int().min(confirmCourierFareResponseAgreementOneEstimatedCommissionMinorMin),
   "estimatedCommission": zod.string(),
   "agreedAt": zod.coerce.date()
@@ -2327,14 +2327,14 @@ export const GetCourierCommissionAccountResponse = zod.object({
   "marketId": zod.string(),
   "agreedFareMinor": zod.int().min(1),
   "agreedFare": zod.string(),
-  "commissionRateBps": zod.literal(1000),
+  "commissionRateBps": zod.union([zod.literal(0),zod.literal(1000)]),
   "commissionMinor": zod.int().min(getCourierCommissionAccountResponseEarningsHistoryItemCommissionMinorMin),
   "commission": zod.string(),
   "courierShareMinor": zod.int().min(getCourierCommissionAccountResponseEarningsHistoryItemCourierShareMinorMin),
   "courierShare": zod.string(),
   "currencyCode": zod.string().regex(getCourierCommissionAccountResponseEarningsHistoryItemCurrencyCodeRegExp),
   "minorUnitScale": zod.int().min(getCourierCommissionAccountResponseEarningsHistoryItemMinorUnitScaleMin).max(getCourierCommissionAccountResponseEarningsHistoryItemMinorUnitScaleMax),
-  "receivableStatus": zod.enum(['OUTSTANDING', 'SIMULATION_CLEARED']),
+  "receivableStatus": zod.enum(['OUTSTANDING', 'SIMULATION_CLEARED', 'NO_COMMISSION']),
   "simulationClearedAt": zod.coerce.date().nullable(),
   "settlementMode": zod.union([zod.literal('SIMULATION_ONLY'),zod.literal(null)]).nullable(),
   "realPaymentVerified": zod.literal(false)

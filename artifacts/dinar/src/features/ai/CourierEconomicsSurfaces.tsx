@@ -163,13 +163,19 @@ export function CourierFareCard({
             </strong>
           </p>
           {role === "COURIER" ? (
-            <p className="mt-1 text-sm">
-              عمولة جاسم المتوقعة عليك عند التسليم الناجح:{" "}
-              <strong className="num" dir="ltr">
-                {agreement.estimatedCommission} {agreement.currencyCode}
-              </strong>{" "}
-              (10%).
-            </p>
+            Number(agreement.estimatedCommission) === 0 ? (
+              <p className="mt-1 text-sm" data-testid="courier-zero-commission">
+                لا يأخذ جاسم عمولة منك في المرحلة الأولى؛ الأجرة المتفق عليها كاملة لك.
+              </p>
+            ) : (
+              <p className="mt-1 text-sm">
+                عمولة جاسم على هذا الاتفاق السابق عند التسليم الناجح:{" "}
+                <strong className="num" dir="ltr">
+                  {agreement.estimatedCommission} {agreement.currencyCode}
+                </strong>{" "}
+                (10%).
+              </p>
+            )
           ) : (
             <p className="mt-1 text-sm text-muted-foreground">
               لا تُخصم عمولة التوصيل من المشتري أو البائع.
@@ -340,13 +346,15 @@ export function CourierCommissionPanel({ active, activeMarketId }: { active: boo
                 <dl className="mt-2 grid grid-cols-[1fr_auto] gap-x-3 gap-y-1">
                   <dt>الأجرة المتفق عليها</dt>
                   <dd className="num" dir="ltr">{earning.agreedFare} {earning.currencyCode}</dd>
-                  <dt>عمولة جاسم (10%)</dt>
+                  <dt>{earning.commissionRateBps === 0 ? "عمولة جاسم (المرحلة الأولى 0%)" : "عمولة جاسم (اتفاق سابق، 10%)"}</dt>
                   <dd className="num" dir="ltr">{earning.commission} {earning.currencyCode}</dd>
                   <dt>الحصة المحاسبية للمندوب</dt>
                   <dd className="num font-semibold" dir="ltr">{earning.courierShare} {earning.currencyCode}</dd>
                 </dl>
                 <p className="mt-2 text-xs" role="status">
-                  {earning.receivableStatus === "SIMULATION_CLEARED"
+                  {earning.receivableStatus === "NO_COMMISSION"
+                    ? "لا عمولة على هذا التوصيل؛ الأجرة كاملة لك."
+                    : earning.receivableStatus === "SIMULATION_CLEARED"
                     ? `مُسجّل كتسوية محاكاة${earning.simulationClearedAt ? ` · ${new Intl.DateTimeFormat("ar", { dateStyle: "medium" }).format(new Date(earning.simulationClearedAt))}` : ""}؛ الدفع الحقيقي غير متحقق.`
                     : "العمولة مستحقة وغير مسوّاة."}
                 </p>

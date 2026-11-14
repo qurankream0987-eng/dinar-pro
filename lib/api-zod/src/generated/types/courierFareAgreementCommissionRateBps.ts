@@ -10,5 +10,6 @@ export type CourierFareAgreementCommissionRateBps = typeof CourierFareAgreementC
 
 
 export const CourierFareAgreementCommissionRateBps = {
+  NUMBER_0: 0,
   NUMBER_1000: 1000,
 } as const;

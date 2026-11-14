@@ -33,7 +33,7 @@ import { deliveryIntent, normalizeDeliveryText } from "../src/ai/delivery-turn";
 import { getModelGatewayCallCount } from "../src/ai/model-gateway";
 import { attachTransactionLocation, deliveryOptions, getDeliveryView, selectDeliveryMethod, transitionDelivery } from "../src/lib/delivery";
 import { assignDelivery, driverHandoff, driverOutForDelivery, recordCourierProgress, ensureDriverDraft, listDeliveryWork, reviewDriverProfile, revokeCourierAssignment, setDriverAvailability, submitDriverProfile } from "../src/lib/driver";
-import { recordCourierCommissionAccrual } from "../src/lib/courier-economics";
+import { COURIER_PLATFORM_COMMISSION_BPS, courierCommissionMinor, recordCourierCommissionAccrual } from "../src/lib/courier-economics";
 import { hasEligibleCourierSupply } from "../src/lib/courier-supply";
 import { resolveMarket } from "../src/lib/markets";
 import { requireSafeReplitDevelopmentDatabase } from "./safe-development-database";
@@ -249,7 +249,21 @@ async function agreeCourierFare(
   );
   assert.equal(courierConfirmation.status, 200, courierConfirmation.raw);
   assert.equal(courierConfirmation.data.agreed, true);
+  if (legacyAgreements) await markPrePhaseOneAgreement(courierConfirmation.data.agreement.id);
   return courierConfirmation.data.agreement;
+}
+
+/**
+ * Phase one charges drivers 0 %. The receivable, hold and settlement machinery still governs
+ * agreements made under the earlier 10 % rule, so these fixtures mark their agreement as such
+ * (rate 1000 and its estimate, exactly as those rows were written) to keep that path covered.
+ */
+const legacyAgreements = true;
+async function markPrePhaseOneAgreement(agreementId: string) {
+  const [row] = await db.select().from(courierFareAgreements).where(eq(courierFareAgreements.id, agreementId));
+  await db.update(courierFareAgreements)
+    .set({ commissionRateBps: 1000, commissionEstimateMinor: courierCommissionMinor(row!.fareMinor) })
+    .where(eq(courierFareAgreements.id, agreementId));
 }
 
 async function completeCourierOrder(
@@ -935,7 +949,11 @@ await focused("R5-01", "fare requires both confirmations and accrues only after 
   assert.equal(courierConfirmation.status, 200, courierConfirmation.raw);
   assert.equal(courierConfirmation.data.agreed, true);
   assert.equal(courierConfirmation.data.agreement.amount, "1.500");
-  assert.equal(courierConfirmation.data.agreement.estimatedCommission, "0.150");
+  assert.equal(COURIER_PLATFORM_COMMISSION_BPS, 0, "owner decision: phase-one driver commission is 0 %");
+  assert.equal(courierConfirmation.data.agreement.estimatedCommission, "0.000", "the whole agreed fare is the driver's");
+  const [snapshot] = await db.select().from(courierFareAgreements).where(eq(courierFareAgreements.orderId, orderId));
+  assert.equal(snapshot!.commissionRateBps, 0, "the agreement snapshots the 0 % rate");
+  assert.equal(snapshot!.commissionEstimateMinor, 0);
 
   const lockedFare = await request(
     `/orders/${orderId}/courier-fare/proposals`,
@@ -952,23 +970,30 @@ await focused("R5-01", "fare requires both confirmations and accrues only after 
   await driverHandoff({ actorId: d2.id, orderId, market: JO });
   const completed = await request(`/orders/${orderId}/confirm`, "POST", { received: true }, buyer.cookie);
   assert.equal(completed.status, 200, completed.raw);
-  const [receivable] = await db
-    .select()
-    .from(courierCommissionReceivables)
-    .where(eq(courierCommissionReceivables.orderId, orderId));
-  assert.ok(receivable);
-  assert.equal(receivable.courierId, d2.id);
-  assert.equal(receivable.amountMinor, 150);
-  assert.equal(receivable.currencyCode, "JOD");
+  assert.equal(
+    (await db.select().from(courierCommissionReceivables).where(eq(courierCommissionReceivables.orderId, orderId))).length,
+    0,
+    "a 0 % delivery creates no receivable, so it can never count toward a hold",
+  );
   const [order] = await db.select().from(orders).where(eq(orders.id, orderId));
   assert.equal(
     await db.transaction((tx) => recordCourierCommissionAccrual(tx, order!, new Date())),
     false,
+    "repeated terminal processing still creates nothing",
   );
   assert.equal(
-    (await db.select().from(courierCommissionReceivables).where(eq(courierCommissionReceivables.orderId, orderId))).length,
-    1,
+    (await db.select().from(sellerDues).where(eq(sellerDues.orderId, orderId)))[0]?.amountMinor ?? order!.platformFeeMinor,
+    order!.platformFeeMinor,
+    "the marketplace sale commission is unchanged",
   );
+  const account = await request("/courier/commission-account", "GET", undefined, d2.cookie);
+  assert.equal(account.status, 200, account.raw);
+  const earning = account.data.earningsHistory.find((entry: any) => entry.orderId === orderId);
+  assert.ok(earning, "the 0 % delivery stays in the driver's earnings history");
+  assert.equal(earning.receivableStatus, "NO_COMMISSION");
+  assert.equal(earning.commissionMinor, 0);
+  assert.equal(earning.courierShareMinor, 1_500, "the whole agreed fare is the driver's share");
+  assert.equal(earning.realPaymentVerified, false);
 });
 
 await focused("R5-02", "pickup, seller delivery, cancelled, failed and unfinished orders create no courier debt", async () => {
@@ -1183,7 +1208,9 @@ await focused("R5-04", "settlement authorization is bound to the courier and act
     const denied = await request("/courier/commission-account/settlements", "POST", body, nonCourier.cookie);
     assert.equal(denied.status, 403, denied.raw);
   }
-  const otherCourier = await request("/courier/commission-account/settlements", "POST", body, d2.cookie);
+  // d2 settles only its own pre-phase-one receivable (phase-one trips owe nothing).
+  await completeCourierOrder(await courierOrder("ذمة سابقة لمندوب آخر R5", CITY, { destination: "MANUAL" }), d2, buyer);
+  const otherCourier = await request("/courier/commission-account/settlements", "POST", { ...body, idempotencyKey: `r5-other-${randomUUID()}` }, d2.cookie);
   assert.equal(otherCourier.status, 200, otherCourier.raw);
   assert.equal(otherCourier.data.settlement.courierId, d2.id);
   assert.equal(

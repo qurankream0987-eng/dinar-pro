@@ -32,7 +32,15 @@ const MUTABLE_ACCOUNT_STATES = new Set([
   ACCOUNT_STATUS.active,
   ACCOUNT_STATUS.restricted,
 ]);
-const COMMISSION_RATE_BPS = 1000;
+/**
+ * Owner decision, phase one: the independent-driver platform commission is 0 %. The fare is
+ * agreed between the driver and the customer. New agreements snapshot this rate; an agreement
+ * made under the earlier 10 % rule keeps its own snapshot (never recalculated), and only a
+ * non-zero snapshot ever creates a receivable.
+ */
+export const COURIER_PLATFORM_COMMISSION_BPS = 0;
+/** The only non-zero rate the receivable table accepts: agreements made before phase one. */
+const LEGACY_COMMISSION_RATE_BPS = 1000;
 const HOLD_DELIVERY_COUNT = 10;
 const MAX_MINOR_UNITS = 2_147_483_647;
 
@@ -394,8 +402,8 @@ export async function confirmCourierFare(input: {
       fareMinor: agreedProposal.fareMinor,
       currencyCode: agreedProposal.currencyCode,
       minorUnitScale: agreedProposal.minorUnitScale,
-      commissionRateBps: COMMISSION_RATE_BPS,
-      commissionEstimateMinor: courierCommissionMinor(agreedProposal.fareMinor),
+      commissionRateBps: COURIER_PLATFORM_COMMISSION_BPS,
+      commissionEstimateMinor: COURIER_PLATFORM_COMMISSION_BPS === 0 ? 0 : courierCommissionMinor(agreedProposal.fareMinor),
       agreedAt: now,
       createdAt: now,
     })
@@ -488,6 +496,8 @@ export async function recordCourierCommissionAccrual(
       ),
     );
   if (!agreement) return false;
+  // A 0 % agreement owes nothing: no receivable, no hold, no settlement.
+  if (agreement.commissionRateBps !== LEGACY_COMMISSION_RATE_BPS) return false;
   const [profile] = await tx
     .select()
     .from(driverProfiles)
@@ -515,7 +525,7 @@ export async function recordCourierCommissionAccrual(
       courierId: assignment.driverId,
       marketId: order.marketId,
       fareMinor: agreement.fareMinor,
-      commissionRateBps: COMMISSION_RATE_BPS,
+      commissionRateBps: agreement.commissionRateBps,
       amountMinor: courierCommissionMinor(agreement.fareMinor),
       currencyCode: agreement.currencyCode,
       minorUnitScale: agreement.minorUnitScale,
@@ -610,6 +620,44 @@ export async function getCourierCommissionAccount(input: { courierId: string }, 
     settlementMode: settlementMode ?? null,
     realPaymentVerified: false as const,
   }));
+  // Phase-one (0 %) deliveries owe nothing and have no receivable; they still belong in the
+  // driver's earnings history, with the whole agreed fare as the driver's share.
+  const zeroRows = await tx
+    .select({ agreement: courierFareAgreements, completedAt: orders.updatedAt })
+    .from(courierFareAgreements)
+    .innerJoin(orders, eq(orders.id, courierFareAgreements.orderId))
+    .innerJoin(
+      deliveryAssignments,
+      and(eq(deliveryAssignments.id, courierFareAgreements.assignmentId), eq(deliveryAssignments.status, "ACCEPTED")),
+    )
+    .where(
+      and(
+        eq(courierFareAgreements.courierId, input.courierId),
+        eq(courierFareAgreements.commissionRateBps, 0),
+        eq(orders.status, "COMPLETED"),
+      ),
+    );
+  for (const { agreement, completedAt } of zeroRows as { agreement: typeof courierFareAgreements.$inferSelect; completedAt: Date }[])
+    earningsHistory.push({
+      orderId: agreement.orderId,
+      orderReference: agreement.orderId.slice(-8).toUpperCase(),
+      completedAt: completedAt.toISOString(),
+      marketId: agreement.marketId,
+      agreedFareMinor: agreement.fareMinor,
+      agreedFare: formatMinorUnits(agreement.fareMinor, agreement.minorUnitScale),
+      commissionRateBps: 0,
+      commissionMinor: 0,
+      commission: formatMinorUnits(0, agreement.minorUnitScale),
+      courierShareMinor: agreement.fareMinor,
+      courierShare: formatMinorUnits(agreement.fareMinor, agreement.minorUnitScale),
+      currencyCode: agreement.currencyCode,
+      minorUnitScale: agreement.minorUnitScale,
+      receivableStatus: "NO_COMMISSION" as const,
+      simulationClearedAt: null,
+      settlementMode: null,
+      realPaymentVerified: false as const,
+    });
+  earningsHistory.sort((a, b) => b.completedAt.localeCompare(a.completedAt));
   return {
     courierId: input.courierId,
     outstandingDeliveryCount,

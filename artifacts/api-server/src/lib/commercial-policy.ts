@@ -69,6 +69,26 @@ export const CommercialPolicySchema = z
      * and Sponsored Search (SPONSORED_SEARCH).
      */
     advertisingProducts: z.array(z.enum(["SPONSORED_RECOMMENDATION", "DEMAND_CAPTURE", "SPONSORED_SEARCH", "FEATURED_LISTING", "VIP_LISTING", "REFRESH_LISTING", "PROMOTION_BUNDLE"])).min(1).max(7).optional(),
+    /**
+     * Owner reference tariffs for the three advertising products (decision 2026-11-14), in USD
+     * at the currency's own precision (2). A market's product must use exactly the tariff's
+     * duration; where the market currency is the tariff currency its price must equal the
+     * tariff; elsewhere the market's own price is set by the commercial admin (no automatic
+     * conversion). Billing stays disabled: this is a price list, not an activation.
+     */
+    advertisingTariffs: z
+      .array(
+        z
+          .object({
+            productType: z.enum(["SPONSORED_RECOMMENDATION", "DEMAND_CAPTURE", "SPONSORED_SEARCH"]),
+            referencePrice: z.object({ amountMinor: z.number().int().min(0), currencyCode: z.string().regex(/^[A-Z]{3}$/), minorUnitScale: z.number().int().min(0).max(3) }).strict(),
+            durationDays: z.number().int().min(1).max(90),
+            autoRenew: z.literal(false),
+          })
+          .strict(),
+      )
+      .max(3),
+    advertisingBillingActivation: z.literal("DISABLED"),
     /** G1: AI usage allowances per plan tier and the global AI spending guard. */
     aiUsage: AiUsagePolicySchema,
     /** D1: the public Go / Pro / Business plan definitions (proposed until the owner approves). */
@@ -107,6 +127,12 @@ export const DEFAULT_COMMERCIAL_POLICY: CommercialPolicy = {
   demandRequestRetentionDays: 30,
   aiUsage: DEFAULT_AI_USAGE_POLICY,
   subscriptionPlans: DEFAULT_SUBSCRIPTION_PLANS_POLICY,
+  advertisingTariffs: [
+    { productType: "SPONSORED_RECOMMENDATION", referencePrice: { amountMinor: 500, currencyCode: "USD", minorUnitScale: 2 }, durationDays: 7, autoRenew: false },
+    { productType: "DEMAND_CAPTURE", referencePrice: { amountMinor: 500, currencyCode: "USD", minorUnitScale: 2 }, durationDays: 10, autoRenew: false },
+    { productType: "SPONSORED_SEARCH", referencePrice: { amountMinor: 200, currencyCode: "USD", minorUnitScale: 2 }, durationDays: 7, autoRenew: false },
+  ],
+  advertisingBillingActivation: "DISABLED",
 };
 
 /** The effective policy for a market: its own latest version, else the global one, else v0. */

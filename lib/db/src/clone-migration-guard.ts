@@ -72,6 +72,8 @@ export const REVIEWED_PENDING_MIGRATIONS: ReadonlyArray<{ tag: string; sha256: s
   { tag: "0063_volatile_xorn", sha256: "d12c0cee16ec8444814c6f0a1ff8e17f9d47cb2b2eb192e226c0f1043911ed11" },
   // Welcome-screen ad exposures, buyer-authorised demand requests and match notices (additive).
   { tag: "0064_welcome_ads_demand_requests", sha256: "0460fd3750b97249d26102fda4543210d114977a00e6fafb09b533baa85cb23a" },
+  // Phase-one 0% independent-driver commission: new agreements may snapshot rate 0 (constraint only).
+  { tag: "0065_courier_commission_phase_one_zero", sha256: "1f489637f10c73b71c35dc54c6fed93bf3ab7ab92b0d011895a5cc6b0c2aea1d" },
 ];
 export const EXPECTED_JOURNAL_ENTRIES =
   EXPECTED_BASELINE_MIGRATIONS + REVIEWED_PENDING_MIGRATIONS.length;

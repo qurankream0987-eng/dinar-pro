@@ -10,5 +10,6 @@ export type CourierCommissionEarningCommissionRateBps = typeof CourierCommission
 
 
 export const CourierCommissionEarningCommissionRateBps = {
+  NUMBER_0: 0,
   NUMBER_1000: 1000,
 } as const;

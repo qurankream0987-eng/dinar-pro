@@ -12,4 +12,5 @@ export type CourierCommissionEarningReceivableStatus = typeof CourierCommissionE
 export const CourierCommissionEarningReceivableStatus = {
   OUTSTANDING: 'OUTSTANDING',
   SIMULATION_CLEARED: 'SIMULATION_CLEARED',
+  NO_COMMISSION: 'NO_COMMISSION',
 } as const;
