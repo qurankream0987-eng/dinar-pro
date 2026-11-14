@@ -1,0 +1,155 @@
+[
+  {
+    "step": "welcome",
+    "width": 320,
+    "height": 568,
+    "cards": 2,
+    "sectionVisible": false,
+    "labels": [
+      "إعلان ممول",
+      "إعلان ممول"
+    ],
+    "starters": 6,
+    "startersDisplayed": 0,
+    "startersHidden": 0,
+    "adsAfterStarters": true,
+    "composerVisible": true,
+    "overflowX": 0,
+    "pageOverflowY": 0,
+    "consoleErrors": 0
+  },
+  {
+    "step": "welcome",
+    "width": 390,
+    "height": 844,
+    "cards": 2,
+    "sectionVisible": true,
+    "labels": [
+      "إعلان ممول",
+      "إعلان ممول"
+    ],
+    "starters": 6,
+    "startersDisplayed": 6,
+    "startersHidden": 0,
+    "adsAfterStarters": true,
+    "composerVisible": true,
+    "overflowX": 0,
+    "pageOverflowY": 0,
+    "consoleErrors": 0
+  },
+  {
+    "step": "welcome",
+    "width": 430,
+    "height": 932,
+    "cards": 2,
+    "sectionVisible": true,
+    "labels": [
+      "إعلان ممول",
+      "إعلان ممول"
+    ],
+    "starters": 6,
+    "startersDisplayed": 6,
+    "startersHidden": 0,
+    "adsAfterStarters": true,
+    "composerVisible": true,
+    "overflowX": 0,
+    "pageOverflowY": 0,
+    "consoleErrors": 0
+  },
+  {
+    "step": "welcome",
+    "width": 768,
+    "height": 1024,
+    "cards": 2,
+    "sectionVisible": true,
+    "labels": [
+      "إعلان ممول",
+      "إعلان ممول"
+    ],
+    "starters": 6,
+    "startersDisplayed": 6,
+    "startersHidden": 0,
+    "adsAfterStarters": true,
+    "composerVisible": true,
+    "overflowX": 0,
+    "pageOverflowY": 0,
+    "consoleErrors": 0
+  },
+  {
+    "step": "welcome",
+    "width": 1280,
+    "height": 600,
+    "cards": 2,
+    "sectionVisible": false,
+    "labels": [
+      "إعلان ممول",
+      "إعلان ممول"
+    ],
+    "starters": 6,
+    "startersDisplayed": 0,
+    "startersHidden": 0,
+    "adsAfterStarters": true,
+    "composerVisible": true,
+    "overflowX": 0,
+    "pageOverflowY": 0,
+    "consoleErrors": 0
+  },
+  {
+    "step": "welcome",
+    "width": 1366,
+    "height": 768,
+    "cards": 2,
+    "sectionVisible": true,
+    "labels": [
+      "إعلان ممول",
+      "إعلان ممول"
+    ],
+    "starters": 6,
+    "startersDisplayed": 6,
+    "startersHidden": 0,
+    "adsAfterStarters": true,
+    "composerVisible": true,
+    "overflowX": 0,
+    "pageOverflowY": 0,
+    "consoleErrors": 0
+  },
+  {
+    "step": "welcome",
+    "width": 1440,
+    "height": 900,
+    "cards": 2,
+    "sectionVisible": true,
+    "labels": [
+      "إعلان ممول",
+      "إعلان ممول"
+    ],
+    "starters": 6,
+    "startersDisplayed": 6,
+    "startersHidden": 0,
+    "adsAfterStarters": true,
+    "composerVisible": true,
+    "overflowX": 0,
+    "pageOverflowY": 0,
+    "consoleErrors": 0
+  },
+  {
+    "step": "reopen",
+    "cards": 2,
+    "sectionVisible": true,
+    "labels": [
+      "إعلان ممول",
+      "إعلان ممول"
+    ],
+    "starters": 6,
+    "startersDisplayed": 6,
+    "startersHidden": 0,
+    "adsAfterStarters": true,
+    "composerVisible": true,
+    "overflowX": 0,
+    "pageOverflowY": 0
+  },
+  {
+    "step": "reduced-motion",
+    "animated": "1e-05s"
+  }
+]
