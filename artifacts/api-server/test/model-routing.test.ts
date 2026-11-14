@@ -7,13 +7,15 @@
 import { test, after } from "node:test";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
-import { and, eq } from "drizzle-orm";
-import { aiModelPrices, aiCostEvents, aiUsageReservations, commercialPolicies, db, pool } from "@workspace/db";
+import { and, desc, eq } from "drizzle-orm";
+import { aiModelPrices, aiCostEvents, aiResultSets, aiUsageReservations, businessSubscriptions, commercialPolicies, db, pool, users } from "@workspace/db";
 import app from "../src/app";
 import { AIProviderError, useCatalogGatewayFactory, type ConversationModelGateway, type ModelMessage } from "../src/ai/model-gateway";
 import { classOrder, planModelRoute, NO_CAPACITY_MESSAGE, type ModelPreference } from "../src/ai/model-routing";
+import { parseResultReference } from "../src/ai/arabic-normalization";
+import { latestListingSet } from "../src/ai/buyer-turn";
 import { CatalogModelSchema, DEFAULT_MODEL_ROUTING_POLICY, ModelRoutingPolicySchema, type CatalogModel, type ModelRoutingPolicy } from "../src/lib/ai-usage-policy";
-import { aiUsagePolicyFor } from "../src/lib/ai-usage";
+import { aiUsagePolicyFor, aiUsageSummary } from "../src/lib/ai-usage";
 import { requireSafeReplitDevelopmentDatabase } from "./safe-development-database";
 
 requireSafeReplitDevelopmentDatabase("BDINAR_TEST_DATABASE");
@@ -134,7 +136,7 @@ test("R11 the catalog refuses dynamic aliases and duplicate models; routing is o
 });
 
 // ---------------------------------------------------------------- API journeys (scripted catalog)
-for (const [e, input, output] of [[FREE_A, 0, 0], [FREE_B, 0, 0], [ECO, 100_000, 400_000], [CORE, 500_000, 2_000_000]] as const)
+for (const [e, input, output] of [[FREE_A, 0, 0], [FREE_B, 0, 0], [ECO, 100_000, 400_000], [CORE, 500_000, 2_000_000], [ADV, 2_000_000, 8_000_000]] as const)
   await db.insert(aiModelPrices).values(priceRow(e, input, output));
 process.env.DINAR_APPROVED_FREE_OPENROUTER_MODELS = [FREE_A.model, FREE_B.model].join(",");
 
@@ -166,7 +168,7 @@ app.locals.conversationModelGateway = scripted({ provider: "OPENAI_COMPATIBLE", 
 const base0 = await aiUsagePolicyFor({ id: "JO" });
 let version = 900_000 + Math.floor(Math.random() * 90_000);
 async function setRouting(over: Partial<ModelRoutingPolicy>, spend: Partial<typeof base0.spend> = {}) {
-  await db.insert(commercialPolicies).values({ id: randomUUID(), marketId: "JO", version: ++version, policy: { aiUsage: { ...base0, spend: { ...base0.spend, global: { ...base0.spend.global, limitMicros: 10_000_000 }, ...spend }, routing: routing({ models: [FREE_A, FREE_B, ECO, CORE], ...over }) } } });
+  await db.insert(commercialPolicies).values({ id: randomUUID(), marketId: "JO", version: ++version, policy: { aiUsage: { ...base0, spend: { ...base0.spend, global: { ...base0.spend.global, limitMicros: 10_000_000 }, ...spend }, routing: routing({ models: [FREE_A, FREE_B, ECO, CORE, ADV], ...over }) } } });
 }
 const server = app.listen(0, "127.0.0.1");
 await new Promise<void>((resolve) => server.once("listening", resolve));
@@ -196,13 +198,72 @@ async function account() {
   assert.equal((await request("/account/market", "PATCH", { marketId: "JO" }, created.cookie)).status, 200);
   return { id: created.data.user.id as string, cookie: created.cookie };
 }
+async function grantBusinessProForTest(user: { id: string }) {
+  const admin = await account();
+  await db.update(users).set({ role: "ADMIN" }).where(eq(users.id, admin.id));
+  const plan = await request(
+    "/admin/markets/JO/commercial-products",
+    "POST",
+    {
+      name: `Business Pro ${s}`,
+      productType: "DINAR_BUSINESS",
+      priceMinor: 15_000,
+      durationDays: 30,
+      chargingMode: "SUBSCRIPTION",
+      businessEntitlements: ["AI_USAGE_BUSINESS_PRO"],
+      enabled: true,
+    },
+    admin.cookie,
+  );
+  assert.equal(plan.status, 201, plan.raw);
+  await db.insert(businessSubscriptions).values({
+    id: randomUUID(),
+    userId: user.id,
+    marketId: "JO",
+    planId: plan.data.id as string,
+    planNameSnapshot: `Business Pro ${s}`,
+    priceMinorSnapshot: 15_000,
+    currencyCodeSnapshot: "JOD",
+    periodDaysSnapshot: 30,
+    pricingVersionSnapshot: 1,
+    entitlementsSnapshot: ["AI_USAGE_BUSINESS_PRO"],
+    planCodeSnapshot: "DINAR_PRO",
+    status: "ACTIVE",
+    autoRenew: false,
+    idempotencyKey: `model-routing-${s}-${user.id}`,
+    currentPeriodStart: new Date(),
+    currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+  });
+  const usage = await aiUsageSummary({ kind: "USER", userId: user.id, market: { id: "JO" } });
+  assert.equal(usage.tier, "BUSINESS_PRO", "ADVANCED is only tested with an eligible account tier");
+}
+async function publishCar(seller: { cookie: string }, title: string, price: string) {
+  const created = await request("/listings", "POST", {
+    title,
+    description: `${title} مستعملة ${s}`,
+    category: "سيارات",
+    categoryId: "cars",
+    area: "خلدا",
+    city: "عمان",
+    attributes: { make: "تويوتا", model: "كورولا", year: 2019, condition: "مستعمل", mileage: 90_000 },
+    unitPrice: price,
+    inventoryMode: "LIMITED",
+    availableQuantity: 1,
+    fulfilmentType: "PICKUP",
+    imageUrl: "",
+    imageUrls: [],
+  }, seller.cookie);
+  assert.equal(created.status, 201, created.raw);
+  return created.data.id as string;
+}
 async function turn(cookie: string, message: string, extra: Record<string, unknown> = {}, conversationId?: string) {
   const id = conversationId ?? (await request("/ai/conversations", "POST", {}, cookie)).data.id;
   const response = await fetch(`${base}/ai/conversations/${id}/turns`, { method: "POST", headers: { "content-type": "application/json", cookie }, body: JSON.stringify({ message, ...extra }) });
   const raw = await response.text();
   const events = raw.split(/\r?\n/).filter((l) => l.startsWith("data:")).map((l) => JSON.parse(l.slice(5)));
   const complete = events.find((e) => e.type === "complete");
-  return { status: response.status, body: String(complete?.assistantMessage?.body ?? events.find((e) => e.type === "error")?.message ?? raw), conversationId: id as string };
+  const blocks = (complete?.assistantMessage?.blocks ?? []) as any[];
+  return { status: response.status, body: String(complete?.assistantMessage?.body ?? events.find((e) => e.type === "error")?.message ?? raw), conversationId: id as string, complete, blocks, payload: blocks[0]?.payload };
 }
 const reservationsOf = (userId: string) => db.select().from(aiUsageReservations).where(eq(aiUsageReservations.ownerKey, `user:${userId}`));
 const reset = () => { behaviour.clear(); calls.length = 0; prompts.length = 0; };
@@ -349,6 +410,105 @@ test("J12 changing model classes keeps one persisted conversation and its prior 
   assert.ok(promptText(1).includes(`جواب من ${FREE_A.model}`), "ECONOMY receives the prior FREE answer");
   assert.ok(promptText(2).includes(marker) && promptText(2).includes(`جواب من ${ECO.model}`), "CORE receives prior context after the ECONOMY turn");
   assert.ok(promptText(3).includes(marker) && promptText(3).includes(`جواب من ${CORE.model}`), "the downgrade to FREE retains the same context");
+});
+
+test("J15 a full eligible model cycle preserves car references and buyer price corrections", async () => {
+  reset(); await setRouting({});
+  assert.deepEqual(parseResultReference("ورني الثاني"), { kind: "INDEX", index: 1 });
+  const buyer = await account();
+  await grantBusinessProForTest(buyer);
+  const seller = await account();
+  const marker = s;
+  const prices = ["3500", "4500", "4800", "12000", "17500", "18500", "19500"];
+  const carIds: string[] = [];
+  for (const [index, price] of prices.entries()) {
+    carIds.push(await publishCar(seller, `تويوتا كورولا ${2018 + index} ${marker}`, price));
+  }
+
+  const referenceConversation = await request("/ai/conversations", "POST", {}, buyer.cookie);
+  assert.equal(referenceConversation.status, 201, referenceConversation.raw);
+  const conversationId = referenceConversation.data.id as string;
+  const searched = await turn(
+    buyer.cookie,
+    `ابحث عن سيارة ${marker} بأقل من 5000`,
+    {},
+    conversationId,
+  );
+  const initialResults = searched.blocks.find((block: any) => block.type === "LISTING_RESULTS");
+  assert.ok(initialResults, searched.body);
+  const resultSetId = initialResults.payload.resultSetId as string;
+  const originalIds = initialResults.payload.resourceIds as string[];
+  assert.equal(originalIds.length, 3, `only the three cars under 5,000 should match: ${JSON.stringify(originalIds)}`);
+  assert.deepEqual(calls, [], "the initial marketplace search is deterministic");
+
+  const transitions = [
+    ["ما عاصمة الأردن؟", "AUTO", FREE_A],
+    ["ما الفرق بين الطاقة الشمسية وطاقة الرياح؟", "ECONOMY", ECO],
+    ["كيف أكتب رسالة شكر قصيرة؟", "CORE", CORE],
+    ["اشرح التضخم باختصار", "ADVANCED", ADV],
+    ["كيف أتعلم الإنجليزية؟", "ECONOMY", ECO],
+    ["ما أهمية النوم الصحي؟", "AUTO", FREE_A],
+  ] as const;
+  const routeStart = calls.length;
+  for (const [message, modelPreference] of transitions) {
+    const reply = await turn(buyer.cookie, message, { modelPreference }, conversationId);
+    assert.equal(reply.status, 200, reply.body);
+    assert.equal(reply.conversationId, conversationId, "model changes keep one persisted conversation");
+    const activeSet = (await db.select().from(aiResultSets).where(eq(aiResultSets.id, resultSetId)))[0];
+    assert.deepEqual(activeSet?.resourceIds, originalIds, `${modelPreference} does not mutate the server-side result set`);
+  }
+  assert.deepEqual(calls.slice(routeStart), transitions.map(([, , model]) => model.model));
+  const promptText = (index: number) => prompts[routeStart + index]!.messages.map((message) => message.content).join("\n");
+  for (let index = 1; index < transitions.length; index += 1) {
+    assert.ok(
+      promptText(index).includes(`جواب من ${transitions[index - 1]![2].model}`),
+      `${transitions[index]![2].model} receives the prior model's answer`,
+    );
+  }
+
+  const storedSet = (await db.select().from(aiResultSets).where(eq(aiResultSets.id, resultSetId)))[0];
+  assert.ok(storedSet, "the original server-side result set survives the model sequence");
+  assert.deepEqual(storedSet.resourceIds, originalIds);
+  const setsAfterTransitions = await db.select().from(aiResultSets).where(eq(aiResultSets.conversationId, conversationId)).orderBy(desc(aiResultSets.createdAt));
+  const activeSet = await latestListingSet(conversationId, "JO");
+  assert.equal(
+    activeSet?.id,
+    resultSetId,
+    `conversation-only turns do not replace the active marketplace result set: ${JSON.stringify(setsAfterTransitions.map((set) => ({ id: set.id, kind: (set.query as any)?.kind, resourceCount: set.resourceIds.length })))}`,
+  );
+  const opened = await turn(buyer.cookie, "ورني تفاصيل الثاني", {}, conversationId);
+  assert.equal(opened.payload.presentation, "DETAILS", opened.body);
+  assert.ok(JSON.stringify(opened.blocks).includes(originalIds[1]!), JSON.stringify(opened.payload));
+  assert.equal(opened.payload.resultSetId, resultSetId);
+  const compared = await turn(buyer.cookie, "قارن لي الأول والثاني", {}, conversationId);
+  const comparison = compared.blocks.find((block: any) => block.payload?.comparison)?.payload.comparison;
+  assert.ok(comparison, compared.body);
+  assert.deepEqual(comparison.listings.map((listing: any) => listing.id), [originalIds[0], originalIds[1]]);
+  const restored = await turn(buyer.cookie, `طيب ارجع لسيارة ${marker}`, {}, conversationId);
+  const restoredResults = restored.blocks.find((block: any) => block.type === "LISTING_RESULTS");
+  assert.ok(restoredResults, restored.body);
+  assert.deepEqual(restoredResults.payload.resourceIds, originalIds, restored.body);
+
+  const budgetConversation = await request("/ai/conversations", "POST", {}, buyer.cookie);
+  assert.equal(budgetConversation.status, 201, budgetConversation.raw);
+  const budgetConversationId = budgetConversation.data.id as string;
+  const broad = await turn(buyer.cookie, `ابحث عن سيارة ${marker} بأقل من 20 ألف`, {}, budgetConversationId);
+  const broadResults = broad.blocks.find((block: any) => block.type === "LISTING_RESULTS");
+  assert.ok(broadResults, broad.body);
+  assert.equal(broadResults.payload.resourceIds.length, 7, "the original 20,000 ceiling includes all seven synthetic offers");
+  const interruption = await turn(buyer.cookie, "كيف أحافظ على بطارية السيارة في الصيف؟", { modelPreference: "ECONOMY" }, budgetConversationId);
+  assert.equal(interruption.status, 200, interruption.body);
+  assert.equal(calls.at(-1), ECO.model, "the unrelated question actually switches to ECONOMY");
+  const narrowed = await turn(buyer.cookie, "طيب خلها لين 18 ألف", {}, budgetConversationId);
+  const narrowedResults = narrowed.blocks.find((block: any) => block.type === "LISTING_RESULTS");
+  assert.ok(narrowedResults, narrowed.body);
+  assert.equal(narrowedResults.payload.resourceIds.length, 5, "the correction narrows the existing search instead of starting a seller edit");
+  const narrowedIds = narrowedResults.payload.resourceIds as string[];
+  assert.ok(narrowedIds.every((id) => broadResults.payload.resourceIds.includes(id)), "the correction only narrows the original budget results");
+  assert.ok(carIds.slice(0, 5).every((id) => narrowedIds.includes(id)), "all five offers below 18,000 remain");
+  assert.ok(carIds.slice(5).every((id) => !narrowedIds.includes(id)), "offers above 18,000 are removed");
+  assert.ok(originalIds.every((id) => narrowedIds.includes(id)), "the earlier under-5,000 results remain within the corrected search");
+  assert.equal((await reservationsOf(buyer.id)).filter((row) => row.resource === "TEXT_REQUEST").length, transitions.length + 1);
 });
 
 test("J13 the assembled request and output reserve are checked against each routed model before dispatch", async () => {

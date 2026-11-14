@@ -5,7 +5,7 @@ Date: 2026-11-14
 ## Handoff
 
 - Isolated branch: `replit/jassimai-model-continuity-stabilization`
-- Base: `origin/claude/jassimai-ads-connect-closure` at `ddfa15d83f6bfb781ac36e63d7ab7def119f8a3d`
+- Starting commit for this acceptance pass: `fe56c4345ef1c4cc50a32f4f4d83c313be2781be`
 - Scope: local code and evidence only; no push, merge, deployment, live model call, or production/staging data.
 
 ## Confirmed routing defect
@@ -23,6 +23,17 @@ The router now requires both tool and structured-output qualification. No catalo
 
 J12 sends four turns through one persisted conversation while changing the preference `AUTO → ECONOMY → CORE → AUTO`. It verifies that the conversation ID stays unchanged and that each captured prompt contains an earlier user fact and the preceding model's answer, including after switching back to FREE. The test uses scripted gateways only.
 
+## J15 cross-model marketplace continuity
+
+J15 extends the model-routing acceptance through a real persisted marketplace result set. It uses a signed-in Business Pro test account, seven synthetic car listings, and scripted model gateways:
+
+- A deterministic search returns the three synthetic cars under 5,000. Six unrelated turns route `AUTO (FREE) → ECONOMY → CORE → ADVANCED → ECONOMY → AUTO (FREE)`.
+- Each turn stays in the same conversation; the test checks the exact selected gateway and that each later model prompt contains the preceding model's reply. The original server-side result-set ID and listing IDs remain unchanged through all six switches.
+- `ورني تفاصيل الثاني` opens the second listing from that set. A comparison returns the first two IDs in order, and returning to the car topic restores the same listing IDs.
+- A second search returns seven cars under 20,000. After an unrelated ECONOMY answer, `طيب خلها لين 18 ألف` narrows the same budget results to five IDs, keeps all five cars under 18,000, and excludes both higher-priced cars.
+
+The Business Pro subscription and listings exist only in the disposable test database; no payment or ledger history is created. The marketplace search and price correction are deterministic, and the model responses are scripted. The J15 suite passes 26/26 with zero outbound attempts.
+
 ## Context-window dispatch safety
 
 The earlier route planner compared a projected input count with a catalog model's context window before the final messages and tool schemas were assembled. The shared gateway boundary now checks each assembled request immediately before dispatch:
@@ -38,8 +49,9 @@ AG13/J13 reproduce the over-context dispatch and then verify the request is refu
 ## Guest/free and continuity checks
 
 - J7 and the free-routing activation tests verify that guests stay on eligible free routes and do not silently use paid capacity.
-- J9 verifies the disabled premium-trial path stays on the normal route and consumes no trial message; the enabled 15-message lifecycle was not exercised in this local pass.
+- J9 verifies the disabled premium-trial path stays on the normal route and consumes no trial message. The G1 usage suite also exercises the enabled, one-time 15-message trial for a signed-in FREE account: a pre-dispatch refusal releases its slot, a dispatched failure consumes one, concurrent final reservations allow only one request, and exhaustion is enforced. A guest is explicitly denied the premium trial; guest free allowance and account behavior remain separate.
 - J12 and the multi-turn continuity suite verify that model changes do not change conversation identity or lose earlier facts and replies.
+- J15 verifies that an unrelated answer on another model does not replace the active marketplace result set.
 - D17.7 rechecks 100, 1,000, and 10,000-message histories, bounded memory summaries, and concurrent reads/writes.
 
 ## Chat model-choice assessment
@@ -48,15 +60,30 @@ The current UI sends `DEFAULT` or an explicitly selected `PREMIUM_TRIAL`; it doe
 
 ## Verification
 
-- Disposable loopback PostgreSQL suites: `advanced-general-ai.test` **14/14**; `model-routing.test` **25/25**; `model-tiers.test` **25/25**; `free-routing-activation.test` **5/5**; `multiturn-continuity.test` **12/12**; `wave06-conversation-memory-performance.test` **5/5**; `ai-provider.test` **48/48**.
+- Earlier disposable loopback PostgreSQL suites: `advanced-general-ai.test` **14/14**; `model-tiers.test` **25/25**; `free-routing-activation.test` **5/5**; `wave06-conversation-memory-performance.test` **5/5**; `ai-provider.test` **48/48**.
+- Final focused reruns after J15: `model-routing.test` **26/26**; `context-sealed.test` **1/1**; `context-understanding.test` **3/3**; `premium-journeys.test` **5/5**; `multiturn-continuity.test` **12/12**; `next-g1-usage.test` **36/36**. `pnpm --filter @workspace/api-server run typecheck` passed.
 - `deepseek-chat-compatibility.test`: **15 passed, 6 skipped** (browser-only cases are gated); its replayed compatibility cases use local fixtures.
-- All completed isolation preludes and suites reported **0 outbound attempts**. No live provider, paid usage, production/staging data, push, merge, or deployment was used.
-- `pnpm --filter @workspace/api-server run typecheck`: passed; `git diff --check`: passed.
+- All completed isolation preludes and suites, including the focused reruns, reported **0 outbound attempts**. No live provider, paid usage, production/staging data, push, merge, or deployment was used.
+- Browser acceptance did not reach Chromium: the isolated checkout lacked Vite, and the offline package cache lacked `maplibre-gl@5.6.0`. No online install was attempted.
+- `git diff --check`: passed.
 - The new context regression was run red before the fix (**2 failing tests**) and green afterward. Raw evidence logs are retained under `generated-artifacts/dinar-model-continuity/`, excluded from Git and deployment.
 
 ## Limits
 
 No provider-specific tokenizer or exact provider-side request serialization is available in this path. The UTF-8 byte method is an estimate, not an exact count or a guarantee of provider-tokenizer accuracy; live-provider fit and Arabic response quality remain unverified. Do not treat this local work as approval to enable a new model, paid route, or deployment.
+
+## Bounded real-provider plan (not executed)
+
+No exact owner-approved chat-routing model IDs are checked into this branch. The checked-in default routing policy is disabled with an empty model catalog; the exact free-model allowlist is owner-configured through `DINAR_APPROVED_FREE_OPENROUTER_MODELS`, and market model catalogs are owner-controlled. I did not inspect secrets or query development, staging, or production for IDs, so no model names are guessed here.
+
+If a real-provider pass is separately approved:
+
+1. Use only exact IDs already approved in the development routing catalog, with approved prices, tool/structured-output support, and the correct account-tier eligibility. Reject dynamic aliases and stop if the provider substitutes a different model.
+2. Use one disposable Business Pro account, one conversation, and synthetic listings in a fresh loopback database. Keep search and price correction deterministic; make at most six provider dispatches for `FREE → ECONOMY → CORE → ADVANCED → ECONOMY → FREE`.
+3. Disable automatic retries and paid fallbacks for this pass. Enforce the current per-turn reservation ceiling and a separate aggregate budget of at most **$0.36** for the six calls (six times the checked-in default Business Pro cap of $0.06); lower the limit when the approved development policy requires it. Do not run if the provider cannot be constrained to that approved budget.
+4. Stop on a model-ID mismatch, budget rejection, schema/tool failure, or context refusal. Record only sanitized request IDs, selected/actual model IDs, token counts, and result-set assertions. Do not use customer data or create orders, payments, promotions, or SMS.
+
+This plan is conditional on explicit approval of the exact model IDs and aggregate spend; it does not authorize execution.
 
 ## Claude review focus
 
