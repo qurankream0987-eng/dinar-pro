@@ -23,10 +23,10 @@ test('all 22 Arab market records retain selection, currency and independent clos
 test('Jordan positive flexible prices and open offers do not use a single market unit price',async()=>{
  const [cat]=await db.select().from(marketplaceCategories).where(eq(marketplaceCategories.id,'other'));assert.ok(cat);
  for(const price of ['0.001','0.250','1.250','37.125']){
-  assert.equal(resolveListingBehavior(cat,{pricingMode:'FIXED',unitPrice:price,inventoryMode:'LIMITED'},'JOD').unitPriceMinor,Math.round(Number(price)*1000));
+  assert.equal(resolveListingBehavior(cat,{pricingMode:'FIXED',unitPrice:price,inventoryMode:'LIMITED',availableQuantity:1},'JOD').unitPriceMinor,Math.round(Number(price)*1000));
  }
- assert.equal(resolveListingBehavior(cat,{pricingMode:'OPEN_TO_OFFERS',unitPrice:null,inventoryMode:'LIMITED'},'JOD').unitPriceMinor,null);
- assert.throws(()=>resolveListingBehavior(cat,{pricingMode:'FIXED',unitPrice:'0',inventoryMode:'LIMITED'},'JOD'));
+ assert.equal(resolveListingBehavior(cat,{pricingMode:'OPEN_TO_OFFERS',unitPrice:null,inventoryMode:'LIMITED',availableQuantity:1},'JOD').unitPriceMinor,null);
+ assert.throws(()=>resolveListingBehavior(cat,{pricingMode:'FIXED',unitPrice:'0',inventoryMode:'LIMITED',availableQuantity:1},'JOD'));
 });
 test('commission arithmetic preserves exact rounding and arbitrary approved rates',()=>{
  for(const rate of [0,250,750,1000,1500,10000]) for(const gross of [1,7,99,1001,98765]) assert.equal(calculatePlatformFeeMinor(gross,rate),Number((BigInt(gross)*BigInt(rate)+5000n)/10000n));
