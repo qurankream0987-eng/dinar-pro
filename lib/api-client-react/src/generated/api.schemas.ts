@@ -2574,6 +2574,7 @@ export const AiUiBlockPayloadSurface = {
   CONTROL_NOTICE: 'CONTROL_NOTICE',
   PRIVACY_EXPORT: 'PRIVACY_EXPORT',
   TUTORIAL_VIDEO_CARD: 'TUTORIAL_VIDEO_CARD',
+  ACCOUNT_STATUS: 'ACCOUNT_STATUS',
 } as const;
 
 export type AiTutorialPayloadId = typeof AiTutorialPayloadId[keyof typeof AiTutorialPayloadId];
