@@ -65,6 +65,21 @@ try {
     rmSync(marker);
     git('switch', 'codex/dinar-next-unified-development');
   });
+  await test('G33 permits the owner-authorized release candidate locally (2026-11-14) with the same identity guards', () => {
+    git('switch', '-c', 'claude/jassimai-release-candidate-2');
+    const result = run({ DINAR_LOCAL_G33_ACCEPTANCE: 'disposable' });
+    assert.equal(result.status, 99, result.stderr);
+    assert.match(result.stdout, /G33_EXECUTION_MODE=LOCAL_DISPOSABLE/);
+    assert.match(result.stdout, new RegExp(`source=${sha}`));
+    rmSync(marker);
+    git('switch', 'codex/dinar-next-unified-development');
+  });
+  await test('G33 still refuses a similarly named branch and the release candidate in CI', () => {
+    git('switch', '-c', 'claude/jassimai-release-candidate-3');
+    denied({ DINAR_LOCAL_G33_ACCEPTANCE: 'disposable' }, /authorized development branch/);
+    git('switch', 'codex/dinar-next-unified-development');
+    denied({ GITHUB_ACTIONS: 'true', GITHUB_REF: 'refs/heads/claude/jassimai-release-candidate-2', GITHUB_RUN_ID: '1', GITHUB_RUN_ATTEMPT: '1' }, /outside the isolated candidate/);
+  });
   await test('G33 explicit local mode clears inherited Docker selectors and creates no CI identity', () => {
     const result = run({ DINAR_LOCAL_G33_ACCEPTANCE: 'disposable', DOCKER_HOST: 'tcp://invalid.example:2376', DOCKER_CONTEXT: 'foreign', DOCKER_TLS: '1', DOCKER_TLS_VERIFY: '1', DOCKER_CERT_PATH: '/not-used' });
     assert.equal(result.status, 99, result.stderr);
