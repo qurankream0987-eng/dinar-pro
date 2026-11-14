@@ -526,8 +526,18 @@ export type ModelGatewayProviderInfo = {
 
 export type ModelRequestTokenEstimate = {
   estimatedInputTokens: number;
-  method: "CONSERVATIVE_UTF8_BYTES_PLUS_FRAMING";
+  method: "SERVER_TEXT_BYTES_DIV3_PLUS_UNTRUSTED_UTF8_BYTES";
 };
+
+/**
+ * Server-authored text (the leading system instruction and the tool schemas, both fixed English
+ * written by JassimAI) measured about 4.5 UTF-8 bytes per token on the DeepSeek V3 and o200k
+ * tokenizers; dividing its bytes by 3 keeps a 1.5x margin. Everything else (history, memory,
+ * results, the user's message) may carry hostile text, so it keeps the strict bound of one
+ * token per UTF-8 byte. Counting every byte as a token made the fixed ~28 KB of instructions
+ * alone exceed a 32k window, refusing every request to such a model.
+ */
+export const SERVER_TEXT_BYTES_PER_TOKEN = 3;
 
 /**
  * A conservative pre-dispatch estimate over the exact messages and tool schemas passed to a
@@ -537,11 +547,14 @@ export function estimateModelRequestInputTokens(
   messages: ModelMessage[],
   tools: ModelToolDefinition[],
 ): ModelRequestTokenEstimate {
-  const serializedBytes = Buffer.byteLength(JSON.stringify({ messages, tools }), "utf8");
+  const [first, ...rest] = messages;
+  const serverInstruction = first?.role === "system" ? first : undefined;
+  const serverBytes = Buffer.byteLength(JSON.stringify(tools), "utf8") + (serverInstruction ? Buffer.byteLength(JSON.stringify(serverInstruction), "utf8") : 0);
+  const untrustedBytes = Buffer.byteLength(JSON.stringify(serverInstruction ? rest : messages), "utf8");
   const framingAllowance = 64 + messages.length * 16 + tools.length * 32;
   return {
-    estimatedInputTokens: serializedBytes + framingAllowance,
-    method: "CONSERVATIVE_UTF8_BYTES_PLUS_FRAMING",
+    estimatedInputTokens: Math.ceil(serverBytes / SERVER_TEXT_BYTES_PER_TOKEN) + untrustedBytes + framingAllowance,
+    method: "SERVER_TEXT_BYTES_DIV3_PLUS_UNTRUSTED_UTF8_BYTES",
   };
 }
 
