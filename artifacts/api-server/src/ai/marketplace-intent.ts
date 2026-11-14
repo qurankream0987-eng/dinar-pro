@@ -144,6 +144,16 @@ export function needsMarketplaceCategoryContext(
   );
 }
 
+/**
+ * «خليها أقل من 18 ألف», «خلها في عمان بس»: an imperative "make it" before a search constraint
+ * refines the current search; the verb is not a search word. Only before a constraint word —
+ * never before a bare number, which stays the seller's price edit («خليها 18»).
+ */
+const REFINEMENT_LEAD = /^\s*(?:خليها|خلّيها|خلها|خليه|خلّيه|خله|خليهم|خلهم|اجعلها|اجعله)\s+(?=(?:[اأإآ]قل|[اأإآ]كثر|[اأإآ]رخص|[اأإآ]غلى|تحت|فوق|في|بس|فقط|لين|[اأإآ]لين|حتى|بين|ضمن|بحدود|مستعمل|جديد)(?:\s|$))/u;
+function stripRefinementLead(message: string): string {
+  return message.replace(REFINEMENT_LEAD, "");
+}
+
 export function interpretMarketplaceTurn(
   message: string,
   context: MarketplaceTurnContext,
@@ -205,7 +215,7 @@ export function interpretMarketplaceTurn(
       confidence: "HIGH",
     };
 
-  const query = parseStructuredSearch(stripCorrectionPrefix(message), context.previous, context.categories, {
+  const query = parseStructuredSearch(stripRefinementLead(stripCorrectionPrefix(message)), context.previous, context.categories, {
     knownCities: context.knownCities,
   });
   if (query) {
