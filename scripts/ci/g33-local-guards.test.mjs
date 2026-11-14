@@ -22,16 +22,18 @@ try {
   for (const name of ['release-migration.test.mjs', 'release-migration-concurrency.test.mjs', 'rehearsal/.keep']) writeFileSync(path.join(temp, 'lib/db/scripts', name), '');
   const script = path.join(temp, 'scripts/ci/g33-docker-acceptance.sh');
   copyFileSync(source, script);
-  writeFileSync(path.join(temp, 'Dockerfile'), 'FROM scratch\n');
+  const builder = 'FROM scratch AS builder\nRUN true\n';
+  writeFileSync(path.join(temp, 'Dockerfile'), `${builder}# Keep compilers, test runners and frontend tooling out of the runtime dependency tree.\nFROM scratch\n`);
+  writeFileSync(path.join(temp, 'Dockerfile.g33'), `${builder}USER node\n`);
   git('init', '-b', 'codex/dinar-next-unified-development');
-  git('add', 'scripts', 'lib', 'Dockerfile');
+  git('add', 'scripts', 'lib', 'Dockerfile', 'Dockerfile.g33');
   git('-c', 'user.name=DINAR guard fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '-m', 'Disposable guard fixture');
   const sha = git('rev-parse', 'HEAD');
   const marker = path.join(temp, 'docker-called');
   writeFileSync(path.join(temp, 'bin/docker'), '#!/bin/sh\n[ -z "${DOCKER_HOST+x}${DOCKER_CONTEXT+x}${DOCKER_TLS+x}${DOCKER_TLS_VERIFY+x}${DOCKER_CERT_PATH+x}" ] || exit 97\n[ -z "${GITHUB_RUN_ID+x}${GITHUB_SHA+x}" ] || exit 98\nprintf "%s\\n" "$@" > "$G33_GUARD_MARKER"\nexit 99\n', { mode: 0o755 });
   // Ignore only disposable test instruments; the copied source must be committed and clean.
   writeFileSync(path.join(temp, '.git/info/exclude'), 'bin/\ndocker-called\n');
-  const base = { PATH: `${temp}/bin:${process.env.PATH}`, ...(process.env.HOME ? { HOME: process.env.HOME } : {}), G33_APP_IMAGE: `dinar-next-g33:${sha}`, G33_POSTGRES_IMAGE: 'postgres:16', G33_GUARD_MARKER: marker };
+  const base = { PATH: `${temp}/bin:${process.env.PATH}`, ...(process.env.HOME ? { HOME: process.env.HOME } : {}), G33_APP_IMAGE: `dinar-next-g33:${sha}`, G33_TEST_IMAGE: `dinar-next-g33-test:${sha}`, G33_POSTGRES_IMAGE: 'postgres:16', G33_GUARD_MARKER: marker };
   const run = (extra = {}) => spawnSync('bash', [script], { cwd: temp, env: { ...base, ...extra }, encoding: 'utf8', timeout: 10000 });
   const denied = (extra, pattern) => {
     const result = run(extra);
@@ -56,6 +58,7 @@ try {
   });
   await test('G33 binds image identity and limits PostgreSQL versions', () => {
     denied({ DINAR_LOCAL_G33_ACCEPTANCE: 'disposable', G33_APP_IMAGE: 'dinar-next-g33:wrong' }, /tag must match/);
+    denied({ DINAR_LOCAL_G33_ACCEPTANCE: 'disposable', G33_TEST_IMAGE: 'dinar-next-g33-test:wrong' }, /test image tag must match/);
     denied({ DINAR_LOCAL_G33_ACCEPTANCE: 'disposable', G33_POSTGRES_IMAGE: 'postgres:latest' }, /must be allowlisted/);
   });
   await test('G33 permits only the explicitly owner-authorized local audit branch with the same identity guards', () => {
@@ -82,6 +85,16 @@ try {
     denied({ DINAR_LOCAL_G33_ACCEPTANCE: 'disposable' }, /authorized development branch/);
     git('switch', 'codex/dinar-next-unified-development');
     denied({ GITHUB_ACTIONS: 'true', GITHUB_REF: 'refs/heads/claude/jassimai-release-candidate-2', GITHUB_RUN_ID: '1', GITHUB_RUN_ATTEMPT: '1' }, /outside the isolated candidate/);
+  });
+  await test('G33 refuses a test image whose builder section drifted from production', () => {
+    const file = path.join(temp, 'Dockerfile.g33');
+    const original = readFileSync(file, 'utf8');
+    writeFileSync(file, original.replace('RUN true', 'RUN echo drift'));
+    git('-c', 'user.name=DINAR guard fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '-qam', 'drift');
+    const drifted = git('rev-parse', 'HEAD');
+    denied({ DINAR_LOCAL_G33_ACCEPTANCE: 'disposable', G33_APP_IMAGE: `dinar-next-g33:${drifted}`, G33_TEST_IMAGE: `dinar-next-g33-test:${drifted}` }, /must start with the production builder section/);
+    git('reset', '-q', '--hard', sha);
+    assert.equal(readFileSync(file, 'utf8'), original);
   });
   await test('G33 explicit local mode clears inherited Docker selectors and creates no CI identity', () => {
     const result = run({ DINAR_LOCAL_G33_ACCEPTANCE: 'disposable', DOCKER_HOST: 'tcp://invalid.example:2376', DOCKER_CONTEXT: 'foreign', DOCKER_TLS: '1', DOCKER_TLS_VERIFY: '1', DOCKER_CERT_PATH: '/not-used' });

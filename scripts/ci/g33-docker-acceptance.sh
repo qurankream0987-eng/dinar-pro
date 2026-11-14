@@ -53,9 +53,22 @@ esac
   echo "G33: app image tag must match the checked-out commit" >&2
   exit 96
 }
+: "${G33_TEST_IMAGE:?set G33_TEST_IMAGE to the Dockerfile.g33 test-runner image built from this commit}"
+[[ "$G33_TEST_IMAGE" == "dinar-next-g33-test:${G33_SOURCE_SHA}" ]] || {
+  echo "G33: test image tag must match the checked-out commit" >&2
+  exit 96
+}
 TEST_DIR="$ROOT/artifacts/api-server/test"
 [[ -d "$TEST_DIR/isolation" && -f "$ROOT/Dockerfile" ]] || {
   echo "G33: candidate sources are incomplete" >&2
+  exit 96
+}
+# The test-runner image must be the production builder section, unchanged, plus its own tail.
+G33_BUILDER_MARKER="# Keep compilers, test runners and frontend tooling out of the runtime dependency tree."
+G33_BUILDER_PREFIX="$(awk -v m="$G33_BUILDER_MARKER" '$0 == m { exit } { print }' "$ROOT/Dockerfile")"
+G33_TEST_PREFIX="$(head -n "$(printf '%s\n' "$G33_BUILDER_PREFIX" | wc -l)" "$ROOT/Dockerfile.g33" 2>/dev/null)"
+[[ -n "$G33_BUILDER_PREFIX" && "$G33_BUILDER_PREFIX" == "$G33_TEST_PREFIX" ]] || {
+  echo "G33: Dockerfile.g33 must start with the production builder section unchanged" >&2
   exit 96
 }
 if [[ "$G33_EXECUTION_MODE" == LOCAL_DISPOSABLE ]]; then
@@ -159,6 +172,7 @@ CREATED_NETWORK=1
 }
 echo "G33_RUNTIME_NETWORK=internal; app, test runner and PostgreSQL will share its namespace"
 echo "G33_APP_IMAGE_ID=$("${G33_DOCKER[@]}" image inspect --format '{{.Id}}' "$G33_APP_IMAGE")"
+echo "G33_TEST_IMAGE_ID=$("${G33_DOCKER[@]}" image inspect --format '{{.Id}}' "$G33_TEST_IMAGE")"
 echo "G33_POSTGRES_IMAGE_ID=$("${G33_DOCKER[@]}" image inspect --format '{{.Id}}' "$G33_POSTGRES_IMAGE")"
 "${G33_DOCKER[@]}" image inspect --format '{{range .RepoDigests}}{{println .}}{{end}}' "$G33_POSTGRES_IMAGE" | sed 's/^/G33_POSTGRES_REPO_DIGEST=/'
 
@@ -207,7 +221,7 @@ run_local_suite() {
     --env DINAR_SUITE_KEEP_DB=1 \
     --env DINAR_SUITE_RELEASE_MIGRATIONS="$release_migrations" \
     --entrypoint /bin/sh \
-    "$G33_APP_IMAGE" \
+    "$G33_TEST_IMAGE" \
     -lc "cd /app/artifacts/api-server && sh test/isolation/local-suite.sh $*"
 }
 
@@ -223,7 +237,7 @@ if [[ "$G33_POSTGRES_IMAGE" == "postgres:18" ]]; then
     --volume "$DB_SCRIPTS_SNAPSHOT/release-migration-concurrency.test.mjs:/app/lib/db/scripts/release-migration-concurrency.test.mjs:ro" \
     --volume "$DB_SCRIPTS_SNAPSHOT/rehearsal:/app/lib/db/scripts/rehearsal:ro" \
     --entrypoint /bin/sh \
-    "$G33_APP_IMAGE" \
+    "$G33_TEST_IMAGE" \
     -lc "cd /app/lib/db && node --experimental-strip-types --test ./scripts/release-migration.test.mjs ./scripts/release-migration-concurrency.test.mjs"
   run_local_suite 1 \
     market-legal-acceptance.test \
@@ -249,7 +263,7 @@ CONNECT_RELEASE=0
   --env DINAR_SUITE_DB="dinar_test_connect_${G33_RUN_ID}_${G33_RUN_ATTEMPT}" \
   --env DINAR_SUITE_SEED=fixtures \
   --env DINAR_SUITE_RELEASE_MIGRATIONS="$CONNECT_RELEASE" \
-  --entrypoint /bin/sh "$G33_APP_IMAGE" \
+  --entrypoint /bin/sh "$G33_TEST_IMAGE" \
   -lc 'cd /app/artifacts/api-server && sh test/isolation/local-suite.sh connect-performance.test connect-commission-math.test connect-sync-observations.test connect-agreement-draft.test connect-card-presentation.test connect-website-catalog.test connect-partners.test connect-mcp-catalog.test connect-catalog-pull.test connect-network.test connect-card-contract.test ai-authority-boundary.test BDINAR_TEST_DATABASE=development'
 
 MIGRATION_FINGERPRINT() {
@@ -358,7 +372,7 @@ probe_health
   --env DINAR_SUITE_KEEP_DB=1 \
   --env DINAR_SUITE_REUSE_DB=1 \
   --entrypoint /bin/sh \
-  "$G33_APP_IMAGE" \
+  "$G33_TEST_IMAGE" \
   -lc 'cd /app/artifacts/api-server && sh test/isolation/local-suite.sh g33-docker-acceptance.test BDINAR_W08_ACCEPTANCE=development BDINAR_TEST_API_BASE=http://127.0.0.1:3000 BDINAR_G33_HANDSHAKE_DIR=/g33' >/dev/null
 CREATED_RUNNER=1
 
@@ -405,4 +419,4 @@ runner_exit="$("${G33_DOCKER[@]}" wait "$RUNNER")"
   echo "G33: Docker API cash journey failed with exit $runner_exit" >&2
   exit 1
 }
-echo "G33_CONTAINER_ACCEPTANCE=passed postgres=$G33_POSTGRES_IMAGE image=$G33_APP_IMAGE"
+echo "G33_CONTAINER_ACCEPTANCE=passed postgres=$G33_POSTGRES_IMAGE image=$G33_APP_IMAGE test_image=$G33_TEST_IMAGE"

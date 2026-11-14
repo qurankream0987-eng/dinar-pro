@@ -56,6 +56,7 @@ jobs:
           - "18"
     env:
       G33_APP_IMAGE: dinar-next-g33:${{ github.sha }}
+      G33_TEST_IMAGE: dinar-next-g33-test:${{ github.sha }}
       G33_POSTGRES_IMAGE: postgres:${{ matrix.postgres }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -71,5 +72,9 @@ jobs:
           echo "Build-time base-image and package downloads are allowed; runtime egress is blocked later."
           docker build --pull --tag "$G33_APP_IMAGE" .
           docker image inspect --format 'G33_APP_IMAGE_ID={{.Id}}' "$G33_APP_IMAGE"
+      - name: Build the test-runner image (production builder section plus dev tools; never deployed)
+        run: |
+          docker build --file Dockerfile.g33 --tag "$G33_TEST_IMAGE" .
+          docker image inspect --format 'G33_TEST_IMAGE_ID={{.Id}}' "$G33_TEST_IMAGE"
       - name: Run isolated G33 acceptance
         run: bash scripts/ci/g33-docker-acceptance.sh
