@@ -101,8 +101,9 @@ try {
   await visitor.getByTestId("policy-fees").waitFor();
   assert.match(await visitor.getByTestId("policy-fees").innerText(), /10%/); // approved commission (PLATFORM_FEE_BASIS_POINTS = 1000)
   await visitor.getByTestId("badge-legal-review").waitFor();
+  // /terms is the terms document itself (public, required for Google OAuth verification).
   await visitor.goto("/terms");
-  await visitor.getByTestId("list-policies").waitFor();
+  await visitor.getByTestId("policy-terms").waitFor();
   assert.equal(new URL(visitor.url()).pathname, "/terms", "chat-only mode keeps policy routes");
   checks.push("policy surfaces navigable in chat-only mode with legal-review marker");
 

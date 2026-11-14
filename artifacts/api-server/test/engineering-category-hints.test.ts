@@ -13,7 +13,9 @@ test('a generic audience cannot classify an unrelated object as clothing',()=>{
  assert.notEqual(q?.categoryId,'fashion');assert.ok(q?.search.includes('اطفال'));
 });
 test('an explicit category retains its own feature filters',()=>{
- const q=parseStructuredSearch('ابحث عن سيارة اوتوماتيك اقل من 9000',undefined,categories);
+ // The seeded cars category lists transmission options (أوتوماتيك/يدوي); the shared fixture omits them.
+ const real=categories.map((c:any)=>c.id!=='cars'?c:{...c,attributes:{...c.attributes,transmission:{...c.attributes.transmission,options:['أوتوماتيك','يدوي']}}});
+ const q=parseStructuredSearch('ابحث عن سيارة اوتوماتيك اقل من 9000',undefined,real as any);
  assert.equal(q?.categoryId,'cars');assert.ok(q?.filters.some(f=>f.field==='transmission'));
 });
 await pool.end();
