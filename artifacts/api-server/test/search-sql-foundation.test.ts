@@ -22,7 +22,7 @@ import { db, marketplaceCategories, offerSearchDocuments, offers, pool } from "@
 import { marketFor } from "../src/lib/markets";
 import { lastSearchStats, searchMarketplaceListings } from "../src/lib/marketplace-listings";
 import { refreshSearchDocuments, staleSearchDocumentCount } from "../src/lib/marketplace-search-index";
-import { idOf, LISTINGS, QUERIES, resultShape, seedSearchFixture } from "./search-fixture";
+import { idOf, listingId, LISTINGS, QUERIES, resultShape, seedSearchFixture } from "./search-fixture";
 import { requireSafeReplitDevelopmentDatabase } from "./safe-development-database";
 
 requireSafeReplitDevelopmentDatabase("BDINAR_TEST_DATABASE");
@@ -62,7 +62,15 @@ function assertPreservedAgainstGolden(actual: Run, label: string) {
     const where = `${label} query #${index} ${JSON.stringify(expected.options)}`;
     assert.equal(got.error, expected.error, where);
     if (expected.error) continue;
-    assert.deepEqual(got.full, (expected as any).full, `${where}: the complete matching set changed`);
+    // The one documented semantic change since the pre-C1 golden (traced in
+    // followup-search-condition-trace): a used-only request no longer returns listings whose
+    // recorded condition is «جديد». Exactly those rows are removed from the historical set; any
+    // other difference still fails.
+    const usedOnly = JSON.stringify(expected.options) === JSON.stringify({ search: "أبي هاتف مستعمل", conversational: true });
+    const isNew = (id: unknown) => LISTINGS[LISTINGS.findIndex((_, i) => listingId(i) === id)]?.attributes?.condition === "جديد";
+    const expectedFull = usedOnly ? ((expected as any).full as unknown[][]).filter((row) => !isNew(row[0])) : (expected as any).full;
+    assert.deepEqual(got.full, expectedFull, `${where}: the complete matching set changed`);
+    if (usedOnly) continue; // its bounded page changes with the removed rows; the full set is asserted above
     if (ordered(expected.options)) assert.deepEqual(got.result, expected.result, `${where}: an ordered result changed`);
     else {
       assert.equal(got.result!.length, (expected.result as unknown[]).length, `${where}: result count`);
