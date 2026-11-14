@@ -133,7 +133,9 @@ try {
   const firstConversationId = await startConversation();
   await sendTurn("أبي أبيع آيفون 16 مستعمل نظيف بـ500 في عمان");
   await sendTurn("قطعة واحدة");
-  assert.match(await latest().innerText(), /رقم حسابي المسجل/);
+  // Contact is a default, not a question (listing-draft.ts): the draft starts as chat only, and
+  // the account phone is used only after the explicit consent asserted below.
+  assert.match(await latest().innerText(), /محادثة جاسم فقط/);
   const beforeContact = await history(firstConversationId);
   const initialDraft = draftBlocks(beforeContact.body).at(-1)?.payload.draft;
   assert.ok(initialDraft);
@@ -152,7 +154,9 @@ try {
   assert.equal(await sellerHelper.getAttribute("open"), null, "the optional helper starts collapsed");
   await sellerHelper.locator("summary").click();
   await page.screenshot({ path: "/tmp/dinar-seller-payment-helper.png", fullPage: true });
-  await clickHelperChoice("كاش");
+  // Payment methods are now a default suggestion (cash), not a step, so the helper offers no
+  // payment buttons; the seller states it in words and the draft records it the same way.
+  await sendTurn("كاش");
   const paymentDraft = draftBlocks((await history(firstConversationId)).body).at(-1)?.payload.draft;
   assert.deepEqual(paymentDraft?.paymentMethods, ["CASH_DIRECT"]);
   let firstHistory = await history(firstConversationId);
@@ -193,7 +197,9 @@ try {
   const secondConversationId = await startConversation();
   await sendTurn("أبي أبيع سماعة جديدة بـ30 في عمان");
   await sendTurn("قطعة واحدة");
-  assert.match(await latest().innerText(), /رقم حسابي المسجل/);
+  // Contact is a default, not a question (listing-draft.ts): the draft starts as chat only, and
+  // the account phone is used only after the explicit consent asserted below.
+  assert.match(await latest().innerText(), /محادثة جاسم فقط/);
   await sendTurn("التواصل على رقمي");
   assert.match(await latest().innerText(), /موافقتك الصريحة/);
   await sendTurn("لا، استخدم هذا الرقم 60000001");
