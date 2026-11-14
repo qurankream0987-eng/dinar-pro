@@ -35,7 +35,9 @@ async function contextFor(browser, width, theme, actor) {
     try {
       await route.fulfill({ response: await route.fetch({ url: `${apiOrigin}${url.pathname}${url.search}`, headers }) });
     } catch {
-      await route.abort();
+      // A request cut off by a closing page or context may already be handled: aborting it again
+      // must not crash the run (it is not a product outcome; assertions below decide pass/fail).
+      await route.abort().catch(() => {});
     }
   });
   return context;

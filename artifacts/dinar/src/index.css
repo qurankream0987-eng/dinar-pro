@@ -668,6 +668,17 @@ body[data-private-session-check="true"] > #dinar-private-session-check { display
   }
 }
 
+/* The conversation surface asks for no motion at all under «reduce» (PremiumMaterials.css). Kept
+   here, next to the global rule and more specific than it, so it wins wherever the build places
+   the two stylesheets. */
+@media (prefers-reduced-motion: reduce) {
+  .dinar-chatgpt *,
+  .ai-history-drawer * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
 /* DINAR AI camera sheet: rises on phones, settles on desktop; still under reduced motion. */
 @media (prefers-reduced-motion: no-preference) {
   .dinar-camera-backdrop { animation: fade var(--dur-base) ease-out; }

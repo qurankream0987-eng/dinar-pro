@@ -52,13 +52,14 @@ export async function verifyPremiumPresentation({ browser, contextFor, openConve
         requestAnimationFrame(sample);
       }));
       await page.screenshot({ path: `${out}/premium-hover-${viewport.width}x${viewport.height}-${preference}.png` });
-      const reduced = await page.evaluate(() => [...document.querySelectorAll(".ai-welcome, .ai-starter, .ai-composer-box")].every(el => getComputedStyle(el).transitionDuration.split(",").every(t => parseFloat(t) === 0) && getComputedStyle(el).animationName === "none"));
+      const motionOf = await page.evaluate(() => [...document.querySelectorAll(".ai-welcome, .ai-starter, .ai-composer-box")].map(el => ({ el: el.className.split(" ")[0], transition: getComputedStyle(el).transitionDuration, animation: getComputedStyle(el).animationName })));
+      const reduced = motionOf.every(item => item.transition.split(",").every(t => parseFloat(t) === 0) && item.animation === "none");
       const check = (ok, label) => { if (!ok) failures.push(`premium ${viewport.width}/${preference}: ${label}`); };
       check(initialLayout.scrollOverflow <= 1 && !initialLayout.overflowing.length, "initial viewport overflow");
       check(initialLayout.composerVisible && focusedLayout.composerVisible, "composer must stay visible before and during typing");
       check(focus.active && focus.value === "اختبار الكتابة" && (focus.outline !== "none" || beforeFocus.border !== afterFocus.border || beforeFocus.shadow !== afterFocus.shadow), "visible keyboard focus and responsive input");
       check(!initialLayout.unnamed.length && !errors.length, "named controls and no page errors");
-      check(preference === "reduce" ? entrance.every(n => n >= .999) && reduced : entrance.some(n => n < .99), "motion preference must control visible entrance");
+      check(preference === "reduce" ? entrance.every(n => n >= .999) && reduced : entrance.some(n => n < .99), `motion preference must control visible entrance${preference === "reduce" ? ` ${JSON.stringify({ entrance: entrance.filter(n => n < .999).slice(0, 3), moving: motionOf.filter(item => !(item.transition.split(",").every(t => parseFloat(t) === 0) && item.animation === "none")).slice(0, 3) })}` : ""}`);
       runs.push({ viewport, preference, initialLayout, focusedLayout, focus, beforeFocus, afterFocus, entrance, performance, reduced, errors });
       await context.close();
     }
