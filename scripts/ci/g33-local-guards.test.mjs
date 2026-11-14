@@ -17,11 +17,14 @@ try {
   mkdirSync(path.join(temp, 'scripts/ci'), { recursive: true });
   mkdirSync(path.join(temp, 'artifacts/api-server/test/isolation'), { recursive: true });
   mkdirSync(path.join(temp, 'bin'));
+  // The runner snapshots these lib/db test files for the runtime image (empty placeholders here).
+  mkdirSync(path.join(temp, 'lib/db/scripts/rehearsal'), { recursive: true });
+  for (const name of ['release-migration.test.mjs', 'release-migration-concurrency.test.mjs', 'rehearsal/.keep']) writeFileSync(path.join(temp, 'lib/db/scripts', name), '');
   const script = path.join(temp, 'scripts/ci/g33-docker-acceptance.sh');
   copyFileSync(source, script);
   writeFileSync(path.join(temp, 'Dockerfile'), 'FROM scratch\n');
   git('init', '-b', 'codex/dinar-next-unified-development');
-  git('add', 'scripts', 'Dockerfile');
+  git('add', 'scripts', 'lib', 'Dockerfile');
   git('-c', 'user.name=DINAR guard fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '-m', 'Disposable guard fixture');
   const sha = git('rev-parse', 'HEAD');
   const marker = path.join(temp, 'docker-called');

@@ -112,6 +112,11 @@ mkdir -p "$TEST_SNAPSHOT"
 cp -a "$TEST_DIR/." "$TEST_SNAPSHOT/"
 rm -rf "$TEST_SNAPSHOT/.test-build"
 chmod -R a+rwX "$TEST_SNAPSHOT"
+# The runtime image excludes lib/db test files (.dockerignore); mount a read-only snapshot.
+DB_SCRIPTS_SNAPSHOT="$HANDSHAKE/db-scripts"
+mkdir -p "$DB_SCRIPTS_SNAPSHOT"
+cp -a "$ROOT/lib/db/scripts/release-migration.test.mjs" "$ROOT/lib/db/scripts/release-migration-concurrency.test.mjs" "$ROOT/lib/db/scripts/rehearsal" "$DB_SCRIPTS_SNAPSHOT/"
+chmod -R a+rX "$DB_SCRIPTS_SNAPSHOT"
 # Startup-only storage configuration for the external Docker host: synthetic values and an
 # unserved loopback endpoint. The runtime network is internal; this is not provider/I/O coverage.
 cat >"$PROD_ENV" <<EOF
@@ -214,6 +219,9 @@ if [[ "$G33_POSTGRES_IMAGE" == "postgres:18" ]]; then
     --cpus 2 \
     --pids-limit 256 \
     --env DINAR_RELEASE_MIGRATION_TEST_PG="$PG_URL" \
+    --volume "$DB_SCRIPTS_SNAPSHOT/release-migration.test.mjs:/app/lib/db/scripts/release-migration.test.mjs:ro" \
+    --volume "$DB_SCRIPTS_SNAPSHOT/release-migration-concurrency.test.mjs:/app/lib/db/scripts/release-migration-concurrency.test.mjs:ro" \
+    --volume "$DB_SCRIPTS_SNAPSHOT/rehearsal:/app/lib/db/scripts/rehearsal:ro" \
     --entrypoint /bin/sh \
     "$G33_APP_IMAGE" \
     -lc "cd /app/lib/db && node --experimental-strip-types --test ./scripts/release-migration.test.mjs ./scripts/release-migration-concurrency.test.mjs"
@@ -222,7 +230,9 @@ if [[ "$G33_POSTGRES_IMAGE" == "postgres:18" ]]; then
     BDINAR_MARKET_LEGAL_ACCEPTANCE=development \
     DINAR_MARKET_LEGAL_TEST_FIXTURE=1
 else
-  run_local_suite 0 \
+  # The production image carries no drizzle-kit (dev dependency); PostgreSQL 16 uses the same
+  # release migration runner that deployments use.
+  run_local_suite 1 \
     market-legal-acceptance.test \
     BDINAR_MARKET_LEGAL_ACCEPTANCE=development \
     DINAR_MARKET_LEGAL_TEST_FIXTURE=1
@@ -230,8 +240,7 @@ fi
 
 # Connect uses a separate fresh fixture database; the legal/restart database below
 # is never reset. Runtime remains in the same internal-only network namespace.
-CONNECT_RELEASE=0
-[[ "$G33_POSTGRES_IMAGE" != "postgres:18" ]] || CONNECT_RELEASE=1
+CONNECT_RELEASE=1
 "${G33_DOCKER[@]}" run --rm \
   --network "container:$POSTGRES" \
   --volume "$TEST_SNAPSHOT:/app/artifacts/api-server/test" \
