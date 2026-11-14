@@ -69,7 +69,10 @@ function resolveRegisteredProvider(): ProviderRegistration<"SMS"> | undefined {
 export function getPhoneVerificationProvider():
   | PhoneVerificationProvider
   | undefined {
-  if (process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test")
+  // The development provider returns the code in the API response. It is only ever used when
+  // the deployment itself resolves to development: a service labelled staging or production
+  // (DINAR_DEPLOYMENT_ENV) never falls back to it, even if NODE_ENV was left at development.
+  if ((process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test") && providerDeploymentEnvironment() === "development")
     return developmentProvider;
   const registration = resolveRegisteredProvider();
   if (!registration) return undefined;

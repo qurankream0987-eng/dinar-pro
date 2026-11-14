@@ -30,6 +30,7 @@ import { grantPremiumTrialAtSignup } from "./ai-premium-trial";
 import { signupConsentRows } from "./policy-lifecycle";
 import { and, eq, gt, inArray, isNotNull, isNull, lte } from "drizzle-orm";
 import { parsePhoneNumberFromString } from "libphonenumber-js/max";
+import { providerDeploymentEnvironment } from "./market-capability-registry";
 import { z } from "zod";
 import {
   GOOGLE_PENDING_COOKIE,
@@ -318,8 +319,10 @@ router.post(
       const response = RequestPhoneVerificationChallengeResponse.parse({
         challengeId,
         expiresAt: expiresAt.toISOString(),
-        ...(process.env.NODE_ENV === "development" ||
-        process.env.NODE_ENV === "test"
+        // The development code is returned only by a development deployment, never by one
+        // labelled staging or production (DINAR_DEPLOYMENT_ENV), whatever NODE_ENV says.
+        ...((process.env.NODE_ENV === "development" ||
+        process.env.NODE_ENV === "test") && providerDeploymentEnvironment() === "development"
           ? delivery
           : {}),
       });
