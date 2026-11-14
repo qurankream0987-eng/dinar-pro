@@ -230,9 +230,7 @@ if [[ "$G33_POSTGRES_IMAGE" == "postgres:18" ]]; then
     BDINAR_MARKET_LEGAL_ACCEPTANCE=development \
     DINAR_MARKET_LEGAL_TEST_FIXTURE=1
 else
-  # The production image carries no drizzle-kit (dev dependency); PostgreSQL 16 uses the same
-  # release migration runner that deployments use.
-  run_local_suite 1 \
+  run_local_suite 0 \
     market-legal-acceptance.test \
     BDINAR_MARKET_LEGAL_ACCEPTANCE=development \
     DINAR_MARKET_LEGAL_TEST_FIXTURE=1
@@ -240,7 +238,8 @@ fi
 
 # Connect uses a separate fresh fixture database; the legal/restart database below
 # is never reset. Runtime remains in the same internal-only network namespace.
-CONNECT_RELEASE=1
+CONNECT_RELEASE=0
+[[ "$G33_POSTGRES_IMAGE" != "postgres:18" ]] || CONNECT_RELEASE=1
 "${G33_DOCKER[@]}" run --rm \
   --network "container:$POSTGRES" \
   --volume "$TEST_SNAPSHOT:/app/artifacts/api-server/test" \
