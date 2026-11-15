@@ -6,7 +6,7 @@ WORKDIR /app
 
 # Optional managed-cloud trust is mounted for this step only; ordinary CI uses its
 # existing system roots. Never copy a session CA or disable TLS verification.
-RUN --mount=type=secret,id=proxy_ca \
+RUN \
   set -eu; \
   if [ -s /run/secrets/proxy_ca ]; then \
     export NODE_EXTRA_CA_CERTS=/run/secrets/proxy_ca NODE_USE_ENV_PROXY=1; \
@@ -28,7 +28,7 @@ COPY lib/global/package.json lib/global/package.json
 COPY lib/integrations-openai-ai-server/package.json lib/integrations-openai-ai-server/package.json
 COPY scripts/package.json scripts/package.json
 
-RUN --mount=type=secret,id=proxy_ca \
+RUN \
   set -eu; \
   if [ -s /run/secrets/proxy_ca ]; then \
     export NODE_EXTRA_CA_CERTS=/run/secrets/proxy_ca NODE_USE_ENV_PROXY=1; \
@@ -39,11 +39,17 @@ RUN --mount=type=secret,id=proxy_ca \
 # while making the runtime user their owner; do not rely on a world-readable clone.
 COPY --chown=node:node . .
 
+# Public, build-time web settings (not secrets): Railway passes a service variable to the build
+# only when it is declared here. The Google client id is a public identifier.
+ARG VITE_GOOGLE_CLIENT_ID=""
+ENV VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID
+
 RUN pnpm --filter @workspace/dinar run build \
   && pnpm --filter @workspace/api-server run build
 
 # ---- G33 test-runner stage (not deployed) -------------------------------------------------
-# Everything above is the production Dockerfile's builder section, byte for byte
+# Everything above is Dockerfile.railway's builder section, byte for byte (the build Railway
+# accepts: no secret mounts)
 # (scripts/ci/g33-docker-acceptance.sh refuses to run if they differ). This image keeps the
 # development dependencies the acceptance runners need (esbuild, drizzle-kit, node:test
 # helpers); the production image still prunes them. It is used only for test-runner

@@ -59,16 +59,17 @@ esac
   exit 96
 }
 TEST_DIR="$ROOT/artifacts/api-server/test"
-[[ -d "$TEST_DIR/isolation" && -f "$ROOT/Dockerfile" ]] || {
+[[ -d "$TEST_DIR/isolation" && -f "$ROOT/Dockerfile" && -f "$ROOT/Dockerfile.railway" ]] || {
   echo "G33: candidate sources are incomplete" >&2
   exit 96
 }
-# The test-runner image must be the production builder section, unchanged, plus its own tail.
+# The test-runner image must be Dockerfile.railway's builder section (Railway rejects secret
+# mounts), unchanged, plus its own tail.
 G33_BUILDER_MARKER="# Keep compilers, test runners and frontend tooling out of the runtime dependency tree."
-G33_BUILDER_PREFIX="$(awk -v m="$G33_BUILDER_MARKER" '$0 == m { exit } { print }' "$ROOT/Dockerfile")"
+G33_BUILDER_PREFIX="$(awk -v m="$G33_BUILDER_MARKER" '$0 == m { exit } { print }' "$ROOT/Dockerfile.railway")"
 G33_TEST_PREFIX="$(head -n "$(printf '%s\n' "$G33_BUILDER_PREFIX" | wc -l)" "$ROOT/Dockerfile.g33" 2>/dev/null)"
 [[ -n "$G33_BUILDER_PREFIX" && "$G33_BUILDER_PREFIX" == "$G33_TEST_PREFIX" ]] || {
-  echo "G33: Dockerfile.g33 must start with the production builder section unchanged" >&2
+  echo "G33: Dockerfile.g33 must start with the Dockerfile.railway builder section unchanged" >&2
   exit 96
 }
 if [[ "$G33_EXECUTION_MODE" == LOCAL_DISPOSABLE ]]; then

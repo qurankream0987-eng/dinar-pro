@@ -24,9 +24,10 @@ try {
   copyFileSync(source, script);
   const builder = 'FROM scratch AS builder\nRUN true\n';
   writeFileSync(path.join(temp, 'Dockerfile'), `${builder}# Keep compilers, test runners and frontend tooling out of the runtime dependency tree.\nFROM scratch\n`);
+  writeFileSync(path.join(temp, 'Dockerfile.railway'), `${builder}# Keep compilers, test runners and frontend tooling out of the runtime dependency tree.\nFROM scratch\n`);
   writeFileSync(path.join(temp, 'Dockerfile.g33'), `${builder}USER node\n`);
   git('init', '-b', 'codex/dinar-next-unified-development');
-  git('add', 'scripts', 'lib', 'Dockerfile', 'Dockerfile.g33');
+  git('add', 'scripts', 'lib', 'Dockerfile', 'Dockerfile.railway', 'Dockerfile.g33');
   git('-c', 'user.name=DINAR guard fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '-m', 'Disposable guard fixture');
   const sha = git('rev-parse', 'HEAD');
   const marker = path.join(temp, 'docker-called');
@@ -92,7 +93,7 @@ try {
     writeFileSync(file, original.replace('RUN true', 'RUN echo drift'));
     git('-c', 'user.name=DINAR guard fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '-qam', 'drift');
     const drifted = git('rev-parse', 'HEAD');
-    denied({ DINAR_LOCAL_G33_ACCEPTANCE: 'disposable', G33_APP_IMAGE: `dinar-next-g33:${drifted}`, G33_TEST_IMAGE: `dinar-next-g33-test:${drifted}` }, /must start with the production builder section/);
+    denied({ DINAR_LOCAL_G33_ACCEPTANCE: 'disposable', G33_APP_IMAGE: `dinar-next-g33:${drifted}`, G33_TEST_IMAGE: `dinar-next-g33-test:${drifted}` }, /must start with the Dockerfile.railway builder section/);
     git('reset', '-q', '--hard', sha);
     assert.equal(readFileSync(file, 'utf8'), original);
   });
