@@ -3,7 +3,7 @@
 // every other target and entry point, and leaves the loopback/Replit guards exactly as they were.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, writeFileSync, rmSync } from "node:fs";
+import { mkdirSync, mkdtempSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { build } from "esbuild";
@@ -102,7 +102,9 @@ test("RA-07 without DINAR_SEED_TARGET the existing loopback guard is unchanged",
 
 test("RA-08 the Replit/loopback guard allows the target only for the fixture seed", async () => {
   // Bundled inside the package so workspace dependencies resolve; removed afterwards.
-  const dir = mkdtempSync(path.join(new URL("../.test-build/", import.meta.url).pathname, "ra-guard-"));
+  const buildDir = new URL("../.test-build/", import.meta.url).pathname;
+  mkdirSync(buildDir, { recursive: true });
+  const dir = mkdtempSync(path.join(buildDir, "ra-guard-"));
   try {
     const out = path.join(dir, "guard.mjs");
     await build({ entryPoints: [new URL("./safe-development-database.ts", import.meta.url).pathname], bundle: true, platform: "node", format: "esm", outfile: out, logLevel: "silent", packages: "external" });

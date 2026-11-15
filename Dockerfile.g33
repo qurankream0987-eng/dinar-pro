@@ -48,5 +48,7 @@ RUN pnpm --filter @workspace/dinar run build \
 # development dependencies the acceptance runners need (esbuild, drizzle-kit, node:test
 # helpers); the production image still prunes them. It is used only for test-runner
 # containers; G33's application server is always the production image.
+# The seed runner bundles its entry point into .test-build; the image runs as node.
+RUN mkdir -p /app/artifacts/api-server/.test-build && chown node:node /app/artifacts/api-server/.test-build
 USER node
 WORKDIR /app
