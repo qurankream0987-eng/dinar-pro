@@ -662,3 +662,85 @@
   .dinar-chatgpt .welcome-sponsored-card { grid-template-columns: 40px 1fr; padding: 6px 8px; border-radius: 12px; }
   .dinar-chatgpt .welcome-sponsored-media { width: 40px; height: 40px; border-radius: 8px; }
 }
+
+/* ── Premium visual restoration (owner decision, 2026-11-15) ─────────────────────────────────────
+   Brings back the Staging (bbfe8f3) materials: glass surfaces, gold accents, the atmosphere waves,
+   the living mark and the glass action cards. Sizes stay compact so the pinned composer is still
+   on screen on first load; layout, sponsored cards, usage card and legal line are unchanged. */
+.dinar-chatgpt, .ai-history-drawer {
+  --premium-radius: 26px;
+  --premium-edge: rgb(var(--chat-line) / .34);
+  --premium-material: linear-gradient(145deg, rgb(var(--chat-line) / .14), transparent 48%), linear-gradient(180deg, rgb(var(--chat-glass) / .96), var(--chat-surface));
+  --premium-depth: inset 0 1px 0 rgb(var(--chat-hi) / .16), 0 18px 44px rgb(var(--chat-shadow) / .16);
+}
+.dark .dinar-chatgpt, .dark .ai-history-drawer {
+  --premium-depth: inset 0 1px 0 rgb(175 219 255 / .18), 0 20px 48px rgb(0 5 17 / .35);
+}
+/* Ground: soft light pools in light mode; the atmosphere waves in dark mode. */
+.dinar-chatgpt .ai-layout, .dinar-chatgpt .ai-layout[data-history-open="true"] {
+  background: radial-gradient(ellipse at 0% 0%, rgb(53 159 238 / .22), transparent 38%), radial-gradient(ellipse at 95% 100%, rgb(234 182 78 / .10), transparent 35%), var(--chat-ground);
+}
+.dark .dinar-chatgpt .ai-layout,
+.dark .dinar-chatgpt .ai-layout[data-history-open="true"],
+.dark .dinar-chatgpt .ai-home-content {
+  background-image: url('/brand/dinar-atmosphere.svg'), radial-gradient(ellipse at 50% 35%, #14346666, transparent 65%);
+  background-size: 100% 100%; background-color: var(--chat-ground);
+}
+/* Sidebar on the same ground, glass search and market, gold «محادثة جديدة». */
+.dinar-chatgpt .ai-history { background: linear-gradient(180deg, rgb(var(--chat-glass) / .34), rgb(var(--chat-glass) / .12)); }
+.ai-history-drawer { background: var(--premium-material); }
+.ai-sidebar-new {
+  border: 1px solid #ffe3a0; background: var(--premium-gold); color: #172337; font-weight: 750;
+  box-shadow: inset 0 1px 0 #fff8db, 0 5px 22px rgb(var(--chat-gold) / .2);
+}
+.ai-sidebar-new svg { color: inherit; }
+.ai-sidebar-new:hover { background: var(--premium-gold); filter: brightness(1.05); }
+.ai-history-search { border-radius: 16px; background: rgb(var(--chat-glass) / .62); border-color: var(--premium-edge); box-shadow: inset 0 2px 7px rgb(var(--chat-shadow) / .10); }
+.ai-history-item { border-radius: 14px; }
+.ai-history-item[data-active="true"] { background: linear-gradient(100deg, rgb(var(--chat-blue) / .18), rgb(var(--chat-line) / .08)); box-shadow: inset -3px 0 0 rgb(var(--chat-gold)); }
+.ai-sidebar-market { border-radius: 18px; background: rgb(var(--chat-glass) / .65); }
+/* Glass composer with the gold send button. */
+.dinar-chatgpt .ai-composer-box { background: var(--premium-material); backdrop-filter: blur(16px); border-radius: 28px; }
+.dinar-chatgpt .dinar-composer-send:not(:disabled):not([aria-busy="true"]),
+.dark .dinar-chatgpt .dinar-composer-send:not(:disabled):not([aria-busy="true"]) {
+  color: #172337; background: var(--premium-gold); border: 1px solid #ffe4aa; box-shadow: inset 0 1px 0 #fff8da, 0 4px 14px rgb(var(--chat-gold) / .2);
+}
+.ai-user-bubble { border: 1px solid var(--premium-edge); border-radius: 24px 8px 24px 24px; background: linear-gradient(135deg, rgb(var(--chat-blue) / .18), rgb(var(--chat-line) / .08)); box-shadow: inset 0 1px 0 rgb(var(--chat-hi) / .1); }
+.dinar-chatgpt .ai-result-card, .dinar-chatgpt .ai-surface, .dinar-chatgpt .ds-card, .dinar-chatgpt .ai-context-card { background: var(--premium-material); }
+.dinar-chatgpt .ai-result-card-media { background: radial-gradient(ellipse at center, rgb(var(--chat-line) / .18), transparent 75%); }
+/* Starter chips: glass pills. */
+.ai-starter { background: var(--premium-material); box-shadow: inset 0 1px 0 rgb(var(--chat-hi) / .1), 0 5px 18px rgb(var(--chat-shadow) / .08); }
+.ai-starter:hover { background: var(--premium-material); border-color: rgb(var(--chat-blue) / .65); }
+/* The living mark: glowing, tilting, breathing; compact enough to keep the composer on screen. */
+.premium-welcome .premium-logo { width: 116px; height: 116px; border-radius: 32px; }
+.premium-welcome .premium-logo .ai-welcome-logo { width: 84px; height: 84px; }
+.dinar-chatgpt .ai-welcome h1 { font-size: clamp(26px, 2.8vw, 36px); line-height: 1.35; letter-spacing: -.02em; }
+.dinar-chatgpt .ai-welcome p { font-size: 14.5px; line-height: 1.8; color: var(--chat-ink-2); }
+/* Glass action cards, the gold «أريد أن أبيع». */
+.premium-primary-actions { gap: 14px; max-width: 900px; }
+.premium-action-card, .dark .premium-action-card {
+  padding: 18px 18px; gap: 14px; border-radius: 24px; border-color: var(--premium-edge);
+  background: var(--premium-material); box-shadow: inset 0 2px 3px rgb(var(--chat-hi) / .18), 0 12px 30px rgb(var(--chat-shadow) / .2);
+}
+.dark .premium-action-card { background: linear-gradient(130deg, #234d7b99, #0c2344aa 65%, #48668a55); border-color: #80bbef66; }
+.premium-action-card[data-action="sell"] { border-color: rgb(var(--chat-gold) / .6); background: linear-gradient(135deg, rgb(var(--chat-gold) / .25), transparent 65%), var(--premium-material); }
+.dark .premium-action-card[data-action="sell"] { background: linear-gradient(130deg, #d0a54c66, #25344b88 60%, #6683a055); border-color: #f0ce7a99; }
+.premium-action-card .premium-action-icon { width: 46px; height: 48px; border-radius: 16px; }
+.premium-action-card .premium-action-copy strong { font-size: clamp(16px, 1.35vw, 19px); }
+.premium-action-card .premium-action-copy span { font-size: 13px; line-height: 1.7; }
+@media (hover: hover) {
+  .premium-action-card:hover { border-color: rgb(var(--chat-blue) / .85); box-shadow: inset 0 2px 3px rgb(var(--chat-hi) / .25), 0 12px 36px rgb(var(--chat-blue) / .16); }
+}
+@media (max-width: 767px) {
+  .premium-welcome .premium-logo { width: 92px; height: 92px; border-radius: 26px; }
+  .premium-welcome .premium-logo .ai-welcome-logo { width: 64px; height: 64px; }
+  .dinar-chatgpt .ai-welcome h1 { font-size: 24px; }
+  .premium-action-card, .dark .premium-action-card { padding: 10px 12px; border-radius: 20px; }
+  .premium-action-card .premium-action-icon { width: 40px; height: 42px; border-radius: 14px; }
+  .premium-action-card .premium-action-copy strong { font-size: 16px; }
+  .dinar-chatgpt .ai-composer-box { backdrop-filter: none; border-radius: 24px; }
+}
+/* Short screens still yield the greeting's space to the conversation (the whole mark, not only its image). */
+@media (max-height: 620px) { .premium-welcome .premium-logo { display: none; } }
+.dinar-chatgpt[data-keyboard="open"] .premium-logo { display: none; }
+@media (prefers-reduced-transparency: reduce) { .dinar-chatgpt .ai-composer-box { backdrop-filter: none; background: var(--chat-surface); } }
