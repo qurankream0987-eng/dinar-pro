@@ -6,7 +6,7 @@ import { validateAcceptanceDatabase } from './acceptance-database-guard.mjs';
 const entry = process.argv[2] || 'commerce.test';
 // Inside an isolation session (test/isolation/sandbox.sh) every suite is preflighted first.
 if (process.env.DINAR_ISOLATION_SESSION !== undefined) await (await import('./isolation/preflight.mjs')).runIsolationPreflight();
-validateAcceptanceDatabase();
+validateAcceptanceDatabase(process.env, { entry });
 mkdirSync('.test-build', { recursive: true });
 await build({ entryPoints: [`test/${entry}.ts`], bundle: true, platform: 'node', format: 'esm', outfile: `.test-build/${entry}.mjs`, external: ['pg-native', 'pino', 'pino-http'], logLevel: 'warning', banner: { js: "import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);" } });
 // Opt-in log privacy scan: the suite writes its fixture sentinels to a file; everything the process

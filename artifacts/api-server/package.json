@@ -96,7 +96,8 @@
     "test:lab-defect-regressions": "NODE_ENV=development node test/run.mjs lab-defect-regressions.test",
     "test:twilio-sms-adapter": "NODE_ENV=development node test/run.mjs twilio-sms-adapter.test",
     "test:staging-fixtures": "NODE_ENV=development node test/run.mjs staging-fixtures.test",
-    "test:staging-rehearsal-browser-journey": "NODE_ENV=development BDINAR_TEST_DATABASE=development node test/run.mjs staging-rehearsal-browser-journey.test"
+    "test:staging-rehearsal-browser-journey": "NODE_ENV=development BDINAR_TEST_DATABASE=development node test/run.mjs staging-rehearsal-browser-journey.test",
+    "test:railway-acceptance-target": "node --test test/railway-acceptance-target.test.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1155.0",

@@ -1,4 +1,5 @@
 import { resolveDatabaseUrl } from "@workspace/db/database-url-resolver";
+import { isRailwayAcceptanceRequested, validateRailwayAcceptanceTarget } from "./railway-acceptance-target.mjs";
 
 const DISPOSABLE_DATABASE_NAME =
   /^dinar_(?:test|acceptance|wave[0-9]+|migration)_[a-z0-9_]+$/i;
@@ -8,10 +9,13 @@ function fail(reason) {
   throw new Error(`Refusing DB-backed acceptance run: ${reason}`);
 }
 
-export function validateAcceptanceDatabase(env = process.env) {
+export function validateAcceptanceDatabase(env = process.env, { entry } = {}) {
   if (env.BDINAR_DISPOSABLE_ACCEPTANCE_DB !== "1") {
     fail("BDINAR_DISPOSABLE_ACCEPTANCE_DB=1 is required.");
   }
+  // The single non-loopback exception: the synthetic fixture seed into Railway `acceptance`.
+  // It has its own, stricter checks and is refused for every other entry point.
+  if (isRailwayAcceptanceRequested(env)) return validateRailwayAcceptanceTarget(env, { entry });
   if (
     env.NODE_ENV === "production" ||
     env.REPLIT_DEPLOYMENT !== undefined ||

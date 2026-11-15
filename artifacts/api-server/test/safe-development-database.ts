@@ -1,4 +1,5 @@
 import { resolveDatabaseUrl } from "@workspace/db/database-url";
+import { isRailwayAcceptanceRequested, validateRailwayAcceptanceTarget } from "./railway-acceptance-target.mjs";
 
 const approvalMessages: Record<string, string> = {
   BDINAR_STOCK_SPEC_ACCEPTANCE: "BDINAR_STOCK_SPEC_ACCEPTANCE=development",
@@ -60,6 +61,15 @@ const approvalMessages: Record<string, string> = {
 export function requireSafeReplitDevelopmentDatabase(
   operation: keyof typeof approvalMessages,
 ): void {
+  if (isRailwayAcceptanceRequested(process.env)) {
+    // Only the synthetic fixture seed may use the Railway acceptance target.
+    if (operation !== "BDINAR_ACCEPTANCE_FIXTURES")
+      throw new Error(`${operationMessages[operation]} blocked: DINAR_SEED_TARGET is reserved for the acceptance fixture seed.`);
+    validateRailwayAcceptanceTarget(process.env, { entry: "acceptance-fixtures.seed" });
+    if (process.env.BDINAR_ACCEPTANCE_FIXTURES !== "development")
+      throw new Error(`${operationMessages[operation]} blocked. Requires ${approvalMessages[operation]}.`);
+    return;
+  }
   const databaseUrl = resolveDatabaseUrl();
   let isDisposableLocalTestDatabase = false;
   if (process.env.BDINAR_DISPOSABLE_TEST_DATABASE === "1" && databaseUrl) {
