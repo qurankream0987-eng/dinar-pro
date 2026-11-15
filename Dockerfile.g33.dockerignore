@@ -1,0 +1,38 @@
+# Build context for Dockerfile.g33 only (BuildKit uses <Dockerfile>.dockerignore when present).
+# Identical to .dockerignore except that it re-includes the files the one-time acceptance job
+# needs: the seed runner, the synthetic fixtures and their guards. The production image keeps
+# using .dockerignore unchanged.
+.git
+**/.git
+node_modules
+**/node_modules
+**/dist
+artifacts/api-server/test/
+!artifacts/api-server/test/run.mjs
+!artifacts/api-server/test/acceptance-database-guard.mjs
+!artifacts/api-server/test/railway-acceptance-target.mjs
+!artifacts/api-server/test/railway-acceptance-target.test.mjs
+!artifacts/api-server/test/acceptance-fixtures.seed.ts
+!artifacts/api-server/test/acceptance-fixtures.ts
+!artifacts/api-server/test/phase1-dev-fixtures.ts
+!artifacts/api-server/test/safe-development-database.ts
+artifacts/dinar/test/
+**/.test-build
+**/coverage
+**/playwright-report
+**/test-results
+**/.env
+**/.env.*
+.local
+.agents
+.replit
+.replit.*
+private-data
+generated-artifacts
+/docs
+/.github
+/scripts/ci
+/scripts/post-merge.sh
+/lib/db/scripts/*.test.mjs
+/lib/db/scripts/rehearsal
+*.log
