@@ -22,6 +22,7 @@ export interface OrderClosure {
   /** @nullable */
   reminderSentAt: string | null;
   notCompleted: OrderClosureNotCompleted;
+  courierHandoff: boolean;
   canEnterCode: boolean;
   canSellWithoutCode: boolean;
   canConfirmReceipt: boolean;

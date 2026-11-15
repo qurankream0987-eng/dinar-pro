@@ -24,6 +24,7 @@ import {
   disputes,
   messages,
   orderClosureEvents,
+  orderFulfillments,
   orderHandoverCodes,
   orders,
   paymentIntents,
@@ -107,6 +108,8 @@ export type ClosureView = {
   closedWithoutCode: boolean;
   reminderSentAt: string | null;
   notCompleted: { buyer: string | null; seller: string | null };
+  /** A courier carries this order: only the assigned driver records the handoff (delivery.ts). */
+  courierHandoff: boolean;
   canEnterCode: boolean;
   canSellWithoutCode: boolean;
   canConfirmReceipt: boolean;
@@ -121,6 +124,15 @@ export async function closureView(tx: any, order: OrderRow, actorId: string): Pr
   let code = open ? await codeRow(tx, order, false) : undefined;
   if (!code && open && role === "BUYER") code = await ensureHandoverCode(tx, order);
   const locked = Boolean(code?.lockedAt);
+  // Courier orders keep their existing rule (recordOrderHandoff): the seller is never offered a
+  // handoff action the server would refuse. Buyer confirmation and «لم يتم» are unchanged.
+  const [fulfillment] = await tx
+    .select({ method: orderFulfillments.method, status: orderFulfillments.status })
+    .from(orderFulfillments)
+    .where(eq(orderFulfillments.orderId, order.id));
+  const courierHandoff =
+    fulfillment?.method === "COURIER" &&
+    ["REQUESTED", "ACCEPTED", "READY_FOR_PICKUP", "OUT_FOR_DELIVERY"].includes(fulfillment.status);
   return {
     role,
     handoverCode: role === "BUYER" && open && code && !code.consumedAt && !locked ? deriveHandoverCode(order.id, code.nonce) : null,
@@ -131,8 +143,9 @@ export async function closureView(tx: any, order: OrderRow, actorId: string): Pr
     closedWithoutCode: closure.closedWithoutCode === true,
     reminderSentAt: closure.reminderSentAt ?? null,
     notCompleted: { buyer: closure.notCompleted?.BUYER ?? null, seller: closure.notCompleted?.SELLER ?? null },
-    canEnterCode: role === "SELLER" && open && !locked,
-    canSellWithoutCode: role === "SELLER" && executable,
+    courierHandoff,
+    canEnterCode: role === "SELLER" && open && !locked && !courierHandoff,
+    canSellWithoutCode: role === "SELLER" && executable && !courierHandoff,
     canConfirmReceipt: role === "BUYER" && open,
     canReportNotCompleted: (executable || (order.status === "DISPUTED" && Boolean(closure.notCompleted))) && !closure.notCompleted?.[role],
   };

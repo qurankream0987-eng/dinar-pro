@@ -7,7 +7,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { and, eq } from "drizzle-orm";
-import { db, disputes, markets, messages, offers, orderClosureEvents, orderHandoverCodes, orders, pool, sellerDues } from "@workspace/db";
+import { db, disputes, markets, messages, offers, orderClosureEvents, orderFulfillments, orderHandoverCodes, orders, pool, sellerDues } from "@workspace/db";
 import { requireSafeReplitDevelopmentDatabase } from "./safe-development-database";
 requireSafeReplitDevelopmentDatabase("BDINAR_TEST_DATABASE");
 
@@ -211,6 +211,26 @@ await test("two tabs entering the right code at once close the deal exactly once
   assert.deepEqual(results.map((r) => r.status), [200, 200]);
   assert.equal((await dues(orderId)).length, 1);
   assert.equal((await events(orderId)).filter((t) => t === "CODE_ACCEPTED").length, 1);
+});
+
+await test("courier orders: the seller is not offered code entry or «بدون رمز»; the server rule is unchanged; the buyer still closes", async () => {
+  const { orderId } = await acceptedOrder();
+  const [o] = await db.select().from(orders).where(eq(orders.id, orderId));
+  await db.insert(orderFulfillments).values({ orderId, marketId: o!.marketId, method: "COURIER", status: "OUT_FOR_DELIVERY", selectedBy: buyer.id });
+  const forSeller = await request(`/orders/${orderId}/closure`, "GET", undefined, seller.cookie);
+  assert.equal(forSeller.data.courierHandoff, true);
+  assert.equal(forSeller.data.canEnterCode, false);
+  assert.equal(forSeller.data.canSellWithoutCode, false);
+  assert.equal(forSeller.data.canReportNotCompleted, true, "«لم يتم» stays available");
+  const forBuyer = await request(`/orders/${orderId}/closure`, "GET", undefined, buyer.cookie);
+  assert.equal(forBuyer.data.canConfirmReceipt, true);
+  assert.match(forBuyer.data.handoverCode, /^\d{4}$/);
+  // The existing authorization is untouched: the server still refuses the seller's handoff.
+  assert.equal((await request(`/orders/${orderId}/handover-code`, "POST", { code: forBuyer.data.handoverCode }, seller.cookie)).status, 403);
+  assert.equal((await request(`/orders/${orderId}/sold-without-code`, "POST", {}, seller.cookie)).status, 403);
+  const closed = await request(`/orders/${orderId}/confirm`, "POST", { received: true }, buyer.cookie);
+  assert.equal(closed.data.status, "COMPLETED", closed.raw);
+  assert.equal((await dues(orderId)).length, 1);
 });
 
 await test("teardown", async () => {

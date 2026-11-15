@@ -90,6 +90,11 @@ export function DealClosurePanel({ orderId, status }: { orderId: string; status:
         </p>
       )}
 
+      {!isBuyer && closure.courierHandoff && (
+        <p className="text-sm text-text-secondary" role="status" data-testid="text-courier-handoff">
+          يسلّم مندوب التوصيل المسند هذا الطلب ويسجّل التسليم. يُغلق الطلب عند تأكيد المشتري الاستلام.
+        </p>
+      )}
       {!isBuyer && closure.canEnterCode && (
         <>
           <p className="text-sm text-text-secondary">لا تسلّم المنتج قبل استلام المبلغ ورمز التسليم معًا. أدخل الرمز الذي يعطيك إياه المشتري.</p>

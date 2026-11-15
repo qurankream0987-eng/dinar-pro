@@ -2822,6 +2822,7 @@ export const GetOrderClosureResponse = zod.object({
   "buyer": zod.string().nullable(),
   "seller": zod.string().nullable()
 }),
+  "courierHandoff": zod.boolean(),
   "canEnterCode": zod.boolean(),
   "canSellWithoutCode": zod.boolean(),
   "canConfirmReceipt": zod.boolean(),

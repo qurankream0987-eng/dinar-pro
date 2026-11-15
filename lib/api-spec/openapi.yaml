@@ -4982,7 +4982,7 @@ components:
         outcome: { type: string, enum: [NOT_COMPLETED, CANCELLED] }
     OrderClosure:
       type: object
-      required: [role, handoverCode, codeLocked, attemptsRemaining, soldWithoutCode, buyerWindowEndsAt, closedWithoutCode, reminderSentAt, notCompleted, canEnterCode, canSellWithoutCode, canConfirmReceipt, canReportNotCompleted]
+      required: [role, handoverCode, codeLocked, attemptsRemaining, soldWithoutCode, buyerWindowEndsAt, closedWithoutCode, reminderSentAt, notCompleted, courierHandoff, canEnterCode, canSellWithoutCode, canConfirmReceipt, canReportNotCompleted]
       properties:
         role: { type: string, enum: [BUYER, SELLER] }
         handoverCode: { type: ["string", "null"] }
@@ -4998,6 +4998,7 @@ components:
           properties:
             buyer: { type: ["string", "null"] }
             seller: { type: ["string", "null"] }
+        courierHandoff: { type: boolean }
         canEnterCode: { type: boolean }
         canSellWithoutCode: { type: boolean }
         canConfirmReceipt: { type: boolean }
