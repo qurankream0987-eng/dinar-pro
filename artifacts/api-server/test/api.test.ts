@@ -2242,7 +2242,7 @@ await test("AI refinements preserve product and size while replacing only explic
   );
   assert.equal(contextualQuery("الأرخص", "تيشيرت أسود XL"), "تيشيرت أسود XL");
   assert.equal(
-    contextualQuery("جاسم فقط", "تيشيرت أسود XL"),
+    contextualQuery("بدينار فقط", "تيشيرت أسود XL"),
     "تيشيرت أسود XL",
   );
   assert.equal(normalizeSearch("تي شيرت الأسود XL"), "تيشيرت اسود xl");
@@ -2603,12 +2603,13 @@ await test("conversation seller drafts and order references remain reviewable an
     assert.equal(draft.draftStep, "quantity");
     draft = await turn("٢");
     assert.equal(draft.draftStep, "area");
+    // Short draft (owner decision 2026-11-09, 8d9732f): contact and payment are never asked; they
+    // default to chat-only contact and direct payment, labelled as defaults and editable by chat.
     draft = await turn("السالمية");
-    assert.equal(draft.draftStep, "contact");
-    draft = await turn("محادثة داخل التطبيق");
-    assert.equal(draft.draftStep, "payment_methods");
-    draft = await turn("كاش");
     assert.equal(draft.draftStep, "review");
+    assert.equal(draft.draft.contactPreference, "CHAT_ONLY");
+    assert.deepEqual(draft.draft.paymentMethods, ["CASH_DIRECT"]);
+    assert.equal(draft.draft.sources?.paymentMethods, "DINAR_DERIVED");
     assert.equal(draft.draft.availableQuantity, "2");
     assert.equal(draft.draft.category, "إلكترونيات");
     assert.match(draft.draft.description, /256/);

@@ -34,6 +34,8 @@ import {
   MarkOrderDeliveredBody,
   ConfirmOrderBody,
   CancelOrderBody,
+  EnterOrderHandoverCodeBody,
+  ReportOrderNotCompletedBody,
 } from "@workspace/api-zod";
 import { z } from "zod";
 import { counterpartContact, setSettlementPreference, SETTLEMENT_METHODS } from "../lib/order-settlement";
@@ -41,7 +43,15 @@ import { requireAuth } from "../lib/auth";
 import { applyTerminalOrderAccounting } from "../lib/order-terminal-accounting";
 import { expireOrderReservation } from "../lib/order-expiry";
 import { recordCourierCommissionAccrual } from "../lib/courier-economics";
-import { getDeliveryView, orderHandoff, settleOrderFulfillment } from "../lib/delivery";
+import { EXECUTABLE_ORDER, getDeliveryView, orderHandoff, settleOrderFulfillment } from "../lib/delivery";
+import {
+  closureView,
+  ensureHandoverCode,
+  enterHandoverCode,
+  recordBuyerConfirmation,
+  reportNotCompleted,
+  sellWithoutCode,
+} from "../lib/order-closure";
 import { marketAllowsCashDirect } from "../lib/market-capability-registry";
 import {
   getOrderTrackingView,
@@ -1156,6 +1166,45 @@ router.post("/orders/:id/messages", async (req, res) => {
     isMine: true,
   });
 });
+// Deal closure (owner-approved design 2026-11-07, answers 2026-11-15): lib/order-closure.ts.
+// Registered before "/orders/:id/:action" so these paths are not read as actions.
+router.get("/orders/:id/closure", async (req, res) => {
+  const view = await db.transaction(async (tx) => closureView(tx, await authorizedOrder(req, tx, true), req.actor!.id));
+  res.setHeader("Cache-Control", "no-store");
+  res.json(view);
+});
+router.post("/orders/:id/handover-code", async (req, res) => {
+  const { code } = EnterOrderHandoverCodeBody.parse(req.body);
+  // A wrong entry is committed (never rolled back), so the five-attempt limit holds across retries.
+  const result = await db.transaction(async (tx) =>
+    enterHandoverCode(tx, await authorizedOrder(req, tx, true), req.actor!.id, code, new Date()),
+  );
+  if (result.outcome === "REJECTED") {
+    res.status(422).json({ error: "رمز التسليم غير صحيح", attemptsRemaining: result.attemptsRemaining });
+    return;
+  }
+  if (result.outcome === "LOCKED") {
+    res.status(423).json({ error: "قُفل رمز التسليم بعد خمس محاولات خاطئة. استخدم «تم البيع بدون رمز»." });
+    return;
+  }
+  const [view] = await orderViews([result.order]);
+  res.json(view);
+});
+router.post("/orders/:id/sold-without-code", async (req, res) => {
+  const updated = await db.transaction(async (tx) =>
+    sellWithoutCode(tx, await authorizedOrder(req, tx, true), req.actor!.id, new Date()),
+  );
+  const [view] = await orderViews([updated]);
+  res.json(view);
+});
+router.post("/orders/:id/not-completed", async (req, res) => {
+  const { outcome } = ReportOrderNotCompletedBody.parse(req.body);
+  const updated = await db.transaction(async (tx) =>
+    reportNotCompleted(tx, await authorizedOrder(req, tx, true), req.actor!.id, outcome, new Date()),
+  );
+  const [view] = await orderViews([updated]);
+  res.json(view);
+});
 router.post("/orders/:id/:action", async (req, res) => {
   const result = await db.transaction(async (tx) => {
     const row = await authorizedOrder(req, tx, true);
@@ -1183,7 +1232,8 @@ router.post("/orders/:id/:action", async (req, res) => {
       if (status !== "CREATED")
         throw fail(409, "لا يمكن قبول الطلب في حالته الحالية");
       status = "ACCEPTED";
-      system = "وافق البائع على الطلب";
+      data.acceptedAt = now.toISOString();
+      system = "وافق البائع على الطلب. يظهر للمشتري وحده رمز تسليم من أربعة أرقام؛ لا تسلّم قبل استلام المبلغ والرمز معًا.";
     } else if (action === "delivery") {
       const body = MarkOrderDeliveredBody.parse(req.body);
       const handoff = await orderHandoff(tx, row, req.actor!.id, body, now);
@@ -1194,8 +1244,14 @@ router.post("/orders/:id/:action", async (req, res) => {
       const body = ConfirmOrderBody.parse(req.body);
       if (status === "COMPLETED" && body.received)
         return { expired: false as const, order: (await orderViews([row], tx))[0] };
-      if (status !== "SELLER_MARKED_DELIVERED")
+      // The buyer's «استلمت» alone closes the deal from acceptance on (owner decision
+      // 2026-11-07/15); a dispute still needs the seller's recorded delivery first.
+      if (
+        status !== "SELLER_MARKED_DELIVERED" &&
+        !(body.received && EXECUTABLE_ORDER.includes(status))
+      )
         throw fail(409, "انتظر إثبات التسليم");
+      if (body.received) await recordBuyerConfirmation(tx, row, req.actor!.id);
       status = body.received ? "COMPLETED" : "DISPUTED";
       data.issue = body.dispute
         ? `${body.dispute.reason}: ${body.dispute.description}${body.dispute.evidence.length ? ` — الدليل: ${body.dispute.evidence.join(" · ")}` : ""}`
@@ -1278,6 +1334,7 @@ router.post("/orders/:id/:action", async (req, res) => {
       .set({ status, data, updatedAt: new Date() })
       .where(eq(orders.id, row.id))
       .returning();
+    if (action === "accept") await ensureHandoverCode(tx, updated);
     await tx
       .insert(messages)
       .values({ id: randomUUID(), conversationId: row.id, body: system });

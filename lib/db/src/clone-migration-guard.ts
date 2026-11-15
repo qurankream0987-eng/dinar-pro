@@ -74,6 +74,8 @@ export const REVIEWED_PENDING_MIGRATIONS: ReadonlyArray<{ tag: string; sha256: s
   { tag: "0064_welcome_ads_demand_requests", sha256: "0460fd3750b97249d26102fda4543210d114977a00e6fafb09b533baa85cb23a" },
   // Phase-one 0% independent-driver commission: new agreements may snapshot rate 0 (constraint only).
   { tag: "0065_courier_commission_phase_one_zero", sha256: "1f489637f10c73b71c35dc54c6fed93bf3ab7ab92b0d011895a5cc6b0c2aea1d" },
+  // Deal closure (owner-approved 2026-11-07/15): buyer-only handover code, 48 h window, audit events.
+  { tag: "0066_order_handover_closure", sha256: "36326b1cf84ce67f785eaf3c744dc1af0049c2c926ec4e012ed669ee2f40917f" },
 ];
 export const EXPECTED_JOURNAL_ENTRIES =
   EXPECTED_BASELINE_MIGRATIONS + REVIEWED_PENDING_MIGRATIONS.length;

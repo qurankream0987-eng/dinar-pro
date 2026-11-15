@@ -1,4 +1,5 @@
 import type React from "react";
+import { ListingGlimpses } from "./ListingGlimpses";
 import { Link } from "wouter";
 import { LazyMotion, domAnimation, m, useReducedMotion } from "framer-motion";
 import { surfaceSpring } from "@/lib/presentation-motion";
@@ -333,6 +334,7 @@ export function Welcome({
         transition={reduceMotion ? { duration: 0 } : surfaceSpring}
       >
         <div className="ai-welcome-copy">
+          <ListingGlimpses />
           <InteractiveLogo />
           <h1>كيف أساعدك اليوم؟</h1>
           <p>اسأل عن أي شيء، أو اشترِ وبِع بالمحادثة.</p>

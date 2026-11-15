@@ -2094,6 +2094,58 @@ export interface ConfirmationInput {
   dispute?: ConfirmationInputDispute;
 }
 
+export interface HandoverCodeInput {
+  /** @pattern ^[0-9]{4}$ */
+  code: string;
+}
+
+export type NotCompletedInputOutcome = typeof NotCompletedInputOutcome[keyof typeof NotCompletedInputOutcome];
+
+
+export const NotCompletedInputOutcome = {
+  NOT_COMPLETED: 'NOT_COMPLETED',
+  CANCELLED: 'CANCELLED',
+} as const;
+
+export interface NotCompletedInput {
+  outcome: NotCompletedInputOutcome;
+}
+
+export type OrderClosureRole = typeof OrderClosureRole[keyof typeof OrderClosureRole];
+
+
+export const OrderClosureRole = {
+  BUYER: 'BUYER',
+  SELLER: 'SELLER',
+} as const;
+
+export type OrderClosureNotCompleted = {
+  /** @nullable */
+  buyer: string | null;
+  /** @nullable */
+  seller: string | null;
+};
+
+export interface OrderClosure {
+  role: OrderClosureRole;
+  /** @nullable */
+  handoverCode: string | null;
+  codeLocked: boolean;
+  /** @nullable */
+  attemptsRemaining: number | null;
+  soldWithoutCode: boolean;
+  /** @nullable */
+  buyerWindowEndsAt: string | null;
+  closedWithoutCode: boolean;
+  /** @nullable */
+  reminderSentAt: string | null;
+  notCompleted: OrderClosureNotCompleted;
+  canEnterCode: boolean;
+  canSellWithoutCode: boolean;
+  canConfirmReceipt: boolean;
+  canReportNotCompleted: boolean;
+}
+
 export interface CancelInput {
   /** @minLength 3 */
   reason: string;

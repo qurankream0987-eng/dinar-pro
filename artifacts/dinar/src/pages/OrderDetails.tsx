@@ -1,5 +1,6 @@
 import { ReportButton } from "@/features/ReportButton";
 import { OrderSettlementCard } from "@/features/ai/OrderSettlementCard";
+import { DealClosurePanel } from "@/features/DealClosurePanel";
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useParams } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
@@ -646,6 +647,7 @@ function OrderView({ order }: { order: Detail }) {
       <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-6">
         <div className="min-w-0 space-y-4">
           {action}
+          <DealClosurePanel orderId={order.id} status={order.status} />
           {error && <InlineAlert tone="danger">{error}</InlineAlert>}
           <OrderSettlementCard orderId={order.id} role={role === "seller" ? "seller" : role === "buyer" ? "buyer" : null} />
           <OrderChat

@@ -93,11 +93,12 @@
     "test:order-settlement": "NODE_ENV=development BDINAR_TEST_DATABASE=development node test/run.mjs order-settlement.test",
     "test:draft-conversational-edits": "NODE_ENV=development BDINAR_TEST_DATABASE=development node test/run.mjs draft-conversational-edits.test",
     "test:commercial-policy-cli": "NODE_ENV=development node test/run.mjs commercial-policy-cli.test",
-    "test:lab-defect-regressions": "NODE_ENV=development node test/run.mjs lab-defect-regressions.test",
+    "test:lab-defect-regressions": "NODE_ENV=development BDINAR_TEST_DATABASE=development node test/run.mjs lab-defect-regressions.test",
     "test:twilio-sms-adapter": "NODE_ENV=development node test/run.mjs twilio-sms-adapter.test",
     "test:staging-fixtures": "NODE_ENV=development node test/run.mjs staging-fixtures.test",
     "test:staging-rehearsal-browser-journey": "NODE_ENV=development BDINAR_TEST_DATABASE=development node test/run.mjs staging-rehearsal-browser-journey.test",
-    "test:railway-acceptance-target": "node --test test/railway-acceptance-target.test.mjs"
+    "test:railway-acceptance-target": "node --test test/railway-acceptance-target.test.mjs",
+    "test:order-closure": "NODE_ENV=development BDINAR_TEST_DATABASE=development node test/run.mjs order-closure.test"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1155.0",

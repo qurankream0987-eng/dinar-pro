@@ -1,4 +1,5 @@
 import app from "./app";
+import { closeExpiredBuyerWindows, sendClosureReminders } from "./lib/order-closure";
 import { logger } from "./lib/logger";
 import { startSearchIndexMaintenance } from "./lib/marketplace-search-index";
 import { onProviderBreakerTransition } from "./ai/model-gateway";
@@ -81,6 +82,13 @@ const sweepExpiredReservations = () => {
     .catch((err) =>
       logger.error({ err }, "Failed to release expired order reservations"),
     );
+  // Deal closure: 48 h buyer windows after «تم البيع بدون رمز» close, and the 24 h reminder is sent.
+  void closeExpiredBuyerWindows()
+    .then((count) => { if (count > 0) logger.info({ count }, "Deals closed after the 48-hour buyer window"); })
+    .catch((err) => logger.error({ err }, "Failed to close expired buyer windows; the next sweep will retry"));
+  void sendClosureReminders()
+    .then((count) => { if (count > 0) logger.info({ count }, "Deal-closure reminders sent"); })
+    .catch((err) => logger.error({ err }, "Failed to send deal-closure reminders; the next sweep will retry"));
   // An EXECUTING claim whose process died is settled as UNKNOWN, never re-executed.
   void settleAbandonedExecutions()
     .then((count) => {

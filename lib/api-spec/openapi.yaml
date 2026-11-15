@@ -892,6 +892,84 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Order" }
+  /orders/{id}/closure:
+    get:
+      operationId: getOrderClosure
+      tags: [orders]
+      summary: Deal-closure state for the signed-in party (the handover code only for the buyer)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Closure state
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OrderClosure" }
+  /orders/{id}/handover-code:
+    post:
+      operationId: enterOrderHandoverCode
+      tags: [orders]
+      summary: Seller enters the buyer's 4-digit handover code to close the deal
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/HandoverCodeInput" }
+      responses:
+        "200":
+          description: Deal closed
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Order" }
+        "422":
+          description: Wrong code; the attempt was counted
+        "423":
+          description: Code locked after five wrong entries
+  /orders/{id}/sold-without-code:
+    post:
+      operationId: sellOrderWithoutCode
+      tags: [orders]
+      summary: Seller records «تم البيع بدون رمز»; the buyer has 48 hours to confirm or dispute
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Updated order
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Order" }
+  /orders/{id}/not-completed:
+    post:
+      operationId: reportOrderNotCompleted
+      tags: [orders]
+      summary: A party reports «لم يتم» or «أُلغي»; one side opens a review, both sides cancel without commission
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/NotCompletedInput" }
+      responses:
+        "200":
+          description: Updated order
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Order" }
   /orders/{id}/messages:
     get:
       operationId: getOrderMessages
@@ -4892,6 +4970,38 @@ components:
             reason: { type: string, minLength: 3, maxLength: 100 }
             description: { type: string, minLength: 10, maxLength: 600 }
             evidence: { type: array, maxItems: 5, items: { type: string, maxLength: 300 } }
+    HandoverCodeInput:
+      type: object
+      required: [code]
+      properties:
+        code: { type: string, pattern: "^[0-9]{4}$" }
+    NotCompletedInput:
+      type: object
+      required: [outcome]
+      properties:
+        outcome: { type: string, enum: [NOT_COMPLETED, CANCELLED] }
+    OrderClosure:
+      type: object
+      required: [role, handoverCode, codeLocked, attemptsRemaining, soldWithoutCode, buyerWindowEndsAt, closedWithoutCode, reminderSentAt, notCompleted, canEnterCode, canSellWithoutCode, canConfirmReceipt, canReportNotCompleted]
+      properties:
+        role: { type: string, enum: [BUYER, SELLER] }
+        handoverCode: { type: ["string", "null"] }
+        codeLocked: { type: boolean }
+        attemptsRemaining: { type: ["integer", "null"] }
+        soldWithoutCode: { type: boolean }
+        buyerWindowEndsAt: { type: ["string", "null"] }
+        closedWithoutCode: { type: boolean }
+        reminderSentAt: { type: ["string", "null"] }
+        notCompleted:
+          type: object
+          required: [buyer, seller]
+          properties:
+            buyer: { type: ["string", "null"] }
+            seller: { type: ["string", "null"] }
+        canEnterCode: { type: boolean }
+        canSellWithoutCode: { type: boolean }
+        canConfirmReceipt: { type: boolean }
+        canReportNotCompleted: { type: boolean }
     CancelInput:
       type: object
       required: [reason]

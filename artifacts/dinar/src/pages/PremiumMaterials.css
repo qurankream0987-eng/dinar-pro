@@ -749,6 +749,14 @@
   .dinar-chatgpt .ai-composer-box { backdrop-filter: none; border-radius: 24px; }
 }
 /* Short screens still yield the greeting's space to the conversation (the whole mark, not only its image). */
-@media (max-height: 620px) { .premium-welcome .premium-logo { display: none; } }
-.dinar-chatgpt[data-keyboard="open"] .premium-logo { display: none; }
+@media (max-height: 620px) { .premium-welcome .premium-logo, .premium-welcome .listing-glimpses { display: none; } }
+/* Phones: the mini-cards sit beside the logo, never over it (the copy spans the column). */
+@media (max-width: 640px) {
+  .premium-welcome .ai-welcome-copy { width: 100%; }
+  .premium-welcome .listing-glimpse { max-width: min(132px, calc(50% - 46px)); padding: 4px 8px 4px 4px; }
+  .premium-welcome .listing-glimpse img { width: 28px; height: 28px; }
+  .premium-welcome .listing-glimpse:is(.is-slot-a, .is-slot-c) { top: 14px; inset-inline-start: auto; inset-inline-end: 0; }
+  .premium-welcome .listing-glimpse:is(.is-slot-b, .is-slot-d) { top: 14px; inset-inline-end: auto; inset-inline-start: 0; }
+}
+.dinar-chatgpt[data-keyboard="open"] :is(.premium-logo, .listing-glimpses) { display: none; }
 @media (prefers-reduced-transparency: reduce) { .dinar-chatgpt .ai-composer-box { backdrop-filter: none; background: var(--chat-surface); } }

@@ -4071,3 +4071,30 @@ export const securityIncidentEvents = pgTable(
 
 export * from "./connect";
 export * from "./advertising";
+
+/** Buyer-only handover code state (migration 0066). The code is derived from the nonce on demand. */
+export const orderHandoverCodes = pgTable("order_handover_codes", {
+  orderId: text("order_id").primaryKey().references(() => orders.id),
+  nonce: text("nonce").notNull(),
+  failedAttempts: integer("failed_attempts").default(0).notNull(),
+  lockedAt: timestamp("locked_at", { withTimezone: true }),
+  consumedAt: timestamp("consumed_at", { withTimezone: true }),
+  ...dates(),
+});
+export type OrderClosureEventType =
+  | "CODE_ISSUED" | "CODE_REJECTED" | "CODE_LOCKED" | "CODE_ACCEPTED"
+  | "BUYER_CONFIRMED" | "SOLD_WITHOUT_CODE" | "BUYER_WINDOW_CLOSED"
+  | "REMINDER_SENT" | "NOT_COMPLETED_CLAIMED" | "MUTUAL_CANCELLED";
+/** Append-only audit trail of deal closure (migration 0066; a trigger refuses update and delete). */
+export const orderClosureEvents = pgTable(
+  "order_closure_events",
+  {
+    id: text("id").primaryKey(),
+    orderId: text("order_id").notNull().references(() => orders.id),
+    actorId: text("actor_id").references(() => users.id),
+    actorRole: text("actor_role").$type<"BUYER" | "SELLER" | "SYSTEM">().notNull(),
+    type: text("type").$type<OrderClosureEventType>().notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [index("order_closure_events_order_idx").on(t.orderId, t.createdAt)],
+);

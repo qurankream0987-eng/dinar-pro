@@ -134,6 +134,7 @@ import type {
   GoogleCompleteInput,
   GoogleSignInInput,
   GoogleSignInResult,
+  HandoverCodeInput,
   HealthStatus,
   LegalReadinessMarket,
   ListAdminSecurityIncidentsParams,
@@ -157,7 +158,9 @@ import type {
   MarketplaceCategoryUpdate,
   Message,
   MessageInput,
+  NotCompletedInput,
   Order,
+  OrderClosure,
   OrderContactRelease,
   OrderCounterpartContact,
   OrderDelivery,
@@ -4681,6 +4684,359 @@ export const useCancelOrder = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getCancelOrderMutationOptions(options), queryClient);
+    }
+
+export const getGetOrderClosureUrl = (id: string,) => {
+
+
+
+
+  return `/api/orders/${id}/closure`
+}
+
+/**
+ * @summary Deal-closure state for the signed-in party (the handover code only for the buyer)
+ */
+export const getOrderClosure = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<OrderClosure> => {
+
+  return customFetch<OrderClosure>(getGetOrderClosureUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetOrderClosureQueryKey = (id: string,) => {
+    return [
+    `/api/orders/${id}/closure`
+    ] as const;
+    }
+
+
+export const getGetOrderClosureQueryOptions = <TData = Awaited<ReturnType<typeof getOrderClosure>>, TError = ErrorType<unknown>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOrderClosure>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetOrderClosureQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getOrderClosure>>> = ({ signal }) => getOrderClosure(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getOrderClosure>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetOrderClosureQueryResult = NonNullable<Awaited<ReturnType<typeof getOrderClosure>>>
+export type GetOrderClosureQueryError = ErrorType<unknown>
+
+
+export function useGetOrderClosure<TData = Awaited<ReturnType<typeof getOrderClosure>>, TError = ErrorType<unknown>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOrderClosure>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getOrderClosure>>,
+          TError,
+          Awaited<ReturnType<typeof getOrderClosure>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetOrderClosure<TData = Awaited<ReturnType<typeof getOrderClosure>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOrderClosure>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getOrderClosure>>,
+          TError,
+          Awaited<ReturnType<typeof getOrderClosure>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetOrderClosure<TData = Awaited<ReturnType<typeof getOrderClosure>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOrderClosure>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Deal-closure state for the signed-in party (the handover code only for the buyer)
+ */
+
+export function useGetOrderClosure<TData = Awaited<ReturnType<typeof getOrderClosure>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOrderClosure>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetOrderClosureQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getEnterOrderHandoverCodeUrl = (id: string,) => {
+
+
+
+
+  return `/api/orders/${id}/handover-code`
+}
+
+/**
+ * @summary Seller enters the buyer's 4-digit handover code to close the deal
+ */
+export const enterOrderHandoverCode = async (id: string,
+    handoverCodeInput: HandoverCodeInput, options?: Parameters<typeof customFetch>[1]): Promise<Order> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<Order>(getEnterOrderHandoverCodeUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(handoverCodeInput)
+  }
+);}
+
+
+
+
+
+export const getEnterOrderHandoverCodeMutationKey = () => ['enterOrderHandoverCode'] as const;
+
+export const getEnterOrderHandoverCodeMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof enterOrderHandoverCode>>, TError,EnterOrderHandoverCodeMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof enterOrderHandoverCode>>, TError,EnterOrderHandoverCodeMutationVariables, TContext> => {
+
+const mutationKey = getEnterOrderHandoverCodeMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof enterOrderHandoverCode>>, EnterOrderHandoverCodeMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  enterOrderHandoverCode(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type EnterOrderHandoverCodeMutationResult = NonNullable<Awaited<ReturnType<typeof enterOrderHandoverCode>>>
+    export type EnterOrderHandoverCodeMutationBody = BodyType<HandoverCodeInput>
+    export type EnterOrderHandoverCodeMutationError = ErrorType<void>
+    export type EnterOrderHandoverCodeMutationVariables = {id: string;data: BodyType<HandoverCodeInput>}
+
+    /**
+ * @summary Seller enters the buyer's 4-digit handover code to close the deal
+ */
+export const useEnterOrderHandoverCode = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof enterOrderHandoverCode>>, TError,EnterOrderHandoverCodeMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof enterOrderHandoverCode>>,
+        TError,
+        EnterOrderHandoverCodeMutationVariables,
+        TContext
+      > => {
+      return useMutation(getEnterOrderHandoverCodeMutationOptions(options), queryClient);
+    }
+
+export const getSellOrderWithoutCodeUrl = (id: string,) => {
+
+
+
+
+  return `/api/orders/${id}/sold-without-code`
+}
+
+/**
+ * @summary Seller records «تم البيع بدون رمز»; the buyer has 48 hours to confirm or dispute
+ */
+export const sellOrderWithoutCode = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<Order> => {
+
+  return customFetch<Order>(getSellOrderWithoutCodeUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getSellOrderWithoutCodeMutationKey = () => ['sellOrderWithoutCode'] as const;
+
+export const getSellOrderWithoutCodeMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sellOrderWithoutCode>>, TError,SellOrderWithoutCodeMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof sellOrderWithoutCode>>, TError,SellOrderWithoutCodeMutationVariables, TContext> => {
+
+const mutationKey = getSellOrderWithoutCodeMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof sellOrderWithoutCode>>, SellOrderWithoutCodeMutationVariables> = (props) => {
+          const {id} = props ?? {};
+
+          return  sellOrderWithoutCode(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SellOrderWithoutCodeMutationResult = NonNullable<Awaited<ReturnType<typeof sellOrderWithoutCode>>>
+
+    export type SellOrderWithoutCodeMutationError = ErrorType<unknown>
+    export type SellOrderWithoutCodeMutationVariables = {id: string}
+
+    /**
+ * @summary Seller records «تم البيع بدون رمز»; the buyer has 48 hours to confirm or dispute
+ */
+export const useSellOrderWithoutCode = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sellOrderWithoutCode>>, TError,SellOrderWithoutCodeMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof sellOrderWithoutCode>>,
+        TError,
+        SellOrderWithoutCodeMutationVariables,
+        TContext
+      > => {
+      return useMutation(getSellOrderWithoutCodeMutationOptions(options), queryClient);
+    }
+
+export const getReportOrderNotCompletedUrl = (id: string,) => {
+
+
+
+
+  return `/api/orders/${id}/not-completed`
+}
+
+/**
+ * @summary A party reports «لم يتم» or «أُلغي»; one side opens a review, both sides cancel without commission
+ */
+export const reportOrderNotCompleted = async (id: string,
+    notCompletedInput: NotCompletedInput, options?: Parameters<typeof customFetch>[1]): Promise<Order> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<Order>(getReportOrderNotCompletedUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(notCompletedInput)
+  }
+);}
+
+
+
+
+
+export const getReportOrderNotCompletedMutationKey = () => ['reportOrderNotCompleted'] as const;
+
+export const getReportOrderNotCompletedMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reportOrderNotCompleted>>, TError,ReportOrderNotCompletedMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof reportOrderNotCompleted>>, TError,ReportOrderNotCompletedMutationVariables, TContext> => {
+
+const mutationKey = getReportOrderNotCompletedMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof reportOrderNotCompleted>>, ReportOrderNotCompletedMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  reportOrderNotCompleted(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ReportOrderNotCompletedMutationResult = NonNullable<Awaited<ReturnType<typeof reportOrderNotCompleted>>>
+    export type ReportOrderNotCompletedMutationBody = BodyType<NotCompletedInput>
+    export type ReportOrderNotCompletedMutationError = ErrorType<unknown>
+    export type ReportOrderNotCompletedMutationVariables = {id: string;data: BodyType<NotCompletedInput>}
+
+    /**
+ * @summary A party reports «لم يتم» or «أُلغي»; one side opens a review, both sides cancel without commission
+ */
+export const useReportOrderNotCompleted = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reportOrderNotCompleted>>, TError,ReportOrderNotCompletedMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof reportOrderNotCompleted>>,
+        TError,
+        ReportOrderNotCompletedMutationVariables,
+        TContext
+      > => {
+      return useMutation(getReportOrderNotCompletedMutationOptions(options), queryClient);
     }
 
 export const getGetOrderMessagesUrl = (id: string,) => {

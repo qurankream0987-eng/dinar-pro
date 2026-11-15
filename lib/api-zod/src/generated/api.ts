@@ -2803,6 +2803,278 @@ export const CancelOrderResponse = zod.object({
 
 
 /**
+ * @summary Deal-closure state for the signed-in party (the handover code only for the buyer)
+ */
+export const GetOrderClosureParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const GetOrderClosureResponse = zod.object({
+  "role": zod.enum(['BUYER', 'SELLER']),
+  "handoverCode": zod.string().nullable(),
+  "codeLocked": zod.boolean(),
+  "attemptsRemaining": zod.int().nullable(),
+  "soldWithoutCode": zod.boolean(),
+  "buyerWindowEndsAt": zod.string().nullable(),
+  "closedWithoutCode": zod.boolean(),
+  "reminderSentAt": zod.string().nullable(),
+  "notCompleted": zod.object({
+  "buyer": zod.string().nullable(),
+  "seller": zod.string().nullable()
+}),
+  "canEnterCode": zod.boolean(),
+  "canSellWithoutCode": zod.boolean(),
+  "canConfirmReceipt": zod.boolean(),
+  "canReportNotCompleted": zod.boolean()
+})
+
+
+/**
+ * @summary Seller enters the buyer's 4-digit handover code to close the deal
+ */
+export const EnterOrderHandoverCodeParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const enterOrderHandoverCodeBodyCodeRegExp = new RegExp('^[0-9]{4}$');
+
+
+export const EnterOrderHandoverCodeBody = zod.object({
+  "code": zod.string().regex(enterOrderHandoverCodeBodyCodeRegExp)
+})
+
+export const enterOrderHandoverCodeResponsePlatformFeeMinorMin = 0;
+
+export const enterOrderHandoverCodeResponseSellerAmountMinorMin = 0;
+
+export const enterOrderHandoverCodeResponseMinorUnitScaleMin = 0;
+export const enterOrderHandoverCodeResponseMinorUnitScaleMax = 6;
+
+export const enterOrderHandoverCodeResponseCommissionRateBpsMin = 0;
+export const enterOrderHandoverCodeResponseCommissionRateBpsMax = 10000;
+
+export const enterOrderHandoverCodeResponseIssueMax = 1500;
+
+export const enterOrderHandoverCodeResponseDisputeReasonMin = 3;
+export const enterOrderHandoverCodeResponseDisputeReasonMax = 100;
+
+export const enterOrderHandoverCodeResponseDisputeDescriptionMin = 10;
+export const enterOrderHandoverCodeResponseDisputeDescriptionMax = 600;
+
+
+
+export const EnterOrderHandoverCodeResponse = zod.object({
+  "id": zod.string(),
+  "listingId": zod.string(),
+  "listingTitle": zod.string(),
+  "listingImageUrl": zod.string(),
+  "buyerName": zod.string(),
+  "buyerAvatarObjectPath": zod.string().nullish(),
+  "sellerName": zod.string(),
+  "sellerAvatarObjectPath": zod.string().nullish(),
+  "quantity": zod.int(),
+  "unitPrice": zod.string(),
+  "total": zod.string(),
+  "currency": zod.string(),
+  "platformFeeMinor": zod.int().min(enterOrderHandoverCodeResponsePlatformFeeMinorMin),
+  "sellerAmountMinor": zod.int().min(enterOrderHandoverCodeResponseSellerAmountMinorMin),
+  "minorUnitScale": zod.int().min(enterOrderHandoverCodeResponseMinorUnitScaleMin).max(enterOrderHandoverCodeResponseMinorUnitScaleMax),
+  "commissionRateBps": zod.int().min(enterOrderHandoverCodeResponseCommissionRateBpsMin).max(enterOrderHandoverCodeResponseCommissionRateBpsMax),
+  "fulfilmentType": zod.string(),
+  "status": zod.enum(['CREATED', 'PAYMENT_PENDING', 'PAID', 'ACCEPTED', 'IN_PROGRESS', 'SELLER_MARKED_DELIVERED', 'BUYER_CONFIRMED', 'COMPLETED', 'CANCELLED', 'DISPUTED']),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string(),
+  "expiresAt": zod.string(),
+  "deliveryProof": zod.string().nullish(),
+  "issue": zod.string().max(enterOrderHandoverCodeResponseIssueMax).nullish(),
+  "dispute": zod.object({
+  "reason": zod.string().min(enterOrderHandoverCodeResponseDisputeReasonMin).max(enterOrderHandoverCodeResponseDisputeReasonMax),
+  "description": zod.string().min(enterOrderHandoverCodeResponseDisputeDescriptionMin).max(enterOrderHandoverCodeResponseDisputeDescriptionMax),
+  "evidence": zod.array(zod.object({
+  "type": zod.string().optional(),
+  "reference": zod.string().optional(),
+  "submittedBy": zod.string().optional(),
+  "createdAt": zod.string().optional()
+})),
+  "status": zod.string().optional(),
+  "resolution": zod.string().nullish(),
+  "resolvedAt": zod.string().nullish()
+}).optional(),
+  "sellerId": zod.string().optional(),
+  "items": zod.array(zod.object({
+  "listingId": zod.string(),
+  "listingTitle": zod.string(),
+  "listingImageUrl": zod.string(),
+  "quantity": zod.int(),
+  "unitPrice": zod.string(),
+  "total": zod.string(),
+  "currency": zod.string(),
+  "fulfilmentType": zod.enum(['PICKUP', 'DELIVERY', 'DIGITAL', 'SERVICE'])
+})).optional()
+})
+
+
+/**
+ * @summary Seller records «تم البيع بدون رمز»; the buyer has 48 hours to confirm or dispute
+ */
+export const SellOrderWithoutCodeParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const sellOrderWithoutCodeResponsePlatformFeeMinorMin = 0;
+
+export const sellOrderWithoutCodeResponseSellerAmountMinorMin = 0;
+
+export const sellOrderWithoutCodeResponseMinorUnitScaleMin = 0;
+export const sellOrderWithoutCodeResponseMinorUnitScaleMax = 6;
+
+export const sellOrderWithoutCodeResponseCommissionRateBpsMin = 0;
+export const sellOrderWithoutCodeResponseCommissionRateBpsMax = 10000;
+
+export const sellOrderWithoutCodeResponseIssueMax = 1500;
+
+export const sellOrderWithoutCodeResponseDisputeReasonMin = 3;
+export const sellOrderWithoutCodeResponseDisputeReasonMax = 100;
+
+export const sellOrderWithoutCodeResponseDisputeDescriptionMin = 10;
+export const sellOrderWithoutCodeResponseDisputeDescriptionMax = 600;
+
+
+
+export const SellOrderWithoutCodeResponse = zod.object({
+  "id": zod.string(),
+  "listingId": zod.string(),
+  "listingTitle": zod.string(),
+  "listingImageUrl": zod.string(),
+  "buyerName": zod.string(),
+  "buyerAvatarObjectPath": zod.string().nullish(),
+  "sellerName": zod.string(),
+  "sellerAvatarObjectPath": zod.string().nullish(),
+  "quantity": zod.int(),
+  "unitPrice": zod.string(),
+  "total": zod.string(),
+  "currency": zod.string(),
+  "platformFeeMinor": zod.int().min(sellOrderWithoutCodeResponsePlatformFeeMinorMin),
+  "sellerAmountMinor": zod.int().min(sellOrderWithoutCodeResponseSellerAmountMinorMin),
+  "minorUnitScale": zod.int().min(sellOrderWithoutCodeResponseMinorUnitScaleMin).max(sellOrderWithoutCodeResponseMinorUnitScaleMax),
+  "commissionRateBps": zod.int().min(sellOrderWithoutCodeResponseCommissionRateBpsMin).max(sellOrderWithoutCodeResponseCommissionRateBpsMax),
+  "fulfilmentType": zod.string(),
+  "status": zod.enum(['CREATED', 'PAYMENT_PENDING', 'PAID', 'ACCEPTED', 'IN_PROGRESS', 'SELLER_MARKED_DELIVERED', 'BUYER_CONFIRMED', 'COMPLETED', 'CANCELLED', 'DISPUTED']),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string(),
+  "expiresAt": zod.string(),
+  "deliveryProof": zod.string().nullish(),
+  "issue": zod.string().max(sellOrderWithoutCodeResponseIssueMax).nullish(),
+  "dispute": zod.object({
+  "reason": zod.string().min(sellOrderWithoutCodeResponseDisputeReasonMin).max(sellOrderWithoutCodeResponseDisputeReasonMax),
+  "description": zod.string().min(sellOrderWithoutCodeResponseDisputeDescriptionMin).max(sellOrderWithoutCodeResponseDisputeDescriptionMax),
+  "evidence": zod.array(zod.object({
+  "type": zod.string().optional(),
+  "reference": zod.string().optional(),
+  "submittedBy": zod.string().optional(),
+  "createdAt": zod.string().optional()
+})),
+  "status": zod.string().optional(),
+  "resolution": zod.string().nullish(),
+  "resolvedAt": zod.string().nullish()
+}).optional(),
+  "sellerId": zod.string().optional(),
+  "items": zod.array(zod.object({
+  "listingId": zod.string(),
+  "listingTitle": zod.string(),
+  "listingImageUrl": zod.string(),
+  "quantity": zod.int(),
+  "unitPrice": zod.string(),
+  "total": zod.string(),
+  "currency": zod.string(),
+  "fulfilmentType": zod.enum(['PICKUP', 'DELIVERY', 'DIGITAL', 'SERVICE'])
+})).optional()
+})
+
+
+/**
+ * @summary A party reports «لم يتم» or «أُلغي»; one side opens a review, both sides cancel without commission
+ */
+export const ReportOrderNotCompletedParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const ReportOrderNotCompletedBody = zod.object({
+  "outcome": zod.enum(['NOT_COMPLETED', 'CANCELLED'])
+})
+
+export const reportOrderNotCompletedResponsePlatformFeeMinorMin = 0;
+
+export const reportOrderNotCompletedResponseSellerAmountMinorMin = 0;
+
+export const reportOrderNotCompletedResponseMinorUnitScaleMin = 0;
+export const reportOrderNotCompletedResponseMinorUnitScaleMax = 6;
+
+export const reportOrderNotCompletedResponseCommissionRateBpsMin = 0;
+export const reportOrderNotCompletedResponseCommissionRateBpsMax = 10000;
+
+export const reportOrderNotCompletedResponseIssueMax = 1500;
+
+export const reportOrderNotCompletedResponseDisputeReasonMin = 3;
+export const reportOrderNotCompletedResponseDisputeReasonMax = 100;
+
+export const reportOrderNotCompletedResponseDisputeDescriptionMin = 10;
+export const reportOrderNotCompletedResponseDisputeDescriptionMax = 600;
+
+
+
+export const ReportOrderNotCompletedResponse = zod.object({
+  "id": zod.string(),
+  "listingId": zod.string(),
+  "listingTitle": zod.string(),
+  "listingImageUrl": zod.string(),
+  "buyerName": zod.string(),
+  "buyerAvatarObjectPath": zod.string().nullish(),
+  "sellerName": zod.string(),
+  "sellerAvatarObjectPath": zod.string().nullish(),
+  "quantity": zod.int(),
+  "unitPrice": zod.string(),
+  "total": zod.string(),
+  "currency": zod.string(),
+  "platformFeeMinor": zod.int().min(reportOrderNotCompletedResponsePlatformFeeMinorMin),
+  "sellerAmountMinor": zod.int().min(reportOrderNotCompletedResponseSellerAmountMinorMin),
+  "minorUnitScale": zod.int().min(reportOrderNotCompletedResponseMinorUnitScaleMin).max(reportOrderNotCompletedResponseMinorUnitScaleMax),
+  "commissionRateBps": zod.int().min(reportOrderNotCompletedResponseCommissionRateBpsMin).max(reportOrderNotCompletedResponseCommissionRateBpsMax),
+  "fulfilmentType": zod.string(),
+  "status": zod.enum(['CREATED', 'PAYMENT_PENDING', 'PAID', 'ACCEPTED', 'IN_PROGRESS', 'SELLER_MARKED_DELIVERED', 'BUYER_CONFIRMED', 'COMPLETED', 'CANCELLED', 'DISPUTED']),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string(),
+  "expiresAt": zod.string(),
+  "deliveryProof": zod.string().nullish(),
+  "issue": zod.string().max(reportOrderNotCompletedResponseIssueMax).nullish(),
+  "dispute": zod.object({
+  "reason": zod.string().min(reportOrderNotCompletedResponseDisputeReasonMin).max(reportOrderNotCompletedResponseDisputeReasonMax),
+  "description": zod.string().min(reportOrderNotCompletedResponseDisputeDescriptionMin).max(reportOrderNotCompletedResponseDisputeDescriptionMax),
+  "evidence": zod.array(zod.object({
+  "type": zod.string().optional(),
+  "reference": zod.string().optional(),
+  "submittedBy": zod.string().optional(),
+  "createdAt": zod.string().optional()
+})),
+  "status": zod.string().optional(),
+  "resolution": zod.string().nullish(),
+  "resolvedAt": zod.string().nullish()
+}).optional(),
+  "sellerId": zod.string().optional(),
+  "items": zod.array(zod.object({
+  "listingId": zod.string(),
+  "listingTitle": zod.string(),
+  "listingImageUrl": zod.string(),
+  "quantity": zod.int(),
+  "unitPrice": zod.string(),
+  "total": zod.string(),
+  "currency": zod.string(),
+  "fulfilmentType": zod.enum(['PICKUP', 'DELIVERY', 'DIGITAL', 'SERVICE'])
+})).optional()
+})
+
+
+/**
  * @summary Get messages for an order
  */
 export const GetOrderMessagesParams = zod.object({
