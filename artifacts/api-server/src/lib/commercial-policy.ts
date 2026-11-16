@@ -187,6 +187,16 @@ export function majorToMinor(major: number, scale: number): number {
   return Number(`${whole}${fraction.padEnd(scale, "0")}`);
 }
 
+/**
+ * Minor-unit scale of a price's own currency. A market's currency uses the market's scale; JassimAI
+ * subscriptions may be priced in USD in every market (owner decision 2026-11-16: Go $10 / Pro $20 /
+ * Business $49 monthly, ×10 annually), so a few ISO 4217 scales are known here. Unknown → undefined.
+ */
+const ISO_SCALES: Record<string, number> = { USD: 2, EUR: 2, GBP: 2, SAR: 2, AED: 2, QAR: 2, KWD: 3, JOD: 3, BHD: 3, OMR: 3 };
+export function scaleOfCurrency(currencyCode: string, market: { currencyCode: string; minorUnitScale: number }): number | undefined {
+  return currencyCode === market.currencyCode ? market.minorUnitScale : ISO_SCALES[currencyCode];
+}
+
 export function formatMinorAmount(minor: number, scale: number, currency: string): string {
   const negative = minor < 0;
   const digits = String(Math.abs(minor)).padStart(scale + 1, "0");

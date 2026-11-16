@@ -269,6 +269,8 @@ const ProductBody = z
     businessEntitlements: z.array(z.enum(BUSINESS_ENTITLEMENT_KEYS)).max(10).default([]),
     /** D1: the public plan a DINAR_BUSINESS product sells. */
     planCode: z.enum(PLAN_CODES).optional(),
+    /** A JassimAI subscription plan may be priced in USD in any market (paid through Whop, never the wallet). */
+    currencyCode: z.literal("USD").optional(),
     pricingVersion: z.number().int().min(1).default(1),
     effectiveFrom: z.string().datetime().optional(),
     effectiveTo: z.string().datetime().optional(),
@@ -294,6 +296,7 @@ router.get("/admin/markets/:marketId/commercial-products", requireAuth, requireC
 router.post("/admin/markets/:marketId/commercial-products", requireAuth, requireCommercialAdmin, async (req, res) => {
   const body = ProductBody.parse(req.body);
   const market = await marketById(String(req.params.marketId));
+  if (body.currencyCode && (body.productType !== "DINAR_BUSINESS" || !body.planCode)) throw fail(400, "العملة المستقلة عن السوق متاحة لخطط الاشتراك فقط", "CURRENCY_NOT_ALLOWED");
   const placement = PLACEMENT_FOR[body.productType] ?? "NONE";
   if (placement !== "NONE") {
     if (!body.categoryId) throw fail(400, "منتجات الإعلانات تحتاج إلى تصنيف");
@@ -343,7 +346,7 @@ router.post("/admin/markets/:marketId/commercial-products", requireAuth, require
         businessEntitlements: body.businessEntitlements,
         planCode: body.planCode ?? null,
         priceMinor: body.priceMinor,
-        currencyCode: market.currencyCode,
+        currencyCode: body.currencyCode ?? market.currencyCode,
         durationDays: body.durationDays,
         enabled: body.enabled,
         createdBy: req.actor!.id,
@@ -354,7 +357,7 @@ router.post("/admin/markets/:marketId/commercial-products", requireAuth, require
     res.status(201).json(commercialProductView(row!, market));
   } catch (error) {
     if ((error as { cause?: { code?: string }; code?: string }).cause?.code === "23505" || (error as { code?: string }).code === "23505")
-      throw refuse(409, "توجد خطة مفعّلة بالرمز نفسه في هذا السوق؛ أوقفها أولًا ثم أضف السعر الجديد بإصدار تسعير جديد", "PLAN_ALREADY_ENABLED");
+      throw refuse(409, "توجد خطة مفعّلة بالرمز والمدة نفسيهما في هذا السوق؛ أوقفها أولًا ثم أضف السعر الجديد بإصدار تسعير جديد", "PLAN_ALREADY_ENABLED");
     if ((error as { cause?: { code?: string }; code?: string }).cause?.code === "23514" || (error as { code?: string }).code === "23514")
       throw fail(400, "شروط المنتج غير متسقة (طريقة الاحتساب أو الميزانية أو الفئة)", "PRODUCT_INVALID");
     throw error;
@@ -373,7 +376,7 @@ router.patch("/admin/commercial-products/:id", requireAuth, requireCommercialAdm
     [row] = await db.update(promotionProducts).set({ enabled: body.enabled, updatedBy: req.actor!.id, updatedAt: new Date() }).where(eq(promotionProducts.id, current.id)).returning();
   } catch (error) {
     if ((error as { cause?: { code?: string }; code?: string }).cause?.code === "23505" || (error as { code?: string }).code === "23505")
-      throw refuse(409, "توجد خطة مفعّلة بالرمز نفسه في هذا السوق", "PLAN_ALREADY_ENABLED");
+      throw refuse(409, "توجد خطة مفعّلة بالرمز والمدة نفسيهما في هذا السوق", "PLAN_ALREADY_ENABLED");
     throw error;
   }
   await db.insert(marketAudit).values({ id: randomUUID(), marketId: current.marketId, actorId: req.actor!.id, action: body.enabled ? "COMMERCIAL_PRODUCT_ENABLED" : "COMMERCIAL_PRODUCT_DISABLED", data: { productId: current.id, productType: current.productType, planCode: current.planCode, priceMinor: current.priceMinor, pricingVersion: current.pricingVersion } });

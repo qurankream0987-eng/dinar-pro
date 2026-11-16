@@ -470,6 +470,13 @@
       "when": 1794760000000,
       "tag": "0066_order_handover_closure",
       "breakpoints": true
+    },
+    {
+      "idx": 67,
+      "version": "7",
+      "when": 1794850000000,
+      "tag": "0067_plan_period_catalog",
+      "breakpoints": true
     }
   ]
 }

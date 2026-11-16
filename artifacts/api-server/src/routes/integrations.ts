@@ -120,10 +120,13 @@ router.post("/business/subscription-checkout", requireAuth, async (req, res) => 
   const planCode = planCodeOfProduct(plan);
   const businessProfileId = await assertPlanEligibility({ actorId: req.actor!.id, market, planCode, businessId: body.businessId });
   const [prior] = await db.select().from(businessSubscriptions).where(and(eq(businessSubscriptions.userId, req.actor!.id), eq(businessSubscriptions.idempotencyKey, body.idempotencyKey)));
-  const [live] = prior ? [] : await db.select({ id: businessSubscriptions.id }).from(businessSubscriptions).where(and(eq(businessSubscriptions.userId, req.actor!.id), eq(businessSubscriptions.marketId, market.id), inArray(businessSubscriptions.status, ["PENDING", "ACTIVE", "PAST_DUE", "CANCEL_AT_PERIOD_END"])));
-  if (live) throw fail(409, "لديك اشتراك جاسم بزنس قائم أو قيد الدفع", "ALREADY_SUBSCRIBED");
-  const subscriptionId = prior?.id ?? randomUUID();
-  if (!prior)
+  const [live] = prior ? [] : await db.select({ id: businessSubscriptions.id, status: businessSubscriptions.status, planId: businessSubscriptions.planId }).from(businessSubscriptions).where(and(eq(businessSubscriptions.userId, req.actor!.id), eq(businessSubscriptions.marketId, market.id), inArray(businessSubscriptions.status, ["PENDING", "ACTIVE", "PAST_DUE", "CANCEL_AT_PERIOD_END"])));
+  // An unpaid checkout for the same plan is resumed (its Whop checkout is reissued idempotently), so an
+  // abandoned payment page never locks the buyer out and never creates a second subscription.
+  const resumed = live?.status === "PENDING" && live.planId === plan.id ? live : undefined;
+  if (live && !resumed) throw fail(409, "لديك اشتراك جاسم بزنس قائم أو قيد الدفع", "ALREADY_SUBSCRIBED");
+  const subscriptionId = prior?.id ?? resumed?.id ?? randomUUID();
+  if (!prior && !resumed)
     await db.insert(businessSubscriptions).values({
       id: subscriptionId,
       userId: req.actor!.id,
@@ -140,7 +143,7 @@ router.post("/business/subscription-checkout", requireAuth, async (req, res) => 
       status: "PENDING",
       idempotencyKey: body.idempotencyKey,
     });
-  const checkout = await provider!.createCheckout({ subscriptionId, planId: plan.id, amountMinor: plan.priceMinor, currencyCode: plan.currencyCode, periodDays: plan.durationDays, idempotencyKey: body.idempotencyKey });
+  const checkout = await provider!.createCheckout({ subscriptionId, planId: plan.id, amountMinor: plan.priceMinor, currencyCode: plan.currencyCode, periodDays: plan.durationDays, idempotencyKey: resumed ? `resume-${resumed.id}` : body.idempotencyKey });
   // PENDING grants nothing: entitlements start only from a verified SUBSCRIPTION_ACTIVATED webhook.
   res.status(201).json({ subscriptionId, status: "PENDING", checkout, autoRenew: false });
 });

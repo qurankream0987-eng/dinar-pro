@@ -24,9 +24,12 @@ import { and, eq } from "drizzle-orm";
 import { billingWebhookEvents, businessSubscriptions, db, markets } from "@workspace/db";
 import { applyBillingEvent, registerSubscriptionBillingProvider, unregisterSubscriptionBillingProvider, type BillingWebhookEvent, type SubscriptionBillingProvider } from "../subscription-billing";
 import { logger } from "../logger";
+import { scaleOfCurrency } from "../commercial-policy";
 
 export const WHOP_PROVIDER_KEY = "whop";
-export const WHOP_API_VERSION_DATE = "2026-08-14";
+// 2026-10-24: payments carry `Money` objects, `account_id` and `membership_id` (verified in the
+// sandbox 2026-11-16; the 2026-08-14 pin returns plain numbers and nested objects instead).
+export const WHOP_API_VERSION_DATE = "2026-10-24";
 export const WHOP_SIGNATURE_TOLERANCE_SECONDS = 5 * 60;
 const BASE_URLS = { sandbox: "https://sandbox-api.whop.com/api/v1", production: "https://api.whop.com/api/v1" } as const;
 
@@ -36,7 +39,12 @@ export type WhopConfig = {
   webhookSecret: string;
   /** The JassimAI Whop account (`biz_…`); events for any other account are refused. */
   accountId: string;
-  /** Our plan code → Whop plan (`plan_…`). Prices live in Whop and must equal our snapshot. */
+  /**
+   * Our plan → Whop plan (`plan_…`), keyed `PLAN_CODE:periodDays` (e.g. `DINAR_GO:30`,
+   * `DINAR_GO:365`); a bare `PLAN_CODE` key is the 30-day plan. Prices live in Whop and must equal
+   * our snapshot. Whop renewal plans must have `initial_price: 0`: an initial price on a renewal
+   * plan is an extra one-time fee on top of the first period (seen in the sandbox checkout).
+   */
   plans: Record<string, string>;
   redirectUrl?: string;
 };
@@ -54,7 +62,7 @@ export function whopConfigFromEnv(env: NodeJS.ProcessEnv = process.env): WhopCon
     return undefined;
   }
   if (!apiKey || !webhookSecret?.startsWith("ws_") || !/^biz_[A-Za-z0-9]+$/.test(accountId ?? "")) return undefined;
-  if (!Object.values(plans).every((plan) => typeof plan === "string" && /^plan_[A-Za-z0-9]+$/.test(plan))) return undefined;
+  if (!Object.entries(plans).every(([key, plan]) => /^DINAR_(GO|PRO|BUSINESS)(:\d{1,3})?$/.test(key) && typeof plan === "string" && /^plan_[A-Za-z0-9]+$/.test(plan))) return undefined;
   return { environment, apiKey, webhookSecret, accountId: accountId!, plans, redirectUrl: env.DINAR_WHOP_REDIRECT_URL };
 }
 
@@ -112,9 +120,25 @@ export function fetchWhopTransport(config: WhopConfig): WhopTransport {
 }
 
 type Money = { amount: string; currency: string; decimals?: number };
-type WhopPayment = { id: string; status: string; billing_reason: string | null; membership_id: string | null; account_id?: string | null; company_id?: string | null; total: Money | null; metadata: Record<string, unknown> | null };
+type WhopPayment = {
+  id: string;
+  status: string;
+  billing_reason: string | null;
+  membership_id: string | null;
+  account_id?: string | null;
+  /** The price before tax: what our snapshot is compared with (tax is Whop's as merchant of record). */
+  subtotal: Money | null;
+  total: Money | null;
+  refunded_amount?: Money | null;
+  metadata: Record<string, unknown> | null;
+};
 type WhopMembership = { id: string; status: string; cancel_at_period_end: boolean; current_period_start: string | null; current_period_end: string | null; metadata: Record<string, unknown> | null };
-type WhopRefund = { id: string; status: string; payment_id: string; amount: Money | null };
+type WhopRefundEvent = { id: string; status: string; payment?: { id?: string } | null; payment_id?: string };
+
+/** The Whop plan for a subscription snapshot: `CODE:days`, or the bare code for a 30-day plan. */
+export function whopPlanFor(plans: Record<string, string>, planCode: string, periodDays: number): string | undefined {
+  return plans[`${planCode}:${periodDays}`] ?? (periodDays === 30 ? plans[planCode] : undefined);
+}
 
 /** Exact major-unit decimal → integer minor units at `scale`; a fraction finer than the scale fails. */
 export function moneyToMinor(money: Money, scale: number): number | undefined {
@@ -151,6 +175,17 @@ export function createWhopAdapter(config: WhopConfig, transport: WhopTransport =
     return response.json as T;
   }
 
+  async function cancelMembershipNow(membershipId: string) {
+    let response;
+    try {
+      response = await transport({ method: "POST", path: `/memberships/${encodeURIComponent(membershipId)}/cancel`, body: { cancel_at_period_end: false }, idempotencyKey: `jassim-refund-cancel-${membershipId}` });
+    } catch {
+      throw new WhopUnavailableError("تعذر إنهاء العضوية في Whop الآن");
+    }
+    // Already canceled at Whop is fine; anything else is retried through Whop's redelivery.
+    if (response.status !== 200 && response.status !== 201 && response.status !== 409 && response.status !== 422) throw new WhopUnavailableError(`Whop ${response.status}`);
+  }
+
   /** One record for events that never reach a subscription (refused, unrelated, informational). */
   async function recordOnly(eventId: string, type: string, digest: string, status: "IGNORED" | "REJECTED", failureCode: string, subscriptionId: string | null = null) {
     const [row] = await db
@@ -164,18 +199,24 @@ export function createWhopAdapter(config: WhopConfig, transport: WhopTransport =
 
   async function subscriptionScale(subscriptionId: string) {
     const [row] = await db
-      .select({ scale: markets.minorUnitScale, userId: businessSubscriptions.userId })
+      .select({ marketScale: markets.minorUnitScale, marketCurrency: markets.currencyCode, currency: businessSubscriptions.currencyCodeSnapshot, userId: businessSubscriptions.userId })
       .from(businessSubscriptions)
       .innerJoin(markets, eq(markets.id, businessSubscriptions.marketId))
       .where(eq(businessSubscriptions.id, subscriptionId));
-    return row;
+    if (!row) return undefined;
+    // The subscription's own price currency decides the scale (USD plans in a KWD market are 2 decimals).
+    const scale = scaleOfCurrency(row.currency, { currencyCode: row.marketCurrency, minorUnitScale: row.marketScale });
+    return scale === undefined ? undefined : { scale, userId: row.userId };
   }
 
   const provider: SubscriptionBillingProvider = {
     providerKey: WHOP_PROVIDER_KEY,
     async createCheckout({ subscriptionId, planId, idempotencyKey }) {
-      const [subscription] = await db.select({ userId: businessSubscriptions.userId, planCode: businessSubscriptions.planCodeSnapshot }).from(businessSubscriptions).where(eq(businessSubscriptions.id, subscriptionId));
-      const whopPlan = subscription?.planCode ? config.plans[subscription.planCode] : undefined;
+      const [subscription] = await db
+        .select({ userId: businessSubscriptions.userId, planCode: businessSubscriptions.planCodeSnapshot, periodDays: businessSubscriptions.periodDaysSnapshot })
+        .from(businessSubscriptions)
+        .where(eq(businessSubscriptions.id, subscriptionId));
+      const whopPlan = subscription?.planCode ? whopPlanFor(config.plans, subscription.planCode, subscription.periodDays) : undefined;
       if (!subscription || !whopPlan) throw Object.assign(new Error("هذه الخطة غير مربوطة بخطة في Whop"), { status: 503, code: "WHOP_PLAN_NOT_MAPPED", expose: true });
       let response;
       try {
@@ -240,16 +281,22 @@ export function createWhopAdapter(config: WhopConfig, transport: WhopTransport =
       if (!owner) return recordOnly(verified.id, type, digest, "REJECTED", "UNKNOWN_SUBSCRIPTION");
       const userId = metadataUser(payment.metadata) ?? "";
       const membershipId = payment.membership_id ?? "unknown";
-      if (type === "payment.failed")
-        return payment.status === "paid"
-          ? recordOnly(verified.id, type, digest, "IGNORED", "PROVIDER_STATE_PAID", subscriptionId)
-          : apply({ id: verified.id, type: "PAYMENT_FAILED", subscriptionId, providerSubscriptionId: membershipId }, userId);
+      if (type === "payment.failed") {
+        if (payment.status === "paid") return recordOnly(verified.id, type, digest, "IGNORED", "PROVIDER_STATE_PAID", subscriptionId);
+        // A declined first payment leaves Whop's checkout open (seen in the sandbox: status "open"):
+        // the buyer may retry with another card on the same page, so the subscription stays PENDING
+        // and activates from that later success. Only a failed renewal moves a live plan to PAST_DUE.
+        if (payment.billing_reason !== "subscription_cycle") return recordOnly(verified.id, type, digest, "IGNORED", "INITIAL_ATTEMPT_FAILED_RETRY_ALLOWED", subscriptionId);
+        return apply({ id: verified.id, type: "PAYMENT_FAILED", subscriptionId, providerSubscriptionId: membershipId }, userId);
+      }
       // `payment.succeeded` is believed only when Whop itself reports the payment as paid now.
       if (payment.status !== "paid") return recordOnly(verified.id, type, digest, "IGNORED", "PROVIDER_STATE_NOT_PAID", subscriptionId);
       if (!payment.membership_id) return recordOnly(verified.id, type, digest, "REJECTED", "NO_MEMBERSHIP", subscriptionId);
       const membership = await get<WhopMembership>(`/memberships/${encodeURIComponent(payment.membership_id)}`);
-      const amountMinor = payment.total ? moneyToMinor(payment.total, owner.scale) : undefined;
-      if (amountMinor === undefined || amountMinor <= 0 || !payment.total) return recordOnly(verified.id, type, digest, "REJECTED", "AMOUNT_MISMATCH", subscriptionId);
+      if (payment.account_id && payment.account_id !== config.accountId) return recordOnly(verified.id, type, digest, "REJECTED", "ACCOUNT_MISMATCH", subscriptionId);
+      // The plan price is compared before tax: Whop adds sales tax/VAT on top as merchant of record.
+      const amountMinor = payment.subtotal ? moneyToMinor(payment.subtotal, owner.scale) : undefined;
+      if (amountMinor === undefined || amountMinor <= 0 || !payment.subtotal) return recordOnly(verified.id, type, digest, "REJECTED", "AMOUNT_MISMATCH", subscriptionId);
       if (!["active", "trialing", "canceling", "completed"].includes(membership.status) || !membership.current_period_start || !membership.current_period_end)
         return recordOnly(verified.id, type, digest, "IGNORED", "MEMBERSHIP_NOT_ACTIVE", subscriptionId);
       const renewal = payment.billing_reason === "subscription_cycle";
@@ -261,7 +308,7 @@ export function createWhopAdapter(config: WhopConfig, transport: WhopTransport =
         periodStart: new Date(membership.current_period_start).toISOString(),
         periodEnd: new Date(membership.current_period_end).toISOString(),
         amountMinor,
-        currencyCode: payment.total.currency.toUpperCase(),
+        currencyCode: payment.subtotal.currency.toUpperCase(),
       };
       const result = await apply(event, userId);
       // Out of order: a cancellation that reached us before the activation is reconciled from
@@ -271,7 +318,7 @@ export function createWhopAdapter(config: WhopConfig, transport: WhopTransport =
       return result;
     }
 
-    if (type === "membership.updated" || type === "membership.activated") {
+    if (type === "membership.updated" || type === "membership.activated" || type === "membership.deactivated") {
       if (!objectId?.startsWith("mem_")) return recordOnly(verified.id, type, digest, "REJECTED", "MALFORMED_BODY");
       const membership = await get<WhopMembership>(`/memberships/${encodeURIComponent(objectId)}`);
       const subscriptionId = metadataSubscription(membership.metadata);
@@ -288,21 +335,30 @@ export function createWhopAdapter(config: WhopConfig, transport: WhopTransport =
     }
 
     if (type === "refund.updated" || type === "refund.created") {
-      if (!objectId) return recordOnly(verified.id, type, digest, "REJECTED", "MALFORMED_BODY");
-      const refund = envelope.data as unknown as WhopRefund;
+      // The body only names the payment; the refunded amount is read from Whop's payment itself.
+      const refund = envelope.data as unknown as WhopRefundEvent;
+      const paymentId = refund.payment?.id ?? refund.payment_id;
+      if (!objectId || !paymentId?.startsWith("pay_")) return recordOnly(verified.id, type, digest, "REJECTED", "MALFORMED_BODY");
       if (refund.status !== "succeeded") return recordOnly(verified.id, type, digest, "IGNORED", "REFUND_NOT_SUCCEEDED");
-      const payment = await get<WhopPayment>(`/payments/${encodeURIComponent(refund.payment_id)}`);
+      const payment = await get<WhopPayment>(`/payments/${encodeURIComponent(paymentId)}`);
       const subscriptionId = metadataSubscription(payment.metadata);
       if (!subscriptionId) return recordOnly(verified.id, type, digest, "IGNORED", "NOT_A_JASSIM_SUBSCRIPTION");
       const owner = await subscriptionScale(subscriptionId);
-      const refunded = refund.amount && owner ? moneyToMinor(refund.amount, owner.scale) : undefined;
-      if (!owner || !refunded || !refund.amount) return recordOnly(verified.id, type, digest, "REJECTED", "AMOUNT_MISMATCH", subscriptionId);
-      // Partial refunds end the entitlement as well (conservative until the owner sets a policy);
-      // the full snapshot amount is what the machine matches, so a partial refund is recorded for review.
-      return apply({ id: verified.id, type: "REFUNDED", subscriptionId, providerSubscriptionId: payment.membership_id ?? "unknown", amountMinor: refunded, currencyCode: refund.amount.currency.toUpperCase() }, metadataUser(payment.metadata) ?? "");
+      const refunded = payment.refunded_amount && owner ? moneyToMinor(payment.refunded_amount, owner.scale) : undefined;
+      const total = payment.total && owner ? moneyToMinor(payment.total, owner.scale) : undefined;
+      const price = payment.subtotal && owner ? moneyToMinor(payment.subtotal, owner.scale) : undefined;
+      if (!owner || !refunded || !total || !price || !payment.subtotal) return recordOnly(verified.id, type, digest, "REJECTED", "AMOUNT_MISMATCH", subscriptionId);
+      // Only a full refund (Whop reports the whole charged total refunded) ends the entitlement; a
+      // partial refund is recorded for the owner's review and changes nothing.
+      if (refunded < total) return recordOnly(verified.id, type, digest, "IGNORED", "PARTIAL_REFUND_FOR_REVIEW", subscriptionId);
+      // Sandbox-verified 2026-11-16: a full refund leaves the Whop membership active and renewing.
+      // End it at Whop first (idempotent); if Whop cannot be reached nothing is recorded and Whop's
+      // retry of this event cancels it later — a refunded buyer is never charged again.
+      if (payment.membership_id) await cancelMembershipNow(payment.membership_id);
+      return apply({ id: verified.id, type: "REFUNDED", subscriptionId, providerSubscriptionId: payment.membership_id ?? "unknown", amountMinor: price, currencyCode: payment.subtotal.currency.toUpperCase() }, metadataUser(payment.metadata) ?? "");
     }
 
-    if (type === "dispute.created" || type === "dispute.updated") {
+    if (type === "dispute.created" || type === "dispute.updated" || type.startsWith("resolution_center_case.")) {
       // A dispute changes no entitlement by itself; it is recorded for the owner's review.
       logger.warn({ event: "whop_dispute", type }, "Whop dispute received for review");
       return recordOnly(verified.id, type, digest, "IGNORED", "DISPUTE_RECORDED_FOR_REVIEW");

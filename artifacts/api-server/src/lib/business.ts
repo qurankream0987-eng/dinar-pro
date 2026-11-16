@@ -14,7 +14,7 @@ import {
   getCommercialBalance,
   lockedAccount,
 } from "./commercial-ledger";
-import { formatMinorAmount } from "./commercial-policy";
+import { formatMinorAmount, scaleOfCurrency } from "./commercial-policy";
 import { assertPromotionsAvailable, commercialProductView, commercialProducts } from "./promotions";
 import { isPromotionSimulationEnabled } from "./promotion-policy";
 import { logger } from "./logger";
@@ -135,7 +135,7 @@ export function subscriptionView(row: SubscriptionRow | undefined, market: Marke
     planCode: planCodeOfSubscription(row),
     businessProfileId: row.businessProfileId ?? null,
     planName: row.planNameSnapshot,
-    priceLabel: formatMinorAmount(row.priceMinorSnapshot, market.minorUnitScale, row.currencyCodeSnapshot),
+    priceLabel: formatMinorAmount(row.priceMinorSnapshot, scaleOfCurrency(row.currencyCodeSnapshot, market) ?? market.minorUnitScale, row.currencyCodeSnapshot),
     periodDays: row.periodDaysSnapshot,
     currentPeriodEnd: row.currentPeriodEnd?.toISOString() ?? null,
     entitlements: row.entitlementsSnapshot,
@@ -178,6 +178,8 @@ export async function reviewBusinessSubscription(input: { actorId: string; marke
   assertPromotionsAvailable();
   const plan = (await businessPlans(input.market)).find((item) => item.id === input.planId);
   if (!plan) throw fail(404, "خطة جاسم بزنس غير متاحة في سوقك", "PRODUCT_DISABLED");
+  // The simulated wallet holds the market currency only; a USD-priced plan is paid through the provider.
+  if (plan.currencyCode !== input.market.currencyCode) throw fail(409, "هذه الخطة تُدفع عبر بوابة الدفع وليس من الرصيد", "PLAN_NOT_WALLET_PAYABLE");
   await assertPlanEligibility({ actorId: input.actorId, market: input.market, planCode: plan.planCode, businessId: input.businessId });
   const balance = await getCommercialBalance(input.actorId, input.market);
   const sufficient = balance.availableMinor >= plan.priceMinor;
@@ -202,6 +204,7 @@ export async function subscribeBusiness(input: { actorId: string; market: Market
   const [plan] = await db.select().from(promotionProducts).where(and(eq(promotionProducts.id, input.planId), eq(promotionProducts.marketId, input.market.id)));
   if (!plan || plan.productType !== "DINAR_BUSINESS" || !(await businessPlans(input.market)).some((item) => item.id === plan.id))
     throw fail(404, "خطة جاسم بزنس غير متاحة في سوقك", "PRODUCT_DISABLED");
+  if (plan.currencyCode !== input.market.currencyCode) throw fail(409, "هذه الخطة تُدفع عبر بوابة الدفع وليس من الرصيد", "PLAN_NOT_WALLET_PAYABLE");
   const planCode = planCodeOfProduct(plan);
   const businessProfileId = await assertPlanEligibility({ actorId: input.actorId, market: input.market, planCode, businessId: input.businessId });
   await settle(input.actorId, input.market.id);

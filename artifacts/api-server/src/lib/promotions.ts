@@ -39,7 +39,7 @@ import {
   type CommercialBalanceView,
   type LedgerPosting,
 } from "./commercial-ledger";
-import { getCommercialPolicy, type CommercialPolicy } from "./commercial-policy";
+import { getCommercialPolicy, scaleOfCurrency, type CommercialPolicy } from "./commercial-policy";
 import { needCoverage } from "./demand-normalization";
 import { logger } from "./logger";
 import { resolveMarket, type marketFor } from "./markets";
@@ -924,7 +924,7 @@ export type CommercialProductView = {
 };
 
 export function commercialProductView(product: ProductRow, market: Market): CommercialProductView {
-  const f = (minor: number) => `${formatMinor(minor, market.minorUnitScale)} ${product.currencyCode}`;
+  const f = (minor: number) => `${formatMinor(minor, scaleOfCurrency(product.currencyCode, market) ?? market.minorUnitScale)} ${product.currencyCode}`;
   const budget = product.chargingMode === "PREPAID_BUDGET";
   return {
     id: product.id,
@@ -971,7 +971,8 @@ export async function commercialProducts(
   return rows.filter(
     (row) =>
       productIsEffective(row) &&
-      row.currencyCode === market.currencyCode &&
+      // A subscription plan may be priced in USD (paid through Whop); everything else is market currency.
+      (row.currencyCode === market.currencyCode || (row.productType === "DINAR_BUSINESS" && !!row.planCode && row.currencyCode === "USD")) &&
       row.productType !== "STANDARD_PROMOTION" &&
       (!allowedAds || row.productType === "DINAR_BUSINESS" || !LISTING_AD_TYPES.has(row.productType) || allowedAds.includes(row.productType)) &&
       (!filter.productTypes || filter.productTypes.includes(row.productType)) &&

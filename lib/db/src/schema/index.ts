@@ -408,9 +408,10 @@ export const promotionProducts = pgTable(
   },
   (t) => [
     index("promotion_products_market_enabled_idx").on(t.marketId, t.enabled),
-    // D1: at most one enabled catalog product per public plan and market (no ambiguous plan price).
-    uniqueIndex("promotion_products_enabled_plan_unique")
-      .on(t.marketId, t.planCode)
+    // D1 + 0067: at most one enabled catalog product per public plan, billing period and market
+    // (monthly and annual coexist; no ambiguous price for one plan and period).
+    uniqueIndex("promotion_products_enabled_plan_period_unique")
+      .on(t.marketId, t.planCode, t.durationDays)
       .where(sql`${t.planCode} IS NOT NULL AND ${t.enabled}`),
     index("promotion_products_market_category_idx").on(t.marketId, t.categoryId),
     check("promotion_products_price_positive_check", sql`${t.priceMinor} > 0`),

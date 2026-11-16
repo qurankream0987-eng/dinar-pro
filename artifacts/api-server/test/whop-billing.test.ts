@@ -13,6 +13,7 @@ import { billingWebhookEvents, businessSubscriptions, db, pool, promotionProduct
 import app from "../src/app";
 import { installWhopBilling, signWhopPayload, moneyToMinor, verifyWhopSignature, type WhopTransport } from "../src/lib/billing/whop";
 import { aiPlanFor } from "../src/lib/business";
+import { unwrapWebhook } from "@whop/sdk/helpers";
 import { requireSafeReplitDevelopmentDatabase } from "./safe-development-database";
 
 requireSafeReplitDevelopmentDatabase("BDINAR_WHOP_BILLING");
@@ -25,6 +26,7 @@ type Money = { amount: string; currency: string; decimals: number };
 const payments = new Map<string, Record<string, unknown>>();
 const memberships = new Map<string, Record<string, unknown>>();
 const checkouts: { body: any; idempotencyKey?: string }[] = [];
+const cancels: { id: string; body: any; idempotencyKey?: string }[] = [];
 let whopDown = false;
 let apiCalls = 0;
 const transport: WhopTransport = async ({ method, path, body, idempotencyKey }) => {
@@ -33,6 +35,14 @@ const transport: WhopTransport = async ({ method, path, body, idempotencyKey }) 
   if (method === "POST" && path === "/checkout_configurations") {
     checkouts.push({ body, idempotencyKey });
     return { status: 201, json: { id: `ch_${checkouts.length}`, purchase_url: `https://whop.com/checkout/ch_${checkouts.length}`, metadata: (body as any).metadata } };
+  }
+  if (method === "POST" && /^\/memberships\/[^/]+\/cancel$/.test(path)) {
+    const mid = decodeURIComponent(path.split("/")[2]!);
+    cancels.push({ id: mid, body, idempotencyKey });
+    const m = memberships.get(mid);
+    if (!m) return { status: 404, json: { error: "not found" } };
+    memberships.set(mid, { ...m, status: "canceled" });
+    return { status: 200, json: memberships.get(mid) };
   }
   const [, kind, id] = path.split("/");
   const store = kind === "payments" ? payments : kind === "memberships" ? memberships : undefined;
@@ -43,7 +53,7 @@ const transport: WhopTransport = async ({ method, path, body, idempotencyKey }) 
 const server = app.listen(0, "127.0.0.1");
 await new Promise<void>((r) => server.once("listening", r));
 const base = `http://127.0.0.1:${(server.address() as { port: number }).port}/api`;
-const uninstall = installWhopBilling({ environment: "sandbox", apiKey: "test-key-not-real", webhookSecret: SECRET, accountId: ACCOUNT, plans: { DINAR_GO: "plan_Go1", DINAR_PRO: "plan_Pro1" } }, transport);
+const uninstall = installWhopBilling({ environment: "sandbox", apiKey: "test-key-not-real", webhookSecret: SECRET, accountId: ACCOUNT, plans: { DINAR_GO: "plan_Go1", "DINAR_GO:365": "plan_GoYear", DINAR_PRO: "plan_Pro1", "DINAR_PRO:365": "plan_ProYear" } }, transport);
 
 let ip = 1;
 async function request(path: string, method = "GET", body?: unknown, cookie = "") {
@@ -74,12 +84,22 @@ async function deliver(type: string, data: Record<string, unknown>, opts: { id?:
   return { id, status: r.status, body: await r.json() };
 }
 const kwd = (amount: string): Money => ({ amount, currency: "kwd", decimals: 3 });
+/** Whop 2026-10-24 payment amounts: the plan price as `subtotal`, tax on top in `total`. */
+function amounts(subtotal: Money, tax = "0") {
+  const scale = subtotal.decimals ?? 2;
+  const add = (a: string, b: string) => ((Math.round(Number(a) * 10 ** scale) + Math.round(Number(b) * 10 ** scale)) / 10 ** scale).toFixed(scale);
+  return { subtotal, total: { ...subtotal, amount: add(subtotal.amount, tax) }, refunded_amount: { ...subtotal, amount: (0).toFixed(scale) } };
+}
+function refundOn(pay: string, amount: string) {
+  const p = payments.get(pay)!;
+  payments.set(pay, { ...p, refunded_amount: { ...(p.total as Money), amount } });
+}
 const day = 86_400_000;
-function paid(subscriptionId: string, userId: string, membershipId: string, opts: { reason?: string; total?: Money; status?: string; start?: number } = {}) {
+function paid(subscriptionId: string, userId: string, membershipId: string, opts: { reason?: string; total?: Money; tax?: string; status?: string; start?: number; periodDays?: number } = {}) {
   const pay = `pay_${randomUUID().replace(/-/g, "").slice(0, 16)}`;
   const start = opts.start ?? Date.now();
-  memberships.set(membershipId, { id: membershipId, status: "active", cancel_at_period_end: false, current_period_start: new Date(start).toISOString(), current_period_end: new Date(start + 30 * day).toISOString(), metadata: { jassim_subscription_id: subscriptionId, jassim_user_id: userId } });
-  payments.set(pay, { id: pay, status: opts.status ?? "paid", billing_reason: opts.reason ?? "subscription_create", membership_id: membershipId, total: opts.total ?? kwd("3.000"), metadata: { jassim_subscription_id: subscriptionId, jassim_user_id: userId } });
+  memberships.set(membershipId, { id: membershipId, status: "active", cancel_at_period_end: false, current_period_start: new Date(start).toISOString(), current_period_end: new Date(start + (opts.periodDays ?? 30) * day).toISOString(), metadata: { jassim_subscription_id: subscriptionId, jassim_user_id: userId } });
+  payments.set(pay, { id: pay, status: opts.status ?? "paid", billing_reason: opts.reason ?? "subscription_create", membership_id: membershipId, account_id: ACCOUNT, ...amounts(opts.total ?? kwd("3.000"), opts.tax), metadata: { jassim_subscription_id: subscriptionId, jassim_user_id: userId } });
   return pay;
 }
 const sub = async (id: string) => (await db.select().from(businessSubscriptions).where(eq(businessSubscriptions.id, id)))[0]!;
@@ -87,6 +107,7 @@ const ledger = async (eventId: string) => db.select().from(billingWebhookEvents)
 
 let goPlan = "";
 let proPlan = "";
+let goYearPlan = "";
 async function checkout(user: { cookie: string }, planId = goPlan) {
   const r = await request("/business/subscription-checkout", "POST", { planId, idempotencyKey: `wh-${randomUUID()}` }, user.cookie);
   assert.equal(r.status, 201, r.raw);
@@ -97,13 +118,14 @@ await test("setup: Jassim Go / Pro catalog products in KW (test configuration, n
   const admin = await account("admin");
   await db.update(users).set({ role: "ADMIN" }).where(eq(users.id, admin.id));
   await db.update(promotionProducts).set({ enabled: false }).where(and(eq(promotionProducts.marketId, "KW"), eq(promotionProducts.productType, "DINAR_BUSINESS")));
-  const create = async (name: string, planCode: string, priceMinor: number, entitlements: string[]) => {
-    const r = await request("/admin/markets/KW/commercial-products", "POST", { name: `${name} ${seq++}${randomUUID().slice(0, 4)}`, productType: "DINAR_BUSINESS", planCode, priceMinor, durationDays: 30, chargingMode: "SUBSCRIPTION", businessEntitlements: entitlements, enabled: true }, admin.cookie);
+  const create = async (name: string, planCode: string, priceMinor: number, entitlements: string[], durationDays = 30) => {
+    const r = await request("/admin/markets/KW/commercial-products", "POST", { name: `${name} ${seq++}${randomUUID().slice(0, 4)}`, productType: "DINAR_BUSINESS", planCode, priceMinor, durationDays, chargingMode: "SUBSCRIPTION", businessEntitlements: entitlements, enabled: true }, admin.cookie);
     assert.equal(r.status, 201, r.raw);
     return r.data.id as string;
   };
   goPlan = await create("Jassim Go", "DINAR_GO", 3_000, ["AI_USAGE_BUSINESS_GO"]);
   proPlan = await create("Jassim Pro", "DINAR_PRO", 6_000, ["AI_USAGE_BUSINESS_PRO"]);
+  goYearPlan = await create("Jassim Go annual", "DINAR_GO", 30_000, ["AI_USAGE_BUSINESS_GO"], 365);
 });
 
 await test("WH-00 verifier matches Whop's documented scheme; money parsing is exact", () => {
@@ -113,6 +135,13 @@ await test("WH-00 verifier matches Whop's documented scheme; money parsing is ex
   assert.deepEqual(verifyWhopSignature(raw, { "webhook-id": "msg_1", "webhook-timestamp": String(now), "webhook-signature": `v1,AAAA v1,${sig}` }, SECRET, now), { ok: true, id: "msg_1" });
   assert.equal(verifyWhopSignature(raw, { "webhook-id": "msg_1", "webhook-timestamp": String(now), "webhook-signature": `v1,${sig}` }, SECRET, now + 301).ok, false, "older than 5 minutes");
   assert.equal(verifyWhopSignature(Buffer.from('{"a":2}'), { "webhook-id": "msg_1", "webhook-timestamp": String(now), "webhook-signature": `v1,${sig}` }, SECRET, now).ok, false, "body changed");
+  // Parity with the official @whop/sdk verifier (unwrapWebhook) on the same bytes and headers.
+  const fresh = Math.floor(Date.now() / 1000);
+  const body = '{"type":"payment.succeeded","data":{"id":"pay_x"}}';
+  const headers = { "webhook-id": "msg_sdk", "webhook-timestamp": String(fresh), "webhook-signature": `v1,${signWhopPayload(SECRET, "msg_sdk", String(fresh), body)}` };
+  assert.deepEqual(unwrapWebhook(body, { headers, key: SECRET }), JSON.parse(body), "the SDK accepts our signature");
+  assert.equal(verifyWhopSignature(Buffer.from(body), headers, SECRET).ok, true);
+  assert.throws(() => unwrapWebhook(body.replace("pay_x", "pay_y"), { headers, key: SECRET }), "the SDK refuses a changed body too");
   assert.equal(moneyToMinor({ amount: "3.000", currency: "kwd" }, 3), 3000);
   assert.equal(moneyToMinor({ amount: "3.5", currency: "kwd" }, 3), 3500);
   assert.equal(moneyToMinor({ amount: "3.0001", currency: "kwd" }, 3), undefined, "finer than the market scale");
@@ -165,13 +194,10 @@ await test("WH-03 failed, pending, renewal, cancellation scheduled, expiry", asy
   assert.equal((await deliver("payment.succeeded", { id: pending })).body.failureCode, "PROVIDER_STATE_NOT_PAID", "the body alone is never believed");
   assert.equal((await sub(id)).status, "PENDING");
   const failed = paid(id, user.id, "mem_A3", { status: "open" });
-  assert.equal((await deliver("payment.failed", { id: failed })).body.outcome, "APPLIED");
-  assert.equal((await sub(id)).status, "PAYMENT_FAILED");
-  // A paid event for the failed row is recorded, never revives it (PAYMENT_FAILED is final in the DB).
-  assert.equal((await deliver("payment.succeeded", { id: paid(id, user.id, "mem_A3") })).body.failureCode, "TERMINAL_STATUS");
-  assert.equal((await sub(id)).status, "PAYMENT_FAILED");
-  // Retry recovery is a new checkout, which a failed one does not block.
-  const retryId = await checkout(user);
+  // Sandbox-observed: a declined first card leaves the Whop checkout open for another card.
+  assert.equal((await deliver("payment.failed", { id: failed })).body.failureCode, "INITIAL_ATTEMPT_FAILED_RETRY_ALLOWED");
+  assert.equal((await sub(id)).status, "PENDING", "a declined first attempt does not close the subscription");
+  const retryId = id;
   const ok = paid(retryId, user.id, "mem_A3");
   assert.equal((await deliver("payment.succeeded", { id: ok })).body.outcome, "APPLIED");
   assert.equal((await sub(retryId)).status, "ACTIVE");
@@ -179,6 +205,15 @@ await test("WH-03 failed, pending, renewal, cancellation scheduled, expiry", asy
   const renewal = paid(retryId, user.id, "mem_A3", { reason: "subscription_cycle", start: periodEnd.getTime() });
   assert.equal((await deliver("payment.succeeded", { id: renewal })).body.outcome, "APPLIED");
   assert.ok((await sub(retryId)).currentPeriodEnd! > periodEnd, "renewal extends the period");
+  // A failed renewal (card 4000…0341 in the sandbox) is PAST_DUE: no access until Whop collects.
+  const renewedEnd = (await sub(retryId)).currentPeriodEnd!;
+  const failedRenewal = paid(retryId, user.id, "mem_A3", { reason: "subscription_cycle", status: "open", start: renewedEnd.getTime() });
+  assert.equal((await deliver("payment.failed", { id: failedRenewal })).body.outcome, "APPLIED");
+  assert.equal((await sub(retryId)).status, "PAST_DUE");
+  assert.equal((await aiPlanFor(user.id, { id: "KW" })).tier, "FREE", "past due grants nothing");
+  const recovered = paid(retryId, user.id, "mem_A3", { reason: "subscription_cycle", start: renewedEnd.getTime() });
+  assert.equal((await deliver("payment.succeeded", { id: recovered })).body.outcome, "APPLIED");
+  assert.equal((await sub(retryId)).status, "ACTIVE", "the recovered renewal restores access");
   memberships.set("mem_A3", { ...memberships.get("mem_A3")!, cancel_at_period_end: true, status: "canceling" });
   assert.equal((await deliver("membership.updated", { id: "mem_A3" })).body.outcome, "APPLIED");
   assert.equal((await sub(retryId)).status, "CANCEL_AT_PERIOD_END");
@@ -189,6 +224,16 @@ await test("WH-03 failed, pending, renewal, cancellation scheduled, expiry", asy
   assert.equal((await aiPlanFor(user.id, { id: "KW" })).tier, "FREE");
 });
 
+await test("WH-03b an abandoned checkout does not lock the buyer out: the same plan reuses it, another plan is refused", async () => {
+  const user = await account("buyer3b");
+  const first = await checkout(user);
+  const again = await request("/business/subscription-checkout", "POST", { planId: goPlan, idempotencyKey: `wh-${randomUUID()}` }, user.cookie);
+  assert.equal(again.status, 201, again.raw);
+  assert.equal(again.data.subscriptionId, first, "the open PENDING subscription is reused, not duplicated");
+  const other = await request("/business/subscription-checkout", "POST", { planId: proPlan, idempotencyKey: `wh-${randomUUID()}` }, user.cookie);
+  assert.equal(other.status, 409);
+});
+
 await test("WH-04 refund ends access; partial refund is recorded for review; dispute changes nothing", async () => {
   const user = await account("buyer4");
   const id = await checkout(user);
@@ -196,10 +241,20 @@ await test("WH-04 refund ends access; partial refund is recorded for review; dis
   await deliver("payment.succeeded", { id: pay });
   assert.equal((await deliver("dispute.created", { id: "dp_1", payment: { id: pay } })).body.failureCode, "DISPUTE_RECORDED_FOR_REVIEW");
   assert.equal((await sub(id)).status, "ACTIVE");
-  assert.equal((await deliver("refund.updated", { id: "rf_p", status: "succeeded", payment_id: pay, amount: kwd("1.000") })).body.failureCode, "AMOUNT_MISMATCH");
+  assert.equal((await deliver("resolution_center_case.created", { id: "rcc_1", payment: { id: pay } })).body.failureCode, "DISPUTE_RECORDED_FOR_REVIEW");
   assert.equal((await sub(id)).status, "ACTIVE");
-  assert.equal((await deliver("refund.updated", { id: "rf_q", status: "pending", payment_id: pay, amount: kwd("3.000") })).body.failureCode, "REFUND_NOT_SUCCEEDED");
-  assert.equal((await deliver("refund.updated", { id: "rf_1", status: "succeeded", payment_id: pay, amount: kwd("3.000") })).body.outcome, "APPLIED");
+  // The body's amount is never believed: a refund of 1.000 claimed as "everything" is read from Whop.
+  refundOn(pay, "1.000");
+  assert.equal((await deliver("refund.updated", { id: "rf_p", status: "succeeded", payment: { id: pay }, amount: 3 })).body.failureCode, "PARTIAL_REFUND_FOR_REVIEW");
+  assert.equal((await sub(id)).status, "ACTIVE");
+  refundOn(pay, "3.000");
+  assert.equal((await deliver("refund.updated", { id: "rf_q", status: "pending", payment: { id: pay } })).body.failureCode, "REFUND_NOT_SUCCEEDED");
+  whopDown = true;
+  assert.equal((await deliver("refund.updated", { id: "rf_1", status: "succeeded", payment: { id: pay } }, { id: "msg_refund_full" })).status, 503, "Whop unreachable: nothing recorded, Whop redelivers");
+  whopDown = false;
+  assert.equal((await sub(id)).status, "ACTIVE");
+  assert.equal((await deliver("refund.updated", { id: "rf_1", status: "succeeded", payment: { id: pay } }, { id: "msg_refund_full" })).body.outcome, "APPLIED");
+  assert.deepEqual(cancels.at(-1), { id: "mem_A4", body: { cancel_at_period_end: false }, idempotencyKey: "jassim-refund-cancel-mem_A4" }, "a full refund ends the Whop membership so it never renews");
   assert.equal((await sub(id)).status, "CANCELLED");
   assert.equal((await aiPlanFor(user.id, { id: "KW" })).tier, "FREE");
 });
@@ -271,6 +326,57 @@ await test("WH-09 upgrade Go → Pro: a new paid subscription, no access before 
   assert.equal(unknown.status, 503, "an id Whop does not know is never applied");
   const foreign = paid(randomUUID(), user.id, "mem_X");
   assert.equal((await deliver("payment.succeeded", { id: foreign })).body.failureCode, "UNKNOWN_SUBSCRIPTION");
+});
+
+await test("WH-10 sandbox-verified shapes: tax on top is accepted on the pre-tax price; annual plan uses its own Whop plan; deactivation ends access", async () => {
+  const user = await account("buyer10");
+  const id = await checkout(user);
+  const taxed = paid(id, user.id, "mem_A10", { tax: "0.248" });
+  assert.equal((await deliver("payment.succeeded", { id: taxed })).body.outcome, "APPLIED", "Whop adds sales tax as merchant of record; our snapshot is the pre-tax price");
+  assert.equal((await aiPlanFor(user.id, { id: "KW" })).tier, "BUSINESS_GO");
+  assert.equal((await deliver("membership.deactivated", { id: "mem_A10" })).body.outcome, "IGNORED", "Whop still reports the membership active: the body is not believed");
+  memberships.set("mem_A10", { ...memberships.get("mem_A10")!, status: "canceled" });
+  assert.equal((await deliver("membership.deactivated", { id: "mem_A10" })).body.outcome, "APPLIED");
+  assert.equal((await sub(id)).status, "EXPIRED");
+  assert.equal((await aiPlanFor(user.id, { id: "KW" })).tier, "FREE");
+
+  const yearly = await account("buyer10y");
+  const yid = await checkout(yearly, goYearPlan);
+  assert.equal(checkouts.at(-1)!.body.variant_id, "plan_GoYear", "the 365-day product maps to the annual Whop plan");
+  assert.equal((await deliver("payment.succeeded", { id: paid(yid, yearly.id, "mem_A10y", { total: kwd("30.000"), periodDays: 365 }) })).body.outcome, "APPLIED");
+  const row = await sub(yid);
+  assert.equal(row.status, "ACTIVE");
+  assert.equal(Math.round((row.currentPeriodEnd!.getTime() - row.currentPeriodStart!.getTime()) / day), 365);
+  assert.equal((await deliver("payment.succeeded", { id: paid(randomUUID(), yearly.id, "mem_Z", { total: kwd("3.000") }) })).body.failureCode, "UNKNOWN_SUBSCRIPTION");
+});
+
+await test("WH-11 plan map without an annual Whop plan refuses the annual checkout (no wrong-price fallback)", async () => {
+  const { whopPlanFor, whopConfigFromEnv } = await import("../src/lib/billing/whop");
+  assert.equal(whopPlanFor({ DINAR_GO: "plan_A" }, "DINAR_GO", 365), undefined);
+  assert.equal(whopPlanFor({ DINAR_GO: "plan_A" }, "DINAR_GO", 30), "plan_A");
+  const env = { DINAR_WHOP_BILLING_ENABLED: "true", WHOP_API_KEY: "k", WHOP_WEBHOOK_SECRET: SECRET, WHOP_ACCOUNT_ID: ACCOUNT };
+  assert.ok(whopConfigFromEnv({ ...env, DINAR_WHOP_PLAN_MAP: '{"DINAR_GO:365":"plan_A"}' }));
+  assert.equal(whopConfigFromEnv({ ...env, DINAR_WHOP_PLAN_MAP: '{"FREE":"plan_A"}' }), undefined);
+  assert.equal(whopConfigFromEnv({ ...env, DINAR_WHOP_ENVIRONMENT: "production", DINAR_WHOP_PLAN_MAP: "{}" }), undefined, "production needs DINAR_LIVE_PROVIDERS_ENABLED");
+});
+
+await test("WH-12 owner-approved USD prices in a KWD market: Pro annual $200 via Whop; never payable from the wallet", async () => {
+  const admin = await account("admin12");
+  await db.update(users).set({ role: "ADMIN" }).where(eq(users.id, admin.id));
+  const created = await request("/admin/markets/KW/commercial-products", "POST", { name: `JassimAI Pro annual ${randomUUID().slice(0, 4)}`, productType: "DINAR_BUSINESS", planCode: "DINAR_PRO", currencyCode: "USD", priceMinor: 20_000, durationDays: 365, chargingMode: "SUBSCRIPTION", businessEntitlements: ["AI_USAGE_BUSINESS_PRO"], enabled: true }, admin.cookie);
+  assert.equal(created.status, 201, created.raw);
+  assert.equal(created.data.priceLabel, "200.00 USD", "USD uses 2 decimals even in a 3-decimal market");
+  const badCurrency = await request("/admin/markets/KW/commercial-products", "POST", { name: `Featured ${randomUUID().slice(0, 4)}`, productType: "FEATURED_LISTING", currencyCode: "USD", priceMinor: 500, durationDays: 7, categoryId: "electronics" }, admin.cookie);
+  assert.equal(badCurrency.status, 400, "only subscription plans may leave the market currency");
+  const user = await account("buyer12");
+  const wallet = await request("/business/subscriptions", "POST", { planId: created.data.id, idempotencyKey: `wh-${randomUUID()}` }, user.cookie);
+  assert.notEqual(wallet.status, 201, "a USD plan is never charged to the simulated KWD wallet");
+  const id = await checkout(user, created.data.id);
+  assert.equal(checkouts.at(-1)!.body.variant_id, "plan_ProYear");
+  const usd = (amount: string): Money => ({ amount, currency: "usd", decimals: 2 });
+  assert.equal((await deliver("payment.succeeded", { id: paid(id, user.id, "mem_A12", { total: usd("199.99"), periodDays: 365 }) })).body.failureCode, "AMOUNT_MISMATCH");
+  assert.equal((await deliver("payment.succeeded", { id: paid(id, user.id, "mem_A12", { total: usd("200.00"), tax: "16.50", periodDays: 365 }) })).body.outcome, "APPLIED");
+  assert.equal((await aiPlanFor(user.id, { id: "KW" })).tier, "BUSINESS_PRO");
 });
 
 after(async () => { uninstall(); server.close(); await pool.end(); });
