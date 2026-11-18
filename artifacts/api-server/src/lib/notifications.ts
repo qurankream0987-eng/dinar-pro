@@ -1,9 +1,9 @@
 /**
  * Outbound user notifications (email / SMS / push) through the NOTIFICATIONS provider family.
  *
- * Only decisions the user is owed a reply about are sent: a privacy request, an appeal or a
- * report they filed. Messages carry a template key and ids/status codes only — never free text,
+ * Notifications carry a template key and record ids/status codes only — never free text,
  * contact data, coordinates or secrets; the adapter resolves the recipient from DINAR's user id.
+ * The acceptance Resend adapter is limited to seller inquiry alerts and opted-in new-listing mail.
  *
  * Nothing leaves DINAR until all of these hold: a vendor adapter is added to
  * NOTIFICATION_REGISTRATIONS, the market's country policy selects it
@@ -18,9 +18,11 @@ import { db, markets, users } from "@workspace/db";
 import { logger, serializeSafeError } from "./logger";
 import { providerDeploymentEnvironment, resolveMarketProvider } from "./market-capability-registry";
 import type { AnyProviderRegistration, NotificationChannel, NotificationProvider } from "./provider-boundaries";
+import { resendNotificationRegistration } from "./resend-notifications";
 
 /** Vendor adapters are registered here only after the owner selects and contracts a provider. */
-const NOTIFICATION_REGISTRATIONS: readonly AnyProviderRegistration[] = [];
+const resendRegistration = resendNotificationRegistration();
+const NOTIFICATION_REGISTRATIONS: readonly AnyProviderRegistration[] = resendRegistration ? [resendRegistration] : [];
 
 /** Each field's shape: a DINAR record id or a status code. No phone number, sentence or coordinate fits. */
 const FIELD_SHAPES = {
@@ -34,6 +36,8 @@ export const NOTIFICATION_TEMPLATES = {
   TRUST_APPEAL_UPDATED: { appealId: "ID", status: "STATUS" },
   REPORT_RESOLVED: { reportId: "ID", status: "STATUS" },
   SUPPORT_CASE_UPDATED: { caseId: "ID", status: "STATUS" },
+  BUYER_INTEREST: { inquiryId: "ID" },
+  OFFER_PUBLISHED: { listingId: "ID" },
 } as const satisfies Record<string, Record<string, keyof typeof FIELD_SHAPES>>;
 export type NotificationTemplateKey = keyof typeof NOTIFICATION_TEMPLATES;
 
@@ -59,7 +63,7 @@ function validData(templateKey: NotificationTemplateKey, data: Record<string, st
 }
 
 export async function notifyUser(
-  input: { recipientId: string; templateKey: NotificationTemplateKey; data: Record<string, string> },
+  input: { recipientId: string; templateKey: NotificationTemplateKey; data: Record<string, string>; idempotencyKey?: string },
   deps: { provider?: NotificationProvider; channel?: NotificationChannel } = {},
 ): Promise<NotificationOutcome> {
   const finish = (outcome: NotificationOutcome) => {
@@ -83,7 +87,9 @@ export async function notifyUser(
       provider = environment ? await resolveMarketProvider({ family: "NOTIFICATIONS", market, environment, registrations: NOTIFICATION_REGISTRATIONS }) : undefined;
     }
     if (!provider) return finish({ status: "NOT_CONNECTED" });
-    const sent = await provider.send({ market, recipientId: input.recipientId, channel, templateKey: input.templateKey, data: input.data });
+    const idempotencyKey = input.idempotencyKey
+      ?? `dinar:${input.templateKey}:${input.recipientId}:${Object.values(input.data).join(":")}`;
+    const sent = await provider.send({ market, recipientId: input.recipientId, channel, templateKey: input.templateKey, data: input.data, idempotencyKey: idempotencyKey.slice(0, 256) });
     return finish({ status: "SENT", providerMessageId: sent.providerMessageId });
   } catch (error) {
     const { code } = serializeSafeError(error) as { code?: string };
@@ -94,4 +100,20 @@ export async function notifyUser(
 /** For decision paths: runs after the decision is committed and never throws back into it. */
 export function notifyUserAfterDecision(input: Parameters<typeof notifyUser>[0]): void {
   void notifyUser(input);
+}
+
+export async function notificationProviderAvailableForMarket(market: {
+  marketId: string;
+  countryCode: string;
+  currencyCode: string;
+}) {
+  if (notificationChannel() !== "EMAIL") return false;
+  const environment = providerDeploymentEnvironment();
+  if (!environment) return false;
+  return Boolean(await resolveMarketProvider({
+    family: "NOTIFICATIONS",
+    market,
+    environment,
+    registrations: NOTIFICATION_REGISTRATIONS,
+  }));
 }

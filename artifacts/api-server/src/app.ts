@@ -211,11 +211,18 @@ app.use((req, res, next) => {
     const voiceTranscriptionUpload =
       req.path === "/api/ai/voice-transcription" &&
       ["audio/webm", "audio/mp4", "audio/ogg", "audio/wav"].includes(contentType ?? "");
+    // RFC 8058 unsubscribe POSTs carry a signed token in the URL. The signature is
+    // bound to the account's current email and the route accepts only the one-click body.
+    const emailUnsubscribePost =
+      req.method === "POST" &&
+      req.path === "/api/email/unsubscribe" &&
+      contentType === "application/x-www-form-urlencoded";
     if (
       (origin &&
-        (!normalizedOrigin || !allowedOrigins.has(normalizedOrigin))) ||
-      req.headers["sec-fetch-site"] === "cross-site" ||
-      (!req.is("application/json") && !voiceTranscriptionUpload)
+        (!normalizedOrigin || !allowedOrigins.has(normalizedOrigin)) &&
+        !emailUnsubscribePost) ||
+      (req.headers["sec-fetch-site"] === "cross-site" && !emailUnsubscribePost) ||
+      (!req.is("application/json") && !voiceTranscriptionUpload && !emailUnsubscribePost)
     ) {
       res.status(403).json({ error: "طلب غير مسموح" });
       return;

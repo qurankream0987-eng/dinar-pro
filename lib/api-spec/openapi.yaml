@@ -175,6 +175,148 @@ paths:
           description: Sign-in required
         "403":
           description: The uploaded image does not belong to this user
+  /account/email:
+    get:
+      operationId: getAccountEmail
+      tags: [account]
+      summary: Read the signed-in user's verified email address
+      responses:
+        "200":
+          description: Email address and verification state
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AccountEmailStatus" }
+        "401":
+          description: Sign-in required
+    delete:
+      operationId: removeAccountEmail
+      tags: [account]
+      summary: Remove the signed-in user's email address
+      responses:
+        "200":
+          description: Email removed and email marketing consent withdrawn
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AccountEmailStatus" }
+        "401":
+          description: Sign-in required
+  /account/email/verification:
+    post:
+      operationId: requestAccountEmailVerification
+      tags: [account]
+      summary: Send a one-time verification code to an email address
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/EmailVerificationRequest" }
+      responses:
+        "202":
+          description: Verification code accepted for delivery
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/EmailVerificationChallenge" }
+        "400":
+          description: Invalid email address
+        "401":
+          description: Sign-in required
+        "409":
+          description: Email address is already in use
+        "429":
+          description: Too many verification requests
+        "503":
+          description: Email delivery is not configured
+  /account/email/verification/confirm:
+    post:
+      operationId: confirmAccountEmailVerification
+      tags: [account]
+      summary: Confirm the one-time email verification code
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/EmailVerificationConfirmation" }
+      responses:
+        "200":
+          description: Email address verified
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AccountEmailStatus" }
+        "400":
+          description: Code is invalid, expired, or already used
+        "401":
+          description: Sign-in required
+        "429":
+          description: Too many verification attempts
+  /account/privacy/preferences:
+    get:
+      operationId: getAccountPrivacyPreferences
+      tags: [account]
+      summary: Read the signed-in user's privacy preferences
+      responses:
+        "200":
+          description: Current communication and location preferences
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PrivacyPreferencesView" }
+        "401":
+          description: Sign-in required
+    patch:
+      operationId: updateAccountPrivacyPreferences
+      tags: [account]
+      summary: Update the signed-in user's privacy preferences
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PrivacyPreferencesPatch" }
+      responses:
+        "200":
+          description: Updated communication and location preferences
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PrivacyPreferencesView" }
+        "400":
+          description: Invalid preference values
+        "401":
+          description: Sign-in required
+        "409":
+          description: Verified email is required for marketing email consent
+  /email/unsubscribe:
+    get:
+      operationId: openEmailUnsubscribe
+      tags: [account]
+      summary: Open the email-unsubscribe confirmation page
+      parameters:
+        - in: query
+          name: token
+          required: true
+          schema: { type: string, minLength: 60, maxLength: 256 }
+      responses:
+        "200":
+          description: Unsubscribe confirmation page
+          content:
+            text/html:
+              schema: { type: string }
+        "400":
+          description: Invalid or expired link
+    post:
+      operationId: unsubscribeFromMarketingEmail
+      tags: [account]
+      summary: Unsubscribe from marketing email
+      parameters:
+        - in: query
+          name: token
+          required: true
+          schema: { type: string, minLength: 60, maxLength: 256 }
+      responses:
+        "200":
+          description: Marketing email consent withdrawn
+          content:
+            text/html:
+              schema: { type: string }
+        "400":
+          description: Invalid or expired link
   /account/listing-photos/upload-url:
     post:
       operationId: requestListingPhotoUpload
@@ -5890,7 +6032,9 @@ components:
                 status, incoming message, list, notice), rebuilt from the inquiry authority on every
                 read. Messages carry their author role and provenance (BUYER_AUTHORED,
                 SELLER_AUTHORED, DINAR_DRAFT_APPROVED) and per-message submitted/delivered/read
-                times; delivery is in-app only and external notifications are NOT_CONFIGURED.
+                times. A verified seller may receive a staging-only email alert for a new inquiry;
+                the alert omits buyer contact details and message content. Delivery status is shown
+                separately from the in-app conversation.
                 Never contains phone numbers, addresses or the other party's account id.
             control:
               type: object
@@ -6599,6 +6743,84 @@ components:
         summary: { type: string, minLength: 3, maxLength: 1200 }
         reference: { type: string, minLength: 3, maxLength: 200, pattern: '^[A-Za-z][A-Za-z0-9._:/-]{2,199}$' }
         severity: { type: string, enum: [LOW, MEDIUM, HIGH, CRITICAL] }
+
+    AccountEmailStatus:
+      type: object
+      required: [email, verifiedAt]
+      additionalProperties: false
+      properties:
+        email: { type: ["string", "null"], format: email }
+        verifiedAt: { type: ["string", "null"], format: date-time }
+    EmailVerificationRequest:
+      type: object
+      required: [email]
+      additionalProperties: false
+      properties:
+        email: { type: string, format: email, maxLength: 320 }
+    EmailVerificationChallenge:
+      type: object
+      required: [challengeId, expiresAt]
+      additionalProperties: false
+      properties:
+        challengeId: { type: string, format: uuid }
+        expiresAt: { type: string, format: date-time }
+    EmailVerificationConfirmation:
+      type: object
+      required: [challengeId, code]
+      additionalProperties: false
+      properties:
+        challengeId: { type: string, format: uuid }
+        code: { type: string, pattern: "^[0-9]{6}$" }
+    PrivacyPreferencesPatch:
+      type: object
+      additionalProperties: false
+      properties:
+        expectedVersion: { type: integer, minimum: 0 }
+        marketing:
+          type: object
+          additionalProperties: false
+          properties:
+            inApp: { type: boolean }
+            email: { type: boolean }
+            sms: { type: boolean }
+            push: { type: boolean }
+        deviceLocationSharing: { type: string, enum: [ASK_EACH_TIME, DISABLED] }
+    PrivacyPreferencesView:
+      type: object
+      required: [version, communications, location, deliveryChannelsConnected]
+      properties:
+        version: { type: integer }
+        communications:
+          type: object
+          required: [transactional, marketing]
+          properties:
+            transactional:
+              type: object
+              required: [inApp, editable]
+              properties:
+                inApp: { type: boolean }
+                editable: { type: boolean }
+            marketing:
+              type: object
+              required: [inApp, email, sms, push]
+              properties:
+                inApp: { type: boolean }
+                email: { type: boolean }
+                sms: { type: boolean }
+                push: { type: boolean }
+        location:
+          type: object
+          required: [deviceLocationSharing, note]
+          properties:
+            deviceLocationSharing: { type: string, enum: [ASK_EACH_TIME, DISABLED] }
+            note: { type: string }
+        deliveryChannelsConnected:
+          type: object
+          required: [email, sms, push]
+          properties:
+            email: { type: boolean }
+            sms: { type: boolean }
+            push: { type: boolean }
 
     ConnectUniversalCardsPayload: {"type":"object","properties":{"version":{"type":"number","const":1},"cards":{"maxItems":12,"type":"array","items":{"type":"object","properties":{"version":{"type":"number","const":1},"id":{"type":"string","minLength":1,"maxLength":400},"kind":{"type":"string","enum":["INTERNAL_PRODUCT","INTERNAL_SERVICE","EXTERNAL_PRODUCT","EXTERNAL_SERVICE","DOMAIN_REGISTRATION","COMPARISON","ORDER_STATUS","TRANSACTION_STATUS","CAPABILITY"]},"commerceMode":{"type":"string","enum":["INTERNAL_DINAR","EXTERNAL_REFERRAL","EXTERNAL_AUTHORIZED_ACTION"]},"title":{"type":"string","minLength":1,"maxLength":180},"description":{"type":"string","maxLength":700},"internalResourceId":{"type":"string","minLength":1,"maxLength":200},"providerId":{"type":"string","minLength":1,"maxLength":80},"facts":{"maxItems":20,"type":"array","items":{"type":"object","properties":{"label":{"type":"string","minLength":1,"maxLength":80},"value":{"anyOf":[{"type":"string","maxLength":300},{"type":"null"}]},"source":{"type":"string","enum":["INTERNAL_RECORD","PROVIDER_RECORD","UNKNOWN"]}},"required":["label","value","source"],"additionalProperties":false}},"price":{"anyOf":[{"type":"object","properties":{"amountMinor":{"type":"integer","minimum":0,"maximum":9007199254740991},"currency":{"type":"string","pattern":"^[A-Z]{3}$"},"minorUnitScale":{"type":"integer","minimum":0,"maximum":4}},"required":["amountMinor","currency","minorUnitScale"],"additionalProperties":false},{"type":"null"}]},"availability":{"type":"string","enum":["AVAILABLE","UNAVAILABLE","UNKNOWN"]},"checkedAt":{"anyOf":[{"type":"null"},{"type":"string","format":"date-time"}]},"sourceLabel":{"type":"string","minLength":1,"maxLength":200},"domain":{"type":"object","properties":{"providerId":{"type":"string","minLength":1,"maxLength":80},"providerName":{"type":"string","minLength":1,"maxLength":120},"domain":{"type":"string","minLength":3,"maxLength":253},"availability":{"type":"string","enum":["AVAILABLE","UNAVAILABLE","UNKNOWN"]},"premium":{"type":["boolean","null"]},"registrationPrice":{"anyOf":[{"type":"object","properties":{"amountMinor":{"type":"integer","minimum":0,"maximum":9007199254740991},"currency":{"type":"string","pattern":"^[A-Z]{3}$"},"minorUnitScale":{"type":"integer","minimum":0,"maximum":4}},"required":["amountMinor","currency","minorUnitScale"],"additionalProperties":false},{"type":"null"}]},"renewalPrice":{"anyOf":[{"type":"object","properties":{"amountMinor":{"type":"integer","minimum":0,"maximum":9007199254740991},"currency":{"type":"string","pattern":"^[A-Z]{3}$"},"minorUnitScale":{"type":"integer","minimum":0,"maximum":4}},"required":["amountMinor","currency","minorUnitScale"],"additionalProperties":false},{"type":"null"}]},"source":{"type":"string","minLength":1,"maxLength":200},"lastCheckedAt":{"anyOf":[{"type":"null"},{"type":"string","format":"date-time"}]},"status":{"type":"string","enum":["CHECKED","NOT_CONFIGURED","RATE_LIMITED","TIMEOUT","UNAVAILABLE","UNAUTHORIZED","INVALID_RESPONSE"]},"providerMode":{"type":"string","enum":["SANDBOX","LIVE","NOT_CONNECTED"]},"retryAfterSeconds":{"type":"integer","minimum":1,"maximum":3600},"reason":{"type":"string","maxLength":100},"action":{"type":"object","properties":{"kind":{"type":"string","const":"EXTERNAL_LINK"},"providerId":{"type":"string","minLength":1,"maxLength":80},"targetId":{"type":"string","minLength":1,"maxLength":400},"intent":{"type":"string","enum":["SEARCH_ON_PROVIDER","VIEW_ON_PROVIDER"]},"label":{"type":"string","minLength":1,"maxLength":100}},"required":["kind","providerId","targetId","intent","label"],"additionalProperties":false},"affiliateRelationship":{"type":"boolean","const":false}},"required":["providerId","providerName","domain","availability","premium","registrationPrice","renewalPrice","source","lastCheckedAt","status","providerMode","action","affiliateRelationship"],"additionalProperties":false},"externalActions":{"maxItems":3,"type":"array","items":{"type":"object","properties":{"kind":{"type":"string","const":"EXTERNAL_LINK"},"providerId":{"type":"string","minLength":1,"maxLength":80},"targetId":{"type":"string","minLength":1,"maxLength":400},"intent":{"type":"string","enum":["SEARCH_ON_PROVIDER","VIEW_ON_PROVIDER"]},"label":{"type":"string","minLength":1,"maxLength":100}},"required":["kind","providerId","targetId","intent","label"],"additionalProperties":false}},"disclosure":{"type":"string","minLength":1,"maxLength":500},"authorizedCapabilityId":{"type":"string","minLength":1,"maxLength":128}},"required":["version","id","kind","commerceMode","title","facts","price","availability","checkedAt","sourceLabel","externalActions"],"additionalProperties":false}},"note":{"type":"string","maxLength":700},"comparisonNote":{"type":"string","maxLength":700}},"required":["version","cards","note"],"additionalProperties":false}
     ConnectOutboundInput: {"type":"object","properties":{"resultSetId":{"type":"string","format":"uuid","pattern":"^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"},"cardId":{"type":"string","minLength":1,"maxLength":400},"trackingConsent":{"default":false,"type":"boolean"},"expectedAgreementId":{"type":"string","format":"uuid","pattern":"^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"},"expectedTermsDigest":{"type":"string","pattern":"^[a-f0-9]{64}$"},"expectedPrivacyPolicyVersion":{"type":"string","minLength":1,"maxLength":80}},"required":["resultSetId","cardId","trackingConsent"],"additionalProperties":false}

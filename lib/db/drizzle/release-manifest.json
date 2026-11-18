@@ -266,5 +266,9 @@
   {
     "tag": "0066_order_handover_closure",
     "sha256": "36326b1cf84ce67f785eaf3c744dc1af0049c2c926ec4e012ed669ee2f40917f"
+  },
+  {
+    "tag": "0067_curved_titania",
+    "sha256": "910cbbccbdb09815927a574b19462553b1d100df0d988bb036a7c1c06cb0e277"
   }
 ]

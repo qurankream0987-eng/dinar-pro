@@ -115,6 +115,8 @@ export const users = pgTable("users", {
   locale: text("locale").default("ar").notNull(),
   timeZone: text("time_zone").default("UTC").notNull(),
   phoneVerified: boolean("phone_verified").default(false).notNull(),
+  email: text("email"),
+  emailVerifiedAt: timestamp("email_verified_at", { withTimezone: true }),
   status: text("status").default("ACTIVE").notNull(),
   statusChangedAt: timestamp("status_changed_at", { withTimezone: true }),
   deactivatedAt: timestamp("deactivated_at", { withTimezone: true }),
@@ -125,11 +127,65 @@ export const users = pgTable("users", {
     sql`${t.status} IN ('ACTIVE', 'RESTRICTED', 'SUSPENDED', 'DEACTIVATED')`,
   ),
   check("users_role_valid", sql`${t.role} IN ('USER', 'ADMIN')`),
+  uniqueIndex("users_email_unique").on(t.email).where(sql`${t.email} IS NOT NULL`),
+  check("users_email_length", sql`${t.email} IS NULL OR char_length(${t.email}) BETWEEN 3 AND 320`),
+  check("users_email_verification_consistent", sql`(${t.email} IS NULL) = (${t.emailVerifiedAt} IS NULL)`),
   check(
     "users_deactivation_consistent",
     sql`(${t.status} = 'DEACTIVATED') = (${t.deactivatedAt} IS NOT NULL)`,
   ),
 ]);
+
+/** Email ownership is proved by a short-lived, single-use code before an address is saved. */
+export const emailVerificationChallenges = pgTable(
+  "email_verification_challenges",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    email: text("email").notNull(),
+    codeDigest: text("code_digest").notNull(),
+    failedAttempts: integer("failed_attempts").default(0).notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    consumedAt: timestamp("consumed_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    uniqueIndex("email_verification_challenges_one_open_user").on(t.userId).where(sql`${t.consumedAt} IS NULL`),
+    uniqueIndex("email_verification_challenges_one_open_email").on(t.email).where(sql`${t.consumedAt} IS NULL`),
+    index("email_verification_challenges_email_created_idx").on(t.email, t.createdAt),
+    check("email_verification_challenges_email_length", sql`char_length(${t.email}) BETWEEN 3 AND 320`),
+    check("email_verification_challenges_digest_shape", sql`${t.codeDigest} ~ '^[a-f0-9]{64}$'`),
+    check("email_verification_challenges_attempts_valid", sql`${t.failedAttempts} BETWEEN 0 AND 5`),
+  ],
+);
+
+/** Persistent, deduplicated email delivery work; recipient addresses are resolved at send time. */
+export const notificationEmailJobs = pgTable(
+  "notification_email_jobs",
+  {
+    id: text("id").primaryKey(),
+    recipientId: text("recipient_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    templateKey: text("template_key").notNull(),
+    data: jsonb("data").$type<Record<string, string>>().notNull(),
+    idempotencyKey: text("idempotency_key").notNull().unique(),
+    status: text("status").default("PENDING").notNull(),
+    attemptCount: integer("attempt_count").default(0).notNull(),
+    nextAttemptAt: timestamp("next_attempt_at", { withTimezone: true }).defaultNow().notNull(),
+    leaseExpiresAt: timestamp("lease_expires_at", { withTimezone: true }),
+    lastErrorCode: text("last_error_code"),
+    providerMessageId: text("provider_message_id"),
+    sentAt: timestamp("sent_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    index("notification_email_jobs_pending_idx").on(t.status, t.nextAttemptAt, t.createdAt),
+    index("notification_email_jobs_recipient_idx").on(t.recipientId, t.createdAt),
+    check("notification_email_jobs_template_valid", sql`${t.templateKey} IN ('BUYER_INTEREST', 'OFFER_PUBLISHED')`),
+    check("notification_email_jobs_status_valid", sql`${t.status} IN ('PENDING', 'PROCESSING', 'SENT', 'CANCELLED', 'FAILED')`),
+    check("notification_email_jobs_attempts_valid", sql`${t.attemptCount} BETWEEN 0 AND 5`),
+  ],
+);
+
 export const marketplaceCategories = pgTable(
   "marketplace_categories",
   {

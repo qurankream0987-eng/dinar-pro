@@ -1,6 +1,7 @@
 import connect from "./connect";
 import { Router, type IRouter } from "express";
 import auth from "../lib/auth";
+import email from "./email";
 import marketplace from "./marketplace";
 import profileAvatar from "./profile-avatar";
 import listingPhotos from "./listing-photos";
@@ -34,6 +35,7 @@ router.use(adminDisputes);
 router.use(adminDrivers);
 router.use(categories);
 router.use(auth);
+router.use(email);
 // Cash attestations live beside orders and must mount before the marketplace router, whose
 // generic POST /orders/:id/:action would otherwise swallow /orders/:id/cash-refunds.
 router.use(cash);

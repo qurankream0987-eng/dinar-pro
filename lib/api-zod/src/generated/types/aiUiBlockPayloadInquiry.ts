@@ -7,6 +7,6 @@
  */
 
 /**
- * DINAR NEXT G2 buyer–seller inquiry view for one of its two parties (draft review, status, incoming message, list, notice), rebuilt from the inquiry authority on every read. Messages carry their author role and provenance (BUYER_AUTHORED, SELLER_AUTHORED, DINAR_DRAFT_APPROVED) and per-message submitted/delivered/read times; delivery is in-app only and external notifications are NOT_CONFIGURED. Never contains phone numbers, addresses or the other party's account id.
+ * DINAR NEXT G2 buyer–seller inquiry view for one of its two parties (draft review, status, incoming message, list, notice), rebuilt from the inquiry authority on every read. Messages carry their author role and provenance (BUYER_AUTHORED, SELLER_AUTHORED, DINAR_DRAFT_APPROVED) and per-message submitted/delivered/read times. A verified seller may receive a staging-only email alert for a new inquiry; the alert omits buyer contact details and message content. Delivery status is shown separately from the in-app conversation. Never contains phone numbers, addresses or the other party's account id.
  */
 export type AiUiBlockPayloadInquiry = { [key: string]: unknown };

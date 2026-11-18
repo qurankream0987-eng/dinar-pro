@@ -322,8 +322,23 @@ export const PreferencesPatch = z
   .strict();
 
 /** Applies a preference change; each changed consent appends to the ledger. Stale versions conflict. */
-export async function updatePrivacyPreferences(userId: string, patch: z.infer<typeof PreferencesPatch>, source: "API" | "CONVERSATION", policyVersion?: string) {
-  return db.transaction(async (tx) => {
+export async function updatePrivacyPreferences(
+  userId: string,
+  patch: z.infer<typeof PreferencesPatch>,
+  source: "API" | "CONVERSATION",
+  policyVersion?: string,
+  txOverride?: Tx,
+) {
+  const apply = async (tx: Tx) => {
+    if (patch.marketing?.email === true) {
+      const [account] = await tx
+        .select({ email: users.email, verifiedAt: users.emailVerifiedAt })
+        .from(users)
+        .where(eq(users.id, userId))
+        .for("update");
+      if (!account?.email || !account.verifiedAt)
+        throw fail(409, "تحقق من بريدك الإلكتروني قبل الموافقة على رسائل العروض.", "VERIFIED_EMAIL_REQUIRED");
+    }
     await tx.insert(userPrivacyPreferences).values({ userId, version: 0 }).onConflictDoNothing();
     const [current] = await tx.select().from(userPrivacyPreferences).where(eq(userPrivacyPreferences.userId, userId)).for("update");
     if (patch.expectedVersion !== undefined && patch.expectedVersion !== current!.version) throw fail(409, "تغيرت تفضيلاتك منذ آخر عرض؛ راجعها مجددًا.", "STALE_PREFERENCES");
@@ -349,7 +364,8 @@ export async function updatePrivacyPreferences(userId: string, patch: z.infer<ty
       .returning();
     await tx.insert(privacyConsentEvents).values(changes.map(([consentKey, granted]) => ({ id: randomUUID(), userId, consentKey, granted, source, policyVersion: policyVersion ?? null, createdAt: now })));
     return { ...preferencesView(updated), changed: changes.map(([key]) => key) };
-  });
+  };
+  return txOverride ? apply(txOverride) : db.transaction(apply);
 }
 
 /** Server-side gate for device coordinates: the user's own setting, never a client claim. */
@@ -410,6 +426,8 @@ export async function personalDataSummary(userId: string) {
       displayName: user.displayName,
       phone: `${user.phoneCountryCode} ${user.phoneNumber}`,
       phoneVerified: user.phoneVerified,
+      email: user.email,
+      emailVerifiedAt: user.emailVerifiedAt?.toISOString() ?? null,
       accountCountry: user.accountCountry,
       activeMarketId: user.activeMarketId,
       city: user.city,

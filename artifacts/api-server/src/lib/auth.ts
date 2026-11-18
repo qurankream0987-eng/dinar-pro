@@ -111,7 +111,7 @@ export function normalizePhone(prefix: unknown, number: unknown) {
   return { normalizedPhone: parsed.number, phoneNumber: parsed.nationalNumber, phoneCountryCode: `+${parsed.countryCallingCode}` };
 }
 export const safeUser = (u: typeof users.$inferSelect) => {
-  const { passwordHash, ...safe } = u;
+  const { passwordHash, email: _email, emailVerifiedAt: _emailVerifiedAt, ...safe } = u;
   return safe;
 };
 declare global {
