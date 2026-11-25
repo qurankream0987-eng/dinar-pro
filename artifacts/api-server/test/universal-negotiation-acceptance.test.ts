@@ -318,7 +318,7 @@ await acceptance("U-07", "seller accepts the buyer's proposal on a FIXED listing
   const placed = await order(buyer, L.fixed!);
   assert.equal(placed.status, 201, placed.raw);
   const [row] = await db.select().from(orders).where(eq(orders.id, placed.data.id));
-  assert.deepEqual([row!.unitPriceMinor, row!.subtotalMinor, row!.platformFeeMinor, row!.sellerAmountMinor], [85_000, 85_000, 8_500, 76_500]);
+  assert.deepEqual([row!.unitPriceMinor, row!.subtotalMinor, row!.platformFeeMinor, row!.sellerAmountMinor], [85_000, 85_000, 4_250, 80_750]);
   agreedOrderId = row!.id;
   assert.equal((await offerOf(L.fixed!)).unitPriceMinor, 100_000);
 });

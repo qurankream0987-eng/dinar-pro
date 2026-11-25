@@ -260,7 +260,7 @@ await test("G3-05 commerce boundaries: price offers, contact privacy, market iso
   assert.match((await say(go, conv, "أرسل")).body, /أرسلت الرسالة نفسها من قبل/u);
   assert.ok((await db.select().from(paymentIntents)).every((row) => row.mode === "SIMULATION_ONLY"));
   assert.ok((await db.select().from(businessSubscriptions)).every((row) => row.autoRenew === false));
-  assert.equal(PLATFORM_FEE_BASIS_POINTS, 1_000);
+  assert.equal(PLATFORM_FEE_BASIS_POINTS, 500); // owner decision 2026-11-25: 5%
 });
 
 await test("CF-7/8/9 seller statistics: explicit period, separated money figures, comparison, top products, actor scope", async () => {
@@ -273,7 +273,7 @@ await test("CF-7/8/9 seller statistics: explicit period, separated money figures
   assert.deepEqual([metric("orders").raw, metric("completed").raw], [3, 3]);
   assert.equal(metric("gross").raw, 3 * 10_000 + 2 * 10_000 + 3_000);
   assert.equal(metric("paid").raw, 0, "cash orders are never shown as money received");
-  assert.equal(metric("recognized").raw, Math.round((53_000 * (10_000 - PLATFORM_FEE_BASIS_POINTS)) / 10_000), "net after the unchanged 10% commission");
+  assert.equal(metric("recognized").raw, Math.round((53_000 * (10_000 - PLATFORM_FEE_BASIS_POINTS)) / 10_000), "net after the 5% commission");
   assert.match(stats.body, /لا يسجّل جاسم استلام مالها/u);
   assert.match((await say(seller, conv, "كم بعت هذا الشهر؟")).body, /هذا الشهر \(\d{4}-\d{2}-01/u);
   const compare = payloadOf(await say(seller, conv, "قارن مبيعات الشهر الحالي بالشهر السابق")).sellerInsight;

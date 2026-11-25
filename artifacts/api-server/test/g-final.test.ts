@@ -477,7 +477,7 @@ await journey("J03", "provider store: push → same Listing/search/detail/order/
   const order = await request("/orders", "POST", { listingId: L.provider, quantity: 1, fulfilmentType: "DELIVERY", idempotencyKey: `gf-${randomUUID()}` }, buyerA.cookie);
   assert.equal(order.status, 201, order.raw);
   const [stored] = await db.select().from(orders).where(eq(orders.id, order.data.id));
-  assert.deepEqual([stored!.sellerId, stored!.unitPriceMinor, stored!.data.commissionRateBps], [providerOwner.id, 14000, 1000], "provider source does not alter commission");
+  assert.deepEqual([stored!.sellerId, stored!.unitPriceMinor, stored!.data.commissionRateBps], [providerOwner.id, 14000, 500], "provider source does not alter commission");
   // Same promotion system (Block E), never from the provider.
   const forgedSponsor = await providerApi(K.main!, "/listings/lamp-1", "PUT", providerItem({ sponsored: true }));
   rejected("fakeSponsored", forgedSponsor, [400], "provider sponsored=true");
@@ -522,7 +522,7 @@ await journey("J04", "buyer: «أبي تلفون بحدود 300 والبطاري
 // ─── 5. Negotiation ──────────────────────────────────────────────────────────
 
 let negotiatedOrder = "";
-await journey("J05", "negotiation: 10 → offer 7 → counter 8 → «موافق» → order at 8; public 10; 1000 bps", async () => {
+await journey("J05", "negotiation: 10 → offer 7 → counter 8 → «موافق» → order at 8; public 10; 500 bps", async () => {
   const seller = await register("Negotiation seller");
   L.bag = await publish(seller, `حقيبة ${TOKEN}`, "10", { negotiable: true });
   const conv = await conversation(buyerA);
@@ -557,7 +557,7 @@ await journey("J05", "negotiation: 10 → offer 7 → counter 8 → «موافق
   await say(buyerA, "وصله لي", conv);
   assert.match((await say(buyerA, "نعم", conv)).body, /تم إنشاء الطلب/);
   const [order] = (await db.select({ order: orders }).from(orders).innerJoin(orderItems, eq(orderItems.orderId, orders.id)).where(and(eq(orders.buyerId, buyerA.id), eq(orderItems.offerId, L.bag)))).map((row) => row.order);
-  assert.deepEqual([order!.unitPriceMinor, order!.data.commissionRateBps, order!.platformFeeMinor, order!.sellerAmountMinor], [8000, 1000, 800, 7200]);
+  assert.deepEqual([order!.unitPriceMinor, order!.data.commissionRateBps, order!.platformFeeMinor, order!.sellerAmountMinor], [8000, 500, 400, 7600]);
   assert.equal((await offerOf(L.bag)).unitPriceMinor, 10000, "public price preserved");
   negotiatedOrder = order!.id;
   // Canonical payment: TEST_NO_TRANSFER / simulation only; never «paid».
@@ -1042,7 +1042,7 @@ async function summarize() {
   const all = (await db.select().from(orders)).filter((order) => runBuyers.has(order.buyerId));
   assert.ok(all.length >= 3, `orders created in this run: ${all.length}`);
   const commission = [...new Set(all.map((order) => order.data.commissionRateBps))];
-  assert.deepEqual(commission, [1000]);
+  assert.deepEqual(commission, [500]);
   const moneyMoved = (await db.select().from(paymentIntents)).filter((intent) => intent.capturedAmountMinor > 0 && intent.mode !== "SIMULATION_ONLY").length;
   // No reply claims success the database does not hold.
   const paidClaims = bodies.filter((body) => /(?:تم الدفع|تم دفع الطلب|الطلب مدفوع)(?!\s*؟)/.test(body) && !/لم/.test(body)).length;

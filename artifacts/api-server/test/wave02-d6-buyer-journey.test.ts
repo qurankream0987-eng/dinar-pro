@@ -323,7 +323,7 @@ await test("W02-D6: cart review, server-authoritative checkout and replay-safe p
     assert.equal(order.sellerId, sellerA.id);
     assert.equal(order.status, "CREATED");
     assert.equal(order.data.paymentMode, "TEST_NO_TRANSFER");
-    assert.equal(order.data.commissionRateBps, 1000);
+    assert.equal(order.data.commissionRateBps, 500); // 5% (owner decision 2026-11-25)
     const orderListingIds = await orderListings(order.id);
     assert.equal(orderListingIds.length, 1, "each order header represents one price group");
     const [listingId] = orderListingIds;
@@ -334,7 +334,7 @@ await test("W02-D6: cart review, server-authoritative checkout and replay-safe p
     assert.equal(order.quantity, 1);
     assert.equal(order.subtotalMinor, expectedPrice);
     assert.equal(order.subtotalMinor, order.quantity * order.unitPriceMinor);
-    assert.equal(order.platformFeeMinor, Math.round(order.subtotalMinor * 0.1));
+    assert.equal(order.platformFeeMinor, Math.round(order.subtotalMinor * 0.05));
     assert.equal(order.sellerAmountMinor, order.subtotalMinor - order.platformFeeMinor);
     assert.equal((await db.select().from(paymentIntents).where(eq(paymentIntents.orderId, order.id))).length, 0, "nothing is paid");
   }

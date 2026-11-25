@@ -107,7 +107,9 @@ await test("N-01 a notification carries a template, ids and status codes only; t
   assert.deepEqual(outcome, { status: "SENT", providerMessageId: "mock-1" });
   assert.equal(provider.sent.length, 1);
   const [sent] = provider.sent;
-  assert.deepEqual(Object.keys(sent!).sort(), ["channel", "data", "market", "recipientId", "templateKey"]);
+  // The Resend merge adds a provider idempotency key derived from the template and ids only (no free text).
+  assert.deepEqual(Object.keys(sent!).sort(), ["channel", "data", "idempotencyKey", "market", "recipientId", "templateKey"]);
+  assert.match(String(sent!.idempotencyKey), /^dinar:PRIVACY_REQUEST_UPDATED:[0-9a-f-]+:[0-9a-f-]+:COMPLETED$/);
   assert.equal(sent!.recipientId, user.id, "a DINAR id, never a phone number or address");
   assert.deepEqual(sent!.market, { marketId: "JO", countryCode: "JO", currencyCode: "JOD" });
   assert.deepEqual(sent!.data, { requestId, status: "COMPLETED" });

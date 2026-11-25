@@ -99,7 +99,7 @@ try {
     await visitor.getByTestId(`link-policy-${key}`).waitFor();
   await visitor.getByTestId("link-policy-fees").click();
   await visitor.getByTestId("policy-fees").waitFor();
-  assert.match(await visitor.getByTestId("policy-fees").innerText(), /10%/); // approved commission (PLATFORM_FEE_BASIS_POINTS = 1000)
+  assert.match(await visitor.getByTestId("policy-fees").innerText(), /5%/); // approved commission (PLATFORM_FEE_BASIS_POINTS = 500, owner decision 2026-11-25)
   await visitor.getByTestId("badge-legal-review").waitFor();
   // /terms is the terms document itself (public, required for Google OAuth verification).
   await visitor.goto("/terms");

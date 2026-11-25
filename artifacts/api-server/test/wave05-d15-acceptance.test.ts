@@ -252,10 +252,10 @@ test("A15-02 COMMERCE — publish, discover, order, hand off, confirm, and a sel
   const created = await request("/orders", "POST", body, buyer);
   assert.equal(created.status, 201, created.text);
   orderId = created.data.id;
-  // JOD has three minor digits: 45.750 x 2 = 91.500, 10% fee = 9.150.
+  // JOD has three minor digits: 45.750 x 2 = 91.500, 5% fee = 4.575 (owner decision 2026-11-25).
   assert.equal(created.data.subtotalMinor, 91_500);
-  assert.equal(created.data.platformFeeMinor, 9_150);
-  assert.equal(created.data.sellerAmountMinor, 82_350);
+  assert.equal(created.data.platformFeeMinor, 4_575);
+  assert.equal(created.data.sellerAmountMinor, 86_925);
   assert.equal(created.data.paymentMode, "TEST_NO_TRANSFER");
 
   const duplicate = await request("/orders", "POST", body, buyer);
@@ -275,7 +275,7 @@ test("A15-02 COMMERCE — publish, discover, order, hand off, confirm, and a sel
 
   const dues = await db.select().from(sellerDues).where(eq(sellerDues.orderId, orderId));
   assert.equal(dues.length, 1);
-  assert.equal(dues[0]!.amountMinor, 9_150);
+  assert.equal(dues[0]!.amountMinor, 4_575);
   const sellerView = await request("/seller-dues", "GET", undefined, seller);
   assert.ok((sellerView.data as Array<{ orderId: string }>).some((due) => due.orderId === orderId));
   const buyerView = await request("/seller-dues", "GET", undefined, buyer);
@@ -284,7 +284,7 @@ test("A15-02 COMMERCE — publish, discover, order, hand off, confirm, and a sel
   // The order rows agree with the API's numbers.
   const [row] = await db.select().from(orders).where(eq(orders.id, orderId));
   assert.equal(row!.subtotalMinor, 91_500);
-  assert.equal(row!.platformFeeMinor, 9_150);
+  assert.equal(row!.platformFeeMinor, 4_575);
   const lines = await db.select().from(orderItems).where(eq(orderItems.orderId, orderId));
   assert.equal(lines.length, 1);
   assert.equal(lines[0]!.offerId, listing.id);

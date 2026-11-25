@@ -1081,9 +1081,9 @@ try {
   assert.equal(completedOrderResponse.status(), 200);
   const completedOrder = await completedOrderResponse.json();
   assert.equal(completedOrder.status, "COMPLETED");
-  assert.equal(completedOrder.commissionRateBps, 1_000, "the approved 10% commission is unchanged");
+  assert.equal(completedOrder.commissionRateBps, 500, "the approved 5% commission is unchanged");
   checks.push(
-    "buyer confirms delivery and the completed 1000 bps (10%) order survives reload",
+    "buyer confirms delivery and the completed 500 bps (5%) order survives reload",
   );
 
   context = sellerSession.context;

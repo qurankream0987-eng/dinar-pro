@@ -802,7 +802,7 @@ await acceptance("FINAL-SAME-LISTING", "a seller-published unpriced iPhone is di
   const [completedAgreement] = await db.select().from(negotiations).where(eq(negotiations.id, agreement!.id));
   assert.ok(completedAgreement?.orderId);
   const [order] = await db.select().from(orders).where(eq(orders.id, completedAgreement!.orderId!));
-  assert.deepEqual([order?.unitPriceMinor, order?.subtotalMinor, order?.platformFeeMinor], [320000, 320000, 32000]);
+  assert.deepEqual([order?.unitPriceMinor, order?.subtotalMinor, order?.platformFeeMinor], [320000, 320000, 16000]);
   assert.equal((await offerOf(listingId)).unitPriceMinor, null);
   assert.equal((await offerOf(listingId)).reservedQuantity, 1);
   const orderId = completedAgreement!.orderId!;
@@ -1445,11 +1445,11 @@ await acceptance("G2-31", "forged negotiated price / accepted state are rejected
   L.spareNegotiation = own.id;
 });
 
-await acceptance("G2-32", "canonical 1000 bps commission on the agreed subtotal", async () => {
+await acceptance("G2-32", "canonical 500 bps commission on the agreed subtotal", async () => {
   const [order] = await db.select().from(orders).where(eq(orders.id, negotiatedOrder));
-  assert.equal(order!.data.commissionRateBps, 1000);
-  assert.equal(order!.platformFeeMinor, 800);
-  assert.equal(order!.sellerAmountMinor, 7200);
+  assert.equal(order!.data.commissionRateBps, 500);
+  assert.equal(order!.platformFeeMinor, 400);
+  assert.equal(order!.sellerAmountMinor, 7600);
 });
 
 await acceptance("G2-33", "stale / sold listing: acceptance is rejected", async () => {
@@ -1690,7 +1690,7 @@ await acceptance("G2-36B", "an unpriced open-to-offers listing can receive a bes
     const [order] = await db.select().from(orders).where(eq(orders.id, negotiated!.orderId!));
     assert.deepEqual(
       [order!.unitPriceMinor, order!.subtotalMinor, order!.platformFeeMinor, order!.sellerAmountMinor],
-      [330000, 330000, 33000, 297000],
+      [330000, 330000, 16500, 313500],
     );
     assert.equal((await offerOf(orderListingId)).unitPriceMinor, null, "the public price stays absent");
     assert.equal((await offerOf(orderListingId)).reservedQuantity, 1, "stock is reserved at order confirmation");
@@ -1815,10 +1815,10 @@ await acceptance("G2-36B", "an unpriced open-to-offers listing can receive a bes
     assert.equal(raceOrders.length, 1);
     assert.equal((await db.select().from(orders)).length, ordersBeforeRace + 1, "only the winner contributes an order/commission");
     const winningNegotiatedMinor = raceOrders[0]!.buyerId === carBuyerA.id ? 320000 : 310000;
-    const winningCommissionMinor = Math.round(winningNegotiatedMinor * 0.10);
+    const winningCommissionMinor = Math.round(winningNegotiatedMinor * 0.05);
     assert.deepEqual(
       [raceOrders[0]!.unitPriceMinor, raceOrders[0]!.subtotalMinor, raceOrders[0]!.data.commissionRateBps, raceOrders[0]!.platformFeeMinor, raceOrders[0]!.sellerAmountMinor],
-      [winningNegotiatedMinor, winningNegotiatedMinor, 1000, winningCommissionMinor, winningNegotiatedMinor - winningCommissionMinor],
+      [winningNegotiatedMinor, winningNegotiatedMinor, 500, winningCommissionMinor, winningNegotiatedMinor - winningCommissionMinor],
       "winning commission is calculated from the accepted amount; the losing checkout leaves no commission order",
     );
     assert.equal((await offerOf(carListingId)).reservedQuantity, 1, "the single stock unit is reserved once");

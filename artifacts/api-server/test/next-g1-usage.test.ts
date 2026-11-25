@@ -986,8 +986,8 @@ await test("G1-19 policy contract: higher tiers can never be configured below lo
   assert.deepEqual((await getCommercialPolicy("KW")).aiUsage, DEFAULT_AI_USAGE_POLICY);
 });
 
-await test("G1-20 financial boundaries unchanged: commission 10%, no auto-renew, simulation-only payments", async () => {
-  assert.equal(PLATFORM_FEE_BASIS_POINTS, 1_000);
+await test("G1-20 financial boundaries unchanged: commission 5%, no auto-renew, simulation-only payments", async () => {
+  assert.equal(PLATFORM_FEE_BASIS_POINTS, 500); // owner decision 2026-11-25: 5%
   const rows = await db.select().from(businessSubscriptions).where(eq(businessSubscriptions.status, "ACTIVE"));
   assert.ok(rows.length >= 2 && rows.every((row) => row.autoRenew === false));
   const conv = await db.select().from(conversations).where(eq(conversations.ownerUserId, go.id));

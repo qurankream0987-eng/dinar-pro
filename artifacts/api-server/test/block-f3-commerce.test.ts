@@ -401,8 +401,8 @@ await focused("F3-06", "repeated and concurrent confirmation creates one canonic
   assert.equal(order!.status, "CREATED");
   assert.equal(order!.buyerId, buyer.id);
   assert.equal(order!.sellerId, seller.id);
-  assert.equal(order!.data.commissionRateBps, 1000);
-  assert.equal(order!.platformFeeMinor, Math.round(order!.subtotalMinor * 0.1));
+  assert.equal(order!.data.commissionRateBps, 500); // 5% (owner decision 2026-11-25)
+  assert.equal(order!.platformFeeMinor, Math.round(order!.subtotalMinor * 0.05));
   assert.equal(order!.data.paymentMode, "TEST_NO_TRANSFER");
   const lines = await db.select().from(orderItems).where(eq(orderItems.orderId, orderId));
   assert.equal(lines.length, 1);
@@ -560,7 +560,7 @@ await focused("F3-10", "client claims of payment, price, total, parties or commi
   assert.equal(order!.buyerId, buyer.id);
   assert.equal(order!.sellerId, listing.sellerId);
   assert.equal(order!.unitPriceMinor, listing.unitPriceMinor);
-  assert.equal(order!.data.commissionRateBps, 1000);
+  assert.equal(order!.data.commissionRateBps, 500); // 5% (owner decision 2026-11-25)
   assert.equal(order!.status, "CREATED");
   // The payment authority accepts only the order id; amount and status come from the order.
   const forged = await request("/payments/intents", "POST", { orderId, amountMinor: 1, status: "CAPTURED", paid: true }, buyer.cookie);
