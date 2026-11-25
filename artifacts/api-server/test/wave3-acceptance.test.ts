@@ -224,10 +224,15 @@ await test("private account data never becomes public through listings", async (
       for (const leak of leaks) assert.ok(!results.text.includes(leak), `search leaked ${leak}`);
     }
   });
-  await check("security", "account email is not collected or exposed", async () => {
-    assert.ok(!("email" in sellerRow));
+  await check("security", "a verified account email is never exposed through listings", async () => {
+    // Email is collected only through verification (Resend, owner commit 0510b41); it is private.
+    const privateEmail = `wave3-${runId}@example.test`;
+    await db.update(users).set({ email: privateEmail, emailVerifiedAt: new Date() }).where(eq(users.id, seller.id));
     const detail = await request(`/listings/${plain.id}`, "GET", undefined, actor("BUYER").cookie);
     assert.ok(!/email/i.test(detail.text));
+    assert.ok(!detail.text.includes(privateEmail));
+    const results = await request(`/listings?search=${encodeURIComponent(runId)}`, "GET", undefined, actor("BUYER").cookie);
+    assert.ok(!results.text.includes(privateEmail));
   });
   await check("security", "an intentionally set listing contact is still not public", async () => {
     // Contact consent is stored on the listing, but buyers receive it only through the
@@ -461,7 +466,7 @@ await test("admin moderation hides, blocks bypass, restores and audits", async (
     assert.equal(view.status, 200);
     assert.equal(view.data.listingId, reportedListingId);
     assert.equal(view.data.subtotalMinor, 10000);
-    assert.equal(view.data.platformFeeMinor, 1000);
+    assert.equal(view.data.platformFeeMinor, 500);
   });
   await check("e2e", "admin restores the listing and the audit trail persists", async () => {
     const restored = await request(
@@ -599,18 +604,18 @@ await test("configurable policy rules restrict publication deterministically", a
 });
 
 await test("commission and sponsored disclosures match server authority", async () => {
-  await check("e2e", "fee disclosure equals the authoritative 1000 bps snapshot", async () => {
+  await check("e2e", "fee disclosure equals the authoritative 500 bps snapshot", async () => {
     const policies = await request("/policies");
     assert.equal(policies.data.fees.commissionRateBps, PLATFORM_FEE_BASIS_POINTS);
-    assert.equal(policies.data.fees.commissionRateBps, 1000);
+    assert.equal(policies.data.fees.commissionRateBps, 500);
     assert.equal(policies.data.fees.payer, "SELLER");
     const fees = await request("/policies/fees");
-    assert.ok(fees.data.summaryAr.includes("10%"));
+    assert.ok(fees.data.summaryAr.includes("5%"));
     const listing = await publish("SELLER", `إفصاح العمولة ${runId}`);
     const created = await order("BUYER", listing.id);
     assert.equal(created.data.commissionRateBps, policies.data.fees.commissionRateBps);
-    assert.equal(created.data.platformFeeMinor, 1000);
-    assert.equal(created.data.sellerAmountMinor, 9000);
+    assert.equal(created.data.platformFeeMinor, 500);
+    assert.equal(created.data.sellerAmountMinor, 9500);
     await request(`/orders/${created.data.id}/cancel`, "POST", { reason: "إلغاء اختبار" }, actor("BUYER").cookie);
   });
   await check("e2e", "every policy surface is versioned and marked for legal review", async () => {
@@ -720,13 +725,13 @@ await test("account deletion deactivates, revokes, archives and preserves histor
     assert.equal(view.status, 200);
     assert.equal(view.data.status, "COMPLETED");
     assert.equal(view.data.subtotalMinor, completed.subtotalMinor);
-    assert.equal(view.data.platformFeeMinor, 1000);
-    assert.equal(view.data.sellerAmountMinor, 9000);
+    assert.equal(view.data.platformFeeMinor, 500);
+    assert.equal(view.data.sellerAmountMinor, 9500);
     const [orderRow] = await db.select().from(orders).where(eq(orders.id, open.data.id));
     assert.equal(orderRow.sellerId, deleter.id);
     const dues = await db.select().from(sellerDues).where(eq(sellerDues.orderId, open.data.id));
     assert.equal(dues.length, 1);
-    assert.equal(dues[0].amountMinor, 1000);
+    assert.equal(dues[0].amountMinor, 500);
     const [audit] = await db
       .select()
       .from(moderationAudit)

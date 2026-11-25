@@ -271,14 +271,14 @@ test("11 completing an order commits only its reserved quantity", () => {
   }
 });
 
-test("seller dues preserve historical 15% snapshots and current 10% orders, and are created once", () => {
+test("seller dues preserve historical 15% snapshots, legacy 10% orders and current 5% orders, and are created once", () => {
   const listing = makeListing();
   const result = checkout([line(listing.id, 7)], [listing]);
   assert.equal(result.ok, true);
   if (result.ok) {
     const dues = [];
     const historicalOrder = { ...result.result.orders[0], commissionRateBps: 1_500 };
-    assert.equal(result.result.orders[0].commissionRateBps, 1_000);
+    assert.equal(result.result.orders[0].commissionRateBps, 500, "owner decision 2026-11-25: 5% of the sale value");
     const first = createSellerDueForOrder(historicalOrder, dues, 1_800_000_000_000);
     const second = createSellerDueForOrder(historicalOrder, dues, 1_800_000_000_001);
     assert.equal(first?.amount, "1.050");
@@ -301,7 +301,8 @@ test("seller dues preserve historical 15% snapshots and current 10% orders, and 
 test("13 KWD arithmetic stays exact in fils", () => {
   assert.equal(parseKwdToFils("4.019"), 4019);
   assert.equal(formatKwdFromFils(4019), "4.019");
-  assert.equal(calculatePlatformFeeFils(7000), 700);
+  assert.equal(calculatePlatformFeeFils(7000), 350);
+  assert.equal(calculatePlatformFeeMinor(7000, 1_000), 700, "a legacy 10% snapshot still computes exactly");
   assert.throws(() => parseKwdToFils("1.0001"), RangeError);
 });
 
@@ -316,8 +317,8 @@ test("19 currency arithmetic uses the ISO minor-unit scale", () => {
     assert.equal(parseMinorUnits(decimal, currencyCode), minor);
     assert.equal(formatMinorUnits(minor, currencyCode), decimal);
   }
-  assert.equal(calculatePlatformFeeMinor(1234), 123);
-  assert.equal(calculatePlatformFeeMinor(123), 12);
+  assert.equal(calculatePlatformFeeMinor(1234), 62);
+  assert.equal(calculatePlatformFeeMinor(123), 6);
   assert.equal(calculatePlatformFeeMinor(1234, 1_500), 185);
   assert.equal(calculatePlatformFeeMinor(1234, 1_000), 123);
 });

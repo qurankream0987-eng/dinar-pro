@@ -27,7 +27,7 @@ export type ResolvedCommissionPolicy = {
 };
 
 /**
- * The owner's baseline is 10% (1,000 bps). It is the fallback only when no published
+ * The owner's baseline is 5% of the sale value for every category (500 bps; 2026-11-25, was 10%). It is the fallback only when no published
  * policy applies; a published policy (global or market-scoped) always wins. A configured
  * table is never allowed to silently disagree with the documented fallback rate.
  */

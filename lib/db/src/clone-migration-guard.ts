@@ -83,6 +83,8 @@ export const REVIEWED_PENDING_MIGRATIONS: ReadonlyArray<{ tag: string; sha256: s
   // Whop for Platforms (Qoder 17, renumbered from 0051): Whop platform money lives in five additive tables beside the simulation ledger; the
   // simulation-only payment tables are untouched, and every checkout is keyed to one order.
   { tag: "0069_whop_platforms", sha256: "6d7ef241130093589f1dbac44f3608a0a04ca01e69f9abbaa37b53174ca7a1d2" },
+  // Owner decision 2026-11-25: 5% of the sale value for every category, published per market.
+  { tag: "0070_commission_five_percent", sha256: "82477f01528da934f9ccb8629c3cedf648fae8d97d63d0fa524a0a103ce3ed5e" },
 ];
 export const EXPECTED_JOURNAL_ENTRIES =
   EXPECTED_BASELINE_MIGRATIONS + REVIEWED_PENDING_MIGRATIONS.length;

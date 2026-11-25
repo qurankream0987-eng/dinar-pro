@@ -278,5 +278,9 @@
   {
     "tag": "0069_whop_platforms",
     "sha256": "6d7ef241130093589f1dbac44f3608a0a04ca01e69f9abbaa37b53174ca7a1d2"
+  },
+  {
+    "tag": "0070_commission_five_percent",
+    "sha256": "82477f01528da934f9ccb8629c3cedf648fae8d97d63d0fa524a0a103ce3ed5e"
   }
 ]

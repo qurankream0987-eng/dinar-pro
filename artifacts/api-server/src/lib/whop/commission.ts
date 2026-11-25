@@ -33,12 +33,9 @@ export function jodMinorToUsdMinor(jodMinor: number, usdPerJod: number): number 
   return minor;
 }
 
-export function selectFeePercent(
-  totalUsdMinor: number,
-  rule: { feePercent: number; largeFeePercent: number; thresholdUsd: number },
-) {
-  const thresholdMinor = Math.round(rule.thresholdUsd * USD_MINOR_PER_MAJOR);
-  return totalUsdMinor >= thresholdMinor ? rule.largeFeePercent : rule.feePercent;
+/** One flat platform rate for every order value (no tiers; owner decision 2026-11-25). */
+export function selectFeePercent(_totalUsdMinor: number, rule: { feePercent: number }) {
+  return rule.feePercent;
 }
 
 /**
@@ -47,7 +44,7 @@ export function selectFeePercent(
  */
 export function computeCommission(
   totalUsdMinor: number,
-  rule: { feePercent: number; largeFeePercent: number; thresholdUsd: number },
+  rule: { feePercent: number },
 ) {
   if (!Number.isSafeInteger(totalUsdMinor) || totalUsdMinor <= 0)
     throw new WhopRuleError("WHOP_AMOUNT_INVALID", "Checkout amount is not a positive integer");

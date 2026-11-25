@@ -676,7 +676,7 @@ test("Wave 4 payment core remains simulation-only and enforces payment boundarie
     assert.equal(buyerOpenedAudit.disputeId, buyerDispute.id);
     assert.equal(buyerOpenedAudit.financialOutcome, "HOLD_PENDING");
     assert.equal(buyerOpenedAudit.amountMinor, 0);
-    assert.equal(buyerOpenedAudit.commissionRateBps, 1_000);
+    assert.equal(buyerOpenedAudit.commissionRateBps, 500);
     let [buyerIntentWhileDisputed] = await db
       .select()
       .from(paymentIntents)
@@ -766,7 +766,7 @@ test("Wave 4 payment core remains simulation-only and enforces payment boundarie
     );
     assert.equal(buyerResolution.status, 200, buyerResolution.text);
     assert.equal(buyerResolution.data.resolution, "BUYER");
-    assert.equal(buyerResolution.data.commissionRateBps, 1_000);
+    assert.equal(buyerResolution.data.commissionRateBps, 500);
     const [buyerIntentResolved] = await db
       .select()
       .from(paymentIntents)

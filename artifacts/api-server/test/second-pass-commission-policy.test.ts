@@ -15,6 +15,6 @@ test('same nominal units respect currency scale without FX conversion or automat
  for(const [currency,scale] of [['JOD',3],['SAR',2],['YER',2]] as const){const x=previewTieredCommission({...rule,currencyCode:currency,minorUnitScale:scale,thresholdMinor:20*10**scale},{marketId:'JO',currencyCode:currency,minorUnitScale:scale,eligibleSubtotalMinor:20*10**scale,at:new Date('2026-06-01T00:00:00Z')});assert.equal(x.rateBasisPoints,500);assert.equal(x.feeMinor,10**scale);assert.equal(x.activationEnabled,false);}
 });
 test('historical snapshots and refund reversals retain their originally selected rate',()=>{
- assert.deepEqual(commissionSnapshot(DEFAULT_COMMISSION_POLICY),{policyId:null,policyKey:'PLATFORM_COMMISSION',version:0,rateBasisPoints:1000,basis:'GROSS_ITEM_SUBTOTAL',roundingMode:'HALF_UP',source:'DEFAULT_BASELINE'});
+ assert.deepEqual(commissionSnapshot(DEFAULT_COMMISSION_POLICY),{policyId:null,policyKey:'PLATFORM_COMMISSION',version:0,rateBasisPoints:500,basis:'GROSS_ITEM_SUBTOTAL',roundingMode:'HALF_UP',source:'DEFAULT_BASELINE'});
  for(const rate of [500,1000]){const order={data:{commissionPolicy:{rateBasisPoints:rate}},subtotalMinor:30000,platformFeeMinor:30000*rate/10000};assert.equal(commissionRateForOrder(order),rate);assert.equal(commissionReversalForRefund({grossMinor:30000,previouslyRefundedMinor:0,refundAmountMinor:10000,rateBasisPoints:commissionRateForOrder(order)}),rate);}
 });after(()=>pool.end());

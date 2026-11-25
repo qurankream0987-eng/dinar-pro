@@ -388,7 +388,12 @@ await test("a seller without a Whop account is refused before any provider call"
   assert.equal(await checkout(offboardedOrderId), undefined);
 });
 
-await test("a large order whose stored commission is the low tier's opposite is refused", async () => {
+await test("an order saved at a rate other than the flat Whop rate is refused (legacy 10%)", async () => {
+  // Owner decision 2026-11-25: one flat 5%. An order snapshotted at the old 10% cannot be paid
+  // through a 5% checkout without silently changing its immutable commission.
+  const before = await orderRow(largeOrderId);
+  assert.equal(before.data.commissionPolicy.rateBasisPoints, 500, "new orders snapshot 5%");
+  await db.update(orders).set({ data: { ...before.data, commissionPolicy: { ...before.data.commissionPolicy, rateBasisPoints: 1_000 } } }).where(eq(orders.id, largeOrderId));
   const order = await orderRow(largeOrderId);
   assert.equal(order.data.commissionPolicy.rateBasisPoints, 1_000);
   const response = await request("/whop/checkout", "POST", { orderId: largeOrderId }, buyer);

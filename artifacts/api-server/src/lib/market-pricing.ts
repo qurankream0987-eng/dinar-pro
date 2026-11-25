@@ -13,7 +13,8 @@ if (!Number.isSafeInteger(parsedMaxQuantity) || parsedMaxQuantity < 1) {
 export const MAX_ORDER_QUANTITY = parsedMaxQuantity;
 /** Legacy defaults retained for the pre-market-scoped in-memory checkout API. */
 export const MARKET_CURRENCY = "KWD";
-export const PLATFORM_FEE_BASIS_POINTS = 1_000;
+/** Owner decision 2026-11-25: 5% of the sale value for every category (was 10%). Snapshotted per order. */
+export const PLATFORM_FEE_BASIS_POINTS = 500;
 
 /** Format an integer minor-unit amount using the currency's ISO scale. */
 export function formatMinorUnits(minor: number, currencyCode: string): string {

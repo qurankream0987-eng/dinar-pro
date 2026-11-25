@@ -1387,9 +1387,9 @@ await test("price, commission, quantity, state, and replay attacks use authorita
   assert.equal(created.data.currency, "SAR");
   assert.equal(created.data.total, "100.00");
   assert.equal(created.data.subtotalMinor, 10_000);
-  assert.equal(created.data.commissionRateBps, 1_000);
-  assert.equal(created.data.platformFeeMinor, 1_000);
-  assert.equal(created.data.sellerAmountMinor, 9_000);
+  assert.equal(created.data.commissionRateBps, 500);
+  assert.equal(created.data.platformFeeMinor, 500);
+  assert.equal(created.data.sellerAmountMinor, 9_500);
   assert.equal(created.data.paymentMode, "TEST_NO_TRANSFER");
 
   const persistedBefore = await db
@@ -1397,8 +1397,8 @@ await test("price, commission, quantity, state, and replay attacks use authorita
     .from(orders)
     .where(eq(orders.id, mainOrderId));
   assert.equal(persistedBefore[0].currencyCode, "SAR");
-  assert.equal(persistedBefore[0].platformFeeMinor, 1_000);
-  assert.equal(persistedBefore[0].sellerAmountMinor, 9_000);
+  assert.equal(persistedBefore[0].platformFeeMinor, 500);
+  assert.equal(persistedBefore[0].sellerAmountMinor, 9_500);
 
   const duplicateCheckout = await request(
     "/orders",
@@ -1821,16 +1821,16 @@ await test("only an admin resolves disputes; replay and forged accounting cannot
     .select()
     .from(orders)
     .where(eq(orders.id, disputedOrderId));
-  assert.equal(persisted.data.commissionRateBps, 1_000);
-  assert.equal(persisted.platformFeeMinor, 1_000);
-  assert.equal(persisted.sellerAmountMinor, 9_000);
+  assert.equal(persisted.data.commissionRateBps, 500);
+  assert.equal(persisted.platformFeeMinor, 500);
+  assert.equal(persisted.sellerAmountMinor, 9_500);
   assert.equal(persisted.data.paymentMode, "TEST_NO_TRANSFER");
   const dues = await db
     .select()
     .from(sellerDues)
     .where(eq(sellerDues.orderId, disputedOrderId));
   assert.equal(dues.length, 1);
-  assert.equal(dues[0].amountMinor, 1_000);
+  assert.equal(dues[0].amountMinor, 500);
 
   const duplicate = await request(
     resolutionPath,

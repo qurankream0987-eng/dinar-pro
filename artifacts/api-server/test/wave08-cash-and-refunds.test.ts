@@ -626,7 +626,7 @@ await test("completion reverses commission for cash refunds before and after it"
     "SELLER_PAYABLE_DUE",
   ]);
   const firstReversal = rows.find((row) => row.eventType === "COMMISSION_REVERSED")!;
-  assert.equal(firstReversal.amountMinor, 500, "10% of the 5,000 refunded");
+  assert.equal(firstReversal.amountMinor, 250, "5% of the 5,000 refunded");
   assert.equal(firstReversal.businessRef, `cash-refunds:${orderId}`);
 
   const after = await openRefund(orderId, 5_000);
@@ -638,8 +638,8 @@ await test("completion reverses commission for cash refunds before and after it"
   assert.equal(reversals.length, 2);
   assert.equal(
     reversals.reduce((sum, row) => sum + row.amountMinor, 0),
-    1_000,
-    "two 5,000 refunds reverse exactly 10% of 10,000",
+    500,
+    "two 5,000 refunds reverse exactly 5% of 10,000",
   );
   assert.equal(
     later.filter((row) => row.eventType === "PAYMENT_REFUNDED").length,

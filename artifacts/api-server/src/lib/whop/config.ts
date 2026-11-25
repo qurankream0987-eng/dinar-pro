@@ -12,9 +12,8 @@ export type WhopConfig = {
   apiKey?: string;
   webhookSecret?: string;
   companyId?: string;
+  /** One flat rate for every order (owner decision 2026-11-25: 5% of the sale value). */
   feePercent: number;
-  largeFeePercent: number;
-  thresholdUsd: number;
   usdPerJod: number;
   blockedCountries: string[];
   /** Problems are names of invalid settings, never their values. */
@@ -39,17 +38,11 @@ export function parseWhopConfig(
     env.WHOP_ENVIRONMENT?.trim().toLowerCase() === "production"
       ? "production"
       : "sandbox";
-  const feePercent = finiteNumber(env.WHOP_FEE_PERCENT, 10);
-  const largeFeePercent = finiteNumber(env.WHOP_FEE_PERCENT_LARGE, 5);
-  const thresholdUsd = finiteNumber(env.THRESHOLD_USD, 500);
+  const feePercent = finiteNumber(env.WHOP_FEE_PERCENT, 5);
   const usdPerJod = finiteNumber(env.WHOP_USD_PER_JOD, 0);
   const problems: string[] = [];
   if (!(feePercent > 0 && feePercent < 100))
     problems.push("WHOP_FEE_PERCENT must be between 0 and 100");
-  if (!(largeFeePercent > 0 && largeFeePercent <= feePercent))
-    problems.push("WHOP_FEE_PERCENT_LARGE must be positive and at most WHOP_FEE_PERCENT");
-  if (!(thresholdUsd >= 0))
-    problems.push("THRESHOLD_USD must be zero or positive");
   if (!(usdPerJod > 0))
     problems.push("WHOP_USD_PER_JOD must be positive");
   if (enabled) {
@@ -65,8 +58,6 @@ export function parseWhopConfig(
     webhookSecret: env.WHOP_WEBHOOK_SECRET?.trim() || undefined,
     companyId: env.WHOP_COMPANY_ID?.trim() || undefined,
     feePercent,
-    largeFeePercent,
-    thresholdUsd,
     usdPerJod,
     blockedCountries: parseBlockedCountries(env.WHOP_BLOCKED_COUNTRIES),
     problems,

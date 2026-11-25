@@ -135,8 +135,8 @@ await test("authorized order at the agreed price; duplicates, wrong actors and c
   assert.equal(created.status, 201, created.text);
   orderId = created.data.id;
   assert.equal(created.data.subtotalMinor, 45_000, "the agreed amount, never the client's");
-  assert.equal(created.data.platformFeeMinor, 4_500);
-  assert.equal(created.data.sellerAmountMinor, 40_500);
+  assert.equal(created.data.platformFeeMinor, 2_250, "5% of the agreed 45.000 JOD");
+  assert.equal(created.data.sellerAmountMinor, 42_750);
   assert.equal(created.data.paymentMode, "TEST_NO_TRANSFER");
 
   const duplicate = await request("/orders", "POST", body, buyer);
@@ -186,7 +186,7 @@ await test("handoff and delivery confirmation complete the order and create exac
 
   const dues = await db.select().from(sellerDues).where(eq(sellerDues.orderId, orderId));
   assert.equal(dues.length, 1);
-  assert.equal(dues[0]!.amountMinor, 4_500, "10% of the agreed 45.000 JOD");
+  assert.equal(dues[0]!.amountMinor, 2_250, "5% of the agreed 45.000 JOD");
   assert.equal(dues[0]!.currencyCode, "JOD");
   assert.equal(dues[0]!.status, "PENDING", "no settlement policy is invented");
   const sellerView = await request("/seller-dues", "GET", undefined, seller);

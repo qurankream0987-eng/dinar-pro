@@ -11,7 +11,7 @@ import {
 import { assertCountryAllowed, isCountryBlocked } from "../src/lib/whop/countries";
 import { deriveAccountStatus, moneyToMinor } from "../src/lib/whop/account-state";
 
-const rule = { feePercent: 10, largeFeePercent: 5, thresholdUsd: 500 };
+const rule = { feePercent: 5 };
 
 await test("an unset environment resolves to sandbox and stays disabled", () => {
   const config = parseWhopConfig({});
@@ -61,24 +61,22 @@ await test("JOD minor units convert to USD cents once, half up", () => {
   assert.throws(() => jodMinorToUsdMinor(1_000, 0), WhopRuleError);
 });
 
-await test("the fee tier changes exactly at the threshold", () => {
-  assert.equal(selectFeePercent(49_999, rule), 10);
-  assert.equal(selectFeePercent(50_000, rule), 5);
-  assert.equal(selectFeePercent(50_001, rule), 5);
+await test("one flat rate at every order value (owner decision 2026-11-25: 5%)", () => {
+  for (const total of [1_000, 49_999, 50_000, 5_000_000]) assert.equal(selectFeePercent(total, rule), 5);
 });
 
 await test("commission is positive, below the total, and integer", () => {
   assert.deepEqual(computeCommission(1_000, rule), {
-    feePercent: 10,
-    feeMinor: 100,
-    sellerMinor: 900,
+    feePercent: 5,
+    feeMinor: 50,
+    sellerMinor: 950,
   });
   assert.deepEqual(computeCommission(50_000, rule), {
     feePercent: 5,
     feeMinor: 2_500,
     sellerMinor: 47_500,
   });
-  for (const total of [10, 19, 99, 2_500]) {
+  for (const total of [20, 39, 99, 2_500]) {
     const { feeMinor, sellerMinor } = computeCommission(total, rule);
     assert.ok(Number.isInteger(feeMinor) && feeMinor > 0);
     assert.ok(feeMinor < total);
@@ -87,13 +85,13 @@ await test("commission is positive, below the total, and integer", () => {
 });
 
 await test("a fee that rounds to zero is refused instead of silently collected", () => {
-  for (const total of [1, 3, 9]) {
+  for (const total of [1, 3, 9, 19]) {
     assert.throws(() => computeCommission(total, rule), WhopRuleError);
   }
   assert.throws(() => computeCommission(5, { ...rule, feePercent: 5 }), WhopRuleError);
   assert.throws(() => computeCommission(0, rule), WhopRuleError);
   assert.throws(
-    () => computeCommission(100, { ...rule, feePercent: 100, largeFeePercent: 100 }),
+    () => computeCommission(100, { feePercent: 100 }),
     WhopRuleError,
   );
 });

@@ -164,7 +164,7 @@ async function rolledBack<T>(fn: (tx: any) => Promise<T>): Promise<T> {
 }
 
 await test("commission arithmetic is integer-only and refunds reverse cumulatively", () => {
-  assert.equal(calculateCommissionMinor(20_000, DEFAULT_COMMISSION_POLICY), 2_000);
+  assert.equal(calculateCommissionMinor(20_000, DEFAULT_COMMISSION_POLICY), 1_000, "5% baseline (owner 2026-11-25)");
   assert.equal(calculateCommissionMinor(0, DEFAULT_COMMISSION_POLICY), 0);
   // 1 minor unit at 10% rounds half up to 0, never to a fraction of a unit.
   assert.equal(calculateCommissionMinor(1, DEFAULT_COMMISSION_POLICY), 0);
@@ -226,11 +226,11 @@ await test("an order without a policy snapshot keeps the rate it was charged", (
   );
 });
 
-await test("the documented 10% baseline is the published fallback, not a hidden constant", async () => {
+await test("the published 5% market policy (0070) is in force; the 10% v1 row stays as immutable history", async () => {
   const resolved = await resolveCommissionPolicy(db, { marketId: "JO" });
-  assert.equal(resolved.rateBasisPoints, 1_000, "owner baseline unchanged");
-  assert.equal(resolved.source, "PUBLISHED_GLOBAL");
-  assert.equal(resolved.version, 1);
+  assert.equal(resolved.rateBasisPoints, 500, "owner decision 2026-11-25: 5% of the sale value");
+  assert.equal(resolved.source, "PUBLISHED_MARKET");
+  assert.ok(resolved.version > 1);
   assert.equal(resolved.policyKey, COMMISSION_POLICY_KEY);
   const [row] = await db
     .select()
@@ -274,7 +274,7 @@ await test("a market-scoped published policy wins for that market only", async (
   assert.equal(resolved.scoped.rateBasisPoints, 750);
   assert.equal(resolved.scoped.version, 9_000);
   assert.equal(resolved.scoped.source, "PUBLISHED_MARKET");
-  assert.equal(resolved.global.rateBasisPoints, 1_000);
+  assert.equal(resolved.global.rateBasisPoints, 500, "JO resolves to its own 5% policy");
 });
 
 await test("market activation no longer depends on a historical market unit price", async () => {
@@ -315,10 +315,10 @@ await test("checkout journals the order under the resolved policy snapshot", asy
   const orderId = await placeOrder(listingId);
   const [order] = await db.select().from(orders).where(eq(orders.id, orderId));
   assert.ok(order);
-  assert.equal(order.data.commissionRateBps, 1_000);
-  assert.equal(order.data.commissionPolicy.version, 1);
-  assert.equal(order.data.commissionPolicy.rateBasisPoints, 1_000);
-  assert.equal(order.platformFeeMinor, 2_000);
+  assert.equal(order.data.commissionRateBps, 500);
+  assert.ok(order.data.commissionPolicy.version > 1, "the 0070 market policy, not v1");
+  assert.equal(order.data.commissionPolicy.rateBasisPoints, 500);
+  assert.equal(order.platformFeeMinor, 1_000);
   const rows = await journal(orderId);
   assert.deepEqual(types(rows), ["ORDER_CREATED"]);
   const created = rows[0]!;
@@ -435,9 +435,9 @@ await test("completion accrues commission and seller payable; cancellation never
   const payable = rows.find((row) => row.eventType === "SELLER_PAYABLE_DUE")!;
   assert.equal(accrued.amountMinor, order!.platformFeeMinor);
   assert.equal(accrued.accountObligation, "PLATFORM_COMMISSION");
-  assert.equal(accrued.amountMinor, 2_000);
+  assert.equal(accrued.amountMinor, 1_000);
   assert.equal(payable.amountMinor, order!.sellerAmountMinor);
-  assert.equal(payable.amountMinor, 18_000);
+  assert.equal(payable.amountMinor, 19_000);
   const [due] = await db
     .select()
     .from(sellerDues)
@@ -525,7 +525,7 @@ await test("a refund after completion reverses the commission on the refunded pa
   const rows = await journal(orderId);
   const reversed = rows.find((row) => row.eventType === "COMMISSION_REVERSED");
   assert.ok(reversed, "a refund after completion reverses commission");
-  assert.equal(reversed!.amountMinor, 500);
+  assert.equal(reversed!.amountMinor, 250);
   assert.equal(reversed!.accountObligation, "PLATFORM_COMMISSION");
   assert.ok(
     rows.some(
@@ -537,7 +537,7 @@ await test("a refund after completion reverses the commission on the refunded pa
   );
   assert.ok(rows.some((row) => row.eventType === "PAYMENT_REFUNDED" && row.amountMinor === refundAmount));
   const accrued = rows.find((row) => row.eventType === "COMMISSION_ACCRUED")!;
-  assert.equal(netCommissionDueMinor(accrued.amountMinor, reversed!.amountMinor), 1_500);
+  assert.equal(netCommissionDueMinor(accrued.amountMinor, reversed!.amountMinor), 750);
 });
 
 after(async () => {
