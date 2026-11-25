@@ -9193,6 +9193,38 @@ export const IssueSmartStoreCardFromConnectorResponse = zod.record(zod.string(),
 
 
 /**
+ * Proposes an ordered plan (2-4 steps) of tools the person may use, possibly at different stores; later steps may take scalar values from earlier answers. Stored PENDING; nothing is sent.
+ */
+export const ProposeConnectWorkflowBody = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+export const ProposeConnectWorkflowResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * The same person's single confirmation: steps run once, in order, each re-decided now; the first failure stops the plan and the outcome (COMPLETED, PARTIAL, FAILED) lists every step.
+ */
+export const ConfirmConnectWorkflowParams = zod.object({
+  "id": zod.uuid()
+})
+
+export const ConfirmConnectWorkflowBody = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+export const ConfirmConnectWorkflowResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * Declines a pending plan; nothing is sent.
+ */
+export const CancelConnectWorkflowParams = zod.object({
+  "id": zod.uuid()
+})
+
+export const CancelConnectWorkflowBody = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+export const CancelConnectWorkflowResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
  * The same person's confirmation: consumed once and re-decided against the current binding.
  */
 export const ConfirmConnectActionParams = zod.object({

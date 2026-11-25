@@ -540,6 +540,13 @@
       "when": 1795180000000,
       "tag": "0076_connect_customer_write",
       "breakpoints": true
+    },
+    {
+      "idx": 77,
+      "version": "7",
+      "when": 1795190000000,
+      "tag": "0077_connect_workflows",
+      "breakpoints": true
     }
   ]
 }

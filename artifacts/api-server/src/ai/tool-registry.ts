@@ -76,6 +76,8 @@ export type ToolResult = {
   connectTools?: Awaited<ReturnType<typeof import("../connect/tool-router").findConnectTools>>;
   /** Stage 4: one tool use. A read's provider data is untrusted; a write is only a confirmation card. */
   connectToolResult?: Awaited<ReturnType<typeof import("../connect/tool-router").useConnectTool>>;
+  /** Multi-company workflow proposal (the person confirms it on its card; nothing is sent here). */
+  connectWorkflow?: import("../connect/workflows").WorkflowSummary | { refused: string };
   /** Published policy summaries (read only). */
   policies?: Record<string, unknown>[];
   memory?: import("./personal-memory-turn").MemorySummary;
@@ -1069,6 +1071,39 @@ export const aiToolRegistry: Record<string, ToolDefinition> = {
     },
   },
 
+  proposeConnectWorkflow: {
+    name: "proposeConnectWorkflow",
+    version: 1,
+    description: "Propose a plan of two to four tool uses across connected stores, confirmed once by the person on a card. Never executes anything.",
+    permissions: ["marketplace.read"],
+    riskLevel: "LOW",
+    idempotency: "READ_ONLY",
+    auditPolicy: "REDACTED_TURN_METADATA",
+    exposedToModel: true,
+    inputSchema: z.object({ steps: z.array(z.object({ toolId: z.string().uuid(), arguments: z.record(z.string().max(64), z.unknown()).default({}) }).strict()).min(2).max(4) }).strict(),
+    modelDefinition: {
+      name: "proposeConnectWorkflow",
+      description: "Use when one request needs several connected stores in order (e.g. buy at one store, then book delivery or installation with another). Steps use toolIds from findConnectTools, in the order they must happen. A later step may take a value from an earlier step's answer with {\"$from\": {\"step\": 0, \"pointer\": \"/fieldName\"}}. The person confirms the whole plan on a card; say it awaits their confirmation and never claim any step was done.",
+      parameters: {
+        type: "object",
+        properties: { steps: { type: "array", minItems: 2, maxItems: 4, items: { type: "object", properties: { toolId: { type: "string" }, arguments: { type: "object", additionalProperties: true } }, required: ["toolId"], additionalProperties: false } } },
+        required: ["steps"],
+        additionalProperties: false,
+      },
+    },
+    execute: async (input: { steps: { toolId: string; arguments: Record<string, unknown> }[] }, context) => {
+      if (!context.actorId) throw Object.assign(new Error("Sign-in required."), { status: 401 });
+      const { proposeConnectWorkflow } = await import("../connect/workflows");
+      let connectWorkflow: ToolResult["connectWorkflow"];
+      try {
+        connectWorkflow = await proposeConnectWorkflow({ actorId: context.actorId, market: context.market as never, raw: input });
+      } catch (error) {
+        connectWorkflow = { refused: (error as { code?: string }).code ?? "WORKFLOW_INVALID" };
+      }
+      return { kind: "SURFACE", surface: "CONNECT_WORKFLOW", query: {}, listings: [], connectWorkflow } as ToolResult;
+    },
+  },
+
   readPolicy: {
     name: "readPolicy",
     version: 1,
@@ -1104,6 +1139,7 @@ export const MODEL_LOOP_TOOL_ALLOWLIST = [
   "readConnectPartnerStatus",
   "findConnectTools",
   "useConnectTool",
+  "proposeConnectWorkflow",
   "readPolicy",
 ] as const;
 

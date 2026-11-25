@@ -511,7 +511,7 @@ await test("D6-AI-01 scripted read-only tool results ground the final comparison
 
     const reply = await say(user.cookie, user.conv, text, clientMessageId);
     assert.equal(matchedScriptKey, text, "the scripted request must match the model's user context");
-    assert.deepEqual(observedToolNames.sort(), ["compareListings", "describeDinarCapabilities", "dinarConversationTurn", "findConnectTools", "getResource", "prepareCartChange", "prepareInquiryMessage", "prepareNegotiationProposal", "readAiUsage", "readBusinessInquiries", "readBusinessOverview", "readCart", "readConnectPartnerStatus", "readFulfillment", "readMyAccountStatus", "readNegotiationStatus", "readOrderIssues", "readOrders", "readPolicy", "readSellerDues", "reviewCheckout", "searchDomains", "searchListings", "searchPartnerOffers", "useConnectTool"]);
+    assert.deepEqual(observedToolNames.sort(), ["compareListings", "describeDinarCapabilities", "dinarConversationTurn", "findConnectTools", "getResource", "prepareCartChange", "prepareInquiryMessage", "prepareNegotiationProposal", "proposeConnectWorkflow", "readAiUsage", "readBusinessInquiries", "readBusinessOverview", "readCart", "readConnectPartnerStatus", "readFulfillment", "readMyAccountStatus", "readNegotiationStatus", "readOrderIssues", "readOrders", "readPolicy", "readSellerDues", "reviewCheckout", "searchDomains", "searchListings", "searchPartnerOffers", "useConnectTool"]);
     assert.equal(calls, 3, "search, a canonical live result lookup, then a final answer");
     assert.equal(sawToolFeedback, true, "the second and final model calls receive canonical tool results");
     assert.equal(sawUntrustedToolFeedbackRule, true, "listing text is explicitly framed as untrusted");

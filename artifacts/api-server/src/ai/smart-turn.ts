@@ -1604,6 +1604,12 @@ function compactCapabilityRead(result: ToolResult) {
   if (result.aiUsage) return { kind: "AI_USAGE", ...result.aiUsage };
   if (result.connectStatus) return { kind: "CONNECT_PARTNERSHIP", ...result.connectStatus };
   if (result.connectTools) return { kind: "CONNECT_TOOLS", ...result.connectTools };
+  if (result.connectWorkflow) {
+    const plan = result.connectWorkflow;
+    // The model never receives the workflow id: only the person's card carries it.
+    if ("refused" in plan) return { kind: "CONNECT_WORKFLOW", status: "REFUSED", refusal: plan.refused };
+    return { kind: "CONNECT_WORKFLOW", status: "AWAITING_PERSON_CONFIRMATION", steps: plan.steps.map((step) => ({ store: step.store, tool: step.tool, capability: step.capability })), note: "Nothing was done. The person must confirm the whole plan on the card." };
+  }
   if (result.connectToolResult) {
     const outcome = result.connectToolResult;
     // The model never receives a confirmation id: only the person's card carries it.

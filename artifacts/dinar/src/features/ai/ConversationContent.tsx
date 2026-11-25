@@ -1,3 +1,4 @@
+import { WorkflowCard } from "./smart-store/WorkflowCard";
 import { ConnectActionCard } from "./smart-store/ConnectActionCard";
 import { MessageSmartStoreCard } from "./smart-store/MessageSmartStoreCard";
 import { UniversalCards } from "./UniversalCards";
@@ -1002,6 +1003,8 @@ function ResultBlock({
         </p>
       </>
     );
+  if (block.type === "SURFACE" && block.payload.connectWorkflow)
+    return <WorkflowCard plan={block.payload.connectWorkflow as never} active={activeResults !== false} />;
   if (block.type === "SURFACE" && block.payload.connectToolResult)
     return <ConnectActionCard result={block.payload.connectToolResult as never} active={activeResults !== false} />;
   if (block.type === "SURFACE" && block.payload.universalCards)

@@ -22778,6 +22778,263 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       return useMutation(getIssueSmartStoreCardFromConnectorMutationOptions(options), queryClient);
     }
 
+export const getProposeConnectWorkflowUrl = () => {
+
+
+
+
+  return `/api/connect/workflows`
+}
+
+/**
+ * Proposes an ordered plan (2-4 steps) of tools the person may use, possibly at different stores; later steps may take scalar values from earlier answers. Stored PENDING; nothing is sent.
+ */
+export const proposeConnectWorkflow = async (serverValidatedObject: ServerValidatedObject, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getProposeConnectWorkflowUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(serverValidatedObject)
+  }
+);}
+
+
+
+
+
+export const getProposeConnectWorkflowMutationKey = () => ['proposeConnectWorkflow'] as const;
+
+export const getProposeConnectWorkflowMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof proposeConnectWorkflow>>, TError,ProposeConnectWorkflowMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof proposeConnectWorkflow>>, TError,ProposeConnectWorkflowMutationVariables, TContext> => {
+
+const mutationKey = getProposeConnectWorkflowMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof proposeConnectWorkflow>>, ProposeConnectWorkflowMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  proposeConnectWorkflow(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ProposeConnectWorkflowMutationResult = NonNullable<Awaited<ReturnType<typeof proposeConnectWorkflow>>>
+    export type ProposeConnectWorkflowMutationBody = BodyType<ServerValidatedObject>
+    export type ProposeConnectWorkflowMutationError = ErrorType<void>
+    export type ProposeConnectWorkflowMutationVariables = {data: BodyType<ServerValidatedObject>}
+
+    export const useProposeConnectWorkflow = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof proposeConnectWorkflow>>, TError,ProposeConnectWorkflowMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof proposeConnectWorkflow>>,
+        TError,
+        ProposeConnectWorkflowMutationVariables,
+        TContext
+      > => {
+      return useMutation(getProposeConnectWorkflowMutationOptions(options), queryClient);
+    }
+
+export const getConfirmConnectWorkflowUrl = (id: string,) => {
+
+
+
+
+  return `/api/connect/workflows/${id}/confirm`
+}
+
+/**
+ * The same person's single confirmation: steps run once, in order, each re-decided now; the first failure stops the plan and the outcome (COMPLETED, PARTIAL, FAILED) lists every step.
+ */
+export const confirmConnectWorkflow = async (id: string,
+    serverValidatedObject: ServerValidatedObject, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getConfirmConnectWorkflowUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(serverValidatedObject)
+  }
+);}
+
+
+
+
+
+export const getConfirmConnectWorkflowMutationKey = () => ['confirmConnectWorkflow'] as const;
+
+export const getConfirmConnectWorkflowMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof confirmConnectWorkflow>>, TError,ConfirmConnectWorkflowMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof confirmConnectWorkflow>>, TError,ConfirmConnectWorkflowMutationVariables, TContext> => {
+
+const mutationKey = getConfirmConnectWorkflowMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof confirmConnectWorkflow>>, ConfirmConnectWorkflowMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  confirmConnectWorkflow(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ConfirmConnectWorkflowMutationResult = NonNullable<Awaited<ReturnType<typeof confirmConnectWorkflow>>>
+    export type ConfirmConnectWorkflowMutationBody = BodyType<ServerValidatedObject>
+    export type ConfirmConnectWorkflowMutationError = ErrorType<void>
+    export type ConfirmConnectWorkflowMutationVariables = {id: string;data: BodyType<ServerValidatedObject>}
+
+    export const useConfirmConnectWorkflow = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof confirmConnectWorkflow>>, TError,ConfirmConnectWorkflowMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof confirmConnectWorkflow>>,
+        TError,
+        ConfirmConnectWorkflowMutationVariables,
+        TContext
+      > => {
+      return useMutation(getConfirmConnectWorkflowMutationOptions(options), queryClient);
+    }
+
+export const getCancelConnectWorkflowUrl = (id: string,) => {
+
+
+
+
+  return `/api/connect/workflows/${id}/cancel`
+}
+
+/**
+ * Declines a pending plan; nothing is sent.
+ */
+export const cancelConnectWorkflow = async (id: string,
+    serverValidatedObject: ServerValidatedObject, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getCancelConnectWorkflowUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(serverValidatedObject)
+  }
+);}
+
+
+
+
+
+export const getCancelConnectWorkflowMutationKey = () => ['cancelConnectWorkflow'] as const;
+
+export const getCancelConnectWorkflowMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof cancelConnectWorkflow>>, TError,CancelConnectWorkflowMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof cancelConnectWorkflow>>, TError,CancelConnectWorkflowMutationVariables, TContext> => {
+
+const mutationKey = getCancelConnectWorkflowMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof cancelConnectWorkflow>>, CancelConnectWorkflowMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  cancelConnectWorkflow(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CancelConnectWorkflowMutationResult = NonNullable<Awaited<ReturnType<typeof cancelConnectWorkflow>>>
+    export type CancelConnectWorkflowMutationBody = BodyType<ServerValidatedObject>
+    export type CancelConnectWorkflowMutationError = ErrorType<void>
+    export type CancelConnectWorkflowMutationVariables = {id: string;data: BodyType<ServerValidatedObject>}
+
+    export const useCancelConnectWorkflow = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof cancelConnectWorkflow>>, TError,CancelConnectWorkflowMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof cancelConnectWorkflow>>,
+        TError,
+        CancelConnectWorkflowMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCancelConnectWorkflowMutationOptions(options), queryClient);
+    }
+
 export const getConfirmConnectActionUrl = (id: string,) => {
 
 

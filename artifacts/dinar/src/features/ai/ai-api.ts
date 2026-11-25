@@ -89,6 +89,7 @@ export type AiUiBlock = {
     memory?: import("./MemorySummary").MemoryPayload;
     policyReview?: unknown;
     connectToolResult?: Record<string, unknown>;
+    connectWorkflow?: Record<string, unknown>;
     /** Phase 2: server-composed figures in the model-chosen form; validated by ComposedSurfaceView. */
     displaySurface?: unknown;
     /** Flexible cards: the arrangement of the seller's draft card (server-validated). */

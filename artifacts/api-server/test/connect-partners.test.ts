@@ -10,6 +10,7 @@ import { importConnectOwnerCatalog } from "../src/connect/partners";
 import { advanceBindingLifecycle, authorizeConnectTool, decideToolUse, grantConnectCapabilities, modelToolView, nextLifecycle, recordDiscoveredTools, revokeConnectTool, toolSchemaDigest, toolUseFacts } from "../src/connect/binding";
 import { connectIntegrations, connectTools } from "@workspace/db";
 import { findConnectTools, rankTools, useConnectTool } from "../src/connect/tool-router";
+import { resolveReferences } from "../src/connect/workflows";
 import { resolveMarket } from "../src/lib/markets";
 import { ConnectNetwork } from "../src/connect/network";
 import { registerBusinessDocumentScanner } from "../src/lib/business-profiles";
@@ -905,6 +906,74 @@ await test("BUSINESS-AI customers use only tools a store opened; every write is 
       if (attempt.data.status === "REFUSED") refused = attempt.data.refusal;
     }
     assert.equal(refused, "RATE_LIMITED");
+  } finally {
+    delete process.env.DINAR_CONNECT_LIVE_CALLS;
+    delete app.locals.connectNetwork;
+    if (previousVaultKey === undefined) delete process.env.DINAR_CONNECT_VAULT_KEY; else process.env.DINAR_CONNECT_VAULT_KEY = previousVaultKey;
+  }
+});
+await test("WORKFLOW one confirmation for a plan across connectors: order then installation with a value passed on; partial outcomes said aloud", async () => {
+  const previousVaultKey = process.env.DINAR_CONNECT_VAULT_KEY;
+  process.env.DINAR_CONNECT_VAULT_KEY = randomBytes(32).toString("base64");
+  const setup = async (name: string, path: string, operationId: string, capability: string, properties: Record<string, unknown>, required: string[]) => {
+    const created = await call(`/connect/partners/${partner.id}/integrations`, owner, { siteId: site.id, kind: "API", name, endpointUrl: `https://catalog.partner.example/${path}`, capabilities: ["CATALOG_READ"], mode: "SIMULATION_ONLY", allowedPathPrefixes: ["/products/"] });
+    const id = created.data.id as string;
+    await call(`/admin/connect/integrations/${id}/review`, admin, { decision: "APPROVE", expectedRevision: created.data.revision, reason: "Workflow acceptance" });
+    await call(`/connect/integrations/${id}/api-tools`, owner, { source: "OPENAPI", document: { openapi: "3.0.3", paths: { "/ping": { get: { operationId: "ping" } }, "/do": { post: { operationId, "x-jassim-capability": capability, requestBody: { required: true, content: { "application/json": { schema: { type: "object", properties, required } } } } } } } } });
+    const tools = (await call(`/connect/integrations/${id}/api-tools`, owner)).data.tools;
+    for (const tool of tools) await call(`/connect/integrations/${id}/api-tools/${tool.id}/authorize`, owner, { reviewedDigest: tool.digest });
+    await call(`/connect/integrations/${id}/capabilities`, owner, { capabilities: ["READ", capability] });
+    await call(`/connect/integrations/${id}/credential`, owner, { method: "BEARER", token: `tok-${path}` });
+    await call(`/connect/integrations/${id}/verify`, owner, { toolId: tools.find((tool: any) => tool.name === "ping").id });
+    const write = tools.find((tool: any) => tool.name === operationId);
+    await call(`/connect/integrations/${id}/api-tools/${write.id}/customer-access`, owner, { open: true });
+    await db.update(connectIntegrations).set({ mode: "LIVE" }).where(eq(connectIntegrations.id, id));
+    return write.id as string;
+  };
+  const sent: { host: string; path: string; body: any; idem: string | null; auth: string | null }[] = [];
+  let failInstall = false;
+  app.locals.connectNetwork = new ConnectNetwork({ dns: app.locals.connectDns, transport: async (request) => {
+    const url = new URL(request.url);
+    if (request.method === "GET") return Response.json({ ok: true });
+    const body = JSON.parse(await request.text());
+    sent.push({ host: url.hostname, path: url.pathname, body, idem: request.headers.get("idempotency-key"), auth: request.headers.get("authorization") });
+    if (url.pathname.startsWith("/install") && failInstall) return new Response("busy", { status: 503 });
+    return url.pathname.startsWith("/sofa") ? Response.json({ order: { id: "ORD-77", deliveryDate: "2026-12-05" } }, { status: 201 }) : Response.json({ appointment: "AP-1" }, { status: 201 });
+  } });
+  process.env.DINAR_CONNECT_LIVE_CALLS = "true";
+  try {
+    const orderTool = await setup("متجر الكنب", "sofa", "orderSofa", "CREATE", { sku: { type: "string", maxLength: 20 }, qty: { type: "integer", minimum: 1, maximum: 3 } }, ["sku", "qty"]);
+    const installTool = await setup("شركة التركيب", "install", "bookInstall", "BOOK", { orderRef: { type: "string", maxLength: 20 }, date: { type: "string", maxLength: 10 } }, ["orderRef", "date"]);
+    const steps = [
+      { toolId: orderTool, arguments: { body: { sku: "SOFA-3", qty: 1 } } },
+      { toolId: installTool, arguments: { body: { orderRef: { $from: { step: 0, pointer: "/order/id" } }, date: { $from: { step: 0, pointer: "/order/deliveryDate" } } } } },
+    ];
+    assert.equal((await call("/connect/workflows", other, { steps: [steps[1], steps[0]] })).response.status, 400, "a value can only come from an earlier step");
+    assert.equal((await call("/connect/workflows", other, { steps: [steps[0], { toolId: randomUUID(), arguments: {} }] })).response.status, 404);
+    const plan = await call("/connect/workflows", other, { steps });
+    assert.equal(plan.response.status, 202, plan.text);
+    assert.equal(plan.data.steps.length, 2);
+    assert.equal(sent.length, 0, "nothing is sent before the single confirmation");
+    assert.equal((await call(`/connect/workflows/${plan.data.workflowId}/confirm`, owner, {})).response.status, 404, "only the person who asked confirms");
+    const done = await call(`/connect/workflows/${plan.data.workflowId}/confirm`, other, {});
+    assert.equal(done.data.status, "COMPLETED", done.text);
+    assert.deepEqual(sent.map((item) => item.path), ["/sofa/do", "/install/do"], "steps run in plan order");
+    assert.deepEqual(sent[1]!.body, { orderRef: "ORD-77", date: "2026-12-05" }, "the order's answer feeds the installation booking");
+    assert.equal(sent[0]!.idem, `${plan.data.workflowId}:0`);
+    assert.equal(sent[1]!.auth, "Bearer tok-install", "each company receives only its own key");
+    assert.equal((await call(`/connect/workflows/${plan.data.workflowId}/confirm`, other, {})).response.status, 409, "a plan runs once");
+    // Partial: the order succeeds, the installation company fails — reported, never hidden.
+    failInstall = true;
+    const second = await call("/connect/workflows", other, { steps });
+    const partial = await call(`/connect/workflows/${second.data.workflowId}/confirm`, other, {});
+    assert.equal(partial.data.status, "PARTIAL");
+    assert.deepEqual(partial.data.steps.map((step: any) => step.status), ["SUCCEEDED", "FAILED"]);
+    // A missing value from an earlier answer stops the plan before anything wrong is sent.
+    assert.throws(() => resolveReferences({ x: { $from: { step: 0, pointer: "/nope" } } }, [{}]));
+    assert.throws(() => resolveReferences({ x: { $from: { step: 0, pointer: "/o" } } }, [{ o: { nested: true } }]), "objects never flow between companies");
+    const cancelled = await call("/connect/workflows", other, { steps });
+    assert.equal((await call(`/connect/workflows/${cancelled.data.workflowId}/cancel`, other, {})).data.status, "CANCELLED");
+    assert.equal((await call(`/connect/workflows/${cancelled.data.workflowId}/confirm`, other, {})).response.status, 409);
   } finally {
     delete process.env.DINAR_CONNECT_LIVE_CALLS;
     delete app.locals.connectNetwork;

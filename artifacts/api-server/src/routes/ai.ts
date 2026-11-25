@@ -290,6 +290,7 @@ const SurfaceBlock = z.object({
     universalCards: UniversalCardsPayloadSchema.optional(),
     // Business AI: one connected-store tool use (read data is untrusted; a write is a confirmation card).
     connectToolResult: z.record(z.string(), z.unknown()).optional(),
+    connectWorkflow: z.record(z.string(), z.unknown()).optional(),
     // Phase 2: server-composed figures in the model's chosen form; re-validated on every read.
     displaySurface: ComposedSurfaceSchema.optional(),
     comparison: z.record(z.string(), z.unknown()).optional(),
@@ -2332,6 +2333,7 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
         sellerInsight: toolResult.sellerInsight,
         universalCards: toolResult.universalCards,
         connectToolResult: toolResult.connectToolResult,
+        connectWorkflow: toolResult.connectWorkflow,
         displaySurface: toolResult.displaySurface,
         comparison: toolResult.comparison,
         purchaseReview: toolResult.purchaseReview,

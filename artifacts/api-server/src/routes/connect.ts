@@ -26,6 +26,7 @@ import * as apiConnector from "../connect/api-connector";
 import * as binding from "../connect/binding";
 import * as vault from "../connect/credential-vault";
 import * as toolCards from "../connect/tool-cards";
+import * as workflows from "../connect/workflows";
 import { connectIntegrations as connectIntegrationsTable, connectTools } from "@workspace/db";
 import { ConnectFinancialReceiptSchema } from "@workspace/api-zod/connect-platform";
 import { connectDiagnostics } from "../connect/diagnostics";
@@ -665,6 +666,18 @@ router.post("/connect/integrations/:id/api-tools/:toolId/customer-access", requi
 router.post("/smart-store/cards/from-connector", requireAuth, async (req, res) => {
   const body = z.object({ integrationId: z.string().uuid(), toolId: z.string().uuid(), arguments: toolArguments.optional(), conversationId: z.string().min(1).max(80).optional() }).strict().parse(req.body);
   res.status(201).set("Cache-Control", "no-store").json(await toolCards.issueCardFromConnector({ actorId: req.actor!.id, market: await marketFor(req), ...body, network: connectNetworkFor(req) }));
+});
+// Multi-company workflows: proposed (nothing sent), confirmed once by the same person, run in order.
+router.post("/connect/workflows", requireAuth, async (req, res) => {
+  res.status(202).set("Cache-Control", "no-store").json(await workflows.proposeConnectWorkflow({ actorId: req.actor!.id, market: await marketFor(req), raw: req.body }));
+});
+router.post("/connect/workflows/:id/confirm", requireAuth, async (req, res) => {
+  z.object({}).strict().parse(req.body ?? {});
+  res.set("Cache-Control", "no-store").json(await workflows.confirmConnectWorkflow({ actorId: req.actor!.id, market: await marketFor(req), workflowId: idParam(req.params.id), network: connectNetworkFor(req) }));
+});
+router.post("/connect/workflows/:id/cancel", requireAuth, async (req, res) => {
+  z.object({}).strict().parse(req.body ?? {});
+  res.json(await workflows.cancelConnectWorkflow({ actorId: req.actor!.id, workflowId: idParam(req.params.id) }));
 });
 router.post("/connect/action-confirmations/:id/confirm", requireAuth, async (req, res) => {
   z.object({}).strict().parse(req.body ?? {});

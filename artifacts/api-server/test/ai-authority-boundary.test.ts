@@ -25,7 +25,7 @@ test("the model sees the three F01 reads plus every F02 prepare/read, and no dir
   const names = modelToolDefinitions().map((definition: any) => definition.function?.name ?? definition.name).sort();
   assert.deepEqual(names, [
     "compareListings", "describeDinarCapabilities", "findConnectTools", "getResource", "openSurface",
-    "prepareBusinessListingAction", "prepareCartChange", "prepareInquiryMessage", "prepareListingDraft", "prepareNegotiationProposal",
+    "prepareBusinessListingAction", "prepareCartChange", "prepareInquiryMessage", "prepareListingDraft", "prepareNegotiationProposal", "proposeConnectWorkflow",
     "readAiUsage", "readBusinessInquiries", "readBusinessOverview", "readCart", "readConnectPartnerStatus", "readFulfillment",
     "readInventory", "readMyAccountStatus", "readNegotiationStatus", "readOrderIssues", "readOrders", "readPolicy", "readSellerDues",
     "requestPublicationReview", "reviewCheckout", "searchDomains", "searchListings", "searchPartnerOffers", "useConnectTool",
@@ -33,7 +33,7 @@ test("the model sees the three F01 reads plus every F02 prepare/read, and no dir
   // The bounded loop advertises the F01 marketplace reads plus the intelligence reads; every one
   // is a registered read-only tool with read permission only (asserted for all tools below).
   assert.deepEqual([...MODEL_LOOP_TOOL_ALLOWLIST].sort(), [
-    "compareListings", "describeDinarCapabilities", "findConnectTools", "getResource", "readAiUsage", "readBusinessOverview",
+    "compareListings", "describeDinarCapabilities", "findConnectTools", "getResource", "proposeConnectWorkflow", "readAiUsage", "readBusinessOverview",
     "readConnectPartnerStatus", "readMyAccountStatus", "readOrderIssues", "readPolicy", "readSellerDues", "searchDomains", "searchListings", "searchPartnerOffers", "useConnectTool",
   ]);
   for (const name of MODEL_LOOP_TOOL_ALLOWLIST) {

@@ -49,6 +49,7 @@ export const CAPABILITY_NAMES = [
   "readOwnConnectPartnership",
   "findOwnConnectTools",
   "useOwnConnectTool",
+  "proposeConnectWorkflow",
   "readPublishedPolicy",
 ] as const;
 export type CapabilityName = (typeof CAPABILITY_NAMES)[number];
@@ -687,6 +688,24 @@ export const CAPABILITY_REGISTRY: Record<CapabilityName, CapabilityDefinition> =
     timeoutMs: MODEL_TOOL_TIMEOUT_MS,
     audit: "REDACTED_TURN_METADATA",
     canonicalService: "connect/tool-router.useConnectTool",
+    availability: "MODEL_TOOL",
+    modelActors: ["BUYER", "SELLER"],
+  }),
+
+  proposeConnectWorkflow: capability({
+    name: "proposeConnectWorkflow",
+    toolName: "proposeConnectWorkflow",
+    purpose: "Propose an ordered multi-store plan of tools the person may use; stored pending and executed only by the person's single confirmation (never here).",
+    inputSchema: z.object({ steps: z.array(z.object({ toolId: z.string(), arguments: z.record(z.string(), z.unknown()).optional() }).strict()) }).strict(),
+    outputSchema: z.object({ kind: z.literal("SURFACE"), surface: z.literal("CONNECT_WORKFLOW") }).passthrough(),
+    actors: ["BUYER", "SELLER"],
+    permissions: ["marketplace.read", "connect.partner.member"],
+    mutation: "READ_ONLY",
+    confirmation: "NONE",
+    idempotency: "READ_ONLY",
+    timeoutMs: MODEL_TOOL_TIMEOUT_MS,
+    audit: "REDACTED_TURN_METADATA",
+    canonicalService: "connect/workflows.proposeConnectWorkflow",
     availability: "MODEL_TOOL",
     modelActors: ["BUYER", "SELLER"],
   }),
