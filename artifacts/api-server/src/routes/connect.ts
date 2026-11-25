@@ -25,6 +25,7 @@ import * as agreements from "../connect/agreements";
 import * as apiConnector from "../connect/api-connector";
 import * as binding from "../connect/binding";
 import * as vault from "../connect/credential-vault";
+import * as toolCards from "../connect/tool-cards";
 import { connectIntegrations as connectIntegrationsTable, connectTools } from "@workspace/db";
 import { ConnectFinancialReceiptSchema } from "@workspace/api-zod/connect-platform";
 import { connectDiagnostics } from "../connect/diagnostics";
@@ -653,6 +654,14 @@ router.post("/connect/integrations/:id/credential", requireAuth, async (req, res
 router.post("/connect/integrations/:id/verify", requireAuth, async (req, res) => {
   const body = z.object({ toolId: z.string().uuid(), arguments: toolArguments.optional() }).strict().parse(req.body);
   res.set("Cache-Control", "no-store").json(await vault.verifyConnectBinding(req.actor!.id, await marketFor(req), idParam(req.params.id), body, connectNetworkFor(req) ?? new ConnectNetwork()));
+});
+// Smart cards from the store's system: the owner maps a READ tool and may open it to customers.
+router.post("/connect/integrations/:id/api-tools/:toolId/card", requireAuth, async (req, res) => {
+  res.json(await toolCards.setConnectToolCard(req.actor!.id, await marketFor(req), idParam(req.params.id), idParam(req.params.toolId), req.body));
+});
+router.post("/smart-store/cards/from-connector", requireAuth, async (req, res) => {
+  const body = z.object({ integrationId: z.string().uuid(), toolId: z.string().uuid(), arguments: toolArguments.optional(), conversationId: z.string().min(1).max(80).optional() }).strict().parse(req.body);
+  res.status(201).set("Cache-Control", "no-store").json(await toolCards.issueCardFromConnector({ actorId: req.actor!.id, market: await marketFor(req), ...body, network: connectNetworkFor(req) }));
 });
 router.post("/connect/action-confirmations/:id/confirm", requireAuth, async (req, res) => {
   z.object({}).strict().parse(req.body ?? {});

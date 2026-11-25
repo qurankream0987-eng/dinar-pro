@@ -3,6 +3,7 @@ import {
   pgTable,
   text,
   integer,
+  boolean,
   bigint,
   jsonb,
   timestamp,
@@ -541,6 +542,10 @@ export const connectTools = pgTable(
     revokedAt: timestamp("revoked_at", { withTimezone: true }),
     /** Stage 3: the reviewed operation (protocol, method, path, parameters, input schema). Its digest is inputSchemaSha256. */
     operation: jsonb("operation").$type<Record<string, unknown>>(),
+    /** Smart cards: the owner's mapping from this READ tool's answer to card products (JSON pointers). */
+    cardMapping: jsonb("card_mapping").$type<Record<string, unknown>>(),
+    /** The owner allows any signed-in customer to read through this tool (READ access only). */
+    publicRead: boolean("public_read").default(false).notNull(),
   },
   (t) => [
     uniqueIndex("connect_tools_identity_unique").on(t.integrationId, t.name, t.inputSchemaSha256),
@@ -551,7 +556,8 @@ export const connectTools = pgTable(
         AND ${t.capability} IN ('READ','SEARCH','DISCOVER','OBSERVE','TRACK','CREATE','UPDATE','DELETE','BOOK','SCHEDULE','MESSAGE','PAY','REFUND','CANCEL')
         AND (${t.access} = 'WRITE') = (${t.capability} IN ('CREATE','UPDATE','DELETE','BOOK','SCHEDULE','MESSAGE','PAY','REFUND','CANCEL'))
         AND (${t.status} <> 'AUTHORIZED' OR (${t.authorizedBy} IS NOT NULL AND ${t.authorizedAt} IS NOT NULL))
-        AND ${t.inputSchemaSha256} ~ '^[0-9a-f]{64}$'`,
+        AND ${t.inputSchemaSha256} ~ '^[0-9a-f]{64}$'
+        AND (NOT ${t.publicRead} OR ${t.access} = 'READ')`,
     ),
   ],
 );

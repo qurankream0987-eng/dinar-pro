@@ -526,6 +526,13 @@
       "when": 1795160000000,
       "tag": "0074_smart_store_cards",
       "breakpoints": true
+    },
+    {
+      "idx": 75,
+      "version": "7",
+      "when": 1795170000000,
+      "tag": "0075_connect_tool_cards",
+      "breakpoints": true
     }
   ]
 }

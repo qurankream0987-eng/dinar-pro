@@ -22605,6 +22605,179 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       return useMutation(getApplySmartStoreCardEventMutationOptions(options), queryClient);
     }
 
+export const getSetConnectToolCardUrl = (id: string,
+    toolId: string,) => {
+
+
+
+
+  return `/api/connect/integrations/${id}/api-tools/${toolId}/card`
+}
+
+/**
+ * OWNER only. Maps an authorized READ tool's answer to smart card products (JSON pointers, declared currency) and chooses whether customers may read through it.
+ */
+export const setConnectToolCard = async (id: string,
+    toolId: string,
+    serverValidatedObject: ServerValidatedObject, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getSetConnectToolCardUrl(id,toolId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(serverValidatedObject)
+  }
+);}
+
+
+
+
+
+export const getSetConnectToolCardMutationKey = () => ['setConnectToolCard'] as const;
+
+export const getSetConnectToolCardMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setConnectToolCard>>, TError,SetConnectToolCardMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof setConnectToolCard>>, TError,SetConnectToolCardMutationVariables, TContext> => {
+
+const mutationKey = getSetConnectToolCardMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof setConnectToolCard>>, SetConnectToolCardMutationVariables> = (props) => {
+          const {id,toolId,data} = props ?? {};
+
+          return  setConnectToolCard(id,toolId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SetConnectToolCardMutationResult = NonNullable<Awaited<ReturnType<typeof setConnectToolCard>>>
+    export type SetConnectToolCardMutationBody = BodyType<ServerValidatedObject>
+    export type SetConnectToolCardMutationError = ErrorType<void>
+    export type SetConnectToolCardMutationVariables = {id: string;toolId: string;data: BodyType<ServerValidatedObject>}
+
+    export const useSetConnectToolCard = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setConnectToolCard>>, TError,SetConnectToolCardMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof setConnectToolCard>>,
+        TError,
+        SetConnectToolCardMutationVariables,
+        TContext
+      > => {
+      return useMutation(getSetConnectToolCardMutationOptions(options), queryClient);
+    }
+
+export const getIssueSmartStoreCardFromConnectorUrl = () => {
+
+
+
+
+  return `/api/smart-store/cards/from-connector`
+}
+
+/**
+ * A smart card read live from a connected store's system through the binding law. Customers reach only owner-opened tools; mapped scalar fields only; marked MERCHANT_SYSTEM with its check time; the total is an estimate the store confirms.
+ */
+export const issueSmartStoreCardFromConnector = async (serverValidatedObject: ServerValidatedObject, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getIssueSmartStoreCardFromConnectorUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(serverValidatedObject)
+  }
+);}
+
+
+
+
+
+export const getIssueSmartStoreCardFromConnectorMutationKey = () => ['issueSmartStoreCardFromConnector'] as const;
+
+export const getIssueSmartStoreCardFromConnectorMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof issueSmartStoreCardFromConnector>>, TError,IssueSmartStoreCardFromConnectorMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof issueSmartStoreCardFromConnector>>, TError,IssueSmartStoreCardFromConnectorMutationVariables, TContext> => {
+
+const mutationKey = getIssueSmartStoreCardFromConnectorMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof issueSmartStoreCardFromConnector>>, IssueSmartStoreCardFromConnectorMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  issueSmartStoreCardFromConnector(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type IssueSmartStoreCardFromConnectorMutationResult = NonNullable<Awaited<ReturnType<typeof issueSmartStoreCardFromConnector>>>
+    export type IssueSmartStoreCardFromConnectorMutationBody = BodyType<ServerValidatedObject>
+    export type IssueSmartStoreCardFromConnectorMutationError = ErrorType<void>
+    export type IssueSmartStoreCardFromConnectorMutationVariables = {data: BodyType<ServerValidatedObject>}
+
+    export const useIssueSmartStoreCardFromConnector = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof issueSmartStoreCardFromConnector>>, TError,IssueSmartStoreCardFromConnectorMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof issueSmartStoreCardFromConnector>>,
+        TError,
+        IssueSmartStoreCardFromConnectorMutationVariables,
+        TContext
+      > => {
+      return useMutation(getIssueSmartStoreCardFromConnectorMutationOptions(options), queryClient);
+    }
+
 export const getConfirmConnectActionUrl = (id: string,) => {
 
 

@@ -9172,6 +9172,27 @@ export const ApplySmartStoreCardEventResponse = zod.record(zod.string(), zod.unk
 
 
 /**
+ * OWNER only. Maps an authorized READ tool's answer to smart card products (JSON pointers, declared currency) and chooses whether customers may read through it.
+ */
+export const SetConnectToolCardParams = zod.object({
+  "id": zod.uuid(),
+  "toolId": zod.uuid()
+})
+
+export const SetConnectToolCardBody = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+export const SetConnectToolCardResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * A smart card read live from a connected store's system through the binding law. Customers reach only owner-opened tools; mapped scalar fields only; marked MERCHANT_SYSTEM with its check time; the total is an estimate the store confirms.
+ */
+export const IssueSmartStoreCardFromConnectorBody = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+export const IssueSmartStoreCardFromConnectorResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
  * The same person's confirmation: consumed once and re-decided against the current binding.
  */
 export const ConfirmConnectActionParams = zod.object({
