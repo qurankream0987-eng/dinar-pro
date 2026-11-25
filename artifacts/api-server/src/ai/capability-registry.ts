@@ -658,7 +658,7 @@ export const CAPABILITY_REGISTRY: Record<CapabilityName, CapabilityDefinition> =
   findOwnConnectTools: capability({
     name: "findOwnConnectTools",
     toolName: "findConnectTools",
-    purpose: "Rank the owner-authorized tools of the actor's own verified Jassim Connect systems for a need (read only; names and capabilities only).",
+    purpose: "Rank tools of verified Jassim Connect stores for a need: the actor's own and those opened to customers (read only; names and capabilities only).",
     inputSchema: z.object({ need: z.string() }).strict(),
     outputSchema: z.object({ kind: z.literal("SURFACE"), surface: z.literal("CONNECT_TOOLS") }).passthrough(),
     actors: ["BUYER", "SELLER"],

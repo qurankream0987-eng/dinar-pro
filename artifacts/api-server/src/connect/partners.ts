@@ -107,7 +107,7 @@ export async function connectAudit(
   tx: any,
   partnerId: string,
   actorId: string | null,
-  actorKind: "OWNER" | "ADMIN" | "PROVIDER" | "SYSTEM",
+  actorKind: "OWNER" | "ADMIN" | "PROVIDER" | "SYSTEM" | "CUSTOMER",
   action: string,
   details: Record<string, unknown>,
   extra: { id?: string; idempotencyKey?: string; requestDigest?: string } = {},

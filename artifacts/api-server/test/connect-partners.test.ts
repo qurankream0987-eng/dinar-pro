@@ -837,6 +837,80 @@ await test("CARDS-CONNECT a store's system becomes a smart card: owner mapping, 
     if (previousVaultKey === undefined) delete process.env.DINAR_CONNECT_VAULT_KEY; else process.env.DINAR_CONNECT_VAULT_KEY = previousVaultKey;
   }
 });
+await test("BUSINESS-AI customers use only tools a store opened; every write is the customer's own confirmation; closing wins; rate limited", async () => {
+  const previousVaultKey = process.env.DINAR_CONNECT_VAULT_KEY;
+  process.env.DINAR_CONNECT_VAULT_KEY = randomBytes(32).toString("base64");
+  const created = await call(`/connect/partners/${partner.id}/integrations`, owner, { siteId: site.id, kind: "API", name: "حجوزات المطعم", endpointUrl: "https://catalog.partner.example/api", capabilities: ["CATALOG_READ"], mode: "SIMULATION_ONLY", allowedPathPrefixes: ["/products/"] });
+  const id = created.data.id as string;
+  assert.equal((await call(`/admin/connect/integrations/${id}/review`, admin, { decision: "APPROVE", expectedRevision: created.data.revision, reason: "Business AI acceptance" })).response.status, 200);
+  await call(`/connect/integrations/${id}/api-tools`, owner, { source: "OPENAPI", document: { openapi: "3.0.3", paths: {
+    "/tables": { get: { operationId: "listTables", parameters: [{ name: "date", in: "query", required: true, schema: { type: "string", maxLength: 10 } }] } },
+    "/bookings": { post: { operationId: "bookTable", "x-jassim-capability": "BOOK", requestBody: { required: true, content: { "application/json": { schema: { type: "object", properties: { date: { type: "string", maxLength: 10 }, people: { type: "integer", minimum: 1, maximum: 12 } }, required: ["date", "people"] } } } } } },
+    "/refunds": { post: { operationId: "issueRefund", "x-jassim-capability": "REFUND", requestBody: { content: { "application/json": { schema: { type: "object", properties: { order: { type: "string" } } } } } } } },
+  } } });
+  const tools = (await call(`/connect/integrations/${id}/api-tools`, owner)).data.tools;
+  const tool = (name: string) => tools.find((item: any) => item.name === name);
+  for (const name of ["listTables", "bookTable", "issueRefund"]) await call(`/connect/integrations/${id}/api-tools/${tool(name).id}/authorize`, owner, { reviewedDigest: tool(name).digest });
+  await call(`/connect/integrations/${id}/capabilities`, owner, { capabilities: ["READ", "BOOK", "REFUND"] });
+  await call(`/connect/integrations/${id}/credential`, owner, { method: "API_KEY_HEADER", headerName: "x-api-key", value: "k_restaurant_1" });
+  const sent: { method: string; body: string; key: string | null; idem: string | null }[] = [];
+  app.locals.connectNetwork = new ConnectNetwork({ dns: app.locals.connectDns, transport: async (request) => {
+    sent.push({ method: request.method, body: request.method === "GET" ? "" : await request.text(), key: request.headers.get("x-api-key"), idem: request.headers.get("idempotency-key") });
+    return request.method === "GET" ? Response.json({ free: [2, 4] }) : Response.json({ bookingId: "bk-9" }, { status: 201 });
+  } });
+  await db.update(connectIntegrations).set({ mode: "LIVE" }).where(eq(connectIntegrations.id, id));
+  process.env.DINAR_CONNECT_LIVE_CALLS = "true";
+  const [jo] = await db.select().from(markets).where(eq(markets.id, "JO"));
+  const market = await resolveMarket(jo!);
+  try {
+    assert.equal((await call(`/connect/integrations/${id}/verify`, owner, { toolId: tool("listTables").id, arguments: { date: "2026-12-01" } })).data.verified, true);
+    // Nothing is open yet: the customer sees no tool of this store and cannot call one directly.
+    assert.equal((await findConnectTools({ actorId: other.id, market, need: "احجز طاولة لشخصين" })).tools.filter((item: any) => item.connector === "").length, 0);
+    assert.ok(!(await findConnectTools({ actorId: other.id, market, need: "احجز طاولة" })).tools.some((item: any) => item.name === "bookTable"));
+    assert.equal((await call(`/connect/integrations/${id}/api-tools/call`, other, { toolName: "bookTable", arguments: { body: { date: "2026-12-01", people: 2 } } })).response.status, 404);
+    assert.equal((await call(`/connect/integrations/${id}/api-tools/${tool("bookTable").id}/customer-access`, other, { open: true })).response.status, 404, "only the owner opens");
+    assert.equal((await call(`/connect/integrations/${id}/api-tools/${tool("bookTable").id}/customer-access`, owner, { open: true })).data.open, true);
+    assert.equal((await call(`/connect/integrations/${id}/api-tools/${tool("listTables").id}/customer-access`, owner, { open: true })).data.access, "READ");
+    // The customer finds the booking tool by need, with the store's name; the refund tool stays closed.
+    const found = await findConnectTools({ actorId: other.id, market, need: "احجز طاولة لشخصين" });
+    const booking = found.tools.find((item: any) => item.name === "bookTable")!;
+    assert.ok(booking, JSON.stringify(found));
+    assert.equal(booking.requiresConfirmation, true);
+    assert.ok(!found.tools.some((item: any) => item.name === "issueRefund"), "a write the owner did not open is invisible to customers");
+    const before = sent.length;
+    const card = await useConnectTool({ actorId: other.id, market, toolId: booking.toolId, arguments: { body: { date: "2026-12-01", people: 2 } }, network: app.locals.connectNetwork });
+    assert.equal(card.status, "CONFIRMATION_REQUIRED");
+    assert.equal(sent.length, before, "nothing reaches the store before the customer confirms");
+    assert.ok((card as any).summary.store.length > 0);
+    assert.match((card as any).summary.sharedWithStore, /المتجر/);
+    assert.equal((await call(`/connect/action-confirmations/${(card as any).confirmationId}/confirm`, owner, {})).response.status, 404, "not even the store owner confirms for the customer");
+    const done = await call(`/connect/action-confirmations/${(card as any).confirmationId}/confirm`, other, {});
+    assert.equal(done.data.status, "EXECUTED", done.text);
+    assert.equal(sent.at(-1)!.idem, (card as any).confirmationId);
+    assert.equal(sent.at(-1)!.key, "k_restaurant_1");
+    assert.deepEqual(JSON.parse(sent.at(-1)!.body), { date: "2026-12-01", people: 2 });
+    const audit = (await pool.query("select actor_kind from connect_audit_events where action='CONNECT_TOOL_WRITE_EXECUTED' and details->>'integrationId'=$1", [id])).rows;
+    assert.deepEqual(audit.map((row: any) => row.actor_kind), ["CUSTOMER"]);
+    // The owner closes the tool: a confirmation issued earlier is refused at confirm time.
+    const pending = await useConnectTool({ actorId: other.id, market, toolId: booking.toolId, arguments: { body: { date: "2026-12-02", people: 4 } } });
+    await call(`/connect/integrations/${id}/api-tools/${tool("bookTable").id}/customer-access`, owner, { open: false });
+    const closed = await call(`/connect/action-confirmations/${(pending as any).confirmationId}/confirm`, other, {});
+    assert.equal(closed.data.refusal, "TOOL_NOT_AVAILABLE");
+    assert.equal(sent.filter((item) => item.method === "POST").length, 1, "only the one confirmed booking was ever sent");
+    // Rate limit: at most ten customer write confirmations per hour.
+    await call(`/connect/integrations/${id}/api-tools/${tool("bookTable").id}/customer-access`, owner, { open: true });
+    let refused = "";
+    for (let index = 0; index < 12 && !refused; index++) {
+      const attempt = await call(`/connect/integrations/${id}/api-tools/call`, other, { toolName: "bookTable", arguments: { body: { date: "2026-12-03", people: 1 } } });
+      if (attempt.data.status === "REFUSED") refused = attempt.data.refusal;
+    }
+    assert.equal(refused, "RATE_LIMITED");
+  } finally {
+    delete process.env.DINAR_CONNECT_LIVE_CALLS;
+    delete app.locals.connectNetwork;
+    if (previousVaultKey === undefined) delete process.env.DINAR_CONNECT_VAULT_KEY; else process.env.DINAR_CONNECT_VAULT_KEY = previousVaultKey;
+  }
+});
 let agreement: any, referral: any, referralCard: any;
 await test("CONNECT-01 registration stores the chosen mode; suspended merchants cannot change it", async () => {
   const seller = await register("تاجر وضع المشاركة");

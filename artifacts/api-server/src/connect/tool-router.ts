@@ -74,18 +74,29 @@ export function rankTools<T extends { name: string; capability: string }>(need: 
     .slice(0, limit);
 }
 
-/** The person's own verified connectors (business owner) in this market and their authorized tools. */
+/**
+ * Tools this person may use: every authorized tool of their own verified connectors, plus tools
+ * other businesses in the market opened to customers (Business AI). Only APPROVED + VERIFIED API
+ * connectors of APPROVED partners; reads opened via publicRead, writes via customerWrite.
+ */
 async function ownAuthorizedTools(actorId: string, marketId: string) {
   const integrations = await db
-    .select({ id: connectIntegrations.id, name: connectIntegrations.name, lifecycle: connectIntegrations.lifecycle, status: connectIntegrations.status })
+    .select({ id: connectIntegrations.id, name: businessProfiles.displayName, owner: businessProfiles.ownerUserId, partnerStatus: connectPartners.status })
     .from(connectIntegrations)
     .innerJoin(connectPartners, eq(connectPartners.id, connectIntegrations.partnerId))
     .innerJoin(businessProfiles, eq(businessProfiles.id, connectPartners.businessId))
-    .where(and(eq(businessProfiles.ownerUserId, actorId), eq(connectPartners.marketId, marketId), eq(connectIntegrations.kind, "API"), eq(connectIntegrations.status, "APPROVED"), eq(connectIntegrations.lifecycle, "VERIFIED")));
+    .where(and(eq(connectPartners.marketId, marketId), eq(connectIntegrations.kind, "API"), eq(connectIntegrations.status, "APPROVED"), eq(connectIntegrations.lifecycle, "VERIFIED")))
+    .limit(200);
   if (!integrations.length) return [];
+  const byId = new Map(integrations.map((row) => [row.id, row]));
   const tools = await db.select().from(connectTools).where(and(inArray(connectTools.integrationId, integrations.map((row) => row.id)), eq(connectTools.status, "AUTHORIZED")));
-  const names = new Map(integrations.map((row) => [row.id, row.name]));
-  return tools.map((tool) => ({ ...tool, connectorName: names.get(tool.integrationId) ?? "" }));
+  return tools
+    .filter((tool) => {
+      const integration = byId.get(tool.integrationId)!;
+      if (integration.owner === actorId) return true;
+      return integration.partnerStatus === "APPROVED" && (tool.access === "READ" ? tool.publicRead : tool.customerWrite);
+    })
+    .map((tool) => ({ ...tool, connectorName: byId.get(tool.integrationId)!.name }));
 }
 
 /** Model tool: up to five authorized tools for this need, as names and capabilities only. */
@@ -107,8 +118,8 @@ export async function findConnectTools(input: { actorId: string; market: Connect
       };
     }),
     note: tools.length
-      ? "أدوات معتمدة من صاحب النشاط فقط. القراءة تُنفّذ مباشرة؛ أي تغيير (حجز، إنشاء، إلغاء، دفع) يظهر للمستخدم بطاقة تأكيد ولا يُنفّذ قبل تأكيده."
-      : "لا يوجد نظام موصول وموثّق بأدوات معتمدة لهذا الحساب.",
+      ? "أدوات فتحها أصحاب المتاجر (أو أدوات نشاطك أنت). القراءة تُنفّذ مباشرة؛ أي طلب أو حجز أو إلغاء أو دفع يظهر للمستخدم بطاقة تأكيد تبيّن ما سيُرسل للمتجر، ولا يُنفّذ قبل تأكيده."
+      : "لا توجد متاجر موصولة بأدوات متاحة لهذا الطلب في سوقك الآن.",
   };
 }
 

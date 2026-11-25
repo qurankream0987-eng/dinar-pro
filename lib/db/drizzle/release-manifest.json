@@ -302,5 +302,9 @@
   {
     "tag": "0075_connect_tool_cards",
     "sha256": "6ac2349834a0fd87a180a8f877723f4097d254ad60b7c31336e9a2640b7f77ed"
+  },
+  {
+    "tag": "0076_connect_customer_write",
+    "sha256": "2a54f8285c99446c76c91999adffd6f298e12e6079093391bbef71f8c30f83d5"
   }
 ]

@@ -523,7 +523,7 @@ export const ConnectDiagnosticsSchema = z
         z
           .object({
             id: z.string().uuid(),
-            actorKind: z.enum(["OWNER", "ADMIN", "PROVIDER", "SYSTEM"]),
+            actorKind: z.enum(["OWNER", "ADMIN", "PROVIDER", "SYSTEM", "CUSTOMER"]),
             action: z.string().regex(/^[A-Z][A-Z0-9_]{0,79}$/),
             createdAt: z.string().datetime(),
           })

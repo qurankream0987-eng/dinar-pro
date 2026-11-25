@@ -627,7 +627,7 @@ router.get("/connect/integrations/:id/api-tools", requireAuth, async (req, res) 
     verificationFailure: row.verificationFailure,
     credential: await vault.connectCredentialStatus(id),
     grantedCapabilities: row.grantedCapabilities,
-    tools: tools.map((tool) => ({ id: tool.id, name: tool.name, capability: tool.capability, access: tool.access, status: tool.status, digest: tool.inputSchemaSha256, operation: tool.operation })),
+    tools: tools.map((tool) => ({ id: tool.id, name: tool.name, capability: tool.capability, access: tool.access, status: tool.status, digest: tool.inputSchemaSha256, operation: tool.operation, openToCustomers: tool.access === "READ" ? tool.publicRead : tool.customerWrite })),
   });
 });
 router.post("/connect/integrations/:id/capabilities", requireAuth, async (req, res) => {
@@ -658,6 +658,9 @@ router.post("/connect/integrations/:id/verify", requireAuth, async (req, res) =>
 // Smart cards from the store's system: the owner maps a READ tool and may open it to customers.
 router.post("/connect/integrations/:id/api-tools/:toolId/card", requireAuth, async (req, res) => {
   res.json(await toolCards.setConnectToolCard(req.actor!.id, await marketFor(req), idParam(req.params.id), idParam(req.params.toolId), req.body));
+});
+router.post("/connect/integrations/:id/api-tools/:toolId/customer-access", requireAuth, async (req, res) => {
+  res.json(await toolCards.setConnectToolCustomerAccess(req.actor!.id, await marketFor(req), idParam(req.params.id), idParam(req.params.toolId), req.body));
 });
 router.post("/smart-store/cards/from-connector", requireAuth, async (req, res) => {
   const body = z.object({ integrationId: z.string().uuid(), toolId: z.string().uuid(), arguments: toolArguments.optional(), conversationId: z.string().min(1).max(80).optional() }).strict().parse(req.body);

@@ -1,3 +1,4 @@
+import { ConnectActionCard } from "./smart-store/ConnectActionCard";
 import { MessageSmartStoreCard } from "./smart-store/MessageSmartStoreCard";
 import { UniversalCards } from "./UniversalCards";
 import { PolicyReviewPanel, isPolicyReview } from "./PolicyReviewPanel";
@@ -1001,6 +1002,8 @@ function ResultBlock({
         </p>
       </>
     );
+  if (block.type === "SURFACE" && block.payload.connectToolResult)
+    return <ConnectActionCard result={block.payload.connectToolResult as never} active={activeResults !== false} />;
   if (block.type === "SURFACE" && block.payload.universalCards)
     return <UniversalCards payload={block.payload.universalCards} resultSetId={block.payload.resultSetId} />;
   if (block.type === "SURFACE" && block.payload.delivery)

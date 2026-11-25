@@ -90,6 +90,7 @@ export const REVIEWED_PENDING_MIGRATIONS: ReadonlyArray<{ tag: string; sha256: s
   { tag: "0073_connect_operations_confirmations", sha256: "75e39726f01f9f9528c883cf52f1858ea8c64cfd7e264bcbc5eab529ff2a4447" },
   { tag: "0074_smart_store_cards", sha256: "9015f8c9806551c7583228791e76cacd75c5d5a18ea6bfdc19cc195e0c305b91" },
   { tag: "0075_connect_tool_cards", sha256: "6ac2349834a0fd87a180a8f877723f4097d254ad60b7c31336e9a2640b7f77ed" },
+  { tag: "0076_connect_customer_write", sha256: "2a54f8285c99446c76c91999adffd6f298e12e6079093391bbef71f8c30f83d5" },
 ];
 export const EXPECTED_JOURNAL_ENTRIES =
   EXPECTED_BASELINE_MIGRATIONS + REVIEWED_PENDING_MIGRATIONS.length;

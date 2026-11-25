@@ -148,3 +148,19 @@ export async function issueCardFromConnector(input: { actorId: string; market: C
   await db.insert(smartStoreCards).values({ id: parsed.cardId, ownerUserId: input.actorId, marketId: input.market.id, conversationId: input.conversationId ?? null, revision: 1, card: parsed });
   return parsed;
 }
+
+/**
+ * Business AI: the owner decides, per authorized tool, what customers may do with it. A READ tool can
+ * be opened for reading; a WRITE tool for customer use, always through the customer's own confirmation.
+ */
+export async function setConnectToolCustomerAccess(actorId: string, market: ConnectMarket, integrationId: string, toolId: string, raw: unknown) {
+  const body = z.object({ open: z.boolean() }).strict().parse(raw);
+  return db.transaction(async (tx) => {
+    const { partnerId } = await lockOwnedConnectIntegration(tx, actorId, market, integrationId);
+    const [tool] = await tx.select().from(connectTools).where(and(eq(connectTools.id, toolId), eq(connectTools.integrationId, integrationId))).for("update");
+    if (!tool || tool.status !== "AUTHORIZED") throw connectError(409, "TOOL_NOT_AUTHORIZED", "اعتمد الأداة أولًا");
+    await tx.update(connectTools).set(tool.access === "READ" ? { publicRead: body.open } : { customerWrite: body.open }).where(eq(connectTools.id, toolId));
+    await connectAudit(tx, partnerId, actorId, "OWNER", "CONNECT_TOOL_CUSTOMER_ACCESS", { integrationId, toolId, access: tool.access, open: body.open });
+    return { toolId, access: tool.access, open: body.open };
+  });
+}

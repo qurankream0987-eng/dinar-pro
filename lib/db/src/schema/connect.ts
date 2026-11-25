@@ -546,6 +546,8 @@ export const connectTools = pgTable(
     cardMapping: jsonb("card_mapping").$type<Record<string, unknown>>(),
     /** The owner allows any signed-in customer to read through this tool (READ access only). */
     publicRead: boolean("public_read").default(false).notNull(),
+    /** Business AI: the owner lets customers use this WRITE tool, always through their own confirmation. */
+    customerWrite: boolean("customer_write").default(false).notNull(),
   },
   (t) => [
     uniqueIndex("connect_tools_identity_unique").on(t.integrationId, t.name, t.inputSchemaSha256),
@@ -557,7 +559,8 @@ export const connectTools = pgTable(
         AND (${t.access} = 'WRITE') = (${t.capability} IN ('CREATE','UPDATE','DELETE','BOOK','SCHEDULE','MESSAGE','PAY','REFUND','CANCEL'))
         AND (${t.status} <> 'AUTHORIZED' OR (${t.authorizedBy} IS NOT NULL AND ${t.authorizedAt} IS NOT NULL))
         AND ${t.inputSchemaSha256} ~ '^[0-9a-f]{64}$'
-        AND (NOT ${t.publicRead} OR ${t.access} = 'READ')`,
+        AND (NOT ${t.publicRead} OR ${t.access} = 'READ')
+        AND (NOT ${t.customerWrite} OR ${t.access} = 'WRITE')`,
     ),
   ],
 );

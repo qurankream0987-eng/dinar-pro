@@ -217,6 +217,7 @@ export function ConnectDiagnosticsPanel({
                       ADMIN: "مسؤول مستقل",
                       PROVIDER: "المزوّد",
                       SYSTEM: "النظام",
+                      CUSTOMER: "عميل",
                     }[event.actorKind]
                   }
                 </p>

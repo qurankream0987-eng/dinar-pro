@@ -12,8 +12,8 @@
  *   NO_HEADER_OR_COOKIE_PARAMETERS: credentials never travel as tool arguments.
  */
 import { randomUUID } from "node:crypto";
-import { and, eq, gt, inArray } from "drizzle-orm";
-import { connectActionConfirmations, connectIntegrations, connectTools, db } from "@workspace/db";
+import { and, eq, gt, inArray, sql } from "drizzle-orm";
+import { businessProfiles, connectActionConfirmations, connectIntegrations, connectPartners, connectTools, db } from "@workspace/db";
 import { ConnectNetwork } from "./network";
 import { connectError, validateExternalUrl } from "./provider-registry";
 import { parseBoundedConnectProviderJson } from "./catalog-document";
@@ -213,13 +213,18 @@ export async function importApiTools(actorId: string, market: ConnectMarket, int
   });
 }
 
+async function storeName(integration: IntegrationRow) {
+  const [row] = await db.select({ name: businessProfiles.displayName }).from(connectPartners).innerJoin(businessProfiles, eq(businessProfiles.id, connectPartners.businessId)).where(eq(connectPartners.id, integration.partnerId));
+  return (row?.name ?? "").slice(0, 120);
+}
+
 // ─── Calls ───────────────────────────────────────────────────────────────────────────────────────
 
 const CONFIRMATION_TTL_MS = 10 * 60_000;
 
 export type ToolCallResult =
   | { status: "EXECUTED"; access: "READ" | "WRITE"; providerStatus: number; result: { source: "PROVIDER"; trusted: false; data: unknown } }
-  | { status: "CONFIRMATION_REQUIRED"; confirmationId: string; expiresAt: string; summary: { tool: string; capability: string; arguments: Record<string, unknown> } }
+  | { status: "CONFIRMATION_REQUIRED"; confirmationId: string; expiresAt: string; summary: { tool: string; capability: string; arguments: Record<string, unknown>; store: string; sharedWithStore: string } }
   | { status: "REFUSED"; refusal: string };
 
 type ToolRow = typeof connectTools.$inferSelect;
@@ -258,33 +263,63 @@ export async function executeConnectOperation(network: ConnectNetwork, integrati
   return { providerStatus: response.status, data };
 }
 
+/**
+ * Business AI: who may use this tool. The business owner uses every authorized tool of their own
+ * connector; a customer only tools the owner opened (READ via publicRead, WRITE via customerWrite),
+ * of an APPROVED partner in the customer's market. Anyone else: none (the caller answers 404/refusal).
+ */
+export async function toolRoleFor(actorId: string, market: ConnectMarket, integration: IntegrationRow, tool: ToolRow | undefined): Promise<"OWNER" | "CUSTOMER" | undefined> {
+  const [partner] = await db
+    .select({ id: connectPartners.id, marketId: connectPartners.marketId, status: connectPartners.status, ownerUserId: businessProfiles.ownerUserId })
+    .from(connectPartners)
+    .innerJoin(businessProfiles, eq(businessProfiles.id, connectPartners.businessId))
+    .where(eq(connectPartners.id, integration.partnerId));
+  if (!partner || partner.marketId !== market.id) return undefined;
+  if (partner.ownerUserId === actorId) {
+    await connectAccess(actorId, market.id, partner.id, "OWNER");
+    return "OWNER";
+  }
+  if (partner.status !== "APPROVED" || !tool || tool.status !== "AUTHORIZED") return undefined;
+  if (tool.access === "READ" ? tool.publicRead : tool.customerWrite) return "CUSTOMER";
+  return undefined;
+}
+
 async function loadCallable(actorId: string, market: ConnectMarket, integrationId: string, toolName: string) {
   const [integration] = await db.select().from(connectIntegrations).where(eq(connectIntegrations.id, integrationId));
   if (!integration) throw connectError(404, "NOT_FOUND", "الموصل غير موجود");
-  // Stage 3: the business owner operates their own connector. Buyers act through Business AI later.
-  await connectAccess(actorId, market.id, integration.partnerId, "OWNER");
   const tools = await db.select().from(connectTools).where(and(eq(connectTools.integrationId, integrationId), eq(connectTools.name, toolName), inArray(connectTools.status, ["AUTHORIZED", "DISCOVERED"])));
   // The latest authorized version is the callable one; a newer, unreviewed description is not.
   const tool = tools.find((item) => item.status === "AUTHORIZED") ?? tools[0];
-  return { integration, tool };
+  const role = await toolRoleFor(actorId, market, integration, tool);
+  if (!role) throw connectError(404, "NOT_FOUND", "الموصل غير موجود");
+  return { integration, tool, role };
 }
+
+const CUSTOMER_WRITES_PER_HOUR = 10;
 
 /**
  * One entry for every tool call. Reads run now when allowed; writes return a confirmation and run
  * only through `confirmToolCall` by the same person.
  */
 export async function callConnectTool(input: { actorId: string; market: ConnectMarket; integrationId: string; toolName: string; arguments: Record<string, unknown>; network?: ConnectNetwork; live?: boolean }): Promise<ToolCallResult> {
-  const { integration, tool } = await loadCallable(input.actorId, input.market, input.integrationId, input.toolName);
+  const { integration, tool, role } = await loadCallable(input.actorId, input.market, input.integrationId, input.toolName);
   if (!tool?.operation) return { status: "REFUSED", refusal: "TOOL_NOT_AUTHORIZED" };
   validateArguments((tool.operation as unknown as ApiOperation).inputSchema, input.arguments);
   const live = input.live ?? process.env.DINAR_CONNECT_LIVE_CALLS === "true";
   const decision = decideToolUse({ binding: integration, tool, presentedSchemaSha256: tool.inputSchemaSha256, confirmed: false, live });
   if (!decision.allowed) {
     if (decision.refusal !== "CONFIRMATION_REQUIRED") return { status: "REFUSED", refusal: decision.refusal };
+    if (role === "CUSTOMER") {
+      const [recent] = await db
+        .select({ n: sql<number>`count(*)::int` })
+        .from(connectActionConfirmations)
+        .where(and(eq(connectActionConfirmations.actorId, input.actorId), gt(connectActionConfirmations.createdAt, new Date(Date.now() - 60 * 60_000))));
+      if ((recent?.n ?? 0) >= CUSTOMER_WRITES_PER_HOUR) return { status: "REFUSED", refusal: "RATE_LIMITED" };
+    }
     const id = randomUUID();
     const expiresAt = new Date(Date.now() + CONFIRMATION_TTL_MS);
     await db.insert(connectActionConfirmations).values({ id, integrationId: integration.id, toolId: tool.id, actorId: input.actorId, argumentsDigest: argumentsDigest(input.arguments), arguments: input.arguments, expiresAt });
-    return { status: "CONFIRMATION_REQUIRED", confirmationId: id, expiresAt: expiresAt.toISOString(), summary: { tool: tool.name, capability: tool.capability, arguments: input.arguments } };
+    return { status: "CONFIRMATION_REQUIRED", confirmationId: id, expiresAt: expiresAt.toISOString(), summary: { tool: tool.name, capability: tool.capability, arguments: input.arguments, store: await storeName(integration), sharedWithStore: "عند التأكيد تُرسل هذه البيانات فقط إلى نظام المتجر، ويتم الطلب وفق شروط المتجر نفسه." } };
   }
   const executed = await executeConnectOperation(input.network ?? new ConnectNetwork(), integration, tool, input.arguments);
   return { status: "EXECUTED", access: decision.access, providerStatus: executed.providerStatus, result: { source: "PROVIDER", trusted: false, data: executed.data } };
@@ -308,7 +343,12 @@ export async function confirmToolCall(input: { actorId: string; market: ConnectM
   };
   const [integration] = await db.select().from(connectIntegrations).where(eq(connectIntegrations.id, claimed.integrationId));
   const [tool] = await db.select().from(connectTools).where(eq(connectTools.id, claimed.toolId));
-  await connectAccess(input.actorId, input.market.id, integration!.partnerId, "OWNER");
+  // The person and the tool's opening are re-checked now: an owner who closed the tool since wins.
+  const role = await toolRoleFor(input.actorId, input.market, integration!, tool);
+  if (!role) {
+    await finish("FAILED", null);
+    return { status: "REFUSED", refusal: "TOOL_NOT_AVAILABLE" };
+  }
   if (argumentsDigest(claimed.arguments) !== claimed.argumentsDigest) {
     await finish("FAILED", null);
     return { status: "REFUSED", refusal: "ARGUMENTS_CHANGED" };
@@ -322,13 +362,13 @@ export async function confirmToolCall(input: { actorId: string; market: ConnectM
   try {
     const executed = await executeConnectOperation(input.network ?? new ConnectNetwork(), integration!, tool!, claimed.arguments, claimed.id);
     await finish("SUCCEEDED", executed.providerStatus);
-    await connectAudit(db, integration!.partnerId, input.actorId, "OWNER", "CONNECT_TOOL_WRITE_EXECUTED", { integrationId: integration!.id, toolId: tool!.id, capability: tool!.capability, providerStatus: executed.providerStatus, argumentsDigest: claimed.argumentsDigest });
+    await connectAudit(db, integration!.partnerId, input.actorId, role, "CONNECT_TOOL_WRITE_EXECUTED", { integrationId: integration!.id, toolId: tool!.id, capability: tool!.capability, providerStatus: executed.providerStatus, argumentsDigest: claimed.argumentsDigest });
     return { status: "EXECUTED", access: "WRITE", providerStatus: executed.providerStatus, result: { source: "PROVIDER", trusted: false, data: executed.data } };
   } catch (error) {
     // The provider may or may not have applied it; the record says FAILED and the same idempotency key
     // is never reused for a different call. The person can ask the provider's status, not retry blindly.
     await finish("FAILED", null);
-    await connectAudit(db, integration!.partnerId, input.actorId, "OWNER", "CONNECT_TOOL_WRITE_FAILED", { integrationId: integration!.id, toolId: tool!.id, code: (error as { code?: string }).code ?? "PROVIDER_ERROR" });
+    await connectAudit(db, integration!.partnerId, input.actorId, role, "CONNECT_TOOL_WRITE_FAILED", { integrationId: integration!.id, toolId: tool!.id, code: (error as { code?: string }).code ?? "PROVIDER_ERROR" });
     throw error;
   }
 }

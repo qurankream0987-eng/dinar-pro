@@ -10590,7 +10590,7 @@ export const GetConnectDiagnosticsResponse = zod.object({
 })).max(getConnectDiagnosticsResponseIntegrationsMax),
   "audit": zod.array(zod.object({
   "id": zod.uuid().regex(getConnectDiagnosticsResponseAuditItemIdRegExp),
-  "actorKind": zod.enum(['OWNER', 'ADMIN', 'PROVIDER', 'SYSTEM']),
+  "actorKind": zod.enum(['OWNER', 'ADMIN', 'PROVIDER', 'SYSTEM', 'CUSTOMER']),
   "action": zod.string().regex(getConnectDiagnosticsResponseAuditItemActionRegExp),
   "createdAt": zod.coerce.date()
 })).max(getConnectDiagnosticsResponseAuditMax),
@@ -10700,7 +10700,7 @@ export const GetAdminConnectDiagnosticsResponse = zod.object({
 })).max(getAdminConnectDiagnosticsResponseIntegrationsMax),
   "audit": zod.array(zod.object({
   "id": zod.uuid().regex(getAdminConnectDiagnosticsResponseAuditItemIdRegExp),
-  "actorKind": zod.enum(['OWNER', 'ADMIN', 'PROVIDER', 'SYSTEM']),
+  "actorKind": zod.enum(['OWNER', 'ADMIN', 'PROVIDER', 'SYSTEM', 'CUSTOMER']),
   "action": zod.string().regex(getAdminConnectDiagnosticsResponseAuditItemActionRegExp),
   "createdAt": zod.coerce.date()
 })).max(getAdminConnectDiagnosticsResponseAuditMax),

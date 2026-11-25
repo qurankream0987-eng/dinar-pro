@@ -1028,7 +1028,7 @@ export const aiToolRegistry: Record<string, ToolDefinition> = {
   findConnectTools: {
     name: "findConnectTools",
     version: 1,
-    description: "Find the authorized tools of the signed-in owner's own verified Jassim Connect systems that fit a need. Read only.",
+    description: "Find tools of verified Jassim Connect stores that fit a need: the owner's own, and tools stores opened to customers. Read only.",
     permissions: ["marketplace.read"],
     riskLevel: "LOW",
     idempotency: "READ_ONLY",
@@ -1037,7 +1037,7 @@ export const aiToolRegistry: Record<string, ToolDefinition> = {
     inputSchema: z.object({ need: z.string().trim().min(2).max(300) }).strict(),
     modelDefinition: {
       name: "findConnectTools",
-      description: "Use when a business owner asks Jassim to do or check something in their own connected business system (their store, booking, inventory, shipping or order system). Pass the person's need in their words. Returns at most five owner-authorized tools with their argument names; never invent a tool or an argument.",
+      description: "Use when the person wants something done or checked in a connected store's own system: as a customer (order, book, reserve, track, check availability at a store) or as a business owner in their own system. Pass the person's need in their words. Returns at most five tools that store owners opened (or the owner's own), with the store name and argument names; never invent a tool, a store or an argument.",
       parameters: { type: "object", properties: { need: { type: "string", description: "The person's need, in their own words" } }, required: ["need"], additionalProperties: false },
     },
     execute: async (input: { need: string }, context) => {

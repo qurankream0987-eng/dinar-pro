@@ -6772,6 +6772,7 @@ export const ConnectDiagnosticsAuditItemActorKind = {
   ADMIN: 'ADMIN',
   PROVIDER: 'PROVIDER',
   SYSTEM: 'SYSTEM',
+  CUSTOMER: 'CUSTOMER',
 } as const;
 
 export type ConnectDiagnosticsAuditItem = {
