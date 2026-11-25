@@ -14,6 +14,7 @@ import { ListingImagePolicyReviewError } from "./ai/listing-image-policy-review"
 import { createWebFrontend } from "./lib/web-frontend";
 import { googleClientId } from "./lib/google-identity";
 import { driverLocationSharingEnabled, firstPartyTrackingProvider } from "./lib/driver-location";
+import { receiveWhopWebhook } from "./lib/whop/webhooks";
 
 const app: Express = express();
 const listingPhotoSuggestionProvider =
@@ -217,12 +218,15 @@ app.use((req, res, next) => {
       req.method === "POST" &&
       req.path === "/api/email/unsubscribe" &&
       contentType === "application/x-www-form-urlencoded";
+    // A provider webhook is authenticated by its signature, not by a browser origin or
+    // cookie; its raw bytes must still reach the verifier unparsed.
+    const signedWebhook = req.path === "/api/whop/webhooks";
     if (
       (origin &&
         (!normalizedOrigin || !allowedOrigins.has(normalizedOrigin)) &&
         !emailUnsubscribePost) ||
       (req.headers["sec-fetch-site"] === "cross-site" && !emailUnsubscribePost) ||
-      (!req.is("application/json") && !voiceTranscriptionUpload && !emailUnsubscribePost)
+      (!req.is("application/json") && !voiceTranscriptionUpload && !emailUnsubscribePost && !signedWebhook)
     ) {
       res.status(403).json({ error: "طلب غير مسموح" });
       return;
@@ -233,6 +237,20 @@ app.use((req, res, next) => {
 // Whop signs the exact bytes it sends, so its webhook keeps a raw body (same 128 KB bound).
 app.post("/api/billing/whop/webhook", express.raw({ type: "application/json", limit: "128kb" }), whopWebhookHandler);
 installWhopBillingFromEnv();
+// Before the JSON parser: the signature covers the exact bytes and a re-serialized body fails.
+app.post(
+  "/api/whop/webhooks",
+  express.raw({ type: "*/*", limit: "256kb" }),
+  async (req, res, next) => {
+    try {
+      const raw = Buffer.isBuffer(req.body) ? req.body : Buffer.from("");
+      const result = await receiveWhopWebhook(raw, req.headers);
+      res.status(result.status).json(result.body);
+    } catch (error) {
+      next(error);
+    }
+  },
+);
 app.use(express.json({ limit: "128kb" }));
 app.use(express.urlencoded({ extended: true }));
 // Zod 3 records one issue per failing array element (GHSA-mrhx-c7xc-m3w5): 128 KB of JSON can

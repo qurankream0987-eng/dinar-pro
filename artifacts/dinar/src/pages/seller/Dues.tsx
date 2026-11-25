@@ -8,6 +8,7 @@ import { ButtonLink } from "@/ui/Button";
 import { useAccount } from "@/account/Account";
 import { EmptyState, ErrorState, Skeleton, StatusBadge } from "@/ui/Feedback";
 import { PageHeader } from "@/ui/Layout";
+import { WhopPayoutsCard } from "./Payouts";
 
 const DUE_STATUS: Record<string, { label: string; tone: Tone }> = {
   PENDING: { label: "بانتظار السداد", tone: "warning" },
@@ -66,6 +67,8 @@ export default function DuesPage() {
               </p>
             </div>
           </section>
+
+          <WhopPayoutsCard />
 
           {list.length === 0 ? (
             <EmptyState

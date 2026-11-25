@@ -56,6 +56,7 @@ const approvalMessages: Record<string, string> = {
   BDINAR_WAVE05_EVALUATION: "BDINAR_WAVE05_EVALUATION=development",
   BDINAR_WAVE05_ACCEPTANCE: "BDINAR_WAVE05_ACCEPTANCE=development",
   BDINAR_WAVE05_SHUTDOWN: "BDINAR_WAVE05_SHUTDOWN=development",
+  BDINAR_WHOP_ACCEPTANCE: "BDINAR_WHOP_ACCEPTANCE=development",
 };
 
 export function requireSafeReplitDevelopmentDatabase(
@@ -159,4 +160,5 @@ const operationMessages: Record<keyof typeof approvalMessages, string> = {
   BDINAR_WAVE05_EVALUATION: "Wave 05 Arabic intelligence evaluation run",
   BDINAR_WAVE05_ACCEPTANCE: "Wave 05 full end-to-end engineering acceptance run",
   BDINAR_WAVE05_SHUTDOWN: "Wave 05 graceful server shutdown acceptance run",
+  BDINAR_WHOP_ACCEPTANCE: "Whop for Platforms sandbox acceptance run",
 };

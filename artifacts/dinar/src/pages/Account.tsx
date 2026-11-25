@@ -399,6 +399,14 @@ export function SettingsPage() {
             trailing={<span className="text-sm font-semibold text-primary">فتح</span>}
             testId="link-settings-admin-disputes"
           />
+          <ListRow
+            onClick={() => window.location.assign("/admin/refunds")}
+            icon={<Shield size={19} />}
+            title="استرداد مدفوعات Whop"
+            description="استرداد كامل أو جزئي لدفعة محصّلة، ومتابعة حالة كل استرداد"
+            trailing={<span className="text-sm font-semibold text-primary">فتح</span>}
+            testId="link-settings-admin-refunds"
+          />
         </ListGroup>
       )}
 

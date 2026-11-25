@@ -58,6 +58,7 @@ import {
   OrderTimeline,
   parseIssue,
 } from "@/features/OrderParts";
+import { WhopPaymentPanel } from "@/features/WhopPayment";
 
 type Detail = OrderView & {
   deliveryInstructions?: string | null;
@@ -648,6 +649,7 @@ function OrderView({ order }: { order: Detail }) {
         <div className="min-w-0 space-y-4">
           {action}
           <DealClosurePanel orderId={order.id} status={order.status} />
+          <WhopPaymentPanel orderId={order.id} orderStatus={order.status} role={role} />
           {error && <InlineAlert tone="danger">{error}</InlineAlert>}
           <OrderSettlementCard orderId={order.id} role={role === "seller" ? "seller" : role === "buyer" ? "buyer" : null} />
           <OrderChat

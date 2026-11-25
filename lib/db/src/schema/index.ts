@@ -4155,3 +4155,136 @@ export const orderClosureEvents = pgTable(
   },
   (t) => [index("order_closure_events_order_idx").on(t.orderId, t.createdAt)],
 );
+/**
+ * Whop platform records sit beside the simulation ledger, never inside it: the payment
+ * tables carry `mode = 'SIMULATION_ONLY'` checks and a real provider's money must not be
+ * written there. Each checkout is keyed to one existing order, so the order keeps its
+ * persisted price/fee snapshot and the seller/buyer ownership rules still apply.
+ */
+export const whopAccounts = pgTable(
+  "whop_accounts",
+  {
+    id: text("id").primaryKey(),
+    sellerUserId: text("seller_user_id")
+      .notNull()
+      .references(() => users.id),
+    whopAccountId: text("whop_account_id").notNull(),
+    contactEmail: text("contact_email").notNull(),
+    countryCode: text("country_code").notNull(),
+    status: text("status").default("PENDING").notNull(),
+    identityStatus: text("identity_status").default("UNKNOWN").notNull(),
+    verificationStatus: text("verification_status").default("UNKNOWN").notNull(),
+    lastSyncedAt: timestamp("last_synced_at", { withTimezone: true }),
+    data: jsonb("data").$type<Record<string, unknown>>().default({}).notNull(),
+    ...dates(),
+  },
+  (t) => [
+    uniqueIndex("whop_accounts_seller_unique").on(t.sellerUserId),
+    uniqueIndex("whop_accounts_provider_unique").on(t.whopAccountId),
+    check("whop_accounts_status_valid", sql`${t.status} IN ('PENDING', 'ONBOARDING', 'VERIFIED', 'RESTRICTED')`),
+    check("whop_accounts_country_valid", sql`${t.countryCode} ~ '^[A-Z]{2}$'`),
+    check("whop_accounts_email_valid", sql`${t.contactEmail} ~* '^[^@[:space:]]+@[^@[:space:]]+\\.[^@[:space:]]+$'`),
+  ],
+);
+export const whopCheckouts = pgTable(
+  "whop_checkouts",
+  {
+    id: text("id").primaryKey(),
+    orderId: text("order_id")
+      .notNull()
+      .unique()
+      .references(() => orders.id),
+    sellerUserId: text("seller_user_id")
+      .notNull()
+      .references(() => users.id),
+    whopCheckoutId: text("whop_checkout_id").notNull(),
+    whopPaymentId: text("whop_payment_id"),
+    purchaseUrl: text("purchase_url").notNull(),
+    redirectUrl: text("redirect_url").notNull(),
+    amountUsdMinor: integer("amount_usd_minor").notNull(),
+    feeUsdMinor: integer("fee_usd_minor").notNull(),
+    sellerUsdMinor: integer("seller_usd_minor").notNull(),
+    feeBasisPoints: integer("fee_basis_points").notNull(),
+    status: text("status").default("CREATED").notNull(),
+    failureCode: text("failure_code"),
+    data: jsonb("data").$type<Record<string, unknown>>().default({}).notNull(),
+    ...dates(),
+  },
+  (t) => [
+    uniqueIndex("whop_checkouts_provider_unique").on(t.whopCheckoutId),
+    uniqueIndex("whop_checkouts_payment_unique").on(t.whopPaymentId),
+    index("whop_checkouts_status_idx").on(t.status, t.createdAt),
+    check("whop_checkouts_amount_positive", sql`${t.amountUsdMinor} > 0`),
+    check("whop_checkouts_fee_bounds", sql`${t.feeUsdMinor} > 0 AND ${t.feeUsdMinor} < ${t.amountUsdMinor}`),
+    check("whop_checkouts_split_valid", sql`${t.feeUsdMinor} + ${t.sellerUsdMinor} = ${t.amountUsdMinor}`),
+    check("whop_checkouts_status_valid", sql`${t.status} IN ('CREATED', 'SUCCEEDED', 'FAILED', 'CANCELED', 'REFUND_DUE')`),
+  ],
+);
+/**
+ * One row per verified delivery. The provider event id is unique in the database, so a
+ * replayed webhook is answered without moving money or changing an order.
+ */
+export const whopEvents = pgTable(
+  "whop_events",
+  {
+    id: text("id").primaryKey(),
+    eventId: text("event_id").notNull(),
+    eventType: text("event_type").notNull(),
+    payloadSha256: text("payload_sha256").notNull(),
+    processingStatus: text("processing_status").notNull(),
+    result: text("result").default("").notNull(),
+    ...dates(),
+  },
+  (t) => [
+    uniqueIndex("whop_events_provider_unique").on(t.eventId),
+    index("whop_events_type_idx").on(t.eventType, t.createdAt),
+    check("whop_events_status_valid", sql`${t.processingStatus} IN ('PROCESSED', 'IGNORED', 'FAILED')`),
+    check("whop_events_payload_sha256_valid", sql`${t.payloadSha256} ~ '^[a-f0-9]{64}$'`),
+  ],
+);
+export const whopRefunds = pgTable(
+  "whop_refunds",
+  {
+    id: text("id").primaryKey(),
+    orderId: text("order_id")
+      .notNull()
+      .references(() => orders.id),
+    whopPaymentId: text("whop_payment_id").notNull(),
+    whopRefundId: text("whop_refund_id"),
+    idempotencyKey: text("idempotency_key").notNull(),
+    amountUsdMinor: integer("amount_usd_minor").notNull(),
+    status: text("status").default("REQUESTED").notNull(),
+    reason: text("reason").default("").notNull(),
+    // Null for obligations the payment webhook opens automatically (REFUND_DUE); an
+    // administrator is recorded when a refund is requested through the admin route.
+    requestedBy: text("requested_by").references(() => users.id),
+    data: jsonb("data").$type<Record<string, unknown>>().default({}).notNull(),
+    ...dates(),
+  },
+  (t) => [
+    uniqueIndex("whop_refunds_idempotency_unique").on(t.idempotencyKey),
+    uniqueIndex("whop_refunds_provider_unique").on(t.whopRefundId),
+    index("whop_refunds_order_idx").on(t.orderId, t.createdAt),
+    index("whop_refunds_payment_idx").on(t.whopPaymentId, t.status),
+    check("whop_refunds_amount_positive", sql`${t.amountUsdMinor} > 0`),
+    check("whop_refunds_status_valid", sql`${t.status} IN ('REFUND_DUE', 'REQUESTED', 'SUCCEEDED', 'FAILED')`),
+  ],
+);
+export const whopDisputes = pgTable(
+  "whop_disputes",
+  {
+    id: text("id").primaryKey(),
+    orderId: text("order_id").references(() => orders.id),
+    whopCaseId: text("whop_case_id").notNull(),
+    whopPaymentId: text("whop_payment_id"),
+    status: text("status").notNull(),
+    amountUsdMinor: integer("amount_usd_minor"),
+    data: jsonb("data").$type<Record<string, unknown>>().default({}).notNull(),
+    ...dates(),
+  },
+  (t) => [
+    uniqueIndex("whop_disputes_case_unique").on(t.whopCaseId),
+    index("whop_disputes_status_idx").on(t.status, t.createdAt),
+    check("whop_disputes_amount_valid", sql`${t.amountUsdMinor} IS NULL OR ${t.amountUsdMinor} > 0`),
+  ],
+);

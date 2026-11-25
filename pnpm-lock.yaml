@@ -189,6 +189,9 @@ importers:
       '@google-cloud/storage':
         specifier: ^8.2.0
         version: 8.2.0
+      '@whop/sdk':
+        specifier: 2.8.1
+        version: 2.8.1
       '@workspace/api-zod':
         specifier: workspace:*
         version: link:../../lib/api-zod
@@ -244,9 +247,6 @@ importers:
       '@types/node':
         specifier: 'catalog:'
         version: 25.9.6
-      '@whop/sdk':
-        specifier: 2.8.1
-        version: 2.8.1
       esbuild:
         specifier: 0.28.2
         version: 0.28.2

@@ -100,6 +100,8 @@ on:
           - w06-d16-adversarial.test
           - w06-d17-context-baseline.test
           - w06-d17-retrieval-quality.test
+          - whop-rules.test
+          - whop-platform.test
       chain:
         description: "Run a reviewed suite chain on one disposable migrated and seeded database"
         required: false
@@ -116,6 +118,7 @@ on:
           - wave04-d10-d12
           - wave06-d16-d17
           - wave06-d17-memory
+          - whop-platform
       flags:
         description: "Allowlisted KEY=VALUE switches, space separated"
         required: false
@@ -174,7 +177,7 @@ jobs:
             key=${pair%%=*}
             value=${pair#*=}
             case "$key" in
-              BDINAR_W07_ACCEPTANCE|BDINAR_W08_ACCEPTANCE|BDINAR_W09_ACCEPTANCE|BDINAR_W10_ACCEPTANCE|BDINAR_W12C_ACCEPTANCE|BDINAR_D1D2_ACCEPTANCE|BDINAR_W02U3_TEST_DATABASE|BDINAR_W02U3_BROWSER|BDINAR_D3A_ACCEPTANCE|BDINAR_D3A_D2_FIXTURES|BDINAR_WAVE03_ACCEPTANCE|BDINAR_WAVE4_ACCEPTANCE|BDINAR_WAVE3_ACCEPTANCE|BDINAR_WAVE02_ACCEPTANCE|BDINAR_PHASE1_ACCEPTANCE|BDINAR_SECURITY_ACCEPTANCE|BDINAR_D4_ACCEPTANCE|BDINAR_D5_ACCEPTANCE|BDINAR_A02_ISOLATION|BDINAR_G2_ACCEPTANCE|BDINAR_BLOCKD_ACCEPTANCE|BDINAR_BLOCKF_ACCEPTANCE|BDINAR_AI_FOUNDATION|BDINAR_WAVE4_D10D12|BDINAR_WAVE05_MONEY_GATE|BDINAR_WAVE05_LOAD|BDINAR_WAVE05_PROFILE|BDINAR_WAVE05_SHUTDOWN|BDINAR_WAVE05_EVALUATION|BDINAR_WAVE05_ACCEPTANCE|BDINAR_D16_ACCEPTANCE|BDINAR_W06_D16_ACCEPTANCE|BDINAR_W06_D17_ACCEPTANCE|BDINAR_W06_D16_AUDIT|BDINAR_W06_D17_MEMORY)
+              BDINAR_W07_ACCEPTANCE|BDINAR_W08_ACCEPTANCE|BDINAR_W09_ACCEPTANCE|BDINAR_W10_ACCEPTANCE|BDINAR_W12C_ACCEPTANCE|BDINAR_D1D2_ACCEPTANCE|BDINAR_WHOP_ACCEPTANCE|BDINAR_W02U3_TEST_DATABASE|BDINAR_W02U3_BROWSER|BDINAR_D3A_ACCEPTANCE|BDINAR_D3A_D2_FIXTURES|BDINAR_WAVE03_ACCEPTANCE|BDINAR_WAVE4_ACCEPTANCE|BDINAR_WAVE3_ACCEPTANCE|BDINAR_WAVE02_ACCEPTANCE|BDINAR_PHASE1_ACCEPTANCE|BDINAR_SECURITY_ACCEPTANCE|BDINAR_D4_ACCEPTANCE|BDINAR_D5_ACCEPTANCE|BDINAR_A02_ISOLATION|BDINAR_G2_ACCEPTANCE|BDINAR_BLOCKD_ACCEPTANCE|BDINAR_BLOCKF_ACCEPTANCE|BDINAR_AI_FOUNDATION|BDINAR_WAVE4_D10D12|BDINAR_WAVE05_MONEY_GATE|BDINAR_WAVE05_LOAD|BDINAR_WAVE05_PROFILE|BDINAR_WAVE05_SHUTDOWN|BDINAR_WAVE05_EVALUATION|BDINAR_WAVE05_ACCEPTANCE|BDINAR_D16_ACCEPTANCE|BDINAR_W06_D16_ACCEPTANCE|BDINAR_W06_D17_ACCEPTANCE|BDINAR_W06_D16_AUDIT|BDINAR_W06_D17_MEMORY)
                 [ "$value" = development ] || { echo "$key must be development" >&2; exit 96; } ;;
               BDINAR_LOG_SCAN)
                 case "$value" in 0|1) ;; *) echo "$key must be 0 or 1" >&2; exit 96 ;; esac ;;
@@ -246,6 +249,9 @@ jobs:
             wave06-d17-memory)
               SUITES="wave06-conversation-memory.test wave06-conversation-memory-adversarial.test wave06-conversation-memory-performance.test w06-d17-context-baseline.test w06-d17-retrieval-quality.test"
               require_flags "BDINAR_TEST_DATABASE BDINAR_W06_D17_ACCEPTANCE BDINAR_W06_D17_MEMORY" ;;
+            whop-platform)
+              SUITES="whop-rules.test whop-platform.test"
+              require_flags "BDINAR_WHOP_ACCEPTANCE" ;;
             *) echo "chain not allowlisted: $CHAIN" >&2; exit 96 ;;
           esac
           if [ "$promotions" = 1 ]; then
