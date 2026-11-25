@@ -112,11 +112,26 @@ export const connectIntegrations = pgTable(
     providerConnectionId: text("provider_connection_id").references(
       () => providerConnections.id,
     ),
+    /**
+     * Stage 2 binding lifecycle. Each step is a separate fact somebody established:
+     * SETUP_PENDING → AUTHORIZED (credential sealed) → AUTHENTICATED (provider answered)
+     * → VERIFIED (account and granted capabilities checked). Only VERIFIED may be used.
+     */
+    lifecycle: text("lifecycle").default("SETUP_PENDING").notNull(),
+    /** What this binding MAY do, granted by the business owner; a subset of what it supports. */
+    grantedCapabilities: jsonb("granted_capabilities").$type<string[]>().default([]).notNull(),
+    authenticatedAt: timestamp("authenticated_at", { withTimezone: true }),
+    verifiedAt: timestamp("verified_at", { withTimezone: true }),
+    verificationFailure: text("verification_failure"),
     createdAt: created(),
     updatedAt: updated(),
   },
   (t) => [
     uniqueIndex("connect_integrations_id_partner_unique").on(t.id, t.partnerId),
+    check(
+      "connect_integrations_lifecycle_valid",
+      sql`${t.lifecycle} IN ('SETUP_PENDING','AUTHORIZED','AUTHENTICATED','VERIFIED','SUSPENDED','REVOKED') AND (${t.lifecycle} <> 'VERIFIED' OR ${t.verifiedAt} IS NOT NULL)`,
+    ),
     uniqueIndex("connect_integrations_provider_unique").on(
       t.providerConnectionId,
     ),
@@ -503,6 +518,41 @@ export const connectSecrets = pgTable("connect_secrets", {
   revokedAt: timestamp("revoked_at", { withTimezone: true }),
   createdAt: created(),
 });
+/**
+ * Stage 2: a provider tool is DISCOVERED (listed by the provider) before anyone may use it.
+ * Only the business owner AUTHORIZES a tool, pinned to the exact input-schema digest seen at
+ * review; a changed schema is a new, unauthorized tool. DISCOVERED_TOOL != AUTHORIZED_TOOL.
+ */
+export const connectTools = pgTable(
+  "connect_tools",
+  {
+    id: text("id").primaryKey(),
+    integrationId: text("integration_id")
+      .notNull()
+      .references(() => connectIntegrations.id),
+    name: text("name").notNull(),
+    inputSchemaSha256: text("input_schema_sha256").notNull(),
+    capability: text("capability").notNull(),
+    access: text("access").notNull(),
+    status: text("status").default("DISCOVERED").notNull(),
+    discoveredAt: timestamp("discovered_at", { withTimezone: true }).defaultNow().notNull(),
+    authorizedBy: text("authorized_by").references(() => users.id),
+    authorizedAt: timestamp("authorized_at", { withTimezone: true }),
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+  },
+  (t) => [
+    uniqueIndex("connect_tools_identity_unique").on(t.integrationId, t.name, t.inputSchemaSha256),
+    index("connect_tools_integration_status_idx").on(t.integrationId, t.status),
+    check(
+      "connect_tools_valid",
+      sql`${t.status} IN ('DISCOVERED','AUTHORIZED','REVOKED') AND ${t.access} IN ('READ','WRITE')
+        AND ${t.capability} IN ('READ','SEARCH','DISCOVER','OBSERVE','TRACK','CREATE','UPDATE','DELETE','BOOK','SCHEDULE','MESSAGE','PAY','REFUND','CANCEL')
+        AND (${t.access} = 'WRITE') = (${t.capability} IN ('CREATE','UPDATE','DELETE','BOOK','SCHEDULE','MESSAGE','PAY','REFUND','CANCEL'))
+        AND (${t.status} <> 'AUTHORIZED' OR (${t.authorizedBy} IS NOT NULL AND ${t.authorizedAt} IS NOT NULL))
+        AND ${t.inputSchemaSha256} ~ '^[0-9a-f]{64}$'`,
+    ),
+  ],
+);
 export const connectOauthStates = pgTable(
   "connect_oauth_states",
   {

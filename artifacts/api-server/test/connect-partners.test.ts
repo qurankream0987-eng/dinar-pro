@@ -7,6 +7,8 @@ import { eq } from "drizzle-orm";
 import app from "../src/app";
 import { readWebsiteCatalog } from "../src/connect/website-catalog";
 import { importConnectOwnerCatalog } from "../src/connect/partners";
+import { advanceBindingLifecycle, authorizeConnectTool, decideToolUse, grantConnectCapabilities, modelToolView, nextLifecycle, recordDiscoveredTools, revokeConnectTool, toolSchemaDigest, toolUseFacts } from "../src/connect/binding";
+import { connectIntegrations, connectTools } from "@workspace/db";
 import { resolveMarket } from "../src/lib/markets";
 import { ConnectNetwork } from "../src/connect/network";
 import { registerBusinessDocumentScanner } from "../src/lib/business-profiles";
@@ -516,6 +518,68 @@ await test("approved integrations issue scoped revocable credentials and import 
     409,
     "a prepared navigation must revalidate current integration status",
   );
+});
+await test("STAGE2 binding law: connected != verified, supported != granted, read != write, discovered != authorized, nothing secret for the model", async () => {
+  const created = await call(`/connect/partners/${partner.id}/integrations`, owner, { siteId: site.id, kind: "API", name: "ربط المرحلة الثانية", endpointUrl: "https://catalog.partner.example/api", capabilities: ["CATALOG_READ"], mode: "SIMULATION_ONLY", allowedPathPrefixes: ["/products/"] });
+  assert.equal(created.response.status, 201, created.text);
+  const id = created.data.id as string;
+  const approved = await call(`/admin/connect/integrations/${id}/review`, admin, { decision: "APPROVE", expectedRevision: created.data.revision, reason: "Stage 2 binding acceptance" });
+  assert.equal(approved.response.status, 200, approved.text);
+  const [marketRow] = await db.select().from(markets).where(eq(markets.id, "JO"));
+  const market = await resolveMarket(marketRow!);
+  // The provider SUPPORTS read, search and create; nothing is granted yet.
+  const [row] = await db.select().from(connectIntegrations).where(eq(connectIntegrations.id, id));
+  await db.update(connectIntegrations).set({ config: { ...(row!.config as object), supportedCapabilities: ["READ", "SEARCH", "CREATE"] } }).where(eq(connectIntegrations.id, id));
+  assert.equal(row!.lifecycle, "SETUP_PENDING", "approval of a row is not a working connection");
+  assert.deepEqual(row!.grantedCapabilities, []);
+  await assert.rejects(() => grantConnectCapabilities(other.id, market, id, ["READ"]), { code: "NOT_FOUND" }, "a stranger cannot grant");
+  await assert.rejects(() => grantConnectCapabilities(owner.id, market, id, ["PAY"]), { code: "CAPABILITY_NOT_SUPPORTED" });
+  assert.deepEqual((await grantConnectCapabilities(owner.id, market, id, ["READ"])).grantedCapabilities, ["READ"]);
+
+  const readSchema = { type: "object", properties: { q: { type: "string" } } };
+  const writeSchema = { type: "object", properties: { item: { type: "string" } } };
+  await db.transaction((tx) => recordDiscoveredTools(tx, id, [{ name: "search_items", inputSchema: readSchema, capability: "SEARCH" }, { name: "read_item", inputSchema: readSchema, capability: "READ" }, { name: "create_item", inputSchema: writeSchema, capability: "CREATE" }]));
+  const readDigest = toolSchemaDigest({ properties: { q: { type: "string" } }, type: "object" });
+  assert.equal(readDigest, toolSchemaDigest(readSchema), "digest ignores key order");
+  const decide = async (name: string, digest = readDigest, confirmed = false) => {
+    const facts = (await toolUseFacts(id, name, digest))!;
+    return decideToolUse({ binding: facts.binding, tool: facts.tool, presentedSchemaSha256: digest, confirmed, live: true });
+  };
+  assert.deepEqual(await decide("read_item"), { allowed: false, refusal: "BINDING_NOT_VERIFIED" });
+  await assert.rejects(() => db.transaction((tx) => advanceBindingLifecycle(tx, id, "VERIFIED")), { code: "NOT_AUTHENTICATED_YET" }, "no step is skipped");
+  for (const event of ["CREDENTIAL_SEALED", "PROVIDER_ANSWERED", "VERIFIED"] as const) await db.transaction((tx) => advanceBindingLifecycle(tx, id, event));
+  assert.deepEqual(await decide("read_item"), { allowed: false, refusal: "TOOL_NOT_AUTHORIZED" }, "a discovered tool authorizes nothing");
+  const tools = await db.select().from(connectTools).where(eq(connectTools.integrationId, id));
+  const tool = (name: string) => tools.find((item) => item.name === name)!;
+  await assert.rejects(() => authorizeConnectTool(other.id, market, id, tool("read_item").id, readDigest), { code: "NOT_FOUND" });
+  await assert.rejects(() => authorizeConnectTool(owner.id, market, id, tool("read_item").id, "0".repeat(64)), { code: "TOOL_SCHEMA_CHANGED" });
+  await authorizeConnectTool(owner.id, market, id, tool("read_item").id, readDigest);
+  await authorizeConnectTool(owner.id, market, id, tool("search_items").id, readDigest);
+  assert.deepEqual(await decide("read_item"), { allowed: true, access: "READ", capability: "READ" });
+  assert.deepEqual(await decide("search_items"), { allowed: false, refusal: "CAPABILITY_NOT_GRANTED" }, "supported is not granted");
+  assert.deepEqual(await decide("read_item", toolSchemaDigest({ type: "object", properties: { q: { type: "number" } } })), { allowed: false, refusal: "TOOL_SCHEMA_CHANGED" });
+  // Write: granted and authorized is still not enough without LIVE mode and the person's confirmation.
+  await grantConnectCapabilities(owner.id, market, id, ["READ", "CREATE"]);
+  const writeDigest = toolSchemaDigest(writeSchema);
+  await authorizeConnectTool(owner.id, market, id, tool("create_item").id, writeDigest);
+  assert.deepEqual(await decide("create_item", writeDigest, true), { allowed: false, refusal: "LIVE_MODE_REQUIRED" }, "simulation never writes");
+  const facts = (await toolUseFacts(id, "create_item", writeDigest))!;
+  const live = { ...facts.binding, mode: "LIVE" };
+  assert.deepEqual(decideToolUse({ binding: live, tool: facts.tool, presentedSchemaSha256: writeDigest, confirmed: false, live: true }), { allowed: false, refusal: "CONFIRMATION_REQUIRED" });
+  assert.deepEqual(decideToolUse({ binding: live, tool: facts.tool, presentedSchemaSha256: writeDigest, confirmed: true, live: true }), { allowed: true, access: "WRITE", capability: "CREATE" });
+  // The model sees names and capabilities only.
+  const view = modelToolView(await db.select().from(connectTools).where(eq(connectTools.integrationId, id)));
+  assert.deepEqual(view.map((item) => item.name).sort(), ["create_item", "read_item", "search_items"]);
+  assert.ok(view.every((item) => Object.keys(item).sort().join() === "access,capability,name,requiresConfirmation,toolId"));
+  assert.ok(!JSON.stringify(view).includes("partner.example"), "no endpoint reaches the model");
+  assert.equal(view.find((item) => item.name === "create_item")!.requiresConfirmation, true);
+  await revokeConnectTool(owner.id, market, id, tool("read_item").id);
+  assert.deepEqual(await decide("read_item"), { allowed: false, refusal: "TOOL_NOT_AUTHORIZED" });
+  // Suspension and resumption never restore trust silently.
+  await db.transaction((tx) => advanceBindingLifecycle(tx, id, "SUSPEND"));
+  assert.equal(await db.transaction((tx) => advanceBindingLifecycle(tx, id, "RESUME")), "AUTHORIZED");
+  assert.deepEqual(nextLifecycle("REVOKED", "RESUME"), { refused: "BINDING_REVOKED" });
+  assert.equal(nextLifecycle("VERIFIED", "CREDENTIAL_ROTATED"), "AUTHORIZED", "a new credential is unproven");
 });
 let agreement: any, referral: any, referralCard: any;
 await test("CONNECT-01 registration stores the chosen mode; suspended merchants cannot change it", async () => {

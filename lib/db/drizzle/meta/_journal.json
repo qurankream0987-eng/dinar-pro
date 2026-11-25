@@ -505,6 +505,13 @@
       "when": 1795130000000,
       "tag": "0071_subscription_provider_link",
       "breakpoints": true
+    },
+    {
+      "idx": 72,
+      "version": "7",
+      "when": 1795140000000,
+      "tag": "0072_connect_binding_lifecycle",
+      "breakpoints": true
     }
   ]
 }
