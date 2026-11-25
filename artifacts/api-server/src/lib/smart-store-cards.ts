@@ -12,7 +12,7 @@
 import { randomUUID } from "node:crypto";
 import { and, eq } from "drizzle-orm";
 import { CardEvent, SmartStoreCard, type SmartMoney, type SmartSection } from "@workspace/api-zod/smart-store-card";
-import { conversations, db, smartStoreCards } from "@workspace/db";
+import { businessProfiles, conversations, db, smartStoreCards } from "@workspace/db";
 import { searchMarketplaceListings } from "./marketplace-listings";
 import { addMarketplaceCartItem } from "./marketplace-cart";
 import { formatMinorAmount, scaleOfCurrency } from "./commercial-policy";
@@ -194,11 +194,18 @@ export async function buildCardFromListings(market: Market, listingIds: readonly
     if (!products.length) throw fail(409, "لا توجد منتجات بسعر منشور", "LISTING_NOT_PRICED");
     sections.push({ kind: "PRODUCT_GRID", products });
   }
+  // A verified business of this seller in this market makes it a business; anyone else is an
+  // individual selling their own items — no business profile or Connect is required to sell.
+  const [business] = await db
+    .select({ id: businessProfiles.id })
+    .from(businessProfiles)
+    .where(and(eq(businessProfiles.ownerUserId, seller), eq(businessProfiles.marketId, market.id), eq(businessProfiles.verificationStatus, "VERIFIED")))
+    .limit(1);
   const card: SmartStoreCard = {
     cardId: randomUUID(),
     revision: 1,
     vertical: "GENERAL",
-    store: { name: own[0]!.sellerName.slice(0, 120) || "متجر", sponsored: own.some((listing) => listing.isSponsored), verified: false, mode: "SELL_INSIDE_JASSIM" },
+    store: { name: own[0]!.sellerName.slice(0, 120) || "بائع", kind: business ? "BUSINESS" : "INDIVIDUAL", sponsored: own.some((listing) => listing.isSponsored), verified: Boolean(business), mode: "SELL_INSIDE_JASSIM" },
     sections,
     primaryAction: { kind: "ADD_TO_CART", label: "إضافة إلى السلة" },
     status: "READY",

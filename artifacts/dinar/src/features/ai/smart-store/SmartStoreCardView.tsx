@@ -152,7 +152,10 @@ export function SmartStoreCardView({ card, onEvent, busy = false }: { card: Smar
   return (
     <section dir="rtl" aria-label={card.store.name} data-testid="smart-store-card" data-vertical={card.vertical} data-revision={card.revision} className="mt-3 w-full min-w-0 max-w-xl space-y-4 rounded-xl border bg-card p-4 text-sm [overflow-wrap:anywhere]">
       <header className="flex items-center justify-between gap-2">
-        <h3 className="font-semibold">{card.store.name}</h3>
+        <h3 className="font-semibold">
+          {card.store.name}
+          <span className="ms-2 text-[11px] font-normal text-muted-foreground">{card.store.kind === "INDIVIDUAL" ? "بائع فرد" : card.store.verified ? "نشاط تجاري موثّق" : "نشاط تجاري"}</span>
+        </h3>
         {card.store.sponsored && <span className="rounded-full border px-2 text-xs">ممول</span>}
       </header>
       {card.source && <p className="text-[11px] text-muted-foreground">حسب نظام المتجر — تم التحقق <time dateTime={card.source.checkedAt}>{new Date(card.source.checkedAt).toLocaleTimeString("ar", { hour: "2-digit", minute: "2-digit" })}</time></p>}

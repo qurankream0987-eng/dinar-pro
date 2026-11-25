@@ -87,6 +87,8 @@ await test("SSC-03 server cards come from published listings; owner-only; stale 
   const card = SmartStoreCard.parse(issued.data);
   assert.equal(card.store.name, listing.sellerName.slice(0, 120), "the store's real name, not Jassim's");
   assert.equal(card.store.mode, "SELL_INSIDE_JASSIM");
+  assert.ok(["INDIVIDUAL", "BUSINESS"].includes(card.store.kind));
+  assert.equal(card.store.verified, card.store.kind === "BUSINESS", "only a verified business is marked verified; individuals sell without one");
   const detail = card.sections.find((section) => section.kind === "PRODUCT_DETAIL") as any;
   assert.equal(detail.productId, listing.id);
   if (listing.reviewCount === 0) assert.equal(detail.rating, undefined, "no rating is invented");

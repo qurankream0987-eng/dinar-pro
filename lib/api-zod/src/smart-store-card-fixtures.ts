@@ -17,7 +17,7 @@ const base = (cardId: string, vertical: SmartStoreCard["vertical"], name: string
   cardId,
   revision: 1,
   vertical,
-  store: { name, sponsored: false, verified: true, mode },
+  store: { name, kind: "BUSINESS", sponsored: false, verified: true, mode },
   status: "READY",
 });
 

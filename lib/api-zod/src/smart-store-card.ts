@@ -85,7 +85,8 @@ export const SmartStoreCard = z
     revision: z.number().int().min(1),
     vertical: z.enum(SMART_STORE_VERTICALS),
     store: z
-      .object({ name: text(120), logoUrl: SmartMedia.shape.url.optional(), sponsored: z.boolean(), verified: z.boolean(), mode: z.enum(["SELL_INSIDE_JASSIM", "BUY_ON_MERCHANT_WEBSITE", "MERCHANT_SYSTEM"]) })
+      // An individual selling their own item (no business, no Connect) is a first-class seller.
+      .object({ name: text(120), kind: z.enum(["INDIVIDUAL", "BUSINESS"]), logoUrl: SmartMedia.shape.url.optional(), sponsored: z.boolean(), verified: z.boolean(), mode: z.enum(["SELL_INSIDE_JASSIM", "BUY_ON_MERCHANT_WEBSITE", "MERCHANT_SYSTEM"]) })
       .strict(),
     source: z.object({ kind: z.literal("MERCHANT_SYSTEM"), checkedAt: z.string().datetime() }).strict().optional(),
     sections: z.array(SmartSection).max(16),
