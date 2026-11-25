@@ -28,14 +28,13 @@ export const MARKET_PROVIDER_POLICY_BY_COUNTRY: Readonly<
 > = Object.freeze({});
 
 /**
- * Staging-only provider selections, read only when DINAR_DEPLOYMENT_ENV=staging. Owner approval
- * (2026-11-10): the AI text provider for the Jordan test market on staging, for the owner's own
- * trial with test data. Production and every other country stay closed; a production entry
- * needs its own legal decision and privacy notice.
+ * Staging-only provider selections, read only when DINAR_DEPLOYMENT_ENV=staging. The Jordan
+ * acceptance market may use the owner-selected AI provider and Resend notifications. Production
+ * and every other country stay closed; a production entry needs its own legal decision and notice.
  */
 export const STAGING_PROVIDER_POLICY_BY_COUNTRY: Readonly<
   Record<string, Partial<Record<ProviderFamily, string>>>
-> = Object.freeze({ JO: Object.freeze({ AI_TEXT: "configured-staging-ai" }) });
+> = Object.freeze({ JO: Object.freeze({ AI_TEXT: "configured-staging-ai", NOTIFICATIONS: "resend" }) });
 
 export const INTEGRATION_READINESS_MATRIX = [
   {
@@ -121,12 +120,12 @@ export const INTEGRATION_READINESS_MATRIX = [
   {
     family: "NOTIFICATIONS",
     boundary: "READY",
-    adapter: "INTERFACE_ONLY",
+    adapter: "RESEND_STAGING_ADAPTER",
     sandbox: "NOT_CONNECTED",
     live: "NOT_CONNECTED",
-    credentialNames: [],
+    credentialNames: ["RESEND_API_KEY", "RESEND_FROM_EMAIL", "JASSIMAI_PUBLIC_URL", "DINAR_EMAIL_STAGING_ALLOWLIST", "DINAR_NOTIFICATION_CHANNEL"],
     connectableWithCredentialsOnly: false,
-    note: "Dispatch is wired for privacy-request, appeal and report decisions (lib/notifications.ts: ids and status codes only, never contact data). No vendor adapter is registered, so nothing is sent; order updates remain in-app. Needs a selected vendor, its registration, a country policy entry and DINAR_NOTIFICATION_CHANNEL.",
+    note: "Resend is available only for Jordan in staging/acceptance, and only to addresses in DINAR_EMAIL_STAGING_ALLOWLIST. Delivery also requires a verified sender, public app URL and DINAR_NOTIFICATION_CHANNEL=EMAIL. The Resend send function rejects every non-staging environment; production and other markets remain disconnected. Marketing additionally requires verified email and explicit consent.",
   },
   {
     family: "DRIVER_LOCATION",

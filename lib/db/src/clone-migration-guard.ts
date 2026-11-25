@@ -76,8 +76,10 @@ export const REVIEWED_PENDING_MIGRATIONS: ReadonlyArray<{ tag: string; sha256: s
   { tag: "0065_courier_commission_phase_one_zero", sha256: "1f489637f10c73b71c35dc54c6fed93bf3ab7ab92b0d011895a5cc6b0c2aea1d" },
   // Deal closure (owner-approved 2026-11-07/15): buyer-only handover code, 48 h window, audit events.
   { tag: "0066_order_handover_closure", sha256: "36326b1cf84ce67f785eaf3c744dc1af0049c2c926ec4e012ed669ee2f40917f" },
+  // Staging-only Resend email notifications and email verification (owner commit 0510b41).
+  { tag: "0067_curved_titania", sha256: "910cbbccbdb09815927a574b19462553b1d100df0d988bb036a7c1c06cb0e277" },
   // Monthly and annual subscription plans (owner-approved 2026-11-16): unique per plan, period, market.
-  { tag: "0067_plan_period_catalog", sha256: "ee31d1126e7bf49034716c0d2b77e56e4a52b7d1aa8039307a9df4239f761aa0" },
+  { tag: "0068_plan_period_catalog", sha256: "ee31d1126e7bf49034716c0d2b77e56e4a52b7d1aa8039307a9df4239f761aa0" },
 ];
 export const EXPECTED_JOURNAL_ENTRIES =
   EXPECTED_BASELINE_MIGRATIONS + REVIEWED_PENDING_MIGRATIONS.length;

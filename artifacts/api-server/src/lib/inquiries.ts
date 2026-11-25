@@ -6,9 +6,9 @@
  *   only inside an existing relationship: a thread the buyer opened, a negotiation or an order.
  * - Messages are stored verbatim in `messages` (thread conversation of kind INQUIRY) with the
  *   author, role and provenance; DINAR never rewrites them and never writes on anyone's behalf.
- * - Events keep SUBMITTED (stored), DELIVERED (placed in the recipient's DINAR conversation,
- *   in-app only), READ (the recipient opened it) and REPLIED (the other party answered) apart.
- *   No external notification transport exists; that is stated, never implied.
+ * - Events keep SUBMITTED (stored), DELIVERED (placed in the recipient's DINAR conversation),
+ *   READ (the recipient opened it) and REPLIED (the other party answered) apart. Optional email
+ *   alerts are queued after commit and never carry the buyer's name, phone number or message.
  * - Nothing here changes stock, prices, orders or negotiations.
  */
 import { createHash, randomUUID } from "node:crypto";
@@ -22,6 +22,7 @@ import {
   marketplaceInquiryEvents,
   messages,
   negotiations,
+  notificationEmailJobs,
   offers,
   orders,
   users,
@@ -30,6 +31,7 @@ import { AUTH_RATE_LIMIT_SCOPE, consumeRateLimit } from "./auth-rate-limiter";
 import { assertSellerEmployeeCapabilityTx } from "./business-delegations";
 import type { SellerEmployeeCapability } from "./business-delegations";
 import { logger } from "./logger";
+import { enqueueBuyerInterestEmailBestEffort } from "./notification-email-outbox";
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 type MarketRef = { id: string; minorUnitScale: number; currencyCode: string };
@@ -237,7 +239,8 @@ export async function submitInquiryMessage(input: {
   }
   const limited = await consumeRateLimit([{ scope: AUTH_RATE_LIMIT_SCOPE.inquiryActor, value: input.actorId }], 3600, INQUIRIES_PER_HOUR).catch(() => ({ retryAfterSeconds: 60 }));
   if (limited) throw fail(429, `أرسلت رسائل كثيرة خلال وقت قصير. حاول بعد ${Math.max(1, Math.ceil(limited.retryAfterSeconds / 60))} دقيقة`, "RATE_LIMITED");
-  const result = await db.transaction(async (tx) => {
+  const transactionOutcome = await db.transaction(async (tx) => {
+    let newlyCreatedInquiry = false;
     let relationship = await resolveRelationship(input.actorId, input.market, input.target, tx);
     let delegatedListing: typeof offers.$inferSelect | undefined;
     if (input.delegatedAuthority) {
@@ -279,11 +282,13 @@ export async function submitInquiryMessage(input: {
             existing.conversationId !== relationship.inquiry!.threadConversationId)
           throw fail(409, "معرّف الإرسال مرتبط برسالة أخرى؛ لم أكررها", "IDEMPOTENCY_CONFLICT");
         return {
-          inquiryId: relationship.inquiry!.id,
-          messageId,
-          duplicate: true,
-          deliveredConversationId: null,
-          replied: false,
+          result: {
+            inquiryId: relationship.inquiry!.id,
+            messageId,
+            duplicate: true,
+            deliveredConversationId: null,
+            replied: false,
+          },
         };
       }
       if (!authority.inventorySnapshot ||
@@ -355,6 +360,7 @@ export async function submitInquiryMessage(input: {
         .returning();
       if (!created) throw fail(409, "أُنشئ استفسار لهذا الإعلان للتو؛ أعد المحاولة", "CONCURRENT_INQUIRY");
       inquiry = created;
+      newlyCreatedInquiry = true;
     }
     const thread = await tx
       .select({ senderId: messages.senderId, body: messages.body, createdAt: messages.createdAt })
@@ -419,7 +425,18 @@ export async function submitInquiryMessage(input: {
       ordinal: 0,
     });
     await tx.update(conversations).set({ updatedAt: now }).where(eq(conversations.id, recipientConversation));
-    await event("INQUIRY_DELIVERED", { actorRole: "SYSTEM", actorId: null, detail: { channel: "IN_APP", notification: NOTIFICATION_STATUS } });
+    const emailQueued = newlyCreatedInquiry && relationship.actorRole === "BUYER"
+      ? await enqueueBuyerInterestEmailBestEffort(tx, {
+          inquiryId: inquiry.id,
+          sellerId: inquiry.sellerId,
+          marketId: relationship.marketId,
+        })
+      : false;
+    await event("INQUIRY_DELIVERED", {
+      actorRole: "SYSTEM",
+      actorId: null,
+      detail: { channel: "IN_APP", notification: emailQueued ? "QUEUED" : NOTIFICATION_STATUS },
+    });
     await tx
       .update(marketplaceInquiries)
       .set({
@@ -429,8 +446,11 @@ export async function submitInquiryMessage(input: {
         ...(relationship.actorRole === "BUYER" ? { buyerConversationId: input.originConversationId, sellerConversationId: recipientConversation } : { sellerConversationId: input.originConversationId, buyerConversationId: recipientConversation }),
       })
       .where(eq(marketplaceInquiries.id, inquiry.id));
-    return { inquiryId: inquiry.id, messageId, duplicate: false, deliveredConversationId: recipientConversation, replied };
+    return {
+      result: { inquiryId: inquiry.id, messageId, duplicate: false, deliveredConversationId: recipientConversation, replied },
+    };
   });
+  const result = transactionOutcome.result;
   logger.info({ event: "dinar_inquiry_submitted", replied: result.replied }, "inquiry message submitted");
   return result;
 }
@@ -473,6 +493,23 @@ export async function inquiryView(inquiry: InquiryRow, actorId: string, market: 
     .orderBy(messages.createdAt)
     .limit(60);
   const events = await db.select().from(marketplaceInquiryEvents).where(eq(marketplaceInquiryEvents.inquiryId, inquiry.id)).orderBy(marketplaceInquiryEvents.createdAt);
+  const [emailJob] = await db
+    .select({ status: notificationEmailJobs.status })
+    .from(notificationEmailJobs)
+    .where(eq(notificationEmailJobs.idempotencyKey, `buyer-interest:${inquiry.id}`));
+  const notificationStatus: "NOT_CONFIGURED" | "QUEUED" | "SENT" | "CANCELLED" | "FAILED" =
+    !emailJob ? NOTIFICATION_STATUS
+      : emailJob.status === "PENDING" || emailJob.status === "PROCESSING" ? "QUEUED"
+        : emailJob.status === "SENT" ? "SENT"
+          : emailJob.status === "CANCELLED" ? "CANCELLED"
+            : "FAILED";
+  const notificationLabels: Record<string, string> = {
+    NOT_CONFIGURED: "لا يوجد تنبيه بريدي لهذا الاستفسار؛ تصل الرسالة داخل جاسم.",
+    QUEUED: "وُضع تنبيه البائع في قائمة الإرسال بالبريد.",
+    SENT: "أُرسل تنبيه البريد إلى البائع؛ لا يتضمن نص الرسالة أو بيانات اتصال المشتري.",
+    CANCELLED: "لم يُرسل تنبيه البريد؛ ما زالت المحادثة متاحة داخل جاسم.",
+    FAILED: "تعذر إرسال تنبيه البريد؛ ما زالت المحادثة متاحة داخل جاسم.",
+  };
   const at = (messageId: string, type: string) => events.find((event) => event.messageId === messageId && event.eventType === type)?.createdAt.toISOString() ?? null;
   const available =
     listing?.inventoryMode === "LIMITED" ? Math.max(0, (listing.availableQuantity ?? 0) - listing.reservedQuantity) : null;
@@ -509,7 +546,7 @@ export async function inquiryView(inquiry: InquiryRow, actorId: string, market: 
         readAt: at(row.id, "INQUIRY_READ"),
       };
     }),
-    notification: { status: NOTIFICATION_STATUS, label: "لا توجد إشعارات خارجية (رسائل SMS أو بريد أو إشعار هاتف) مفعّلة؛ تصل الرسالة إلى محادثة الطرف الآخر داخل جاسم ويراها عند فتحه." },
+    notification: { status: notificationStatus, label: notificationLabels[notificationStatus] ?? notificationLabels.FAILED },
     privacyNote: "لا تُشارك أرقام الهواتف أو العناوين عبر الاستفسار. الاستفسار ليس عرض سعر ولا طلب شراء ولا يغيّر المخزون.",
     currencyCode: market.currencyCode,
   };

@@ -53,6 +53,7 @@ import {
   sellWithoutCode,
 } from "../lib/order-closure";
 import { marketAllowsCashDirect } from "../lib/market-capability-registry";
+import { enqueuePublishedOfferEmailsBestEffort } from "../lib/notification-email-outbox";
 import {
   getOrderTrackingView,
   type OrderTrackingProvider,
@@ -496,7 +497,10 @@ export async function createListingForActor(
         ),
       )
       .returning();
-    if (published) return published;
+    if (published) {
+      await enqueuePublishedOfferEmailsBestEffort(executor, published, market);
+      return published;
+    }
     const [current] = await executor
       .select()
       .from(offers)

@@ -16,6 +16,7 @@ import { sweepDriverLocationShares } from "./lib/driver-location";
 import { registerPhoneVerificationProvider } from "./lib/phone-verification";
 import { providerDeploymentEnvironment } from "./lib/market-capability-registry";
 import { TWILIO_MESSAGING_PROVIDER_KEY, twilioMessagingRegistration } from "./lib/sms/twilio-messaging";
+import { startNotificationEmailWorker } from "./lib/notification-email-outbox";
 
 // Alerting: a provider/model circuit opening is a warning; closing is info. No prompt, user or key.
 onProviderBreakerTransition((event) =>
@@ -114,6 +115,7 @@ const reservationSweep = setInterval(sweepExpiredReservations, 60_000);
 reservationSweep.unref();
 
 let stopSearchIndexMaintenance: (() => void) | undefined;
+let stopNotificationEmailWorker: (() => void) | undefined;
 const server = app.listen(port, (err) => {
   if (err) {
     logger.error({ err }, "Error listening on port");
@@ -121,6 +123,7 @@ const server = app.listen(port, (err) => {
   }
 
   logger.info({ port }, "Server listening");
+  stopNotificationEmailWorker = startNotificationEmailWorker();
   // C1: build and refresh search documents in the background (search stays correct without them).
   stopSearchIndexMaintenance = startSearchIndexMaintenance();
 });
@@ -128,6 +131,7 @@ installGracefulShutdown(server, {
   beforeShutdown: () => {
     clearInterval(reservationSweep);
     stopVisualSearchExpirySweep();
+    stopNotificationEmailWorker?.();
     stopSearchIndexMaintenance?.();
   },
 });

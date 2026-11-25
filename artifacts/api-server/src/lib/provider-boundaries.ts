@@ -118,6 +118,7 @@ export interface NotificationProvider {
     channel: NotificationChannel;
     templateKey: string;
     data: Record<string, string | number>;
+    idempotencyKey?: string;
   }): Promise<{ providerMessageId: string }>;
 }
 

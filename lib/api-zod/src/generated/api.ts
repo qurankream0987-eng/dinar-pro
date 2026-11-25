@@ -200,6 +200,161 @@ export const SetProfileAvatarResponse = zod.object({
 
 
 /**
+ * @summary Read the signed-in user's verified email address
+ */
+export const GetAccountEmailResponse = zod.object({
+  "email": zod.email().nullable(),
+  "verifiedAt": zod.coerce.date().nullable()
+})
+
+
+/**
+ * @summary Remove the signed-in user's email address
+ */
+export const RemoveAccountEmailResponse = zod.object({
+  "email": zod.email().nullable(),
+  "verifiedAt": zod.coerce.date().nullable()
+})
+
+
+/**
+ * @summary Send a one-time verification code to an email address
+ */
+export const requestAccountEmailVerificationBodyEmailMax = 320;
+
+
+
+export const RequestAccountEmailVerificationBody = zod.object({
+  "email": zod.email().max(requestAccountEmailVerificationBodyEmailMax)
+})
+
+export const RequestAccountEmailVerificationResponse = zod.object({
+  "challengeId": zod.uuid(),
+  "expiresAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Confirm the one-time email verification code
+ */
+export const confirmAccountEmailVerificationBodyCodeRegExp = new RegExp('^[0-9]{6}$');
+
+
+export const ConfirmAccountEmailVerificationBody = zod.object({
+  "challengeId": zod.uuid(),
+  "code": zod.string().regex(confirmAccountEmailVerificationBodyCodeRegExp)
+})
+
+export const ConfirmAccountEmailVerificationResponse = zod.object({
+  "email": zod.email().nullable(),
+  "verifiedAt": zod.coerce.date().nullable()
+})
+
+
+/**
+ * @summary Read the signed-in user's privacy preferences
+ */
+export const GetAccountPrivacyPreferencesResponse = zod.object({
+  "version": zod.int(),
+  "communications": zod.object({
+  "transactional": zod.object({
+  "inApp": zod.boolean(),
+  "editable": zod.boolean()
+}),
+  "marketing": zod.object({
+  "inApp": zod.boolean(),
+  "email": zod.boolean(),
+  "sms": zod.boolean(),
+  "push": zod.boolean()
+})
+}),
+  "location": zod.object({
+  "deviceLocationSharing": zod.enum(['ASK_EACH_TIME', 'DISABLED']),
+  "note": zod.string()
+}),
+  "deliveryChannelsConnected": zod.object({
+  "email": zod.boolean(),
+  "sms": zod.boolean(),
+  "push": zod.boolean()
+})
+})
+
+
+/**
+ * @summary Update the signed-in user's privacy preferences
+ */
+export const updateAccountPrivacyPreferencesBodyExpectedVersionMin = 0;
+
+
+
+export const UpdateAccountPrivacyPreferencesBody = zod.object({
+  "expectedVersion": zod.int().min(updateAccountPrivacyPreferencesBodyExpectedVersionMin).optional(),
+  "marketing": zod.object({
+  "inApp": zod.boolean().optional(),
+  "email": zod.boolean().optional(),
+  "sms": zod.boolean().optional(),
+  "push": zod.boolean().optional()
+}).optional(),
+  "deviceLocationSharing": zod.enum(['ASK_EACH_TIME', 'DISABLED']).optional()
+})
+
+export const UpdateAccountPrivacyPreferencesResponse = zod.object({
+  "version": zod.int(),
+  "communications": zod.object({
+  "transactional": zod.object({
+  "inApp": zod.boolean(),
+  "editable": zod.boolean()
+}),
+  "marketing": zod.object({
+  "inApp": zod.boolean(),
+  "email": zod.boolean(),
+  "sms": zod.boolean(),
+  "push": zod.boolean()
+})
+}),
+  "location": zod.object({
+  "deviceLocationSharing": zod.enum(['ASK_EACH_TIME', 'DISABLED']),
+  "note": zod.string()
+}),
+  "deliveryChannelsConnected": zod.object({
+  "email": zod.boolean(),
+  "sms": zod.boolean(),
+  "push": zod.boolean()
+})
+})
+
+
+/**
+ * @summary Open the email-unsubscribe confirmation page
+ */
+export const openEmailUnsubscribeQueryTokenMin = 60;
+export const openEmailUnsubscribeQueryTokenMax = 256;
+
+
+
+export const OpenEmailUnsubscribeQueryParams = zod.object({
+  "token": zod.coerce.string().min(openEmailUnsubscribeQueryTokenMin).max(openEmailUnsubscribeQueryTokenMax)
+})
+
+export const OpenEmailUnsubscribeResponse = zod.unknown()
+
+
+/**
+ * @summary Unsubscribe from marketing email
+ */
+export const unsubscribeFromMarketingEmailQueryTokenMin = 60;
+export const unsubscribeFromMarketingEmailQueryTokenMax = 256;
+
+
+
+export const UnsubscribeFromMarketingEmailQueryParams = zod.object({
+  "token": zod.coerce.string().min(unsubscribeFromMarketingEmailQueryTokenMin).max(unsubscribeFromMarketingEmailQueryTokenMax)
+})
+
+export const UnsubscribeFromMarketingEmailResponse = zod.unknown()
+
+
+/**
  * @summary Request a private listing photo upload URL
  */
 export const requestListingPhotoUploadBodySizeMax = 5242880;
@@ -3587,7 +3742,7 @@ export const PreviewAiConversationResponse = zod.object({
 }).optional().describe('Private structured memory summary, returned only to the authenticated owner.'),
   "advice": zod.record(zod.string(), zod.unknown()).optional().describe('G2 conversational answer: its class (CONVERSATIONAL_RESPONSE, GROUNDED_ADVICE, CLARIFICATION_REQUIRED), the data scope it is grounded in (DINAR_INTERNAL or GENERAL_KNOWLEDGE), deterministic statistics and reasons, and an optional topic (SPONSORED_PLACEMENT, MARKETING_CLAIMS_BLOCKED with the refused claim kinds, MARKETING_COPY for copy grounded in the seller\'s own listing record). Never an action.\n'),
   "negotiation": zod.record(zod.string(), zod.unknown()).optional().describe('Allowlisted price-negotiation view for one of its two parties (review, status or list), rebuilt from the negotiation authority on every read.\n'),
-  "inquiry": zod.record(zod.string(), zod.unknown()).optional().describe('DINAR NEXT G2 buyer–seller inquiry view for one of its two parties (draft review, status, incoming message, list, notice), rebuilt from the inquiry authority on every read. Messages carry their author role and provenance (BUYER_AUTHORED, SELLER_AUTHORED, DINAR_DRAFT_APPROVED) and per-message submitted/delivered/read times; delivery is in-app only and external notifications are NOT_CONFIGURED. Never contains phone numbers, addresses or the other party\'s account id.\n'),
+  "inquiry": zod.record(zod.string(), zod.unknown()).optional().describe('DINAR NEXT G2 buyer–seller inquiry view for one of its two parties (draft review, status, incoming message, list, notice), rebuilt from the inquiry authority on every read. Messages carry their author role and provenance (BUYER_AUTHORED, SELLER_AUTHORED, DINAR_DRAFT_APPROVED) and per-message submitted/delivered/read times. A verified seller may receive a staging-only email alert for a new inquiry; the alert omits buyer contact details and message content. Delivery status is shown separately from the in-app conversation. Never contains phone numbers, addresses or the other party\'s account id.\n'),
   "control": zod.record(zod.string(), zod.unknown()).optional().describe('Universal product control view (APP_THEME, MARKET_SWITCH_REVIEW/STATUS, PROFILE_REVIEW/STATUS, CONTROL_NOTICE, PRIVACY_EXPORT), validated by ProductControlPayload in @workspace/api-zod/conversation-runtime. Theme changes are client actions whose status (REQUESTED, APPLIED, FAILED) is the device\'s own acknowledgement; market and profile reviews show their pending action\'s real status. Never contains secrets, coordinates or another user\'s data.\n'),
   "commerce": zod.record(zod.string(), zod.unknown()).optional().describe('Monetization V3 commercial view (commercial balance, top-up and purchase reviews, campaigns and aggregate results, Market Pulse, DINAR Business), and the G1 AI usage card (AI_USAGE: plan tier, per-resource requests and tokens consumed in the current period, renewal boundary) and plan comparison (AI_PLANS: allowances per tier, configured prices or "not configured", billing connection state), rebuilt from server state on every read. Never contains buyer identity, ledger keys, provider costs or secrets.\n'),
   "resultSetId": zod.string(),
@@ -4078,7 +4233,7 @@ export const CreateAiGuestHandoffResponse = zod.object({
 }).optional().describe('Private structured memory summary, returned only to the authenticated owner.'),
   "advice": zod.record(zod.string(), zod.unknown()).optional().describe('G2 conversational answer: its class (CONVERSATIONAL_RESPONSE, GROUNDED_ADVICE, CLARIFICATION_REQUIRED), the data scope it is grounded in (DINAR_INTERNAL or GENERAL_KNOWLEDGE), deterministic statistics and reasons, and an optional topic (SPONSORED_PLACEMENT, MARKETING_CLAIMS_BLOCKED with the refused claim kinds, MARKETING_COPY for copy grounded in the seller\'s own listing record). Never an action.\n'),
   "negotiation": zod.record(zod.string(), zod.unknown()).optional().describe('Allowlisted price-negotiation view for one of its two parties (review, status or list), rebuilt from the negotiation authority on every read.\n'),
-  "inquiry": zod.record(zod.string(), zod.unknown()).optional().describe('DINAR NEXT G2 buyer–seller inquiry view for one of its two parties (draft review, status, incoming message, list, notice), rebuilt from the inquiry authority on every read. Messages carry their author role and provenance (BUYER_AUTHORED, SELLER_AUTHORED, DINAR_DRAFT_APPROVED) and per-message submitted/delivered/read times; delivery is in-app only and external notifications are NOT_CONFIGURED. Never contains phone numbers, addresses or the other party\'s account id.\n'),
+  "inquiry": zod.record(zod.string(), zod.unknown()).optional().describe('DINAR NEXT G2 buyer–seller inquiry view for one of its two parties (draft review, status, incoming message, list, notice), rebuilt from the inquiry authority on every read. Messages carry their author role and provenance (BUYER_AUTHORED, SELLER_AUTHORED, DINAR_DRAFT_APPROVED) and per-message submitted/delivered/read times. A verified seller may receive a staging-only email alert for a new inquiry; the alert omits buyer contact details and message content. Delivery status is shown separately from the in-app conversation. Never contains phone numbers, addresses or the other party\'s account id.\n'),
   "control": zod.record(zod.string(), zod.unknown()).optional().describe('Universal product control view (APP_THEME, MARKET_SWITCH_REVIEW/STATUS, PROFILE_REVIEW/STATUS, CONTROL_NOTICE, PRIVACY_EXPORT), validated by ProductControlPayload in @workspace/api-zod/conversation-runtime. Theme changes are client actions whose status (REQUESTED, APPLIED, FAILED) is the device\'s own acknowledgement; market and profile reviews show their pending action\'s real status. Never contains secrets, coordinates or another user\'s data.\n'),
   "commerce": zod.record(zod.string(), zod.unknown()).optional().describe('Monetization V3 commercial view (commercial balance, top-up and purchase reviews, campaigns and aggregate results, Market Pulse, DINAR Business), and the G1 AI usage card (AI_USAGE: plan tier, per-resource requests and tokens consumed in the current period, renewal boundary) and plan comparison (AI_PLANS: allowances per tier, configured prices or "not configured", billing connection state), rebuilt from server state on every read. Never contains buyer identity, ledger keys, provider costs or secrets.\n'),
   "resultSetId": zod.string(),
@@ -4473,7 +4628,7 @@ export const GetAiConversationResponse = zod.object({
 }).optional().describe('Private structured memory summary, returned only to the authenticated owner.'),
   "advice": zod.record(zod.string(), zod.unknown()).optional().describe('G2 conversational answer: its class (CONVERSATIONAL_RESPONSE, GROUNDED_ADVICE, CLARIFICATION_REQUIRED), the data scope it is grounded in (DINAR_INTERNAL or GENERAL_KNOWLEDGE), deterministic statistics and reasons, and an optional topic (SPONSORED_PLACEMENT, MARKETING_CLAIMS_BLOCKED with the refused claim kinds, MARKETING_COPY for copy grounded in the seller\'s own listing record). Never an action.\n'),
   "negotiation": zod.record(zod.string(), zod.unknown()).optional().describe('Allowlisted price-negotiation view for one of its two parties (review, status or list), rebuilt from the negotiation authority on every read.\n'),
-  "inquiry": zod.record(zod.string(), zod.unknown()).optional().describe('DINAR NEXT G2 buyer–seller inquiry view for one of its two parties (draft review, status, incoming message, list, notice), rebuilt from the inquiry authority on every read. Messages carry their author role and provenance (BUYER_AUTHORED, SELLER_AUTHORED, DINAR_DRAFT_APPROVED) and per-message submitted/delivered/read times; delivery is in-app only and external notifications are NOT_CONFIGURED. Never contains phone numbers, addresses or the other party\'s account id.\n'),
+  "inquiry": zod.record(zod.string(), zod.unknown()).optional().describe('DINAR NEXT G2 buyer–seller inquiry view for one of its two parties (draft review, status, incoming message, list, notice), rebuilt from the inquiry authority on every read. Messages carry their author role and provenance (BUYER_AUTHORED, SELLER_AUTHORED, DINAR_DRAFT_APPROVED) and per-message submitted/delivered/read times. A verified seller may receive a staging-only email alert for a new inquiry; the alert omits buyer contact details and message content. Delivery status is shown separately from the in-app conversation. Never contains phone numbers, addresses or the other party\'s account id.\n'),
   "control": zod.record(zod.string(), zod.unknown()).optional().describe('Universal product control view (APP_THEME, MARKET_SWITCH_REVIEW/STATUS, PROFILE_REVIEW/STATUS, CONTROL_NOTICE, PRIVACY_EXPORT), validated by ProductControlPayload in @workspace/api-zod/conversation-runtime. Theme changes are client actions whose status (REQUESTED, APPLIED, FAILED) is the device\'s own acknowledgement; market and profile reviews show their pending action\'s real status. Never contains secrets, coordinates or another user\'s data.\n'),
   "commerce": zod.record(zod.string(), zod.unknown()).optional().describe('Monetization V3 commercial view (commercial balance, top-up and purchase reviews, campaigns and aggregate results, Market Pulse, DINAR Business), and the G1 AI usage card (AI_USAGE: plan tier, per-resource requests and tokens consumed in the current period, renewal boundary) and plan comparison (AI_PLANS: allowances per tier, configured prices or "not configured", billing connection state), rebuilt from server state on every read. Never contains buyer identity, ledger keys, provider costs or secrets.\n'),
   "resultSetId": zod.string(),
@@ -4906,7 +5061,7 @@ export const CopyAiConversationResponse = zod.object({
 }).optional().describe('Private structured memory summary, returned only to the authenticated owner.'),
   "advice": zod.record(zod.string(), zod.unknown()).optional().describe('G2 conversational answer: its class (CONVERSATIONAL_RESPONSE, GROUNDED_ADVICE, CLARIFICATION_REQUIRED), the data scope it is grounded in (DINAR_INTERNAL or GENERAL_KNOWLEDGE), deterministic statistics and reasons, and an optional topic (SPONSORED_PLACEMENT, MARKETING_CLAIMS_BLOCKED with the refused claim kinds, MARKETING_COPY for copy grounded in the seller\'s own listing record). Never an action.\n'),
   "negotiation": zod.record(zod.string(), zod.unknown()).optional().describe('Allowlisted price-negotiation view for one of its two parties (review, status or list), rebuilt from the negotiation authority on every read.\n'),
-  "inquiry": zod.record(zod.string(), zod.unknown()).optional().describe('DINAR NEXT G2 buyer–seller inquiry view for one of its two parties (draft review, status, incoming message, list, notice), rebuilt from the inquiry authority on every read. Messages carry their author role and provenance (BUYER_AUTHORED, SELLER_AUTHORED, DINAR_DRAFT_APPROVED) and per-message submitted/delivered/read times; delivery is in-app only and external notifications are NOT_CONFIGURED. Never contains phone numbers, addresses or the other party\'s account id.\n'),
+  "inquiry": zod.record(zod.string(), zod.unknown()).optional().describe('DINAR NEXT G2 buyer–seller inquiry view for one of its two parties (draft review, status, incoming message, list, notice), rebuilt from the inquiry authority on every read. Messages carry their author role and provenance (BUYER_AUTHORED, SELLER_AUTHORED, DINAR_DRAFT_APPROVED) and per-message submitted/delivered/read times. A verified seller may receive a staging-only email alert for a new inquiry; the alert omits buyer contact details and message content. Delivery status is shown separately from the in-app conversation. Never contains phone numbers, addresses or the other party\'s account id.\n'),
   "control": zod.record(zod.string(), zod.unknown()).optional().describe('Universal product control view (APP_THEME, MARKET_SWITCH_REVIEW/STATUS, PROFILE_REVIEW/STATUS, CONTROL_NOTICE, PRIVACY_EXPORT), validated by ProductControlPayload in @workspace/api-zod/conversation-runtime. Theme changes are client actions whose status (REQUESTED, APPLIED, FAILED) is the device\'s own acknowledgement; market and profile reviews show their pending action\'s real status. Never contains secrets, coordinates or another user\'s data.\n'),
   "commerce": zod.record(zod.string(), zod.unknown()).optional().describe('Monetization V3 commercial view (commercial balance, top-up and purchase reviews, campaigns and aggregate results, Market Pulse, DINAR Business), and the G1 AI usage card (AI_USAGE: plan tier, per-resource requests and tokens consumed in the current period, renewal boundary) and plan comparison (AI_PLANS: allowances per tier, configured prices or "not configured", billing connection state), rebuilt from server state on every read. Never contains buyer identity, ledger keys, provider costs or secrets.\n'),
   "resultSetId": zod.string(),
@@ -5354,7 +5509,7 @@ export const AddAiListingToCartResponse = zod.object({
 }).optional().describe('Private structured memory summary, returned only to the authenticated owner.'),
   "advice": zod.record(zod.string(), zod.unknown()).optional().describe('G2 conversational answer: its class (CONVERSATIONAL_RESPONSE, GROUNDED_ADVICE, CLARIFICATION_REQUIRED), the data scope it is grounded in (DINAR_INTERNAL or GENERAL_KNOWLEDGE), deterministic statistics and reasons, and an optional topic (SPONSORED_PLACEMENT, MARKETING_CLAIMS_BLOCKED with the refused claim kinds, MARKETING_COPY for copy grounded in the seller\'s own listing record). Never an action.\n'),
   "negotiation": zod.record(zod.string(), zod.unknown()).optional().describe('Allowlisted price-negotiation view for one of its two parties (review, status or list), rebuilt from the negotiation authority on every read.\n'),
-  "inquiry": zod.record(zod.string(), zod.unknown()).optional().describe('DINAR NEXT G2 buyer–seller inquiry view for one of its two parties (draft review, status, incoming message, list, notice), rebuilt from the inquiry authority on every read. Messages carry their author role and provenance (BUYER_AUTHORED, SELLER_AUTHORED, DINAR_DRAFT_APPROVED) and per-message submitted/delivered/read times; delivery is in-app only and external notifications are NOT_CONFIGURED. Never contains phone numbers, addresses or the other party\'s account id.\n'),
+  "inquiry": zod.record(zod.string(), zod.unknown()).optional().describe('DINAR NEXT G2 buyer–seller inquiry view for one of its two parties (draft review, status, incoming message, list, notice), rebuilt from the inquiry authority on every read. Messages carry their author role and provenance (BUYER_AUTHORED, SELLER_AUTHORED, DINAR_DRAFT_APPROVED) and per-message submitted/delivered/read times. A verified seller may receive a staging-only email alert for a new inquiry; the alert omits buyer contact details and message content. Delivery status is shown separately from the in-app conversation. Never contains phone numbers, addresses or the other party\'s account id.\n'),
   "control": zod.record(zod.string(), zod.unknown()).optional().describe('Universal product control view (APP_THEME, MARKET_SWITCH_REVIEW/STATUS, PROFILE_REVIEW/STATUS, CONTROL_NOTICE, PRIVACY_EXPORT), validated by ProductControlPayload in @workspace/api-zod/conversation-runtime. Theme changes are client actions whose status (REQUESTED, APPLIED, FAILED) is the device\'s own acknowledgement; market and profile reviews show their pending action\'s real status. Never contains secrets, coordinates or another user\'s data.\n'),
   "commerce": zod.record(zod.string(), zod.unknown()).optional().describe('Monetization V3 commercial view (commercial balance, top-up and purchase reviews, campaigns and aggregate results, Market Pulse, DINAR Business), and the G1 AI usage card (AI_USAGE: plan tier, per-resource requests and tokens consumed in the current period, renewal boundary) and plan comparison (AI_PLANS: allowances per tier, configured prices or "not configured", billing connection state), rebuilt from server state on every read. Never contains buyer identity, ledger keys, provider costs or secrets.\n'),
   "resultSetId": zod.string(),

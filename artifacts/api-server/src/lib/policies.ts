@@ -50,7 +50,7 @@ export const DATA_RETENTION_POLICY = [
     period: "REQUIRES_LAUNCH_COUNTRY_REVIEW",
   },
   {
-    record: "profile name, phone, private location, avatar, password",
+    record: "profile name, phone, verified email, private location, avatar, password",
     handling: "ANONYMIZED_ON_DELETION",
     reason: "Not required once the account is closed.",
     period: "IMMEDIATE",
@@ -107,17 +107,21 @@ function documents(): PolicyDocument[] {
     },
     {
       key: "privacy",
-      version: "2026-10-02",
-      effectiveDate,
+      version: "2026-11-18",
+      effectiveDate: "2026-11-18",
       titleAr: "سياسة الخصوصية",
       titleEn: "Privacy Policy",
-      summaryAr: "ما البيانات التي نحفظها، ومن يراها، وكيف تحذف حسابك.",
+      summaryAr: "ما البيانات التي نحفظها، بما فيها البريد الاختياري، ومن يراها، وكيف تحذف حسابك.",
       legalReviewStatus: pending,
       requiresAcceptance: true,
       sections: [
         {
           heading: "بيانات الحساب الخاصة",
-          body: "رقم هاتف الحساب ومدينتك ومنطقتك في الملف الشخصي خاصة بك ولا تظهر في العروض العامة. لا نجمع البريد الإلكتروني حاليًا.",
+          body: "رقم هاتف الحساب ومدينتك ومنطقتك في الملف الشخصي خاصة بك ولا تظهر في العروض العامة. البريد الإلكتروني اختياري ولا يُحفظ إلا بعد توثيقه.",
+        },
+        {
+          heading: "البريد والتنبيهات",
+          body: "يمكن للبائع اختيار بريد موثّق لتلقي تنبيه عند وصول استفسار شراء إلى أحد إعلاناته؛ لا يتضمن التنبيه اسم المشتري أو وسيلة اتصاله أو نص رسالته. رسائل العروض التسويقية منفصلة واختيارية، ويمكن أن تصل رسالة عن كل عرض جديد منشور في سوقك بعد موافقتك الصريحة على البريد الموثق؛ يمكن إيقافها من الإعدادات أو رابط إلغاء الاشتراك. يعالج مزود البريد عنوان المرسل إليه ومحتوى الرسالة لإيصالها؛ لا نرسل عنوان بريدك أو محتوى استفساراتك إلى مزودي نماذج الذكاء الاصطناعي.",
         },
         {
           heading: "بيانات العرض العامة",

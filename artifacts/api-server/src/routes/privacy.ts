@@ -5,6 +5,8 @@
  */
 import { Router, type RequestHandler } from "express";
 import { z } from "zod";
+import { db, markets, users } from "@workspace/db";
+import { eq } from "drizzle-orm";
 import { requireAuth, verifyPassword } from "../lib/auth";
 import { AUTH_RATE_LIMIT_SCOPE, consumeRateLimit } from "../lib/auth-rate-limiter";
 import {
@@ -26,6 +28,7 @@ import {
   withdrawOwnPrivacyRequest,
 } from "../lib/privacy-rights";
 import { currentPolicy } from "../lib/policies";
+import { notificationProviderAvailableForMarket } from "../lib/notifications";
 
 const router = Router();
 const fail = (status: number, message: string) => Object.assign(new Error(message), { status });
@@ -72,7 +75,22 @@ router.post("/account/privacy/exports", requireAuth, privacyLimit(5), async (req
 });
 
 router.get("/account/privacy/preferences", requireAuth, async (req, res) => {
-  res.json(await getPrivacyPreferences(req.actor!.id));
+  const [market] = await db
+    .select({ marketId: markets.id, countryCode: markets.countryCode, currencyCode: markets.currencyCode })
+    .from(users)
+    .innerJoin(markets, eq(markets.id, users.activeMarketId))
+    .where(eq(users.id, req.actor!.id));
+  const preferences = await getPrivacyPreferences(req.actor!.id);
+  const emailConnected = market
+    ? await notificationProviderAvailableForMarket(market)
+    : false;
+  res.json({
+    ...preferences,
+    deliveryChannelsConnected: {
+      ...preferences.deliveryChannelsConnected,
+      email: emailConnected,
+    },
+  });
 });
 
 router.patch("/account/privacy/preferences", requireAuth, privacyLimit(60), async (req, res) => {

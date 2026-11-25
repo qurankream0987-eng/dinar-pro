@@ -6,14 +6,18 @@ import {
   carts,
   checkoutRequests,
   conversations,
+  emailVerificationChallenges,
   messages,
   moderationAudit,
+  notificationEmailJobs,
   offers,
   orders,
   jobs,
+  privacyConsentEvents,
+  userPrivacyPreferences,
   users,
 } from "@workspace/db";
-import { and, desc, eq, inArray, or } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, or } from "drizzle-orm";
 import { ACCOUNT_STATUS, revokeUserSessions } from "./account-status";
 
 const fail = (status: number, message: string) =>
@@ -346,6 +350,41 @@ export async function deactivateOwnAccount(tx: any, userId: string) {
       })
       .where(eq(offers.id, listing.id));
 
+  const [preferences] = await tx
+    .select({ marketingEmail: userPrivacyPreferences.marketingEmail, version: userPrivacyPreferences.version })
+    .from(userPrivacyPreferences)
+    .where(eq(userPrivacyPreferences.userId, userId))
+    .for("update");
+  if (preferences?.marketingEmail) {
+    await tx.update(userPrivacyPreferences).set({
+      marketingEmail: false,
+      version: preferences.version + 1,
+      updatedAt: now,
+    }).where(eq(userPrivacyPreferences.userId, userId));
+    await tx.insert(privacyConsentEvents).values({
+      id: randomUUID(),
+      userId,
+      consentKey: "MARKETING_EMAIL",
+      granted: false,
+      source: "API",
+      createdAt: now,
+    });
+  }
+  await tx.update(notificationEmailJobs).set({
+    status: "CANCELLED",
+    leaseExpiresAt: null,
+    lastErrorCode: "ACCOUNT_DEACTIVATED",
+  }).where(and(
+    eq(notificationEmailJobs.recipientId, userId),
+    inArray(notificationEmailJobs.status, ["PENDING", "PROCESSING"]),
+  ));
+  await tx.update(emailVerificationChallenges)
+    .set({ consumedAt: now })
+    .where(and(
+      eq(emailVerificationChallenges.userId, userId),
+      isNull(emailVerificationChallenges.consumedAt),
+    ));
+
   const userCarts = await tx
     .select({ id: carts.id })
     .from(carts)
@@ -381,6 +420,8 @@ export async function deactivateOwnAccount(tx: any, userId: string) {
       area: "",
       administrativeArea: "",
       avatarObjectPath: null,
+      email: null,
+      emailVerifiedAt: null,
       phoneVerified: false,
       passwordHash: `disabled:${randomBytes(32).toString("hex")}`,
       status: ACCOUNT_STATUS.deactivated,

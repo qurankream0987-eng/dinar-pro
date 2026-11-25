@@ -6,6 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from './accountEmailStatus';
 export * from './adminDispute';
 export * from './adminDisputeResolutionResult';
 export * from './adminDisputeResolutionResultDisputeStatus';
@@ -351,6 +352,9 @@ export * from './driverLocationSharingEndReason';
 export * from './driverLocationUpdateInput';
 export * from './driverLocationUpdateResult';
 export * from './driverLocationUpdateResultReason';
+export * from './emailVerificationChallenge';
+export * from './emailVerificationConfirmation';
+export * from './emailVerificationRequest';
 export * from './emptyInput';
 export * from './emptyObject';
 export * from './getAdminConnectDiagnosticsParams';
@@ -454,6 +458,7 @@ export * from './messageInput';
 export * from './messageSenderRole';
 export * from './notCompletedInput';
 export * from './notCompletedInputOutcome';
+export * from './openEmailUnsubscribeParams';
 export * from './order';
 export * from './orderClosure';
 export * from './orderClosureNotCompleted';
@@ -504,6 +509,16 @@ export * from './phoneVerificationChallengeResponse';
 export * from './phoneVerificationCodeRequest';
 export * from './phoneVerificationCodeResponse';
 export * from './previewBusinessPlanChangeParams';
+export * from './privacyPreferencesPatch';
+export * from './privacyPreferencesPatchDeviceLocationSharing';
+export * from './privacyPreferencesPatchMarketing';
+export * from './privacyPreferencesView';
+export * from './privacyPreferencesViewCommunications';
+export * from './privacyPreferencesViewCommunicationsMarketing';
+export * from './privacyPreferencesViewCommunicationsTransactional';
+export * from './privacyPreferencesViewDeliveryChannelsConnected';
+export * from './privacyPreferencesViewLocation';
+export * from './privacyPreferencesViewLocationDeviceLocationSharing';
 export * from './profileAvatarSetRequest';
 export * from './profileAvatarSetResponse';
 export * from './profileAvatarUploadRequest';
@@ -592,3 +607,4 @@ export * from './tutorialLearningEventInputMilestonePercent';
 export * from './tutorialLearningEventInputTutorialId';
 export * from './tutorialLearningEventMilestonePercent';
 export * from './tutorialLearningEventTutorialId';
+export * from './unsubscribeFromMarketingEmailParams';

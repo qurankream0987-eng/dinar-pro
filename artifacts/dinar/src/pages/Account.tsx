@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useRef, useState, type ChangeEvent } from "react";
+import { lazy, Suspense, useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { Link, useSearch } from "wouter";
 import {
   Bell,
@@ -11,6 +11,7 @@ import {
   Info,
   LifeBuoy,
   LogOut,
+  Mail,
   MapPin,
   Moon,
   ReceiptText,
@@ -22,7 +23,18 @@ import {
   Shield,
   UserRound,
 } from "lucide-react";
-import { useGetDashboard } from "@workspace/api-client-react";
+import {
+  getGetAccountEmailQueryKey,
+  getGetAccountPrivacyPreferencesQueryKey,
+  useConfirmAccountEmailVerification,
+  useGetAccountEmail,
+  useGetAccountPrivacyPreferences,
+  useGetDashboard,
+  useRemoveAccountEmail,
+  useRequestAccountEmailVerification,
+  useUpdateAccountPrivacyPreferences,
+} from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { api, useAccount } from "@/account/Account";
 import { usePolicyIndex } from "@/pages/Policies";
 import {ConnectAttributionPrivacy} from "@/features/ConnectAttributionPrivacy";
@@ -325,6 +337,8 @@ export function SettingsPage() {
         />
       </ListGroup>
 
+      <EmailNotificationsSettings />
+
       <ListGroup title="السوق والدولة">
         <ListRow
           onClick={open}
@@ -516,6 +530,233 @@ export function SettingsPage() {
         onConfirm={() => logout().catch((e) => setError(friendlyError(e)))}
       />
     </div>
+  );
+}
+
+function EmailNotificationsSettings() {
+  const queryClient = useQueryClient();
+  const emailQuery = useGetAccountEmail();
+  const preferencesQuery = useGetAccountPrivacyPreferences();
+  const requestCode = useRequestAccountEmailVerification();
+  const confirmCode = useConfirmAccountEmailVerification();
+  const removeEmail = useRemoveAccountEmail();
+  const updatePreferences = useUpdateAccountPrivacyPreferences();
+  const [email, setEmail] = useState("");
+  const [code, setCode] = useState("");
+  const [challengeId, setChallengeId] = useState("");
+  const [editing, setEditing] = useState(false);
+  const [confirmRemove, setConfirmRemove] = useState(false);
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+  const busy = requestCode.isPending || confirmCode.isPending || removeEmail.isPending || updatePreferences.isPending;
+  const verifiedEmail = emailQuery.data?.email ?? null;
+  const isEmailVerified = Boolean(verifiedEmail && emailQuery.data?.verifiedAt);
+  const marketingEmail = preferencesQuery.data?.communications.marketing.email ?? false;
+
+  async function invalidate() {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: getGetAccountEmailQueryKey() }),
+      queryClient.invalidateQueries({ queryKey: getGetAccountPrivacyPreferencesQueryKey() }),
+    ]);
+  }
+
+  async function sendCode(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError("");
+    setMessage("");
+    try {
+      const result = await requestCode.mutateAsync({ data: { email: email.trim() } });
+      setChallengeId(result.challengeId);
+      setCode("");
+      setMessage("أرسلنا رمزًا من ستة أرقام. أدخله خلال عشر دقائق لإثبات ملكية البريد.");
+    } catch (cause) {
+      setError(friendlyError(cause));
+    }
+  }
+
+  async function verifyCode(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError("");
+    setMessage("");
+    try {
+      await confirmCode.mutateAsync({ data: { challengeId, code } });
+      setChallengeId("");
+      setCode("");
+      setEditing(false);
+      setMessage("تم توثيق البريد الإلكتروني.");
+      await invalidate();
+    } catch (cause) {
+      setError(friendlyError(cause));
+    }
+  }
+
+  async function setMarketingConsent(checked: boolean) {
+    setError("");
+    setMessage("");
+    try {
+      await updatePreferences.mutateAsync({
+        data: {
+          expectedVersion: preferencesQuery.data?.version ?? 0,
+          marketing: { email: checked },
+        },
+      });
+      await preferencesQuery.refetch();
+      setMessage(checked ? "تم حفظ موافقتك على رسائل العروض." : "تم إيقاف رسائل العروض.");
+    } catch (cause) {
+      setError(friendlyError(cause));
+      await preferencesQuery.refetch();
+    }
+  }
+
+  async function deleteEmail() {
+    setError("");
+    try {
+      await removeEmail.mutateAsync();
+      setConfirmRemove(false);
+      setEditing(false);
+      setChallengeId("");
+      setEmail("");
+      setMessage("أُزيل البريد وأُوقفت موافقة رسائل العروض.");
+      await invalidate();
+    } catch (cause) {
+      setError(friendlyError(cause));
+    }
+  }
+
+  return (
+    <section className="mb-5 rounded-xl border border-border bg-card p-4" data-testid="section-email-notifications">
+      <div className="mb-2 flex items-center gap-2">
+        <Mail size={18} aria-hidden />
+        <h2 className="font-bold">البريد والتنبيهات</h2>
+      </div>
+      <p className="mb-4 text-sm leading-6 text-muted-foreground">
+        نرسل للبائع تنبيهًا عند وصول استفسار شراء بعد توثيق بريده. رسائل العروض التسويقية اختيارية ومنفصلة.
+      </p>
+
+      {emailQuery.isError || preferencesQuery.isError ? (
+        <InlineAlert tone="danger">تعذر تحميل البريد وتفضيلات الرسائل. حدّث الصفحة وحاول مرة أخرى.</InlineAlert>
+      ) : emailQuery.isLoading || preferencesQuery.isLoading ? (
+        <p className="text-sm text-muted-foreground" aria-busy="true">جارٍ تحميل بيانات البريد…</p>
+      ) : isEmailVerified && !editing ? (
+        <div className="mb-4 flex flex-wrap items-center gap-2">
+          <span dir="ltr" className="rounded-lg border border-border px-3 py-2 text-sm" data-testid="text-account-email">
+            {verifiedEmail}
+          </span>
+          <Badge tone="success">موثّق</Badge>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              setEmail(verifiedEmail ?? "");
+              setEditing(true);
+              setChallengeId("");
+              setError("");
+              setMessage("");
+            }}
+            data-testid="button-change-account-email"
+          >
+            تغيير البريد
+          </Button>
+          <Button
+            variant="danger-soft"
+            size="sm"
+            onClick={() => setConfirmRemove(true)}
+            data-testid="button-remove-account-email"
+          >
+            إزالة البريد
+          </Button>
+        </div>
+      ) : (
+        <div className="mb-4 grid gap-3">
+          <form onSubmit={(event) => void sendCode(event)} className="flex flex-wrap items-end gap-2">
+            <Field label={isEmailVerified ? "البريد الجديد" : "البريد الإلكتروني"}>
+              <Input
+                type="email"
+                dir="ltr"
+                autoComplete="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                maxLength={320}
+                required
+                data-testid="input-account-email"
+              />
+            </Field>
+            <Button type="submit" loading={requestCode.isPending} disabled={busy} data-testid="button-send-email-code">
+              إرسال رمز التحقق
+            </Button>
+            {isEmailVerified && (
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => {
+                  setEditing(false);
+                  setChallengeId("");
+                  setError("");
+                  setMessage("");
+                }}
+                data-testid="button-cancel-email-change"
+              >
+                إلغاء
+              </Button>
+            )}
+          </form>
+
+          {challengeId && (
+            <form onSubmit={(event) => void verifyCode(event)} className="flex flex-wrap items-end gap-2">
+              <Field label="رمز التحقق" hint="ستة أرقام، صالح لعشر دقائق">
+                <Input
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  dir="ltr"
+                  value={code}
+                  onChange={(event) => setCode(event.target.value.replace(/\D/gu, "").slice(0, 6))}
+                  pattern="[0-9]{6}"
+                  required
+                  data-testid="input-email-verification-code"
+                />
+              </Field>
+              <Button type="submit" loading={confirmCode.isPending} disabled={busy || code.length !== 6} data-testid="button-confirm-email-code">
+                توثيق البريد
+              </Button>
+            </form>
+          )}
+        </div>
+      )}
+
+      <label className="flex items-start gap-3 border-t border-border pt-3 text-sm leading-6">
+        <input
+          type="checkbox"
+          checked={marketingEmail}
+          disabled={!isEmailVerified || busy || preferencesQuery.isLoading || preferencesQuery.isError}
+          onChange={(event) => void setMarketingConsent(event.currentTarget.checked)}
+          className="mt-1 h-4 w-4 accent-primary"
+          data-testid="checkbox-marketing-email"
+        />
+        <span>
+          أوافق على تلقي رسالة عن كل إعلان جديد يُنشر في سوقي. لا نرسلها إلا بعد توثيق البريد، ويمكن إلغاء الاشتراك من أي رسالة.
+          {!isEmailVerified && marketingEmail && (
+            <span className="block text-xs text-muted-foreground">موافقتك السابقة محفوظة، لكنها غير فعّالة حتى توثيق البريد.</span>
+          )}
+        </span>
+      </label>
+      {preferencesQuery.data && !preferencesQuery.data.deliveryChannelsConnected.email && (
+        <p className="mt-2 text-xs text-muted-foreground">إرسال البريد غير مفعّل في بيئة القبول حاليًا؛ تُحفظ الموافقة ولا تُرسل رسالة حتى تهيئة المزود.</p>
+      )}
+
+      {error && <InlineAlert tone="danger" className="mt-3">{error}</InlineAlert>}
+      {message && <InlineAlert tone="success" className="mt-3" testId="status-email-notifications">{message}</InlineAlert>}
+
+      <ConfirmDialog
+        open={confirmRemove}
+        onOpenChange={setConfirmRemove}
+        title="إزالة البريد الإلكتروني؟"
+        body="سيُحذف البريد الموثّق من حسابك، وتتوقف موافقة رسائل العروض."
+        confirmLabel="إزالة البريد"
+        tone="danger"
+        loading={removeEmail.isPending}
+        onConfirm={() => void deleteEmail()}
+      />
+    </section>
   );
 }
 

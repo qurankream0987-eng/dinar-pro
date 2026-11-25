@@ -3106,7 +3106,7 @@ export type AiUiBlockPayloadAdvice = { [key: string]: unknown };
 export type AiUiBlockPayloadNegotiation = { [key: string]: unknown };
 
 /**
- * DINAR NEXT G2 buyer–seller inquiry view for one of its two parties (draft review, status, incoming message, list, notice), rebuilt from the inquiry authority on every read. Messages carry their author role and provenance (BUYER_AUTHORED, SELLER_AUTHORED, DINAR_DRAFT_APPROVED) and per-message submitted/delivered/read times; delivery is in-app only and external notifications are NOT_CONFIGURED. Never contains phone numbers, addresses or the other party's account id.
+ * DINAR NEXT G2 buyer–seller inquiry view for one of its two parties (draft review, status, incoming message, list, notice), rebuilt from the inquiry authority on every read. Messages carry their author role and provenance (BUYER_AUTHORED, SELLER_AUTHORED, DINAR_DRAFT_APPROVED) and per-message submitted/delivered/read times. A verified seller may receive a staging-only email alert for a new inquiry; the alert omits buyer contact details and message content. Delivery status is shown separately from the in-app conversation. Never contains phone numbers, addresses or the other party's account id.
  */
 export type AiUiBlockPayloadInquiry = { [key: string]: unknown };
 
@@ -3175,7 +3175,7 @@ export type AiUiBlockPayload = {
   advice?: AiUiBlockPayloadAdvice;
   /** Allowlisted price-negotiation view for one of its two parties (review, status or list), rebuilt from the negotiation authority on every read. */
   negotiation?: AiUiBlockPayloadNegotiation;
-  /** DINAR NEXT G2 buyer–seller inquiry view for one of its two parties (draft review, status, incoming message, list, notice), rebuilt from the inquiry authority on every read. Messages carry their author role and provenance (BUYER_AUTHORED, SELLER_AUTHORED, DINAR_DRAFT_APPROVED) and per-message submitted/delivered/read times; delivery is in-app only and external notifications are NOT_CONFIGURED. Never contains phone numbers, addresses or the other party's account id. */
+  /** DINAR NEXT G2 buyer–seller inquiry view for one of its two parties (draft review, status, incoming message, list, notice), rebuilt from the inquiry authority on every read. Messages carry their author role and provenance (BUYER_AUTHORED, SELLER_AUTHORED, DINAR_DRAFT_APPROVED) and per-message submitted/delivered/read times. A verified seller may receive a staging-only email alert for a new inquiry; the alert omits buyer contact details and message content. Delivery status is shown separately from the in-app conversation. Never contains phone numbers, addresses or the other party's account id. */
   inquiry?: AiUiBlockPayloadInquiry;
   /** Universal product control view (APP_THEME, MARKET_SWITCH_REVIEW/STATUS, PROFILE_REVIEW/STATUS, CONTROL_NOTICE, PRIVACY_EXPORT), validated by ProductControlPayload in @workspace/api-zod/conversation-runtime. Theme changes are client actions whose status (REQUESTED, APPLIED, FAILED) is the device's own acknowledgement; market and profile reviews show their pending action's real status. Never contains secrets, coordinates or another user's data. */
   control?: AiUiBlockPayloadControl;
@@ -5435,6 +5435,94 @@ export interface SecurityIncidentTransitionInput {
   severity?: SecurityIncidentTransitionInputSeverity;
 }
 
+export interface AccountEmailStatus {
+  /** @nullable */
+  email: string | null;
+  /** @nullable */
+  verifiedAt: string | null;
+}
+
+export interface EmailVerificationRequest {
+  /** @maxLength 320 */
+  email: string;
+}
+
+export interface EmailVerificationChallenge {
+  challengeId: string;
+  expiresAt: string;
+}
+
+export interface EmailVerificationConfirmation {
+  challengeId: string;
+  /** @pattern ^[0-9]{6}$ */
+  code: string;
+}
+
+export type PrivacyPreferencesPatchMarketing = {
+  inApp?: boolean;
+  email?: boolean;
+  sms?: boolean;
+  push?: boolean;
+};
+
+export type PrivacyPreferencesPatchDeviceLocationSharing = typeof PrivacyPreferencesPatchDeviceLocationSharing[keyof typeof PrivacyPreferencesPatchDeviceLocationSharing];
+
+
+export const PrivacyPreferencesPatchDeviceLocationSharing = {
+  ASK_EACH_TIME: 'ASK_EACH_TIME',
+  DISABLED: 'DISABLED',
+} as const;
+
+export interface PrivacyPreferencesPatch {
+  /** @minimum 0 */
+  expectedVersion?: number;
+  marketing?: PrivacyPreferencesPatchMarketing;
+  deviceLocationSharing?: PrivacyPreferencesPatchDeviceLocationSharing;
+}
+
+export type PrivacyPreferencesViewCommunicationsTransactional = {
+  inApp: boolean;
+  editable: boolean;
+};
+
+export type PrivacyPreferencesViewCommunicationsMarketing = {
+  inApp: boolean;
+  email: boolean;
+  sms: boolean;
+  push: boolean;
+};
+
+export type PrivacyPreferencesViewCommunications = {
+  transactional: PrivacyPreferencesViewCommunicationsTransactional;
+  marketing: PrivacyPreferencesViewCommunicationsMarketing;
+};
+
+export type PrivacyPreferencesViewLocationDeviceLocationSharing = typeof PrivacyPreferencesViewLocationDeviceLocationSharing[keyof typeof PrivacyPreferencesViewLocationDeviceLocationSharing];
+
+
+export const PrivacyPreferencesViewLocationDeviceLocationSharing = {
+  ASK_EACH_TIME: 'ASK_EACH_TIME',
+  DISABLED: 'DISABLED',
+} as const;
+
+export type PrivacyPreferencesViewLocation = {
+  deviceLocationSharing: PrivacyPreferencesViewLocationDeviceLocationSharing;
+  note: string;
+};
+
+export type PrivacyPreferencesViewDeliveryChannelsConnected = {
+  email: boolean;
+  sms: boolean;
+  push: boolean;
+};
+
+export interface PrivacyPreferencesView {
+  version: number;
+  communications: PrivacyPreferencesViewCommunications;
+  location: PrivacyPreferencesViewLocation;
+  deliveryChannelsConnected: PrivacyPreferencesViewDeliveryChannelsConnected;
+}
+
 export interface ConnectOutboundInput {
   /** @pattern ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$ */
   resultSetId: string;
@@ -6741,6 +6829,22 @@ export interface ConnectParticipationModeInput {
      */
   expectedRevision: number;
 }
+
+export type OpenEmailUnsubscribeParams = {
+/**
+ * @minLength 60
+ * @maxLength 256
+ */
+token: string;
+};
+
+export type UnsubscribeFromMarketingEmailParams = {
+/**
+ * @minLength 60
+ * @maxLength 256
+ */
+token: string;
+};
 
 export type GetListingsParams = {
 search?: string;
