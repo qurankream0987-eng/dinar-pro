@@ -21526,6 +21526,710 @@ export function useGetConnectReadOnlyCatalog<TData = Awaited<ReturnType<typeof g
 
 
 
+export const getListConnectApiToolsUrl = (id: string,) => {
+
+
+
+
+  return `/api/connect/integrations/${id}/api-tools`
+}
+
+/**
+ * OWNER only. Discovered and authorized tools with their full reviewed operation and digest; never credentials.
+ */
+export const listConnectApiTools = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+  return customFetch<ServerValidatedObject>(getListConnectApiToolsUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListConnectApiToolsQueryKey = (id: string,) => {
+    return [
+    `/api/connect/integrations/${id}/api-tools`
+    ] as const;
+    }
+
+
+export const getListConnectApiToolsQueryOptions = <TData = Awaited<ReturnType<typeof listConnectApiTools>>, TError = ErrorType<void>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listConnectApiTools>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListConnectApiToolsQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listConnectApiTools>>> = ({ signal }) => listConnectApiTools(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listConnectApiTools>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListConnectApiToolsQueryResult = NonNullable<Awaited<ReturnType<typeof listConnectApiTools>>>
+export type ListConnectApiToolsQueryError = ErrorType<void>
+
+
+export function useListConnectApiTools<TData = Awaited<ReturnType<typeof listConnectApiTools>>, TError = ErrorType<void>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listConnectApiTools>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listConnectApiTools>>,
+          TError,
+          Awaited<ReturnType<typeof listConnectApiTools>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListConnectApiTools<TData = Awaited<ReturnType<typeof listConnectApiTools>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listConnectApiTools>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listConnectApiTools>>,
+          TError,
+          Awaited<ReturnType<typeof listConnectApiTools>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListConnectApiTools<TData = Awaited<ReturnType<typeof listConnectApiTools>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listConnectApiTools>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useListConnectApiTools<TData = Awaited<ReturnType<typeof listConnectApiTools>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listConnectApiTools>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListConnectApiToolsQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getImportConnectApiToolsUrl = (id: string,) => {
+
+
+
+
+  return `/api/connect/integrations/${id}/api-tools`
+}
+
+/**
+ * OWNER only. OpenAPI 3 document, well-known discovery or named GraphQL operations become DISCOVERED tools; nothing becomes usable.
+ */
+export const importConnectApiTools = async (id: string,
+    serverValidatedObject: ServerValidatedObject, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getImportConnectApiToolsUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(serverValidatedObject)
+  }
+);}
+
+
+
+
+
+export const getImportConnectApiToolsMutationKey = () => ['importConnectApiTools'] as const;
+
+export const getImportConnectApiToolsMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof importConnectApiTools>>, TError,ImportConnectApiToolsMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof importConnectApiTools>>, TError,ImportConnectApiToolsMutationVariables, TContext> => {
+
+const mutationKey = getImportConnectApiToolsMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof importConnectApiTools>>, ImportConnectApiToolsMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  importConnectApiTools(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ImportConnectApiToolsMutationResult = NonNullable<Awaited<ReturnType<typeof importConnectApiTools>>>
+    export type ImportConnectApiToolsMutationBody = BodyType<ServerValidatedObject>
+    export type ImportConnectApiToolsMutationError = ErrorType<void>
+    export type ImportConnectApiToolsMutationVariables = {id: string;data: BodyType<ServerValidatedObject>}
+
+    export const useImportConnectApiTools = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof importConnectApiTools>>, TError,ImportConnectApiToolsMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof importConnectApiTools>>,
+        TError,
+        ImportConnectApiToolsMutationVariables,
+        TContext
+      > => {
+      return useMutation(getImportConnectApiToolsMutationOptions(options), queryClient);
+    }
+
+export const getGrantConnectCapabilitiesUrl = (id: string,) => {
+
+
+
+
+  return `/api/connect/integrations/${id}/capabilities`
+}
+
+/**
+ * OWNER only. Grants a subset of the capabilities the connector supports.
+ */
+export const grantConnectCapabilities = async (id: string,
+    serverValidatedObject: ServerValidatedObject, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getGrantConnectCapabilitiesUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(serverValidatedObject)
+  }
+);}
+
+
+
+
+
+export const getGrantConnectCapabilitiesMutationKey = () => ['grantConnectCapabilities'] as const;
+
+export const getGrantConnectCapabilitiesMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof grantConnectCapabilities>>, TError,GrantConnectCapabilitiesMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof grantConnectCapabilities>>, TError,GrantConnectCapabilitiesMutationVariables, TContext> => {
+
+const mutationKey = getGrantConnectCapabilitiesMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof grantConnectCapabilities>>, GrantConnectCapabilitiesMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  grantConnectCapabilities(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type GrantConnectCapabilitiesMutationResult = NonNullable<Awaited<ReturnType<typeof grantConnectCapabilities>>>
+    export type GrantConnectCapabilitiesMutationBody = BodyType<ServerValidatedObject>
+    export type GrantConnectCapabilitiesMutationError = ErrorType<void>
+    export type GrantConnectCapabilitiesMutationVariables = {id: string;data: BodyType<ServerValidatedObject>}
+
+    export const useGrantConnectCapabilities = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof grantConnectCapabilities>>, TError,GrantConnectCapabilitiesMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof grantConnectCapabilities>>,
+        TError,
+        GrantConnectCapabilitiesMutationVariables,
+        TContext
+      > => {
+      return useMutation(getGrantConnectCapabilitiesMutationOptions(options), queryClient);
+    }
+
+export const getAuthorizeConnectApiToolUrl = (id: string,
+    toolId: string,) => {
+
+
+
+
+  return `/api/connect/integrations/${id}/api-tools/${toolId}/authorize`
+}
+
+/**
+ * OWNER only. DISCOVERED -> AUTHORIZED, pinned to the reviewed operation digest.
+ */
+export const authorizeConnectApiTool = async (id: string,
+    toolId: string,
+    serverValidatedObject: ServerValidatedObject, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getAuthorizeConnectApiToolUrl(id,toolId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(serverValidatedObject)
+  }
+);}
+
+
+
+
+
+export const getAuthorizeConnectApiToolMutationKey = () => ['authorizeConnectApiTool'] as const;
+
+export const getAuthorizeConnectApiToolMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authorizeConnectApiTool>>, TError,AuthorizeConnectApiToolMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof authorizeConnectApiTool>>, TError,AuthorizeConnectApiToolMutationVariables, TContext> => {
+
+const mutationKey = getAuthorizeConnectApiToolMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof authorizeConnectApiTool>>, AuthorizeConnectApiToolMutationVariables> = (props) => {
+          const {id,toolId,data} = props ?? {};
+
+          return  authorizeConnectApiTool(id,toolId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AuthorizeConnectApiToolMutationResult = NonNullable<Awaited<ReturnType<typeof authorizeConnectApiTool>>>
+    export type AuthorizeConnectApiToolMutationBody = BodyType<ServerValidatedObject>
+    export type AuthorizeConnectApiToolMutationError = ErrorType<void>
+    export type AuthorizeConnectApiToolMutationVariables = {id: string;toolId: string;data: BodyType<ServerValidatedObject>}
+
+    export const useAuthorizeConnectApiTool = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authorizeConnectApiTool>>, TError,AuthorizeConnectApiToolMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof authorizeConnectApiTool>>,
+        TError,
+        AuthorizeConnectApiToolMutationVariables,
+        TContext
+      > => {
+      return useMutation(getAuthorizeConnectApiToolMutationOptions(options), queryClient);
+    }
+
+export const getRevokeConnectApiToolUrl = (id: string,
+    toolId: string,) => {
+
+
+
+
+  return `/api/connect/integrations/${id}/api-tools/${toolId}/revoke`
+}
+
+/**
+ * OWNER only. Revokes a tool.
+ */
+export const revokeConnectApiTool = async (id: string,
+    toolId: string,
+    serverValidatedObject: ServerValidatedObject, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getRevokeConnectApiToolUrl(id,toolId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(serverValidatedObject)
+  }
+);}
+
+
+
+
+
+export const getRevokeConnectApiToolMutationKey = () => ['revokeConnectApiTool'] as const;
+
+export const getRevokeConnectApiToolMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revokeConnectApiTool>>, TError,RevokeConnectApiToolMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof revokeConnectApiTool>>, TError,RevokeConnectApiToolMutationVariables, TContext> => {
+
+const mutationKey = getRevokeConnectApiToolMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof revokeConnectApiTool>>, RevokeConnectApiToolMutationVariables> = (props) => {
+          const {id,toolId,data} = props ?? {};
+
+          return  revokeConnectApiTool(id,toolId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RevokeConnectApiToolMutationResult = NonNullable<Awaited<ReturnType<typeof revokeConnectApiTool>>>
+    export type RevokeConnectApiToolMutationBody = BodyType<ServerValidatedObject>
+    export type RevokeConnectApiToolMutationError = ErrorType<void>
+    export type RevokeConnectApiToolMutationVariables = {id: string;toolId: string;data: BodyType<ServerValidatedObject>}
+
+    export const useRevokeConnectApiTool = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revokeConnectApiTool>>, TError,RevokeConnectApiToolMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof revokeConnectApiTool>>,
+        TError,
+        RevokeConnectApiToolMutationVariables,
+        TContext
+      > => {
+      return useMutation(getRevokeConnectApiToolMutationOptions(options), queryClient);
+    }
+
+export const getCallConnectApiToolUrl = (id: string,) => {
+
+
+
+
+  return `/api/connect/integrations/${id}/api-tools/call`
+}
+
+/**
+ * OWNER only. A read runs when the binding law allows; a write returns 202 with a confirmation and runs only from the same person's confirmation.
+ */
+export const callConnectApiTool = async (id: string,
+    serverValidatedObject: ServerValidatedObject, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getCallConnectApiToolUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(serverValidatedObject)
+  }
+);}
+
+
+
+
+
+export const getCallConnectApiToolMutationKey = () => ['callConnectApiTool'] as const;
+
+export const getCallConnectApiToolMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof callConnectApiTool>>, TError,CallConnectApiToolMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof callConnectApiTool>>, TError,CallConnectApiToolMutationVariables, TContext> => {
+
+const mutationKey = getCallConnectApiToolMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof callConnectApiTool>>, CallConnectApiToolMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  callConnectApiTool(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CallConnectApiToolMutationResult = NonNullable<Awaited<ReturnType<typeof callConnectApiTool>>>
+    export type CallConnectApiToolMutationBody = BodyType<ServerValidatedObject>
+    export type CallConnectApiToolMutationError = ErrorType<void>
+    export type CallConnectApiToolMutationVariables = {id: string;data: BodyType<ServerValidatedObject>}
+
+    export const useCallConnectApiTool = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof callConnectApiTool>>, TError,CallConnectApiToolMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof callConnectApiTool>>,
+        TError,
+        CallConnectApiToolMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCallConnectApiToolMutationOptions(options), queryClient);
+    }
+
+export const getConfirmConnectActionUrl = (id: string,) => {
+
+
+
+
+  return `/api/connect/action-confirmations/${id}/confirm`
+}
+
+/**
+ * The same person's confirmation: consumed once and re-decided against the current binding.
+ */
+export const confirmConnectAction = async (id: string,
+    serverValidatedObject: ServerValidatedObject, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getConfirmConnectActionUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(serverValidatedObject)
+  }
+);}
+
+
+
+
+
+export const getConfirmConnectActionMutationKey = () => ['confirmConnectAction'] as const;
+
+export const getConfirmConnectActionMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof confirmConnectAction>>, TError,ConfirmConnectActionMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof confirmConnectAction>>, TError,ConfirmConnectActionMutationVariables, TContext> => {
+
+const mutationKey = getConfirmConnectActionMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof confirmConnectAction>>, ConfirmConnectActionMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  confirmConnectAction(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ConfirmConnectActionMutationResult = NonNullable<Awaited<ReturnType<typeof confirmConnectAction>>>
+    export type ConfirmConnectActionMutationBody = BodyType<ServerValidatedObject>
+    export type ConfirmConnectActionMutationError = ErrorType<void>
+    export type ConfirmConnectActionMutationVariables = {id: string;data: BodyType<ServerValidatedObject>}
+
+    export const useConfirmConnectAction = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof confirmConnectAction>>, TError,ConfirmConnectActionMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof confirmConnectAction>>,
+        TError,
+        ConfirmConnectActionMutationVariables,
+        TContext
+      > => {
+      return useMutation(getConfirmConnectActionMutationOptions(options), queryClient);
+    }
+
+export const getCancelConnectActionUrl = (id: string,) => {
+
+
+
+
+  return `/api/connect/action-confirmations/${id}/cancel`
+}
+
+/**
+ * Declines a pending write; nothing is sent.
+ */
+export const cancelConnectAction = async (id: string,
+    serverValidatedObject: ServerValidatedObject, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getCancelConnectActionUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(serverValidatedObject)
+  }
+);}
+
+
+
+
+
+export const getCancelConnectActionMutationKey = () => ['cancelConnectAction'] as const;
+
+export const getCancelConnectActionMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof cancelConnectAction>>, TError,CancelConnectActionMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof cancelConnectAction>>, TError,CancelConnectActionMutationVariables, TContext> => {
+
+const mutationKey = getCancelConnectActionMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof cancelConnectAction>>, CancelConnectActionMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  cancelConnectAction(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CancelConnectActionMutationResult = NonNullable<Awaited<ReturnType<typeof cancelConnectAction>>>
+    export type CancelConnectActionMutationBody = BodyType<ServerValidatedObject>
+    export type CancelConnectActionMutationError = ErrorType<void>
+    export type CancelConnectActionMutationVariables = {id: string;data: BodyType<ServerValidatedObject>}
+
+    export const useCancelConnectAction = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof cancelConnectAction>>, TError,CancelConnectActionMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof cancelConnectAction>>,
+        TError,
+        CancelConnectActionMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCancelConnectActionMutationOptions(options), queryClient);
+    }
+
 export const getStartConnectOAuthUrl = (id: string,) => {
 
 

@@ -196,19 +196,21 @@ export class ConnectNetwork {
     raw: string,
     hosts: readonly string[],
     options: {
-      method?: "GET" | "POST" | "DELETE";
+      method?: "GET" | "POST" | "DELETE" | "PUT" | "PATCH";
       body?: string;
       headers?: Record<string, string>;
       allowEmptyResponse?: boolean;
       endMcpSession?: boolean;
+      /** Stage 3: query keys a reviewed API operation declares (default: catalog paging only). */
+      allowedQueryKeys?: readonly string[];
     } = {},
   ) {
-    const url = new URL(validateExternalUrl(raw, hosts, ["cursor", "limit"]));
+    const url = new URL(validateExternalUrl(raw, hosts, options.allowedQueryKeys ?? ["cursor", "limit"]));
     const addresses = await publicConnectAddresses(url.hostname, this.dns);
     const controller = new AbortController();
     for (const [key, value] of Object.entries(options.headers ?? {}))
       if (
-        !["authorization", "accept", "content-type", "user-agent", "mcp-session-id", "mcp-protocol-version"].includes(
+        !["authorization", "accept", "content-type", "user-agent", "mcp-session-id", "mcp-protocol-version", "idempotency-key"].includes(
           key.toLowerCase(),
         ) ||
         /[\r\n]/.test(value)
@@ -257,7 +259,7 @@ export class ConnectNetwork {
           "لم يؤكد المزوّد نتيجة صالحة",
         );
       const reader = response.body?.getReader();
-      if (!reader && options.allowEmptyResponse && response.status === 202)
+      if (!reader && options.allowEmptyResponse && (response.status === 202 || response.status === 204))
         return { status: response.status, text: "", contentType: response.headers.get("content-type") ?? "", headers: response.headers };
       if (!reader)
         throw connectError(502, "PROVIDER_INVALID_RESPONSE", "رد المزوّد فارغ");

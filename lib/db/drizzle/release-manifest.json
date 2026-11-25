@@ -290,5 +290,9 @@
   {
     "tag": "0072_connect_binding_lifecycle",
     "sha256": "4dfbd6c9f19c06c160fe6a0f1abadf47c26d5933ff98d2ddfaa62dd2ed5987ac"
+  },
+  {
+    "tag": "0073_connect_operations_confirmations",
+    "sha256": "75e39726f01f9f9528c883cf52f1858ea8c64cfd7e264bcbc5eab529ff2a4447"
   }
 ]

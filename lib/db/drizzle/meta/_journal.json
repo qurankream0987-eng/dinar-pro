@@ -512,6 +512,13 @@
       "when": 1795140000000,
       "tag": "0072_connect_binding_lifecycle",
       "breakpoints": true
+    },
+    {
+      "idx": 73,
+      "version": "7",
+      "when": 1795150000000,
+      "tag": "0073_connect_operations_confirmations",
+      "breakpoints": true
     }
   ]
 }

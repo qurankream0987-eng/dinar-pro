@@ -9032,6 +9032,102 @@ export const GetConnectReadOnlyCatalogResponse = zod.record(zod.string(), zod.un
 
 
 /**
+ * OWNER only. Discovered and authorized tools with their full reviewed operation and digest; never credentials.
+ */
+export const ListConnectApiToolsParams = zod.object({
+  "id": zod.uuid()
+})
+
+export const ListConnectApiToolsResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * OWNER only. OpenAPI 3 document, well-known discovery or named GraphQL operations become DISCOVERED tools; nothing becomes usable.
+ */
+export const ImportConnectApiToolsParams = zod.object({
+  "id": zod.uuid()
+})
+
+export const ImportConnectApiToolsBody = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+export const ImportConnectApiToolsResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * OWNER only. Grants a subset of the capabilities the connector supports.
+ */
+export const GrantConnectCapabilitiesParams = zod.object({
+  "id": zod.uuid()
+})
+
+export const GrantConnectCapabilitiesBody = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+export const GrantConnectCapabilitiesResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * OWNER only. DISCOVERED -> AUTHORIZED, pinned to the reviewed operation digest.
+ */
+export const AuthorizeConnectApiToolParams = zod.object({
+  "id": zod.uuid(),
+  "toolId": zod.uuid()
+})
+
+export const AuthorizeConnectApiToolBody = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+export const AuthorizeConnectApiToolResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * OWNER only. Revokes a tool.
+ */
+export const RevokeConnectApiToolParams = zod.object({
+  "id": zod.uuid(),
+  "toolId": zod.uuid()
+})
+
+export const RevokeConnectApiToolBody = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+export const RevokeConnectApiToolResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * OWNER only. A read runs when the binding law allows; a write returns 202 with a confirmation and runs only from the same person's confirmation.
+ */
+export const CallConnectApiToolParams = zod.object({
+  "id": zod.uuid()
+})
+
+export const CallConnectApiToolBody = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+export const CallConnectApiToolResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * The same person's confirmation: consumed once and re-decided against the current binding.
+ */
+export const ConfirmConnectActionParams = zod.object({
+  "id": zod.uuid()
+})
+
+export const ConfirmConnectActionBody = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+export const ConfirmConnectActionResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * Declines a pending write; nothing is sent.
+ */
+export const CancelConnectActionParams = zod.object({
+  "id": zod.uuid()
+})
+
+export const CancelConnectActionBody = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+export const CancelConnectActionResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
  * OWNER only. Independently approved SIMULATION_ONLY public-client PKCE S256 catalog.read authorization. No confidential client, billing/transaction scopes or browser-visible tokens. Disconnect revokes only local use and never claims provider-side revocation.
  */
 export const StartConnectOAuthParams = zod.object({

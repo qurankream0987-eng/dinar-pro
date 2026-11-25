@@ -539,6 +539,8 @@ export const connectTools = pgTable(
     authorizedBy: text("authorized_by").references(() => users.id),
     authorizedAt: timestamp("authorized_at", { withTimezone: true }),
     revokedAt: timestamp("revoked_at", { withTimezone: true }),
+    /** Stage 3: the reviewed operation (protocol, method, path, parameters, input schema). Its digest is inputSchemaSha256. */
+    operation: jsonb("operation").$type<Record<string, unknown>>(),
   },
   (t) => [
     uniqueIndex("connect_tools_identity_unique").on(t.integrationId, t.name, t.inputSchemaSha256),
@@ -550,6 +552,33 @@ export const connectTools = pgTable(
         AND (${t.access} = 'WRITE') = (${t.capability} IN ('CREATE','UPDATE','DELETE','BOOK','SCHEDULE','MESSAGE','PAY','REFUND','CANCEL'))
         AND (${t.status} <> 'AUTHORIZED' OR (${t.authorizedBy} IS NOT NULL AND ${t.authorizedAt} IS NOT NULL))
         AND ${t.inputSchemaSha256} ~ '^[0-9a-f]{64}$'`,
+    ),
+  ],
+);
+/**
+ * Stage 3: a write through a connector runs only from the person's own confirmation of the exact
+ * call (tool + arguments digest), consumed once. The confirmation id is the provider idempotency key.
+ */
+export const connectActionConfirmations = pgTable(
+  "connect_action_confirmations",
+  {
+    id: text("id").primaryKey(),
+    integrationId: text("integration_id").notNull().references(() => connectIntegrations.id),
+    toolId: text("tool_id").notNull().references(() => connectTools.id),
+    actorId: text("actor_id").notNull().references(() => users.id),
+    argumentsDigest: text("arguments_digest").notNull(),
+    arguments: jsonb("arguments").$type<Record<string, unknown>>().notNull(),
+    status: text("status").default("PENDING").notNull(),
+    resultStatus: integer("result_status"),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    consumedAt: timestamp("consumed_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    index("connect_action_confirmations_actor_idx").on(t.actorId, t.createdAt),
+    check(
+      "connect_action_confirmations_valid",
+      sql`${t.status} IN ('PENDING','EXECUTING','SUCCEEDED','FAILED','CANCELLED','EXPIRED') AND ${t.argumentsDigest} ~ '^[0-9a-f]{64}$' AND (${t.status} IN ('PENDING','CANCELLED','EXPIRED') OR ${t.consumedAt} IS NOT NULL)`,
     ),
   ],
 );

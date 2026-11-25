@@ -22,6 +22,9 @@ import * as sites from "../connect/sites";
 import * as team from "../connect/team";
 import * as partners from "../connect/partners";
 import * as agreements from "../connect/agreements";
+import * as apiConnector from "../connect/api-connector";
+import * as binding from "../connect/binding";
+import { connectIntegrations as connectIntegrationsTable, connectTools } from "@workspace/db";
 import { ConnectFinancialReceiptSchema } from "@workspace/api-zod/connect-platform";
 import { connectDiagnostics } from "../connect/diagnostics";
 import { importConnectOffer, previewConnectImport } from "../connect/catalog-import";
@@ -586,4 +589,68 @@ router.get("/connect/outbound/:id", requireAuth, async (req, res) => {
     })
     .redirect(303, target);
 });
+// ─── Stage 3: API connectors (owner only). Discovery proposes; the owner authorizes; writes need confirmation.
+const toolArguments = z.record(z.string().max(64), z.unknown());
+router.post("/connect/integrations/:id/api-tools", requireAuth, async (req, res) => {
+  const body = z.union([
+    z.object({ source: z.literal("OPENAPI"), document: z.record(z.string(), z.unknown()) }).strict(),
+    z.object({ source: z.literal("DISCOVER") }).strict(),
+    z.object({ source: z.literal("GRAPHQL"), operations: z.array(z.unknown()).max(100) }).strict(),
+  ]).parse(req.body);
+  const market = await marketFor(req);
+  const id = idParam(req.params.id);
+  let proposed;
+  if (body.source === "GRAPHQL") proposed = apiConnector.proposeGraphqlTools(body.operations);
+  else if (body.source === "OPENAPI") proposed = apiConnector.proposeOpenApiTools(body.document);
+  else {
+    const [row] = await db.select().from(connectIntegrationsTable).where(eq(connectIntegrationsTable.id, id));
+    if (!row?.endpointUrl) throw connectError(404, "NOT_FOUND", "الموصل غير موجود");
+    await partners.connectAccess(req.actor!.id, market.id, row.partnerId, "OWNER");
+    const found = await apiConnector.discoverOpenApiDocument(connectNetworkFor(req) ?? new ConnectNetwork(), row.endpointUrl);
+    if (!found) throw connectError(404, "API_DESCRIPTION_NOT_FOUND", "لم يُعثر على وصف OpenAPI في المسارات المعروفة للموصل");
+    proposed = apiConnector.proposeOpenApiTools(found.document);
+  }
+  res.status(201).json(await apiConnector.importApiTools(req.actor!.id, market, id, proposed));
+});
+router.get("/connect/integrations/:id/api-tools", requireAuth, async (req, res) => {
+  const market = await marketFor(req);
+  const id = idParam(req.params.id);
+  const [row] = await db.select().from(connectIntegrationsTable).where(eq(connectIntegrationsTable.id, id));
+  if (!row) throw connectError(404, "NOT_FOUND", "الموصل غير موجود");
+  await partners.connectAccess(req.actor!.id, market.id, row.partnerId, "OWNER");
+  const tools = await db.select().from(connectTools).where(eq(connectTools.integrationId, id));
+  // The owner reviews the full operation and its digest before authorizing; credentials never appear.
+  res.set("Cache-Control", "no-store").json({
+    lifecycle: row.lifecycle,
+    grantedCapabilities: row.grantedCapabilities,
+    tools: tools.map((tool) => ({ id: tool.id, name: tool.name, capability: tool.capability, access: tool.access, status: tool.status, digest: tool.inputSchemaSha256, operation: tool.operation })),
+  });
+});
+router.post("/connect/integrations/:id/capabilities", requireAuth, async (req, res) => {
+  const body = z.object({ capabilities: z.array(z.string().max(16)).max(14) }).strict().parse(req.body);
+  res.json(await binding.grantConnectCapabilities(req.actor!.id, await marketFor(req), idParam(req.params.id), body.capabilities));
+});
+router.post("/connect/integrations/:id/api-tools/:toolId/authorize", requireAuth, async (req, res) => {
+  const body = z.object({ reviewedDigest: z.string().regex(/^[0-9a-f]{64}$/) }).strict().parse(req.body);
+  res.json(await binding.authorizeConnectTool(req.actor!.id, await marketFor(req), idParam(req.params.id), idParam(req.params.toolId), body.reviewedDigest));
+});
+router.post("/connect/integrations/:id/api-tools/:toolId/revoke", requireAuth, async (req, res) => {
+  z.object({}).strict().parse(req.body ?? {});
+  res.json(await binding.revokeConnectTool(req.actor!.id, await marketFor(req), idParam(req.params.id), idParam(req.params.toolId)));
+});
+router.post("/connect/integrations/:id/api-tools/call", requireAuth, async (req, res) => {
+  const body = z.object({ toolName: z.string().min(1).max(64), arguments: toolArguments }).strict().parse(req.body);
+  const result = await apiConnector.callConnectTool({ actorId: req.actor!.id, market: await marketFor(req), integrationId: idParam(req.params.id), toolName: body.toolName, arguments: body.arguments, network: connectNetworkFor(req) });
+  res.set("Cache-Control", "no-store").status(result.status === "CONFIRMATION_REQUIRED" ? 202 : result.status === "REFUSED" ? 409 : 200).json(result);
+});
+router.post("/connect/action-confirmations/:id/confirm", requireAuth, async (req, res) => {
+  z.object({}).strict().parse(req.body ?? {});
+  const result = await apiConnector.confirmToolCall({ actorId: req.actor!.id, market: await marketFor(req), confirmationId: idParam(req.params.id), network: connectNetworkFor(req) });
+  res.set("Cache-Control", "no-store").status(result.status === "REFUSED" ? 409 : 200).json(result);
+});
+router.post("/connect/action-confirmations/:id/cancel", requireAuth, async (req, res) => {
+  z.object({}).strict().parse(req.body ?? {});
+  res.json(await apiConnector.cancelToolCall({ actorId: req.actor!.id, confirmationId: idParam(req.params.id) }));
+});
+
 export default router;

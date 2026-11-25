@@ -87,6 +87,7 @@ export const REVIEWED_PENDING_MIGRATIONS: ReadonlyArray<{ tag: string; sha256: s
   { tag: "0070_commission_five_percent", sha256: "82477f01528da934f9ccb8629c3cedf648fae8d97d63d0fa524a0a103ce3ed5e" },
   { tag: "0071_subscription_provider_link", sha256: "101d16fda0730f1432ba7c727c046a5d0e141666391b530bd867792977555a36" },
   { tag: "0072_connect_binding_lifecycle", sha256: "4dfbd6c9f19c06c160fe6a0f1abadf47c26d5933ff98d2ddfaa62dd2ed5987ac" },
+  { tag: "0073_connect_operations_confirmations", sha256: "75e39726f01f9f9528c883cf52f1858ea8c64cfd7e264bcbc5eab529ff2a4447" },
 ];
 export const EXPECTED_JOURNAL_ENTRIES =
   EXPECTED_BASELINE_MIGRATIONS + REVIEWED_PENDING_MIGRATIONS.length;

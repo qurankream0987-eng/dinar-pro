@@ -134,7 +134,7 @@ export function modelToolView(tools: readonly { id: string; name: string; capabi
 const TOOL_NAME = /^[A-Za-z0-9_.:-]{1,64}$/;
 
 /** Records what a provider listed. Discovery never authorizes; a changed schema is a new tool. */
-export async function recordDiscoveredTools(tx: ConnectTx, integrationId: string, tools: readonly { name: string; inputSchema: unknown; capability: string }[]) {
+export async function recordDiscoveredTools(tx: ConnectTx, integrationId: string, tools: readonly { name: string; inputSchema: unknown; capability: string; operation?: Record<string, unknown> }[]) {
   if (tools.length > 100) throw connectError(400, "TOO_MANY_TOOLS", "عدد الأدوات أكبر من المسموح");
   const recorded: string[] = [];
   for (const tool of tools) {
@@ -142,7 +142,7 @@ export async function recordDiscoveredTools(tx: ConnectTx, integrationId: string
     const digest = toolSchemaDigest(tool.inputSchema);
     const [row] = await tx
       .insert(connectTools)
-      .values({ id: randomUUID(), integrationId, name: tool.name, inputSchemaSha256: digest, capability: tool.capability, access: capabilityMutates(tool.capability) ? "WRITE" : "READ" })
+      .values({ id: randomUUID(), integrationId, name: tool.name, inputSchemaSha256: digest, capability: tool.capability, access: capabilityMutates(tool.capability) ? "WRITE" : "READ", ...(tool.operation ? { operation: tool.operation } : {}) })
       .onConflictDoNothing()
       .returning({ id: connectTools.id });
     if (row) recorded.push(row.id);
