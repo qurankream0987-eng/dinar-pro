@@ -1,0 +1,6 @@
+# JassimAI Production backup job (PROPOSED FOR REVIEW; not deployed).
+FROM postgres:18
+RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates && rm -rf /var/lib/apt/lists/*
+COPY scripts/railway/production-backup.sh /usr/local/bin/production-backup.sh
+RUN chmod 0755 /usr/local/bin/production-backup.sh
+ENTRYPOINT ["/usr/local/bin/production-backup.sh"]
