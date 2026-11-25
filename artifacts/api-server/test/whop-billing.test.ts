@@ -9,7 +9,8 @@ import { test, after } from "node:test";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { and, eq } from "drizzle-orm";
-import { billingWebhookEvents, businessSubscriptions, db, pool, promotionProducts, users } from "@workspace/db";
+import { billingWebhookEvents, businessSubscriptions, conversations, db, messages, pool, promotionProducts, users } from "@workspace/db";
+import { sweepRenewalReminders, renewalReminderText } from "../src/lib/subscription-reminders";
 import app from "../src/app";
 import { installWhopBilling, signWhopPayload, moneyToMinor, verifyWhopSignature, type WhopTransport } from "../src/lib/billing/whop";
 import { aiPlanFor } from "../src/lib/business";
@@ -41,7 +42,8 @@ const transport: WhopTransport = async ({ method, path, body, idempotencyKey }) 
     cancels.push({ id: mid, body, idempotencyKey });
     const m = memberships.get(mid);
     if (!m) return { status: 404, json: { error: "not found" } };
-    memberships.set(mid, { ...m, status: "canceled" });
+    // Whop keeps a cancel-at-period-end membership active until the period ends.
+    memberships.set(mid, (body as any)?.cancel_at_period_end ? { ...m, cancel_at_period_end: true } : { ...m, status: "canceled" });
     return { status: 200, json: memberships.get(mid) };
   }
   const [, kind, id] = path.split("/");
@@ -377,6 +379,96 @@ await test("WH-12 owner-approved USD prices in a KWD market: Pro annual $200 via
   assert.equal((await deliver("payment.succeeded", { id: paid(id, user.id, "mem_A12", { total: usd("199.99"), periodDays: 365 }) })).body.failureCode, "AMOUNT_MISMATCH");
   assert.equal((await deliver("payment.succeeded", { id: paid(id, user.id, "mem_A12", { total: usd("200.00"), tax: "16.50", periodDays: 365 }) })).body.outcome, "APPLIED");
   assert.equal((await aiPlanFor(user.id, { id: "KW" })).tier, "BUSINESS_PRO");
+});
+
+// ── Whop phase 2 ─────────────────────────────────────────────────────────────────────────────────
+async function aiConversation(userId: string) {
+  const id = randomUUID();
+  await db.insert(conversations).values({ id, ownerUserId: userId, marketId: "KW", kind: "AI", title: "اشتراك" });
+  return id;
+}
+
+await test("WH-13 checkout from a conversation: owner-only conversation, return URL to the same conversation, tax note, membership linked from the verified payment", async () => {
+  const user = await account("buyer13");
+  const stranger = await account("stranger13");
+  const conversationId = await aiConversation(user.id);
+  const foreign = await request("/business/subscription-checkout", "POST", { planId: goPlan, idempotencyKey: `wh-${randomUUID()}`, conversationId }, stranger.cookie);
+  assert.equal(foreign.status, 404, "another user's conversation is never accepted");
+  process.env.APP_ORIGIN = "https://app.example.test";
+  const r = await request("/business/subscription-checkout", "POST", { planId: goPlan, idempotencyKey: `wh-${randomUUID()}`, conversationId }, user.cookie);
+  delete process.env.APP_ORIGIN;
+  assert.equal(r.status, 201, r.raw);
+  assert.equal(r.data.status, "PENDING");
+  assert.match(r.data.taxNote, /Whop/);
+  assert.equal(r.data.returnPath, `/?checkout=${r.data.subscriptionId}&conversation=${conversationId}`);
+  assert.equal(checkouts.at(-1)!.body.redirect_url, `https://app.example.test/?checkout=${r.data.subscriptionId}&conversation=${conversationId}`);
+  const id = r.data.subscriptionId as string;
+  let row = await sub(id);
+  assert.equal(row.conversationId, conversationId);
+  assert.equal(row.providerKey, "whop");
+  assert.match(row.providerCheckoutId ?? "", /^ch_/);
+  assert.equal(row.providerSubscriptionId, null, "no membership before Whop confirms payment");
+  // The return page reads the server, never the URL: unpaid until the signed webhook; 404 for strangers.
+  assert.equal((await request(`/business/subscription-checkout/${id}`, "GET", undefined, stranger.cookie)).status, 404);
+  assert.equal((await request(`/business/subscription-checkout/${id}`, "GET", undefined, user.cookie)).data.paid, false);
+  assert.equal((await deliver("payment.succeeded", { id: paid(id, user.id, "mem_P13") })).body.outcome, "APPLIED");
+  const back = await request(`/business/subscription-checkout/${id}`, "GET", undefined, user.cookie);
+  assert.equal(back.data.paid, true);
+  assert.equal(back.data.conversationId, conversationId);
+  row = await sub(id);
+  assert.equal(row.providerSubscriptionId, "mem_P13");
+});
+
+await test("WH-14 cancel from the app goes to Whop (cancel at period end); our record changes only on Whop's signed confirmation", async () => {
+  const user = await account("buyer14");
+  const id = await checkout(user);
+  assert.equal((await deliver("payment.succeeded", { id: paid(id, user.id, "mem_P14") })).body.outcome, "APPLIED");
+  const before = cancels.length;
+  const r = await request("/business/subscription/cancel", "POST", {}, user.cookie);
+  assert.equal(r.status, 200, r.raw);
+  assert.equal(r.data.status, "CANCELLATION_REQUESTED");
+  assert.equal(cancels.length, before + 1);
+  assert.deepEqual(cancels.at(-1)!.body, { cancel_at_period_end: true });
+  assert.equal(cancels.at(-1)!.id, "mem_P14");
+  assert.equal((await sub(id)).status, "ACTIVE", "no local change before Whop confirms");
+  assert.equal((await deliver("membership.updated", { id: "mem_P14" })).body.outcome, "APPLIED");
+  assert.equal((await sub(id)).status, "CANCEL_AT_PERIOD_END");
+  assert.equal((await aiPlanFor(user.id, { id: "KW" })).tier, "BUSINESS_GO", "benefits stay until the period ends");
+  const user2 = await account("buyer14b");
+  const id2 = await checkout(user2);
+  assert.equal((await deliver("payment.succeeded", { id: paid(id2, user2.id, "mem_P14b") })).body.outcome, "APPLIED");
+  whopDown = true;
+  const down = await request("/business/subscription/cancel", "POST", {}, user2.cookie);
+  whopDown = false;
+  assert.equal(down.status, 503, "Whop unreachable: refused truthfully");
+  assert.equal((await sub(id2)).status, "ACTIVE");
+});
+
+await test("WH-15 renewal reminder: once per period, three days before the end, written into the conversation", async () => {
+  const user = await account("buyer15");
+  const conversationId = await aiConversation(user.id);
+  const r = await request("/business/subscription-checkout", "POST", { planId: goPlan, idempotencyKey: `wh-${randomUUID()}`, conversationId }, user.cookie);
+  const id = r.data.subscriptionId as string;
+  assert.equal((await deliver("payment.succeeded", { id: paid(id, user.id, "mem_P15") })).body.outcome, "APPLIED");
+  const end = (await sub(id)).currentPeriodEnd!;
+  const sent: any[] = [];
+  const notify = async (input: any) => { sent.push(input); return { status: "NOT_CONNECTED" as const }; };
+  assert.ok(!(await sweepRenewalReminders(new Date(end.getTime() - 4 * day), { notify })).includes(id), "not before three days");
+  assert.ok((await sweepRenewalReminders(new Date(end.getTime() - 3 * day + 60_000), { notify })).includes(id));
+  assert.ok(!(await sweepRenewalReminders(new Date(end.getTime() - 2 * day), { notify })).includes(id), "one reminder per period");
+  const mine = sent.filter((item) => item.data.subscriptionId === id);
+  assert.equal(mine.length, 1);
+  assert.equal(mine[0].templateKey, "SUBSCRIPTION_RENEWAL_REMINDER");
+  assert.equal(mine[0].data.status, "RENEWS");
+  const notes = await db.select().from(messages).where(eq(messages.conversationId, conversationId));
+  assert.equal(notes.length, 1);
+  assert.match(notes[0]!.body, /يتجدد/);
+  assert.equal(renewalReminderText({ planName: "Go", periodEnd: end, renews: false }).includes("لن يتجدد"), true);
+  // A renewal moves the period end: the next period gets its own reminder.
+  const next = paid(id, user.id, "mem_P15", { reason: "subscription_cycle", start: end.getTime() });
+  assert.equal((await deliver("payment.succeeded", { id: next })).body.outcome, "APPLIED");
+  const end2 = (await sub(id)).currentPeriodEnd!;
+  assert.ok((await sweepRenewalReminders(new Date(end2.getTime() - 2 * day), { notify })).includes(id));
 });
 
 after(async () => { uninstall(); server.close(); await pool.end(); });
