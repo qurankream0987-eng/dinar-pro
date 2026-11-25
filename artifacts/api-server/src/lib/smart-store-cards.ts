@@ -209,14 +209,41 @@ export async function buildCardFromListings(market: Market, listingIds: readonly
 
 // ─── Persistence ────────────────────────────────────────────────────────────────────────────────
 
-export async function issueSmartStoreCard(input: { actorId: string; market: Market; listingIds: readonly string[]; conversationId?: string; understood?: readonly string[] }) {
+/** On by default outside production; production needs DINAR_SMART_STORE_CARDS=true (owner decision). */
+export function smartStoreCardsEnabled(env: NodeJS.ProcessEnv = process.env) {
+  if (env.DINAR_SMART_STORE_CARDS === "true") return true;
+  if (env.DINAR_SMART_STORE_CARDS === "false") return false;
+  return env.NODE_ENV !== "production";
+}
+
+/**
+ * After a search reply: one card for the first store among the organic results (paid results never
+ * pick the store). Failure never affects the reply; the ordinary results stay the source of truth.
+ */
+export async function issueCardForSearchReply(input: { actorId: string; market: Market; conversationId: string; messageId: string; listings: readonly ListingRecord[]; search?: string }) {
+  if (!smartStoreCardsEnabled()) return undefined;
+  const organic = input.listings.filter((listing) => !listing.isSponsored);
+  const seller = organic[0]?.sellerId;
+  if (!seller) return undefined;
+  const ids = organic.filter((listing) => listing.sellerId === seller).slice(0, 8).map((listing) => listing.id);
+  const understood = input.search?.trim() ? [input.search.trim().slice(0, 60)] : [];
+  return issueSmartStoreCard({ actorId: input.actorId, market: input.market, listingIds: ids, conversationId: input.conversationId, messageId: input.messageId, understood });
+}
+
+export async function issueSmartStoreCard(input: { actorId: string; market: Market; listingIds: readonly string[]; conversationId?: string; messageId?: string; understood?: readonly string[] }) {
   if (input.conversationId) {
     const [owned] = await db.select({ id: conversations.id }).from(conversations).where(and(eq(conversations.id, input.conversationId), eq(conversations.ownerUserId, input.actorId), eq(conversations.marketId, input.market.id)));
     if (!owned) throw fail(404, "المحادثة غير موجودة", "CONVERSATION_NOT_FOUND");
   }
   const card = await buildCardFromListings(input.market, input.listingIds, input.understood);
-  await db.insert(smartStoreCards).values({ id: card.cardId, ownerUserId: input.actorId, marketId: input.market.id, conversationId: input.conversationId ?? null, revision: card.revision, card });
+  await db.insert(smartStoreCards).values({ id: card.cardId, ownerUserId: input.actorId, marketId: input.market.id, conversationId: input.conversationId ?? null, messageId: input.messageId ?? null, revision: card.revision, card });
   return card;
+}
+
+/** The card attached to one of the actor's assistant replies, or null. */
+export async function smartStoreCardForMessage(actorId: string, messageId: string) {
+  const [row] = await db.select().from(smartStoreCards).where(and(eq(smartStoreCards.messageId, messageId), eq(smartStoreCards.ownerUserId, actorId)));
+  return row ? SmartStoreCard.parse(row.card) : null;
 }
 
 export async function readSmartStoreCard(actorId: string, cardId: string) {

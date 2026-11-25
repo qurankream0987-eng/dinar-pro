@@ -9136,6 +9136,20 @@ export const IssueSmartStoreCardResponse = zod.record(zod.string(), zod.unknown(
 
 
 /**
+ * The owner's card attached to one assistant reply, or null.
+ */
+export const getSmartStoreCardForMessageQueryMessageIdMax = 80;
+
+
+
+export const GetSmartStoreCardForMessageQueryParams = zod.object({
+  "messageId": zod.coerce.string().max(getSmartStoreCardForMessageQueryMessageIdMax)
+})
+
+export const GetSmartStoreCardForMessageResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
  * The owner's current card (server copy).
  */
 export const GetSmartStoreCardParams = zod.object({

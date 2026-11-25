@@ -134,6 +134,7 @@ import type {
   GetConnectPartnerReportParams,
   GetListingsParams,
   GetOrdersParams,
+  GetSmartStoreCardForMessageParams,
   GetSubscriptionPlanEconomicsParams,
   GoogleCompleteInput,
   GoogleSignInInput,
@@ -22314,6 +22315,111 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       > => {
       return useMutation(getIssueSmartStoreCardMutationOptions(options), queryClient);
     }
+
+export const getGetSmartStoreCardForMessageUrl = (params: GetSmartStoreCardForMessageParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/smart-store/cards?${stringifiedParams}` : `/api/smart-store/cards`
+}
+
+/**
+ * The owner's card attached to one assistant reply, or null.
+ */
+export const getSmartStoreCardForMessage = async (params: GetSmartStoreCardForMessageParams, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+  return customFetch<ServerValidatedObject>(getGetSmartStoreCardForMessageUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetSmartStoreCardForMessageQueryKey = (params?: GetSmartStoreCardForMessageParams,) => {
+    return [
+    `/api/smart-store/cards`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetSmartStoreCardForMessageQueryOptions = <TData = Awaited<ReturnType<typeof getSmartStoreCardForMessage>>, TError = ErrorType<unknown>>(params: GetSmartStoreCardForMessageParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSmartStoreCardForMessage>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetSmartStoreCardForMessageQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSmartStoreCardForMessage>>> = ({ signal }) => getSmartStoreCardForMessage(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSmartStoreCardForMessage>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetSmartStoreCardForMessageQueryResult = NonNullable<Awaited<ReturnType<typeof getSmartStoreCardForMessage>>>
+export type GetSmartStoreCardForMessageQueryError = ErrorType<unknown>
+
+
+export function useGetSmartStoreCardForMessage<TData = Awaited<ReturnType<typeof getSmartStoreCardForMessage>>, TError = ErrorType<unknown>>(
+ params: GetSmartStoreCardForMessageParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSmartStoreCardForMessage>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSmartStoreCardForMessage>>,
+          TError,
+          Awaited<ReturnType<typeof getSmartStoreCardForMessage>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSmartStoreCardForMessage<TData = Awaited<ReturnType<typeof getSmartStoreCardForMessage>>, TError = ErrorType<unknown>>(
+ params: GetSmartStoreCardForMessageParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSmartStoreCardForMessage>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSmartStoreCardForMessage>>,
+          TError,
+          Awaited<ReturnType<typeof getSmartStoreCardForMessage>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSmartStoreCardForMessage<TData = Awaited<ReturnType<typeof getSmartStoreCardForMessage>>, TError = ErrorType<unknown>>(
+ params: GetSmartStoreCardForMessageParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSmartStoreCardForMessage>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useGetSmartStoreCardForMessage<TData = Awaited<ReturnType<typeof getSmartStoreCardForMessage>>, TError = ErrorType<unknown>>(
+ params: GetSmartStoreCardForMessageParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSmartStoreCardForMessage>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetSmartStoreCardForMessageQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 
 export const getGetSmartStoreCardUrl = (id: string,) => {
 

@@ -113,4 +113,30 @@ await test("SSC-03 server cards come from published listings; owner-only; stale 
   }
 });
 
+await test("SSC-04 a search reply in a conversation carries the first organic store's card; only its owner reads it", async () => {
+  const [row] = await db.select().from(markets).where(eq(markets.id, "JO"));
+  const market = await resolveMarket(row!);
+  const listings = (await searchMarketplaceListings(market, { search: "", limit: 40 })) as any[];
+  const listing = listings.find((item) => item.unitPrice !== null && !item.isSponsored && item.title.trim().split(/\s+/)[0].length > 2);
+  assert.ok(listing);
+  const buyer = await register("محادثة البطاقة");
+  const stranger = await register("غريب المحادثة");
+  const created = await call("/ai/conversations", buyer.cookie, {});
+  const conversationId = (created.data.conversation?.id ?? created.data.id) as string;
+  const response = await fetch(`${base}/ai/conversations/${conversationId}/turns`, { method: "POST", headers: { "content-type": "application/json", cookie: buyer.cookie }, body: JSON.stringify({ message: `أبحث عن ${listing.title}` }) });
+  const raw = await response.text();
+  assert.equal(response.status, 200, raw);
+  const complete = raw.split("\n").filter((line) => line.startsWith("data: ")).map((line) => JSON.parse(line.slice(6))).find((event) => event.type === "complete");
+  assert.ok(complete, raw);
+  const results = (complete.assistantMessage.blocks ?? []).find((block: any) => block.type === "LISTING_RESULTS");
+  assert.ok(results?.payload.resourceIds?.length, `search reply had no results: ${JSON.stringify({ body: complete.assistantMessage.body, types: (complete.assistantMessage.blocks ?? []).map((block: any) => block.type), title: listing.title })}`);
+  const messageId = complete.assistantMessage.id as string;
+  const mine = await call(`/smart-store/cards?messageId=${messageId}`, buyer.cookie);
+  assert.equal(mine.status, 200, mine.text);
+  const card = SmartStoreCard.parse(mine.data.card);
+  const organic = results.payload.listings.filter((item: any) => !item.isSponsored);
+  assert.equal(card.store.name, String(organic[0].sellerName).slice(0, 120), "the first organic store, never a paid slot");
+  assert.equal((await call(`/smart-store/cards?messageId=${messageId}`, stranger.cookie)).data.card, null, "another person's reply has no card for them");
+});
+
 after(async () => { server.close(); await pool.end(); });

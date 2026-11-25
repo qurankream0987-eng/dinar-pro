@@ -1763,9 +1763,10 @@ await test("delivery, chat, confirmation and exact fee persist", async () => {
     .from(orders)
     .where(eq(orders.id, order.id));
   assert.equal(due.amountMinor, persistedOrder.platformFeeMinor);
-  assert.equal(persistedOrder.data.commissionRateBps, 1_000);
-  assert.equal(persistedOrder.platformFeeMinor, 247);
-  assert.equal(persistedOrder.sellerAmountMinor, 2_221);
+  // Owner decision 2026-11-25: 5% of the sale value (2_468 × 5% = 123.4 → 123).
+  assert.equal(persistedOrder.data.commissionRateBps, 500);
+  assert.equal(persistedOrder.platformFeeMinor, 123);
+  assert.equal(persistedOrder.sellerAmountMinor, 2_345);
   const [o] = await db.select().from(offers).where(eq(offers.id, sa.id));
   assert.equal(o.availableQuantity, 3);
   assert.equal(o.reservedQuantity, 0);

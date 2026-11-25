@@ -3,6 +3,7 @@ CREATE TABLE "smart_store_cards" (
 	"owner_user_id" text NOT NULL,
 	"market_id" text NOT NULL,
 	"conversation_id" text,
+	"message_id" text,
 	"revision" integer DEFAULT 1 NOT NULL,
 	"card" jsonb NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
@@ -11,5 +12,7 @@ CREATE TABLE "smart_store_cards" (
 );--> statement-breakpoint
 ALTER TABLE "smart_store_cards" ADD CONSTRAINT "smart_store_cards_owner_user_id_users_id_fk" FOREIGN KEY ("owner_user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "smart_store_cards" ADD CONSTRAINT "smart_store_cards_market_id_markets_id_fk" FOREIGN KEY ("market_id") REFERENCES "public"."markets"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "smart_store_cards" ADD CONSTRAINT "smart_store_cards_conversation_id_conversations_id_fk" FOREIGN KEY ("conversation_id") REFERENCES "public"."conversations"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "smart_store_cards" ADD CONSTRAINT "smart_store_cards_conversation_id_conversations_id_fk" FOREIGN KEY ("conversation_id") REFERENCES "public"."conversations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "smart_store_cards" ADD CONSTRAINT "smart_store_cards_message_id_messages_id_fk" FOREIGN KEY ("message_id") REFERENCES "public"."messages"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+CREATE UNIQUE INDEX "smart_store_cards_message_unique" ON "smart_store_cards" USING btree ("message_id") WHERE "smart_store_cards"."message_id" IS NOT NULL;--> statement-breakpoint
 CREATE INDEX "smart_store_cards_owner_idx" ON "smart_store_cards" USING btree ("owner_user_id","created_at");

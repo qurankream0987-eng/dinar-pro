@@ -366,6 +366,7 @@ export * from './getListingsSort';
 export * from './getListingsStatus';
 export * from './getOrdersParams';
 export * from './getOrdersRole';
+export * from './getSmartStoreCardForMessageParams';
 export * from './getSubscriptionPlanEconomicsParams';
 export * from './googleCompleteInput';
 export * from './googleSignInInput';

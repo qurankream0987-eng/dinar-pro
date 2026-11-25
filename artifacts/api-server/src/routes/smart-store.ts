@@ -3,7 +3,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { requireAuth } from "../lib/auth";
 import { marketFor } from "../lib/markets";
-import { handleSmartStoreEvent, issueSmartStoreCard, readSmartStoreCard } from "../lib/smart-store-cards";
+import { handleSmartStoreEvent, issueSmartStoreCard, readSmartStoreCard, smartStoreCardForMessage } from "../lib/smart-store-cards";
 
 const router = Router();
 const uuid = z.string().uuid();
@@ -14,6 +14,10 @@ router.post("/smart-store/cards", requireAuth, async (req, res) => {
     .strict()
     .parse(req.body);
   res.status(201).set("Cache-Control", "no-store").json(await issueSmartStoreCard({ actorId: req.actor!.id, market: await marketFor(req), ...body }));
+});
+router.get("/smart-store/cards", requireAuth, async (req, res) => {
+  const messageId = z.string().min(1).max(80).regex(/^[A-Za-z0-9_.:-]+$/).parse(req.query.messageId);
+  res.set("Cache-Control", "no-store").json({ card: await smartStoreCardForMessage(req.actor!.id, messageId) });
 });
 router.get("/smart-store/cards/:id", requireAuth, async (req, res) => {
   res.set("Cache-Control", "no-store").json(await readSmartStoreCard(req.actor!.id, uuid.parse(req.params.id)));

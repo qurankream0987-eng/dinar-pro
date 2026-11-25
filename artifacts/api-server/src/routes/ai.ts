@@ -1,3 +1,4 @@
+import { issueCardForSearchReply } from "../lib/smart-store-cards";
 import { isChatVideoPath, MAX_CHAT_VIDEOS, verifyChatVideo } from "../lib/chat-video";
 import { type AiCallRecord } from "../lib/ai-spend";
 import { getCommercialPolicy } from "../lib/commercial-policy";
@@ -2709,6 +2710,11 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
       await tx.update(messages).set({ metadata: completedTurnMetadata }).where(eq(messages.id, userMessageId));
     });
 
+    // Smart store card for the first organic store of this reply (best effort; never fails the turn).
+    if (toolResult.kind === "SEARCH" && toolResult.listings.length)
+      await issueCardForSearchReply({ actorId: req.actor!.id, market, conversationId: conversation.id, messageId: assistantMessageId, listings: toolResult.listings, search: searchState?.search }).catch((error) =>
+        req.log.warn({ event: "smart_store_card_skipped", err: error instanceof Error ? error.message : "unknown" }, "smart store card skipped"),
+      );
     const [updatedConversation] = await db
       .select()
       .from(conversations)

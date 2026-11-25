@@ -6937,6 +6937,13 @@ export type RemoveConnectReadOnlyTeamBody = {
   confirm: true;
 };
 
+export type GetSmartStoreCardForMessageParams = {
+/**
+ * @maxLength 80
+ */
+messageId: string;
+};
+
 export type CompleteConnectOAuthParams = {
 /**
  * @maxLength 43

@@ -140,6 +140,10 @@ await test("P2-05 preferences: opt-in marketing, consent ledger, stale versions 
   const initial = await request("/account/privacy/preferences", "GET", undefined, alice.cookie);
   assert.equal(initial.data.version, 0);
   assert.equal(initial.data.deliveryChannelsConnected.email, false, "unconnected channels are reported honestly");
+  // Resend merge: marketing email needs a verified address first (an unverified opt-in is refused).
+  const unverified = await request("/account/privacy/preferences", "PATCH", { expectedVersion: 0, marketing: { email: true } }, alice.cookie);
+  assert.equal(unverified.status, 409, unverified.raw);
+  await db.update(users).set({ email: `alice-${alice.id.slice(0, 8)}@example.test`, emailVerifiedAt: new Date() }).where(eq(users.id, alice.id));
   const updated = await request("/account/privacy/preferences", "PATCH", { expectedVersion: 0, marketing: { email: true } }, alice.cookie);
   assert.equal(updated.status, 200, updated.raw);
   assert.deepEqual(updated.data.changed, ["MARKETING_EMAIL"]);

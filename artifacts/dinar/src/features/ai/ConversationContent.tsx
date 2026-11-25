@@ -1,3 +1,4 @@
+import { MessageSmartStoreCard } from "./smart-store/MessageSmartStoreCard";
 import { UniversalCards } from "./UniversalCards";
 import { PolicyReviewPanel, isPolicyReview } from "./PolicyReviewPanel";
 import { normalizeMemory } from "./memory-types";
@@ -1464,6 +1465,11 @@ function MessageTurn({
               </BlockBoundary>
             </fieldset>
           ))}
+        {assistant && !message.id.startsWith("local-") && message.blocks?.some((block) => block.type === "LISTING_RESULTS" && (block.payload.resourceIds?.length ?? 0) > 0) && (
+          <BlockBoundary>
+            <MessageSmartStoreCard messageId={message.id} />
+          </BlockBoundary>
+        )}
         {assistant && message.receipts?.length ? <ActionReceiptList receipts={message.receipts} /> : null}
         {assistant &&
           (message.body || chip) &&
