@@ -6436,15 +6436,28 @@ export const PreviewBusinessPlanChangeResponse = zod.record(zod.string(), zod.un
 export const startBusinessSubscriptionCheckoutBodyPlanIdMax = 80;
 
 export const startBusinessSubscriptionCheckoutBodyIdempotencyKeyRegExp = new RegExp('^[A-Za-z0-9._:-]{8,128}$');
+export const startBusinessSubscriptionCheckoutBodyConversationIdMax = 80;
+
 
 
 export const StartBusinessSubscriptionCheckoutBody = zod.object({
   "planId": zod.string().max(startBusinessSubscriptionCheckoutBodyPlanIdMax),
   "idempotencyKey": zod.string().regex(startBusinessSubscriptionCheckoutBodyIdempotencyKeyRegExp),
-  "businessId": zod.uuid().optional()
+  "businessId": zod.uuid().optional(),
+  "conversationId": zod.string().min(1).max(startBusinessSubscriptionCheckoutBodyConversationIdMax).optional()
 })
 
 export const StartBusinessSubscriptionCheckoutResponse = zod.record(zod.string(), zod.unknown()).describe('Commercial economy request/response object; bodies are validated strictly on the server and never accept owners, prices, balances or paid flags.')
+
+
+/**
+ * @summary The buyer's own checkout state after returning from Whop (server record; 404 for others)
+ */
+export const GetBusinessSubscriptionCheckoutParams = zod.object({
+  "subscriptionId": zod.uuid()
+})
+
+export const GetBusinessSubscriptionCheckoutResponse = zod.record(zod.string(), zod.unknown()).describe('Commercial economy request/response object; bodies are validated strictly on the server and never accept owners, prices, balances or paid flags.')
 
 
 /**

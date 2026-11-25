@@ -9,7 +9,8 @@ DINAR يشغّل مدفوعات البطاقة عبر **Whop for Platforms**. ك
 | `WHOP_ENABLED` | نعم للتفعيل | `false` | `true` يفعّل مسارات Whop؛ أي قيمة أخرى تُبقيها معطّلة. |
 | `WHOP_ENVIRONMENT` | لا | `sandbox` | `sandbox` أو `production` حرفيًا. أي قيمة أخرى (بما فيها `prod`) تُحسم إلى sandbox. |
 | `WHOP_API_KEY` | نعم عند التفعيل | — | مفتاح الخادم للبيئة المختارة. لا يُستخدم مفتاح sandbox في الإنتاج ولا العكس. |
-| `WHOP_WEBHOOK_SECRET` | نعم عند التفعيل | — | سر توقيع الـ webhook (`ws_…`) لنفس البيئة. |
+| `WHOP_WEBHOOK_SECRET` | نعم عند التفعيل | — | سر توقيع webhook الطلبات (`/api/whop/webhooks`, `ws_…`) لنفس البيئة. |
+| `WHOP_BILLING_WEBHOOK_SECRET` | نعم لاشتراكات جاسم | — | سر webhook الاشتراكات المستقل (`/api/billing/whop/webhook`). لا يُستعمل سر الطلبات مكانه. |
 | `WHOP_COMPANY_ID` | نعم عند التفعيل | — | معرّف حساب المنصة (`biz_…`) الذي يملك fee markup الافتراضي. |
 | `WHOP_USD_PER_JOD` | نعم عند التفعيل | `0` | سعر تحويل ثابت JOD→USD. يجب أن يكون موجبًا. |
 | `WHOP_FEE_PERCENT` | لا | `5` | نسبة عمولة جاسم الثابتة على قيمة البيع لكل الفئات (قرار المالك 2026-11-25). |

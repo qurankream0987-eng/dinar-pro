@@ -59,8 +59,8 @@ Subscription checkout is never used to settle marketplace orders.
   - Disputes are recorded for owner review and change no entitlement.
   - Checkout: `POST /checkout_configurations` with `variant_id` from `DINAR_WHOP_PLAN_MAP` and
     metadata `{jassim_subscription_id, jassim_user_id}`; PENDING grants nothing.
-- Activation requires all of: `DINAR_WHOP_BILLING_ENABLED=true`, `WHOP_API_KEY`, `WHOP_WEBHOOK_SECRET`
-  (`ws_…`), `WHOP_ACCOUNT_ID` (`biz_…`), `DINAR_WHOP_PLAN_MAP`; production additionally
+- Activation requires all of: `DINAR_WHOP_BILLING_ENABLED=true`, `WHOP_API_KEY`, `WHOP_BILLING_WEBHOOK_SECRET`
+  (`ws_…`, the subscription webhook's own secret), `WHOP_COMPANY_ID` (`biz_…`; `WHOP_ACCOUNT_ID` still accepted), `DINAR_WHOP_PLAN_MAP`; production additionally
   `DINAR_WHOP_ENVIRONMENT=production` and `DINAR_LIVE_PROVIDERS_ENABLED=true`.
 - Defect fixed while building it: the lifecycle machine allowed `PAYMENT_FAILED → ACTIVE` and
   `EXPIRED → CANCELLED`, which the database integrity trigger refuses (HTTP 500). Now

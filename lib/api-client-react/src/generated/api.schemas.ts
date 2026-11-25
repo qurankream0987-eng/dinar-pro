@@ -229,6 +229,11 @@ export interface SubscriptionCheckoutRequest {
   /** @pattern ^[A-Za-z0-9._:-]{8,128}$ */
   idempotencyKey: string;
   businessId?: string;
+  /**
+     * @minLength 1
+     * @maxLength 80
+     */
+  conversationId?: string;
 }
 
 export type SubscriptionUsageResourceResource = typeof SubscriptionUsageResourceResource[keyof typeof SubscriptionUsageResourceResource];

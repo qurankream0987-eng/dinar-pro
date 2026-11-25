@@ -54,7 +54,13 @@ export function whopConfigFromEnv(env: NodeJS.ProcessEnv = process.env): WhopCon
   if (env.DINAR_WHOP_BILLING_ENABLED !== "true") return undefined;
   const environment = env.DINAR_WHOP_ENVIRONMENT === "production" ? "production" : "sandbox";
   if (environment === "production" && env.DINAR_LIVE_PROVIDERS_ENABLED !== "true") return undefined;
-  const { WHOP_API_KEY: apiKey, WHOP_WEBHOOK_SECRET: webhookSecret, WHOP_ACCOUNT_ID: accountId } = env;
+  // One Whop company, two signed webhooks: Whop for Platforms (orders, `/api/whop/webhooks`,
+  // WHOP_WEBHOOK_SECRET) and subscriptions (`/api/billing/whop/webhook`, its own secret). Each Whop
+  // webhook has its own signing secret, so the two are never read from one variable. The API key and
+  // company id are shared (WHOP_COMPANY_ID, or the older WHOP_ACCOUNT_ID).
+  const apiKey = env.WHOP_API_KEY;
+  const webhookSecret = env.WHOP_BILLING_WEBHOOK_SECRET;
+  const accountId = env.WHOP_COMPANY_ID ?? env.WHOP_ACCOUNT_ID;
   let plans: Record<string, string> = {};
   try {
     plans = JSON.parse(env.DINAR_WHOP_PLAN_MAP ?? "{}");

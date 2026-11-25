@@ -165,7 +165,10 @@ await test("C4-03 MOCKED provider: signed, idempotent webhooks drive the lifecyc
     assert.equal(checkout.data.status, "PENDING");
     const subscriptionId = checkout.data.subscriptionId as string;
     assert.equal((await aiPlanFor(user.id, { id: "JO" })).tier, "FREE", "a checkout is not a payment");
-    assert.equal((await request("/business/subscription-checkout", "POST", { planId: goPlanId, idempotencyKey: `chk-${randomUUID()}` }, user.cookie)).status, 409);
+    // An unpaid checkout for the same plan is resumed, never duplicated (one live subscription).
+    const again = await request("/business/subscription-checkout", "POST", { planId: goPlanId, idempotencyKey: `chk-${randomUUID()}` }, user.cookie);
+    assert.equal(again.status, 201, again.raw);
+    assert.equal(again.data.subscriptionId, checkout.data.subscriptionId);
     const send = (event: BillingWebhookEvent, signature = sign(event)) => request("/billing/webhooks/mock-billing", "POST", { event, signature });
     const now = Date.now();
     const period = (offsetDays: number) => ({ periodStart: new Date(now + offsetDays * 86_400_000).toISOString(), periodEnd: new Date(now + (offsetDays + 30) * 86_400_000).toISOString() });

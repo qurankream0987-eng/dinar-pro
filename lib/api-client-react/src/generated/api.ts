@@ -11360,6 +11360,107 @@ export const useStartBusinessSubscriptionCheckout = <TError = ErrorType<unknown>
       return useMutation(getStartBusinessSubscriptionCheckoutMutationOptions(options), queryClient);
     }
 
+export const getGetBusinessSubscriptionCheckoutUrl = (subscriptionId: string,) => {
+
+
+
+
+  return `/api/business/subscription-checkout/${subscriptionId}`
+}
+
+/**
+ * @summary The buyer's own checkout state after returning from Whop (server record; 404 for others)
+ */
+export const getBusinessSubscriptionCheckout = async (subscriptionId: string, options?: Parameters<typeof customFetch>[1]): Promise<CommercialJsonObject> => {
+
+  return customFetch<CommercialJsonObject>(getGetBusinessSubscriptionCheckoutUrl(subscriptionId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetBusinessSubscriptionCheckoutQueryKey = (subscriptionId: string,) => {
+    return [
+    `/api/business/subscription-checkout/${subscriptionId}`
+    ] as const;
+    }
+
+
+export const getGetBusinessSubscriptionCheckoutQueryOptions = <TData = Awaited<ReturnType<typeof getBusinessSubscriptionCheckout>>, TError = ErrorType<unknown>>(subscriptionId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getBusinessSubscriptionCheckout>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetBusinessSubscriptionCheckoutQueryKey(subscriptionId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getBusinessSubscriptionCheckout>>> = ({ signal }) => getBusinessSubscriptionCheckout(subscriptionId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: subscriptionId !== null && subscriptionId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getBusinessSubscriptionCheckout>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetBusinessSubscriptionCheckoutQueryResult = NonNullable<Awaited<ReturnType<typeof getBusinessSubscriptionCheckout>>>
+export type GetBusinessSubscriptionCheckoutQueryError = ErrorType<unknown>
+
+
+export function useGetBusinessSubscriptionCheckout<TData = Awaited<ReturnType<typeof getBusinessSubscriptionCheckout>>, TError = ErrorType<unknown>>(
+ subscriptionId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getBusinessSubscriptionCheckout>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getBusinessSubscriptionCheckout>>,
+          TError,
+          Awaited<ReturnType<typeof getBusinessSubscriptionCheckout>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetBusinessSubscriptionCheckout<TData = Awaited<ReturnType<typeof getBusinessSubscriptionCheckout>>, TError = ErrorType<unknown>>(
+ subscriptionId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getBusinessSubscriptionCheckout>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getBusinessSubscriptionCheckout>>,
+          TError,
+          Awaited<ReturnType<typeof getBusinessSubscriptionCheckout>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetBusinessSubscriptionCheckout<TData = Awaited<ReturnType<typeof getBusinessSubscriptionCheckout>>, TError = ErrorType<unknown>>(
+ subscriptionId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getBusinessSubscriptionCheckout>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary The buyer's own checkout state after returning from Whop (server record; 404 for others)
+ */
+
+export function useGetBusinessSubscriptionCheckout<TData = Awaited<ReturnType<typeof getBusinessSubscriptionCheckout>>, TError = ErrorType<unknown>>(
+ subscriptionId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getBusinessSubscriptionCheckout>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetBusinessSubscriptionCheckoutQueryOptions(subscriptionId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
 export const getReceiveBillingWebhookUrl = (providerKey: string,) => {
 
 

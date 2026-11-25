@@ -356,7 +356,10 @@ await test("WH-11 plan map without an annual Whop plan refuses the annual checko
   const { whopPlanFor, whopConfigFromEnv } = await import("../src/lib/billing/whop");
   assert.equal(whopPlanFor({ DINAR_GO: "plan_A" }, "DINAR_GO", 365), undefined);
   assert.equal(whopPlanFor({ DINAR_GO: "plan_A" }, "DINAR_GO", 30), "plan_A");
-  const env = { DINAR_WHOP_BILLING_ENABLED: "true", WHOP_API_KEY: "k", WHOP_WEBHOOK_SECRET: SECRET, WHOP_ACCOUNT_ID: ACCOUNT };
+  const env = { DINAR_WHOP_BILLING_ENABLED: "true", WHOP_API_KEY: "k", WHOP_BILLING_WEBHOOK_SECRET: SECRET, WHOP_ACCOUNT_ID: ACCOUNT };
+  // The orders webhook secret never stands in for the subscription webhook's own secret.
+  assert.equal(whopConfigFromEnv({ DINAR_WHOP_BILLING_ENABLED: "true", WHOP_API_KEY: "k", WHOP_WEBHOOK_SECRET: SECRET, WHOP_ACCOUNT_ID: ACCOUNT, DINAR_WHOP_PLAN_MAP: '{"DINAR_GO":"plan_A"}' }), undefined);
+  assert.equal(whopConfigFromEnv({ DINAR_WHOP_BILLING_ENABLED: "true", WHOP_API_KEY: "k", WHOP_BILLING_WEBHOOK_SECRET: SECRET, WHOP_COMPANY_ID: ACCOUNT, DINAR_WHOP_PLAN_MAP: '{"DINAR_GO":"plan_A"}' })?.accountId, ACCOUNT);
   assert.ok(whopConfigFromEnv({ ...env, DINAR_WHOP_PLAN_MAP: '{"DINAR_GO:365":"plan_A"}' }));
   assert.equal(whopConfigFromEnv({ ...env, DINAR_WHOP_PLAN_MAP: '{"FREE":"plan_A"}' }), undefined);
   assert.equal(whopConfigFromEnv({ ...env, DINAR_WHOP_ENVIRONMENT: "production", DINAR_WHOP_PLAN_MAP: "{}" }), undefined, "production needs DINAR_LIVE_PROVIDERS_ENABLED");

@@ -2264,6 +2264,19 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/CommercialJsonObject" }
+  /business/subscription-checkout/{subscriptionId}:
+    get:
+      operationId: getBusinessSubscriptionCheckout
+      tags: [commercial]
+      summary: "The buyer's own checkout state after returning from Whop (server record; 404 for others)"
+      parameters:
+        - { name: subscriptionId, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommercialJsonObject" }
   /billing/webhooks/{providerKey}:
     post:
       operationId: receiveBillingWebhook
@@ -4226,6 +4239,7 @@ components:
         planId: { type: string, maxLength: 80 }
         idempotencyKey: { type: string, pattern: "^[A-Za-z0-9._:-]{8,128}$" }
         businessId: { type: string, format: uuid }
+        conversationId: { type: string, minLength: 1, maxLength: 80 }
     SubscriptionUsageResource:
       type: object
       additionalProperties: false
