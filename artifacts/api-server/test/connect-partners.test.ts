@@ -9,6 +9,7 @@ import { readWebsiteCatalog } from "../src/connect/website-catalog";
 import { importConnectOwnerCatalog } from "../src/connect/partners";
 import { advanceBindingLifecycle, authorizeConnectTool, decideToolUse, grantConnectCapabilities, modelToolView, nextLifecycle, recordDiscoveredTools, revokeConnectTool, toolSchemaDigest, toolUseFacts } from "../src/connect/binding";
 import { connectIntegrations, connectTools } from "@workspace/db";
+import { findConnectTools, rankTools, useConnectTool } from "../src/connect/tool-router";
 import { resolveMarket } from "../src/lib/markets";
 import { ConnectNetwork } from "../src/connect/network";
 import { registerBusinessDocumentScanner } from "../src/lib/business-profiles";
@@ -680,6 +681,37 @@ await test("STAGE3 API connector: OpenAPI proposes, owner authorizes, reads run,
   assert.equal(after.data.tools.find((item: any) => item.name === "cancelOrder").access, "WRITE");
   assert.equal((await call(`/connect/integrations/${id}/api-tools`, owner, { source: "GRAPHQL", operations: [{ name: "two", document: "query a { x } mutation b { y }" }] })).response.status, 422);
   assert.equal((await call(`/connect/integrations/${id}/api-tools`, owner, { source: "GRAPHQL", operations: [{ name: "sub", document: "subscription s { x }" }] })).response.status, 422);
+
+  // ── STAGE4 routing: the model is offered only authorized tools of the person's own verified systems.
+  const ranked = rankTools("احجز لي مقعدين", [{ name: "getItem", capability: "READ" }, { name: "createBooking", capability: "CREATE" }, { name: "searchItems", capability: "SEARCH" }]);
+  assert.equal(ranked[0]!.tool.name, "createBooking", "a booking need routes to the booking tool");
+  assert.equal(rankTools("وين وصلت شحنتي", [{ name: "trackShipment", capability: "TRACK" }, { name: "createBooking", capability: "CREATE" }])[0]!.tool.name, "trackShipment");
+  assert.deepEqual(rankTools("مرحبا", [{ name: "createBooking", capability: "CREATE" }]), [], "no intent, no tool");
+  const [jo] = await db.select().from(markets).where(eq(markets.id, "JO"));
+  const joMarket = await resolveMarket(jo!);
+  const found = await findConnectTools({ actorId: owner.id, market: joMarket, need: "كم سعر المنتج a1 وتفاصيله" });
+  assert.ok(found.tools.length >= 1 && found.tools.length <= 5);
+  assert.equal(found.tools[0]!.name, "getItem");
+  assert.ok(found.tools.every((item: any) => !("operation" in item) && !JSON.stringify(item).includes("partner.example")), "no endpoint or raw operation for the model");
+  assert.deepEqual(found.tools[0]!.requiredArguments, ["itemId"]);
+  assert.equal((await findConnectTools({ actorId: other.id, market: joMarket, need: "كم سعر المنتج" })).tools.length, 0, "another person's systems are invisible");
+  app.locals.connectNetwork = undefined;
+  const network = new ConnectNetwork({ dns: app.locals.connectDns, transport: async (request) => { assert.equal(request.method, "GET", "the router never sends a write"); return Response.json({ id: "a1", price: "3.500" }); } });
+  const used = await useConnectTool({ actorId: owner.id, market: joMarket, toolId: found.tools[0]!.toolId, arguments: { itemId: "a1" }, network });
+  assert.equal(used.status, "EXECUTED");
+  assert.deepEqual((used as any).result, { source: "PROVIDER", trusted: false, data: { id: "a1", price: "3.500" } });
+  assert.equal((await useConnectTool({ actorId: other.id, market: joMarket, toolId: found.tools[0]!.toolId, arguments: { itemId: "a1" }, network })).status, "REFUSED", "a stranger cannot use the owner's tool id");
+  // A write via the router is only a confirmation card, never executed.
+  await call(`/connect/integrations/${id}/capabilities`, owner, { capabilities: ["READ", "CREATE"] });
+  process.env.DINAR_CONNECT_LIVE_CALLS = "true";
+  try {
+    const booking = (await findConnectTools({ actorId: owner.id, market: joMarket, need: "احجز مقعد" })).tools.find((item: any) => item.name === "createBooking")!;
+    assert.equal(booking.requiresConfirmation, true);
+    const card = await useConnectTool({ actorId: owner.id, market: joMarket, toolId: booking.toolId, arguments: { body: { itemId: "a1", seats: 1 } }, network });
+    assert.equal(card.status, "CONFIRMATION_REQUIRED");
+  } finally {
+    delete process.env.DINAR_CONNECT_LIVE_CALLS;
+  }
 });
 let agreement: any, referral: any, referralCard: any;
 await test("CONNECT-01 registration stores the chosen mode; suspended merchants cannot change it", async () => {

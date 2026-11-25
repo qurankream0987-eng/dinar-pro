@@ -242,6 +242,8 @@ await test("DS-01 general Arabic: canonical request reaches DeepSeek and the val
     "readAiUsage",
     "readMyAccountStatus",
     "readConnectPartnerStatus",
+    "findConnectTools",
+    "useConnectTool",
     "readPolicy",
     "readBusinessInquiries",
     "prepareInquiryMessage",

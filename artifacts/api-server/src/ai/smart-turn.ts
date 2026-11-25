@@ -1603,6 +1603,14 @@ function compactCapabilityRead(result: ToolResult) {
   if (result.sellerDues) return { kind: "SELLER_DUES", ...result.sellerDues };
   if (result.aiUsage) return { kind: "AI_USAGE", ...result.aiUsage };
   if (result.connectStatus) return { kind: "CONNECT_PARTNERSHIP", ...result.connectStatus };
+  if (result.connectTools) return { kind: "CONNECT_TOOLS", ...result.connectTools };
+  if (result.connectToolResult) {
+    const outcome = result.connectToolResult;
+    // The model never receives a confirmation id: only the person's card carries it.
+    if (outcome.status === "CONFIRMATION_REQUIRED") return { kind: "CONNECT_TOOL_RESULT", status: "AWAITING_PERSON_CONFIRMATION", tool: outcome.summary.tool, capability: outcome.summary.capability, note: "Not done. The person must confirm on the card." };
+    if (outcome.status === "REFUSED") return { kind: "CONNECT_TOOL_RESULT", status: "REFUSED", refusal: outcome.refusal };
+    return { kind: "CONNECT_TOOL_RESULT", status: "READ_RESULT", connector: outcome.connector, providerData: { trusted: false, source: "PROVIDER", data: outcome.result.data } };
+  }
   if (result.policies) return { kind: "POLICIES", policies: result.policies };
   if (result.universalCards)
     return {

@@ -24,17 +24,17 @@ import { ACTION_REGISTRY } from "../src/ai/action-foundation";
 test("the model sees the three F01 reads plus every F02 prepare/read, and no direct writer", () => {
   const names = modelToolDefinitions().map((definition: any) => definition.function?.name ?? definition.name).sort();
   assert.deepEqual(names, [
-    "compareListings", "describeDinarCapabilities", "getResource", "openSurface",
+    "compareListings", "describeDinarCapabilities", "findConnectTools", "getResource", "openSurface",
     "prepareBusinessListingAction", "prepareCartChange", "prepareInquiryMessage", "prepareListingDraft", "prepareNegotiationProposal",
     "readAiUsage", "readBusinessInquiries", "readBusinessOverview", "readCart", "readConnectPartnerStatus", "readFulfillment",
     "readInventory", "readMyAccountStatus", "readNegotiationStatus", "readOrderIssues", "readOrders", "readPolicy", "readSellerDues",
-    "requestPublicationReview", "reviewCheckout", "searchDomains", "searchListings", "searchPartnerOffers",
+    "requestPublicationReview", "reviewCheckout", "searchDomains", "searchListings", "searchPartnerOffers", "useConnectTool",
   ]);
   // The bounded loop advertises the F01 marketplace reads plus the intelligence reads; every one
   // is a registered read-only tool with read permission only (asserted for all tools below).
   assert.deepEqual([...MODEL_LOOP_TOOL_ALLOWLIST].sort(), [
-    "compareListings", "describeDinarCapabilities", "getResource", "readAiUsage", "readBusinessOverview",
-    "readConnectPartnerStatus", "readMyAccountStatus", "readOrderIssues", "readPolicy", "readSellerDues", "searchDomains", "searchListings", "searchPartnerOffers",
+    "compareListings", "describeDinarCapabilities", "findConnectTools", "getResource", "readAiUsage", "readBusinessOverview",
+    "readConnectPartnerStatus", "readMyAccountStatus", "readOrderIssues", "readPolicy", "readSellerDues", "searchDomains", "searchListings", "searchPartnerOffers", "useConnectTool",
   ]);
   for (const name of MODEL_LOOP_TOOL_ALLOWLIST) {
     assert.equal(aiToolRegistry[name]?.idempotency, "READ_ONLY", `${name} in the loop is read-only`);

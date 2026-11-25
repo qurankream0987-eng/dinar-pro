@@ -246,9 +246,9 @@ const stableJson = (value: unknown): string => {
 const signatureOf = (tool: string, args: unknown) =>
   `${tool}:${createHash("sha256").update(stableJson(args)).digest("hex")}`;
 
-test("AI-F02 the capability registry names all twenty-six capabilities (15 F01/F02 + 10 intelligence reads incl. own account status + 1 business prepare) and advertises them under one tool each", async () => {
-  assert.equal(CAPABILITY_NAMES.length, 26);
-  assert.equal(new Set(CAPABILITY_NAMES).size, 26);
+test("AI-F02 the capability registry names all twenty-eight capabilities (15 F01/F02 + 10 intelligence reads incl. own account status + 1 business prepare + 2 Connect routing reads) and advertises them under one tool each", async () => {
+  assert.equal(CAPABILITY_NAMES.length, 28);
+  assert.equal(new Set(CAPABILITY_NAMES).size, 28);
   for (const name of CAPABILITY_NAMES) {
     const definition = CAPABILITY_REGISTRY[name];
     assert.equal(definition.name, name);
@@ -274,7 +274,7 @@ test("AI-F02 the capability registry names all twenty-six capabilities (15 F01/F
   }
   assert.deepEqual([...MODEL_TOOL_CAPABILITIES].sort(), [...CAPABILITY_NAMES].sort());
   const toolNames = MODEL_TOOL_CAPABILITIES.map((name) => CAPABILITY_REGISTRY[name].toolName);
-  assert.equal(new Set(toolNames).size, 26, "every capability owns one distinct model tool name");
+  assert.equal(new Set(toolNames).size, 28, "every capability owns one distinct model tool name");
   assert.deepEqual(
     [...toolNames].filter((name) => (MODEL_LOOP_TOOL_ALLOWLIST as readonly string[]).includes(name)).sort(),
     [...MODEL_LOOP_TOOL_ALLOWLIST].sort(),
@@ -312,7 +312,7 @@ test("AI-F02 search then compare renders DINAR's own side-by-side surface and pe
   const reply = await say(user.cookie, user.conv, text, clientMessageId);
   assert.equal(reply.status, 200, reply.body);
   assert.equal(matchedScriptKey, text);
-  assert.deepEqual(observedToolNames.sort(), ["compareListings", "describeDinarCapabilities", "dinarConversationTurn", "getResource", "prepareCartChange", "prepareInquiryMessage", "prepareNegotiationProposal", "readAiUsage", "readBusinessInquiries", "readBusinessOverview", "readCart", "readConnectPartnerStatus", "readFulfillment", "readMyAccountStatus", "readNegotiationStatus", "readOrderIssues", "readOrders", "readPolicy", "readSellerDues", "reviewCheckout", "searchDomains", "searchListings", "searchPartnerOffers"]);
+  assert.deepEqual(observedToolNames.sort(), ["compareListings", "describeDinarCapabilities", "dinarConversationTurn", "findConnectTools", "getResource", "prepareCartChange", "prepareInquiryMessage", "prepareNegotiationProposal", "readAiUsage", "readBusinessInquiries", "readBusinessOverview", "readCart", "readConnectPartnerStatus", "readFulfillment", "readMyAccountStatus", "readNegotiationStatus", "readOrderIssues", "readOrders", "readPolicy", "readSellerDues", "reviewCheckout", "searchDomains", "searchListings", "searchPartnerOffers", "useConnectTool"]);
   assert.equal(calls, 3, "search, comparison, final answer");
   assert.equal(sawUntrustedRule, true);
   assert.equal(reply.payload.surface, "COMPARISON", reply.body);
@@ -591,7 +591,7 @@ test("AI-F10 instructions inside listing text stay data: no cart or publication 
   calls = 0;
   const reply = await say(user.cookie, user.conv, text);
   assert.equal(reply.status, 200, reply.body);
-  assert.deepEqual(observedToolNames.sort(), ["compareListings", "describeDinarCapabilities", "dinarConversationTurn", "getResource", "prepareCartChange", "prepareInquiryMessage", "prepareNegotiationProposal", "readAiUsage", "readBusinessInquiries", "readBusinessOverview", "readCart", "readConnectPartnerStatus", "readFulfillment", "readMyAccountStatus", "readNegotiationStatus", "readOrderIssues", "readOrders", "readPolicy", "readSellerDues", "reviewCheckout", "searchDomains", "searchListings", "searchPartnerOffers"]);
+  assert.deepEqual(observedToolNames.sort(), ["compareListings", "describeDinarCapabilities", "dinarConversationTurn", "findConnectTools", "getResource", "prepareCartChange", "prepareInquiryMessage", "prepareNegotiationProposal", "readAiUsage", "readBusinessInquiries", "readBusinessOverview", "readCart", "readConnectPartnerStatus", "readFulfillment", "readMyAccountStatus", "readNegotiationStatus", "readOrderIssues", "readOrders", "readPolicy", "readSellerDues", "reviewCheckout", "searchDomains", "searchListings", "searchPartnerOffers", "useConnectTool"]);
   assert.equal(observedToolNames.includes("addToCart"), false);
   assert.equal(sawUntrustedRule, true, "tool results are framed as untrusted listing data");
   assert.match(lastPromptText, /<dinar_tool_results>/u, "listing text is delivered inside the data envelope");
