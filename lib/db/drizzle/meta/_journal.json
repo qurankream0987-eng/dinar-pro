@@ -519,6 +519,13 @@
       "when": 1795150000000,
       "tag": "0073_connect_operations_confirmations",
       "breakpoints": true
+    },
+    {
+      "idx": 74,
+      "version": "7",
+      "when": 1795160000000,
+      "tag": "0074_smart_store_cards",
+      "breakpoints": true
     }
   ]
 }

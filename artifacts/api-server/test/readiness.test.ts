@@ -259,7 +259,7 @@ await test("migration ledger assessment distinguishes current, behind, and incon
 });
 
 await test("readiness derives its expected head from the current migration journal", () => {
-  assert.equal(expectedJournal.at(-1)?.tag, "0073_connect_operations_confirmations");
+  assert.equal(expectedJournal.at(-1)?.tag, "0074_smart_store_cards");
   assert.equal(
     String(expectedJournal.at(-1)?.when),
     expectedApplied.at(-1)?.created_at,

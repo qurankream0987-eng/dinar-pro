@@ -4140,6 +4140,7 @@ export const securityIncidentEvents = pgTable(
 
 export * from "./connect";
 export * from "./advertising";
+export * from "./smart-store";
 
 /** Buyer-only handover code state (migration 0066). The code is derived from the nonce on demand. */
 export const orderHandoverCodes = pgTable("order_handover_codes", {

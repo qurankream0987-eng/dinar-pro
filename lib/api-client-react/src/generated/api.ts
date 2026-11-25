@@ -22230,6 +22230,275 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       return useMutation(getVerifyConnectBindingMutationOptions(options), queryClient);
     }
 
+export const getIssueSmartStoreCardUrl = () => {
+
+
+
+
+  return `/api/smart-store/cards`
+}
+
+/**
+ * Builds a smart store card from Jassim's own published listings (one store per card) and stores the server's copy. Prices, ratings and specs come only from persisted listings.
+ */
+export const issueSmartStoreCard = async (serverValidatedObject: ServerValidatedObject, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getIssueSmartStoreCardUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(serverValidatedObject)
+  }
+);}
+
+
+
+
+
+export const getIssueSmartStoreCardMutationKey = () => ['issueSmartStoreCard'] as const;
+
+export const getIssueSmartStoreCardMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof issueSmartStoreCard>>, TError,IssueSmartStoreCardMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof issueSmartStoreCard>>, TError,IssueSmartStoreCardMutationVariables, TContext> => {
+
+const mutationKey = getIssueSmartStoreCardMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof issueSmartStoreCard>>, IssueSmartStoreCardMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  issueSmartStoreCard(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type IssueSmartStoreCardMutationResult = NonNullable<Awaited<ReturnType<typeof issueSmartStoreCard>>>
+    export type IssueSmartStoreCardMutationBody = BodyType<ServerValidatedObject>
+    export type IssueSmartStoreCardMutationError = ErrorType<void>
+    export type IssueSmartStoreCardMutationVariables = {data: BodyType<ServerValidatedObject>}
+
+    export const useIssueSmartStoreCard = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof issueSmartStoreCard>>, TError,IssueSmartStoreCardMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof issueSmartStoreCard>>,
+        TError,
+        IssueSmartStoreCardMutationVariables,
+        TContext
+      > => {
+      return useMutation(getIssueSmartStoreCardMutationOptions(options), queryClient);
+    }
+
+export const getGetSmartStoreCardUrl = (id: string,) => {
+
+
+
+
+  return `/api/smart-store/cards/${id}`
+}
+
+/**
+ * The owner's current card (server copy).
+ */
+export const getSmartStoreCard = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+  return customFetch<ServerValidatedObject>(getGetSmartStoreCardUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetSmartStoreCardQueryKey = (id: string,) => {
+    return [
+    `/api/smart-store/cards/${id}`
+    ] as const;
+    }
+
+
+export const getGetSmartStoreCardQueryOptions = <TData = Awaited<ReturnType<typeof getSmartStoreCard>>, TError = ErrorType<void>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSmartStoreCard>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetSmartStoreCardQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSmartStoreCard>>> = ({ signal }) => getSmartStoreCard(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSmartStoreCard>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetSmartStoreCardQueryResult = NonNullable<Awaited<ReturnType<typeof getSmartStoreCard>>>
+export type GetSmartStoreCardQueryError = ErrorType<void>
+
+
+export function useGetSmartStoreCard<TData = Awaited<ReturnType<typeof getSmartStoreCard>>, TError = ErrorType<void>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSmartStoreCard>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSmartStoreCard>>,
+          TError,
+          Awaited<ReturnType<typeof getSmartStoreCard>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSmartStoreCard<TData = Awaited<ReturnType<typeof getSmartStoreCard>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSmartStoreCard>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSmartStoreCard>>,
+          TError,
+          Awaited<ReturnType<typeof getSmartStoreCard>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSmartStoreCard<TData = Awaited<ReturnType<typeof getSmartStoreCard>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSmartStoreCard>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useGetSmartStoreCard<TData = Awaited<ReturnType<typeof getSmartStoreCard>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSmartStoreCard>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetSmartStoreCardQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getApplySmartStoreCardEventUrl = (id: string,) => {
+
+
+
+
+  return `/api/smart-store/cards/${id}/events`
+}
+
+/**
+ * One CardEvent applied to the server's copy at the expected revision; the quote is recomputed by the server. PRIMARY_ACTION adds Jassim listings to the cart at server prices (no order, no payment). A stale revision returns 409 with the current card.
+ */
+export const applySmartStoreCardEvent = async (id: string,
+    serverValidatedObject: ServerValidatedObject, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getApplySmartStoreCardEventUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(serverValidatedObject)
+  }
+);}
+
+
+
+
+
+export const getApplySmartStoreCardEventMutationKey = () => ['applySmartStoreCardEvent'] as const;
+
+export const getApplySmartStoreCardEventMutationOptions = <TError = ErrorType<void | ServerValidatedObject>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof applySmartStoreCardEvent>>, TError,ApplySmartStoreCardEventMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof applySmartStoreCardEvent>>, TError,ApplySmartStoreCardEventMutationVariables, TContext> => {
+
+const mutationKey = getApplySmartStoreCardEventMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof applySmartStoreCardEvent>>, ApplySmartStoreCardEventMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  applySmartStoreCardEvent(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ApplySmartStoreCardEventMutationResult = NonNullable<Awaited<ReturnType<typeof applySmartStoreCardEvent>>>
+    export type ApplySmartStoreCardEventMutationBody = BodyType<ServerValidatedObject>
+    export type ApplySmartStoreCardEventMutationError = ErrorType<void | ServerValidatedObject>
+    export type ApplySmartStoreCardEventMutationVariables = {id: string;data: BodyType<ServerValidatedObject>}
+
+    export const useApplySmartStoreCardEvent = <TError = ErrorType<void | ServerValidatedObject>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof applySmartStoreCardEvent>>, TError,ApplySmartStoreCardEventMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof applySmartStoreCardEvent>>,
+        TError,
+        ApplySmartStoreCardEventMutationVariables,
+        TContext
+      > => {
+      return useMutation(getApplySmartStoreCardEventMutationOptions(options), queryClient);
+    }
+
 export const getConfirmConnectActionUrl = (id: string,) => {
 
 

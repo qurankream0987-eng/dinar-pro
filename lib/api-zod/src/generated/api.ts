@@ -9128,6 +9128,36 @@ export const VerifyConnectBindingResponse = zod.record(zod.string(), zod.unknown
 
 
 /**
+ * Builds a smart store card from Jassim's own published listings (one store per card) and stores the server's copy. Prices, ratings and specs come only from persisted listings.
+ */
+export const IssueSmartStoreCardBody = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+export const IssueSmartStoreCardResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * The owner's current card (server copy).
+ */
+export const GetSmartStoreCardParams = zod.object({
+  "id": zod.uuid()
+})
+
+export const GetSmartStoreCardResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * One CardEvent applied to the server's copy at the expected revision; the quote is recomputed by the server. PRIMARY_ACTION adds Jassim listings to the cart at server prices (no order, no payment). A stale revision returns 409 with the current card.
+ */
+export const ApplySmartStoreCardEventParams = zod.object({
+  "id": zod.uuid()
+})
+
+export const ApplySmartStoreCardEventBody = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+export const ApplySmartStoreCardEventResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
  * The same person's confirmation: consumed once and re-decided against the current binding.
  */
 export const ConfirmConnectActionParams = zod.object({

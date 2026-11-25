@@ -17,6 +17,7 @@ const SearchPage = lazy(() => import("./pages/Search"));
 const Home = lazy(() => import("./pages/Home"));
 const OfferDetails = lazy(() => import("./pages/OfferDetails"));
 const CartPage = lazy(() => import("./pages/Cart"));
+const SmartStorePreview = import.meta.env.DEV ? lazy(() => import("./pages/dev/SmartStorePreview")) : undefined;
 const CheckoutPage = lazy(() => import("./pages/Checkout"));
 const OrderDetailsPage = lazy(() => import("./pages/OrderDetails"));
 const SellerDashboard = lazy(() => import("./pages/seller/SellerDashboard"));
@@ -128,6 +129,7 @@ function Routes() {
       location !== "/" &&
       location !== "/ai" &&
       location !== "/orders" &&
+      !(import.meta.env.DEV && location === "/dev/smart-store") &&
       !CHAT_ONLY_ADMIN_ROUTES.has(location) &&
       !CHAT_ONLY_SELLER_ROUTES.has(location) &&
       !CHAT_ONLY_ACCOUNT_ROUTES.has(location) &&
@@ -145,6 +147,7 @@ function Routes() {
       <Route path="/orders">
         <Redirect to="/ai?openOrders=1" />
       </Route>
+      {SmartStorePreview && <Route path="/dev/smart-store"><SmartStorePreview /></Route>}
       <Route path="/cart"><Redirect replace to="/ai?openSurface=cart" /></Route>
       <Route path="/seller/offers"><Redirect to="/ai?openSurface=listings" /></Route>
       <Route path="/seller/dues"><Redirect to="/ai?openSurface=dues" /></Route>

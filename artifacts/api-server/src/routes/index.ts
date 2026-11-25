@@ -24,6 +24,7 @@ import courier from "./courier";
 import privacy from "./privacy";
 import appeals from "./appeals";
 import integrations from "./integrations";
+import smartStore from "./smart-store";
 import businessProfiles from "./business-profiles";
 import businessDelegations from "./business-delegations";
 import businesses from "./businesses";
@@ -40,6 +41,7 @@ router.use(email);
 // Cash attestations live beside orders and must mount before the marketplace router, whose
 // generic POST /orders/:id/:action would otherwise swallow /orders/:id/cash-refunds.
 router.use(cash);
+router.use(smartStore);
 router.use(marketplace);
 router.use(profileAvatar);
 router.use(listingPhotos);

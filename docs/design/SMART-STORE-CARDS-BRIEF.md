@@ -90,7 +90,8 @@
 
 ## 5. عقد البيانات (ما يرسله الخادم وما ترسله البطاقة)
 
-ابنِ على هذه الأنواع حرفيًا (ضعها في `src/features/ai/smart-store/types.ts` مع مخطط zod مطابق). الخادم سيرسلها لاحقًا ضمن حمولة المحادثة؛ الآن استخدم fixtures.
+**العقد موجود الآن في الكود — لا تكتب أنواعًا خاصة بك:** استورد من `@workspace/api-zod/smart-store-card` (مخططات zod + الأنواع)، والبيانات التجريبية التسع من `@workspace/api-zod/smart-store-card-fixtures`.
+**مرجع عامل موجود:** `src/features/ai/smart-store/SmartStoreCardView.tsx` (عرض بسيط يثبت السلوك) و`useLiveSmartStoreCard.ts` (يرسل الأحداث إلى الخادم ويعرض بطاقة الخادم دائمًا)، ومعاينة التطوير على `/dev/smart-store`. مهمتك: جعل هذا المكوّن يبدو مثل الصور مع الإبقاء على سلوكه حرفيًا. الخادم جاهز: `POST /api/smart-store/cards`، `GET /api/smart-store/cards/:id`، `POST /api/smart-store/cards/:id/events`.
 
 ```ts
 type Money = { minor: number; currency: string; scale: number; label: string }; // label منسّق من الخادم

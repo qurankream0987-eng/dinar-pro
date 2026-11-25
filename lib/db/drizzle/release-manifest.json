@@ -294,5 +294,9 @@
   {
     "tag": "0073_connect_operations_confirmations",
     "sha256": "75e39726f01f9f9528c883cf52f1858ea8c64cfd7e264bcbc5eab529ff2a4447"
+  },
+  {
+    "tag": "0074_smart_store_cards",
+    "sha256": "79f513371605a11b24fb5d718260752405214d6fae9a90ac23ac3ec2ecfa5c6c"
   }
 ]
