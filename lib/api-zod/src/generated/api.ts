@@ -9104,6 +9104,30 @@ export const CallConnectApiToolResponse = zod.record(zod.string(), zod.unknown()
 
 
 /**
+ * OWNER only. Seals (or rotates) the connector's own API key, bearer token or basic credential, encrypted and bound to the connector. Never returned; the response carries method and a short fingerprint only. Rotation makes the binding unproven again.
+ */
+export const SealConnectCredentialParams = zod.object({
+  "id": zod.uuid()
+})
+
+export const SealConnectCredentialBody = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+export const SealConnectCredentialResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * OWNER only. Calls one authorized READ tool with the sealed key; success moves the binding to VERIFIED, a provider refusal is recorded and nothing becomes usable.
+ */
+export const VerifyConnectBindingParams = zod.object({
+  "id": zod.uuid()
+})
+
+export const VerifyConnectBindingBody = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+export const VerifyConnectBindingResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
  * The same person's confirmation: consumed once and re-decided against the current binding.
  */
 export const ConfirmConnectActionParams = zod.object({

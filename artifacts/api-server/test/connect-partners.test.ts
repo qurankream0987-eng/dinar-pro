@@ -713,6 +713,70 @@ await test("STAGE3 API connector: OpenAPI proposes, owner authorizes, reads run,
     delete process.env.DINAR_CONNECT_LIVE_CALLS;
   }
 });
+await test("STAGE5a vault: the owner's key is sealed, never returned, used only for requests; verification is a real read; rotation unproves", async () => {
+  const created = await call(`/connect/partners/${partner.id}/integrations`, owner, { siteId: site.id, kind: "API", name: "موصل بمفتاح", endpointUrl: "https://catalog.partner.example/api", capabilities: ["CATALOG_READ"], mode: "SIMULATION_ONLY", allowedPathPrefixes: ["/products/"] });
+  const id = created.data.id as string;
+  assert.equal((await call(`/admin/connect/integrations/${id}/review`, admin, { decision: "APPROVE", expectedRevision: created.data.revision, reason: "Stage 5a vault acceptance" })).response.status, 200);
+  const doc = { openapi: "3.0.3", paths: { "/me": { get: { operationId: "whoAmI" } }, "/items/{itemId}": { get: { operationId: "getItem", parameters: [{ name: "itemId", in: "path", required: true, schema: { type: "string" } }] } } } };
+  assert.equal((await call(`/connect/integrations/${id}/api-tools`, owner, { source: "OPENAPI", document: doc })).response.status, 201);
+  const tools = (await call(`/connect/integrations/${id}/api-tools`, owner)).data.tools;
+  for (const tool of tools) assert.equal((await call(`/connect/integrations/${id}/api-tools/${tool.id}/authorize`, owner, { reviewedDigest: tool.digest })).response.status, 200);
+  await call(`/connect/integrations/${id}/capabilities`, owner, { capabilities: ["READ"] });
+  const whoAmI = tools.find((tool: any) => tool.name === "whoAmI").id;
+  const token = `tok_${randomBytes(18).toString("hex")}`;
+  const previousVaultKey = process.env.DINAR_CONNECT_VAULT_KEY;
+  process.env.DINAR_CONNECT_VAULT_KEY = randomBytes(32).toString("base64");
+  const early = await call(`/connect/integrations/${id}/verify`, owner, { toolId: whoAmI });
+  assert.equal(early.response.status, 409, early.text);
+  assert.match(early.data.error, /مفتاح/, "no key, no verification");
+  assert.equal((await call(`/connect/integrations/${id}/credential`, other, { method: "BEARER", token })).response.status, 404, "a stranger cannot seal");
+  assert.equal((await call(`/connect/integrations/${id}/credential`, owner, { method: "BEARER", token: "bad token\r\nx: y" })).response.status, 400, "header injection refused");
+  const sealed = await call(`/connect/integrations/${id}/credential`, owner, { method: "BEARER", token });
+  assert.equal(sealed.response.status, 201, sealed.text);
+  assert.equal(sealed.data.lifecycle, "AUTHORIZED");
+  assert.ok(!sealed.text.includes(token), "the key is never returned");
+  const stored = (await pool.query("select ciphertext from connect_secrets where integration_id=$1 and kind='API_CREDENTIAL' and revoked_at is null", [id])).rows;
+  assert.equal(stored.length, 1);
+  assert.ok(!stored[0].ciphertext.includes(token) && !stored[0].ciphertext.includes(Buffer.from(token).toString("base64")), "encrypted at rest");
+  const listing = await call(`/connect/integrations/${id}/api-tools`, owner);
+  assert.equal(listing.data.credential.sealed, true);
+  assert.ok(!listing.text.includes(token));
+  const seen: Request[] = [];
+  let accept = false;
+  app.locals.connectNetwork = new ConnectNetwork({ dns: app.locals.connectDns, transport: async (request) => {
+    seen.push(request);
+    assert.equal(request.method, "GET", "verification never writes");
+    return accept ? Response.json({ account: "biz-1" }) : new Response("denied", { status: 401 });
+  } });
+  try {
+    const refused = await call(`/connect/integrations/${id}/verify`, owner, { toolId: whoAmI });
+    assert.equal(refused.data.verified, false);
+    assert.equal(refused.data.lifecycle, "AUTHORIZED", "a provider refusal makes nothing usable");
+    assert.equal(seen.at(-1)!.headers.get("authorization"), `Bearer ${token}`, "the sealed key is sent only to the connector's own host");
+    assert.equal(new URL(seen.at(-1)!.url).hostname, "catalog.partner.example");
+    accept = true;
+    const verified = await call(`/connect/integrations/${id}/verify`, owner, { toolId: whoAmI });
+    assert.equal(verified.data.verified, true, verified.text);
+    assert.equal(verified.data.lifecycle, "VERIFIED");
+    assert.ok(!verified.text.includes("biz-1"), "verification returns status, not provider data");
+    const read = await call(`/connect/integrations/${id}/api-tools/call`, owner, { toolName: "getItem", arguments: { itemId: "x" } });
+    assert.equal(read.response.status, 200, read.text);
+    assert.equal(seen.at(-1)!.headers.get("authorization"), `Bearer ${token}`);
+    // Rotation: a new key is unproven until verified again.
+    const rotated = await call(`/connect/integrations/${id}/credential`, owner, { method: "API_KEY_HEADER", headerName: "x-api-key", value: "k_rotated_123" });
+    assert.equal(rotated.data.lifecycle, "AUTHORIZED");
+    assert.equal((await call(`/connect/integrations/${id}/api-tools/call`, owner, { toolName: "getItem", arguments: { itemId: "x" } })).data.refusal, "BINDING_NOT_VERIFIED");
+    assert.equal((await pool.query("select count(*)::int as n from connect_secrets where integration_id=$1 and kind='API_CREDENTIAL' and revoked_at is null", [id])).rows[0].n, 1, "the old key is retired");
+    assert.equal((await call(`/connect/integrations/${id}/verify`, owner, { toolId: whoAmI })).data.verified, true);
+    assert.equal(seen.at(-1)!.headers.get("x-api-key"), "k_rotated_123");
+    assert.equal(seen.at(-1)!.headers.has("authorization"), false);
+  } finally {
+    delete app.locals.connectNetwork;
+    if (previousVaultKey === undefined) delete process.env.DINAR_CONNECT_VAULT_KEY; else process.env.DINAR_CONNECT_VAULT_KEY = previousVaultKey;
+  }
+  const audit = (await pool.query("select details::text as d from connect_audit_events where details->>'integrationId'=$1", [id])).rows.map((row: any) => row.d).join(" ");
+  assert.ok(!audit.includes(token) && !audit.includes("k_rotated_123"), "audit never holds a key");
+});
 let agreement: any, referral: any, referralCard: any;
 await test("CONNECT-01 registration stores the chosen mode; suspended merchants cannot change it", async () => {
   const seller = await register("تاجر وضع المشاركة");

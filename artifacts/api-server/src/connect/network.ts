@@ -210,7 +210,7 @@ export class ConnectNetwork {
     const controller = new AbortController();
     for (const [key, value] of Object.entries(options.headers ?? {}))
       if (
-        !["authorization", "accept", "content-type", "user-agent", "mcp-session-id", "mcp-protocol-version", "idempotency-key"].includes(
+        !["authorization", "accept", "content-type", "user-agent", "mcp-session-id", "mcp-protocol-version", "idempotency-key", "x-api-key"].includes(
           key.toLowerCase(),
         ) ||
         /[\r\n]/.test(value)

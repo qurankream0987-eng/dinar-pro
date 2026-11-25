@@ -24,6 +24,7 @@ import * as partners from "../connect/partners";
 import * as agreements from "../connect/agreements";
 import * as apiConnector from "../connect/api-connector";
 import * as binding from "../connect/binding";
+import * as vault from "../connect/credential-vault";
 import { connectIntegrations as connectIntegrationsTable, connectTools } from "@workspace/db";
 import { ConnectFinancialReceiptSchema } from "@workspace/api-zod/connect-platform";
 import { connectDiagnostics } from "../connect/diagnostics";
@@ -622,6 +623,8 @@ router.get("/connect/integrations/:id/api-tools", requireAuth, async (req, res) 
   // The owner reviews the full operation and its digest before authorizing; credentials never appear.
   res.set("Cache-Control", "no-store").json({
     lifecycle: row.lifecycle,
+    verificationFailure: row.verificationFailure,
+    credential: await vault.connectCredentialStatus(id),
     grantedCapabilities: row.grantedCapabilities,
     tools: tools.map((tool) => ({ id: tool.id, name: tool.name, capability: tool.capability, access: tool.access, status: tool.status, digest: tool.inputSchemaSha256, operation: tool.operation })),
   });
@@ -642,6 +645,14 @@ router.post("/connect/integrations/:id/api-tools/call", requireAuth, async (req,
   const body = z.object({ toolName: z.string().min(1).max(64), arguments: toolArguments }).strict().parse(req.body);
   const result = await apiConnector.callConnectTool({ actorId: req.actor!.id, market: await marketFor(req), integrationId: idParam(req.params.id), toolName: body.toolName, arguments: body.arguments, network: connectNetworkFor(req) });
   res.set("Cache-Control", "no-store").status(result.status === "CONFIRMATION_REQUIRED" ? 202 : result.status === "REFUSED" ? 409 : 200).json(result);
+});
+// Stage 5a: the owner seals their system's key (never returned) and verifies with one read tool.
+router.post("/connect/integrations/:id/credential", requireAuth, async (req, res) => {
+  res.set("Cache-Control", "no-store").status(201).json(await vault.sealConnectCredential(req.actor!.id, await marketFor(req), idParam(req.params.id), req.body));
+});
+router.post("/connect/integrations/:id/verify", requireAuth, async (req, res) => {
+  const body = z.object({ toolId: z.string().uuid(), arguments: toolArguments.optional() }).strict().parse(req.body);
+  res.set("Cache-Control", "no-store").json(await vault.verifyConnectBinding(req.actor!.id, await marketFor(req), idParam(req.params.id), body, connectNetworkFor(req) ?? new ConnectNetwork()));
 });
 router.post("/connect/action-confirmations/:id/confirm", requireAuth, async (req, res) => {
   z.object({}).strict().parse(req.body ?? {});

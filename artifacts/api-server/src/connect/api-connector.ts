@@ -18,6 +18,7 @@ import { ConnectNetwork } from "./network";
 import { connectError, validateExternalUrl } from "./provider-registry";
 import { parseBoundedConnectProviderJson } from "./catalog-document";
 import { connectAccess, connectAudit, lockOwnedConnectIntegration, type ConnectMarket } from "./partners";
+import { credentialHeaders } from "./credential-vault";
 import { capabilityMutates, decideToolUse, isConnectCapability, recordDiscoveredTools, toolSchemaDigest, type ConnectCapability } from "./binding";
 
 // ─── Operations ──────────────────────────────────────────────────────────────────────────────────
@@ -224,11 +225,13 @@ export type ToolCallResult =
 type ToolRow = typeof connectTools.$inferSelect;
 type IntegrationRow = typeof connectIntegrations.$inferSelect;
 
-async function execute(network: ConnectNetwork, integration: IntegrationRow, tool: ToolRow, args: Record<string, unknown>, idempotencyKey?: string, authorization?: string) {
+/** Server-side only: the sealed credential becomes headers here and nowhere else. */
+export async function executeConnectOperation(network: ConnectNetwork, integration: IntegrationRow, tool: ToolRow, args: Record<string, unknown>, idempotencyKey?: string) {
+  const credential = await credentialHeaders(integration.id);
   const operation = tool.operation as unknown as ApiOperation;
   if (!integration.endpointUrl) throw connectError(409, "ENDPOINT_MISSING", "عنوان الموصل غير محدد");
   const base = new URL(validateExternalUrl(integration.endpointUrl, [new URL(integration.endpointUrl).hostname]));
-  const headers: Record<string, string> = { accept: "application/json", ...(authorization ? { authorization } : {}), ...(idempotencyKey ? { "idempotency-key": idempotencyKey } : {}) };
+  const headers: Record<string, string> = { accept: "application/json", ...credential, ...(idempotencyKey ? { "idempotency-key": idempotencyKey } : {}) };
   let url: URL;
   let method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   let body: string | undefined;
@@ -270,7 +273,7 @@ async function loadCallable(actorId: string, market: ConnectMarket, integrationI
  * One entry for every tool call. Reads run now when allowed; writes return a confirmation and run
  * only through `confirmToolCall` by the same person.
  */
-export async function callConnectTool(input: { actorId: string; market: ConnectMarket; integrationId: string; toolName: string; arguments: Record<string, unknown>; network?: ConnectNetwork; live?: boolean; authorization?: string }): Promise<ToolCallResult> {
+export async function callConnectTool(input: { actorId: string; market: ConnectMarket; integrationId: string; toolName: string; arguments: Record<string, unknown>; network?: ConnectNetwork; live?: boolean }): Promise<ToolCallResult> {
   const { integration, tool } = await loadCallable(input.actorId, input.market, input.integrationId, input.toolName);
   if (!tool?.operation) return { status: "REFUSED", refusal: "TOOL_NOT_AUTHORIZED" };
   validateArguments((tool.operation as unknown as ApiOperation).inputSchema, input.arguments);
@@ -283,12 +286,12 @@ export async function callConnectTool(input: { actorId: string; market: ConnectM
     await db.insert(connectActionConfirmations).values({ id, integrationId: integration.id, toolId: tool.id, actorId: input.actorId, argumentsDigest: argumentsDigest(input.arguments), arguments: input.arguments, expiresAt });
     return { status: "CONFIRMATION_REQUIRED", confirmationId: id, expiresAt: expiresAt.toISOString(), summary: { tool: tool.name, capability: tool.capability, arguments: input.arguments } };
   }
-  const executed = await execute(input.network ?? new ConnectNetwork(), integration, tool, input.arguments, undefined, input.authorization);
+  const executed = await executeConnectOperation(input.network ?? new ConnectNetwork(), integration, tool, input.arguments);
   return { status: "EXECUTED", access: decision.access, providerStatus: executed.providerStatus, result: { source: "PROVIDER", trusted: false, data: executed.data } };
 }
 
 /** The person's confirmation: consumed once, re-decided against the binding as it is now. */
-export async function confirmToolCall(input: { actorId: string; market: ConnectMarket; confirmationId: string; network?: ConnectNetwork; live?: boolean; authorization?: string }): Promise<ToolCallResult> {
+export async function confirmToolCall(input: { actorId: string; market: ConnectMarket; confirmationId: string; network?: ConnectNetwork; live?: boolean }): Promise<ToolCallResult> {
   const now = new Date();
   const [claimed] = await db
     .update(connectActionConfirmations)
@@ -317,7 +320,7 @@ export async function confirmToolCall(input: { actorId: string; market: ConnectM
     return { status: "REFUSED", refusal: decision.refusal };
   }
   try {
-    const executed = await execute(input.network ?? new ConnectNetwork(), integration!, tool!, claimed.arguments, claimed.id, input.authorization);
+    const executed = await executeConnectOperation(input.network ?? new ConnectNetwork(), integration!, tool!, claimed.arguments, claimed.id);
     await finish("SUCCEEDED", executed.providerStatus);
     await connectAudit(db, integration!.partnerId, input.actorId, "OWNER", "CONNECT_TOOL_WRITE_EXECUTED", { integrationId: integration!.id, toolId: tool!.id, capability: tool!.capability, providerStatus: executed.providerStatus, argumentsDigest: claimed.argumentsDigest });
     return { status: "EXECUTED", access: "WRITE", providerStatus: executed.providerStatus, result: { source: "PROVIDER", trusted: false, data: executed.data } };

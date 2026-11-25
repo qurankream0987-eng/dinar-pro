@@ -22058,6 +22058,178 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       return useMutation(getCallConnectApiToolMutationOptions(options), queryClient);
     }
 
+export const getSealConnectCredentialUrl = (id: string,) => {
+
+
+
+
+  return `/api/connect/integrations/${id}/credential`
+}
+
+/**
+ * OWNER only. Seals (or rotates) the connector's own API key, bearer token or basic credential, encrypted and bound to the connector. Never returned; the response carries method and a short fingerprint only. Rotation makes the binding unproven again.
+ */
+export const sealConnectCredential = async (id: string,
+    serverValidatedObject: ServerValidatedObject, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getSealConnectCredentialUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(serverValidatedObject)
+  }
+);}
+
+
+
+
+
+export const getSealConnectCredentialMutationKey = () => ['sealConnectCredential'] as const;
+
+export const getSealConnectCredentialMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sealConnectCredential>>, TError,SealConnectCredentialMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof sealConnectCredential>>, TError,SealConnectCredentialMutationVariables, TContext> => {
+
+const mutationKey = getSealConnectCredentialMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof sealConnectCredential>>, SealConnectCredentialMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  sealConnectCredential(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SealConnectCredentialMutationResult = NonNullable<Awaited<ReturnType<typeof sealConnectCredential>>>
+    export type SealConnectCredentialMutationBody = BodyType<ServerValidatedObject>
+    export type SealConnectCredentialMutationError = ErrorType<void>
+    export type SealConnectCredentialMutationVariables = {id: string;data: BodyType<ServerValidatedObject>}
+
+    export const useSealConnectCredential = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sealConnectCredential>>, TError,SealConnectCredentialMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof sealConnectCredential>>,
+        TError,
+        SealConnectCredentialMutationVariables,
+        TContext
+      > => {
+      return useMutation(getSealConnectCredentialMutationOptions(options), queryClient);
+    }
+
+export const getVerifyConnectBindingUrl = (id: string,) => {
+
+
+
+
+  return `/api/connect/integrations/${id}/verify`
+}
+
+/**
+ * OWNER only. Calls one authorized READ tool with the sealed key; success moves the binding to VERIFIED, a provider refusal is recorded and nothing becomes usable.
+ */
+export const verifyConnectBinding = async (id: string,
+    serverValidatedObject: ServerValidatedObject, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getVerifyConnectBindingUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(serverValidatedObject)
+  }
+);}
+
+
+
+
+
+export const getVerifyConnectBindingMutationKey = () => ['verifyConnectBinding'] as const;
+
+export const getVerifyConnectBindingMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof verifyConnectBinding>>, TError,VerifyConnectBindingMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof verifyConnectBinding>>, TError,VerifyConnectBindingMutationVariables, TContext> => {
+
+const mutationKey = getVerifyConnectBindingMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof verifyConnectBinding>>, VerifyConnectBindingMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  verifyConnectBinding(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type VerifyConnectBindingMutationResult = NonNullable<Awaited<ReturnType<typeof verifyConnectBinding>>>
+    export type VerifyConnectBindingMutationBody = BodyType<ServerValidatedObject>
+    export type VerifyConnectBindingMutationError = ErrorType<void>
+    export type VerifyConnectBindingMutationVariables = {id: string;data: BodyType<ServerValidatedObject>}
+
+    export const useVerifyConnectBinding = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof verifyConnectBinding>>, TError,VerifyConnectBindingMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof verifyConnectBinding>>,
+        TError,
+        VerifyConnectBindingMutationVariables,
+        TContext
+      > => {
+      return useMutation(getVerifyConnectBindingMutationOptions(options), queryClient);
+    }
+
 export const getConfirmConnectActionUrl = (id: string,) => {
 
 
