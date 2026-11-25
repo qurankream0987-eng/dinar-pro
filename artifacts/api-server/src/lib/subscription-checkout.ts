@@ -7,7 +7,9 @@
  */
 import { randomUUID } from "node:crypto";
 import { and, eq, inArray } from "drizzle-orm";
-import { businessSubscriptions, conversations, db, promotionProducts } from "@workspace/db";
+import { businessSubscriptions, conversations, db, promotionProducts, users } from "@workspace/db";
+import { isCountryBlocked } from "./whop/countries";
+import { whopConfig } from "./whop/config";
 import { assertPlanEligibility, businessPlans, cancelBusinessSubscription } from "./business";
 import { planCodeOfProduct } from "./subscription-plans";
 import { getSubscriptionBillingProvider, subscriptionBillingStatus } from "./subscription-billing";
@@ -48,6 +50,10 @@ export async function startSubscriptionCheckout(input: {
 }) {
   if (!subscriptionBillingStatus().connected) throw fail(503, "الدفع الحقيقي للاشتراكات غير موصول بعد؛ لم يُنشأ اشتراك ولم يُخصم شيء.", "BILLING_PROVIDER_NOT_CONNECTED");
   const provider = getSubscriptionBillingProvider()!;
+  // Whop payments only, per the provider's support and legal requirements; Jassim itself stays open.
+  const [buyer] = await db.select({ country: users.accountCountry }).from(users).where(eq(users.id, input.actorId));
+  if (provider.providerKey === "whop" && buyer?.country && isCountryBlocked(buyer.country, whopConfig().blockedCountries))
+    throw fail(403, "الدفع عبر Whop غير متاح في بلدك حاليًا؛ يبقى استخدام جاسم والسوق والبيع النقدي متاحًا.", "PAYMENT_PROVIDER_COUNTRY_UNSUPPORTED");
   const [plan] = await db.select().from(promotionProducts).where(and(eq(promotionProducts.id, input.planId), eq(promotionProducts.marketId, input.market.id)));
   if (!plan || plan.productType !== "DINAR_BUSINESS" || !(await businessPlans(input.market)).some((item) => item.id === plan.id))
     throw fail(404, "خطة جاسم بزنس غير متاحة في سوقك", "PRODUCT_DISABLED");

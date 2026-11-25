@@ -28,7 +28,6 @@ import {
 import { canHoldSession, SESSION_STATUSES } from "./account-status";
 import { grantPremiumTrialAtSignup } from "./ai-premium-trial";
 import { signupConsentRows } from "./policy-lifecycle";
-import { isCountryBlocked } from "./whop/countries";
 import { and, eq, gt, inArray, isNotNull, isNull, lte } from "drizzle-orm";
 import { parsePhoneNumberFromString } from "libphonenumber-js/max";
 import { providerDeploymentEnvironment } from "./market-capability-registry";
@@ -504,10 +503,8 @@ router.post("/auth/register", registrationLimit, async (req, res) => {
     });
     return;
   }
-  if (isCountryBlocked(b.accountCountry)) {
-    res.status(403).json({ error: "هذه الدولة غير مدعومة في دينار" });
-    return;
-  }
+  // Owner decision 2026-11-25: every country may use Jassim (marketplace, cash sales). Provider
+  // restrictions apply only where that provider is used (Whop payments check the country there).
   const signupMarket = await resolveSignupMarket(b.accountCountry);
   if ("error" in signupMarket) {
     res.status(signupMarket.status).json({ error: signupMarket.error });

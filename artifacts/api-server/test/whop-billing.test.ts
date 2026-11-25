@@ -474,4 +474,14 @@ await test("WH-15 renewal reminder: once per period, three days before the end, 
   assert.ok((await sweepRenewalReminders(new Date(end2.getTime() - 2 * day), { notify })).includes(id));
 });
 
+await test("WH-16 Iraq/Syria (owner decision 2026-11-25): Jassim stays open; only Whop payment is refused", async () => {
+  const user = await account("buyer16");
+  await db.update(users).set({ accountCountry: "IQ" }).where(eq(users.id, user.id));
+  const refused = await request("/business/subscription-checkout", "POST", { planId: goPlan, idempotencyKey: `wh-${randomUUID()}` }, user.cookie);
+  assert.equal(refused.status, 403, refused.raw);
+  assert.match(refused.data.error, /Whop/);
+  assert.equal((await db.select().from(businessSubscriptions).where(eq(businessSubscriptions.userId, user.id))).length, 0, "no subscription row is created");
+  assert.equal((await request("/business/subscription", "GET", undefined, user.cookie)).status, 200, "the account itself keeps working");
+});
+
 after(async () => { uninstall(); server.close(); await pool.end(); });
