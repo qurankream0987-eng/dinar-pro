@@ -498,6 +498,13 @@
       "when": 1795120000000,
       "tag": "0070_commission_five_percent",
       "breakpoints": true
+    },
+    {
+      "idx": 71,
+      "version": "7",
+      "when": 1795130000000,
+      "tag": "0071_subscription_provider_link",
+      "breakpoints": true
     }
   ]
 }

@@ -87,7 +87,7 @@ export function planChangePreview(current: { tier: AiPlanTier; periodEnd: Date |
 /** A billing provider adapter. None is registered: every caller gets a truthful "not connected". */
 export interface SubscriptionBillingProvider {
   readonly providerKey: string;
-  createCheckout(input: { subscriptionId: string; planId: string; amountMinor: number; currencyCode: string; periodDays: number; idempotencyKey: string }): Promise<{ checkoutUrl: string; providerCheckoutId: string; expiresAt: string }>;
+  createCheckout(input: { subscriptionId: string; planId: string; amountMinor: number; currencyCode: string; periodDays: number; idempotencyKey: string; returnUrl?: string }): Promise<{ checkoutUrl: string; providerCheckoutId: string; expiresAt: string }>;
   scheduleCancellation(input: { providerSubscriptionId: string; idempotencyKey: string }): Promise<{ effectiveAt: string }>;
   /** Verifies the provider's signature over the canonical event; never trusts an unsigned body. */
   verifyWebhook(event: BillingWebhookEvent, signature: string): boolean;
@@ -120,6 +120,10 @@ export function subscriptionBillingStatus() {
 export function eventDigest(event: BillingWebhookEvent): string {
   const sorted = Object.fromEntries(Object.entries(event).sort(([a], [b]) => a.localeCompare(b)));
   return createHash("sha256").update(JSON.stringify(sorted)).digest("hex");
+}
+
+function validProviderSubscriptionId(id: string | undefined): id is string {
+  return typeof id === "string" && id !== "unknown" && /^[A-Za-z0-9_-]{4,128}$/.test(id);
 }
 
 const fail = (status: number, message: string, code: string) => Object.assign(new Error(message), { status, code, expose: true });
@@ -184,6 +188,9 @@ export async function applyBillingEvent(providerKey: string, event: BillingWebho
         status: transition.to,
         ...(transition.setPeriod && "periodStart" in event ? { currentPeriodStart: new Date(event.periodStart), currentPeriodEnd: new Date(event.periodEnd) } : {}),
         ...(transition.cancelled ? { cancelledAt: now } : {}),
+        // Phase 2: the provider's own subscription id is recorded once, from a verified event, so
+        // cancellation can be requested at the provider. A different id later is never overwritten.
+        ...(!subscription.providerSubscriptionId && validProviderSubscriptionId(event.providerSubscriptionId) ? { providerKey, providerSubscriptionId: event.providerSubscriptionId } : {}),
         updatedAt: now,
       })
       .where(eq(businessSubscriptions.id, subscription.id));

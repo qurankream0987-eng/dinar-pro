@@ -17,6 +17,7 @@ import { registerPhoneVerificationProvider } from "./lib/phone-verification";
 import { providerDeploymentEnvironment } from "./lib/market-capability-registry";
 import { TWILIO_MESSAGING_PROVIDER_KEY, twilioMessagingRegistration } from "./lib/sms/twilio-messaging";
 import { startNotificationEmailWorker } from "./lib/notification-email-outbox";
+import { startRenewalReminderSweep } from "./lib/subscription-reminders";
 
 // Alerting: a provider/model circuit opening is a warning; closing is info. No prompt, user or key.
 onProviderBreakerTransition((event) =>
@@ -113,6 +114,8 @@ driverLocationSweep.unref?.();
 sweepExpiredReservations();
 const reservationSweep = setInterval(sweepExpiredReservations, 60_000);
 reservationSweep.unref();
+// Whop phase 2: one reminder per paid period, three days before it ends (hourly, claim-before-send).
+startRenewalReminderSweep();
 
 let stopSearchIndexMaintenance: (() => void) | undefined;
 let stopNotificationEmailWorker: (() => void) | undefined;

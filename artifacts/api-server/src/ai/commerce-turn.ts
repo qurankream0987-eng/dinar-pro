@@ -8,6 +8,7 @@
  * business). Payloads are rebuilt from live server state; the client only renders them.
  * No model output can credit, charge, grant, activate or change any number here.
  */
+import { cancelSubscriptionEverywhere, configuredAppOrigin, startSubscriptionCheckout, SUBSCRIPTION_TAX_NOTE } from "../lib/subscription-checkout";
 import { createHash, randomUUID } from "node:crypto";
 import { and, desc, eq, gt, sql } from "drizzle-orm";
 import { z } from "zod";
@@ -46,7 +47,6 @@ import { isPromotionFeatureEnabled } from "../lib/promotion-policy";
 import {
   businessEntitlements,
   businessPlans,
-  cancelBusinessSubscription,
   getBusinessStatus,
   reviewBusinessSubscription,
   subscribeBusiness,
@@ -147,6 +147,11 @@ const CommerceQuery = z
     businessId: z.string().uuid().optional(),
     businessFocus: z.enum(["OVERVIEW", "INFO", "UPLOAD", "STATUS", "CONNECT"]).optional(),
     action: PendingAction.optional(),
+    /** Whop phase 2: the hosted payment page prepared after «تأكيد» (nothing paid until Whop confirms). */
+    checkout: z
+      .object({ subscriptionId: z.string().uuid(), url: z.string().max(600).regex(/^https:\/\/[^\s]+$/), expiresAt: z.string().max(40) })
+      .strict()
+      .optional(),
     status: z.enum(["PENDING", "CONFIRMED", "CANCELLED", "EXPIRED", "REJECTED"]).optional(),
     notice: z.string().max(600).optional(),
   })
@@ -564,6 +569,7 @@ async function composePayload(state: CommerceQuery, resourceIds: string[], resul
       }
       case "BUSINESS_STATUS":
         payload.status = await getBusinessStatus(actorId, market);
+        if (state.checkout) payload.checkout = { ...state.checkout, taxNote: SUBSCRIPTION_TAX_NOTE };
         break;
       case "AI_USAGE":
         payload.usage = await usageCardView(actorId, market);
@@ -645,6 +651,7 @@ export type CommerceActionOutcome = {
   message: string;
   promotionId?: string;
   view?: CommerceSurface;
+  checkout?: { subscriptionId: string; url: string; expiresAt: string };
 };
 
 /**
@@ -683,7 +690,7 @@ export async function applyCommerceAction(input: { actionId: string; actorId: st
     if ((set.expiresAt && set.expiresAt.getTime() <= Date.now()) || newer)
       return settle("EXPIRED", "انتهت صلاحية هذه المراجعة لأن المحادثة تابعت بعدها أو مضى وقتها. لم يتغير شيء؛ اطلبها من جديد.");
     if (input.decision === "CANCEL") return settle("CANCELLED", "أُلغي الطلب. لم يُخصم أو يُضف أي رصيد.");
-    return { state };
+    return { state, conversationId: set.conversationId };
   });
   if ("done" in checked) return checked.done!;
   const state = checked.state!;
@@ -727,12 +734,22 @@ export async function applyCommerceAction(input: { actionId: string; actorId: st
           view: "BUNDLE_STATUS",
           message: `أُضيفت وحدات الباقة إلى حسابك (${(purchase.entitlements ?? []).map((item) => `${item.unitsTotal} ${item.productType === "VIP_LISTING" ? "VIP" : item.productType === "REFRESH_LISTING" ? "تجديد" : "مميز"}`).join("، ")}). رصيدك المتاح الآن ${purchase.balance.availableLabel}.`,
         };
+    } else if (action.type === "SUBSCRIBE" && subscriptionBillingStatus().connected) {
+      // Whop phase 2: «تأكيد» prepares the hosted payment page; the plan activates only from Whop's
+      // signed, verified payment. The buyer returns to this same conversation after paying.
+      const started = await startSubscriptionCheckout({ actorId: input.actorId, market: input.market, planId: action.planId, businessId: action.businessId, idempotencyKey: key, conversationId: checked.conversationId, origin: configuredAppOrigin() });
+      outcome = {
+        status: "CONFIRMED",
+        view: "BUSINESS_STATUS",
+        checkout: { subscriptionId: started.subscriptionId, url: started.checkout.checkoutUrl, expiresAt: started.checkout.expiresAt },
+        message: `صفحة الدفع الآمنة لـ«${started.plan.name}» جاهزة عبر Whop. لم يُخصم شيء بعد، ولا تُفعَّل الخطة قبل تأكيد Whop الموقّع؛ ستعود بعد الدفع إلى هذه المحادثة. ${SUBSCRIPTION_TAX_NOTE}`,
+      };
     } else if (action.type === "SUBSCRIBE") {
       const subscription = await subscribeBusiness({ actorId: input.actorId, market: input.market, planId: action.planId, idempotencyKey: key, businessId: action.businessId });
       outcome = { status: "CONFIRMED", view: "BUSINESS_STATUS", message: `اشتراكك في «${"planName" in subscription ? subscription.planName : "جاسم بزنس"}» نشط حتى ${"currentPeriodEnd" in subscription ? String(subscription.currentPeriodEnd).slice(0, 10) : ""}. لا تجديد تلقائي، ولا يغيّر ترتيب نتائج البحث.` };
     } else {
-      await cancelBusinessSubscription({ actorId: input.actorId, market: input.market });
-      outcome = { status: "CONFIRMED", view: "BUSINESS_STATUS", message: "لن يتجدد اشتراكك؛ تبقى مزاياه حتى نهاية الفترة المدفوعة." };
+      const cancelled = await cancelSubscriptionEverywhere({ actorId: input.actorId, market: input.market });
+      outcome = { status: "CONFIRMED", view: "BUSINESS_STATUS", message: cancelled.message };
     }
   } catch (error) {
     const status = (error as { status?: unknown }).status;
@@ -747,7 +764,7 @@ export async function applyCommerceAction(input: { actionId: string; actorId: st
   }
   await db
     .update(aiResultSets)
-    .set({ query: { ...state, status: outcome.status, notice: outcome.message, ...(outcome.promotionId ? { promotionId: outcome.promotionId } : {}) } })
+    .set({ query: { ...state, status: outcome.status, notice: outcome.message, ...(outcome.promotionId ? { promotionId: outcome.promotionId } : {}), ...(outcome.checkout ? { checkout: outcome.checkout } : {}) } })
     .where(and(eq(aiResultSets.id, input.actionId), sql`${aiResultSets.query} ->> 'status' is distinct from 'CONFIRMED'`));
   return outcome;
 }
@@ -874,7 +891,7 @@ async function commerceTurn(
   // Decisions apply only to this adapter's own latest pending review.
   if (latest?.action && (latest.status ?? "PENDING") === "PENDING" && (CONFIRM.test(text) || CANCEL.test(text))) {
     const outcome = await applyCommerceAction({ actionId: latestSet!.id, actorId, market, decision: CONFIRM.test(text) ? "CONFIRM" : "CANCEL" });
-    const state: CommerceQuery = { kind: "COMMERCE", ownerId: actorId, view: outcome.view ?? "COMMERCE_NOTICE", notice: outcome.message, ...(outcome.promotionId ? { promotionId: outcome.promotionId } : {}) };
+    const state: CommerceQuery = { kind: "COMMERCE", ownerId: actorId, view: outcome.view ?? "COMMERCE_NOTICE", notice: outcome.message, ...(outcome.promotionId ? { promotionId: outcome.promotionId } : {}), ...(outcome.checkout ? { checkout: outcome.checkout } : {}) };
     return turnFor(state, outcome.promotionId ? [outcome.promotionId] : [], outcome.message, actorId, market);
   }
 
@@ -883,7 +900,7 @@ async function commerceTurn(
 
   if (P.businessCancel.test(text)) {
     const status = await getBusinessStatus(actorId, market);
-    if (status.status !== "ACTIVE") return notice(actorId, "لا يوجد اشتراك جاسم بزنس نشط لإلغائه.", market, "BUSINESS_STATUS");
+    if (status.status !== "ACTIVE" && status.status !== "PAST_DUE") return notice(actorId, "لا يوجد اشتراك جاسم بزنس نشط لإلغائه.", market, "BUSINESS_STATUS");
     return turnFor({ kind: "COMMERCE", ownerId: actorId, view: "BUSINESS_STATUS", action: { type: "CANCEL_SUBSCRIPTION" }, status: "PENDING" }, [], "هل تريد إيقاف تجديد اشتراكك؟ تبقى مزاياه حتى نهاية الفترة المدفوعة. اكتب «نعم» أو «لا».", actorId, market);
   }
   if (P.businessStatus.test(text)) return turnFor({ kind: "COMMERCE", ownerId: actorId, view: "BUSINESS_STATUS" }, [], "حالة اشتراكك في جاسم بزنس.", actorId, market);
@@ -1152,6 +1169,14 @@ async function businessReview(actorId: string, market: Market, planId?: string, 
     return turnFor({ kind: "COMMERCE", ownerId: actorId, view: "BUSINESS_STATUS" }, [], planId ? "لديك اشتراك جاسم بزنس قائم. تغيير الباقة أثناء الفترة غير متاح بعد لأنه لا توجد قواعد احتساب تناسبي معتمدة؛ يمكنك الاشتراك في الباقة الأخرى بعد انتهاء فترتك. لم يتغير شيء." : "لديك اشتراك جاسم بزنس قائم.", actorId, market);
   if (!plans.length) return notice(actorId, "لا توجد خطة جاسم بزنس مفعّلة في سوقك حاليًا. الحساب المجاني يكفي للبيع والشراء وشراء الإعلانات.", market, "BUSINESS_STATUS");
   const plan = plans.find((item) => item.id === planId) ?? plans[0]!;
+  if (subscriptionBillingStatus().connected)
+    return turnFor(
+      { kind: "COMMERCE", ownerId: actorId, view: "BUSINESS_PLAN_REVIEW", action: { type: "SUBSCRIBE", planId: plan.id }, status: "PENDING" },
+      [plan.id],
+      `راجع «${plan.name}»: ${plan.priceLabel} لكل ${plan.durationDays} يومًا، يُدفع عبر Whop ويتجدد في نهاية كل فترة حتى تلغيه من هنا. ${SUBSCRIPTION_TAX_NOTE} يضيف أدوات أو سعة استخدام فقط ولا يغيّر ترتيب نتائج البحث. اكتب «تأكيد» لفتح صفحة الدفع أو «إلغاء».`,
+      actorId,
+      market,
+    );
   const review = await reviewBusinessSubscription({ actorId, market, planId: plan.id });
   if (!review.sufficient)
     return turnFor({ kind: "COMMERCE", ownerId: actorId, view: "BUSINESS_PLAN_REVIEW", notice: `تحتاج إلى شحن ${review.missingLabel} إضافية للاشتراك.` }, [plan.id], `«${plan.name}» بسعر ${plan.priceLabel} لكل ${plan.durationDays} يومًا. رصيدك غير كافٍ: تحتاج إلى شحن ${review.missingLabel}. لم يتغير شيء.`, actorId, market);

@@ -585,6 +585,49 @@ export default function AiPage() {
 
   const historyScope =
     user && market ? `dinar-conversation:${user.id}:${market.id}` : null;
+  // Whop phase 2: the payment page returns to `/?checkout=<id>&conversation=<id>`. The URL only
+  // points; the paid state shown is the server's record of Whop's signed confirmation.
+  const [checkoutReturn] = useState<{ subscriptionId: string; conversationId?: string } | null>(() => {
+    if (typeof window === "undefined") return null;
+    const params = new URLSearchParams(window.location.search);
+    const subscriptionId = params.get("checkout");
+    if (!subscriptionId || !/^[0-9a-f-]{36}$/.test(subscriptionId)) return null;
+    return { subscriptionId, conversationId: params.get("conversation") ?? undefined };
+  });
+  const [checkoutNotice, setCheckoutNotice] = useState("");
+  useEffect(() => {
+    // Only the buyer's own conversation is opened (the list is the server's, owner-scoped).
+    if (checkoutReturn?.conversationId && conversationList.some((item) => item.id === checkoutReturn.conversationId)) setActiveId(checkoutReturn.conversationId);
+  }, [checkoutReturn, conversationList]);
+  useEffect(() => {
+    if (!checkoutReturn || !user) return;
+    let stopped = false;
+    let attempts = 0;
+    const check = async () => {
+      attempts += 1;
+      try {
+        const response = await fetch(`/api/business/subscription-checkout/${encodeURIComponent(checkoutReturn.subscriptionId)}`, { credentials: "include" });
+        if (!response.ok) return setCheckoutNotice("تعذر العثور على عملية الدفع هذه.");
+        const body = (await response.json()) as { paid?: boolean; status?: string; planName?: string };
+        if (stopped) return;
+        if (body.paid) return setCheckoutNotice(`تم تأكيد الدفع من Whop، واشتراكك «${body.planName ?? ""}» نشط الآن.`);
+        if (body.status === "PAYMENT_FAILED") return setCheckoutNotice("لم يكتمل الدفع؛ لم تُفعَّل الخطة. يمكنك المحاولة مرة أخرى من المحادثة.");
+        setCheckoutNotice("بانتظار تأكيد Whop للدفع… لن تُفعَّل الخطة قبل وصول التأكيد الموقّع.");
+        if (attempts < 12) setTimeout(() => void (stopped || check()), 5000);
+      } catch {
+        if (!stopped) setCheckoutNotice("تعذر التحقق من حالة الدفع الآن.");
+      }
+    };
+    void check();
+    try {
+      window.history.replaceState(null, "", window.location.pathname);
+    } catch {
+      /* the pointer stays in the URL; harmless */
+    }
+    return () => {
+      stopped = true;
+    };
+  }, [checkoutReturn, user]);
   useEffect(() => {
     // Resuming the last conversation is for a page that has none. A conversation the page is
     // already starting (an entry link such as /orders, or a first message) owns the view: a
@@ -1999,6 +2042,11 @@ export default function AiPage() {
             </button>
           )}
         </div>
+      )}
+      {checkoutNotice && (
+        <p role="status" aria-live="polite" className="px-4 pb-2 text-center text-xs" data-testid="subscription-checkout-return">
+          {checkoutNotice}
+        </p>
       )}
       {!online && (
         <p

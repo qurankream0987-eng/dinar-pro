@@ -3,6 +3,7 @@
  * actor's active market, every price and charge from server policy; request bodies are
  * strict, so client-sent prices, balances, owners, «paid» flags or VIP flags are rejected.
  */
+import { cancelSubscriptionEverywhere } from "../lib/subscription-checkout";
 import { Router, type RequestHandler } from "express";
 import { randomUUID } from "node:crypto";
 import { and, asc, desc, eq, sql } from "drizzle-orm";
@@ -54,7 +55,6 @@ import { insightView, marketPulse } from "../lib/market-pulse";
 import {
   businessEntitlements,
   businessPlans,
-  cancelBusinessSubscription,
   getBusinessStatus,
   reviewBusinessSubscription,
   subscribeBusiness,
@@ -239,7 +239,8 @@ router.post("/business/subscriptions", requireAuth, async (req, res) => {
 router.post("/business/subscription/cancel", requireAuth, async (req, res) => {
   z.object({}).strict().parse(req.body ?? {});
   const market = await marketFor(req);
-  res.json(await cancelBusinessSubscription({ actorId: req.actor!.id, market }));
+  const result = await cancelSubscriptionEverywhere({ actorId: req.actor!.id, market });
+  res.json(result.status === "CANCEL_AT_PERIOD_END" ? result.subscription : result);
 });
 
 /** The card button: the same authority as a conversational «تأكيد». */
@@ -247,7 +248,7 @@ router.post("/ai/commerce-actions/:id/action", requireAuth, async (req, res) => 
   const body = z.object({ action: z.enum(["CONFIRM", "CANCEL"]) }).strict().parse(req.body);
   const market = await marketFor(req);
   const outcome = await applyCommerceAction({ actionId: String(req.params.id), actorId: req.actor!.id, market, decision: body.action });
-  res.json({ status: outcome.status, message: outcome.message, ...(outcome.promotionId ? { promotionId: outcome.promotionId } : {}) });
+  res.json({ status: outcome.status, message: outcome.message, ...(outcome.promotionId ? { promotionId: outcome.promotionId } : {}), ...(outcome.checkout ? { checkout: outcome.checkout } : {}) });
 });
 
 // ─── Admin ───────────────────────────────────────────────────────────────────

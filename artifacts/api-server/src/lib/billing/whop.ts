@@ -211,7 +211,7 @@ export function createWhopAdapter(config: WhopConfig, transport: WhopTransport =
 
   const provider: SubscriptionBillingProvider = {
     providerKey: WHOP_PROVIDER_KEY,
-    async createCheckout({ subscriptionId, planId, idempotencyKey }) {
+    async createCheckout({ subscriptionId, planId, idempotencyKey, returnUrl }) {
       const [subscription] = await db
         .select({ userId: businessSubscriptions.userId, planCode: businessSubscriptions.planCodeSnapshot, periodDays: businessSubscriptions.periodDaysSnapshot })
         .from(businessSubscriptions)
@@ -224,7 +224,7 @@ export function createWhopAdapter(config: WhopConfig, transport: WhopTransport =
           method: "POST",
           path: "/checkout_configurations",
           idempotencyKey: `jassim-${idempotencyKey}`,
-          body: { variant_id: whopPlan, metadata: { jassim_subscription_id: subscriptionId, jassim_user_id: subscription.userId, jassim_plan: planId }, ...(config.redirectUrl ? { redirect_url: config.redirectUrl } : {}) },
+          body: { variant_id: whopPlan, metadata: { jassim_subscription_id: subscriptionId, jassim_user_id: subscription.userId, jassim_plan: planId }, ...(returnUrl ?? config.redirectUrl ? { redirect_url: returnUrl ?? config.redirectUrl } : {}) },
         });
       } catch {
         throw new WhopUnavailableError("تعذر الوصول إلى Whop");
@@ -234,10 +234,20 @@ export function createWhopAdapter(config: WhopConfig, transport: WhopTransport =
       if (!body?.id || !body.purchase_url?.startsWith("https://")) throw new WhopUnavailableError("Whop checkout without a purchase URL");
       return { checkoutUrl: body.purchase_url, providerCheckoutId: body.id, expiresAt: new Date(Date.now() + 60 * 60_000).toISOString() };
     },
-    async scheduleCancellation() {
-      // Cancellation needs the Whop membership id stored on the subscription (a reviewed migration);
-      // until then the subscriber cancels from Whop's manage page and `membership.updated` arrives here.
-      throw Object.assign(new Error("الإلغاء يتم من صفحة إدارة الاشتراك في Whop"), { status: 409, code: "WHOP_CANCEL_VIA_MANAGE_URL", expose: true });
+    async scheduleCancellation({ providerSubscriptionId, idempotencyKey }) {
+      // Phase 2: the membership id is stored from the verified activation. Whop stops renewal at the
+      // period end; our record changes only when Whop's signed `membership.updated` arrives.
+      if (!/^mem_[A-Za-z0-9]+$/.test(providerSubscriptionId)) throw Object.assign(new Error("عضوية Whop غير معروفة"), { status: 409, code: "WHOP_MEMBERSHIP_UNKNOWN", expose: true });
+      let response;
+      try {
+        response = await transport({ method: "POST", path: `/memberships/${encodeURIComponent(providerSubscriptionId)}/cancel`, body: { cancel_at_period_end: true }, idempotencyKey: `jassim-${idempotencyKey}` });
+      } catch {
+        throw new WhopUnavailableError("تعذر الوصول إلى Whop");
+      }
+      if (response.status !== 200 && response.status !== 201) throw new WhopUnavailableError(`Whop ${response.status}`);
+      const body = response.json as { renewal_period_end?: string | null; current_period_end?: string | null } | null;
+      const end = body?.renewal_period_end ?? body?.current_period_end;
+      return { effectiveAt: end ? new Date(end).toISOString() : "" };
     },
     // The canonical JSON intake is never used for Whop: only the raw, signed transport below.
     verifyWebhook() {

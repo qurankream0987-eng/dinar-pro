@@ -822,10 +822,22 @@ export const businessSubscriptions = pgTable(
     currentPeriodStart: timestamp("current_period_start", { withTimezone: true }),
     currentPeriodEnd: timestamp("current_period_end", { withTimezone: true }),
     cancelledAt: timestamp("cancelled_at", { withTimezone: true }),
+    /** Whop phase 2: the provider that holds the membership (`whop`) and its ids; never a secret. */
+    providerKey: text("provider_key"),
+    providerSubscriptionId: text("provider_subscription_id"),
+    providerCheckoutId: text("provider_checkout_id"),
+    /** The conversation the checkout started in; the buyer returns to it after paying. */
+    conversationId: text("conversation_id").references(() => conversations.id),
+    /** The period end the 3-day renewal reminder was sent for (one reminder per period). */
+    renewalReminderPeriodEnd: timestamp("renewal_reminder_period_end", { withTimezone: true }),
     ...dates(),
   },
   (t) => [
     uniqueIndex("business_subscriptions_user_idempotency_unique").on(t.userId, t.idempotencyKey),
+    uniqueIndex("business_subscriptions_provider_subscription_unique")
+      .on(t.providerKey, t.providerSubscriptionId)
+      .where(sql`${t.providerSubscriptionId} IS NOT NULL`),
+    check("business_subscriptions_provider_link", sql`${t.providerSubscriptionId} IS NULL OR ${t.providerKey} IS NOT NULL`),
     uniqueIndex("business_subscriptions_one_live")
       .on(t.userId, t.marketId)
       .where(sql`${t.status} IN ('PENDING', 'ACTIVE', 'PAST_DUE', 'CANCEL_AT_PERIOD_END')`),

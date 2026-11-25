@@ -19,6 +19,7 @@ import { accessPlanFor, aiPlanFor, assertPlanEligibility, businessPlans } from "
 import { getCommercialPolicy } from "../lib/commercial-policy";
 import { planChangeKind, planCodeOfProduct } from "../lib/subscription-plans";
 import { subscriptionEconomics } from "../lib/subscription-economics";
+import { configuredAppOrigin, startSubscriptionCheckout, subscriptionCheckoutStatus } from "../lib/subscription-checkout";
 import { getSubscriptionBillingProvider, planChangePreview, receiveBillingWebhook, subscriptionBillingStatus, tierOfEntitlements } from "../lib/subscription-billing";
 import { retentionPolicy } from "../lib/privacy-rights";
 
@@ -109,43 +110,17 @@ router.get("/business/plan-change-preview", requireAuth, async (req, res) => {
  * BILLING_PROVIDER_NOT_CONNECTED: no subscription row, no charge, no simulated success.
  */
 router.post("/business/subscription-checkout", requireAuth, async (req, res) => {
-  const body = z.object({ planId: z.string().min(1).max(80), idempotencyKey: z.string().regex(/^[A-Za-z0-9._:-]{8,128}$/), businessId: z.string().uuid().optional() }).strict().parse(req.body);
-  const billing = subscriptionBillingStatus();
-  if (!billing.connected) throw fail(503, "الدفع الحقيقي للاشتراكات غير موصول بعد؛ لم يُنشأ اشتراك ولم يُخصم شيء.", "BILLING_PROVIDER_NOT_CONNECTED");
-  const provider = getSubscriptionBillingProvider();
+  const body = z.object({ planId: z.string().min(1).max(80), idempotencyKey: z.string().regex(/^[A-Za-z0-9._:-]{8,128}$/), businessId: z.string().uuid().optional(), conversationId: z.string().min(1).max(80).optional() }).strict().parse(req.body);
   const market = await marketFor(req);
-  const [plan] = await db.select().from(promotionProducts).where(and(eq(promotionProducts.id, body.planId), eq(promotionProducts.marketId, market.id)));
-  if (!plan || plan.productType !== "DINAR_BUSINESS" || !(await businessPlans(market)).some((item) => item.id === plan.id)) throw fail(404, "خطة جاسم بزنس غير متاحة في سوقك", "PRODUCT_DISABLED");
-  // Eligibility is the server's: Business needs the actor's own VERIFIED business; payment never verifies.
-  const planCode = planCodeOfProduct(plan);
-  const businessProfileId = await assertPlanEligibility({ actorId: req.actor!.id, market, planCode, businessId: body.businessId });
-  const [prior] = await db.select().from(businessSubscriptions).where(and(eq(businessSubscriptions.userId, req.actor!.id), eq(businessSubscriptions.idempotencyKey, body.idempotencyKey)));
-  const [live] = prior ? [] : await db.select({ id: businessSubscriptions.id, status: businessSubscriptions.status, planId: businessSubscriptions.planId }).from(businessSubscriptions).where(and(eq(businessSubscriptions.userId, req.actor!.id), eq(businessSubscriptions.marketId, market.id), inArray(businessSubscriptions.status, ["PENDING", "ACTIVE", "PAST_DUE", "CANCEL_AT_PERIOD_END"])));
-  // An unpaid checkout for the same plan is resumed (its Whop checkout is reissued idempotently), so an
-  // abandoned payment page never locks the buyer out and never creates a second subscription.
-  const resumed = live?.status === "PENDING" && live.planId === plan.id ? live : undefined;
-  if (live && !resumed) throw fail(409, "لديك اشتراك جاسم بزنس قائم أو قيد الدفع", "ALREADY_SUBSCRIBED");
-  const subscriptionId = prior?.id ?? resumed?.id ?? randomUUID();
-  if (!prior && !resumed)
-    await db.insert(businessSubscriptions).values({
-      id: subscriptionId,
-      userId: req.actor!.id,
-      marketId: market.id,
-      planId: plan.id,
-      planNameSnapshot: plan.name,
-      priceMinorSnapshot: plan.priceMinor,
-      currencyCodeSnapshot: plan.currencyCode,
-      periodDaysSnapshot: plan.durationDays,
-      pricingVersionSnapshot: plan.pricingVersion,
-      entitlementsSnapshot: plan.businessEntitlements ?? [],
-      planCodeSnapshot: plan.planCode ?? null,
-      businessProfileId,
-      status: "PENDING",
-      idempotencyKey: body.idempotencyKey,
-    });
-  const checkout = await provider!.createCheckout({ subscriptionId, planId: plan.id, amountMinor: plan.priceMinor, currencyCode: plan.currencyCode, periodDays: plan.durationDays, idempotencyKey: resumed ? `resume-${resumed.id}` : body.idempotencyKey });
+  const result = await startSubscriptionCheckout({ actorId: req.actor!.id, market, ...body, origin: configuredAppOrigin() });
   // PENDING grants nothing: entitlements start only from a verified SUBSCRIPTION_ACTIVATED webhook.
-  res.status(201).json({ subscriptionId, status: "PENDING", checkout, autoRenew: false });
+  res.status(201).json(result);
+});
+
+/** The return page asks the server; `?checkout=` in the URL is only a pointer, never proof of payment. */
+router.get("/business/subscription-checkout/:subscriptionId", requireAuth, async (req, res) => {
+  const subscriptionId = z.string().uuid().parse(req.params.subscriptionId);
+  res.json(await subscriptionCheckoutStatus({ actorId: req.actor!.id, subscriptionId }));
 });
 
 /** D1.6: what each plan could cost DINAR in AI at full use, from configured prices only. */

@@ -37,6 +37,7 @@ export const NOTIFICATION_TEMPLATES = {
   REPORT_RESOLVED: { reportId: "ID", status: "STATUS" },
   SUPPORT_CASE_UPDATED: { caseId: "ID", status: "STATUS" },
   BUYER_INTEREST: { inquiryId: "ID" },
+  SUBSCRIPTION_RENEWAL_REMINDER: { subscriptionId: "ID", status: "STATUS" },
   OFFER_PUBLISHED: { listingId: "ID" },
 } as const satisfies Record<string, Record<string, keyof typeof FIELD_SHAPES>>;
 export type NotificationTemplateKey = keyof typeof NOTIFICATION_TEMPLATES;

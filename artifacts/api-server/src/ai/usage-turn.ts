@@ -3,6 +3,8 @@
  * which metered resource a model turn consumes. Deterministic; no model call is needed to
  * explain usage, and ordinary marketplace actions never depend on an AI allowance.
  */
+import { subscriptionBillingStatus } from "../lib/subscription-billing";
+import { SUBSCRIPTION_TAX_NOTE } from "../lib/subscription-checkout";
 import { subscriptionPlansOverview } from "../lib/subscription-overview";
 import { aiUsagePolicyFor, aiUsageSummary, globalGuardOpen, type AiUsageRefusal, type AiUsageSummary } from "../lib/ai-usage";
 import { AI_RESOURCE_LABELS, AI_TIER_LABELS, AI_USAGE_RESOURCES, type AiUsageResource } from "../lib/ai-usage-policy";
@@ -183,13 +185,15 @@ export async function plansCardView(actorId: string, market: CardMarket) {
     provisional: !policy.approved,
     tiers,
     sameCapabilities: "كل الباقات تعطي قدرات جاسم الذكية نفسها؛ الفرق في سعة الاستخدام فقط، ولا تمنح أي باقة وصولًا لبيانات بائعين أو مشترين آخرين.",
-    billing: {
-      status: "NOT_CONNECTED" as const,
-      simulationAvailable: simulation,
-      note: simulation
-        ? "الفوترة الحقيقية غير متصلة. في بيئة التطوير يمكن تجربة التفعيل من رصيد تجريبي فقط (TEST_NO_TRANSFER) دون تحويل أموال."
-        : "الفوترة غير متصلة بعد؛ لا يمكن تفعيل باقة مدفوعة الآن، ولن يُخصم أي مبلغ.",
-    },
+    billing: subscriptionBillingStatus().connected
+      ? { status: "CONNECTED" as const, simulationAvailable: false, note: `الدفع عبر Whop بعد تأكيدك، ولا تُفعّل الباقة قبل تأكيد Whop الموقّع. ${SUBSCRIPTION_TAX_NOTE}` }
+      : {
+          status: "NOT_CONNECTED" as const,
+          simulationAvailable: simulation,
+          note: simulation
+            ? "الفوترة الحقيقية غير متصلة. في بيئة التطوير يمكن تجربة التفعيل من رصيد تجريبي فقط (TEST_NO_TRANSFER) دون تحويل أموال."
+            : "الفوترة غير متصلة بعد؛ لا يمكن تفعيل باقة مدفوعة الآن، ولن يُخصم أي مبلغ.",
+        },
     renewalNote: "لا تجديد تلقائي؛ تنتهي الباقة المدفوعة بنهاية فترتها وتعود حصتك إلى المجاني.",
     // D1: the three public plans as the server defines them (price, eligibility, status).
     publicPlans: overview.plans.map((plan) => ({
