@@ -167,6 +167,11 @@ test("clone migration accepts only the reviewed journal (every entry hashed and 
   }));
   assert.equal(entries.length, EXPECTED_JOURNAL_ENTRIES);
   assert.equal(REVIEWED_PENDING_MIGRATIONS.at(-1)?.tag, "0069_whop_platforms");
+  // Drizzle applies a migration only if its journal timestamp is newer than the last applied one:
+  // an out-of-order `when` is skipped silently (found 2026-11-25 when 0067 outdated 0068/0069).
+  const journalEntries = (JSON.parse(readFileSync(new URL("meta/_journal.json", migrations), "utf8")) as { entries: { tag: string; when: number }[] }).entries;
+  journalEntries.slice(1).forEach((entry, index) =>
+    assert.ok(entry.when > journalEntries[index]!.when, `${entry.tag} must be newer than ${journalEntries[index]!.tag}`));
   assert.doesNotThrow(() => assertCloneMigrationJournal(entries));
   assert.throws(() => assertCloneMigrationJournal(entries.slice(0, entries.length - 1)), new RegExp(`expects ${EXPECTED_JOURNAL_ENTRIES}`));
   assert.throws(() => assertCloneMigrationJournal([...entries, { tag: "9999_unreviewed", sha256: "0".repeat(64) }]), new RegExp(`expects ${EXPECTED_JOURNAL_ENTRIES}`));

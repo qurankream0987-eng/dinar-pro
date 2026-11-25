@@ -345,11 +345,6 @@ function paymentBody(input: {
   };
 }
 
-after(async () => {
-  await new Promise<void>((resolve) => server.close(() => resolve()));
-  await pool.end();
-});
-
 await test("status reports a configured sandbox and hides problems from non-admins", async () => {
   const view = await request("/whop/status", "GET", undefined, seller);
   assert.equal(view.status, 200, view.text);
@@ -443,12 +438,14 @@ await test("an invalid signature is rejected and never reaches the ledger", asyn
   assert.equal(await ledger(body.id), undefined);
 });
 
+let settledEventId = "";
 await test("a paid webhook settles exactly one checkout and writes the receipt", async () => {
   const body = paymentBody({
     paymentId: paidPaymentId,
     checkoutId: paidCheckoutId,
     orderId: paidOrderId,
   });
+  settledEventId = body.id;
   const result = await deliver(body);
   assert.equal(result.status, 200, result.text);
   assert.equal(result.data.result, "payment_recorded");
@@ -467,7 +464,9 @@ await test("a paid webhook settles exactly one checkout and writes the receipt",
 });
 
 await test("a replayed event answers from the ledger and moves nothing again", async () => {
+  // The same event id again (a provider retry); a new id for the same payment is the next test.
   const body = paymentBody({
+    eventId: settledEventId,
     paymentId: paidPaymentId,
     checkoutId: paidCheckoutId,
     orderId: paidOrderId,
@@ -639,4 +638,10 @@ await test("verification and money movement events are observed without inventin
   assert.equal(unknown.status, 200, unknown.text);
   assert.equal(unknown.data.result, "ignored_event_type");
   assert.equal((await ledger(`evt_unknown_${runId}`))?.processingStatus, "IGNORED");
+});
+
+// Registered last: on Node 22 a module-level `after` declared before the tests ran after the first one.
+after(async () => {
+  await new Promise<void>((resolve) => server.close(() => resolve()));
+  await pool.end();
 });

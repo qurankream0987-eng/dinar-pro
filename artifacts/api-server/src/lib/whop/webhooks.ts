@@ -161,12 +161,15 @@ async function recordRefundDue(
     })
     .onConflictDoNothing()
     .returning();
-  const [row] =
+  // `created` is one row (or undefined on a replay): read the existing row only in that case.
+  const row =
     created ??
-    (await tx
-      .select()
-      .from(whopRefunds)
-      .where(eq(whopRefunds.idempotencyKey, idempotencyKey)));
+    (
+      await tx
+        .select()
+        .from(whopRefunds)
+        .where(eq(whopRefunds.idempotencyKey, idempotencyKey))
+    )[0];
   await tx
     .update(whopCheckouts)
     .set({ status: "REFUND_DUE", whopPaymentId: input.payment.id, updatedAt: new Date() })
