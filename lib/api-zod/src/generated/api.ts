@@ -104,6 +104,7 @@ export const SignInWithGoogleBody = zod.object({
 
 export const SignInWithGoogleResponse = zod.object({
   "status": zod.enum(['SIGNED_IN', 'PHONE_VERIFICATION_REQUIRED', 'CREATED', 'LINKED']),
+  "phoneMode": zod.enum(['SMS', 'CONFIRM_TWICE']).optional(),
   "email": zod.string().optional(),
   "name": zod.string().nullish(),
   "user": zod.record(zod.string(), zod.unknown()).optional()
@@ -120,6 +121,8 @@ export const completeGoogleSignInBodyPhoneCountryCodeMax = 5;
 
 export const completeGoogleSignInBodyPhoneNumberMax = 32;
 
+export const completeGoogleSignInBodyPhoneNumberConfirmMax = 32;
+
 export const completeGoogleSignInBodyAccountCountryMax = 3;
 
 export const completeGoogleSignInBodyVerificationTokenRegExp = new RegExp('^[0-9a-f]{64}$');
@@ -129,13 +132,15 @@ export const CompleteGoogleSignInBody = zod.object({
   "displayName": zod.string().min(completeGoogleSignInBodyDisplayNameMin).max(completeGoogleSignInBodyDisplayNameMax).optional(),
   "phoneCountryCode": zod.string().max(completeGoogleSignInBodyPhoneCountryCodeMax),
   "phoneNumber": zod.string().max(completeGoogleSignInBodyPhoneNumberMax),
+  "phoneNumberConfirm": zod.string().max(completeGoogleSignInBodyPhoneNumberConfirmMax).optional(),
   "accountCountry": zod.string().max(completeGoogleSignInBodyAccountCountryMax),
   "acceptTerms": zod.literal(true),
-  "verificationToken": zod.string().regex(completeGoogleSignInBodyVerificationTokenRegExp)
-})
+  "verificationToken": zod.string().regex(completeGoogleSignInBodyVerificationTokenRegExp).optional()
+}).describe('SMS mode sends verificationToken. Deferred mode (no SMS provider) sends phoneNumberConfirm instead: the phone is kept as an unverified contact number and the Google-verified email is the account\'s proof of identity.\n')
 
 export const CompleteGoogleSignInResponse = zod.object({
   "status": zod.enum(['SIGNED_IN', 'PHONE_VERIFICATION_REQUIRED', 'CREATED', 'LINKED']),
+  "phoneMode": zod.enum(['SMS', 'CONFIRM_TWICE']).optional(),
   "email": zod.string().optional(),
   "name": zod.string().nullish(),
   "user": zod.record(zod.string(), zod.unknown()).optional()

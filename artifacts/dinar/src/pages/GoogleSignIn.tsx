@@ -60,7 +60,8 @@ export function GoogleSignIn({ onSignedIn }: { onSignedIn: () => Promise<void> |
   const complete = useCompleteGoogleSignIn();
   const requestCode = useRequestPhoneVerificationChallenge();
   const verifyCode = useVerifyPhoneVerificationChallenge();
-  const [pending, setPending] = useState<{ email: string; name: string | null } | null>(null);
+  const [pending, setPending] = useState<{ email: string; name: string | null; confirmTwice: boolean } | null>(null);
+  const [phoneConfirm, setPhoneConfirm] = useState("");
   const [unavailable, setUnavailable] = useState(false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -91,7 +92,7 @@ export function GoogleSignIn({ onSignedIn }: { onSignedIn: () => Promise<void> |
             const result = await signIn.mutateAsync({ data: { idToken: credential } });
             if (result.status === "SIGNED_IN") await onSignedIn();
             else {
-              setPending({ email: result.email ?? "", name: result.name ?? null });
+              setPending({ email: result.email ?? "", name: result.name ?? null, confirmTwice: result.phoneMode === "CONFIRM_TWICE" });
               setDisplayName(result.name ?? "");
             }
           } catch (err) {
@@ -142,6 +143,32 @@ export function GoogleSignIn({ onSignedIn }: { onSignedIn: () => Promise<void> |
     }
   };
 
+  // Deferred mode (no SMS): the phone is typed twice and kept as an unverified contact number.
+  const finishWithoutSms = async () => {
+    if (!accepted) return setError("يلزم الموافقة على الشروط");
+    if (!/^[+\d\s٠-٩۰-۹()-]{6,40}$/.test(phoneNumber.trim())) return setError("أدخل رقم هاتف صحيحًا");
+    if (phoneNumber.replace(/\D/g, "") !== phoneConfirm.replace(/\D/g, "")) return setError("رقما الهاتف غير متطابقين. اكتب رقمك مرتين بنفس الطريقة.");
+    setError("");
+    setBusy(true);
+    try {
+      await complete.mutateAsync({
+        data: {
+          phoneCountryCode: dialCode,
+          phoneNumber: phoneNumber.trim(),
+          phoneNumberConfirm: phoneConfirm.trim(),
+          accountCountry: country,
+          acceptTerms: true,
+          ...(displayName.trim().length >= 2 ? { displayName: displayName.trim() } : {}),
+        },
+      });
+      await onSignedIn();
+    } catch (err) {
+      setError(friendlyError(err));
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const finish = async () => {
     if (!accepted) return setError("يلزم الموافقة على الشروط");
     if (!/^\d{6}$/.test(code)) return setError("أدخل رمز التحقق المكوّن من 6 أرقام");
@@ -170,9 +197,18 @@ export function GoogleSignIn({ onSignedIn }: { onSignedIn: () => Promise<void> |
   return (
     <div className="grid gap-4 rounded-2xl border border-border bg-muted/30 p-4" data-testid="google-phone-step">
       <div>
-        <p className="font-semibold text-foreground">خطوة أخيرة: تأكيد رقم هاتفك</p>
+        <p className="font-semibold text-foreground">خطوة أخيرة: {pending.confirmTwice ? "رقم هاتفك للتواصل" : "تأكيد رقم هاتفك"}</p>
         <p className="mt-1 text-sm text-muted-foreground">
-          تم التحقق من حساب Google <span dir="ltr">{pending.email}</span>. يتطلب جاسم رقم هاتف موثقًا لكل حساب؛ إذا كان الرقم مسجلًا لديك سابقًا فسنربط حساب Google به.
+          {pending.confirmTwice ? (
+            <>
+              تم التحقق من حساب Google <span dir="ltr">{pending.email}</span>. اكتب رقم هاتفك مرتين؛ يصل إليه البائع أو المشتري للتنسيق على طلباتك.
+              تأكد أنه رقمك وصحيح، فالحسابات برقم غير موثّق تملك طلبين مفتوحين كحد أقصى.
+            </>
+          ) : (
+            <>
+              تم التحقق من حساب Google <span dir="ltr">{pending.email}</span>. يتطلب جاسم رقم هاتف موثقًا لكل حساب؛ إذا كان الرقم مسجلًا لديك سابقًا فسنربط حساب Google به.
+            </>
+          )}
         </p>
       </div>
       <Field label="الاسم">
@@ -184,7 +220,19 @@ export function GoogleSignIn({ onSignedIn }: { onSignedIn: () => Promise<void> |
       <Field label="رقم الهاتف">
         <PhoneInput name="googlePhoneNumber" dialCode={dialCode} onDialCodeChange={setDialCode} countryCode={phoneCountry} onCountryChange={setPhoneCountry} value={phoneNumber} onChange={(event) => setPhoneNumber(event.target.value)} />
       </Field>
-      {!challengeId ? (
+      {pending.confirmTwice ? (
+        <>
+          <Field label="أعد كتابة رقم الهاتف">
+            <PhoneInput name="googlePhoneNumberConfirm" dialCode={dialCode} onDialCodeChange={setDialCode} countryCode={phoneCountry} onCountryChange={setPhoneCountry} value={phoneConfirm} onChange={(event) => setPhoneConfirm(event.target.value)} />
+          </Field>
+          <Checkbox checked={accepted} onChange={(value: boolean) => setAccepted(value)}>
+            <TermsAcknowledgementText />
+          </Checkbox>
+          <Button type="button" loading={busy} onClick={() => void finishWithoutSms()} data-testid="google-complete-confirm-twice">
+            إنشاء الحساب والمتابعة
+          </Button>
+        </>
+      ) : !challengeId ? (
         <Button type="button" loading={busy} onClick={() => void sendCode()} data-testid="google-send-code">
           أرسل رمز التحقق
         </Button>

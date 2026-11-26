@@ -5,11 +5,13 @@
  * DINAR general marketplace API with seller-defined listing prices
  * OpenAPI spec version: 0.1.0
  */
+import type { GoogleSignInResultPhoneMode } from './googleSignInResultPhoneMode';
 import type { GoogleSignInResultStatus } from './googleSignInResultStatus';
 import type { GoogleSignInResultUser } from './googleSignInResultUser';
 
 export interface GoogleSignInResult {
   status: GoogleSignInResultStatus;
+  phoneMode?: GoogleSignInResultPhoneMode;
   email?: string;
   /** @nullable */
   name?: string | null;
