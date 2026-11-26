@@ -260,4 +260,72 @@ await test("DC-13 in the conversation: «نبّهني إذا توفر» shows wh
   assert.equal(row!.expiresAt.getTime() - row!.createdAt.getTime(), 30 * DAY, "policy retention: 30 days");
 });
 
+await test("AP-01..06 interest-based ads: off until the buyer opts in, coarse interests only, truthful reason, erasable", async () => {
+  const { recordAdInterest, interestMatch, interestProfile, interestTerms, listAdInterests, HALF_LIFE_DAYS } = await import("../src/lib/ad-interests");
+  const { adInterestSignals } = await import("@workspace/db");
+  const watcher = await account("watcher");
+  const listener = await account("listener");
+  // AP-01 off by default: nothing is recorded and the setting says so.
+  const initial = await request("/account/ad-personalization", "GET", undefined, watcher.cookie);
+  assert.equal(initial.status, 200, initial.raw);
+  assert.equal(initial.data.status, "OFF");
+  assert.equal(initial.data.decided, false);
+  assert.equal(initial.data.retentionDays, 90);
+  assert.deepEqual(await recordAdInterest({ userId: watcher.id, source: "SEARCH", categoryId: "electronics", text: "ساعة ذكية" }), { recorded: 0 });
+  assert.equal((await db.select().from(adInterestSignals).where(eq(adInterestSignals.userId, watcher.id))).length, 0);
+  // AP-02 opt in; only category ids and keywords are kept, never the sentence.
+  for (const actor of [watcher, listener])
+    assert.equal((await request("/account/ad-personalization", "PUT", { status: "ON" }, actor.cookie)).status, 200);
+  await recordAdInterest({ userId: watcher.id, source: "SEARCH", text: "بدي ساعة ذكية رياضية" });
+  await recordAdInterest({ userId: watcher.id, source: "CART", text: "ساعة ذكية" });
+  await recordAdInterest({ userId: listener.id, source: "SEARCH", text: "سماعة بلوتوث" });
+  const stored = await db.select().from(adInterestSignals).where(eq(adInterestSignals.userId, watcher.id));
+  assert.ok(stored.every((row) => !row.key.includes(" ") && row.key.length <= 30), JSON.stringify(stored));
+  assert.ok(stored.some((row) => row.kind === "TERM" && row.key === "ساعه" || row.key === "ساعة"), JSON.stringify(stored));
+  assert.ok(!stored.some((row) => ["بدي"].includes(row.key)), "request words are not interests");
+  // AP-03 sensitive subjects record nothing at all, not even the category.
+  const before = stored.length;
+  assert.deepEqual(await recordAdInterest({ userId: watcher.id, source: "SEARCH", categoryId: "services", text: "دواء ضغط الدم" }), { recorded: 0 });
+  assert.equal((await db.select().from(adInterestSignals).where(eq(adInterestSignals.userId, watcher.id))).length, before);
+  // AP-04 interests re-order eligible cards and the reason is the interest that matched.
+  await appendCommercialPolicy({ marketId: "JO", policy: { welcomeSponsoredSlots: 1 }, actorId: null });
+  try {
+    const watcherCards = (await request(`/ai/welcome-sponsored?key=${randomUUID()}`, "GET", undefined, watcher.cookie)).data.cards;
+    const listenerCards = (await request(`/ai/welcome-sponsored?key=${randomUUID()}`, "GET", undefined, listener.cookie)).data.cards;
+    assert.equal(watcherCards.length, 1);
+    assert.equal(listenerCards.length, 1);
+    assert.equal(watcherCards[0].listingId, listings.chatB, "the smart-watch buyer sees the watch");
+    assert.equal(listenerCards[0].listingId, listings.chatA, "the headphones buyer sees the headphones");
+    assert.match(watcherCards[0].whyShown, /لأنك بحثت عن «ساع/u);
+    assert.equal(watcherCards[0].label, "إعلان ممول", "still labelled as an ad");
+  } finally {
+    await appendCommercialPolicy({ marketId: "JO", policy: { welcomeSponsoredSlots: 2 }, actorId: null });
+  }
+  // AP-05 the buyer sees their interests and can erase them; OFF erases and stops recording.
+  const visible = await request("/account/ad-personalization", "GET", undefined, watcher.cookie);
+  assert.equal(visible.data.status, "ON");
+  assert.ok(visible.data.interests.length > 0);
+  assert.equal((await request("/account/ad-interests/clear", "POST", {}, watcher.cookie)).status, 200);
+  assert.equal((await listAdInterests(watcher.id)).length, 0);
+  await recordAdInterest({ userId: listener.id, source: "SEARCH", text: "سماعة" });
+  assert.equal((await request("/account/ad-personalization", "PUT", { status: "OFF" }, listener.cookie)).status, 200);
+  assert.equal((await db.select().from(adInterestSignals).where(eq(adInterestSignals.userId, listener.id))).length, 0);
+  assert.deepEqual(await recordAdInterest({ userId: listener.id, source: "SEARCH", text: "سماعة" }), { recorded: 0 });
+  const plain = (await request(`/ai/welcome-sponsored?key=${randomUUID()}`, "GET", undefined, listener.cookie)).data.cards;
+  assert.ok(plain.every((card: any) => card.whyShown === "إعلان عام في سوقك"), JSON.stringify(plain));
+  // AP-06 decay and cross-category keywords (cars interest reaches a car charger in electronics).
+  const now = new Date();
+  const old = new Date(now.getTime() - HALF_LIFE_DAYS * DAY);
+  const profile = { categories: new Map([["cars", 4]]), terms: new Map([[interestTerms("سيارة")[0]!, 2]]) };
+  const charger = interestMatch(profile, { categoryId: "electronics", text: "شاحن سيارة سريع" });
+  assert.ok(charger.boost > 0, "a car keyword matches an electronics listing");
+  assert.equal(interestMatch(profile, { categoryId: "fashion", text: "قميص قطن" }).boost, 0);
+  await request("/account/ad-personalization", "PUT", { status: "ON" }, watcher.cookie);
+  await recordAdInterest({ userId: watcher.id, source: "SEARCH", categoryId: "cars", text: "تويوتا", now: old });
+  const decayedValue = (await interestProfile(watcher.id, now)).categories.get("cars")!;
+  assert.ok(Math.abs(decayedValue - 0.5) < 0.01, `one half-life halves the score (${decayedValue})`);
+  const unauth = await request("/account/ad-personalization", "GET");
+  assert.equal(unauth.status, 401);
+});
+
 after(async () => { server.close(); await pool.end(); });

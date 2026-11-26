@@ -1,4 +1,5 @@
 import type { UniversalCardsPayload } from "@workspace/api-zod/connect";
+import { recordAdInterest } from "../lib/ad-interests";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import type { DinarCapabilityCatalog } from "./dinar-capabilities";
@@ -416,6 +417,13 @@ export const aiToolRegistry: Record<string, ToolDefinition> = {
           sort: input.sort as SearchSort | undefined,
         });
       let listings = await run(input.query);
+      // Interest-based ads: only for a signed-in buyer who turned them ON (checked inside).
+      await recordAdInterest({
+        userId: context.actorId,
+        source: "SEARCH",
+        categoryId: input.categoryId ?? (listings[0] as { categoryId?: string } | undefined)?.categoryId ?? null,
+        text: input.query ?? "",
+      });
       let broadenedFrom: string[] | undefined;
       let widenedFromCategory: string | undefined;
       const serviceQuery=hasServiceMeaning(itemTokens(normalizeSearch(input.query??"").split(/\s+/u)));

@@ -310,5 +310,9 @@
   {
     "tag": "0077_connect_workflows",
     "sha256": "12984b0f9e7a743bef841cabce897d29c3996a5f8ce53aaae24754c300dc894f"
+  },
+  {
+    "tag": "0078_ad_personalization",
+    "sha256": "7cb02b8c3188cc5e676afe294a252eb03c9ed816465e2f0e09b6ce803508354b"
   }
 ]

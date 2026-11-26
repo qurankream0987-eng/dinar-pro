@@ -38,6 +38,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { api, useAccount } from "@/account/Account";
 import { usePolicyIndex } from "@/pages/Policies";
 import {ConnectAttributionPrivacy} from "@/features/ConnectAttributionPrivacy";
+import { AdPersonalizationSettings } from "@/features/AdPersonalizationSettings";
 import { friendlyError } from "@/lib/errors";
 import { longDate } from "@/lib/format";
 import { useTheme, type ThemePreference } from "@/lib/theme";
@@ -338,6 +339,8 @@ export function SettingsPage() {
       </ListGroup>
 
       <EmailNotificationsSettings />
+
+      <AdPersonalizationSettings />
 
       <ListGroup title="السوق والدولة">
         <ListRow

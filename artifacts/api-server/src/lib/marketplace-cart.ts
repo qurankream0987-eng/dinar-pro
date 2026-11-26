@@ -1,4 +1,5 @@
 import { createHash, randomUUID } from "node:crypto";
+import { recordAdInterest } from "./ad-interests";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { aiResultSets, aiUiBlocks, cartItems, carts, conversations, db, messages, users } from "@workspace/db";
 import { isMarketAvailable, marketFor } from "./markets";
@@ -268,7 +269,7 @@ export async function addMarketplaceCartItem(input: {
   if (!Number.isSafeInteger(quantity) || quantity < 1 || quantity > 100)
     throw fail(400, "الكمية غير صالحة");
 
-  return db.transaction(async (tx) => {
+  const added = await db.transaction(async (tx) => {
     const [actor] = await tx
       .select()
       .from(users)
@@ -291,11 +292,16 @@ export async function addMarketplaceCartItem(input: {
       quantity,
     );
     await persistCart(tx, actor, market, items);
+    const data = row.offer.data as { title?: string; categoryId?: string };
     return {
       listing: listing(row.offer, row.seller, market),
       quantity: nextQuantity,
+      interest: { categoryId: data.categoryId ?? null, text: data.title ?? "" },
     };
   });
+  // Interest-based ads (only if the buyer turned them ON); never affects the cart result.
+  await recordAdInterest({ userId, source: "CART", categoryId: added.interest.categoryId, text: added.interest.text });
+  return { listing: added.listing, quantity: added.quantity };
 }
 
 /**
@@ -357,7 +363,8 @@ export async function addMarketplaceCartItemOnce(input: {
     throw fail(400, "الكمية غير صالحة");
   const key = cardAddReceiptKey({ conversationId, resultSetId, listingId });
 
-  return db.transaction(async (tx) => {
+  let interest: { categoryId: string | null; text: string } | undefined;
+  const outcome = await db.transaction(async (tx) => {
     const [actor] = await tx
       .select()
       .from(users)
@@ -397,6 +404,8 @@ export async function addMarketplaceCartItemOnce(input: {
       throw fail(409, "لم يعد هذا العرض ضمن نتائج هذه المحادثة؛ أعد البحث ثم حاول مجددًا");
 
     const row = await validatedCartListing(tx, actor, market, listingId);
+    const interestData = row.offer.data as { title?: string; categoryId?: string };
+    interest = { categoryId: interestData.categoryId ?? null, text: interestData.title ?? "" };
     const { items, nextQuantity } = await cartItemsAfterAdd(
       tx,
       actor,
@@ -440,6 +449,10 @@ export async function addMarketplaceCartItemOnce(input: {
     await tx.update(conversations).set({ updatedAt: new Date() }).where(eq(conversations.id, conversationId));
     return { receipt: receiptOf(message!), replayed: false };
   });
+  // Assigned inside the transaction callback; read through a cast so TypeScript keeps the type.
+  const captured = interest as { categoryId: string | null; text: string } | undefined;
+  if (captured && !outcome.replayed) await recordAdInterest({ userId, source: "CART", categoryId: captured.categoryId, text: captured.text });
+  return outcome;
 }
 
 /**

@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, integer, timestamp, uniqueIndex, index, check } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, timestamp, uniqueIndex, index, check, doublePrecision, primaryKey } from "drizzle-orm/pg-core";
 import { conversations, listingPromotions, markets, offers, users } from "./index";
 
 const created = () => timestamp("created_at", { withTimezone: true }).defaultNow().notNull();
@@ -24,6 +24,8 @@ export const welcomeAdExposures = pgTable(
     slot: integer("slot").notNull(),
     shownAt: timestamp("shown_at", { withTimezone: true }).defaultNow().notNull(),
     dismissedAt: timestamp("dismissed_at", { withTimezone: true }),
+    /** Why this card was chosen for this viewer (the interest that matched), or null when unpersonalized. */
+    personalizationReason: text("personalization_reason"),
   },
   (t) => [
     uniqueIndex("welcome_ad_exposures_key_slot_unique").on(t.userId, t.welcomeKey, t.slot),
@@ -82,5 +84,41 @@ export const demandMatchNotices = pgTable(
     index("demand_match_notices_buyer_idx").on(t.buyerId, t.matchedAt),
     index("demand_match_notices_promotion_idx").on(t.promotionId),
     check("demand_match_notices_status_valid", sql`${t.status} IN ('UNREAD', 'SEEN', 'DISMISSED')`),
+  ],
+);
+
+/**
+ * Interest-based ads: the viewer's own choice. Absent row = never asked (no personalization).
+ * OFF erases every stored interest; ON lets search and cart signals build interests.
+ */
+export const adPersonalizationSettings = pgTable(
+  "ad_personalization_settings",
+  {
+    userId: text("user_id").primaryKey().references(() => users.id),
+    status: text("status").notNull(),
+    decidedAt: timestamp("decided_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  () => [check("ad_personalization_settings_status_valid", sql`status IN ('ON','OFF')`)],
+);
+
+/**
+ * Coarse interests only: a category id or a normalized keyword, a decayed score and when it was last
+ * seen. Never the message text. Rows older than the retention window are deleted on read and write.
+ */
+export const adInterestSignals = pgTable(
+  "ad_interest_signals",
+  {
+    userId: text("user_id").notNull().references(() => users.id),
+    kind: text("kind").notNull(),
+    key: text("key").notNull(),
+    score: doublePrecision("score").notNull(),
+    lastSeenAt: timestamp("last_seen_at", { withTimezone: true }).notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.userId, t.kind, t.key] }),
+    index("ad_interest_signals_user_idx").on(t.userId, t.lastSeenAt),
+    check("ad_interest_signals_kind_valid", sql`${t.kind} IN ('CATEGORY','TERM')`),
+    check("ad_interest_signals_key_valid", sql`char_length(${t.key}) BETWEEN 1 AND 60`),
+    check("ad_interest_signals_score_valid", sql`${t.score} > 0`),
   ],
 );

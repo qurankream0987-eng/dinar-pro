@@ -9,7 +9,7 @@ import { SmartImage } from "@/ui/Media";
  * renders what it returns, once per welcome key — typing never refetches or rotates them, and
  * nothing here is ever added to the conversation. No eligible card → nothing at all.
  */
-type Card = { slot: number; listingId: string; title: string; price: string | null; currency: string; city: string | null; imagePath: string | null; sellerName: string; label: string; path: string };
+type Card = { slot: number; listingId: string; title: string; price: string | null; currency: string; city: string | null; imagePath: string | null; sellerName: string; label: string; path: string; whyShown?: string };
 
 const NONCE_KEY = "jassim-welcome-key";
 /** The new-conversation screen's key: the empty conversation's id, or a nonce for this screen. */
@@ -79,6 +79,11 @@ export function WelcomeSponsored({ conversationId }: { conversationId?: string }
                 <span aria-hidden> · </span>
                 <span>{card.sellerName}</span>
               </span>
+              {card.whyShown ? (
+                <span className="welcome-sponsored-why" data-testid="welcome-sponsored-why" title="لماذا أرى هذا الإعلان؟">
+                  {card.whyShown}
+                </span>
+              ) : null}
             </span>
           </Link>
         ))}

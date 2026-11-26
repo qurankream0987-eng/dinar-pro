@@ -10,18 +10,22 @@
  *   - at most `welcomeSponsoredSlots` (≤ 2) cards, chosen once per conversation and returned
  *     unchanged on every later read (typing or refreshing never rotates them);
  *   - at most `welcomeSponsoredDailyConversations` conversations per viewer per 24 h show any;
- *   - market eligibility only — no personal profiling; the viewer's own listings are excluded;
+ *   - market eligibility first; only then, for a viewer who turned interest-based ads ON
+ *     (lib/ad-interests.ts), eligible cards are re-ordered by the viewer's own interests and the
+ *     matching interest is stored as the card's truthful «why am I seeing this» reason. Interests
+ *     never make an ineligible campaign appear. The viewer's own listings are excluded;
  *   - one IMPRESSION attribution per card (placement WELCOME), never billable; dismissal hides
  *     them for that conversation.
  * No eligible campaign → no section at all (never filler).
  */
 import { randomUUID } from "node:crypto";
 import { and, count, desc, eq, gt, inArray, isNull, lte } from "drizzle-orm";
-import { conversations, db, listingPromotions, messages, offers, users, welcomeAdExposures } from "@workspace/db";
+import { conversations, db, listingPromotions, marketplaceCategories, messages, offers, users, welcomeAdExposures } from "@workspace/db";
 import { getCommercialPolicy } from "./commercial-policy";
 import { isPromotionSimulationEnabled } from "./promotion-policy";
 import { formatMinor, isServingCampaign, listingPromotionEligibility, rankSponsored, sponsoredScore, SPONSORED_LABEL, SERVING_PAYMENT_STATUSES } from "./promotions";
 import { recordAttributionEvent } from "./promotion-attribution";
+import { interestMatch, interestProfile } from "./ad-interests";
 import type { marketFor } from "./markets";
 type Market = Awaited<ReturnType<typeof marketFor>>;
 
@@ -41,11 +45,24 @@ export type WelcomeCard = {
   sellerName: string;
   label: typeof SPONSORED_LABEL;
   path: string;
+  /** Truthful «لماذا أرى هذا الإعلان؟»: the viewer's own interest that matched, or the market default. */
+  whyShown: string;
 };
 export type WelcomeAds = { cards: WelcomeCard[]; reason?: "NOT_EMPTY" | "NOT_OWNER" | "DISMISSED" | "DAILY_CAP" | "NO_ELIGIBLE" | "DISABLED" };
 
-async function cardsFor(market: Market, rows: { slot: number; listingId: string; promotionId: string }[]): Promise<WelcomeCard[]> {
+async function whyShownText(reason: string | null | undefined): Promise<string> {
+  if (reason?.startsWith("CATEGORY:")) {
+    const [row] = await db.select({ label: marketplaceCategories.label }).from(marketplaceCategories).where(eq(marketplaceCategories.id, reason.slice(9)));
+    if (row) return `لأنك تهتم بـ«${row.label}»`;
+  }
+  if (reason?.startsWith("TERM:")) return `لأنك بحثت عن «${reason.slice(5)}»`;
+  return "إعلان عام في سوقك";
+}
+
+async function cardsFor(market: Market, rows: { slot: number; listingId: string; promotionId: string; personalizationReason?: string | null }[]): Promise<WelcomeCard[]> {
   if (!rows.length) return [];
+  const why = new Map<string, string>();
+  for (const row of rows) why.set(row.listingId, await whyShownText(row.personalizationReason));
   const listing = await db
     .select({ offer: offers, sellerName: users.displayName })
     .from(offers)
@@ -69,6 +86,7 @@ async function cardsFor(market: Market, rows: { slot: number; listingId: string;
       sellerName: found.sellerName.slice(0, 60),
       label: SPONSORED_LABEL,
       path: `/listings/${row.listingId}`,
+      whyShown: why.get(row.listingId) ?? "إعلان عام في سوقك",
     }];
   });
 }
@@ -126,16 +144,23 @@ export async function welcomeSponsoredCards(input: { actorId: string; welcomeKey
     .from(offers)
     .innerJoin(users, eq(users.id, offers.sellerId))
     .where(inArray(offers.id, [...new Set(campaigns.map((row) => row.listingId))]));
-  const scored: { id: string; listingId: string; promotionId: string; score: number }[] = [];
+  const profile = await interestProfile(input.actorId, now);
+  const scored: { id: string; listingId: string; promotionId: string; score: number; reason: string | null }[] = [];
   for (const row of listings) {
     const eligible = await listingPromotionEligibility(row.offer, row.sellerStatus, input.market);
     if (!eligible.ok) continue;
     const campaign = campaigns.find((item) => item.listingId === row.offer.id)!;
+    const data = row.offer.data as { title?: string; description?: string; tags?: string[]; categoryId?: string };
+    const match = interestMatch(profile, {
+      categoryId: data.categoryId ?? null,
+      text: [data.title, data.description, ...(Array.isArray(data.tags) ? data.tags : [])].filter(Boolean).join(" "),
+    });
     scored.push({
       id: row.offer.id,
       listingId: row.offer.id,
       promotionId: campaign.id,
-      score: sponsoredScore({
+      reason: match.reason,
+      score: (1 + 3 * match.boost) * sponsoredScore({
         organicIndex: 0,
         priorityWeight: campaign.priorityWeightSnapshot,
         unitChargeMinor: campaign.unitChargeMinorSnapshot,
@@ -145,7 +170,7 @@ export async function welcomeSponsoredCards(input: { actorId: string; welcomeKey
       }),
     });
   }
-  const chosen = rankSponsored(scored, slots).map((item, index) => ({ slot: index + 1, listingId: item.listingId, promotionId: item.promotionId }));
+  const chosen = rankSponsored(scored, slots).map((item, index) => ({ slot: index + 1, listingId: item.listingId, promotionId: item.promotionId, personalizationReason: item.reason }));
   if (!chosen.length) return { cards: [], reason: "NO_ELIGIBLE" };
   // The unique (conversation, slot) index makes a concurrent first read choose once.
   const inserted = await db

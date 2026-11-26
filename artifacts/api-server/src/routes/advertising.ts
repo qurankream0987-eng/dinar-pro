@@ -8,6 +8,7 @@ import { requireAuth } from "../lib/auth";
 import { marketFor } from "../lib/markets";
 import { majorToMinor } from "../lib/commercial-policy";
 import { dismissWelcomeCards, welcomeSponsoredCards } from "../lib/welcome-ads";
+import { clearAdInterests, getAdPersonalization, hasDecidedAdPersonalization, listAdInterests, RETENTION_DAYS, setAdPersonalization } from "../lib/ad-interests";
 import {
   DEMAND_REQUEST_DISCLOSURE,
   deleteDemandRequest,
@@ -31,6 +32,28 @@ router.get("/ai/welcome-sponsored", requireAuth, async (req, res) => {
 router.post("/ai/welcome-sponsored/dismiss", requireAuth, async (req, res) => {
   const body = z.object({ key: id }).strict().parse(req.body);
   res.json(await dismissWelcomeCards({ actorId: req.actor!.id, welcomeKey: body.key }));
+});
+
+/** Interest-based ads: the viewer's own switch and the interests they can see and erase. */
+router.get("/account/ad-personalization", requireAuth, async (req, res) => {
+  const userId = req.actor!.id;
+  res.set("Cache-Control", "no-store").json({
+    status: await getAdPersonalization(userId),
+    decided: await hasDecidedAdPersonalization(userId),
+    retentionDays: RETENTION_DAYS,
+    interests: await listAdInterests(userId),
+  });
+});
+
+router.put("/account/ad-personalization", requireAuth, async (req, res) => {
+  const body = z.object({ status: z.enum(["ON", "OFF"]) }).strict().parse(req.body);
+  res.json(await setAdPersonalization(req.actor!.id, body.status));
+});
+
+router.post("/account/ad-interests/clear", requireAuth, async (req, res) => {
+  z.object({}).strict().parse(req.body ?? {});
+  await clearAdInterests(req.actor!.id);
+  res.json({ cleared: true });
 });
 
 router.get("/demand-requests/disclosure", (_req, res) => {
