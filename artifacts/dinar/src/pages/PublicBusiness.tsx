@@ -144,7 +144,7 @@ export default function PublicBusinessPage() {
 
         <p className="flex items-center justify-center gap-1.5 pb-6 text-center text-xs text-muted-foreground">
           <Clock size={13} aria-hidden />
-          البيانات المعروضة يحدّثها صاحب النشاط من محادثة دينار.
+          البيانات المعروضة يحدّثها صاحب النشاط من محادثة جاسم.
           {profile.area ? (
             <span className="inline-flex items-center gap-1">
               <MapPin size={13} aria-hidden />

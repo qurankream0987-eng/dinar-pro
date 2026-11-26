@@ -172,7 +172,7 @@ export function GoogleSignIn({ onSignedIn }: { onSignedIn: () => Promise<void> |
       <div>
         <p className="font-semibold text-foreground">خطوة أخيرة: تأكيد رقم هاتفك</p>
         <p className="mt-1 text-sm text-muted-foreground">
-          تم التحقق من حساب Google <span dir="ltr">{pending.email}</span>. يتطلب دينار رقم هاتف موثقًا لكل حساب؛ إذا كان الرقم مسجلًا لديك سابقًا فسنربط حساب Google به.
+          تم التحقق من حساب Google <span dir="ltr">{pending.email}</span>. يتطلب جاسم رقم هاتف موثقًا لكل حساب؛ إذا كان الرقم مسجلًا لديك سابقًا فسنربط حساب Google به.
         </p>
       </div>
       <Field label="الاسم">

@@ -36,7 +36,7 @@ function MemoryExperience({ memory, active = false, onSend, dir }: MemorySummary
       <Button size="sm" variant="secondary" icon={<Plus size={15} aria-hidden />} onClick={() => openEditor()} data-testid="memory-add">تذكر تفضيلًا</Button>
       <Button size="sm" variant="ghost" onClick={() => send("جاسم، ماذا تعرف عن اهتماماتي؟")} data-testid="memory-view">اعرض اهتماماتي</Button>
     </div> : <p className="text-xs text-muted-foreground">يمكنك كتابة «تذكر أني أحب التخييم» أو «احذف اهتمام السيارات» في المحادثة.</p>}
-    <Sheet open={Boolean(editor)} onOpenChange={open => { if (!open) setEditor(null); }} title={editor?.oldLabel ? "عدّل تفضيلك" : "تذكر تفضيلًا"} description="سيُرسل طلبك في المحادثة. يؤكد دينار النتيجة بعد معالجة الطلب." testId="memory-editor">
+    <Sheet open={Boolean(editor)} onOpenChange={open => { if (!open) setEditor(null); }} title={editor?.oldLabel ? "عدّل تفضيلك" : "تذكر تفضيلًا"} description="سيُرسل طلبك في المحادثة. يؤكد جاسم النتيجة بعد معالجة الطلب." testId="memory-editor">
       <form className="min-w-0 space-y-4 pb-4" onSubmit={event => { event.preventDefault(); if (!value.trim() || !canAct) return; send(editor?.oldLabel ? `عدّل تفضيلي ${editor.oldLabel} إلى ${value.trim()}` : `تذكر أني أحب ${value.trim()}`); setEditor(null); }}>
         {editor?.oldLabel && <p className="break-words text-sm text-muted-foreground">التفضيل الحالي: {editor.oldLabel}</p>}
         <Field label={editor?.oldLabel ? "التفضيل الجديد" : "ما الذي تفضله؟"} hint="اكتب اهتمامًا أو تفضيلًا؛ لا تضف معلومات حساسة أو بيانات دخول."><Input value={value} maxLength={80} autoFocus onChange={e => setValue(e.target.value)} placeholder="مثل: التخييم" data-testid="memory-editor-input" /></Field>
