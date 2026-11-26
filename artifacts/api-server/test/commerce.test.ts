@@ -282,7 +282,7 @@ test("seller dues preserve historical 15% snapshots, legacy 10% orders and curre
     const first = createSellerDueForOrder(historicalOrder, dues, 1_800_000_000_000);
     const second = createSellerDueForOrder(historicalOrder, dues, 1_800_000_000_001);
     assert.equal(first?.amount, "1.050");
-    assert.equal(first?.reason, "عمولة BDINAR بنسبة 15% بعد اكتمال الطلب");
+    assert.equal(first?.reason, "عمولة جاسم بنسبة 15% بعد اكتمال الطلب");
     assert.equal(second, null);
     assert.equal(dues.length, 1);
 
@@ -294,7 +294,7 @@ test("seller dues preserve historical 15% snapshots, legacy 10% orders and curre
       1_800_000_000_002,
     );
     assert.equal(legacyDue?.amount, "0.700");
-    assert.equal(legacyDue?.reason, "عمولة BDINAR بنسبة 10% بعد اكتمال الطلب");
+    assert.equal(legacyDue?.reason, "عمولة جاسم بنسبة 10% بعد اكتمال الطلب");
   }
 });
 
