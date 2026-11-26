@@ -371,6 +371,7 @@ export * from './getSubscriptionPlanEconomicsParams';
 export * from './googleCompleteInput';
 export * from './googleSignInInput';
 export * from './googleSignInResult';
+export * from './googleSignInResultPhoneMode';
 export * from './googleSignInResultStatus';
 export * from './googleSignInResultUser';
 export * from './handoverCodeInput';

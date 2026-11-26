@@ -24,6 +24,10 @@ import {
   businessOperatingProfiles,
 } from "@workspace/db";
 import { and, eq, or, inArray, desc, lte, sql } from "drizzle-orm";
+import { OPEN_ORDER_STATUSES } from "../lib/moderation";
+import { phoneVerificationDeferred } from "../lib/auth";
+/** Owner decision 2026-11-26: open orders allowed to a buyer whose phone is not verified. */
+const UNVERIFIED_PHONE_OPEN_ORDER_LIMIT = 2;
 import {
   CreateListingBody,
   UpdateListingBody,
@@ -714,6 +718,19 @@ async function checkout(
           (order) => currentById.get(order.id) ?? order,
         ),
       };
+    }
+    // Deferred phone verification (no SMS): a buyer whose phone is not verified may hold only a
+    // few open orders at once, so a mistyped or false number cannot tie up many sellers.
+    if (phoneVerificationDeferred() && !actor.phoneVerified) {
+      const [open] = await tx
+        .select({ n: sql<number>`count(*)::int` })
+        .from(orders)
+        .where(and(eq(orders.buyerId, actor.id), inArray(orders.status, [...OPEN_ORDER_STATUSES])));
+      if ((open?.n ?? 0) + lines.length > UNVERIFIED_PHONE_OPEN_ORDER_LIMIT)
+        throw fail(
+          409,
+          `حسابك برقم هاتف غير موثّق، فيمكنك أن تملك ${UNVERIFIED_PHONE_OPEN_ORDER_LIMIT} طلبات مفتوحة كحد أقصى. أكمل طلباتك الحالية أو ألغِها أولًا.`,
+        );
     }
     // Contract acceptance before a new order (an idempotent replay above still returns its order).
     await assertPoliciesAccepted(actor.id, tx);

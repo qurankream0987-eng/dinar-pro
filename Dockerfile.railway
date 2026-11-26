@@ -43,6 +43,9 @@ COPY --chown=node:node . .
 # only when it is declared here. The Google client id is a public identifier.
 ARG VITE_GOOGLE_CLIENT_ID=""
 ENV VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID
+# Map style (owner-approved provider, e.g. MapTiler). A public, domain-restricted key; https only.
+ARG VITE_DINAR_MAP_STYLE_URL=""
+ENV VITE_DINAR_MAP_STYLE_URL=$VITE_DINAR_MAP_STYLE_URL
 
 RUN pnpm --filter @workspace/dinar run build \
   && pnpm --filter @workspace/api-server run build

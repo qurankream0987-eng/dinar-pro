@@ -3399,6 +3399,9 @@ export interface GoogleSignInInput {
   idToken: string;
 }
 
+/**
+ * SMS mode sends verificationToken. Deferred mode (no SMS provider) sends phoneNumberConfirm instead: the phone is kept as an unverified contact number and the Google-verified email is the account's proof of identity.
+ */
 export interface GoogleCompleteInput {
   /**
      * @minLength 2
@@ -3409,11 +3412,13 @@ export interface GoogleCompleteInput {
   phoneCountryCode: string;
   /** @maxLength 32 */
   phoneNumber: string;
+  /** @maxLength 32 */
+  phoneNumberConfirm?: string;
   /** @maxLength 3 */
   accountCountry: string;
   acceptTerms: true;
   /** @pattern ^[0-9a-f]{64}$ */
-  verificationToken: string;
+  verificationToken?: string;
 }
 
 export type GoogleSignInResultStatus = typeof GoogleSignInResultStatus[keyof typeof GoogleSignInResultStatus];
@@ -3426,10 +3431,19 @@ export const GoogleSignInResultStatus = {
   LINKED: 'LINKED',
 } as const;
 
+export type GoogleSignInResultPhoneMode = typeof GoogleSignInResultPhoneMode[keyof typeof GoogleSignInResultPhoneMode];
+
+
+export const GoogleSignInResultPhoneMode = {
+  SMS: 'SMS',
+  CONFIRM_TWICE: 'CONFIRM_TWICE',
+} as const;
+
 export type GoogleSignInResultUser = { [key: string]: unknown };
 
 export interface GoogleSignInResult {
   status: GoogleSignInResultStatus;
+  phoneMode?: GoogleSignInResultPhoneMode;
   email?: string;
   /** @nullable */
   name?: string | null;

@@ -28,7 +28,7 @@ import {
 import { canHoldSession, SESSION_STATUSES } from "./account-status";
 import { grantPremiumTrialAtSignup } from "./ai-premium-trial";
 import { signupConsentRows } from "./policy-lifecycle";
-import { and, eq, gt, inArray, isNotNull, isNull, lte } from "drizzle-orm";
+import { and, eq, gt, inArray, isNotNull, isNull, lte, or } from "drizzle-orm";
 import { parsePhoneNumberFromString } from "libphonenumber-js/max";
 import { providerDeploymentEnvironment } from "./market-capability-registry";
 import { z } from "zod";
@@ -76,6 +76,19 @@ const scrypt = (password: string, salt: string, length: number, options: any) =>
 const phoneVerificationRequired = () =>
   process.env.NODE_ENV !== "development" ||
   process.env.BDINAR_REQUIRE_PHONE_VERIFICATION === "1";
+/**
+ * Owner decision 2026-11-26 (no SMS provider at launch): DINAR_PHONE_VERIFICATION_MODE=
+ * DEFERRED_WITH_VERIFIED_EMAIL lets an account hold a session when its EMAIL is verified (by Google)
+ * even though its phone is not. The phone is still required (typed twice) as an unverified contact
+ * number: it is never used to link or take over another account, and unverified buyers have a
+ * limit on open cash orders. Any other value keeps phone ownership mandatory.
+ */
+export const phoneVerificationDeferred = () =>
+  process.env.DINAR_PHONE_VERIFICATION_MODE === "DEFERRED_WITH_VERIFIED_EMAIL";
+export function canIssueSession(user: { phoneVerified: boolean; emailVerifiedAt: Date | null }): boolean {
+  if (!phoneVerificationRequired() || user.phoneVerified) return true;
+  return phoneVerificationDeferred() && user.emailVerifiedAt !== null;
+}
 export const digest = (value: string) =>
   createHash("sha256").update(value).digest("hex");
 export async function hashPassword(password: string) {
@@ -135,9 +148,11 @@ export const sessionMiddleware: RequestHandler = async (req, res, next) => {
           eq(sessions.id, digest(token)),
           gt(sessions.expiresAt, new Date()),
           inArray(users.status, [...SESSION_STATUSES]),
-          phoneVerificationRequired()
-            ? eq(users.phoneVerified, true)
-            : undefined,
+          !phoneVerificationRequired()
+            ? undefined
+            : phoneVerificationDeferred()
+              ? or(eq(users.phoneVerified, true), isNotNull(users.emailVerifiedAt))
+              : eq(users.phoneVerified, true),
         ),
       );
     if (rows[0]) {
@@ -224,8 +239,8 @@ async function startSession(
       if (updatedUser) sessionUser = updatedUser;
     }
   }
-  if (phoneVerificationRequired() && !user.phoneVerified)
-    throw new Error("Cannot issue a session before phone ownership is verified");
+  if (!canIssueSession(user))
+    throw new Error("Cannot issue a session before phone ownership (or, in deferred mode, the email) is verified");
   const token = randomBytes(32).toString("hex");
   await db.insert(sessions).values({
     id: digest(token),
@@ -582,7 +597,8 @@ const GoogleCompleteBody = z
     phoneNumber: z.string().min(1).max(32),
     accountCountry: z.string().min(2).max(3),
     acceptTerms: z.literal(true),
-    verificationToken: z.string().regex(/^[0-9a-f]{64}$/),
+    verificationToken: z.string().regex(/^[0-9a-f]{64}$/).optional(),
+    phoneNumberConfirm: z.string().min(1).max(32).optional(),
   })
   .strict();
 const pendingCookieOptions = { ...cookieOptions, sameSite: "strict" as const, maxAge: PENDING_TICKET_TTL_MS };
@@ -609,7 +625,7 @@ router.post("/auth/google", registrationLimit, async (req, res): Promise<void> =
     .limit(1);
   res.set("Cache-Control", "no-store");
   if (linked) {
-    if (!canHoldSession(linked.user.status) || !linked.user.phoneVerified) {
+    if (!canHoldSession(linked.user.status) || !canIssueSession(linked.user)) {
       res.status(403).json({ error: "لا يمكن تسجيل الدخول بهذا الحساب حاليًا." });
       return;
     }
@@ -622,7 +638,7 @@ router.post("/auth/google", registrationLimit, async (req, res): Promise<void> =
   // Not linked yet: nothing is created. The browser keeps a short-lived signed ticket and must
   // now prove phone ownership through the existing SMS challenge.
   res.cookie(GOOGLE_PENDING_COOKIE, issuePendingTicket(identity), pendingCookieOptions);
-  res.json({ status: "PHONE_VERIFICATION_REQUIRED", email: identity.email, name: identity.name });
+  res.json({ status: "PHONE_VERIFICATION_REQUIRED", email: identity.email, name: identity.name, phoneMode: phoneVerificationDeferred() ? "CONFIRM_TWICE" : "SMS" });
 });
 
 router.post("/auth/google/complete", registrationLimit, async (req, res): Promise<void> => {
@@ -646,6 +662,29 @@ router.post("/auth/google/complete", registrationLimit, async (req, res): Promis
     res.status(400).json({ error: "رقم الهاتف غير صالح للدولة المختارة" });
     return;
   }
+  // Deferred mode: no SMS. The phone is typed twice and kept as an UNVERIFIED contact number; the
+  // Google-verified email is the account's proof of identity. Without a verified Google email there
+  // is no account.
+  const deferred = phoneVerificationDeferred() && !b.verificationToken;
+  if (deferred) {
+    let confirm;
+    try {
+      confirm = b.phoneNumberConfirm ? normalizePhone(b.phoneCountryCode, b.phoneNumberConfirm) : undefined;
+    } catch {
+      confirm = undefined;
+    }
+    if (!confirm || confirm.normalizedPhone !== phone.normalizedPhone) {
+      res.status(400).json({ error: "رقما الهاتف غير متطابقين. اكتب رقمك مرتين بنفس الطريقة.", code: "PHONE_CONFIRMATION_MISMATCH" });
+      return;
+    }
+    if (!identity.email) {
+      res.status(400).json({ error: "حساب Google هذا بلا بريد موثّق. استخدم حسابًا آخر.", code: "GOOGLE_EMAIL_REQUIRED" });
+      return;
+    }
+  } else if (!b.verificationToken) {
+    res.status(400).json({ error: "يلزم التحقق من ملكية رقم الهاتف برمز SMS صالح" });
+    return;
+  }
   const signupMarket = await resolveSignupMarket(b.accountCountry);
   if ("error" in signupMarket) {
     res.status(signupMarket.status).json({ error: signupMarket.error });
@@ -655,10 +694,16 @@ router.post("/auth/google/complete", registrationLimit, async (req, res): Promis
   const passwordHash = await hashPassword(randomBytes(32).toString("base64url"));
   const result = await db.transaction(async (tx) => {
     const now = new Date();
-    if (!(await consumePhoneVerification(tx, b.verificationToken, phone.normalizedPhone, now))) return { kind: "unverified" as const };
+    if (!deferred && !(await consumePhoneVerification(tx, b.verificationToken!, phone.normalizedPhone, now))) return { kind: "unverified" as const };
     const [existing] = await tx.select().from(users).where(eq(users.normalizedPhone, phone.normalizedPhone)).for("update").limit(1);
     let user = existing;
     let kind: "LINKED" | "CREATED" = "LINKED";
+    // An unverified phone proves nothing: it never links to (or takes over) an existing account.
+    if (existing && deferred) return { kind: "phone_taken" as const };
+    if (deferred) {
+      const [emailOwner] = await tx.select({ id: users.id }).from(users).where(eq(users.email, identity.email!.toLowerCase())).limit(1);
+      if (emailOwner) return { kind: "conflict" as const };
+    }
     if (existing) {
       // The SMS code just proved ownership of this account's phone: linking is allowed, once.
       if (!canHoldSession(existing.status)) return { kind: "blocked" as const };
@@ -668,7 +713,16 @@ router.post("/auth/google/complete", registrationLimit, async (req, res): Promis
       if (displayName.length < 2) return { kind: "name" as const };
       const [created] = await tx
         .insert(users)
-        .values({ id: randomUUID(), displayName: displayName.slice(0, 80), ...phone, accountCountry: signupMarket.country.countryCode, activeMarketId: signupMarket.activeMarketId, passwordHash, phoneVerified: true })
+        .values({
+          id: randomUUID(),
+          displayName: displayName.slice(0, 80),
+          ...phone,
+          accountCountry: signupMarket.country.countryCode,
+          activeMarketId: signupMarket.activeMarketId,
+          passwordHash,
+          phoneVerified: !deferred,
+          ...(deferred ? { email: identity.email!.toLowerCase(), emailVerifiedAt: now } : {}),
+        })
         .onConflictDoNothing({ target: users.normalizedPhone })
         .returning();
       if (!created) return { kind: "duplicate" as const };
@@ -690,6 +744,10 @@ router.post("/auth/google/complete", registrationLimit, async (req, res): Promis
   });
   if (result.kind === "unverified") {
     res.status(400).json({ error: "يلزم التحقق من ملكية رقم الهاتف برمز SMS صالح" });
+    return;
+  }
+  if (result.kind === "phone_taken") {
+    res.status(409).json({ error: "رقم الهاتف هذا مسجّل بحساب آخر. إن كان حسابك فسجّل الدخول بكلمة المرور، أو تواصل مع الدعم.", code: "PHONE_ALREADY_REGISTERED" });
     return;
   }
   if (result.kind === "name") {
@@ -743,7 +801,7 @@ router.post("/auth/login", loginLimit, async (req, res): Promise<void> => {
     return;
   }
   let sessionUser = user;
-  if (!user.phoneVerified && phoneVerificationRequired()) {
+  if (!user.phoneVerified && phoneVerificationRequired() && !canIssueSession(user)) {
     if (!parsed.data.verificationToken) {
       res.status(401).json({ error: "رقم الهاتف أو كلمة المرور غير صحيحة" });
       return;

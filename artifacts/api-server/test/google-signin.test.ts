@@ -180,6 +180,61 @@ await test("an existing phone account is linked only after SMS proof, and only o
   assert.equal(login.status, 200, login.raw);
 });
 
+await test("deferred mode (no SMS): Google-verified email + phone typed twice; the phone never links or takes over", async () => {
+  const saved = { require: process.env.BDINAR_REQUIRE_PHONE_VERIFICATION, mode: process.env.DINAR_PHONE_VERIFICATION_MODE };
+  process.env.BDINAR_REQUIRE_PHONE_VERIFICATION = "1";
+  process.env.DINAR_PHONE_VERIFICATION_MODE = "DEFERRED_WITH_VERIFIED_EMAIL";
+  try {
+    const sub = `g-${randomUUID()}`;
+    const email = `deferred-${randomUUID().slice(0, 8)}@example.com`;
+    const pending = await request("/auth/google", { idToken: token({ sub, email, name: "مستخدم مؤجل" }) });
+    assert.equal(pending.status, 200, pending.raw);
+    assert.equal(pending.data.status, "PHONE_VERIFICATION_REQUIRED");
+    assert.equal(pending.data.phoneMode, "CONFIRM_TWICE");
+    const phoneNumber = nextPhone();
+    const base = { phoneCountryCode: "+965", phoneNumber, accountCountry: "KW", acceptTerms: true };
+    const mismatch = await request("/auth/google/complete", { ...base, phoneNumberConfirm: nextPhone() }, pending.jar);
+    assert.equal(mismatch.status, 400, mismatch.raw);
+    assert.equal(mismatch.data.code, "PHONE_CONFIRMATION_MISMATCH");
+    const missing = await request("/auth/google/complete", base, pending.jar);
+    assert.equal(missing.status, 400, "neither SMS token nor confirmation: refused");
+    const created = await request("/auth/google/complete", { ...base, phoneNumberConfirm: phoneNumber }, pending.jar);
+    assert.equal(created.status, 201, created.raw);
+    const [row] = await db.select().from(users).where(eq(users.id, created.data.user.id));
+    assert.equal(row!.phoneVerified, false, "the phone stays unverified");
+    assert.equal(row!.email, email);
+    assert.ok(row!.emailVerifiedAt, "the Google email is the verified identity");
+    const me = await request("/auth/me", undefined, created.jar, "GET");
+    assert.equal(me.data.user?.id, row!.id, "a session is issued in deferred mode");
+    const again = await request("/auth/google", { idToken: token({ sub, email }) });
+    assert.equal(again.data.status, "SIGNED_IN", again.raw);
+    // An existing account's phone can never be claimed by a new Google identity without SMS.
+    const intruder = await request("/auth/google", { idToken: token({ sub: `g-${randomUUID()}`, email: `other-${randomUUID().slice(0, 8)}@example.com` }) });
+    const takeover = await request("/auth/google/complete", { ...base, phoneNumberConfirm: phoneNumber }, intruder.jar);
+    assert.equal(takeover.status, 409, takeover.raw);
+    assert.equal(takeover.data.code, "PHONE_ALREADY_REGISTERED");
+    // The same Google email cannot open a second account.
+    const dupEmail = await request("/auth/google", { idToken: token({ sub: `g-${randomUUID()}`, email }) });
+    const second = nextPhone();
+    const dup = await request("/auth/google/complete", { ...base, phoneNumber: second, phoneNumberConfirm: second }, dupEmail.jar);
+    assert.equal(dup.status, 409, dup.raw);
+    // Turning deferred mode off: the unverified-phone account no longer holds a session.
+    delete process.env.DINAR_PHONE_VERIFICATION_MODE;
+    const off = await request("/auth/me", undefined, created.jar, "GET");
+    assert.equal(off.data.user, null, "strict mode refuses the existing session");
+    const offSignIn = await request("/auth/google", { idToken: token({ sub, email }) });
+    assert.equal(offSignIn.status, 403, offSignIn.raw);
+    const strict = await request("/auth/google", { idToken: token({ sub: `g-${randomUUID()}`, email: `strict-${randomUUID().slice(0, 8)}@example.com` }) });
+    assert.equal(strict.data.phoneMode, "SMS");
+    const strictPhone = nextPhone();
+    const noSms = await request("/auth/google/complete", { ...base, phoneNumber: strictPhone, phoneNumberConfirm: strictPhone }, strict.jar);
+    assert.equal(noSms.status, 400, "strict mode still requires the SMS token");
+  } finally {
+    if (saved.require === undefined) delete process.env.BDINAR_REQUIRE_PHONE_VERIFICATION; else process.env.BDINAR_REQUIRE_PHONE_VERIFICATION = saved.require;
+    if (saved.mode === undefined) delete process.env.DINAR_PHONE_VERIFICATION_MODE; else process.env.DINAR_PHONE_VERIFICATION_MODE = saved.mode;
+  }
+});
+
 await test("no outbound network", () => {
   assert.deepEqual(external, []);
 });

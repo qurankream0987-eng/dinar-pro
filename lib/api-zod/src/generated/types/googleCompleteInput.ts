@@ -6,6 +6,9 @@
  * OpenAPI spec version: 0.1.0
  */
 
+/**
+ * SMS mode sends verificationToken. Deferred mode (no SMS provider) sends phoneNumberConfirm instead: the phone is kept as an unverified contact number and the Google-verified email is the account's proof of identity.
+ */
 export interface GoogleCompleteInput {
   /**
      * @minLength 2
@@ -16,9 +19,11 @@ export interface GoogleCompleteInput {
   phoneCountryCode: string;
   /** @maxLength 32 */
   phoneNumber: string;
+  /** @maxLength 32 */
+  phoneNumberConfirm?: string;
   /** @maxLength 3 */
   accountCountry: string;
   acceptTerms: true;
   /** @pattern ^[0-9a-f]{64}$ */
-  verificationToken: string;
+  verificationToken?: string;
 }
