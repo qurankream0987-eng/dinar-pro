@@ -1816,7 +1816,7 @@ export default function AiPage() {
           </h3>
           <p>رأي مبني على نتائج هذا البحث داخل جاسم فقط، مع ذكر ما لا نعرفه.</p>
           <button type="button" className="ai-context-link" disabled={streaming} onClick={() => sendQuickReply("وش تنصحني؟")} data-testid="button-context-advice">
-            اطلب نصيحة دينار
+            اطلب نصيحة جاسم
             <ChevronLeft size={16} aria-hidden />
           </button>
         </section>
