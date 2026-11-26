@@ -330,7 +330,7 @@ export function createSellerDueForOrder(
     listingTitle: order.listingTitle,
     amount: formatMinorUnits(feeMinor, order.currency),
     currency: order.currency,
-    reason: `عمولة BDINAR بنسبة ${commissionRateBps / 100}% بعد اكتمال الطلب`,
+    reason: `عمولة جاسم بنسبة ${commissionRateBps / 100}% بعد اكتمال الطلب`,
     dueAt: new Date(now).toISOString(),
     status: "PENDING",
   };
