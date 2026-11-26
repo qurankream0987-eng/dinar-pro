@@ -4,6 +4,7 @@
  * Google proves the email identity only. A linked account signs in directly; otherwise the user
  * must still verify their phone by SMS here before DINAR links or creates the account.
  */
+import { detectCountry } from "@/lib/detect-country";
 import { TermsAcknowledgementText } from "@/features/legal/TermsAcknowledgement";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "wouter";
@@ -65,9 +66,11 @@ export function GoogleSignIn({ onSignedIn }: { onSignedIn: () => Promise<void> |
   const [unavailable, setUnavailable] = useState(false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-  const [country, setCountry] = useState("KW");
-  const [dialCode, setDialCode] = useState("+965");
-  const [phoneCountry, setPhoneCountry] = useState("KW");
+  // Pre-selected from the device's time zone / language (Jordan if unknown); always editable.
+  const [detected] = useState(() => detectCountry());
+  const [country, setCountry] = useState(detected.countryCode);
+  const [dialCode, setDialCode] = useState(detected.callingCode!);
+  const [phoneCountry, setPhoneCountry] = useState(detected.countryCode);
   const [phoneNumber, setPhoneNumber] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [accepted, setAccepted] = useState(false);

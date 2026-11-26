@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useState, type ReactNode } from "react";
+import { detectCountry } from "@/lib/detect-country";
 import { TermsAcknowledgementText } from "@/features/legal/TermsAcknowledgement";
 import { Link, useLocation, useSearch } from "wouter";
 import { toast } from "sonner";
@@ -90,9 +91,11 @@ export function AuthPage({ register = false, next, embedded = false }: { registe
   const [location, navigate] = useLocation();
   const params = new URLSearchParams(useSearch());
   const target = safeNext(next ?? params.get("next"));
-  const [country, setCountry] = useState("KW");
-  const [phoneCountry, setPhoneCountry] = useState("KW");
-  const [dialCode, setDialCode] = useState("+965");
+  // Pre-selected from the device's time zone / language (Jordan if unknown); always editable.
+  const [detected] = useState(() => detectCountry());
+  const [country, setCountry] = useState(detected.countryCode);
+  const [dialCode, setDialCode] = useState(detected.callingCode!);
+  const [phoneCountry, setPhoneCountry] = useState(detected.countryCode);
   const [phoneNumber, setPhoneNumber] = useState("");
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
