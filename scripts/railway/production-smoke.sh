@@ -71,5 +71,18 @@ if rclone -q copyto /tmp/probe "p:$S3_BUCKET/$key" 2>/dev/null && rclone -q copy
 pub=$(code "${S3_ENDPOINT/https:\/\//https://$S3_BUCKET.}/$key"); case "$pub" in 401|403) pass "bucket not publicly readable ($pub)";; *) fail "bucket anonymous read -> $pub";; esac
 rclone -q deletefile "p:$S3_BUCKET/$key" 2>/dev/null && [ -z "$(rclone lsf "p:$S3_BUCKET/smoke-probe/" 2>/dev/null)" ] && pass "storage delete" || fail "storage delete"
 
+# --- 7. Release checks: brand, sign-in mode, maps policy ---
+sha() { curl -s --max-time 20 "$APP_URL$1" | sha256sum | cut -d' ' -f1; }
+[ "$(sha /favicon.ico)" = "${EXPECTED_FAVICON_SHA:-x}" ] && pass "favicon is the approved logo" || fail "favicon differs from the approved logo"
+[ "$(sha /brand/jassimai-mark.png)" = "${EXPECTED_MARK_SHA:-x}" ] && pass "brand mark is the approved logo" || fail "brand mark differs"
+csp=$(curl -s -D - -o /dev/null --max-time 20 "$APP_URL/" | grep -i '^content-security-policy:')
+echo "$csp" | grep -q "api.maptiler.com" && pass "CSP allows the map provider" || fail "CSP lacks api.maptiler.com"
+echo "$csp" | grep -q "accounts.google.com" && pass "CSP allows Google sign-in" || fail "CSP lacks Google sign-in"
+c=$(code -X POST -H "Origin: $ORIGIN" -H 'Content-Type: application/json' -d '{"idToken":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.bbbb.cccc"}' "$APP_URL/api/auth/google"); case "$c" in 400|401|403) pass "Google sign-in enabled and rejects a forged token ($c)";; *) fail "Google sign-in -> $c $(head -c 120 /tmp/body)";; esac
+c=$(code -X POST -H "Origin: $ORIGIN" -H 'Content-Type: application/json' -d '{"phoneCountryCode":"+962","phoneNumber":"790000002","accountCountry":"JO","acceptTerms":true,"phoneNumberConfirm":"790000002"}' "$APP_URL/api/auth/google/complete"); [ "$c" = 401 ] && pass "Google completion without a Google session refused (401)" || fail "google/complete without ticket -> $c"
+bundle=$(curl -s --max-time 20 "$APP_URL/" | grep -oE '/assets/[^"]+\.js' | head -20)
+found=0; for a in $bundle; do curl -s --max-time 20 "$APP_URL$a" | grep -qE 'نصيحة دينار|محادثة دينار|يتطلب دينار' && found=1; done
+[ "$found" = 0 ] && pass "no old «دينار» strings in the entry bundle (lazy chunks not scanned)" || fail "old «دينار» strings still in the bundle"
+
 echo "SMOKE_DONE fails=$fails"
 [ "$fails" = 0 ]
