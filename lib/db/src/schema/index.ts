@@ -614,7 +614,7 @@ export const listingPromotions = pgTable(
     ),
     check(
       "listing_promotions_simulation_only_check",
-      sql`${t.paymentMode} = 'DEVELOPMENT_SIMULATED'`,
+      sql`${t.paymentMode} IN ('DEVELOPMENT_SIMULATED', 'WHOP_LIVE')`,
     ),
     check(
       "listing_promotions_status_valid",
@@ -622,16 +622,16 @@ export const listingPromotions = pgTable(
     ),
     check(
       "listing_promotions_payment_status_valid",
-      sql`${t.paymentStatus} IN ('SIMULATION_PENDING', 'SIMULATION_CAPTURED', 'SIMULATION_FAILED', 'LEGACY_UNVERIFIED', 'BALANCE_CHARGED', 'ENTITLEMENT_CONSUMED')`,
+      sql`${t.paymentStatus} IN ('SIMULATION_PENDING', 'SIMULATION_CAPTURED', 'SIMULATION_FAILED', 'LEGACY_UNVERIFIED', 'BALANCE_CHARGED', 'ENTITLEMENT_CONSUMED', 'PROVIDER_PENDING', 'PROVIDER_PAID', 'PROVIDER_FAILED', 'PROVIDER_REFUNDED', 'PROVIDER_DISPUTED')`,
     ),
     // ACTIVE/PAUSED rows need a payment outcome; only SIMULATION_CAPTURED ever serves.
     check(
       "listing_promotions_live_requires_payment",
-      sql`${t.status} NOT IN ('ACTIVE', 'PAUSED') OR ${t.paymentStatus} IN ('SIMULATION_CAPTURED', 'LEGACY_UNVERIFIED', 'BALANCE_CHARGED', 'ENTITLEMENT_CONSUMED')`,
+      sql`${t.status} NOT IN ('ACTIVE', 'PAUSED') OR ${t.paymentStatus} IN ('SIMULATION_CAPTURED', 'LEGACY_UNVERIFIED', 'BALANCE_CHARGED', 'ENTITLEMENT_CONSUMED', 'PROVIDER_PAID', 'PROVIDER_DISPUTED')`,
     ),
     check(
       "listing_promotions_failed_consistent",
-      sql`(${t.status} = 'PAYMENT_FAILED') = (${t.paymentStatus} = 'SIMULATION_FAILED')`,
+      sql`(${t.status} = 'PAYMENT_FAILED') = (${t.paymentStatus} IN ('SIMULATION_FAILED', 'PROVIDER_FAILED'))`,
     ),
     check(
       "listing_promotions_reference_consistent",
@@ -651,11 +651,11 @@ export const listingPromotions = pgTable(
     ),
     check(
       "listing_promotions_payment_source_valid",
-      sql`${t.paymentSource} IN ('SIMULATED_PROVIDER', 'COMMERCIAL_BALANCE', 'BUNDLE_ENTITLEMENT')`,
+      sql`${t.paymentSource} IN ('SIMULATED_PROVIDER', 'COMMERCIAL_BALANCE', 'BUNDLE_ENTITLEMENT', 'WHOP_DIRECT')`,
     ),
     check(
       "listing_promotions_payment_source_status",
-      sql`(${t.paymentSource} = 'SIMULATED_PROVIDER') OR (${t.paymentSource} = 'COMMERCIAL_BALANCE' AND ${t.paymentStatus} = 'BALANCE_CHARGED') OR (${t.paymentSource} = 'BUNDLE_ENTITLEMENT' AND ${t.paymentStatus} = 'ENTITLEMENT_CONSUMED' AND ${t.entitlementId} IS NOT NULL)`,
+      sql`(${t.paymentSource} = 'SIMULATED_PROVIDER') OR (${t.paymentSource} = 'COMMERCIAL_BALANCE' AND ${t.paymentStatus} = 'BALANCE_CHARGED') OR (${t.paymentSource} = 'BUNDLE_ENTITLEMENT' AND ${t.paymentStatus} = 'ENTITLEMENT_CONSUMED' AND ${t.entitlementId} IS NOT NULL) OR (${t.paymentSource} = 'WHOP_DIRECT' AND ${t.paymentMode} = 'WHOP_LIVE' AND ${t.paymentStatus} IN ('PROVIDER_PENDING', 'PROVIDER_PAID', 'PROVIDER_FAILED', 'PROVIDER_REFUNDED', 'PROVIDER_DISPUTED'))`,
     ),
     // Budget accounting: never negative, spend plus release never exceeds the budget.
     check(

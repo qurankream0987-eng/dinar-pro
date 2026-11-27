@@ -19,7 +19,7 @@ import { randomUUID } from "node:crypto";
 import { and, count, desc, eq, gt, inArray, isNull, lte } from "drizzle-orm";
 import { conversations, db, listingPromotions, messages, offers, users, welcomeAdExposures } from "@workspace/db";
 import { getCommercialPolicy } from "./commercial-policy";
-import { isPromotionSimulationEnabled } from "./promotion-policy";
+import { isSponsoredServingEnabled } from "./promotion-policy";
 import { formatMinor, isServingCampaign, listingPromotionEligibility, rankSponsored, representativeCampaign, sponsoredScore, SPONSORED_LABEL, SERVING_PAYMENT_STATUSES } from "./promotions";
 import { jassimAdsEnabled } from "./jassim-ads";
 import { recordAttributionEvent } from "./promotion-attribution";
@@ -80,7 +80,7 @@ async function cardsFor(market: Market, rows: { slot: number; listingId: string;
  */
 export async function welcomeSponsoredCards(input: { actorId: string; welcomeKey: string; conversationId?: string; market: Market; now?: Date }): Promise<WelcomeAds> {
   const now = input.now ?? new Date();
-  if (!isPromotionSimulationEnabled()) return { cards: [], reason: "DISABLED" };
+  if (!isSponsoredServingEnabled()) return { cards: [], reason: "DISABLED" };
   if (input.conversationId) {
     const [conversation] = await db.select({ owner: conversations.ownerUserId }).from(conversations).where(eq(conversations.id, input.conversationId));
     if (!conversation || conversation.owner !== input.actorId) return { cards: [], reason: "NOT_OWNER" };
@@ -180,14 +180,14 @@ export async function dismissWelcomeCards(input: { actorId: string; welcomeKey: 
  * non-personal (market + the same public-visibility gates as search); the viewer's own listings
  * are excluded when signed in. Nothing is persisted or charged here (no exposure rows, no
  * billable events); every card carries the sponsored label. Served only where sponsored
- * placements serve at all (`isPromotionSimulationEnabled` today; real payment is Phase 2).
+ * placements serve at all (`isSponsoredServingEnabled`: simulation in development/test, or Whop when live).
  */
 export const DISPLAY_PLACEMENTS = { HERO: { sources: ["VIP"], max: 5 }, SIDEBAR: { sources: ["FEATURED", "VIP"], max: 3 } } as const;
 export type DisplayPlacement = keyof typeof DISPLAY_PLACEMENTS;
 
 export async function displayPlacementCards(input: { placement: DisplayPlacement; market: Market; viewerId?: string; now?: Date }): Promise<WelcomeAds> {
   const now = input.now ?? new Date();
-  if (!jassimAdsEnabled() || !isPromotionSimulationEnabled()) return { cards: [], reason: "DISABLED" };
+  if (!jassimAdsEnabled() || !isSponsoredServingEnabled()) return { cards: [], reason: "DISABLED" };
   const spec = DISPLAY_PLACEMENTS[input.placement];
   const campaigns = (await db
     .select()

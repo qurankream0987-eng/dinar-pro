@@ -50,8 +50,11 @@ import {
 } from "./marketplace-categories";
 import { activePolicyRules, offerPolicyViolation } from "./publication-policy";
 import {
+  campaignPaymentServes,
   isPromotionFeatureEnabled,
   isPromotionSimulationEnabled,
+  isSponsoredServingEnabled,
+  servingPaymentModes,
 } from "./promotion-policy";
 import { testOnlyPaymentAdapter } from "./payments/test-adapter";
 import { DEFAULT_COMMERCIAL_POLICY } from "./commercial-policy";
@@ -76,7 +79,7 @@ export const SEARCH_PLACEMENTS = ["SEARCH_AND_CHAT", "FEATURED", "VIP", "REFRESH
 export const RECOMMENDATION_PLACEMENTS = ["SEARCH_AND_CHAT", "FEATURED", "VIP", "SPONSORED_RECOMMENDATION"] as const;
 export const DEMAND_PLACEMENTS = ["DEMAND"] as const;
 /** Payment outcomes that may serve: a verified simulated capture, a commercial-balance charge or a bundle unit. */
-export const SERVING_PAYMENT_STATUSES = ["SIMULATION_CAPTURED", "BALANCE_CHARGED", "ENTITLEMENT_CONSUMED"] as const;
+export const SERVING_PAYMENT_STATUSES = ["SIMULATION_CAPTURED", "BALANCE_CHARGED", "ENTITLEMENT_CONSUMED", "PROVIDER_PAID"] as const;
 
 export const LIVE_STATUSES = ["PENDING_PAYMENT", "ACTIVE", "PAUSED"] as const;
 
@@ -103,7 +106,7 @@ export function isServingCampaign(
   return (
     campaign.status === "ACTIVE" &&
     (SERVING_PAYMENT_STATUSES as readonly string[]).includes(campaign.paymentStatus) &&
-    campaign.paymentMode === "DEVELOPMENT_SIMULATED" &&
+    campaignPaymentServes(campaign) &&
     campaign.startsAt.getTime() <= now.getTime() &&
     campaign.expiresAt.getTime() > now.getTime() &&
     hasBudgetForOneCharge(campaign)
@@ -134,7 +137,7 @@ export async function servingCampaignsFor(
   now = new Date(),
   placements: readonly string[] = SEARCH_PLACEMENTS,
 ): Promise<PromotionRow[]> {
-  if (!listingIds.length || !isPromotionSimulationEnabled()) return [];
+  if (!listingIds.length || !isSponsoredServingEnabled()) return [];
   const rows: PromotionRow[] = await db
     .select()
     .from(listingPromotions)
@@ -143,7 +146,7 @@ export async function servingCampaignsFor(
         eq(listingPromotions.marketId, marketId),
         eq(listingPromotions.status, "ACTIVE"),
         inArray(listingPromotions.paymentStatus, [...SERVING_PAYMENT_STATUSES]),
-        eq(listingPromotions.paymentMode, "DEVELOPMENT_SIMULATED"),
+        inArray(listingPromotions.paymentMode, servingPaymentModes()),
         inArray(listingPromotions.placementSnapshot, [...placements]),
         lte(listingPromotions.startsAt, now),
         gt(listingPromotions.expiresAt, now),
@@ -1536,7 +1539,7 @@ export async function demandCaptureCandidates(
   need: DemandNeed,
   options: { excludeIds?: string[]; slots: number; minCoverage: number; viewerUserId?: string },
 ): Promise<{ listingId: string; promotionId: string }[]> {
-  if (!need.tokens.length || options.slots <= 0 || !isPromotionSimulationEnabled()) return [];
+  if (!need.tokens.length || options.slots <= 0 || !isSponsoredServingEnabled()) return [];
   const now = new Date();
   const campaigns = ((await db
     .select()

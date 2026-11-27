@@ -27,7 +27,8 @@ import {
 } from "./publication-policy";
 import {
   isEligibleSearchPromotion,
-  isPromotionSimulationEnabled,
+  isSponsoredServingEnabled,
+  servingPaymentModes,
 } from "./promotion-policy";
 import { rankSponsored, representativeCampaign, servingCampaignsFor, sponsoredScore } from "./promotions";
 import { getCommercialPolicy } from "./commercial-policy";
@@ -531,7 +532,7 @@ async function sponsoredPlacementIds(
   },
   slots: number,
 ): Promise<Map<string, PaidSlot>> {
-  if (slots <= 0 || !rankedRows.length || !isPromotionSimulationEnabled())
+  if (slots <= 0 || !rankedRows.length || !isSponsoredServingEnabled())
     return new Map();
   const now = new Date();
   const campaigns = await servingCampaignsFor(
@@ -742,7 +743,7 @@ async function sqlCandidates(input: {
   }
   let pendingSponsored = new Set<string>();
   const sponsoredStarted = clock();
-  if (!readAll && input.sponsoredSlots > 0 && isPromotionSimulationEnabled()) {
+  if (!readAll && input.sponsoredSlots > 0 && isSponsoredServingEnabled()) {
     const now = new Date();
     const serving = await db
       .selectDistinct({ id: listingPromotions.listingId })
@@ -751,7 +752,7 @@ async function sqlCandidates(input: {
         eq(listingPromotions.marketId, market.id),
         eq(listingPromotions.status, "ACTIVE"),
         inArray(listingPromotions.paymentStatus, [...SERVING_PAYMENT_STATUSES]),
-        eq(listingPromotions.paymentMode, "DEVELOPMENT_SIMULATED"),
+        inArray(listingPromotions.paymentMode, servingPaymentModes()),
         inArray(listingPromotions.placementSnapshot, [...SEARCH_PLACEMENTS]),
         sql`${listingPromotions.startsAt} <= ${now}`,
         sql`${listingPromotions.expiresAt} > ${now}`,
