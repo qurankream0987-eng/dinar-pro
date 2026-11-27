@@ -3,6 +3,7 @@ import { useState } from "react";
 import { SmartStoreCard } from "@workspace/api-zod/smart-store-card";
 import { SMART_STORE_FIXTURES } from "@workspace/api-zod/smart-store-card-fixtures";
 import { SmartStoreCardView } from "../../features/ai/smart-store/SmartStoreCardView";
+import { InChatPaymentCard, type InChatPaymentCardProps } from "../../features/ai/smart-store/InChatPaymentCard";
 import { useLiveSmartStoreCard } from "../../features/ai/smart-store/useLiveSmartStoreCard";
 
 function LiveCard({ initial }: { initial: SmartStoreCard }) {
@@ -44,6 +45,25 @@ export default function SmartStorePreview() {
           <SmartStoreCardView card={card} />
         </section>
       ))}
+
+      <section className="space-y-4 border-t border-border pt-6" aria-label="حالات بطاقة الدفع داخل المحادثة">
+        <div>
+          <h2 className="text-base font-bold">حالات بطاقة الدفع داخل المحادثة (معاينة بصرية فقط)</h2>
+          <p className="text-xs text-muted-foreground">بيانات توضيحية للعرض فقط — غير مرتبطة ببوابة دفع حقيقية.</p>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          {([
+            { state: "AVAILABLE", merchantName: "متجر النخبة للإلكترونيات", amountLabel: "89.00 JOD", methods: ["بطاقة بنكية", "Apple Pay", "مدى"], onPay: () => {} },
+            { state: "UNAVAILABLE_IN_COUNTRY", merchantName: "متجر النخبة للإلكترونيات", amountLabel: "89.00 JOD" },
+            { state: "PENDING", merchantName: "متجر النخبة للإلكترونيات", amountLabel: "89.00 JOD", referenceId: "PAY-2026-8841" },
+            { state: "PAID", merchantName: "متجر النخبة للإلكترونيات", amountLabel: "89.00 JOD", referenceId: "PAY-2026-8841", timestampLabel: "2026-11-27 · 19:05" },
+            { state: "FAILED", merchantName: "متجر النخبة للإلكترونيات", amountLabel: "89.00 JOD", reason: "رفض البنك المصدر العملية. جرّب بطاقة أخرى.", onRetry: () => {} },
+            { state: "REFUNDED", merchantName: "متجر النخبة للإلكترونيات", amountLabel: "89.00 JOD", referenceId: "REF-2026-1102", timestampLabel: "2026-11-27 · 19:12" },
+          ] as InChatPaymentCardProps[]).map((item) => (
+            <InChatPaymentCard key={item.state} {...item} />
+          ))}
+        </div>
+      </section>
     </main>
   );
 }
