@@ -12,15 +12,16 @@ Read this file, `qa/environment/qa-lab-isolation.md`, `docs/antigravity-qa-brief
 7. You tested an in-sandbox server, not the deployed application. Round 2 tests the **deployed app**.
 
 ## 1. Environment
-- Target: **qa-lab** — https://jassimai-acceptance-gate-qa-lab.up.railway.app (gate credentials from the owner; never commit, print or log them).
+- Target: **qa-lab** — https://jassimai-acceptance-app-qa-lab.up.railway.app — **public, no gate, no username or password** (owner decision). The old gate address was removed.
 - Railway environment `qa-lab`, fork of production, expires 2026-12-27. Deploy branch `fork/d33eb4ba`.
 - Production (https://jassimai.com): **read-only, anonymous GETs only.** No sign-in, no POST/PUT/PATCH/DELETE, no account creation.
 - Before your first write: repeat the isolation proof yourself (unique marker in qa-lab, confirm absent in production through public read-only API; storage probe object written and read in qa-lab only). Record evidence. If any check fails, stop all writes and report.
 
 ## 2. Gate 0 — prerequisites (report BLOCKED with evidence if not solvable)
-1. **Test identities.** Sign-up uses Google sign-in + phone typed twice. If Google sign-in fails on the qa-lab origin, report it as BLOCKED (infrastructure) and ask the owner to add the origin to the OAuth client or provide dedicated test Google accounts. **Never add an authentication bypass.**
+1. **Test identities.** Sign-up uses Google sign-in + phone typed twice. The owner must add `https://jassimai-acceptance-app-qa-lab.up.railway.app` as an authorised origin of the Google OAuth client. If Google sign-in still fails on the qa-lab origin, report it as BLOCKED (infrastructure) and ask the owner to add the origin to the OAuth client or provide dedicated test Google accounts. **Never add an authentication bypass.**
 2. Ask Claude (via the owner) to grant ADMIN to your designated qa-lab admin test accounts and to set the legal-role IDs if you test the legal workflow. Never use or modify the two pre-existing owner accounts copied from production.
-3. **AI budget.** DeepSeek calls are real and billed. Do not exceed the call budget the owner sets; until then, stop at **1,500 model turns** and report. Count every turn in `results.json`.
+3. **AI provider — free only (owner decision).** In qa-lab the paid DeepSeek key was removed and model calls are blocked (`BDINAR_BLOCK_MODEL_CALLS=1`). Research and choose a **free** provider the code already supports — Groq (`GROQ_API_KEY`, free model `openai/gpt-oss-120b`), OpenRouter (`OPENROUTER_API_KEY`, `openrouter/free`) or Gemini — compare their free-tier limits against the plan, and document the choice. The owner creates the free account and puts the key in Railway (qa-lab only); then Claude sets `DINAR_AI_PROVIDER`/`DINAR_AI_MODEL` and `BDINAR_BLOCK_MODEL_CALLS=0`. Run **at least 2,000 real model calls** across the AI scenarios. Never put a paid key in qa-lab. Count every call in `results.json`, and record rate-limit errors as INFRASTRUCTURE, not application failures.
+4. **Maps — open source or mocked (owner decision).** The MapTiler key was removed from qa-lab. Research an open-source/free tile source with no key (for example OpenFreeMap or another MapLibre-compatible style), document its terms, and test with it; or test the map with a clearly labelled MOCK style. Changing the map source needs `VITE_DINAR_MAP_STYLE_URL` (a rebuild) and the tile host in `CSP_CONNECT_EXTRA_ORIGINS` — ask Claude to set them in qa-lab. Never use the production MapTiler key in tests.
 
 ## 3. The campaign — what must be covered
 At least 1,000 *distinct* scenarios where the functionality supports them. No padding. Each scenario: id, category, objective, persona, preconditions, data, exact steps, expected, actual, DB verification, evidence, status, failure class, environment, market, duration.
@@ -58,7 +59,7 @@ Plans and prices come from the server, checkout refused in PRE_LEGAL markets and
 IDOR/BOLA on every owner-scoped resource (listings, orders, conversations, business profiles, Connect bindings), privilege escalation, mass assignment, price/quantity/total manipulation, replayed and duplicated requests, race conditions, CSRF/Origin, XSS in every text field rendered anywhere (chat, cards, admin), SQL/NoSQL/command injection, path traversal in uploads, oversized and deeply nested JSON, rate limits, error messages leaking internals, secrets in responses or HTML, session cookie flags. Never attack production, external services or real people.
 
 ### J. UI, maps, accessibility, performance, reliability
-Real browser runs (mobile 360px and desktop, light and dark, RTL), every page and dialog, MapTiler map actually rendering tiles and location sharing, WCAG AA checks, Core Web Vitals, p50/p95 API latency under concurrent load (moderate, qa-lab only), restart/recovery behaviour, behaviour when the AI provider times out.
+Real browser runs (mobile 360px and desktop, light and dark, RTL), every page and dialog, map actually rendering tiles from the chosen open-source/mock source, and location sharing, WCAG AA checks, Core Web Vitals, p50/p95 API latency under concurrent load (moderate, qa-lab only), restart/recovery behaviour, behaviour when the AI provider times out.
 
 ### K. Regression
 Run the repository suites relevant to every area you touch, correctly, one database per suite, and report them **separately** from the campaign.

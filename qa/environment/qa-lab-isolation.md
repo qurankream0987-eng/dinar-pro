@@ -4,7 +4,7 @@
 |---|---|
 | Environment | `qa-lab` (d39015ea-14e8-46b5-86dd-766ca6dd9e11), Railway fork of `production` |
 | Expires | 2026-12-27 12:11 UTC (30 days) |
-| App URL | https://jassimai-acceptance-gate-qa-lab.up.railway.app (HTTP Basic gate; credentials from the owner, never committed) |
+| App URL | https://jassimai-acceptance-app-qa-lab.up.railway.app — public, no gate (owner decision 2026-11-27) |
 | Deploy branch | `fork/d33eb4ba` (created from `claude/jassim-connect-universal-engine` @ c9477f5). Pushes to this branch redeploy qa-lab only |
 | Database | `jassimai_production` on qa-lab's own `jassimai-production-postgres` (copy-on-write clone: starts with production's 2 owner accounts; new password) |
 | Storage bucket | `jassimai-acceptance-ams-hhfz2e` (production uses `…-o9x5et`); app variables reference the qa-lab bucket via `${{jassimai-acceptance-ams.*}}` |
@@ -25,7 +25,7 @@
 | Whop / billing | `WHOP_ENABLED=false`, `DINAR_WHOP_BILLING_ENABLED=false`, no Whop API key |
 | Live providers / Connect live calls | `DINAR_LIVE_PROVIDERS_ENABLED=false`, `DINAR_CONNECT_LIVE_CALLS=false` |
 | Origins | `APP_ORIGIN`/`JASSIMAI_PUBLIC_URL`/`APP_ADDITIONAL_ORIGINS` = qa-lab URL |
-| AI model (DeepSeek) | **live and billed** on the same account as production — a cost, not a data path |
+| AI model | paid DeepSeek key **removed**; model calls blocked until a free provider is configured |
 | Google sign-in | same OAuth client; qa-lab URL must be added as an authorised origin by the owner |
 
 Production was not modified for any of this (only read-only public GETs against jassimai.com).
@@ -34,3 +34,9 @@ Production was not modified for any of this (only read-only public GETs against 
 - The clone contains production's 2 real owner accounts and their sessions; testers must not use or alter them.
 - `SESSION_SECRET` and the gate credentials are inherited from production; they do not grant access to production data.
 - The old `fcm-isolated` environment is kept (not deleted) until it expires on 2026-11-28 16:35 UTC; its rescued evidence is in `qa/evidence/run1-fcm-isolated/`.
+
+## Changes after owner decision (2026-11-27)
+- Public access without a password: app given its own Railway domain; gate domain removed; origins updated.
+- MapTiler key removed from qa-lab (`VITE_DINAR_MAP_STYLE_URL` empty) — maps to be tested with an open-source or mocked source.
+- Paid AI key removed, `BDINAR_BLOCK_MODEL_CALLS=1` until a free provider key is added.
+- Note: qa-lab is now public and contains a copy of production's 2 owner accounts (names, phones, emails). Sign-in still requires their Google accounts.
