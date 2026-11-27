@@ -22,6 +22,11 @@ import {
 } from "../lib/markets";
 import { listMarketplaceCategories } from "../lib/marketplace-categories";
 import { assertCountryActivationReady } from "../lib/country-legal-readiness";
+import {
+  ARAB_MARKET_IDS,
+  arabMarketsReadinessReport,
+  verifyMarketTechnicalReadiness,
+} from "../lib/market-technical-readiness";
 
 const router = Router();
 
@@ -31,6 +36,21 @@ router.use("/admin", requireAuth, (req, res, next) => {
     return;
   }
   next();
+});
+
+// Technical readiness and legal status of every Arab market, side by side and never merged.
+router.get("/admin/markets/arab-readiness", async (_req, res) => {
+  res.json({ markets: await arabMarketsReadinessReport() });
+});
+
+// Runs the automated technical checks. Records technical readiness only: no legal review,
+// counsel signature, owner approval or activation is written or implied.
+router.post("/admin/markets/arab-readiness/verify", async (req, res) => {
+  const requested = Array.isArray(req.body?.marketIds) ? req.body.marketIds : ARAB_MARKET_IDS;
+  const ids = requested.filter((id: unknown): id is string => typeof id === "string" && (ARAB_MARKET_IDS as readonly string[]).includes(id));
+  if (!ids.length) throw marketError(400, "لا توجد أسواق عربية صالحة للفحص");
+  const results = await verifyMarketTechnicalReadiness(ids, req.actor!.id);
+  res.json({ results, markets: await arabMarketsReadinessReport() });
 });
 
 router.get("/admin/markets", async (_req, res) => {

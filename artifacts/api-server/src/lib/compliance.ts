@@ -765,7 +765,7 @@ export async function marketComplianceOverview() {
   const entityByMarket = new Map(entityRows.map((row) => [row.marketId, row]));
   return marketRows.map((market) => ({
     currencyCode: market.currencyCode,
-    marketActive: market.isActive && ["ACTIVE", "LIMITED"].includes(market.status),
+    marketActive: (market.isActive && ["ACTIVE", "LIMITED"].includes(market.status)) || (market as { operationMode?: string }).operationMode === "PRE_LEGAL",
     ...complianceSettingsView(market.id, settingsByMarket.get(market.id)),
     legalEntity: entityByMarket.has(market.id)
       ? legalEntityView(entityByMarket.get(market.id)!)

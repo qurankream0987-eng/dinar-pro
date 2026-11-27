@@ -64,7 +64,7 @@ import {
 } from "../lib/order-tracking";
 import { checkoutIssueMessage, planCheckout, type PlannedCheckoutLine } from "../lib/commerce";
 import { acceptedNegotiationForCheckout, consumeNegotiation, resolveCommercialUnitPrice, type Negotiation } from "../lib/negotiations";
-import { marketFor, assertMarketActive, assertMarketPolicy } from "../lib/markets";
+import { marketFor, assertMarketActive, assertMarketPolicy, isMarketAvailable } from "../lib/markets";
 import { assertMarketLegalCapability } from "../lib/d16-readiness";
 import { assertMinorProtection, requireCommercialCapability } from "../lib/compliance";
 import {
@@ -263,7 +263,7 @@ export async function releaseExpiredReservations(now = new Date()) {
 router.get("/listings", async (req, res) => {
   const market = await marketFor(req);
   await assertMarketLegalCapability(market.id, "BROWSING");
-  if (!market.isActive || !["ACTIVE", "LIMITED"].includes(market.status)) {
+  if (!isMarketAvailable(market)) {
     res.json([]);
     return;
   }

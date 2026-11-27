@@ -11,6 +11,7 @@ import {
 } from "@workspace/db";
 import { assertAdminActor } from "./admin-authority";
 import { assertCountryActivationReady } from "./country-legal-readiness";
+import { preLegalCapabilityAllowed } from "./market-technical-readiness";
 
 export const MARKET_LEGAL_CAPABILITIES = [
   "INFORMATION_ONLY",
@@ -125,6 +126,10 @@ export async function assertMarketLegalCapability(
 ) {
   if (!marketLegalGateEnforced(env))
     return { enforced: false as const, enabled: true as const };
+  // A technically READY market may run its non-regulated functions before legal approval when the
+  // deployment opts in (DINAR_PRE_LEGAL_OPERATION). This records no legal approval of any kind.
+  if (await preLegalCapabilityAllowed(marketId, capability, tx, env))
+    return { enforced: true as const, enabled: true as const, mode: "PRE_LEGAL" as const };
   await assertCountryActivationReady(marketId, tx);
   const row = await readCapability(marketId, capability, tx);
   if (row?.status !== "ENABLED")

@@ -1644,7 +1644,7 @@ export const countries: Country[] = [
     "countryNameAr": "الأراضي الفلسطينية",
     "countryNameEn": "Palestinian Territories",
     "callingCode": "+970",
-    "defaultCurrencyCode": "EGP",
+    "defaultCurrencyCode": "ILS",
     "flag": "🇵🇸",
     "isSelectable": true
   },

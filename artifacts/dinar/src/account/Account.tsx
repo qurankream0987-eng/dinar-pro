@@ -22,8 +22,14 @@ export type Market = {
   currencySymbolAr: string;
   unitPriceMinor: number;
   minorUnitScale: number;
+  /** Server decision: open fully, or on technical readiness before legal approval. */
+  marketOpen?: boolean;
+  operationMode?: "FULL" | "PRE_LEGAL" | "LEGAL_GATED" | "CLOSED";
+  technicalStatus?: "READY" | "NOT_READY" | "NOT_VERIFIED";
+  legalApprovalStatus?: "APPROVED" | "PENDING" | "SUSPENDED";
 };
 export function isMarketAvailable(market?: Market) {
+  if (market?.operationMode === "PRE_LEGAL") return true;
   return Boolean(
     market?.isActive &&
       (market.status === "ACTIVE" || market.status === "LIMITED") &&

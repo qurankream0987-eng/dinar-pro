@@ -6,7 +6,7 @@ import { writeFileSync, readFileSync } from 'node:fs';
 const require = createRequire(new URL('../artifacts/api-server/package.json', import.meta.url));
 const { getCountryCallingCode, isSupportedCountry } = require('libphonenumber-js');
 const official = readFileSync(new URL('../lib/global/src/currencies.ts', import.meta.url),'utf8');
-const currencyUpdates = { BG: 'EUR', CW: 'XCG', SX: 'XCG', SL: 'SLE', ZW: 'ZWG' }; // Reconciled against SIX List One.
+const currencyUpdates = { BG: 'EUR', CW: 'XCG', SX: 'XCG', SL: 'SLE', ZW: 'ZWG', PS: 'ILS' }; // Reconciled against SIX List One.
 const ar = new Intl.DisplayNames(['ar'], { type: 'region' });
 const en = new Intl.DisplayNames(['en'], { type: 'region' });
 const rows = Object.keys(iso.getAlpha2Codes()).filter(code => code !== 'XK').sort().map(countryCode => {

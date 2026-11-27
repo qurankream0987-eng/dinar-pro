@@ -372,6 +372,14 @@ export function SettingsPage() {
       {user.role === "ADMIN" && (
         <ListGroup title="الإدارة">
           <ListRow
+            onClick={() => window.location.assign("/admin/arab-markets")}
+            icon={<Globe2 size={19} />}
+            title="الأسواق العربية"
+            description="الجاهزية التقنية والاعتماد القانوني لكل دولة عربية"
+            trailing={<span className="text-sm font-semibold text-primary">فتح</span>}
+            testId="link-settings-admin-arab-markets"
+          />
+          <ListRow
             onClick={() => window.location.assign("/admin/markets")}
             icon={<Shield size={19} />}
             title="إدارة الأسواق"

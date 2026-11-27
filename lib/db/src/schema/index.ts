@@ -4302,3 +4302,29 @@ export const whopDisputes = pgTable(
     check("whop_disputes_amount_valid", sql`${t.amountUsdMinor} IS NULL OR ${t.amountUsdMinor} > 0`),
   ],
 );
+
+/**
+ * Technical readiness of a market, recorded separately from legal approval (market_legal_intakes).
+ * READY only means the automated checks passed (currency, calling code, fulfilment, cash method,
+ * legal intake package present); it never means any legal requirement is met.
+ */
+export const marketTechnicalReadiness = pgTable(
+  "market_technical_readiness",
+  {
+    marketId: text("market_id")
+      .primaryKey()
+      .references(() => markets.id),
+    status: text("status").default("NOT_VERIFIED").notNull(),
+    checks: jsonb("checks").$type<{ key: string; passed: boolean; detail: string }[]>().default([]).notNull(),
+    verifiedBy: text("verified_by").references(() => users.id),
+    verifiedAt: timestamp("verified_at", { withTimezone: true }),
+    ...dates(),
+  },
+  () => [
+    check("market_technical_readiness_status_check", sql`"status" IN ('NOT_VERIFIED', 'READY', 'NOT_READY')`),
+    check(
+      "market_technical_readiness_ready_verified",
+      sql`"status" <> 'READY' OR ("verified_at" IS NOT NULL AND "verified_by" IS NOT NULL)`,
+    ),
+  ],
+);

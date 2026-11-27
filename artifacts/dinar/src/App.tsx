@@ -27,6 +27,7 @@ const EditOffer = lazy(() => import("./pages/seller/EditOffer"));
 const DuesPage = lazy(() => import("./pages/seller/Dues"));
 const PayoutsPage = lazy(() => import("./pages/seller/Payouts"));
 const AdminMarketsPage = lazy(() => import("./pages/admin/AdminMarkets"));
+const AdminArabMarketsPage = lazy(() => import("./pages/admin/AdminArabMarkets"));
 const AdminCategoriesPage = lazy(() => import("./pages/admin/AdminCategories"));
 const AdminPromotionsPage = lazy(() => import("./pages/admin/AdminPromotions"));
 const AdminDisputesPage = lazy(() => import("./pages/admin/AdminDisputes"));
@@ -77,6 +78,7 @@ const CHAT_ONLY_MODE = true;
 const CHAT_ONLY_ADMIN_ROUTES = new Set([
   "/admin/connect",
   "/admin/markets",
+  "/admin/arab-markets",
   "/admin/categories",
   "/admin/promotions",
   "/admin/disputes",
@@ -160,6 +162,7 @@ function Routes() {
       <Route path="/profile">{guard(<ProfilePage />)}</Route>
       <Route path="/settings">{guard(<SettingsPage />)}</Route>
       <Route path="/connect">{guard(<ConnectPage />)}</Route>
+      <Route path="/admin/arab-markets">{guard(<AdminArabMarketsPage />)}</Route>
       <Route path="/admin/markets">{guard(<AdminMarketsPage />)}</Route>
       <Route path="/admin/connect">{guard(<AdminConnectPage />)}</Route>
       <Route path="/admin/categories">{guard(<AdminCategoriesPage />)}</Route>
@@ -211,6 +214,7 @@ function Routes() {
       <Route path="/seller/offers/:id/edit">{guard(<EditOffer />)}</Route>
       <Route path="/seller/dues">{guard(<DuesPage />)}</Route>
       <Route path="/seller/payouts">{guard(<PayoutsPage />)}</Route>
+      <Route path="/admin/arab-markets">{guard(<AdminArabMarketsPage />)}</Route>
       <Route path="/admin/markets">{guard(<AdminMarketsPage />)}</Route>
       <Route path="/admin/categories">{guard(<AdminCategoriesPage />)}</Route>
       <Route path="/admin/promotions">{guard(<AdminPromotionsPage />)}</Route>

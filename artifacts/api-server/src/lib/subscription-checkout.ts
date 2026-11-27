@@ -65,6 +65,9 @@ export async function startSubscriptionCheckout(input: {
       .where(and(eq(conversations.id, input.conversationId), eq(conversations.ownerUserId, input.actorId), eq(conversations.marketId, input.market.id), eq(conversations.kind, "AI")));
     if (!owned) throw fail(404, "المحادثة غير موجودة", "CONVERSATION_NOT_FOUND");
   }
+  // Electronic payments never run in a market that is open only on technical readiness.
+  if ((input.market as { operationMode?: string }).operationMode === "PRE_LEGAL")
+    throw fail(409, "الدفع الإلكتروني غير متاح في هذا السوق قبل اكتمال الاعتماد القانوني", "LEGAL_APPROVAL_REQUIRED_FOR_PAYMENTS");
   // Eligibility is the server's: Business needs the actor's own VERIFIED business; payment never verifies.
   const planCode = planCodeOfProduct(plan);
   const businessProfileId = await assertPlanEligibility({ actorId: input.actorId, market: input.market, planCode, businessId: input.businessId });
