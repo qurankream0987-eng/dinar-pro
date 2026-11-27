@@ -41,7 +41,7 @@ export function OrderSettlementCard({ orderId, role }: { orderId: string; role: 
   return (
     <section
       dir="rtl"
-      className="w-full max-w-[500px] rounded-2xl border border-border/80 bg-card/95 p-4 shadow-sm backdrop-blur-sm"
+      className="animate-fade w-full max-w-[500px] rounded-2xl border border-border/80 bg-card/95 p-4 shadow-sm backdrop-blur-sm transition-all duration-200"
       aria-label="التواصل والدفع"
       data-testid={`order-settlement-${orderId}`}
     >
@@ -97,7 +97,7 @@ export function OrderSettlementCard({ orderId, role }: { orderId: string; role: 
                   aria-checked={selected}
                   disabled={setPreference.isPending}
                   onClick={() => void choose(option.method)}
-                  className={`inline-flex min-h-11 items-center gap-1.5 rounded-xl border px-3.5 text-xs font-medium transition ${
+                  className={`pressable inline-flex min-h-11 items-center gap-1.5 rounded-xl border px-3.5 text-xs font-medium ${
                     selected
                       ? "border-amber-500/60 bg-amber-500/12 font-semibold text-foreground shadow-xs ring-1 ring-amber-500/30"
                       : "border-border/80 bg-background/70 text-foreground hover:border-border hover:bg-muted/60"

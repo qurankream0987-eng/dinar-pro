@@ -2357,9 +2357,17 @@ body:has(.dinar-chatgpt) {
 .dinar-chatgpt .dinar-action-group .ds-size[data-size="COMPACT"] > .ai-surface.ds-card { width: fit-content; min-width: min(100%, 272px); max-width: min(100%, 420px); }
 .dinar-chatgpt .dinar-action-group .ds-size[data-size="MEDIUM"] > .ai-surface.ds-card { width: min(100%, 560px); max-width: 100%; }
 .dinar-chatgpt .dinar-action-group .ds-size[data-size="WIDE"] > .ai-surface.ds-card { width: min(100%, 820px); max-width: 100%; }
+@keyframes ds-card-enter {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.dinar-chatgpt .ds-card {
+  animation: ds-card-enter 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  transition: border-color 180ms ease, box-shadow 220ms cubic-bezier(0.22, 1, 0.36, 1), transform 180ms cubic-bezier(0.22, 1, 0.36, 1);
+}
 /* Visual distinction between reviewable proposals and confirmed server receipts */
 .dinar-chatgpt .ds-card[data-card-lifecycle="PROPOSAL"] { border-style: dashed; border-color: var(--ds-gold-line); }
-.dinar-chatgpt .ds-card[data-card-lifecycle="RECEIPT"] { border-style: solid; box-shadow: 0 1px 2px rgb(0 0 0 / .04), inset 0 1px 0 rgb(255 255 255 / .06); }
+.dinar-chatgpt .ds-card[data-card-lifecycle="RECEIPT"] { border-style: solid; box-shadow: 0 2px 8px rgb(0 0 0 / .05), inset 0 1px 0 rgb(255 255 255 / .08); }
 .dinar-chatgpt .ds-card[data-tone="WARNING"] { border-color: var(--ds-gold-line); }
 .dinar-chatgpt .ds-card[data-tone="DANGER"] { border-color: color-mix(in srgb, var(--ds-err) 45%, transparent); }
 .dinar-chatgpt .ds-card[data-state="EXPIRED"] > :not(.ds-notice) { opacity: .72; }

@@ -88,7 +88,7 @@ export function InChatPaymentCard({
       aria-label="بطاقة الدفع داخل المحادثة"
       data-testid="in-chat-payment-card"
       data-payment-state={state}
-      className={`w-full max-w-[440px] rounded-2xl border bg-card/95 p-4 shadow-sm backdrop-blur-sm ${meta.borderClass}`}
+      className={`animate-fade w-full max-w-[440px] rounded-2xl border bg-card/95 p-4 shadow-sm backdrop-blur-sm transition-all duration-200 ${meta.borderClass}`}
     >
       <header className="flex items-start justify-between gap-2 border-b border-border/60 pb-3">
         <div className="flex min-w-0 items-center gap-2.5">
@@ -96,7 +96,7 @@ export function InChatPaymentCard({
             {state === "PAID" ? (
               <CheckCircle2 size={18} className="text-emerald-500" aria-hidden />
             ) : state === "PENDING" ? (
-              <Clock3 size={18} className="text-sky-500" aria-hidden />
+              <Clock3 size={18} className="animate-pulse text-sky-500" aria-hidden />
             ) : state === "FAILED" ? (
               <AlertCircle size={18} className="text-destructive" aria-hidden />
             ) : state === "REFUNDED" ? (
@@ -145,7 +145,7 @@ export function InChatPaymentCard({
             disabled={busy || !onPay}
             onClick={onPay}
             data-testid="in-chat-payment-cta"
-            className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-l from-amber-500 to-amber-400 px-4 text-sm font-bold text-slate-950 shadow-xs transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
+            className="pressable flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-l from-amber-500 to-amber-400 px-4 text-sm font-bold text-slate-950 shadow-xs transition hover:brightness-105 hover:shadow-[0_6px_22px_rgba(245,158,11,0.28)] disabled:cursor-not-allowed disabled:opacity-60"
           >
             <Lock size={15} aria-hidden />
             <span>{busy ? "جارٍ تجهيز بوابة الدفع…" : "إتمام الدفع الآمن"}</span>
