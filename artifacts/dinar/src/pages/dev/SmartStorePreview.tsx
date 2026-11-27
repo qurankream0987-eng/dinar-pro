@@ -3,6 +3,8 @@ import { useState } from "react";
 import { SmartStoreCard } from "@workspace/api-zod/smart-store-card";
 import { SMART_STORE_FIXTURES } from "@workspace/api-zod/smart-store-card-fixtures";
 import { SmartStoreCardView } from "../../features/ai/smart-store/SmartStoreCardView";
+import { LiveDeliveryTrackerCard } from "../../features/ai/LiveDeliveryTrackerCard";
+import { ConnectUrlQuickCard } from "../../features/ConnectUrlQuickCard";
 import { useLiveSmartStoreCard } from "../../features/ai/smart-store/useLiveSmartStoreCard";
 
 function LiveCard({ initial }: { initial: SmartStoreCard }) {
@@ -44,6 +46,28 @@ export default function SmartStorePreview() {
           <SmartStoreCardView card={card} />
         </section>
       ))}
+
+      <section className="space-y-4 border-t border-border pt-6" aria-label="التتبع المباشر والربط بالرابط داخل المحادثة">
+        <h2 className="text-base font-bold">التتبع المباشر والربط بالرابط داخل محادثة واحدة</h2>
+        <div className="grid gap-5 md:grid-cols-2">
+          <LiveDeliveryTrackerCard
+            orderRef="ORD-2026-904"
+            merchantName="برغر هاوس التفاعلي"
+            status="OUT_FOR_DELIVERY"
+            etaLabel="12–16 دقيقة"
+            remainingKmLabel="2.1 كم"
+            progressPercent={62}
+            courierName="كابتن أحمد"
+            courierRating={4.9}
+            courierPhone="+962790000000"
+            pickupCoords={{ lat: 31.9539, lng: 35.9106 }}
+            courierCoords={{ lat: 31.9620, lng: 35.8900 }}
+            dropoffCoords={{ lat: 31.9700, lng: 35.8700 }}
+            onQuickMessage={() => {}}
+          />
+          <ConnectUrlQuickCard />
+        </div>
+      </section>
     </main>
   );
 }
