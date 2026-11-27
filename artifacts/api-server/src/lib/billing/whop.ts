@@ -447,9 +447,14 @@ export function createWhopAdapter(config: WhopConfig, transport: WhopTransport =
       const data = envelope.data as { payment?: { id?: string } | null; payment_id?: string } | undefined;
       const disputedPayment = data?.payment?.id ?? data?.payment_id;
       if (type.startsWith("dispute.") && disputedPayment?.startsWith("pay_")) {
-        const payment = await get<WhopPayment>(`/payments/${encodeURIComponent(disputedPayment)}`);
-        const disputedPromotion = metadataPromotion(payment.metadata);
-        if (disputedPromotion) return promotion({ eventId: verified.id, type: "DISPUTED", eventType: type, digest, promotionId: disputedPromotion, payment });
+        // A payment Whop no longer finds is recorded for review (never retried for days); any other
+        // failure to reach Whop is retried by Whop, so a disputed promotion is always paused.
+        const payment = await get<WhopPayment>(`/payments/${encodeURIComponent(disputedPayment)}`).catch((error) => {
+          if (error instanceof WhopUnavailableError && error.message === "Whop 404") return undefined;
+          throw error;
+        });
+        const disputedPromotion = payment ? metadataPromotion(payment.metadata) : undefined;
+        if (disputedPromotion && payment) return promotion({ eventId: verified.id, type: "DISPUTED", eventType: type, digest, promotionId: disputedPromotion, payment });
       }
       logger.warn({ event: "whop_dispute", type }, "Whop dispute received for review");
       return recordOnly(verified.id, type, digest, "IGNORED", "DISPUTE_RECORDED_FOR_REVIEW");

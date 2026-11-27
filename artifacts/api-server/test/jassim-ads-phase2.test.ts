@@ -241,6 +241,8 @@ test("AP-06 a payment for a cancelled checkout is never served and is flagged fo
   assert.equal((await row(id)).status, "CANCELLED");
   const unrelated = await deliver("payment.succeeded", { id: pay(randomUUID(), seller.id, { kind: "OTHER" }) });
   assert.equal(unrelated.body.failureCode, "NOT_A_JASSIM_SUBSCRIPTION", "only explicitly tagged promotion payments reach campaigns");
+  const unknownDispute = await deliver("dispute.created", { id: `dsp_unknown${run}`, payment: { id: "pay_doesnotexist" } });
+  assert.deepEqual([unknownDispute.status, unknownDispute.body.failureCode], [200, "DISPUTE_RECORDED_FOR_REVIEW"], "a dispute on a payment Whop no longer finds is recorded, not retried for days");
 });
 
 test("AP-07 conversation: the review says real payment via Whop and «نعم» returns the Whop page, not a test charge", async () => {
@@ -275,4 +277,38 @@ test("AP-07 conversation: the review says real payment via Whop and «نعم» r
   assert.deepEqual([created.status, created.paymentSource, created.listingId], ["PENDING_PAYMENT", "WHOP_DIRECT", laptop]);
   const balance = await request("/commercial/balance", "GET", undefined, seller.cookie);
   assert.equal(balance.data.spentMinor ?? 0, 0, "the test balance is never charged for a Whop promotion");
+});
+
+test("AP-08 fail-closed configuration: missing or malformed variables keep every real-payment gate shut", async () => {
+  const { isWhopAdsPaymentsEnabled } = await import("../src/lib/promotion-policy");
+  const { whopConfigFromEnv } = await import("../src/lib/billing/whop");
+  const { marketLegalGateEnforced } = await import("../src/lib/d16-readiness");
+  const { DEFAULT_COMMERCIAL_POLICY } = await import("../src/lib/commercial-policy");
+  // Gate 1: only the exact pair BDINAR_PROMOTIONS_ENABLED=true + DINAR_JASSIM_ADS_PAYMENTS=true opens it.
+  assert.equal(isWhopAdsPaymentsEnabled({}), false, "both missing");
+  assert.equal(isWhopAdsPaymentsEnabled({ DINAR_JASSIM_ADS_PAYMENTS: "true" }), false, "promotions flag missing");
+  assert.equal(isWhopAdsPaymentsEnabled({ BDINAR_PROMOTIONS_ENABLED: "true" }), false, "payments flag missing");
+  for (const value of ["", "1", "yes", "on", "enabled", "false", "ture"])
+    assert.equal(isWhopAdsPaymentsEnabled({ BDINAR_PROMOTIONS_ENABLED: "true", DINAR_JASSIM_ADS_PAYMENTS: value }), false, `"${value}"`);
+  assert.equal(isWhopAdsPaymentsEnabled({ BDINAR_PROMOTIONS_ENABLED: "TRUE", DINAR_JASSIM_ADS_PAYMENTS: "true" }), false, "promotions flag is exact");
+  // Gate 2: Whop is installed only with the full, well-formed configuration.
+  const full = { DINAR_WHOP_BILLING_ENABLED: "true", DINAR_WHOP_ENVIRONMENT: "production", DINAR_LIVE_PROVIDERS_ENABLED: "true", WHOP_API_KEY: "k", WHOP_BILLING_WEBHOOK_SECRET: "ws_x", WHOP_COMPANY_ID: "biz_A1" } as NodeJS.ProcessEnv;
+  assert.ok(whopConfigFromEnv(full), "the complete configuration connects");
+  assert.equal(whopConfigFromEnv({}), undefined, "nothing set");
+  for (const missing of Object.keys(full)) {
+    const env = { ...full };
+    delete env[missing];
+    if (missing === "DINAR_WHOP_ENVIRONMENT") continue; // falls back to sandbox, never production
+    assert.equal(whopConfigFromEnv(env), undefined, `missing ${missing}`);
+  }
+  assert.equal(whopConfigFromEnv({ ...full, DINAR_WHOP_BILLING_ENABLED: "false" }), undefined);
+  assert.equal(whopConfigFromEnv({ ...full, WHOP_BILLING_WEBHOOK_SECRET: "not-ws" }), undefined, "malformed secret");
+  assert.equal(whopConfigFromEnv({ ...full, WHOP_COMPANY_ID: "acme" }), undefined, "malformed company id");
+  assert.equal(whopConfigFromEnv({ ...full, DINAR_WHOP_PLAN_MAP: "{not json" }), undefined, "malformed plan map");
+  assert.equal(whopConfigFromEnv({ ...full, DINAR_WHOP_ENVIRONMENT: undefined })?.environment, "sandbox", "an unset environment is never production");
+  // Gate 3: the policy default is DISABLED.
+  assert.equal(DEFAULT_COMMERCIAL_POLICY.advertisingBillingActivation, "DISABLED");
+  // Gate 4: with no deployment marker and no NODE_ENV the legal gate is enforced (fail closed).
+  assert.equal(marketLegalGateEnforced({}), true);
+  assert.equal(marketLegalGateEnforced({ DINAR_DEPLOYMENT_ENV: "production", NODE_ENV: "development" }), true, "the deploy marker wins over NODE_ENV");
 });
