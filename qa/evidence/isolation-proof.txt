@@ -1,0 +1,18 @@
+=== JASSIM AI — ISOLATION PROOF (2026-11-27) ===
+Project: dinar-development-canonical (3810e583-cc70-434c-b6fa-9ea15779f3c1)
+Production env: 7269f58f-5e4e-49d7-86c5-8fdc4d443b32
+Isolated env: fcm-isolated (9c020f4c-471e-473c-b9c8-f7897d439686)
+
+1. PostgreSQL Service Targets in fcm-isolated:
+- jassimai-production-postgres: host=jassimai-production-postgres.railway.internal, ip=fd12:420e:bf1a:1:b000:14e:914a:1c8d, db=jassimai_production, tables=151, migrations=79, markets=249, users=0
+- Postgres-J--D: host=postgres-j-d.railway.internal, ip=fd12:420e:bf1a:1:b000:133:fc84:cec2, db=jassimai_acceptance, tables=141, migrations=68, markets=249, users=0
+
+2. Divergent Data & Marker Row Proof (fcm-isolated):
+- Production has 2 real users (observed in migration dry-run logs); fcm-isolated had 0 users.
+- Inserted throwaway marker in fcm-isolated jassimai_production.users:
+  id=aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeee0001, display_name='QA Isolation Marker', account_country='JO', active_market_id='JO'
+- Verified before=0, markerInserted={...}, deleted marker, after=0.
+- Production public API remained completely unaffected.
+
+3. Object Storage Note:
+- describe-environment showed bucket jassimai-acceptance-ams (cb656224-d630-4bd5-b647-dccd44db0eaf) in both environments; therefore bucket upload tests were NOT executed to avoid any shared-bucket risk.
