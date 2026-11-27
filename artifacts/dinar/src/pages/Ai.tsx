@@ -34,6 +34,7 @@ import {
   Welcome,
 } from "@/features/ai/ConversationHistory";
 import { WelcomeSponsored, retireWelcomeKey } from "@/features/ai/WelcomeSponsored";
+import { InteractiveCircuitBg } from "@/features/ai/InteractiveCircuitBg";
 import {
   useCallback,
   useEffect,
@@ -2094,6 +2095,7 @@ export default function AiPage() {
       data-keyboard={keyboardOpen ? "open" : undefined}
       data-identity={identityVerifying ? "verifying" : undefined}
     >
+      <InteractiveCircuitBg />
       {identityVerifying && (
         // Back from another tab: nothing private shows or can be used until the server confirms
         // who is signed in now.
