@@ -42,7 +42,7 @@ export function WhopPaymentPanel({
   orderStatus: string;
   role: "buyer" | "seller" | "stranger";
 }) {
-  const { user } = useAccount();
+  const { user, market } = useAccount();
   const query = useQuery<PaymentResponse>({
     queryKey: ["whop-payment", orderId],
     queryFn: async () => (await api(`/whop/orders/${encodeURIComponent(orderId)}/payment`)) as PaymentResponse,
@@ -57,6 +57,16 @@ export function WhopPaymentPanel({
     },
   });
 
+  if (market?.operationMode === "PRE_LEGAL") {
+    return (
+      <Card testId="whop-payment-panel" className="rounded-2xl border-border/80 bg-card/95 shadow-xs">
+        <CardTitle>الدفع الإلكتروني غير متاح في دولتك حاليًا</CardTitle>
+        <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
+          هذا السوق في وضع التشغيل التقني — الدفع نقدًا فقط. يمكنك تنسيق الدفع المباشر مع البائع من بطاقة التواصل والدفع.
+        </p>
+      </Card>
+    );
+  }
   if (query.isLoading || query.isError || !query.data?.enabled) return null;
   const payment = query.data.payment;
   if (!payment) return null;
@@ -103,12 +113,12 @@ export function WhopPaymentPanel({
       )}
       {payment.status === "SUCCEEDED" && (
         <InlineAlert tone="success" title="تم استلام الدفعة">
-          استلمت Whop {usd(payment.amountUsd)}. لا حاجة لأي إجراء إضافي.
+          استلمت Whop <bdi dir="ltr" className="font-semibold tabular-nums">{usd(payment.amountUsd)}</bdi>. لا حاجة لأي إجراء إضافي.
         </InlineAlert>
       )}
       {payment.status === "REFUND_DUE" && (
         <InlineAlert tone="warning" title="دفعة بحاجة إلى استرداد">
-          وصلت دفعة على طلب ملغى أو منتهي الحجز، فسُجّلت obligation استرداد كاملة. لا
+          وصلت دفعة على طلب ملغى أو منتهي الحجز، فسُجّل التزام استرداد كامل. لا
           تُعدّ بيعًا حتى يكتمل الاسترداد من الإدارة.
         </InlineAlert>
       )}
