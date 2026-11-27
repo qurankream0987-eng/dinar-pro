@@ -111,6 +111,7 @@ export function AppShell({
         {!chat && <TopBar location={location} minimal={bare} />}
         <main
           id="main"
+          tabIndex={-1}
           className="app-main"
           data-bar={chat ? "chat" : focus ? "action" : bare ? "none" : "nav"}
         >
