@@ -293,7 +293,7 @@ body[data-private-session-check="true"] > #dinar-private-session-check { display
   --breakpoint-xl: 1280px;
 
   --animate-rise: rise var(--dur-slow) var(--ease-out) both;
-  --animate-fade: fade var(--dur-base) ease-out both;
+  --animate-fade: fade 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
   --animate-pop: pop 360ms var(--ease-out);
   --animate-shimmer: shimmer 1.4s ease-in-out infinite;
 }
@@ -559,15 +559,16 @@ body[data-private-session-check="true"] > #dinar-private-session-check { display
   }
   .pressable {
     transition:
-      transform var(--dur-fast) ease,
-      background-color var(--dur-base) ease,
-      border-color var(--dur-base) ease,
-      color var(--dur-base) ease,
-      box-shadow var(--dur-base) ease,
-      opacity var(--dur-base) ease;
+      transform 180ms cubic-bezier(0.22, 1, 0.36, 1),
+      background-color 180ms ease,
+      border-color 180ms ease,
+      color 180ms ease,
+      box-shadow 220ms cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 180ms ease;
+    will-change: transform;
   }
   .pressable:active:not(:disabled) {
-    transform: scale(0.97);
+    transform: scale(0.985);
   }
   .skeleton {
     background: hsl(var(--muted));
