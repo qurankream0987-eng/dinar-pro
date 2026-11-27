@@ -1,0 +1,16 @@
+ok 1 - seven actors receive real sessions and resources span two markets
+ok 2 - anonymous users are denied protected order and checkout routes
+ok 3 - ownership, draft privacy, and market boundaries are enforced by the API
+ok 4 - listing photos reject invalid uploads, enforce ownership, and are public only when published
+ok 5 - price, commission, quantity, state, and replay attacks use authoritative state
+ok 6 - every admin mutation denies anonymous and ordinary users
+ok 7 - cross-origin requests cannot mutate listings, archive, checkout, orders, disputes, or markets
+ok 8 - stored HTML payloads stay inert across buyer, seller, chat, and admin surfaces
+ok 9 - only an admin resolves disputes; replay and forged accounting cannot duplicate dues
+ok 10 - anonymous phone verification is equivalent and account creation requires one-time proof
+ok 11 - a successful login remains counted until the 900-second window expires
+not ok 12 - auth limits share PostgreSQL authority across two API processes
+# tests 12
+# pass 11
+# fail 1
+LOCAL_SUITE suite=security-acceptance.test db=dinar_test_local_ac7ce0ed1643 exit=1 outbound=0

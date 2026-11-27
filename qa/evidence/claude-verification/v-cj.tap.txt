@@ -1,0 +1,12 @@
+ok 1 - seller publishes a product and a service; invalid prices are refused
+ok 2 - buyer discovers both listings and refines the results
+ok 3 - offer → counteroffer → acceptance, with invalid, stale, wrong-actor and own-listing refusals
+ok 4 - authorized order at the agreed price; duplicates, wrong actors and client amounts change nothing
+ok 5 - simulated payment: only a correctly signed capture moves the intent; fabricated success is refused
+ok 6 - handoff and delivery confirmation complete the order and create exactly one seller due
+ok 7 - concurrent purchases of the last unit produce exactly one order
+ok 8 - the rival's offer on the sold listing cannot become a second agreement beyond stock
+# tests 8
+# pass 8
+# fail 0
+LOCAL_SUITE suite=commerce-journey.test db=dinar_test_local_a3c309a37753 exit=0 outbound=0

@@ -1,0 +1,328 @@
+##### qa-local-1.log (2026-11-27 12:01:08.913956585 +0000)
+LOCAL_SUITE_PRELUDE exit=0 outbound=0
+✔ seller publishes a product and a service; invalid prices are refused (11127.316258ms)
+Terminated                 DINAR_LOCAL_PG="postgres://${PGUSER}:${PGPASSWORD}@127.0.0.1:5432" artifacts/api-server/test/isolation/local-suite.sh commerce-journey.test BDINAR_WAVE4_ACCEPTANCE=development 2>&1
+=== DONE_LOCAL_1 ===
+✔ buyer discovers both listings and refines the results (5781.893892ms)
+✔ offer → counteroffer → acceptance, with invalid, stale, wrong-actor and own-listing refusals (8320.407099ms)
+✔ authorized order at the agreed price; duplicates, wrong actors and client amounts change nothing (9844.748105ms)
+✔ simulated payment: only a correctly signed capture moves the intent; fabricated success is refused (4333.665156ms)
+✔ handoff and delivery confirmation complete the order and create exactly one seller due (8089.107471ms)
+✔ concurrent purchases of the last unit produce exactly one order (8385.856622ms)
+✔ the rival's offer on the sold listing cannot become a second agreement beyond stock (13862.387969ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 70476.101913
+##### qa-local-2.log (2026-11-27 12:06:46.681956585 +0000)
+LOCAL_SUITE_PRELUDE exit=0 outbound=0
+✔ migration: every Arab market has an empty legal file and no approval (3636.350188ms)
+✔ before the technical check every Arab market is closed and the gate refuses (19270.518377ms)
+✔ non-admin cannot run the technical check (5670.85893ms)
+✔ technical check marks all 22 READY and touches no legal record (26339.502265ms)
+✔ deployed gate: technical readiness opens non-regulated capabilities only (70637.865326ms)
+✔ PRE-LEGAL-AE (23694.894548ms)
+✔ PRE-LEGAL-BH (23010.012345ms)
+✔ PRE-LEGAL-DZ (22616.984935ms)
+✔ PRE-LEGAL-EG (23202.45474ms)
+✔ PRE-LEGAL-IQ (23227.812489ms)
+✔ PRE-LEGAL-JO (23092.248038ms)
+✔ PRE-LEGAL-KM (22773.311335ms)
+✔ PRE-LEGAL-DJ (23247.690697ms)
+✔ PRE-LEGAL-KW (22933.980437ms)
+✔ PRE-LEGAL-LB (23069.252268ms)
+✔ PRE-LEGAL-LY (23641.480339ms)
+✔ PRE-LEGAL-MA (23507.256057ms)
+##### qa-local-3.log (2026-11-27 12:06:46.157956585 +0000)
+LOCAL_SUITE_PRELUDE exit=0 outbound=0
+✔ setup: two users and an admin (22470.213295ms)
+✔ P2-01 every privacy route requires a signed-in user (179.79187ms)
+✔ P2-02 access: the summary shows the user's own data and preferences only (1197.02555ms)
+✔ P2-03 export: password re-authentication, tracked request, own records only, idempotent (20211.85747ms)
+✔ P2-04 export is rate limited per user (fails closed) (12984.743161ms)
+✔ P2-05 preferences: opt-in marketing, consent ledger, stale versions conflict, ledger is append-only (7684.177904ms)
+✔ P2-06 location sharing permission is enforced on the server (3845.131609ms)
+✔ P2-07 tracked requests: own only, withdrawal, admin decisions require a reason, invalid transitions refused (9688.069624ms)
+✔ P2-08 conversation: view, export card (no password in chat), preferences and requests through the same authority (53949.784929ms)
+✔ P2-09 account deletion is tracked and keeps required records (11091.006065ms)
+✔ P2-09b account closure completes when private-photo cleanup is unavailable (10605.698615ms)
+✔ P2-10 retention periods are configuration pending legal approval (36.883344ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 154410.711228
+      "type": "Error"
+      "type": "Error"
+LOCAL_SUITE suite=closure-privacy.test db=dinar_test_local_7568952efb0d exit=0 outbound=0
+LOCAL_SUITE_THROTTLE_RESET after=closure-privacy.test before=closure-ai-cost.test rows=38
+##### qa-local-4.log (2026-11-27 12:04:02.897956585 +0000)
+##### qa-suite-1.log (2026-11-27 11:52:07.177956585 +0000)
+=== START arab-markets-readiness.test ===
+✔ AR-DZ (30755.030143ms)
+✔ AR-BH (25036.430104ms)
+✔ AR-KM (24794.781703ms)
+✔ AR-DJ (24641.903183ms)
+✔ AR-EG (24899.047451ms)
+✔ AR-IQ (24848.381452ms)
+✔ AR-JO (22528.740941ms)
+✔ AR-KW (24923.490221ms)
+✔ AR-LB (25219.647325ms)
+✔ AR-LY (24979.506653ms)
+✔ AR-MR (28790.244277ms)
+✔ AR-MA (28210.290215ms)
+✔ AR-OM (28184.810196ms)
+✔ AR-PS (28163.004257ms)
+✔ AR-QA (28338.754274ms)
+✔ AR-SA (29046.086007ms)
+✔ AR-SO (28834.942745ms)
+✔ AR-SD (28700.126753ms)
+✔ AR-SY (28896.508369ms)
+✔ AR-TN (29136.809611ms)
+✔ AR-AE (32079.741403ms)
+✔ AR-YE (28018.798121ms)
+ℹ tests 22
+ℹ suites 0
+ℹ pass 22
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 599272.673055
+=== EXIT arab-markets-readiness.test: 0 ===
+=== START wave08-cash-and-refunds.test ===
+✔ cash is implemented but available only in a development environment (1.50153ms)
+✔ a buyer cash claim is an unverified claim, not a payment entry (12694.49967ms)
+✔ only the seller decides a claim and only the buyer may dispute it (16633.961295ms)
+✔ seller confirmation is the only cash payment attestation and is idempotent (15039.293501ms)
+✖ cash claims are idempotent, order-scoped and refuse an electronic conflict (32348.133846ms)
+✔ cash claim facts are immutable and rows cannot be deleted (13547.957548ms)
+✔ a cash refund case can exist before any repayment is claimed (16275.311107ms)
+✔ cash refunds are idempotent and cannot exceed the confirmed cash (20806.122558ms)
+✔ a seller repayment claim stays unverified until the buyer confirms receipt (19766.314428ms)
+✔ a disputed repayment never records a refund (20481.041463ms)
+✔ completion reverses commission for cash refunds before and after it (25519.54188ms)
+✔ cash refund database transitions and facts cannot be forged (18166.596774ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 11
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 211319.417826
+✖ failing tests:
+✖ cash claims are idempotent, order-scoped and refuse an electronic conflict (32348.133846ms)
+  AssertionError [ERR_ASSERTION]: {"error":"Not found"}
+    actual: 404,
+    expected: 201,
+=== EXIT wave08-cash-and-refunds.test: 1 ===
+=== START commerce.test ===
+✔ 01 limited checkout reserves stock but does not decrement it (22.38561ms)
+✔ 02 limited checkout rejects overselling with the fresh available quantity (0.669761ms)
+✔ quote-required listings cannot be checked out or reserve inventory (0.656561ms)
+✔ negotiable listings are not checked out at the public price without an agreement (1.999758ms)
+✔ open-to-offers listings still need an agreed price before checkout (0.44569ms)
+✔ checkout rejection message names the actual reason (0.64006ms)
+✔ 03 zero quantity is rejected (0.37516ms)
+✔ 04 negative, fractional, unsafe, and over-limit quantities are rejected (0.76562ms)
+✔ 05 unlimited listings do not reserve or decrement stock (0.539941ms)
+✔ 06 repeated cart lines for a listing merge before stock validation (0.67006ms)
+✔ 07 different prices from one seller split into arithmetically consistent orders (1.459241ms)
+✔ 07b same-price offers from one seller remain in one order (0.611649ms)
+✔ 08 different sellers get separate orders and untrusted client totals are ignored (6.122192ms)
+✔ 09 stock changed since cart add rejects checkout without partial reservations (0.36892ms)
+✔ 10 cancelling an unaccepted order releases its reservation (0.483941ms)
+✔ 11 completing an order commits only its reserved quantity (0.47197ms)
+✔ seller dues preserve historical 15% snapshots, legacy 10% orders and current 5% orders, and are created once (1.24168ms)
+✔ 13 KWD arithmetic stays exact in fils (2.266791ms)
+✔ 19 currency arithmetic uses the ISO minor-unit scale (0.49429ms)
+✔ 14 cart additions merge duplicates and enforce limited stock (0.92746ms)
+✔ 15 cart quantity updates can remove a line with quantity zero (0.417601ms)
+✔ 16 cart storage restores valid state and clears invalid payloads (1.437421ms)
+✔ 17 limited inventory can be switched to unlimited without affecting older reservations (0.8956ms)
+✔ 18 unlimited inventory can be bounded only with a safe quantity at least as high as reservations (0.22439ms)
+ℹ tests 24
+ℹ suites 0
+ℹ pass 24
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 76.358557
+=== EXIT commerce.test: 0 ===
+=== ALL_DONE_SUITE_1 ===
+##### qa-suite-2-iso.log (2026-11-27 11:52:18.217956585 +0000)
+✖ seven actors receive real sessions and resources span two markets (55699.259453ms)
+✖ anonymous users are denied protected order and checkout routes (163.700683ms)
+✖ ownership, draft privacy, and market boundaries are enforced by the API (4668.604035ms)
+✖ listing photos reject invalid uploads, enforce ownership, and are public only when published (3489.242262ms)
+✖ price, commission, quantity, state, and replay attacks use authoritative state (925.717727ms)
+✖ every admin mutation denies anonymous and ordinary users (5.613592ms)
+✖ cross-origin requests cannot mutate listings, archive, checkout, orders, disputes, or markets (1.143051ms)
+✖ stored HTML payloads stay inert across buyer, seller, chat, and admin surfaces (0.886889ms)
+✖ only an admin resolves disputes; replay and forged accounting cannot duplicate dues (1.963142ms)
+WAVE3_ANONYMOUS_CHALLENGE_TIMING_MS {"existingPhone":{"samples":4,"median":1021.96,"p95":1605.09},"newPhone":{"samples":4,"median":1014.1,"p95":1039.57}}
+✔ anonymous phone verification is equivalent and account creation requires one-time proof (90711.853941ms)
+✔ a successful login remains counted until the 900-second window expires (23304.117729ms)
+✔ auth limits share PostgreSQL authority across two API processes (92096.278054ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 3
+ℹ fail 9
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 273829.885268
+✖ failing tests:
+✖ seven actors receive real sessions and resources span two markets (55699.259453ms)
+  AssertionError [ERR_ASSERTION]: {"error":"هذا السوق غير متاح للتصفح حاليًا. اختر سوقًا نشطًا بسعر وحدة معتمد."}
+    actual: 409,
+    expected: 200,
+✖ anonymous users are denied protected order and checkout routes (163.700683ms)
+  AssertionError [ERR_ASSERTION]: {"error":"تحقق من البيانات المدخلة"}
+    actual: 400,
+    expected: 201,
+✖ ownership, draft privacy, and market boundaries are enforced by the API (4668.604035ms)
+  AssertionError [ERR_ASSERTION]: {"error":"العرض غير موجود"}
+    actual: 404,
+    expected: 200,
+✖ listing photos reject invalid uploads, enforce ownership, and are public only when published (3489.242262ms)
+  AssertionError [ERR_ASSERTION]: {"error":"العرض غير موجود"}
+    actual: 404,
+    expected: 403,
+✖ price, commission, quantity, state, and replay attacks use authoritative state (925.717727ms)
+  AssertionError [ERR_ASSERTION]: {"error":"تحقق من البيانات المدخلة"}
+    actual: 400,
+    expected: 409,
+✖ every admin mutation denies anonymous and ordinary users (5.613592ms)
+  AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+    actual: undefined,
+    expected: true,
+✖ cross-origin requests cannot mutate listings, archive, checkout, orders, disputes, or markets (1.143051ms)
+  AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+    actual: undefined,
+    expected: true,
+✖ stored HTML payloads stay inert across buyer, seller, chat, and admin surfaces (0.886889ms)
+  AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+    actual: undefined,
+    expected: true,
+✖ only an admin resolves disputes; replay and forged accounting cannot duplicate dues (1.963142ms)
+  AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+    actual: undefined,
+    expected: true,
+=== EXIT security-acceptance.test: 1 ===
+=== START commerce-journey.test ===
+AssertionError [ERR_ASSERTION]: acceptance fixtures activate JO
+  actual: false,
+  expected: true,
+=== EXIT commerce-journey.test: 1 ===
+=== START conversation.test ===
+✔ guest restoration preserves mixed text and latest result ordering (2.32068ms)
+✔ guest restoration rejects another market, malformed storage and invalid message roles (0.21436ms)
+✔ guest handoff keeps bounded text order and excludes the auth-triggering turn (0.998231ms)
+✔ guest restoration retains handoff identity and binds resumed context to its account (0.975321ms)
+✔ guest restoration retains the selected listing reference for negotiation continuation (0.420569ms)
+✔ server handoff sanitizer removes secrets, contact details and temporary locations (0.33182ms)
+✔ untrusted blocks are dropped while safe text and logout surfaces restore (0.30371ms)
+✔ conversation titles are concise and useful without a model (0.879531ms)
+✔ back-to-results intent recognizes short and explicit Arabic requests (0.59664ms)
+✔ AI color refinements preserve the product when the user says 'the black color' (7.513231ms)
+✔ an alphanumeric car model code is a model filter; a plain word is free text (24.176601ms)
+✔ a request to compare the results is not searched for as product text (7.216502ms)
+✔ car search stays deterministic and accumulates typed filters across turns (11.953924ms)
+✔ property query uses the same category-neutral structured search contract (4.064223ms)
+✔ category aliases match whole words without mistaking household-use text for property intent (14.423428ms)
+✔ unclassified seller details stay category-neutral until valid registry rules are selected (2.399572ms)
+✔ structured search supports sorting, filter clearing, and category switches (5.531989ms)
+✔ a generic color refinement does not guess a category or discard prior text (0.46759ms)
+✔ configured categories parse typed fields without inventing unsupported fields (1.816182ms)
+✔ photo suggestions require a permitted field and matching photo provenance (3.380629ms)
+✔ photo suggestions cannot establish hidden storage or warranty attributes (0.35529ms)
+✔ photo analysis is explicit when no provider is configured or one fails (0.44476ms)
+✔ guest conversation restoration keeps validated structured search context (0.46516ms)
+✔ category attributes are normalized and publication requirements are explicit (0.38841ms)
+✔ Camry sale drafts accept price and mileage changes without publishing (10.646094ms)
+✔ data-configured categories use generic sale drafts, validation, and filter fields (4.536704ms)
+✔ generic seller prompts extract ordinary price, quantity, and service titles (18.362516ms)
+✔ generic offer wording enters the sell flow without hijacking account navigation (10.045483ms)
+✔ seller payment choices use canonical values; the short draft defaults to direct payment (8.713865ms)
+ℹ tests 29
+ℹ suites 0
+ℹ pass 29
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 178.804419
+=== EXIT conversation.test: 0 ===
+=== ALL_DONE_SUITE_2 ===
+##### qa-suite-2.log (2026-11-27 11:41:02.121956585 +0000)
+=== START security-acceptance.test ===
+✖ seven actors receive real sessions and resources span two markets (53097.444782ms)
+✖ anonymous users are denied protected order and checkout routes (166.229844ms)
+✖ ownership, draft privacy, and market boundaries are enforced by the API (4776.826577ms)
+✖ listing photos reject invalid uploads, enforce ownership, and are public only when published (3497.212675ms)
+✖ price, commission, quantity, state, and replay attacks use authoritative state (913.238881ms)
+✖ every admin mutation denies anonymous and ordinary users (19.793297ms)
+✖ cross-origin requests cannot mutate listings, archive, checkout, orders, disputes, or markets (2.737141ms)
+✖ stored HTML payloads stay inert across buyer, seller, chat, and admin surfaces (0.79579ms)
+✖ only an admin resolves disputes; replay and forged accounting cannot duplicate dues (2.094151ms)
+WAVE3_ANONYMOUS_CHALLENGE_TIMING_MS {"existingPhone":{"samples":4,"median":1028.12,"p95":1641.68},"newPhone":{"samples":4,"median":1026.01,"p95":1036.74}}
+✔ anonymous phone verification is equivalent and account creation requires one-time proof (86619.926649ms)
+##### qa-suite-3.log (2026-11-27 12:06:47.033956585 +0000)
+=== START arab-markets-pre-legal.test ===
+✔ migration: every Arab market has an empty legal file and no approval (3681.622355ms)
+✔ before the technical check every Arab market is closed and the gate refuses (19681.063375ms)
+✔ non-admin cannot run the technical check (6500.254809ms)
+✔ technical check marks all 22 READY and touches no legal record (26822.98349ms)
+✔ deployed gate: technical readiness opens non-regulated capabilities only (70855.345429ms)
+✔ PRE-LEGAL-AE (23447.785294ms)
+✔ PRE-LEGAL-BH (22842.774552ms)
+✔ PRE-LEGAL-DZ (23562.878267ms)
+✔ PRE-LEGAL-EG (22898.916664ms)
+✔ PRE-LEGAL-IQ (22547.014197ms)
+✔ PRE-LEGAL-JO (23033.099854ms)
+✔ PRE-LEGAL-KM (22708.772829ms)
+✔ PRE-LEGAL-DJ (22836.169869ms)
+✔ PRE-LEGAL-KW (23078.223183ms)
+✔ PRE-LEGAL-LB (22671.575096ms)
+✔ PRE-LEGAL-LY (22471.055207ms)
+✔ PRE-LEGAL-MA (22531.418513ms)
+✔ PRE-LEGAL-MR (23030.957503ms)
+✔ PRE-LEGAL-OM (23171.261707ms)
+✔ PRE-LEGAL-PS (23434.055709ms)
+✔ PRE-LEGAL-QA (22992.49402ms)
+✔ PRE-LEGAL-SA (22834.475038ms)
+✔ PRE-LEGAL-SO (22885.420938ms)
+✔ PRE-LEGAL-SD (23326.074237ms)
+✔ PRE-LEGAL-SY (23339.919632ms)
+✔ PRE-LEGAL-TN (22899.786393ms)
+##### qa-wave08-retry.log (2026-11-27 11:58:11.213956585 +0000)
+✔ cash is implemented but available only in a development environment (3.032553ms)
+✔ a buyer cash claim is an unverified claim, not a payment entry (12659.065544ms)
+✔ only the seller decides a claim and only the buyer may dispute it (16884.039671ms)
+✔ seller confirmation is the only cash payment attestation and is idempotent (15089.67679ms)
+✔ cash claims are idempotent, order-scoped and refuse an electronic conflict (36485.470825ms)
+✔ cash claim facts are immutable and rows cannot be deleted (14464.60567ms)
+✔ a cash refund case can exist before any repayment is claimed (16601.112792ms)
+✔ cash refunds are idempotent and cannot exceed the confirmed cash (20941.78912ms)
+✔ a seller repayment claim stays unverified until the buyer confirms receipt (20281.371806ms)
+✔ a disputed repayment never records a refund (20951.792925ms)
+✔ completion reverses commission for cash refunds before and after it (25857.03537ms)
+✔ cash refund database transitions and facts cannot be forged (18317.903452ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 218567.430053
