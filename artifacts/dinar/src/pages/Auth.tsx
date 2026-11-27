@@ -35,50 +35,60 @@ const phoneVerificationEnabled = !import.meta.env.DEV;
 function PasswordInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
   const [show, setShow] = useState(false);
   return (
-    <div className="relative">
-      <Input {...props} type={show ? "text" : "password"} dir="ltr" className="pl-12 text-left" />
+    <div className="relative" dir="ltr">
+      <Input {...props} type={show ? "text" : "password"} dir="ltr" className="pe-11 text-start" />
       <button
         type="button"
         aria-label={show ? "إخفاء كلمة المرور" : "إظهار كلمة المرور"}
         aria-pressed={show}
         onClick={() => setShow(!show)}
-        className={`${iconButtonClass("ghost")} !absolute left-1 top-1/2 -translate-y-1/2`}
+        className={`${iconButtonClass("ghost")} !absolute end-1 top-1/2 -translate-y-1/2`}
       >
-        {show ? <EyeOff size={19} /> : <Eye size={19} />}
+        {show ? <EyeOff size={18} /> : <Eye size={18} />}
       </button>
     </div>
   );
 }
 
-function AuthFrame({ children }: { children: ReactNode }) {
+function AuthFrame({ children, embedded = false }: { children: ReactNode; embedded?: boolean }) {
+  if (embedded) {
+    return (
+      <div className="mx-auto w-full max-w-[400px] px-3 py-3 sm:px-4 sm:py-4">
+        {children}
+      </div>
+    );
+  }
   return (
-    <div className="container-app py-6 md:py-12">
-      <div className="mx-auto grid max-w-[860px] overflow-hidden rounded-2xl md:border md:border-border md:bg-card md:shadow-sm lg:grid-cols-[1fr_360px]">
-        <div className="md:p-7">{children}</div>
-        <aside className="relative hidden overflow-hidden bg-ink p-7 text-ink-foreground lg:flex lg:flex-col lg:justify-between">
-          <span aria-hidden className="absolute -end-24 -top-24 h-72 w-72 rounded-full border-[36px] border-accent/15" />
-          <span aria-hidden className="absolute -bottom-20 -start-16 h-56 w-56 rounded-full border-[28px] border-white/5" />
-          <BrandMark size={48} wordmark={false} className="relative z-10" />
-          <div className="relative">
-            <p className="text-3xl font-bold leading-[1.5]">
+    <div className="container-app flex min-h-[calc(100dvh-5rem)] items-center justify-center py-4 md:py-6">
+      <div className="mx-auto grid w-full max-w-[740px] rounded-2xl border border-border/80 bg-card/95 shadow-sm backdrop-blur-sm lg:grid-cols-[1fr_290px]">
+        <div className="p-4 sm:p-5 md:p-6">{children}</div>
+        <aside className="relative hidden overflow-hidden rounded-e-2xl bg-ink p-6 text-ink-foreground lg:flex lg:flex-col lg:justify-between">
+          <span aria-hidden className="pointer-events-none absolute -end-20 -top-20 h-56 w-56 rounded-full border-[28px] border-accent/15" />
+          <span aria-hidden className="pointer-events-none absolute -bottom-16 -start-14 h-44 w-44 rounded-full border-[22px] border-white/5" />
+          <BrandMark size={44} wordmark={false} className="relative z-10" />
+          <div className="relative my-4">
+            <p className="text-xl font-bold leading-[1.5]">
               لكل عرض سعر يحدده البائع، وتظهر التكلفة بوضوح قبل الطلب.
               <br />
               <span className="text-accent">اشترِ وبِع بوضوح.</span>
             </p>
-            <ul className="mt-8 space-y-4 text-md text-ink-foreground/80">
-              <li className="flex gap-3">
-                <ShoppingBag size={20} className="shrink-0 text-accent" aria-hidden /> اختر الكمية — والإجمالي واضح دائمًا.
+            <ul className="mt-5 space-y-3 text-sm text-ink-foreground/80">
+              <li className="flex items-start gap-2.5">
+                <ShoppingBag size={18} className="mt-0.5 shrink-0 text-accent" aria-hidden />
+                <span>اختر الكمية — والإجمالي واضح دائمًا.</span>
               </li>
-              <li className="flex gap-3">
-                <Store size={20} className="shrink-0 text-accent" aria-hidden /> اعرض ما تبيعه من الحساب نفسه.
+              <li className="flex items-start gap-2.5">
+                <Store size={18} className="mt-0.5 shrink-0 text-accent" aria-hidden />
+                <span>اعرض ما تبيعه من الحساب نفسه.</span>
               </li>
-              <li className="flex gap-3">
-                <MessageCircle size={20} className="shrink-0 text-accent" aria-hidden /> تواصل داخل كل طلب فقط.
+              <li className="flex items-start gap-2.5">
+                <MessageCircle size={18} className="mt-0.5 shrink-0 text-accent" aria-hidden />
+                <span>تواصل داخل كل طلب فقط.</span>
               </li>
             </ul>
           </div>
-          <p className="relative flex items-center gap-2 text-sm text-ink-foreground/60">
-            <ShieldCheck size={16} aria-hidden /> لا نطلب موقعك الدقيق عند التسجيل.
+          <p className="relative flex items-center gap-2 text-xs text-ink-foreground/65">
+            <ShieldCheck size={15} className="shrink-0" aria-hidden /> لا نطلب موقعك الدقيق عند التسجيل.
           </p>
         </aside>
       </div>
@@ -281,20 +291,22 @@ export function AuthPage({ register = false, next, embedded = false }: { registe
   };
 
   return (
-    <AuthFrame>
-      <div className="mx-auto max-w-[380px]">
-        <div className="mb-7 text-center lg:text-start">
-          <div className="mb-5 flex justify-center lg:hidden">
-            <BrandMark size={56} wordmark={false} />
-          </div>
-          <h1 className="text-2xl font-bold md:text-3xl">{register ? "أنشئ حسابك" : "مرحبًا بعودتك"}</h1>
-          <p className="mt-1.5 text-base text-muted-foreground">
+    <AuthFrame embedded={embedded}>
+      <div className="mx-auto w-full max-w-[360px]">
+        <div className={embedded ? "mb-4 text-center" : "mb-5 text-center lg:text-start"}>
+          {!embedded && (
+            <div className="mb-3 flex justify-center lg:hidden">
+              <BrandMark size={44} wordmark={false} />
+            </div>
+          )}
+          <h1 className="text-xl font-bold sm:text-2xl">{register ? "أنشئ حسابك" : "مرحبًا بعودتك"}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
             {register ? "حساب واحد للشراء والبيع في JassimAI." : "سجّل دخولك لمتابعة طلباتك وسلتك وعروضك."}
           </p>
         </div>
 
         {googleSignInConfigured && (
-          <div className="mb-5 grid gap-3">
+          <div className="mb-4 grid gap-2.5">
             <GoogleSignIn
               onSignedIn={async () => {
                 await refresh();
@@ -314,7 +326,7 @@ export function AuthPage({ register = false, next, embedded = false }: { registe
             التسجيل برقم الهاتف غير متاح حاليًا. اضغط زر «المتابعة بحساب Google» أعلاه، ثم اكتب رقم هاتفك مرتين.
           </InlineAlert>
         ) : (
-        <form noValidate onSubmit={submit} className="grid gap-4">
+        <form noValidate onSubmit={submit} className="grid gap-3">
           {register && (
             <>
               <Field label="الاسم" error={fieldErrors.displayName}>

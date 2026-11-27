@@ -198,10 +198,10 @@ export function GoogleSignIn({ onSignedIn }: { onSignedIn: () => Promise<void> |
   };
 
   return (
-    <div className="grid gap-4 rounded-2xl border border-border bg-muted/30 p-4" data-testid="google-phone-step">
+    <div className="grid gap-3 rounded-xl border border-border/80 bg-muted/30 p-3.5" data-testid="google-phone-step">
       <div>
-        <p className="font-semibold text-foreground">خطوة أخيرة: {pending.confirmTwice ? "رقم هاتفك للتواصل" : "تأكيد رقم هاتفك"}</p>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="text-sm font-semibold text-foreground">خطوة أخيرة: {pending.confirmTwice ? "رقم هاتفك للتواصل" : "تأكيد رقم هاتفك"}</p>
+        <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
           {pending.confirmTwice ? (
             <>
               تم التحقق من حساب Google <span dir="ltr">{pending.email}</span>. اكتب رقم هاتفك مرتين؛ يصل إليه البائع أو المشتري للتنسيق على طلباتك.
