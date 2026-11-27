@@ -216,13 +216,21 @@ export function AccountProvider({ children }: { children: ReactNode }) {
     await qc.invalidateQueries({ queryKey: ["markets"] });
   }, [qc]);
   const logout = useCallback(async () => {
+    const leavingEmail = (me.data?.user as { email?: string | null } | null | undefined)?.email;
     await api("/auth/logout", "POST", {});
+    // Make the Google button forget the account that is leaving, so the next sign-in shows the
+    // account chooser instead of "Continue as <previous account>".
+    try {
+      const gid = (window as unknown as { google?: { accounts?: { id?: { disableAutoSelect?: () => void; revoke?: (hint: string, done: () => void) => void } } } }).google?.accounts?.id;
+      gid?.disableAutoSelect?.();
+      if (leavingEmail && gid?.revoke) await new Promise<void>((done) => { gid.revoke!(leavingEmail, () => done()); setTimeout(done, 1500); });
+    } catch { /* Google script absent: nothing to forget */ }
     // A handoff waiting in this tab belongs to the account that is leaving; never to the next one.
     clearGuestHandoff();
     await qc.cancelQueries();
     qc.clear();
     window.location.replace(import.meta.env.BASE_URL);
-  }, [qc]);
+  }, [qc, me]);
   return (
     <Context.Provider
       value={{

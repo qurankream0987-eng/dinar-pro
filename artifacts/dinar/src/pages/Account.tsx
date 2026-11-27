@@ -67,6 +67,7 @@ export function ProfilePage() {
   const dashboard = useGetDashboard();
   const { open } = useMarketSheet();
   const [error, setError] = useState("");
+  const [confirmProfileLogout, setConfirmProfileLogout] = useState(false);
   const [avatarError, setAvatarError] = useState("");
   const [avatarBusy, setAvatarBusy] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
@@ -282,10 +283,21 @@ export function ProfilePage() {
         block
         size="lg"
         icon={<LogOut size={18} />}
-        onClick={() => logout().catch((e) => setError(friendlyError(e)))}
+        onClick={() => setConfirmProfileLogout(true)}
+        data-testid="button-profile-logout"
       >
         تسجيل الخروج
       </Button>
+      <ConfirmDialog
+        open={confirmProfileLogout}
+        onOpenChange={setConfirmProfileLogout}
+        title="تسجيل الخروج؟"
+        body="ستبقى سلتك وطلباتك محفوظة في حسابك."
+        confirmLabel="تسجيل الخروج"
+        tone="danger"
+        icon={<LogOut size={19} />}
+        onConfirm={() => logout().catch((e) => setError(friendlyError(e)))}
+      />
     </div>
   );
 }
