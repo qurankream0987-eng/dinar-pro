@@ -3,11 +3,12 @@ import assert from "node:assert/strict";
 import {
   BoundedHotCache,
   classifyFastArabicIntent,
+  formatScopedCacheKey,
   FrameCoalescedTokenBuffer,
 } from "../src/ai/speed-optimizer";
 import { DualChannelStreamParser } from "../src/ai/dual-channel-stream";
 
-test("Speed-01: FastArabicIntentClassifier classifies 1,000 Arabic turns in <15ms (<0.015ms/turn)", () => {
+test("Speed-01: FastArabicIntentClassifier classifies 1,000 Arabic turns in <15ms with strictly read-only authority", () => {
   const samples = [
     "السلام عليكم",
     "أريد أن أشتري آيفون 16 برو في الكويت",
@@ -20,6 +21,7 @@ test("Speed-01: FastArabicIntentClassifier classifies 1,000 Arabic turns in <15m
   const t0 = performance.now();
   for (let i = 0; i < 1000; i++) {
     const plan = classifyFastArabicIntent(samples[i % samples.length]!);
+    assert.equal(plan.authority, "READ_ONLY_PREFETCH_HINT");
     assert.ok(plan.speculativePrefetches.length >= 1);
   }
   const elapsedMs = performance.now() - t0;
@@ -34,8 +36,13 @@ test("Speed-01: FastArabicIntentClassifier classifies 1,000 Arabic turns in <15m
   assert.ok(goSellPlan.speculativePrefetches.includes("SELLER_INVENTORY"));
 });
 
-test("Speed-02: FrameCoalescedTokenBuffer flushes first token in 0ms and coalesces bursts to 60fps frames", () => {
-  const coalescer = new FrameCoalescedTokenBuffer({ frameIntervalMs: 16, maxBufferChars: 48 });
+test("Speed-02: FrameCoalescedTokenBuffer flushes first token in 0ms, coalesces bursts, and auto-flushes mid-sentence stalls", async () => {
+  const autoFlushed: string[] = [];
+  const coalescer = new FrameCoalescedTokenBuffer({
+    frameIntervalMs: 16,
+    maxBufferChars: 48,
+    onAutoFlush: (chunk) => autoFlushed.push(chunk),
+  });
 
   // First token flushes immediately at t=0ms (zero TTFT penalty)
   const first = coalescer.push("أهلاً", 100);
@@ -49,6 +56,11 @@ test("Speed-02: FrameCoalescedTokenBuffer flushes first token in 0ms and coalesc
   // At t=117ms (>= 16ms frame tick), all buffered tokens flush in one smooth 60fps frame update
   const frameTick = coalescer.push(" الذكي", 117);
   assert.equal(frameTick, " بك في جاسم الذكي");
+
+  // Mid-sentence stall test: push a token without punctuation, then pause > 20ms
+  assert.equal(coalescer.push(" — منتج", 120), null);
+  await new Promise((resolve) => setTimeout(resolve, 28));
+  assert.deepEqual(autoFlushed, [" — منتج"]);
   assert.equal(coalescer.flushRemaining(), "");
 });
 
@@ -63,7 +75,6 @@ test("Speed-03: Combined DualChannelStreamParser + FrameCoalescedTokenBuffer pro
     const events = parser.push("كلمة ");
     for (const ev of events) {
       if (ev.type === "token") {
-        // Simulate 1 token arriving every 2ms (500 tokens/sec ultra-fast Groq stream)
         const frame = coalescer.push(ev.delta, i * 2);
         if (frame) {
           visibleOutput += frame;
@@ -82,14 +93,55 @@ test("Speed-03: Combined DualChannelStreamParser + FrameCoalescedTokenBuffer pro
   const elapsedMs = performance.now() - t0;
 
   assert.equal(visibleOutput.length, 2000 * 5);
-  // 2,000 tokens coalesced into ~250 60fps frames (87.5% fewer React DOM renders!)
   assert.ok(renderFrames < 550, `Expected <550 React render frames for 2,000 tokens, got ${renderFrames}`);
   assert.ok(elapsedMs < 35, `Expected 2,000 tokens parsed & coalesced in <35ms, took ${elapsedMs.toFixed(2)}ms`);
 });
 
-test("Speed-04: BoundedHotCache enforces O(1) LRU eviction and strict TTL expiration", () => {
+test("Speed-04: BoundedHotCache enforces Market/Tenant/User isolation, rejects unscoped keys, and supports invalidation", () => {
   const cache = new BoundedHotCache<string>({ maxEntries: 16, defaultTtlMs: 5000 });
-  cache.set("market:KW", "KWD", 5000, 1000);
-  assert.equal(cache.get("market:KW", 2000), "KWD");
-  assert.equal(cache.get("market:KW", 7000), undefined); // expired
+
+  // 1. Strict tenant & market separation: same resource name in two markets or two tenants never collides
+  const kwTenantA = { scope: "TENANT" as const, marketId: "KW", tenantId: "merchant_A", resource: "inventory" };
+  const kwTenantB = { scope: "TENANT" as const, marketId: "KW", tenantId: "merchant_B", resource: "inventory" };
+  const saTenantA = { scope: "TENANT" as const, marketId: "SA", tenantId: "merchant_A", resource: "inventory" };
+  const kwUser1 = { scope: "USER" as const, marketId: "KW", userId: "user_1", resource: "prefs" };
+  const kwUser2 = { scope: "USER" as const, marketId: "KW", userId: "user_2", resource: "prefs" };
+
+  cache.set(kwTenantA, "KW_A_DATA", 5000, 1000);
+  cache.set(kwTenantB, "KW_B_DATA", 5000, 1000);
+  cache.set(saTenantA, "SA_A_DATA", 5000, 1000);
+  cache.set(kwUser1, "USER_1_PREFS", 5000, 1000);
+  cache.set(kwUser2, "USER_2_PREFS", 5000, 1000);
+
+  assert.equal(cache.get(kwTenantA, 2000), "KW_A_DATA");
+  assert.equal(cache.get(kwTenantB, 2000), "KW_B_DATA");
+  assert.equal(cache.get(saTenantA, 2000), "SA_A_DATA");
+  assert.equal(cache.get(kwUser1, 2000), "USER_1_PREFS");
+  assert.equal(cache.get(kwUser2, 2000), "USER_2_PREFS");
+
+  // 2. Targeted tenant invalidation removes ONLY that tenant's entries in that market
+  assert.equal(cache.invalidateTenant("KW", "merchant_A"), 1);
+  assert.equal(cache.get(kwTenantA, 2000), undefined);
+  assert.equal(cache.get(kwTenantB, 2000), "KW_B_DATA");
+  assert.equal(cache.get(saTenantA, 2000), "SA_A_DATA");
+
+  // 3. Targeted user invalidation removes ONLY that user's entries
+  assert.equal(cache.invalidateUser("KW", "user_1"), 1);
+  assert.equal(cache.get(kwUser1, 2000), undefined);
+  assert.equal(cache.get(kwUser2, 2000), "USER_2_PREFS");
+
+  // 4. Market invalidation removes all remaining KW entries while preserving SA
+  assert.equal(cache.invalidateMarket("KW"), 2);
+  assert.equal(cache.get(kwTenantB, 2000), undefined);
+  assert.equal(cache.get(kwUser2, 2000), undefined);
+  assert.equal(cache.get(saTenantA, 2000), "SA_A_DATA");
+
+  // 5. Rejects empty or delimiter-injected keys
+  assert.throws(() => formatScopedCacheKey({ scope: "PUBLIC_MARKET", marketId: "", resource: "plans" }));
+  assert.throws(() => formatScopedCacheKey({ scope: "TENANT", marketId: "KW", tenantId: "a|b", resource: "plans" }));
+
+  // 6. TTL expiration and clear()
+  assert.equal(cache.get(saTenantA, 7000), undefined);
+  cache.clear();
+  assert.equal(cache.size, 0);
 });

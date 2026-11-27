@@ -1,3 +1,4 @@
+import { classifyFastArabicIntent } from "./speed-optimizer";
 import { parseStructuredSearch } from "./search-query";
 import { claimsCompletedAction } from "./action-receipts";
 import { executeConnectReadTurn } from "../connect/conversation";
@@ -752,6 +753,8 @@ export async function executeAiConversationTurn(
   // services, not an address followed by a request.
   const addressed = context.message.replace(/^\s*(?:يا\s+)?جاسم\s*[،,:!]?\s+(?=\S)(?!(?:بزنس|بيزنس|business|جو|go|برو|pro|كونكت|كونيكت|connect)(?:\s|[؟?!.،,]|$))/iu, "");
   if (addressed !== context.message) context = { ...context, message: addressed };
+  const fastIntentHint = classifyFastArabicIntent(context.message);
+  void fastIntentHint;
   if (context.imageUnderstanding) {
     const prompt = claimsCompletedAction(context.imageUnderstanding.answer)
       ? "أستطيع شرح محتوى الصورة فقط؛ لم أنفّذ أي إجراء أو أؤكد شراءً أو دفعًا."

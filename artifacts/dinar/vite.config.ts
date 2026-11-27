@@ -85,7 +85,6 @@ export default defineConfig({
         manualChunks(id) {
           if (!id.includes("node_modules")) return;
           if (id.includes("maplibre-gl")) return "vendor-maplibre";
-          if (id.includes("recharts") || id.includes("d3-") || id.includes("victory-vendor")) return "vendor-charts";
           if (id.includes("framer-motion")) return "vendor-motion";
           if (id.includes("@radix-ui")) return "vendor-radix";
           if (id.includes("@tanstack")) return "vendor-query";

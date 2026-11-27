@@ -124,7 +124,12 @@ function takeStashedDraft(): string {
 
 export default function AiPage() {
   useEffect(() => {
-    // dinar-idle-route-prefetch: warm secondary route chunks when main thread is idle
+    // dinar-idle-route-prefetch: warm secondary route chunks only on unconstrained networks when Save-Data is off
+    const nav = navigator as Navigator & {
+      connection?: { saveData?: boolean; effectiveType?: string };
+    };
+    if (nav.connection?.saveData) return;
+    if (nav.connection?.effectiveType && ["slow-2g", "2g", "3g"].includes(nav.connection.effectiveType)) return;
     const timer = window.setTimeout(() => {
       const warm = () => {
         void import("./Search");
@@ -1993,18 +1998,28 @@ export default function AiPage() {
     };
   }, []);
 
+  const handleComposerSubmit = useStableCallback(() => {
+    void submit();
+  });
+  const handleComposerStop = useStableCallback(() => {
+    activeStream.current?.controller.abort();
+  });
+  const handleComposerPhotosChange = useStableCallback((files: File[]) => {
+    setSelectedPhotos(files);
+    if (failedTurn?.imageObjectPaths) setFailedTurn(null);
+  });
+  const canStopActiveStream = Boolean(
+    streaming && activeStream.current?.dispatched && activeStream.current.stoppable,
+  );
+
   const chatComposer = (
     <ChatComposer
       draft={draft}
       onDraftChange={setDraft}
-      onSubmit={() => void submit()}
-      onStop={streaming && activeStream.current?.dispatched && activeStream.current.stoppable
-        ? () => activeStream.current?.controller.abort() : undefined}
+      onSubmit={handleComposerSubmit}
+      onStop={canStopActiveStream ? handleComposerStop : undefined}
       photos={selectedPhotos}
-      onPhotosChange={(files) => {
-        setSelectedPhotos(files);
-        if (failedTurn?.imageObjectPaths) setFailedTurn(null);
-      }}
+      onPhotosChange={handleComposerPhotosChange}
       canUploadPhotos={Boolean(user)}
       busy={
         streaming || createConversation.isPending || Boolean(addingListingId) || verifyingActiveTurn

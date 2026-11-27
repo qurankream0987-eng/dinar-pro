@@ -1,6 +1,7 @@
 import { WorkflowCard } from "./smart-store/WorkflowCard";
 import { ConnectActionCard } from "./smart-store/ConnectActionCard";
 import { MessageSmartStoreCard } from "./smart-store/MessageSmartStoreCard";
+import { LiveInteractiveCard, isLiveInteractiveCardLanguage } from "./LiveInteractiveCards";
 import { UniversalCards } from "./UniversalCards";
 import { PolicyReviewPanel, isPolicyReview } from "./PolicyReviewPanel";
 import { normalizeMemory } from "./memory-types";
@@ -1357,7 +1358,7 @@ function ResultBlock({
   );
 }
 
-function MessageTurn({
+const MessageTurn = memo(function MessageTurn({
   message,
   onSend,
   onSelectMarket,
@@ -1568,6 +1569,6 @@ function MessageTurn({
       </div>
     </article>
   );
-}
+});
 
 export const MessageBubble = memo(MessageTurn);

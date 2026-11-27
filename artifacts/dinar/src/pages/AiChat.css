@@ -2721,16 +2721,29 @@ body:has(.dinar-chatgpt) {
     linear-gradient(180deg, #040c18 0%, #07172b 55%, #050f1e 100%);
 }
 
+.jassim-circuit-bg {
+  contain: strict;
+}
 .jassim-circuit-spotlight {
   position: absolute;
-  inset: 0;
+  top: 0;
+  left: 0;
+  width: 600px;
+  height: 600px;
+  border-radius: 50%;
+  pointer-events: none;
+  will-change: transform;
+  transform: translate3d(calc(50vw - 300px), calc(38vh - 300px), 0);
   background: radial-gradient(
-    460px circle at var(--mx) var(--my),
-    rgba(242, 184, 75, 0.09),
-    rgba(42, 141, 255, 0.06) 42%,
-    transparent 72%
+    circle at 50% 50%,
+    rgba(242, 184, 75, 0.10),
+    rgba(42, 141, 255, 0.06) 45%,
+    transparent 70%
   );
-  transition: opacity 220ms ease;
+}
+@media (pointer: coarse), (max-width: 1023px) {
+  .jassim-circuit-spotlight { display: none; }
+  .jassim-pulse-path { animation: none; }
 }
 
 .jassim-circuit-svg {

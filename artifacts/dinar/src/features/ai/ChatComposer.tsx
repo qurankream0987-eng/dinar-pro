@@ -1,5 +1,6 @@
 import { lazy, memo, Suspense, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { iconButtonClass } from "@/ui/Button";
+import { useStableCallback } from "@/hooks/use-stable-callback";
 import { ArrowUp, Camera, LoaderCircle, Mic, MicOff, Plus, Square, X } from "lucide-react";
 // The camera is loaded on first use; it is not part of the chat's initial bundle.
 const CameraCapture = lazy(() => import("./CameraCapture").then((module) => ({ default: module.CameraCapture })));
@@ -150,7 +151,7 @@ export const ChatComposer = memo(function ChatComposer({
     }
   }, [busy, offline]);
 
-  const toggleVoiceInput = async () => {
+  const toggleVoiceInput = useStableCallback(async () => {
     if (recorder.current) {
       window.clearTimeout(recordingTimer.current);
       recorder.current.stop();
@@ -235,7 +236,7 @@ export const ChatComposer = memo(function ChatComposer({
           : "تعذر بدء التسجيل. تحقق من إذن الميكروفون.",
       );
     }
-  };
+  });
 
   useLayoutEffect(() => {
     const textarea = input.current;
