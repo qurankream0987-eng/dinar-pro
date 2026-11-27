@@ -53,6 +53,9 @@ async function openContext(cookie) {
   const context = await browser.newContext({
     baseURL: webBase,
     viewport: { width: 1440, height: 900 },
+    // Sign-up pre-selects the country from the device time zone; the fixtures use Kuwaiti numbers.
+    timezoneId: "Asia/Kuwait",
+    locale: "ar-KW",
   });
   if (cookie) {
     const token = cookieParts(cookie);
