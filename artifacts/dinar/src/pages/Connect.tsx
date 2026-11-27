@@ -53,7 +53,7 @@ function ModeChoice({ value, onChange, name }: { value: ConnectParticipationMode
     <fieldset className="space-y-2" data-testid={`connect-mode-choice-${name}`}>
       <legend className="font-semibold">طريقة المشاركة في جاسم Connect</legend>
       {CONNECT_PARTICIPATION_MODES.map((mode) => (
-        <label key={mode} className="flex min-h-11 cursor-pointer items-start gap-3 rounded-lg border p-3 has-[:checked]:border-primary">
+        <label key={mode} className="flex min-h-11 cursor-pointer items-start gap-3 rounded-2xl border border-border/80 bg-card/95 p-3.5 shadow-xs transition has-[:checked]:border-amber-500/60 has-[:checked]:bg-amber-500/8">
           <input
             type="radio"
             name={name}
@@ -161,7 +161,31 @@ export default function ConnectPage() {
       className="container-app max-w-3xl space-y-5 py-6"
       data-testid="connect-portal"
     >
-      <h1 className="text-2xl font-bold">جاسم Connect — بوابة الشركاء</h1>
+      <div className="space-y-3">
+        <h1 className="text-2xl font-bold">جاسم Connect — بوابة الشركاء</h1>
+        <ol
+          aria-label="خطوات الربط والتفعيل"
+          data-testid="connect-onboarding-steps"
+          className="grid grid-cols-2 gap-2 rounded-2xl border border-border/80 bg-card/95 p-3 shadow-xs sm:grid-cols-4"
+        >
+          {[
+            { num: "1", title: "الربط", desc: "إنشاء حساب الشريك والموقع" },
+            { num: "2", title: "التحقق", desc: "إثبات ملكية النطاق والنشاط" },
+            { num: "3", title: "تفويض الأدوات", desc: "تفعيل موصل الكتالوج والربط" },
+            { num: "4", title: "التفعيل المباشر", desc: "الظهور داخل محادثة جاسم" },
+          ].map((step) => (
+            <li key={step.num} className="flex items-start gap-2 rounded-xl border border-border/60 bg-muted/30 p-2.5">
+              <span className="grid size-6 shrink-0 place-items-center rounded-full bg-amber-500/15 text-xs font-bold tabular-nums text-amber-600 dark:text-amber-400">
+                {step.num}
+              </span>
+              <span className="min-w-0">
+                <span className="block text-xs font-bold text-foreground">{step.title}</span>
+                <span className="block text-[11px] leading-snug text-muted-foreground">{step.desc}</span>
+              </span>
+            </li>
+          ))}
+        </ol>
+      </div>
       <p>
         التسجيل والعرض العضوي والإحالة الأساسية مجانية؛ لا يلزم اشتراك جاسم
         Business. أي عمولة تتطلب اتفاقًا منفصلًا مقبولًا وتحويلًا موثّقًا. الربط
