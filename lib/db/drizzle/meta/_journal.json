@@ -561,6 +561,13 @@
       "when": 1795810000000,
       "tag": "0079_connect_store_payment_link",
       "breakpoints": true
+    },
+    {
+      "idx": 80,
+      "version": "7",
+      "when": 1795820000000,
+      "tag": "0080_promotion_whop_direct",
+      "breakpoints": true
     }
   ]
 }

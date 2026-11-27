@@ -318,5 +318,9 @@
   {
     "tag": "0079_connect_store_payment_link",
     "sha256": "a68b6fae2ceeefc4152173e77e415805f1c7759738341940f668ebceeb985c66"
+  },
+  {
+    "tag": "0080_promotion_whop_direct",
+    "sha256": "13331260e1ac1c76e4ba2d94ebfe5d6a5536cdf7f1a63753d9e1797b1899f69a"
   }
 ]
