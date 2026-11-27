@@ -259,6 +259,9 @@ router.get("/auth/me", async (req, res): Promise<void> => {
   res.json({
     user: req.actor ? safeUser(req.actor) : null,
     marketId: market.id,
+    // Whether a new account can be created with a phone number (SMS available, or development).
+    // False in deferred mode: new accounts are created with Google instead.
+    phoneSignup: !phoneVerificationRequired() || getPhoneVerificationProvider() !== undefined,
   });
 });
 const phoneVerificationChallengeLimit = createAuthRateLimitMiddleware((req) => {

@@ -98,6 +98,18 @@ export function AuthPage({ register = false, next, embedded = false }: { registe
   const [phoneCountry, setPhoneCountry] = useState(detected.countryCode);
   const [phoneNumber, setPhoneNumber] = useState("");
   const [error, setError] = useState("");
+  // Deferred mode (no SMS): new accounts are created with Google only.
+  const [phoneSignup, setPhoneSignup] = useState<boolean | undefined>(undefined);
+  useEffect(() => {
+    let alive = true;
+    fetch("/api/auth/me", { credentials: "include" })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data: { phoneSignup?: boolean } | null) => alive && setPhoneSignup(data?.phoneSignup))
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, []);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const [challengeId, setChallengeId] = useState("");
@@ -297,6 +309,11 @@ export function AuthPage({ register = false, next, embedded = false }: { registe
             </div>
           </div>
         )}
+        {register && phoneSignup === false ? (
+          <InlineAlert tone="info" title="أنشئ حسابك عبر Google">
+            التسجيل برقم الهاتف غير متاح حاليًا. اضغط زر «المتابعة بحساب Google» أعلاه، ثم اكتب رقم هاتفك مرتين.
+          </InlineAlert>
+        ) : (
         <form noValidate onSubmit={submit} className="grid gap-4">
           {register && (
             <>
@@ -488,6 +505,7 @@ export function AuthPage({ register = false, next, embedded = false }: { registe
               : "تسجيل الدخول"}
           </Button>
         </form>
+        )}
 
         <p className="mt-6 text-center text-base text-muted-foreground">
           {register ? "لديك حساب؟" : "جديد على JassimAI؟"}{" "}
