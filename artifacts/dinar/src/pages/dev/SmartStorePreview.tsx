@@ -3,6 +3,7 @@ import { useState } from "react";
 import { SmartStoreCard } from "@workspace/api-zod/smart-store-card";
 import { SMART_STORE_FIXTURES } from "@workspace/api-zod/smart-store-card-fixtures";
 import { SmartStoreCardView } from "../../features/ai/smart-store/SmartStoreCardView";
+import { JassimGoSellCard } from "../../features/ai/JassimGoSellCard";
 import { useLiveSmartStoreCard } from "../../features/ai/smart-store/useLiveSmartStoreCard";
 
 function LiveCard({ initial }: { initial: SmartStoreCard }) {
@@ -44,6 +45,21 @@ export default function SmartStorePreview() {
           <SmartStoreCardView card={card} />
         </section>
       ))}
+
+      <section className="space-y-4 border-t border-border pt-6" aria-label="معاينة بطاقة جاسم روح بيع لي">
+        <h2 className="text-base font-bold">بطاقة «جاسم روح بيع لي» التفاعلية (Apple Magic Motion)</h2>
+        <JassimGoSellCard
+          merchantName="متجر النخبة للعطور والأزياء"
+          budgetLabel="سقف يحدده التاجر"
+          durationLabel="10 أيام"
+          opportunities={[
+            { listingId: "l1", title: "عطر عود ملكي فاخر", placementLabel: "مطابقة الطلبات", rationaleAr: "يتطابق مع طلب حقيقي مُجمّع في السوق مع مخزون متوفر.", demandBadge: "طلب مرتفع (+10 مهتم)" },
+            { listingId: "l2", title: "جاكيت كحلي كلاسيك", placementLabel: "نتائج البحث الممولة", rationaleAr: "زيارات مرتفعة ويحتاج إبرازًا واضحًا في نتائج البحث." },
+          ]}
+          adHeadline="عطر عود ملكي فاخر — متوفر الآن بالتوصيل السريع"
+          adBody="عرض حقيقي من متجر النخبة بمخزون مؤكد وسعر واضح قبل الطلب."
+        />
+      </section>
     </main>
   );
 }
