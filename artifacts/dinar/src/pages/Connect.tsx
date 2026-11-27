@@ -8,6 +8,7 @@ import { ConnectOAuthControls } from "@/features/ConnectOAuthControls";
 import { ConnectTeam, ConnectReadOnlyCatalog } from "@/features/ConnectTeam";
 import { ConnectDiagnosticsPanel } from "@/features/ConnectDiagnostics";
 import { ConnectDashboard } from "@/features/ConnectDashboard";
+import { ConnectCardSandbox } from "@/features/ConnectCardSandbox";
 type Site = { id: string; hostname: string; status: string };
 type Integration = {
   id: string;
@@ -162,6 +163,7 @@ export default function ConnectPage() {
       data-testid="connect-portal"
     >
       <h1 className="text-2xl font-bold">جاسم Connect — بوابة الشركاء</h1>
+      <ConnectCardSandbox />
       <p>
         التسجيل والعرض العضوي والإحالة الأساسية مجانية؛ لا يلزم اشتراك جاسم
         Business. أي عمولة تتطلب اتفاقًا منفصلًا مقبولًا وتحويلًا موثّقًا. الربط
