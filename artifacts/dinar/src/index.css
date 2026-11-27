@@ -11,7 +11,7 @@ body[data-private-session-check="true"] > #dinar-private-session-check { display
 
 
 /* ==========================================================================
-   BDINAR design tokens
+   JassimAI design tokens
    Brand foundation: deep blue + warm gold from the approved logo.
    Gold is an accent only: badges, highlights, the "1 unit" coin motif.
    Every surface is defined separately for light and dark — no inversion.
@@ -102,8 +102,23 @@ body[data-private-session-check="true"] > #dinar-private-session-check { display
   /* Type */
   --app-font-sans: "IBM Plex Sans Arabic", "Segoe UI", Tahoma, system-ui, sans-serif;
 
-  /* Radius */
-  --radius: 1rem;
+  /* Radius scale (4/8-based) */
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.25rem;
+  --radius-pill: 9999px;
+  --radius: var(--radius-lg);
+
+  /* Spacing & Touch */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --touch-min: 44px;
+  --leading-arabic: 1.65;
 
   /* Layout */
   --container: 1200px;
