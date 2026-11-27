@@ -1,0 +1,41 @@
+ok 1 - only active development campaigns for the same market and category are eligible
+ok 2 - expired, not-yet-started, non-published, or non-search campaigns do not surface
+ok 3 - only a captured simulated payment can serve, whatever the status says
+ok 4 - campaign must still match the user's search terms
+ok 5 - simulated purchases are enabled only in development or test
+ok 6 - promotion catalog configuration is administrator-only
+# tests 6
+# pass 6
+# fail 0
+LOCAL_SUITE suite=promotions.test db=dinar_test_local_3889a3086140 exit=0 outbound=0
+ok 1 - AD-01 the policy sells exactly three ad products; a retired type cannot be created
+ok 2 - AD-02 purchases: fee and duration shown before payment; campaigns run exactly 7 / 10 / 7 days, no renewal
+ok 3 - WS-01..08 welcome cards: ≤2, labelled, real data, stable per screen, gone once a message exists, capped, dismissible
+ok 4 - DC-01..12 «جاسم روح بيع لي»: consented requests only, matched inside exactly 10 days, never twice, no identity, no renewal
+ok 5 - DC-13 in the conversation: «نبّهني إذا توفر» shows what is stored and saves only after explicit consent
+# tests 5
+# pass 5
+# fail 0
+LOCAL_SUITE suite=advertising-acceptance.test db=dinar_test_local_bc09c1e49588 exit=0 outbound=0
+ok 1 - promotion intents generalize across common Arabic phrasing
+ok 2 - educational promotion questions do not become campaign actions
+ok 3 - Arabic «حدثني» conversation requests are not listing-refresh commands
+ok 4 - a buyer's quality preference does not become a featured-listing action
+ok 5 - a buyer's own search request is never a sponsored-search purchase
+ok 6 - ordinary buyer choices between products are not promotion tutorials
+# tests 6
+# pass 6
+# fail 0
+LOCAL_SUITE suite=promotion-intent.test db=dinar_test_local_07e680b6aeae exit=0 outbound=0
+ok 1 - WS-B1 every required viewport: ≤2 labelled cards when there is room, composer visible, six starters, no overflow
+ok 2 - WS-B2 typing keeps the cards; the first message removes them; refresh and reopening never bring them back
+ok 3 - WS-B3 dismissal, dark mode and reduced motion
+# tests 3
+# pass 3
+# fail 0
+LOCAL_SUITE suite=welcome-ads-browser.test db=dinar_test_local_1594948ba4c0 exit=0 outbound=0
+ok 1 - D9 seller campaign lifecycle writes one audit row per real change and serving follows it
+# tests 1
+# pass 1
+# fail 0
+LOCAL_SUITE suite=wave03-d9-campaign-audit.test db=dinar_test_local_074b3f621cd2 exit=0 outbound=0
