@@ -121,3 +121,36 @@ The owner sends each branch to Claude; Claude reviews, deploys to qa-lab for pre
 ## 8. Definition of done (whole mission)
 
 All 14 tasks delivered and reviewed; no Critical/High items left from the UI-01 audit; AA accessibility; no horizontal scroll at 360px; light and dark mode complete; Lighthouse mobile performance ≥ 85 on the preview; zero «دينار» strings in the UI; no regressions in existing browser tests.
+
+---
+
+## UI-15 — Jassim Ads surfaces (added 2026-11-27, owner decision)
+
+Context: `docs/jassim-ads-audit/DESIGN-SCOPE-AR.md` and the owner's design `docs/jassim-ads-audit/owner-design-ad-placements.webp` (branch `claude/jassim-ads-audit`). Jassim Ads is a **conversational** marketing manager: merchants create, preview, buy, launch, monitor and optimise promotion inside the chat. Your job is the **visual and interaction layer** of those cards and placements — not server logic, not payments.
+
+Vocabulary on screen: «إعلان» = the merchant's listing; «ترويج» = paid reach (internal or external). Every paid item shows a visible label («إعلان ممول» / «ممول») — never remove or shrink it below readable size.
+
+### A. Buyer-facing placements (design + front-end, with server data only)
+1. **Welcome hero carousel** (top of the chat welcome): 16:9-ish banner, image left / text right in RTL, crown «عرض مميز» tag only for VIP, «إعلان ممول» chip, product name, 3 trust facts (condition, warranty, delivery), price pill from server value, primary «عرض التفاصيل والشراء», favourite, prev/next arrows, dots. Autoplay ≥ 6 s, pause on hover/focus/touch, swipe on mobile, keyboard arrows, `prefers-reduced-motion` = no autoplay. Height ≤ 38% of viewport on desktop, ≤ 32% on mobile; never pushes the composer off-screen. Hidden on screens ≤ 620 px high.
+2. **«إعلانات مميزة لك» row**: exactly the number of cards the server returns (target 3). Desktop: 3 equal cards in one row; tablet: 2 + scroll; mobile: horizontal scroll-snap, 1.15 cards visible, no layout jump when it loads (reserve height with a skeleton). Card anatomy: image, «إعلان» chip, title (1 line, ellipsis), one-line subtitle, price, add-to-cart icon button (44 px). Dismiss «×» for the whole row.
+3. **Sidebar sponsored card** (desktop ≥ 1280 px only): one card, rotating with dots, same anatomy, never taller than 220 px, never above «المحادثات الأخيرة».
+4. **Sponsored items inside chat search results and recommendations**: keep current server rules; restyle the badge consistently with UI-05; sponsored items must look visually distinct from organic results (badge + subtle border), never styled as Jassim's own answer.
+
+### B. Merchant conversational ad cards (render server-provided objects; design them now on a dev page with mock data)
+Build components under `features/ai/ads/` and a dev page `pages/dev/AdsCards.tsx`:
+1. **Opportunity card** — "this product gets views but few sales", suggested actions as chips.
+2. **Creative preview card** — the ad as it will appear, switchable by placement/platform (search result, featured card, hero, Instagram post 1:1, story 9:16, Facebook feed, Google search text); multiple copy variants with «اختر هذه النسخة».
+3. **Campaign plan card** — channels with budget per channel (bar), audience, regions, duration, assumptions, and three clearly separated money blocks: «حصتك/رصيد جاسم» · «ميزانية المنصة (من حسابك لدى Meta/Google)» · «رسوم خدمة جاسم» (hidden when zero).
+4. **Confirmation card** — exact item, price in local currency from server, duration, what is charged where; «تأكيد ودفع» / «تعديل» / «إلغاء». Pending state until the server returns a receipt; never a success look before the receipt.
+5. **Receipt card** — visibly different from the proposal (check icon, reference, start/end dates).
+6. **Performance report card** — KPI tiles (impressions, clicks, attributed orders, conversion), per-channel table, Jassim's analysis text, suggested next actions as chips; every number from server; "example/illustrative" watermark when data is mock.
+7. **Account connection card** — Meta / Google connect status (not connected / connecting / connected / needs re-auth), what permissions mean in plain Arabic, never show tokens.
+8. **Budget alert / expiry card** — compact, actionable.
+
+### C. Quality bar
+- Smoothness: no layout shift (CLS < 0.05 on the welcome screen), skeletons for every async card, 60 fps scroll on mid-range Android, images `loading="lazy"` with fixed aspect ratios, transitions 150–250 ms.
+- Sizes: card widths fluid with min 260 px / max 360 px in rows; chat cards max 560 px; typography and spacing from the UI-02 tokens.
+- Accessibility: carousel and chips fully keyboard-operable, `aria-roledescription="carousel"`, live region for slide changes off by default, labels on all icon buttons, AA contrast on gold-on-dark (the design's gold must pass AA — adjust shade if needed).
+- Light and dark mode; RTL; 360 px with no horizontal page scroll.
+- Screenshots per §7 for every card state (loading, empty, error, pending, receipt) at 360 and 1440 px.
+- Do not hard-code any price, quota, slot count or plan limit; read them from props supplied by the server.
