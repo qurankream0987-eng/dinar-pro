@@ -241,6 +241,26 @@ test("AP-06 a payment for a cancelled checkout is never served and is flagged fo
   assert.equal((await row(id)).status, "CANCELLED");
   const unrelated = await deliver("payment.succeeded", { id: pay(randomUUID(), seller.id, { kind: "OTHER" }) });
   assert.equal(unrelated.body.failureCode, "NOT_A_JASSIM_SUBSCRIPTION", "only explicitly tagged promotion payments reach campaigns");
+  // Out of order: dispute (then refund) before the delayed payment.succeeded — never activated.
+  const early = await request("/commercial/whop-promotions/checkouts", "POST", { productId: vip, listingId: laptop, idempotencyKey: `k-${randomUUID()}` }, seller.cookie);
+  assert.equal(early.status, 201, early.raw);
+  const earlyId = early.data.promotion.id;
+  const earlyPay = pay(earlyId, seller.id);
+  const disputedFirst = await deliver("dispute.created", { id: `dsp_early${run}`, payment: { id: earlyPay } });
+  assert.equal(disputedFirst.body.outcome, "APPLIED");
+  assert.deepEqual([(await row(earlyId)).status, (await row(earlyId)).paymentStatus], ["CANCELLED", "PROVIDER_DISPUTED"]);
+  const delayed = await deliver("payment.succeeded", { id: earlyPay });
+  assert.equal(delayed.body.failureCode, "ALREADY_SETTLED_PAYMENT_REVIEW");
+  assert.equal((await row(earlyId)).status, "CANCELLED", "a disputed payment never starts a campaign");
+  const early2 = await request("/commercial/whop-promotions/checkouts", "POST", { productId: vip, listingId: laptop, idempotencyKey: `k-${randomUUID()}` }, seller.cookie);
+  const early2Id = early2.data.promotion.id;
+  const early2Pay = pay(early2Id, seller.id);
+  payments.set(early2Pay, { ...payments.get(early2Pay)!, refunded_amount: jod("5.000") });
+  const refundedFirst = await deliver("refund.updated", { id: `rfd_early${run}`, status: "succeeded", payment: { id: early2Pay } });
+  assert.equal(refundedFirst.body.outcome, "APPLIED");
+  const delayed2 = await deliver("payment.succeeded", { id: early2Pay });
+  assert.equal(delayed2.body.failureCode, "ALREADY_SETTLED_PAYMENT_REVIEW");
+  assert.deepEqual([(await row(early2Id)).status, (await row(early2Id)).paymentStatus], ["CANCELLED", "PROVIDER_REFUNDED"]);
   const unknownDispute = await deliver("dispute.created", { id: `dsp_unknown${run}`, payment: { id: "pay_doesnotexist" } });
   assert.deepEqual([unknownDispute.status, unknownDispute.body.failureCode], [200, "DISPUTE_RECORDED_FOR_REVIEW"], "a dispute on a payment Whop no longer finds is recorded, not retried for days");
 });

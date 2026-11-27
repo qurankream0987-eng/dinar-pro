@@ -258,8 +258,10 @@ export async function applyWhopPromotionEvent(event: WhopPromotionEvent): Promis
       const amount = payment.subtotal && scale !== undefined ? moneyToMinor(payment.subtotal, scale) : undefined;
       if (!payment.subtotal || payment.subtotal.currency.toUpperCase() !== row.currencyCodeSnapshot || amount !== row.priceMinorSnapshot)
         return done("REJECTED", "AMOUNT_MISMATCH_REVIEW");
-      if (row.paymentStatus === "PROVIDER_PAID" || row.paymentStatus === "PROVIDER_DISPUTED" || row.paymentStatus === "PROVIDER_REFUNDED")
-        return done("IGNORED", "ALREADY_PAID_SECOND_PAYMENT_REVIEW");
+      if (row.paymentStatus === "PROVIDER_PAID") return done("IGNORED", "ALREADY_PAID_SECOND_PAYMENT_REVIEW");
+      // Out of order: a refund or dispute was already recorded on this campaign. Never activate.
+      if (row.paymentStatus === "PROVIDER_DISPUTED" || row.paymentStatus === "PROVIDER_REFUNDED")
+        return done("IGNORED", "ALREADY_SETTLED_PAYMENT_REVIEW");
       // The campaign was cancelled before the money arrived: never served on it, the owner reviews
       // the payment for a refund in Whop (nothing here marks money refunded).
       if (row.status !== "PENDING_PAYMENT") return done("REJECTED", "PAID_AFTER_CANCEL_REFUND_REVIEW");
@@ -297,7 +299,15 @@ export async function applyWhopPromotionEvent(event: WhopPromotionEvent): Promis
       });
     }
 
-    // DISPUTED: disputed money never serves; the campaign pauses until the owner decides.
+    // DISPUTED: disputed money never serves. A campaign still waiting for its payment is cancelled
+    // (so a delayed payment.succeeded can never start it); a live one pauses until the owner decides.
+    if (row.paymentStatus === "PROVIDER_PENDING" && row.status === "PENDING_PAYMENT")
+      return done("APPLIED", null, async () => {
+        await tx
+          .update(listingPromotions)
+          .set({ paymentStatus: "PROVIDER_DISPUTED", status: "CANCELLED", endedAt: now, updatedAt: now })
+          .where(eq(listingPromotions.id, row.id));
+      });
     if (row.paymentStatus !== "PROVIDER_PAID") return done("IGNORED", "DISPUTE_RECORDED_FOR_REVIEW");
     return done("APPLIED", null, async () => {
       await tx
