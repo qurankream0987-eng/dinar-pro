@@ -1,0 +1,49 @@
+commit 07d9e09cfee94ffb96dcf74611e90e002fb5c2c7
+api build OK
+web build OK
+promotions: # pass 6 # fail 0  LOCAL_SUITE suite=promotions.test exit=0 outbound=0
+promotion-intent: # pass 6 # fail 0  LOCAL_SUITE suite=promotion-intent.test exit=0 outbound=0
+advertising-acceptance:  LOCAL_SUITE suite=advertising-acceptance.test exit=1 outbound=0
+jassim-ads-phase1: # pass 5 # fail 0  LOCAL_SUITE suite=jassim-ads-phase1.test exit=0 outbound=0
+jassim-ads-phase2: # pass 8 # fail 0  LOCAL_SUITE suite=jassim-ads-phase2.test exit=0 outbound=0
+whop-billing: # pass 19 # fail 0  LOCAL_SUITE suite=whop-billing.test exit=0 outbound=0
+whop-rules: # pass 13 # fail 0  LOCAL_SUITE suite=whop-rules.test exit=0 outbound=0
+wave03-d9-campaign-audit: # pass 1 # fail 0  LOCAL_SUITE suite=wave03-d9-campaign-audit.test exit=0 outbound=0
+development-tls: # pass 7 # fail 0  LOCAL_SUITE suite=development-tls.test exit=0 outbound=0
+readiness: # pass 15 # fail 0  LOCAL_SUITE suite=readiness.test exit=0 outbound=0
+commerce-journey: # pass 8 # fail 0  LOCAL_SUITE suite=commerce-journey.test exit=0 outbound=0
+arab-markets-pre-legal: # pass 29 # fail 0  LOCAL_SUITE suite=arab-markets-pre-legal.test exit=0 outbound=0
+block-e-acceptance: # pass 44 # fail 2  LOCAL_SUITE suite=block-e-acceptance.test exit=1 outbound=0
+welcome-ads-browser: # pass 3 # fail 0  LOCAL_SUITE suite=welcome-ads-browser.test exit=0 outbound=0
+block-f5-unified: # pass 25 # fail 4  LOCAL_SUITE suite=block-f5-unified.test exit=1 outbound=0
+whop-platform: # pass 15 # fail 0  exit=0 outbound=0
+block-e-acceptance failing tests:
+not ok 2 - E01 a normal new order uses the current 1000 bps commission
+not ok 18 - E02 an order for a promoted listing uses the current 1000 bps commission
+block-f5-unified failing tests:
+not ok 8 - F5-07 results → review → quantity → «وصله لي» → order → one-time locati
+not ok 11 - F5-10 sponsored results are labelled and never «best» because they paid
+not ok 23 - F5-21 reload restores seller, buyer, purchase, promotion and driver state from server ro
+not ok 26 - F5-24 privacy audit over every stored conversation row
+
+== on 07d9e09
+advertising-acceptance: # pass 5 # fail 0  LOCAL_SUITE suite=advertising-acceptance.test exit=0 outbound=0
+conversation: # pass 29 # fail 0  LOCAL_SUITE suite=conversation.test exit=0 outbound=0
+== rollback branch 0ddc28d
+typecheck OK
+api build OK
+development-tls: # pass 7 # fail 0  LOCAL_SUITE suite=development-tls.test exit=0 outbound=0
+promotions: # pass 6 # fail 0  LOCAL_SUITE suite=promotions.test exit=0 outbound=0
+readiness: # pass 15 # fail 0  LOCAL_SUITE suite=readiness.test exit=0 outbound=0
+back on 07d9e09
+
+== baseline: Production version ca942a8 (same machine, same flags)
+block-e-acceptance: # pass 44 # fail 2 
+not ok 2 - E01 a normal new order uses the current 1000 bps commission
+not ok 18 - E02 an order for a promoted listing uses the current 1000 bps commission
+block-f5-unified: # pass 24 # fail 5 
+not ok 8 - F5-07 results → review → quantity → «وصله لي» → order → one-time locati
+not ok 11 - F5-10 sponsored results are labelled and never «best» because they paid
+not ok 23 - F5-21 reload restores seller, buyer, purchase, promotion and driver state from server ro
+not ok 26 - F5-24 privacy audit over every stored conversation row
+not ok 27 - F5-25 deterministic commands use no model; connected UI journeys at 320/360/390/414

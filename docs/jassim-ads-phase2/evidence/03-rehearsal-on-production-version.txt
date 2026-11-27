@@ -1,0 +1,22 @@
+== Rehearsal of 0080 on a database built at Production version ca942a8 (ledger 0000-0079), 2026-11-27T17:40:46Z
+ledger before: 80
+data before: 81 rows md5=fc8a204ba9f97a1e78c7d5ebd0fe1357
+0080 APPLIED in one transaction in 34 ms
+data after 0080: 81 rows md5=fc8a204ba9f97a1e78c7d5ebd0fe1357
+constraint diff (before → after 0080):
+> listing_promotions_whop_mode_consistent
+  constraints after: 22
+-- negative checks after 0080 (each must be REFUSED):
+  set payment_mode='WHOP_LIVE', payment_source='SIMULATED_PROVIDER', payment_status='PROVIDER_PAID' → ERROR:  listing_promotions contract snapshot is immutable
+  set payment_status='PROVIDER_PAID' → ERROR:  new row for relation "listing_promotions" violates check constraint "listing_promotions_payment_source_status"
+  set payment_mode='WHOP_LIVE' → ERROR:  listing_promotions contract snapshot is immutable
+  insert WHOP_LIVE+SIMULATED_PROVIDER+PROVIDER_PAID → violates check constraint "listing_promotions_whop_mode_consistent"
+-- rollback with no real-payment rows:
+  ROLLED_BACK
+  constraints identical to before 0080 (definitions compared verbatim)
+  data after rollback: 81 rows md5=fc8a204ba9f97a1e78c7d5ebd0fe1357
+  ledger after rollback: 80
+-- rollback refusal when a real-payment row exists:
+  a WHOP_DIRECT pending row is accepted after 0080
+  ROLLBACK_REFUSED: real-payment promotion rows exist; keep migration 0080
+  constraints still 0080: 1 ; ledger: 81

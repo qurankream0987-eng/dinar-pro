@@ -1,0 +1,6 @@
+combinations | 1848
+old_accepted | 76
+old_accepted_but_new_rejects (must be 0) | 0
+new_accepted_not_old (only WHOP_LIVE allowed) | WHOP_LIVE/WHOP_DIRECT
+new_accepted_WHOP_with_nonWhop_source_or_status (must be 0) | 0
+whop_active_paused_allowed_statuses | PROVIDER_DISPUTED,PROVIDER_PAID

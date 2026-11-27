@@ -1,0 +1,7 @@
+07d9e09cfee94ffb96dcf74611e90e002fb5c2c7 Jassim Ads phase 2: a dispute or refund before the payment event cancels the pending campaign
+26ca40621d0fe41e3d0c0c03f958c0d3914983bc Jassim Ads phase 2: fail-closed config test, dispute on unknown payment recorded, rollback script for 0080
+42f0b3d5b075f7acc326fbbd134d74653ef3d6ec Migration 0080: add whop_mode_consistent (WHOP_LIVE <=> WHOP_DIRECT <=> PROVIDER_* status)
+d4f1b35559d7bc143fe9cda7169819e52b4b5416 Jassim Ads phase 2: report
+e4a1a94020f9578364a6a80859c0dfbf9b3ac1c9 Jassim Ads phase 2: acceptance test, API schema accepts real Whop promotions, chat review skips test balance
+d6e464ebe170d77e051c09f23ef6423b056b129e WIP: Jassim Ads phase 2 — Whop promotion checkout, signed events, chat card (switches off)
+671ba0292d538a551401fdd89e40777b11809282 WIP: Jassim Ads phase 2 — migration 0080 and unified serving rule (switches off)

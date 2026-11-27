@@ -1,0 +1,9 @@
+ artifacts/api-server/test/development-tls.test.ts |  2 +-
+ artifacts/api-server/test/readiness.test.ts       |  2 +-
+ lib/db/drizzle/0080_promotion_whop_direct.sql     | 20 ++++++++++++++++++++
+ lib/db/drizzle/meta/_journal.json                 |  7 +++++++
+ lib/db/drizzle/release-manifest.json              |  4 ++++
+ lib/db/src/clone-migration-guard.ts               |  1 +
+ lib/db/src/schema/index.ts                        | 17 +++++++++++------
+ scripts/railway/production-smoke.sh               |  2 +-
+ 8 files changed, 46 insertions(+), 9 deletions(-)
