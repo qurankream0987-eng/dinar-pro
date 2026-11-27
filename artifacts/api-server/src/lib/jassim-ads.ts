@@ -1,0 +1,125 @@
+/**
+ * Jassim Ads — Phase 1 (owner decision 2026-11-27): the conversational marketing assistant for a
+ * seller, inside the JassimAI conversation. Off unless DINAR_JASSIM_ADS=true.
+ *
+ * Read-only and honest by construction:
+ *   - Facts come only from the seller's own rows in the active market (listings, their campaigns,
+ *     server-attributed campaign results). Nothing is invented: no reach, sales or price promises.
+ *   - «جاسم روح بيع لي» is suggested only from authorised buyer requests, as an aggregate count at
+ *     or above the policy cohort size (see `waitingBuyersForListing`) — never who or what they wrote.
+ *   - Ad copy drafts use only the listing's own facts (title, price, city, condition) and are
+ *     labelled as drafts for the seller to approve; nothing is published or charged here.
+ *   - Buying a promotion stays in the existing promotion flow (confirmation, server price in the
+ *     market currency, receipt). This module never charges, activates or changes anything.
+ */
+import { and, desc, eq, gt, inArray } from "drizzle-orm";
+import { db, listingPromotions, offers } from "@workspace/db";
+import { formatMoney } from "@workspace/global";
+import { isPromotionFeatureEnabled } from "./promotion-policy";
+import { campaignAnalytics, type CampaignAnalyticsView } from "./promotions";
+import { waitingBuyersForListing } from "./demand-requests";
+import type { marketFor } from "./markets";
+
+type Market = Awaited<ReturnType<typeof marketFor>>;
+type Environment = Record<string, string | undefined>;
+
+export function jassimAdsEnabled(env: Environment = process.env) {
+  return env.DINAR_JASSIM_ADS?.trim().toLowerCase() === "true";
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+const LIVE_STATUSES = ["ACTIVE", "SCHEDULED", "PENDING_PAYMENT", "PAUSED"];
+
+export type AdsListing = {
+  id: string;
+  title: string;
+  priceLabel: string | null;
+  city: string | null;
+  condition: string | null;
+  ageDays: number;
+  livePromotion: { status: string; expiresAt: string | null } | null;
+  waitingBuyers: number | null;
+};
+
+export type AdsOpportunity = {
+  kind: "DEMAND_CAPTURE" | "NOT_PROMOTED" | "PROMOTION_ENDING";
+  listingId: string;
+  text: string;
+};
+
+const text = (value: unknown, max: number) => (typeof value === "string" || typeof value === "number" ? String(value).trim().slice(0, max) : "");
+
+/** The seller's own published listings in this market with promotion and «روح بيع لي» facts. */
+export async function sellerAdsListings(actorId: string, market: Market, now = new Date()): Promise<AdsListing[]> {
+  const rows = await db
+    .select()
+    .from(offers)
+    .where(and(eq(offers.sellerId, actorId), eq(offers.marketId, market.id), eq(offers.status, "PUBLISHED")))
+    .orderBy(desc(offers.createdAt))
+    .limit(12);
+  if (!rows.length) return [];
+  const campaigns = await db
+    .select({ listingId: listingPromotions.listingId, status: listingPromotions.status, expiresAt: listingPromotions.expiresAt })
+    .from(listingPromotions)
+    .where(and(eq(listingPromotions.sellerId, actorId), eq(listingPromotions.marketId, market.id), inArray(listingPromotions.listingId, rows.map((row) => row.id)), inArray(listingPromotions.status, LIVE_STATUSES), gt(listingPromotions.expiresAt, now)));
+  const result: AdsListing[] = [];
+  for (const row of rows) {
+    const data = row.data as { title?: unknown; city?: unknown; attributes?: Record<string, unknown> };
+    const live = campaigns.find((campaign) => campaign.listingId === row.id);
+    const waiting = await waitingBuyersForListing(row.id, actorId, market, now).catch(() => ({ status: "NOT_ENOUGH_DATA" as const }));
+    result.push({
+      id: row.id,
+      title: text(data.title, 120) || "إعلان",
+      priceLabel: row.unitPriceMinor === null ? null : formatMoney(row.unitPriceMinor, market.currencyCode).replace(/\s+/g, " ").trim(),
+      city: text(data.city, 60) || null,
+      condition: text(data.attributes?.condition, 40) || null,
+      ageDays: Math.max(0, Math.floor((now.getTime() - row.createdAt.getTime()) / DAY_MS)),
+      livePromotion: live ? { status: live.status, expiresAt: live.expiresAt?.toISOString() ?? null } : null,
+      waitingBuyers: waiting.status === "COUNT" ? waiting.buyers : null,
+    });
+  }
+  return result;
+}
+
+/** Deterministic opportunities from the facts above; at most one per listing, demand first. */
+export function adsOpportunities(listings: AdsListing[], now = new Date()): AdsOpportunity[] {
+  const out: AdsOpportunity[] = [];
+  for (const listing of listings) {
+    if (listing.waitingBuyers !== null && !listing.livePromotion) {
+      out.push({
+        kind: "DEMAND_CAPTURE",
+        listingId: listing.id,
+        text: `${listing.waitingBuyers} مشترين طلبوا تنبيههم عن منتج مثل «${listing.title}». «جاسم روح بيع لي» يُبلغهم داخل جاسم لمدة محدودة، دون أن تعرف هويتهم ودون ضمان بيع.`,
+      });
+      continue;
+    }
+    if (listing.livePromotion?.expiresAt) {
+      const left = new Date(listing.livePromotion.expiresAt).getTime() - now.getTime();
+      if (left > 0 && left <= 2 * DAY_MS) {
+        out.push({ kind: "PROMOTION_ENDING", listingId: listing.id, text: `ينتهي ترويج «${listing.title}» خلال أقل من يومين.` });
+        continue;
+      }
+    }
+    if (!listing.livePromotion && listing.ageDays >= 7)
+      out.push({ kind: "NOT_PROMOTED", listingId: listing.id, text: `«${listing.title}» منشور منذ ${listing.ageDays} يومًا دون ترويج. يمكن تمييزه أو إبرازه في نتائج البحث.` });
+  }
+  return out.sort((a, b) => (a.kind === "DEMAND_CAPTURE" ? -1 : 0) - (b.kind === "DEMAND_CAPTURE" ? -1 : 0)).slice(0, 6);
+}
+
+/** Three short copy drafts from the listing's own facts only. */
+export function adCopyDrafts(listing: Pick<AdsListing, "title" | "priceLabel" | "city" | "condition">): string[] {
+  const price = listing.priceLabel ? ` بسعر ${listing.priceLabel}` : "";
+  const where = listing.city ? ` في ${listing.city}` : "";
+  const condition = listing.condition ? ` (${listing.condition})` : "";
+  return [
+    `${listing.title}${condition}${price}. متوفر الآن${where} — اطلبه مباشرةً عبر جاسم.`,
+    `تبحث عن ${listing.title}؟ لدينا واحد${condition}${price}${where}. راسلنا في جاسم وتفاوض بسهولة.`,
+    `${listing.title}${price} — جاهز للبيع${where}. اسأل جاسم عن التفاصيل واطلبه الآن.`,
+  ].map((line) => line.replace(/\s+/g, " ").trim());
+}
+
+/** Server-attributed results of the seller's campaigns (empty when promotions are off). */
+export async function sellerAdsReport(actorId: string, market: Market): Promise<CampaignAnalyticsView[]> {
+  if (!isPromotionFeatureEnabled()) return [];
+  return campaignAnalytics(actorId, market).catch(() => []);
+}

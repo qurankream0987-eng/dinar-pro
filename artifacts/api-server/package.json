@@ -99,7 +99,8 @@
     "test:staging-rehearsal-browser-journey": "NODE_ENV=development BDINAR_TEST_DATABASE=development node test/run.mjs staging-rehearsal-browser-journey.test",
     "test:railway-acceptance-target": "node --test test/railway-acceptance-target.test.mjs",
     "test:order-closure": "NODE_ENV=development BDINAR_TEST_DATABASE=development node test/run.mjs order-closure.test",
-    "test:arab-markets-pre-legal": "env -u AI_INTEGRATIONS_OPENAI_API_KEY -u AI_INTEGRATIONS_OPENAI_BASE_URL -u OPENAI_API_KEY -u OPENROUTER_API_KEY -u GROQ_API_KEY NODE_ENV=development BDINAR_TEST_DATABASE=development BDINAR_PROMOTIONS_ENABLED=true node test/run.mjs arab-markets-pre-legal.test"
+    "test:arab-markets-pre-legal": "env -u AI_INTEGRATIONS_OPENAI_API_KEY -u AI_INTEGRATIONS_OPENAI_BASE_URL -u OPENAI_API_KEY -u OPENROUTER_API_KEY -u GROQ_API_KEY NODE_ENV=development BDINAR_TEST_DATABASE=development BDINAR_PROMOTIONS_ENABLED=true node test/run.mjs arab-markets-pre-legal.test",
+    "test:jassim-ads-phase1": "env -u AI_INTEGRATIONS_OPENAI_API_KEY -u AI_INTEGRATIONS_OPENAI_BASE_URL -u OPENAI_API_KEY -u OPENROUTER_API_KEY -u GROQ_API_KEY NODE_ENV=development BDINAR_TEST_DATABASE=development BDINAR_PROMOTIONS_ENABLED=true node test/run.mjs jassim-ads-phase1.test"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1155.0",

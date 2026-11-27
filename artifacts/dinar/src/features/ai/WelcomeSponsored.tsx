@@ -5,7 +5,7 @@ import { SmartImage } from "@/ui/Media";
 
 /**
  * Welcome-screen sponsored cards (Sponsored Conversation, WELCOME placement). The server decides
- * everything: eligibility, at most two cards, caps, stability per screen and dismissal. This only
+ * everything: eligibility, at most three cards (policy-set), caps, stability per screen and dismissal. This only
  * renders what it returns, once per welcome key — typing never refetches or rotates them, and
  * nothing here is ever added to the conversation. No eligible card → nothing at all.
  */
@@ -44,7 +44,7 @@ export function WelcomeSponsored({ conversationId }: { conversationId?: string }
     fetch(`/api/ai/welcome-sponsored?${query}`, { credentials: "include" })
       .then((response) => (response.ok ? response.json() : { cards: [] }))
       .then((data: { cards?: Card[] }) => {
-        if (alive) setCards(Array.isArray(data.cards) ? data.cards.slice(0, 2) : []);
+        if (alive) setCards(Array.isArray(data.cards) ? data.cards.slice(0, 3) : []);
       })
       .catch(() => alive && setCards([]));
     return () => {

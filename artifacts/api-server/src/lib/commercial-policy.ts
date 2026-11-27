@@ -57,7 +57,7 @@ export const CommercialPolicySchema = z
     rawEventRetentionDays: z.number().int().min(1).max(365),
     demandSignalRetentionDays: z.number().int().min(1).max(365),
     /** Sponsored Conversation, WELCOME placement: cards on an empty new conversation (never more than 2). */
-    welcomeSponsoredSlots: z.number().int().min(0).max(2),
+    welcomeSponsoredSlots: z.number().int().min(0).max(3),
     /** Newly created conversations per viewer per 24 h that may show welcome cards at all. */
     welcomeSponsoredDailyConversations: z.number().int().min(0).max(20),
     /** How long a buyer's saved, authorised request («نبّهني إذا توفر») stays matchable. */

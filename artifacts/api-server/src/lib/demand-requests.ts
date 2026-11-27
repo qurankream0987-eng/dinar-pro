@@ -222,3 +222,23 @@ export async function demandCampaignReach(sellerId: string, promotionId: string)
   const [row] = await db.select({ n: count() }).from(demandMatchNotices).where(eq(demandMatchNotices.promotionId, promotionId));
   return { promotionId, buyersNotified: row?.n ?? 0, startsAt: campaign.startsAt.toISOString(), expiresAt: campaign.expiresAt.toISOString(), note: "عدد مشترين أُبلغوا داخل جاسم؛ لا يضمن تواصلًا أو بيعًا، ولا تُعرض هوية أي مشترٍ." };
 }
+
+/**
+ * Jassim Ads (Phase 1): how many authorised «نبّهني إذا توفر» requests would match one of the
+ * seller's own listings right now — so Jassim can suggest «جاسم روح بيع لي». Read-only, no notice
+ * is created. Privacy: below the policy cohort size (`minCohortSize`, default 10) the seller learns
+ * nothing (not even that one exists); at or above it, only the aggregate count. Never who, never
+ * the request text, never the buyer's price or city.
+ */
+export async function waitingBuyersForListing(listingId: string, sellerId: string, market: Market, now = new Date()): Promise<{ status: "NOT_ENOUGH_DATA" } | { status: "COUNT"; buyers: number }> {
+  const listing = await listingFacts(listingId, market);
+  if (!listing || listing.sellerId !== sellerId) return { status: "NOT_ENOUGH_DATA" };
+  const policy = await getCommercialPolicy(market.id);
+  const requests = await db.select().from(buyerDemandRequests).where(liveRequests(market.id, now));
+  const buyers = new Set<string>();
+  for (const request of requests) {
+    if (request.buyerId === sellerId) continue;
+    if (demandMatch(request, listing.facts, policy.demandRelevanceMinCoverage)) buyers.add(request.buyerId);
+  }
+  return buyers.size >= policy.minCohortSize ? { status: "COUNT", buyers: buyers.size } : { status: "NOT_ENOUGH_DATA" };
+}

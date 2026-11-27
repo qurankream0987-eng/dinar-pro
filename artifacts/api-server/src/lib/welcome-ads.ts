@@ -20,7 +20,8 @@ import { and, count, desc, eq, gt, inArray, isNull, lte } from "drizzle-orm";
 import { conversations, db, listingPromotions, messages, offers, users, welcomeAdExposures } from "@workspace/db";
 import { getCommercialPolicy } from "./commercial-policy";
 import { isPromotionSimulationEnabled } from "./promotion-policy";
-import { formatMinor, isServingCampaign, listingPromotionEligibility, rankSponsored, sponsoredScore, SPONSORED_LABEL, SERVING_PAYMENT_STATUSES } from "./promotions";
+import { formatMinor, isServingCampaign, listingPromotionEligibility, rankSponsored, representativeCampaign, sponsoredScore, SPONSORED_LABEL, SERVING_PAYMENT_STATUSES } from "./promotions";
+import { jassimAdsEnabled } from "./jassim-ads";
 import { recordAttributionEvent } from "./promotion-attribution";
 import type { marketFor } from "./markets";
 type Market = Awaited<ReturnType<typeof marketFor>>;
@@ -99,7 +100,8 @@ export async function welcomeSponsoredCards(input: { actorId: string; welcomeKey
   }
 
   const policy = await getCommercialPolicy(input.market.id);
-  const slots = Math.min(2, policy.welcomeSponsoredSlots);
+  // Owner decision 2026-11-27: up to three cards («إعلانات مميزة لك»); the policy sets the number.
+  const slots = Math.min(3, policy.welcomeSponsoredSlots);
   if (slots <= 0) return { cards: [], reason: "DISABLED" };
   const recent = await db
     .selectDistinct({ welcomeKey: welcomeAdExposures.welcomeKey })
@@ -169,4 +171,64 @@ export async function dismissWelcomeCards(input: { actorId: string; welcomeKey: 
     .where(and(eq(welcomeAdExposures.welcomeKey, input.welcomeKey), eq(welcomeAdExposures.userId, input.actorId), isNull(welcomeAdExposures.dismissedAt)))
     .returning({ id: welcomeAdExposures.id });
   return { dismissed: result.length };
+}
+
+/**
+ * Jassim Ads Phase 1 (behind DINAR_JASSIM_ADS): display placements around the conversation —
+ * the welcome hero carousel (paid VIP campaigns) and the desktop sidebar card (paid FEATURED or
+ * VIP campaigns). Owner decision 2026-11-27: visible to signed-out visitors too, so selection is
+ * non-personal (market + the same public-visibility gates as search); the viewer's own listings
+ * are excluded when signed in. Nothing is persisted or charged here (no exposure rows, no
+ * billable events); every card carries the sponsored label. Served only where sponsored
+ * placements serve at all (`isPromotionSimulationEnabled` today; real payment is Phase 2).
+ */
+export const DISPLAY_PLACEMENTS = { HERO: { sources: ["VIP"], max: 5 }, SIDEBAR: { sources: ["FEATURED", "VIP"], max: 3 } } as const;
+export type DisplayPlacement = keyof typeof DISPLAY_PLACEMENTS;
+
+export async function displayPlacementCards(input: { placement: DisplayPlacement; market: Market; viewerId?: string; now?: Date }): Promise<WelcomeAds> {
+  const now = input.now ?? new Date();
+  if (!jassimAdsEnabled() || !isPromotionSimulationEnabled()) return { cards: [], reason: "DISABLED" };
+  const spec = DISPLAY_PLACEMENTS[input.placement];
+  const campaigns = (await db
+    .select()
+    .from(listingPromotions)
+    .where(and(
+      eq(listingPromotions.marketId, input.market.id),
+      eq(listingPromotions.status, "ACTIVE"),
+      inArray(listingPromotions.placementSnapshot, [...spec.sources]),
+      inArray(listingPromotions.paymentStatus, [...SERVING_PAYMENT_STATUSES]),
+      lte(listingPromotions.startsAt, now),
+      gt(listingPromotions.expiresAt, now),
+    ))
+    .orderBy(desc(listingPromotions.createdAt))
+    .limit(50)).filter((row) => isServingCampaign(row, now) && row.sellerId !== input.viewerId);
+  if (!campaigns.length) return { cards: [], reason: "NO_ELIGIBLE" };
+  const listings = await db
+    .select({ offer: offers, sellerStatus: users.status })
+    .from(offers)
+    .innerJoin(users, eq(users.id, offers.sellerId))
+    .where(inArray(offers.id, [...new Set(campaigns.map((row) => row.listingId))]));
+  const scored: { id: string; listingId: string; promotionId: string; score: number }[] = [];
+  for (const row of listings) {
+    const eligible = await listingPromotionEligibility(row.offer, row.sellerStatus, input.market);
+    if (!eligible.ok) continue;
+    const campaign = representativeCampaign(campaigns, row.offer.id);
+    if (!campaign) continue;
+    scored.push({
+      id: row.offer.id,
+      listingId: row.offer.id,
+      promotionId: campaign.id,
+      score: sponsoredScore({
+        organicIndex: 0,
+        priorityWeight: campaign.priorityWeightSnapshot,
+        unitChargeMinor: campaign.unitChargeMinorSnapshot,
+        minorUnitScale: input.market.minorUnitScale,
+        hasImage: Boolean((row.offer.data as { imageUrl?: string }).imageUrl),
+        descriptionLength: String((row.offer.data as { description?: string }).description ?? "").length,
+      }),
+    });
+  }
+  const chosen = rankSponsored(scored, spec.max).map((item, index) => ({ slot: index + 1, listingId: item.listingId, promotionId: item.promotionId }));
+  if (!chosen.length) return { cards: [], reason: "NO_ELIGIBLE" };
+  return { cards: await cardsFor(input.market, chosen) };
 }

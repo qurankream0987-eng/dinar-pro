@@ -7,7 +7,7 @@ import { z } from "zod";
 import { requireAuth } from "../lib/auth";
 import { marketFor } from "../lib/markets";
 import { majorToMinor } from "../lib/commercial-policy";
-import { dismissWelcomeCards, welcomeSponsoredCards } from "../lib/welcome-ads";
+import { dismissWelcomeCards, displayPlacementCards, welcomeSponsoredCards } from "../lib/welcome-ads";
 import {
   DEMAND_REQUEST_DISCLOSURE,
   deleteDemandRequest,
@@ -25,6 +25,14 @@ const id = z.string().uuid();
 router.get("/ai/welcome-sponsored", requireAuth, async (req, res) => {
   const query = z.object({ key: id, conversationId: id.optional() }).strict().parse(req.query);
   const result = await welcomeSponsoredCards({ actorId: req.actor!.id, welcomeKey: query.key, conversationId: query.conversationId, market: await marketFor(req) });
+  res.set("Cache-Control", "no-store").json(result);
+});
+
+// Jassim Ads Phase 1: hero carousel and sidebar card. Signed-out visitors allowed (owner decision);
+// selection is non-personal and returns nothing unless DINAR_JASSIM_ADS is on.
+router.get("/ads/placements", async (req, res) => {
+  const query = z.object({ slot: z.enum(["HERO", "SIDEBAR"]) }).strict().parse(req.query);
+  const result = await displayPlacementCards({ placement: query.slot, market: await marketFor(req), viewerId: req.actor?.id });
   res.set("Cache-Control", "no-store").json(result);
 });
 

@@ -65,6 +65,7 @@ import {
 import { executeEmploymentTurn, isEmploymentQuery } from "./employment-turn";
 import { deliveryIntent, normalizeDeliveryText, executeDeliveryTurn, isDeliveryQuery } from "./delivery-turn";
 import { executePromotionTurn, explainSponsoredPlacement, isPromotionQuery } from "./promotion-turn";
+import { executeAdsAssistantTurn } from "./ads-assistant-turn";
 import { executeBuyerTurn, executePurchaseTurn, executeOrderContactRequest, reviewQuantity } from "./buyer-turn";
 import { executeListingFactQuestion } from "./listing-fact-question";
 import { executeStockQuestion } from "./stock-question";
@@ -1771,6 +1772,15 @@ async function executeRuntime(context: RuntimeContext, incoming: RuntimeOptions)
   if (delivery) {
     options.onToolSelected?.(delivery.tool);
     return delivery;
+  }
+  // Jassim Ads (Phase 1, DINAR_JASSIM_ADS): marketing advice from the seller's own facts. Read-only;
+  // buying a promotion stays in the promotion turn below.
+  const adsAssistant = addToCart || hasListingPhotos
+    ? null
+    : await executeAdsAssistantTurn({ conversationId: context.conversationId, message: context.message, market: context.market, actorId: context.actorId });
+  if (adsAssistant) {
+    options.onToolSelected?.(adsAssistant.tool);
+    return adsAssistant;
   }
   // Seller promotions claim explicit promotion phrases and follow-ups on their own
   // latest step. Employment above never reaches this path: payment never ranks people.

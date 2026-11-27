@@ -34,6 +34,7 @@ import {
   Welcome,
 } from "@/features/ai/ConversationHistory";
 import { WelcomeSponsored, retireWelcomeKey } from "@/features/ai/WelcomeSponsored";
+import { HeroSponsored, SidebarSponsored } from "@/features/ai/DisplaySponsored";
 import {
   useCallback,
   useEffect,
@@ -2381,6 +2382,7 @@ export default function AiPage() {
                 </div>
               )}
             </div>
+            <SidebarSponsored />
             <div className="ai-sidebar-footer">
               {navItems.length > 0 && (
                 <nav className="ai-sidebar-management" aria-label="إدارة جاسم">
@@ -2496,6 +2498,7 @@ export default function AiPage() {
                   data-testid="home-scroll-region"
                 >
                   <div className="ai-home-stack">
+                    <HeroSponsored />
                     <Welcome
                       onStarter={(value) =>
                         activeId

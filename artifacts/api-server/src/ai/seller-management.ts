@@ -379,7 +379,7 @@ async function currentSellerContext(
   return { resourceIds: latest.resourceIds, resultSetId: latest.id };
 }
 
-async function resolveCurrentOwnedListings(
+export async function resolveCurrentOwnedListings(
   market: Market,
   ownerId: string,
   resourceIds?: string[],
