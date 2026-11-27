@@ -159,6 +159,11 @@ const metadataSubscription = (metadata: Record<string, unknown> | null | undefin
   const value = metadata?.jassim_subscription_id;
   return typeof value === "string" && /^[0-9a-f-]{36}$/.test(value) ? value : undefined;
 };
+/** Jassim Ads (Phase 2): a one-time promotion payment names its campaign, never a subscription. */
+export const metadataPromotion = (metadata: Record<string, unknown> | null | undefined) => {
+  const value = metadata?.jassim_promotion_id;
+  return metadata?.kind === "JASSIM_PROMOTION" && typeof value === "string" && /^[0-9a-f-]{36}$/.test(value) ? value : undefined;
+};
 const metadataUser = (metadata: Record<string, unknown> | null | undefined) => (typeof metadata?.jassim_user_id === "string" ? metadata.jassim_user_id : undefined);
 
 export class WhopUnavailableError extends Error {
@@ -168,6 +173,18 @@ export class WhopUnavailableError extends Error {
 }
 
 export type WhopWebhookResult = { status: number; outcome: string; failureCode?: string | null; duplicate?: boolean };
+export type { Money as WhopMoney, WhopPayment };
+
+/** What a promotion event handler receives: Whop's own payment, read by the server. */
+export type WhopPromotionEvent = {
+  eventId: string;
+  type: "PAID" | "FAILED" | "REFUNDED" | "DISPUTED";
+  eventType: string;
+  digest: string;
+  promotionId: string;
+  payment: WhopPayment;
+  accountId: string;
+};
 
 export function createWhopAdapter(config: WhopConfig, transport: WhopTransport = fetchWhopTransport(config)) {
   async function get<T>(path: string): Promise<T> {
@@ -261,6 +278,52 @@ export function createWhopAdapter(config: WhopConfig, transport: WhopTransport =
     },
   };
 
+  /**
+   * Jassim Ads: a one-time checkout for one promotion at the server's snapshot price. The plan is
+   * created inline (no price lives in Whop beforehand); metadata ties the payment to the campaign.
+   */
+  async function createPromotionCheckout(input: { promotionId: string; userId: string; currencyCode: string; priceMinor: number; scale: number; productRef: string; title: string }) {
+    const major = input.priceMinor / 10 ** input.scale;
+    let response;
+    try {
+      response = await transport({
+        method: "POST",
+        path: "/checkout_configurations",
+        idempotencyKey: `jassim-promotion-${input.promotionId}`,
+        body: {
+          plan: {
+            company_id: config.accountId,
+            currency: input.currencyCode.toLowerCase(),
+            plan_type: "one_time",
+            initial_price: Number(major.toFixed(input.scale)),
+            product: { external_identifier: `jassim-promotion-${input.productRef}`.slice(0, 120), title: input.title.slice(0, 80) },
+          },
+          metadata: { kind: "JASSIM_PROMOTION", jassim_promotion_id: input.promotionId, jassim_user_id: input.userId },
+          ...(config.redirectUrl ? { redirect_url: config.redirectUrl } : {}),
+        },
+      });
+    } catch {
+      throw new WhopUnavailableError("تعذر الوصول إلى Whop");
+    }
+    const body = response.json as { id?: string; purchase_url?: string } | null;
+    if (response.status !== 200 && response.status !== 201) throw new WhopUnavailableError(`Whop ${response.status}`);
+    if (!body?.id || !body.purchase_url?.startsWith("https://")) throw new WhopUnavailableError("Whop checkout without a purchase URL");
+    return { checkoutId: body.id, checkoutUrl: body.purchase_url };
+  }
+
+  /** The purchase page of an existing checkout (a repeated request shows the same page again). */
+  async function promotionCheckoutUrl(checkoutId: string) {
+    const body = await get<{ id?: string; purchase_url?: string }>(`/checkout_configurations/${encodeURIComponent(checkoutId)}`);
+    if (!body.purchase_url?.startsWith("https://")) throw new WhopUnavailableError("Whop checkout without a purchase URL");
+    return body.purchase_url;
+  }
+
+  /** Hands a verified promotion event to the promotion domain (lazy import: no cycle). */
+  async function promotion(event: Omit<WhopPromotionEvent, "accountId">): Promise<WhopWebhookResult> {
+    const { applyWhopPromotionEvent } = await import("../promotion-whop");
+    return applyWhopPromotionEvent({ ...event, accountId: config.accountId });
+  }
+
   /** The signed Whop webhook: verify, read the provider's own state, apply through the one machine. */
   async function receive(raw: Buffer, headers: Record<string, string | string[] | undefined>, nowSeconds?: number): Promise<WhopWebhookResult> {
     const digest = createHash("sha256").update(raw).digest("hex");
@@ -291,6 +354,8 @@ export function createWhopAdapter(config: WhopConfig, transport: WhopTransport =
     if (type === "payment.succeeded" || type === "payment.failed") {
       if (!objectId?.startsWith("pay_")) return recordOnly(verified.id, type, digest, "REJECTED", "MALFORMED_BODY");
       const payment = await get<WhopPayment>(`/payments/${encodeURIComponent(objectId)}`);
+      const promotionId = metadataPromotion(payment.metadata);
+      if (promotionId) return promotion({ eventId: verified.id, type: type === "payment.succeeded" ? "PAID" : "FAILED", eventType: type, digest, promotionId, payment });
       const subscriptionId = metadataSubscription(payment.metadata);
       if (!subscriptionId) return recordOnly(verified.id, type, digest, "IGNORED", "NOT_A_JASSIM_SUBSCRIPTION");
       const owner = await subscriptionScale(subscriptionId);
@@ -357,6 +422,8 @@ export function createWhopAdapter(config: WhopConfig, transport: WhopTransport =
       if (!objectId || !paymentId?.startsWith("pay_")) return recordOnly(verified.id, type, digest, "REJECTED", "MALFORMED_BODY");
       if (refund.status !== "succeeded") return recordOnly(verified.id, type, digest, "IGNORED", "REFUND_NOT_SUCCEEDED");
       const payment = await get<WhopPayment>(`/payments/${encodeURIComponent(paymentId)}`);
+      const refundPromotion = metadataPromotion(payment.metadata);
+      if (refundPromotion) return promotion({ eventId: verified.id, type: "REFUNDED", eventType: type, digest, promotionId: refundPromotion, payment });
       const subscriptionId = metadataSubscription(payment.metadata);
       if (!subscriptionId) return recordOnly(verified.id, type, digest, "IGNORED", "NOT_A_JASSIM_SUBSCRIPTION");
       const owner = await subscriptionScale(subscriptionId);
@@ -375,14 +442,22 @@ export function createWhopAdapter(config: WhopConfig, transport: WhopTransport =
     }
 
     if (type === "dispute.created" || type === "dispute.updated" || type.startsWith("resolution_center_case.")) {
-      // A dispute changes no entitlement by itself; it is recorded for the owner's review.
+      // A dispute on a promotion payment pauses that campaign (it never serves on disputed money);
+      // for subscriptions a dispute changes no entitlement by itself. Both are recorded for review.
+      const data = envelope.data as { payment?: { id?: string } | null; payment_id?: string } | undefined;
+      const disputedPayment = data?.payment?.id ?? data?.payment_id;
+      if (type.startsWith("dispute.") && disputedPayment?.startsWith("pay_")) {
+        const payment = await get<WhopPayment>(`/payments/${encodeURIComponent(disputedPayment)}`);
+        const disputedPromotion = metadataPromotion(payment.metadata);
+        if (disputedPromotion) return promotion({ eventId: verified.id, type: "DISPUTED", eventType: type, digest, promotionId: disputedPromotion, payment });
+      }
       logger.warn({ event: "whop_dispute", type }, "Whop dispute received for review");
       return recordOnly(verified.id, type, digest, "IGNORED", "DISPUTE_RECORDED_FOR_REVIEW");
     }
     return recordOnly(verified.id, type, digest, "IGNORED", "UNHANDLED_EVENT_TYPE");
   }
 
-  return { provider, receive };
+  return { provider, receive, createPromotionCheckout, promotionCheckoutUrl, config: { accountId: config.accountId, environment: config.environment } };
 }
 
 // ─── Installation (server code only; never from a request) ──────────────────────────────────────
@@ -397,6 +472,10 @@ export function installWhopBilling(config: WhopConfig, transport?: WhopTransport
     unregisterSubscriptionBillingProvider(WHOP_PROVIDER_KEY);
     active = undefined;
   };
+}
+/** The installed adapter, if the owner connected Whop billing in this deployment. */
+export function activeWhopAdapter() {
+  return active;
 }
 /** Installs from the environment when the owner has enabled it; otherwise nothing is connected. */
 export function installWhopBillingFromEnv() {

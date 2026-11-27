@@ -20,6 +20,7 @@ import {
   users,
 } from "@workspace/db";
 import { requireAuth } from "../lib/auth";
+import { startWhopPromotionCheckout, whopPromotionAvailability } from "../lib/promotion-whop";
 import { marketFor, resolveMarket } from "../lib/markets";
 import {
   commercialEconomics,
@@ -161,6 +162,21 @@ router.post("/commercial/purchases", requireAuth, async (req, res) => {
   res.status(outcome.created ? 201 : 200).json(outcome);
 });
 
+/** Jassim Ads Phase 2: whether this market can take a real promotion payment now (changes nothing). */
+router.get("/commercial/whop-promotions/availability", requireAuth, async (req, res) => {
+  assertPromotionsAvailable();
+  const market = await marketFor(req);
+  res.json(await whopPromotionAvailability(market));
+});
+/** Opens (or repeats) the Whop page for one fixed-price promotion; it starts only after Whop confirms. */
+router.post("/commercial/whop-promotions/checkouts", requireAuth, async (req, res) => {
+  assertPromotionsAvailable();
+  const body = z.object({ productId: z.string().min(1).max(80), listingId: z.string().min(1).max(80), idempotencyKey: key }).strict().parse(req.body);
+  const market = await marketFor(req);
+  const started = await startWhopPromotionCheckout({ actorId: req.actor!.id, market, ...body });
+  res.status(started.created ? 201 : 200).json(started);
+});
+
 router.get("/commercial/entitlements", requireAuth, async (req, res) => {
   const market = await marketFor(req);
   res.json(await listEntitlements(req.actor!.id, market));
@@ -248,7 +264,7 @@ router.post("/ai/commerce-actions/:id/action", requireAuth, async (req, res) => 
   const body = z.object({ action: z.enum(["CONFIRM", "CANCEL"]) }).strict().parse(req.body);
   const market = await marketFor(req);
   const outcome = await applyCommerceAction({ actionId: String(req.params.id), actorId: req.actor!.id, market, decision: body.action });
-  res.json({ status: outcome.status, message: outcome.message, ...(outcome.promotionId ? { promotionId: outcome.promotionId } : {}), ...(outcome.checkout ? { checkout: outcome.checkout } : {}) });
+  res.json({ status: outcome.status, message: outcome.message, ...(outcome.promotionId ? { promotionId: outcome.promotionId } : {}), ...(outcome.checkout ? { checkout: outcome.checkout } : {}), ...(outcome.promotionCheckout ? { promotionCheckout: outcome.promotionCheckout } : {}) });
 });
 
 // ─── Admin ───────────────────────────────────────────────────────────────────

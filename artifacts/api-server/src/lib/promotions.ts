@@ -233,7 +233,7 @@ export async function listingPromotionEligibility(
   return { ok: true, categoryId: category.id };
 }
 
-async function ownedOffer(actorId: string, market: Market, listingId: string, tx: any = db, lock = false) {
+export async function ownedOffer(actorId: string, market: Market, listingId: string, tx: any = db, lock = false) {
   const query = tx
     .select({ offer: offers, sellerStatus: users.status })
     .from(offers)
@@ -342,7 +342,8 @@ export type SellerPromotionView = {
   status: string;
   effectiveStatus: string;
   paymentStatus: string;
-  paymentMode: "TEST_NO_TRANSFER";
+  /** WHOP_LIVE: a real payment through Whop (Jassim Ads Phase 2); otherwise no money moves. */
+  paymentMode: "TEST_NO_TRANSFER" | "WHOP_LIVE";
   serving: boolean;
   servingNote: string;
   startsAt: string;
@@ -383,7 +384,14 @@ const STATUS_NOTES: Record<string, string> = {
   BUDGET_EXHAUSTED: "نفدت الميزانية — توقف الظهور الممول",
 };
 
-async function promotionViews(rows: PromotionRow[], market: Market, now = new Date()): Promise<SellerPromotionView[]> {
+const WHOP_STATUS_NOTES: Record<string, string> = {
+  PENDING_PAYMENT: "بانتظار إتمام الدفع في صفحة Whop — لا يبدأ قبل تأكيد Whop",
+  PAUSED: "موقوف — الدفع عليه نزاع قيد المراجعة أو أوقفته أنت",
+  CANCELLED: "ملغى — لا يظهر كإعلان ممول",
+  PAYMENT_FAILED: "لم يكتمل الدفع — لم يُفعّل الترويج",
+};
+
+export async function promotionViews(rows: PromotionRow[], market: Market, now = new Date()): Promise<SellerPromotionView[]> {
   if (!rows.length) return [];
   const listingRows: { offer: OfferRowData; sellerStatus: string }[] = await db
     .select({ offer: offers, sellerStatus: users.status })
@@ -404,7 +412,9 @@ async function promotionViews(rows: PromotionRow[], market: Market, now = new Da
         ? serving
           ? "يظهر الآن مع شارة «إعلان ممول» عندما يطابق بحث المشتري"
           : `لا يظهر حاليًا: ${listingOk && !listingOk.ok ? listingOk.reason : "العرض غير متاح"}`
-        : STATUS_NOTES[effectiveStatus] ?? effectiveStatus;
+        : row.paymentMode === "WHOP_LIVE" && WHOP_STATUS_NOTES[effectiveStatus]
+          ? WHOP_STATUS_NOTES[effectiveStatus]!
+          : STATUS_NOTES[effectiveStatus] ?? effectiveStatus;
     const live = effectiveStatus === "ACTIVE" || effectiveStatus === "PAUSED" || effectiveStatus === "SCHEDULED";
     return {
       id: row.id,
@@ -420,7 +430,7 @@ async function promotionViews(rows: PromotionRow[], market: Market, now = new Da
       status: row.status,
       effectiveStatus,
       paymentStatus: row.paymentStatus,
-      paymentMode: "TEST_NO_TRANSFER",
+      paymentMode: row.paymentMode === "WHOP_LIVE" ? "WHOP_LIVE" : "TEST_NO_TRANSFER",
       serving,
       servingNote,
       startsAt: row.startsAt.toISOString(),
@@ -983,7 +993,7 @@ export async function commercialProducts(
   );
 }
 
-async function effectiveProduct(market: Market, productId: string, tx: any = db): Promise<ProductRow> {
+export async function effectiveProduct(market: Market, productId: string, tx: any = db): Promise<ProductRow> {
   const [row] = (await tx.select().from(promotionProducts).where(and(eq(promotionProducts.id, productId), eq(promotionProducts.marketId, market.id)))) as ProductRow[];
   if (!row || row.productType === "STANDARD_PROMOTION") throw fail(404, "المنتج التجاري غير موجود في سوقك", "PRODUCT_NOT_FOUND");
   if (!productIsEffective(row) || row.currencyCode !== market.currencyCode)
@@ -1002,7 +1012,7 @@ async function usableEntitlement(userId: string, market: Market, productType: st
   return rows.find((row) => row.unitsUsed < row.unitsTotal && (!row.expiresAt || row.expiresAt.getTime() > now.getTime()));
 }
 
-async function refreshLimitBreach(listingId: string, policy: CommercialPolicy, tx: any = db): Promise<string | undefined> {
+export async function refreshLimitBreach(listingId: string, policy: CommercialPolicy, tx: any = db): Promise<string | undefined> {
   const since = new Date(Date.now() - DAY_MS);
   const recent: PromotionRow[] = await tx
     .select()
@@ -1143,7 +1153,7 @@ export async function reviewCommercialPurchase(input: PurchaseInput): Promise<Co
   };
 }
 
-async function liveCampaignAt(listingId: string, placement: string, tx: any = db): Promise<PromotionRow | undefined> {
+export async function liveCampaignAt(listingId: string, placement: string, tx: any = db): Promise<PromotionRow | undefined> {
   const [row] = await tx
     .select()
     .from(listingPromotions)

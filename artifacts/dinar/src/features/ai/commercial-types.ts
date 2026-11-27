@@ -41,6 +41,9 @@ const schema = z.object({
   aiPlans:z.object({provisional:z.boolean(),tiers:z.array(z.object({tier:text,label:text,current:z.boolean(),priceLabel:text.nullable(),priceConfigured:z.boolean(),allowances:z.array(z.object({key:text,label:text,value:count})).max(8),tokens:count})).max(3),sameCapabilities:text,billing:z.object({status:z.enum(["NOT_CONNECTED","CONNECTED"]),simulationAvailable:z.boolean(),note:text}),renewalNote:text,publicPlans:z.array(PublicPlan).max(3).optional(),publicPlansNote:text.nullable().optional()}).optional(),
   publicPlanFocus:z.array(text).max(3).optional(),
   checkout:z.object({subscriptionId:text,url:z.string().regex(/^https:\/\/[^\s]+$/).max(600),expiresAt:text,taxNote:text.optional()}).optional(),
+  /** Jassim Ads Phase 2: a real promotion payment through Whop (server decides; never computed here). */
+  whopPayment:z.object({provider:z.literal("WHOP"),note:text}).optional(),
+  promotionCheckout:z.object({promotionId:text,url:z.string().regex(/^https:\/\/[^\s]+$/).max(600),amountLabel:text,note:text}).optional(),
   business:Business.optional(),
 });
 export type CommercialPayload = z.infer<typeof schema>;

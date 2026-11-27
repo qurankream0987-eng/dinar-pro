@@ -9,6 +9,7 @@
  * No model output can credit, charge, grant, activate or change any number here.
  */
 import { cancelSubscriptionEverywhere, configuredAppOrigin, startSubscriptionCheckout, SUBSCRIPTION_TAX_NOTE } from "../lib/subscription-checkout";
+import { startWhopPromotionCheckout, WHOP_PROMOTION_REVIEW_NOTE, whopDirectApplies } from "../lib/promotion-whop";
 import { createHash, randomUUID } from "node:crypto";
 import { and, desc, eq, gt, sql } from "drizzle-orm";
 import { z } from "zod";
@@ -150,6 +151,11 @@ const CommerceQuery = z
     /** Whop phase 2: the hosted payment page prepared after «تأكيد» (nothing paid until Whop confirms). */
     checkout: z
       .object({ subscriptionId: z.string().uuid(), url: z.string().max(600).regex(/^https:\/\/[^\s]+$/), expiresAt: z.string().max(40) })
+      .strict()
+      .optional(),
+    /** Jassim Ads Phase 2: the Whop page for one promotion (it starts only after Whop confirms). */
+    promotionCheckout: z
+      .object({ promotionId: z.string().uuid(), url: z.string().max(600).regex(/^https:\/\/[^\s]+$/), amountLabel: z.string().max(60), note: z.string().max(400) })
       .strict()
       .optional(),
     status: z.enum(["PENDING", "CONFIRMED", "CANCELLED", "EXPIRED", "REJECTED"]).optional(),
@@ -504,8 +510,22 @@ async function composePayload(state: CommerceQuery, resourceIds: string[], resul
           } catch (error) {
             if ((state.status ?? "PENDING") === "PENDING") throw error;
           }
+          // Real payment through Whop replaces the test balance for direct fixed-price products.
+          const review = payload.review as { failureCode?: string; sufficient?: boolean; failure?: string; balanceAfterLabel?: string; missingLabel?: string } | undefined;
+          if (review && (await whopDirectApplies({ market, productId: state.action.productId, paymentSource: state.action.paymentSource }))) {
+            if (review.failureCode === "INSUFFICIENT_BALANCE") {
+              delete review.failure;
+              delete review.failureCode;
+            }
+            review.sufficient = true;
+            delete review.balanceAfterLabel;
+            delete review.missingLabel;
+            payload.whopPayment = { provider: "WHOP", note: WHOP_PROMOTION_REVIEW_NOTE };
+          }
         }
         if (state.promotionId) payload.promotion = await getSellerPromotion(actorId, market, state.promotionId);
+        if (state.promotionCheckout && (payload.promotion as { effectiveStatus?: string } | undefined)?.effectiveStatus === "PENDING_PAYMENT")
+          payload.promotionCheckout = state.promotionCheckout;
         break;
       }
       case "BUNDLE_STATUS":
@@ -514,6 +534,9 @@ async function composePayload(state: CommerceQuery, resourceIds: string[], resul
         break;
       case "CAMPAIGN_STATUS":
         if (state.promotionId) payload.promotion = await getSellerPromotion(actorId, market, state.promotionId);
+        // The Whop link is shown only while that campaign still waits for its payment.
+        if (state.promotionCheckout && (payload.promotion as { effectiveStatus?: string } | undefined)?.effectiveStatus === "PENDING_PAYMENT")
+          payload.promotionCheckout = state.promotionCheckout;
         payload.balance = await getCommercialBalance(actorId, market);
         break;
       case "CAMPAIGN_ANALYTICS": {
@@ -652,6 +675,7 @@ export type CommerceActionOutcome = {
   promotionId?: string;
   view?: CommerceSurface;
   checkout?: { subscriptionId: string; url: string; expiresAt: string };
+  promotionCheckout?: { promotionId: string; url: string; amountLabel: string; note: string };
 };
 
 /**
@@ -707,6 +731,16 @@ export async function applyCommerceAction(input: { actionId: string; actorId: st
         settled.topup.status === "CREDITED"
           ? { status: "CONFIRMED", view: "COMMERCIAL_BALANCE", message: `تم شحن ${settled.topup.amountLabel} بعد تأكيد موثّق من مزوّد الدفع التجريبي (دون تحويل أموال حقيقية). رصيدك المتاح الآن ${balance.availableLabel}.` }
           : { status: "REJECTED", view: "COMMERCIAL_BALANCE", message: "لم يُؤكَّد الدفع، فلم يُضف أي رصيد." };
+    } else if (action.type === "PURCHASE" && action.listingId && (await whopDirectApplies({ market: input.market, productId: action.productId, paymentSource: action.paymentSource }))) {
+      // Jassim Ads Phase 2: «تأكيد» opens Whop's page; nothing starts before Whop's signed payment.
+      const started = await startWhopPromotionCheckout({ actorId: input.actorId, market: input.market, productId: action.productId, listingId: action.listingId, idempotencyKey: key });
+      outcome = {
+        status: "CONFIRMED",
+        view: "CAMPAIGN_STATUS",
+        promotionId: started.promotion.id,
+        promotionCheckout: { promotionId: started.promotion.id, url: started.checkoutUrl, amountLabel: started.amountLabel, note: started.note },
+        message: `صفحة الدفع الآمنة لـ«${started.promotion.productTypeLabel}» على إعلان «${started.promotion.listingTitle}» جاهزة عبر Whop (${started.amountLabel}). لم يُخصم شيء بعد، ولا يبدأ الترويج قبل تأكيد Whop الموقّع.`,
+      };
     } else if (action.type === "PURCHASE") {
       const purchase = await purchaseCommercialProduct({
         actorId: input.actorId,
@@ -764,7 +798,7 @@ export async function applyCommerceAction(input: { actionId: string; actorId: st
   }
   await db
     .update(aiResultSets)
-    .set({ query: { ...state, status: outcome.status, notice: outcome.message, ...(outcome.promotionId ? { promotionId: outcome.promotionId } : {}), ...(outcome.checkout ? { checkout: outcome.checkout } : {}) } })
+    .set({ query: { ...state, status: outcome.status, notice: outcome.message, ...(outcome.promotionId ? { promotionId: outcome.promotionId } : {}), ...(outcome.checkout ? { checkout: outcome.checkout } : {}), ...(outcome.promotionCheckout ? { promotionCheckout: outcome.promotionCheckout } : {}) } })
     .where(and(eq(aiResultSets.id, input.actionId), sql`${aiResultSets.query} ->> 'status' is distinct from 'CONFIRMED'`));
   return outcome;
 }
@@ -891,7 +925,7 @@ async function commerceTurn(
   // Decisions apply only to this adapter's own latest pending review.
   if (latest?.action && (latest.status ?? "PENDING") === "PENDING" && (CONFIRM.test(text) || CANCEL.test(text))) {
     const outcome = await applyCommerceAction({ actionId: latestSet!.id, actorId, market, decision: CONFIRM.test(text) ? "CONFIRM" : "CANCEL" });
-    const state: CommerceQuery = { kind: "COMMERCE", ownerId: actorId, view: outcome.view ?? "COMMERCE_NOTICE", notice: outcome.message, ...(outcome.promotionId ? { promotionId: outcome.promotionId } : {}), ...(outcome.checkout ? { checkout: outcome.checkout } : {}) };
+    const state: CommerceQuery = { kind: "COMMERCE", ownerId: actorId, view: outcome.view ?? "COMMERCE_NOTICE", notice: outcome.message, ...(outcome.promotionId ? { promotionId: outcome.promotionId } : {}), ...(outcome.checkout ? { checkout: outcome.checkout } : {}), ...(outcome.promotionCheckout ? { promotionCheckout: outcome.promotionCheckout } : {}) };
     return turnFor(state, outcome.promotionId ? [outcome.promotionId] : [], outcome.message, actorId, market);
   }
 
