@@ -1,5 +1,8 @@
 const ARABIC = /[؀-ۿ]/;
 const INTERNAL = /[{}\[\]]|\b(?:SQL|SELECT|INSERT|UPDATE|DELETE|postgres|migration|stack|provider|HTTP|Zod|OTP|token|cookie|password|cvv|iban|Error:)\b|api[ _-]?key|authorization|bearer|sk-[\w-]+|dnr_[\w-]+|[\w-]{40,}|\d{7,}|[-+]?\d{1,3}\.\d{4,}|رمز التحقق|مفتاح الربط|كلمة المرور|\n\s*at\s/i;
+// Server-authored Arabic messages are curated; only block shapes that look like leaked internals.
+const SERVER_LEAK = /[{}\[\]]|\n\s*at\s|\b(?:SQL|SELECT|postgres|stack|Error:)\b|bearer|sk-[\w-]+|dnr_[\w-]+|[\w-]{40,}/i;
+const serverReadable = (value: string) => value.length <= 300 && ARABIC.test(value) && !SERVER_LEAK.test(value);
 const readable = (value: string) => value.length <= 300 && ARABIC.test(value) && !INTERNAL.test(value);
 
 /**
@@ -9,7 +12,7 @@ const readable = (value: string) => value.length <= 300 && ARABIC.test(value) &&
 export function friendlyError(error: unknown, fallback = "حدث خطأ غير متوقع. حاول مرة أخرى.") {
   const e = error as { data?: { error?: unknown }; message?: unknown; status?: number } | null;
   const fromData = typeof e?.data?.error === "string" ? e.data.error : "";
-  if (fromData && readable(fromData)) return fromData;
+  if (fromData && serverReadable(fromData)) return fromData;
   const message = typeof e?.message === "string" ? e.message : "";
   // Generated client prefixes "HTTP 409 Conflict: <server message>".
   const serverPart = message.includes(": ") ? message.slice(message.indexOf(": ") + 2) : message;
