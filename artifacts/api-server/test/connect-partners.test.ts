@@ -857,7 +857,7 @@ await test("BUSINESS-AI customers use only tools a store opened; every write is 
   const sent: { method: string; body: string; key: string | null; idem: string | null }[] = [];
   app.locals.connectNetwork = new ConnectNetwork({ dns: app.locals.connectDns, transport: async (request) => {
     sent.push({ method: request.method, body: request.method === "GET" ? "" : await request.text(), key: request.headers.get("x-api-key"), idem: request.headers.get("idempotency-key") });
-    return request.method === "GET" ? Response.json({ free: [2, 4] }) : Response.json({ bookingId: "bk-9" }, { status: 201 });
+    return request.method === "GET" ? Response.json({ free: [2, 4] }) : Response.json({ bookingId: "bk-9", checkout: { url: "https://catalog.partner.example/pay/bk-9", total: "3.500", currency: "JOD" } }, { status: 201 });
   } });
   await db.update(connectIntegrations).set({ mode: "LIVE" }).where(eq(connectIntegrations.id, id));
   process.env.DINAR_CONNECT_LIVE_CALLS = "true";
@@ -885,8 +885,22 @@ await test("BUSINESS-AI customers use only tools a store opened; every write is 
     assert.ok((card as any).summary.store.length > 0);
     assert.match((card as any).summary.sharedWithStore, /المتجر/);
     assert.equal((await call(`/connect/action-confirmations/${(card as any).confirmationId}/confirm`, owner, {})).response.status, 404, "not even the store owner confirms for the customer");
+    // Store payment link in the conversation: only the owner maps it, only on a WRITE tool.
+    const linkMapping = { mapping: { url: "/checkout/url", orderReference: "/bookingId", amount: "/checkout/total", currency: "/checkout/currency" } };
+    assert.equal((await call(`/connect/integrations/${id}/api-tools/${tool("bookTable").id}/payment-link`, other, linkMapping)).response.status, 404, "only the owner maps the payment link");
+    assert.equal((await call(`/connect/integrations/${id}/api-tools/${tool("listTables").id}/payment-link`, owner, linkMapping)).response.status, 409, "a read tool cannot carry a payment link");
+    assert.equal((await call(`/connect/integrations/${id}/api-tools/${tool("bookTable").id}/payment-link`, owner, linkMapping)).data.paymentLink, "MAPPED");
     const done = await call(`/connect/action-confirmations/${(card as any).confirmationId}/confirm`, other, {});
     assert.equal(done.data.status, "EXECUTED", done.text);
+    assert.deepEqual(
+      { status: done.data.paymentLink?.status, url: done.data.paymentLink?.url, host: done.data.paymentLink?.host, ref: done.data.paymentLink?.orderReference, amount: done.data.paymentLink?.amountMinor, currency: done.data.paymentLink?.currencyCode, source: done.data.paymentLink?.source },
+      { status: "AVAILABLE", url: "https://catalog.partner.example/pay/bk-9", host: "catalog.partner.example", ref: "bk-9", amount: 3500, currency: "JOD", source: "STORE" },
+      "the store's own checkout link, amount exactly as the store sent it",
+    );
+    const restored = await call(`/connect/action-confirmations/${(card as any).confirmationId}`, other);
+    assert.equal(restored.data.status, "SUCCEEDED");
+    assert.equal(restored.data.paymentLink.url, "https://catalog.partner.example/pay/bk-9", "the link survives a reload");
+    assert.equal((await call(`/connect/action-confirmations/${(card as any).confirmationId}`, owner)).response.status, 404, "the store owner cannot read the customer's confirmation");
     assert.equal(sent.at(-1)!.idem, (card as any).confirmationId);
     assert.equal(sent.at(-1)!.key, "k_restaurant_1");
     assert.deepEqual(JSON.parse(sent.at(-1)!.body), { date: "2026-12-01", people: 2 });
@@ -2500,4 +2514,28 @@ after(async () => {
   await new Promise<void>((resolve) => server.close(() => resolve()));
   await localObjectStorage?.close();
   await pool.end();
+});
+
+await test("STORE-PAYMENT-LINK only https links on the store's own hosts; never a guessed amount", async () => {
+  const { extractStorePaymentLink } = await import("../src/connect/payment-link");
+  const allowed = { endpointHost: "api.store.example", verifiedSites: ["store.example"] };
+  const jo = { currencyCode: "JOD", minorUnitScale: 3 };
+  const map = (extra: Record<string, unknown> = {}) => ({ url: "/u", amount: "/a", currency: "/c", expiresAt: "/e", paymentHosts: [] as string[], ...extra });
+  const now = new Date("2026-12-01T10:00:00Z");
+  const ok = extractStorePaymentLink({ u: "https://pay.store.example/c/1", a: "12.500", c: "JOD" }, map(), allowed, jo, now);
+  assert.equal(ok.status, "AVAILABLE");
+  assert.equal((ok as any).amountMinor, 12500, "a subdomain of a verified site is the store's own");
+  assert.equal(extractStorePaymentLink({ u: "https://evil.example/c/1" }, map(), allowed, jo, now).status === "UNAVAILABLE" && (extractStorePaymentLink({ u: "https://evil.example/c/1" }, map(), allowed, jo, now) as any).reason, "HOST_NOT_ALLOWED");
+  assert.equal((extractStorePaymentLink({ u: "https://store.example.evil.example/x" }, map(), allowed, jo, now) as any).reason, "HOST_NOT_ALLOWED", "suffix tricks are refused");
+  assert.equal((extractStorePaymentLink({ u: "http://pay.store.example/c/1" }, map(), allowed, jo, now) as any).reason, "INVALID_URL", "no plain http");
+  assert.equal((extractStorePaymentLink({ u: "https://user:pw@pay.store.example/c" }, map(), allowed, jo, now) as any).reason, "INVALID_URL", "no credentials in the link");
+  assert.equal((extractStorePaymentLink({ u: "javascript:alert(1)" }, map(), allowed, jo, now) as any).reason, "INVALID_URL");
+  assert.equal((extractStorePaymentLink({}, map(), allowed, jo, now) as any).reason, "MISSING_URL");
+  assert.equal((extractStorePaymentLink({ u: "https://pay.store.example/c", e: "2026-11-30T00:00:00Z" }, map(), allowed, jo, now) as any).reason, "EXPIRED");
+  const otherCurrency = extractStorePaymentLink({ u: "https://pay.store.example/c", a: "10", c: "USD" }, map(), allowed, jo, now) as any;
+  assert.equal(otherCurrency.status, "AVAILABLE");
+  assert.equal(otherCurrency.amountMinor, undefined, "a foreign-currency amount is never converted or shown as the market currency");
+  assert.equal((extractStorePaymentLink({ u: "https://pay.store.example/c", a: "1.2345", c: "JOD" }, map(), allowed, jo, now) as any).amountMinor, undefined, "finer than the currency precision is dropped");
+  const declared = extractStorePaymentLink({ u: "https://checkout.gateway.example/s/9" }, map({ paymentHosts: ["checkout.gateway.example"] }), allowed, jo, now);
+  assert.equal(declared.status, "AVAILABLE", "a payment host the owner declared explicitly is allowed");
 });

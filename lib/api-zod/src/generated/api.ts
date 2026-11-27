@@ -9230,6 +9230,29 @@ export const CancelConnectWorkflowResponse = zod.record(zod.string(), zod.unknow
 
 
 /**
+ * OWNER only. Maps where an authorized WRITE tool (create order, book, schedule, pay) returns the store's own checkout URL (JSON pointers; optional order reference, amount, currency, expiry, extra payment hosts). The store takes the payment; Jassim never holds it. mapping null removes it.
+ */
+export const SetConnectToolPaymentLinkParams = zod.object({
+  "id": zod.uuid(),
+  "toolId": zod.uuid()
+})
+
+export const SetConnectToolPaymentLinkBody = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+export const SetConnectToolPaymentLinkResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
+ * The person's own confirmation outcome and the store payment link extracted after it executed (https, store-owned host only). Strangers get 404.
+ */
+export const GetConnectActionConfirmationParams = zod.object({
+  "id": zod.uuid()
+})
+
+export const GetConnectActionConfirmationResponse = zod.record(zod.string(), zod.unknown()).describe('W07–W10 request/response object. Each route validates its body with a strict server-side schema (unknown keys, owners, amounts and statuses from the client are refused); the response is the server\'s own view.')
+
+
+/**
  * The same person's confirmation: consumed once and re-decided against the current binding.
  */
 export const ConfirmConnectActionParams = zod.object({

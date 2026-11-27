@@ -554,6 +554,13 @@
       "when": 1795800000000,
       "tag": "0078_arab_market_technical_readiness",
       "breakpoints": true
+    },
+    {
+      "idx": 79,
+      "version": "7",
+      "when": 1795810000000,
+      "tag": "0079_connect_store_payment_link",
+      "breakpoints": true
     }
   ]
 }

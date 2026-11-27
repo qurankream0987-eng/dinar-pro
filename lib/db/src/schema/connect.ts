@@ -544,6 +544,8 @@ export const connectTools = pgTable(
     operation: jsonb("operation").$type<Record<string, unknown>>(),
     /** Smart cards: the owner's mapping from this READ tool's answer to card products (JSON pointers). */
     cardMapping: jsonb("card_mapping").$type<Record<string, unknown>>(),
+    /** Where the owner's WRITE tool returns the store's own checkout URL (JSON pointers). */
+    paymentLinkMapping: jsonb("payment_link_mapping").$type<Record<string, unknown>>(),
     /** The owner allows any signed-in customer to read through this tool (READ access only). */
     publicRead: boolean("public_read").default(false).notNull(),
     /** Business AI: the owner lets customers use this WRITE tool, always through their own confirmation. */
@@ -579,6 +581,8 @@ export const connectActionConfirmations = pgTable(
     arguments: jsonb("arguments").$type<Record<string, unknown>>().notNull(),
     status: text("status").default("PENDING").notNull(),
     resultStatus: integer("result_status"),
+    /** The store payment link extracted after this confirmation executed (never a Jassim payment). */
+    paymentLink: jsonb("payment_link").$type<Record<string, unknown>>(),
     expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
     consumedAt: timestamp("consumed_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),

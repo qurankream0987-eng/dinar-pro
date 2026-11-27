@@ -23035,6 +23035,192 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       return useMutation(getCancelConnectWorkflowMutationOptions(options), queryClient);
     }
 
+export const getSetConnectToolPaymentLinkUrl = (id: string,
+    toolId: string,) => {
+
+
+
+
+  return `/api/connect/integrations/${id}/api-tools/${toolId}/payment-link`
+}
+
+/**
+ * OWNER only. Maps where an authorized WRITE tool (create order, book, schedule, pay) returns the store's own checkout URL (JSON pointers; optional order reference, amount, currency, expiry, extra payment hosts). The store takes the payment; Jassim never holds it. mapping null removes it.
+ */
+export const setConnectToolPaymentLink = async (id: string,
+    toolId: string,
+    serverValidatedObject: ServerValidatedObject, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ServerValidatedObject>(getSetConnectToolPaymentLinkUrl(id,toolId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(serverValidatedObject)
+  }
+);}
+
+
+
+
+
+export const getSetConnectToolPaymentLinkMutationKey = () => ['setConnectToolPaymentLink'] as const;
+
+export const getSetConnectToolPaymentLinkMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setConnectToolPaymentLink>>, TError,SetConnectToolPaymentLinkMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof setConnectToolPaymentLink>>, TError,SetConnectToolPaymentLinkMutationVariables, TContext> => {
+
+const mutationKey = getSetConnectToolPaymentLinkMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof setConnectToolPaymentLink>>, SetConnectToolPaymentLinkMutationVariables> = (props) => {
+          const {id,toolId,data} = props ?? {};
+
+          return  setConnectToolPaymentLink(id,toolId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SetConnectToolPaymentLinkMutationResult = NonNullable<Awaited<ReturnType<typeof setConnectToolPaymentLink>>>
+    export type SetConnectToolPaymentLinkMutationBody = BodyType<ServerValidatedObject>
+    export type SetConnectToolPaymentLinkMutationError = ErrorType<void>
+    export type SetConnectToolPaymentLinkMutationVariables = {id: string;toolId: string;data: BodyType<ServerValidatedObject>}
+
+    export const useSetConnectToolPaymentLink = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setConnectToolPaymentLink>>, TError,SetConnectToolPaymentLinkMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof setConnectToolPaymentLink>>,
+        TError,
+        SetConnectToolPaymentLinkMutationVariables,
+        TContext
+      > => {
+      return useMutation(getSetConnectToolPaymentLinkMutationOptions(options), queryClient);
+    }
+
+export const getGetConnectActionConfirmationUrl = (id: string,) => {
+
+
+
+
+  return `/api/connect/action-confirmations/${id}`
+}
+
+/**
+ * The person's own confirmation outcome and the store payment link extracted after it executed (https, store-owned host only). Strangers get 404.
+ */
+export const getConnectActionConfirmation = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<ServerValidatedObject> => {
+
+  return customFetch<ServerValidatedObject>(getGetConnectActionConfirmationUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetConnectActionConfirmationQueryKey = (id: string,) => {
+    return [
+    `/api/connect/action-confirmations/${id}`
+    ] as const;
+    }
+
+
+export const getGetConnectActionConfirmationQueryOptions = <TData = Awaited<ReturnType<typeof getConnectActionConfirmation>>, TError = ErrorType<void>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConnectActionConfirmation>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetConnectActionConfirmationQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getConnectActionConfirmation>>> = ({ signal }) => getConnectActionConfirmation(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getConnectActionConfirmation>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetConnectActionConfirmationQueryResult = NonNullable<Awaited<ReturnType<typeof getConnectActionConfirmation>>>
+export type GetConnectActionConfirmationQueryError = ErrorType<void>
+
+
+export function useGetConnectActionConfirmation<TData = Awaited<ReturnType<typeof getConnectActionConfirmation>>, TError = ErrorType<void>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConnectActionConfirmation>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getConnectActionConfirmation>>,
+          TError,
+          Awaited<ReturnType<typeof getConnectActionConfirmation>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetConnectActionConfirmation<TData = Awaited<ReturnType<typeof getConnectActionConfirmation>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConnectActionConfirmation>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getConnectActionConfirmation>>,
+          TError,
+          Awaited<ReturnType<typeof getConnectActionConfirmation>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetConnectActionConfirmation<TData = Awaited<ReturnType<typeof getConnectActionConfirmation>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConnectActionConfirmation>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useGetConnectActionConfirmation<TData = Awaited<ReturnType<typeof getConnectActionConfirmation>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConnectActionConfirmation>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetConnectActionConfirmationQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
 export const getConfirmConnectActionUrl = (id: string,) => {
 
 

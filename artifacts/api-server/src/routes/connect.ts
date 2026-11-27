@@ -26,6 +26,7 @@ import * as apiConnector from "../connect/api-connector";
 import * as binding from "../connect/binding";
 import * as vault from "../connect/credential-vault";
 import * as toolCards from "../connect/tool-cards";
+import * as paymentLink from "../connect/payment-link";
 import * as workflows from "../connect/workflows";
 import { connectIntegrations as connectIntegrationsTable, connectTools } from "@workspace/db";
 import { ConnectFinancialReceiptSchema } from "@workspace/api-zod/connect-platform";
@@ -659,6 +660,13 @@ router.post("/connect/integrations/:id/verify", requireAuth, async (req, res) =>
 // Smart cards from the store's system: the owner maps a READ tool and may open it to customers.
 router.post("/connect/integrations/:id/api-tools/:toolId/card", requireAuth, async (req, res) => {
   res.json(await toolCards.setConnectToolCard(req.actor!.id, await marketFor(req), idParam(req.params.id), idParam(req.params.toolId), req.body));
+});
+// Store payment link in the conversation: the owner maps where a WRITE tool returns the store's checkout URL.
+router.post("/connect/integrations/:id/api-tools/:toolId/payment-link", requireAuth, async (req, res) => {
+  res.json(await paymentLink.setConnectToolPaymentLink(req.actor!.id, await marketFor(req), idParam(req.params.id), idParam(req.params.toolId), req.body));
+});
+router.get("/connect/action-confirmations/:id", requireAuth, async (req, res) => {
+  res.set("Cache-Control", "no-store").json(await paymentLink.readOwnConfirmation(req.actor!.id, idParam(req.params.id)));
 });
 router.post("/connect/integrations/:id/api-tools/:toolId/customer-access", requireAuth, async (req, res) => {
   res.json(await toolCards.setConnectToolCustomerAccess(req.actor!.id, await marketFor(req), idParam(req.params.id), idParam(req.params.toolId), req.body));

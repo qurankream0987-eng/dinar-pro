@@ -314,5 +314,9 @@
   {
     "tag": "0078_arab_market_technical_readiness",
     "sha256": "ca3a3bae46c33987e95e6c92032fbbbe523b1ef34d20048ccf4401bc97bae46c"
+  },
+  {
+    "tag": "0079_connect_store_payment_link",
+    "sha256": "a68b6fae2ceeefc4152173e77e415805f1c7759738341940f668ebceeb985c66"
   }
 ]

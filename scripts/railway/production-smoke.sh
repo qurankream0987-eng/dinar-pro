@@ -26,7 +26,7 @@ echo "INFO readyz http=$c body=$(echo "$r" | jq -c . 2>/dev/null | cut -c1-400)"
 echo "$r" | jq -e '.checks.database=="ready" and .checks.migrations=="current"' >/dev/null 2>&1 && pass "database ready, migrations current" || fail "readyz database/migrations"
 
 # --- 2. Migrated data (read-only) ---
-[ "$(q "select count(*) from drizzle.__drizzle_migrations")" = 79 ] && pass "79 migrations recorded (0000-0078)" || fail "migration ledger count $(q 'select count(*) from drizzle.__drizzle_migrations')"
+[ "$(q "select count(*) from drizzle.__drizzle_migrations")" = 80 ] && pass "80 migrations recorded (0000-0079)" || fail "migration ledger count $(q 'select count(*) from drizzle.__drizzle_migrations')"
 nz=""; for t in $(q "select table_name from information_schema.tables where table_schema='public' and table_type='BASE TABLE' order by 1"); do n=$(q "select count(*) from public.\"$t\""); [ "$n" != 0 ] && nz="$nz $t=$n"; done
 echo "INFO non-empty tables:$nz"
 for t in users orders; do echo "INFO exact $t=$(q "select count(*) from public.$t")"; done

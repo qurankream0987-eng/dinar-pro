@@ -11,6 +11,7 @@
  *   HTTP_METHOD_DECIDES_ACCESS: a provider cannot label a POST as a read.
  *   NO_HEADER_OR_COOKIE_PARAMETERS: credentials never travel as tool arguments.
  */
+import { paymentLinkAfterWrite, type StorePaymentLink } from "./payment-link";
 import { randomUUID } from "node:crypto";
 import { and, eq, gt, inArray, sql } from "drizzle-orm";
 import { businessProfiles, connectActionConfirmations, connectIntegrations, connectPartners, connectTools, db } from "@workspace/db";
@@ -223,7 +224,7 @@ async function storeName(integration: IntegrationRow) {
 const CONFIRMATION_TTL_MS = 10 * 60_000;
 
 export type ToolCallResult =
-  | { status: "EXECUTED"; access: "READ" | "WRITE"; providerStatus: number; result: { source: "PROVIDER"; trusted: false; data: unknown } }
+  | { status: "EXECUTED"; access: "READ" | "WRITE"; providerStatus: number; result: { source: "PROVIDER"; trusted: false; data: unknown }; paymentLink?: StorePaymentLink }
   | { status: "CONFIRMATION_REQUIRED"; confirmationId: string; expiresAt: string; summary: { tool: string; capability: string; arguments: Record<string, unknown>; store: string; sharedWithStore: string } }
   | { status: "REFUSED"; refusal: string };
 
@@ -363,7 +364,9 @@ export async function confirmToolCall(input: { actorId: string; market: ConnectM
     const executed = await executeConnectOperation(input.network ?? new ConnectNetwork(), integration!, tool!, claimed.arguments, claimed.id);
     await finish("SUCCEEDED", executed.providerStatus);
     await connectAudit(db, integration!.partnerId, input.actorId, role, "CONNECT_TOOL_WRITE_EXECUTED", { integrationId: integration!.id, toolId: tool!.id, capability: tool!.capability, providerStatus: executed.providerStatus, argumentsDigest: claimed.argumentsDigest });
-    return { status: "EXECUTED", access: "WRITE", providerStatus: executed.providerStatus, result: { source: "PROVIDER", trusted: false, data: executed.data } };
+    // The store's own checkout link, when the owner mapped one; a failure to extract it never undoes the order.
+    const paymentLink = await paymentLinkAfterWrite({ confirmationId: claimed.id, integration: integration!, tool: tool!, data: executed.data, market: input.market }).catch(() => undefined);
+    return { status: "EXECUTED", access: "WRITE", providerStatus: executed.providerStatus, result: { source: "PROVIDER", trusted: false, data: executed.data }, ...(paymentLink ? { paymentLink } : {}) };
   } catch (error) {
     // The provider may or may not have applied it; the record says FAILED and the same idempotency key
     // is never reused for a different call. The person can ask the provider's status, not retry blindly.
