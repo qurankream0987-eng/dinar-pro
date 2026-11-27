@@ -1188,6 +1188,11 @@ async function purchaseReview(productId: string, listingId: string | undefined, 
     status: "PENDING",
   };
   const what = `${review.product.productTypeLabel}${review.listing ? ` لإعلان «${review.listing.title}»` : ""}`;
+  // Jassim Ads Phase 2: a direct fixed-price product is paid through Whop, never from the test balance.
+  if (await whopDirectApplies({ market, productId, paymentSource: review.paymentSource })) {
+    const whopPrompt = `راجع ${what} بسعر ${review.amountLabel}، يُدفع عبر صفحة Whop الآمنة. عند «تأكيد» تُفتح صفحة الدفع فقط؛ لا يبدأ الترويج قبل تأكيد Whop الموقّع. اكتب «تأكيد» أو «إلغاء».`;
+    return turnFor(state, listingId ? [listingId] : [productId], whopPrompt, actorId, market);
+  }
   const pay = review.paymentSource === "BUNDLE_ENTITLEMENT" ? "باستخدام وحدة من باقتك (دون خصم من الرصيد)" : review.budgetLabel ? `بحجز ميزانية ${review.budgetLabel} من رصيدك` : `بسعر ${review.amountLabel} من رصيدك`;
   const prompt = review.sufficient
     ? `راجع ${what} ${pay}. رصيدك بعد التأكيد ${review.balanceAfterLabel}. لن يُفعّل شيء قبل تأكيدك؛ اكتب «تأكيد» أو «إلغاء».`

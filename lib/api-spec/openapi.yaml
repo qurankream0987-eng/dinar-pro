@@ -6397,17 +6397,17 @@ components:
         priceLabel: { type: string }
         status: { type: string, enum: [PENDING_PAYMENT, ACTIVE, PAUSED, EXPIRED, CANCELLED, PAYMENT_FAILED, BUDGET_EXHAUSTED] }
         effectiveStatus: { type: string, enum: [PENDING_PAYMENT, SCHEDULED, ACTIVE, PAUSED, EXPIRED, CANCELLED, PAYMENT_FAILED, BUDGET_EXHAUSTED] }
-        paymentStatus: { type: string, enum: [SIMULATION_PENDING, SIMULATION_CAPTURED, SIMULATION_FAILED, LEGACY_UNVERIFIED, BALANCE_CHARGED, ENTITLEMENT_CONSUMED] }
+        paymentStatus: { type: string, enum: [SIMULATION_PENDING, SIMULATION_CAPTURED, SIMULATION_FAILED, LEGACY_UNVERIFIED, BALANCE_CHARGED, ENTITLEMENT_CONSUMED, PROVIDER_PENDING, PROVIDER_PAID, PROVIDER_FAILED, PROVIDER_REFUNDED, PROVIDER_DISPUTED] }
         productType: { type: string }
         productTypeLabel: { type: string }
         tier: { type: string, enum: [VIP, STANDARD] }
-        paymentSource: { type: string, enum: [SIMULATED_PROVIDER, COMMERCIAL_BALANCE, BUNDLE_ENTITLEMENT] }
+        paymentSource: { type: string, enum: [SIMULATED_PROVIDER, COMMERCIAL_BALANCE, BUNDLE_ENTITLEMENT, WHOP_DIRECT] }
         chargingMode: { type: string }
         budgetLabel: { type: string }
         spentLabel: { type: string }
         remainingLabel: { type: string }
         unitChargeLabel: { type: string }
-        paymentMode: { type: string, enum: [TEST_NO_TRANSFER] }
+        paymentMode: { type: string, enum: [TEST_NO_TRANSFER, WHOP_LIVE] }
         serving: { type: boolean }
         servingNote: { type: string }
         startsAt: { type: string, format: date-time }

@@ -11,4 +11,5 @@ export type SellerPromotionPaymentMode = typeof SellerPromotionPaymentMode[keyof
 
 export const SellerPromotionPaymentMode = {
   TEST_NO_TRANSFER: 'TEST_NO_TRANSFER',
+  WHOP_LIVE: 'WHOP_LIVE',
 } as const;

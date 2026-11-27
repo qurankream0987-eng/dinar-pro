@@ -4679,6 +4679,11 @@ export const SellerPromotionPaymentStatus = {
   LEGACY_UNVERIFIED: 'LEGACY_UNVERIFIED',
   BALANCE_CHARGED: 'BALANCE_CHARGED',
   ENTITLEMENT_CONSUMED: 'ENTITLEMENT_CONSUMED',
+  PROVIDER_PENDING: 'PROVIDER_PENDING',
+  PROVIDER_PAID: 'PROVIDER_PAID',
+  PROVIDER_FAILED: 'PROVIDER_FAILED',
+  PROVIDER_REFUNDED: 'PROVIDER_REFUNDED',
+  PROVIDER_DISPUTED: 'PROVIDER_DISPUTED',
 } as const;
 
 export type SellerPromotionTier = typeof SellerPromotionTier[keyof typeof SellerPromotionTier];
@@ -4696,6 +4701,7 @@ export const SellerPromotionPaymentSource = {
   SIMULATED_PROVIDER: 'SIMULATED_PROVIDER',
   COMMERCIAL_BALANCE: 'COMMERCIAL_BALANCE',
   BUNDLE_ENTITLEMENT: 'BUNDLE_ENTITLEMENT',
+  WHOP_DIRECT: 'WHOP_DIRECT',
 } as const;
 
 export type SellerPromotionPaymentMode = typeof SellerPromotionPaymentMode[keyof typeof SellerPromotionPaymentMode];
@@ -4703,6 +4709,7 @@ export type SellerPromotionPaymentMode = typeof SellerPromotionPaymentMode[keyof
 
 export const SellerPromotionPaymentMode = {
   TEST_NO_TRANSFER: 'TEST_NO_TRANSFER',
+  WHOP_LIVE: 'WHOP_LIVE',
 } as const;
 
 export interface SellerPromotion {
