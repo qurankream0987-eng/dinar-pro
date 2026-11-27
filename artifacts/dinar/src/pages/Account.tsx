@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
+﻿import { lazy, Suspense, useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { Link, useSearch } from "wouter";
 import {
   Bell,
@@ -230,7 +230,7 @@ export function ProfilePage() {
             key={s.href}
             href={s.href}
             data-testid={s.testId}
-            className="pressable flex flex-col items-center gap-1.5 rounded-xl border border-border bg-card px-1 py-3.5 text-center hover:border-border-strong"
+            className="pressable flex flex-col items-center gap-1.5 rounded-2xl border border-border/85 bg-card/95 px-1.5 py-3.5 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.14),0_10px_24px_-12px_rgba(0,0,0,0.18)] transition hover:-translate-y-0.5 hover:border-amber-400/50"
           >
             <span className="relative flex h-10 w-10 items-center justify-center rounded-full bg-primary-soft text-primary-soft-foreground">
               <s.icon size={19} aria-hidden />
@@ -652,7 +652,7 @@ function EmailNotificationsSettings() {
   }
 
   return (
-    <section className="mb-5 rounded-xl border border-border bg-card p-4" data-testid="section-email-notifications">
+    <section className="mb-5 rounded-2xl border border-border/85 bg-card/95 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_12px_28px_-14px_rgba(0,0,0,0.18)]" data-testid="section-email-notifications">
       <div className="mb-2 flex items-center gap-2">
         <Mail size={18} aria-hidden />
         <h2 className="font-bold">البريد والتنبيهات</h2>
@@ -969,7 +969,7 @@ function AccountEditor() {
     }
   }
   return (
-    <section className="mb-5 space-y-3 rounded-xl border border-border bg-card p-4">
+    <section className="mb-5 space-y-3 rounded-2xl border border-border/85 bg-card/95 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_12px_28px_-14px_rgba(0,0,0,0.18)]">
       <h2 className="font-bold">تعديل الحساب والموقع</h2>
       <form
         className="space-y-3"

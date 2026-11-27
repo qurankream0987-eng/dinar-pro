@@ -1,4 +1,4 @@
-import { ReportButton } from "@/features/ReportButton";
+﻿import { ReportButton } from "@/features/ReportButton";
 import { OrderSettlementCard } from "@/features/ai/OrderSettlementCard";
 import { DealClosurePanel } from "@/features/DealClosurePanel";
 import { useEffect, useState, type ReactNode } from "react";
@@ -932,7 +932,7 @@ function ActionCard({
   return (
     <section
       data-testid={testId}
-      className={cn("rounded-xl border p-4 md:p-5", tones[tone])}
+      className={cn("rounded-2xl border p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.16),0_14px_34px_-14px_rgba(0,0,0,0.22)] backdrop-blur-sm md:p-5", tones[tone])}
       aria-labelledby={`${testId ?? "action"}-title`}
     >
       {tone === "accent" && (

@@ -298,7 +298,7 @@ function Workflow({
             <Route>
               {!user ? (
                 <>
-                  <p className="p-4">
+                  <p className="border-b border-border/60 px-4 py-2.5 text-center text-xs font-medium text-muted-foreground">
                     سجّل الدخول للوصول إلى بياناتك ومتابعة هذا الإجراء.
                   </p>
                   <Switch>

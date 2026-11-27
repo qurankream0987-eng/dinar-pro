@@ -34,6 +34,7 @@ import {
   Welcome,
 } from "@/features/ai/ConversationHistory";
 import { WelcomeSponsored, retireWelcomeKey } from "@/features/ai/WelcomeSponsored";
+import { InteractiveCircuitBg } from "@/features/ai/InteractiveCircuitBg";
 import { HeroSponsored, SidebarSponsored } from "@/features/ai/DisplaySponsored";
 import {
   useCallback,
@@ -122,6 +123,23 @@ function takeStashedDraft(): string {
 }
 
 export default function AiPage() {
+  useEffect(() => {
+    // dinar-idle-route-prefetch: warm secondary route chunks when main thread is idle
+    const timer = window.setTimeout(() => {
+      const warm = () => {
+        void import("./Search");
+        void import("./OfferDetails");
+        void import("./Account");
+        void import("./Connect");
+      };
+      if ("requestIdleCallback" in window) {
+        (window as Window & { requestIdleCallback: (cb: () => void) => number }).requestIdleCallback(warm);
+      } else {
+        warm();
+      }
+    }, 1800);
+    return () => window.clearTimeout(timer);
+  }, []);
   const [reasoningEffort, setReasoningEffort] =
     useState<ReasoningEffort>("medium");
   const [modelPreference, setModelPreference] =
@@ -2095,6 +2113,7 @@ export default function AiPage() {
       data-keyboard={keyboardOpen ? "open" : undefined}
       data-identity={identityVerifying ? "verifying" : undefined}
     >
+      <InteractiveCircuitBg />
       {identityVerifying && (
         // Back from another tab: nothing private shows or can be used until the server confirms
         // who is signed in now.

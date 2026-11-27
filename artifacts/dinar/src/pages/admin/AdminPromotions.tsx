@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+﻿import { useEffect, useState, type FormEvent } from "react";
 import { Megaphone } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -195,7 +195,7 @@ export default function AdminPromotionsPage() {
         إنتاجيًا.
       </InlineAlert>
 
-      <section className="rounded-xl border border-border bg-card p-4 md:p-5">
+      <section className="rounded-2xl border border-border/85 bg-card/95 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.14),0_12px_28px_-14px_rgba(0,0,0,0.18)] md:p-5">
         <Field label="السوق">
           <select
             className="h-11 w-full rounded-md border border-border bg-background px-3 text-sm"
@@ -241,7 +241,7 @@ export default function AdminPromotionsPage() {
               {standardPlans.map((product) => (
                 <li
                   key={product.id}
-                  className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-card p-4"
+                  className="flex flex-wrap items-center gap-3 rounded-2xl border border-border/85 bg-card/95 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_10px_24px_-14px_rgba(0,0,0,0.16)] transition hover:border-amber-400/40"
                 >
                   <div className="min-w-0 flex-1">
                     <p className="font-semibold">{product.name}</p>
@@ -278,7 +278,7 @@ export default function AdminPromotionsPage() {
 
         <form
           onSubmit={save}
-          className="space-y-4 rounded-xl border border-border bg-card p-4 md:p-5"
+          className="space-y-4 rounded-2xl border border-amber-400/30 bg-card/95 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.16),0_16px_36px_-14px_rgba(0,0,0,0.24)] md:p-5"
         >
           <div className="flex items-center justify-between gap-3">
             <h2 className="text-lg font-semibold">

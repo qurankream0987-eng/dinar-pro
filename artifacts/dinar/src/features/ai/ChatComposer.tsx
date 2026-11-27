@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { lazy, memo, Suspense, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { iconButtonClass } from "@/ui/Button";
 import { ArrowUp, Camera, LoaderCircle, Mic, MicOff, Plus, Square, X } from "lucide-react";
 // The camera is loaded on first use; it is not part of the chat's initial bundle.
@@ -11,8 +11,72 @@ import { EffortPicker } from "./EffortPicker";
 
 export type ReasoningEffort = "low" | "medium" | "high";
 
+const WAVE_BARS = [18, 28, 42, 64, 36, 52, 84, 46, 30, 68, 94, 58, 38, 76, 48, 32, 62, 88, 54, 36, 70, 44, 26, 16];
+
+const VoiceWaveformBadge = memo(function VoiceWaveformBadge({
+  recording,
+  transcribing,
+  disabled,
+  onClick,
+}: {
+  recording: boolean;
+  transcribing: boolean;
+  disabled: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-hidden="true"
+      tabIndex={-1}
+      data-recording={recording || undefined}
+      data-transcribing={transcribing || undefined}
+      className="dinar-composer-wave-pill hidden sm:inline-flex"
+      title="تحدث مع جاسم بالصوت"
+    >
+      <svg
+        width="104"
+        height="24"
+        viewBox="0 0 104 24"
+        fill="none"
+        className="dinar-composer-waveform"
+        aria-hidden="true"
+      >
+        {WAVE_BARS.map((pct, idx) => {
+          const h = Math.max(3, Math.round((pct / 100) * 20));
+          const y = (24 - h) / 2;
+          const x = 4 + idx * 4.1;
+          const isGold = idx >= 8 && idx <= 15;
+          return (
+            <rect
+              key={idx}
+              x={x}
+              y={y}
+              width="2.1"
+              height={h}
+              rx="1.05"
+              fill={isGold ? "#f3cc73" : "#38bdf8"}
+              opacity={recording ? 0.96 : 0.72}
+              style={
+                recording
+                  ? {
+                      transformOrigin: `${x + 1}px 12px`,
+                      animation: `dinar-wave-pulse ${520 + (idx % 5) * 110}ms ease-in-out ${(idx % 6) * 60}ms infinite alternate`,
+                    }
+                  : undefined
+              }
+            />
+          );
+        })}
+      </svg>
+    </button>
+  );
+});
+
 /** Drafting stays available while DINAR works. Sending is guarded by the turn owner. */
-export function ChatComposer({
+export const ChatComposer = memo(function ChatComposer({
   draft,
   onDraftChange,
   onSubmit,
@@ -183,12 +247,9 @@ export function ChatComposer({
       textarea.style.overflowY = height > 176 ? "auto" : "hidden";
     };
     resize();
-    // Watch width changes rather than textarea height to avoid resize feedback.
     let width = textarea.parentElement?.clientWidth;
     const parent = textarea.parentElement;
     if (parent) {
-      // Re-measure on the next frame: resizing the textarea inside the callback grows the
-      // observed box in the same frame on narrow screens (a ResizeObserver loop).
       let frame = 0;
       const widthObserver = new ResizeObserver(() => {
         if (parent.clientWidth === width) return;
@@ -212,7 +273,6 @@ export function ChatComposer({
       setHint("سجّل الدخول لإرفاق صور في المحادثة.");
       return;
     }
-    // One video per message, on its own: MP4, WebM or MOV up to 25 MB (the server re-checks).
     const videos = selected.filter(isChatVideoFile);
     if (videos.length) {
       const video = videos[0]!;
@@ -252,12 +312,10 @@ export function ChatComposer({
       <CameraCapture
         onClose={() => {
           setCameraOpen(false);
-          // Focus returns to the control that opened the camera.
           window.requestAnimationFrame(() => cameraButton.current?.focus());
         }}
         onConfirm={(file) => {
           setCameraOpen(false);
-          // One search photo per message; it replaces listing photos rather than mixing with them.
           onPhotosChange([markSearchPhoto(file)]);
           setHint("أضف وصفًا إن شئت، ثم أرسل الصورة إلى جاسم.");
           input.current?.focus();
@@ -335,7 +393,7 @@ export function ChatComposer({
         }}
       />
       <div
-        className={`ai-composer-box${dragging ? " is-dragging" : ""}`}
+        className={`ai-composer-box${dragging ? " is-dragging" : ""}${recording ? " is-recording-voice" : ""}`}
         dir="ltr"
         onDragOver={(event) => {
           if (!event.dataTransfer?.types.includes("Files")) return;
@@ -418,7 +476,15 @@ export function ChatComposer({
           data-testid="input-ai-composer"
           className="block min-h-[42px] max-h-44 min-w-0 flex-1 resize-none bg-transparent px-3 py-2 text-base leading-7 outline-none placeholder:text-muted-foreground"
         />
-        <div className="flex shrink-0 items-center gap-1">
+        <div className="flex shrink-0 items-center gap-1.5">
+          {(!draft.trim() || recording || transcribing) && (
+            <VoiceWaveformBadge
+              recording={recording}
+              transcribing={transcribing}
+              disabled={busy || offline || transcribing}
+              onClick={toggleVoiceInput}
+            />
+          )}
           <EffortPicker value={reasoningEffort} disabled={busy || offline} onChange={onReasoningEffortChange} />
           <button
             type="button"
@@ -470,4 +536,4 @@ export function ChatComposer({
     </form>
     </>
   );
-}
+});

@@ -1,4 +1,4 @@
-/* DINAR materials: presentation only. Layout, action authority and theme preference stay canonical. */
+﻿/* DINAR materials: presentation only. Layout, action authority and theme preference stay canonical. */
 .dinar-chatgpt, .ai-history-drawer {
   --premium-fast: 160ms;
   --premium-enter: 320ms;
@@ -760,3 +760,163 @@
 }
 .dinar-chatgpt[data-keyboard="open"] :is(.premium-logo, .listing-glimpses) { display: none; }
 @media (prefers-reduced-transparency: reduce) { .dinar-chatgpt .ai-composer-box { backdrop-filter: none; background: var(--chat-surface); } }
+
+/* ── Apple-Grade Specular Craftsmanship & Royal Mockup Alignment (2026-11-27) ───────────────────
+   1. Jewel-toned 3 primary action cards: Buy (Royal Sapphire), Sell (Sovereign Gold), Compare (Emerald Teal).
+   2. Composer live Cyan/Gold audio waveform capsule & tactile circular buttons.
+   3. Gold-rimmed VIP sponsored cards with circular golden cart badge.
+   4. Sub-pixel inner specular hairlines (inset 0 1px 0) across cards and commerce surfaces. */
+
+.premium-action-card[data-action="buy"] {
+  border-color: rgb(56 189 248 / .48);
+  background: linear-gradient(135deg, rgb(29 78 216 / .22), transparent 64%), var(--premium-material);
+  box-shadow: inset 0 1px 0 rgb(191 219 254 / .28), 0 12px 30px -10px rgb(14 116 144 / .18);
+}
+.dark .premium-action-card[data-action="buy"] {
+  background: linear-gradient(135deg, rgba(29, 78, 216, 0.44) 0%, rgba(10, 31, 64, 0.90) 64%, rgba(56, 189, 248, 0.16) 100%);
+  border-color: rgba(96, 165, 250, 0.58);
+  box-shadow: inset 0 1px 0 rgba(191, 219, 254, 0.26), 0 14px 36px -10px rgba(2, 12, 27, 0.65);
+}
+
+.premium-action-card[data-action="sell"] {
+  border-color: rgb(245 185 66 / .72);
+  background: linear-gradient(135deg, rgb(245 185 66 / .28), transparent 64%), var(--premium-material);
+  box-shadow: inset 0 1px 0 rgb(254 243 199 / .5), 0 12px 32px -10px rgb(234 179 8 / .24);
+}
+.dark .premium-action-card[data-action="sell"] {
+  background: linear-gradient(135deg, rgba(234, 179, 8, 0.44) 0%, rgba(92, 66, 22, 0.78) 54%, rgba(14, 32, 60, 0.92) 100%);
+  border-color: rgba(251, 191, 36, 0.82);
+  box-shadow: inset 0 1px 0 rgba(254, 243, 199, 0.42), 0 0 28px -6px rgba(245, 185, 66, 0.25), 0 16px 38px -10px rgba(2, 12, 27, 0.7);
+}
+.dark .premium-action-card[data-action="sell"] .premium-action-icon {
+  background: linear-gradient(140deg, rgba(245, 185, 66, 0.36), rgba(245, 185, 66, 0.12));
+  border-color: rgba(251, 191, 36, 0.65);
+  color: #fde68a;
+}
+
+.premium-action-card[data-action="compare"] {
+  border-color: rgb(20 184 166 / .48);
+  background: linear-gradient(135deg, rgb(13 148 136 / .22), transparent 64%), var(--premium-material);
+  box-shadow: inset 0 1px 0 rgb(153 246 228 / .3), 0 12px 30px -10px rgb(13 148 136 / .18);
+}
+.dark .premium-action-card[data-action="compare"] {
+  background: linear-gradient(135deg, rgba(13, 148, 136, 0.42) 0%, rgba(9, 44, 58, 0.90) 64%, rgba(45, 212, 191, 0.16) 100%);
+  border-color: rgba(45, 212, 191, 0.56);
+  box-shadow: inset 0 1px 0 rgba(153, 246, 228, 0.26), 0 14px 36px -10px rgba(2, 12, 27, 0.65);
+}
+.dark .premium-action-card[data-action="compare"] .premium-action-icon {
+  background: linear-gradient(140deg, rgba(20, 184, 166, 0.34), rgba(20, 184, 166, 0.10));
+  border-color: rgba(45, 212, 191, 0.5);
+  color: #5eead4;
+}
+
+/* Composer live waveform capsule */
+.dinar-composer-wave-pill {
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  padding-inline: 10px;
+  border-radius: 999px;
+  border: 1px solid rgb(var(--chat-line) / .24);
+  background: radial-gradient(ellipse at 50% 50%, rgb(56 189 248 / .12), rgb(242 184 75 / .06) 65%, transparent);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / .12);
+  cursor: pointer;
+  transition: border-color 180ms ease, transform 180ms ease, box-shadow 180ms ease;
+}
+.dinar-composer-wave-pill:hover:not(:disabled) {
+  border-color: rgb(242 184 75 / .55);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / .2), 0 0 16px rgb(56 189 248 / .18);
+}
+.dinar-composer-wave-pill[data-recording="true"] {
+  border-color: rgb(242 184 75 / .85);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / .25), 0 0 22px rgb(242 184 75 / .3);
+}
+@keyframes dinar-wave-pulse {
+  0% { transform: scaleY(0.55); }
+  100% { transform: scaleY(1.32); }
+}
+
+/* Gold-rimmed Welcome Sponsored row matching Owner Mockup 1 */
+.dinar-chatgpt .welcome-sponsored {
+  width: min(100%, 780px);
+  margin: 14px auto 0;
+  display: grid;
+  gap: 8px;
+}
+.dinar-chatgpt .welcome-sponsored-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--chat-gold-ink, #f3cc73);
+  font-size: 12px;
+  font-weight: 700;
+}
+.dinar-chatgpt .welcome-sponsored-divider {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgb(242 184 75 / .45), transparent);
+}
+.dinar-chatgpt .welcome-sponsored-heading {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.dinar-chatgpt .welcome-sponsored-spark {
+  color: #f3cc73;
+}
+.dinar-chatgpt .welcome-sponsored-card {
+  border: 1px solid rgb(242 184 75 / .42);
+  border-radius: 18px;
+  background: linear-gradient(145deg, rgb(242 184 75 / .10), transparent 55%), var(--premium-material);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / .16), 0 10px 26px -10px rgb(0 0 0 / .35);
+  transition: transform 180ms cubic-bezier(.22, 1, .36, 1), border-color 180ms ease, box-shadow 180ms ease;
+}
+.dinar-chatgpt .welcome-sponsored-card[data-vip="true"] {
+  border-color: rgb(251 191 36 / .68);
+  box-shadow: inset 0 1px 0 rgb(254 243 199 / .28), 0 12px 30px -10px rgb(242 184 75 / .22);
+}
+.dinar-chatgpt .welcome-sponsored-card:hover {
+  transform: translateY(-2px);
+  border-color: rgb(251 191 36 / .85);
+}
+.dinar-chatgpt .welcome-sponsored-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+.dinar-chatgpt .welcome-sponsored-label {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #fff0ba 0%, #f3cc73 50%, #e4aa42 100%);
+  color: #172337;
+  font-size: 10.5px;
+  font-weight: 800;
+}
+.dinar-chatgpt .welcome-sponsored-city {
+  font-size: 10.5px;
+  color: var(--chat-ink-3);
+}
+.dinar-chatgpt .welcome-sponsored-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 2px;
+}
+.dinar-chatgpt .welcome-sponsored-price {
+  color: var(--chat-gold-ink, #f3cc73);
+  font-weight: 800;
+}
+.dinar-chatgpt .welcome-sponsored-cta {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  background: var(--premium-gold);
+  color: #172337;
+  box-shadow: inset 0 1px 0 #fff8db, 0 2px 8px rgb(242 184 75 / .3);
+}
