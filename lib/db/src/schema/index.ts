@@ -657,6 +657,11 @@ export const listingPromotions = pgTable(
       "listing_promotions_payment_source_status",
       sql`(${t.paymentSource} = 'SIMULATED_PROVIDER') OR (${t.paymentSource} = 'COMMERCIAL_BALANCE' AND ${t.paymentStatus} = 'BALANCE_CHARGED') OR (${t.paymentSource} = 'BUNDLE_ENTITLEMENT' AND ${t.paymentStatus} = 'ENTITLEMENT_CONSUMED' AND ${t.entitlementId} IS NOT NULL) OR (${t.paymentSource} = 'WHOP_DIRECT' AND ${t.paymentMode} = 'WHOP_LIVE' AND ${t.paymentStatus} IN ('PROVIDER_PENDING', 'PROVIDER_PAID', 'PROVIDER_FAILED', 'PROVIDER_REFUNDED', 'PROVIDER_DISPUTED'))`,
     ),
+    // Jassim Ads Phase 2: real-payment mode, Whop source and provider statuses always go together.
+    check(
+      "listing_promotions_whop_mode_consistent",
+      sql`(${t.paymentMode} = 'WHOP_LIVE') = (${t.paymentSource} = 'WHOP_DIRECT') AND (${t.paymentMode} = 'WHOP_LIVE') = (${t.paymentStatus} IN ('PROVIDER_PENDING', 'PROVIDER_PAID', 'PROVIDER_FAILED', 'PROVIDER_REFUNDED', 'PROVIDER_DISPUTED'))`,
+    ),
     // Budget accounting: never negative, spend plus release never exceeds the budget.
     check(
       "listing_promotions_budget_valid",
