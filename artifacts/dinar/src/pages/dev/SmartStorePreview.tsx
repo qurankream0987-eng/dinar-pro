@@ -3,6 +3,8 @@ import { useState } from "react";
 import { SmartStoreCard } from "@workspace/api-zod/smart-store-card";
 import { SMART_STORE_FIXTURES } from "@workspace/api-zod/smart-store-card-fixtures";
 import { SmartStoreCardView } from "../../features/ai/smart-store/SmartStoreCardView";
+import { UniversalCardEngine } from "../../features/ai/infinite-cards/UniversalCardEngine";
+import { INFINITE_CARD_DEMO_SPECS } from "../../features/ai/infinite-cards/fixtures";
 import { useLiveSmartStoreCard } from "../../features/ai/smart-store/useLiveSmartStoreCard";
 
 function LiveCard({ initial }: { initial: SmartStoreCard }) {
@@ -44,6 +46,18 @@ export default function SmartStorePreview() {
           <SmartStoreCardView card={card} />
         </section>
       ))}
+
+      <section className="space-y-4 border-t border-border pt-6" aria-label="محرك البطاقات اللانهائية التفاعلية">
+        <div>
+          <h2 className="text-base font-bold">محرك البطاقات اللانهائية التفاعلية (برغر + مانيكان + استوديو)</h2>
+          <p className="text-xs text-muted-foreground">نماذج تفاعلية حية مبنية على بروتوكول JassimCardSpec v1 (بيانات معاينة تجريبية).</p>
+        </div>
+        <div className="grid gap-5 md:grid-cols-2">
+          {INFINITE_CARD_DEMO_SPECS.map((spec) => (
+            <UniversalCardEngine key={spec.cardId} spec={spec} />
+          ))}
+        </div>
+      </section>
     </main>
   );
 }
