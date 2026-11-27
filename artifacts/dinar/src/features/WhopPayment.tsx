@@ -108,7 +108,7 @@ export function WhopPaymentPanel({
       )}
       {payment.status === "REFUND_DUE" && (
         <InlineAlert tone="warning" title="دفعة بحاجة إلى استرداد">
-          وصلت دفعة على طلب ملغى أو منتهي الحجز، فسُجّلت obligation استرداد كاملة. لا
+          وصلت دفعة على طلب ملغى أو منتهي الحجز، فسُجّل التزام استرداد كامل. لا
           تُعدّ بيعًا حتى يكتمل الاسترداد من الإدارة.
         </InlineAlert>
       )}
