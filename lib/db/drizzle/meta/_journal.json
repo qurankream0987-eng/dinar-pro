@@ -568,6 +568,20 @@
       "when": 1795820000000,
       "tag": "0080_promotion_whop_direct",
       "breakpoints": true
+    },
+    {
+      "idx": 81,
+      "version": "7",
+      "when": 1795830000000,
+      "tag": "0081_deal_payment_agreement",
+      "breakpoints": true
+    },
+    {
+      "idx": 82,
+      "version": "7",
+      "when": 1795840000000,
+      "tag": "0082_seller_classification",
+      "breakpoints": true
     }
   ]
 }

@@ -81,6 +81,7 @@ export * from './aiUiBlockPayloadComposition';
 export * from './aiUiBlockPayloadCompositionLayout';
 export * from './aiUiBlockPayloadCompositionSource';
 export * from './aiUiBlockPayloadControl';
+export * from './aiUiBlockPayloadDealCard';
 export * from './aiUiBlockPayloadDelivery';
 export * from './aiUiBlockPayloadDisplaySurface';
 export * from './aiUiBlockPayloadDraft';

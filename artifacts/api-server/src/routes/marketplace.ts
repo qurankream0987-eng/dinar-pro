@@ -42,6 +42,7 @@ import {
   ReportOrderNotCompletedBody,
 } from "@workspace/api-zod";
 import { z } from "zod";
+import { marketplaceRateFor, recordResolutionIfChanged, resolveSellerClassification, sellerClassificationEnabled } from "../lib/seller-classification";
 import { counterpartContact, setSettlementPreference, SETTLEMENT_METHODS } from "../lib/order-settlement";
 import { requireAuth } from "../lib/auth";
 import { applyTerminalOrderAccounting } from "../lib/order-terminal-accounting";
@@ -861,8 +862,20 @@ async function checkout(
       );
       if (!Number.isSafeInteger(subtotal) || subtotal > 2000000000)
         throw fail(400, "الإجمالي يتجاوز الحد المسموح");
-      const commissionRateBps = commissionPolicy.rateBasisPoints;
-      const fee = calculateCommissionMinor(subtotal, commissionPolicy);
+      // Seller classification (owner switch): personal sales, Connect partners and undecided cases
+      // pay no marketplace commission; the classification is snapshotted so a later change never
+      // reprices this order.
+      let classification: Record<string, unknown> | null = null;
+      let commissionRateBps = commissionPolicy.rateBasisPoints;
+      if (sellerClassificationEnabled()) {
+        const resolved = await resolveSellerClassification(tx, sellerId, market.id);
+        const rate = marketplaceRateFor(resolved.classification, commissionPolicy.rateBasisPoints);
+        const recordId = await recordResolutionIfChanged(tx, sellerId, market.id, resolved);
+        commissionRateBps = rate.rateBasisPoints;
+        classification = { classification: resolved.classification, confidence: resolved.confidence, source: resolved.source, recordId, rule: rate.rule, policyRateBasisPoints: commissionPolicy.rateBasisPoints };
+      }
+      const fee = calculateCommissionMinor(subtotal, { rateBasisPoints: commissionRateBps });
+      const orderCommissionSnapshot = { ...commissionSnapshot(commissionPolicy), rateBasisPoints: commissionRateBps, ...(classification ? { sellerClassification: classification } : {}) };
       const id = randomUUID();
       const first = group[0].listing;
       const reservationExpiresAt = new Date(Date.now() + 1800000);
@@ -914,7 +927,8 @@ async function checkout(
             issue: null,
             paymentMode: "TEST_NO_TRANSFER",
             commissionRateBps,
-            commissionPolicy: commissionSnapshot(commissionPolicy),
+            commissionPolicy: orderCommissionSnapshot,
+            ...(classification ? { sellerClassification: classification } : {}),
             deliveryInstructions: safeInstructions,
             ...(group.some((line) => negotiated.has(line.listing.id))
               ? { negotiationIds: group.flatMap((line) => (negotiated.has(line.listing.id) ? [negotiated.get(line.listing.id)!.id] : [])) }
@@ -956,7 +970,7 @@ async function checkout(
           subtotalMinor: subtotal,
           platformFeeMinor: fee,
           commissionRateBps,
-          commissionPolicy: commissionSnapshot(commissionPolicy),
+          commissionPolicy: orderCommissionSnapshot,
           priceVersionId: market.priceVersionId,
         },
       });

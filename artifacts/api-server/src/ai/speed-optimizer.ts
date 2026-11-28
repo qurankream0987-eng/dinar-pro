@@ -1,24 +1,22 @@
 /**
  * JassimAI High-Speed Generation, Frame-Coalesced Streaming & Scoped Cache Engine.
  *
- * Remediated Architecture (verified against independent audit):
+ * Remediated & Intelligent Commerce Architecture:
  * 1. FrameCoalescedTokenBuffer:
  *    - Flushes the very first Arabic token in 0ms (instant TTFT).
  *    - Coalesces rapid sub-frame token bursts into 16ms (60fps) frame windows.
  *    - Handles mid-sentence stream pauses/stalls automatically via an idle flush timer
- *      (`onAutoFlush` / `flushIfStalled`) so buffered text is never delayed or lost if
- *      the upstream provider pauses mid-sentence for >= 16ms.
- *    - Provides `cancel()` for clean timer teardown on stream abort/error.
+ *      (`onAutoFlush` / `flushIfStalled`) so buffered text is never delayed or lost.
  * 2. FastArabicIntentClassifier:
  *    - Deterministic sub-50-microsecond (<0.05ms) intent & read-only prefetch planner.
+ *    - Trained on Deal Payment Agreements (22 Arab markets + open methods), Seller
+ *      Classification (`0%` personal / `5%` merchant / `10%` Connect direct profit),
+ *      and Conversational Merchant Policies.
  *    - Strictly advisory (`authority: "READ_ONLY_PREFETCH_HINT"`): NEVER grants execution,
  *      payment, or authorization bypass permissions.
  * 3. BoundedHotCache<V>:
  *    - Enforces strictly-typed composite keys (`ScopedCacheKey`) requiring explicit
  *      `marketId` and scope isolation (`PUBLIC_MARKET` | `TENANT` | `USER`).
- *    - Rejects empty or delimiter-injected keys to prevent cross-market/cross-tenant leaks.
- *    - Provides explicit invalidation (`delete`, `invalidateMarket`, `invalidateTenant`,
- *      `invalidateUser`, `clear`) alongside O(1) LRU eviction and TTL expiration.
  */
 
 export type FastArabicIntent =
@@ -29,6 +27,9 @@ export type FastArabicIntent =
   | "TRACK_DELIVERY"
   | "CONNECT_STORE_URL"
   | "GO_SELL_ADS"
+  | "DEAL_PAYMENT_AGREEMENT"
+  | "SELLER_CLASSIFICATION_POLICY"
+  | "MERCHANT_COMMERCE_POLICY"
   | "GENERAL_CHAT";
 
 export type PrefetchTarget =
@@ -37,7 +38,10 @@ export type PrefetchTarget =
   | "LEXICAL_LISTINGS"
   | "SELLER_INVENTORY"
   | "ACTIVE_ORDER_TELEMETRY"
-  | "PROMOTION_PLANS";
+  | "PROMOTION_PLANS"
+  | "DEAL_PAYMENT_CATALOG"
+  | "SELLER_CLASSIFICATION_STATE"
+  | "MERCHANT_POLICIES";
 
 export interface FastIntentPlan {
   readonly authority: "READ_ONLY_PREFETCH_HINT";
@@ -52,6 +56,9 @@ const URL_RE = /https?:\/\/[^\s"'<>]+|(?:[a-z0-9-]+\.)+(?:salla\.sa|zid\.store|m
 const GREETING_RE = /^(?:السلام عليكم|مرحبا|أهلا|اهلا|هلا|صباح الخير|مساء الخير|كيف حالك|شلونك|يا جاسم)[!؟.\s]*$/u;
 const GO_SELL_RE = /(?:روح بيع|روّج|روج لي|حملة إعلانية|حمله اعلانيه|إعلان ممول|اعلان ممول|زيادة مبيعات|مدير التسويق)/u;
 const TRACK_RE = /(?:أين طلبي|وين طلبي|تتبع الطلب|تتبع التوصيل|المندوب وصل|كم باقي للطلب|حالة الطلب)/u;
+const SELLER_CLASSIFICATION_RE = /(?:ما تصنيفي|شو تصنيفي|تصنيفي كبائع|مقتنياتي الشخصيه|مقتنياتي الشخصية|سريري الشخصي|أغراضي الشخصية|اغراضي الشخصيه|أعترض على التصنيف|اعترض على التصنيف|بائع فردي|حصة الربح المباشر|كم عمولة جاسم)/u;
+const MERCHANT_POLICY_RE = /(?:سياسة المتجر|سياسه المتجر|إذا نفد|اذا نفد|حد التفاوض|حدود التفاوض|أوقف استقبال الطلبات|اوقف استقبال الطلبات|الحد الأدنى للطلب|الحد الادني للطلب|مناطق الدفع عند الاستلام)/u;
+const DEAL_PAYMENT_RE = /(?:طرق الدفع|طريقة الدفع|طريقه الدفع|كليك|cliq|إنستاباي|انستاباي|instapay|تحويل بنكي|ومض|wamd|كي نت|knet|بنفت باي|فوران|آني|زين كاش|الدفع عند الاستلام|حولت المبلغ|استلمت المبلغ|شارك بيانات الدفع|بطاقة الصفقة|بطاقه الصفقه)/iu;
 const COMPARE_RE = /(?:قارن|مقارنة|الفرق بين|أيهما أفضل|ايهما افضل)/u;
 const SELL_RE = /(?:أريد أن أبيع|اريد ان ابيع|عندي للبيع|أعرض للبيع|اعرض منتج|انشر إعلان|انشر اعلان)/u;
 const BUY_RE = /(?:أريد أن أشتري|اريد ان اشتري|أبحث عن|ابحث عن|بكم سعر|كم سعر|عندكم|متوفر)/u;
@@ -90,6 +97,36 @@ export function classifyFastArabicIntent(rawText: string): FastIntentPlan {
       confidence: 0.96,
       extractedUrl: urlMatch[0],
       speculativePrefetches: ["MARKET_CONFIG", "CATEGORY_SCHEMA"],
+      canSkipHeavyReasoning: true,
+    };
+  }
+
+  if (SELLER_CLASSIFICATION_RE.test(text)) {
+    return {
+      authority: "READ_ONLY_PREFETCH_HINT",
+      intent: "SELLER_CLASSIFICATION_POLICY",
+      confidence: 0.96,
+      speculativePrefetches: ["MARKET_CONFIG", "SELLER_CLASSIFICATION_STATE", "SELLER_INVENTORY"],
+      canSkipHeavyReasoning: true,
+    };
+  }
+
+  if (MERCHANT_POLICY_RE.test(text)) {
+    return {
+      authority: "READ_ONLY_PREFETCH_HINT",
+      intent: "MERCHANT_COMMERCE_POLICY",
+      confidence: 0.95,
+      speculativePrefetches: ["MARKET_CONFIG", "MERCHANT_POLICIES", "SELLER_INVENTORY"],
+      canSkipHeavyReasoning: false,
+    };
+  }
+
+  if (DEAL_PAYMENT_RE.test(text)) {
+    return {
+      authority: "READ_ONLY_PREFETCH_HINT",
+      intent: "DEAL_PAYMENT_AGREEMENT",
+      confidence: 0.96,
+      speculativePrefetches: ["MARKET_CONFIG", "DEAL_PAYMENT_CATALOG", "ACTIVE_ORDER_TELEMETRY"],
       canSkipHeavyReasoning: true,
     };
   }
@@ -153,13 +190,6 @@ export function classifyFastArabicIntent(rawText: string): FastIntentPlan {
   };
 }
 
-/**
- * Coalesces rapid LLM token streams into smooth 16ms frame ticks while guaranteeing:
- * - 0ms latency on the very first token (TTFT),
- * - immediate flush on sentence boundaries,
- * - automatic idle flush (`onAutoFlush` + `flushIfStalled`) if the stream pauses mid-sentence
- *   for >= `frameIntervalMs`, preventing any mid-sentence hang or lost text.
- */
 export class FrameCoalescedTokenBuffer {
   private buffer = "";
   private firstTokenFlushed = false;
@@ -207,7 +237,6 @@ export class FrameCoalescedTokenBuffer {
     this.buffer += delta;
     this.lastPushMs = nowMs;
 
-    // 1. First token ALWAYS flushes in 0ms for instant TTFT
     if (!this.firstTokenFlushed) {
       this.firstTokenFlushed = true;
       this.lastFlushMs = nowMs;
@@ -216,7 +245,6 @@ export class FrameCoalescedTokenBuffer {
       return out;
     }
 
-    // 2. Flush if 16ms elapsed, buffer reached maxBufferChars, or sentence/line boundary reached
     const elapsed = nowMs - this.lastFlushMs;
     const isBoundary = /[\n.؟!،]$/u.test(this.buffer);
     if (elapsed >= this.frameIntervalMs || this.buffer.length >= this.maxBufferChars || isBoundary) {
@@ -226,15 +254,10 @@ export class FrameCoalescedTokenBuffer {
       return out;
     }
 
-    // 3. Mid-sentence sub-frame token: arm idle timer so if stream stalls, it auto-flushes in 16ms
     this.armIdleTimer();
     return null;
   }
 
-  /**
-   * Deterministically flushes buffered text if at least `frameIntervalMs` has passed
-   * since the last token arrived (for synchronous / fake-clock polling).
-   */
   flushIfStalled(nowMs: number = performance.now()): string | null {
     if (!this.buffer) return null;
     if (nowMs - this.lastPushMs >= this.frameIntervalMs) {
@@ -290,10 +313,6 @@ export function formatScopedCacheKey(key: ScopedCacheKey): string {
   throw new Error("Unsupported cache key scope");
 }
 
-/**
- * O(1) In-Memory LRU + TTL Cache with strict Market / Tenant / User key isolation
- * and explicit invalidation (`delete`, `invalidateMarket`, `invalidateTenant`, `invalidateUser`, `clear`).
- */
 export class BoundedHotCache<V> {
   private readonly map = new Map<string, { value: V; expiresAtMs: number; marketId: string; ownerId: string; scope: ScopedCacheKey["scope"] }>();
   private readonly maxEntries: number;

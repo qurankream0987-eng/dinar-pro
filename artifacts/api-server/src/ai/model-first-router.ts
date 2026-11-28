@@ -1,7 +1,8 @@
 /**
  * AI-02 — MODEL_FIRST Multi-Dialect Router Guard.
  * Keeps deterministic decision/confirmation utterances completely isolated from the LLM,
- * while guiding MODEL_FIRST mode across Gulf, Levantine, Egyptian, and Maghrebi Arabic.
+ * while guiding MODEL_FIRST mode across Gulf, Levantine, Egyptian, Iraqi, and Maghrebi Arabic
+ * including Deal Payment Agreement methods, Seller Classification, and Merchant Policies.
  */
 import { aiRoutingMode, isDecisionUtterance, type AiRoutingMode } from "./routing-mode";
 
@@ -17,6 +18,10 @@ export const DIALECT_NORMALIZATION_HINTS: ReadonlyArray<[string, string]> = [
   ["كم سعره / بكم / قديش / شحال / بكام", "كم سعره"],
   ["رخيص / على قد الميزانية / مو غالي", "بسعر اقتصادي"],
   ["توصيل / دليفري / شحن للبيت", "توصيل للمنزل"],
+  ["كليك / انستاباي / سريع / ومض / فوران / آني / بنفت باي / زين كاش", "وسيلة دفع مباشر للبائع"],
+  ["كاش عند التوصيل / سلم واستلم / الدفع عند الاستلام", "الدفع نقدًا عند الاستلام (COD)"],
+  ["أغراضي الشخصية / مقتنياتي / مستعمل شخصي / مو تاجر", "تصريح بائع فردي (0% عمولة)"],
+  ["إذا خلص المنتج / لو نفد المخزون / حد التفاوض / أوقف الطلبات مؤقتا", "سياسة متجر مدارة بالمحادثة"],
 ];
 
 export function modelFirstTimeoutMs(env: NodeJS.ProcessEnv = process.env): number {
@@ -53,9 +58,9 @@ export function buildModelFirstDialectPrompt(market?: { countryNameAr?: string; 
     ? `السوق النشط: ${market.countryNameAr} (${market.currencyCode ?? "—"}).`
     : "احترم السوق والعملة المختارة من الخادم فقط.";
   return [
-    "افهم جميع اللهجات العربية (الخليجية، الشامية، المصرية، المغاربية) وحوّل النية إلى أوامر جاسم القياسية بوضوح دون افتراض تفاصيل لم يذكرها المستخدم.",
+    "افهم جميع اللهجات العربية (الخليجية، الشامية، المصرية، العراقية، المغاربية) وحوّل النية إلى أوامر جاسم القياسية بوضوح دون افتراض تفاصيل لم يذكرها المستخدم.",
     marketLine,
-    "مرجع تطبيع اللهجات:",
+    "مرجع تطبيع اللهجات والمدفوعات والسياسات:",
     hints,
   ].join("\n");
 }

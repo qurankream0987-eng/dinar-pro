@@ -68,6 +68,8 @@ import { deliveryIntent, normalizeDeliveryText, executeDeliveryTurn, isDeliveryQ
 import { executePromotionTurn, explainSponsoredPlacement, isPromotionQuery } from "./promotion-turn";
 import { executeAdsAssistantTurn } from "./ads-assistant-turn";
 import { executeBuyerTurn, executePurchaseTurn, executeOrderContactRequest, reviewQuantity } from "./buyer-turn";
+import { executeDealPaymentTurn } from "./deal-payment-turn";
+import { executeSellerClassificationTurn } from "./seller-classification-turn";
 import { executeListingFactQuestion } from "./listing-fact-question";
 import { executeStockQuestion } from "./stock-question";
 import { modelRolesForActor } from "./model-capability-tools";
@@ -1474,6 +1476,14 @@ async function executeRuntime(context: RuntimeContext, incoming: RuntimeOptions)
     }
     return NO_MODEL_RESULT;
   }
+  // Seller classification («سريري الشخصي», «ما تصنيفي», «أعترض على التصنيف»): before privacy objections.
+  const classified = !context.imageObjectPaths?.length && isMarketAvailable(context.market)
+    ? await executeSellerClassificationTurn({ message: context.message, market: context.market, actorId: context.actorId })
+    : null;
+  if (classified) {
+    options.onToolSelected?.(classified.tool);
+    return classified;
+  }
   // «راجع الشروط المحدثة», «أوافق على الشروط المحدثة»: deterministic, before any commerce flow.
   const policy = await executePolicyTurn({ conversationId: context.conversationId, message: context.message, market: context.market, actorId: context.actorId });
   if (policy) {
@@ -1489,6 +1499,14 @@ async function executeRuntime(context: RuntimeContext, incoming: RuntimeOptions)
   if (contactRequest) {
     options.onToolSelected?.(contactRequest.tool);
     return contactRequest;
+  }
+  // Payment Preferences & Agreement: how buyer and seller settle directly (no money through DINAR).
+  const dealPayment = isMarketAvailable(context.market)
+    ? await executeDealPaymentTurn({ conversationId: context.conversationId, message: context.message, market: context.market, actorId: context.actorId })
+    : null;
+  if (dealPayment) {
+    options.onToolSelected?.(dealPayment.tool);
+    return dealPayment;
   }
   // NEXT G2: buyer–seller messages through DINAR (reviews, sends, replies, status). Before the
   // order, listing-management and commerce adapters, so «عندي 60 قطعة» typed under an incoming
