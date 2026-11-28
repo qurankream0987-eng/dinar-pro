@@ -1,0 +1,135 @@
+/**
+ * Jassim Ads plan — browser journey (real Chromium, the Vite web app, the real API, a disposable DB).
+ * A fake collection provider is registered: no Whop, no network, no money. The browser never opens
+ * the provider page; it checks the handoff link, then the test applies one signed-event stand-in.
+ *   phase PLAN    — plan card, options + server prices, suggested option, copy, interested buyers
+ *                   (above / below the privacy threshold), review, confirmation, payment handoff
+ *   phase RESULTS — the campaign-results card after the payment
+ * Mobile (390) and desktop (1280), Arabic RTL, no horizontal overflow, screenshots kept.
+ */
+import { test, after } from "node:test";
+import assert from "node:assert/strict";
+import { randomUUID } from "node:crypto";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
+import { readFile, unlink } from "node:fs/promises";
+import { eq } from "drizzle-orm";
+import { db, listingPromotions, markets, pool, users } from "@workspace/db";
+import app from "../src/app";
+import { startDinarBrowserTestWeb } from "./browser-test-web-server";
+import { appendCommercialPolicy } from "../src/lib/commercial-policy-append";
+import { resolveMarket } from "../src/lib/markets";
+import { saveDemandRequest } from "../src/lib/demand-requests";
+import { registerPromotionBillingProvider, unregisterPromotionBillingProvider } from "../src/lib/promotion-billing";
+import { applyPromotionProviderEvent } from "../src/lib/promotion-payments";
+import { requireSafeReplitDevelopmentDatabase } from "./safe-development-database";
+
+requireSafeReplitDevelopmentDatabase("BDINAR_TEST_DATABASE");
+process.env.BDINAR_PROMOTIONS_ENABLED = "true";
+process.env.DINAR_JASSIM_ADS = "true";
+process.env.DINAR_JASSIM_ADS_PAYMENTS = "true";
+const run = randomUUID().slice(0, 5);
+registerPromotionBillingProvider({
+  key: "test-gateway",
+  displayName: "بوابة الاختبار",
+  currencies: new Set(["JOD"]),
+  async createCheckout(input) {
+    return { checkoutId: `tg_${input.promotionId}`, checkoutUrl: `https://pay.test-gateway.example/tg_${input.promotionId}` };
+  },
+  async checkoutUrl(id) {
+    return `https://pay.test-gateway.example/${id}`;
+  },
+});
+const server = app.listen(0, "127.0.0.1");
+await new Promise<void>((r) => server.once("listening", r));
+const origin = `http://127.0.0.1:${(server.address() as { port: number }).port}`;
+after(async () => {
+  unregisterPromotionBillingProvider("test-gateway");
+  for (const key of ["DINAR_JASSIM_ADS", "DINAR_JASSIM_ADS_PAYMENTS"]) delete process.env[key];
+  server.close();
+  await pool.end();
+});
+let ip = 0;
+async function req(path: string, method = "GET", body?: unknown, cookie = "") {
+  const r = await fetch(`${origin}/api${path}`, { method, headers: { "content-type": "application/json", ...(cookie ? { cookie } : {}), "X-Forwarded-For": `198.71.${Math.floor(ip / 250)}.${(ip++ % 250) + 1}` }, body: method === "GET" ? undefined : JSON.stringify(body ?? {}) });
+  const raw = await r.text(); let data: any; try { data = JSON.parse(raw); } catch {}
+  return { status: r.status, data, raw, cookie: r.headers.get("set-cookie")?.split(";")[0] ?? "" };
+}
+let offset = 0;
+async function register(label: string) {
+  const phoneNumber = String(51_230_000 + ((Date.now() + process.pid + 7 * offset++) % 60_000));
+  const s = await req("/auth/phone-verification/challenges", "POST", { phoneCountryCode: "+965", phoneNumber });
+  const v = await req("/auth/phone-verification/challenges/verify", "POST", { challengeId: s.data.challengeId, code: s.data.developmentCode });
+  const pw = `Apb-${randomUUID().slice(0, 10)}!`;
+  const u = await req("/auth/register", "POST", { displayName: `مستخدم ${label}`, phoneCountryCode: "+965", phoneNumber, accountCountry: "KW", password: pw, confirmPassword: pw, acceptTerms: true, verificationToken: v.data.verificationToken });
+  assert.equal(u.status, 201, u.raw);
+  await req("/account/market", "PATCH", { marketId: "JO" }, u.cookie);
+  const id = u.data.user.id as string;
+  return { cookie: u.cookie, id, conv: (await req("/ai/conversations", "POST", {}, u.cookie)).data.id as string };
+}
+async function publish(seller: { cookie: string }, title: string) {
+  const r = await req("/listings", "POST", {
+    title, description: `${title} — جديدة بالكرتونة`, category: "إلكترونيات", categoryId: "electronics", area: "خلدا", city: "عمان",
+    attributes: { condition: "جديد" }, unitPrice: "40.000", inventoryMode: "LIMITED", availableQuantity: 100, fulfilmentType: "PICKUP", imageUrl: "", imageUrls: [], paymentMethods: ["CASH_DIRECT"],
+  }, seller.cookie);
+  assert.equal(r.status, 201, r.raw);
+  return r.data.id as string;
+}
+
+async function browser(phase: string, fixture: unknown, web: { baseUrl: string }) {
+  const reportPath = `/tmp/dinar-ads-plan-${phase}-${randomUUID()}.json`;
+  let runError: unknown;
+  try {
+    await promisify(execFile)(process.execPath, [`${process.cwd()}/../dinar/test/jassim-ads-plan-ui.mjs`], {
+      cwd: `${process.cwd()}/../dinar`,
+      env: { ...process.env, AP_PHASE: phase, AP_WEB: web.baseUrl, AP_API: origin, AP_REPORT: reportPath, AP_SHOTS: `${process.env.DINAR_BROWSER_EVIDENCE_DIR ?? `${process.cwd()}/.test-build/browser-evidence`}/jassim-ads-plan`, AP_FIXTURE: JSON.stringify(fixture) },
+      timeout: 600_000, maxBuffer: 20 * 1024 * 1024,
+    });
+  } catch (error) { runError = error; }
+  let report: any;
+  try { report = JSON.parse(await readFile(reportPath, "utf8")); await unlink(reportPath); } catch {}
+  console.log(`ADS_PLAN_BROWSER_${phase}`, JSON.stringify(report));
+  if (!report) throw runError ?? new Error("no browser report");
+  assert.equal(report.failure, undefined, report.failure);
+  assert.deepEqual(report.pageErrors, []);
+  assert.deepEqual(report.consoleErrors, []);
+  assert.deepEqual(report.externalRequests, [], "the provider page is never opened");
+  return report;
+}
+
+test("ADS-PLAN browser: plan card, options, copy, interested buyers, review, payment handoff, results — mobile and desktop, RTL", async () => {
+  await db.update(markets).set({ isActive: true, status: "ACTIVE" }).where(eq(markets.id, "JO"));
+  const admin = await register("admin");
+  await db.update(users).set({ role: "ADMIN" }).where(eq(users.id, admin.id));
+  await appendCommercialPolicy({ marketId: "JO", policy: { advertisingBillingActivation: "PROVIDER_DIRECT", advertisingBillingProvider: "test-gateway", minCohortSize: 3 }, actorId: admin.id });
+  for (const [name, productType, priceMinor, durationDays] of [["ظهور مميز", "VIP_LISTING", 8_000, 3], ["إبراز في البحث", "FEATURED_LISTING", 5_000, 7]] as const) {
+    const r = await req("/admin/markets/JO/commercial-products", "POST", { name: `${name} ${run}`, productType, categoryId: "electronics", priceMinor, durationDays, chargingMode: "FIXED" }, admin.cookie);
+    assert.equal(r.status, 201, r.raw);
+  }
+  const sellerAbove = await register("بائع-أ");
+  const sellerBelow = await register("بائع-ب");
+  const titleAbove = `سماعة سوني ${run}`;
+  const titleBelow = `مكواة فيليبس ${run}`;
+  const listingAbove = await publish(sellerAbove, titleAbove);
+  await publish(sellerBelow, titleBelow);
+  const JO = await resolveMarket((await db.select().from(markets).where(eq(markets.id, "JO")))[0]!);
+  const buyers = [await register("مشتري1"), await register("مشتري2"), await register("مشتري3")];
+  for (const b of buyers) await saveDemandRequest({ buyerId: b.id, market: JO, needText: titleAbove, consent: true });
+  for (const b of buyers.slice(0, 2)) await saveDemandRequest({ buyerId: b.id, market: JO, needText: titleBelow, consent: true });
+
+  const web = await startDinarBrowserTestWeb(origin);
+  try {
+    const plan = await browser("PLAN", { sellerAbove, sellerBelow, titleAbove, titleBelow, expectedInterested: 3 }, web);
+    assert.ok(plan.checks.length >= 20, JSON.stringify(plan.checks));
+    const promotionId = plan.promotionId as string;
+    const [row] = await db.select().from(listingPromotions).where(eq(listingPromotions.id, promotionId));
+    assert.equal(row?.listingId, listingAbove);
+    assert.deepEqual([row?.status, row?.paymentStatus], ["PENDING_PAYMENT", "PROVIDER_PENDING"], "nothing starts from the browser confirmation");
+    const paid = await applyPromotionProviderEvent({ providerKey: "test-gateway", eventId: `b_${run}`, type: "PAID", eventType: "payment", digest: `b_${run}`, promotionId, expectedAccountId: "acct", facts: { status: "paid", ownerUserId: sellerAbove.id, subtotal: { amount: row!.priceMinorSnapshot === 5000 ? "5.000" : "8.000", currency: "JOD" } } });
+    assert.equal(paid.outcome, "APPLIED");
+    const results = await browser("RESULTS", { sellerAbove, titleAbove }, web);
+    assert.ok(results.checks.length >= 6, JSON.stringify(results.checks));
+  } finally {
+    await web.stop();
+  }
+});

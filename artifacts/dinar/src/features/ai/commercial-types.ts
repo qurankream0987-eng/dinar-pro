@@ -6,7 +6,7 @@ export const COMMERCIAL_SURFACES = CONVERSATION_SURFACE_FAMILIES.commercial;
 const text = z.string().max(700).refine(s => !/sk-[\w-]+|dnr_[\w-]+|\b(?:api.?key|cookie|token|otp|cvv|iban)\b|[-+]?\d{1,3}\.\d{4,}/i.test(s));
 const count = z.number().int().nonnegative();
 const Balance = z.object({availableLabel:text,promoLabel:text.optional(),reservedLabel:text.optional(),spentLabel:text.optional(),statement:text.optional()});
-export const Product = z.object({name:text,productTypeLabel:text,priceLabel:text,durationDays:count,currencyCode:text, minBudgetLabel:text.optional(),unitChargeLabel:text.optional(), refundPolicyLabel:text.optional(),bundleItems:z.array(z.object({productTypeLabel:text,units:count,durationDays:count})).max(24).optional(),businessEntitlements:z.array(text).optional()});
+export const Product = z.object({id:text.optional(),name:text,productTypeLabel:text,priceLabel:text,durationDays:count,currencyCode:text, minBudgetLabel:text.optional(),unitChargeLabel:text.optional(), refundPolicyLabel:text.optional(),bundleItems:z.array(z.object({productTypeLabel:text,units:count,durationDays:count})).max(24).optional(),businessEntitlements:z.array(text).optional()});
 const Review = z.object({product:Product.optional(),plan:Product.optional(),listing:z.object({title:text}).optional(),amountLabel:text.optional(),budgetLabel:text.optional(),balanceAfterLabel:text.optional(),sufficient:z.boolean().optional(),failure:text.optional(),missingLabel:text.optional(),disclosure:text.optional(),pitch:text.optional(),privacyNote:text.optional(),refundNote:text.optional(),renewalNote:text.optional(),rankNote:text.optional(),startNote:text.optional(),endNote:text.optional()});
 const Campaign = z.object({listingTitle:text,effectiveStatus:text,productTypeLabel:text.optional(),status:text.optional(),priceLabel:text.optional(),budgetLabel:text.optional(),spentLabel:text.optional(),remainingLabel:text.optional(),qualifiedImpressions:count.optional(),qualifiedEngagements:count.optional(),ordersAttributed:count.optional(),conversionRate:text.optional()});
 /** D1: a public plan exactly as the server defines it (no price is computed on the client). */
@@ -27,7 +27,7 @@ const Business = z.object({
 export type BusinessCardPayload = z.infer<typeof Business>;
 export type PublicPlanPayload = z.infer<typeof PublicPlan>;
 const schema = z.object({
-  view:z.enum(COMMERCIAL_SURFACES),paymentMode:z.enum(["TEST_NO_TRANSFER","SIMULATION_ONLY"]),
+  view:z.enum(COMMERCIAL_SURFACES),paymentMode:z.enum(["TEST_NO_TRANSFER","SIMULATION_ONLY"]),liveProviderPayments:z.boolean().optional(),
   notice:text.optional(),step:text.optional(),pitch:text.optional(),privacyNote:text.optional(),
   action:z.object({type:text,status:z.enum(["PENDING","CONFIRMED","CANCELLED","EXPIRED","REJECTED"]),statusLabel:text}).optional(),
   balance:Balance.optional(),monthSpentLabel:text.optional(),history:z.array(z.object({label:text,amountLabel:text})).max(24).optional(),

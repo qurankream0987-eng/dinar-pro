@@ -414,6 +414,8 @@ export async function promotionViews(rows: PromotionRow[], market: Market, now =
           : `لا يظهر حاليًا: ${listingOk && !listingOk.ok ? listingOk.reason : "العرض غير متاح"}`
         : row.paymentMode === "PROVIDER_LIVE" && effectiveStatus === "CANCELLED" && row.paymentStatus === "PROVIDER_PAID"
           ? "وصل دفعك، لكن الإعلان لم يعد متاحًا فلم يبدأ الترويج. سُجّل الطلب لمراجعة الاسترداد."
+        : row.paymentMode === "PROVIDER_LIVE" && effectiveStatus === "CANCELLED" && row.paymentStatus === "PROVIDER_REFUNDED"
+          ? "ملغى — أكّد مزود الدفع استرداد المبلغ"
         : row.paymentMode === "PROVIDER_LIVE" && PROVIDER_STATUS_NOTES[effectiveStatus]
           ? PROVIDER_STATUS_NOTES[effectiveStatus]!
           : STATUS_NOTES[effectiveStatus] ?? effectiveStatus;

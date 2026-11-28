@@ -425,6 +425,8 @@ const REVIEW_SURFACE: Record<string, CommerceSurface> = {
 /** Rebuilt from live server state on every turn and history read. */
 async function composePayload(state: CommerceQuery, resourceIds: string[], resultSetId: string, actorId: string, market: Market): Promise<Record<string, unknown>> {
   const payload: Record<string, unknown> = { view: state.view, paymentMode: "TEST_NO_TRANSFER", autoRenew: false };
+  // In a market where promotions are collected by a real provider, the "simulation only" disclaimer would be false.
+  if ((await promotionPaymentAvailability(market).catch(() => ({ available: false }))).available) payload.liveProviderPayments = true;
   if (state.step) payload.step = state.step;
   if (state.productType) payload.productType = state.productType;
   if (state.notice) payload.notice = state.notice;

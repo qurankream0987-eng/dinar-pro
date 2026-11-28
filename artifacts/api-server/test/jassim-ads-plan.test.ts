@@ -9,7 +9,8 @@ import { test, after } from "node:test";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
-import { db, listingPromotions, markets, offers, pool, users } from "@workspace/db";
+import { and, eq as eq2 } from "drizzle-orm";
+import { billingWebhookEvents, db, listingPromotions, markets, offers, pool, users } from "@workspace/db";
 import app from "../src/app";
 import { appendCommercialPolicy } from "../src/lib/commercial-policy-append";
 import { registerPromotionBillingProvider, unregisterPromotionBillingProvider } from "../src/lib/promotion-billing";
@@ -137,18 +138,75 @@ test("ADP-02 «عندي 100 قطعة أريد بيعها»: the same plan, hones
   assert.match(plan.body, /لا أعدك ببيع الكمية كلها/);
 });
 
+const NOTE = "وصل دفعك، لكن الإعلان لم يعد متاحًا فلم يبدأ الترويج. سُجّل الطلب لمراجعة الاسترداد.";
+const webhookRow = async (eventId: string) =>
+  (await db.select().from(billingWebhookEvents).where(and(eq2(billingWebhookEvents.providerKey, "test-gateway"), eq2(billingWebhookEvents.providerEventId, eventId))));
+
 test("ADP-03 paying is not serving: a listing removed while the payment is pending never starts", async () => {
   const seller = await account("seller3");
   const listingId = await publish(seller, `كاميرا ${run}`);
   const started = await request("/commercial/promotion-payments/checkouts", "POST", { productId: vip, listingId, idempotencyKey: `adp3-${randomUUID()}` }, seller.cookie);
   assert.equal(started.status, 201, started.raw);
   const id = started.data.promotion.id;
+  const pending = await promotion(id);
+  assert.deepEqual([pending.status, pending.paymentStatus], ["PENDING_PAYMENT", "PROVIDER_PENDING"]);
   await db.update(offers).set({ status: "ARCHIVED" }).where(eq(offers.id, listingId));
+
+  // 1. valid signed confirmation → recorded as paid, never started, refund review recorded
   const result = await pay(id, seller.id, `e3_${run}`, "8.000");
-  assert.equal(result.failureCode, "PAID_LISTING_UNAVAILABLE_REFUND_REVIEW");
+  assert.deepEqual([result.outcome, result.failureCode, result.duplicate], ["APPLIED", "PAID_LISTING_UNAVAILABLE_REFUND_REVIEW", false]);
   const row = await promotion(id);
-  assert.deepEqual([row.status, row.paymentStatus], ["CANCELLED", "PROVIDER_PAID"], "the payment is recorded; the campaign did not start");
+  assert.deepEqual([row.status, row.paymentStatus], ["CANCELLED", "PROVIDER_PAID"]);
+  assert.equal(String(row.expiresAt), String(pending.expiresAt), "no serving window was opened by the payment");
+  assert.ok(row.endedAt, "ended at the moment the payment arrived");
+  const [review] = await webhookRow(`e3_${run}`);
+  assert.deepEqual([review?.status, review?.failureCode], ["APPLIED", "PAID_LISTING_UNAVAILABLE_REFUND_REVIEW"], "refund review recorded with the event");
+
+  // 2. exact seller-facing message, and no claim that money was already refunded
   const view = await request(`/promotions/${id}`, "GET", undefined, seller.cookie);
-  const note = JSON.stringify(view.data ?? {});
-  assert.ok(view.status !== 200 || /وصل دفعك، لكن الإعلان لم يعد متاحًا/.test(note), note.slice(0, 300));
+  assert.equal(view.status, 200, view.raw);
+  const campaign = view.data.promotion ?? view.data;
+  assert.equal(campaign.servingNote, NOTE);
+  assert.equal(campaign.paymentStatus, "PROVIDER_PAID");
+  assert.doesNotMatch(view.raw, /تم الاسترداد|استُرد|أُعيد المبلغ|تمت إعادة/, "no false refund claim");
+  const list = await request("/promotions", "GET", undefined, seller.cookie);
+  assert.ok(list.raw.includes(NOTE), "the same note in the seller's campaign list");
+
+  // 3. duplicate delivery of the same signed event → nothing changes, one record
+  const again = await pay(id, seller.id, `e3_${run}`, "8.000");
+  assert.equal(again.duplicate, true);
+  assert.equal((await webhookRow(`e3_${run}`)).length, 1);
+  const after1 = await promotion(id);
+  assert.deepEqual([after1.status, after1.paymentStatus, String(after1.updatedAt)], [row.status, row.paymentStatus, String(row.updatedAt)]);
+
+  // 4. a second, different payment event for the same campaign → flagged, never starts
+  const second = await pay(id, seller.id, `e3b_${run}`, "8.000");
+  assert.deepEqual([second.outcome, second.failureCode], ["IGNORED", "ALREADY_PAID_SECOND_PAYMENT_REVIEW"]);
+  assert.equal((await promotion(id)).status, "CANCELLED");
+
+  // 5. restoring the listing afterwards does not start the paid campaign by itself
+  await db.update(offers).set({ status: "PUBLISHED" }).where(eq(offers.id, listingId));
+  assert.equal((await promotion(id)).status, "CANCELLED");
+
+  // 6. only a provider-signed refund marks the money refunded
+  const refund = await applyPromotionProviderEvent({ providerKey: "test-gateway", eventId: `r3_${run}`, type: "REFUNDED", eventType: "refund", digest: `r3_${run}`, promotionId: id, expectedAccountId: "acct", facts: { status: "refunded", ownerUserId: seller.id, total: { amount: "8.000", currency: "JOD" }, refunded: { amount: "8.000", currency: "JOD" } } });
+  assert.equal(refund.outcome, "APPLIED");
+  const refunded = await promotion(id);
+  assert.deepEqual([refunded.status, refunded.paymentStatus], ["CANCELLED", "PROVIDER_REFUNDED"]);
+  const afterRefund = await request(`/promotions/${id}`, "GET", undefined, seller.cookie);
+  assert.equal((afterRefund.data.promotion ?? afterRefund.data).servingNote, "ملغى — أكّد مزود الدفع استرداد المبلغ", "refund stated only after the provider-signed refund");
+});
+
+test("ADP-04 wrong amount, wrong owner, or another provider on a removed listing: rejected, nothing recorded as paid", async () => {
+  const seller = await account("seller4");
+  const listingId = await publish(seller, `ساعة ${run}`);
+  const started = await request("/commercial/promotion-payments/checkouts", "POST", { productId: vip, listingId, idempotencyKey: `adp4-${randomUUID()}` }, seller.cookie);
+  const id = started.data.promotion.id;
+  await db.update(offers).set({ status: "ARCHIVED" }).where(eq(offers.id, listingId));
+  assert.equal((await pay(id, seller.id, `e4a_${run}`, "5.000")).failureCode, "AMOUNT_MISMATCH_REVIEW");
+  assert.equal((await pay(id, randomUUID(), `e4b_${run}`, "8.000")).failureCode, "OWNER_MISMATCH");
+  const other = await applyPromotionProviderEvent({ providerKey: "other-gateway", eventId: `e4c_${run}`, type: "PAID", eventType: "payment", digest: "d", promotionId: id, expectedAccountId: "acct", facts: { status: "paid", ownerUserId: seller.id, subtotal: { amount: "8.000", currency: "JOD" } } });
+  assert.equal(other.failureCode, "PROVIDER_MISMATCH");
+  const row = await promotion(id);
+  assert.deepEqual([row.status, row.paymentStatus], ["PENDING_PAYMENT", "PROVIDER_PENDING"]);
 });
