@@ -116,30 +116,33 @@ Migrations must be additive only, and must never change or delete existing data.
   - payment values never present in stored chat blocks or in the DOM before the protected view is opened.
 - Screenshots go to `docs/agent-handoff/screens/`.
 
-### E. Provider-neutral payment collection for Jassim Ads (do this FIRST)
-Owner decision (`docs/payments/PAYMENT-SEPARATION-AR.md`): Whop is only a collection provider. JassimAI owns its services, prices, campaigns and records. Replacing Whop with a local gateway later must not require rebuilding subscriptions or ads.
+### E. Provider-neutral payment for Jassim Ads (do this FIRST; keep it small)
+Owner decision: three parts only.
+1. Jassim's own records: what was bought, price and currency, payment status, activation, refund.
+2. One provider interface.
+3. A clear financial record.
 
-**Already provider-neutral, keep as is:**
-- Subscriptions: `lib/subscription-billing.ts` (`SubscriptionBillingProvider` registry) and `business_subscriptions.provider_key`.
+**Do not add new financial layers. Do not build or enable the Ads wallet.**
 
-**Gap to close:**
-- Jassim Ads names Whop in its data and policy:
-  - migration 0080: `payment_mode 'WHOP_LIVE'`, `payment_source 'WHOP_DIRECT'`;
-  - `advertisingBillingActivation 'WHOP_DIRECT'`;
-  - `lib/promotion-whop.ts`;
-  - `payload.whopPayment`.
-- **0080 is not deployed anywhere**, so redefine it in place (keep its file name and tag, update its sha256 everywhere it is registered):
-  1. **Neutral database values:** `payment_mode 'PROVIDER_LIVE'` and `payment_source 'PROVIDER_DIRECT'`. Add a nullable `payment_provider_key text` column on `listing_promotions`. A CHECK requires it exactly when the source is `PROVIDER_DIRECT`. Existing values `SIMULATED_*`, `BALANCE_*` and `ENTITLEMENT_*` stay unchanged.
-  2. **Neutral policy:** `advertisingBillingActivation: "DISABLED" | "PROVIDER_DIRECT"`, plus an `advertisingBillingProvider` key such as `"whop"`.
-  3. **Provider interface:** `lib/promotion-billing.ts` defines a `PromotionBillingProvider` (create checkout, verify and parse webhook, re-read payment; mirroring `SubscriptionBillingProvider`) with a registry. Whop becomes one registered implementation (`lib/billing/whop.ts`). The promotion flow, the serving rule and the conversation call the interface, never Whop directly.
-  4. **Conversation payload:** `payload.whopPayment` becomes `payload.providerPayment = { providerKey, displayName, note }`. Update the OpenAPI spec and regenerate, never hand-edit.
-  5. **Supported currencies and blocked countries** come from the registered provider, not from constants in the ads flow.
-- **Tests:**
-  - `jassim-ads-phase2` stays green (8/8) through the Whop provider.
-  - A second **fake provider** registered in a test runs a promotion end to end: checkout, signed event, activation, refund. No ads-flow code changes are needed for it. This proves Whop is replaceable.
-  - A rehearsal of the redefined 0080 on a copy of migrations 0000–0079 data (see `docs/jassim-ads-phase2/` for the previous rehearsal): applied, rolled back, constraints restored.
-  - No Whop name appears in `deal-payments/`, `merchant-policies/`, `seller-classification` or the commission code (grep test).
-- **Stop point:** if redefining 0080 in place turns out unsafe for any reason, stop and ask; do not add a corrective migration on your own.
+Payment success and promotion state stay separate. The payment proves the merchant's right to the
+service; the campaign has its own status, end time and results. `listing_promotions` already keeps
+`payment_status` and `status` apart; keep it that way.
+
+**Goal 1: remove Whop names from the database, if safe.**
+- Migration 0080 is not deployed. Redefine it in place:
+  - `'WHOP_LIVE'` becomes `'PROVIDER_LIVE'` and `'WHOP_DIRECT'` becomes `'PROVIDER_DIRECT'`;
+  - add a nullable `payment_provider_key` column, required exactly when the source is `PROVIDER_DIRECT`;
+  - `advertisingBillingActivation` becomes `"DISABLED" | "PROVIDER_DIRECT"`.
+- Update the sha256 wherever 0080 is registered.
+- Rehearse it on migrations 0000–0079: apply, roll back, constraints restored.
+- If redefining it is not safe, stop and ask.
+
+**Goal 2: prove the ads flow runs through the generic interface.**
+- Create a `PromotionBillingProvider` interface and registry, mirroring the existing `SubscriptionBillingProvider`. Whop is one registered provider.
+- A second **fake provider**, registered only in a test, completes a full promotion cycle with no change to ads code: checkout, signed event, activation, expiry, refund.
+- `jassim-ads-phase2` stays green.
+
+Nothing else from earlier versions of this section is required.
 
 ## 5. Rules that must never be weakened (from CLAUDE.md and owner decisions)
 
