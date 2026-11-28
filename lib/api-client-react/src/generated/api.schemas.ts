@@ -7049,3 +7049,19 @@ limit?: number;
 cursor?: string;
 };
 
+export type GetPromotionCampaignPlacementsParams = {
+listingId?: string;
+businessId?: string;
+};
+
+export type GetAdPlacementCardsParams = {
+slot: string;
+categoryId?: string;
+conversationId?: string;
+};
+
+export type GetWelcomeSponsoredCardsParams = {
+key: string;
+conversationId?: string;
+};
+

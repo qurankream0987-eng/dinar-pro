@@ -4075,6 +4075,259 @@ paths:
   /admin/connect/partners/{id}/diagnostics: {"get": {"operationId": "getAdminConnectDiagnostics", "tags": ["connect"], "description": "Access: ADMIN. Read-only bounded immutable observations. No live provider probe, credentials, hashes, raw audit details or customer content. Staff report/catalog access does not grant diagnostics.", "parameters": [{"in": "path", "name": "id", "required": true, "schema": {"type": "string", "format": "uuid"}}, {"in": "query", "name": "integrationCursor", "schema": {"type": "string", "format": "uuid"}}, {"in": "query", "name": "auditCursor", "schema": {"type": "string", "format": "uuid"}}, {"in": "query", "name": "limit", "schema": {"type": "integer", "minimum": 1, "maximum": 50, "default": 25}}], "responses": {"200": {"description": "Sanitized server observations; not live health", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ConnectDiagnostics"}}}}, "400": {"description": "Invalid bounded query"}, "401": {"description": "Authentication required"}, "403": {"description": "Administrative role required"}, "404": {"description": "Absent or foreign partner/cursor or role not granted"}}}}
   /connect/partners/{id}/report: {"get": {"operationId": "getConnectPartnerReport", "tags": ["connect"], "description": "Access: AUTHENTICATED. Bounded owned external-commerce report. Currency balances remain separate integer strings. Prepared consented referrals are not purchases. No provider secret or buyer account/conversation identity is returned. Historical simulation settlements remain visible after reversals; actual received funds remain unverified outside simulation.", "parameters": [{"in": "path", "name": "id", "required": true, "schema": {"type": "string", "format": "uuid"}}, {"in": "query", "name": "limit", "schema": {"type": "integer", "minimum": 1, "maximum": 50, "default": 25}}, {"in": "query", "name": "cursor", "schema": {"type": "string", "format": "uuid"}}], "responses": {"200": {"description": "Consistent ledger snapshot", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ConnectPartnerReport"}}}}, "401": {"description": "Sign-in required"}, "403": {"description": "Admin access required"}, "404": {"description": "Absent or foreign partner/cursor"}}}}
   /admin/connect/partners/{id}/report: {"get": {"operationId": "getAdminConnectPartnerReport", "tags": ["connect"], "description": "Access: ADMIN. Bounded owned external-commerce report. Currency balances remain separate integer strings. Prepared consented referrals are not purchases. No provider secret or buyer account/conversation identity is returned. Historical simulation settlements remain visible after reversals; actual received funds remain unverified outside simulation.", "parameters": [{"in": "path", "name": "id", "required": true, "schema": {"type": "string", "format": "uuid"}}, {"in": "query", "name": "limit", "schema": {"type": "integer", "minimum": 1, "maximum": 50, "default": 25}}, {"in": "query", "name": "cursor", "schema": {"type": "string", "format": "uuid"}}], "responses": {"200": {"description": "Consistent ledger snapshot", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ConnectPartnerReport"}}}}, "401": {"description": "Sign-in required"}, "403": {"description": "Admin access required"}, "404": {"description": "Absent or foreign partner/cursor"}}}}
+  /commercial/promotion-payments/availability:
+    get:
+      operationId: getPromotionPaymentAvailability
+      tags: [jassim-ads]
+      summary: "Jassim Ads: whether this market can take a real promotion payment now and through which provider (no money moves)"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommercialJsonObject" }
+  /commercial/promotion-payments/checkouts:
+    post:
+      operationId: createPromotionPaymentCheckout
+      tags: [jassim-ads]
+      summary: "Jassim Ads: open (or repeat) the provider page for one fixed-price promotion; it starts only after a provider-signed payment"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CommercialJsonObject" }
+      responses:
+        "201":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommercialJsonObject" }
+  /commercial/promotion-campaigns/placements:
+    get:
+      operationId: getPromotionCampaignPlacements
+      tags: [jassim-ads]
+      summary: "Jassim Ads: the placements this seller can buy now for one listing or store (own only; 404 for strangers), each with its server price and days"
+      parameters:
+        - { name: listingId, in: query, required: false, schema: { type: string } }
+        - { name: businessId, in: query, required: false, schema: { type: string } }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommercialJsonObject" }
+  /commercial/promotion-campaigns/quote:
+    post:
+      operationId: quotePromotionCampaign
+      tags: [jassim-ads]
+      summary: "Jassim Ads: server price of a selection of placements and days (read-only); returns a quoteKey the confirmation must match"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CommercialJsonObject" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommercialJsonObject" }
+  /commercial/promotion-campaigns/checkouts:
+    post:
+      operationId: createPromotionCampaignCheckout
+      tags: [jassim-ads]
+      summary: "Jassim Ads: one provider page for the whole campaign; refused with PRICE_CHANGED when the server total differs from the reviewed quote; placements start only after a signed payment"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CommercialJsonObject" }
+      responses:
+        "201":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommercialJsonObject" }
+  /commercial/promotion-campaigns:
+    get:
+      operationId: listPromotionCampaigns
+      tags: [jassim-ads]
+      summary: "Jassim Ads: the seller's campaigns with per-placement and campaign results from recorded events only"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommercialJsonObject" }
+  /commercial/promotion-campaigns/{id}:
+    get:
+      operationId: getPromotionCampaign
+      tags: [jassim-ads]
+      summary: "Jassim Ads: one campaign of the seller with per-placement status and results (404 for strangers)"
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommercialJsonObject" }
+  /ads/placements:
+    get:
+      operationId: getAdPlacementCards
+      tags: [jassim-ads]
+      summary: "Jassim Ads: hero/sidebar paid cards, labelled; with conversationId (the viewer's own) only ads related to its context"
+      security: []
+      parameters:
+        - { name: slot, in: query, required: true, schema: { type: string } }
+        - { name: categoryId, in: query, required: false, schema: { type: string } }
+        - { name: conversationId, in: query, required: false, schema: { type: string } }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommercialJsonObject" }
+  /ads/placements/engagement:
+    post:
+      operationId: recordAdPlacementEngagement
+      tags: [jassim-ads]
+      summary: "Jassim Ads: a click on a hero/sidebar card, recorded server-side by a keyed viewer (never an identity)"
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CommercialJsonObject" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommercialJsonObject" }
+  /ai/welcome-sponsored:
+    get:
+      operationId: getWelcomeSponsoredCards
+      tags: [jassim-ads]
+      summary: "Jassim Ads: up to the policy's number of labelled sponsored cards on an empty conversation, stable per screen"
+      parameters:
+        - { name: key, in: query, required: true, schema: { type: string } }
+        - { name: conversationId, in: query, required: false, schema: { type: string } }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommercialJsonObject" }
+  /ai/welcome-sponsored/dismiss:
+    post:
+      operationId: dismissWelcomeSponsoredCards
+      tags: [jassim-ads]
+      summary: "Jassim Ads: hide the welcome sponsored cards for this conversation"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CommercialJsonObject" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommercialJsonObject" }
+  /demand-requests/disclosure:
+    get:
+      operationId: getDemandRequestDisclosure
+      tags: [jassim-ads]
+      summary: "«جاسم روح بيع لي»: the disclosure shown before a buyer saves a request"
+      security: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommercialJsonObject" }
+  /demand-requests:
+    post:
+      operationId: createDemandRequest
+      tags: [jassim-ads]
+      summary: "«جاسم روح بيع لي»: a buyer saves a request with explicit consent"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CommercialJsonObject" }
+      responses:
+        "201":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommercialJsonObject" }
+    get:
+      operationId: listDemandRequests
+      tags: [jassim-ads]
+      summary: "«جاسم روح بيع لي»: the buyer's own saved requests"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommercialJsonObject" }
+  /demand-requests/matches:
+    get:
+      operationId: listDemandRequestMatches
+      tags: [jassim-ads]
+      summary: "«جاسم روح بيع لي»: matches sent to the buyer (labelled paid options)"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommercialJsonObject" }
+  /demand-requests/{requestId}:
+    delete:
+      operationId: deleteDemandRequest
+      tags: [jassim-ads]
+      summary: "«جاسم روح بيع لي»: the buyer deletes a saved request"
+      parameters:
+        - { name: requestId, in: path, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommercialJsonObject" }
+  /demand-requests/{requestId}/opt-out:
+    post:
+      operationId: optOutDemandRequest
+      tags: [jassim-ads]
+      summary: "«جاسم روح بيع لي»: the buyer stops alerts for a request"
+      parameters:
+        - { name: requestId, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CommercialJsonObject" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommercialJsonObject" }
+  /promotions/{promotionId}/demand-reach:
+    get:
+      operationId: getPromotionDemandReach
+      tags: [jassim-ads]
+      summary: "«جاسم روح بيع لي»: aggregate reach of the seller's own demand campaign (counts only, never who)"
+      parameters:
+        - { name: promotionId, in: path, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommercialJsonObject" }
 components:
   schemas:
     BusinessDelegationConfirmation:

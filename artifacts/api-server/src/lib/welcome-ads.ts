@@ -17,7 +17,7 @@
  */
 import { randomUUID } from "node:crypto";
 import { and, count, desc, eq, gt, inArray, isNull, lte } from "drizzle-orm";
-import { conversations, db, listingPromotions, messages, offers, users, welcomeAdExposures } from "@workspace/db";
+import { aiResultSets, conversations, db, listingPromotions, messages, offers, users, welcomeAdExposures } from "@workspace/db";
 import { getCommercialPolicy } from "./commercial-policy";
 import { isSponsoredServingEnabled } from "./promotion-policy";
 import { formatMinor, isServingCampaign, listingPromotionEligibility, rankSponsored, representativeCampaign, sponsoredScore, SPONSORED_LABEL, SERVING_PAYMENT_STATUSES } from "./promotions";
@@ -27,6 +27,35 @@ import type { marketFor } from "./markets";
 type Market = Awaited<ReturnType<typeof marketFor>>;
 
 export const WELCOME_PLACEMENT = "WELCOME" as const;
+
+/** The listing's first photo (the cover), or null. Display placements show the product image. */
+export function listingImage(data: { imageUrl?: unknown; imageUrls?: unknown }): string | null {
+  if (typeof data.imageUrl === "string" && data.imageUrl.trim()) return data.imageUrl;
+  const first = Array.isArray(data.imageUrls) ? data.imageUrls.find((item) => typeof item === "string" && item.trim()) : undefined;
+  return typeof first === "string" ? first : null;
+}
+
+/**
+ * The context of the viewer's OWN current conversation (owner-checked): the category of the latest
+ * search or result in it. Read for this one request only; never stored, never shared with sellers.
+ */
+export async function conversationAdContext(viewerId: string | undefined, conversationId: string | undefined): Promise<string | undefined> {
+  if (!viewerId || !conversationId) return undefined;
+  const [conversation] = await db.select({ owner: conversations.ownerUserId }).from(conversations).where(eq(conversations.id, conversationId));
+  if (!conversation || conversation.owner !== viewerId) return undefined;
+  const sets = await db.select({ query: aiResultSets.query, resourceIds: aiResultSets.resourceIds }).from(aiResultSets).where(eq(aiResultSets.conversationId, conversationId)).orderBy(desc(aiResultSets.createdAt)).limit(5);
+  for (const set of sets) {
+    const query = (set.query ?? {}) as { kind?: unknown; categoryId?: unknown };
+    if (query.kind === "COMMERCE") continue;
+    if (typeof query.categoryId === "string" && query.categoryId) return query.categoryId;
+    const ids = (set.resourceIds ?? []).filter((id): id is string => typeof id === "string").slice(0, 5);
+    if (!ids.length) continue;
+    const rows = await db.select({ data: offers.data }).from(offers).where(inArray(offers.id, ids));
+    const category = rows.map((row) => (row.data as { categoryId?: unknown }).categoryId).find((value): value is string => typeof value === "string" && !!value);
+    if (category) return category;
+  }
+  return undefined;
+}
 export const WELCOME_SOURCE_PLACEMENT = "SPONSORED_RECOMMENDATION" as const;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -46,7 +75,7 @@ export type WelcomeCard = {
   label: typeof SPONSORED_LABEL;
   path: string;
 };
-export type WelcomeAds = { cards: WelcomeCard[]; reason?: "NOT_EMPTY" | "NOT_OWNER" | "DISMISSED" | "DAILY_CAP" | "NO_ELIGIBLE" | "DISABLED" };
+export type WelcomeAds = { cards: WelcomeCard[]; context?: "CONVERSATION" | "MARKET"; reason?: "NOT_EMPTY" | "NOT_OWNER" | "DISMISSED" | "DAILY_CAP" | "NO_ELIGIBLE" | "DISABLED" };
 
 async function cardsFor(market: Market, rows: { slot: number; listingId: string; promotionId: string }[]): Promise<WelcomeCard[]> {
   if (!rows.length) return [];
@@ -60,7 +89,7 @@ async function cardsFor(market: Market, rows: { slot: number; listingId: string;
     const found = byId.get(row.listingId);
     // A listing that stopped being published since it was chosen is simply not shown.
     if (!found || found.offer.status !== "PUBLISHED") return [];
-    const data = found.offer.data as { title?: string; imageUrl?: string; city?: string };
+    const data = found.offer.data as { title?: string; imageUrl?: string; imageUrls?: unknown; city?: string };
     return [{
       slot: row.slot,
       listingId: row.listingId,
@@ -69,7 +98,7 @@ async function cardsFor(market: Market, rows: { slot: number; listingId: string;
       price: found.offer.unitPriceMinor == null ? null : formatMinor(found.offer.unitPriceMinor, market.minorUnitScale),
       currency: market.currencyCode,
       city: data.city ? String(data.city).slice(0, 60) : null,
-      imagePath: data.imageUrl ? String(data.imageUrl) : null,
+      imagePath: listingImage(data),
       sellerName: found.sellerName.slice(0, 60),
       label: SPONSORED_LABEL,
       path: `/listings/${row.listingId}`,
@@ -195,8 +224,11 @@ export type DisplayPlacement = keyof typeof DISPLAY_PLACEMENTS;
  * viewer is searching or asking about) only ads of that category are shown — none rather than an
  * unrelated one — and stores (which have no single category) are left out.
  */
-export async function displayPlacementCards(input: { placement: DisplayPlacement; market: Market; viewerId?: string; categoryId?: string; now?: Date }): Promise<WelcomeAds> {
+export async function displayPlacementCards(input: { placement: DisplayPlacement; market: Market; viewerId?: string; categoryId?: string; conversationId?: string; now?: Date }): Promise<WelcomeAds> {
   const now = input.now ?? new Date();
+  // The sidebar follows what the viewer is looking at in their own conversation (when there is one).
+  const contextCategory = input.categoryId ?? (input.placement === "SIDEBAR" ? await conversationAdContext(input.viewerId, input.conversationId) : undefined);
+  input = { ...input, categoryId: contextCategory };
   if (!jassimAdsEnabled() || !isSponsoredServingEnabled()) return { cards: [], reason: "DISABLED" };
   const spec = DISPLAY_PLACEMENTS[input.placement];
   const campaigns = (await db
@@ -223,6 +255,8 @@ export async function displayPlacementCards(input: { placement: DisplayPlacement
       const eligible = await listingPromotionEligibility(row.offer, row.sellerStatus, input.market);
       if (!eligible.ok) continue;
       if (input.categoryId && eligible.categoryId !== input.categoryId) continue;
+      // Hero and sidebar show the product image: a listing without a photo is not shown there.
+      if (!listingImage(row.offer.data as { imageUrl?: unknown; imageUrls?: unknown })) continue;
       const campaign = representativeCampaign(campaigns, row.offer.id);
       if (!campaign) continue;
       scored.push({
@@ -251,7 +285,7 @@ export async function displayPlacementCards(input: { placement: DisplayPlacement
       promotionId: row.id,
       score: sponsoredScore({ organicIndex: 0, priorityWeight: row.priorityWeightSnapshot, unitChargeMinor: null, minorUnitScale: input.market.minorUnitScale, hasImage: false, descriptionLength: profile.description.length }),
     });
-  if (!scored.length) return { cards: [], reason: "NO_ELIGIBLE" };
+  if (!scored.length) return { cards: [], context: contextCategory ? "CONVERSATION" : "MARKET", reason: "NO_ELIGIBLE" };
   const chosen = rankSponsored(scored, spec.max);
   if (!chosen.length) return { cards: [], reason: "NO_ELIGIBLE" };
   const listingCards = await cardsFor(input.market, chosen.flatMap((item, index) => (item.kind === "LISTING" ? [{ slot: index + 1, listingId: item.listingId, promotionId: item.promotionId }] : [])));
@@ -275,7 +309,7 @@ export async function displayPlacementCards(input: { placement: DisplayPlacement
         price: null,
         currency: input.market.currencyCode,
         city: null,
-        imagePath: null,
+        imagePath: store.imagePath,
         sellerName: store.profile.displayName.slice(0, 60),
         label: SPONSORED_LABEL,
         path: `/business/${encodeURIComponent(store.profile.id)}`,
@@ -283,7 +317,8 @@ export async function displayPlacementCards(input: { placement: DisplayPlacement
       await recordStoreEvent(store.row.id, input.placement, input.viewerId, "IMPRESSION", now).catch(() => undefined);
     }
   }
-  return cards.length ? { cards: cards.map((card, index) => ({ ...card, slot: index + 1 })) } : { cards: [], reason: "NO_ELIGIBLE" };
+  const context = contextCategory ? "CONVERSATION" as const : "MARKET" as const;
+  return cards.length ? { cards: cards.map((card, index) => ({ ...card, slot: index + 1 })), context } : { cards: [], context, reason: "NO_ELIGIBLE" };
 }
 
 /** A click on a display card: an opened ad, recorded once per viewer and window. */

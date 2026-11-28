@@ -31,8 +31,9 @@ router.get("/ai/welcome-sponsored", requireAuth, async (req, res) => {
 // Jassim Ads Phase 1: hero carousel and sidebar card. Signed-out visitors allowed (owner decision);
 // selection is non-personal and returns nothing unless DINAR_JASSIM_ADS is on.
 router.get("/ads/placements", async (req, res) => {
-  const query = z.object({ slot: z.enum(["HERO", "SIDEBAR"]), categoryId: z.string().min(1).max(80).optional() }).strict().parse(req.query);
-  const result = await displayPlacementCards({ placement: query.slot, market: await marketFor(req), viewerId: req.actor?.id, categoryId: query.categoryId });
+  const query = z.object({ slot: z.enum(["HERO", "SIDEBAR"]), categoryId: z.string().min(1).max(80).optional(), conversationId: z.string().uuid().optional() }).strict().parse(req.query);
+  // conversationId: the viewer's own open conversation; its context is read server-side, owner-checked.
+  const result = await displayPlacementCards({ placement: query.slot, market: await marketFor(req), viewerId: req.actor?.id, categoryId: query.categoryId, conversationId: query.conversationId });
   res.set("Cache-Control", "no-store").json(result);
 });
 

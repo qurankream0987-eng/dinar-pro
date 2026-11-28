@@ -1106,7 +1106,7 @@ async function campaignPlan(actorId: string, market: Market, subject: CampaignSu
   return {
     available: catalog.options.some((option) => option.available),
     ...(catalog.options.some((option) => option.available) ? {} : { reason: catalog.options.length ? "كل المواضع غير متاحة حاليًا لهذا الإعلان" : "لا توجد مواضع إعلانية مفعّلة في سوقك حاليًا" }),
-    subject: { kind: catalog.subject.kind, id: catalog.subject.id, title: catalog.subject.title },
+    subject: { kind: catalog.subject.kind, id: catalog.subject.id, title: catalog.subject.title, imagePath: catalog.subject.imagePath },
     providerName: availability.displayName,
     options: catalog.options.map((option) => ({ ...option })),
     suggestions: suggestPlacementSets(catalog.options, goal),

@@ -14,7 +14,7 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { readFile, unlink } from "node:fs/promises";
 import { eq } from "drizzle-orm";
-import { businessProfiles, db, markets, pool, promotionCampaigns, users } from "@workspace/db";
+import { businessProfiles, db, markets, offers, pool, promotionCampaigns, users } from "@workspace/db";
 import app from "../src/app";
 import { startDinarBrowserTestWeb } from "./browser-test-web-server";
 import { appendCommercialPolicy } from "../src/lib/commercial-policy-append";
@@ -73,8 +73,13 @@ async function publish(seller: { cookie: string }, title: string) {
     attributes: { condition: "جديد" }, unitPrice: "40.000", inventoryMode: "LIMITED", availableQuantity: 100, fulfilmentType: "PICKUP", imageUrl: "", imageUrls: [], paymentMethods: ["CASH_DIRECT"],
   }, seller.cookie);
   assert.equal(r.status, 201, r.raw);
-  return r.data.id as string;
+  const id = r.data.id as string;
+  // Hero and sidebar show the product photo: the journey's listings have one.
+  const [row] = await db.select({ data: offers.data }).from(offers).where(eq(offers.id, id));
+  await db.update(offers).set({ data: { ...(row!.data as Record<string, unknown>), imageUrl: PHOTO, imageUrls: [PHOTO] } }).where(eq(offers.id, id));
+  return id;
 }
+const PHOTO = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCI+PHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiBmaWxsPSIjNDQ0Ii8+PGNpcmNsZSBjeD0iNDAiIGN5PSI0MCIgcj0iMjQiIGZpbGw9IiNmYTAiLz48L3N2Zz4=";
 
 async function browser(phase: string, fixture: unknown, web: { baseUrl: string }) {
   const reportPath = `/tmp/dinar-ads-plan-${phase}-${randomUUID()}.json`;
@@ -118,6 +123,7 @@ test("ADS-PLAN browser: Go Sell for Me plan, placement builder (multi-select, da
   const titleBelow = `مكواة فيليبس ${run}`;
   const listingAbove = await publish(sellerAbove, titleAbove);
   await publish(sellerBelow, titleBelow);
+  await publish(storeOwner, `منتج متجر ${run}`);
   const storeId = randomUUID();
   const storeName = `متجر الأمل ${run}`;
   await db.insert(businessProfiles).values({ id: storeId, ownerUserId: storeOwner.id, marketId: "JO", displayName: storeName, normalizedName: `store-${storeId}`, categoryKey: "OTHER", legalName: "Synthetic Store", legalForm: "COMPANY", verificationStatus: "VERIFIED", verifiedAt: new Date(), verifiedBy: admin.id, publicationStatus: "PUBLISHED", idempotencyKey: randomUUID() });
@@ -140,8 +146,8 @@ test("ADS-PLAN browser: Go Sell for Me plan, placement builder (multi-select, da
     const [aboveCampaign] = await db.select().from(promotionCampaigns).where(eq(promotionCampaigns.id, plan.campaignId));
     assert.equal(aboveCampaign?.listingId, listingAbove);
     assert.equal(aboveCampaign?.adCopy, plan.editedCopy, "the edited ad text is what was saved");
-    const results = await browser("RESULTS", { sellerAbove, viewer, titleAbove, storeName }, web);
-    assert.ok(results.checks.length >= 12, JSON.stringify(results.checks));
+    const results = await browser("RESULTS", { sellerAbove, storeOwner, viewer, titleAbove, storeName, run }, web);
+    assert.ok(results.checks.length >= 22, JSON.stringify(results.checks));
   } finally {
     await web.stop();
   }

@@ -11038,3 +11038,157 @@ export const GetAdminConnectPartnerReportResponse = zod.object({
 })
 
 
+/**
+ * @summary Jassim Ads: whether this market can take a real promotion payment now and through which provider (no money moves)
+ */
+export const GetPromotionPaymentAvailabilityResponse = zod.record(zod.string(), zod.unknown()).describe('Commercial economy request/response object; bodies are validated strictly on the server and never accept owners, prices, balances or paid flags.')
+
+
+/**
+ * @summary Jassim Ads: open (or repeat) the provider page for one fixed-price promotion; it starts only after a provider-signed payment
+ */
+export const CreatePromotionPaymentCheckoutBody = zod.record(zod.string(), zod.unknown()).describe('Commercial economy request/response object; bodies are validated strictly on the server and never accept owners, prices, balances or paid flags.')
+
+export const CreatePromotionPaymentCheckoutResponse = zod.record(zod.string(), zod.unknown()).describe('Commercial economy request/response object; bodies are validated strictly on the server and never accept owners, prices, balances or paid flags.')
+
+
+/**
+ * @summary Jassim Ads: the placements this seller can buy now for one listing or store (own only; 404 for strangers), each with its server price and days
+ */
+export const GetPromotionCampaignPlacementsQueryParams = zod.object({
+  "listingId": zod.coerce.string().optional(),
+  "businessId": zod.coerce.string().optional()
+})
+
+export const GetPromotionCampaignPlacementsResponse = zod.record(zod.string(), zod.unknown()).describe('Commercial economy request/response object; bodies are validated strictly on the server and never accept owners, prices, balances or paid flags.')
+
+
+/**
+ * @summary Jassim Ads: server price of a selection of placements and days (read-only); returns a quoteKey the confirmation must match
+ */
+export const QuotePromotionCampaignBody = zod.record(zod.string(), zod.unknown()).describe('Commercial economy request/response object; bodies are validated strictly on the server and never accept owners, prices, balances or paid flags.')
+
+export const QuotePromotionCampaignResponse = zod.record(zod.string(), zod.unknown()).describe('Commercial economy request/response object; bodies are validated strictly on the server and never accept owners, prices, balances or paid flags.')
+
+
+/**
+ * @summary Jassim Ads: one provider page for the whole campaign; refused with PRICE_CHANGED when the server total differs from the reviewed quote; placements start only after a signed payment
+ */
+export const CreatePromotionCampaignCheckoutBody = zod.record(zod.string(), zod.unknown()).describe('Commercial economy request/response object; bodies are validated strictly on the server and never accept owners, prices, balances or paid flags.')
+
+export const CreatePromotionCampaignCheckoutResponse = zod.record(zod.string(), zod.unknown()).describe('Commercial economy request/response object; bodies are validated strictly on the server and never accept owners, prices, balances or paid flags.')
+
+
+/**
+ * @summary Jassim Ads: the seller's campaigns with per-placement and campaign results from recorded events only
+ */
+export const ListPromotionCampaignsResponse = zod.record(zod.string(), zod.unknown()).describe('Commercial economy request/response object; bodies are validated strictly on the server and never accept owners, prices, balances or paid flags.')
+
+
+/**
+ * @summary Jassim Ads: one campaign of the seller with per-placement status and results (404 for strangers)
+ */
+export const GetPromotionCampaignParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const GetPromotionCampaignResponse = zod.record(zod.string(), zod.unknown()).describe('Commercial economy request/response object; bodies are validated strictly on the server and never accept owners, prices, balances or paid flags.')
+
+
+/**
+ * @summary Jassim Ads: hero/sidebar paid cards, labelled; with conversationId (the viewer's own) only ads related to its context
+ */
+export const GetAdPlacementCardsQueryParams = zod.object({
+  "slot": zod.coerce.string(),
+  "categoryId": zod.coerce.string().optional(),
+  "conversationId": zod.coerce.string().optional()
+})
+
+export const GetAdPlacementCardsResponse = zod.record(zod.string(), zod.unknown()).describe('Commercial economy request/response object; bodies are validated strictly on the server and never accept owners, prices, balances or paid flags.')
+
+
+/**
+ * @summary Jassim Ads: a click on a hero/sidebar card, recorded server-side by a keyed viewer (never an identity)
+ */
+export const RecordAdPlacementEngagementBody = zod.record(zod.string(), zod.unknown()).describe('Commercial economy request/response object; bodies are validated strictly on the server and never accept owners, prices, balances or paid flags.')
+
+export const RecordAdPlacementEngagementResponse = zod.record(zod.string(), zod.unknown()).describe('Commercial economy request/response object; bodies are validated strictly on the server and never accept owners, prices, balances or paid flags.')
+
+
+/**
+ * @summary Jassim Ads: up to the policy's number of labelled sponsored cards on an empty conversation, stable per screen
+ */
+export const GetWelcomeSponsoredCardsQueryParams = zod.object({
+  "key": zod.coerce.string(),
+  "conversationId": zod.coerce.string().optional()
+})
+
+export const GetWelcomeSponsoredCardsResponse = zod.record(zod.string(), zod.unknown()).describe('Commercial economy request/response object; bodies are validated strictly on the server and never accept owners, prices, balances or paid flags.')
+
+
+/**
+ * @summary Jassim Ads: hide the welcome sponsored cards for this conversation
+ */
+export const DismissWelcomeSponsoredCardsBody = zod.record(zod.string(), zod.unknown()).describe('Commercial economy request/response object; bodies are validated strictly on the server and never accept owners, prices, balances or paid flags.')
+
+export const DismissWelcomeSponsoredCardsResponse = zod.record(zod.string(), zod.unknown()).describe('Commercial economy request/response object; bodies are validated strictly on the server and never accept owners, prices, balances or paid flags.')
+
+
+/**
+ * @summary «جاسم روح بيع لي»: the disclosure shown before a buyer saves a request
+ */
+export const GetDemandRequestDisclosureResponse = zod.record(zod.string(), zod.unknown()).describe('Commercial economy request/response object; bodies are validated strictly on the server and never accept owners, prices, balances or paid flags.')
+
+
+/**
+ * @summary «جاسم روح بيع لي»: a buyer saves a request with explicit consent
+ */
+export const CreateDemandRequestBody = zod.record(zod.string(), zod.unknown()).describe('Commercial economy request/response object; bodies are validated strictly on the server and never accept owners, prices, balances or paid flags.')
+
+export const CreateDemandRequestResponse = zod.record(zod.string(), zod.unknown()).describe('Commercial economy request/response object; bodies are validated strictly on the server and never accept owners, prices, balances or paid flags.')
+
+
+/**
+ * @summary «جاسم روح بيع لي»: the buyer's own saved requests
+ */
+export const ListDemandRequestsResponse = zod.record(zod.string(), zod.unknown()).describe('Commercial economy request/response object; bodies are validated strictly on the server and never accept owners, prices, balances or paid flags.')
+
+
+/**
+ * @summary «جاسم روح بيع لي»: matches sent to the buyer (labelled paid options)
+ */
+export const ListDemandRequestMatchesResponse = zod.record(zod.string(), zod.unknown()).describe('Commercial economy request/response object; bodies are validated strictly on the server and never accept owners, prices, balances or paid flags.')
+
+
+/**
+ * @summary «جاسم روح بيع لي»: the buyer deletes a saved request
+ */
+export const DeleteDemandRequestParams = zod.object({
+  "requestId": zod.coerce.string()
+})
+
+export const DeleteDemandRequestResponse = zod.record(zod.string(), zod.unknown()).describe('Commercial economy request/response object; bodies are validated strictly on the server and never accept owners, prices, balances or paid flags.')
+
+
+/**
+ * @summary «جاسم روح بيع لي»: the buyer stops alerts for a request
+ */
+export const OptOutDemandRequestParams = zod.object({
+  "requestId": zod.coerce.string()
+})
+
+export const OptOutDemandRequestBody = zod.record(zod.string(), zod.unknown()).describe('Commercial economy request/response object; bodies are validated strictly on the server and never accept owners, prices, balances or paid flags.')
+
+export const OptOutDemandRequestResponse = zod.record(zod.string(), zod.unknown()).describe('Commercial economy request/response object; bodies are validated strictly on the server and never accept owners, prices, balances or paid flags.')
+
+
+/**
+ * @summary «جاسم روح بيع لي»: aggregate reach of the seller's own demand campaign (counts only, never who)
+ */
+export const GetPromotionDemandReachParams = zod.object({
+  "promotionId": zod.coerce.string()
+})
+
+export const GetPromotionDemandReachResponse = zod.record(zod.string(), zod.unknown()).describe('Commercial economy request/response object; bodies are validated strictly on the server and never accept owners, prices, balances or paid flags.')
+
+

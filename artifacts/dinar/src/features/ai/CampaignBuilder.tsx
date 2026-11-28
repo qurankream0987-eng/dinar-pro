@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "@/account/Account";
 import { friendlyError } from "@/lib/errors";
 import { Button } from "@/ui/Button";
+import { SmartImage } from "@/ui/Media";
 import type { CampaignPlan, PlacementCampaignResult } from "./commercial-types";
 
 type Quote = {
@@ -91,6 +92,16 @@ export function CampaignBuilder({ plan, copy, active }: { plan: CampaignPlan; co
 
   return (
     <div className="space-y-3" data-testid="campaign-builder">
+      <div className="flex items-center gap-3 rounded-lg border border-border p-2" data-testid="campaign-subject">
+        <span className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-muted" data-testid="campaign-subject-image" data-has-image={plan.subject?.imagePath ? "true" : "false"}>
+          {plan.subject?.imagePath ? <SmartImage src={plan.subject.imagePath} alt={plan.subject.title} /> : <span className="grid h-full place-items-center p-1 text-center text-[10px] text-muted-foreground">لا صورة</span>}
+        </span>
+        <span className="min-w-0">
+          <span className="block truncate font-medium">{plan.subject?.title}</span>
+          <span className="block text-xs text-muted-foreground">{plan.subject?.kind === "STORE" ? "ترويج المتجر" : "ترويج المنتج"}</span>
+          {!plan.subject?.imagePath && <span className="block text-xs text-destructive">أضف صورة: الشريط الرئيسي والجانبي يعرضان صورة المنتج.</span>}
+        </span>
+      </div>
       <h4 className="font-semibold">أين تريد ظهور إعلانك؟</h4>
       {plan.suggestions.length > 0 && (
         <div className="space-y-2" data-testid="campaign-suggestions">
@@ -179,8 +190,11 @@ export function PlacementCampaignResults({ campaigns }: { campaigns: PlacementCa
     <div className="space-y-3" data-testid="placement-campaigns">
       {campaigns.map((campaign) => (
         <div key={campaign.campaignId} className="space-y-3 rounded-lg border border-border p-3" data-testid="placement-campaign" data-status={campaign.status}>
-          <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <h4 className="font-semibold">{campaign.subjectTitle}</h4>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className="flex min-w-0 items-center gap-2">
+              <span className="h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-muted" data-testid="placement-campaign-image">{campaign.subjectImage ? <SmartImage src={campaign.subjectImage} alt={campaign.subjectTitle} /> : null}</span>
+              <h4 className="min-w-0 truncate font-semibold">{campaign.subjectTitle}</h4>
+            </span>
             <span className="text-xs">{campaign.statusLabel} · <bdi className="tabular-nums">{campaign.totalLabel}</bdi></span>
           </div>
           <p className="text-xs text-muted-foreground" data-testid="placement-campaign-payment">{campaign.paymentNote}</p>
@@ -190,7 +204,7 @@ export function PlacementCampaignResults({ campaigns }: { campaigns: PlacementCa
                 <p className="flex flex-wrap justify-between gap-2 font-medium"><span>{item.where}</span><span>{item.statusLabel}</span></p>
                 <p className="text-muted-foreground">{item.note}</p>
                 <p className="flex flex-wrap gap-x-3 gap-y-1 tabular-nums">
-                  <span>ظهور: {item.impressions}</span><span>نقرات: {item.clicks}</span><span>تفاعل: {item.engagements}</span><span>طلبات منسوبة: {item.orders}</span>
+                  <span>ظهور: {item.impressions}</span><span>نقرات: {item.clicks}</span><span>تفاعل: {item.engagements}</span><span data-testid="placement-orders" data-available={item.orders === null ? "false" : "true"} title={item.ordersNote}>طلبات منسوبة: {item.orders === null ? "غير متاح" : item.orders}</span>
                   {item.remainingDays !== null && <span>متبقٍ: {item.remainingDays} يومًا</span>}
                   {item.expiresAt && <span>ينتهي: {new Date(item.expiresAt).toLocaleDateString("ar")}</span>}
                 </p>
@@ -198,8 +212,9 @@ export function PlacementCampaignResults({ campaigns }: { campaigns: PlacementCa
             ))}
           </ul>
           <p className="flex flex-wrap gap-x-3 text-xs font-medium tabular-nums" data-testid="placement-campaign-totals">
-            <span>الإجمالي — ظهور: {campaign.totals.impressions}</span><span>نقرات: {campaign.totals.clicks}</span><span>تفاعل: {campaign.totals.engagements}</span><span>طلبات: {campaign.totals.orders}</span>
+            <span>الإجمالي — ظهور: {campaign.totals.impressions}</span><span>نقرات: {campaign.totals.clicks}</span><span>تفاعل: {campaign.totals.engagements}</span><span data-testid="placement-campaign-orders">طلبات: {campaign.placements.every((item) => item.orders === null) ? "غير متاح" : `${campaign.totals.orders}${campaign.totals.ordersPartial ? " (من المواضع القابلة للإسناد فقط)" : ""}`}</span>
           </p>
+          {campaign.placements.some((item) => item.orders === null) && <p className="text-xs text-muted-foreground" data-testid="placement-orders-note">الطلبات المنسوبة لإعلانات المتجر غير متاحة حتى يُبنى ربط موثوق؛ لا يُنسب بيع دون دليل.</p>}
           {campaign.previous && <p className="text-xs text-muted-foreground">الحملة السابقة: ظهور {campaign.previous.impressions}، نقرات {campaign.previous.clicks}، طلبات {campaign.previous.orders}.</p>}
           {campaign.advice.length > 0 && <ul className="list-inside list-disc text-xs">{campaign.advice.map((line, index) => <li key={index}>{line}</li>)}</ul>}
         </div>

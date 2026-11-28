@@ -2382,7 +2382,7 @@ export default function AiPage() {
                 </div>
               )}
             </div>
-            <SidebarSponsored />
+            <SidebarSponsored conversationId={activeId} refreshKey={`${messages.length}:${String((messages.at(-1) as { id?: unknown } | undefined)?.id ?? "")}`} />
             <div className="ai-sidebar-footer">
               {navItems.length > 0 && (
                 <nav className="ai-sidebar-management" aria-label="إدارة جاسم">

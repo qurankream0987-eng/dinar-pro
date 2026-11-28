@@ -128,14 +128,17 @@ import type {
   EmailVerificationRequest,
   EmptyInput,
   EmptyObject,
+  GetAdPlacementCardsParams,
   GetAdminConnectDiagnosticsParams,
   GetAdminConnectPartnerReportParams,
   GetConnectDiagnosticsParams,
   GetConnectPartnerReportParams,
   GetListingsParams,
   GetOrdersParams,
+  GetPromotionCampaignPlacementsParams,
   GetSmartStoreCardForMessageParams,
   GetSubscriptionPlanEconomicsParams,
+  GetWelcomeSponsoredCardsParams,
   GoogleCompleteInput,
   GoogleSignInInput,
   GoogleSignInResult,
@@ -26406,6 +26409,1728 @@ export function useGetAdminConnectPartnerReport<TData = Awaited<ReturnType<typeo
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetAdminConnectPartnerReportQueryOptions(id,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetPromotionPaymentAvailabilityUrl = () => {
+
+
+
+
+  return `/api/commercial/promotion-payments/availability`
+}
+
+/**
+ * @summary Jassim Ads: whether this market can take a real promotion payment now and through which provider (no money moves)
+ */
+export const getPromotionPaymentAvailability = async ( options?: Parameters<typeof customFetch>[1]): Promise<CommercialJsonObject> => {
+
+  return customFetch<CommercialJsonObject>(getGetPromotionPaymentAvailabilityUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetPromotionPaymentAvailabilityQueryKey = () => {
+    return [
+    `/api/commercial/promotion-payments/availability`
+    ] as const;
+    }
+
+
+export const getGetPromotionPaymentAvailabilityQueryOptions = <TData = Awaited<ReturnType<typeof getPromotionPaymentAvailability>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPromotionPaymentAvailability>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPromotionPaymentAvailabilityQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPromotionPaymentAvailability>>> = ({ signal }) => getPromotionPaymentAvailability({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPromotionPaymentAvailability>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPromotionPaymentAvailabilityQueryResult = NonNullable<Awaited<ReturnType<typeof getPromotionPaymentAvailability>>>
+export type GetPromotionPaymentAvailabilityQueryError = ErrorType<unknown>
+
+
+export function useGetPromotionPaymentAvailability<TData = Awaited<ReturnType<typeof getPromotionPaymentAvailability>>, TError = ErrorType<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPromotionPaymentAvailability>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPromotionPaymentAvailability>>,
+          TError,
+          Awaited<ReturnType<typeof getPromotionPaymentAvailability>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPromotionPaymentAvailability<TData = Awaited<ReturnType<typeof getPromotionPaymentAvailability>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPromotionPaymentAvailability>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPromotionPaymentAvailability>>,
+          TError,
+          Awaited<ReturnType<typeof getPromotionPaymentAvailability>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPromotionPaymentAvailability<TData = Awaited<ReturnType<typeof getPromotionPaymentAvailability>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPromotionPaymentAvailability>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Jassim Ads: whether this market can take a real promotion payment now and through which provider (no money moves)
+ */
+
+export function useGetPromotionPaymentAvailability<TData = Awaited<ReturnType<typeof getPromotionPaymentAvailability>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPromotionPaymentAvailability>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPromotionPaymentAvailabilityQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getCreatePromotionPaymentCheckoutUrl = () => {
+
+
+
+
+  return `/api/commercial/promotion-payments/checkouts`
+}
+
+/**
+ * @summary Jassim Ads: open (or repeat) the provider page for one fixed-price promotion; it starts only after a provider-signed payment
+ */
+export const createPromotionPaymentCheckout = async (commercialJsonObject: CommercialJsonObject, options?: Parameters<typeof customFetch>[1]): Promise<CommercialJsonObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<CommercialJsonObject>(getCreatePromotionPaymentCheckoutUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(commercialJsonObject)
+  }
+);}
+
+
+
+
+
+export const getCreatePromotionPaymentCheckoutMutationKey = () => ['createPromotionPaymentCheckout'] as const;
+
+export const getCreatePromotionPaymentCheckoutMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPromotionPaymentCheckout>>, TError,CreatePromotionPaymentCheckoutMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createPromotionPaymentCheckout>>, TError,CreatePromotionPaymentCheckoutMutationVariables, TContext> => {
+
+const mutationKey = getCreatePromotionPaymentCheckoutMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createPromotionPaymentCheckout>>, CreatePromotionPaymentCheckoutMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  createPromotionPaymentCheckout(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreatePromotionPaymentCheckoutMutationResult = NonNullable<Awaited<ReturnType<typeof createPromotionPaymentCheckout>>>
+    export type CreatePromotionPaymentCheckoutMutationBody = BodyType<CommercialJsonObject>
+    export type CreatePromotionPaymentCheckoutMutationError = ErrorType<unknown>
+    export type CreatePromotionPaymentCheckoutMutationVariables = {data: BodyType<CommercialJsonObject>}
+
+    /**
+ * @summary Jassim Ads: open (or repeat) the provider page for one fixed-price promotion; it starts only after a provider-signed payment
+ */
+export const useCreatePromotionPaymentCheckout = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPromotionPaymentCheckout>>, TError,CreatePromotionPaymentCheckoutMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createPromotionPaymentCheckout>>,
+        TError,
+        CreatePromotionPaymentCheckoutMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCreatePromotionPaymentCheckoutMutationOptions(options), queryClient);
+    }
+
+export const getGetPromotionCampaignPlacementsUrl = (params?: GetPromotionCampaignPlacementsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/commercial/promotion-campaigns/placements?${stringifiedParams}` : `/api/commercial/promotion-campaigns/placements`
+}
+
+/**
+ * @summary Jassim Ads: the placements this seller can buy now for one listing or store (own only; 404 for strangers), each with its server price and days
+ */
+export const getPromotionCampaignPlacements = async (params?: GetPromotionCampaignPlacementsParams, options?: Parameters<typeof customFetch>[1]): Promise<CommercialJsonObject> => {
+
+  return customFetch<CommercialJsonObject>(getGetPromotionCampaignPlacementsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetPromotionCampaignPlacementsQueryKey = (params?: GetPromotionCampaignPlacementsParams,) => {
+    return [
+    `/api/commercial/promotion-campaigns/placements`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetPromotionCampaignPlacementsQueryOptions = <TData = Awaited<ReturnType<typeof getPromotionCampaignPlacements>>, TError = ErrorType<unknown>>(params?: GetPromotionCampaignPlacementsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPromotionCampaignPlacements>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPromotionCampaignPlacementsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPromotionCampaignPlacements>>> = ({ signal }) => getPromotionCampaignPlacements(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPromotionCampaignPlacements>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPromotionCampaignPlacementsQueryResult = NonNullable<Awaited<ReturnType<typeof getPromotionCampaignPlacements>>>
+export type GetPromotionCampaignPlacementsQueryError = ErrorType<unknown>
+
+
+export function useGetPromotionCampaignPlacements<TData = Awaited<ReturnType<typeof getPromotionCampaignPlacements>>, TError = ErrorType<unknown>>(
+ params: undefined |  GetPromotionCampaignPlacementsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPromotionCampaignPlacements>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPromotionCampaignPlacements>>,
+          TError,
+          Awaited<ReturnType<typeof getPromotionCampaignPlacements>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPromotionCampaignPlacements<TData = Awaited<ReturnType<typeof getPromotionCampaignPlacements>>, TError = ErrorType<unknown>>(
+ params?: GetPromotionCampaignPlacementsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPromotionCampaignPlacements>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPromotionCampaignPlacements>>,
+          TError,
+          Awaited<ReturnType<typeof getPromotionCampaignPlacements>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPromotionCampaignPlacements<TData = Awaited<ReturnType<typeof getPromotionCampaignPlacements>>, TError = ErrorType<unknown>>(
+ params?: GetPromotionCampaignPlacementsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPromotionCampaignPlacements>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Jassim Ads: the placements this seller can buy now for one listing or store (own only; 404 for strangers), each with its server price and days
+ */
+
+export function useGetPromotionCampaignPlacements<TData = Awaited<ReturnType<typeof getPromotionCampaignPlacements>>, TError = ErrorType<unknown>>(
+ params?: GetPromotionCampaignPlacementsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPromotionCampaignPlacements>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPromotionCampaignPlacementsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getQuotePromotionCampaignUrl = () => {
+
+
+
+
+  return `/api/commercial/promotion-campaigns/quote`
+}
+
+/**
+ * @summary Jassim Ads: server price of a selection of placements and days (read-only); returns a quoteKey the confirmation must match
+ */
+export const quotePromotionCampaign = async (commercialJsonObject: CommercialJsonObject, options?: Parameters<typeof customFetch>[1]): Promise<CommercialJsonObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<CommercialJsonObject>(getQuotePromotionCampaignUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(commercialJsonObject)
+  }
+);}
+
+
+
+
+
+export const getQuotePromotionCampaignMutationKey = () => ['quotePromotionCampaign'] as const;
+
+export const getQuotePromotionCampaignMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof quotePromotionCampaign>>, TError,QuotePromotionCampaignMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof quotePromotionCampaign>>, TError,QuotePromotionCampaignMutationVariables, TContext> => {
+
+const mutationKey = getQuotePromotionCampaignMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof quotePromotionCampaign>>, QuotePromotionCampaignMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  quotePromotionCampaign(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type QuotePromotionCampaignMutationResult = NonNullable<Awaited<ReturnType<typeof quotePromotionCampaign>>>
+    export type QuotePromotionCampaignMutationBody = BodyType<CommercialJsonObject>
+    export type QuotePromotionCampaignMutationError = ErrorType<unknown>
+    export type QuotePromotionCampaignMutationVariables = {data: BodyType<CommercialJsonObject>}
+
+    /**
+ * @summary Jassim Ads: server price of a selection of placements and days (read-only); returns a quoteKey the confirmation must match
+ */
+export const useQuotePromotionCampaign = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof quotePromotionCampaign>>, TError,QuotePromotionCampaignMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof quotePromotionCampaign>>,
+        TError,
+        QuotePromotionCampaignMutationVariables,
+        TContext
+      > => {
+      return useMutation(getQuotePromotionCampaignMutationOptions(options), queryClient);
+    }
+
+export const getCreatePromotionCampaignCheckoutUrl = () => {
+
+
+
+
+  return `/api/commercial/promotion-campaigns/checkouts`
+}
+
+/**
+ * @summary Jassim Ads: one provider page for the whole campaign; refused with PRICE_CHANGED when the server total differs from the reviewed quote; placements start only after a signed payment
+ */
+export const createPromotionCampaignCheckout = async (commercialJsonObject: CommercialJsonObject, options?: Parameters<typeof customFetch>[1]): Promise<CommercialJsonObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<CommercialJsonObject>(getCreatePromotionCampaignCheckoutUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(commercialJsonObject)
+  }
+);}
+
+
+
+
+
+export const getCreatePromotionCampaignCheckoutMutationKey = () => ['createPromotionCampaignCheckout'] as const;
+
+export const getCreatePromotionCampaignCheckoutMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPromotionCampaignCheckout>>, TError,CreatePromotionCampaignCheckoutMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createPromotionCampaignCheckout>>, TError,CreatePromotionCampaignCheckoutMutationVariables, TContext> => {
+
+const mutationKey = getCreatePromotionCampaignCheckoutMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createPromotionCampaignCheckout>>, CreatePromotionCampaignCheckoutMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  createPromotionCampaignCheckout(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreatePromotionCampaignCheckoutMutationResult = NonNullable<Awaited<ReturnType<typeof createPromotionCampaignCheckout>>>
+    export type CreatePromotionCampaignCheckoutMutationBody = BodyType<CommercialJsonObject>
+    export type CreatePromotionCampaignCheckoutMutationError = ErrorType<unknown>
+    export type CreatePromotionCampaignCheckoutMutationVariables = {data: BodyType<CommercialJsonObject>}
+
+    /**
+ * @summary Jassim Ads: one provider page for the whole campaign; refused with PRICE_CHANGED when the server total differs from the reviewed quote; placements start only after a signed payment
+ */
+export const useCreatePromotionCampaignCheckout = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPromotionCampaignCheckout>>, TError,CreatePromotionCampaignCheckoutMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createPromotionCampaignCheckout>>,
+        TError,
+        CreatePromotionCampaignCheckoutMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCreatePromotionCampaignCheckoutMutationOptions(options), queryClient);
+    }
+
+export const getListPromotionCampaignsUrl = () => {
+
+
+
+
+  return `/api/commercial/promotion-campaigns`
+}
+
+/**
+ * @summary Jassim Ads: the seller's campaigns with per-placement and campaign results from recorded events only
+ */
+export const listPromotionCampaigns = async ( options?: Parameters<typeof customFetch>[1]): Promise<CommercialJsonObject> => {
+
+  return customFetch<CommercialJsonObject>(getListPromotionCampaignsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListPromotionCampaignsQueryKey = () => {
+    return [
+    `/api/commercial/promotion-campaigns`
+    ] as const;
+    }
+
+
+export const getListPromotionCampaignsQueryOptions = <TData = Awaited<ReturnType<typeof listPromotionCampaigns>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPromotionCampaigns>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListPromotionCampaignsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listPromotionCampaigns>>> = ({ signal }) => listPromotionCampaigns({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listPromotionCampaigns>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListPromotionCampaignsQueryResult = NonNullable<Awaited<ReturnType<typeof listPromotionCampaigns>>>
+export type ListPromotionCampaignsQueryError = ErrorType<unknown>
+
+
+export function useListPromotionCampaigns<TData = Awaited<ReturnType<typeof listPromotionCampaigns>>, TError = ErrorType<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPromotionCampaigns>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listPromotionCampaigns>>,
+          TError,
+          Awaited<ReturnType<typeof listPromotionCampaigns>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListPromotionCampaigns<TData = Awaited<ReturnType<typeof listPromotionCampaigns>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPromotionCampaigns>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listPromotionCampaigns>>,
+          TError,
+          Awaited<ReturnType<typeof listPromotionCampaigns>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListPromotionCampaigns<TData = Awaited<ReturnType<typeof listPromotionCampaigns>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPromotionCampaigns>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Jassim Ads: the seller's campaigns with per-placement and campaign results from recorded events only
+ */
+
+export function useListPromotionCampaigns<TData = Awaited<ReturnType<typeof listPromotionCampaigns>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPromotionCampaigns>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListPromotionCampaignsQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetPromotionCampaignUrl = (id: string,) => {
+
+
+
+
+  return `/api/commercial/promotion-campaigns/${id}`
+}
+
+/**
+ * @summary Jassim Ads: one campaign of the seller with per-placement status and results (404 for strangers)
+ */
+export const getPromotionCampaign = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<CommercialJsonObject> => {
+
+  return customFetch<CommercialJsonObject>(getGetPromotionCampaignUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetPromotionCampaignQueryKey = (id: string,) => {
+    return [
+    `/api/commercial/promotion-campaigns/${id}`
+    ] as const;
+    }
+
+
+export const getGetPromotionCampaignQueryOptions = <TData = Awaited<ReturnType<typeof getPromotionCampaign>>, TError = ErrorType<unknown>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPromotionCampaign>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPromotionCampaignQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPromotionCampaign>>> = ({ signal }) => getPromotionCampaign(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPromotionCampaign>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPromotionCampaignQueryResult = NonNullable<Awaited<ReturnType<typeof getPromotionCampaign>>>
+export type GetPromotionCampaignQueryError = ErrorType<unknown>
+
+
+export function useGetPromotionCampaign<TData = Awaited<ReturnType<typeof getPromotionCampaign>>, TError = ErrorType<unknown>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPromotionCampaign>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPromotionCampaign>>,
+          TError,
+          Awaited<ReturnType<typeof getPromotionCampaign>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPromotionCampaign<TData = Awaited<ReturnType<typeof getPromotionCampaign>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPromotionCampaign>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPromotionCampaign>>,
+          TError,
+          Awaited<ReturnType<typeof getPromotionCampaign>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPromotionCampaign<TData = Awaited<ReturnType<typeof getPromotionCampaign>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPromotionCampaign>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Jassim Ads: one campaign of the seller with per-placement status and results (404 for strangers)
+ */
+
+export function useGetPromotionCampaign<TData = Awaited<ReturnType<typeof getPromotionCampaign>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPromotionCampaign>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPromotionCampaignQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetAdPlacementCardsUrl = (params: GetAdPlacementCardsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/ads/placements?${stringifiedParams}` : `/api/ads/placements`
+}
+
+/**
+ * @summary Jassim Ads: hero/sidebar paid cards, labelled; with conversationId (the viewer's own) only ads related to its context
+ */
+export const getAdPlacementCards = async (params: GetAdPlacementCardsParams, options?: Parameters<typeof customFetch>[1]): Promise<CommercialJsonObject> => {
+
+  return customFetch<CommercialJsonObject>(getGetAdPlacementCardsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAdPlacementCardsQueryKey = (params?: GetAdPlacementCardsParams,) => {
+    return [
+    `/api/ads/placements`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetAdPlacementCardsQueryOptions = <TData = Awaited<ReturnType<typeof getAdPlacementCards>>, TError = ErrorType<unknown>>(params: GetAdPlacementCardsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdPlacementCards>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAdPlacementCardsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdPlacementCards>>> = ({ signal }) => getAdPlacementCards(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdPlacementCards>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetAdPlacementCardsQueryResult = NonNullable<Awaited<ReturnType<typeof getAdPlacementCards>>>
+export type GetAdPlacementCardsQueryError = ErrorType<unknown>
+
+
+export function useGetAdPlacementCards<TData = Awaited<ReturnType<typeof getAdPlacementCards>>, TError = ErrorType<unknown>>(
+ params: GetAdPlacementCardsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdPlacementCards>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAdPlacementCards>>,
+          TError,
+          Awaited<ReturnType<typeof getAdPlacementCards>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAdPlacementCards<TData = Awaited<ReturnType<typeof getAdPlacementCards>>, TError = ErrorType<unknown>>(
+ params: GetAdPlacementCardsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdPlacementCards>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAdPlacementCards>>,
+          TError,
+          Awaited<ReturnType<typeof getAdPlacementCards>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetAdPlacementCards<TData = Awaited<ReturnType<typeof getAdPlacementCards>>, TError = ErrorType<unknown>>(
+ params: GetAdPlacementCardsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdPlacementCards>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Jassim Ads: hero/sidebar paid cards, labelled; with conversationId (the viewer's own) only ads related to its context
+ */
+
+export function useGetAdPlacementCards<TData = Awaited<ReturnType<typeof getAdPlacementCards>>, TError = ErrorType<unknown>>(
+ params: GetAdPlacementCardsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAdPlacementCards>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetAdPlacementCardsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getRecordAdPlacementEngagementUrl = () => {
+
+
+
+
+  return `/api/ads/placements/engagement`
+}
+
+/**
+ * @summary Jassim Ads: a click on a hero/sidebar card, recorded server-side by a keyed viewer (never an identity)
+ */
+export const recordAdPlacementEngagement = async (commercialJsonObject: CommercialJsonObject, options?: Parameters<typeof customFetch>[1]): Promise<CommercialJsonObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<CommercialJsonObject>(getRecordAdPlacementEngagementUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(commercialJsonObject)
+  }
+);}
+
+
+
+
+
+export const getRecordAdPlacementEngagementMutationKey = () => ['recordAdPlacementEngagement'] as const;
+
+export const getRecordAdPlacementEngagementMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof recordAdPlacementEngagement>>, TError,RecordAdPlacementEngagementMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof recordAdPlacementEngagement>>, TError,RecordAdPlacementEngagementMutationVariables, TContext> => {
+
+const mutationKey = getRecordAdPlacementEngagementMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof recordAdPlacementEngagement>>, RecordAdPlacementEngagementMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  recordAdPlacementEngagement(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RecordAdPlacementEngagementMutationResult = NonNullable<Awaited<ReturnType<typeof recordAdPlacementEngagement>>>
+    export type RecordAdPlacementEngagementMutationBody = BodyType<CommercialJsonObject>
+    export type RecordAdPlacementEngagementMutationError = ErrorType<unknown>
+    export type RecordAdPlacementEngagementMutationVariables = {data: BodyType<CommercialJsonObject>}
+
+    /**
+ * @summary Jassim Ads: a click on a hero/sidebar card, recorded server-side by a keyed viewer (never an identity)
+ */
+export const useRecordAdPlacementEngagement = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof recordAdPlacementEngagement>>, TError,RecordAdPlacementEngagementMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof recordAdPlacementEngagement>>,
+        TError,
+        RecordAdPlacementEngagementMutationVariables,
+        TContext
+      > => {
+      return useMutation(getRecordAdPlacementEngagementMutationOptions(options), queryClient);
+    }
+
+export const getGetWelcomeSponsoredCardsUrl = (params: GetWelcomeSponsoredCardsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/ai/welcome-sponsored?${stringifiedParams}` : `/api/ai/welcome-sponsored`
+}
+
+/**
+ * @summary Jassim Ads: up to the policy's number of labelled sponsored cards on an empty conversation, stable per screen
+ */
+export const getWelcomeSponsoredCards = async (params: GetWelcomeSponsoredCardsParams, options?: Parameters<typeof customFetch>[1]): Promise<CommercialJsonObject> => {
+
+  return customFetch<CommercialJsonObject>(getGetWelcomeSponsoredCardsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetWelcomeSponsoredCardsQueryKey = (params?: GetWelcomeSponsoredCardsParams,) => {
+    return [
+    `/api/ai/welcome-sponsored`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetWelcomeSponsoredCardsQueryOptions = <TData = Awaited<ReturnType<typeof getWelcomeSponsoredCards>>, TError = ErrorType<unknown>>(params: GetWelcomeSponsoredCardsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getWelcomeSponsoredCards>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetWelcomeSponsoredCardsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getWelcomeSponsoredCards>>> = ({ signal }) => getWelcomeSponsoredCards(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getWelcomeSponsoredCards>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetWelcomeSponsoredCardsQueryResult = NonNullable<Awaited<ReturnType<typeof getWelcomeSponsoredCards>>>
+export type GetWelcomeSponsoredCardsQueryError = ErrorType<unknown>
+
+
+export function useGetWelcomeSponsoredCards<TData = Awaited<ReturnType<typeof getWelcomeSponsoredCards>>, TError = ErrorType<unknown>>(
+ params: GetWelcomeSponsoredCardsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getWelcomeSponsoredCards>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getWelcomeSponsoredCards>>,
+          TError,
+          Awaited<ReturnType<typeof getWelcomeSponsoredCards>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetWelcomeSponsoredCards<TData = Awaited<ReturnType<typeof getWelcomeSponsoredCards>>, TError = ErrorType<unknown>>(
+ params: GetWelcomeSponsoredCardsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getWelcomeSponsoredCards>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getWelcomeSponsoredCards>>,
+          TError,
+          Awaited<ReturnType<typeof getWelcomeSponsoredCards>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetWelcomeSponsoredCards<TData = Awaited<ReturnType<typeof getWelcomeSponsoredCards>>, TError = ErrorType<unknown>>(
+ params: GetWelcomeSponsoredCardsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getWelcomeSponsoredCards>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Jassim Ads: up to the policy's number of labelled sponsored cards on an empty conversation, stable per screen
+ */
+
+export function useGetWelcomeSponsoredCards<TData = Awaited<ReturnType<typeof getWelcomeSponsoredCards>>, TError = ErrorType<unknown>>(
+ params: GetWelcomeSponsoredCardsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getWelcomeSponsoredCards>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetWelcomeSponsoredCardsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getDismissWelcomeSponsoredCardsUrl = () => {
+
+
+
+
+  return `/api/ai/welcome-sponsored/dismiss`
+}
+
+/**
+ * @summary Jassim Ads: hide the welcome sponsored cards for this conversation
+ */
+export const dismissWelcomeSponsoredCards = async (commercialJsonObject: CommercialJsonObject, options?: Parameters<typeof customFetch>[1]): Promise<CommercialJsonObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<CommercialJsonObject>(getDismissWelcomeSponsoredCardsUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(commercialJsonObject)
+  }
+);}
+
+
+
+
+
+export const getDismissWelcomeSponsoredCardsMutationKey = () => ['dismissWelcomeSponsoredCards'] as const;
+
+export const getDismissWelcomeSponsoredCardsMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof dismissWelcomeSponsoredCards>>, TError,DismissWelcomeSponsoredCardsMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof dismissWelcomeSponsoredCards>>, TError,DismissWelcomeSponsoredCardsMutationVariables, TContext> => {
+
+const mutationKey = getDismissWelcomeSponsoredCardsMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof dismissWelcomeSponsoredCards>>, DismissWelcomeSponsoredCardsMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  dismissWelcomeSponsoredCards(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DismissWelcomeSponsoredCardsMutationResult = NonNullable<Awaited<ReturnType<typeof dismissWelcomeSponsoredCards>>>
+    export type DismissWelcomeSponsoredCardsMutationBody = BodyType<CommercialJsonObject>
+    export type DismissWelcomeSponsoredCardsMutationError = ErrorType<unknown>
+    export type DismissWelcomeSponsoredCardsMutationVariables = {data: BodyType<CommercialJsonObject>}
+
+    /**
+ * @summary Jassim Ads: hide the welcome sponsored cards for this conversation
+ */
+export const useDismissWelcomeSponsoredCards = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof dismissWelcomeSponsoredCards>>, TError,DismissWelcomeSponsoredCardsMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof dismissWelcomeSponsoredCards>>,
+        TError,
+        DismissWelcomeSponsoredCardsMutationVariables,
+        TContext
+      > => {
+      return useMutation(getDismissWelcomeSponsoredCardsMutationOptions(options), queryClient);
+    }
+
+export const getGetDemandRequestDisclosureUrl = () => {
+
+
+
+
+  return `/api/demand-requests/disclosure`
+}
+
+/**
+ * @summary «جاسم روح بيع لي»: the disclosure shown before a buyer saves a request
+ */
+export const getDemandRequestDisclosure = async ( options?: Parameters<typeof customFetch>[1]): Promise<CommercialJsonObject> => {
+
+  return customFetch<CommercialJsonObject>(getGetDemandRequestDisclosureUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetDemandRequestDisclosureQueryKey = () => {
+    return [
+    `/api/demand-requests/disclosure`
+    ] as const;
+    }
+
+
+export const getGetDemandRequestDisclosureQueryOptions = <TData = Awaited<ReturnType<typeof getDemandRequestDisclosure>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDemandRequestDisclosure>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetDemandRequestDisclosureQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getDemandRequestDisclosure>>> = ({ signal }) => getDemandRequestDisclosure({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getDemandRequestDisclosure>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetDemandRequestDisclosureQueryResult = NonNullable<Awaited<ReturnType<typeof getDemandRequestDisclosure>>>
+export type GetDemandRequestDisclosureQueryError = ErrorType<unknown>
+
+
+export function useGetDemandRequestDisclosure<TData = Awaited<ReturnType<typeof getDemandRequestDisclosure>>, TError = ErrorType<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDemandRequestDisclosure>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getDemandRequestDisclosure>>,
+          TError,
+          Awaited<ReturnType<typeof getDemandRequestDisclosure>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetDemandRequestDisclosure<TData = Awaited<ReturnType<typeof getDemandRequestDisclosure>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDemandRequestDisclosure>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getDemandRequestDisclosure>>,
+          TError,
+          Awaited<ReturnType<typeof getDemandRequestDisclosure>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetDemandRequestDisclosure<TData = Awaited<ReturnType<typeof getDemandRequestDisclosure>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDemandRequestDisclosure>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary «جاسم روح بيع لي»: the disclosure shown before a buyer saves a request
+ */
+
+export function useGetDemandRequestDisclosure<TData = Awaited<ReturnType<typeof getDemandRequestDisclosure>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDemandRequestDisclosure>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetDemandRequestDisclosureQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getCreateDemandRequestUrl = () => {
+
+
+
+
+  return `/api/demand-requests`
+}
+
+/**
+ * @summary «جاسم روح بيع لي»: a buyer saves a request with explicit consent
+ */
+export const createDemandRequest = async (commercialJsonObject: CommercialJsonObject, options?: Parameters<typeof customFetch>[1]): Promise<CommercialJsonObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<CommercialJsonObject>(getCreateDemandRequestUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(commercialJsonObject)
+  }
+);}
+
+
+
+
+
+export const getCreateDemandRequestMutationKey = () => ['createDemandRequest'] as const;
+
+export const getCreateDemandRequestMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createDemandRequest>>, TError,CreateDemandRequestMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createDemandRequest>>, TError,CreateDemandRequestMutationVariables, TContext> => {
+
+const mutationKey = getCreateDemandRequestMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createDemandRequest>>, CreateDemandRequestMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  createDemandRequest(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateDemandRequestMutationResult = NonNullable<Awaited<ReturnType<typeof createDemandRequest>>>
+    export type CreateDemandRequestMutationBody = BodyType<CommercialJsonObject>
+    export type CreateDemandRequestMutationError = ErrorType<unknown>
+    export type CreateDemandRequestMutationVariables = {data: BodyType<CommercialJsonObject>}
+
+    /**
+ * @summary «جاسم روح بيع لي»: a buyer saves a request with explicit consent
+ */
+export const useCreateDemandRequest = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createDemandRequest>>, TError,CreateDemandRequestMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createDemandRequest>>,
+        TError,
+        CreateDemandRequestMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCreateDemandRequestMutationOptions(options), queryClient);
+    }
+
+export const getListDemandRequestsUrl = () => {
+
+
+
+
+  return `/api/demand-requests`
+}
+
+/**
+ * @summary «جاسم روح بيع لي»: the buyer's own saved requests
+ */
+export const listDemandRequests = async ( options?: Parameters<typeof customFetch>[1]): Promise<CommercialJsonObject> => {
+
+  return customFetch<CommercialJsonObject>(getListDemandRequestsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListDemandRequestsQueryKey = () => {
+    return [
+    `/api/demand-requests`
+    ] as const;
+    }
+
+
+export const getListDemandRequestsQueryOptions = <TData = Awaited<ReturnType<typeof listDemandRequests>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listDemandRequests>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListDemandRequestsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listDemandRequests>>> = ({ signal }) => listDemandRequests({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listDemandRequests>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListDemandRequestsQueryResult = NonNullable<Awaited<ReturnType<typeof listDemandRequests>>>
+export type ListDemandRequestsQueryError = ErrorType<unknown>
+
+
+export function useListDemandRequests<TData = Awaited<ReturnType<typeof listDemandRequests>>, TError = ErrorType<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listDemandRequests>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listDemandRequests>>,
+          TError,
+          Awaited<ReturnType<typeof listDemandRequests>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListDemandRequests<TData = Awaited<ReturnType<typeof listDemandRequests>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listDemandRequests>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listDemandRequests>>,
+          TError,
+          Awaited<ReturnType<typeof listDemandRequests>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListDemandRequests<TData = Awaited<ReturnType<typeof listDemandRequests>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listDemandRequests>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary «جاسم روح بيع لي»: the buyer's own saved requests
+ */
+
+export function useListDemandRequests<TData = Awaited<ReturnType<typeof listDemandRequests>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listDemandRequests>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListDemandRequestsQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getListDemandRequestMatchesUrl = () => {
+
+
+
+
+  return `/api/demand-requests/matches`
+}
+
+/**
+ * @summary «جاسم روح بيع لي»: matches sent to the buyer (labelled paid options)
+ */
+export const listDemandRequestMatches = async ( options?: Parameters<typeof customFetch>[1]): Promise<CommercialJsonObject> => {
+
+  return customFetch<CommercialJsonObject>(getListDemandRequestMatchesUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListDemandRequestMatchesQueryKey = () => {
+    return [
+    `/api/demand-requests/matches`
+    ] as const;
+    }
+
+
+export const getListDemandRequestMatchesQueryOptions = <TData = Awaited<ReturnType<typeof listDemandRequestMatches>>, TError = ErrorType<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listDemandRequestMatches>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListDemandRequestMatchesQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listDemandRequestMatches>>> = ({ signal }) => listDemandRequestMatches({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listDemandRequestMatches>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListDemandRequestMatchesQueryResult = NonNullable<Awaited<ReturnType<typeof listDemandRequestMatches>>>
+export type ListDemandRequestMatchesQueryError = ErrorType<unknown>
+
+
+export function useListDemandRequestMatches<TData = Awaited<ReturnType<typeof listDemandRequestMatches>>, TError = ErrorType<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listDemandRequestMatches>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listDemandRequestMatches>>,
+          TError,
+          Awaited<ReturnType<typeof listDemandRequestMatches>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListDemandRequestMatches<TData = Awaited<ReturnType<typeof listDemandRequestMatches>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listDemandRequestMatches>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listDemandRequestMatches>>,
+          TError,
+          Awaited<ReturnType<typeof listDemandRequestMatches>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListDemandRequestMatches<TData = Awaited<ReturnType<typeof listDemandRequestMatches>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listDemandRequestMatches>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary «جاسم روح بيع لي»: matches sent to the buyer (labelled paid options)
+ */
+
+export function useListDemandRequestMatches<TData = Awaited<ReturnType<typeof listDemandRequestMatches>>, TError = ErrorType<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listDemandRequestMatches>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListDemandRequestMatchesQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getDeleteDemandRequestUrl = (requestId: string,) => {
+
+
+
+
+  return `/api/demand-requests/${requestId}`
+}
+
+/**
+ * @summary «جاسم روح بيع لي»: the buyer deletes a saved request
+ */
+export const deleteDemandRequest = async (requestId: string, options?: Parameters<typeof customFetch>[1]): Promise<CommercialJsonObject> => {
+
+  return customFetch<CommercialJsonObject>(getDeleteDemandRequestUrl(requestId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDeleteDemandRequestMutationKey = () => ['deleteDemandRequest'] as const;
+
+export const getDeleteDemandRequestMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteDemandRequest>>, TError,DeleteDemandRequestMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteDemandRequest>>, TError,DeleteDemandRequestMutationVariables, TContext> => {
+
+const mutationKey = getDeleteDemandRequestMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteDemandRequest>>, DeleteDemandRequestMutationVariables> = (props) => {
+          const {requestId} = props ?? {};
+
+          return  deleteDemandRequest(requestId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteDemandRequestMutationResult = NonNullable<Awaited<ReturnType<typeof deleteDemandRequest>>>
+
+    export type DeleteDemandRequestMutationError = ErrorType<unknown>
+    export type DeleteDemandRequestMutationVariables = {requestId: string}
+
+    /**
+ * @summary «جاسم روح بيع لي»: the buyer deletes a saved request
+ */
+export const useDeleteDemandRequest = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteDemandRequest>>, TError,DeleteDemandRequestMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteDemandRequest>>,
+        TError,
+        DeleteDemandRequestMutationVariables,
+        TContext
+      > => {
+      return useMutation(getDeleteDemandRequestMutationOptions(options), queryClient);
+    }
+
+export const getOptOutDemandRequestUrl = (requestId: string,) => {
+
+
+
+
+  return `/api/demand-requests/${requestId}/opt-out`
+}
+
+/**
+ * @summary «جاسم روح بيع لي»: the buyer stops alerts for a request
+ */
+export const optOutDemandRequest = async (requestId: string,
+    commercialJsonObject: CommercialJsonObject, options?: Parameters<typeof customFetch>[1]): Promise<CommercialJsonObject> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<CommercialJsonObject>(getOptOutDemandRequestUrl(requestId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(commercialJsonObject)
+  }
+);}
+
+
+
+
+
+export const getOptOutDemandRequestMutationKey = () => ['optOutDemandRequest'] as const;
+
+export const getOptOutDemandRequestMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof optOutDemandRequest>>, TError,OptOutDemandRequestMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof optOutDemandRequest>>, TError,OptOutDemandRequestMutationVariables, TContext> => {
+
+const mutationKey = getOptOutDemandRequestMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof optOutDemandRequest>>, OptOutDemandRequestMutationVariables> = (props) => {
+          const {requestId,data} = props ?? {};
+
+          return  optOutDemandRequest(requestId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type OptOutDemandRequestMutationResult = NonNullable<Awaited<ReturnType<typeof optOutDemandRequest>>>
+    export type OptOutDemandRequestMutationBody = BodyType<CommercialJsonObject>
+    export type OptOutDemandRequestMutationError = ErrorType<unknown>
+    export type OptOutDemandRequestMutationVariables = {requestId: string;data: BodyType<CommercialJsonObject>}
+
+    /**
+ * @summary «جاسم روح بيع لي»: the buyer stops alerts for a request
+ */
+export const useOptOutDemandRequest = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof optOutDemandRequest>>, TError,OptOutDemandRequestMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof optOutDemandRequest>>,
+        TError,
+        OptOutDemandRequestMutationVariables,
+        TContext
+      > => {
+      return useMutation(getOptOutDemandRequestMutationOptions(options), queryClient);
+    }
+
+export const getGetPromotionDemandReachUrl = (promotionId: string,) => {
+
+
+
+
+  return `/api/promotions/${promotionId}/demand-reach`
+}
+
+/**
+ * @summary «جاسم روح بيع لي»: aggregate reach of the seller's own demand campaign (counts only, never who)
+ */
+export const getPromotionDemandReach = async (promotionId: string, options?: Parameters<typeof customFetch>[1]): Promise<CommercialJsonObject> => {
+
+  return customFetch<CommercialJsonObject>(getGetPromotionDemandReachUrl(promotionId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetPromotionDemandReachQueryKey = (promotionId: string,) => {
+    return [
+    `/api/promotions/${promotionId}/demand-reach`
+    ] as const;
+    }
+
+
+export const getGetPromotionDemandReachQueryOptions = <TData = Awaited<ReturnType<typeof getPromotionDemandReach>>, TError = ErrorType<unknown>>(promotionId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPromotionDemandReach>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPromotionDemandReachQueryKey(promotionId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPromotionDemandReach>>> = ({ signal }) => getPromotionDemandReach(promotionId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: promotionId !== null && promotionId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPromotionDemandReach>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPromotionDemandReachQueryResult = NonNullable<Awaited<ReturnType<typeof getPromotionDemandReach>>>
+export type GetPromotionDemandReachQueryError = ErrorType<unknown>
+
+
+export function useGetPromotionDemandReach<TData = Awaited<ReturnType<typeof getPromotionDemandReach>>, TError = ErrorType<unknown>>(
+ promotionId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPromotionDemandReach>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPromotionDemandReach>>,
+          TError,
+          Awaited<ReturnType<typeof getPromotionDemandReach>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPromotionDemandReach<TData = Awaited<ReturnType<typeof getPromotionDemandReach>>, TError = ErrorType<unknown>>(
+ promotionId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPromotionDemandReach>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPromotionDemandReach>>,
+          TError,
+          Awaited<ReturnType<typeof getPromotionDemandReach>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPromotionDemandReach<TData = Awaited<ReturnType<typeof getPromotionDemandReach>>, TError = ErrorType<unknown>>(
+ promotionId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPromotionDemandReach>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary «جاسم روح بيع لي»: aggregate reach of the seller's own demand campaign (counts only, never who)
+ */
+
+export function useGetPromotionDemandReach<TData = Awaited<ReturnType<typeof getPromotionDemandReach>>, TError = ErrorType<unknown>>(
+ promotionId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPromotionDemandReach>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPromotionDemandReachQueryOptions(promotionId,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

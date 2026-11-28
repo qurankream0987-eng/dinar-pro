@@ -110,6 +110,7 @@ try {
       check(`${label}: no promise on 100 pieces`, (await insights.innerText()).includes("لا أستطيع أن أعدك ببيع 100 قطعة"));
       const builder = surface.getByTestId("campaign-builder");
       await builder.waitFor({ timeout: 15_000 });
+      check(`${label}: the product photo heads the card`, (await builder.getByTestId("campaign-subject-image").getAttribute("data-has-image")) === "true" && (await builder.getByTestId("campaign-subject-image").locator("img").count()) === 1);
       check(`${label}: «أين تريد ظهور إعلانك؟»`, (await builder.innerText()).includes("أين تريد ظهور إعلانك؟"));
       check(`${label}: three placements offered`, (await builder.getByTestId("campaign-option").count()) === 3);
       const suggestions = await builder.getByTestId("campaign-suggestions").locator("> div").count();
@@ -212,15 +213,33 @@ try {
       check(`${label}: per-placement counts and remaining days`, text.includes("ظهور:") && text.includes("نقرات:") && text.includes("طلبات منسوبة:") && text.includes("متبقٍ:"));
       check(`${label}: campaign totals`, (await campaign.getByTestId("placement-campaign-totals").innerText()).includes("الإجمالي"));
       check(`${label}: payment confirmed note`, (await campaign.getByTestId("placement-campaign-payment").innerText()).includes("وصل الدفع"));
+      check(`${label}: the product photo in the results`, (await campaign.getByTestId("placement-campaign-image").locator("img").count()) === 1);
+      check(`${label}: listing orders are attributed numbers`, (await campaign.getByTestId("placement-orders").first().getAttribute("data-available")) === "true");
       check(`${label}: results RTL`, (await rtl(surface)) === "rtl");
       check(`${label}: no overflow (results)`, await noOverflow(page));
       await campaign.scrollIntoViewIfNeeded();
       await shot(page, `${label}-5-results`);
       await context.close();
     }
+    // Store results: orders from store cards are «غير متاح», never a fabricated 0.
+    {
+      const { context, page } = await open(F.storeOwner, await newConversation(F.storeOwner), VIEWPORTS[0][1]);
+      const msg = await send(page, "كيف تسير حملاتي");
+      const campaign = msg.getByTestId("placement-campaign").first();
+      await campaign.waitFor({ timeout: 15_000 });
+      const orders = campaign.getByTestId("placement-orders").first();
+      check("store results: orders «غير متاح»", (await orders.getAttribute("data-available")) === "false" && (await orders.innerText()).includes("غير متاح"));
+      check("store results: the reason is shown", (await campaign.getByTestId("placement-orders-note").innerText()).includes("لا يُنسب بيع دون دليل"));
+      check("store results: campaign total orders «غير متاح» too", (await campaign.getByTestId("placement-campaign-orders").innerText()).includes("غير متاح"));
+      check("store results: a store photo", (await campaign.getByTestId("placement-campaign-image").locator("img").count()) === 1);
+      await campaign.scrollIntoViewIfNeeded();
+      await shot(page, "mobile-5b-store-results");
+      await context.close();
+    }
     // A visitor on desktop sees the paid store in the sidebar, labelled; clicking is recorded.
     {
-      const { context, page } = await open(F.viewer, await newConversation(F.viewer), VIEWPORTS[1][1]);
+      const viewerConv = await newConversation(F.viewer);
+      const { context, page } = await open(F.viewer, viewerConv, VIEWPORTS[1][1]);
       const card = page.getByTestId("sidebar-sponsored-card");
       await card.waitFor({ timeout: 20_000 });
       check("visitor: the sidebar shows a labelled paid card", (await card.innerText()).includes("إعلان ممول"));
@@ -230,7 +249,25 @@ try {
       check("visitor: the paid store is served in the sidebar placement", store?.title === STORE_NAME && store.label === "إعلان ممول" && store.path.startsWith("/business/"), served.map((c) => [c.kind, c.title]));
       const hero = page.getByTestId("hero-sponsored");
       check("visitor: hero carries only labelled paid cards", (await hero.count()) === 0 || (await hero.getByTestId("hero-sponsored-label").first().innerText()).includes("إعلان ممول"));
+      const aside = page.getByTestId("sidebar-sponsored");
+      const count = Number(await aside.getAttribute("data-count"));
+      check("visitor: sidebar rotates through at most three", count >= 1 && count <= 3, count);
+      check("visitor: one dot per ad", count < 2 || (await aside.getByTestId("sidebar-sponsored-dots").locator("button").count()) === count);
+      check("visitor: the first card is the server's top-ranked ad", (await card.getAttribute("data-slot")) === "1" && (await card.getAttribute("data-listing-id")) === served[0].listingId);
+      check("visitor: the sidebar card shows the product photo", (await aside.getByTestId("sidebar-sponsored-image").locator("img").count()) === 1);
+      check("visitor: market-wide without a conversation context", (await aside.getAttribute("data-context")) === "MARKET");
       await shot(page, "desktop-6-sidebar-store");
+      // In a conversation about headphones the sidebar follows it: only related (electronics) ads.
+      await send(page, `ابحث عن سماعة سوني ${F.run}`);
+      await page.waitForFunction(() => document.querySelector('[data-testid="sidebar-sponsored"]')?.getAttribute("data-context") === "CONVERSATION", undefined, { timeout: 20_000 }).catch(() => {});
+      report.debugContext = await page.evaluate(async (conv) => {
+        const placements = await (await fetch(`/api/ads/placements?slot=SIDEBAR&conversationId=${conv}`, { credentials: "include" })).json();
+        const requests = performance.getEntriesByType("resource").map((e) => e.name).filter((n) => n.includes("/ads/placements"));
+        return { context: placements.context, cards: placements.cards?.length, requests };
+      }, viewerConv);
+      check("visitor: the sidebar follows the conversation", (await aside.getAttribute("data-context")) === "CONVERSATION");
+      check("visitor: in context, the related product (not the store)", (await page.getByTestId("sidebar-sponsored-card").getAttribute("data-kind")) === "LISTING");
+      await shot(page, "desktop-7-sidebar-context");
       await context.close();
     }
   }

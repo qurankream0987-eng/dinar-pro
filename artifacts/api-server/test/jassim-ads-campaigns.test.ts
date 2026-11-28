@@ -84,7 +84,8 @@ const search = await product({ name: "إبراز في البحث", productType: 
 const demand = await product({ name: "روح بيع لي", productType: "DEMAND_CAPTURE", categoryId: "electronics", priceMinor: 4_000, durationDays: 10 });
 const serviceSearch = await product({ name: "إبراز خدمة", productType: "SPONSORED_SEARCH", categoryId: "services", priceMinor: 3_000, durationDays: 7 });
 
-async function publish(seller: { cookie: string }, title: string, categoryId = "electronics", category = "إلكترونيات") {
+const PHOTO = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4IiBoZWlnaHQ9IjgiPjxyZWN0IHdpZHRoPSI4IiBoZWlnaHQ9IjgiIGZpbGw9IiNmYTAiLz48L3N2Zz4=";
+async function publish(seller: { cookie: string }, title: string, categoryId = "electronics", category = "إلكترونيات", withImage = true) {
   const service = categoryId === "services";
   const r = await request("/listings", "POST", {
     title, description: `${title} — بحالة ممتازة مع الضمان والكرتونة الأصلية وتوصيل داخل عمان`, category, categoryId, area: "خلدا", city: "عمان",
@@ -92,7 +93,13 @@ async function publish(seller: { cookie: string }, title: string, categoryId = "
     unitPrice: "40.000", imageUrl: "", imageUrls: [], paymentMethods: ["CASH_DIRECT"],
   }, seller.cookie);
   assert.equal(r.status, 201, r.raw);
-  return r.data.id as string;
+  const id = r.data.id as string;
+  // The product photo (hero and sidebar show it); tests that need a listing without one say so.
+  if (withImage) {
+    const [row] = await db.select({ data: offers.data }).from(offers).where(eq(offers.id, id));
+    await db.update(offers).set({ data: { ...(row!.data as Record<string, unknown>), imageUrl: PHOTO, imageUrls: [PHOTO] } }).where(eq(offers.id, id));
+  }
+  return id;
 }
 const subjectL = (listingId: string) => ({ kind: "LISTING", listingId });
 const quote = (cookie: string, subject: unknown, items: unknown) => request("/commercial/promotion-campaigns/quote", "POST", { subject, items }, cookie);
@@ -303,6 +310,10 @@ test("CMP-10 store promotion: only a published store, only hero/sidebar, served 
   const storeId = randomUUID();
   await db.insert(businessProfiles).values({ id: storeId, ownerUserId: owner.id, marketId: "JO", displayName: `متجر الأمل ${run}`, normalizedName: `store-${storeId}`, categoryKey: "OTHER", legalName: "Synthetic Store", legalForm: "COMPANY", verificationStatus: "VERIFIED", verifiedAt: new Date(), verifiedBy: admin.id, publicationStatus: "PUBLISHED", idempotencyKey: randomUUID() });
   const store = { kind: "STORE", businessId: storeId };
+  // A store card shows a product photo from the store: without one, display placements are refused.
+  const noPhoto = await quote(owner.cookie, store, [{ productId: hero.id }]);
+  assert.equal(noPhoto.data.lines[0].reason, "أضف صورة لمنتج واحد على الأقل في متجرك؛ هذا الموضع يعرض صورة");
+  await publish(owner, `منتج من المتجر ${run}`);
   const catalog = await request(`/commercial/promotion-campaigns/placements?businessId=${storeId}`, "GET", undefined, owner.cookie);
   assert.equal(catalog.status, 200, catalog.raw);
   assert.ok(catalog.data.options.every((o: any) => ["HERO", "SIDEBAR"].includes(o.placement)), "a store is offered only display placements");
@@ -316,7 +327,7 @@ test("CMP-10 store promotion: only a published store, only hero/sidebar, served 
   const cards = (await displayPlacementCards({ placement: "SIDEBAR", market: JO, viewerId: viewer.id })).cards;
   const card = cards.find((item) => item.businessId === storeId)!;
   assert.ok(card, JSON.stringify(cards));
-  assert.deepEqual([card.kind, card.label, card.path], ["STORE", "إعلان ممول", `/business/${storeId}`]);
+  assert.deepEqual([card.kind, card.label, card.path, card.imagePath], ["STORE", "إعلان ممول", `/business/${storeId}`, PHOTO]);
   assert.equal((await displayPlacementCards({ placement: "SIDEBAR", market: JO, viewerId: owner.id })).cards.some((item) => item.businessId === storeId), false, "never shown to its own owner");
   const click = await request("/ads/placements/engagement", "POST", { slot: "SIDEBAR", promotionId: card.promotionId, kind: "STORE" }, viewer.cookie);
   assert.equal(click.status, 200, click.raw);
@@ -325,8 +336,10 @@ test("CMP-10 store promotion: only a published store, only hero/sidebar, served 
   assert.ok(events.every((e) => e.viewerKey !== viewer.id), "the viewer is a key, never an identity");
   const result = (await campaignResults(owner.id, JO, c.data.campaignId))[0]!;
   const side = result.placements.find((p) => p.placement === "SIDEBAR")!;
-  assert.deepEqual([side.impressions, side.clicks, side.orders], [1, 1, 0], "orders are never attributed to a store card without evidence");
+  assert.deepEqual([side.impressions, side.clicks, side.orders], [1, 1, null], "no reliable attribution: «not available», never a fabricated 0");
+  assert.match(side.ordersNote!, /غير متاح/);
   assert.equal(result.totals.impressions, 1);
+  assert.equal(result.totals.ordersPartial, true);
   // An unpublished store cannot be promoted.
   await db.update(businessProfiles).set({ publicationStatus: "UNPUBLISHED" }).where(eq(businessProfiles.id, storeId));
   const blocked = await quote(owner.cookie, store, [{ productId: hero.id }]);
@@ -375,7 +388,7 @@ test("TGT-01..05 contextual targeting: relevance first, labelled, organic when n
 test("GSFM-01 Jassim Go Sell for Me in the conversation: real interest marked real, tips from the listing, honest limits, the placement builder", async () => {
   const seller = await account("gsfm");
   const title = `مكنسة دايسون ${run}`;
-  const listingId = await publish(seller, title);
+  const listingId = await publish(seller, title, "electronics", "إلكترونيات", false);
   const buyers = [await account("g1"), await account("g2"), await account("g3")];
   for (const b of buyers) await saveDemandRequest({ buyerId: b.id, market: JO, needText: title, consent: true });
   const created = await request("/ai/conversations", "POST", {}, seller.cookie);
@@ -403,7 +416,9 @@ test("GSFM-01 Jassim Go Sell for Me in the conversation: real interest marked re
   // No store yet: honest answer, nothing invented.
   const store = await turn("روّج لمتجري");
   assert.match(store.body, /لا يوجد لديك متجر/);
-  // Results card per placement after a paid campaign.
+  // Results card per placement after a paid campaign (the seller adds the photo first).
+  const [own] = await db.select({ data: offers.data }).from(offers).where(eq(offers.id, listingId));
+  await db.update(offers).set({ data: { ...(own!.data as Record<string, unknown>), imageUrl: PHOTO, imageUrls: [PHOTO] } }).where(eq(offers.id, listingId));
   const { checkout: c } = await checkout(seller, subjectL(listingId), [{ productId: sidebar.id, days: 2 }, { productId: search.id }]);
   await pay(c.data.campaignId, seller.id, `gs_${run}`, "10.000");
   const report = await turn("كيف تسير حملاتي");
@@ -417,6 +432,7 @@ test("GSFM-01 Jassim Go Sell for Me in the conversation: real interest marked re
 test("GSFM-02 a store owner: «روّج لمتجري» opens the store builder with display placements only", async () => {
   const owner = await account("gstore");
   const storeId = randomUUID();
+  await publish(owner, `منتج متجر النور ${run}`);
   await db.insert(businessProfiles).values({ id: storeId, ownerUserId: owner.id, marketId: "JO", displayName: `متجر النور ${run}`, normalizedName: `store-${storeId}`, categoryKey: "OTHER", legalName: "Synthetic Store 2", legalForm: "COMPANY", verificationStatus: "VERIFIED", verifiedAt: new Date(), verifiedBy: admin.id, publicationStatus: "PUBLISHED", idempotencyKey: randomUUID() });
   const created = await request("/ai/conversations", "POST", {}, owner.cookie);
   const conversationId = created.data.conversation?.id ?? created.data.id;
@@ -429,4 +445,57 @@ test("GSFM-02 a store owner: «روّج لمتجري» opens the store builder w
   assert.ok(commerce.promotionPlan.campaign.options.length >= 1);
   assert.ok(commerce.promotionPlan.campaign.options.every((o: any) => ["HERO", "SIDEBAR"].includes(o.placement)));
   void promotionProducts;
+});
+
+test("IMG-01 the product photo is required where the placement shows it: refused without a photo, never served without one", async () => {
+  const seller = await account("nophoto");
+  const listingId = await publish(seller, `مروحة بلا صورة ${run}`, "electronics", "إلكترونيات", false);
+  const q = await quote(seller.cookie, subjectL(listingId), [{ productId: sidebar.id, days: 2 }, { productId: search.id }]);
+  assert.equal(q.data.ok, false);
+  assert.equal(q.data.lines.find((l: any) => l.productId === sidebar.id).reason, "أضف صورة للمنتج أولًا؛ هذا الموضع يعرض صورة المنتج");
+  assert.equal(q.data.lines.find((l: any) => l.productId === search.id).available, true, "search results do not depend on a photo");
+  const catalog = await request(`/commercial/promotion-campaigns/placements?listingId=${listingId}`, "GET", undefined, seller.cookie);
+  assert.equal(catalog.data.subject.imagePath, null);
+  // A campaign bought with a photo stops showing in hero/sidebar if the photo is later removed.
+  const other = await account("photo");
+  const withPhoto = await publish(other, `مروحة بصورة ${run}`);
+  const { checkout: c } = await checkout(other, subjectL(withPhoto), [{ productId: sidebar.id, days: 2 }]);
+  await pay(c.data.campaignId, other.id, `img_${run}`, "4.000");
+  const viewer = await account("imgviewer");
+  assert.ok((await displayPlacementCards({ placement: "SIDEBAR", market: JO, viewerId: viewer.id })).cards.some((card) => card.listingId === withPhoto && card.imagePath === PHOTO));
+  const [row] = await db.select({ data: offers.data }).from(offers).where(eq(offers.id, withPhoto));
+  await db.update(offers).set({ data: { ...(row!.data as Record<string, unknown>), imageUrl: "", imageUrls: [] } }).where(eq(offers.id, withPhoto));
+  assert.ok(!(await displayPlacementCards({ placement: "SIDEBAR", market: JO, viewerId: viewer.id })).cards.some((card) => card.listingId === withPhoto));
+});
+
+test("CTX-01 the sidebar follows the viewer's own conversation; another user's conversation gives no context; ranking puts the most relevant first", async () => {
+  const strong = await product({ name: "جانبي أولوية", productType: "SIDEBAR_AD", priceMinor: 3_000, durationDays: 3, pricingUnit: "DAY", minDays: 1, maxDays: 10, priorityWeight: 400 });
+  const carSeller = await account("ctxcar");
+  const phoneSeller = await account("ctxphone");
+  const car = await publish(carSeller, `طاولة خشب زان ${run}`, "home", "منزل");
+  const phone = await publish(phoneSeller, `هاتف ون بلس ${run}`);
+  const { checkout: c1 } = await checkout(carSeller, subjectL(car), [{ productId: sidebar.id, days: 2 }]);
+  await pay(c1.data.campaignId, carSeller.id, `ctx_${run}_1`, "4.000");
+  const { checkout: c2 } = await checkout(phoneSeller, subjectL(phone), [{ productId: strong.id, days: 2 }]);
+  await pay(c2.data.campaignId, phoneSeller.id, `ctx_${run}_2`, "6.000");
+  const viewer = await account("ctxviewer");
+  const created = await request("/ai/conversations", "POST", {}, viewer.cookie);
+  const conversationId = created.data.conversation?.id ?? created.data.id;
+  await fetch(`${base}/ai/conversations/${conversationId}/turns`, { method: "POST", headers: { "Content-Type": "application/json", Cookie: viewer.cookie }, body: JSON.stringify({ message: `ابحث عن طاولة خشب زان ${run}` }) }).then((r) => r.text());
+  const inContext = await request(`/ads/placements?slot=SIDEBAR&conversationId=${conversationId}`, "GET", undefined, viewer.cookie);
+  assert.equal(inContext.data.context, "CONVERSATION", inContext.raw.slice(0, 300));
+  assert.ok(inContext.data.cards.length >= 1);
+  assert.ok(inContext.data.cards.every((card: any) => card.kind === "LISTING"), "stores have no single category: left out in a context");
+  assert.ok(inContext.data.cards.some((card: any) => card.listingId === car));
+  assert.ok(!inContext.data.cards.some((card: any) => card.listingId === phone), "an unrelated phone is not shown while the viewer looks at tables");
+  // Someone else's conversation id gives nothing about it (owner-checked): market-wide only.
+  const stranger = await account("ctxstranger");
+  const foreign = await request(`/ads/placements?slot=SIDEBAR&conversationId=${conversationId}`, "GET", undefined, stranger.cookie);
+  assert.equal(foreign.data.context, "MARKET");
+  // Market-wide: the higher-priority campaign is ranked first (the card the sidebar shows first).
+  const market = await displayPlacementCards({ placement: "SIDEBAR", market: JO, viewerId: stranger.id });
+  const order = market.cards.map((card) => card.listingId);
+  assert.ok(order.includes(phone) && order.includes(car));
+  assert.ok(order.indexOf(phone) < order.indexOf(car), `priority 400 ranks before 100: ${order}`);
+  assert.ok(market.cards.length <= 3, "the sidebar rotates through at most three");
 });

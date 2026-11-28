@@ -82,6 +82,7 @@ type ResolvedSubject = {
   kind: "LISTING" | "STORE";
   id: string;
   title: string;
+  imagePath: string | null;
   categoryId: string | null;
   available: boolean;
   reason?: string;
@@ -97,9 +98,10 @@ async function resolveSubject(actorId: string, market: Market, subject: Campaign
     if (!row || row.offer.marketId !== market.id) throw fail(404, "الإعلان غير موجود", "SUBJECT_NOT_FOUND");
     const eligible = await listingPromotionEligibility(row.offer, row.sellerStatus, market, tx);
     const title = typeof row.offer.data.title === "string" ? row.offer.data.title : "إعلان";
+    const imagePath = listingImageOf(row.offer.data as { imageUrl?: unknown; imageUrls?: unknown });
     return eligible.ok
-      ? { kind: "LISTING", id: row.offer.id, title, categoryId: eligible.categoryId, available: true }
-      : { kind: "LISTING", id: row.offer.id, title, categoryId: null, available: false, reason: eligible.reason };
+      ? { kind: "LISTING", id: row.offer.id, title, imagePath, categoryId: eligible.categoryId, available: true }
+      : { kind: "LISTING", id: row.offer.id, title, imagePath, categoryId: null, available: false, reason: eligible.reason };
   }
   const [store] = await tx
     .select({ profile: businessProfiles, ownerStatus: users.status })
@@ -112,6 +114,7 @@ async function resolveSubject(actorId: string, market: Market, subject: Campaign
     kind: "STORE",
     id: store.profile.id,
     title: store.profile.displayName,
+    imagePath: await storeImage(store.profile.ownerUserId, market.id),
     categoryId: null,
     available: ok,
     ...(ok ? {} : { reason: store.ownerStatus !== "ACTIVE" ? "حساب صاحب المتجر غير نشط حاليًا" : "يجب أن يكون المتجر منشورًا وموثقًا للترويج له" }),
@@ -206,6 +209,8 @@ async function placementAvailability(product: ProductRow, subject: ResolvedSubje
   if (!subject.available) return subject.reason ?? "غير متاح للترويج";
   if (!(product.subjectKinds ?? ["LISTING"]).includes(subject.kind)) return subject.kind === "STORE" ? "هذا الموضع يعرض منتجات فقط، لا المتاجر" : "هذا الموضع للمتاجر فقط";
   if (subject.kind === "LISTING" && product.categoryId && product.categoryId !== subject.categoryId) return "هذا الموضع لا يخص فئة إعلانك";
+  if ((product.placement === "HERO" || product.placement === "SIDEBAR") && !subject.imagePath)
+    return subject.kind === "STORE" ? "أضف صورة لمنتج واحد على الأقل في متجرك؛ هذا الموضع يعرض صورة" : "أضف صورة للمنتج أولًا؛ هذا الموضع يعرض صورة المنتج";
   if (await subjectHolds(subject, product.placement, tx)) return "لديك حملة قائمة أو دفع قيد الإتمام على هذا الموضع";
   if (product.capacity != null && (await usedCapacity(product.id, tx)) >= product.capacity) return "هذا الموضع ممتلئ حاليًا في سوقك";
   return undefined;
@@ -223,7 +228,7 @@ export async function placementCatalog(actorId: string, market: Market, subject:
     const reason = await placementAvailability(product, resolved, db);
     options.push(optionView(product, market, !reason, reason));
   }
-  return { subject: { kind: resolved.kind, id: resolved.id, title: resolved.title, available: resolved.available, reason: resolved.reason }, options };
+  return { subject: { kind: resolved.kind, id: resolved.id, title: resolved.title, imagePath: resolved.imagePath, available: resolved.available, reason: resolved.reason }, options };
 }
 
 export type CampaignQuoteLine = {
@@ -653,6 +658,21 @@ export function storeItemServes(row: Pick<StoreItem, "status" | "paymentStatus" 
   return row.status === "ACTIVE" && row.paymentStatus === "PROVIDER_PAID" && row.startsAt.getTime() <= now.getTime() && row.expiresAt.getTime() > now.getTime();
 }
 
+/** The cover photo of the store owner's latest published listing with a photo in this market. */
+export async function storeImage(ownerUserId: string, marketId: string): Promise<string | null> {
+  const rows = await db.select({ data: offers.data }).from(offers).where(and(eq(offers.sellerId, ownerUserId), eq(offers.marketId, marketId), eq(offers.status, "PUBLISHED"))).orderBy(desc(offers.createdAt)).limit(20);
+  for (const row of rows) {
+    const image = listingImageOf(row.data as { imageUrl?: unknown; imageUrls?: unknown });
+    if (image) return image;
+  }
+  return null;
+}
+function listingImageOf(data: { imageUrl?: unknown; imageUrls?: unknown }): string | null {
+  if (typeof data.imageUrl === "string" && data.imageUrl.trim()) return data.imageUrl;
+  const first = Array.isArray(data.imageUrls) ? data.imageUrls.find((item) => typeof item === "string" && item.trim()) : undefined;
+  return typeof first === "string" ? first : null;
+}
+
 export async function servingStoreItems(marketId: string, placement: "HERO" | "SIDEBAR", now: Date, viewerId?: string) {
   const rows: StoreItem[] = await db
     .select()
@@ -667,7 +687,15 @@ export async function servingStoreItems(marketId: string, placement: "HERO" | "S
     .innerJoin(users, eq(users.id, businessProfiles.ownerUserId))
     .where(inArray(businessProfiles.id, [...new Set(live.map((row) => row.businessId))]));
   const ok = new Map(stores.filter((s) => s.profile.publicationStatus === "PUBLISHED" && s.ownerStatus === "ACTIVE").map((s) => [s.profile.id, s.profile]));
-  return live.filter((row) => ok.has(row.businessId)).map((row) => ({ row, profile: ok.get(row.businessId)! }));
+  const out: { row: StoreItem; profile: typeof businessProfiles.$inferSelect; imagePath: string }[] = [];
+  for (const row of live) {
+    const profile = ok.get(row.businessId);
+    if (!profile) continue;
+    // A store card shows a product photo from the store; a store with no photo is not shown.
+    const imagePath = await storeImage(profile.ownerUserId, marketId);
+    if (imagePath) out.push({ row, profile, imagePath });
+  }
+  return out;
 }
 
 /** One impression per store placement, viewer and day (never billable; the viewer is an HMAC key). */
@@ -713,12 +741,15 @@ export type CampaignPlacementResult = {
   impressions: number;
   clicks: number;
   engagements: number;
-  orders: number;
+  /** null: no reliable attribution exists for this placement (store cards); never shown as 0. */
+  orders: number | null;
+  ordersNote?: string;
 };
 export type CampaignResult = {
   campaignId: string;
   subjectKind: "LISTING" | "STORE";
   subjectTitle: string;
+  subjectImage: string | null;
   status: string;
   statusLabel: string;
   paymentNote: string;
@@ -726,7 +757,8 @@ export type CampaignResult = {
   refundReviewLabel: string | null;
   adCopy: string;
   placements: CampaignPlacementResult[];
-  totals: { impressions: number; clicks: number; engagements: number; orders: number };
+  /** orders: the sum of placements WITH reliable attribution; ordersPartial when some have none. */
+  totals: { impressions: number; clicks: number; engagements: number; orders: number; ordersPartial: boolean };
   previous: { impressions: number; clicks: number; engagements: number; orders: number } | null;
   advice: string[];
   createdAt: string;
@@ -773,7 +805,7 @@ function adviceFor(result: Pick<CampaignResult, "status" | "totals" | "placement
   if (result.status === "PENDING_PAYMENT") return ["الحملة لم تبدأ بعد: تبدأ فقط بعد تأكيد الدفع."];
   if (live && result.totals.impressions === 0) advice.push("لا ظهور مسجل بعد. مواضع البحث والمحادثة تظهر فقط عندما يطابق طلب المشتري إعلانك؛ وضوح العنوان والفئة يرفع فرص المطابقة.");
   if (result.totals.impressions >= 20 && result.totals.clicks === 0) advice.push("ظهر إعلانك دون نقرات: جرّب صورة أوضح أو نصًا يذكر السعر والحالة والمدينة.");
-  if (result.totals.clicks > 0 && result.totals.orders === 0) advice.push("هناك اهتمام دون طلبات حتى الآن: راجع السعر وطريقة التسليم وردّك على الاستفسارات.");
+  if (result.totals.clicks > 0 && result.totals.orders === 0 && !result.totals.ordersPartial) advice.push("هناك اهتمام دون طلبات حتى الآن: راجع السعر وطريقة التسليم وردّك على الاستفسارات.");
   const best = [...result.placements].filter((item) => item.impressions > 0).sort((a, b) => b.clicks / b.impressions - a.clicks / a.impressions)[0];
   if (best && result.placements.length > 1 && best.clicks > 0) advice.push(`أفضل نسبة نقر حتى الآن في «${best.name}» (${best.clicks} من ${best.impressions}).`);
   if (!advice.length && live) advice.push("الأرقام قليلة حتى الآن للحكم؛ تابع النتائج بعد يومين.");
@@ -825,9 +857,10 @@ export async function campaignResults(actorId: string, market: Market, campaignI
         expiresAt: started && status !== "CANCELLED" ? row.expiresAt.toISOString() : null,
         remainingDays: running ? Math.max(0, Math.ceil((row.expiresAt.getTime() - now.getTime()) / DAY_MS)) : null,
         ...c,
+        ...("businessId" in row ? { orders: null, ordersNote: "غير متاح: لا توجد بعد آلية موثوقة تربط طلبًا بإعلان المتجر" } : {}),
       };
     });
-    const totals = placements.reduce((t, p) => ({ impressions: t.impressions + p.impressions, clicks: t.clicks + p.clicks, engagements: t.engagements + p.engagements, orders: t.orders + p.orders }), { impressions: 0, clicks: 0, engagements: 0, orders: 0 });
+    const totals = placements.reduce((t, p) => ({ impressions: t.impressions + p.impressions, clicks: t.clicks + p.clicks, engagements: t.engagements + p.engagements, orders: t.orders + (p.orders ?? 0), ordersPartial: t.ordersPartial || p.orders === null }), { impressions: 0, clicks: 0, engagements: 0, orders: 0, ordersPartial: false });
     const anyRunning = placements.some((p) => p.status === "ACTIVE" || p.status === "PAUSED");
     const status = campaign.status === "PENDING_PAYMENT" || campaign.status === "CANCELLED" ? campaign.status : anyRunning ? (placements.some((p) => p.status === "CANCELLED") ? "PARTIAL" : "ACTIVE") : "ENDED";
     // The previous comparable campaign: same subject, created earlier, actually paid.
@@ -865,6 +898,9 @@ export async function campaignResults(actorId: string, market: Market, campaignI
       campaignId: campaign.id,
       subjectKind: base.subjectKind,
       subjectTitle: await subjectTitle(campaign),
+      subjectImage: campaign.listingId
+        ? await db.select({ data: offers.data }).from(offers).where(eq(offers.id, campaign.listingId)).then(([row]) => (row ? listingImageOf(row.data as { imageUrl?: unknown; imageUrls?: unknown }) : null))
+        : await storeImage(campaign.sellerId, campaign.marketId),
       status,
       statusLabel: STATUS_LABELS[status] ?? status,
       paymentNote,

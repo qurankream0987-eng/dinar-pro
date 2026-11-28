@@ -51,3 +51,16 @@ await test("OA-02 every D1/D2 route has an operation, and the generated client k
   for (const name of ["useCreateBusinessDraft", "useGetSubscriptionPlans", "useDecideBusinessVerification", "usePostOrdersIdCashRefunds", "usePostAccountPolicyDecisions", "usePostAccountSupportCases"])
     assert.ok(generated.includes(name), name);
 });
+
+await test("OA-03 every Jassim Ads route has an operation with the access the router enforces", () => {
+  const ads = [...routes("advertising.ts"), ...routes("commercial.ts").filter((route) => /^\/commercial\/promotion-(?:campaigns|payments)/.test(route.path))];
+  assert.ok(ads.length >= 18, String(ads.length));
+  const problems = ads.flatMap((route) => {
+    const op = operation(route.path, route.method);
+    if (!op) return [`${route.method} ${route.path}: missing`];
+    if (route.access === "PUBLIC" ? !op.includes("security: []") : op.includes("security: []")) return [`${route.method} ${route.path}: security mismatch`];
+    return [];
+  });
+  assert.deepEqual(problems, []);
+  for (const name of ["useQuotePromotionCampaign", "useCreatePromotionCampaignCheckout", "useGetAdPlacementCards"]) assert.ok(generated.includes(name), name);
+});
