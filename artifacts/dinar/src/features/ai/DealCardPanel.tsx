@@ -31,6 +31,7 @@ export type DealCard = {
   cod: { amountDue: string; currency: string; collected: boolean } | null;
   payment: { verification: "NONE" | "UNVERIFIED_BUYER_CLAIM" | "SELLER_ATTESTED"; platformVerified: false };
   actions: string[];
+  commission: { amount: string; state: "NONE" | "DUE_ON_COMPLETION" | "RECORDED_AS_DUE"; collected: false; note: string; sellerNetBeforeOtherCosts: string } | null;
   notice: string;
 };
 
@@ -158,6 +159,13 @@ export function DealCardPanel({ card, active, onSend }: { card: DealCard; active
           {can("REPORT_NOT_RECEIVED") && <button type="button" className={button} onClick={() => send("لم يصلني المبلغ")}>لم يصلني المبلغ</button>}
           {can("COD_COLLECTED") && <button type="button" className={button} onClick={() => send("استلمت المبلغ")}>حصّلت المبلغ نقدًا</button>}
           {can("CANCEL") && <button type="button" className={`${button} text-red-600`} onClick={() => send(`الغاء اتفاق الدفع ${ref}`)}>إلغاء اتفاق الدفع</button>}
+        </div>
+      )}
+
+      {card.commission && (
+        <div className="mt-3 text-sm">
+          <p>عمولة JassimAI: <strong dir="ltr">{card.commission.amount} {card.currency}</strong> · مستحق البائع قبل التكاليف الأخرى: <span dir="ltr">{card.commission.sellerNetBeforeOtherCosts}</span></p>
+          <p className="text-xs text-muted-foreground">{card.commission.note}</p>
         </div>
       )}
 

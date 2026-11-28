@@ -568,11 +568,39 @@ export async function dealCard(input: { actorId: string; orderId: string; market
           agreement.status === "BUYER_REPORTED_PAID" ? "UNVERIFIED_BUYER_CLAIM" : agreement.status === "SELLER_CONFIRMED_RECEIPT" || agreement.status === "COD_COLLECTED" ? "SELLER_ATTESTED" : "NONE",
         platformVerified: false,
       },
+      // Commission is shown to the seller only, from the order's immutable snapshot. «Due» is never «collected».
+      commission: role === "SELLER" ? commissionView(order) : null,
+      sellerClassification: classificationOf(order),
       actions: actionsFor(role, status, agreement, orderClosed),
       history: events.map((e: any) => ({ event: e.event, by: e.actorRole, status: e.toStatus, at: e.createdAt.toISOString() })),
       notice: "جاسم ينظم الاتفاق فقط. يتم الدفع مباشرة للبائع أو نقدًا عند الاستلام، ولا يستلم جاسم الأموال ولا يتحقق من التحويلات.",
     };
   });
+}
+
+const RULE_NOTES: Record<string, string> = {
+  PERSONAL_SALE_NO_COMMISSION: "بيع مقتنيات شخصية: لا عمولة.",
+  CONNECT_AGREEMENT_APPLIES: "شريك Jassim Connect: لا عمولة سوق؛ تطبق اتفاقية Connect (حصة من الربح المباشر).",
+  UNDER_REVIEW_NO_AUTOMATIC_COMMISSION: "التصنيف قيد المراجعة: لا عمولة تلقائية على هذا الطلب.",
+  MARKETPLACE_POLICY_RATE: "نشاط تجاري: عمولة السوق مستحقة عند اكتمال البيع وفق السياسة، وليست محصّلة.",
+};
+function classificationOf(order: Order) {
+  const c = (order.data?.sellerClassification ?? null) as { classification?: string } | null;
+  return c?.classification ? { classification: c.classification } : null;
+}
+function commissionView(order: Order) {
+  const scale = order.minorUnitScale;
+  const snapshot = (order.data?.commissionPolicy ?? {}) as { rateBasisPoints?: number; sellerClassification?: { rule?: string } };
+  const rule = snapshot.sellerClassification?.rule ?? "MARKETPLACE_POLICY_RATE";
+  return {
+    rateBasisPoints: snapshot.rateBasisPoints ?? null,
+    amount: (order.platformFeeMinor / 10 ** scale).toFixed(scale),
+    sellerNetBeforeOtherCosts: (order.sellerAmountMinor / 10 ** scale).toFixed(scale),
+    state: order.platformFeeMinor === 0 ? "NONE" : order.status === "COMPLETED" ? "RECORDED_AS_DUE" : "DUE_ON_COMPLETION",
+    collected: false,
+    rule,
+    note: RULE_NOTES[rule] ?? "",
+  };
 }
 
 function actionsFor(role: Role, status: string, agreement: Agreement, orderClosed: boolean): string[] {

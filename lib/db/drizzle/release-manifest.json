@@ -326,5 +326,9 @@
   {
     "tag": "0081_deal_payment_agreement",
     "sha256": "6ef247e10be4285f9dd9294b7c7e4adad013b0a60f417c9a3ef3f728b593c133"
+  },
+  {
+    "tag": "0082_seller_classification",
+    "sha256": "ea1f353b5bcdf12860d44ed0042ca3728c3913a708ce12bf030a32d8d97a323f"
   }
 ]

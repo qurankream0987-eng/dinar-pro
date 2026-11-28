@@ -132,3 +132,30 @@ export const dealPaymentEvents = pgTable(
     check("deal_payment_events_actor_present", sql`${t.actorRole} = 'SYSTEM' OR ${t.actorId} IS NOT NULL`),
   ],
 );
+
+export const SELLER_CLASSIFICATIONS = ["PERSONAL_SELLER", "INDIVIDUAL_MERCHANT", "REGISTERED_BUSINESS", "CONNECT_PARTNER", "UNDER_REVIEW"] as const;
+
+/** Seller classification history (0082), append-only; the latest row per seller and market is current. */
+export const sellerClassifications = pgTable(
+  "seller_classifications",
+  {
+    id: text("id").primaryKey(),
+    sellerId: text("seller_id").notNull().references(() => users.id),
+    marketId: text("market_id").notNull().references(() => markets.id),
+    classification: text("classification").notNull(),
+    confidence: integer("confidence").notNull(),
+    source: text("source").notNull(),
+    signals: jsonb("signals").$type<{ key: string; weight: number; detail?: string }[]>().default([]).notNull(),
+    reason: text("reason").notNull(),
+    actorId: text("actor_id").references(() => users.id),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    index("seller_classifications_current_idx").on(t.sellerId, t.marketId, t.createdAt),
+    check("seller_classifications_classification_valid", sql`${t.classification} IN ('PERSONAL_SELLER', 'INDIVIDUAL_MERCHANT', 'REGISTERED_BUSINESS', 'CONNECT_PARTNER', 'UNDER_REVIEW')`),
+    check("seller_classifications_source_valid", sql`${t.source} IN ('USER_DECLARED', 'SIGNALS', 'BUSINESS_PROFILE', 'CONNECT_PARTNER', 'ADMIN', 'APPEAL')`),
+    check("seller_classifications_confidence_range", sql`${t.confidence} BETWEEN 0 AND 100`),
+    check("seller_classifications_reason_present", sql`length(trim(${t.reason})) > 0`),
+    check("seller_classifications_actor_present", sql`${t.source} NOT IN ('USER_DECLARED', 'ADMIN', 'APPEAL') OR ${t.actorId} IS NOT NULL`),
+  ],
+);

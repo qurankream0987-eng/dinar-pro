@@ -10,6 +10,8 @@ import { marketFor } from "../lib/markets";
 import { COUNTRY_SEED, resolveCountry } from "../lib/deal-payments/catalog";
 import { recordCatalogChange } from "../lib/deal-payments/admin";
 import { dealPaymentsEnabled } from "../lib/deal-payments/flag";
+import { adminDecideClassification, CLASSIFICATION_LABELS_AR, declareSellerClassification, resolveSellerClassification } from "../lib/seller-classification";
+import { db } from "@workspace/db";
 import { adminSetDealStatus, applyDealAction, dealCard, sellerMethodsView, setSellerMethods } from "../lib/deal-payments/service";
 
 const router = Router();
@@ -111,6 +113,30 @@ router.post("/admin/deal-payments/catalog-changes", enabled, requireAuth, requir
 router.post("/admin/deal-payments/orders/:id/status", enabled, requireAuth, requireAdmin, async (req, res) => {
   const body = z.object({ status: z.enum(["CANCELLED", "DISPUTED", "COMPLETED"]), reason: z.string().min(3).max(500) }).strict().parse(req.body);
   res.json(await adminSetDealStatus({ adminId: req.actor!.id, orderId: id(req.params.id), status: body.status, reason: body.reason }));
+});
+
+// Seller classification: what Jassim currently thinks and why; the seller may declare or appeal.
+const classificationView = (r: Awaited<ReturnType<typeof resolveSellerClassification>>) => ({
+  classification: r.classification,
+  label: CLASSIFICATION_LABELS_AR[r.classification],
+  confidence: r.confidence,
+  source: r.source,
+  reason: r.reason,
+  signals: r.signals,
+  notice: "تصنيف تجاري داخلي لاحتساب العمولة، وليس حكمًا قانونيًا بشأن تسجيل النشاط.",
+});
+router.get("/seller-classification", requireAuth, noStore, async (req, res) => {
+  const market = await marketFor(req);
+  res.json(classificationView(await resolveSellerClassification(db, req.actor!.id, market.id)));
+});
+router.post("/seller-classification/declarations", requireAuth, noStore, async (req, res) => {
+  const body = z.object({ classification: z.enum(["PERSONAL_SELLER", "INDIVIDUAL_MERCHANT"]), statement: z.string().min(3).max(300), appeal: z.boolean().optional() }).strict().parse(req.body);
+  const market = await marketFor(req);
+  res.status(201).json(classificationView(await declareSellerClassification({ sellerId: req.actor!.id, marketId: market.id, ...body })));
+});
+router.post("/admin/seller-classifications", requireAuth, requireAdmin, async (req, res) => {
+  const body = z.object({ sellerId: z.string().min(1).max(80), marketId: z.string().min(1).max(10), classification: z.enum(["PERSONAL_SELLER", "INDIVIDUAL_MERCHANT", "REGISTERED_BUSINESS", "CONNECT_PARTNER", "UNDER_REVIEW"]), reason: z.string().min(3).max(500) }).strict().parse(req.body);
+  res.status(201).json(classificationView(await adminDecideClassification({ adminId: req.actor!.id, ...body })));
 });
 
 export default router;
