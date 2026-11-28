@@ -1,4 +1,4 @@
-import { ReportButton } from "@/features/ReportButton";
+﻿import { ReportButton } from "@/features/ReportButton";
 import { useState } from "react";
 import { Link, useLocation, useParams } from "wouter";
 import { toast } from "sonner";
@@ -195,7 +195,7 @@ function OfferView({
       <div className="grid gap-5 @4xl:grid-cols-[minmax(0,1fr)_400px] @4xl:gap-10">
         {/* Gallery */}
         <div className="relative -mx-[var(--gutter)] md:mx-0 @4xl:col-start-1 @4xl:row-start-1">
-          <div className="aspect-square max-h-[560px] w-full overflow-hidden md:aspect-[4/3] md:rounded-2xl md:border md:border-border">
+          <div className="aspect-square max-h-[560px] w-full overflow-hidden md:aspect-[4/3] md:rounded-[24px] md:border md:border-amber-400/25 md:shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_20px_44px_-16px_rgba(0,0,0,0.32)]">
             <SmartImage
               src={images[photo] ?? offer.imageUrl}
               alt={offer.title}
@@ -294,7 +294,7 @@ function OfferView({
               )}
             </div>
 
-            <div className="rounded-xl border border-border bg-card p-4 md:p-5">
+            <div className="rounded-2xl border border-border/85 bg-card/95 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.14),0_14px_34px_-14px_rgba(0,0,0,0.22)] backdrop-blur-sm md:p-5">
               <div className="flex items-end justify-between gap-3">
                 <div>
                   <p className="text-xs font-medium text-muted-foreground">
@@ -534,7 +534,7 @@ function OfferView({
             </div>
 
             {/* Seller */}
-            <div className="flex items-center gap-3 rounded-xl border border-border bg-card p-4">
+            <div className="flex items-center gap-3 rounded-2xl border border-border/85 bg-card/95 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.14),0_12px_28px_-14px_rgba(0,0,0,0.18)] backdrop-blur-sm">
               <Avatar
                 name={offer.sellerName}
                 src={
@@ -596,14 +596,14 @@ function OfferView({
 
         {/* Details */}
         <div className="space-y-4 @4xl:col-start-1 @4xl:row-start-2">
-          <section className="rounded-xl border border-border bg-card p-4 md:p-5">
+          <section className="rounded-2xl border border-border/85 bg-card/95 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.14),0_14px_34px_-14px_rgba(0,0,0,0.22)] backdrop-blur-sm md:p-5">
             <h2 className="mb-2 text-md font-bold">ما تشمله الوحدة</h2>
             <p className="whitespace-pre-line text-md leading-8 text-text-secondary">
               {offer.description}
             </p>
           </section>
 
-          <section className="rounded-xl border border-border bg-card p-4 md:p-5">
+          <section className="rounded-2xl border border-border/85 bg-card/95 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.14),0_14px_34px_-14px_rgba(0,0,0,0.22)] backdrop-blur-sm md:p-5">
             <h2 className="mb-3 text-md font-bold">طريقة التنفيذ</h2>
             <div className="flex gap-3">
               <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-primary-soft text-primary-soft-foreground">
@@ -660,7 +660,7 @@ function TrustItem({
   body: string;
 }) {
   return (
-    <div className="flex gap-3 rounded-xl border border-border bg-card p-4">
+    <div className="flex gap-3 rounded-2xl border border-border/80 bg-card/95 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_10px_24px_-14px_rgba(0,0,0,0.16)]">
       <Icon size={20} className="mt-0.5 shrink-0 text-primary" aria-hidden />
       <div>
         <p className="text-base font-semibold">{title}</p>

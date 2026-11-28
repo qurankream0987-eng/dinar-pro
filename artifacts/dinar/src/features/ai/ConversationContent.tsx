@@ -1,6 +1,7 @@
 import { WorkflowCard } from "./smart-store/WorkflowCard";
 import { ConnectActionCard } from "./smart-store/ConnectActionCard";
 import { MessageSmartStoreCard } from "./smart-store/MessageSmartStoreCard";
+import { LiveInteractiveCard, isLiveInteractiveCardLanguage } from "./LiveInteractiveCards";
 import { UniversalCards } from "./UniversalCards";
 import { PolicyReviewPanel, isPolicyReview } from "./PolicyReviewPanel";
 import { normalizeMemory } from "./memory-types";
@@ -299,7 +300,7 @@ function Workflow({
             <Route>
               {!user ? (
                 <>
-                  <p className="p-4">
+                  <p className="border-b border-border/60 px-4 py-2.5 text-center text-xs font-medium text-muted-foreground">
                     سجّل الدخول للوصول إلى بياناتك ومتابعة هذا الإجراء.
                   </p>
                   <Switch>
@@ -1360,7 +1361,7 @@ function ResultBlock({
   );
 }
 
-function MessageTurn({
+const MessageTurn = memo(function MessageTurn({
   message,
   onSend,
   onSelectMarket,
@@ -1571,6 +1572,6 @@ function MessageTurn({
       </div>
     </article>
   );
-}
+});
 
 export const MessageBubble = memo(MessageTurn);

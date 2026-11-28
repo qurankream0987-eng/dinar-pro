@@ -23,9 +23,27 @@ export const useMarketSheet = () => useContext(Ctx);
 
 function marketAvailabilityLabel(market: Market) {
   if (market.status === "DISABLED") return "غير متاح";
+  if (market.operationMode === "PRE_LEGAL") return "تشغيل تقني — الدفع نقدًا فقط";
   if (!market.priceConfigured || market.unitPriceMinor < 1) return "السعر غير معتمد";
   if (!isMarketAvailable(market)) return "قريبًا";
   return market.status === "LIMITED" ? "متاح بنطاق محدود" : "متاح الآن";
+}
+
+/** Small, honest market status pill: shown ONLY for PRE_LEGAL markets; renders nothing for FULL markets. */
+export function MarketOperationBadge({ className }: { className?: string }) {
+  const { market } = useAccount();
+  if (market?.operationMode !== "PRE_LEGAL") return null;
+  return (
+    <span
+      data-testid="badge-market-pre-legal"
+      className={cn(
+        "inline-flex items-center rounded-full border border-amber-500/35 bg-amber-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-amber-700 dark:text-amber-300",
+        className,
+      )}
+    >
+      تشغيل تقني — الدفع نقدًا فقط
+    </span>
+  );
 }
 
 export function MarketSheetProvider({ children }: { children: ReactNode }) {

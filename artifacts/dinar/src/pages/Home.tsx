@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { ArrowLeft, Bot, LayoutGrid, Megaphone, PackageOpen, Search, Store } from "lucide-react";
+import { ArrowLeft, Bot, Globe2, LayoutGrid, Megaphone, PackageOpen, Search, ShoppingBag, Sparkles, Store } from "lucide-react";
 import {
   useGetListings,
   useGetMarketplaceCategories,
@@ -61,35 +61,87 @@ function AdsInfo() {
   );
 }
 
-/** Sellers set listing prices in the selected market's currency. */
+/** Compact hero: one-sentence value prop, 3 starter actions (buy, sell, ask), and market selector. */
 function UnitPriceStrip() {
   const { market } = useAccount();
   const { open } = useMarketSheet();
-  if (market && !market.isActive) return <InlineAlert title={`سوق ${market.countryNameAr} — قريبًا`}>جاسم لم يبدأ استقبال العروض والطلبات في هذا السوق بعد. يمكنك تغيير السوق من الشريط العلوي.</InlineAlert>;
+  if (market && !market.isActive) {
+    return (
+      <InlineAlert title={`سوق ${market.countryNameAr} — قريبًا`}>
+        جاسم لم يبدأ استقبال العروض والطلبات في هذا السوق بعد. يمكنك تغيير السوق من الشريط العلوي.
+      </InlineAlert>
+    );
+  }
+  const tasks = [
+    {
+      href: "/search",
+      title: "أريد أن أشتري",
+      desc: "تصفح العروض بأسعار واضحة",
+      icon: ShoppingBag,
+      accent: "border-white/15 bg-white/[0.06] hover:border-white/30",
+      testId: "home-task-buy",
+    },
+    {
+      href: "/ai?sell=1",
+      title: "أريد أن أبيع",
+      desc: "اعرض منتجك أو خدمتك في دقائق",
+      icon: Store,
+      accent: "border-amber-400/45 bg-amber-500/15 hover:border-amber-400/70",
+      testId: "home-task-sell",
+    },
+    {
+      href: "/ai",
+      title: "اسأل جاسم",
+      desc: "قارن الأسعار واطلب بالمحادثة",
+      icon: Sparkles,
+      accent: "border-sky-400/30 bg-sky-500/12 hover:border-sky-400/55",
+      testId: "home-task-ask",
+    },
+  ];
   return (
     <section
-      aria-label="أسعار العروض في السوق"
-      className="relative flex items-center gap-3.5 overflow-hidden rounded-xl bg-ink p-4 text-ink-foreground md:p-5"
+      aria-label="مرحبًا بك في جاسم"
+      className="relative overflow-hidden rounded-2xl border border-amber-500/20 bg-ink p-4 text-ink-foreground shadow-sm md:p-5"
     >
-      <span aria-hidden className="absolute -start-10 -top-12 h-36 w-36 rounded-full border-[18px] border-white/[0.04]" />
-      <span
-        aria-hidden
-        className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-accent text-xl font-bold text-accent-foreground shadow-[inset_0_-3px_0_hsl(34_90%_40%/0.45)]"
-      >
-        <Store size={24} />
-      </span>
-      <div className="relative min-w-0 flex-1">
-        <p className="text-sm text-ink-foreground/70">كل بائع يحدد سعر الوحدة في سوق {market?.countryNameAr ?? "الكويت"}</p>
-        <p className="num text-xl font-bold leading-tight text-accent">{market?.currencyCode ?? "—"}</p>
-        <p className="mt-0.5 hidden text-sm text-ink-foreground/70 sm:block">السعر والإجمالي ظاهران قبل تأكيد الطلب.</p>
+      <span aria-hidden className="pointer-events-none absolute -start-12 -top-12 h-40 w-40 rounded-full border-[20px] border-white/[0.04]" />
+      <span aria-hidden className="pointer-events-none absolute -bottom-16 -end-10 h-44 w-44 rounded-full border-[22px] border-accent/10" />
+      <div className="relative flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-lg font-bold leading-snug sm:text-xl">
+            جاسم — مساعدك الذكي للشراء والبيع بالمحادثة
+          </h1>
+          <p className="mt-1 text-xs text-ink-foreground/75 sm:text-sm">
+            كل بائع يحدد سعر الوحدة في سوق {market?.countryNameAr ?? "الكويت"} (<span className="num font-semibold text-accent">{market?.currencyCode ?? "—"}</span>) والإجمالي واضح قبل التأكيد.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={open}
+          className={`${buttonClass("secondary", "sm")} min-h-10 shrink-0 gap-1.5`}
+          data-testid="button-home-market"
+        >
+          <Globe2 size={15} aria-hidden />
+          <span>تغيير السوق</span>
+        </button>
       </div>
-      <button
-        type="button"
-        onClick={open}
-        className={buttonClass("secondary", "sm")}
-      >
-        تغيير السوق
-      </button>
+      <div className="relative mt-3.5 grid gap-2 sm:grid-cols-3">
+        {tasks.map(({ href, title, desc, icon: Icon, accent, testId }) => (
+          <Link
+            key={href}
+            href={href}
+            data-testid={testId}
+            className={`pressable flex min-h-12 items-center gap-2.5 rounded-xl border px-3 py-2.5 text-start transition ${accent}`}
+          >
+            <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-white/10 text-accent">
+              <Icon size={16} aria-hidden />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-sm font-bold text-ink-foreground">{title}</span>
+              <span className="block truncate text-[11.5px] text-ink-foreground/70">{desc}</span>
+            </span>
+          </Link>
+        ))}
+      </div>
     </section>
   );
 }
@@ -143,10 +195,10 @@ function SellPrompt() {
 
 function GuestWelcome() {
   return (
-    <section className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-primary/20 bg-primary-soft/60 p-4">
-      <p className="text-base font-semibold text-foreground">حساب واحد للشراء والبيع. سلتك محفوظة لكل سوق.</p>
+    <section className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-500/25 bg-card/95 px-4 py-3 shadow-xs">
+      <p className="text-sm font-semibold text-foreground">حساب واحد للشراء والبيع في جاسم، وسلتك محفوظة لكل سوق.</p>
       <div className="flex gap-2">
-        <ButtonLink href="/register" size="sm">
+        <ButtonLink href="/register" size="sm" variant="gold">
           إنشاء حساب
         </ButtonLink>
         <ButtonLink href="/login" size="sm" variant="secondary">
@@ -199,7 +251,7 @@ export default function Home() {
   const more = offers.slice(10);
 
   return (
-    <div className="container-app space-y-6 pt-4 md:space-y-8 md:pt-6">
+    <div className="container-app space-y-5 pt-4 md:space-y-6 md:pt-5">
       <div className="space-y-4">
         <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(260px,0.8fr)]">
           <SearchLauncher />

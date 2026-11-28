@@ -106,7 +106,7 @@ export default function OrdersPage({ resourceIds, conversational = false }: { re
             <EmptyState icon={ReceiptText} title="لا توجد طلبات بهذه الحالة" compact />
           )
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-3.5">
             {shown.map((o, index) => (
               <div key={o.id} data-testid={conversational ? `order-result-${index + 1}` : undefined}>
                 {conversational && <p className="mb-2 text-sm font-semibold text-muted-foreground">الطلب {index + 1}</p>}

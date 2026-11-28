@@ -25,7 +25,7 @@ export function OrderCard({ order, userId, href }: { order: OrderView; userId?: 
     <Link
       href={href ?? `/orders/${order.id}`}
       data-testid={`row-order-${order.id}`}
-      className="pressable block rounded-xl border border-border bg-card p-3.5 hover:border-border-strong hover:shadow-sm md:p-4"
+      className="pressable block rounded-2xl border border-border/80 bg-card/95 p-3.5 shadow-xs transition hover:border-amber-500/35 hover:shadow-sm md:p-4"
     >
       <div className="flex gap-3">
         <div className="h-[68px] w-[68px] shrink-0 overflow-hidden rounded-md">
@@ -60,8 +60,8 @@ export function OrderCard({ order, userId, href }: { order: OrderView; userId?: 
         </div>
       </div>
       {todo && (
-        <div className="mt-3 flex items-start gap-2 rounded-md bg-accent-soft px-3 py-2 text-sm font-semibold text-accent-ink">
-          <CircleDot size={15} className="mt-0.5 shrink-0" aria-hidden />
+        <div className="mt-3 flex items-start gap-2 rounded-xl border border-amber-500/25 bg-amber-500/10 px-3 py-2 text-xs font-semibold text-foreground sm:text-sm">
+          <CircleDot size={15} className="mt-0.5 shrink-0 text-amber-500" aria-hidden />
           <span className="min-w-0 flex-1">المطلوب منك: {todo}</span>
           <span className="mt-px shrink-0 text-2xs font-medium opacity-80">{relativeTime(order.updatedAt)}</span>
         </div>

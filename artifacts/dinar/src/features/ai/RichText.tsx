@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Check, Copy } from "lucide-react";
 import { AnswerCard, detectAnswerCardLanguage } from "./AnswerCards";
+import { isLiveInteractiveCardLanguage, LiveInteractiveCard } from "./LiveInteractiveCards";
 import { inlineText, parseRichText, textDirection, type Inline, type RichBlock } from "./rich-text";
 
 function InlineText({ parts }: { parts: Inline[] }) {
@@ -81,6 +82,9 @@ function Block({ block }: { block: RichBlock }) {
   switch (block.kind) {
     case "code":
       {
+        if (isLiveInteractiveCardLanguage(block.language)) {
+          return <LiveInteractiveCard language={block.language} code={block.code} />;
+        }
         const card = detectAnswerCardLanguage(block.language, block.code);
         if (card) return <AnswerCard language={card} code={block.code} />;
       }
@@ -92,7 +96,6 @@ function Block({ block }: { block: RichBlock }) {
         <h4 dir={dirOf(block.inline)} className="ai-rich-subheading"><HeadingMark /><InlineText parts={block.inline} /></h4>
       );
     case "list": {
-      // One direction for the whole list keeps every marker on the same side.
       const items = block.items.map((item, index) => <li key={index}><InlineText parts={item} /></li>);
       const dir = dirOf(...block.items);
       return block.ordered ? <ol dir={dir} className="ai-rich-list ai-rich-ordered">{items}</ol> : <ul dir={dir} className="ai-rich-list">{items}</ul>;

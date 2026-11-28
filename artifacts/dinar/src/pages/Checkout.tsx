@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+﻿import { useState, type ReactNode } from "react";
 import { useLocation } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -42,9 +42,9 @@ function Step({
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-xl border border-border bg-card p-4 md:p-5">
+    <section className="rounded-2xl border border-border/85 bg-card/95 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.14),0_14px_34px_-14px_rgba(0,0,0,0.22)] backdrop-blur-sm md:p-5">
       <h2 className="mb-3 flex items-center gap-2.5 text-md font-bold">
-        <span className="num flex h-7 w-7 items-center justify-center rounded-full bg-primary-soft text-sm text-primary-soft-foreground">
+        <span className="num flex h-7 w-7 items-center justify-center rounded-full border border-amber-400/40 bg-gradient-to-br from-amber-400/25 to-primary-soft text-sm font-extrabold text-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.25)]">
           {n}
         </span>
         {title}
@@ -288,7 +288,7 @@ export default function CheckoutPage() {
         </div>
 
         <aside className="lg:sticky lg:top-[calc(var(--topbar-h)+24px)]">
-          <div className="rounded-xl border border-border bg-card p-4 md:p-5">
+          <div className="rounded-2xl border border-border/85 bg-card/95 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.14),0_14px_34px_-14px_rgba(0,0,0,0.22)] backdrop-blur-sm md:p-5">
             <h2 className="mb-3 text-md font-bold">المراجعة</h2>
             <Summary
               rows={[

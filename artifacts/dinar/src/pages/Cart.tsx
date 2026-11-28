@@ -257,7 +257,7 @@ export default function CartPage() {
             <section
               key={g.sellerId}
               data-testid={`section-seller-${g.sellerId}`}
-              className="rounded-xl border border-border bg-card"
+              className="rounded-2xl border border-border/80 bg-card/95 shadow-xs"
             >
               <header className="flex items-center gap-2 border-b border-border px-4 py-3">
                 <Store
@@ -292,7 +292,7 @@ export default function CartPage() {
           className="lg:sticky lg:top-[calc(var(--topbar-h)+24px)]"
           data-testid="panel-cart-summary"
         >
-          <div className="rounded-xl border border-border bg-card p-4 md:p-5">
+          <div className="rounded-2xl border border-border/80 bg-card/95 p-4 shadow-xs md:p-5">
             <h2 className="mb-3 text-md font-bold">ملخص الطلب</h2>
             <Summary
               rows={[
@@ -313,6 +313,7 @@ export default function CartPage() {
                   ),
                 },
                 { label: "رسوم جاسم على المشتري", value: "لا يوجد" },
+                { label: "الدفع والتسليم", value: "يُنسَّق مع البائع بعد القبول" },
                 ...(agreementIssue
                   ? [{ label: "غير محتسب في الإجمالي", value: <span data-testid="text-cart-unpriced">عرض بانتظار الاتفاق على السعر</span> }]
                   : []),

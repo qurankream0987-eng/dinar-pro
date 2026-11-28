@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+﻿import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useSearch } from "wouter";
 import { Clock, SearchX, SlidersHorizontal, X, Search as SearchIcon } from "lucide-react";
 import { useGetListings, useGetMarketplaceCategories } from "@workspace/api-client-react";
@@ -160,7 +160,7 @@ export default function SearchPage() {
   return (
     <div className="container-app pt-3 md:pt-6">
       {/* Search field */}
-      <div className="sticky top-[var(--topbar-h)] z-[var(--z-sticky)] -mx-[var(--gutter)] bg-background/95 px-[var(--gutter)] pb-3 pt-1 backdrop-blur">
+      <div className="sticky top-[var(--topbar-h)] z-[var(--z-sticky)] -mx-[var(--gutter)] border-b border-border/60 bg-background/85 px-[var(--gutter)] pb-3.5 pt-2 backdrop-blur-xl">
         <form
           role="search"
           className="flex items-center gap-2"
@@ -187,7 +187,7 @@ export default function SearchPage() {
               placeholder="ماذا تبحث عنه؟"
               aria-label="ابحث في العروض"
               data-testid="input-search-query"
-              className="h-12 w-full rounded-full border border-border bg-card pe-11 ps-11 text-md shadow-xs outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
+              className="h-12 w-full rounded-full border border-border/90 bg-card/95 pe-11 ps-11 text-md shadow-[inset_0_1px_0_rgba(255,255,255,0.14),0_8px_22px_-10px_rgba(0,0,0,0.18)] outline-none transition focus:border-amber-400/80 focus:ring-4 focus:ring-amber-400/15"
             />
             {query && (
               <button
@@ -251,7 +251,7 @@ export default function SearchPage() {
 
       {/* Suggestions while typing */}
       {suggestions.length > 0 && (
-        <ul aria-label="اقتراحات" className="mb-4 overflow-hidden rounded-xl border border-border bg-card">
+        <ul aria-label="اقتراحات" className="mb-4 overflow-hidden rounded-2xl border border-border/80 bg-card/95 shadow-[inset_0_1px_0_rgba(255,255,255,0.14),0_14px_32px_-12px_rgba(0,0,0,0.24)] backdrop-blur-md">
           {suggestions.map((s) => (
             <li key={s}>
               <button

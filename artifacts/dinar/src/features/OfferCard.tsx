@@ -161,10 +161,10 @@ export function OfferCard({
       onClick={onOpen ? (event) => { event.preventDefault(); onOpen(); } : undefined}
       data-testid={`card-listing-${offer.id}`}
       className={cn(
-        "group flex min-w-0 flex-col overflow-hidden border border-border bg-card transition-[box-shadow,border-color,transform] duration-200 hover:border-border-strong hover:shadow-md focus-visible:shadow-md active:scale-[0.99]",
+        "group flex min-w-0 flex-col overflow-hidden border border-border/80 bg-card/95 shadow-xs transition-[box-shadow,border-color,transform] duration-200 hover:border-amber-500/35 hover:shadow-md focus-visible:shadow-md active:scale-[0.99]",
         conversational
           ? "rounded-2xl shadow-sm shadow-black/15"
-          : "rounded-xl",
+          : "rounded-2xl",
       )}
     >
       <div className={cn("relative", conversational ? "aspect-[4/3]" : "aspect-square", out && "opacity-60 grayscale")}>

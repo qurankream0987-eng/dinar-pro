@@ -80,6 +80,20 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, 'dist/public'),
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes("node_modules")) return;
+          if (id.includes("maplibre-gl")) return "vendor-maplibre";
+          if (id.includes("framer-motion")) return "vendor-motion";
+          if (id.includes("@radix-ui")) return "vendor-radix";
+          if (id.includes("@tanstack")) return "vendor-query";
+          if (id.includes("lucide-react")) return "vendor-icons";
+          if (id.includes("/zod/")) return "vendor-zod";
+          if (id.includes("/react/") || id.includes("/react-dom/") || id.includes("/scheduler/")) return "vendor-react";
+        },
+      },
+    },
   },
   server: {
     proxy: { "/api": { target: process.env.API_PROXY_TARGET ?? "http://127.0.0.1:8080" } },

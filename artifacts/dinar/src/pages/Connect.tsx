@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+﻿import { useCallback, useEffect, useState } from "react";
 import { Link } from "wouter";
 import { api } from "@/account/Account";
 import { Button } from "@/ui/Button";
@@ -8,6 +8,8 @@ import { ConnectOAuthControls } from "@/features/ConnectOAuthControls";
 import { ConnectTeam, ConnectReadOnlyCatalog } from "@/features/ConnectTeam";
 import { ConnectDiagnosticsPanel } from "@/features/ConnectDiagnostics";
 import { ConnectDashboard } from "@/features/ConnectDashboard";
+import { ConnectCardSandbox } from "@/features/ConnectCardSandbox";
+import { ConnectUniversalWizard } from "@/features/ConnectUniversalWizard";
 type Site = { id: string; hostname: string; status: string };
 type Integration = {
   id: string;
@@ -53,7 +55,7 @@ function ModeChoice({ value, onChange, name }: { value: ConnectParticipationMode
     <fieldset className="space-y-2" data-testid={`connect-mode-choice-${name}`}>
       <legend className="font-semibold">طريقة المشاركة في جاسم Connect</legend>
       {CONNECT_PARTICIPATION_MODES.map((mode) => (
-        <label key={mode} className="flex min-h-11 cursor-pointer items-start gap-3 rounded-lg border p-3 has-[:checked]:border-primary">
+        <label key={mode} className="pressable flex min-h-11 cursor-pointer items-start gap-3 rounded-2xl border border-border/85 bg-card/90 p-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] transition has-[:checked]:border-amber-400/80 has-[:checked]:bg-amber-500/10 has-[:checked]:ring-1 has-[:checked]:ring-amber-400/30">
           <input
             type="radio"
             name={name}
@@ -167,7 +169,27 @@ export default function ConnectPage() {
         Business. أي عمولة تتطلب اتفاقًا منفصلًا مقبولًا وتحويلًا موثّقًا. الربط
         لا يمنح إذنًا للشراء أو التسوية.
       </p>
-      <Link href="/" className="underline">
+      <ol aria-label="خطوات الربط في جاسم كونيكت" data-testid="connect-onboarding-stepper" className="grid grid-cols-2 gap-2.5 rounded-2xl border border-amber-400/30 bg-card/95 p-3.5 text-xs shadow-[inset_0_1px_0_rgba(255,255,255,0.16),0_12px_28px_-14px_rgba(0,0,0,0.22)] sm:grid-cols-4">
+        {[
+          { step: "1", title: "الربط السريع", desc: "أضف رابط متجرك أو اختر منصتك" },
+          { step: "2", title: "التحقق من الملكية", desc: "تلقائي OAuth أو وسم أو DNS" },
+          { step: "3", title: "معاينة البطاقة", desc: "اختبر بطاقة متجرك داخل المحادثة" },
+          { step: "4", title: "التفعيل المباشر", desc: "مزامنة الكتالوج والبيع الفوري" },
+        ].map((item) => (
+          <li key={item.step} className="flex items-start gap-2 rounded-xl border border-border/70 bg-muted/30 p-2.5">
+            <span className="num grid size-6 shrink-0 place-items-center rounded-full border border-amber-400/45 bg-amber-500/15 text-[11px] font-extrabold text-amber-600 dark:text-amber-300">
+              {item.step}
+            </span>
+            <div className="min-w-0">
+              <p className="font-bold text-foreground">{item.title}</p>
+              <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground">{item.desc}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
+      <ConnectUniversalWizard />
+      <ConnectCardSandbox />
+      <Link href="/" className="inline-flex items-center gap-1 text-sm font-semibold text-primary underline">
         العودة إلى المحادثة
       </Link>
       {loading && <p role="status">جارٍ تحميل حسابات الشركاء…</p>}
@@ -177,7 +199,7 @@ export default function ConnectPage() {
         </p>
       )}
       {message && <p role="status">{message}</p>}
-      <section className="space-y-3 rounded-xl border p-4">
+      <section className="space-y-3 rounded-2xl border border-border/85 bg-card/95 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_12px_28px_-14px_rgba(0,0,0,0.18)] md:p-5">
         <h2 className="font-bold">تسجيل نشاط قائم</h2>
         {businesses.length === 0 ? (
           <p>
@@ -281,7 +303,7 @@ export default function ConnectPage() {
               </form>
             )}
           </section>
-          <section className="space-y-3 rounded-xl border p-4">
+          <section className="space-y-3 rounded-2xl border border-border/85 bg-card/95 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_12px_28px_-14px_rgba(0,0,0,0.18)] md:p-5">
             <h2 className="font-bold">حالة الحساب</h2>
             <p data-testid="connect-partner-status">
               {partner.status} — توثيق النشاط:{" "}
@@ -300,7 +322,7 @@ export default function ConnectPage() {
               إرسال الحساب للمراجعة
             </Button>
           </section>
-          <section className="space-y-3 rounded-xl border p-4">
+          <section className="space-y-3 rounded-2xl border border-border/85 bg-card/95 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_12px_28px_-14px_rgba(0,0,0,0.18)] md:p-5">
             <h2 className="font-bold">إثبات ملكية موقعك</h2>
             <form
               onSubmit={(e) => {
@@ -379,7 +401,7 @@ export default function ConnectPage() {
               </div>
             ))}
           </section>
-          <section className="space-y-3 rounded-xl border p-4">
+          <section className="space-y-3 rounded-2xl border border-border/85 bg-card/95 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_12px_28px_-14px_rgba(0,0,0,0.18)] md:p-5">
             <h2 className="font-bold">ربط كتالوج خارجي</h2>
             <p>
               هذا المسار يتيح إرسال كتالوج عبر API بعد مراجعة الهوية والموقع
