@@ -14,7 +14,7 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { readFile, unlink } from "node:fs/promises";
 import { eq } from "drizzle-orm";
-import { db, listingPromotions, markets, pool, users } from "@workspace/db";
+import { businessProfiles, db, markets, pool, promotionCampaigns, users } from "@workspace/db";
 import app from "../src/app";
 import { startDinarBrowserTestWeb } from "./browser-test-web-server";
 import { appendCommercialPolicy } from "../src/lib/commercial-policy-append";
@@ -97,21 +97,30 @@ async function browser(phase: string, fixture: unknown, web: { baseUrl: string }
   return report;
 }
 
-test("ADS-PLAN browser: plan card, options, copy, interested buyers, review, payment handoff, results — mobile and desktop, RTL", async () => {
+test("ADS-PLAN browser: Go Sell for Me plan, placement builder (multi-select, days, copy, server total), payment handoff, per-placement results, store card — mobile and desktop, RTL", async () => {
   await db.update(markets).set({ isActive: true, status: "ACTIVE" }).where(eq(markets.id, "JO"));
   const admin = await register("admin");
   await db.update(users).set({ role: "ADMIN" }).where(eq(users.id, admin.id));
   await appendCommercialPolicy({ marketId: "JO", policy: { advertisingBillingActivation: "PROVIDER_DIRECT", advertisingBillingProvider: "test-gateway", minCohortSize: 3 }, actorId: admin.id });
-  for (const [name, productType, priceMinor, durationDays] of [["ظهور مميز", "VIP_LISTING", 8_000, 3], ["إبراز في البحث", "FEATURED_LISTING", 5_000, 7]] as const) {
-    const r = await req("/admin/markets/JO/commercial-products", "POST", { name: `${name} ${run}`, productType, categoryId: "electronics", priceMinor, durationDays, chargingMode: "FIXED" }, admin.cookie);
+  const product = async (body: Record<string, unknown>) => {
+    const r = await req("/admin/markets/JO/commercial-products", "POST", { chargingMode: "FIXED", ...body, name: `${body.name} ${run}` }, admin.cookie);
     assert.equal(r.status, 201, r.raw);
-  }
+    return r.data.id as string;
+  };
+  await product({ name: "الشريط الجانبي", productType: "SIDEBAR_AD", priceMinor: 2_000, durationDays: 7, pricingUnit: "DAY", minDays: 1, maxDays: 30, subjectKinds: ["LISTING", "STORE"] });
+  await product({ name: "الشريط الرئيسي", productType: "HERO_BANNER", priceMinor: 25_000, durationDays: 7, subjectKinds: ["LISTING", "STORE"] });
+  await product({ name: "إبراز في البحث", productType: "SPONSORED_SEARCH", categoryId: "electronics", priceMinor: 6_000, durationDays: 7 });
   const sellerAbove = await register("بائع-أ");
   const sellerBelow = await register("بائع-ب");
+  const storeOwner = await register("صاحب-متجر");
+  const viewer = await register("زائر");
   const titleAbove = `سماعة سوني ${run}`;
   const titleBelow = `مكواة فيليبس ${run}`;
   const listingAbove = await publish(sellerAbove, titleAbove);
   await publish(sellerBelow, titleBelow);
+  const storeId = randomUUID();
+  const storeName = `متجر الأمل ${run}`;
+  await db.insert(businessProfiles).values({ id: storeId, ownerUserId: storeOwner.id, marketId: "JO", displayName: storeName, normalizedName: `store-${storeId}`, categoryKey: "OTHER", legalName: "Synthetic Store", legalForm: "COMPANY", verificationStatus: "VERIFIED", verifiedAt: new Date(), verifiedBy: admin.id, publicationStatus: "PUBLISHED", idempotencyKey: randomUUID() });
   const JO = await resolveMarket((await db.select().from(markets).where(eq(markets.id, "JO")))[0]!);
   const buyers = [await register("مشتري1"), await register("مشتري2"), await register("مشتري3")];
   for (const b of buyers) await saveDemandRequest({ buyerId: b.id, market: JO, needText: titleAbove, consent: true });
@@ -119,16 +128,20 @@ test("ADS-PLAN browser: plan card, options, copy, interested buyers, review, pay
 
   const web = await startDinarBrowserTestWeb(origin);
   try {
-    const plan = await browser("PLAN", { sellerAbove, sellerBelow, titleAbove, titleBelow, expectedInterested: 3 }, web);
-    assert.ok(plan.checks.length >= 20, JSON.stringify(plan.checks));
-    const promotionId = plan.promotionId as string;
-    const [row] = await db.select().from(listingPromotions).where(eq(listingPromotions.id, promotionId));
-    assert.equal(row?.listingId, listingAbove);
-    assert.deepEqual([row?.status, row?.paymentStatus], ["PENDING_PAYMENT", "PROVIDER_PENDING"], "nothing starts from the browser confirmation");
-    const paid = await applyPromotionProviderEvent({ providerKey: "test-gateway", eventId: `b_${run}`, type: "PAID", eventType: "payment", digest: `b_${run}`, promotionId, expectedAccountId: "acct", facts: { status: "paid", ownerUserId: sellerAbove.id, subtotal: { amount: row!.priceMinorSnapshot === 5000 ? "5.000" : "8.000", currency: "JOD" } } });
-    assert.equal(paid.outcome, "APPLIED");
-    const results = await browser("RESULTS", { sellerAbove, titleAbove }, web);
-    assert.ok(results.checks.length >= 6, JSON.stringify(results.checks));
+    const plan = await browser("PLAN", { sellerAbove, sellerBelow, storeOwner, titleAbove, titleBelow, storeName }, web);
+    assert.ok(plan.checks.length >= 40, JSON.stringify(plan.checks));
+    for (const [campaignId, owner, total] of [[plan.campaignId, sellerAbove, "14.000"], [plan.storeCampaignId, storeOwner, "6.000"]] as const) {
+      const [campaign] = await db.select().from(promotionCampaigns).where(eq(promotionCampaigns.id, campaignId));
+      assert.equal(campaign?.status, "PENDING_PAYMENT", "nothing starts from the browser confirmation");
+      assert.equal((campaign!.totalMinor / 1000).toFixed(3), total, "the browser showed exactly the server total");
+      const paid = await applyPromotionProviderEvent({ providerKey: "test-gateway", eventId: `b_${campaignId}`, type: "PAID", eventType: "payment", digest: `b_${campaignId}`, promotionId: campaignId, expectedAccountId: "acct", facts: { status: "paid", ownerUserId: owner.id, subtotal: { amount: total, currency: "JOD" } } });
+      assert.equal(paid.outcome, "APPLIED");
+    }
+    const [aboveCampaign] = await db.select().from(promotionCampaigns).where(eq(promotionCampaigns.id, plan.campaignId));
+    assert.equal(aboveCampaign?.listingId, listingAbove);
+    assert.equal(aboveCampaign?.adCopy, plan.editedCopy, "the edited ad text is what was saved");
+    const results = await browser("RESULTS", { sellerAbove, viewer, titleAbove, storeName }, web);
+    assert.ok(results.checks.length >= 12, JSON.stringify(results.checks));
   } finally {
     await web.stop();
   }

@@ -1639,10 +1639,16 @@ async function analytics(actorId: string, market: Market, latest: CommerceQuery 
   // The campaign in context (status card) or all of the seller's campaigns.
   const focus = latest?.promotionId ? [latest.promotionId] : latestSet && (latestSet.query as { kind?: unknown; view?: unknown }).kind === "PROMOTION" && (latestSet.query as { promotionId?: unknown }).promotionId ? [String((latestSet.query as { promotionId: string }).promotionId)] : all.map((item) => item.id);
   const rows = await campaignAnalytics(actorId, market, focus);
+  const campaignRowIds = new Set((await db.select({ id: listingPromotions.id }).from(listingPromotions).where(and(eq(listingPromotions.sellerId, actorId), isNotNull(listingPromotions.campaignId)))).map((row) => row.id));
+  const placementCount = (await campaignResults(actorId, market).catch(() => [])).length;
   const budgeted = rows.filter((row) => row.budgetLabel);
   const summary = budgeted.length
     ? budgeted.map((row) => `«${row.listingTitle}»: صُرف ${row.spentLabel} من ${row.budgetLabel} وبقي ${row.remainingLabel}`).join("؛ ")
-    : `${rows.length} حملة`;
+    : (() => {
+        const standalone = rows.filter((row) => !campaignRowIds.has(row.promotionId)).length;
+        const total = standalone + placementCount;
+        return total === 1 ? "حملة واحدة" : total === 2 ? "حملتان" : `${total} حملات`;
+      })();
   return turnFor({ kind: "COMMERCE", ownerId: actorId, view: "CAMPAIGN_ANALYTICS" }, focus, `نتائج حملاتك (أرقام مجمّعة من أحداث يتحقق منها الخادم): ${summary}.`, actorId, market);
 }
 

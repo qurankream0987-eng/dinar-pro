@@ -76,109 +76,125 @@ async function newConversation(actor) {
 const noOverflow = (page) => page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1);
 const shot = async (page, name) => { await mkdir(SHOTS, { recursive: true }); const path = `${SHOTS}/${name}.png`; await page.screenshot({ path, fullPage: false }); report.screenshots.push(path); };
 const rtl = (locator) => locator.evaluate((el) => getComputedStyle(el).direction);
-const VIEWPORTS = [["mobile", { width: 390, height: 844 }], ["desktop", { width: 1280, height: 900 }]];
+const VIEWPORTS = [["mobile", { width: 390, height: 844 }], ["desktop", { width: 1440, height: 900 }]];
+const option = (builder, placement) => builder.locator(`[data-testid="campaign-option"][data-placement="${placement}"]`);
+async function waitTotal(builder, expected) {
+  const total = builder.getByTestId("campaign-total");
+  await builder.page().waitForFunction(({ el, want }) => el?.textContent?.includes(want), { el: await total.elementHandle({ timeout: 15_000 }), want: expected }, { timeout: 15_000 }).catch(() => {});
+  return (await total.textContent())?.trim() ?? "";
+}
+async function setOnly(builder, placements) {
+  for (const row of await builder.getByTestId("campaign-option").all()) {
+    const placement = await row.getAttribute("data-placement");
+    const selected = (await row.getAttribute("data-selected")) === "true";
+    if (selected !== placements.includes(placement)) await row.getByTestId("campaign-option-toggle").click();
+  }
+}
 
 try {
   if (PHASE === "PLAN") {
     for (const [label, viewport] of VIEWPORTS) {
-      // Above the privacy threshold: the interested-buyer count is shown, never who they are.
       const { context, page } = await open(F.sellerAbove, await newConversation(F.sellerAbove), viewport);
-      const planMsg = await send(page, "روّج لهذا المنتج");
+      const planMsg = await send(page, "عندي 100 قطعة من هذا المنتج وأريد بيعها");
       const surface = planMsg.getByTestId("commercial-surface");
-      check(`${label}: plan card shown`, await surface.getAttribute("data-view") === "PROMOTION_TYPE_OPTIONS");
-      check(`${label}: plan names the listing`, (await planMsg.innerText()).includes(F.titleAbove));
-      check(`${label}: no "simulation only" claim in a live-provider market`, await surface.getByTestId("commercial-simulation").count() === 0);
-      check(`${label}: card is RTL`, await rtl(surface) === "rtl");
-      const plan = surface.getByTestId("promotion-plan");
-      const planText = await plan.innerText();
-      check(`${label}: interested buyers above threshold`, planText.includes(`${F.expectedInterested} مشترٍ`), planText);
-      check(`${label}: no buyer identity revealed`, !/مشتري1|مشتري2|مشتري3/.test(await planMsg.innerText()));
-      const copy = plan.locator("li");
-      check(`${label}: three copy drafts`, await copy.count() === 3);
-      check(`${label}: copy from listing facts`, (await copy.first().innerText()).length > 5);
-      check(`${label}: nothing paid note`, planText.includes("لا يُدفع شيء"), planText);
-      const options = surface.getByTestId("promotion-option");
-      check(`${label}: two options`, await options.count() === 2);
-      const optionsText = await surface.locator("ol").first().innerText();
-      check(`${label}: server prices shown`, /5[.,٫]000|٥/.test(optionsText) && /8[.,٫]000|٨/.test(optionsText), optionsText);
-      const suggested = surface.locator('[data-testid="promotion-option"][data-suggested="true"]');
-      check(`${label}: one suggested option`, await suggested.count() === 1);
-      check(`${label}: suggested is the cheaper`, (await suggested.innerText()).includes("إبراز في البحث"), await suggested.innerText());
-      check(`${label}: no overflow (plan)`, await noOverflow(page));
-      await planMsg.scrollIntoViewIfNeeded();
-      await shot(page, `${label}-1-plan`);
-
-      const review = await click(page, suggested.getByRole("button"));
-      const reviewText = await review.innerText();
-      check(`${label}: review names provider`, reviewText.includes("بوابة الاختبار"), reviewText.slice(0, 400));
-      check(`${label}: review shows amount`, /5[.,٫]000|٥/.test(reviewText), reviewText.slice(0, 400));
-      const confirm = review.getByTestId("commercial-confirm");
-      const confirmLabel = await confirm.innerText();
-      check(`${label}: confirm button names provider, not Whop`, confirmLabel.includes("بوابة الاختبار") && !confirmLabel.includes("Whop"), confirmLabel);
-      check(`${label}: no overflow (review)`, await noOverflow(page));
-      await review.scrollIntoViewIfNeeded();
+      check(`${label}: plan card`, (await surface.getAttribute("data-view", { timeout: 15_000 })) === "PROMOTION_TYPE_OPTIONS");
+      const text = await planMsg.innerText();
+      check(`${label}: honest about the quantity`, text.includes("لا أعدك ببيع الكمية كلها"));
+      check(`${label}: RTL`, (await rtl(surface)) === "rtl");
+      check(`${label}: no simulation claim`, (await surface.getByTestId("commercial-simulation").count()) === 0);
+      const insights = surface.getByTestId("selling-insights");
+      await insights.waitFor({ timeout: 15_000 });
+      check(`${label}: real interest labelled «فعلي»`, (await insights.locator('[data-kind="REAL"]').first().innerText()).includes("فعلي"));
+      check(`${label}: interest count above threshold, no identity`, (await insights.innerText()).includes("3 مشترين") && !/مشتري1|مشتري2|مشتري3/.test(text));
+      check(`${label}: listing tip`, (await insights.locator('[data-kind="TIP"]').count()) >= 1);
+      check(`${label}: no promise on 100 pieces`, (await insights.innerText()).includes("لا أستطيع أن أعدك ببيع 100 قطعة"));
+      const builder = surface.getByTestId("campaign-builder");
+      await builder.waitFor({ timeout: 15_000 });
+      check(`${label}: «أين تريد ظهور إعلانك؟»`, (await builder.innerText()).includes("أين تريد ظهور إعلانك؟"));
+      check(`${label}: three placements offered`, (await builder.getByTestId("campaign-option").count()) === 3);
+      const suggestions = await builder.getByTestId("campaign-suggestions").locator("> div").count();
+      check(`${label}: one to three suggestions with reasons`, suggestions >= 1 && suggestions <= 3);
+      check(`${label}: no older one-at-a-time list`, (await surface.getByTestId("promotion-option").count()) === 0);
+      // One placement, per-day, days changed → server total.
+      await setOnly(builder, ["SIDEBAR"]);
+      check(`${label}: one placement total`, (await waitTotal(builder, "14.000")).includes("14.000"), await builder.getByTestId("campaign-total").textContent());
+      await option(builder, "SIDEBAR").getByTestId("campaign-option-days").fill("4");
+      check(`${label}: days change recomputes`, (await waitTotal(builder, "8.000")).includes("8.000"));
+      // Several placements, then all, then remove one.
+      await option(builder, "HERO").getByTestId("campaign-option-toggle").click();
+      check(`${label}: two placements`, (await waitTotal(builder, "33.000")).includes("33.000"));
+      await option(builder, "SPONSORED_SEARCH").getByTestId("campaign-option-toggle").click();
+      check(`${label}: all placements`, (await waitTotal(builder, "39.000")).includes("39.000"));
+      check(`${label}: a review line per placement`, (await builder.getByTestId("campaign-review-line").count()) === 3);
+      await option(builder, "HERO").getByTestId("campaign-option-toggle").click();
+      check(`${label}: removing recomputes`, (await waitTotal(builder, "14.000")).includes("14.000"));
+      check(`${label}: no overflow (builder)`, await noOverflow(page));
+      await builder.scrollIntoViewIfNeeded();
+      await shot(page, `${label}-1-builder`);
+      const copy = builder.getByTestId("campaign-copy");
+      const edited = `سماعة سوني أصلية بالضمان — اطلبها الآن ${label}`;
+      await copy.fill(edited);
+      const confirm = builder.getByTestId("campaign-confirm");
+      check(`${label}: confirm names the provider`, (await confirm.innerText()).includes("بوابة الاختبار"));
+      await builder.getByTestId("campaign-review").scrollIntoViewIfNeeded();
       await shot(page, `${label}-2-review`);
-
-      if (label === "mobile") {
-        // Cancel path: nothing is opened.
-        const cancelled = await click(page, review.getByTestId("commercial-cancel"));
-        await cancelled.getByTestId("commercial-surface").waitFor({ timeout: 15_000 }).catch(() => {});
-        check(`${label}: cancel leaves no checkout`, await cancelled.getByTestId("promotion-checkout").count() === 0, (await cancelled.innerText()).slice(0, 300));
-        await context.close();
-        continue;
+      if (label === "desktop") {
+        await confirm.click();
+        const handoff = builder.getByTestId("campaign-checkout");
+        await handoff.waitFor({ timeout: 15_000 });
+        const link = handoff.getByTestId("campaign-checkout-link");
+        const href = await link.getAttribute("href");
+        check(`${label}: one payment page for the campaign`, /^https:\/\/pay\.test-gateway\.example\/tg_/.test(href ?? ""), href);
+        check(`${label}: amount = reviewed total`, (await handoff.innerText()).includes("14.000"));
+        check(`${label}: nothing charged yet`, (await handoff.innerText()).includes("لم يُخصم شيء بعد"));
+        check(`${label}: link is noopener`, (await link.getAttribute("rel"))?.includes("noopener"));
+        check(`${label}: inputs locked after confirmation`, await copy.isDisabled());
+        check(`${label}: no overflow (handoff)`, await noOverflow(page));
+        await handoff.scrollIntoViewIfNeeded();
+        await shot(page, `${label}-3-handoff`);
+        report.campaignId = href.split("/tg_")[1];
+        report.editedCopy = edited;
       }
-      const handoff = await click(page, confirm);
-      const checkout = handoff.getByTestId("promotion-checkout");
-      await checkout.waitFor({ timeout: 15_000 }).catch(() => {});
-      check(`${label}: checkout card shown`, await checkout.count() === 1);
-      const link = checkout.getByTestId("promotion-checkout-link");
-      const href = await link.getAttribute("href");
-      check(`${label}: handoff link to provider`, /^https:\/\/pay\.test-gateway\.example\/tg_/.test(href ?? ""), href);
-      check(`${label}: link names provider`, (await link.innerText()).includes("بوابة الاختبار"), await link.innerText());
-      check(`${label}: link is noopener`, (await link.getAttribute("rel"))?.includes("noopener"));
-      check(`${label}: no wallet balance shown (wallet deferred)`, await handoff.getByTestId("commercial-balance").count() === 0);
-      check(`${label}: nothing charged yet`, (await handoff.innerText()).includes("لم يُخصم شيء بعد"));
-      check(`${label}: no overflow (handoff)`, await noOverflow(page));
-      await handoff.scrollIntoViewIfNeeded();
-      await shot(page, `${label}-3-handoff`);
-      report.promotionId = href.split("/tg_")[1];
       await context.close();
     }
-    // Below the privacy threshold: no count at all.
-    for (const [label, viewport] of VIEWPORTS) {
-      const { context, page } = await open(F.sellerBelow, await newConversation(F.sellerBelow), viewport);
-      const planMsg = await send(page, "روّج لهذا المنتج");
-      const plan = planMsg.getByTestId("promotion-plan");
-      await plan.waitFor({ timeout: 15_000 }).catch(() => {});
-      check(`${label}: below-threshold plan shown`, await plan.count() === 1, (await planMsg.innerText()).slice(0, 500));
-      check(`${label}: no interested count below threshold`, !/مشترٍ يبحثون/.test(await plan.innerText()), await plan.innerText());
-      await planMsg.scrollIntoViewIfNeeded();
-      await shot(page, `${label}-4-below-threshold`);
-      await context.close();
-    }
-    // Mobile handoff too (the other seller: the first listing already has a pending checkout).
+    // Below the privacy threshold (mobile): no count; honest limit; mobile handoff.
     {
       const { context, page } = await open(F.sellerBelow, await newConversation(F.sellerBelow), VIEWPORTS[0][1]);
       const planMsg = await send(page, "روّج لهذا المنتج");
-      const review = await click(page, planMsg.locator('[data-testid="promotion-option"][data-suggested="true"]').getByRole("button"));
-      check("mobile: confirm names provider", (await review.getByTestId("commercial-confirm").innerText()).includes("بوابة الاختبار"));
-      const handoff = await click(page, review.getByTestId("commercial-confirm"));
-      check("mobile: handoff link", /^https:\/\/pay\.test-gateway\.example\//.test(await handoff.getByTestId("promotion-checkout-link").getAttribute("href") ?? ""));
+      const insights = planMsg.getByTestId("selling-insights");
+      await insights.waitFor({ timeout: 15_000 });
+      const text = await planMsg.innerText();
+      check("mobile: no interest count below threshold", !/مشترين طلبوا|مشترٍ يبحثون/.test(text), text.slice(0, 500));
+      check("mobile: honest limit below threshold", (await insights.innerText()).includes("لا توجد بيانات اهتمام كافية"));
+      const builder = planMsg.getByTestId("campaign-builder");
+      await setOnly(builder, ["SPONSORED_SEARCH"]);
+      check("mobile: search-only total", (await waitTotal(builder, "6.000")).includes("6.000"));
+      await builder.getByTestId("campaign-confirm").click();
+      await builder.getByTestId("campaign-checkout").waitFor({ timeout: 15_000 });
+      check("mobile: handoff", /^https:\/\/pay\.test-gateway\.example\//.test((await builder.getByTestId("campaign-checkout-link").getAttribute("href")) ?? ""));
       check("mobile: no overflow (handoff)", await noOverflow(page));
-      await handoff.scrollIntoViewIfNeeded();
+      await builder.getByTestId("campaign-checkout").scrollIntoViewIfNeeded();
       await shot(page, "mobile-3-handoff");
       await context.close();
     }
-    // A second plan for a listing whose payment is already pending: shown honestly, nothing doubled.
+    // Store promotion (mobile): display placements only.
     {
-      const { context, page } = await open(F.sellerAbove, await newConversation(F.sellerAbove), VIEWPORTS[0][1]);
-      const planMsg = await send(page, "روّج لهذا المنتج");
-      const review = await click(page, planMsg.locator('[data-testid="promotion-option"][data-suggested="true"]').getByRole("button"));
-      await review.getByTestId("commercial-surface").waitFor({ timeout: 15_000 }).catch(() => {});
-      report.pendingRepeat = (await review.innerText()).slice(0, 600);
-      check("mobile: repeat on pending listing does not offer a second confirm", await review.getByTestId("commercial-confirm").count() === 0, report.pendingRepeat);
-      await review.scrollIntoViewIfNeeded();
-      await shot(page, "mobile-3b-pending-repeat");
+      const { context, page } = await open(F.storeOwner, await newConversation(F.storeOwner), VIEWPORTS[0][1]);
+      const msg = await send(page, "أريد ترويج متجري");
+      check("store: plan opened", (await msg.innerText()).includes(`خطة ترويج متجر «${F.storeName}»`));
+      const builder = msg.getByTestId("campaign-builder");
+      await builder.waitFor({ timeout: 15_000 });
+      const placements = await builder.getByTestId("campaign-option").evaluateAll((rows) => rows.map((row) => row.getAttribute("data-placement")).sort());
+      check("store: hero and sidebar only", JSON.stringify(placements) === JSON.stringify(["HERO", "SIDEBAR"]), placements);
+      await setOnly(builder, ["SIDEBAR"]);
+      await option(builder, "SIDEBAR").getByTestId("campaign-option-days").fill("3");
+      check("store: total", (await waitTotal(builder, "6.000")).includes("6.000"));
+      await builder.getByTestId("campaign-confirm").click();
+      await builder.getByTestId("campaign-checkout").waitFor({ timeout: 15_000 });
+      report.storeCampaignId = ((await builder.getByTestId("campaign-checkout-link").getAttribute("href")) ?? "").split("/tg_")[1];
+      check("store: handoff", Boolean(report.storeCampaignId));
+      await builder.scrollIntoViewIfNeeded();
+      await shot(page, "mobile-4-store");
       await context.close();
     }
   } else {
@@ -186,17 +202,35 @@ try {
       const { context, page } = await open(F.sellerAbove, await newConversation(F.sellerAbove), viewport);
       const msg = await send(page, "كيف تسير حملاتي");
       const surface = msg.getByTestId("commercial-surface");
-      check(`${label}: results card`, await surface.getAttribute("data-view") === "CAMPAIGN_ANALYTICS");
-      const campaigns = surface.getByTestId("commercial-campaign");
-      await campaigns.first().waitFor({ timeout: 15_000 }).catch(() => {});
-      check(`${label}: at least one campaign`, await campaigns.count() >= 1);
-      const text = await surface.innerText();
-      check(`${label}: active campaign for the listing`, text.includes(F.titleAbove) && text.includes("نشط"), text.slice(0, 400));
-      check(`${label}: no wallet balance in results`, await surface.getByTestId("commercial-balance").count() === 0);
-      check(`${label}: results RTL`, await rtl(surface) === "rtl");
+      check(`${label}: results card`, (await surface.getAttribute("data-view", { timeout: 15_000 })) === "CAMPAIGN_ANALYTICS");
+      const campaign = surface.getByTestId("placement-campaign").first();
+      await campaign.waitFor({ timeout: 15_000 });
+      check(`${label}: campaign active`, (await campaign.getAttribute("data-status")) === "ACTIVE");
+      const rows = campaign.getByTestId("placement-result");
+      check(`${label}: one row per placement`, (await rows.count()) === 2);
+      const text = await campaign.innerText();
+      check(`${label}: per-placement counts and remaining days`, text.includes("ظهور:") && text.includes("نقرات:") && text.includes("طلبات منسوبة:") && text.includes("متبقٍ:"));
+      check(`${label}: campaign totals`, (await campaign.getByTestId("placement-campaign-totals").innerText()).includes("الإجمالي"));
+      check(`${label}: payment confirmed note`, (await campaign.getByTestId("placement-campaign-payment").innerText()).includes("وصل الدفع"));
+      check(`${label}: results RTL`, (await rtl(surface)) === "rtl");
       check(`${label}: no overflow (results)`, await noOverflow(page));
-      await msg.scrollIntoViewIfNeeded();
+      await campaign.scrollIntoViewIfNeeded();
       await shot(page, `${label}-5-results`);
+      await context.close();
+    }
+    // A visitor on desktop sees the paid store in the sidebar, labelled; clicking is recorded.
+    {
+      const { context, page } = await open(F.viewer, await newConversation(F.viewer), VIEWPORTS[1][1]);
+      const card = page.getByTestId("sidebar-sponsored-card");
+      await card.waitFor({ timeout: 20_000 });
+      check("visitor: the sidebar shows a labelled paid card", (await card.innerText()).includes("إعلان ممول"));
+      const STORE_NAME = F.storeName;
+      const served = await page.evaluate(async () => (await (await fetch("/api/ads/placements?slot=SIDEBAR", { credentials: "include" })).json()).cards);
+      const store = served.find((item) => item.kind === "STORE");
+      check("visitor: the paid store is served in the sidebar placement", store?.title === STORE_NAME && store.label === "إعلان ممول" && store.path.startsWith("/business/"), served.map((c) => [c.kind, c.title]));
+      const hero = page.getByTestId("hero-sponsored");
+      check("visitor: hero carries only labelled paid cards", (await hero.count()) === 0 || (await hero.getByTestId("hero-sponsored-label").first().innerText()).includes("إعلان ممول"));
+      await shot(page, "desktop-6-sidebar-store");
       await context.close();
     }
   }
