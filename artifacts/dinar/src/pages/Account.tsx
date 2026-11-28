@@ -1,4 +1,4 @@
-﻿import { lazy, Suspense, useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
+import { lazy, Suspense, useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { Link, useSearch } from "wouter";
 import {
   Bell,

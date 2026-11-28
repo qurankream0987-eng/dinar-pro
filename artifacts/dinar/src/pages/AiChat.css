@@ -2360,6 +2360,13 @@ body:has(.dinar-chatgpt) {
 .dinar-chatgpt .ds-card[data-tone="WARNING"] { border-color: var(--ds-gold-line); }
 .dinar-chatgpt .ds-card[data-tone="DANGER"] { border-color: color-mix(in srgb, var(--ds-err) 45%, transparent); }
 .dinar-chatgpt .ds-card[data-state="EXPIRED"] > :not(.ds-notice) { opacity: .72; }
+/* UI-05 (restored, corrected): a card enters once; a proposal awaiting review reads differently from
+   a confirmed receipt. data-card-lifecycle carries the server's SURFACE_STATES (surface/primitives.tsx);
+   UI-05 targeted "PROPOSAL"/"RECEIPT", which the server never sends, so it is bound to the real states. */
+.dinar-chatgpt .ds-card { animation: dinar-card-enter var(--motion-card) var(--ease-standard) both; }
+.dinar-chatgpt .ds-card[data-card-lifecycle="PENDING_REVIEW"] { border-style: dashed; border-color: var(--ds-gold-line); }
+.dinar-chatgpt .ds-card[data-card-lifecycle="CONFIRMED"] { border-style: solid; box-shadow: 0 2px 8px rgb(0 0 0 / .05), inset 0 1px 0 rgb(255 255 255 / .08); }
+@media (prefers-reduced-motion: reduce) { .dinar-chatgpt .ds-card { animation: none; } }
 
 /* Header: optional icon, title and subtitle, optional badge or source. */
 .ds-header { display: flex; align-items: flex-start; gap: var(--ds-3); }

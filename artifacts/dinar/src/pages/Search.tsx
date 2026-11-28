@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useSearch } from "wouter";
 import { Clock, SearchX, SlidersHorizontal, X, Search as SearchIcon } from "lucide-react";
 import { useGetListings, useGetMarketplaceCategories } from "@workspace/api-client-react";

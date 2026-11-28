@@ -1,4 +1,4 @@
-﻿import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { Megaphone } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import {

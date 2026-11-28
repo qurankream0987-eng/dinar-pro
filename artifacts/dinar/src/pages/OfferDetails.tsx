@@ -1,4 +1,4 @@
-﻿import { ReportButton } from "@/features/ReportButton";
+import { ReportButton } from "@/features/ReportButton";
 import { useState } from "react";
 import { Link, useLocation, useParams } from "wouter";
 import { toast } from "sonner";

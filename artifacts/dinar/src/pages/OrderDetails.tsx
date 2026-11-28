@@ -1,4 +1,4 @@
-﻿import { ReportButton } from "@/features/ReportButton";
+import { ReportButton } from "@/features/ReportButton";
 import { OrderSettlementCard } from "@/features/ai/OrderSettlementCard";
 import { DealClosurePanel } from "@/features/DealClosurePanel";
 import { useEffect, useState, type ReactNode } from "react";

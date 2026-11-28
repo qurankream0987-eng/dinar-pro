@@ -42,7 +42,7 @@ export function WhopPaymentPanel({
   orderStatus: string;
   role: "buyer" | "seller" | "stranger";
 }) {
-  const { user } = useAccount();
+  const { user, market } = useAccount();
   const query = useQuery<PaymentResponse>({
     queryKey: ["whop-payment", orderId],
     queryFn: async () => (await api(`/whop/orders/${encodeURIComponent(orderId)}/payment`)) as PaymentResponse,
@@ -57,6 +57,18 @@ export function WhopPaymentPanel({
     },
   });
 
+  // UI-09 (restored): a market in pre-legal technical operation takes no electronic payment. The
+  // server refuses it too (lib/whop/checkout.ts); this only explains it to the parties.
+  if (market?.operationMode === "PRE_LEGAL" && role !== "stranger") {
+    return (
+      <Card testId="whop-payment-panel" className="rounded-2xl border-border/80 bg-card/95 shadow-xs">
+        <CardTitle>الدفع الإلكتروني غير متاح في دولتك حاليًا</CardTitle>
+        <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground" data-testid="whop-payment-pre-legal">
+          هذا السوق في وضع التشغيل التقني — الدفع نقدًا فقط. يمكنك تنسيق الدفع المباشر مع البائع من بطاقة التواصل والدفع.
+        </p>
+      </Card>
+    );
+  }
   if (query.isLoading || query.isError || !query.data?.enabled) return null;
   const payment = query.data.payment;
   if (!payment) return null;

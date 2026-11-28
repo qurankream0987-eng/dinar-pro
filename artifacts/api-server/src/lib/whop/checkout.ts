@@ -8,6 +8,7 @@ import { jodMinorToUsdMinor, selectFeePercent, usdMinorToAmount } from "./commis
 import { assertCountryAllowed } from "./countries";
 import { whopRefusal } from "./errors";
 import { sellerAccountFor } from "./accounts";
+import { assertMarketLegalCapability } from "../d16-readiness";
 
 export type WhopCheckoutView = {
   orderId: string;
@@ -114,6 +115,13 @@ export async function createWhopCheckout(input: {
     };
   }
 
+  // Electronic payment never runs before the market's legal approval (LEGAL_ONLY capability), even
+  // when the market operates pre-legally (browsing, listings, cash). Checked before any provider call.
+  try {
+    await assertMarketLegalCapability(order.marketId, "ELECTRONIC_PAYMENT");
+  } catch {
+    throw whopRefusal(409, "الدفع الإلكتروني غير متاح في دولتك حاليًا. يمكنك الدفع نقدًا أو مباشرة مع البائع.", "MARKET_ELECTRONIC_PAYMENT_UNAVAILABLE");
+  }
   if (order.status !== "CREATED")
     throw whopRefusal(409, "لا يمكن الدفع بعد بدء تنفيذ الطلب", "ORDER_NOT_PAYABLE");
   if (order.reservationExpiresAt && order.reservationExpiresAt <= new Date())
