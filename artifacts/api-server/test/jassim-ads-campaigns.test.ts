@@ -458,14 +458,15 @@ test("IMG-01 the product photo is required where the placement shows it: refused
   assert.equal(catalog.data.subject.imagePath, null);
   // A campaign bought with a photo stops showing in hero/sidebar if the photo is later removed.
   const other = await account("photo");
-  const withPhoto = await publish(other, `مروحة بصورة ${run}`);
+  const withPhoto = await publish(other, `فستان سهرة بصورة ${run}`, "fashion", "أزياء");
   const { checkout: c } = await checkout(other, subjectL(withPhoto), [{ productId: sidebar.id, days: 2 }]);
   await pay(c.data.campaignId, other.id, `img_${run}`, "4.000");
   const viewer = await account("imgviewer");
-  assert.ok((await displayPlacementCards({ placement: "SIDEBAR", market: JO, viewerId: viewer.id })).cards.some((card) => card.listingId === withPhoto && card.imagePath === PHOTO));
+  // (In its own category: the sidebar shows at most three, and this suite has many paid campaigns.)
+  assert.ok((await displayPlacementCards({ placement: "SIDEBAR", market: JO, viewerId: viewer.id, categoryId: "fashion" })).cards.some((card) => card.listingId === withPhoto && card.imagePath === PHOTO));
   const [row] = await db.select({ data: offers.data }).from(offers).where(eq(offers.id, withPhoto));
   await db.update(offers).set({ data: { ...(row!.data as Record<string, unknown>), imageUrl: "", imageUrls: [] } }).where(eq(offers.id, withPhoto));
-  assert.ok(!(await displayPlacementCards({ placement: "SIDEBAR", market: JO, viewerId: viewer.id })).cards.some((card) => card.listingId === withPhoto));
+  assert.ok(!(await displayPlacementCards({ placement: "SIDEBAR", market: JO, viewerId: viewer.id, categoryId: "fashion" })).cards.some((card) => card.listingId === withPhoto));
 });
 
 test("CTX-01 the sidebar follows the viewer's own conversation; another user's conversation gives no context; ranking puts the most relevant first", async () => {
@@ -492,10 +493,11 @@ test("CTX-01 the sidebar follows the viewer's own conversation; another user's c
   const stranger = await account("ctxstranger");
   const foreign = await request(`/ads/placements?slot=SIDEBAR&conversationId=${conversationId}`, "GET", undefined, stranger.cookie);
   assert.equal(foreign.data.context, "MARKET");
-  // Market-wide: the higher-priority campaign is ranked first (the card the sidebar shows first).
+  // Ranking: among many paid electronics campaigns (priority 100), the priority-400 one is first —
+  // the card the sidebar shows first; never more than three rotate.
+  const ranked = await displayPlacementCards({ placement: "SIDEBAR", market: JO, viewerId: stranger.id, categoryId: "electronics" });
+  assert.equal(ranked.cards[0]?.listingId, phone, JSON.stringify(ranked.cards.map((card) => card.title)));
+  assert.ok(ranked.cards.length <= 3, "the sidebar rotates through at most three");
   const market = await displayPlacementCards({ placement: "SIDEBAR", market: JO, viewerId: stranger.id });
-  const order = market.cards.map((card) => card.listingId);
-  assert.ok(order.includes(phone) && order.includes(car));
-  assert.ok(order.indexOf(phone) < order.indexOf(car), `priority 400 ranks before 100: ${order}`);
-  assert.ok(market.cards.length <= 3, "the sidebar rotates through at most three");
+  assert.ok(market.cards.length >= 1 && market.cards.length <= 3);
 });

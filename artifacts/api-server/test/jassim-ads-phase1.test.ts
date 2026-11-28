@@ -5,7 +5,7 @@ import { test, after } from "node:test";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { count, eq } from "drizzle-orm";
-import { db, demandMatchNotices, markets, pool, users } from "@workspace/db";
+import { db, demandMatchNotices, markets, offers, pool, users } from "@workspace/db";
 import app from "../src/app";
 import { appendCommercialPolicy } from "../src/lib/commercial-policy-append";
 import { resolveMarket } from "../src/lib/markets";
@@ -50,6 +50,9 @@ async function publish(seller: Actor, title: string, price: string, city = "عم
     attributes: { condition: "مستعمل" }, unitPrice: price, inventoryMode: "LIMITED", availableQuantity: 2, fulfilmentType: "PICKUP", imageUrl: "", imageUrls: [], paymentMethods: ["CASH_DIRECT"],
   }, seller.cookie);
   assert.equal(created.status, 201, created.raw);
+  // Hero and sidebar show the product photo (owner decision 2026-11-28): these listings have one.
+  const [photoRow] = await db.select({ data: offers.data }).from(offers).where(eq(offers.id, created.data.id));
+  await db.update(offers).set({ data: { ...(photoRow!.data as Record<string, unknown>), imageUrl: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4IiBoZWlnaHQ9IjgiPjxyZWN0IHdpZHRoPSI4IiBoZWlnaHQ9IjgiIGZpbGw9IiNmYTAiLz48L3N2Zz4=", imageUrls: ["data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4IiBoZWlnaHQ9IjgiPjxyZWN0IHdpZHRoPSI4IiBoZWlnaHQ9IjgiIGZpbGw9IiNmYTAiLz48L3N2Zz4="] } }).where(eq(offers.id, created.data.id));
   return created.data.id as string;
 }
 async function fund(seller: Actor, amountMajor = 40) {
