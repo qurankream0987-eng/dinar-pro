@@ -9,7 +9,8 @@
  * No model output can credit, charge, grant, activate or change any number here.
  */
 import { cancelSubscriptionEverywhere, configuredAppOrigin, startSubscriptionCheckout, SUBSCRIPTION_TAX_NOTE } from "../lib/subscription-checkout";
-import { startWhopPromotionCheckout, WHOP_PROMOTION_REVIEW_NOTE, whopDirectApplies } from "../lib/promotion-whop";
+import { adCopyDrafts, sellerAdsListings } from "../lib/jassim-ads";
+import { promotionPaymentAvailability, promotionReviewNote, providerDirectApplies, startPromotionCheckout } from "../lib/promotion-payments";
 import { createHash, randomUUID } from "node:crypto";
 import { and, desc, eq, gt, sql } from "drizzle-orm";
 import { z } from "zod";
@@ -153,9 +154,9 @@ const CommerceQuery = z
       .object({ subscriptionId: z.string().uuid(), url: z.string().max(600).regex(/^https:\/\/[^\s]+$/), expiresAt: z.string().max(40) })
       .strict()
       .optional(),
-    /** Jassim Ads Phase 2: the Whop page for one promotion (it starts only after Whop confirms). */
+    /** Jassim Ads: the provider page for one promotion (it starts only after a signed confirmation). */
     promotionCheckout: z
-      .object({ promotionId: z.string().uuid(), url: z.string().max(600).regex(/^https:\/\/[^\s]+$/), amountLabel: z.string().max(60), note: z.string().max(400) })
+      .object({ promotionId: z.string().uuid(), url: z.string().max(600).regex(/^https:\/\/[^\s]+$/), amountLabel: z.string().max(60), note: z.string().max(400), providerName: z.string().max(60).optional() })
       .strict()
       .optional(),
     status: z.enum(["PENDING", "CONFIRMED", "CANCELLED", "EXPIRED", "REJECTED"]).optional(),
@@ -481,6 +482,7 @@ async function composePayload(state: CommerceQuery, resourceIds: string[], resul
             const byId = new Map(products.map((product) => [product.id, product]));
             payload.listing = await listingRef(state.listingId, actorId);
             payload.products = resourceIds.flatMap((id) => byId.has(id) ? [commercialProductView(byId.get(id)!, market)] : []);
+            payload.promotionPlan = await promotionPlan(state.listingId, actorId, market, resourceIds.flatMap((id) => (byId.has(id) ? [byId.get(id)!] : [])));
           }
         } else if (state.step === "BUDGET" && state.productId) {
           const [product] = (await commercialProducts(market, {})).filter((item) => item.id === state.productId);
@@ -510,9 +512,10 @@ async function composePayload(state: CommerceQuery, resourceIds: string[], resul
           } catch (error) {
             if ((state.status ?? "PENDING") === "PENDING") throw error;
           }
-          // Real payment through Whop replaces the test balance for direct fixed-price products.
+          // A real provider payment replaces the test balance for direct fixed-price products.
           const review = payload.review as { failureCode?: string; sufficient?: boolean; failure?: string; balanceAfterLabel?: string; missingLabel?: string } | undefined;
-          if (review && (await whopDirectApplies({ market, productId: state.action.productId, paymentSource: state.action.paymentSource }))) {
+          const paid = review ? await promotionPaymentAvailability(market) : undefined;
+          if (review && paid?.available && (await providerDirectApplies({ market, productId: state.action.productId, paymentSource: state.action.paymentSource }))) {
             if (review.failureCode === "INSUFFICIENT_BALANCE") {
               delete review.failure;
               delete review.failureCode;
@@ -520,7 +523,7 @@ async function composePayload(state: CommerceQuery, resourceIds: string[], resul
             review.sufficient = true;
             delete review.balanceAfterLabel;
             delete review.missingLabel;
-            payload.whopPayment = { provider: "WHOP", note: WHOP_PROMOTION_REVIEW_NOTE };
+            payload.providerPayment = { providerKey: paid.providerKey, displayName: paid.displayName, note: promotionReviewNote(paid.displayName) };
           }
         }
         if (state.promotionId) payload.promotion = await getSellerPromotion(actorId, market, state.promotionId);
@@ -534,7 +537,7 @@ async function composePayload(state: CommerceQuery, resourceIds: string[], resul
         break;
       case "CAMPAIGN_STATUS":
         if (state.promotionId) payload.promotion = await getSellerPromotion(actorId, market, state.promotionId);
-        // The Whop link is shown only while that campaign still waits for its payment.
+        // The payment link is shown only while that campaign still waits for its payment.
         if (state.promotionCheckout && (payload.promotion as { effectiveStatus?: string } | undefined)?.effectiveStatus === "PENDING_PAYMENT")
           payload.promotionCheckout = state.promotionCheckout;
         payload.balance = await getCommercialBalance(actorId, market);
@@ -675,7 +678,7 @@ export type CommerceActionOutcome = {
   promotionId?: string;
   view?: CommerceSurface;
   checkout?: { subscriptionId: string; url: string; expiresAt: string };
-  promotionCheckout?: { promotionId: string; url: string; amountLabel: string; note: string };
+  promotionCheckout?: { promotionId: string; url: string; amountLabel: string; note: string; providerName?: string };
 };
 
 /**
@@ -731,15 +734,15 @@ export async function applyCommerceAction(input: { actionId: string; actorId: st
         settled.topup.status === "CREDITED"
           ? { status: "CONFIRMED", view: "COMMERCIAL_BALANCE", message: `تم شحن ${settled.topup.amountLabel} بعد تأكيد موثّق من مزوّد الدفع التجريبي (دون تحويل أموال حقيقية). رصيدك المتاح الآن ${balance.availableLabel}.` }
           : { status: "REJECTED", view: "COMMERCIAL_BALANCE", message: "لم يُؤكَّد الدفع، فلم يُضف أي رصيد." };
-    } else if (action.type === "PURCHASE" && action.listingId && (await whopDirectApplies({ market: input.market, productId: action.productId, paymentSource: action.paymentSource }))) {
-      // Jassim Ads Phase 2: «تأكيد» opens Whop's page; nothing starts before Whop's signed payment.
-      const started = await startWhopPromotionCheckout({ actorId: input.actorId, market: input.market, productId: action.productId, listingId: action.listingId, idempotencyKey: key });
+    } else if (action.type === "PURCHASE" && action.listingId && (await providerDirectApplies({ market: input.market, productId: action.productId, paymentSource: action.paymentSource }))) {
+      // «تأكيد» opens the provider's page; nothing starts before its signed payment confirmation.
+      const started = await startPromotionCheckout({ actorId: input.actorId, market: input.market, productId: action.productId, listingId: action.listingId, idempotencyKey: key });
       outcome = {
         status: "CONFIRMED",
         view: "CAMPAIGN_STATUS",
         promotionId: started.promotion.id,
-        promotionCheckout: { promotionId: started.promotion.id, url: started.checkoutUrl, amountLabel: started.amountLabel, note: started.note },
-        message: `صفحة الدفع الآمنة لـ«${started.promotion.productTypeLabel}» على إعلان «${started.promotion.listingTitle}» جاهزة عبر Whop (${started.amountLabel}). لم يُخصم شيء بعد، ولا يبدأ الترويج قبل تأكيد Whop الموقّع.`,
+        promotionCheckout: { promotionId: started.promotion.id, url: started.checkoutUrl, amountLabel: started.amountLabel, note: started.note, providerName: started.providerName },
+        message: `صفحة الدفع الآمنة لـ«${started.promotion.productTypeLabel}» على إعلان «${started.promotion.listingTitle}» جاهزة عبر ${started.providerName} (${started.amountLabel}). لم يُخصم شيء بعد، ولا يبدأ الترويج قبل التأكيد الموقّع للدفع.`,
       };
     } else if (action.type === "PURCHASE") {
       const purchase = await purchaseCommercialProduct({
@@ -1056,6 +1059,36 @@ async function promotionEntry(actorId: string, market: Market): Promise<Turn | n
   );
 }
 
+/**
+ * The promotion plan shown with the options: copy drafted from the listing's own facts, how many
+ * authorised buyers are waiting for something like it (only above the cohort size, never who),
+ * and the lowest-priced option as a starting suggestion. Prices are the server's products; the
+ * seller still picks, reviews and confirms before any payment page opens.
+ */
+async function promotionPlan(listingId: string, actorId: string, market: Market, products: { id: string; priceMinor: number }[]) {
+  const listing = (await sellerAdsListings(actorId, market)).find((item) => item.id === listingId);
+  if (!listing) return undefined;
+  const suggested = [...products].sort((a, b) => a.priceMinor - b.priceMinor)[0];
+  return {
+    copy: adCopyDrafts(listing),
+    interestedBuyers: listing.waitingBuyers,
+    suggestedProductId: suggested?.id ?? null,
+    note: "اختر خيارًا لمراجعة تفاصيله وسعره. لا يُدفع شيء ولا يبدأ الترويج قبل تأكيدك ثم تأكيد الدفع.",
+  };
+}
+
+/** «روّج لهذا المنتج» / «عندي 100 قطعة أريد بيعها»: the plan for one listing, opened from Jassim Ads. */
+export async function promotionPlanTurn(listingId: string, actorId: string, market: Market, lead = ""): Promise<Turn> {
+  const turn = await promotionOptionsForListing(listingId, actorId, market);
+  if (lead && (turn.result as { prompt?: string }).prompt) (turn.result as { prompt: string }).prompt = `${lead} ${(turn.result as { prompt: string }).prompt}`;
+  return turn;
+}
+
+/** The seller's campaign results as a card (impressions, engagement, attributed orders). */
+export async function campaignResultsTurn(actorId: string, market: Market): Promise<Turn> {
+  return analytics(actorId, market, undefined, undefined);
+}
+
 async function promotionOptionsForListing(listingId: string | undefined, actorId: string, market: Market): Promise<Turn> {
   const listing = listingId && (await promotableListings(actorId, market)).find((item) => item.id === listingId);
   if (!listing) return notice(actorId, "هذا الإعلان غير مؤهل أو ليس لك. لم يتغير شيء.", market);
@@ -1188,10 +1221,11 @@ async function purchaseReview(productId: string, listingId: string | undefined, 
     status: "PENDING",
   };
   const what = `${review.product.productTypeLabel}${review.listing ? ` لإعلان «${review.listing.title}»` : ""}`;
-  // Jassim Ads Phase 2: a direct fixed-price product is paid through Whop, never from the test balance.
-  if (await whopDirectApplies({ market, productId, paymentSource: review.paymentSource })) {
-    const whopPrompt = `راجع ${what} بسعر ${review.amountLabel}، يُدفع عبر صفحة Whop الآمنة. عند «تأكيد» تُفتح صفحة الدفع فقط؛ لا يبدأ الترويج قبل تأكيد Whop الموقّع. اكتب «تأكيد» أو «إلغاء».`;
-    return turnFor(state, listingId ? [listingId] : [productId], whopPrompt, actorId, market);
+  // A direct fixed-price product is paid through the collection provider, never from the test balance.
+  const paid = await promotionPaymentAvailability(market);
+  if (paid.available && (await providerDirectApplies({ market, productId, paymentSource: review.paymentSource }))) {
+    const providerPrompt = `راجع ${what} بسعر ${review.amountLabel}، يُدفع عبر صفحة ${paid.displayName} الآمنة. عند «تأكيد» تُفتح صفحة الدفع فقط؛ لا يبدأ الترويج قبل التأكيد الموقّع للدفع. اكتب «تأكيد» أو «إلغاء».`;
+    return turnFor(state, listingId ? [listingId] : [productId], providerPrompt, actorId, market);
   }
   const pay = review.paymentSource === "BUNDLE_ENTITLEMENT" ? "باستخدام وحدة من باقتك (دون خصم من الرصيد)" : review.budgetLabel ? `بحجز ميزانية ${review.budgetLabel} من رصيدك` : `بسعر ${review.amountLabel} من رصيدك`;
   const prompt = review.sufficient

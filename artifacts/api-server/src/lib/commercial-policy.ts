@@ -88,8 +88,10 @@ export const CommercialPolicySchema = z
           .strict(),
       )
       .max(3),
-    /** Jassim Ads Phase 2: WHOP_DIRECT lets a fixed-price promotion be paid through Whop (default off). */
-    advertisingBillingActivation: z.enum(["DISABLED", "WHOP_DIRECT"]),
+    /** Jassim Ads: PROVIDER_DIRECT lets a fixed-price promotion be paid through a collection provider (default off). */
+    advertisingBillingActivation: z.enum(["DISABLED", "PROVIDER_DIRECT"]),
+    /** Which registered PromotionBillingProvider collects promotion payments in this market. */
+    advertisingBillingProvider: z.string().regex(/^[a-z][a-z0-9-]{1,39}$/),
     /** G1: AI usage allowances per plan tier and the global AI spending guard. */
     aiUsage: AiUsagePolicySchema,
     /** D1: the public Go / Pro / Business plan definitions (proposed until the owner approves). */
@@ -134,6 +136,7 @@ export const DEFAULT_COMMERCIAL_POLICY: CommercialPolicy = {
     { productType: "SPONSORED_SEARCH", referencePrice: { amountMinor: 200, currencyCode: "USD", minorUnitScale: 2 }, durationDays: 7, autoRenew: false },
   ],
   advertisingBillingActivation: "DISABLED",
+  advertisingBillingProvider: "whop",
 };
 
 /** The effective policy for a market: its own latest version, else the global one, else v0. */

@@ -342,8 +342,8 @@ export type SellerPromotionView = {
   status: string;
   effectiveStatus: string;
   paymentStatus: string;
-  /** WHOP_LIVE: a real payment through Whop (Jassim Ads Phase 2); otherwise no money moves. */
-  paymentMode: "TEST_NO_TRANSFER" | "WHOP_LIVE";
+  /** PROVIDER_LIVE: a real payment through the collection provider; otherwise no money moves. */
+  paymentMode: "TEST_NO_TRANSFER" | "PROVIDER_LIVE";
   serving: boolean;
   servingNote: string;
   startsAt: string;
@@ -384,8 +384,8 @@ const STATUS_NOTES: Record<string, string> = {
   BUDGET_EXHAUSTED: "نفدت الميزانية — توقف الظهور الممول",
 };
 
-const WHOP_STATUS_NOTES: Record<string, string> = {
-  PENDING_PAYMENT: "بانتظار إتمام الدفع في صفحة Whop — لا يبدأ قبل تأكيد Whop",
+const PROVIDER_STATUS_NOTES: Record<string, string> = {
+  PENDING_PAYMENT: "بانتظار إتمام الدفع في صفحة مزود الدفع — لا يبدأ قبل تأكيده الموقّع",
   PAUSED: "موقوف — الدفع عليه نزاع قيد المراجعة أو أوقفته أنت",
   CANCELLED: "ملغى — لا يظهر كإعلان ممول",
   PAYMENT_FAILED: "لم يكتمل الدفع — لم يُفعّل الترويج",
@@ -412,8 +412,10 @@ export async function promotionViews(rows: PromotionRow[], market: Market, now =
         ? serving
           ? "يظهر الآن مع شارة «إعلان ممول» عندما يطابق بحث المشتري"
           : `لا يظهر حاليًا: ${listingOk && !listingOk.ok ? listingOk.reason : "العرض غير متاح"}`
-        : row.paymentMode === "WHOP_LIVE" && WHOP_STATUS_NOTES[effectiveStatus]
-          ? WHOP_STATUS_NOTES[effectiveStatus]!
+        : row.paymentMode === "PROVIDER_LIVE" && effectiveStatus === "CANCELLED" && row.paymentStatus === "PROVIDER_PAID"
+          ? "وصل دفعك، لكن الإعلان لم يعد متاحًا فلم يبدأ الترويج. سُجّل الطلب لمراجعة الاسترداد."
+        : row.paymentMode === "PROVIDER_LIVE" && PROVIDER_STATUS_NOTES[effectiveStatus]
+          ? PROVIDER_STATUS_NOTES[effectiveStatus]!
           : STATUS_NOTES[effectiveStatus] ?? effectiveStatus;
     const live = effectiveStatus === "ACTIVE" || effectiveStatus === "PAUSED" || effectiveStatus === "SCHEDULED";
     return {
@@ -430,7 +432,7 @@ export async function promotionViews(rows: PromotionRow[], market: Market, now =
       status: row.status,
       effectiveStatus,
       paymentStatus: row.paymentStatus,
-      paymentMode: row.paymentMode === "WHOP_LIVE" ? "WHOP_LIVE" : "TEST_NO_TRANSFER",
+      paymentMode: row.paymentMode === "PROVIDER_LIVE" ? "PROVIDER_LIVE" : "TEST_NO_TRANSFER",
       serving,
       servingNote,
       startsAt: row.startsAt.toISOString(),

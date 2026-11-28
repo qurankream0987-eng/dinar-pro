@@ -1,12 +1,12 @@
 -- Rollback of migration 0080_promotion_whop_direct (NOT a migration; run manually, only with the
 -- owner's approval, in ONE transaction, after a fresh verified backup).
--- Refuses if any real-payment (WHOP_LIVE / WHOP_DIRECT / PROVIDER_*) promotion row exists: those rows
+-- Refuses if any real-payment (PROVIDER_LIVE / PROVIDER_DIRECT / PROVIDER_*) promotion row exists: those rows
 -- record real money and cannot exist under the old rules. Keep 0080 in that case (it is additive).
 BEGIN;
 SET LOCAL lock_timeout = '5s';
 DO $$
 BEGIN
-  IF EXISTS (SELECT 1 FROM listing_promotions WHERE payment_mode = 'WHOP_LIVE' OR payment_source = 'WHOP_DIRECT' OR payment_status LIKE 'PROVIDER_%') THEN
+  IF EXISTS (SELECT 1 FROM listing_promotions WHERE payment_mode = 'PROVIDER_LIVE' OR payment_source = 'PROVIDER_DIRECT' OR payment_status LIKE 'PROVIDER_%') THEN
     RAISE EXCEPTION 'ROLLBACK_REFUSED: real-payment promotion rows exist; keep migration 0080';
   END IF;
   IF (SELECT count(*) FROM drizzle.__drizzle_migrations WHERE created_at = 1795820000000) <> 1 THEN
@@ -16,7 +16,7 @@ BEGIN
     RAISE EXCEPTION 'ROLLBACK_REFUSED: a later migration is applied';
   END IF;
 END $$;
-ALTER TABLE "listing_promotions" DROP CONSTRAINT "listing_promotions_whop_mode_consistent";
+ALTER TABLE "listing_promotions" DROP CONSTRAINT "listing_promotions_provider_mode_consistent";
 ALTER TABLE "listing_promotions" DROP CONSTRAINT "listing_promotions_simulation_only_check";
 ALTER TABLE "listing_promotions" ADD CONSTRAINT "listing_promotions_simulation_only_check" CHECK ("listing_promotions"."payment_mode" = 'DEVELOPMENT_SIMULATED');
 ALTER TABLE "listing_promotions" DROP CONSTRAINT "listing_promotions_payment_status_valid";

@@ -11,6 +11,22 @@ import { foldArabicLetters, normalizeDigits } from "./arabic-normalization";
 import { makeSellerContextResult, resolveCurrentOwnedListings } from "./seller-management";
 import { adCopyDrafts, adsOpportunities, jassimAdsEnabled, sellerAdsListings, sellerAdsReport } from "../lib/jassim-ads";
 import type { marketFor } from "../lib/markets";
+import { and, desc, eq } from "drizzle-orm";
+import { aiUiBlocks, db } from "@workspace/db";
+import { campaignResultsTurn, promotionPlanTurn } from "./commerce-turn";
+
+/** The seller's own listing currently in view in this conversation (latest card), if any. */
+async function listingInView(conversationId: string, ownedIds: string[]) {
+  const blocks = await db.select({ payload: aiUiBlocks.payload }).from(aiUiBlocks).where(and(eq(aiUiBlocks.conversationId, conversationId))).orderBy(desc(aiUiBlocks.createdAt)).limit(10);
+  for (const block of blocks) {
+    const payload = (block.payload ?? {}) as { resourceId?: unknown; resourceIds?: unknown };
+    const ids = [payload.resourceId, ...(Array.isArray(payload.resourceIds) ? payload.resourceIds : [])].filter((id): id is string => typeof id === "string");
+    const owned = ids.filter((id) => ownedIds.includes(id));
+    if (owned.length === 1) return owned[0];
+    if (owned.length > 1) return undefined;
+  }
+  return undefined;
+}
 
 type Market = Awaited<ReturnType<typeof marketFor>>;
 
@@ -20,6 +36,10 @@ export function normalizeAdsText(message: string) {
 
 const OVERVIEW = /(?:ساعدني|كيف|علمني)\s+(?:ف[يى]\s+)?(?:ا|أ)?(?:سوق|سوّق|روج|روّج|تسويق)|(?:فرص|اقتراحات)\s+(?:ال)?(?:تسويق|ترويج)|(?:شو|ايش|وش|ماذا|ما(?:ذا)?\s+الذي)\s+(?:ا|أ)?روج|سوق(?:\s+لي)?\s+متجري|(?:دير|ادر|أدر)\s+(?:لي\s+)?(?:ال)?تسويق|جاسم\s+ادز|مدير\s+(?:ال)?تسويق/u;
 const COPY = /(?:اكتب|جهز|اقترح|صغ)\s+(?:لي\s+)?(?:نص(?:ا)?\s+(?:اعلاني|ترويجي|اعلان)|نصوص\s+(?:اعلانيه|ترويجيه)|كابشن|صيغه\s+اعلان)/u;
+/** «روّج لهذا المنتج», «روج الإعلان هذا», «أعلن عن منتجي»: the plan for the listing in view. */
+const PROMOTE_THIS = /(?:روّج|روج|اعلن|سوق|سوّق)\s+(?:لي\s+)?(?:ل|عن\s+)?(?:هذا|هذه|هاد|هادا|المنتج|منتجي|الخدمه|خدمتي|العرض)|(?:روّج|روج)\s+(?:لل|ل)?(?:اول|ثاني|ثالث|رابع|خامس|[1-5])(?:\s|$)/u;
+/** «عندي 100 قطعة من هذا المنتج أريد بيعها»: stock to move, the same plan with the quantity noted. */
+const SELL_STOCK = /عندي\s+(\d{1,6})\s+(?:قطعه|قطع|حبه|حبات|وحده|وحدات|كرتونه|كراتين)(?:.*?)(?:ابيعها|بيعها|ابيعهم|بيعهم|اصرفها|اسوقها)/u;
 const REPORT = /(?:كيف|شو|ما)\s+(?:تسير|اداء|نتائج|وضع)\s+(?:ال)?(?:حملات[يى]?|حملتي|ترويج[يى]?|الترويج)|تقرير\s+(?:ال)?(?:تسويق|ترويج|حملات)/u;
 
 const ORDINALS: [RegExp, number][] = [
@@ -30,9 +50,10 @@ const ORDINALS: [RegExp, number][] = [
   [/(?:^|\s)(?:لل|ل|ال)?(?:خامس|الخامسه|5)(?:\s|$)/u, 4],
 ];
 
-export function adsIntent(message: string): "OVERVIEW" | "COPY" | "REPORT" | undefined {
+export function adsIntent(message: string): "OVERVIEW" | "COPY" | "REPORT" | "PLAN" | undefined {
   const t = normalizeAdsText(message);
   if (COPY.test(t)) return "COPY";
+  if (SELL_STOCK.test(t) || PROMOTE_THIS.test(t)) return "PLAN";
   if (REPORT.test(t)) return "REPORT";
   if (OVERVIEW.test(t)) return "OVERVIEW";
   return undefined;
@@ -68,8 +89,25 @@ export async function executeAdsAssistantTurn(input: { conversationId: string; m
     const report = await sellerAdsReport(input.actorId, input.market);
     if (!report.length)
       return makeSellerContextResult(context, cards, "لا توجد لديك حملات ترويج بنتائج مسجلة في هذا السوق بعد. قل «شو أروّج؟» لأقترح عليك من بيانات إعلاناتك.");
-    const lines = report.slice(0, 8).map((row) => `• «${row.listingTitle}» (${row.productTypeLabel}، ${row.effectiveStatus}): ظهور ${row.qualifiedImpressions}، تفاعل ${row.qualifiedEngagements}، طلبات منسوبة ${row.ordersAttributed}، تحويل ${row.conversionRate}، المصروف ${row.spentLabel}`);
-    return makeSellerContextResult(context, [], ["نتائج حملاتك داخل جاسم (أحداث يسجلها الخادم، دون هوية المشاهدين):", ...lines].join("\n"));
+    // The results card (impressions, engagement, attributed orders) from server-recorded events.
+    return campaignResultsTurn(input.actorId, input.market);
+  }
+
+  if (intent === "PLAN") {
+    const t = normalizeAdsText(input.message);
+    const index = ORDINALS.find(([pattern]) => pattern.test(t))?.[1];
+    const target = listings.length === 1
+      ? listings[0]
+      : index !== undefined
+        ? listings[index]
+        : await listingInView(input.conversationId, listings.map((item) => item.id)).then((id) => listings.find((item) => item.id === id));
+    if (!target)
+      return makeSellerContextResult(context, cards, `أي منتج تريد ترويجه؟ افتح الإعلان أو قل «روّج للأول».\n${listings.map((item, i) => `${i + 1}. «${item.title}»`).join("\n")}`);
+    const quantity = t.match(SELL_STOCK)?.[1];
+    const lead = quantity
+      ? `خطة لبيع ${quantity} قطعة من «${target.title}» داخل جاسم. لا أعدك ببيع الكمية كلها؛ الترويج يزيد ظهور إعلانك فقط.`
+      : `خطة ترويج «${target.title}» داخل جاسم.`;
+    return promotionPlanTurn(target.id, input.actorId, input.market, lead);
   }
 
   const opportunities = adsOpportunities(listings);

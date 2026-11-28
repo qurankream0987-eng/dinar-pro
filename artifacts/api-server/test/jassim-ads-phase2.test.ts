@@ -114,9 +114,9 @@ after(async () => { uninstall?.(); delete process.env.DINAR_JASSIM_ADS_PAYMENTS;
 
 test("AP-01 switched off by default: no real promotion payment, nothing opened at Whop", async () => {
   assert.deepEqual(await whopPromotionAvailability(JO), { available: false, code: "PAYMENTS_OFF", reason: "الدفع الحقيقي للترويج غير مفعّل بعد" });
-  const r = await request("/commercial/whop-promotions/checkouts", "POST", { productId: vip, listingId: phone, idempotencyKey: `k-${randomUUID()}` }, seller.cookie);
+  const r = await request("/commercial/promotion-payments/checkouts", "POST", { productId: vip, listingId: phone, idempotencyKey: `k-${randomUUID()}` }, seller.cookie);
   assert.equal(r.status, 409, r.raw);
-  assert.equal(r.data.code, "WHOP_PROMOTION_PAYMENTS_OFF");
+  assert.equal(r.data.code, "PROMOTION_PAYMENT_PAYMENTS_OFF");
   assert.equal(posts, 0);
 });
 
@@ -125,8 +125,8 @@ test("AP-02 every gate must be open: provider, market policy, currency, legal ap
   assert.equal(((await whopPromotionAvailability(JO)) as any).code, "PROVIDER_NOT_CONNECTED");
   uninstall = installWhopBilling({ environment: "sandbox", apiKey: "test-key-not-real", webhookSecret: SECRET, accountId: ACCOUNT, plans: {} }, transport);
   assert.equal(((await whopPromotionAvailability(JO)) as any).code, "POLICY_DISABLED", "default policy is DISABLED");
-  await appendCommercialPolicy({ marketId: "JO", policy: { advertisingBillingActivation: "WHOP_DIRECT" }, actorId: admin.id });
-  assert.deepEqual(await whopPromotionAvailability(JO), { available: true });
+  await appendCommercialPolicy({ marketId: "JO", policy: { advertisingBillingActivation: "PROVIDER_DIRECT" }, actorId: admin.id });
+  assert.deepEqual(await whopPromotionAvailability(JO), { available: true, providerKey: "whop", displayName: "Whop" });
   for (const unsupported of ["IQD", "SYP", "LBP", "YER"])
     assert.equal(((await whopPromotionAvailability({ ...JO, currencyCode: unsupported })) as any).code, "CURRENCY_UNSUPPORTED", unsupported);
   // A deployed environment enforces the legal gate: without an approved legal file, payments stay closed.
@@ -143,16 +143,16 @@ test("AP-02 every gate must be open: provider, market policy, currency, legal ap
 let pending = "";
 let checkoutId = "";
 test("AP-03 checkout: server price snapshot, inline one-time plan, idempotent, owner-only, nothing serves before payment", async () => {
-  const forged = await request("/commercial/whop-promotions/checkouts", "POST", { productId: vip, listingId: phone, idempotencyKey: `k-${randomUUID()}`, priceMinor: 1 }, seller.cookie);
+  const forged = await request("/commercial/promotion-payments/checkouts", "POST", { productId: vip, listingId: phone, idempotencyKey: `k-${randomUUID()}`, priceMinor: 1 }, seller.cookie);
   assert.equal(forged.status, 400, "a client price is refused");
-  const notMine = await request("/commercial/whop-promotions/checkouts", "POST", { productId: vip, listingId: foreign, idempotencyKey: `k-${randomUUID()}` }, seller.cookie);
+  const notMine = await request("/commercial/promotion-payments/checkouts", "POST", { productId: vip, listingId: foreign, idempotencyKey: `k-${randomUUID()}` }, seller.cookie);
   assert.equal(notMine.status, 404, notMine.raw);
   const key = `k-${randomUUID()}`;
-  const first = await request("/commercial/whop-promotions/checkouts", "POST", { productId: vip, listingId: phone, idempotencyKey: key }, seller.cookie);
+  const first = await request("/commercial/promotion-payments/checkouts", "POST", { productId: vip, listingId: phone, idempotencyKey: key }, seller.cookie);
   assert.equal(first.status, 201, first.raw);
   pending = first.data.promotion.id;
   assert.match(first.data.checkoutUrl, /^https:\/\/whop\.com\/checkout\//);
-  assert.equal(first.data.promotion.paymentMode, "WHOP_LIVE");
+  assert.equal(first.data.promotion.paymentMode, "PROVIDER_LIVE");
   assert.equal(first.data.promotion.effectiveStatus, "PENDING_PAYMENT");
   assert.equal(first.data.promotion.serving, false);
   const sent = [...checkouts.values()].at(-1)!;
@@ -164,12 +164,12 @@ test("AP-03 checkout: server price snapshot, inline one-time plan, idempotent, o
   assert.equal(sent.body.plan.initial_price, 5, "5.000 JOD from the server snapshot");
   checkoutId = (await row(pending)).paymentReference!;
   const stored = await row(pending);
-  assert.deepEqual([stored.status, stored.paymentMode, stored.paymentStatus, stored.paymentSource, stored.priceMinorSnapshot, stored.currencyCodeSnapshot], ["PENDING_PAYMENT", "WHOP_LIVE", "PROVIDER_PENDING", "WHOP_DIRECT", 5_000, "JOD"]);
-  const again = await request("/commercial/whop-promotions/checkouts", "POST", { productId: vip, listingId: phone, idempotencyKey: key }, seller.cookie);
+  assert.deepEqual([stored.status, stored.paymentMode, stored.paymentStatus, stored.paymentSource, stored.priceMinorSnapshot, stored.currencyCodeSnapshot], ["PENDING_PAYMENT", "PROVIDER_LIVE", "PROVIDER_PENDING", "PROVIDER_DIRECT", 5_000, "JOD"]);
+  const again = await request("/commercial/promotion-payments/checkouts", "POST", { productId: vip, listingId: phone, idempotencyKey: key }, seller.cookie);
   assert.equal(again.status, 200);
   assert.equal(again.data.promotion.id, pending);
   assert.equal(again.data.checkoutUrl, first.data.checkoutUrl, "the same Whop page");
-  const otherKey = await request("/commercial/whop-promotions/checkouts", "POST", { productId: vip, listingId: phone, idempotencyKey: `k-${randomUUID()}` }, seller.cookie);
+  const otherKey = await request("/commercial/promotion-payments/checkouts", "POST", { productId: vip, listingId: phone, idempotencyKey: `k-${randomUUID()}` }, seller.cookie);
   assert.equal(otherKey.data.promotion.id, pending, "a second request reuses the open checkout, never a second campaign");
   assert.equal(posts, 1, "one Whop checkout only");
   assert.ok(!(await heroIds()).includes(phone), "unpaid: never served");
@@ -230,7 +230,7 @@ test("AP-05 dispute pauses, a partial refund changes nothing, a full refund ends
 });
 
 test("AP-06 a payment for a cancelled checkout is never served and is flagged for refund review", async () => {
-  const started = await request("/commercial/whop-promotions/checkouts", "POST", { productId: featured, listingId: laptop, idempotencyKey: `k-${randomUUID()}` }, seller.cookie);
+  const started = await request("/commercial/promotion-payments/checkouts", "POST", { productId: featured, listingId: laptop, idempotencyKey: `k-${randomUUID()}` }, seller.cookie);
   assert.equal(started.status, 201, started.raw);
   const id = started.data.promotion.id;
   const cancelled = await request(`/promotions/${id}/actions`, "POST", { action: "CANCEL" }, seller.cookie);
@@ -242,7 +242,7 @@ test("AP-06 a payment for a cancelled checkout is never served and is flagged fo
   const unrelated = await deliver("payment.succeeded", { id: pay(randomUUID(), seller.id, { kind: "OTHER" }) });
   assert.equal(unrelated.body.failureCode, "NOT_A_JASSIM_SUBSCRIPTION", "only explicitly tagged promotion payments reach campaigns");
   // Out of order: dispute (then refund) before the delayed payment.succeeded — never activated.
-  const early = await request("/commercial/whop-promotions/checkouts", "POST", { productId: vip, listingId: laptop, idempotencyKey: `k-${randomUUID()}` }, seller.cookie);
+  const early = await request("/commercial/promotion-payments/checkouts", "POST", { productId: vip, listingId: laptop, idempotencyKey: `k-${randomUUID()}` }, seller.cookie);
   assert.equal(early.status, 201, early.raw);
   const earlyId = early.data.promotion.id;
   const earlyPay = pay(earlyId, seller.id);
@@ -252,7 +252,7 @@ test("AP-06 a payment for a cancelled checkout is never served and is flagged fo
   const delayed = await deliver("payment.succeeded", { id: earlyPay });
   assert.equal(delayed.body.failureCode, "ALREADY_SETTLED_PAYMENT_REVIEW");
   assert.equal((await row(earlyId)).status, "CANCELLED", "a disputed payment never starts a campaign");
-  const early2 = await request("/commercial/whop-promotions/checkouts", "POST", { productId: vip, listingId: laptop, idempotencyKey: `k-${randomUUID()}` }, seller.cookie);
+  const early2 = await request("/commercial/promotion-payments/checkouts", "POST", { productId: vip, listingId: laptop, idempotencyKey: `k-${randomUUID()}` }, seller.cookie);
   const early2Id = early2.data.promotion.id;
   const early2Pay = pay(early2Id, seller.id);
   payments.set(early2Pay, { ...payments.get(early2Pay)!, refunded_amount: jod("5.000") });
@@ -287,14 +287,14 @@ test("AP-07 conversation: the review says real payment via Whop and «نعم» r
     trail.push(`${t.commerce.view}/${t.commerce.step ?? ""} [${t.commerce.notice ?? ""}] keys=${Object.keys(t.commerce).join(",")}`);
   }
   assert.ok(t.commerce.review, `reached a review: ${trail.join(" → ")} — ${t.body}`);
-  assert.ok(t.commerce.whopPayment, "the review is marked as a real Whop payment");
+  assert.ok(t.commerce.providerPayment?.providerKey === "whop", "the review is marked as a real payment through the registered provider (Whop)");
   assert.equal(t.commerce.review.sufficient, true, "no test balance is needed");
   const confirmed = await turn("نعم");
   assert.ok(confirmed.commerce.promotionCheckout, `${confirmed.body}`);
   assert.match(confirmed.commerce.promotionCheckout.url, /^https:\/\/whop\.com\/checkout\//);
   assert.match(confirmed.body, /لم يُخصم شيء بعد/);
   const created = await row(confirmed.commerce.promotionCheckout.promotionId);
-  assert.deepEqual([created.status, created.paymentSource, created.listingId], ["PENDING_PAYMENT", "WHOP_DIRECT", laptop]);
+  assert.deepEqual([created.status, created.paymentSource, created.listingId], ["PENDING_PAYMENT", "PROVIDER_DIRECT", laptop]);
   const balance = await request("/commercial/balance", "GET", undefined, seller.cookie);
   assert.equal(balance.data.spentMinor ?? 0, 0, "the test balance is never charged for a Whop promotion");
 });

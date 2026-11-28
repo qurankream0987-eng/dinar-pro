@@ -20,7 +20,7 @@ import {
   users,
 } from "@workspace/db";
 import { requireAuth } from "../lib/auth";
-import { startWhopPromotionCheckout, whopPromotionAvailability } from "../lib/promotion-whop";
+import { promotionPaymentAvailability, startPromotionCheckout } from "../lib/promotion-payments";
 import { marketFor, resolveMarket } from "../lib/markets";
 import {
   commercialEconomics,
@@ -162,18 +162,18 @@ router.post("/commercial/purchases", requireAuth, async (req, res) => {
   res.status(outcome.created ? 201 : 200).json(outcome);
 });
 
-/** Jassim Ads Phase 2: whether this market can take a real promotion payment now (changes nothing). */
-router.get("/commercial/whop-promotions/availability", requireAuth, async (req, res) => {
+/** Jassim Ads: whether this market can take a real promotion payment now, and through which provider. */
+router.get("/commercial/promotion-payments/availability", requireAuth, async (req, res) => {
   assertPromotionsAvailable();
   const market = await marketFor(req);
-  res.json(await whopPromotionAvailability(market));
+  res.json(await promotionPaymentAvailability(market));
 });
-/** Opens (or repeats) the Whop page for one fixed-price promotion; it starts only after Whop confirms. */
-router.post("/commercial/whop-promotions/checkouts", requireAuth, async (req, res) => {
+/** Opens (or repeats) the provider page for one fixed-price promotion; it starts only after a signed confirmation. */
+router.post("/commercial/promotion-payments/checkouts", requireAuth, async (req, res) => {
   assertPromotionsAvailable();
   const body = z.object({ productId: z.string().min(1).max(80), listingId: z.string().min(1).max(80), idempotencyKey: key }).strict().parse(req.body);
   const market = await marketFor(req);
-  const started = await startWhopPromotionCheckout({ actorId: req.actor!.id, market, ...body });
+  const started = await startPromotionCheckout({ actorId: req.actor!.id, market, ...body });
   res.status(started.created ? 201 : 200).json(started);
 });
 

@@ -1,3 +1,4 @@
+import { registerPromotionBillingProvider, unregisterPromotionBillingProvider } from "../promotion-billing";
 /**
  * Whop billing adapter for JassimAI subscriptions (Jassim Go / Pro / Business) — prepared, off by
  * default. Built against Whop's current docs (docs.whop.com, read 2026-11-13) and the official
@@ -27,6 +28,8 @@ import { logger } from "../logger";
 import { scaleOfCurrency } from "../commercial-policy";
 
 export const WHOP_PROVIDER_KEY = "whop";
+/** Arab-market currencies Whop accepts for plans (docs.whop.com, read 2026-11-27). */
+export const WHOP_PROMOTION_CURRENCIES: ReadonlySet<string> = new Set(["AED", "BHD", "DZD", "EGP", "ILS", "JOD", "KWD", "MAD", "OMR", "QAR", "SAR", "TND"]);
 // 2026-10-24: payments carry `Money` objects, `account_id` and `membership_id` (verified in the
 // sandbox 2026-11-16; the 2026-08-14 pin returns plain numbers and nested objects instead).
 export const WHOP_API_VERSION_DATE = "2026-10-24";
@@ -318,10 +321,30 @@ export function createWhopAdapter(config: WhopConfig, transport: WhopTransport =
     return body.purchase_url;
   }
 
-  /** Hands a verified promotion event to the promotion domain (lazy import: no cycle). */
+  /**
+   * Hands a verified promotion event to the provider-neutral promotion domain (lazy import: no
+   * cycle). Only facts Whop's own API returned are passed; the domain decides the campaign.
+   */
   async function promotion(event: Omit<WhopPromotionEvent, "accountId">): Promise<WhopWebhookResult> {
-    const { applyWhopPromotionEvent } = await import("../promotion-whop");
-    return applyWhopPromotionEvent({ ...event, accountId: config.accountId });
+    const { applyPromotionProviderEvent } = await import("../promotion-payments");
+    const payment = event.payment;
+    return applyPromotionProviderEvent({
+      providerKey: WHOP_PROVIDER_KEY,
+      eventId: event.eventId,
+      type: event.type,
+      eventType: event.eventType,
+      digest: event.digest,
+      promotionId: event.promotionId,
+      expectedAccountId: config.accountId,
+      facts: {
+        status: payment.status,
+        accountId: payment.account_id ?? null,
+        ownerUserId: metadataUser(payment.metadata),
+        subtotal: payment.subtotal,
+        total: payment.total,
+        refunded: payment.refunded_amount ?? null,
+      },
+    });
   }
 
   /** The signed Whop webhook: verify, read the provider's own state, apply through the one machine. */
@@ -472,9 +495,18 @@ let active: ReturnType<typeof createWhopAdapter> | undefined;
 export function installWhopBilling(config: WhopConfig, transport?: WhopTransport) {
   const adapter = createWhopAdapter(config, transport);
   registerSubscriptionBillingProvider(adapter.provider);
+  // Jassim Ads: Whop is one registered collection provider for promotions.
+  registerPromotionBillingProvider({
+    key: WHOP_PROVIDER_KEY,
+    displayName: "Whop",
+    currencies: WHOP_PROMOTION_CURRENCIES,
+    createCheckout: adapter.createPromotionCheckout,
+    checkoutUrl: adapter.promotionCheckoutUrl,
+  });
   active = adapter;
   return () => {
     unregisterSubscriptionBillingProvider(WHOP_PROVIDER_KEY);
+    unregisterPromotionBillingProvider(WHOP_PROVIDER_KEY);
     active = undefined;
   };
 }
