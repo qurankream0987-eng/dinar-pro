@@ -16,6 +16,7 @@ import type { AiUiBlockPayloadCommerce } from './aiUiBlockPayloadCommerce';
 import type { AiUiBlockPayloadComparison } from './aiUiBlockPayloadComparison';
 import type { AiUiBlockPayloadComposition } from './aiUiBlockPayloadComposition';
 import type { AiUiBlockPayloadControl } from './aiUiBlockPayloadControl';
+import type { AiUiBlockPayloadDealCard } from './aiUiBlockPayloadDealCard';
 import type { AiUiBlockPayloadDelivery } from './aiUiBlockPayloadDelivery';
 import type { AiUiBlockPayloadDisplaySurface } from './aiUiBlockPayloadDisplaySurface';
 import type { AiUiBlockPayloadDraft } from './aiUiBlockPayloadDraft';
@@ -73,6 +74,8 @@ export type AiUiBlockPayload = {
   employment?: AiUiBlockPayloadEmployment;
   /** Allowlisted delivery/location view for the order's own participant, rebuilt server-side on every read. Stored copies never contain coordinates or address text. */
   delivery?: AiUiBlockPayloadDelivery;
+  /** Payment Preferences & Agreement deal card for one party of the order, rebuilt server-side on every read. Stored copies hold only the order id, never payment instructions. JassimAI does not receive, hold or verify the payment. */
+  dealCard?: AiUiBlockPayloadDealCard;
   /** Allowlisted seller promotion view (plans, review, campaigns), rebuilt from server state on every read. Prices come only from admin plans. */
   promotion?: AiUiBlockPayloadPromotion;
   /** Allowlisted driver view (profile, review, coarse work cards, assignments), rebuilt from server state on every read. Never contains contacts or coordinates. */

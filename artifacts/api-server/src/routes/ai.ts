@@ -1,3 +1,5 @@
+import { dealCard } from "../lib/deal-payments/service";
+import { dealPaymentsEnabled } from "../lib/deal-payments/flag";
 import { issueCardForSearchReply } from "../lib/smart-store-cards";
 import { isChatVideoPath, MAX_CHAT_VIDEOS, verifyChatVideo } from "../lib/chat-video";
 import { type AiCallRecord } from "../lib/ai-spend";
@@ -260,6 +262,11 @@ const StoredBlockPayload = z
     composition: ResultCompositionSchema.optional(),
   })
   .strict();
+function storableDealCard(card: unknown) {
+  const orderId = (card as { orderId?: unknown } | null)?.orderId;
+  return { kind: "DEAL_CARD", orderId: typeof orderId === "string" ? orderId : null };
+}
+
 const SurfaceBlock = z.object({
   type: z.literal("SURFACE"),
   version: z.literal(1),
@@ -325,6 +332,8 @@ const SurfaceBlock = z.object({
       .optional(),
     employment: z.record(z.string(), z.unknown()).optional(),
     delivery: z.record(z.string(), z.unknown()).optional(),
+    // Payment agreement deal card: stored as { kind, orderId } only and rebuilt per reader.
+    dealCard: z.record(z.string(), z.unknown()).optional(),
     promotion: z.record(z.string(), z.unknown()).optional(),
     driver: z.record(z.string(), z.unknown()).optional(),
     provider: z.record(z.string(), z.unknown()).optional(),
@@ -509,6 +518,14 @@ async function freshBlocksForConversation(
         expiresAt: set?.expiresAt,
       });
     }
+  }
+  // Deal cards are rebuilt for this reader from the agreement; a non-party sees nothing.
+  const dealBlocks = surfaceBlocks.filter((item) => item.block.payload.dealCard);
+  for (const item of dealBlocks) {
+    const orderId = (item.block.payload.dealCard as { orderId?: unknown }).orderId;
+    item.block.payload.dealCard = typeof orderId === "string" && dealPaymentsEnabled()
+      ? await dealCard({ actorId, orderId, market }).catch(() => ({ kind: "DEAL_CARD", orderId, unavailable: true }))
+      : { kind: "DEAL_CARD", unavailable: true };
   }
   // Driver blocks show the profile, review and assignment state as they are now (Block F4).
   const driverBlocks = surfaceBlocks.filter((item) => item.block.payload.driver);
@@ -2364,6 +2381,7 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
         control: toolResult.control,
         business: toolResult.business,
         relatesToAction: toolResult.relatesToAction,
+        dealCard: toolResult.dealCard,
       };
       const block = SurfaceBlock.parse({
         type: "SURFACE",
@@ -2413,7 +2431,10 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
             payload: block.payload.delivery
               // The envelope is derived on every read; a stored copy would be stale by design.
               ? { ...block.payload, card: undefined, delivery: storableDeliveryPayload(block.payload.delivery) }
-              : { ...block.payload, card: undefined },
+              : block.payload.dealCard
+                // Never store payment instructions or party names: the card is rebuilt per reader.
+                ? { ...block.payload, card: undefined, dealCard: storableDealCard(block.payload.dealCard) }
+                : { ...block.payload, card: undefined },
             ordinal: 0,
           });
         const d5DraftBinding = (toolResult as typeof toolResult & {
@@ -2781,6 +2802,7 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
         : error instanceof AIProviderError
           ? "AI_PROVIDER_ERROR"
           : "AI_RUNTIME_ERROR";
+
     req.log.warn(
       {
         event: "dinar_ai_turn",

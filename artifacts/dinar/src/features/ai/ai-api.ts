@@ -88,6 +88,8 @@ export type AiUiBlock = {
   payload: {
     memory?: import("./MemorySummary").MemoryPayload;
     policyReview?: unknown;
+    /** Payment agreement deal card, rebuilt for this reader by the server. */
+    dealCard?: unknown;
     connectToolResult?: Record<string, unknown>;
     connectWorkflow?: Record<string, unknown>;
     /** Phase 2: server-composed figures in the model-chosen form; validated by ComposedSurfaceView. */

@@ -50,6 +50,7 @@ import { RichText } from "./RichText";
 import { textDirection } from "./rich-text";
 import { SellerDraftHelper } from "./SellerDraftHelper";
 import { ComparisonPanel, isComparison, isPurchaseReview, PurchaseReviewPanel } from "./BuyerPanels";
+import { DealCardPanel, isDealCard } from "./DealCardPanel";
 import { isDriverPayload } from "./driver-types";
 import { isProviderPayload } from "./provider-types";
 import { AdvicePanel, ClarificationOptions, NegotiationPanel, adviceChipLabel, isAdvice, isNegotiation } from "./SmartSurfaces";
@@ -1075,6 +1076,8 @@ function ResultBlock({
     );
   if (block.type === "SURFACE" && block.payload.surface === "COMPARISON")
     return isComparison(block.payload.comparison) ? <ComparisonPanel comparison={block.payload.comparison} /> : null;
+  if (block.type === "SURFACE" && block.payload.surface === "DEAL_CARD")
+    return isDealCard(block.payload.dealCard) ? <DealCardPanel card={block.payload.dealCard} active={Boolean(activeWorkflow)} onSend={onSend} /> : null;
   if (block.type === "SURFACE" && (block.payload.surface === "PURCHASE_REVIEW" || block.payload.surface === "PAYMENT_REVIEW"))
     return isPurchaseReview(block.payload.purchaseReview) ? (
       <PurchaseReviewPanel review={block.payload.purchaseReview} active={Boolean(activeWorkflow)} onSend={onSend} />
