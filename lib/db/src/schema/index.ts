@@ -457,6 +457,15 @@ export const promotionProducts = pgTable(
     priceMinor: integer("price_minor").notNull(),
     currencyCode: text("currency_code").notNull(),
     durationDays: integer("duration_days").notNull(),
+    /** 0084: PERIOD = fixed price for durationDays; DAY = priceMinor per day, minDays..maxDays (durationDays = default). */
+    pricingUnit: text("pricing_unit").default("PERIOD").notNull(),
+    minDays: integer("min_days"),
+    maxDays: integer("max_days"),
+    /** 0084: what this placement may promote: LISTING, and STORE for HERO/SIDEBAR only. */
+    subjectKinds: jsonb("subject_kinds").$type<("LISTING" | "STORE")[]>().default(["LISTING"]).notNull(),
+    /** 0084: at most this many concurrent pending/live campaigns per placement product (null: no cap). */
+    capacity: integer("capacity"),
+    description: text("description").default("").notNull(),
     enabled: boolean("enabled").default(true).notNull(),
     createdBy: text("created_by").references(() => users.id),
     updatedBy: text("updated_by").references(() => users.id),
@@ -481,21 +490,32 @@ export const promotionProducts = pgTable(
     ),
     check(
       "promotion_products_placement_valid",
-      sql`${t.placement} IN ('SEARCH_AND_CHAT', 'FEATURED', 'VIP', 'REFRESH', 'SPONSORED_SEARCH', 'SPONSORED_RECOMMENDATION', 'DEMAND', 'NONE')`,
+      sql`${t.placement} IN ('SEARCH_AND_CHAT', 'FEATURED', 'VIP', 'REFRESH', 'SPONSORED_SEARCH', 'SPONSORED_RECOMMENDATION', 'DEMAND', 'HERO', 'SIDEBAR', 'NONE')`,
     ),
     check(
       "promotion_products_type_valid",
-      sql`${t.productType} IN ('STANDARD_PROMOTION', 'FEATURED_LISTING', 'VIP_LISTING', 'REFRESH_LISTING', 'SPONSORED_SEARCH', 'SPONSORED_RECOMMENDATION', 'DEMAND_CAPTURE', 'PROMOTION_BUNDLE', 'EXTRA_LISTING_QUOTA', 'DINAR_BUSINESS', 'SPONSORED_SURFACE')`,
+      sql`${t.productType} IN ('STANDARD_PROMOTION', 'FEATURED_LISTING', 'VIP_LISTING', 'REFRESH_LISTING', 'SPONSORED_SEARCH', 'SPONSORED_RECOMMENDATION', 'DEMAND_CAPTURE', 'PROMOTION_BUNDLE', 'EXTRA_LISTING_QUOTA', 'DINAR_BUSINESS', 'SPONSORED_SURFACE', 'HERO_BANNER', 'SIDEBAR_AD')`,
     ),
     // Each product type has exactly one placement; listing products need a category.
     check(
       "promotion_products_type_placement",
-      sql`(${t.productType}, ${t.placement}) IN (('STANDARD_PROMOTION', 'SEARCH_AND_CHAT'), ('FEATURED_LISTING', 'FEATURED'), ('VIP_LISTING', 'VIP'), ('REFRESH_LISTING', 'REFRESH'), ('SPONSORED_SEARCH', 'SPONSORED_SEARCH'), ('SPONSORED_RECOMMENDATION', 'SPONSORED_RECOMMENDATION'), ('DEMAND_CAPTURE', 'DEMAND'), ('PROMOTION_BUNDLE', 'NONE'), ('EXTRA_LISTING_QUOTA', 'NONE'), ('DINAR_BUSINESS', 'NONE'), ('SPONSORED_SURFACE', 'NONE'))`,
+      sql`(${t.productType}, ${t.placement}) IN (('STANDARD_PROMOTION', 'SEARCH_AND_CHAT'), ('FEATURED_LISTING', 'FEATURED'), ('VIP_LISTING', 'VIP'), ('REFRESH_LISTING', 'REFRESH'), ('SPONSORED_SEARCH', 'SPONSORED_SEARCH'), ('SPONSORED_RECOMMENDATION', 'SPONSORED_RECOMMENDATION'), ('DEMAND_CAPTURE', 'DEMAND'), ('PROMOTION_BUNDLE', 'NONE'), ('EXTRA_LISTING_QUOTA', 'NONE'), ('DINAR_BUSINESS', 'NONE'), ('SPONSORED_SURFACE', 'NONE'), ('HERO_BANNER', 'HERO'), ('SIDEBAR_AD', 'SIDEBAR'))`,
     ),
     check(
       "promotion_products_category_scope",
-      sql`(${t.placement} = 'NONE') = (${t.categoryId} IS NULL)`,
+      sql`(${t.placement} = 'NONE' AND ${t.categoryId} IS NULL) OR ${t.placement} IN ('HERO', 'SIDEBAR') OR (${t.placement} NOT IN ('NONE', 'HERO', 'SIDEBAR') AND ${t.categoryId} IS NOT NULL)`,
     ),
+    check("promotion_products_pricing_unit_valid", sql`${t.pricingUnit} IN ('PERIOD', 'DAY')`),
+    check(
+      "promotion_products_day_terms",
+      sql`(${t.pricingUnit} = 'DAY' AND ${t.chargingMode} = 'FIXED' AND ${t.minDays} IS NOT NULL AND ${t.maxDays} IS NOT NULL AND ${t.minDays} >= 1 AND ${t.minDays} <= ${t.durationDays} AND ${t.durationDays} <= ${t.maxDays} AND ${t.maxDays} <= 365) OR (${t.pricingUnit} = 'PERIOD' AND ${t.minDays} IS NULL AND ${t.maxDays} IS NULL)`,
+    ),
+    check(
+      "promotion_products_subject_kinds_valid",
+      sql`jsonb_typeof(${t.subjectKinds}) = 'array' AND jsonb_array_length(${t.subjectKinds}) >= 1 AND ${t.subjectKinds} <@ '["LISTING", "STORE"]'::jsonb AND (NOT (${t.subjectKinds} ? 'STORE') OR ${t.placement} IN ('HERO', 'SIDEBAR'))`,
+    ),
+    check("promotion_products_capacity_valid", sql`${t.capacity} IS NULL OR (${t.capacity} >= 1 AND ${t.capacity} <= 1000)`),
+    check("promotion_products_description_length", sql`char_length(${t.description}) <= 300`),
     check(
       "promotion_products_charging_mode_valid",
       sql`${t.chargingMode} IN ('FIXED', 'PREPAID_BUDGET', 'QUALIFIED_IMPRESSION', 'QUALIFIED_CLICK', 'QUALIFIED_ENGAGEMENT', 'QUALIFIED_LEAD', 'SUBSCRIPTION')`,
@@ -557,6 +577,8 @@ export const listingPromotions = pgTable(
     currencyCodeSnapshot: text("currency_code_snapshot").notNull(),
     placementSnapshot: text("placement_snapshot").notNull(),
     durationDaysSnapshot: integer("duration_days_snapshot").notNull(),
+    /** 0084: the multi-placement campaign this placement belongs to (one payment for all). */
+    campaignId: text("campaign_id").references(() => promotionCampaigns.id),
     status: text("status").default("PENDING_PAYMENT").notNull(),
     paymentMode: text("payment_mode")
       .default("DEVELOPMENT_SIMULATED")
@@ -597,6 +619,7 @@ export const listingPromotions = pgTable(
     ),
     index("listing_promotions_listing_status_idx").on(t.listingId, t.status),
     index("listing_promotions_seller_created_idx").on(t.sellerId, t.createdAt),
+    index("listing_promotions_campaign_idx").on(t.campaignId).where(sql`${t.campaignId} IS NOT NULL`),
     uniqueIndex("listing_promotions_seller_idempotency_unique")
       .on(t.sellerId, t.idempotencyKey)
       .where(sql`${t.idempotencyKey} IS NOT NULL`),
@@ -647,7 +670,7 @@ export const listingPromotions = pgTable(
     ),
     check(
       "listing_promotions_placement_valid",
-      sql`${t.placementSnapshot} IN ('SEARCH_AND_CHAT', 'FEATURED', 'VIP', 'REFRESH', 'SPONSORED_SEARCH', 'SPONSORED_RECOMMENDATION', 'DEMAND')`,
+      sql`${t.placementSnapshot} IN ('SEARCH_AND_CHAT', 'FEATURED', 'VIP', 'REFRESH', 'SPONSORED_SEARCH', 'SPONSORED_RECOMMENDATION', 'DEMAND', 'HERO', 'SIDEBAR')`,
     ),
     check(
       "listing_promotions_payment_source_valid",
@@ -4335,3 +4358,103 @@ export const marketTechnicalReadiness = pgTable(
 );
 export * from "./deal-payments";
 export * from "./merchant-policies";
+
+// ════ 0084 Jassim Ads closure: multi-placement campaigns ════════════════════
+/** One purchase: one listing or one store, its server total and ONE provider payment. */
+export const promotionCampaigns = pgTable(
+  "promotion_campaigns",
+  {
+    id: text("id").primaryKey(),
+    sellerId: text("seller_id").notNull().references(() => users.id),
+    marketId: text("market_id").notNull().references(() => markets.id),
+    subjectKind: text("subject_kind").notNull(),
+    listingId: text("listing_id").references(() => offers.id),
+    businessId: text("business_id").references(() => businessProfiles.id),
+    adCopy: text("ad_copy").default("").notNull(),
+    currencyCode: text("currency_code").notNull(),
+    totalMinor: integer("total_minor").notNull(),
+    itemsCount: integer("items_count").notNull(),
+    paymentProviderKey: text("payment_provider_key"),
+    paymentReference: text("payment_reference"),
+    paymentStatus: text("payment_status").default("PROVIDER_PENDING").notNull(),
+    status: text("status").default("PENDING_PAYMENT").notNull(),
+    refundReviewMinor: integer("refund_review_minor").default(0).notNull(),
+    failureCode: text("failure_code"),
+    idempotencyKey: text("idempotency_key").notNull(),
+    ...dates(),
+  },
+  (t) => [
+    uniqueIndex("promotion_campaigns_seller_idempotency_unique").on(t.sellerId, t.idempotencyKey),
+    uniqueIndex("promotion_campaigns_payment_reference_unique").on(t.paymentProviderKey, t.paymentReference).where(sql`${t.paymentReference} IS NOT NULL`),
+    index("promotion_campaigns_seller_idx").on(t.sellerId, t.createdAt),
+    check("promotion_campaigns_subject_valid", sql`(${t.subjectKind} = 'LISTING' AND ${t.listingId} IS NOT NULL AND ${t.businessId} IS NULL) OR (${t.subjectKind} = 'STORE' AND ${t.businessId} IS NOT NULL AND ${t.listingId} IS NULL)`),
+    check("promotion_campaigns_status_valid", sql`${t.status} IN ('PENDING_PAYMENT', 'ACTIVE', 'PARTIAL', 'ENDED', 'CANCELLED', 'PAYMENT_FAILED')`),
+    check("promotion_campaigns_payment_status_valid", sql`${t.paymentStatus} IN ('PROVIDER_PENDING', 'PROVIDER_PAID', 'PROVIDER_FAILED', 'PROVIDER_REFUNDED', 'PROVIDER_DISPUTED')`),
+    check("promotion_campaigns_live_requires_payment", sql`${t.status} NOT IN ('ACTIVE', 'PARTIAL', 'ENDED') OR ${t.paymentStatus} IN ('PROVIDER_PAID', 'PROVIDER_DISPUTED', 'PROVIDER_REFUNDED')`),
+    check("promotion_campaigns_reference_consistent", sql`(${t.paymentReference} IS NULL) = (${t.paymentProviderKey} IS NULL)`),
+    check("promotion_campaigns_amounts_valid", sql`${t.totalMinor} > 0 AND ${t.itemsCount} >= 1 AND ${t.itemsCount} <= 10 AND ${t.refundReviewMinor} >= 0 AND ${t.refundReviewMinor} <= ${t.totalMinor}`),
+    check("promotion_campaigns_currency_valid", sql`${t.currencyCode} ~ '^[A-Z]{3}$'`),
+    check("promotion_campaigns_ad_copy_length", sql`char_length(${t.adCopy}) <= 280`),
+  ],
+);
+
+/** A store campaign's placement (HERO/SIDEBAR); same lifecycle as a listing placement. */
+export const storePromotions = pgTable(
+  "store_promotions",
+  {
+    id: text("id").primaryKey(),
+    campaignId: text("campaign_id").notNull().references(() => promotionCampaigns.id),
+    businessId: text("business_id").notNull().references(() => businessProfiles.id),
+    sellerId: text("seller_id").notNull().references(() => users.id),
+    marketId: text("market_id").notNull().references(() => markets.id),
+    productId: text("product_id").notNull().references(() => promotionProducts.id),
+    productNameSnapshot: text("product_name_snapshot").notNull(),
+    placementSnapshot: text("placement_snapshot").notNull(),
+    priceMinorSnapshot: integer("price_minor_snapshot").notNull(),
+    currencyCodeSnapshot: text("currency_code_snapshot").notNull(),
+    durationDaysSnapshot: integer("duration_days_snapshot").notNull(),
+    pricingVersionSnapshot: integer("pricing_version_snapshot").notNull(),
+    priorityWeightSnapshot: integer("priority_weight_snapshot").default(100).notNull(),
+    status: text("status").default("PENDING_PAYMENT").notNull(),
+    paymentStatus: text("payment_status").default("PROVIDER_PENDING").notNull(),
+    startsAt: timestamp("starts_at", { withTimezone: true }).notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    endedAt: timestamp("ended_at", { withTimezone: true }),
+    failureCode: text("failure_code"),
+    ...dates(),
+  },
+  (t) => [
+    uniqueIndex("store_promotions_one_live_per_placement").on(t.businessId, t.placementSnapshot).where(sql`${t.status} IN ('PENDING_PAYMENT', 'ACTIVE', 'PAUSED')`),
+    index("store_promotions_campaign_idx").on(t.campaignId),
+    index("store_promotions_serving_idx").on(t.marketId, t.placementSnapshot, t.status, t.expiresAt),
+    check("store_promotions_placement_valid", sql`${t.placementSnapshot} IN ('HERO', 'SIDEBAR')`),
+    check("store_promotions_status_valid", sql`${t.status} IN ('PENDING_PAYMENT', 'ACTIVE', 'PAUSED', 'EXPIRED', 'CANCELLED', 'PAYMENT_FAILED')`),
+    check("store_promotions_payment_status_valid", sql`${t.paymentStatus} IN ('PROVIDER_PENDING', 'PROVIDER_PAID', 'PROVIDER_FAILED', 'PROVIDER_REFUNDED', 'PROVIDER_DISPUTED')`),
+    check("store_promotions_live_requires_payment", sql`${t.status} NOT IN ('ACTIVE', 'PAUSED') OR ${t.paymentStatus} IN ('PROVIDER_PAID', 'PROVIDER_DISPUTED')`),
+    check("store_promotions_price_positive", sql`${t.priceMinorSnapshot} > 0`),
+    check("store_promotions_duration_valid", sql`${t.durationDaysSnapshot} >= 1 AND ${t.durationDaysSnapshot} <= 365`),
+    check("store_promotions_window_valid", sql`${t.expiresAt} > ${t.startsAt}`),
+    check("store_promotions_currency_valid", sql`${t.currencyCodeSnapshot} ~ '^[A-Z]{3}$'`),
+  ],
+);
+
+/** Store placement impressions/engagements (append-only); the viewer is an HMAC key. */
+export const storePromotionEvents = pgTable(
+  "store_promotion_events",
+  {
+    id: text("id").primaryKey(),
+    storePromotionId: text("store_promotion_id").notNull().references(() => storePromotions.id),
+    placement: text("placement").notNull(),
+    viewerKey: text("viewer_key").notNull(),
+    eventType: text("event_type").notNull(),
+    dedupKey: text("dedup_key").notNull(),
+    trafficClass: text("traffic_class").default("TEST").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    uniqueIndex("store_promotion_events_dedup_unique").on(t.dedupKey),
+    index("store_promotion_events_promotion_idx").on(t.storePromotionId, t.eventType),
+    check("store_promotion_events_event_valid", sql`${t.eventType} IN ('IMPRESSION', 'ENGAGEMENT')`),
+    check("store_promotion_events_traffic_valid", sql`${t.trafficClass} IN ('LIVE', 'TEST')`),
+  ],
+);

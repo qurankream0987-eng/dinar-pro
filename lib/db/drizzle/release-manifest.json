@@ -334,5 +334,9 @@
   {
     "tag": "0083_merchant_policies",
     "sha256": "55128b78939943afe65dad9e3077897ec097efff0adcd5773873cdc7dbb5e856"
+  },
+  {
+    "tag": "0084_ad_placement_campaigns",
+    "sha256": "7cbe0edd26f6c6ed0d97778677e568d95d3aed4531788a865ef3abf72a6557f8"
   }
 ]
