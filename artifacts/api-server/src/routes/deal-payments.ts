@@ -12,7 +12,7 @@ import { recordCatalogChange } from "../lib/deal-payments/admin";
 import { dealPaymentsEnabled } from "../lib/deal-payments/flag";
 import { adminDecideClassification, CLASSIFICATION_LABELS_AR, declareSellerClassification, resolveSellerClassification } from "../lib/seller-classification";
 import { db } from "@workspace/db";
-import { adminSetDealStatus, applyDealAction, dealCard, sellerMethodsView, setSellerMethods } from "../lib/deal-payments/service";
+import { adminSetDealStatus, applyDealAction, dealCard, dealInstructions, sellerMethodsView, setSellerMethods } from "../lib/deal-payments/service";
 
 const router = Router();
 const id = (value: unknown) => String(value).slice(0, 80);
@@ -38,12 +38,15 @@ const requireAdmin: RequestHandler = (req, res, next) => {
 };
 
 const instructionText = z.string().max(120);
+const INSTRUCTION_SHAPE = { beneficiaryName: instructionText, alias: instructionText, phone: instructionText, iban: instructionText, accountNumber: instructionText, bankName: instructionText, walletProvider: instructionText, walletNumber: instructionText, paymentLink: z.string().max(300), note: instructionText };
+/** A catalog code (CLIQ, KNET…) or a method a party named (DECLARED:<name>). */
+const methodCode = z.string().min(2).max(60).regex(/^(?:[A-Z][A-Z0-9_]{1,39}|DECLARED:[^\s:][^:]{0,49})$/u);
 const SellerMethod = z
   .object({
-    code: z.string().min(2).max(40),
+    code: methodCode,
     customLabel: z.string().max(60).nullish(),
     instructions: z
-      .object({ beneficiaryName: instructionText, alias: instructionText, phone: instructionText, iban: instructionText, accountNumber: instructionText, bankName: instructionText, walletNumber: instructionText, note: instructionText })
+      .object(INSTRUCTION_SHAPE)
       .partial()
       .strict()
       .optional(),
@@ -80,7 +83,8 @@ router.get("/orders/:id/deal-card", enabled, requireAuth, noStore, async (req, r
 });
 
 const Action = z.discriminatedUnion("type", [
-  z.object({ type: z.literal("CHOOSE"), method: z.string().min(2).max(40), customLabel: z.string().max(60).optional() }).strict(),
+  z.object({ type: z.literal("CHOOSE"), method: methodCode, customLabel: z.string().max(60).optional() }).strict(),
+  z.object({ type: z.literal("PROVIDE_INSTRUCTIONS"), instructions: z.object(INSTRUCTION_SHAPE).partial().strict() }).strict(),
   z.object({ type: z.literal("RESPOND"), accept: z.boolean() }).strict(),
   z.object({ type: z.literal("SHARE_INSTRUCTIONS") }).strict(),
   z.object({ type: z.literal("REPORT_PAID"), note: z.string().max(300).optional() }).strict(),
@@ -89,6 +93,10 @@ const Action = z.discriminatedUnion("type", [
   z.object({ type: z.literal("COD_COLLECTED") }).strict(),
   z.object({ type: z.literal("CANCEL"), reason: z.string().max(300).optional() }).strict(),
 ]);
+// Protected payment details: never part of the card or the chat history; every rule re-checked.
+router.get("/orders/:id/deal-card/instructions", enabled, requireAuth, noStore, async (req, res) => {
+  res.json(await dealInstructions({ actorId: req.actor!.id, orderId: id(req.params.id), market: await marketFor(req) }));
+});
 router.post("/orders/:id/deal-card/actions", enabled, requireAuth, noStore, async (req, res) => {
   const body = z.object({ action: Action, expectedVersion: z.number().int().positive().optional() }).strict().parse(req.body);
   res.json(await applyDealAction({ actorId: req.actor!.id, orderId: id(req.params.id), market: await marketFor(req), action: body.action, expectedVersion: body.expectedVersion }));

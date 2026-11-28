@@ -11,7 +11,7 @@ import { and, desc, eq, or } from "drizzle-orm";
 import { aiResultSets, aiUiBlocks, db, orders } from "@workspace/db";
 import type { ToolResult } from "./tool-registry";
 import { normalizeBuyerText } from "./buyer-turn";
-import { methodLabel, methodsInText, offerableMethods, resolveCountry } from "../lib/deal-payments/catalog";
+import { declaredCode, METHODS, methodLabel, methodsInText, offerableMethods, resolveCountry } from "../lib/deal-payments/catalog";
 import { dealPaymentsEnabled } from "../lib/deal-payments/flag";
 import { applyDealAction, dealCard, DealPaymentError, sellerMethodsView, setSellerMethods, type DealAction } from "../lib/deal-payments/service";
 
@@ -100,7 +100,7 @@ async function orderInView(conversationId: string, actorId: string, marketId: st
 export async function executeDealPaymentTurn(input: { conversationId: string; message: string; market: MarketRef; actorId?: string }): Promise<Turn | null> {
   if (!input.actorId || !dealPaymentsEnabled()) return null;
   const text = normalizeBuyerText(input.message);
-  if (![PAYMENT_WORDS, AGREE, DISAGREE, RECEIVED, SHOW, PRIVACY, PAY_AFTER].some((pattern) => pattern.test(text))) return null;
+  if (![PAYMENT_WORDS, AGREE, DISAGREE, RECEIVED, SHOW, PRIVACY, PAY_AFTER].some((pattern) => pattern.test(text)) && !(SELLER_ACCEPTS.test(text) && methodsInText(input.message, Object.keys(METHODS)).codes.length)) return null;
   // A bare «موافق»/«أرفض» belongs to the deal card only when the deal card is the latest thing shown.
   if (!PAYMENT_WORDS.test(text) && (AGREE.test(text) || DISAGREE.test(text)) && !(await latestIsDealCard(input.conversationId))) return null;
   if (await hasOpenOwnReview(input.conversationId, input.market.id, input.actorId)) return null;
@@ -122,20 +122,35 @@ async function route(input: { conversationId: string; message: string; market: M
   if (!orderId || SELLER_ACCEPTS.test(text) && !/(?:الاقتراح|التغيير)/u.test(text)) {
     if (SELLER_METHODS_QUERY.test(text)) return sellerSummary(actorId, input.market, "");
     if (SELLER_ACCEPTS.test(text)) {
-      const { codes, ambiguousCash } = methodsInText(input.message, available);
-      if (ambiguousCash) return notice("تقصد كاش عند التوصيل (الدفع عند الاستلام) أم كاش يدًا بيد عند الاستلام الشخصي؟ أو الاثنين؟");
-      if (!codes.length) {
+      const found = methodsInText(input.message, available);
+      // «زين كاش» is a wallet's name, not cash: a multi-word named method wins over bare «كاش».
+      const walletNames = namedMethods(input.message, "SELLER").filter(isSpecificWallet);
+      const codes = walletNames.length ? found.codes.filter((c) => !GENERIC_CODES.has(c)) : found.codes;
+      if (found.ambiguousCash && !walletNames.length) return notice("تقصد كاش عند التوصيل (الدفع عند الاستلام) أم كاش يدًا بيد عند الاستلام الشخصي؟ أو الاثنين؟");
+      // Open choice: a method the catalog does not know is accepted under the seller's own name for it.
+      const named = namedMethods(input.message, "SELLER").filter((n) => walletNames.includes(n) || !methodsInText(n, available).codes.length);
+      if (!codes.length && !named.length) {
         if (!orderId) return sellerSummary(actorId, input.market, "أي طرق الدفع تقبل؟");
       } else {
-        const unavailable = codes.filter((code) => !available.includes(code));
-        const accepted = codes.filter((code) => available.includes(code));
-        if (!accepted.length)
-          return notice(`${unavailable.map((c) => `«${methodLabel(c)}»`).join(" و")} غير متاحة كخيار في ${country?.nameAr ?? "بلدك"} حاليًا. المتاح: ${available.map((c) => methodLabel(c)).join("، ")}.`);
-        await setSellerMethods({ sellerId: actorId, market: input.market, methods: accepted.map((code) => ({ code })) });
+        const methods = [...codes.map((code) => ({ code })), ...named.map((label) => ({ code: declaredCode(label)!, customLabel: label }))].filter((m) => m.code);
+        const refused: string[] = [];
+        const accepted: typeof methods = [];
+        for (const m of methods) {
+          try {
+            await setSellerMethods({ sellerId: actorId, market: input.market, methods: [m] });
+            accepted.push(m);
+          } catch (error) {
+            if (!(error instanceof DealPaymentError)) throw error;
+            refused.push(`${methodLabel(m.code, (m as { customLabel?: string }).customLabel)} (${error.message})`);
+          }
+        }
+        if (!accepted.length) return notice(`لم أضف شيئًا: ${refused.join("؛ ")}`);
+        const labels = accepted.map((m) => methodLabel(m.code, (m as { customLabel?: string }).customLabel));
+        const unverified = accepted.filter((m) => !available.includes(m.code)).map((m) => methodLabel(m.code, (m as { customLabel?: string }).customLabel));
         return sellerSummary(
           actorId,
           input.market,
-          `ممتاز، سأعرض للمشتري ${accepted.map((c) => methodLabel(c)).join(" و")}.${unavailable.length ? ` (${unavailable.map((c) => methodLabel(c)).join("، ")} غير متاحة في بلدك حاليًا، فلم أضفها.)` : ""}${accepted.some((c) => c !== "COD" && c !== "CASH_IN_PERSON") ? " بيانات التحويل اختيارية الآن، ولن تظهر لأي مشترٍ إلا بعد الاتفاق وموافقتك." : ""}`,
+          `ممتاز، سأعرض للمشتري ${labels.join(" و")}.${unverified.length ? ` (${unverified.join("، ")}: وسيلة تتفقان عليها بينكما؛ لم يتحقق جاسم من توفرها.)` : ""}${refused.length ? ` لم أضف: ${refused.join("؛ ")}.` : ""}${accepted.some((m) => m.code !== "COD" && m.code !== "CASH_IN_PERSON") ? " بيانات الدفع تُدخلها لاحقًا في نموذج محمي داخل بطاقة الصفقة، ولن تظهر لأي مشترٍ قبل الاتفاق وموافقتك." : ""}`,
         );
       }
     }
@@ -146,10 +161,22 @@ async function route(input: { conversationId: string; message: string; market: M
   const current = await dealCard({ actorId, orderId, market });
   const act = async (action: DealAction) => {
     const out = await applyDealAction({ actorId, orderId, market, action });
-    return cardTurn(out.card, out.message);
+    const card = out.card;
+    const next =
+      card.viewerRole === "SELLER" && card.instructionsState === "SELLER_TO_PROVIDE"
+        ? ` أدخل بيانات ${card.agreedMethod?.label ?? "الدفع"} في النموذج المحمي داخل البطاقة، ولا تكتبها في المحادثة.${card.agreedMethod?.requiresMerchantCheckout ? " هذه الوسيلة تحتاج رابط صفحة الدفع التجارية الخاصة بك، لا رقم بطاقة." : ""}`
+        : card.viewerRole === "BUYER" && card.agreedMethod && card.instructionsState !== "NOT_APPLICABLE" && card.instructionsState !== "SHARED"
+          ? " ستظهر تعليمات الدفع في المساحة المحمية بعد أن يشاركها البائع."
+          : card.viewerRole === "BUYER" && card.instructionsState === "SHARED"
+            ? " تعليمات الدفع جاهزة في المساحة المحمية داخل البطاقة."
+            : "";
+    const standing = card.agreedMethod && card.agreedMethod.standing === "USER_DECLARED_METHOD" ? " تنبيه: هذه وسيلة اتفقتما عليها، ولم يتحقق جاسم من توفرها أو أمانها." : "";
+    return cardTurn(card, `${out.message}${next}${standing}`);
   };
   const role = current.viewerRole;
 
+  if (role === "SELLER" && current.instructionsState === "SELLER_TO_PROVIDE" && /(?:[A-Z]{2}\d{2}[A-Z0-9]{10,}|\d{7,})/iu.test(input.message.replace(/\s+/g, "")))
+    return cardTurn(current, "لم أحفظ هذه البيانات من المحادثة. أدخلها في النموذج المحمي داخل بطاقة الصفقة حتى تُعرض للمشتري وحده؛ ويُفضّل حذف رسالتك.");
   if (PRIVACY.test(text))
     return cardTurn(current, "لن تُشارك أي بيانات دفع قبل الاتفاق على الطريقة، وبيانات البائع لا تظهر إلا بموافقته وللمشتري في هذا الطلب فقط. لا يطلب جاسم رقم بطاقة أو كلمة مرور أو رمز تحقق أبدًا.");
   if (CANCEL.test(text)) return act({ type: "CANCEL" });
@@ -163,7 +190,10 @@ async function route(input: { conversationId: string; message: string; market: M
   }
 
   const candidates = current.acceptedMethods.map((m) => m.code);
-  const { codes, ambiguousCash } = methodsInText(input.message, candidates);
+  const buyerFound = methodsInText(input.message, candidates);
+  const buyerWallets = namedMethods(input.message, "BUYER").filter(isSpecificWallet);
+  const codes = buyerWallets.length ? buyerFound.codes.filter((c) => !GENERIC_CODES.has(c)) : buyerFound.codes;
+  const ambiguousCash = buyerFound.ambiguousCash && !buyerWallets.length;
   const acceptedLabels = current.acceptedMethods.filter((m) => m.available).map((m) => m.label).join(" أو ");
 
   if (PAY_AFTER.test(text) && !codes.length) {
@@ -184,6 +214,14 @@ async function route(input: { conversationId: string; message: string; market: M
     const common = codes.filter((c) => candidates.includes(c));
     if (common.length === 1) return act({ type: "CHOOSE", method: common[0]! });
     return cardTurn(current, common.length ? `البائع يقبل ${common.map((c) => methodLabel(c)).join(" و")}. اختر واحدة.` : `لا توجد طريقة مشتركة بين ما ذكرته وما يقبله البائع (${acceptedLabels || "لم يحدد بعد"}). يمكنك اقتراح إحداها وسيُسأل البائع.`);
+  }
+  if (!codes.length && role === "BUYER" && !ASK_ACCEPT.test(text)) {
+    const [named] = namedMethods(input.message, "BUYER");
+    const code = named ? declaredCode(named) : null;
+    if (named && code) {
+      const accepted = current.acceptedMethods.find((m) => m.code === code);
+      return act({ type: "CHOOSE", method: code, ...(accepted ? {} : { customLabel: named }) });
+    }
   }
   if (codes.length === 1) {
     const code = codes[0]!;
@@ -215,6 +253,27 @@ async function route(input: { conversationId: string; message: string; market: M
     return cardTurn(current, prompt);
   }
   return null;
+}
+
+/** «زين كاش», «محفظة نجمة»: a specific product name built on a generic word is not the generic method. */
+const GENERIC_CODES = new Set(["COD", "CASH_IN_PERSON", "LOCAL_WALLET"]);
+const isSpecificWallet = (name: string) => /\s(?:كاش|cash)$/u.test(name) || /^(?:محفظه|المحفظه)\s+\S+/u.test(name);
+const GENERIC_NAMES = /^(?:الدفع|دفع|المبلغ|التحويل|تحويل|كاش|نقدا|نقد|هذا|هذه|البطاقه|بطاقه|فيزا)$/u;
+/**
+ * Method names a party used that the catalog does not know: «أقبل زين كاش وأورنج موني»,
+ * «أفضل الدفع عن طريق محفظة X». Order references and filler words are dropped.
+ */
+function namedMethods(message: string, who: "SELLER" | "BUYER"): string[] {
+  const text = normalizeBuyerText(message).replace(/(?:^|\s)#?[0-9a-f]{8}(?=\s|$)/giu, " ").trim();
+  const match =
+    who === "SELLER"
+      ? text.match(/(?:اقبل|بقبل|نقبل|استقبل|بستقبل)\s+(?:الدفع\s+)?(?:ب|عن طريق|عبر|من خلال)?\s*(.+)$/u)
+      : text.match(/(?:الدفع|ادفع|بدفع|سادفع|احول|بحول)\s+(?:عن طريق|عبر|بواسطه|من خلال|ب)\s*(.+)$/u);
+  if (!match) return [];
+  return match[1]!
+    .split(/\s+(?:او|و)\s*|،|,/u)
+    .map((part) => part.replace(/^(?:ال)?(?:دفع\s+)?(?:ب|عن طريق|عبر)\s+/u, "").trim())
+    .filter((part) => part.length >= 2 && part.length <= 40 && !GENERIC_NAMES.test(part));
 }
 
 async function sellerSummary(actorId: string, market: MarketRef, lead: string): Promise<Turn> {

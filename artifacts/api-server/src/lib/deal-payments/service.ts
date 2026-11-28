@@ -8,11 +8,13 @@
  * Separate from the Jassim Ads wallet, JassimAI subscriptions and the simulated order payments.
  */
 import { randomUUID } from "node:crypto";
-import { and, asc, desc, eq, inArray } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
 import {
   db,
   dealPaymentAgreements,
   dealPaymentEvents,
+  conversations,
+  messages,
   offers,
   orderFulfillments,
   orders,
@@ -20,7 +22,7 @@ import {
   transactionLocations,
   users,
 } from "@workspace/db";
-import { METHODS, methodLabel, offerableMethods, resolveCountry, type InstructionField, type ResolvedMethod } from "./catalog";
+import { definitionFor, isDeclared, METHODS, methodLabel, methodStanding, negotiable, offerableMethods, resolveCountry, STANDING_LABELS_AR, type InstructionField, type ResolvedCountry, type ResolvedMethod } from "./catalog";
 
 type Agreement = typeof dealPaymentAgreements.$inferSelect;
 type Order = typeof orders.$inferSelect;
@@ -127,19 +129,18 @@ const catalogView = (m: ResolvedMethod) => ({ code: m.code, label: m.labelAr, ki
 export async function setSellerMethods(input: { sellerId: string; market: MarketRef; methods: SellerMethodInput[]; replace?: boolean }) {
   if (!input.methods.length && !input.replace) reject(400, "NO_METHODS", "اختر طريقة دفع واحدة على الأقل.");
   const country = await resolveCountry(input.market.countryCode);
-  const available = offerableMethods(country, input.market.currencyCode);
   const seen = new Set<string>();
   for (const method of input.methods) {
     if (seen.has(method.code)) reject(400, "DUPLICATE_METHOD", "طريقة الدفع مكررة.");
     seen.add(method.code);
-    const offer = available.find((m) => m.code === method.code);
-    if (!offer) reject(409, "METHOD_NOT_AVAILABLE_IN_COUNTRY", `«${methodLabel(method.code)}» غير متاحة حاليًا في ${country?.nameAr ?? "هذا البلد"}.`);
-    if (method.code === "OTHER_AGREED" && !method.customLabel?.trim()) reject(400, "CUSTOM_LABEL_REQUIRED", "اكتب اسم الوسيلة الأخرى.");
-    for (const [field, value] of Object.entries(method.instructions ?? {})) {
-      if (!offer!.instructionFields.includes(field as InstructionField)) reject(400, "INSTRUCTION_FIELD_NOT_ALLOWED", `الحقل «${field}» غير مطلوب لهذه الوسيلة.`);
-      if (typeof value !== "string" || value.length > FIELD_LIMIT) reject(400, "INSTRUCTION_TOO_LONG", "بيانات الدفع طويلة أكثر من اللازم.");
-      assertSafeInstructionValue(field, value!);
-    }
+    // Open choice: any known or named method may be accepted, except where the country catalog
+    // explicitly marks it unavailable. Accepting it does not make it «verified».
+    const definition = definitionFor(method.code, method.customLabel);
+    if (!definition) reject(400, "UNKNOWN_METHOD", "اكتب اسم الوسيلة.");
+    if ((method.code === "OTHER_AGREED" || isDeclared(method.code)) && !method.customLabel?.trim()) reject(400, "CUSTOM_LABEL_REQUIRED", "اكتب اسم الوسيلة الأخرى.");
+    if (!negotiable(methodStanding(country, method.code, input.market.currencyCode)))
+      reject(409, "METHOD_UNSUPPORTED_FOR_THIS_TRANSACTION", `«${methodLabel(method.code, method.customLabel)}» غير متاحة في ${country?.nameAr ?? "هذا البلد"} حاليًا.`);
+    validateInstructions(definition!.instructionFields, method.instructions);
     if (method.codAreas && (method.codAreas.length > 50 || method.codAreas.some((a) => typeof a !== "string" || a.length > 60)))
       reject(400, "COD_AREAS_INVALID", "مناطق التوصيل غير صالحة.");
   }
@@ -176,6 +177,23 @@ export async function setSellerMethods(input: { sellerId: string; market: Market
   }).then(() => sellerMethodsView(input.sellerId, input.market));
 }
 
+const IBAN = /^[A-Z]{2}\d{2}[A-Z0-9]{10,30}$/;
+function validateInstructions(allowed: readonly InstructionField[], instructions?: Partial<Record<string, string>>) {
+  for (const [field, value] of Object.entries(instructions ?? {})) {
+    if (!allowed.includes(field as InstructionField)) reject(400, "INSTRUCTION_FIELD_NOT_ALLOWED", `الحقل «${field}» غير مطلوب لهذه الوسيلة.`);
+    if (typeof value !== "string" || value.length > FIELD_LIMIT) reject(400, "INSTRUCTION_TOO_LONG", "بيانات الدفع طويلة أكثر من اللازم.");
+    assertSafeInstructionValue(field, value!);
+    const v = value!.trim();
+    if (field === "iban" && v && !IBAN.test(v.replace(/\s+/g, "").toUpperCase())) reject(400, "IBAN_INVALID", "رقم IBAN غير صالح الصيغة.");
+    if (field === "phone" && v && !/^\+?[\d\s-]{7,20}$/.test(v)) reject(400, "PHONE_INVALID", "رقم الهاتف غير صالح الصيغة.");
+    if (field === "paymentLink" && v) {
+      let url: URL | null = null;
+      try { url = new URL(v); } catch { url = null; }
+      if (!url || url.protocol !== "https:" || url.username || url.password) reject(400, "PAYMENT_LINK_INVALID", "رابط الدفع يجب أن يكون https ومن صفحة دفع البائع نفسه.");
+    }
+  }
+}
+
 function clean(instructions?: Partial<Record<string, string>>) {
   if (!instructions) return undefined;
   const out: Record<string, string> = {};
@@ -192,7 +210,7 @@ function clean(instructions?: Partial<Record<string, string>>) {
  */
 async function acceptedFor(tx: any, order: Order): Promise<string[]> {
   const country = await resolveCountry(order.countryCode, tx);
-  const offerable = new Set(offerableMethods(country, order.currencyCode).map((m) => m.code));
+  const allowed = (code: string) => negotiable(methodStanding(country, code, order.currencyCode));
   const rows = await tx
     .select({ code: sellerPaymentMethods.methodCode })
     .from(sellerPaymentMethods)
@@ -208,7 +226,7 @@ async function acceptedFor(tx: any, order: Order): Promise<string[]> {
       if (Array.isArray(restriction) && restriction.length) accepted = accepted.filter((code) => restriction.includes(code));
     }
   }
-  return accepted.filter((code) => offerable.has(code));
+  return accepted.filter(allowed);
 }
 
 async function lockOrder(tx: any, orderId: string, actorId: string, marketId: string): Promise<{ order: Order; role: Role }> {
@@ -282,7 +300,30 @@ async function codAvailability(tx: any, order: Order): Promise<CodCheck> {
   return covered ? { available: true } : { available: false, reason: "البائع لا يقبل الدفع عند الاستلام في منطقة التسليم هذه." };
 }
 
+/**
+ * Jassim tells the other party in the order's own thread (the conversation both parties already
+ * see). Never payment details: only what happened and what is awaited.
+ */
+const THREAD_NOTES: Record<string, (d: Record<string, unknown>, role: string) => string | null> = {
+  METHOD_PROPOSED: (d, role) => `${role === "BUYER" ? "المشتري" : "البائع"} يقترح الدفع عبر «${String(d.labelText)}» لهذه الصفقة. هل تقبلها؟ الرد من بطاقة الصفقة.`,
+  CHANGE_PROPOSED: (d, role) => `${role === "BUYER" ? "المشتري" : "البائع"} يطلب تغيير طريقة الدفع إلى «${String(d.labelText)}». الاتفاق السابق يبقى حتى توافق.`,
+  PROPOSAL_ACCEPTED: (d) => `تمت الموافقة على الدفع عبر «${String(d.labelText)}».`,
+  PROPOSAL_REJECTED: (d) => `رُفض اقتراح الدفع عبر «${String(d.labelText)}»؛ لم يتغير الاتفاق.`,
+  INSTRUCTIONS_SHARED: () => "شارك البائع تعليمات الدفع؛ تظهر للمشتري في المساحة المحمية داخل بطاقة الصفقة.",
+  INSTRUCTIONS_PROVIDED_AND_SHARED: () => "شارك البائع تعليمات الدفع؛ تظهر للمشتري في المساحة المحمية داخل بطاقة الصفقة.",
+  BUYER_REPORTED_PAID: () => "المشتري أبلغ أنه دفع. هذا إبلاغ وليس تأكيدًا؛ بانتظار تأكيد البائع للاستلام.",
+  SELLER_CONFIRMED_RECEIPT: () => "البائع أكد استلام المبلغ (إفادة البائع؛ لم يتحقق جاسم من أي تحويل).",
+  SELLER_REPORTED_NOT_RECEIVED: () => "البائع أفاد بأن المبلغ لم يصله؛ الحالة الآن خلاف على الدفع.",
+};
+
 async function record(tx: any, agreement: Agreement, actor: { id: string | null; role: Role | "ADMIN" | "SYSTEM" }, event: string, toStatus: string, detail: Record<string, unknown> = {}) {
+  const note = THREAD_NOTES[event];
+  if (note) {
+    const labelText = methodLabel(String(detail.method ?? agreement.proposedMethod ?? agreement.agreedMethod ?? ""), (detail.label as string | null) ?? agreement.proposedLabel ?? agreement.agreedLabel);
+    const body = note({ ...detail, labelText }, actor.role);
+    const [thread] = await tx.select({ id: conversations.id }).from(conversations).where(eq(conversations.orderId, agreement.orderId)).limit(1);
+    if (body && thread) await tx.insert(messages).values({ id: randomUUID(), conversationId: thread.id, body });
+  }
   await tx.insert(dealPaymentEvents).values({
     id: randomUUID(),
     agreementId: agreement.id,
@@ -312,6 +353,7 @@ export type DealAction =
   | { type: "CHOOSE"; method: string; customLabel?: string }
   | { type: "RESPOND"; accept: boolean }
   | { type: "SHARE_INSTRUCTIONS" }
+  | { type: "PROVIDE_INSTRUCTIONS"; instructions: Partial<Record<InstructionField, string>> }
   | { type: "REPORT_PAID"; note?: string }
   | { type: "CONFIRM_RECEIPT" }
   | { type: "REPORT_NOT_RECEIVED"; note?: string }
@@ -338,25 +380,27 @@ export async function applyDealAction(input: { actorId: string; orderId: string;
       case "CHOOSE": {
         if (SETTLED.has(agreement.status) || agreement.status === "BUYER_REPORTED_PAID" || agreement.status === "DISPUTED")
           reject(409, "PAYMENT_ALREADY_REPORTED", "لا يمكن تغيير طريقة الدفع بعد الإبلاغ عن الدفع أو تأكيده.");
-        const definition = METHODS[action.method];
+        const definition = definitionFor(action.method, action.customLabel);
         if (!definition) reject(400, "UNKNOWN_METHOD", "طريقة الدفع غير معروفة.");
+        if ((action.method === "OTHER_AGREED" || isDeclared(action.method)) && !action.customLabel?.trim() && !agreement.acceptedMethods.includes(action.method))
+          reject(400, "CUSTOM_LABEL_REQUIRED", "اكتب اسم الوسيلة التي تقترحها.");
         const country = await resolveCountry(order.countryCode, tx);
-        if (!offerableMethods(country, order.currencyCode).some((m) => m.code === action.method))
-          reject(409, "METHOD_NOT_AVAILABLE_IN_COUNTRY", `«${definition!.labelAr}» غير متاحة كخيار في ${country?.nameAr ?? "هذا البلد"} حاليًا.`);
-        if (action.method === "OTHER_AGREED" && !action.customLabel?.trim()) reject(400, "CUSTOM_LABEL_REQUIRED", "اكتب اسم الوسيلة التي تقترحها.");
+        // Open choice: a method missing from the catalog is still negotiable between the parties.
+        if (!negotiable(methodStanding(country, action.method, order.currencyCode)))
+          reject(409, "METHOD_UNSUPPORTED_FOR_THIS_TRANSACTION", `«${definition!.labelAr}» غير متاحة في ${country?.nameAr ?? "هذا البلد"} حاليًا؛ اختر وسيلة أخرى.`);
         if (definition!.kind === "COD") {
           const cod = await codAvailability(tx, order);
           if (!cod.available) reject(409, "COD_UNAVAILABLE", cod.reason!);
         }
-        const label = action.method === "OTHER_AGREED" ? action.customLabel!.trim().slice(0, 60) : null;
+        const label = action.method === "OTHER_AGREED" || isDeclared(action.method) ? (action.customLabel?.trim() || definition!.labelAr).slice(0, 60) : null;
         const accepted = agreement.acceptedMethods.includes(action.method) && action.method !== "OTHER_AGREED";
         const wasAgreed = AGREED.has(agreement.status);
         if (accepted && role === "BUYER" && !wasAgreed) {
           // The seller accepted this method in advance; the buyer's choice completes the agreement.
           const to = agreedStatusFor(action.method);
           await record(tx, agreement, actor, "METHOD_CONFIRMED", to, { method: action.method, basis: "SELLER_PRE_ACCEPTED" });
-          agreement = await update(tx, agreement, { agreedMethod: action.method, agreedLabel: null, proposedMethod: null, proposedBy: null, proposedLabel: null, status: to, instructionsShared: null, instructionsSharedAt: null });
-          message = `تم الاتفاق على ${methodLabel(action.method)}.`;
+          agreement = await update(tx, agreement, { agreedMethod: action.method, agreedLabel: label, proposedMethod: null, proposedBy: null, proposedLabel: null, status: to, instructionsShared: null, instructionsSharedAt: null });
+          message = `تم الاتفاق على ${methodLabel(action.method, label)}.`;
         } else {
           // Anything else — a method the seller did not pre-accept, a seller proposal, or any change
           // after agreement — waits for the other party.
@@ -407,6 +451,32 @@ export async function applyDealAction(input: { actorId: string; orderId: string;
         await record(tx, agreement, actor, "INSTRUCTIONS_SHARED", agreement.status, { method: agreement.agreedMethod, fields: Object.keys(instructions!) });
         agreement = await update(tx, agreement, { instructionsShared: instructions, instructionsSharedAt: new Date() });
         message = "شاركت بيانات الدفع مع المشتري في هذا الطلب فقط.";
+        break;
+      }
+      case "PROVIDE_INSTRUCTIONS": {
+        // The seller gives the details for the agreed method from the protected form and, by this
+        // action, approves sharing them with this order's buyer only.
+        if (role !== "SELLER") reject(403, "SELLER_ONLY", "بيانات الدفع يقدمها البائع.");
+        if (!agreement.agreedMethod || (!AGREED.has(agreement.status) && agreement.status !== "BUYER_REPORTED_PAID"))
+          reject(409, "NOT_AGREED", "تُقدَّم بيانات الدفع بعد الاتفاق على الطريقة.");
+        const definition = definitionFor(agreement.agreedMethod!, agreement.agreedLabel);
+        if (!definition || definition.kind === "COD" || agreement.agreedMethod === "CASH_IN_PERSON") reject(409, "NO_INSTRUCTIONS_NEEDED", "هذه الطريقة لا تحتاج بيانات دفع.");
+        validateInstructions(definition!.instructionFields, action.instructions);
+        const instructions = clean(action.instructions) ?? {};
+        if (!Object.keys(instructions).length) reject(400, "NO_INSTRUCTIONS", "أدخل بيانات الدفع المطلوبة.");
+        if (definition!.requiresMerchantCheckout && !instructions.paymentLink)
+          reject(400, "MERCHANT_CHECKOUT_REQUIRED", `${definition!.labelAr} تحتاج رابط صفحة الدفع التجارية الخاصة بك؛ لا نستخدم بطاقة شخصية.`);
+        const now = new Date();
+        await tx
+          .insert(sellerPaymentMethods)
+          .values({ sellerId: order.sellerId, marketId: order.marketId, methodCode: agreement.agreedMethod!, customLabel: agreement.agreedLabel, instructions, createdAt: now, updatedAt: now })
+          .onConflictDoUpdate({
+            target: [sellerPaymentMethods.sellerId, sellerPaymentMethods.marketId, sellerPaymentMethods.methodCode],
+            set: { instructions, paused: false, updatedAt: now, version: sql`${sellerPaymentMethods.version} + 1` },
+          });
+        await record(tx, agreement, actor, "INSTRUCTIONS_PROVIDED_AND_SHARED", agreement.status, { method: agreement.agreedMethod, fields: Object.keys(instructions) });
+        agreement = await update(tx, agreement, { instructionsShared: instructions, instructionsSharedAt: now });
+        message = "حفظت بيانات الدفع وشاركتها مع المشتري في هذا الطلب فقط، داخل مساحة محمية.";
         break;
       }
       case "REPORT_PAID": {
@@ -520,16 +590,32 @@ export async function dealCard(input: { actorId: string; orderId: string; market
       .from(dealPaymentEvents)
       .where(eq(dealPaymentEvents.agreementId, agreement.id))
       .orderBy(asc(dealPaymentEvents.createdAt));
+    const profiles = await tx
+      .select({ code: sellerPaymentMethods.methodCode, label: sellerPaymentMethods.customLabel, instructions: sellerPaymentMethods.instructions })
+      .from(sellerPaymentMethods)
+      .where(and(eq(sellerPaymentMethods.sellerId, order.sellerId), eq(sellerPaymentMethods.marketId, order.marketId)));
+    const profileOf = (code: string) => profiles.find((p: { code: string }) => p.code === code) as { label: string | null; instructions: Record<string, string> } | undefined;
     const acceptedView = agreement.acceptedMethods.map((code) => ({
       code,
-      label: methodLabel(code),
+      label: methodLabel(code, profileOf(code)?.label),
       kind: METHODS[code]?.kind ?? "DIRECT",
-      available: METHODS[code]?.kind === "COD" ? cod.available : offerable.some((m) => m.code === code),
+      ...standingView(country, code, order.currencyCode),
+      available: METHODS[code]?.kind === "COD" ? cod.available : negotiable(methodStanding(country, code, order.currencyCode)),
       ...(METHODS[code]?.kind === "COD" && !cod.available ? { reason: cod.reason } : {}),
     }));
+    const agreedDefinition = agreement.agreedMethod ? definitionFor(agreement.agreedMethod, agreement.agreedLabel) : null;
     const agreed = agreement.agreedMethod
-      ? { code: agreement.agreedMethod, label: methodLabel(agreement.agreedMethod, agreement.agreedLabel), kind: METHODS[agreement.agreedMethod]?.kind ?? "DIRECT" }
+      ? { code: agreement.agreedMethod, label: methodLabel(agreement.agreedMethod, agreement.agreedLabel), kind: agreedDefinition?.kind ?? "DIRECT", ...standingView(country, agreement.agreedMethod, order.currencyCode), requiresMerchantCheckout: Boolean(agreedDefinition?.requiresMerchantCheckout) }
       : null;
+    const needsInstructions = Boolean(agreed && agreed.kind === "DIRECT" && agreement.agreedMethod !== "CASH_IN_PERSON");
+    const storedForAgreed = agreement.agreedMethod ? Object.keys(profileOf(agreement.agreedMethod)?.instructions ?? {}).length > 0 : false;
+    const instructionsState = !needsInstructions || orderClosed || agreement.status === "CANCELLED"
+      ? "NOT_APPLICABLE"
+      : showInstructions
+        ? "SHARED"
+        : storedForAgreed
+          ? "NOT_SHARED_YET"
+          : "SELLER_TO_PROVIDE";
     const sellerApproved = agreed !== null || agreement.proposedBy === "SELLER";
     const buyerApproved = agreed !== null || agreement.proposedBy === "BUYER";
     return {
@@ -559,8 +645,13 @@ export async function dealCard(input: { actorId: string; orderId: string; market
       proposal: agreement.proposedMethod ? { code: agreement.proposedMethod, label: methodLabel(agreement.proposedMethod, agreement.proposedLabel), by: agreement.proposedBy, awaiting: agreement.proposedBy === "BUYER" ? "SELLER" : "BUYER" } : null,
       agreedMethod: agreed,
       approvals: { seller: sellerApproved, buyer: buyerApproved },
-      instructions: showInstructions ? instructions : null,
-      instructionsState: showInstructions ? "SHARED" : agreed && agreed.kind === "DIRECT" && agreement.agreedMethod !== "CASH_IN_PERSON" ? "NOT_SHARED_YET" : "NOT_APPLICABLE",
+      // Payment details never travel in the card (or the chat history): the buyer and seller of this
+      // order open them from the protected endpoint, which re-checks every rule on each read.
+      instructions: null,
+      instructionsAvailable: showInstructions,
+      instructionsState,
+      instructionFields: role === "SELLER" && needsInstructions ? agreedDefinition?.instructionFields ?? [] : [],
+      checkout: { integrated: false, note: agreed?.requiresMerchantCheckout ? "رابط دفع من نظام البائع نفسه، ليس بوابة متكاملة مع جاسم." : null },
       cod: agreed?.kind === "COD" ? { amountDue: money(order.subtotalMinor), currency: order.currencyCode, collected: agreement.status === "COD_COLLECTED" } : null,
       payment: {
         state: status,
@@ -603,12 +694,43 @@ function commissionView(order: Order) {
   };
 }
 
+function standingView(country: ResolvedCountry | null, code: string, currency: string) {
+  const standing = methodStanding(country, code, currency);
+  return { standing, standingLabel: STANDING_LABELS_AR[standing] };
+}
+
+/**
+ * The protected payment details for this order: only its buyer or seller, only after a method is
+ * agreed and the seller shared them, never on a cancelled or closed order. Every buyer view is
+ * recorded; the values themselves never enter the event log or the chat history.
+ */
+export async function dealInstructions(input: { actorId: string; orderId: string; market: MarketRef }) {
+  return db.transaction(async (tx) => {
+    const { order, role } = await lockOrder(tx, input.orderId, input.actorId, input.market.id);
+    const [agreement] = await tx.select().from(dealPaymentAgreements).where(eq(dealPaymentAgreements.orderId, order.id)).for("update");
+    if (!agreement || !agreement.instructionsShared || !agreement.agreedMethod || !OPEN_ORDER.has(order.status) || agreement.status === "CANCELLED" || !(AGREED.has(agreement.status) || agreement.status === "BUYER_REPORTED_PAID" || agreement.status === "DISPUTED"))
+      reject(404, "INSTRUCTIONS_NOT_AVAILABLE", "لا توجد تعليمات دفع متاحة لك في هذا الطلب.");
+    if (role === "BUYER") await record(tx, agreement!, { id: input.actorId, role }, "INSTRUCTIONS_VIEWED", agreement!.status, { method: agreement!.agreedMethod });
+    const definition = definitionFor(agreement!.agreedMethod!, agreement!.agreedLabel);
+    return {
+      orderId: order.id,
+      method: { code: agreement!.agreedMethod, label: methodLabel(agreement!.agreedMethod!, agreement!.agreedLabel) },
+      instructions: agreement!.instructionsShared,
+      merchantCheckoutLink: definition?.requiresMerchantCheckout ? agreement!.instructionsShared!.paymentLink ?? null : null,
+      notice: "حوّل المبلغ بنفسك من تطبيق بنكك أو محفظتك. جاسم لا ينفذ التحويل ولا يتحقق من وصوله، ولا يطلب منك رمز تحقق أو كلمة مرور.",
+    };
+  });
+}
+
 function actionsFor(role: Role, status: string, agreement: Agreement, orderClosed: boolean): string[] {
   if (orderClosed || status === "CANCELLED" || status === "COMPLETED") return [];
   const out: string[] = [];
   if (NEGOTIATING.has(status) || AGREED.has(status)) out.push("CHOOSE");
   if (status === "PAYMENT_METHOD_PROPOSED" && agreement.proposedBy !== role) out.push("ACCEPT_PROPOSAL", "REJECT_PROPOSAL");
-  if (role === "SELLER" && (AGREED.has(status) || status === "BUYER_REPORTED_PAID") && !agreement.instructionsShared && agreement.agreedMethod && agreement.agreedMethod !== "CASH_IN_PERSON" && METHODS[agreement.agreedMethod]?.kind === "DIRECT") out.push("SHARE_INSTRUCTIONS");
+  if (role === "SELLER" && (AGREED.has(status) || status === "BUYER_REPORTED_PAID") && agreement.agreedMethod && agreement.agreedMethod !== "CASH_IN_PERSON" && (definitionFor(agreement.agreedMethod, agreement.agreedLabel)?.kind ?? "DIRECT") === "DIRECT") {
+    if (!agreement.instructionsShared) out.push("SHARE_INSTRUCTIONS");
+    out.push("PROVIDE_INSTRUCTIONS");
+  }
   if (role === "BUYER" && status === "AWAITING_PAYMENT") out.push("REPORT_PAID");
   if (role === "SELLER" && (status === "AWAITING_PAYMENT" || status === "BUYER_REPORTED_PAID" || status === "DISPUTED")) out.push("CONFIRM_RECEIPT");
   if (role === "SELLER" && status === "BUYER_REPORTED_PAID") out.push("REPORT_NOT_RECEIVED");

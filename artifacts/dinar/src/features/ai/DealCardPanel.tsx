@@ -3,7 +3,9 @@
  * every read; the client only renders it. Buttons send the party's own words back to Jassim, so
  * every change goes through the same server-side consent checks as typed messages.
  */
-type DealMethod = { code: string; label: string; kind: "DIRECT" | "COD"; available?: boolean; reason?: string };
+import { useState } from "react";
+
+type DealMethod = { code: string; label: string; kind: "DIRECT" | "COD"; available?: boolean; reason?: string; standing?: string; standingLabel?: string; requiresMerchantCheckout?: boolean };
 export type DealCard = {
   kind: "DEAL_CARD";
   orderId: string;
@@ -26,8 +28,11 @@ export type DealCard = {
   proposal: { code: string; label: string; by: "BUYER" | "SELLER"; awaiting: "BUYER" | "SELLER" } | null;
   agreedMethod: DealMethod | null;
   approvals: { seller: boolean; buyer: boolean };
-  instructions: Record<string, string> | null;
-  instructionsState: "SHARED" | "NOT_SHARED_YET" | "NOT_APPLICABLE";
+  instructions: null;
+  instructionsAvailable?: boolean;
+  instructionsState: "SHARED" | "NOT_SHARED_YET" | "SELLER_TO_PROVIDE" | "NOT_APPLICABLE";
+  instructionFields?: string[];
+  checkout?: { integrated: false; note: string | null };
   cod: { amountDue: string; currency: string; collected: boolean } | null;
   payment: { verification: "NONE" | "UNVERIFIED_BUYER_CLAIM" | "SELLER_ATTESTED"; platformVerified: false };
   actions: string[];
@@ -47,7 +52,9 @@ const FIELD_LABELS: Record<string, string> = {
   iban: "IBAN",
   accountNumber: "رقم الحساب",
   bankName: "البنك",
+  walletProvider: "مزود المحفظة",
   walletNumber: "رقم المحفظة",
+  paymentLink: "رابط صفحة الدفع الخاصة بالبائع",
   note: "ملاحظة",
 };
 const DELIVERY_LABELS: Record<string, string> = { PICKUP: "استلام شخصي", SELLER_DELIVERY: "توصيل من البائع", COURIER: "مندوب توصيل", EXTERNAL_PROVIDER: "شركة توصيل" };
@@ -59,7 +66,74 @@ function tone(status: string) {
   return "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300";
 }
 
-export function DealCardPanel({ card, active, onSend }: { card: DealCard; active: boolean; onSend?: (text: string) => void }) {
+type Protected = { instructions: Record<string, string>; merchantCheckoutLink: string | null; notice: string };
+
+async function call(path: string, init?: RequestInit) {
+  const response = await fetch(path, { credentials: "same-origin", cache: "no-store", ...init, headers: { "content-type": "application/json", ...(init?.headers ?? {}) } });
+  const data = await response.json().catch(() => null);
+  if (!response.ok) throw new Error(data?.error ?? "تعذر إكمال الطلب الآن.");
+  return data;
+}
+
+/** Payment details are fetched on demand from the protected endpoint and kept only in memory. */
+function ProtectedInstructions({ orderId }: { orderId: string }) {
+  const [state, setState] = useState<{ open: boolean; data?: Protected; error?: string }>({ open: false });
+  if (!state.open)
+    return (
+      <button type="button" className="mt-2 rounded-lg border px-3 py-2 text-sm font-medium hover:bg-muted"
+        onClick={() => call(`/api/orders/${encodeURIComponent(orderId)}/deal-card/instructions`).then((data) => setState({ open: true, data }), (e: Error) => setState({ open: true, error: e.message }))}>
+        عرض تعليمات الدفع المحمية
+      </button>
+    );
+  if (state.error) return <p role="alert" className="mt-2 text-sm text-red-600">{state.error}</p>;
+  const data = state.data!;
+  return (
+    <div className="mt-2 rounded-xl border border-sky-500/40 p-3" aria-live="polite">
+      <dl className="space-y-1">
+        {Object.entries(data.instructions).filter(([field]) => field !== "paymentLink").map(([field, value]) => (
+          <div key={field} className="flex flex-wrap gap-x-2"><dt className="text-muted-foreground">{FIELD_LABELS[field] ?? field}:</dt><dd dir="auto" className="select-all font-medium">{value}</dd></div>
+        ))}
+      </dl>
+      {data.merchantCheckoutLink && (
+        <a href={data.merchantCheckoutLink} target="_blank" rel="noopener noreferrer nofollow" className="mt-2 inline-block rounded-lg border px-3 py-2 text-sm font-medium">
+          فتح صفحة الدفع الخاصة بالبائع
+        </a>
+      )}
+      <p className="mt-2 text-xs text-muted-foreground">{data.notice}</p>
+      <button type="button" className="mt-2 text-xs underline" onClick={() => setState({ open: false })}>إخفاء</button>
+    </div>
+  );
+}
+
+/** The seller enters only the fields this method needs; sent straight to the server, never into chat. */
+function InstructionsForm({ orderId, fields, onDone }: { orderId: string; fields: string[]; onDone: () => void }) {
+  const [values, setValues] = useState<Record<string, string>>({});
+  const [status, setStatus] = useState<{ busy?: boolean; error?: string; done?: boolean }>({});
+  if (status.done) return <p className="mt-2 text-sm text-emerald-700 dark:text-emerald-300">حُفظت بيانات الدفع وشُوركت مع المشتري في هذا الطلب فقط.</p>;
+  return (
+    <form className="mt-2 space-y-2" onSubmit={(event) => {
+      event.preventDefault();
+      setStatus({ busy: true });
+      call(`/api/orders/${encodeURIComponent(orderId)}/deal-card/actions`, { method: "POST", body: JSON.stringify({ action: { type: "PROVIDE_INSTRUCTIONS", instructions: Object.fromEntries(Object.entries(values).filter(([, v]) => v.trim())) } }) })
+        .then(() => { setStatus({ done: true }); onDone(); }, (e: Error) => setStatus({ error: e.message }));
+    }}>
+      <p className="text-xs text-muted-foreground">أدخل فقط ما يحتاجه المشتري للتحويل. لا تُدخل كلمة مرور أو رمز تحقق أو رقم بطاقة.</p>
+      {fields.map((field) => (
+        <label key={field} className="block text-sm">
+          <span className="text-muted-foreground">{FIELD_LABELS[field] ?? field}</span>
+          <input dir="auto" autoComplete="off" maxLength={field === "paymentLink" ? 300 : 120} className="mt-1 w-full rounded-lg border bg-background px-3 py-2"
+            value={values[field] ?? ""} onChange={(event) => setValues({ ...values, [field]: event.target.value })} />
+        </label>
+      ))}
+      {status.error && <p role="alert" className="text-sm text-red-600">{status.error}</p>}
+      <button type="submit" disabled={status.busy} className="rounded-lg border px-3 py-2 text-sm font-medium">حفظ ومشاركة مع المشتري</button>
+    </form>
+  );
+}
+
+export function DealCardPanel({ card: initial, active, onSend }: { card: DealCard; active: boolean; onSend?: (text: string) => void }) {
+  const [card, setCard] = useState(initial);
+  const refresh = () => { call(`/api/orders/${encodeURIComponent(card.orderId)}/deal-card`).then((next) => isDealCard(next) && setCard(next), () => undefined); };
   const ref = card.orderReference.toLowerCase();
   const send = (text: string) => onSend?.(text);
   const can = (action: string) => active && Boolean(onSend) && card.actions.includes(action);
@@ -106,7 +180,7 @@ export function DealCardPanel({ card, active, onSend }: { card: DealCard; active
                     title={method.available === false ? method.reason : undefined}
                     className={`${button} ${chosen ? "border-primary bg-primary/10" : ""}`}>
                     {method.label}
-                    <span className="block text-xs font-normal text-muted-foreground">{method.kind === "COD" ? (method.available === false ? "غير متاح لهذا الطلب" : "عند الاستلام") : "دفع مباشر للبائع"}</span>
+                    <span className="block text-xs font-normal text-muted-foreground">{method.kind === "COD" ? (method.available === false ? "غير متاح لهذا الطلب" : "عند الاستلام") : method.standing === "USER_DECLARED_METHOD" ? "وسيلة يحددها البائع" : "دفع مباشر للبائع"}</span>
                   </button>
                 </li>
               );
@@ -134,14 +208,13 @@ export function DealCardPanel({ card, active, onSend }: { card: DealCard; active
           <p>الطريقة المتفق عليها: <strong>{card.agreedMethod.label}</strong></p>
           <p className="text-xs text-muted-foreground">موافقة البائع: {card.approvals.seller ? "نعم" : "لا"} · موافقة المشتري: {card.approvals.buyer ? "نعم" : "لا"}</p>
           {card.cod && <p className="mt-1">المبلغ المطلوب عند الاستلام: <strong dir="ltr">{card.cod.amountDue} {card.cod.currency}</strong></p>}
-          {card.instructions && (
-            <dl className="mt-2 space-y-1">
-              {Object.entries(card.instructions).map(([field, value]) => (
-                <div key={field} className="flex flex-wrap gap-x-2"><dt className="text-muted-foreground">{FIELD_LABELS[field] ?? field}:</dt><dd dir="auto" className="font-medium select-all">{value}</dd></div>
-              ))}
-            </dl>
+          {card.agreedMethod.standingLabel && <p className="text-xs text-muted-foreground">{card.agreedMethod.standingLabel}</p>}
+          {card.checkout?.note && <p className="text-xs text-muted-foreground">{card.checkout.note}</p>}
+          {card.instructionsAvailable && <ProtectedInstructions orderId={card.orderId} />}
+          {!card.instructionsAvailable && card.instructionsState !== "NOT_APPLICABLE" && card.viewerRole === "BUYER" && <p className="mt-1 text-xs text-muted-foreground">ستظهر تعليمات الدفع هنا بعد أن يشاركها البائع.</p>}
+          {card.viewerRole === "SELLER" && active && card.actions.includes("PROVIDE_INSTRUCTIONS") && card.instructionsState === "SELLER_TO_PROVIDE" && (card.instructionFields?.length ?? 0) > 0 && (
+            <InstructionsForm orderId={card.orderId} fields={card.instructionFields!} onDone={refresh} />
           )}
-          {card.instructionsState === "NOT_SHARED_YET" && <p className="mt-1 text-xs text-muted-foreground">لم يشارك البائع بيانات الدفع بعد.</p>}
         </div>
       )}
 

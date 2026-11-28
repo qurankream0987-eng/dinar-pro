@@ -28,8 +28,14 @@ export type MethodDefinition = {
   instructionFields: readonly InstructionField[];
   /** Arabic words a person may use for this method in chat (normalised, no diacritics). */
   aliases: readonly string[];
+  /**
+   * Card schemes such as KNET are paid through a merchant checkout, never a personal card number:
+   * the seller must provide their own merchant payment link, shown as the seller's link — not as a
+   * JassimAI-integrated checkout.
+   */
+  requiresMerchantCheckout?: boolean;
 };
-export type InstructionField = "beneficiaryName" | "alias" | "phone" | "iban" | "accountNumber" | "bankName" | "walletNumber" | "note";
+export type InstructionField = "beneficiaryName" | "alias" | "phone" | "iban" | "accountNumber" | "bankName" | "walletProvider" | "walletNumber" | "paymentLink" | "note";
 
 export type CountryMethod = { code: string; status: CatalogStatus; source: string | null; note?: string };
 export type CountryConfig = {
@@ -45,7 +51,7 @@ export type CountryConfig = {
 
 const TRANSFER_FIELDS = ["beneficiaryName", "bankName", "iban", "accountNumber", "note"] as const;
 const ALIAS_FIELDS = ["beneficiaryName", "alias", "phone", "note"] as const;
-const WALLET_FIELDS = ["beneficiaryName", "walletNumber", "phone", "note"] as const;
+const WALLET_FIELDS = ["beneficiaryName", "walletProvider", "walletNumber", "phone", "note"] as const;
 
 export const METHODS: Record<string, MethodDefinition> = {
   CASH_IN_PERSON: { code: "CASH_IN_PERSON", labelAr: "كاش عند التسليم يدًا بيد", kind: "DIRECT", instructionFields: ["note"], aliases: ["كاش يد بيد", "كاش يدا بيد", "نقدا يدا بيد", "يدا بيد", "يد بيد", "كاش عند الاستلام الشخصي"] },
@@ -60,6 +66,7 @@ export const METHODS: Record<string, MethodDefinition> = {
   FAWRI_PLUS: { code: "FAWRI_PLUS", labelAr: "فوري+ (Fawri+)", kind: "DIRECT", instructionFields: TRANSFER_FIELDS, aliases: ["فوري بلس", "فوري+"] },
   BENEFIT_PAY: { code: "BENEFIT_PAY", labelAr: "بنفت باي (BenefitPay)", kind: "DIRECT", instructionFields: WALLET_FIELDS, aliases: ["بنفت", "بنفت باي", "benefitpay"] },
   STC_PAY: { code: "STC_PAY", labelAr: "STC Pay", kind: "DIRECT", instructionFields: WALLET_FIELDS, aliases: ["stc pay", "اس تي سي باي"] },
+  KNET: { code: "KNET", labelAr: "كي نت (KNET)", kind: "DIRECT", instructionFields: ["beneficiaryName", "paymentLink", "note"], aliases: ["كي نت", "كي-نت", "knet"], requiresMerchantCheckout: true },
   LOCAL_WALLET: { code: "LOCAL_WALLET", labelAr: "محفظة إلكترونية محلية", kind: "DIRECT", instructionFields: WALLET_FIELDS, aliases: ["محفظه", "محفظه الكترونيه", "المحفظه"] },
   OTHER_AGREED: { code: "OTHER_AGREED", labelAr: "وسيلة أخرى يتفق عليها الطرفان", kind: "DIRECT", instructionFields: ["note"], aliases: [] },
 };
@@ -82,7 +89,7 @@ export const COUNTRY_SEED: readonly CountryConfig[] = [
   country("JO", "الأردن", "JOD", "د.أ", "ACTIVE", [...GENERIC(), { code: "CLIQ", status: "ACTIVE", source: "EXISTING_DINAR_SETTLEMENT_CATALOG (CliQ, Central Bank of Jordan / JoPACC)" }]),
   country("SA", "السعودية", "SAR", "ر.س", "LIMITED", [...GENERIC(), unverified("SARIE_INSTANT"), unverified("STC_PAY")]),
   country("AE", "الإمارات", "AED", "د.إ", "LIMITED", [...GENERIC(), unverified("AANI")], undefined, ["ar", "en"]),
-  country("KW", "الكويت", "KWD", "د.ك", "LIMITED", [...GENERIC(), unverified("WAMD")]),
+  country("KW", "الكويت", "KWD", "د.ك", "LIMITED", [...GENERIC(), unverified("WAMD"), unverified("KNET", "شبكة بطاقات: تحتاج صفحة دفع تجارية للبائع، لا بطاقة شخصية.")]),
   country("QA", "قطر", "QAR", "ر.ق", "LIMITED", [...GENERIC(), unverified("FAWRAN")]),
   country("BH", "البحرين", "BHD", "د.ب", "LIMITED", [...GENERIC(), unverified("FAWRI_PLUS"), unverified("BENEFIT_PAY")]),
   country("OM", "عُمان", "OMR", "ر.ع", "LIMITED", GENERIC()),
@@ -168,7 +175,9 @@ export function offerableMethods(country: ResolvedCountry | null, currencyCode: 
 }
 
 export function methodLabel(code: string, custom?: string | null) {
-  return code === "OTHER_AGREED" && custom ? custom : METHODS[code]?.labelAr ?? code;
+  if ((code === "OTHER_AGREED" || code.startsWith("DECLARED:")) && custom) return custom;
+  if (code.startsWith("DECLARED:")) return code.slice("DECLARED:".length).replace(/_/g, " ");
+  return METHODS[code]?.labelAr ?? code;
 }
 
 const normalize = (text: string) =>
@@ -210,3 +219,54 @@ export function methodsInText(message: string, candidates: readonly string[]): {
   }
   return { codes: [...found], ambiguousCash: false };
 }
+
+
+// ── Open payment choice ────────────────────────────────────────────────────────────────────────
+//
+// The catalog guides; it does not forbid. Parties may agree on any direct method they name. What
+// Jassim must never do is present a method as verified or integrated when it is not.
+
+/**
+ *  VERIFIED_METHOD                  offered in the country catalog with a recorded source
+ *  UNDER_REVIEW                     known to the catalog for this country, not yet verified
+ *  USER_DECLARED_METHOD             named by a party; not in this country's catalog
+ *  UNSUPPORTED_FOR_THIS_TRANSACTION the country is closed, or the catalog marks it UNAVAILABLE here
+ *  INTEGRATED_PROVIDER              a real, authorized technical integration — none exists today,
+ *                                   so this value is never produced by the catalog
+ */
+export type MethodStanding = "VERIFIED_METHOD" | "USER_DECLARED_METHOD" | "UNDER_REVIEW" | "UNSUPPORTED_FOR_THIS_TRANSACTION" | "INTEGRATED_PROVIDER";
+export const STANDING_LABELS_AR: Record<MethodStanding, string> = {
+  VERIFIED_METHOD: "وسيلة معروفة في هذا البلد",
+  UNDER_REVIEW: "قيد التحقق من توفرها",
+  USER_DECLARED_METHOD: "وسيلة اتفق عليها الطرفان؛ لم يتحقق منها جاسم",
+  UNSUPPORTED_FOR_THIS_TRANSACTION: "غير متاحة لهذه الصفقة",
+  INTEGRATED_PROVIDER: "بوابة دفع متكاملة",
+};
+
+export const DECLARED_PREFIX = "DECLARED:";
+export const isDeclared = (code: string) => code.startsWith(DECLARED_PREFIX);
+/** A stable code for a method a party named that the catalog does not know (e.g. «زين كاش»). */
+export function declaredCode(label: string) {
+  const slug = normalize(label).replace(/[^\p{L}\p{N}]+/gu, "_").replace(/^_+|_+$/g, "").slice(0, 40);
+  return slug ? `${DECLARED_PREFIX}${slug}` : null;
+}
+const DECLARED_FIELDS: readonly InstructionField[] = ["beneficiaryName", "walletProvider", "walletNumber", "phone", "accountNumber", "note"];
+
+export function definitionFor(code: string, label?: string | null): MethodDefinition | null {
+  if (METHODS[code]) return METHODS[code]!;
+  if (!isDeclared(code)) return null;
+  const name = label?.trim() || code.slice(DECLARED_PREFIX.length).replace(/_/g, " ");
+  return { code, labelAr: name, kind: "DIRECT", instructionFields: DECLARED_FIELDS, aliases: [] };
+}
+
+export function methodStanding(country: ResolvedCountry | null, code: string, currencyCode: string): MethodStanding {
+  if (!country || country.status === "UNAVAILABLE") return "UNSUPPORTED_FOR_THIS_TRANSACTION";
+  if (isDeclared(code) || code === "OTHER_AGREED") return "USER_DECLARED_METHOD";
+  const entry = country.methods.find((m) => m.code === code);
+  if (!entry) return "USER_DECLARED_METHOD";
+  if (entry.status === "UNAVAILABLE") return "UNSUPPORTED_FOR_THIS_TRANSACTION";
+  if (entry.status === "UNDER_REVIEW") return "UNDER_REVIEW";
+  if (!entry.currencies.includes(currencyCode)) return "USER_DECLARED_METHOD";
+  return entry.source ? "VERIFIED_METHOD" : "UNDER_REVIEW";
+}
+export const negotiable = (standing: MethodStanding) => standing !== "UNSUPPORTED_FOR_THIS_TRANSACTION";

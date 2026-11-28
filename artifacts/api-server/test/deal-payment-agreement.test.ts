@@ -72,6 +72,7 @@ async function order(listingId: string, fulfilmentType: "PICKUP" | "DELIVERY", w
   return created.data.id as string;
 }
 const card = (orderId: string, who: Actor) => request(`/orders/${orderId}/deal-card`, "GET", undefined, who.cookie);
+const protectedInstructions = (orderId: string, who: Actor) => request(`/orders/${orderId}/deal-card/instructions`, "GET", undefined, who.cookie);
 const act = (orderId: string, who: Actor, action: Record<string, unknown>, expectedVersion?: number) =>
   request(`/orders/${orderId}/deal-card/actions`, "POST", { action, ...(expectedVersion ? { expectedVersion } : {}) }, who.cookie);
 const setMethods = (who: Actor, methods: unknown[], replace = true) => request("/deal-payments/seller-methods", "PUT", { methods, replace }, who.cookie);
@@ -104,8 +105,8 @@ test("DP-02 seller preferences: one method, several methods, no invented or unav
   const one = await setMethods(seller, [{ code: "CLIQ" }]);
   assert.equal(one.status, 200, one.raw);
   assert.deepEqual(one.data.accepted.filter((m: any) => !m.paused).map((m: any) => m.code), ["CLIQ"]);
-  assert.equal((await setMethods(seller, [{ code: "INSTAPAY" }])).status, 409, "InstaPay is not a Jordan method");
-  assert.equal((await setMethods(seller, [{ code: "MADE_UP" }])).status, 409);
+  // Open choice: a method outside the Jordan catalog is accepted as the seller's own, never as verified.
+  assert.equal((await setMethods(seller, [{ code: "MADE_UP" }])).data.code, "UNKNOWN_METHOD", "an unknown code needs a name (DECLARED:)");
   assert.equal((await setMethods(seller, [{ code: "CLIQ", instructions: { alias: "4111 1111 1111 1111" } }])).data.code, "CARD_NUMBER_REFUSED");
   assert.equal((await setMethods(seller, [{ code: "CLIQ", instructions: { note: "أرسل لي رمز التحقق OTP" } }])).data.code, "SECRET_REFUSED");
   assert.equal((await setMethods(seller, [{ code: "CLIQ", instructions: { iban: "x" } }])).data.code, "INSTRUCTION_FIELD_NOT_ALLOWED", "only the method's own fields");
@@ -159,8 +160,15 @@ test("DP-03 direct payment: buyer picks an accepted method; instructions only af
   const shared = await act(direct, seller, { type: "SHARE_INSTRUCTIONS" });
   assert.equal(shared.status, 200, shared.raw);
   const forBuyer = await card(direct, buyer);
-  assert.deepEqual(forBuyer.data.instructions, { beneficiaryName: "أحمد", alias: "AHMAD.SHOP" }, "only the agreed method's instructions");
-  assert.ok(!forBuyer.raw.includes("JO71CBJO"), "the bank details of another method are never shown");
+  assert.equal(forBuyer.data.instructions, null, "the card never carries payment details");
+  assert.equal(forBuyer.data.instructionsAvailable, true);
+  assert.ok(!forBuyer.raw.includes("AHMAD.SHOP"));
+  const opened = await protectedInstructions(direct, buyer);
+  assert.equal(opened.status, 200, opened.raw);
+  assert.match(opened.cache, /no-store/);
+  assert.deepEqual(opened.data.instructions, { beneficiaryName: "أحمد", alias: "AHMAD.SHOP" }, "only the agreed method's instructions");
+  assert.ok(!opened.raw.includes("JO71CBJO"), "the bank details of another method are never shown");
+  assert.equal((await protectedInstructions(direct, stranger)).status, 404);
   assert.equal(forBuyer.data.payment.platformVerified, false);
   assert.match(forBuyer.data.notice, /لا يستلم جاسم الأموال/);
 
@@ -183,8 +191,8 @@ test("DP-03 direct payment: buyer picks an accepted method; instructions only af
   const [orderRow] = await db.select().from(orders).where(eq(orders.id, direct));
   assert.equal(orderRow!.status, "CREATED", "agreement never changes order status");
   const events = await db.select().from(dealPaymentEvents).where(eq(dealPaymentEvents.orderId, direct));
-  assert.deepEqual(events.map((e) => e.event), ["CREATED", "METHOD_CONFIRMED", "INSTRUCTIONS_SHARED", "BUYER_REPORTED_PAID", "SELLER_CONFIRMED_RECEIPT"]);
-  assert.deepEqual(events.map((e) => e.actorRole), ["SYSTEM", "BUYER", "SELLER", "BUYER", "SELLER"]);
+  assert.deepEqual(events.map((e) => e.event), ["CREATED", "METHOD_CONFIRMED", "INSTRUCTIONS_SHARED", "INSTRUCTIONS_VIEWED", "BUYER_REPORTED_PAID", "SELLER_CONFIRMED_RECEIPT"]);
+  assert.deepEqual(events.map((e) => e.actorRole), ["SYSTEM", "BUYER", "SELLER", "BUYER", "BUYER", "SELLER"]);
 });
 
 test("DP-04 a method the seller did not accept is a proposal; the seller decides; changing it re-asks", async () => {
@@ -217,11 +225,11 @@ test("DP-05 changing an agreed method needs the other party; a rejected change k
   const id = await order(pickupListing, "PICKUP");
   await act(id, buyer, { type: "CHOOSE", method: "CLIQ" });
   await act(id, seller, { type: "SHARE_INSTRUCTIONS" });
-  assert.ok((await card(id, buyer)).data.instructions);
+  assert.equal((await protectedInstructions(id, buyer)).status, 200);
   const change = await act(id, buyer, { type: "CHOOSE", method: "BANK_TRANSFER" });
   assert.equal(change.data.card.status, "PAYMENT_METHOD_PROPOSED", "even an accepted method needs re-approval after agreement");
   assert.equal(change.data.card.agreedMethod, null);
-  assert.equal((await card(id, buyer)).data.instructions, null, "instructions from the old agreement disappear");
+  assert.equal((await protectedInstructions(id, buyer)).status, 404, "instructions from the old agreement disappear");
   const kept = await act(id, seller, { type: "RESPOND", accept: false });
   assert.equal(kept.data.card.status, "AWAITING_PAYMENT");
   assert.equal(kept.data.card.agreedMethod.code, "CLIQ", "rejected change: earlier agreement stays");
@@ -266,10 +274,10 @@ test("DP-06 cash on delivery: needs delivery and a covered area; delivery is not
   assert.deepEqual([event!.actorId, event!.actorRole, (event!.detail as any).verification], [seller.id, "SELLER", "SELLER_ATTESTED"]);
 });
 
-test("DP-07 a method the country does not offer is refused even if proposed; currencies follow the country", async () => {
+test("DP-07 a method outside the country catalog is only a proposal; currencies follow the country", async () => {
   const id = await order(pickupListing, "PICKUP");
-  const refused = await act(id, buyer, { type: "CHOOSE", method: "INSTAPAY" });
-  assert.deepEqual([refused.status, refused.data.code], [409, "METHOD_NOT_AVAILABLE_IN_COUNTRY"]);
+  const proposed = await act(id, buyer, { type: "CHOOSE", method: "INSTAPAY" });
+  assert.equal(proposed.data.card.status, "PAYMENT_METHOD_PROPOSED", "open choice: negotiable, never auto-agreed");
   assert.equal((await act(id, buyer, { type: "CHOOSE", method: "NOPE" })).data.code, "UNKNOWN_METHOD");
   for (const [code, currency] of [["KW", "KWD"], ["EG", "EGP"], ["MA", "MAD"], ["IQ", "IQD"], ["SO", "SOS"]] as const) {
     const c = await resolveCountry(code);
@@ -299,7 +307,7 @@ test("DP-09 cancellation: either party cancels the agreement; a cancelled order 
   await act(id, seller, { type: "SHARE_INSTRUCTIONS" });
   const cancelled = await act(id, buyer, { type: "CANCEL", reason: "غيرت رأيي" });
   assert.equal(cancelled.data.card.status, "CANCELLED");
-  assert.equal(cancelled.data.card.instructions, null);
+  assert.equal((await protectedInstructions(id, buyer)).status, 404);
   assert.deepEqual(cancelled.data.card.actions, []);
   assert.equal((await act(id, seller, { type: "CHOOSE", method: "CLIQ" })).data.code, "AGREEMENT_CANCELLED");
 
@@ -309,7 +317,7 @@ test("DP-09 cancellation: either party cancels the agreement; a cancelled order 
   assert.equal((await request(`/orders/${other}/cancel`, "POST", { reason: "لم أعد أحتاجه" }, buyer.cookie)).status, 200);
   const closed = await card(other, buyer);
   assert.equal(closed.data.status, "CANCELLED");
-  assert.equal(closed.data.instructions, null, "a cancelled order never shows payment details");
+  assert.equal((await protectedInstructions(other, buyer)).status, 404, "a cancelled order never shows payment details");
   assert.equal((await act(other, buyer, { type: "REPORT_PAID" })).data.code, "ORDER_CLOSED");
 });
 
@@ -386,7 +394,7 @@ test("DP-13 chat: the seller states methods, the buyer asks and chooses, both co
   const view = await request("/deal-payments/seller-methods", "GET", undefined, seller.cookie);
   assert.ok(view.data.accepted.some((m: any) => m.code === "CLIQ" && !m.paused));
   const unknown = await s.turn("أقبل انستاباي");
-  assert.match(unknown.body, /غير متاحة/, "no unavailable method is added");
+  assert.match(unknown.body, /لم يتحقق جاسم من توفرها/, "a method outside the catalog is accepted, flagged as unverified");
 
   const id = await order(pickupListing, "PICKUP");
   const reference = id.replace(/-/g, "").slice(0, 8);
