@@ -1518,6 +1518,13 @@ export async function executeSellerAdviceTurn(input: {
 }): Promise<SurfaceTurn | null> {
   if (!input.actorId) return null;
   const actorId = input.actorId;
+  // An explicit Jassim Ads request (promote this / my store, more customers) belongs to the ads turn.
+  const { adsIntent } = await import("./ads-assistant-turn");
+  const { jassimAdsEnabled } = await import("../lib/jassim-ads");
+  if (jassimAdsEnabled()) {
+    const ads = adsIntent(input.message);
+    if (ads === "STORE" || ads === "PLAN") return null;
+  }
   const text = businessText(input.message);
   const scoped = { conversationId: input.conversationId, message: input.message, market: input.market, actorId };
   if (SALES_QUESTION.test(text)) return salesTurn(scoped, text);

@@ -179,7 +179,7 @@ function optionView(product: ProductRow, market: Market, available: boolean, rea
 /** Pending/live campaigns holding a slot of this placement product (abandoned checkouts excluded). */
 async function usedCapacity(productId: string, tx: any): Promise<number> {
   const cutoff = new Date(Date.now() - PROMOTION_PENDING_MINUTES * 60_000).toISOString();
-  const live = sql`(status IN ('ACTIVE', 'PAUSED') AND expires_at > now()) OR (status = 'PENDING_PAYMENT' AND created_at > ${cutoff})`;
+  const live = sql`((status IN ('ACTIVE', 'PAUSED') AND expires_at > now()) OR (status = 'PENDING_PAYMENT' AND created_at > ${cutoff}))`;
   const [a] = await tx.select({ n: sql<number>`count(*)::int` }).from(listingPromotions).where(and(eq(listingPromotions.productId, productId), live));
   const [b] = await tx.select({ n: sql<number>`count(*)::int` }).from(storePromotions).where(and(eq(storePromotions.productId, productId), live));
   return (a?.n ?? 0) + (b?.n ?? 0);

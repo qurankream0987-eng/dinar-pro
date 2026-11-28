@@ -65,7 +65,7 @@ import {
 import { executeEmploymentTurn, isEmploymentQuery } from "./employment-turn";
 import { deliveryIntent, normalizeDeliveryText, executeDeliveryTurn, isDeliveryQuery } from "./delivery-turn";
 import { executePromotionTurn, explainSponsoredPlacement, isPromotionQuery } from "./promotion-turn";
-import { executeAdsAssistantTurn } from "./ads-assistant-turn";
+import { adsIntent, executeAdsAssistantTurn } from "./ads-assistant-turn";
 import { executeBuyerTurn, executePurchaseTurn, executeOrderContactRequest, reviewQuantity } from "./buyer-turn";
 import { executeDealPaymentTurn } from "./deal-payment-turn";
 import { executeSellerClassificationTurn } from "./seller-classification-turn";
@@ -1190,6 +1190,16 @@ async function executeRuntime(context: RuntimeContext, incoming: RuntimeOptions)
   const { modelStage, ...options } = incoming;
   // «تمام روجه», «طيب نفذ»: a leading acknowledgement is not part of the command.
   context = { ...context, message: withoutAcknowledgement(context.message) };
+  // Jassim Ads closure: an explicit promotion request («أريد ترويج متجري», «أريد زبائن أكثر لهذا
+  // المنتج», «روّج لهذا المنتج») opens the seller's plan; it is never read as a buyer search or as
+  // general advice. Deterministic, signed-in sellers only, behind DINAR_JASSIM_ADS.
+  if (!modelStage && context.actorId && !context.imageObjectPaths?.length && context.location === undefined && ["STORE", "PLAN"].includes(adsIntent(context.message) ?? "")) {
+    const ads = await executeAdsAssistantTurn({ conversationId: context.conversationId, message: context.message, market: context.market, actorId: context.actorId });
+    if (ads) {
+      options.onToolSelected?.(ads.tool);
+      return ads;
+    }
+  }
   const modelFallback = async () => {
     if (options.noModel) return null;
     const turn = await executeModelFallback(
