@@ -614,7 +614,7 @@ export const listingPromotions = pgTable(
     ),
     check(
       "listing_promotions_simulation_only_check",
-      sql`${t.paymentMode} IN ('DEVELOPMENT_SIMULATED', 'WHOP_LIVE')`,
+      sql`${t.paymentMode} IN ('DEVELOPMENT_SIMULATED', 'PROVIDER_LIVE')`,
     ),
     check(
       "listing_promotions_status_valid",
@@ -651,16 +651,20 @@ export const listingPromotions = pgTable(
     ),
     check(
       "listing_promotions_payment_source_valid",
-      sql`${t.paymentSource} IN ('SIMULATED_PROVIDER', 'COMMERCIAL_BALANCE', 'BUNDLE_ENTITLEMENT', 'WHOP_DIRECT')`,
+      sql`${t.paymentSource} IN ('SIMULATED_PROVIDER', 'COMMERCIAL_BALANCE', 'BUNDLE_ENTITLEMENT', 'PROVIDER_DIRECT')`,
     ),
     check(
       "listing_promotions_payment_source_status",
-      sql`(${t.paymentSource} = 'SIMULATED_PROVIDER') OR (${t.paymentSource} = 'COMMERCIAL_BALANCE' AND ${t.paymentStatus} = 'BALANCE_CHARGED') OR (${t.paymentSource} = 'BUNDLE_ENTITLEMENT' AND ${t.paymentStatus} = 'ENTITLEMENT_CONSUMED' AND ${t.entitlementId} IS NOT NULL) OR (${t.paymentSource} = 'WHOP_DIRECT' AND ${t.paymentMode} = 'WHOP_LIVE' AND ${t.paymentStatus} IN ('PROVIDER_PENDING', 'PROVIDER_PAID', 'PROVIDER_FAILED', 'PROVIDER_REFUNDED', 'PROVIDER_DISPUTED'))`,
+      sql`(${t.paymentSource} = 'SIMULATED_PROVIDER') OR (${t.paymentSource} = 'COMMERCIAL_BALANCE' AND ${t.paymentStatus} = 'BALANCE_CHARGED') OR (${t.paymentSource} = 'BUNDLE_ENTITLEMENT' AND ${t.paymentStatus} = 'ENTITLEMENT_CONSUMED' AND ${t.entitlementId} IS NOT NULL) OR (${t.paymentSource} = 'PROVIDER_DIRECT' AND ${t.paymentMode} = 'PROVIDER_LIVE' AND ${t.paymentStatus} IN ('PROVIDER_PENDING', 'PROVIDER_PAID', 'PROVIDER_FAILED', 'PROVIDER_REFUNDED', 'PROVIDER_DISPUTED'))`,
     ),
-    // Jassim Ads Phase 2: real-payment mode, Whop source and provider statuses always go together.
+    // Jassim Ads Phase 2: provider-neutral real-payment mode, source and provider statuses always go together.
     check(
-      "listing_promotions_whop_mode_consistent",
-      sql`(${t.paymentMode} = 'WHOP_LIVE') = (${t.paymentSource} = 'WHOP_DIRECT') AND (${t.paymentMode} = 'WHOP_LIVE') = (${t.paymentStatus} IN ('PROVIDER_PENDING', 'PROVIDER_PAID', 'PROVIDER_FAILED', 'PROVIDER_REFUNDED', 'PROVIDER_DISPUTED'))`,
+      "listing_promotions_provider_mode_consistent",
+      sql`(${t.paymentMode} = 'PROVIDER_LIVE') = (${t.paymentSource} = 'PROVIDER_DIRECT') AND (${t.paymentMode} = 'PROVIDER_LIVE') = (${t.paymentStatus} IN ('PROVIDER_PENDING', 'PROVIDER_PAID', 'PROVIDER_FAILED', 'PROVIDER_REFUNDED', 'PROVIDER_DISPUTED'))`,
+    ),
+    check(
+      "listing_promotions_provider_key_required",
+      sql`${t.paymentSource} <> 'PROVIDER_DIRECT' OR ${t.paymentProviderKey} IS NOT NULL`,
     ),
     // Budget accounting: never negative, spend plus release never exceeds the budget.
     check(
@@ -4335,3 +4339,4 @@ export const marketTechnicalReadiness = pgTable(
 );
 export * from "./deal-payments";
 export * from "./merchant-policies";
+export * from "./store-checkout";

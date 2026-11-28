@@ -20,7 +20,11 @@ import {
   users,
 } from "@workspace/db";
 import { requireAuth } from "../lib/auth";
-import { startWhopPromotionCheckout, whopPromotionAvailability } from "../lib/promotion-whop";
+import {
+  promotionBillingAvailability,
+  receivePromotionProviderWebhook,
+  startProviderPromotionCheckout,
+} from "../lib/promotion-billing";
 import { marketFor, resolveMarket } from "../lib/markets";
 import {
   commercialEconomics,
@@ -163,18 +167,39 @@ router.post("/commercial/purchases", requireAuth, async (req, res) => {
 });
 
 /** Jassim Ads Phase 2: whether this market can take a real promotion payment now (changes nothing). */
+router.get("/commercial/provider-promotions/availability", requireAuth, async (req, res) => {
+  assertPromotionsAvailable();
+  const market = await marketFor(req);
+  const avail = await promotionBillingAvailability(market);
+  res.json(avail.available ? { available: true, providerKey: avail.provider.providerKey, displayName: avail.provider.displayName } : avail);
+});
 router.get("/commercial/whop-promotions/availability", requireAuth, async (req, res) => {
   assertPromotionsAvailable();
   const market = await marketFor(req);
-  res.json(await whopPromotionAvailability(market));
+  const avail = await promotionBillingAvailability(market);
+  res.json(avail.available ? { available: true, providerKey: avail.provider.providerKey, displayName: avail.provider.displayName } : avail);
 });
-/** Opens (or repeats) the Whop page for one fixed-price promotion; it starts only after Whop confirms. */
+/** Opens (or repeats) the registered provider's page for one fixed-price promotion; it starts only after signed confirmation. */
+router.post("/commercial/provider-promotions/checkouts", requireAuth, async (req, res) => {
+  assertPromotionsAvailable();
+  const body = z.object({ productId: z.string().min(1).max(80), listingId: z.string().min(1).max(80), idempotencyKey: key }).strict().parse(req.body);
+  const market = await marketFor(req);
+  const started = await startProviderPromotionCheckout({ actorId: req.actor!.id, market, ...body });
+  res.status(started.created ? 201 : 200).json(started);
+});
 router.post("/commercial/whop-promotions/checkouts", requireAuth, async (req, res) => {
   assertPromotionsAvailable();
   const body = z.object({ productId: z.string().min(1).max(80), listingId: z.string().min(1).max(80), idempotencyKey: key }).strict().parse(req.body);
   const market = await marketFor(req);
-  const started = await startWhopPromotionCheckout({ actorId: req.actor!.id, market, ...body });
+  const started = await startProviderPromotionCheckout({ actorId: req.actor!.id, market, ...body });
   res.status(started.created ? 201 : 200).json(started);
+});
+router.post("/commercial/promotion-webhooks/:providerKey", async (req, res) => {
+  const raw = Buffer.isBuffer(req.body)
+    ? req.body
+    : Buffer.from(typeof req.body === "string" ? req.body : JSON.stringify(req.body ?? {}), "utf8");
+  const result = await receivePromotionProviderWebhook(String(req.params.providerKey), raw, req.headers);
+  res.status(result.status).json(result);
 });
 
 router.get("/commercial/entitlements", requireAuth, async (req, res) => {

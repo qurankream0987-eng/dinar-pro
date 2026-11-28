@@ -77,7 +77,7 @@ export function resetWhopConfigForTests() {
   cached = undefined;
 }
 
-const DEFAULT_BLOCKED_COUNTRIES = ["IQ", "IR", "KP", "SY", "CU"];
+const DEFAULT_BLOCKED_COUNTRIES = ["CU", "IQ", "IR", "KM", "KP", "LY", "PS", "SD", "SO", "SY", "YE"];
 
 /**
  * The owner's list always applies; the environment variable can only add countries.

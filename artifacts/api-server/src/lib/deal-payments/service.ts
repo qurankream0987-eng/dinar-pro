@@ -23,6 +23,9 @@ import {
   users,
 } from "@workspace/db";
 import { definitionFor, isDeclared, METHODS, methodLabel, methodStanding, negotiable, offerableMethods, resolveCountry, STANDING_LABELS_AR, type InstructionField, type ResolvedCountry, type ResolvedMethod } from "./catalog";
+import { codAreaPolicyCheck } from "../merchant-policies/enforcement";
+import { effectivePolicy } from "../merchant-policies/engine";
+import { merchantPoliciesM2Enabled } from "../merchant-policies/flag";
 
 type Agreement = typeof dealPaymentAgreements.$inferSelect;
 type Order = typeof orders.$inferSelect;
@@ -220,10 +223,20 @@ async function acceptedFor(tx: any, order: Order): Promise<string[]> {
   if (!accepted.length && items.length && items.every((item) => item.paymentMethods?.includes("CASH_DIRECT"))) accepted = ["CASH_IN_PERSON", "COD"];
   const listingIds = [...new Set(items.map((i) => i.listingId).filter((id): id is string => typeof id === "string"))];
   if (listingIds.length) {
-    const listingRows = await tx.select({ data: offers.data }).from(offers).where(inArray(offers.id, listingIds));
+    const listingRows = await tx.select({ data: offers.data, businessProfileId: offers.businessProfileId }).from(offers).where(inArray(offers.id, listingIds));
     for (const row of listingRows) {
       const restriction = (row.data as any)?.dealPaymentMethods;
       if (Array.isArray(restriction) && restriction.length) accepted = accepted.filter((code) => restriction.includes(code));
+      if (merchantPoliciesM2Enabled() && row.businessProfileId) {
+        const policy = await effectivePolicy(row.businessProfileId, "PAYMENT_METHODS", {}, tx);
+        const rawMethods = (policy?.rule as { methods?: Array<string | { code: string; enabled?: boolean }> } | undefined)?.methods;
+        if (Array.isArray(rawMethods) && rawMethods.length) {
+          const policyCodes = rawMethods
+            .filter((m) => (typeof m === "string" ? true : m.enabled !== false))
+            .map((m) => (typeof m === "string" ? m : m.code));
+          accepted = accepted.filter((code) => policyCodes.includes(code));
+        }
+      }
     }
   }
   return accepted.filter(allowed);
@@ -289,11 +302,27 @@ async function codAvailability(tx: any, order: Order): Promise<CodCheck> {
     .from(sellerPaymentMethods)
     .where(and(eq(sellerPaymentMethods.sellerId, order.sellerId), eq(sellerPaymentMethods.marketId, order.marketId), eq(sellerPaymentMethods.methodCode, "COD")));
   const areas: string[] = profile?.codAreas ?? [];
-  if (!areas.length) return { available: true };
   const [destination] = await tx
     .select({ city: transactionLocations.city, area: transactionLocations.area })
     .from(transactionLocations)
     .where(and(eq(transactionLocations.orderId, order.id), eq(transactionLocations.purpose, "DELIVERY_DESTINATION")));
+  if (merchantPoliciesM2Enabled()) {
+    const items = (Array.isArray(order.data?.items) ? order.data.items : []) as { listingId?: string }[];
+    const firstId = items.find((i) => typeof i.listingId === "string")?.listingId;
+    if (firstId) {
+      const [offerRow] = await tx.select({ businessProfileId: offers.businessProfileId }).from(offers).where(eq(offers.id, firstId)).limit(1);
+      if (offerRow?.businessProfileId) {
+        const policyCod = await codAreaPolicyCheck({
+          businessId: offerRow.businessProfileId,
+          city: destination?.city,
+          area: destination?.area,
+          tx,
+        });
+        if (!policyCod.allowed) return { available: false, reason: policyCod.reason };
+      }
+    }
+  }
+  if (!areas.length) return { available: true };
   if (!destination) return { available: false, reason: "شارك موقع التسليم أولًا ليتحقق جاسم من أن البائع يغطي منطقتك بالدفع عند الاستلام." };
   const norm = (s: string) => s.replace(/\s+/g, " ").trim();
   const covered = areas.some((a) => [destination.city, destination.area].map(norm).includes(norm(a)));

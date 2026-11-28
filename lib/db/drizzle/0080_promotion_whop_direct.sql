@@ -1,12 +1,10 @@
--- Jassim Ads Phase 2 (owner decision 2026-11-27, 1a): real direct payment per fixed-price promotion
--- through Whop. Additive: every existing simulated/balance/entitlement rule is kept verbatim; a new
--- WHOP_LIVE mode with its own provider statuses is allowed alongside. A Whop promotion is ACTIVE or
--- PAUSED only once Whop's own payment record says PAID; FAILED status pairs with PROVIDER_FAILED.
--- whop_mode_consistent: WHOP_LIVE mode <=> WHOP_DIRECT source <=> a PROVIDER_* status, so no row can
--- mix a real-payment mode with a simulated source or status (every existing row is DEVELOPMENT_SIMULATED
--- with a non-Whop source and non-provider status, so it satisfies this unchanged).
+-- Jassim Ads Phase 2: real direct payment per fixed-price promotion through a registered billing
+-- provider (provider-neutral: payment_mode = 'PROVIDER_LIVE', payment_source = 'PROVIDER_DIRECT',
+-- payment_provider_key required). Additive: every existing simulated/balance/entitlement rule is
+-- kept verbatim. A provider promotion is ACTIVE or PAUSED only once the provider's payment record
+-- says PAID; FAILED status pairs with PROVIDER_FAILED.
 ALTER TABLE "listing_promotions" DROP CONSTRAINT "listing_promotions_simulation_only_check";--> statement-breakpoint
-ALTER TABLE "listing_promotions" ADD CONSTRAINT "listing_promotions_simulation_only_check" CHECK ("listing_promotions"."payment_mode" IN ('DEVELOPMENT_SIMULATED', 'WHOP_LIVE'));--> statement-breakpoint
+ALTER TABLE "listing_promotions" ADD CONSTRAINT "listing_promotions_simulation_only_check" CHECK ("listing_promotions"."payment_mode" IN ('DEVELOPMENT_SIMULATED', 'PROVIDER_LIVE'));--> statement-breakpoint
 ALTER TABLE "listing_promotions" DROP CONSTRAINT "listing_promotions_payment_status_valid";--> statement-breakpoint
 ALTER TABLE "listing_promotions" ADD CONSTRAINT "listing_promotions_payment_status_valid" CHECK ("listing_promotions"."payment_status" IN ('SIMULATION_PENDING', 'SIMULATION_CAPTURED', 'SIMULATION_FAILED', 'LEGACY_UNVERIFIED', 'BALANCE_CHARGED', 'ENTITLEMENT_CONSUMED', 'PROVIDER_PENDING', 'PROVIDER_PAID', 'PROVIDER_FAILED', 'PROVIDER_REFUNDED', 'PROVIDER_DISPUTED'));--> statement-breakpoint
 ALTER TABLE "listing_promotions" DROP CONSTRAINT "listing_promotions_live_requires_payment";--> statement-breakpoint
@@ -14,7 +12,8 @@ ALTER TABLE "listing_promotions" ADD CONSTRAINT "listing_promotions_live_require
 ALTER TABLE "listing_promotions" DROP CONSTRAINT "listing_promotions_failed_consistent";--> statement-breakpoint
 ALTER TABLE "listing_promotions" ADD CONSTRAINT "listing_promotions_failed_consistent" CHECK (("listing_promotions"."status" = 'PAYMENT_FAILED') = ("listing_promotions"."payment_status" IN ('SIMULATION_FAILED', 'PROVIDER_FAILED')));--> statement-breakpoint
 ALTER TABLE "listing_promotions" DROP CONSTRAINT "listing_promotions_payment_source_valid";--> statement-breakpoint
-ALTER TABLE "listing_promotions" ADD CONSTRAINT "listing_promotions_payment_source_valid" CHECK ("listing_promotions"."payment_source" IN ('SIMULATED_PROVIDER', 'COMMERCIAL_BALANCE', 'BUNDLE_ENTITLEMENT', 'WHOP_DIRECT'));--> statement-breakpoint
+ALTER TABLE "listing_promotions" ADD CONSTRAINT "listing_promotions_payment_source_valid" CHECK ("listing_promotions"."payment_source" IN ('SIMULATED_PROVIDER', 'COMMERCIAL_BALANCE', 'BUNDLE_ENTITLEMENT', 'PROVIDER_DIRECT'));--> statement-breakpoint
 ALTER TABLE "listing_promotions" DROP CONSTRAINT "listing_promotions_payment_source_status";--> statement-breakpoint
-ALTER TABLE "listing_promotions" ADD CONSTRAINT "listing_promotions_payment_source_status" CHECK (("listing_promotions"."payment_source" = 'SIMULATED_PROVIDER') OR ("listing_promotions"."payment_source" = 'COMMERCIAL_BALANCE' AND "listing_promotions"."payment_status" = 'BALANCE_CHARGED') OR ("listing_promotions"."payment_source" = 'BUNDLE_ENTITLEMENT' AND "listing_promotions"."payment_status" = 'ENTITLEMENT_CONSUMED' AND "listing_promotions"."entitlement_id" IS NOT NULL) OR ("listing_promotions"."payment_source" = 'WHOP_DIRECT' AND "listing_promotions"."payment_mode" = 'WHOP_LIVE' AND "listing_promotions"."payment_status" IN ('PROVIDER_PENDING', 'PROVIDER_PAID', 'PROVIDER_FAILED', 'PROVIDER_REFUNDED', 'PROVIDER_DISPUTED')));--> statement-breakpoint
-ALTER TABLE "listing_promotions" ADD CONSTRAINT "listing_promotions_whop_mode_consistent" CHECK (("listing_promotions"."payment_mode" = 'WHOP_LIVE') = ("listing_promotions"."payment_source" = 'WHOP_DIRECT') AND ("listing_promotions"."payment_mode" = 'WHOP_LIVE') = ("listing_promotions"."payment_status" IN ('PROVIDER_PENDING', 'PROVIDER_PAID', 'PROVIDER_FAILED', 'PROVIDER_REFUNDED', 'PROVIDER_DISPUTED')));
+ALTER TABLE "listing_promotions" ADD CONSTRAINT "listing_promotions_payment_source_status" CHECK (("listing_promotions"."payment_source" = 'SIMULATED_PROVIDER') OR ("listing_promotions"."payment_source" = 'COMMERCIAL_BALANCE' AND "listing_promotions"."payment_status" = 'BALANCE_CHARGED') OR ("listing_promotions"."payment_source" = 'BUNDLE_ENTITLEMENT' AND "listing_promotions"."payment_status" = 'ENTITLEMENT_CONSUMED' AND "listing_promotions"."entitlement_id" IS NOT NULL) OR ("listing_promotions"."payment_source" = 'PROVIDER_DIRECT' AND "listing_promotions"."payment_mode" = 'PROVIDER_LIVE' AND "listing_promotions"."payment_status" IN ('PROVIDER_PENDING', 'PROVIDER_PAID', 'PROVIDER_FAILED', 'PROVIDER_REFUNDED', 'PROVIDER_DISPUTED')));--> statement-breakpoint
+ALTER TABLE "listing_promotions" ADD CONSTRAINT "listing_promotions_provider_mode_consistent" CHECK (("listing_promotions"."payment_mode" = 'PROVIDER_LIVE') = ("listing_promotions"."payment_source" = 'PROVIDER_DIRECT') AND ("listing_promotions"."payment_mode" = 'PROVIDER_LIVE') = ("listing_promotions"."payment_status" IN ('PROVIDER_PENDING', 'PROVIDER_PAID', 'PROVIDER_FAILED', 'PROVIDER_REFUNDED', 'PROVIDER_DISPUTED')));--> statement-breakpoint
+ALTER TABLE "listing_promotions" ADD CONSTRAINT "listing_promotions_provider_key_required" CHECK ("listing_promotions"."payment_source" <> 'PROVIDER_DIRECT' OR "listing_promotions"."payment_provider_key" IS NOT NULL);

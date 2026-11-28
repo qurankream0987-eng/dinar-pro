@@ -589,6 +589,13 @@
       "when": 1795850000000,
       "tag": "0083_merchant_policies",
       "breakpoints": true
+    },
+    {
+      "idx": 84,
+      "version": "7",
+      "when": 1795860000000,
+      "tag": "0084_store_checkout_sessions",
+      "breakpoints": true
     }
   ]
 }

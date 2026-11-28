@@ -1,4 +1,5 @@
 import { sellerDuesView } from "../lib/seller-dues";
+import { evaluateOrderPolicies } from "../lib/merchant-policies/enforcement";
 import {
   validateCategoryAttributesAgainstSchema,
   type SearchSort,
@@ -878,6 +879,31 @@ async function checkout(
       const orderCommissionSnapshot = { ...commissionSnapshot(commissionPolicy), rateBasisPoints: commissionRateBps, ...(classification ? { sellerClassification: classification } : {}) };
       const id = randomUUID();
       const first = group[0].listing;
+      const firstOffer = offerById.get(first.id);
+      const businessProfileId = firstOffer?.businessProfileId ?? null;
+      const policyCheck = await evaluateOrderPolicies({
+        businessId: businessProfileId,
+        market,
+        quantity,
+        subtotalMinor: subtotal,
+        productId: first.id,
+        category: firstOffer?.data?.categoryId ?? firstOffer?.data?.category,
+        tx,
+      });
+      if (!policyCheck.allowed) {
+        throw Object.assign(fail(409, policyCheck.message, policyCheck.code), {
+          provenance: policyCheck.provenance,
+        });
+      }
+      const shippingPolicySnapshot =
+        policyCheck.shippingFeeMinor !== null && policyCheck.shippingProvenance
+          ? {
+              feeMinor: policyCheck.shippingFeeMinor,
+              feeFormatted: money(policyCheck.shippingFeeMinor, market.minorUnitScale),
+              currency: market.currencyCode,
+              provenance: policyCheck.shippingProvenance,
+            }
+          : null;
       const reservationExpiresAt = new Date(Date.now() + 1800000);
       const items = group.map((l) => ({
         listingId: l.listing.id,
@@ -929,6 +955,8 @@ async function checkout(
             commissionRateBps,
             commissionPolicy: orderCommissionSnapshot,
             ...(classification ? { sellerClassification: classification } : {}),
+            ...(shippingPolicySnapshot ? { shippingPolicy: shippingPolicySnapshot } : {}),
+            ...(policyCheck.appliedPolicies.length ? { appliedMerchantPolicies: policyCheck.appliedPolicies } : {}),
             deliveryInstructions: safeInstructions,
             ...(group.some((line) => negotiated.has(line.listing.id))
               ? { negotiationIds: group.flatMap((line) => (negotiated.has(line.listing.id) ? [negotiated.get(line.listing.id)!.id] : [])) }

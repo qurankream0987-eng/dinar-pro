@@ -20,7 +20,7 @@ import { and, count, desc, eq, gt, inArray, isNull, lte } from "drizzle-orm";
 import { conversations, db, listingPromotions, messages, offers, users, welcomeAdExposures } from "@workspace/db";
 import { getCommercialPolicy } from "./commercial-policy";
 import { isSponsoredServingEnabled } from "./promotion-policy";
-import { formatMinor, isServingCampaign, listingPromotionEligibility, rankSponsored, representativeCampaign, sponsoredScore, SPONSORED_LABEL, SERVING_PAYMENT_STATUSES } from "./promotions";
+import { formatMinor, isElectronicPaymentApprovedForServing, isServingCampaign, listingPromotionEligibility, rankSponsored, representativeCampaign, sponsoredScore, SPONSORED_LABEL, SERVING_PAYMENT_STATUSES } from "./promotions";
 import { jassimAdsEnabled } from "./jassim-ads";
 import { recordAttributionEvent } from "./promotion-attribution";
 import type { marketFor } from "./markets";
@@ -109,7 +109,7 @@ export async function welcomeSponsoredCards(input: { actorId: string; welcomeKey
     .where(and(eq(welcomeAdExposures.userId, input.actorId), gt(welcomeAdExposures.shownAt, new Date(now.getTime() - DAY_MS))));
   if (recent.length >= policy.welcomeSponsoredDailyConversations) return { cards: [], reason: "DAILY_CAP" };
 
-  const campaigns = (await db
+  const rawCampaigns = (await db
     .select()
     .from(listingPromotions)
     .where(and(
@@ -122,6 +122,10 @@ export async function welcomeSponsoredCards(input: { actorId: string; welcomeKey
     ))
     .orderBy(desc(listingPromotions.createdAt))
     .limit(50)).filter((row) => isServingCampaign(row, now) && row.sellerId !== input.actorId);
+  const legalOk = rawCampaigns.some((r) => r.paymentMode === "PROVIDER_LIVE")
+    ? await isElectronicPaymentApprovedForServing(input.market.id)
+    : true;
+  const campaigns = rawCampaigns.filter((row) => row.paymentMode !== "PROVIDER_LIVE" || legalOk);
   if (!campaigns.length) return { cards: [], reason: "NO_ELIGIBLE" };
   const listings = await db
     .select({ offer: offers, sellerStatus: users.status })
@@ -189,7 +193,7 @@ export async function displayPlacementCards(input: { placement: DisplayPlacement
   const now = input.now ?? new Date();
   if (!jassimAdsEnabled() || !isSponsoredServingEnabled()) return { cards: [], reason: "DISABLED" };
   const spec = DISPLAY_PLACEMENTS[input.placement];
-  const campaigns = (await db
+  const rawCampaigns = (await db
     .select()
     .from(listingPromotions)
     .where(and(
@@ -202,6 +206,10 @@ export async function displayPlacementCards(input: { placement: DisplayPlacement
     ))
     .orderBy(desc(listingPromotions.createdAt))
     .limit(50)).filter((row) => isServingCampaign(row, now) && row.sellerId !== input.viewerId);
+  const legalOk = rawCampaigns.some((r) => r.paymentMode === "PROVIDER_LIVE")
+    ? await isElectronicPaymentApprovedForServing(input.market.id)
+    : true;
+  const campaigns = rawCampaigns.filter((row) => row.paymentMode !== "PROVIDER_LIVE" || legalOk);
   if (!campaigns.length) return { cards: [], reason: "NO_ELIGIBLE" };
   const listings = await db
     .select({ offer: offers, sellerStatus: users.status })

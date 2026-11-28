@@ -22,12 +22,14 @@ import {
   db,
   listingPromotions,
   marketAudit,
+  marketLegalCapabilityApprovals,
   markets,
   offers,
   promotionAttributions,
   promotionProducts,
   users,
 } from "@workspace/db";
+import { assertMarketLegalCapability } from "./d16-readiness";
 import {
   balanceView,
   chargeAvailable,
@@ -130,7 +132,23 @@ export function effectivePromotionStatus(row: PromotionRow, now: Date): string {
   return row.status;
 }
 
-/** Campaigns that may boost these listings right now (payment, status, window, budget). */
+/** Whether ELECTRONIC_PAYMENT is approved for serving paid promotions in this market. */
+export async function isElectronicPaymentApprovedForServing(marketId: string, tx: any = db): Promise<boolean> {
+  try {
+    await assertMarketLegalCapability(marketId, "ELECTRONIC_PAYMENT", tx);
+  } catch {
+    return false;
+  }
+  const [row] = await tx
+    .select({ status: marketLegalCapabilityApprovals.status })
+    .from(marketLegalCapabilityApprovals)
+    .where(and(eq(marketLegalCapabilityApprovals.marketId, marketId), eq(marketLegalCapabilityApprovals.capability, "ELECTRONIC_PAYMENT")))
+    .limit(1);
+  if (row && row.status !== "ENABLED") return false;
+  return true;
+}
+
+/** Campaigns that may boost these listings right now (payment, status, window, budget, legal approval). */
 export async function servingCampaignsFor(
   marketId: string,
   listingIds: string[],
@@ -153,7 +171,13 @@ export async function servingCampaignsFor(
         inArray(listingPromotions.listingId, listingIds),
       ),
     );
-  return rows.filter((row) => hasBudgetForOneCharge(row));
+  const needsElectronicLegalCheck = rows.some((row) => row.paymentMode === "PROVIDER_LIVE");
+  const electronicLegalApproved = needsElectronicLegalCheck
+    ? await isElectronicPaymentApprovedForServing(marketId)
+    : true;
+  return rows.filter(
+    (row) => hasBudgetForOneCharge(row) && (row.paymentMode !== "PROVIDER_LIVE" || electronicLegalApproved),
+  );
 }
 
 // ─── Sponsored score ─────────────────────────────────────────────────────────
@@ -342,8 +366,8 @@ export type SellerPromotionView = {
   status: string;
   effectiveStatus: string;
   paymentStatus: string;
-  /** WHOP_LIVE: a real payment through Whop (Jassim Ads Phase 2); otherwise no money moves. */
-  paymentMode: "TEST_NO_TRANSFER" | "WHOP_LIVE";
+  /** PROVIDER_LIVE: a real payment through a registered billing provider (Jassim Ads Phase 2); otherwise no money moves. */
+  paymentMode: "TEST_NO_TRANSFER" | "PROVIDER_LIVE";
   serving: boolean;
   servingNote: string;
   startsAt: string;
@@ -384,8 +408,8 @@ const STATUS_NOTES: Record<string, string> = {
   BUDGET_EXHAUSTED: "نفدت الميزانية — توقف الظهور الممول",
 };
 
-const WHOP_STATUS_NOTES: Record<string, string> = {
-  PENDING_PAYMENT: "بانتظار إتمام الدفع في صفحة Whop — لا يبدأ قبل تأكيد Whop",
+const PROVIDER_STATUS_NOTES: Record<string, string> = {
+  PENDING_PAYMENT: "بانتظار إتمام الدفع عبر مزود الدفع — لا يبدأ قبل التأكيد الموقّع",
   PAUSED: "موقوف — الدفع عليه نزاع قيد المراجعة أو أوقفته أنت",
   CANCELLED: "ملغى — لا يظهر كإعلان ممول",
   PAYMENT_FAILED: "لم يكتمل الدفع — لم يُفعّل الترويج",
@@ -402,18 +426,23 @@ export async function promotionViews(rows: PromotionRow[], market: Market, now =
   const eligibility = new Map<string, PromotionEligibility>();
   for (const row of listingRows)
     eligibility.set(row.offer.id, await listingPromotionEligibility(row.offer, row.sellerStatus, market));
+  const needsLegalCheck = rows.some((row) => row.paymentMode === "PROVIDER_LIVE");
+  const electronicLegalApproved = needsLegalCheck
+    ? await isElectronicPaymentApprovedForServing(market.id)
+    : true;
   return rows.map((row) => {
     const listing = byId.get(row.listingId);
     const effectiveStatus = effectivePromotionStatus(row, now);
     const listingOk = eligibility.get(row.listingId);
-    const serving = isServingCampaign(row, now) && listingOk?.ok === true;
+    const legalOk = row.paymentMode !== "PROVIDER_LIVE" || electronicLegalApproved;
+    const serving = isServingCampaign(row, now) && listingOk?.ok === true && legalOk;
     const servingNote =
       effectiveStatus === "ACTIVE"
         ? serving
           ? "يظهر الآن مع شارة «إعلان ممول» عندما يطابق بحث المشتري"
-          : `لا يظهر حاليًا: ${listingOk && !listingOk.ok ? listingOk.reason : "العرض غير متاح"}`
-        : row.paymentMode === "WHOP_LIVE" && WHOP_STATUS_NOTES[effectiveStatus]
-          ? WHOP_STATUS_NOTES[effectiveStatus]!
+          : `لا يظهر حاليًا: ${!legalOk ? "الدفع الإلكتروني غير معتمد قانونيًا في هذا السوق" : listingOk && !listingOk.ok ? listingOk.reason : "العرض غير متاح"}`
+        : row.paymentMode === "PROVIDER_LIVE" && PROVIDER_STATUS_NOTES[effectiveStatus]
+          ? PROVIDER_STATUS_NOTES[effectiveStatus]!
           : STATUS_NOTES[effectiveStatus] ?? effectiveStatus;
     const live = effectiveStatus === "ACTIVE" || effectiveStatus === "PAUSED" || effectiveStatus === "SCHEDULED";
     return {
@@ -430,7 +459,7 @@ export async function promotionViews(rows: PromotionRow[], market: Market, now =
       status: row.status,
       effectiveStatus,
       paymentStatus: row.paymentStatus,
-      paymentMode: row.paymentMode === "WHOP_LIVE" ? "WHOP_LIVE" : "TEST_NO_TRANSFER",
+      paymentMode: row.paymentMode === "PROVIDER_LIVE" ? "PROVIDER_LIVE" : "TEST_NO_TRANSFER",
       serving,
       servingNote,
       startsAt: row.startsAt.toISOString(),

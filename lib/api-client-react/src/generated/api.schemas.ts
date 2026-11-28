@@ -4717,7 +4717,7 @@ export const SellerPromotionPaymentSource = {
   SIMULATED_PROVIDER: 'SIMULATED_PROVIDER',
   COMMERCIAL_BALANCE: 'COMMERCIAL_BALANCE',
   BUNDLE_ENTITLEMENT: 'BUNDLE_ENTITLEMENT',
-  WHOP_DIRECT: 'WHOP_DIRECT',
+  PROVIDER_DIRECT: 'PROVIDER_DIRECT',
 } as const;
 
 export type SellerPromotionPaymentMode = typeof SellerPromotionPaymentMode[keyof typeof SellerPromotionPaymentMode];
@@ -4725,7 +4725,7 @@ export type SellerPromotionPaymentMode = typeof SellerPromotionPaymentMode[keyof
 
 export const SellerPromotionPaymentMode = {
   TEST_NO_TRANSFER: 'TEST_NO_TRANSFER',
-  WHOP_LIVE: 'WHOP_LIVE',
+  PROVIDER_LIVE: 'PROVIDER_LIVE',
 } as const;
 
 export interface SellerPromotion {

@@ -94,10 +94,11 @@ export const REVIEWED_PENDING_MIGRATIONS: ReadonlyArray<{ tag: string; sha256: s
   { tag: "0077_connect_workflows", sha256: "12984b0f9e7a743bef841cabce897d29c3996a5f8ce53aaae24754c300dc894f" },
   { tag: "0078_arab_market_technical_readiness", sha256: "ca3a3bae46c33987e95e6c92032fbbbe523b1ef34d20048ccf4401bc97bae46c" },
   { tag: "0079_connect_store_payment_link", sha256: "a68b6fae2ceeefc4152173e77e415805f1c7759738341940f668ebceeb985c66" },
-  { tag: "0080_promotion_whop_direct", sha256: "13331260e1ac1c76e4ba2d94ebfe5d6a5536cdf7f1a63753d9e1797b1899f69a" },
+  { tag: "0080_promotion_whop_direct", sha256: "218dbdd8239223262527178c74fec9d9ef7437b412dfb68c484903b00c7d0ef9" },
   { tag: "0081_deal_payment_agreement", sha256: "6ef247e10be4285f9dd9294b7c7e4adad013b0a60f417c9a3ef3f728b593c133" },
   { tag: "0082_seller_classification", sha256: "ea1f353b5bcdf12860d44ed0042ca3728c3913a708ce12bf030a32d8d97a323f" },
   { tag: "0083_merchant_policies", sha256: "55128b78939943afe65dad9e3077897ec097efff0adcd5773873cdc7dbb5e856" },
+  { tag: "0084_store_checkout_sessions", sha256: "7ccd777e34e36df8ca3c9c1df3d2a609e30cad8f226541750e3199289ed9d404" },
 ];
 export const EXPECTED_JOURNAL_ENTRIES =
   EXPECTED_BASELINE_MIGRATIONS + REVIEWED_PENDING_MIGRATIONS.length;

@@ -23,10 +23,13 @@ import { createHash, createHmac, randomUUID, timingSafeEqual } from "node:crypto
 import { and, eq } from "drizzle-orm";
 import { billingWebhookEvents, businessSubscriptions, db, markets } from "@workspace/db";
 import { applyBillingEvent, registerSubscriptionBillingProvider, unregisterSubscriptionBillingProvider, type BillingWebhookEvent, type SubscriptionBillingProvider } from "../subscription-billing";
+import { applyPromotionBillingEvent, registerPromotionBillingProvider, unregisterPromotionBillingProvider, type PromotionBillingEvent, type PromotionBillingProvider } from "../promotion-billing";
+import { parseBlockedCountries } from "../whop/config";
 import { logger } from "../logger";
 import { scaleOfCurrency } from "../commercial-policy";
 
 export const WHOP_PROVIDER_KEY = "whop";
+export const WHOP_PROMOTION_CURRENCIES = new Set(["AED", "BHD", "DZD", "EGP", "ILS", "JOD", "KWD", "MAD", "OMR", "QAR", "SAR", "TND"]);
 // 2026-10-24: payments carry `Money` objects, `account_id` and `membership_id` (verified in the
 // sandbox 2026-11-16; the 2026-08-14 pin returns plain numbers and nested objects instead).
 export const WHOP_API_VERSION_DATE = "2026-10-24";
@@ -318,10 +321,33 @@ export function createWhopAdapter(config: WhopConfig, transport: WhopTransport =
     return body.purchase_url;
   }
 
-  /** Hands a verified promotion event to the promotion domain (lazy import: no cycle). */
+  /** Maps a verified Whop payment event to the provider-neutral promotion billing domain. */
   async function promotion(event: Omit<WhopPromotionEvent, "accountId">): Promise<WhopWebhookResult> {
-    const { applyWhopPromotionEvent } = await import("../promotion-whop");
-    return applyWhopPromotionEvent({ ...event, accountId: config.accountId });
+    const scale = event.payment.subtotal?.currency
+      ? await db
+          .select({ scale: markets.minorUnitScale })
+          .from(markets)
+          .where(eq(markets.currencyCode, event.payment.subtotal.currency.toUpperCase()))
+          .limit(1)
+          .then((r) => r[0]?.scale)
+      : undefined;
+    const effectiveScale = scale ?? scaleOfCurrency(event.payment.subtotal?.currency?.toUpperCase() ?? "");
+    const sellerId = typeof event.payment.metadata?.jassim_user_id === "string" ? event.payment.metadata.jassim_user_id : "";
+    const canonical: PromotionBillingEvent = {
+      eventId: event.eventId,
+      eventType: event.eventType,
+      digest: event.digest,
+      type: event.type,
+      promotionId: event.promotionId,
+      sellerId,
+      providerPaymentStatus: event.payment.status ?? "",
+      currencyCode: event.payment.subtotal?.currency?.toUpperCase(),
+      amountMinor: event.payment.subtotal && effectiveScale !== undefined ? moneyToMinor(event.payment.subtotal, effectiveScale) : undefined,
+      refundedMinor: event.payment.refunded_amount && effectiveScale !== undefined ? moneyToMinor(event.payment.refunded_amount, effectiveScale) : undefined,
+      totalMinor: event.payment.total && effectiveScale !== undefined ? moneyToMinor(event.payment.total, effectiveScale) : undefined,
+      accountMismatch: Boolean(event.payment.account_id && event.payment.account_id !== config.accountId),
+    };
+    return applyPromotionBillingEvent(WHOP_PROVIDER_KEY, canonical);
   }
 
   /** The signed Whop webhook: verify, read the provider's own state, apply through the one machine. */
@@ -462,7 +488,16 @@ export function createWhopAdapter(config: WhopConfig, transport: WhopTransport =
     return recordOnly(verified.id, type, digest, "IGNORED", "UNHANDLED_EVENT_TYPE");
   }
 
-  return { provider, receive, createPromotionCheckout, promotionCheckoutUrl, config: { accountId: config.accountId, environment: config.environment } };
+  const promotionProvider: PromotionBillingProvider = {
+    providerKey: WHOP_PROVIDER_KEY,
+    displayName: "Whop",
+    supportedCurrencies: WHOP_PROMOTION_CURRENCIES,
+    blockedCountries: parseBlockedCountries(process.env.DINAR_WHOP_BLOCKED_COUNTRIES),
+    createPromotionCheckout,
+    promotionCheckoutUrl,
+  };
+
+  return { provider, promotionProvider, receive, createPromotionCheckout, promotionCheckoutUrl, config: { accountId: config.accountId, environment: config.environment } };
 }
 
 // ─── Installation (server code only; never from a request) ──────────────────────────────────────
@@ -472,9 +507,11 @@ let active: ReturnType<typeof createWhopAdapter> | undefined;
 export function installWhopBilling(config: WhopConfig, transport?: WhopTransport) {
   const adapter = createWhopAdapter(config, transport);
   registerSubscriptionBillingProvider(adapter.provider);
+  registerPromotionBillingProvider(adapter.promotionProvider);
   active = adapter;
   return () => {
     unregisterSubscriptionBillingProvider(WHOP_PROVIDER_KEY);
+    unregisterPromotionBillingProvider(WHOP_PROVIDER_KEY);
     active = undefined;
   };
 }

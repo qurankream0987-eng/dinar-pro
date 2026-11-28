@@ -27,6 +27,9 @@ import { buildListingUpdateBody, parseListingPriceMinor, updateOwnedListing } fr
 import { addMarketplaceCartItem } from "../lib/marketplace-cart";
 import { METHOD_LABELS, deliveryOptions, selectDeliveryMethod, type DeliveryMethod } from "../lib/delivery";
 import { checkoutForActor } from "../routes/marketplace";
+import { effectivePolicy } from "../lib/merchant-policies/engine";
+import { evaluateOutOfStockAndAlternatives } from "../lib/merchant-policies/enforcement";
+import { merchantPoliciesM2Enabled } from "../lib/merchant-policies/flag";
 import { createTestPaymentIntent, paymentSimulationEnabled } from "../routes/payments";
 import {
   DRIVER_STATUS_LABELS,
@@ -295,6 +298,16 @@ type ServerSnapshot = {
   /** NEXT G2: the actor's role and the listing title in an inquiry thread. */
   inquiryRole?: "BUYER" | "SELLER";
   inquiryTitle?: string;
+  /** M2: merchant policy snapshot fields for buyer order review & enforcement. */
+  businessProfileId?: string | null;
+  merchantOrderingPausedReason?: string;
+  merchantGeoRestrictionReason?: string;
+  merchantMinOrderQuantity?: number;
+  merchantMinOrderAmountMinor?: number;
+  merchantShippingFeeMinor?: number | null;
+  merchantShippingFreeAboveMinor?: number | null;
+  merchantShippingVersion?: number;
+  merchantOutOfStockMessage?: string;
 };
 
 type ActionDefinition = {
@@ -578,30 +591,58 @@ export const ACTION_REGISTRY: Record<string, ActionDefinition> = {
     allowed: (snapshot, actorId, input) => {
       if (snapshot.ownerId === actorId) return "لا يمكنك شراء عرضك";
       if (snapshot.resourceStatus !== "PUBLISHED") return "العرض غير متاح حاليًا";
+      if (snapshot.merchantOrderingPausedReason) return snapshot.merchantOrderingPausedReason;
+      if (snapshot.merchantGeoRestrictionReason) return snapshot.merchantGeoRestrictionReason;
       if (snapshot.unitPriceMinor === null) return "هذا العرض بلا سعر معلن؛ اتفق مع البائع على السعر أولًا";
       // Same rule as checkout: without an accepted agreement only a definite asking price is ordered.
       if (!snapshot.directPurchase && snapshot.agreedQuantity === undefined)
         return needsAgreementMessage(snapshot.priceRepresentation);
-      if (snapshot.available !== null && snapshot.available <= 0) return "المنتج لم يعد متوفرًا";
+      if (snapshot.available !== null && snapshot.available <= 0)
+        return snapshot.merchantOutOfStockMessage ?? "المنتج لم يعد متوفرًا";
       const quantity = Number(input.quantity);
       if (snapshot.agreedQuantity !== undefined && quantity > snapshot.agreedQuantity)
         return `السعر المتفق عليه يشمل ${snapshot.agreedQuantity} فقط`;
       if (snapshot.available !== null && quantity > snapshot.available) return `المتوفر الآن ${snapshot.available} فقط`;
+      if (snapshot.merchantMinOrderQuantity !== undefined && quantity < snapshot.merchantMinOrderQuantity)
+        return `الحد الأدنى للطلب حسب سياسة المتجر هو ${snapshot.merchantMinOrderQuantity} قطعة`;
+      if (
+        snapshot.merchantMinOrderAmountMinor !== undefined &&
+        snapshot.unitPriceMinor * quantity < snapshot.merchantMinOrderAmountMinor
+      )
+        return "قيمة الطلب أقل من الحد الأدنى المحدد في سياسة المتجر";
       if (typeof input.fulfilment === "string" && !fulfilmentAvailable(snapshot.fulfilmentType, input.fulfilment))
         return "طريقة التوصيل هذه لم تعد متاحة";
       return undefined;
     },
-    reviewLines: (snapshot, input, market) => [
-      snapshot.publicUnitPriceMinor !== undefined
-        ? `السعر المتفق عليه: ${money(snapshot.unitPriceMinor, market)} (السعر المعلن ${money(snapshot.publicUnitPriceMinor, market)})`
-        : `السعر: ${money(snapshot.unitPriceMinor, market)}`,
-      `الكمية: ${String(input.quantity)}`,
-      `الإجمالي: ${money(snapshot.unitPriceMinor === null ? null : snapshot.unitPriceMinor * Number(input.quantity), market)}`,
-      typeof input.fulfilment === "string"
-        ? `التسليم: ${METHOD_LABELS[input.fulfilment as DeliveryMethod] ?? input.fulfilment}`
-        : "التسليم: تختاره بعد إنشاء الطلب",
-      "الدفع: تجريبي دون تحويل أموال",
-    ],
+    reviewLines: (snapshot, input, market) => {
+      const subtotal = snapshot.unitPriceMinor === null ? null : snapshot.unitPriceMinor * Number(input.quantity);
+      const shippingMinor =
+        snapshot.merchantShippingFeeMinor !== undefined && snapshot.merchantShippingFeeMinor !== null && subtotal !== null
+          ? snapshot.merchantShippingFreeAboveMinor !== undefined &&
+            snapshot.merchantShippingFreeAboveMinor !== null &&
+            subtotal >= snapshot.merchantShippingFreeAboveMinor
+            ? 0
+            : snapshot.merchantShippingFeeMinor
+          : null;
+      return [
+        snapshot.publicUnitPriceMinor !== undefined
+          ? `السعر المتفق عليه: ${money(snapshot.unitPriceMinor, market)} (السعر المعلن ${money(snapshot.publicUnitPriceMinor, market)})`
+          : `السعر: ${money(snapshot.unitPriceMinor, market)}`,
+        `الكمية: ${String(input.quantity)}`,
+        `الإجمالي: ${money(subtotal, market)}`,
+        ...(shippingMinor !== null
+          ? [
+              `الشحن (من سياسة التاجر — الإصدار ${snapshot.merchantShippingVersion ?? 1}): ${
+                shippingMinor === 0 ? "مجاني" : money(shippingMinor, market)
+              }`,
+            ]
+          : []),
+        typeof input.fulfilment === "string"
+          ? `التسليم: ${METHOD_LABELS[input.fulfilment as DeliveryMethod] ?? input.fulfilment}`
+          : "التسليم: تختاره بعد إنشاء الطلب",
+        "الدفع: تجريبي دون تحويل أموال",
+      ];
+    },
     execute: async ({ actionId, actorId, market, resourceId, values, expected }) => {
       // The idempotency key is the reviewed action: retries return the same order.
       const placed = await checkoutForActor(
@@ -1112,6 +1153,56 @@ export async function readServerSnapshot(actorId: string, resourceId: string, tx
     tx.select().from(offers).where(eq(offers.id, resourceId)),
   ]);
   if (!actor || !row) return undefined;
+  const available = row.inventoryMode === "UNLIMITED" ? null : (row.availableQuantity ?? 0) - row.reservedQuantity;
+  const m2Extras: Partial<ServerSnapshot> = { businessProfileId: row.businessProfileId };
+  if (merchantPoliciesM2Enabled() && row.businessProfileId) {
+    const ctx = {
+      productId: row.id,
+      category: typeof row.data?.categoryId === "string" ? row.data.categoryId : typeof row.data?.category === "string" ? row.data.category : undefined,
+    };
+    const [paused, geo, minOrder, shipping] = await Promise.all([
+      effectivePolicy(row.businessProfileId, "ORDERING_PAUSED", ctx, tx),
+      effectivePolicy(row.businessProfileId, "GEO_RESTRICTION", ctx, tx),
+      effectivePolicy(row.businessProfileId, "MIN_ORDER", ctx, tx),
+      effectivePolicy(row.businessProfileId, "SHIPPING", ctx, tx),
+    ]);
+    if (paused && (paused.rule as { paused?: boolean }).paused === true) {
+      m2Extras.merchantOrderingPausedReason =
+        (paused.rule as { reason?: string }).reason?.trim() || "استقبال الطلبات متوقف مؤقتًا حسب سياسة المتجر.";
+    }
+    if (geo) {
+      const allowedCountries = (geo.rule as { allowedCountries?: string[] }).allowedCountries ?? [];
+      const [mkt] = await tx.select({ countryCode: markets.countryCode }).from(markets).where(eq(markets.id, actor.activeMarketId)).limit(1);
+      if (allowedCountries.length && mkt && !allowedCountries.includes(mkt.countryCode)) {
+        m2Extras.merchantGeoRestrictionReason = `الطلب غير متاح في ${mkt.countryCode} حسب سياسة المتجر.`;
+      }
+    }
+    if (minOrder) {
+      const r = minOrder.rule as { minQuantity?: number; minAmountMinor?: number };
+      if (typeof r.minQuantity === "number") m2Extras.merchantMinOrderQuantity = r.minQuantity;
+      if (typeof r.minAmountMinor === "number") m2Extras.merchantMinOrderAmountMinor = r.minAmountMinor;
+    }
+    if (shipping) {
+      const r = shipping.rule as { feeMinor: number; freeAboveMinor?: number };
+      m2Extras.merchantShippingFeeMinor = r.feeMinor;
+      m2Extras.merchantShippingFreeAboveMinor = r.freeAboveMinor ?? null;
+      m2Extras.merchantShippingVersion = shipping.version;
+    }
+    if (available !== null && available <= 0) {
+      const oosGuidance = await evaluateOutOfStockAndAlternatives({
+        businessId: row.businessProfileId,
+        sellerId: row.sellerId,
+        marketId: row.marketId,
+        listingId: row.id,
+        categoryId: ctx.category,
+        tx,
+      });
+      const altTitles = oosGuidance.alternatives.map((a) => a.title);
+      m2Extras.merchantOutOfStockMessage = altTitles.length
+        ? `${oosGuidance.message} البدائل المتوفرة من نفس المتجر: ${altTitles.join("، ")}.`
+        : oosGuidance.message;
+    }
+  }
   return {
     actorStatus: actor.status,
     actorMarketId: actor.activeMarketId,
@@ -1119,13 +1210,14 @@ export async function readServerSnapshot(actorId: string, resourceId: string, tx
     resourceStatus: row.status,
     ownerId: row.sellerId,
     unitPriceMinor: row.unitPriceMinor,
-    available: row.inventoryMode === "UNLIMITED" ? null : (row.availableQuantity ?? 0) - row.reservedQuantity,
+    available,
     version: row.updatedAt.toISOString(),
     fulfilmentType: typeof row.data?.fulfilmentType === "string" ? row.data.fulfilmentType : undefined,
     negotiable: listingNegotiable(row),
     pricingMode: row.pricingMode,
     priceRepresentation: priceRepresentationOf(row),
     directPurchase: directPurchaseAllowed(priceRepresentationOf(row), row.unitPriceMinor),
+    ...m2Extras,
   };
 }
 

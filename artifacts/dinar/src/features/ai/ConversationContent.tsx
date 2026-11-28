@@ -51,6 +51,8 @@ import { textDirection } from "./rich-text";
 import { SellerDraftHelper } from "./SellerDraftHelper";
 import { ComparisonPanel, isComparison, isPurchaseReview, PurchaseReviewPanel } from "./BuyerPanels";
 import { DealCardPanel, isDealCard } from "./DealCardPanel";
+import { MerchantPolicyReviewPanel, type MerchantPolicyReviewData } from "./MerchantPolicyReviewPanel";
+import { PaymentOptionsPanel, PaymentStatusPanel, type PaymentOptionsCardView, type PaymentStatusCardView } from "./StorePaymentPanels";
 import { isDriverPayload } from "./driver-types";
 import { isProviderPayload } from "./provider-types";
 import { AdvicePanel, ClarificationOptions, NegotiationPanel, adviceChipLabel, isAdvice, isNegotiation } from "./SmartSurfaces";
@@ -1078,6 +1080,18 @@ function ResultBlock({
     return isComparison(block.payload.comparison) ? <ComparisonPanel comparison={block.payload.comparison} /> : null;
   if (block.type === "SURFACE" && block.payload.surface === "DEAL_CARD")
     return isDealCard(block.payload.dealCard) ? <DealCardPanel card={block.payload.dealCard} active={Boolean(activeWorkflow)} onSend={onSend} /> : null;
+  if (block.type === "SURFACE" && ((block.payload.surface as string) === "MERCHANT_POLICY_REVIEW" || (block.payload as Record<string, unknown>).merchantPolicy))
+    return (block.payload as { merchantPolicy?: MerchantPolicyReviewData }).merchantPolicy ? (
+      <MerchantPolicyReviewPanel review={(block.payload as { merchantPolicy: MerchantPolicyReviewData }).merchantPolicy} onReply={onSend} />
+    ) : null;
+  if (block.type === "SURFACE" && ((block.payload.surface as string) === "PAYMENT_OPTIONS" || (block.payload as Record<string, unknown>).paymentOptions))
+    return (block.payload as { paymentOptions?: PaymentOptionsCardView }).paymentOptions ? (
+      <PaymentOptionsPanel card={(block.payload as { paymentOptions: PaymentOptionsCardView }).paymentOptions} />
+    ) : null;
+  if (block.type === "SURFACE" && ((block.payload.surface as string) === "PAYMENT_STATUS" || (block.payload as Record<string, unknown>).paymentStatus))
+    return (block.payload as { paymentStatus?: PaymentStatusCardView }).paymentStatus ? (
+      <PaymentStatusPanel card={(block.payload as { paymentStatus: PaymentStatusCardView }).paymentStatus} />
+    ) : null;
   if (block.type === "SURFACE" && (block.payload.surface === "PURCHASE_REVIEW" || block.payload.surface === "PAYMENT_REVIEW"))
     return isPurchaseReview(block.payload.purchaseReview) ? (
       <PurchaseReviewPanel review={block.payload.purchaseReview} active={Boolean(activeWorkflow)} onSend={onSend} />

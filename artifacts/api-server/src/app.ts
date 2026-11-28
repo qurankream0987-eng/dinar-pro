@@ -14,6 +14,8 @@ import { ListingImagePolicyReviewError } from "./ai/listing-image-policy-review"
 import { createWebFrontend } from "./lib/web-frontend";
 import { googleClientId } from "./lib/google-identity";
 import { driverLocationSharingEnabled, firstPartyTrackingProvider } from "./lib/driver-location";
+import { receivePromotionProviderWebhook } from "./lib/promotion-billing";
+import { receiveStoreCheckoutWebhook } from "./lib/store-checkout/service";
 import { receiveWhopWebhook } from "./lib/whop/webhooks";
 
 const app: Express = express();
@@ -220,7 +222,10 @@ app.use((req, res, next) => {
       contentType === "application/x-www-form-urlencoded";
     // A provider webhook is authenticated by its signature, not by a browser origin or
     // cookie; its raw bytes must still reach the verifier unparsed.
-    const signedWebhook = req.path === "/api/whop/webhooks";
+    const signedWebhook =
+      req.path === "/api/whop/webhooks" ||
+      req.path.startsWith("/api/commercial/promotion-webhooks/") ||
+      req.path.startsWith("/api/store-checkout/webhooks/");
     if (
       (origin &&
         (!normalizedOrigin || !allowedOrigins.has(normalizedOrigin)) &&
@@ -236,6 +241,28 @@ app.use((req, res, next) => {
 });
 // Whop signs the exact bytes it sends, so its webhook keeps a raw body (same 128 KB bound).
 app.post("/api/billing/whop/webhook", express.raw({ type: "application/json", limit: "128kb" }), whopWebhookHandler);
+app.post("/api/commercial/promotion-webhooks/:providerKey", express.raw({ type: "application/json", limit: "128kb" }), async (req, res, next) => {
+  try {
+    const raw = Buffer.isBuffer(req.body) ? req.body : Buffer.from("");
+    const result = await receivePromotionProviderWebhook(String(req.params.providerKey), raw, req.headers);
+    res.status(result.status).json(result);
+  } catch (error) {
+    next(error);
+  }
+});
+app.post("/api/store-checkout/webhooks/:adapterId", express.raw({ type: "application/json", limit: "128kb" }), async (req, res, next) => {
+  try {
+    const raw = Buffer.isBuffer(req.body) ? req.body : Buffer.from("");
+    const result = await receiveStoreCheckoutWebhook({
+      adapterId: String(req.params.adapterId),
+      rawBody: raw,
+      headers: req.headers,
+    });
+    res.status(result.status).json(result);
+  } catch (error) {
+    next(error);
+  }
+});
 installWhopBillingFromEnv();
 // Before the JSON parser: the signature covers the exact bytes and a re-serialized body fails.
 app.post(
