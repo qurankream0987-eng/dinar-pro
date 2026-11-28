@@ -1,3 +1,4 @@
+import { refreshMerchantPolicyPayload } from "../ai/merchant-policy-turn";
 import { dealCard } from "../lib/deal-payments/service";
 import { dealPaymentsEnabled } from "../lib/deal-payments/flag";
 import { issueCardForSearchReply } from "../lib/smart-store-cards";
@@ -334,6 +335,7 @@ const SurfaceBlock = z.object({
     delivery: z.record(z.string(), z.unknown()).optional(),
     // Payment agreement deal card: stored as { kind, orderId } only and rebuilt per reader.
     dealCard: z.record(z.string(), z.unknown()).optional(),
+    merchantPolicy: z.record(z.string(), z.unknown()).optional(),
     promotion: z.record(z.string(), z.unknown()).optional(),
     driver: z.record(z.string(), z.unknown()).optional(),
     provider: z.record(z.string(), z.unknown()).optional(),
@@ -519,6 +521,9 @@ async function freshBlocksForConversation(
       });
     }
   }
+  // Merchant policy reviews show the proposal's current status (confirmed, cancelled, pending).
+  for (const item of surfaceBlocks.filter((entry) => entry.block.payload.merchantPolicy))
+    item.block.payload.merchantPolicy = await refreshMerchantPolicyPayload(item.block.payload.merchantPolicy as Record<string, unknown>, actorId);
   // Deal cards are rebuilt for this reader from the agreement; a non-party sees nothing.
   const dealBlocks = surfaceBlocks.filter((item) => item.block.payload.dealCard);
   for (const item of dealBlocks) {
@@ -2382,6 +2387,7 @@ router.post("/ai/conversations/:id/turns", requireAuth, async (req, res) => {
         business: toolResult.business,
         relatesToAction: toolResult.relatesToAction,
         dealCard: toolResult.dealCard,
+        merchantPolicy: toolResult.merchantPolicy,
       };
       const block = SurfaceBlock.parse({
         type: "SURFACE",

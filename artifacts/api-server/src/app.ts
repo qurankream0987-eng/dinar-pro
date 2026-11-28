@@ -319,6 +319,8 @@ export function apiErrorHandler(error: any, req: any, res: any, _next: any) {
     ...(imageReviewError ? { code: imageReviewError.code } : {}),
     ...(exposed && typeof error.code === "string" && /^[A-Z][A-Z0-9_]{2,63}$/.test(error.code) ? { code: error.code } : {}),
     ...(error.issues && status === 409 ? { issues: error.issues } : {}),
+    // Merchant policy refusals carry their conflicts / missing scope so the review card can explain them.
+    ...(exposed && error.name === "MerchantPolicyError" && error.detail ? { detail: error.detail } : {}),
   });
 }
 app.use(apiErrorHandler);

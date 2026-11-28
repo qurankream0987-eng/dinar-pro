@@ -97,6 +97,7 @@ export const REVIEWED_PENDING_MIGRATIONS: ReadonlyArray<{ tag: string; sha256: s
   { tag: "0080_promotion_whop_direct", sha256: "13331260e1ac1c76e4ba2d94ebfe5d6a5536cdf7f1a63753d9e1797b1899f69a" },
   { tag: "0081_deal_payment_agreement", sha256: "6ef247e10be4285f9dd9294b7c7e4adad013b0a60f417c9a3ef3f728b593c133" },
   { tag: "0082_seller_classification", sha256: "ea1f353b5bcdf12860d44ed0042ca3728c3913a708ce12bf030a32d8d97a323f" },
+  { tag: "0083_merchant_policies", sha256: "55128b78939943afe65dad9e3077897ec097efff0adcd5773873cdc7dbb5e856" },
 ];
 export const EXPECTED_JOURNAL_ENTRIES =
   EXPECTED_BASELINE_MIGRATIONS + REVIEWED_PENDING_MIGRATIONS.length;

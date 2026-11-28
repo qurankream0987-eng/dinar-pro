@@ -199,6 +199,7 @@ export type TutorialLearningEvent = z.infer<typeof TutorialLearningEventSchema>;
 const CORE_SURFACE_TOKENS = [
   "CONNECT_RESULTS",
   "DEAL_CARD",
+  "MERCHANT_POLICY_REVIEW",
   "CART",
   "CHECKOUT",
   "AUTH",
@@ -298,6 +299,7 @@ export const CONVERSATION_SURFACE_REGISTRY = {
   TRACKING_CARD: surface(["ORDER_TRACKING"], "tracking"),
   // Payment Preferences & Agreement: how buyer and seller settle directly (no money through JassimAI).
   DEAL_CARD: surface(["DEAL_CARD"], "deal-card"),
+  MERCHANT_POLICY_REVIEW: surface(["MERCHANT_POLICY_REVIEW"], "merchant-policy"),
   DELIVERY_CARD: surface(
     CONVERSATION_SURFACE_FAMILIES.delivery,
     "delivery",

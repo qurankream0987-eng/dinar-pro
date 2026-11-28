@@ -4334,3 +4334,4 @@ export const marketTechnicalReadiness = pgTable(
   ],
 );
 export * from "./deal-payments";
+export * from "./merchant-policies";

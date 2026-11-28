@@ -69,6 +69,7 @@ import { executeAdsAssistantTurn } from "./ads-assistant-turn";
 import { executeBuyerTurn, executePurchaseTurn, executeOrderContactRequest, reviewQuantity } from "./buyer-turn";
 import { executeDealPaymentTurn } from "./deal-payment-turn";
 import { executeSellerClassificationTurn } from "./seller-classification-turn";
+import { executeMerchantPolicyTurn } from "./merchant-policy-turn";
 import { executeListingFactQuestion } from "./listing-fact-question";
 import { executeStockQuestion } from "./stock-question";
 import { modelRolesForActor } from "./model-capability-tools";
@@ -1480,6 +1481,14 @@ async function executeRuntime(context: RuntimeContext, incoming: RuntimeOptions)
   if (classified) {
     options.onToolSelected?.(classified.tool);
     return classified;
+  }
+  // Merchant policies (M1): «لا تقبل طلبات أقل من 3 قطع», «نعم» under a policy review.
+  const merchantPolicy = !context.imageObjectPaths?.length && isMarketAvailable(context.market)
+    ? await executeMerchantPolicyTurn({ conversationId: context.conversationId, message: context.message, market: context.market, actorId: context.actorId })
+    : null;
+  if (merchantPolicy) {
+    options.onToolSelected?.(merchantPolicy.tool);
+    return merchantPolicy;
   }
   // «راجع الشروط المحدثة», «أوافق على الشروط المحدثة»: deterministic, before any commerce flow.
   const policy = await executePolicyTurn({ conversationId: context.conversationId, message: context.message, market: context.market, actorId: context.actorId });

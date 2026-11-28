@@ -30,6 +30,7 @@ import businessDelegations from "./business-delegations";
 import businesses from "./businesses";
 import cash from "./cash";
 import dealPayments from "./deal-payments";
+import merchantPolicies from "./merchant-policies";
 import securityIncidents from "./security-incidents";
 import whop from "./whop";
 const router: IRouter = Router();
@@ -43,6 +44,7 @@ router.use(email);
 // generic POST /orders/:id/:action would otherwise swallow /orders/:id/cash-refunds.
 router.use(cash);
 router.use(dealPayments);
+router.use(merchantPolicies);
 router.use(smartStore);
 router.use(marketplace);
 router.use(profileAvatar);

@@ -61,6 +61,8 @@ export type ToolContext = {
 export type ToolResult = {
   /** Payment Preferences & Agreement deal card, rebuilt per reader from server state (deal-payments). */
   dealCard?: Record<string, unknown>;
+  /** Merchant policy review (M1): a typed proposal awaiting the confirmation its sensitivity needs. */
+  merchantPolicy?: Record<string, unknown>;
   universalCards?: UniversalCardsPayload;
   /** Server-authored description of what DINAR can and cannot do for this actor; read only. */
   capabilities?: DinarCapabilityCatalog;

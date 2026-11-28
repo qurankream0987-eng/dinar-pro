@@ -96,6 +96,7 @@ export * from './aiUiBlockPayloadMemory';
 export * from './aiUiBlockPayloadMemoryGroupsItem';
 export * from './aiUiBlockPayloadMemoryGroupsItemItemsItem';
 export * from './aiUiBlockPayloadMemoryView';
+export * from './aiUiBlockPayloadMerchantPolicy';
 export * from './aiUiBlockPayloadNegotiation';
 export * from './aiUiBlockPayloadPhotoSuggestionStatus';
 export * from './aiUiBlockPayloadPolicyReview';

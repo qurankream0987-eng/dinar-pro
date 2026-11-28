@@ -330,5 +330,9 @@
   {
     "tag": "0082_seller_classification",
     "sha256": "ea1f353b5bcdf12860d44ed0042ca3728c3913a708ce12bf030a32d8d97a323f"
+  },
+  {
+    "tag": "0083_merchant_policies",
+    "sha256": "55128b78939943afe65dad9e3077897ec097efff0adcd5773873cdc7dbb5e856"
   }
 ]
