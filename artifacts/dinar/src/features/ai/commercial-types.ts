@@ -26,6 +26,12 @@ const Business = z.object({
 });
 export type BusinessCardPayload = z.infer<typeof Business>;
 export type PublicPlanPayload = z.infer<typeof PublicPlan>;
+const PlacementOptionSchema = z.object({productId:text,placement:text,where:text,name:text,description:z.string().max(300),productTypeLabel:text,pricingUnit:z.enum(["PERIOD","DAY"]),unitPriceLabel:text,priceMinor:count,defaultDays:count,minDays:count,maxDays:count,pricingVersion:count,available:z.boolean(),reason:text.optional()});
+const CampaignPlanSchema = z.object({available:z.boolean(),reason:text.optional(),subject:z.object({kind:z.enum(["LISTING","STORE"]),id:text,title:text}).optional(),providerName:text.optional(),options:z.array(PlacementOptionSchema).max(16),suggestions:z.array(z.object({productIds:z.array(text).max(10),reason:text})).max(3)});
+export type CampaignPlan = z.infer<typeof CampaignPlanSchema>;
+const Counts = z.object({impressions:count,clicks:count,engagements:count,orders:count});
+const PlacementCampaignSchema = z.object({campaignId:text,subjectKind:text,subjectTitle:text,status:text,statusLabel:text,paymentNote:text,totalLabel:text,refundReviewLabel:text.nullable(),adCopy:z.string().max(300),placements:z.array(z.object({placement:text,where:text,name:text,status:text,statusLabel:text,note:text,days:count,priceLabel:text,startsAt:text.nullable(),expiresAt:text.nullable(),remainingDays:count.nullable(),impressions:count,clicks:count,engagements:count,orders:count})).max(10),totals:Counts,previous:Counts.nullable(),advice:z.array(text).max(6),createdAt:text});
+export type PlacementCampaignResult = z.infer<typeof PlacementCampaignSchema>;
 const schema = z.object({
   view:z.enum(COMMERCIAL_SURFACES),paymentMode:z.enum(["TEST_NO_TRANSFER","SIMULATION_ONLY"]),liveProviderPayments:z.boolean().optional(),
   notice:text.optional(),step:text.optional(),pitch:text.optional(),privacyNote:text.optional(),
@@ -45,7 +51,8 @@ const schema = z.object({
   providerPayment:z.object({providerKey:z.string().max(40),displayName:text,note:text}).optional(),
   promotionCheckout:z.object({promotionId:text,url:z.string().regex(/^https:\/\/[^\s]+$/).max(600),amountLabel:text,note:text,providerName:text.optional()}).optional(),
   /** Jassim Ads plan: copy from the listing's own facts, waiting buyers (cohort-safe), a suggested option. */
-  promotionPlan:z.object({copy:z.array(text).max(5),interestedBuyers:count.nullable(),suggestedProductId:text.nullable(),note:text}).optional(),
+  promotionPlan:z.object({copy:z.array(text).max(5),interestedBuyers:count.nullable(),suggestedProductId:text.nullable(),note:text,insights:z.array(z.object({kind:z.enum(["REAL","TIP","LIMIT"]),text})).max(8).optional(),campaign:CampaignPlanSchema.optional()}).optional(),
+  placementCampaigns:z.array(PlacementCampaignSchema).max(12).optional(),
   business:Business.optional(),
 });
 export type CommercialPayload = z.infer<typeof schema>;

@@ -12,8 +12,9 @@
  *   - Buying a promotion stays in the existing promotion flow (confirmation, server price in the
  *     market currency, receipt). This module never charges, activates or changes anything.
  */
-import { and, desc, eq, gt, inArray } from "drizzle-orm";
-import { db, listingPromotions, offers } from "@workspace/db";
+import { and, desc, eq, gt, inArray, sql } from "drizzle-orm";
+import { db, demandSignals, listingPromotions, offers } from "@workspace/db";
+import { getCommercialPolicy } from "./commercial-policy";
 import { formatMoney } from "@workspace/global";
 import { isPromotionFeatureEnabled } from "./promotion-policy";
 import { campaignAnalytics, type CampaignAnalyticsView } from "./promotions";
@@ -122,4 +123,39 @@ export function adCopyDrafts(listing: Pick<AdsListing, "title" | "priceLabel" | 
 export async function sellerAdsReport(actorId: string, market: Market): Promise<CampaignAnalyticsView[]> {
   if (!isPromotionFeatureEnabled()) return [];
   return campaignAnalytics(actorId, market).catch(() => []);
+}
+
+export type SellingInsight = { kind: "REAL" | "TIP" | "LIMIT"; text: string };
+
+/**
+ * Jassim Go Sell for Me: what Jassim actually knows about selling this listing. REAL facts come from
+ * recorded data and are shown only at or above the market's privacy cohort size (never who); TIPs
+ * come from the listing's own fields; LIMIT says plainly what Jassim cannot know or promise.
+ */
+export async function sellingInsights(listingId: string, actorId: string, market: Market, quantity?: number, now = new Date()): Promise<SellingInsight[]> {
+  const [row] = await db.select().from(offers).where(and(eq(offers.id, listingId), eq(offers.sellerId, actorId)));
+  if (!row) return [];
+  const data = row.data as { title?: unknown; description?: unknown; imageUrl?: unknown; imageUrls?: unknown; categoryId?: unknown; attributes?: Record<string, unknown> };
+  const policy = await getCommercialPolicy(market.id);
+  const out: SellingInsight[] = [];
+  const waiting = await waitingBuyersForListing(listingId, actorId, market, now).catch(() => ({ status: "NOT_ENOUGH_DATA" as const }));
+  if (waiting.status === "COUNT") out.push({ kind: "REAL", text: `${waiting.buyers} مشترين طلبوا تنبيههم عن منتج مثل هذا (طلبات حقيقية محفوظة، دون كشف هوياتهم).` });
+  const categoryId = typeof data.categoryId === "string" ? data.categoryId : undefined;
+  if (categoryId) {
+    const since = new Date(now.getTime() - 7 * DAY_MS);
+    const [searchers] = await db
+      .select({ n: sql<number>`count(distinct ${demandSignals.actorKey})::int`, unmet: sql<number>`count(distinct ${demandSignals.actorKey}) filter (where ${demandSignals.state} in ('ZERO_RESULTS', 'LOW_SUPPLY', 'USER_UNSATISFIED'))::int` })
+      .from(demandSignals)
+      .where(and(eq(demandSignals.marketId, market.id), eq(demandSignals.categoryId, categoryId), gt(demandSignals.createdAt, since)));
+    if ((searchers?.n ?? 0) >= policy.minCohortSize) out.push({ kind: "REAL", text: `${searchers!.n} مستخدمين مختلفين بحثوا في هذه الفئة خلال آخر 7 أيام.` });
+    if ((searchers?.unmet ?? 0) >= policy.minCohortSize) out.push({ kind: "REAL", text: `${searchers!.unmet} منهم لم يجدوا ما يكفيهم — طلب غير ملبّى في الفئة.` });
+  }
+  if (!out.some((item) => item.kind === "REAL")) out.push({ kind: "LIMIT", text: "لا توجد بيانات اهتمام كافية لعرض أرقام دون المساس بخصوصية المشترين." });
+  const images = Array.isArray(data.imageUrls) ? data.imageUrls.length : data.imageUrl ? 1 : 0;
+  if (!images) out.push({ kind: "TIP", text: "أضف صورة واضحة للمنتج؛ الإعلانات بلا صور تجذب نقرات أقل." });
+  const description = typeof data.description === "string" ? data.description.trim() : "";
+  if (description.length < 60) out.push({ kind: "TIP", text: "وسّع الوصف: الحالة، المواصفات المهمة، وطريقة التسليم." });
+  if (!data.attributes?.condition) out.push({ kind: "TIP", text: "حدّد حالة المنتج (جديد أو مستعمل)؛ المشترون يصفّون بها." });
+  if (quantity && quantity > 1) out.push({ kind: "LIMIT", text: `لا أستطيع أن أعدك ببيع ${quantity} قطعة أو تقدير عدد ما سيُباع؛ الترويج يزيد الظهور فقط.` });
+  return out.slice(0, 6);
 }

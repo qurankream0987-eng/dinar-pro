@@ -13,7 +13,8 @@ import { adCopyDrafts, adsOpportunities, jassimAdsEnabled, sellerAdsListings, se
 import type { marketFor } from "../lib/markets";
 import { and, desc, eq } from "drizzle-orm";
 import { aiUiBlocks, db } from "@workspace/db";
-import { campaignResultsTurn, promotionPlanTurn } from "./commerce-turn";
+import { campaignResults } from "../lib/promotion-campaigns";
+import { campaignResultsTurn, promotionPlanTurn, storePlanTurn } from "./commerce-turn";
 
 /** The seller's own listing currently in view in this conversation (latest card), if any. */
 async function listingInView(conversationId: string, ownedIds: string[]) {
@@ -40,6 +41,10 @@ const COPY = /(?:اكتب|جهز|اقترح|صغ)\s+(?:لي\s+)?(?:نص(?:ا)?\s
 const PROMOTE_THIS = /(?:روّج|روج|اعلن|سوق|سوّق)\s+(?:لي\s+)?(?:ل|عن\s+)?(?:هذا|هذه|هاد|هادا|المنتج|منتجي|الخدمه|خدمتي|العرض)|(?:روّج|روج)\s+(?:لل|ل)?(?:اول|ثاني|ثالث|رابع|خامس|[1-5])(?:\s|$)/u;
 /** «عندي 100 قطعة من هذا المنتج أريد بيعها»: stock to move, the same plan with the quantity noted. */
 const SELL_STOCK = /عندي\s+(\d{1,6})\s+(?:قطعه|قطع|حبه|حبات|وحده|وحدات|كرتونه|كراتين)(?:.*?)(?:ابيعها|بيعها|ابيعهم|بيعهم|اصرفها|اسوقها)/u;
+/** «روّج لمتجري», «أريد ترويج متجري», «سوّق متجري»: the store plan (not a single listing). */
+const STORE = /(?:روّج|روج|اعلن|سوق|سوّق|اسوق|تسويق|ترويج)\s+(?:لي\s+)?(?:ل|عن\s+)?متجري|(?:ترويج|تسويق|اعلان)\s+(?:لل)?متجر(?:ي)?(?:\s|$)/u;
+/** Jassim Go Sell for Me phrasing: more customers / more sales for this product, service or offer. */
+const GROW = /(?:اريد|ابي|ابغي|بدي|ودي)\s+(?:زبائن|عملاء|مشترين|زباين)\s+(?:اكثر|اكتر)|(?:كيف|ساعدني)\s+(?:ازيد|ارفع|ابيع)\s+(?:فرص\s+)?(?:بيع|مبيعات)?\s*(?:هذا|هذه|هاد|المنتج|الخدمه|العرض)|ساعدني\s+ابيع\s+(?:هذا|هذه|المنتج|الخدمه|العرض|مخزون)/u;
 const REPORT = /(?:كيف|شو|ما)\s+(?:تسير|اداء|نتائج|وضع)\s+(?:ال)?(?:حملات[يى]?|حملتي|ترويج[يى]?|الترويج)|تقرير\s+(?:ال)?(?:تسويق|ترويج|حملات)/u;
 
 const ORDINALS: [RegExp, number][] = [
@@ -50,10 +55,11 @@ const ORDINALS: [RegExp, number][] = [
   [/(?:^|\s)(?:لل|ل|ال)?(?:خامس|الخامسه|5)(?:\s|$)/u, 4],
 ];
 
-export function adsIntent(message: string): "OVERVIEW" | "COPY" | "REPORT" | "PLAN" | undefined {
+export function adsIntent(message: string): "OVERVIEW" | "COPY" | "REPORT" | "PLAN" | "STORE" | undefined {
   const t = normalizeAdsText(message);
   if (COPY.test(t)) return "COPY";
-  if (SELL_STOCK.test(t) || PROMOTE_THIS.test(t)) return "PLAN";
+  if (STORE.test(t) && !/مخزون/.test(t)) return "STORE";
+  if (SELL_STOCK.test(t) || PROMOTE_THIS.test(t) || GROW.test(t)) return "PLAN";
   if (REPORT.test(t)) return "REPORT";
   if (OVERVIEW.test(t)) return "OVERVIEW";
   return undefined;
@@ -64,6 +70,7 @@ export async function executeAdsAssistantTurn(input: { conversationId: string; m
   const intent = adsIntent(input.message);
   if (!intent) return null;
   const context = { conversationId: input.conversationId, market: input.market, actorId: input.actorId };
+  if (intent === "STORE") return storePlanTurn(input.actorId, input.market);
   const listings = await sellerAdsListings(input.actorId, input.market);
   if (!listings.length)
     return makeSellerContextResult(context, [], "لا توجد لديك إعلانات منشورة في هذا السوق بعد. انشر منتجك أولًا (قل «أبي أبيع …»)، ثم أساعدك في تسويقه.");
@@ -87,7 +94,7 @@ export async function executeAdsAssistantTurn(input: { conversationId: string; m
 
   if (intent === "REPORT") {
     const report = await sellerAdsReport(input.actorId, input.market);
-    if (!report.length)
+    if (!report.length && !(await campaignResults(input.actorId, input.market).catch(() => [])).length)
       return makeSellerContextResult(context, cards, "لا توجد لديك حملات ترويج بنتائج مسجلة في هذا السوق بعد. قل «شو أروّج؟» لأقترح عليك من بيانات إعلاناتك.");
     // The results card (impressions, engagement, attributed orders) from server-recorded events.
     return campaignResultsTurn(input.actorId, input.market);
@@ -107,7 +114,8 @@ export async function executeAdsAssistantTurn(input: { conversationId: string; m
     const lead = quantity
       ? `خطة لبيع ${quantity} قطعة من «${target.title}» داخل جاسم. لا أعدك ببيع الكمية كلها؛ الترويج يزيد ظهور إعلانك فقط.`
       : `خطة ترويج «${target.title}» داخل جاسم.`;
-    return promotionPlanTurn(target.id, input.actorId, input.market, lead);
+    const stock = quantity || /مخزون|ابيع|بيع/.test(t);
+    return promotionPlanTurn(target.id, input.actorId, input.market, lead, stock ? "SELL_STOCK" : "VISIBILITY", quantity ? Number(quantity) : undefined);
   }
 
   const opportunities = adsOpportunities(listings);

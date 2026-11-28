@@ -68,7 +68,7 @@ export const CommercialPolicySchema = z
      * (SPONSORED_RECOMMENDATION, placements WELCOME + in-chat), «جاسم روح بيع لي» (DEMAND_CAPTURE)
      * and Sponsored Search (SPONSORED_SEARCH).
      */
-    advertisingProducts: z.array(z.enum(["SPONSORED_RECOMMENDATION", "DEMAND_CAPTURE", "SPONSORED_SEARCH", "FEATURED_LISTING", "VIP_LISTING", "REFRESH_LISTING", "PROMOTION_BUNDLE"])).min(1).max(7).optional(),
+    advertisingProducts: z.array(z.enum(["SPONSORED_RECOMMENDATION", "DEMAND_CAPTURE", "SPONSORED_SEARCH", "FEATURED_LISTING", "VIP_LISTING", "REFRESH_LISTING", "PROMOTION_BUNDLE", "HERO_BANNER", "SIDEBAR_AD"])).min(1).max(9).optional(),
     /**
      * Owner reference tariffs for the three advertising products (decision 2026-11-14), in USD
      * at the currency's own precision (2). A market's product must use exactly the tariff's

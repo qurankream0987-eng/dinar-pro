@@ -30,6 +30,7 @@ const AdminMarketsPage = lazy(() => import("./pages/admin/AdminMarkets"));
 const AdminArabMarketsPage = lazy(() => import("./pages/admin/AdminArabMarkets"));
 const AdminCategoriesPage = lazy(() => import("./pages/admin/AdminCategories"));
 const AdminPromotionsPage = lazy(() => import("./pages/admin/AdminPromotions"));
+const AdminAdPlacementsPage = lazy(() => import("./pages/admin/AdminAdPlacements"));
 const AdminDisputesPage = lazy(() => import("./pages/admin/AdminDisputes"));
 const AdminRefundsPage = lazy(() => import("./pages/admin/AdminRefunds"));
 const AdminTrustSafetyPage = lazy(() => import("./pages/admin/AdminTrustSafety"));
@@ -167,6 +168,7 @@ function Routes() {
       <Route path="/admin/connect">{guard(<AdminConnectPage />)}</Route>
       <Route path="/admin/categories">{guard(<AdminCategoriesPage />)}</Route>
       <Route path="/admin/promotions">{guard(<AdminPromotionsPage />)}</Route>
+      <Route path="/admin/ad-placements">{guard(<AdminAdPlacementsPage />)}</Route>
       <Route path="/admin/disputes">{guard(<AdminDisputesPage />)}</Route>
       <Route path="/admin/trust-safety">{guard(<AdminTrustSafetyPage />)}</Route>
       <Route path="/admin/legal-readiness">{guard(<AdminLegalReadinessPage />)}</Route>
@@ -218,6 +220,7 @@ function Routes() {
       <Route path="/admin/markets">{guard(<AdminMarketsPage />)}</Route>
       <Route path="/admin/categories">{guard(<AdminCategoriesPage />)}</Route>
       <Route path="/admin/promotions">{guard(<AdminPromotionsPage />)}</Route>
+      <Route path="/admin/ad-placements">{guard(<AdminAdPlacementsPage />)}</Route>
       <Route path="/admin/disputes">{guard(<AdminDisputesPage />)}</Route>
       <Route path="/admin/trust-safety">{guard(<AdminTrustSafetyPage />)}</Route>
       <Route path="/admin/legal-readiness">{guard(<AdminLegalReadinessPage />)}</Route>

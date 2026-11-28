@@ -372,6 +372,8 @@ export const PLACEMENT_LABELS: Record<string, string> = {
   SPONSORED_SEARCH: "خانات البحث الممولة عند تطابق البحث",
   SPONSORED_RECOMMENDATION: "خانة اقتراح ممولة عند تطابق الطلب",
   DEMAND: "خيار ممول عند طلب حقيقي غير مُلبّى يطابق إعلانك",
+  HERO: "الشريط الإعلاني الرئيسي أعلى الصفحة (مع شارة «ممول»)",
+  SIDEBAR: "المساحة الإعلانية في الشريط الجانبي (مع شارة «ممول»)",
 };
 
 const STATUS_NOTES: Record<string, string> = {
@@ -891,6 +893,8 @@ export const PRODUCT_TYPE_LABELS: Record<string, string> = {
   DEMAND_CAPTURE: "جاسم روح بيع لي",
   PROMOTION_BUNDLE: "باقة إعلانات",
   DINAR_BUSINESS: "جاسم بزنس",
+  HERO_BANNER: "الشريط الإعلاني الرئيسي",
+  SIDEBAR_AD: "مساحة الشريط الجانبي",
 };
 export const REFUND_POLICY_LABELS: Record<string, string> = {
   NON_REFUNDABLE_ON_ACTIVATION: "يُستهلك عند التفعيل ولا يُسترد",
@@ -938,6 +942,13 @@ export type CommercialProductView = {
   pricingVersion: number;
   refundPolicy: string;
   refundPolicyLabel: string;
+  placement: string;
+  pricingUnit: string;
+  minDays: number | null;
+  maxDays: number | null;
+  subjectKinds: string[];
+  capacity: number | null;
+  description: string;
 };
 
 export function commercialProductView(product: ProductRow, market: Market): CommercialProductView {
@@ -968,14 +979,21 @@ export function commercialProductView(product: ProductRow, market: Market): Comm
     pricingVersion: product.pricingVersion,
     refundPolicy: product.refundPolicy,
     refundPolicyLabel: REFUND_POLICY_LABELS[product.refundPolicy] ?? product.refundPolicy,
+    placement: product.placement,
+    pricingUnit: product.pricingUnit,
+    minDays: product.minDays,
+    maxDays: product.maxDays,
+    subjectKinds: product.subjectKinds ?? ["LISTING"],
+    capacity: product.capacity,
+    description: product.description,
   };
 }
 
 /** Effective products in the market's currency; listing products narrowed to a category. */
-const LISTING_AD_TYPES = new Set(["SPONSORED_RECOMMENDATION", "DEMAND_CAPTURE", "SPONSORED_SEARCH", "FEATURED_LISTING", "VIP_LISTING", "REFRESH_LISTING", "PROMOTION_BUNDLE"]);
+const LISTING_AD_TYPES = new Set(["SPONSORED_RECOMMENDATION", "DEMAND_CAPTURE", "SPONSORED_SEARCH", "FEATURED_LISTING", "VIP_LISTING", "REFRESH_LISTING", "PROMOTION_BUNDLE", "HERO_BANNER", "SIDEBAR_AD"]);
 export async function commercialProducts(
   market: Market,
-  filter: { productTypes?: readonly string[]; categoryId?: string } = {},
+  filter: { productTypes?: readonly string[]; categoryId?: string; campaign?: boolean } = {},
   tx: any = db,
 ): Promise<ProductRow[]> {
   const rows: ProductRow[] = await tx
@@ -993,13 +1011,21 @@ export async function commercialProducts(
       row.productType !== "STANDARD_PROMOTION" &&
       (!allowedAds || row.productType === "DINAR_BUSINESS" || !LISTING_AD_TYPES.has(row.productType) || allowedAds.includes(row.productType)) &&
       (!filter.productTypes || filter.productTypes.includes(row.productType)) &&
-      (filter.categoryId === undefined || row.categoryId === null || row.categoryId === filter.categoryId),
+      (filter.categoryId === undefined || row.categoryId === null || row.categoryId === filter.categoryId) &&
+      // 0084: per-day prices and HERO/SIDEBAR placements are sold only through a placement campaign,
+      // which prices days on the server; the older single-purchase paths never see them.
+      (filter.campaign === true || (row.pricingUnit !== "DAY" && !CAMPAIGN_ONLY_TYPES.has(row.productType))),
   );
 }
 
-export async function effectiveProduct(market: Market, productId: string, tx: any = db): Promise<ProductRow> {
+/** 0084: placements sold only inside a multi-placement campaign. */
+export const CAMPAIGN_ONLY_TYPES = new Set(["HERO_BANNER", "SIDEBAR_AD"]);
+
+export async function effectiveProduct(market: Market, productId: string, tx: any = db, options: { campaign?: boolean } = {}): Promise<ProductRow> {
   const [row] = (await tx.select().from(promotionProducts).where(and(eq(promotionProducts.id, productId), eq(promotionProducts.marketId, market.id)))) as ProductRow[];
   if (!row || row.productType === "STANDARD_PROMOTION") throw fail(404, "المنتج التجاري غير موجود في سوقك", "PRODUCT_NOT_FOUND");
+  if (!options.campaign && (row.pricingUnit === "DAY" || CAMPAIGN_ONLY_TYPES.has(row.productType)))
+    throw fail(409, "هذا الموضع يُشترى ضمن حملة مواضع فقط", "CAMPAIGN_ONLY_PRODUCT");
   if (!productIsEffective(row) || row.currencyCode !== market.currencyCode)
     throw fail(409, "هذا المنتج غير متاح للشراء حاليًا", "PRODUCT_DISABLED");
   return row;

@@ -235,6 +235,9 @@ export async function startPromotionCheckout(input: { actorId: string; market: M
  * what a campaign becomes; a provider supplies facts it read from its own API.
  */
 export async function applyPromotionProviderEvent(event: PromotionProviderEvent): Promise<PromotionWebhookResult> {
+  // 0084: a multi-placement campaign is settled as one payment (same dedup, amount and owner rules).
+  const campaigns = await import("./promotion-campaigns");
+  if (await campaigns.isCampaignId(event.promotionId)) return campaigns.applyCampaignProviderEvent(event);
   let demandMatch: { id: string; marketId: string } | undefined;
   const result = await db.transaction(async (tx) => {
     const record = async (status: "APPLIED" | "IGNORED" | "REJECTED", failureCode: string | null) => {

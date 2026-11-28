@@ -9,7 +9,7 @@ import { SmartImage } from "@/ui/Media";
  * nothing while DINAR_JASSIM_ADS is off — then this renders nothing at all. Every card shows the
  * sponsored label; it is never presented as Jassim's own answer. Visual polish: Google UI-15.
  */
-type Card = { slot: number; listingId: string; title: string; price: string | null; currency: string; city: string | null; imagePath: string | null; sellerName: string; label: string; path: string };
+type Card = { slot: number; kind?: "LISTING" | "STORE"; promotionId?: string; businessId?: string; listingId: string; title: string; price: string | null; currency: string; city: string | null; imagePath: string | null; sellerName: string; label: string; path: string };
 
 function usePlacement(slot: "HERO" | "SIDEBAR") {
   const [cards, setCards] = useState<Card[]>([]);
@@ -24,6 +24,12 @@ function usePlacement(slot: "HERO" | "SIDEBAR") {
     };
   }, [slot]);
   return cards;
+}
+
+/** A click on a paid card is recorded by the server (never who clicked, only a keyed count). */
+function recordClick(slot: "HERO" | "SIDEBAR", card: Card) {
+  if (!card.promotionId) return;
+  void fetch("/api/ads/placements/engagement", { method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ slot, promotionId: card.promotionId, kind: card.kind ?? "LISTING" }), keepalive: true }).catch(() => undefined);
 }
 
 const reducedMotion = () => typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
@@ -55,7 +61,7 @@ export function HeroSponsored() {
         if (event.key === "ArrowRight") go(-1);
       }}
     >
-      <Link href={card.path} className="flex min-h-32 items-center gap-4 p-4" data-testid="hero-sponsored-card" data-listing-id={card.listingId}>
+      <Link href={card.path} className="flex min-h-32 items-center gap-4 p-4" data-testid="hero-sponsored-card" data-kind={card.kind ?? "LISTING"} data-listing-id={card.listingId} onClick={() => recordClick("HERO", card)}>
         <span className="h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-muted">
           {card.imagePath ? <SmartImage src={card.imagePath} alt="" /> : null}
         </span>
@@ -63,7 +69,7 @@ export function HeroSponsored() {
           <span className="inline-block rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-900" data-testid="hero-sponsored-label">{card.label}</span>
           <strong className="block truncate text-base">{card.title}</strong>
           <span className="block text-sm text-muted-foreground">
-            {card.price ? <span dir="ltr" className="num font-semibold text-foreground">{card.price} {card.currency}</span> : "السعر بالاتفاق"}
+            {card.kind === "STORE" ? "متجر على جاسم — تصفّح منتجاته" : card.price ? <span dir="ltr" className="num font-semibold text-foreground">{card.price} {card.currency}</span> : "السعر بالاتفاق"}
             {card.city ? ` · ${card.city}` : ""}
           </span>
         </span>
@@ -87,12 +93,12 @@ export function SidebarSponsored() {
   const card = cards[0]!;
   return (
     <aside className="mx-3 mb-3 hidden rounded-xl border border-amber-300/60 bg-card p-3 xl:block" aria-label="إعلان ممول" data-testid="sidebar-sponsored">
-      <Link href={card.path} className="flex items-center gap-3" data-listing-id={card.listingId}>
+      <Link href={card.path} className="flex items-center gap-3" data-testid="sidebar-sponsored-card" data-kind={card.kind ?? "LISTING"} data-listing-id={card.listingId} onClick={() => recordClick("SIDEBAR", card)}>
         <span className="h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-muted">{card.imagePath ? <SmartImage src={card.imagePath} alt="" /> : null}</span>
         <span className="min-w-0 space-y-0.5">
           <span className="inline-block rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-900">{card.label}</span>
           <strong className="block truncate text-sm">{card.title}</strong>
-          {card.price && <span dir="ltr" className="num block text-xs font-semibold">{card.price} {card.currency}</span>}
+          {card.kind === "STORE" ? <span className="block text-xs text-muted-foreground">متجر على جاسم</span> : card.price && <span dir="ltr" className="num block text-xs font-semibold">{card.price} {card.currency}</span>}
         </span>
       </Link>
     </aside>

@@ -82,7 +82,7 @@ export async function api(
       typeof result?.error === "string" && /[؀-ۿ]/.test(result.error)
         ? result.error
         : "تعذر إتمام العملية. حاول مرة أخرى.";
-    throw Object.assign(new Error(message), { status: res.status });
+    throw Object.assign(new Error(message), { status: res.status, data: result });
   }
   return result;
 }

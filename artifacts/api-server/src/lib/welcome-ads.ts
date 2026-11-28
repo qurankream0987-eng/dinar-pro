@@ -32,6 +32,9 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 
 export type WelcomeCard = {
   slot: number;
+  /** 0084: a display card promotes a listing (default) or a store. */
+  kind?: "LISTING" | "STORE";
+  businessId?: string;
   listingId: string;
   promotionId: string;
   title: string;
@@ -182,10 +185,17 @@ export async function dismissWelcomeCards(input: { actorId: string; welcomeKey: 
  * billable events); every card carries the sponsored label. Served only where sponsored
  * placements serve at all (`isSponsoredServingEnabled`: simulation in development/test, or Whop when live).
  */
-export const DISPLAY_PLACEMENTS = { HERO: { sources: ["VIP"], max: 5 }, SIDEBAR: { sources: ["FEATURED", "VIP"], max: 3 } } as const;
+// 0084: HERO/SIDEBAR are also explicit placements (HERO_BANNER, SIDEBAR_AD) and accept stores.
+export const DISPLAY_PLACEMENTS = { HERO: { sources: ["VIP", "HERO"], max: 5 }, SIDEBAR: { sources: ["FEATURED", "VIP", "SIDEBAR"], max: 3 } } as const;
 export type DisplayPlacement = keyof typeof DISPLAY_PLACEMENTS;
 
-export async function displayPlacementCards(input: { placement: DisplayPlacement; market: Market; viewerId?: string; now?: Date }): Promise<WelcomeAds> {
+/**
+ * Hero carousel and sidebar card. Eligibility (published, active seller, policy, stock) and a
+ * deterministic score decide; payment alone never shows an ad. With a context category (what the
+ * viewer is searching or asking about) only ads of that category are shown — none rather than an
+ * unrelated one — and stores (which have no single category) are left out.
+ */
+export async function displayPlacementCards(input: { placement: DisplayPlacement; market: Market; viewerId?: string; categoryId?: string; now?: Date }): Promise<WelcomeAds> {
   const now = input.now ?? new Date();
   if (!jassimAdsEnabled() || !isSponsoredServingEnabled()) return { cards: [], reason: "DISABLED" };
   const spec = DISPLAY_PLACEMENTS[input.placement];
@@ -202,33 +212,90 @@ export async function displayPlacementCards(input: { placement: DisplayPlacement
     ))
     .orderBy(desc(listingPromotions.createdAt))
     .limit(50)).filter((row) => isServingCampaign(row, now) && row.sellerId !== input.viewerId);
-  if (!campaigns.length) return { cards: [], reason: "NO_ELIGIBLE" };
-  const listings = await db
-    .select({ offer: offers, sellerStatus: users.status })
-    .from(offers)
-    .innerJoin(users, eq(users.id, offers.sellerId))
-    .where(inArray(offers.id, [...new Set(campaigns.map((row) => row.listingId))]));
-  const scored: { id: string; listingId: string; promotionId: string; score: number }[] = [];
-  for (const row of listings) {
-    const eligible = await listingPromotionEligibility(row.offer, row.sellerStatus, input.market);
-    if (!eligible.ok) continue;
-    const campaign = representativeCampaign(campaigns, row.offer.id);
-    if (!campaign) continue;
-    scored.push({
-      id: row.offer.id,
-      listingId: row.offer.id,
-      promotionId: campaign.id,
-      score: sponsoredScore({
-        organicIndex: 0,
-        priorityWeight: campaign.priorityWeightSnapshot,
-        unitChargeMinor: campaign.unitChargeMinorSnapshot,
-        minorUnitScale: input.market.minorUnitScale,
-        hasImage: Boolean((row.offer.data as { imageUrl?: string }).imageUrl),
-        descriptionLength: String((row.offer.data as { description?: string }).description ?? "").length,
-      }),
-    });
+  const scored: { id: string; kind: "LISTING" | "STORE"; listingId: string; promotionId: string; score: number }[] = [];
+  if (campaigns.length) {
+    const listings = await db
+      .select({ offer: offers, sellerStatus: users.status })
+      .from(offers)
+      .innerJoin(users, eq(users.id, offers.sellerId))
+      .where(inArray(offers.id, [...new Set(campaigns.map((row) => row.listingId))]));
+    for (const row of listings) {
+      const eligible = await listingPromotionEligibility(row.offer, row.sellerStatus, input.market);
+      if (!eligible.ok) continue;
+      if (input.categoryId && eligible.categoryId !== input.categoryId) continue;
+      const campaign = representativeCampaign(campaigns, row.offer.id);
+      if (!campaign) continue;
+      scored.push({
+        id: `l:${row.offer.id}`,
+        kind: "LISTING",
+        listingId: row.offer.id,
+        promotionId: campaign.id,
+        score: sponsoredScore({
+          organicIndex: 0,
+          priorityWeight: campaign.priorityWeightSnapshot,
+          unitChargeMinor: campaign.unitChargeMinorSnapshot,
+          minorUnitScale: input.market.minorUnitScale,
+          hasImage: Boolean((row.offer.data as { imageUrl?: string }).imageUrl),
+          descriptionLength: String((row.offer.data as { description?: string }).description ?? "").length,
+        }),
+      });
+    }
   }
-  const chosen = rankSponsored(scored, spec.max).map((item, index) => ({ slot: index + 1, listingId: item.listingId, promotionId: item.promotionId }));
+  const { servingStoreItems, recordStoreEvent } = await import("./promotion-campaigns");
+  const stores = input.categoryId ? [] : await servingStoreItems(input.market.id, input.placement, now, input.viewerId);
+  for (const { row, profile } of stores)
+    scored.push({
+      id: `s:${row.businessId}`,
+      kind: "STORE",
+      listingId: row.businessId,
+      promotionId: row.id,
+      score: sponsoredScore({ organicIndex: 0, priorityWeight: row.priorityWeightSnapshot, unitChargeMinor: null, minorUnitScale: input.market.minorUnitScale, hasImage: false, descriptionLength: profile.description.length }),
+    });
+  if (!scored.length) return { cards: [], reason: "NO_ELIGIBLE" };
+  const chosen = rankSponsored(scored, spec.max);
   if (!chosen.length) return { cards: [], reason: "NO_ELIGIBLE" };
-  return { cards: await cardsFor(input.market, chosen) };
+  const listingCards = await cardsFor(input.market, chosen.flatMap((item, index) => (item.kind === "LISTING" ? [{ slot: index + 1, listingId: item.listingId, promotionId: item.promotionId }] : [])));
+  const cards: WelcomeCard[] = [];
+  for (const [index, item] of chosen.entries()) {
+    if (item.kind === "LISTING") {
+      const card = listingCards.find((c) => c.slot === index + 1);
+      if (!card) continue;
+      cards.push({ ...card, kind: "LISTING" });
+      if (input.viewerId)
+        await recordAttributionEvent({ promotionId: item.promotionId, listingId: item.listingId, placement: campaigns.find((c) => c.id === item.promotionId)!.placementSnapshot, recordedPlacement: input.placement, market: input.market, viewerUserId: input.viewerId, eventType: "IMPRESSION", resultSetId: `display:${input.placement}` }).catch(() => undefined);
+    } else {
+      const store = stores.find((s) => s.row.id === item.promotionId)!;
+      cards.push({
+        slot: index + 1,
+        kind: "STORE",
+        businessId: store.profile.id,
+        listingId: store.profile.id,
+        promotionId: store.row.id,
+        title: store.profile.displayName.slice(0, 120),
+        price: null,
+        currency: input.market.currencyCode,
+        city: null,
+        imagePath: null,
+        sellerName: store.profile.displayName.slice(0, 60),
+        label: SPONSORED_LABEL,
+        path: `/business/${encodeURIComponent(store.profile.id)}`,
+      });
+      await recordStoreEvent(store.row.id, input.placement, input.viewerId, "IMPRESSION", now).catch(() => undefined);
+    }
+  }
+  return cards.length ? { cards: cards.map((card, index) => ({ ...card, slot: index + 1 })) } : { cards: [], reason: "NO_ELIGIBLE" };
+}
+
+/** A click on a display card: an opened ad, recorded once per viewer and window. */
+export async function displayPlacementEngagement(input: { placement: DisplayPlacement; promotionId: string; kind: "LISTING" | "STORE"; market: Market; viewerId?: string }) {
+  if (input.kind === "STORE") {
+    const { storeEngagement } = await import("./promotion-campaigns");
+    return storeEngagement(input.promotionId, input.viewerId);
+  }
+  const [campaign] = await db.select().from(listingPromotions).where(eq(listingPromotions.id, input.promotionId));
+  if (!campaign || campaign.marketId !== input.market.id || !(DISPLAY_PLACEMENTS[input.placement].sources as readonly string[]).includes(campaign.placementSnapshot))
+    throw Object.assign(new Error("الإعلان غير موجود"), { status: 404, expose: true });
+  if (input.viewerId)
+    await recordAttributionEvent({ promotionId: campaign.id, listingId: campaign.listingId, placement: campaign.placementSnapshot, recordedPlacement: input.placement, market: input.market, viewerUserId: input.viewerId, eventType: "ENGAGEMENT", kind: "DETAIL_OPENED" }).catch(() => undefined);
+  return { path: `/listings/${encodeURIComponent(campaign.listingId)}` };
 }

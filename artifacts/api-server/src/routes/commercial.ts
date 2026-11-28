@@ -21,6 +21,7 @@ import {
 } from "@workspace/db";
 import { requireAuth } from "../lib/auth";
 import { promotionPaymentAvailability, startPromotionCheckout } from "../lib/promotion-payments";
+import { campaignResults, placementCatalog, quoteCampaign, startCampaignCheckout } from "../lib/promotion-campaigns";
 import { marketFor, resolveMarket } from "../lib/markets";
 import {
   commercialEconomics,
@@ -177,6 +178,42 @@ router.post("/commercial/promotion-payments/checkouts", requireAuth, async (req,
   res.status(started.created ? 201 : 200).json(started);
 });
 
+// ─── 0084 placement campaigns: one or several placements, one payment, per-placement delivery ───
+const Subject = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("LISTING"), listingId: z.string().min(1).max(80) }).strict(),
+  z.object({ kind: z.literal("STORE"), businessId: z.string().min(1).max(80) }).strict(),
+]);
+const Items = z.array(z.object({ productId: z.string().min(1).max(80), days: z.number().int().min(1).max(365).optional() }).strict()).min(1).max(10);
+router.get("/commercial/promotion-campaigns/placements", requireAuth, async (req, res) => {
+  assertPromotionsAvailable();
+  const query = z.object({ listingId: z.string().min(1).max(80).optional(), businessId: z.string().min(1).max(80).optional() }).strict().parse(req.query);
+  if (!query.listingId === !query.businessId) throw fail(400, "حدّد الإعلان أو المتجر", "SUBJECT_REQUIRED");
+  const subject = query.listingId ? { kind: "LISTING" as const, listingId: query.listingId } : { kind: "STORE" as const, businessId: query.businessId! };
+  res.json(await placementCatalog(req.actor!.id, await marketFor(req), subject));
+});
+/** Server price of a selection (read-only); the seller reviews this before confirming. */
+router.post("/commercial/promotion-campaigns/quote", requireAuth, async (req, res) => {
+  assertPromotionsAvailable();
+  const body = z.object({ subject: Subject, items: Items }).strict().parse(req.body);
+  res.json(await quoteCampaign({ actorId: req.actor!.id, market: await marketFor(req), subject: body.subject, items: body.items }));
+});
+/** Opens one provider page for the whole campaign; placements start only after a signed payment. */
+router.post("/commercial/promotion-campaigns/checkouts", requireAuth, async (req, res) => {
+  assertPromotionsAvailable();
+  const body = z.object({ subject: Subject, items: Items, adCopy: z.string().max(280).optional(), quoteKey: z.string().min(8).max(64), idempotencyKey: key }).strict().parse(req.body);
+  const started = await startCampaignCheckout({ actorId: req.actor!.id, market: await marketFor(req), ...body });
+  res.status(started.created ? 201 : 200).json(started);
+});
+router.get("/commercial/promotion-campaigns", requireAuth, async (req, res) => {
+  assertPromotionsAvailable();
+  res.json({ campaigns: await campaignResults(req.actor!.id, await marketFor(req)) });
+});
+router.get("/commercial/promotion-campaigns/:id", requireAuth, async (req, res) => {
+  assertPromotionsAvailable();
+  const [campaign] = await campaignResults(req.actor!.id, await marketFor(req), String(req.params.id));
+  res.json(campaign);
+});
+
 router.get("/commercial/entitlements", requireAuth, async (req, res) => {
   const market = await marketFor(req);
   res.json(await listEntitlements(req.actor!.id, market));
@@ -272,7 +309,14 @@ router.post("/ai/commerce-actions/:id/action", requireAuth, async (req, res) => 
 const ProductBody = z
   .object({
     name: z.string().trim().min(2).max(120),
-    productType: z.enum(["FEATURED_LISTING", "VIP_LISTING", "REFRESH_LISTING", "SPONSORED_SEARCH", "SPONSORED_RECOMMENDATION", "DEMAND_CAPTURE", "PROMOTION_BUNDLE", "DINAR_BUSINESS", "EXTRA_LISTING_QUOTA", "SPONSORED_SURFACE"]),
+    productType: z.enum(["FEATURED_LISTING", "VIP_LISTING", "REFRESH_LISTING", "SPONSORED_SEARCH", "SPONSORED_RECOMMENDATION", "DEMAND_CAPTURE", "PROMOTION_BUNDLE", "DINAR_BUSINESS", "EXTRA_LISTING_QUOTA", "SPONSORED_SURFACE", "HERO_BANNER", "SIDEBAR_AD"]),
+    /** 0084 placement terms: per-day price with a day range, accepted subjects, capacity, description. */
+    pricingUnit: z.enum(["PERIOD", "DAY"]).default("PERIOD"),
+    minDays: z.number().int().min(1).max(365).optional(),
+    maxDays: z.number().int().min(1).max(365).optional(),
+    subjectKinds: z.array(z.enum(["LISTING", "STORE"])).min(1).max(2).default(["LISTING"]),
+    capacity: z.number().int().min(1).max(1000).optional(),
+    description: z.string().trim().max(300).default(""),
     categoryId: z.string().min(1).max(80).optional(),
     priceMinor: z.number().int().positive().max(1_000_000_000),
     durationDays: z.number().int().min(1).max(365),
@@ -294,7 +338,7 @@ const ProductBody = z
     enabled: z.boolean().default(true),
   })
   .strict();
-const AD_PRODUCT_TYPES: readonly string[] = ["SPONSORED_RECOMMENDATION", "DEMAND_CAPTURE", "SPONSORED_SEARCH", "FEATURED_LISTING", "VIP_LISTING", "REFRESH_LISTING", "PROMOTION_BUNDLE"];
+const AD_PRODUCT_TYPES: readonly string[] = ["SPONSORED_RECOMMENDATION", "DEMAND_CAPTURE", "SPONSORED_SEARCH", "FEATURED_LISTING", "VIP_LISTING", "REFRESH_LISTING", "PROMOTION_BUNDLE", "HERO_BANNER", "SIDEBAR_AD"];
 const PLACEMENT_FOR: Record<string, string> = {
   FEATURED_LISTING: "FEATURED",
   VIP_LISTING: "VIP",
@@ -302,6 +346,8 @@ const PLACEMENT_FOR: Record<string, string> = {
   SPONSORED_SEARCH: "SPONSORED_SEARCH",
   SPONSORED_RECOMMENDATION: "SPONSORED_RECOMMENDATION",
   DEMAND_CAPTURE: "DEMAND",
+  HERO_BANNER: "HERO",
+  SIDEBAR_AD: "SIDEBAR",
 };
 
 router.get("/admin/markets/:marketId/commercial-products", requireAuth, requireCommercialAdmin, async (req, res) => {
@@ -315,7 +361,14 @@ router.post("/admin/markets/:marketId/commercial-products", requireAuth, require
   const market = await marketById(String(req.params.marketId));
   if (body.currencyCode && (body.productType !== "DINAR_BUSINESS" || !body.planCode)) throw fail(400, "العملة المستقلة عن السوق متاحة لخطط الاشتراك فقط", "CURRENCY_NOT_ALLOWED");
   const placement = PLACEMENT_FOR[body.productType] ?? "NONE";
-  if (placement !== "NONE") {
+  const display = placement === "HERO" || placement === "SIDEBAR";
+  if (body.subjectKinds.includes("STORE") && !display) throw fail(400, "ترويج المتجر متاح في الشريط الرئيسي والجانبي فقط", "STORE_PLACEMENT_INVALID");
+  if (body.pricingUnit === "DAY" && (body.minDays === undefined || body.maxDays === undefined || body.minDays > body.durationDays || body.durationDays > body.maxDays || body.chargingMode !== "FIXED"))
+    throw fail(400, "السعر اليومي يحتاج حدًا أدنى وأقصى للأيام تشمل المدة الافتراضية", "DAY_TERMS_INVALID");
+  if (body.pricingUnit === "PERIOD" && (body.minDays !== undefined || body.maxDays !== undefined)) throw fail(400, "حدود الأيام تخص السعر اليومي فقط", "DAY_TERMS_INVALID");
+  if (display) {
+    if (body.categoryId && !(await resolveMarketplaceCategory(body.categoryId, undefined))) throw fail(404, "التصنيف غير موجود");
+  } else if (placement !== "NONE") {
     if (!body.categoryId) throw fail(400, "منتجات الإعلانات تحتاج إلى تصنيف");
     if (!(await resolveMarketplaceCategory(body.categoryId, undefined))) throw fail(404, "التصنيف غير موجود");
   } else if (body.categoryId) throw fail(400, "هذا المنتج لا يرتبط بتصنيف");
@@ -346,7 +399,13 @@ router.post("/admin/markets/:marketId/commercial-products", requireAuth, require
       .values({
         id: randomUUID(),
         marketId: market.id,
-        categoryId: placement === "NONE" ? null : body.categoryId!,
+        categoryId: placement === "NONE" ? null : (body.categoryId ?? null),
+        pricingUnit: body.pricingUnit,
+        minDays: body.minDays ?? null,
+        maxDays: body.maxDays ?? null,
+        subjectKinds: body.subjectKinds,
+        capacity: body.capacity ?? null,
+        description: body.description,
         name: body.name,
         placement,
         productType: body.productType,
@@ -370,7 +429,7 @@ router.post("/admin/markets/:marketId/commercial-products", requireAuth, require
         updatedBy: req.actor!.id,
       })
       .returning();
-    await db.insert(marketAudit).values({ id: randomUUID(), marketId: market.id, actorId: req.actor!.id, action: "COMMERCIAL_PRODUCT_CREATED", data: { productId: row!.id, productType: row!.productType, planCode: row!.planCode, priceMinor: row!.priceMinor, currencyCode: row!.currencyCode, pricingVersion: row!.pricingVersion, durationDays: row!.durationDays, entitlements: row!.businessEntitlements, enabled: row!.enabled } });
+    await db.insert(marketAudit).values({ id: randomUUID(), marketId: market.id, actorId: req.actor!.id, action: "COMMERCIAL_PRODUCT_CREATED", data: { productId: row!.id, productType: row!.productType, placement: row!.placement, pricingUnit: row!.pricingUnit, minDays: row!.minDays, maxDays: row!.maxDays, subjectKinds: row!.subjectKinds, capacity: row!.capacity, planCode: row!.planCode, priceMinor: row!.priceMinor, currencyCode: row!.currencyCode, pricingVersion: row!.pricingVersion, durationDays: row!.durationDays, entitlements: row!.businessEntitlements, enabled: row!.enabled } });
     res.status(201).json(commercialProductView(row!, market));
   } catch (error) {
     if ((error as { cause?: { code?: string }; code?: string }).cause?.code === "23505" || (error as { code?: string }).code === "23505")

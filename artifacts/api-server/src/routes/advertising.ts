@@ -7,7 +7,7 @@ import { z } from "zod";
 import { requireAuth } from "../lib/auth";
 import { marketFor } from "../lib/markets";
 import { majorToMinor } from "../lib/commercial-policy";
-import { dismissWelcomeCards, displayPlacementCards, welcomeSponsoredCards } from "../lib/welcome-ads";
+import { dismissWelcomeCards, displayPlacementCards, displayPlacementEngagement, welcomeSponsoredCards } from "../lib/welcome-ads";
 import {
   DEMAND_REQUEST_DISCLOSURE,
   deleteDemandRequest,
@@ -31,9 +31,15 @@ router.get("/ai/welcome-sponsored", requireAuth, async (req, res) => {
 // Jassim Ads Phase 1: hero carousel and sidebar card. Signed-out visitors allowed (owner decision);
 // selection is non-personal and returns nothing unless DINAR_JASSIM_ADS is on.
 router.get("/ads/placements", async (req, res) => {
-  const query = z.object({ slot: z.enum(["HERO", "SIDEBAR"]) }).strict().parse(req.query);
-  const result = await displayPlacementCards({ placement: query.slot, market: await marketFor(req), viewerId: req.actor?.id });
+  const query = z.object({ slot: z.enum(["HERO", "SIDEBAR"]), categoryId: z.string().min(1).max(80).optional() }).strict().parse(req.query);
+  const result = await displayPlacementCards({ placement: query.slot, market: await marketFor(req), viewerId: req.actor?.id, categoryId: query.categoryId });
   res.set("Cache-Control", "no-store").json(result);
+});
+
+// 0084: a click on a hero/sidebar card (listing or store), recorded server-side; returns where to go.
+router.post("/ads/placements/engagement", async (req, res) => {
+  const body = z.object({ slot: z.enum(["HERO", "SIDEBAR"]), promotionId: z.string().uuid(), kind: z.enum(["LISTING", "STORE"]) }).strict().parse(req.body);
+  res.json(await displayPlacementEngagement({ placement: body.slot, promotionId: body.promotionId, kind: body.kind, market: await marketFor(req), viewerId: req.actor?.id }));
 });
 
 router.post("/ai/welcome-sponsored/dismiss", requireAuth, async (req, res) => {

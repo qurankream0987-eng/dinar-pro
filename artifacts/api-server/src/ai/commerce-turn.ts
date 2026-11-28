@@ -9,17 +9,18 @@
  * No model output can credit, charge, grant, activate or change any number here.
  */
 import { cancelSubscriptionEverywhere, configuredAppOrigin, startSubscriptionCheckout, SUBSCRIPTION_TAX_NOTE } from "../lib/subscription-checkout";
-import { adCopyDrafts, sellerAdsListings } from "../lib/jassim-ads";
+import { sellingInsights, adCopyDrafts, sellerAdsListings } from "../lib/jassim-ads";
 import { promotionPaymentAvailability, promotionReviewNote, providerDirectApplies, startPromotionCheckout } from "../lib/promotion-payments";
+import { campaignResults, placementCatalog, sellerStore, suggestPlacementSets, type CampaignSubject } from "../lib/promotion-campaigns";
 import { createHash, randomUUID } from "node:crypto";
-import { and, desc, eq, gt, sql } from "drizzle-orm";
+import { and, desc, eq, gt, isNotNull, sql } from "drizzle-orm";
 import { z } from "zod";
 import {
   CONVERSATION_SURFACE_FAMILIES,
   isDinarTutorialQuestion,
   type TutorialPayload,
 } from "@workspace/api-zod/conversation-runtime";
-import { aiResultSets, aiUiBlocks, conversations, db, offers } from "@workspace/db";
+import { aiResultSets, aiUiBlocks, conversations, db, listingPromotions, offers } from "@workspace/db";
 import type { marketFor } from "../lib/markets";
 import {
   commercialHistory,
@@ -123,7 +124,10 @@ const CommerceQuery = z
       "DEMAND_CAPTURE_EXPLAINER",
     ]).optional(),
     tutorialDraftId: z.string().uuid().optional(),
-    step: z.enum(["LISTING", "PRODUCT", "BUDGET"]).optional(),
+    step: z.enum(["LISTING", "PRODUCT", "BUDGET", "STORE_PLAN"]).optional(),
+    /** Jassim Go Sell for Me: what the seller asked for (shapes the suggested placement sets). */
+    goal: z.enum(["SELL_STOCK", "VISIBILITY", "STORE"]).optional(),
+    quantity: z.number().int().positive().max(1_000_000).optional(),
     productType: z.string().max(40).optional(),
     listingId: z.string().max(80).optional(),
     productId: z.string().max(80).optional(),
@@ -484,8 +488,10 @@ async function composePayload(state: CommerceQuery, resourceIds: string[], resul
             const byId = new Map(products.map((product) => [product.id, product]));
             payload.listing = await listingRef(state.listingId, actorId);
             payload.products = resourceIds.flatMap((id) => byId.has(id) ? [commercialProductView(byId.get(id)!, market)] : []);
-            payload.promotionPlan = await promotionPlan(state.listingId, actorId, market, resourceIds.flatMap((id) => (byId.has(id) ? [byId.get(id)!] : [])));
+            payload.promotionPlan = await promotionPlan(state.listingId, actorId, market, resourceIds.flatMap((id) => (byId.has(id) ? [byId.get(id)!] : [])), state.goal ?? "VISIBILITY", state.quantity);
           }
+        } else if (state.step === "STORE_PLAN" && state.businessId) {
+          payload.promotionPlan = await storePromotionPlan(state.businessId, actorId, market);
         } else if (state.step === "BUDGET" && state.productId) {
           const [product] = (await commercialProducts(market, {})).filter((item) => item.id === state.productId);
           if (product) payload.product = commercialProductView(product, market);
@@ -547,7 +553,12 @@ async function composePayload(state: CommerceQuery, resourceIds: string[], resul
       case "CAMPAIGN_ANALYTICS": {
         await expireStalePromotions({ sellerId: actorId });
         const analytics = await campaignAnalytics(actorId, market, resourceIds.length ? resourceIds : undefined);
-        payload.campaigns = analytics;
+        // 0084: multi-placement campaigns are shown as campaigns (per placement + totals); their rows
+        // are left out of the single-promotion list so nothing is counted twice.
+        const placementCampaigns = await campaignResults(actorId, market).catch(() => []);
+        const inCampaign = new Set((await db.select({ id: listingPromotions.id }).from(listingPromotions).where(and(eq(listingPromotions.sellerId, actorId), isNotNull(listingPromotions.campaignId)))).map((row) => row.id));
+        payload.campaigns = analytics.filter((row) => !inCampaign.has(row.promotionId));
+        if (placementCampaigns.length) payload.placementCampaigns = placementCampaigns;
         payload.balance = await getCommercialBalance(actorId, market);
         payload.privacyNote = "أرقام مجمّعة فقط؛ لا تظهر هوية أي مشترٍ أو رسائله أو موقعه أو أي سعر تفاوض خاص.";
         break;
@@ -1067,7 +1078,7 @@ async function promotionEntry(actorId: string, market: Market): Promise<Turn | n
  * and the lowest-priced option as a starting suggestion. Prices are the server's products; the
  * seller still picks, reviews and confirms before any payment page opens.
  */
-async function promotionPlan(listingId: string, actorId: string, market: Market, products: { id: string; priceMinor: number }[]) {
+async function promotionPlan(listingId: string, actorId: string, market: Market, products: { id: string; priceMinor: number }[], goal: "SELL_STOCK" | "VISIBILITY" | "STORE" = "VISIBILITY", quantity?: number) {
   const listing = (await sellerAdsListings(actorId, market)).find((item) => item.id === listingId);
   if (!listing) return undefined;
   const suggested = [...products].sort((a, b) => a.priceMinor - b.priceMinor)[0];
@@ -1076,12 +1087,66 @@ async function promotionPlan(listingId: string, actorId: string, market: Market,
     interestedBuyers: listing.waitingBuyers,
     suggestedProductId: suggested?.id ?? null,
     note: "اختر خيارًا لمراجعة تفاصيله وسعره. لا يُدفع شيء ولا يبدأ الترويج قبل تأكيدك ثم تأكيد الدفع.",
+    insights: await sellingInsights(listingId, actorId, market, quantity),
+    campaign: await campaignPlan(actorId, market, { kind: "LISTING", listingId }, goal === "STORE" ? "VISIBILITY" : goal),
   };
 }
 
+/**
+ * The placement builder shown in the plan (owner decision 2026-11-28): every placement the seller
+ * can buy for this subject, each with its own server price and days, and one to three suggested
+ * sets with the reason. Pricing and confirmation go through the server (quote → review → checkout).
+ */
+async function campaignPlan(actorId: string, market: Market, subject: CampaignSubject, goal: "SELL_STOCK" | "VISIBILITY" | "STORE") {
+  const availability = await promotionPaymentAvailability(market).catch(() => ({ available: false as const, reason: "الدفع غير متاح" }));
+  if (!availability.available) return { available: false, reason: availability.reason, options: [], suggestions: [] };
+  const catalog = await placementCatalog(actorId, market, subject).catch(() => undefined);
+  if (!catalog) return { available: false, reason: "غير متاح للترويج", options: [], suggestions: [] };
+  if (!catalog.subject.available) return { available: false, reason: catalog.subject.reason ?? "غير متاح للترويج", options: [], suggestions: [] };
+  return {
+    available: catalog.options.some((option) => option.available),
+    ...(catalog.options.some((option) => option.available) ? {} : { reason: catalog.options.length ? "كل المواضع غير متاحة حاليًا لهذا الإعلان" : "لا توجد مواضع إعلانية مفعّلة في سوقك حاليًا" }),
+    subject: { kind: catalog.subject.kind, id: catalog.subject.id, title: catalog.subject.title },
+    providerName: availability.displayName,
+    options: catalog.options.map((option) => ({ ...option })),
+    suggestions: suggestPlacementSets(catalog.options, goal),
+  };
+}
+
+/** «روّج لمتجري»: the store plan (HERO/SIDEBAR placements that accept stores). */
+async function storePromotionPlan(businessId: string, actorId: string, market: Market) {
+  const store = await sellerStore(actorId, market);
+  if (!store || store.id !== businessId) return undefined;
+  return {
+    copy: [
+      `${store.displayName} — تسوّق من متجرنا داخل جاسم.`,
+      `زوروا ${store.displayName} على جاسم: منتجاتنا وخدماتنا في مكان واحد.`,
+      `${store.displayName}${store.description ? `: ${store.description.slice(0, 120)}` : ""}`.trim(),
+    ],
+    interestedBuyers: null,
+    suggestedProductId: null,
+    note: "اختر الموضع والمدة، راجع الإجمالي ثم أكّد. لا يُدفع شيء ولا يبدأ الترويج قبل تأكيدك ثم تأكيد الدفع.",
+    insights: store.publicationStatus === "PUBLISHED" ? [] : [{ kind: "TIP" as const, text: "متجرك غير منشور بعد؛ يجب توثيقه ونشره قبل ترويجه." }],
+    campaign: await campaignPlan(actorId, market, { kind: "STORE", businessId }, "STORE"),
+  };
+}
+
+/** «روّج لمتجري»: opens the store plan, or says honestly why it cannot. */
+export async function storePlanTurn(actorId: string, market: Market): Promise<Turn> {
+  const store = await sellerStore(actorId, market);
+  if (!store) return notice(actorId, "لا يوجد لديك متجر في هذا السوق بعد. أنشئ متجرك ووثّقه أولًا، أو قل «روّج لهذا المنتج» لترويج منتج بعينه.", market);
+  return turnFor(
+    { kind: "COMMERCE", ownerId: actorId, view: "PROMOTION_TYPE_OPTIONS", step: "STORE_PLAN", businessId: store.id, goal: "STORE" },
+    [],
+    `خطة ترويج متجر «${store.displayName}» داخل جاسم: اختر أين يظهر وكم يومًا، وراجع الإجمالي قبل التأكيد.`,
+    actorId,
+    market,
+  );
+}
+
 /** «روّج لهذا المنتج» / «عندي 100 قطعة أريد بيعها»: the plan for one listing, opened from Jassim Ads. */
-export async function promotionPlanTurn(listingId: string, actorId: string, market: Market, lead = ""): Promise<Turn> {
-  const turn = await promotionOptionsForListing(listingId, actorId, market);
+export async function promotionPlanTurn(listingId: string, actorId: string, market: Market, lead = "", goal: "SELL_STOCK" | "VISIBILITY" = "VISIBILITY", quantity?: number): Promise<Turn> {
+  const turn = await promotionOptionsForListing(listingId, actorId, market, goal, quantity);
   if (lead && (turn.result as { prompt?: string }).prompt) (turn.result as { prompt: string }).prompt = `${lead} ${(turn.result as { prompt: string }).prompt}`;
   return turn;
 }
@@ -1091,14 +1156,14 @@ export async function campaignResultsTurn(actorId: string, market: Market): Prom
   return analytics(actorId, market, undefined, undefined);
 }
 
-async function promotionOptionsForListing(listingId: string | undefined, actorId: string, market: Market): Promise<Turn> {
+async function promotionOptionsForListing(listingId: string | undefined, actorId: string, market: Market, goal?: "SELL_STOCK" | "VISIBILITY", quantity?: number): Promise<Turn> {
   const listing = listingId && (await promotableListings(actorId, market)).find((item) => item.id === listingId);
   if (!listing) return notice(actorId, "هذا الإعلان غير مؤهل أو ليس لك. لم يتغير شيء.", market);
   const products = await commercialProducts(market, { productTypes: [...LISTING_PROMOTION_TYPES], categoryId: listing.categoryId });
   return turnFor(
-    { kind: "COMMERCE", ownerId: actorId, view: "PROMOTION_TYPE_OPTIONS", step: "PRODUCT", listingId: listing.id },
+    { kind: "COMMERCE", ownerId: actorId, view: "PROMOTION_TYPE_OPTIONS", step: "PRODUCT", listingId: listing.id, ...(goal ? { goal } : {}), ...(quantity ? { quantity } : {}) },
     products.map((product) => product.id),
-    products.length ? `خيارات الترويج المتاحة لإعلان «${listing.title}» في سوقك. اختر خيارًا لمراجعة تفاصيله.` : "لا توجد خيارات ترويج متاحة لهذا الإعلان في سوقك حاليًا.",
+    products.length ? `خيارات الترويج المتاحة لإعلان «${listing.title}» في سوقك. اختر خيارًا لمراجعة تفاصيله.` : (await promotionPaymentAvailability(market)).available ? `اختر أين يظهر إعلان «${listing.title}» ومدة كل موضع، وراجع الإجمالي قبل التأكيد.` : "لا توجد خيارات ترويج متاحة لهذا الإعلان في سوقك حاليًا.",
     actorId,
     market,
   );
@@ -1570,7 +1635,7 @@ async function publicPlansTurn(text: string, actorId: string, market: Market): P
 
 async function analytics(actorId: string, market: Market, latest: CommerceQuery | undefined, latestSet: StoredSet | undefined): Promise<Turn> {
   const all = await listSellerPromotions(actorId, market);
-  if (!all.length) return notice(actorId, "لا توجد لديك حملات بعد. قل «روح بع لي هذا» أو «خل الإعلان مميز».", market);
+  if (!all.length && !(await campaignResults(actorId, market).catch(() => [])).length) return notice(actorId, "لا توجد لديك حملات بعد. قل «روح بع لي هذا» أو «خل الإعلان مميز».", market);
   // The campaign in context (status card) or all of the seller's campaigns.
   const focus = latest?.promotionId ? [latest.promotionId] : latestSet && (latestSet.query as { kind?: unknown; view?: unknown }).kind === "PROMOTION" && (latestSet.query as { promotionId?: unknown }).promotionId ? [String((latestSet.query as { promotionId: string }).promotionId)] : all.map((item) => item.id);
   const rows = await campaignAnalytics(actorId, market, focus);
